@@ -9,5 +9,5 @@ cp commit-msg ../.git/hooks/commit-msg
 chmod +x ../.git/hooks/commit-msg
 
 # Sets up a simple 'git review' command to push changes for review
-git config alias.review 'push origin HEAD:refs/for/master%r=datastudio+cl@google.com'
+git config alias.review 'push origin HEAD:refs/for/master'
 
