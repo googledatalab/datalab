@@ -67,7 +67,9 @@ class TestCases(unittest.TestCase):
   def _create_table(self, name):
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return gcp.bigquery.table(name, project_id, creds)
+    context = gcp.Context(project_id, creds)
+
+    return gcp.bigquery.table(name, context)
 
   def _create_table_info_result(self):
     # pylint: disable=g-continuation-in-parens-misaligned

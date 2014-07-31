@@ -12,9 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from _util import Context as _Context
-
-# The default context object.
-# TODO(nikhilko): Make Context be a public singleton type rather than have a
-#                 top-level field.
-context = _Context()
+from ._context import Context

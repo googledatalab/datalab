@@ -19,13 +19,24 @@ class QueryResults(object):
   """Represents a results object holding the results of an executed query.
   """
 
-  def __init__(self, rows):
+  def __init__(self, sql, rows):
     """Initializes an instance of a QueryResults with the rows.
 
     Args:
+      sql: the SQL statement used to produce the result set.
       rows: the rows making up the result set.
     """
+    self._sql = sql
     self._rows = rows
+
+  @property
+  def sql(self):
+    """The SQL statement used to produce this result set.
+
+    Returns:
+      The SQL statement as it was sent to the BigQuery API for execution.
+    """
+    return self._sql
 
   def __iter__(self):
     """Creates an iterator to iterate over the rows in the result set.
@@ -150,7 +161,7 @@ class Query(object):
                                                         page_size=page_size,
                                                         timeout=timeout,
                                                         page_token=token)
-      return QueryResults(rows)
+      return QueryResults(self._sql, rows)
     except KeyError:
       raise Exception('Unexpected query response.')
 

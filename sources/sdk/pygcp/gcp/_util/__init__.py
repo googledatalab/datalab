@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ._context import Context
+from ._credentials import MetadataCredentials
 from ._http import Http
+from ._metadata import MetadataService
 from ._sql import Sql

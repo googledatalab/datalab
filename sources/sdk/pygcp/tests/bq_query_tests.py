@@ -24,9 +24,12 @@ class TestCases(unittest.TestCase):
   def test_single_result_query(self, mock_api_query):
     mock_api_query.return_value = self._create_single_row_result()
 
-    q = self._create_query()
-    data = q.results().to_list()
+    sql = 'SELECT field1 FROM [table] LIMIT 1'
+    q = self._create_query(sql)
+    results = q.results()
+    data = results.to_list()
 
+    self.assertEqual(results.sql, sql)
     self.assertEqual(len(data), 1)
     self.assertEqual(data[0]['field1'], 'value1')
 
@@ -86,7 +89,9 @@ class TestCases(unittest.TestCase):
 
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return gcp.bigquery.query(sql, project_id, creds)
+    context = gcp.Context(project_id, creds)
+
+    return gcp.bigquery.query(sql, context)
 
   def _create_single_row_result(self):
     # pylint: disable=g-continuation-in-parens-misaligned
