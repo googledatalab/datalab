@@ -1,6 +1,11 @@
 Data Studio Project
 ===================
 
-Interactive tools for big data on Google Cloud Platform.
-See more information at go/datastudio.
+Interactive tools for big data on Google Cloud Platform. Data Studio enables
+developers and data scientists to easily and efficiently explore, transform,
+analyze and visualize their data in the cloud.
 
+We're starting with creating a development experience for data analysis using
+BigQuery, Python within an IPython-based notebook, and taking that further to
+enable the same style of iterative development workflow to developing data
+processing pipelines in Java using Cloud Dataflow.
