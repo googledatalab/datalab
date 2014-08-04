@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Implements HTTP client helper functionality."""
+
 import json
 import urllib
 import httplib2
@@ -42,8 +44,8 @@ class Http(object):
     Raises:
       Exception when the HTTP request fails or the response cannot be processed.
     """
-
-    if headers is None: headers = {}
+    if headers is None:
+      headers = {}
 
     # Add querystring to the URL if there are any arguments.
     if args is not None:

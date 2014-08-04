@@ -18,9 +18,6 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-# Sample modules need to be loaded after the path has been modified to
-# include the gcloud package sources on the python path.
-# pylint: disable=g-import-not-at-top
 import gcp.bigquery as bq
 
 

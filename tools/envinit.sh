@@ -14,3 +14,9 @@ export METADATA_PORT=8089
 # end up picking up stale code when running samples or tests during development.
 export PYTHONDONTWRITEBYTECODE=1
 
+# Add this tools directory to the path
+export PATH=$PATH:$REPO_DIR/tools
+
+# Add aliases
+alias pylint='pylint --rcfile=$REPO_DIR/tools/pylint.rc'
+

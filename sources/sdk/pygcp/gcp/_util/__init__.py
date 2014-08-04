@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Google Cloud Platform library - Internal Helpers."""
+
 from ._credentials import MetadataCredentials
 from ._http import Http
 from ._metadata import MetadataService

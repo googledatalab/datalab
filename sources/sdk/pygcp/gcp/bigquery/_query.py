@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Implements Query and QueryResult BigQuery APIs."""
+
 import pandas as pd
-from _parser import Parser as _Parser
+from ._parser import Parser as _Parser
 
 
 class QueryResults(object):

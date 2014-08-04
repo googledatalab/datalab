@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Google Cloud Platform library - BigQuery Functionality."""
+
 import re
 import gcp as _gcp
 import gcp._util as _util
-from _api import Api as _Api
-from _query import Query as _Query
-from _table import Table as _Table
+from ._api import Api as _Api
+from ._query import Query as _Query
+from ._table import Table as _Table
 
 
 def _create_api(context):

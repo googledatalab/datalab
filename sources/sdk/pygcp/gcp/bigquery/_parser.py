@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Implements BigQuery related data parsing helpers."""
+
 import datetime as dt
-import time
 
 
 class Parser(object):
@@ -34,23 +35,21 @@ class Parser(object):
     """
     def parse_value(data_type, value):
       """Parses a value returned from a BigQuery response."""
-
-      if (value is None) or (value == 'null'):
-        return None
-
-      if data_type == 'INTEGER':
-        return int(value)
-      elif data_type == 'FLOAT':
-        return float(value)
-      elif data_type == 'TIMESTAMP':
-        return dt.datetime.utcfromtimestamp(float(value))
-      elif data_type == 'BOOLEAN':
-        return value == 'true'
-      elif (type(value) == str) or (type(value) == unicode):
-        return value
-      else:
-        # TODO(nikhilko): Handle nested JSON records
-        return str(value)
+      if value is not None:
+        if value == 'null':
+          value = None
+        elif data_type == 'INTEGER':
+          value = int(value)
+        elif data_type == 'FLOAT':
+          value = float(value)
+        elif data_type == 'TIMESTAMP':
+          value = dt.datetime.utcfromtimestamp(float(value))
+        elif data_type == 'BOOLEAN':
+          value = value == 'true'
+        elif (type(value) != str) and (type(value) != unicode):
+          # TODO(nikhilko): Handle nested JSON records
+          value = str(value)
+      return value
 
     row = {}
     for i, field in enumerate(data['f']):

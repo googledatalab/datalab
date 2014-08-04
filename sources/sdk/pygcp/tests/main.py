@@ -18,9 +18,6 @@ import unittest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-# Test modules need to be loaded after the path has been modified to
-# include the sources to be tested on the python path.
-# pylint: disable=g-import-not-at-top
 import bq_query_tests
 import bq_table_tests
 import http_tests

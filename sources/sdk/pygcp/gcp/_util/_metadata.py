@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Implements service wrapper for the compute metadata service."""
+
 import json
 import os
 

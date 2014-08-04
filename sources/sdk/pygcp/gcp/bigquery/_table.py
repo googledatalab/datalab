@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Implements Table and TableMetadata BigQuery APIs."""
+
 import re
-from _query import Query as _Query
-from _parser import Parser as _Parser
+from ._query import Query as _Query
+from ._parser import Parser as _Parser
 
 
 class TableMetadata(object):

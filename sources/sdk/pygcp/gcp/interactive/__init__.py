@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Google Cloud Platform library - IPython Functionality."""
+
 import gcp.bigquery as _bq
 
-# pylint: disable=g-import-not-at-top
 try:
   import IPython as _ipy
   import IPython.core.magic as _magic

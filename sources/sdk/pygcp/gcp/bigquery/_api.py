@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Implements BigQuery HTTP API wrapper."""
+
 import time
 import gcp._util as _util
 
@@ -57,8 +59,10 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    if page_size == 0: page_size = Api._DEFAULT_PAGE_SIZE
-    if timeout == 0: timeout = Api._DEFAULT_TIMEOUT
+    if page_size == 0:
+      page_size = Api._DEFAULT_PAGE_SIZE
+    if timeout == 0:
+      timeout = Api._DEFAULT_TIMEOUT
 
     url = Api._ENDPOINT + (Api._QUERY_PATH % self._project_id)
     data = {
@@ -89,8 +93,10 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    if page_size == 0: page_size = Api._DEFAULT_PAGE_SIZE
-    if timeout == 0: timeout = Api._DEFAULT_TIMEOUT
+    if page_size == 0:
+      page_size = Api._DEFAULT_PAGE_SIZE
+    if timeout == 0:
+      timeout = Api._DEFAULT_TIMEOUT
 
     if wait_interval != 0:
       time.sleep(wait_interval)

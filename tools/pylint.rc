@@ -1,0 +1,25 @@
+[MASTER]
+profile=no
+persistent=no
+
+[MESSAGES CONTROL]
+disable=fixme,too-few-public-methods,locally-disabled,no-self-use
+
+[REPORTS]
+reports=no
+comment=no
+
+[FORMAT]
+max-line-length=100
+ignore-long-lines=^\s*(# )?<?https?://\S+>?$
+indent-string='  '
+indent-after-paren=4
+
+[BASIC]
+variable-rgx=^[a-z][a-z0-9_]*$
+
+[VARIABLES]
+dummy-variables-rgx=^(_$|dummy_|unused_)
+
+[DESIGN]
+max-args=6
