@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import datetime as dt
 import unittest
 import gcp.bigquery
 import mock
@@ -45,6 +46,23 @@ class TestCases(unittest.TestCase):
       _ = self._create_table('today')
 
   @mock.patch('gcp.bigquery._Api.tables_get')
+  def test_table_metadata(self, mock_api_tables):
+    name = 'data-studio-team:requestlogs.today'
+    ts = dt.datetime.utcnow()
+
+    mock_api_tables.return_value = self._create_table_info_result(ts=ts)
+    t = self._create_table(name)
+
+    metadata = t.metadata()
+
+    self.assertEqual(metadata.full_name, name)
+    self.assertEqual(metadata.friendly_name, 'Logs')
+    self.assertEqual(metadata.rows, 2)
+    self.assertEqual(metadata.rows, 2)
+    self.assertEqual(metadata.created_on, ts)
+    self.assertEqual(metadata.expires_on, None)
+
+  @mock.patch('gcp.bigquery._Api.tables_get')
   def test_table_schema(self, mock_api_tables):
     mock_api_tables.return_value = self._create_table_info_result()
 
@@ -71,9 +89,20 @@ class TestCases(unittest.TestCase):
 
     return gcp.bigquery.table(name, context)
 
-  def _create_table_info_result(self):
+  def _create_table_info_result(self, ts=None):
+    if ts is None:
+      ts = dt.datetime.utcnow()
+    epoch = dt.datetime.utcfromtimestamp(0)
+    timestamp = (ts - epoch).total_seconds() * 1000
+
     # pylint: disable=g-continuation-in-parens-misaligned
     return {
+      'description': 'Daily Logs Table',
+      'friendlyName': 'Logs',
+      'numBytes': 1000,
+      'numRows': 2,
+      'creationTime': timestamp,
+      'lastModifiedTime': timestamp,
       'schema': {
         'fields': [
           {'name': 'name', 'type': 'STRING', 'mode': 'NULLABLE'},

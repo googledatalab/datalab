@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import pandas as pd
+from _parser import Parser as _Parser
 
 
 class QueryResults(object):
@@ -86,7 +87,6 @@ class Query(object):
       api: the BigQuery API object to use to issue requests.
       sql: the BigQuery SQL string to execute.
     """
-
     self._api = api
     self._sql = sql
     self._results = None
@@ -104,7 +104,6 @@ class Query(object):
       Exception if the query could not be executed or query response was
       malformed.
     """
-
     if not use_cache or (self._results is None):
       self._results = self._execute(page_size, timeout, use_cache)
     return self._results
@@ -122,7 +121,6 @@ class Query(object):
       Exception if the query could not be executed or query response was
       malformed.
     """
-
     try:
       query_result = self._api.jobs_query(self._sql,
                                           page_size=page_size,
@@ -144,7 +142,7 @@ class Query(object):
 
         while len(rows) < total_count:
           for r in query_result['rows']:
-            rows.append(self._api.parse_row(schema, r))
+            rows.append(_Parser.parse_row(schema, r))
 
           if len(rows) < total_count:
             token = query_result['pageToken']

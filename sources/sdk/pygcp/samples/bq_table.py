@@ -37,7 +37,15 @@ def main():
 
   name2 = 'requestlogs.logs20140615'
   table2 = bq.table(name2)
+  table2_md = table2.metadata()
   print name2
+  print 'full name: ' + table2_md.full_name
+  print 'friendly name: ' + table2_md.friendly_name
+  print 'description: ' + table2_md.description
+  print 'rows: ' + str(table2_md.rows)
+  print 'size: ' + str(table2_md.size)
+  print 'created: ' + str(table2_md.created_on)
+  print 'modified: ' + str(table2_md.modified_on)
   print json.dumps(table2.schema(), sort_keys=True, indent=2)
 
   print table2.sample().to_dataframe()

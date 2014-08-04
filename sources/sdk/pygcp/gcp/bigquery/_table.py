@@ -14,6 +14,66 @@
 
 import re
 from _query import Query as _Query
+from _parser import Parser as _Parser
+
+
+class TableMetadata(object):
+  """Represents metadata about a BigQuery table."""
+
+  def __init__(self, name, info):
+    """Initializes an instance of a TableMetadata.
+
+    Args:
+      name: the name of the table.
+      info: The BigQuery information about this table.
+    """
+    self._name = name
+    self._info = info
+
+  @property
+  def created_on(self):
+    """The creation timestamp."""
+    timestamp = self._info.get('creationTime')
+    return _Parser.parse_timestamp(timestamp)
+
+  @property
+  def description(self):
+    """The description of the table if it exists."""
+    return self._info.get('description', '')
+
+  @property
+  def expires_on(self):
+    """The timestamp for when the table will expire."""
+    timestamp = self._info.get('expirationTime', None)
+    if timestamp is None:
+      return None
+    return _Parser.parse_timestamp(timestamp)
+
+  @property
+  def friendly_name(self):
+    """The friendly name of the table if it exists."""
+    return self._info.get('friendlyName', '')
+
+  @property
+  def full_name(self):
+    """The full name of the table."""
+    return self._name
+
+  @property
+  def modified_on(self):
+    """The timestamp for when the table was last modified."""
+    timestamp = self._info.get('lastModifiedTime')
+    return _Parser.parse_timestamp(timestamp)
+
+  @property
+  def rows(self):
+    """The number of rows within the table."""
+    return self._info['numRows']
+
+  @property
+  def size(self):
+    """The size of the table in bytes."""
+    return self._info['numBytes']
 
 
 class Table(object):
@@ -29,10 +89,21 @@ class Table(object):
       api: the BigQuery API object to use to issue requests.
       name: the name of the table.
     """
-
     self._api = api
     self._name = name
     self._name_parts = self._parse_name(name)
+    self._full_name = '%s:%s.%s' % self._name_parts
+    self._info = None
+
+  @property
+  def name(self):
+    """The name of the table, as used when it was constructed."""
+    return self._name
+
+  def _load_info(self):
+    """Loads metadata about this table."""
+    if self._info is None:
+      self._info = self._api.tables_get(self._name_parts)
 
   def _parse_name(self, name):
     """Parses a table name into its individual parts.
@@ -47,7 +118,6 @@ class Table(object):
     Raises:
       Exception: raised if the name doesn't match the expected formats.
     """
-
     # Try to parse as fully-qualified <project>:<dataset>.<table> name first.
     m = re.match(r'^([a-z0-9\-_]+)\:([a-z0-9]+)\.([a-z0-9]+)$', name)
     if m is not None:
@@ -61,6 +131,18 @@ class Table(object):
 
     raise Exception('Invalid table name: ' + name)
 
+  def metadata(self):
+    """Retrieves metadata about the table.
+
+    Returns:
+      A TableMetadata object.
+    Raises
+      Exception if the request could not be executed or the response was
+      malformed.
+    """
+    self._load_info()
+    return TableMetadata(self._full_name, self._info)
+
   def sample(self, count=5):
     """Retrieves a sampling of data from the table.
 
@@ -72,8 +154,7 @@ class Table(object):
       Exception if the sample query could not be executed or query response was
       malformed.
     """
-
-    sql = 'SELECT * FROM [%s:%s.%s] LIMIT %d' % (self._name_parts + (count,))
+    sql = 'SELECT * FROM [%s] LIMIT %d' % (self._full_name, count)
     q = _Query(self._api, sql)
 
     return q.results()
@@ -87,13 +168,12 @@ class Table(object):
       Exception if the request could not be executed or the response was
       malformed.
     """
-
     try:
-      table_info = self._api.tables_get(self._name_parts)
+      self._load_info()
 
       # TODO(nikhilko): Build a python-representation of the schema, as well
       #                 as handle nested objects/json fields
-      return table_info['schema']['fields']
+      return self._info['schema']['fields']
     except KeyError:
       raise Exception('Unexpected table response.')
 
@@ -103,7 +183,7 @@ class Table(object):
     Returns:
       A formatted table name for use within SQL statements.
     """
-    return '[%s:%s.%s]' % self._name_parts
+    return '[' + self._full_name + ']'
 
   def __str__(self):
     """Returns a string representation of the table using its specified name.

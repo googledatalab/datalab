@@ -12,17 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime as dt
 import time
 import gcp._util as _util
 
 
 class Api(object):
-  """A helper class to issue BigQuery HTTP requests.
-
-  This is mostly a direct wrapper over the underlying API calls. It also
-  provides some helper methods to work with BigQuery requests and responses.
-  """
+  """A helper class to issue BigQuery HTTP requests."""
 
   _ENDPOINT = 'https://www.googleapis.com/bigquery/v2'
   _QUERY_PATH = '/projects/%s/queries'
@@ -39,48 +34,13 @@ class Api(object):
       credentials: the credentials to use to authorize requests.
       project_id: the project id to associate with requests.
     """
-
     self._credentials = credentials
     self._project_id = project_id
 
   @property
   def project_id(self):
+    """The project_id associated with this API client."""
     return self._project_id
-
-  def parse_row(self, schema, data):
-    """Parses a row from query results into an equivalent object.
-
-    Args:
-      schema: the array of fields defining the schema of the data.
-      data: the JSON row from a query result.
-    Returns:
-      The parsed row object.
-    """
-
-    def parse_value(data_type, value):
-      if (value is None) or (value == 'null'):
-        return None
-
-      if data_type == 'INTEGER':
-        return int(value)
-      elif data_type == 'FLOAT':
-        return float(value)
-      elif data_type == 'TIMESTAMP':
-        return dt.datetime.utcfromtimestamp(float(value))
-      elif data_type == 'BOOLEAN':
-        return value == 'true'
-      elif (type(value) == str) or (type(value) == unicode):
-        return value
-      else:
-        # TODO(nikhilko): Handle nested JSON records
-        return str(value)
-
-    row = {}
-    for i, field in enumerate(data['f']):
-      schema_field = schema[i]
-      row[schema_field['name']] = parse_value(schema_field['type'], field['v'])
-
-    return row
 
   def jobs_query(self, sql, page_size=0, timeout=0, dry_run=False,
                  use_cache=True):
@@ -97,7 +57,6 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-
     if page_size == 0: page_size = Api._DEFAULT_PAGE_SIZE
     if timeout == 0: timeout = Api._DEFAULT_TIMEOUT
 
@@ -130,7 +89,6 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-
     if page_size == 0: page_size = Api._DEFAULT_PAGE_SIZE
     if timeout == 0: timeout = Api._DEFAULT_TIMEOUT
 
@@ -158,6 +116,5 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-
     url = Api._ENDPOINT + (Api._TABLE_PATH % name)
     return _util.Http.request(url, credentials=self._credentials)

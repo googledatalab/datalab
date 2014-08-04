@@ -8,6 +8,8 @@
 cp commit-msg ../.git/hooks/commit-msg
 chmod +x ../.git/hooks/commit-msg
 
-# Sets up a simple 'git review' command to push changes for review
+# Set up some simple git commands (aliases as well as some new ones)
+git config alias.diffui !'meld $REPO_DIR'
+git config alias.amend 'git commit --amend'
 git config alias.review 'push origin HEAD:refs/for/master'
 
