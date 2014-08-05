@@ -121,7 +121,7 @@ class Table(object):
       Exception: raised if the name doesn't match the expected formats.
     """
     # Try to parse as fully-qualified <project>:<dataset>.<table> name first.
-    m = re.match(r'^([a-z0-9\-_]+)\:([a-z0-9]+)\.([a-z0-9]+)$', name)
+    m = re.match(r'^([a-z0-9\-_\.:]+)\:([a-z0-9_]+)\.([a-z0-9_]+)$', name, re.IGNORECASE)
     if m is not None:
       return m.groups()
 

@@ -101,7 +101,7 @@ class Query(object):
       timeout: duration (in milliseconds) to wait for the query to complete.
       use_cache: whether to use cached results or not.
     Returns:
-      A list of objects representing the rows in the result set.
+      A QueryResults objects representing the result set.
     Raises:
       Exception if the query could not be executed or query response was
       malformed.
@@ -109,6 +109,24 @@ class Query(object):
     if not use_cache or (self._results is None):
       self._results = self._execute(page_size, timeout, use_cache)
     return self._results
+
+  def sample(self, count=5, timeout=0, use_cache=True):
+    """Retrieves a sampling of rows for the query.
+
+    Args:
+      count: the number of sample result rows to retrieve.
+      timeout: duration (in milliseconds) to wait for the query to complete.
+      use_cache: whether to use cached results or not.
+    Returns:
+      A QueryResults objects representing a sampling of the result set.
+    Raises:
+      Exception if the query could not be executed or query response was
+      malformed.
+    """
+    sample_sql = 'SELECT * FROM (%s) LIMIT %d' % (self._sql, count)
+    sample_query = Query(self._api, sample_sql)
+
+    return sample_query.results(page_size=0, timeout=timeout, use_cache=use_cache)
 
   def _execute(self, page_size, timeout, use_cache):
     """Executes a query and retrieve results after waiting for completion.
