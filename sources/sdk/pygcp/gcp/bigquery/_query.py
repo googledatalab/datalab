@@ -16,6 +16,7 @@
 
 import pandas as pd
 from ._parser import Parser as _Parser
+from ._sampling import Sampling as _Sampling
 
 
 class QueryResults(object):
@@ -110,11 +111,11 @@ class Query(object):
       self._results = self._execute(page_size, timeout, use_cache)
     return self._results
 
-  def sample(self, count=5, timeout=0, use_cache=True):
+  def sample(self, sampling=None, timeout=0, use_cache=True):
     """Retrieves a sampling of rows for the query.
 
     Args:
-      count: the number of sample result rows to retrieve.
+      sampling: an optional sampling strategy to apply to the table.
       timeout: duration (in milliseconds) to wait for the query to complete.
       use_cache: whether to use cached results or not.
     Returns:
@@ -123,9 +124,11 @@ class Query(object):
       Exception if the query could not be executed or query response was
       malformed.
     """
-    sample_sql = 'SELECT * FROM (%s) LIMIT %d' % (self._sql, count)
-    sample_query = Query(self._api, sample_sql)
+    if sampling is None:
+      sampling = _Sampling.default()
+    sql = sampling(self._api, self._sql)
 
+    sample_query = Query(self._api, sql)
     return sample_query.results(page_size=0, timeout=timeout, use_cache=use_cache)
 
   def _execute(self, page_size, timeout, use_cache):

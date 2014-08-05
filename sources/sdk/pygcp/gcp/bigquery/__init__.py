@@ -19,6 +19,7 @@ import gcp as _gcp
 import gcp._util as _util
 from ._api import Api as _Api
 from ._query import Query as _Query
+from ._sampling import Sampling
 from ._table import Table as _Table
 
 

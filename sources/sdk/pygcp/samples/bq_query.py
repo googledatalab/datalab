@@ -62,5 +62,10 @@ def main():
   print 'SQL (nested queries):'
   print sql
 
+  # SQL query sampling
+  sql = 'SELECT repository_name FROM [githubarchive:github.timeline]'
+  query = bq.query(sql)
+  print query.sample().to_dataframe()
+
 if __name__ == '__main__':
   main()

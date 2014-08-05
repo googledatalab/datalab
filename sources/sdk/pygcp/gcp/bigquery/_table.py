@@ -17,6 +17,7 @@
 import re
 from ._query import Query as _Query
 from ._parser import Parser as _Parser
+from ._sampling import Sampling as _Sampling
 
 
 class TableMetadata(object):
@@ -145,18 +146,20 @@ class Table(object):
     self._load_info()
     return TableMetadata(self._full_name, self._info)
 
-  def sample(self, count=5):
+  def sample(self, sampling=None):
     """Retrieves a sampling of data from the table.
 
     Args:
-      count: the number of rows of data to retrieve. This defaults to 5.
+      sampling: an optional sampling strategy to apply to the table.
     Returns:
       A query results object containing the resulting data.
     Raises:
       Exception if the sample query could not be executed or query response was
       malformed.
     """
-    sql = 'SELECT * FROM [%s] LIMIT %d' % (self._full_name, count)
+    if sampling is None:
+      sampling = _Sampling.default()
+    sql = sampling(self._api, '[' + self._full_name + ']')
     q = _Query(self._api, sql)
 
     return q.results()
