@@ -45,7 +45,7 @@ def main():
   print json.dumps(table2.schema(), sort_keys=True, indent=2)
 
   print table2.sample().to_dataframe()
-  print table2.sample(sampling=bq.Sampling.random(count=10)).to_dataframe()
+  print table2.sample(sampling=bq.Sampling.default(count=10)).to_dataframe()
 
 if __name__ == '__main__':
   main()

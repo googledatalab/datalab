@@ -24,6 +24,10 @@ class TestCases(unittest.TestCase):
     expected_sql = 'SELECT * FROM (%s) LIMIT 5' % TestCases.BASE_SQL
     self._apply_sampling(bq.Sampling.default(), expected_sql)
 
+  def test_default_custom_count(self):
+    expected_sql = 'SELECT * FROM (%s) LIMIT 20' % TestCases.BASE_SQL
+    self._apply_sampling(bq.Sampling.default(count=20), expected_sql)
+
   def test_hashed(self):
     expected_sql = 'SELECT * FROM (%s) WHERE ABS(HASH(f1)) < 5' % TestCases.BASE_SQL
     self._apply_sampling(bq.Sampling.hashed('f1', 5), expected_sql)
@@ -31,10 +35,6 @@ class TestCases(unittest.TestCase):
   def test_hashed_and_limited(self):
     expected_sql = 'SELECT * FROM (%s) WHERE ABS(HASH(f1)) < 5 LIMIT 100' % TestCases.BASE_SQL
     self._apply_sampling(bq.Sampling.hashed('f1', 5, count=100), expected_sql)
-
-  def test_random(self):
-    expected_sql = 'SELECT * FROM (%s) LIMIT 10' % TestCases.BASE_SQL
-    self._apply_sampling(bq.Sampling.random(count=10), expected_sql)
 
   def test_sorted_ascending(self):
     expected_sql = 'SELECT * FROM (%s) ORDER BY f1 LIMIT 5' % TestCases.BASE_SQL
@@ -45,5 +45,5 @@ class TestCases(unittest.TestCase):
     self._apply_sampling(bq.Sampling.sorted('f1', ascending=False), expected_sql)
 
   def _apply_sampling(self, sampling, expected_query):
-    sampled_query = sampling(None, TestCases.BASE_SQL)
+    sampled_query = sampling(TestCases.BASE_SQL)
     self.assertEqual(sampled_query, expected_query)

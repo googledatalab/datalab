@@ -159,7 +159,7 @@ class Table(object):
     """
     if sampling is None:
       sampling = _Sampling.default()
-    sql = sampling(self._api, '[' + self._full_name + ']')
+    sql = sampling(self._repr_sql_())
     q = _Query(self._api, sql)
 
     return q.results()

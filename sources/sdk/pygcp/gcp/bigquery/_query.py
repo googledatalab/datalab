@@ -126,10 +126,10 @@ class Query(object):
     """
     if sampling is None:
       sampling = _Sampling.default()
-    sql = sampling(self._api, self._sql)
+    sampling_sql = sampling(self._sql)
 
-    sample_query = Query(self._api, sql)
-    return sample_query.results(page_size=0, timeout=timeout, use_cache=use_cache)
+    sampling_query = Query(self._api, sampling_sql)
+    return sampling_query.results(page_size=0, timeout=timeout, use_cache=use_cache)
 
   def _execute(self, page_size, timeout, use_cache):
     """Executes a query and retrieve results after waiting for completion.
