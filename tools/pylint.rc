@@ -17,6 +17,7 @@ indent-after-paren=4
 
 [BASIC]
 variable-rgx=^[a-z][a-z0-9_]*$
+no-docstring-rgx=^_
 
 [VARIABLES]
 dummy-variables-rgx=^(_$|dummy_|unused_)

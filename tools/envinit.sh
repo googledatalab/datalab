@@ -4,7 +4,11 @@
 # and any other environment customizations.
 
 # Export a variable corresponding to the root of the repository
-export REPO_DIR=$(cd "$(dirname "$0")/.."; pwd)
+SCRIPT=$0
+if [ "$SCRIPT" == "-bash" ]; then
+  SCRIPT=${BASH_SOURCE[0]}
+fi
+export REPO_DIR=$(cd "$(dirname "$SCRIPT")/.."; pwd)
 
 # These control where the local emulation of the GCE metadata service exists.
 export METADATA_HOST=localhost

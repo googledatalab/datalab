@@ -85,6 +85,12 @@ class Table(object):
   This object can be used to inspect tables and create SQL queries.
   """
 
+  # Absolute project-qualified name pattern: <project>:<dataset>.<table>
+  _ABS_NAME_PATTERN = r'^([a-z0-9\-_\.:]+)\:([a-z0-9_]+)\.([a-z0-9_]+)$'
+
+  # Relative name pattern: <dataset>.<table>
+  _REL_NAME_PATTERN = r'^([a-z0-9_]+)\.([a-z0-9_]+)$'
+
   def __init__(self, api, name):
     """Initializes an instance of a Table object.
 
@@ -121,13 +127,13 @@ class Table(object):
     Raises:
       Exception: raised if the name doesn't match the expected formats.
     """
-    # Try to parse as fully-qualified <project>:<dataset>.<table> name first.
-    m = re.match(r'^([a-z0-9\-_\.:]+)\:([a-z0-9_]+)\.([a-z0-9_]+)$', name, re.IGNORECASE)
+    # Try to parse as absolute name first.
+    m = re.match(Table._ABS_NAME_PATTERN, name, re.IGNORECASE)
     if m is not None:
       return m.groups()
 
-    # Next try to match <dataset>.<table> as a project-scoped table.
-    m = re.match(r'^([a-z0-9]+)\.([a-z0-9]+)$', name)
+    # Next try to match as a relative name implicitly scoped within current project.
+    m = re.match(Table._REL_NAME_PATTERN, name)
     if m is not None:
       groups = m.groups()
       return (self._api.project_id, groups[0], groups[1])
@@ -146,11 +152,16 @@ class Table(object):
     self._load_info()
     return TableMetadata(self._full_name, self._info)
 
-  def sample(self, sampling=None):
+  def sample(self, fields=None, count=5, sampling=None, timeout=0, use_cache=True):
     """Retrieves a sampling of data from the table.
 
     Args:
+      fields: an optional list of field names to retrieve.
+      count: an optional count of rows to retrieve which is used if a specific
+          sampling is not specified.
       sampling: an optional sampling strategy to apply to the table.
+      timeout: duration (in milliseconds) to wait for the query to complete.
+      use_cache: whether to use cached results or not.
     Returns:
       A query results object containing the resulting data.
     Raises:
@@ -158,11 +169,11 @@ class Table(object):
       malformed.
     """
     if sampling is None:
-      sampling = _Sampling.default()
+      sampling = _Sampling.default(fields=fields, count=count)
     sql = sampling(self._repr_sql_())
     q = _Query(self._api, sql)
 
-    return q.results()
+    return q.results(timeout=timeout, use_cache=use_cache)
 
   def schema(self):
     """Retrieves the schema of the table.

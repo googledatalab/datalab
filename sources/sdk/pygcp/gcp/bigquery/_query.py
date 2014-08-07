@@ -111,10 +111,12 @@ class Query(object):
       self._results = self._execute(page_size, timeout, use_cache)
     return self._results
 
-  def sample(self, sampling=None, timeout=0, use_cache=True):
+  def sample(self, count=5, sampling=None, timeout=0, use_cache=True):
     """Retrieves a sampling of rows for the query.
 
     Args:
+      count: an optional count of rows to retrieve which is used if a specific
+          sampling is not specified.
       sampling: an optional sampling strategy to apply to the table.
       timeout: duration (in milliseconds) to wait for the query to complete.
       use_cache: whether to use cached results or not.
@@ -125,7 +127,7 @@ class Query(object):
       malformed.
     """
     if sampling is None:
-      sampling = _Sampling.default()
+      sampling = _Sampling.default(count=count)
     sampling_sql = sampling(self._sql)
 
     sampling_query = Query(self._api, sampling_sql)
