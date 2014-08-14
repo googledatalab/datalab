@@ -1,0 +1,10 @@
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    buildDir = new File(rootProject.projectDir, "../build/" + project.name)
+}
+
