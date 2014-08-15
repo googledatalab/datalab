@@ -27,20 +27,19 @@ class TestCases(unittest.TestCase):
     sql = 'SELECT field1 FROM [table] LIMIT 1'
     q = self._create_query(sql)
     results = q.results()
-    data = results.to_list()
 
     self.assertEqual(results.sql, sql)
-    self.assertEqual(len(data), 1)
-    self.assertEqual(data[0]['field1'], 'value1')
+    self.assertEqual(len(results), 1)
+    self.assertEqual(results[0]['field1'], 'value1')
 
   @mock.patch('gcp.bigquery._Api.jobs_query')
   def test_empty_result_query(self, mock_api_query):
     mock_api_query.return_value = self._create_empty_result()
 
     q = self._create_query()
-    data = q.results().to_list()
+    results = q.results()
 
-    self.assertEqual(len(data), 0)
+    self.assertEqual(len(results), 0)
 
   @mock.patch('gcp.bigquery._Api.jobs_query_results')
   @mock.patch('gcp.bigquery._Api.jobs_query')
@@ -51,9 +50,10 @@ class TestCases(unittest.TestCase):
     mock_api_query_results.return_value = self._create_single_row_result()
 
     q = self._create_query()
-    data = q.results().to_list()
+    results = q.results()
 
-    self.assertEqual(len(data), 1)
+    self.assertEqual(len(results), 1)
+    self.assertEqual(results.job_id, 'test_job')
     self.assertEqual(mock_api_query_results.call_count, 1)
 
   @mock.patch('gcp.bigquery._Api.jobs_query_results')
@@ -65,9 +65,9 @@ class TestCases(unittest.TestCase):
     mock_api_query_results.return_value = self._create_page2_result()
 
     q = self._create_query()
-    data = q.results().to_list()
+    results = q.results()
 
-    self.assertEqual(len(data), 2)
+    self.assertEqual(len(results), 2)
     self.assertEqual(mock_api_query_results.call_count, 1)
     self.assertEqual(mock_api_query_results.call_args[0][0], 'test_job')
     self.assertEqual(mock_api_query_results.call_args[1]['page_token'],

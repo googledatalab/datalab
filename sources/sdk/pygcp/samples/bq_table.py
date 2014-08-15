@@ -24,7 +24,8 @@ def main():
   name1 = 'githubarchive:github.timeline'
   table1 = bq.table(name1)
   print name1
-  print json.dumps(table1.schema(), sort_keys=True, indent=2)
+  for field in table1.schema():
+    print field.name + ' [' + field.data_type + ']'
 
   # pylint: disable=protected-access
   print 'sql representation: ' + table1._repr_sql_()
@@ -42,10 +43,19 @@ def main():
   print 'size: ' + str(table2_md.size)
   print 'created: ' + str(table2_md.created_on)
   print 'modified: ' + str(table2_md.modified_on)
-  print json.dumps(table2.schema(), sort_keys=True, indent=2)
+  for field in table2.schema():
+    print field.name + ' [' + field.data_type + ']'
 
   print table2.sample().to_dataframe()
   print table2.sample(sampling=bq.Sampling.default(count=10)).to_dataframe()
+
+  print ''
+
+  table_list = bq.tables('requestlogs')
+  print 'Tables:'
+  for t in table_list:
+    print t.name
+
 
 if __name__ == '__main__':
   main()

@@ -112,15 +112,37 @@ class Api(object):
     url = Api._ENDPOINT + (Api._QUERY_RESULT_PATH % (self._project_id, job_id))
     return _util.Http.request(url, args=args, credentials=self._credentials)
 
-  def tables_get(self, name):
+  def tables_get(self, name_parts):
     """Issues a request to retrieve information about a table.
 
     Args:
-      name: the name of the table.
+      name_parts: a tuple representing the full name of the table.
     Returns:
       A parsed table information object.
     Raises:
       Exception if there is an error performing the operation.
     """
-    url = Api._ENDPOINT + (Api._TABLE_PATH % name)
+    url = Api._ENDPOINT + (Api._TABLE_PATH % name_parts)
     return _util.Http.request(url, credentials=self._credentials)
+
+  def tables_list(self, dataset_id, max_results=0, page_token=None):
+    """Issues a request to retrieve a list of tables.
+
+    Args:
+      dataset_id: the name of the dataset to enumerate.
+      max_results: an optional maximum number of tables to retrieve.
+      page_token: an optional token to continue the retrieval.
+    Returns:
+      A parsed table list object.
+    Raises:
+      Exception if there is an error performing the operation.
+    """
+    url = Api._ENDPOINT + (Api._TABLE_PATH % (self._project_id, dataset_id, ''))
+
+    args = {}
+    if max_results != 0:
+      args['maxResults'] = max_results
+    if page_token is not None:
+      args['pageToken'] = page_token
+
+    return _util.Http.request(url, args=args, credentials=self._credentials)

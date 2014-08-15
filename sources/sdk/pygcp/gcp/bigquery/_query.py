@@ -19,19 +19,30 @@ from ._parser import Parser as _Parser
 from ._sampling import Sampling as _Sampling
 
 
-class QueryResults(object):
+class QueryResults(list):
   """Represents a results object holding the results of an executed query.
   """
 
-  def __init__(self, sql, rows):
+  def __init__(self, sql, job_id, rows):
     """Initializes an instance of a QueryResults with the rows.
 
     Args:
       sql: the SQL statement used to produce the result set.
+      job_id: the id of the query job that produced this result set.
       rows: the rows making up the result set.
     """
+    list.__init__(self, rows)
     self._sql = sql
-    self._rows = rows
+    self._job_id = job_id
+
+  @property
+  def job_id(self):
+    """The id of the query job that produced this result set.
+
+    Returns:
+      The job id associated with this result.
+    """
+    return self._job_id
 
   @property
   def sql(self):
@@ -42,39 +53,15 @@ class QueryResults(object):
     """
     return self._sql
 
-  def __iter__(self):
-    """Creates an iterator to iterate over the rows in the result set.
-
-    Returns:
-      An iterator to iterate over the rows.
-    """
-    return iter(self._rows)
-
-  def __len__(self):
-    """Retrieves the number of rows in the result set.
-
-    Returns:
-      The number of rows in the resultset.
-    """
-    return len(self._rows)
-
-  def to_list(self):
-    """Retrieves the result set as a simple list of objects.
-
-    Returns:
-      The list of rows forming the result set.
-    """
-    return self._rows
-
   def to_dataframe(self):
     """Retrieves the result set as a pandas dataframe object.
 
     Returns:
       A dataframe representing the data in the result set.
     """
-    if len(self._rows) == 0:
+    if len(self) == 0:
       return pd.DataFrame()
-    return pd.DataFrame.from_dict(self._rows)
+    return pd.DataFrame.from_dict(self)
 
 
 class Query(object):
@@ -93,6 +80,10 @@ class Query(object):
     self._api = api
     self._sql = sql
     self._results = None
+
+  @property
+  def sql(self):
+    return self._sql
 
   def results(self, page_size=0, timeout=0, use_cache=True):
     """Retrieves results for the query.
@@ -184,7 +175,7 @@ class Query(object):
                                                         page_size=page_size,
                                                         timeout=timeout,
                                                         page_token=token)
-      return QueryResults(self._sql, rows)
+      return QueryResults(self._sql, job_id, rows)
     except KeyError:
       raise Exception('Unexpected query response.')
 

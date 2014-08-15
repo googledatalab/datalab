@@ -12,12 +12,56 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Implements Table and TableMetadata BigQuery APIs."""
+"""Implements Table, and related Table BigQuery APIs."""
 
 import re
 from ._query import Query as _Query
 from ._parser import Parser as _Parser
 from ._sampling import Sampling as _Sampling
+
+
+class TableSchema(list):
+  """Represents the schema of a BigQuery table.
+  """
+
+  class _Field(object):
+
+    def __init__(self, name, data_type, mode, description):
+      self.name = name
+      self.data_type = data_type
+      self.mode = mode
+      self.description = description
+
+  def __init__(self, data):
+    """Initializes a TableSchema from its raw JSON representation.
+    """
+    list.__init__(self)
+    self._populate_fields(data)
+
+    self._map = {}
+    for field in self:
+      self._map[field.name] = field
+
+  def __getitem__(self, key):
+    """Provides ability to lookup a schema field by position or by name.
+    """
+    if isinstance(key, basestring):
+      return self._map.get(key, None)
+    return list.__getitem__(self, key)
+
+  def _populate_fields(self, data, prefix=''):
+    for field_data in data:
+      name = prefix + field_data['name']
+      data_type = field_data['type']
+
+      field = TableSchema._Field(name, data_type,
+                                 field_data.get('mode', 'NULLABLE'),
+                                 field_data.get('description', ''))
+      self.append(field)
+
+      if data_type == 'RECORD':
+        # Recurse into the nested fields, using this field's name as a prefix.
+        self._populate_fields(field_data.get('fields'), name + '.')
 
 
 class TableMetadata(object):
@@ -96,13 +140,25 @@ class Table(object):
 
     Args:
       api: the BigQuery API object to use to issue requests.
-      name: the name of the table.
+      name: the name of the table either as a string or a 3-part tuple (projectid, datasetid, name).
     """
     self._api = api
-    self._name = name
-    self._name_parts = self._parse_name(name)
-    self._full_name = '%s:%s.%s' % self._name_parts
+
+    if isinstance(name, basestring):
+      self._name_parts = self._parse_name(name)
+      self._full_name = '%s:%s.%s' % self._name_parts
+      self._name = name
+    else:
+      self._name_parts = name
+      self._full_name = '%s:%s.%s' % self._name_parts
+      self._name = self._full_name
+
     self._info = None
+
+  @property
+  def full_name(self):
+    """The full name of the table."""
+    return self._full_name
 
   @property
   def name(self):
@@ -146,8 +202,7 @@ class Table(object):
     Returns:
       A TableMetadata object.
     Raises
-      Exception if the request could not be executed or the response was
-      malformed.
+      Exception if the request could not be executed or the response was malformed.
     """
     self._load_info()
     return TableMetadata(self._full_name, self._info)
@@ -165,8 +220,7 @@ class Table(object):
     Returns:
       A query results object containing the resulting data.
     Raises:
-      Exception if the sample query could not be executed or query response was
-      malformed.
+      Exception if the sample query could not be executed or query response was malformed.
     """
     if sampling is None:
       sampling = _Sampling.default(fields=fields, count=count)
@@ -179,17 +233,13 @@ class Table(object):
     """Retrieves the schema of the table.
 
     Returns:
-      An array of schema fields and associated metadata.
+      A TableSchema object containing a list of schema fields and associated metadata.
     Raises
-      Exception if the request could not be executed or the response was
-      malformed.
+      Exception if the request could not be executed or the response was malformed.
     """
     try:
       self._load_info()
-
-      # TODO(nikhilko): Build a python-representation of the schema, as well
-      #                 as handle nested objects/json fields
-      return self._info['schema']['fields']
+      return TableSchema(self._info['schema']['fields'])
     except KeyError:
       raise Exception('Unexpected table response.')
 
@@ -208,3 +258,13 @@ class Table(object):
       The string representation of this object.
     """
     return self._name
+
+
+class TableList(list):
+  """A list of Tables.
+  """
+
+  def __init__(self, *tables):
+    """Initializes the list with a set of Table objects.
+    """
+    list.__init__(self, *tables)

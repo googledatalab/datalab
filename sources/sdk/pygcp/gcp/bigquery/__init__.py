@@ -14,13 +14,14 @@
 
 """Google Cloud Platform library - BigQuery Functionality."""
 
-import re
 import gcp as _gcp
 import gcp._util as _util
 from ._api import Api as _Api
 from ._query import Query as _Query
 from ._sampling import Sampling
 from ._table import Table as _Table
+from ._table import TableList as _TableList
+from ._udf import Function as _Function
 
 
 def _create_api(context):
@@ -31,7 +32,6 @@ def _create_api(context):
   Returns:
     An Api object to make BigQuery HTTP API requests.
   """
-
   if context is None:
     context = _gcp.Context.default()
   return _Api(context.credentials, context.project_id)
@@ -49,9 +49,26 @@ def query(sql_statement, context=None):
   Returns:
     A query object that can be executed to retrieve data from BigQuery.
   """
-
   api = _create_api(context)
   return _Query(api, sql_statement)
+
+
+def udf(inputs, outputs, implementation, context=None):
+  """Creates a BigQuery SQL UDF query object.
+
+  The implementation is a javascript function of the form:
+    function(row, emitFn) { ... }
+  where the row matches a structure represented by inputs, and the emitFn
+  is a function that accepts a structure represented by outputs.
+
+  Args:
+    inputs: a list of (name, type) tuples representing the schema of input.
+    outputs: a list of (name, type) tuples representing the schema of the output.
+    implementation: a javascript function defining the UDF logic.
+    context: an optional Context object providing project_id and credentials.
+  """
+  api = _create_api(context)
+  return _Function(api, inputs, outputs, implementation)
 
 
 def sql(sql_template, **kwargs):
@@ -69,7 +86,6 @@ def sql(sql_template, **kwargs):
     Exception if a placeholder was found in the SQL statement, but did not have
     a corresponding argument value.
   """
-
   return _util.Sql.format(sql_template, kwargs)
 
 
@@ -86,10 +102,36 @@ def table(name, context=None):
     name: the name of the table.
     context: an optional Context object providing project_id and credentials.
   Returns:
-    A table object that can be used to retrieve table metadata from BigQuery.
+    A Table object that can be used to retrieve table metadata from BigQuery.
   Raises:
     Exception if the name is invalid.
   """
-
   api = _create_api(context)
   return _Table(api, name)
+
+
+def tables(dataset_id, count=0, context=None):
+  """Retrieves a list of tables with the specified dataset.
+
+  Args:
+    dataset_id: the name of the dataset.
+    count: optional maximum number of tables to retrieve.
+    context: an optional Context object providing project_id and credentials.
+  Returns:
+    A TableList object that can be used to iterate over the tables.
+  Raises:
+    Exception if the table list could not be retrieved or the table list response was malformed.
+  """
+  api = _create_api(context)
+  table_list_result = api.tables_list(dataset_id, max_results=count)
+
+  table_objects = []
+  try:
+    for table_info in table_list_result['tables']:
+      table_ref = table_info['tableReference']
+      name = (table_ref['projectId'], dataset_id, table_ref['tableId'])
+      table_objects.append(_Table(api, name))
+  except KeyError:
+    raise Exception('Unexpected table list response.')
+
+  return _TableList(table_objects)

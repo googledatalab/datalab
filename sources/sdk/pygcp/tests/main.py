@@ -21,6 +21,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import bq_query_tests
 import bq_sampling_tests
 import bq_table_tests
+import bq_udf_tests
 import http_tests
 import metadataservice_tests
 import sql_tests
@@ -30,6 +31,7 @@ _TEST_MODULES = [metadataservice_tests,
                  sql_tests,
                  bq_query_tests,
                  bq_table_tests,
+                 bq_udf_tests,
                  bq_sampling_tests
                 ]
 
