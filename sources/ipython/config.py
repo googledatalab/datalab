@@ -32,3 +32,7 @@ c.InteractiveShellApp.exec_lines = [
 c.NotebookApp.extra_static_paths = [
   os.path.join(os.path.dirname(__file__), 'static')
 ]
+
+# Custom notebook manager
+if os.environ.get('IPYTHON_ENV', '') == 'cloud':
+  c.NotebookApp.notebook_manager_class = 'IPythonExtensions.gcp.NotebookManager'

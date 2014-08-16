@@ -29,5 +29,4 @@ echo '----------'
 ipython notebook --notebook-dir=$USER_NB_DIR \
   --config=$REPO_DIR/sources/ipython/config.py \
   --ip="*" --port=9000 \
-  --pylab=inline --no-mathjax --no-browser --no-script --quiet
-
+  --matplotlib=inline --no-mathjax --no-browser --no-script --quiet

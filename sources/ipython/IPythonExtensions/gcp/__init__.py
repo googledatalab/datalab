@@ -13,3 +13,5 @@
 # limitations under the License.
 
 """Google Cloud Platform extensions to customize IPython."""
+
+from ._notebooks import TransientNotebookManager as NotebookManager
