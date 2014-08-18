@@ -1,0 +1,13 @@
+{
+  "name": "TodoServer",
+  "version": "0.0.1",
+  "description": "Backend for Todo App",
+  "main": "server.js",
+  "dependencies": {
+    "express": "3.x",
+    "underscore": "1.x",
+    "socket.io": "1.x"
+  },
+  "author": "Drew Bryant",
+  "license": "Apache 2.0"
+}
