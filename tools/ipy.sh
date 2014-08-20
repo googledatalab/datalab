@@ -16,7 +16,7 @@ mkdir -p $USER_NB_DIR
 
 # Setup python path to include modules being developed as well as any
 # developer specific modules.
-LIBS=$REPO_DIR/sources/sdk/pygcp
+LIBS=$REPO_DIR/sources/sdk/pygcp:$REPO_DIR/sources/ipython
 export PYTHONPATH=$PYTHONPATH:$LIBS:$USER_PY_DIR
 
 # Spew out some informative output.
@@ -27,6 +27,6 @@ echo '----------'
 
 # Finally start IPython.
 ipython notebook --notebook-dir=$USER_NB_DIR \
+  --config=$REPO_DIR/sources/ipython/config.py \
   --ip="*" --port=9000 \
-  --pylab=inline --no-mathjax --no-browser --no-script --quiet
-
+  --matplotlib=inline --no-mathjax --no-browser --no-script --quiet
