@@ -117,7 +117,7 @@ class TransientNotebookManager(_NotebookManager):
                                        data_content)
 
   def save_notebook(self, model, name, path=''):
-    """Saves information about the specified notebook.
+    """Saves the notebook represented by the specified model object.
     """
     if path != '':
       return None
@@ -146,7 +146,7 @@ class TransientNotebookManager(_NotebookManager):
     return self._create_notebook_model(new_name, created, last_modified)
 
   def update_notebook(self, model, name, path=''):
-    """Updates information about the specified notebook.
+    """Updates the notebook represented by the specified model object.
     """
     if path != '':
       return None
@@ -169,19 +169,31 @@ class TransientNotebookManager(_NotebookManager):
     if path != '':
       return
 
-    if self._notebooks.has_key(name):
+    if name in self._notebooks:
       del self._notebooks[name]
 
   def create_checkpoint(self, name, path=''):
+    """Creates an save checkpoint."""
+    # This is really meant to be a no-op implementation, but returning a valid checkpoint
+    # avoids the seemingly benign error that shows up in verbose debug logs if one isn't
+    # created/returned. The returned checkpoint is ID'd with an arbitrary but fixed name,
+    # so it can also be returned when listing checkpoints.
     return {'id': 'current'}
 
   def list_checkpoints(self, name, path=''):
+    """Retrieves the list of previously saved checkpoints."""
+    # This is really meant to be be a no-op implementation, but returns the
+    # checkpoint that create_checkpoint pretended to have created.
     return [{'id': 'current'}]
 
   def restore_checkpoint(self, checkpoint_id, name, path=''):
+    """Restores a previously savec checkpoint."""
+    # No-op as this implementation does not support checkpoints.
     pass
 
   def delete_checkpoint(self, checkpoint_id, name, path=''):
+    """Deletes a previously saved checkpoint."""
+    # No-op as this implementation does not support checkpoints.
     pass
 
   def _create_notebook_model(self, name, created, last_modified, content=None):

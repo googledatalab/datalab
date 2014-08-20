@@ -18,5 +18,4 @@ echo '----------'
 # Finally start IPython.
 ipython notebook --config=$REPO_DIR/sources/ipython/config.py \
   --ip="*" --port=9001 \
-  --pylab=inline --no-mathjax --no-browser --no-script --quiet
-
+  --matplotlib=inline --no-mathjax --no-browser --no-script --quiet
