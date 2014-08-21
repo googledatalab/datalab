@@ -18,6 +18,8 @@ import json
 import urllib
 import httplib2
 
+# TODO(nikhilko): Start using the requests library instead.
+# TODO(nikhilko): Create a specific exception type
 
 class Http(object):
   """A helper class for making HTTP requests.
@@ -28,7 +30,8 @@ class Http(object):
 
   @staticmethod
   def request(url, args=None, data=None, headers=None, method=None,
-              credentials=None):
+              credentials=None,
+              raw_response=False):
     """Issues HTTP requests.
 
     Args:
@@ -39,6 +42,7 @@ class Http(object):
       method: optional HTTP method to use. If unspecified this is inferred
           (GET or POST) based on the existence of request data.
       credentials: optional set of credentials to authorize the request.
+      raw_response: whether the raw response content should be returned as-is.
     Returns:
       The parsed response object.
     Raises:
@@ -59,9 +63,15 @@ class Http(object):
         method = 'POST'
 
       if data != '':
-        data = json.dumps(data)
-        headers['Content-Type'] = 'application/json'
-        headers['Content-Length'] = str(len(data))
+        # If there is a content type specified, use it (and the data) as-is.
+        # Otherwise, assume JSON, and serialize the data object.
+        if not headers.has_key('Content-Type'):
+          data = json.dumps(data)
+          headers['Content-Type'] = 'application/json'
+      headers['Content-Length'] = str(len(data))
+    else:
+      if method == 'POST':
+        headers['Content-Length'] = '0'
 
     # If the method is still unset, i.e. it was unspecified, and there
     # was no data to be POSTed, then default to GET request.
@@ -86,6 +96,8 @@ class Http(object):
                                        body=data,
                                        headers=headers)
       if response.status == 200:
+        if raw_response:
+          return content
         return json.loads(content)
       else:
         raise Exception(('HTTP request failed.', response.status, content))
