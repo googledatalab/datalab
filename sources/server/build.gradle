@@ -1,0 +1,18 @@
+buildscript {
+    repositories {
+        maven {
+            url 'https://github.com/sothmann/typescript-gradle-plugin/raw/mavenrepo/'
+        }
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'de.richsource.gradle.plugins:typescript-gradle-plugin:1.0.5'
+    }
+}
+
+apply plugin: 'typescript'
+
+project(':server').compileTypeScript {
+    sourcemap = true
+    source = 'src'
+}

@@ -1,1 +1,1 @@
-include 'kernels:ijava:kernel'
+include 'kernels:ijava:kernel', 'server'
