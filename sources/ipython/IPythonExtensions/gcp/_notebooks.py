@@ -173,7 +173,7 @@ class TransientNotebookManager(_NotebookManager):
       del self._notebooks[name]
 
   def create_checkpoint(self, name, path=''):
-    """Creates an save checkpoint."""
+    """Creates a save checkpoint."""
     # This is really meant to be a no-op implementation, but returning a valid checkpoint
     # avoids the seemingly benign error that shows up in verbose debug logs if one isn't
     # created/returned. The returned checkpoint is ID'd with an arbitrary but fixed name,
@@ -187,7 +187,7 @@ class TransientNotebookManager(_NotebookManager):
     return [{'id': 'current'}]
 
   def restore_checkpoint(self, checkpoint_id, name, path=''):
-    """Restores a previously savec checkpoint."""
+    """Restores a previously saved checkpoint."""
     # No-op as this implementation does not support checkpoints.
     pass
 
