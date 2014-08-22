@@ -24,9 +24,9 @@
 require.config({
   paths: {
     // TODO(bryantd): Eventually add local fallbacks for these CDN versions
-    angular: ['//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular'],
-    angularRoute: ['//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular-route'],
-    angularResource: ['//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular-resource'],
+    angular: ['//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular.min'],
+    angularRoute: ['//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular-route.min'],
+    angularResource: ['//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular-resource.min'],
     socketio: '/socket.io/socket.io'
   },
   shim: {

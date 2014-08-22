@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Copyright 2014 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,15 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-pushd . > /dev/null
-SCRIPT_PATH="${BASH_SOURCE[0]}";
-while([ -h "${SCRIPT_PATH}" ]); do
-    cd "`dirname "${SCRIPT_PATH}"`"
-    SCRIPT_PATH="$(readlink "`basename "${SCRIPT_PATH}"`")";
-done
-cd "`dirname "${SCRIPT_PATH}"`" > /dev/null
-SCRIPT_PATH="`pwd`";
-popd  > /dev/null
+First install the NodeJS dependencies via:
+$ pushd src/node && npm install . && popd
 
-echo "Starting server with NodeJS reloading enabled"
-supervisor $SCRIPT_PATH/../src/node/server.js
+The startup script uses the npm supervisor package to watch the local filesystem and restart the server when a modification occurs.  You can install it with:
+$ npm install -g supervisor
