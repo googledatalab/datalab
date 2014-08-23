@@ -26,11 +26,10 @@ class TestCases(unittest.TestCase):
     mock_api_objects.return_value = self._create_objects_get_result()
 
     b = self._create_bucket()
-    i = b.item('test_item1')
-    self.assertTrue(i.exists())
+    self.assertTrue(b.items().contains('test_item1'))
 
     mock_api_objects.side_effect = Exception(('failed', 404))
-    self.assertFalse(i.exists())
+    self.assertFalse(b.items().contains('test_item2'))
 
   @mock.patch('gcp.storage._Api.objects_get')
   def test_item_metadata(self, mock_api_objects):

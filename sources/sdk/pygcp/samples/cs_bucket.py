@@ -37,8 +37,8 @@ def main():
 
   print ''
 
-  bucket2 = storage.bucket('datastudio-non-existing-bucket')
-  print '/datastudio-not-existing exists? ' + str(bucket2.exists())
+  print 'datastudio-not-existing exists?'
+  print storage.buckets().contains('datastudio-non-existing-bucket')
 
   print ''
 

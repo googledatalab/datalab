@@ -68,22 +68,6 @@ class Bucket(object):
     """Returns the name of the bucket."""
     return self._name
 
-  def exists(self):
-    """Checks if this bucket exists.
-
-    Returns:
-      True if the bucket exists; False otherwise.
-    Raises:
-      Exception if there was an error requesting information about the bucket.
-    """
-    try:
-      _ = self._api.buckets_get(self._name)
-    except Exception as e:
-      if (len(e.args[0]) > 1) and (e.args[0][1] == 404):
-        return False
-      raise e
-    return True
-
   def metadata(self):
     """Retrieves metadata about the bucket.
 
@@ -128,6 +112,37 @@ class BucketList(object):
       api: the Storage API object to use to issue requests.
     """
     self._api = api
+
+  def contains(self, name):
+    """Checks if the specified bucket exists.
+
+    Args:
+      name: the name of the bucket to lookup.
+    Returns:
+      True if the bucket exists; False otherwise.
+    Raises:
+      Exception if there was an error requesting information about the bucket.
+    """
+    try:
+      _ = self._api.buckets_get(name)
+    except Exception as e:
+      if (len(e.args[0]) > 1) and (e.args[0][1] == 404):
+        return False
+      raise e
+    return True
+
+  def create(self, name):
+    """Creates a new bucket.
+
+    Args:
+      name: a unique name for the new bucket.
+    Returns:
+      The newly created bucket.
+    Raises:
+      Exception if there was an error creating the bucket.
+    """
+    bucket_info = self._api.buckets_insert(name)
+    return Bucket(self._api, name, bucket_info)
 
   def _retrieve_buckets(self, page_token):
     list_info = self._api.buckets_list(page_token=page_token)

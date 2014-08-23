@@ -24,10 +24,11 @@ import gcp.storage as storage
 
 def main():
   bucket = storage.bucket('datastudio-test')
+  items = bucket.items()
+
+  print 'datastudio-test/test.txt exists? ' + str(items.contains('test.txt'))
+
   item = bucket.item('test.txt')
-
-  print '/datastudio-test/test.txt exists? ' + str(item.exists())
-
   item_md = item.metadata()
   print 'Name   : ' + item_md.name
   print 'ETag   : ' + item_md.etag
@@ -48,21 +49,20 @@ def main():
 
   print ''
 
-  item2 = bucket.item('non-existing-file')
-  print '/datastudio-test/non-existing-file exists? ' + str(item2.exists())
+  print 'datastudio-test/non-existing-file exists? ' + str(items.contains('non-existing-file'))
 
   print 'Moving folder1/test3.txt to foo.txt'
-  item3 = bucket.item('folder1/test3.txt')
-  print 'folder1/test3.txt exists? ' + str(item3.exists())
+  print 'folder1/test3.txt exists? ' + str(items.contains('folder1/test3.txt'))
 
-  item4 = item3.copy_to('foo.txt')
-  print 'foo.txt exists? ' + str(item4.exists())
+  item2 = bucket.item('folder1/test3.txt')
+  item3 = item2.copy_to('foo.txt')
+  print 'foo.txt exists? ' + str(items.contains('foo.txt'))
 
-  item3.delete()
-  print 'folder1/test3.txt exists? ' + str(item3.exists())
+  item2.delete()
+  print 'folder1/test3.txt exists? ' + str(items.contains('folder1/test3.txt'))
 
-  item4.copy_to('folder1/test3.txt')
-  print 'folder1/test3.txt exists? ' + str(item3.exists())
+  item3.copy_to('folder1/test3.txt')
+  print 'folder1/test3.txt exists? ' + str(items.contains('folder1/test3.txt'))
 
 if __name__ == '__main__':
   main()

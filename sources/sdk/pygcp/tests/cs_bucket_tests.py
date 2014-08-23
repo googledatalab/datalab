@@ -25,11 +25,11 @@ class TestCases(unittest.TestCase):
   def test_bucket_existence(self, mock_api_buckets):
     mock_api_buckets.return_value = self._create_buckets_get_result()
 
-    b = self._create_bucket()
-    self.assertTrue(b.exists())
+    buckets = gcp.storage.buckets(context=self._create_context())
+    self.assertTrue(buckets.contains('test_bucket'))
 
     mock_api_buckets.side_effect = Exception(('failed', 404))
-    self.assertFalse(b.exists())
+    self.assertFalse(buckets.contains('test_bucket_2'))
 
   @mock.patch('gcp.storage._Api.buckets_get')
   def test_bucket_metadata(self, mock_api_buckets):

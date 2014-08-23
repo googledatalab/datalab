@@ -46,6 +46,23 @@ class Api(object):
     """The project_id associated with this API client."""
     return self._project_id
 
+  def buckets_insert(self, bucket, projection='noAcl'):
+    """Issues a request to create a new bucket.
+
+    Args:
+      bucket: the name of the bucket.
+      projection: the projection of the bucket information to retrieve.
+    Returns:
+      A parsed bucket information dictionary.
+    Raises:
+      Exception if there is an error performing the operation.
+    """
+    args = {'project': self._project_id}
+    data = {'name': bucket}
+
+    url = Api._ENDPOINT + (Api._BUCKET_PATH % '')
+    return _util.Http.request(url, args=args, data=data, credentials=self._credentials)
+
   def buckets_get(self, bucket, projection='noAcl'):
     """Issues a request to retrieve information about a bucket.
 
@@ -97,7 +114,7 @@ class Api(object):
     """
     args = {'alt': 'media'}
 
-    url = Api._DOWNLOAD_ENDPOINT + (Api._OBJECT_PATH % (bucket, urllib.quote_plus(key)))
+    url = Api._DOWNLOAD_ENDPOINT + (Api._OBJECT_PATH % (bucket, urllib.quote(key)))
     return _util.Http.request(url, args=args, credentials=self._credentials, raw_response=True)
 
   def object_upload(self, bucket, key, content, content_type):
@@ -131,8 +148,8 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    url = Api._ENDPOINT + (Api._OBJECT_COPY_PATH % (source_bucket, urllib.quote_plus(source_key),
-                                                    target_bucket, urllib.quote_plus(target_key)))
+    url = Api._ENDPOINT + (Api._OBJECT_COPY_PATH % (source_bucket, urllib.quote(source_key),
+                                                    target_bucket, urllib.quote(target_key)))
     return _util.Http.request(url, method='POST', credentials=self._credentials)
 
   def objects_delete(self, bucket, key):
@@ -144,7 +161,7 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, urllib.quote_plus(key)))
+    url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, urllib.quote(key)))
     return _util.Http.request(url, method='DELETE', credentials=self._credentials)
 
   def objects_get(self, bucket, key, projection='noAcl'):
@@ -163,7 +180,7 @@ class Api(object):
     if projection is not None:
       args['projection'] = projection
 
-    url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, urllib.quote_plus(key)))
+    url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, urllib.quote(key)))
     return _util.Http.request(url, args=args, credentials=self._credentials)
 
   def objects_list(self, bucket, prefix=None, delimiter=None, projection='noAcl', versions=False,

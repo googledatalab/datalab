@@ -110,22 +110,6 @@ class Item(object):
       raise e
     return False
 
-  def exists(self):
-    """Checks if this item exists.
-
-    Returns:
-      True if the item exists; False otherwise.
-    Raises:
-      Exception if there was an error requesting information about the item.
-    """
-    try:
-      _ = self._api.objects_get(self._bucket, self._key)
-    except Exception as e:
-      if (len(e.args[0]) > 1) and (e.args[0][1] == 404):
-        return False
-      raise e
-    return True
-
   def metadata(self):
     """Retrieves metadata about the bucket.
 
@@ -176,6 +160,24 @@ class ItemList(object):
     self._bucket = bucket
     self._prefix = prefix
     self._delimiter = delimiter
+
+  def contains(self, key):
+    """Checks if the specified item exists.
+
+    Args:
+      key: the key of the item to lookup.
+    Returns:
+      True if the item exists; False otherwise.
+    Raises:
+      Exception if there was an error requesting information about the item.
+    """
+    try:
+      _ = self._api.objects_get(self._bucket, key)
+    except Exception as e:
+      if (len(e.args[0]) > 1) and (e.args[0][1] == 404):
+        return False
+      raise e
+    return True
 
   def _retrieve_items(self, page_token):
     list_info = self._api.objects_list(self._bucket,
