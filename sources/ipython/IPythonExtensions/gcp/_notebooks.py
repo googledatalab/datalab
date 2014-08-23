@@ -21,24 +21,24 @@ from IPython.html.services.notebooks.nbmanager import NotebookManager as _Notebo
 from IPython.nbformat import current as _NotebookFormat
 
 
-class TransientNotebookManager(_NotebookManager):
-  """Implements a simple in-memory notebook manager supporting a flat list of notebooks.
-  """
+class Notebook(object):
+  """Information about a notebook."""
 
-  class Notebook(object):
-    """Information about a notebook.
-    """
-    def __init__(self, name, created_at, modified_at, data):
-      self.name = name
-      self.created_at = created_at
-      self.modified_at = modified_at
-      self.data = data
+  def __init__(self, name, created_at, modified_at, data):
+    self.name = name
+    self.created_at = created_at
+    self.modified_at = modified_at
+    self.data = data
 
-  def __init__(self, **kwargs):
+
+class SimpleNotebookManager(_NotebookManager):
+  """Base class for simple notebook managers that support a flat list of notebooks."""
+
+  def __init__(self, name, **kwargs):
     """Initializes an instance of a TransientNotebookManager.
     """
-    super(TransientNotebookManager, self).__init__(**kwargs)
-    self._notebooks = {}
+    super(SimpleNotebookManager, self).__init__(**kwargs)
+    self._name = name
     self._created_at = _dt.datetime.utcnow()
     self._modified_at = self._created_at
 
@@ -47,7 +47,7 @@ class TransientNotebookManager(_NotebookManager):
     pass
 
   def info_string(self):
-    return 'Serving in-memory notebooks.'
+    return 'Serving notebooks via the %s notebook manager.' % self._name
 
   def path_exists(self, path):
     """Checks if the specified path exists.
@@ -67,7 +67,7 @@ class TransientNotebookManager(_NotebookManager):
     """
     if path != '':
       return False
-    return self._notebooks.has_key(name)
+    return self._check_file(name)
 
   def list_dirs(self, path):
     """Retrieves the list of sub-directories.
@@ -94,7 +94,7 @@ class TransientNotebookManager(_NotebookManager):
     if path != '':
       return []
 
-    names = sorted(self._notebooks.keys())
+    names = sorted(self._list_files())
     return map(lambda name: self.get_notebook(name, path, content=False), names)
 
   def get_notebook(self, name, path='', content=True):
@@ -103,7 +103,7 @@ class TransientNotebookManager(_NotebookManager):
     if path != '':
       return None
 
-    notebook = self._notebooks.get(name, None)
+    notebook = self._read_file(name)
     if notebook is None:
       return None
 
@@ -138,9 +138,9 @@ class TransientNotebookManager(_NotebookManager):
 
     created = model.get('created', _dt.datetime.utcnow())
     last_modified = model.get('last_modified', _dt.datetime.utcnow())
-    notebook = TransientNotebookManager.Notebook(new_name, created, last_modified, data)
+    notebook = Notebook(new_name, created, last_modified, data)
 
-    self._notebooks[new_name] = notebook
+    self._write_file(notebook)
     self._modified_at = notebook.modified_at
 
     return self._create_notebook_model(new_name, created, last_modified)
@@ -152,25 +152,20 @@ class TransientNotebookManager(_NotebookManager):
       return None
 
     new_name = model['name']
+    notebook = self._rename_file(name, new_name)
 
-    notebook = self._notebooks[name]
-    notebook.name = new_name
-    notebook.modified_at = _dt.datetime.utcnow()
-
-    del self._notebooks[name]
-    self._notebooks[new_name] = notebook
-    self._modified_at = notebook.modified_at
-
-    return self._create_notebook_model(new_name, notebook.created_at, notebook.modified_at)
+    if notebook is not None:
+      self._modified_at = _dt.datetime.utcnow()
+      return self._create_notebook_model(new_name, notebook.created_at, notebook.modified_at)
+    else:
+      return None
 
   def delete_notebook(self, name, path=''):
     """Deletes the specified notebook.
     """
     if path != '':
       return
-
-    if name in self._notebooks:
-      del self._notebooks[name]
+    self._delete_file(name)
 
   def create_checkpoint(self, name, path=''):
     """Creates a save checkpoint."""
@@ -206,3 +201,58 @@ class TransientNotebookManager(_NotebookManager):
     if content is not None:
       model['content'] = content
     return model
+
+  def _list_files(self):
+    raise NotImplementedError('Must be implemented in a derived class.')
+
+  def _check_file(self, name):
+    raise NotImplementedError('Must be implemented in a derived class.')
+
+  def _read_file(self, name):
+    raise NotImplementedError('Must be implemented in a derived class.')
+
+  def _write_file(self, notebook):
+    raise NotImplementedError('Must be implemented in a derived class.')
+
+  def _rename_file(self, name, new_name):
+    raise NotImplementedError('Must be implemented in a derived class.')
+
+  def _delete_file(self, name):
+    raise NotImplementedError('Must be implemented in a derived class.')
+
+
+class TransientNotebookManager(SimpleNotebookManager):
+  """Implements a simple in-memory notebook manager."""
+
+  def __init__(self, **kwargs):
+    """Initializes an instance of a TransientNotebookManager.
+    """
+    super(TransientNotebookManager, self).__init__('in-memory', **kwargs)
+    self._notebooks = {}
+
+  def _list_files(self):
+    return self._notebooks.keys()
+
+  def _check_file(self, name):
+    return self._notebooks.has_key(name)
+
+  def _read_file(self, name):
+    return self._notebooks.get(name, None)
+
+  def _write_file(self, notebook):
+    self._notebooks[notebook.name] = notebook
+
+  def _rename_file(self, name, new_name):
+    notebook = self._notebooks.get(name, None)
+    if notebook is None:
+      return None
+
+    notebook.name = new_name
+    self._notebooks[new_name] = notebook
+    del self._notebooks[name]
+
+    return notebook
+
+  def _delete_file(self, name):
+    if name in self._notebooks:
+      del self._notebooks[name]
