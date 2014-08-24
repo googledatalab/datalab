@@ -14,4 +14,5 @@
 
 """Google Cloud Platform extensions to customize IPython."""
 
-from ._notebooks import TransientNotebookManager as NotebookManager
+from ._notebooks import MemoryNotebookManager
+from ._notebooks import StorageNotebookManager

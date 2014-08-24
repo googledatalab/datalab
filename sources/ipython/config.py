@@ -34,5 +34,11 @@ c.NotebookApp.extra_static_paths = [
 ]
 
 # Custom notebook manager
-if os.environ.get('IPYTHON_ENV', '') == 'cloud':
-  c.NotebookApp.notebook_manager_class = 'IPythonExtensions.gcp.NotebookManager'
+env = os.environ.get('IPYTHON_ENV', '')
+if env == 'cloud':
+  c.NotebookApp.notebook_manager_class = 'IPythonExtensions.gcp.StorageNotebookManager'
+elif env == 'memory':
+  c.NotebookApp.notebook_manager_class = 'IPythonExtensions.gcp.MemoryNotebookManager'
+
+if os.environ.get('IPYTHON_DEBUG', '') != '':
+  c.NotebookApp.log_level = 'DEBUG'
