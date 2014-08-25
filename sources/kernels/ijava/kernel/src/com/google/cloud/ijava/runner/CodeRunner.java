@@ -45,20 +45,37 @@ public class CodeRunner extends Thread {
     System.setOut(out);
     System.setErr(err);
     try {
-      code.___init___();
-      code.___run___();
-      code.___done___();
-    } catch (IllegalAccessError e) {
-      err.println(e.getMessage());
-      err.println();
-      err.println("It is likely that you are trying to access a non-public element.");
-    } catch (ClassCastException e) {
-      err.println(e.getMessage());
-      err.println();
-      err.println("If this exception is unexpected, it is likely that you have altered a "
-          + "previously defined class and have references to the old one.");
-    } catch (Throwable e) {
-      e.printStackTrace(err);
+      try {
+        code.___init___();
+      } catch (ClassCastException e) {
+        err.println(e.getMessage());
+        err.println();
+        err.println("If this exception is unexpected, it is likely that you have altered a "
+            + "previously defined class and have references to the old one.");
+        return;
+      }
+
+      try {
+        code.___run___();
+      } catch (IllegalAccessError e) {
+        err.println(e.getMessage());
+        err.println();
+        err.println("It is likely that you are trying to access a non-public element.");
+        return;
+      } catch (Throwable e) {
+        e.printStackTrace(err);
+        return;
+      }
+
+      try {
+        code.___done___();
+      } catch (ClassCastException e) {
+        err.println(e.getMessage());
+        err.println();
+        err.println("If this exception is unexpected, it is likely that you have altered a "
+            + "previously defined class and have references to the old one.");
+        return;
+      }
     } finally {
       System.setIn(currentIn);
       System.setOut(currentOut);
