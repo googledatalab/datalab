@@ -29,6 +29,7 @@ import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
 import javax.tools.ToolProvider;
+import javax.tools.Diagnostic.Kind;
 
 /**
  * A Java compiler class which can compile, parse and analyze an input code and returns the compiler
@@ -92,10 +93,10 @@ public class InMemoryCompiler {
    *
    * @see CompilationResult
    */
-  public CompilationResult parse(String sourcePath, String classSourceCode) throws IOException {
+  public CompilationResult parse(String classSourceCode) throws IOException {
     DiagnosticCollector<JavaFileObject> diagnosticCollector = new DiagnosticCollector<>();
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-    InMemoryJavaSourceFile sourceFile = new InMemoryJavaSourceFile(sourcePath, classSourceCode);
+    InMemoryJavaSourceFile sourceFile = new InMemoryJavaSourceFile("", classSourceCode);
     JavacTaskImpl javacTask = (JavacTaskImpl) compiler.getTask(null,
         javaFileManager,
         diagnosticCollector,
@@ -127,6 +128,16 @@ public class InMemoryCompiler {
       this.context = context;
       this.diagnostics = diagnostics;
       this.compilationUnits = trees;
+    }
+
+
+    public boolean hasAnyDiagnosticError() {
+      for (Diagnostic<? extends JavaFileObject> d : diagnostics) {
+        if (d.getKind() == Kind.ERROR) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 

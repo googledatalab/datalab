@@ -1,0 +1,41 @@
+/*
+ * Copyright 2014 Google Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+$imports
+public class $codeClassName
+    extends com.google.cloud.ijava.runner.RunnableCode {
+  public $codeClassName(java.util.Map<String, Object> values) {
+    super(values);
+  }
+
+  $declarations
+
+  protected void ___run___() throws Throwable {
+    $codeToRun
+  }
+
+  protected void ___init___() {
+#foreach($field in $fields)
+    if (___values___.containsKey("${field.name}")) {
+      $field.name = ($field.type) ___values___.get("${field.name}");
+    }
+#end
+  }
+  
+  protected void ___done___() {
+#foreach($field in $fields)
+    ___values___.put("${field.name}", $field.name);
+#end
+  }
+}
