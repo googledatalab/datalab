@@ -1,0 +1,24 @@
+version: v1beta2
+containers:
+  - name: demo-ipython
+    image: docker-registry:5000/dsdemo
+    env:
+      - name: NBPROFILE
+        value: ipython
+      - name: NBPORT
+        value: 8080
+    ports:
+      - name: ipython
+        hostPort: 8080
+        containerPort: 8080
+  - name: demo-ijava
+    image: docker-registry:5000/dsdemo
+    env:
+      - name: NBPROFILE
+        value: ijava
+      - name: NBPORT
+        value: 8081
+    ports:
+      - name: ijava
+        hostPort: 8081
+        containerPort: 8081

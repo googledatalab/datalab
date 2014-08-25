@@ -1,3 +1,4 @@
+#!/bin/sh
 # Copyright 2014 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Google Cloud Platform extensions to customize IPython."""
+BUILD_DIR=$REPO_DIR/build/ipython
+mkdir -p $BUILD_DIR
 
-from ._notebooks import MemoryNotebookManager
-from ._notebooks import StorageNotebookManager
+cp config.py $BUILD_DIR/config.py
+cp -R static $BUILD_DIR
+
+PYLIB_DIR=$REPO_DIR/build/python
+mkdir -p $PYLIB_DIR
+
+python setup.py sdist --dist-dir=$PYLIB_DIR
+mv MANIFEST $PYLIB_DIR/IPythonGCP.manifest
+
+cd $REPO_DIR/build
+tar cvfz ipython.tar.gz ipython

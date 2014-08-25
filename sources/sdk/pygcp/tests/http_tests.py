@@ -72,6 +72,18 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('httplib2.Response')
   @mock.patch('httplib2.Http.request')
+  def test_supports_custom_content(self, mock_request, mock_response):
+    self._setup_mocks(mock_request, mock_response, '{}')
+
+    headers = {'Content-Type': 'text/plain'}
+    data = 'custom text'
+    data = Http.request('http://www.example.org', data=data, headers=headers)
+
+    self.assertEqual(mock_request.call_args[1]['body'], 'custom text')
+    self.assertEqual(mock_request.call_args[1]['headers']['Content-Type'], 'text/plain')
+
+  @mock.patch('httplib2.Response')
+  @mock.patch('httplib2.Http.request')
   def test_parses_json_response(self, mock_request, mock_response):
     self._setup_mocks(mock_request, mock_response, '{"abc":123}')
 

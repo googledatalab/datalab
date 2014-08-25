@@ -15,6 +15,7 @@
 package com.google.cloud.ijava.compiler;
 
 import com.google.cloud.ijava.compiler.InMemoryCompiler.CompilationResult;
+import com.google.common.collect.Iterables;
 
 import com.sun.source.tree.CompilationUnitTree;
 
@@ -49,44 +50,51 @@ public class ASTHelperTest extends TestCase {
   @Test
   public void testNoTypeDecl() throws IOException {
     CompilationResult result = compiler.parse("A.java", "int a = 10;");
-    assertFalse(ASTHelper.hasTypeDecls(ASTHelper.firstOf(result.compilationUnits), result.context));
+    assertFalse(
+        ASTHelper.hasTypeDecls(Iterables.getFirst(result.compilationUnits, null), result.context));
   }
 
   @Test
   public void testMethodDecl() throws IOException {
     CompilationResult result = compiler.parse("A.java", "public String toString() {}");
-    assertFalse(ASTHelper.hasTypeDecls(ASTHelper.firstOf(result.compilationUnits), result.context));
+    assertFalse(
+        ASTHelper.hasTypeDecls(Iterables.getFirst(result.compilationUnits, null), result.context));
   }
 
   @Test
   public void testHasClassDecl() throws IOException {
     CompilationResult result = compiler.parse("Test.java", "class Test {}");
-    assertTrue(ASTHelper.hasTypeDecls(ASTHelper.firstOf(result.compilationUnits), result.context));
+    assertTrue(
+        ASTHelper.hasTypeDecls(Iterables.getFirst(result.compilationUnits, null), result.context));
   }
 
   @Test
   public void testHasEnumDecl() throws IOException {
     CompilationResult result = compiler.parse("Test.java", "class Test {}");
-    assertTrue(ASTHelper.hasTypeDecls(ASTHelper.firstOf(result.compilationUnits), result.context));
+    assertTrue(
+        ASTHelper.hasTypeDecls(Iterables.getFirst(result.compilationUnits, null), result.context));
   }
 
   @Test
   public void testHasInterfaceDecl() throws IOException {
     CompilationResult result = compiler.parse("Test.java", "class Test {}");
-    assertTrue(ASTHelper.hasTypeDecls(ASTHelper.firstOf(result.compilationUnits), result.context));
+    assertTrue(
+        ASTHelper.hasTypeDecls(Iterables.getFirst(result.compilationUnits, null), result.context));
   }
 
   @Test
   public void testHasAnnotationDecl() throws IOException {
     CompilationResult result = compiler.parse("Test.java", "public @interface Test {}");
-    assertTrue(ASTHelper.hasTypeDecls(ASTHelper.firstOf(result.compilationUnits), result.context));
+    assertTrue(
+        ASTHelper.hasTypeDecls(Iterables.getFirst(result.compilationUnits, null), result.context));
   }
 
   @Test
   public void testImportsToString() throws IOException {
     CompilationResult result =
         compiler.parse("Test.java", "import java.util.*; import java.io.IOException; class Test{}");
-    String importString = ASTHelper.importsToString(ASTHelper.firstOf(result.compilationUnits));
+    String importString =
+        ASTHelper.importsToString(Iterables.getFirst(result.compilationUnits, null));
     assertThat(importString, containsString("import java.util.*;"));
     assertThat(importString, containsString("import java.io.IOException;"));
   }
@@ -96,7 +104,8 @@ public class ASTHelperTest extends TestCase {
     CompilationResult result = compiler.parse("Test.java", "class Test{}");
     List<Import> imports = new ArrayList<>();
     imports.add(new Import(false, "  "));
-    ASTHelper.addImports(ASTHelper.firstOf(result.compilationUnits), imports, result.context);
+    ASTHelper.addImports(Iterables.getFirst(result.compilationUnits, null), imports,
+        result.context);
   }
 
   @Test
@@ -105,8 +114,8 @@ public class ASTHelperTest extends TestCase {
     List<Import> imports = new ArrayList<>();
     imports.add(new Import(false, "java.util.List"));
     imports.add(new Import(true, "java.util.Arrays"));
-    CompilationUnitTree withImports =
-        ASTHelper.addImports(ASTHelper.firstOf(result.compilationUnits), imports, result.context);
+    CompilationUnitTree withImports = ASTHelper.addImports(
+        Iterables.getFirst(result.compilationUnits, null), imports, result.context);
     String importString = ASTHelper.importsToString(withImports);
     assertThat(importString, containsString("import java.util.List;"));
     assertThat(importString, containsString("import static java.util.Arrays;"));
@@ -116,12 +125,12 @@ public class ASTHelperTest extends TestCase {
   public void testPublicOrPackageTypeName1() throws IOException {
     CompilationResult result = compiler.parse("Test.java", "class Test{}");
     assertEquals("Test", ASTHelper.publicOrPackageTypeName(
-        ASTHelper.firstOf(result.compilationUnits), result.context));
+        Iterables.getFirst(result.compilationUnits, null), result.context));
     result = compiler.parse("Test.java", "public class Test{}");
     assertEquals("Test", ASTHelper.publicOrPackageTypeName(
-        ASTHelper.firstOf(result.compilationUnits), result.context));
+        Iterables.getFirst(result.compilationUnits, null), result.context));
     result = compiler.parse("Test.java", "int a =10;");
-    assertNull(ASTHelper.publicOrPackageTypeName(ASTHelper.firstOf(result.compilationUnits),
+    assertNull(ASTHelper.publicOrPackageTypeName(Iterables.getFirst(result.compilationUnits, null),
         result.context));
   }
 }

@@ -12,7 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Google Cloud Platform extensions to customize IPython."""
+from distutils.core import setup
 
-from ._notebooks import MemoryNotebookManager
-from ._notebooks import StorageNotebookManager
+# TODO(nikhilko):
+# Fill in various other bits that can/should be specified once we have them.
+# These include url, license, long_description (readme), author & author_email.
+
+setup(
+    name='IPythonGCP',
+    version='0.1.0',
+    packages=['IPythonExtensions',
+              'IPythonExtensions.gcp'
+             ],
+    description='Google Cloud Platform Extensions for IPython.'
+)

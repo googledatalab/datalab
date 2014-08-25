@@ -21,6 +21,7 @@ import gcp._util as _util
 class Api(object):
   """A helper class to issue BigQuery HTTP requests."""
 
+  # TODO(nikhilko): Use named placeholders in these string templates.
   _ENDPOINT = 'https://www.googleapis.com/bigquery/v2'
   _QUERY_PATH = '/projects/%s/queries'
   _QUERY_RESULT_PATH = '/projects/%s/queries/%s'

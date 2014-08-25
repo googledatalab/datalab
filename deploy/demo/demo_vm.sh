@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright 2014 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Google Cloud Platform extensions to customize IPython."""
+# Creates a new demo GCE VM instance. Useful logs on the VM:
+#   /var/log/startupscript.log
+#   /var/log/kubelet.log
+#   /var/log/docker.log
 
-from ._notebooks import MemoryNotebookManager
-from ._notebooks import StorageNotebookManager
+if [ "$#" -ne 1 ]; then
+    echo "Usage: demo_vm.sh <instance_name>"
+    exit
+fi
+
+gcloud compute instances create $1 \
+  --image container-vm-v20140731 \
+  --image-project google-containers \
+  --zone us-central1-a \
+  --machine-type n1-standard-1 \
+  --maintenance-policy="TERMINATE" \
+  --tags http-server \
+  --scopes storage-full bigquery datastore sql \
+  --metadata-from-file google-container-manifest=demo_vm.yml

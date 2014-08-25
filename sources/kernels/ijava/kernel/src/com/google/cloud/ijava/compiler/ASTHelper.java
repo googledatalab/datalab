@@ -36,7 +36,6 @@ import com.sun.tools.javac.util.Names;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -297,16 +296,5 @@ public class ASTHelper {
       blockNumber++;
       return null;
     }
-  }
-
-  /**
-   * @return the first compilation unit from the input units
-   */
-  public static CompilationUnitTree firstOf(Iterable<? extends CompilationUnitTree> cunits) {
-    Iterator<? extends CompilationUnitTree> iterator = cunits.iterator();
-    if (iterator.hasNext()) {
-      return iterator.next();
-    }
-    return null;
   }
 }

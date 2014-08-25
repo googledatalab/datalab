@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Google Cloud Platform extensions to customize IPython."""
+First install the NodeJS dependencies via:
+$ pushd src/node && npm install . && popd
 
-from ._notebooks import MemoryNotebookManager
-from ._notebooks import StorageNotebookManager
+The startup script uses the npm supervisor package to watch the local filesystem and restart the server when a modification occurs.  You can install it with:
+$ npm install -g supervisor
