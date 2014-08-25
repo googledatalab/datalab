@@ -1,0 +1,14 @@
+{
+  "name": "datalab-server",
+  "version": "0.0.1",
+  "description": "The DataLab server",
+  "main": "server.js",
+  "engines": {
+    "node": "0.10.x"
+  },
+  "dependencies": {
+    "express": "4.x"
+  },
+  "author": "Google DataLab Team",
+  "license": "Apache 2.0"
+}
