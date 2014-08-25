@@ -1,3 +1,4 @@
+#!/bin/sh
 # Copyright 2014 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Google Cloud Platform extensions to customize IPython."""
+PYLIB_DIR=$REPO_DIR/build/python
+mkdir -p $PYLIB_DIR
 
-from ._notebooks import MemoryNotebookManager
-from ._notebooks import StorageNotebookManager
+python setup.py sdist --dist-dir=$PYLIB_DIR
+mv MANIFEST $PYLIB_DIR/PyGCP.manifest

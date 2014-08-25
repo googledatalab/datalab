@@ -1,9 +1,9 @@
 #!/bin/sh
 
-# Script to launch IPython in similar manner to how it would be within a
-# container in the cloud.
+# Script to launch IPython with an in-memory notebook manager, to
+# make it easy to try things without needing to do any cleanup.
 
-export IPYTHON_ENV=cloud
+export IPYTHON_ENV=memory
 
 # Setup python path to include modules being developed as well as any
 # developer specific modules.
@@ -12,10 +12,10 @@ export PYTHONPATH=$PYTHONPATH:$LIBS
 
 # Spew out some informative output.
 echo 'Lib Path :' $PYTHONPATH
-echo 'Local URL: http://localhost:9001'
+echo 'Local URL: http://localhost:9002'
 echo '----------'
 
 # Finally start IPython.
 ipython notebook --config=$REPO_DIR/sources/ipython/config.py \
-  --ip="*" --port=9001 \
+  --ip="*" --port=9002 \
   --matplotlib=inline --no-mathjax --no-script --quiet

@@ -22,6 +22,8 @@ import bq_query_tests
 import bq_sampling_tests
 import bq_table_tests
 import bq_udf_tests
+import cs_bucket_tests
+import cs_item_tests
 import http_tests
 import metadataservice_tests
 import sql_tests
@@ -32,7 +34,9 @@ _TEST_MODULES = [metadataservice_tests,
                  bq_query_tests,
                  bq_table_tests,
                  bq_udf_tests,
-                 bq_sampling_tests
+                 bq_sampling_tests,
+                 cs_bucket_tests,
+                 cs_item_tests
                 ]
 
 if __name__ == '__main__':
