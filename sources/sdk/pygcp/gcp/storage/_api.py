@@ -114,7 +114,7 @@ class Api(object):
     """
     args = {'alt': 'media'}
 
-    url = Api._DOWNLOAD_ENDPOINT + (Api._OBJECT_PATH % (bucket, urllib.quote(key)))
+    url = Api._DOWNLOAD_ENDPOINT + (Api._OBJECT_PATH % (bucket, Api._escape_key(key)))
     return _util.Http.request(url, args=args, credentials=self._credentials, raw_response=True)
 
   def object_upload(self, bucket, key, content, content_type):
@@ -148,8 +148,8 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    url = Api._ENDPOINT + (Api._OBJECT_COPY_PATH % (source_bucket, urllib.quote(source_key),
-                                                    target_bucket, urllib.quote(target_key)))
+    url = Api._ENDPOINT + (Api._OBJECT_COPY_PATH % (source_bucket, Api._escape_key(source_key),
+                                                    target_bucket, Api._escape_key(target_key)))
     return _util.Http.request(url, method='POST', credentials=self._credentials)
 
   def objects_delete(self, bucket, key):
@@ -161,7 +161,7 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, urllib.quote(key)))
+    url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, Api._escape_key(key)))
     return _util.Http.request(url, method='DELETE', credentials=self._credentials)
 
   def objects_get(self, bucket, key, projection='noAcl'):
@@ -180,7 +180,7 @@ class Api(object):
     if projection is not None:
       args['projection'] = projection
 
-    url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, urllib.quote(key)))
+    url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, Api._escape_key(key)))
     return _util.Http.request(url, args=args, credentials=self._credentials)
 
   def objects_list(self, bucket, prefix=None, delimiter=None, projection='noAcl', versions=False,
@@ -217,3 +217,8 @@ class Api(object):
 
     url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, ''))
     return _util.Http.request(url, args=args, credentials=self._credentials)
+
+  @staticmethod
+  def _escape_key(key):
+    # Disable the behavior to leave '/' alone by explicitly specifying the safe parameter.
+    return urllib.quote(key, safe='')

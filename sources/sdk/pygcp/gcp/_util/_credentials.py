@@ -52,7 +52,9 @@ class MetadataCredentials(OAuth2Credentials):
     """
     self._metadata_service.refresh()
 
-  def _refresh(self, unused_request):
-    # Turning off default behavior which tries to use a refresh token (which
-    # doesn't exist in our case).
-    pass
+  def _refresh(self, unused_http):
+    """Refreshes the auth token on expiry.
+    """
+    # Refreshing can also be done by directly calling this method, instead of just through
+    # refresh() above!
+    self._metadata_service.refresh()
