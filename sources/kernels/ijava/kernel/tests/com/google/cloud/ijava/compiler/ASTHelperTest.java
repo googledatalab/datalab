@@ -50,43 +50,50 @@ public class ASTHelperTest extends TestCase {
   @Test
   public void testNoTypeDecl() throws IOException {
     CompilationResult result = compiler.parse("int a = 10;");
-    assertFalse(
-        ASTHelper.hasTypeDecls(Iterables.getFirst(result.compilationUnits, null), result.context));
+    assertFalse(ASTHelper.hasNonStaticTypeDecls(Iterables.getFirst(result.compilationUnits, null),
+        result.context));
   }
 
   @Test
   public void testMethodDecl() throws IOException {
     CompilationResult result = compiler.parse("public String toString() {}");
-    assertFalse(
-        ASTHelper.hasTypeDecls(Iterables.getFirst(result.compilationUnits, null), result.context));
+    assertFalse(ASTHelper.hasNonStaticTypeDecls(Iterables.getFirst(result.compilationUnits, null),
+        result.context));
+  }
+
+  @Test
+  public void testStaticTypeDecl() throws IOException {
+    CompilationResult result = compiler.parse("static class StaticClass {}");
+    assertFalse(ASTHelper.hasNonStaticTypeDecls(Iterables.getFirst(result.compilationUnits, null),
+        result.context));
   }
 
   @Test
   public void testHasClassDecl() throws IOException {
     CompilationResult result = compiler.parse("class Test {}");
-    assertTrue(
-        ASTHelper.hasTypeDecls(Iterables.getFirst(result.compilationUnits, null), result.context));
+    assertTrue(ASTHelper.hasNonStaticTypeDecls(Iterables.getFirst(result.compilationUnits, null),
+        result.context));
   }
 
   @Test
   public void testHasEnumDecl() throws IOException {
     CompilationResult result = compiler.parse("class Test {}");
-    assertTrue(
-        ASTHelper.hasTypeDecls(Iterables.getFirst(result.compilationUnits, null), result.context));
+    assertTrue(ASTHelper.hasNonStaticTypeDecls(Iterables.getFirst(result.compilationUnits, null),
+        result.context));
   }
 
   @Test
   public void testHasInterfaceDecl() throws IOException {
     CompilationResult result = compiler.parse("class Test {}");
-    assertTrue(
-        ASTHelper.hasTypeDecls(Iterables.getFirst(result.compilationUnits, null), result.context));
+    assertTrue(ASTHelper.hasNonStaticTypeDecls(Iterables.getFirst(result.compilationUnits, null),
+        result.context));
   }
 
   @Test
   public void testHasAnnotationDecl() throws IOException {
     CompilationResult result = compiler.parse("public @interface Test {}");
-    assertTrue(
-        ASTHelper.hasTypeDecls(Iterables.getFirst(result.compilationUnits, null), result.context));
+    assertTrue(ASTHelper.hasNonStaticTypeDecls(Iterables.getFirst(result.compilationUnits, null),
+        result.context));
   }
 
   @Test

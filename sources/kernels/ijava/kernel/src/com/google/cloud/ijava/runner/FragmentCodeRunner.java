@@ -36,11 +36,19 @@ import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Logger;
+
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
+import javax.tools.Diagnostic.Kind;
 
 /**
  * This class is responsible for compiling any input string into a compilable Java class in the
@@ -165,13 +173,13 @@ public class FragmentCodeRunner {
     {
       CompilationResult compilationResult = compiler.parse(code);
       CompilationUnitTree cunit = Iterables.getFirst(compilationResult.compilationUnits, null);
-      if (ASTHelper.hasTypeDecls(cunit, compilationResult.context)) {
+      if (ASTHelper.hasNonStaticTypeDecls(cunit, compilationResult.context)) {
         if (compilationResult.hasAnyDiagnosticError()) {
           return new FragmentCodeCompilationResult(compilationResult, true, null);
         }
         String typeName = ASTHelper.publicOrPackageTypeName(cunit, compilationResult.context);
-        compiler.compile(typeName + JAVA_FILE_EXTENSION,
-            ASTHelper.treeToString((JCTree) cunit)).getDiagnostics();
+        compiler.compile(typeName + JAVA_FILE_EXTENSION, ASTHelper.treeToString((JCTree) cunit))
+            .getDiagnostics();
         compiler.pushClassLoader();
         return new FragmentCodeCompilationResult(compilationResult, true, null);
       }
@@ -300,5 +308,111 @@ public class FragmentCodeRunner {
     fragmentCodeCompilationResult.imports = ASTHelper.importsToString(
         Iterables.getFirst(finalCompilationResult.compilationUnits, null));
     return fragmentCodeCompilationResult;
+  }
+
+  /**
+   * Runs the input {@code code}. Replaces the standard input, output and error streams with
+   * {@code in}, {@code out} and {@code err} before running the code.
+   *
+   * @return true for a successful run and false if any error or exception happened during the
+   *         execution.
+   */
+  public boolean run(String code, InputStream in, PrintStream out, PrintStream err) {
+    try {
+      FragmentCodeCompilationResult fragmentCodeCompilationResult = null;
+      try {
+        fragmentCodeCompilationResult = tryCompile(code);
+        if (fragmentCodeCompilationResult.compilationResult.hasAnyDiagnosticError()) {
+          reportErrors(Iterables
+              .getFirst(fragmentCodeCompilationResult.compilationResult.compilationUnits, null)
+              .getSourceFile().getCharContent(true).toString(),
+              fragmentCodeCompilationResult.compilationResult.diagnostics, err);
+          return false;
+        }
+        // If the input was a type definition, then return here because we do not need to execute
+        // any code
+        if (fragmentCodeCompilationResult.isTypeDefinition) {
+          return true;
+        }
+      } catch (ClassNotFoundException | IOException e) {
+        e.printStackTrace(err);
+        return false;
+      }
+
+      try {
+        // Running the code
+        runCore(fragmentCodeCompilationResult, in, out, err);
+      } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+          | InvocationTargetException | NoSuchMethodException | SecurityException
+          | InterruptedException e) {
+        e.printStackTrace(err);
+        return false;
+      }
+
+      // After a successful run update the execution state with new codes and imports.
+      updateState(fragmentCodeCompilationResult);
+      LOGGER.fine("RunnableCode buffer is:\n" + executionState.codes + "\n===============");
+      return true;
+    } finally {
+      err.flush();
+      out.flush();
+      LOGGER.fine("Finished running code: " + code);
+    }
+  }
+
+  private void updateState(FragmentCodeCompilationResult fragmentCodeCompilationResult) {
+    executionState.codes = fragmentCodeCompilationResult.codes;
+    executionState.imports = fragmentCodeCompilationResult.imports;
+  }
+
+  private void runCore(FragmentCodeCompilationResult fragmentCodeCompilationResult, InputStream in,
+      PrintStream out, PrintStream err)
+      throws InstantiationException,
+      IllegalAccessException,
+      IllegalArgumentException,
+      InvocationTargetException,
+      NoSuchMethodException,
+      SecurityException,
+      InterruptedException {
+    Class<?> codeClass = fragmentCodeCompilationResult.compiledClass;
+    RunnableCode runCode = codeClass.asSubclass(RunnableCode.class)
+        .getDeclaredConstructor(Map.class).newInstance(executionState.fieldValues);
+    CodeRunner codeRunner = new CodeRunner(in, out, err, runCode);
+    codeRunner.start();
+    codeRunner.join();
+  }
+
+  /**
+   * Reports diagnostic errors from Java compiler into the error stream. This method alters the
+   * diagnostic error message to match the correct line and column number that we get after
+   * manipulating the user's input code.
+   *
+   * @throws IOException when it cannot read the content of the source
+   */
+  private static void reportErrors(String code,
+      List<Diagnostic<? extends JavaFileObject>> diagnostics, PrintStream err) throws IOException {
+    LOGGER.fine("Reporting errors on: \n" + code);
+    String[] lines = code.split("\n");
+    for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics) {
+      if (diagnostic.getKind() == Kind.ERROR) {
+        String diagMessage = diagnostic.getMessage(Locale.US);
+
+        // Adding a caret right below where error is happening:
+        StringBuilder errorMessage = new StringBuilder();
+        errorMessage.append(lines[(int) (diagnostic.getLineNumber() - 1)]).append("\n");
+        for (int i = 1; i < diagnostic.getColumnNumber(); i++) {
+          errorMessage.append(" ");
+        }
+        errorMessage.append("^\n").append(diagMessage);
+
+        // The following case is most likely to happen when user is trying to type in a code to run
+        // but does not have braces around the code.
+        if (diagMessage.contains("<identifier> expected")
+            || diagMessage.contains("return type required")) {
+          errorMessage.append("\nFor a code to run, wrap it in a block: { ... }");
+        }
+        err.println(errorMessage.toString());
+      }
+    }
   }
 }

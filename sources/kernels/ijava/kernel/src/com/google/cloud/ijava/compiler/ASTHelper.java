@@ -55,13 +55,14 @@ public class ASTHelper {
    * @param context the compiler context
    * @return true when there is at least one type declared in the unit. Returns false otherwise.
    */
-  public static boolean hasTypeDecls(CompilationUnitTree cunit, Context context) {
+  public static boolean hasNonStaticTypeDecls(CompilationUnitTree cunit, Context context) {
     Names names = Names.instance(context);
     if (cunit.getTypeDecls().size() > 0) {
       for (Tree t : cunit.getTypeDecls()) {
         Kind kind = t.getKind();
         if ((kind == Kind.CLASS || kind == Kind.INTERFACE || kind == Kind.ENUM
             || kind == Kind.ANNOTATION_TYPE)
+            && !((JCClassDecl) t).getModifiers().getFlags().contains(Modifier.STATIC)
         // Sometimes due to parse errors the name is "<error>" which means it is not really a
         // type declaration.
             && !((JCClassDecl) t).name.toString().equals(names.error.toString())) {
@@ -173,7 +174,9 @@ public class ASTHelper {
 
   /**
    * Merges delta into the defs. The merge is done based on a unique name which is generated for
-   * input trees using the {@link NameGenerator} class. This method does not modify the input lists.
+   * input trees using the {@link NameGenerator} class. This method removes the redefinition of
+   * members from the delta list and put them into the merged list instead of the original
+   * definition.
    */
   public static List<? extends Tree> merge(List<? extends Tree> defs, List<? extends Tree> delta) {
     NameGenerator defsNames = new NameGenerator();
