@@ -1,0 +1,32 @@
+version: v1beta2
+containers:
+  - name: docker-registry
+    image: google/docker-registry
+    ports:
+      - name: registry
+        containerPort: 5000
+    env:
+      - key: GCS_BUCKET
+        value: datastudio-docker-registry
+  - name: preview-ipython
+    image: localhost:5000/ds:preview
+    env:
+      - name: NBPROFILE
+        value: ipython
+      - name: NBPORT
+        value: 8080
+    ports:
+      - name: ipython
+        hostPort: 8080
+        containerPort: 8080
+  - name: preview-ijava
+    image: localhost:5000/ds:preview
+    env:
+      - name: NBPROFILE
+        value: ijava
+      - name: NBPORT
+        value: 8081
+    ports:
+      - name: ijava
+        hostPort: 8081
+        containerPort: 8081
