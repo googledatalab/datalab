@@ -12,8 +12,13 @@
  * the License.
  */
 
-var http = require('http');
-var express = require('express');
+
+/// <reference path="../../typedefs/node/node.d.ts" />
+/// <reference path="../../typedefs/express/express.d.ts" />
+
+
+import http = require('http');
+import express = require('express');
 
 var PORT = parseInt(process.env['DATALAB_PORT'] || 8080);
 

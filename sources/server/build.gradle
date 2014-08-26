@@ -1,18 +1,72 @@
-buildscript {
-    repositories {
-        maven {
-            url 'https://github.com/sothmann/typescript-gradle-plugin/raw/mavenrepo/'
-        }
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'de.richsource.gradle.plugins:typescript-gradle-plugin:1.0.5'
+/*
+ * Copyright 2014 Google Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+
+/**
+ * TypeScript compilation task that calls out to tsc
+ *
+ * TODO: collect custom Gradle code into a single global location for the project
+ */
+class TypeScriptCompileTask extends DefaultTask {
+    String rootModule = ''
+    String pathToRootModule = ''
+    String srcDir = 'src'
+    String outDir = project.buildDir.path
+    String outFile = ''
+    String moduleType = 'commonjs'
+    String compilerArgs = '--removeComments'
+
+    @TaskAction
+    def compile() {
+        outFile = "${ outDir }${ pathToRootModule }${ rootModule }.js"
+        """tsc $compilerArgs --module $moduleType \
+               ${ srcDir }${ pathToRootModule }${ rootModule }.ts --out $outFile""".execute()
     }
 }
 
-apply plugin: 'typescript'
-
-project(':server').compileTypeScript {
-    sourcemap = true
-    source = 'src'
+/**
+ * Copy all UI files (except the TypeScript files) to the build dir
+ */
+task copyStaticUi(type: Copy) {
+    from 'src'
+    into  project.buildDir
+    exclude '**/*.ts'
 }
+
+/**
+ * Compile the main UI module and it's dependencies into a single main.js
+ */
+task tscUi(type: TypeScriptCompileTask) {
+    rootModule = 'main'
+    pathToRootModule = '/ui/scripts/'
+    moduleType = 'amd'
+}
+
+/**
+ * Compile the NodeJS modules into a single server.js
+ */
+task tscNode(type: TypeScriptCompileTask) {
+    rootModule = 'server'
+    pathToRootModule = '/node/'
+    moduleType = 'commonjs'
+}
+
+/**
+ * Execute all of the tasks necessary to build the DataLab server
+ */
+task('build') {
+    dependsOn 'copyStaticUi', 'tscUi', 'tscNode'
+}
+
+// TODO(bryantd): Add support for JavaScript compilation/minification of the UI js
