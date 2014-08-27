@@ -14,17 +14,17 @@
 
 FROM debian:jessie
 
-RUN apt-get update -y && apt-get install --no-install-recommends -y -q python2.7 python-pip
+RUN apt-get update -y && apt-get install --no-install-recommends -y -q \
+  python2.7 python-pip \
+  python-zmq python-tornado python-jinja2 \
+  python-numpy python-pandas python-matplotlib \
+  python-oauth2client python-httplib2
 RUN pip install -U pip
-
-RUN apt-get install --no-install-recommends -y -q python-zmq python-tornado python-jinja2
-RUN apt-get install --no-install-recommends -y -q python-numpy python-pandas python-matplotlib
-RUN apt-get install --no-install-recommends -y -q python-oauth2client python-httplib2
 RUN pip install -U ipython==2.2.0
 
 # Setup java, and jzmq
-RUN apt-get install -y openjdk-7-jdk
-RUN apt-get install -y git build-essential pkg-config ant libtool autoconf automake make unzip libzmq-dev
+RUN apt-get update -y && apt-get install -y openjdk-7-jdk
+RUN apt-get install -y git build-essential pkg-config ant libtool autoconf automake libzmq3-dev
 RUN git clone --recursive https://github.com/zeromq/jzmq.git
 RUN cd jzmq && ./autogen.sh && ./configure && make && make install && ldconfig
 

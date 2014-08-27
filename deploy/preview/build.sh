@@ -27,21 +27,21 @@ VM=$1
 if [ "$2" == "stage" ]; then
   # Stages files for building onto the VM
 
-  gcloud compute ssh --zone us-central1-a $VM --command="mkdir -p /build"
+  gcloud compute ssh --zone us-central1-a $VM --command="mkdir -p ~/build"
 
-  gcloud compute copy-files --zone us-central1-a Dockerfile $VM:/build/Dockerfile
-  gcloud compute copy-files --zone us-central1-a ../../build/python/PyGCP-0.1.0.tar.gz $VM:/build/PyGCP.tar.gz
-  gcloud compute copy-files --zone us-central1-a ../../build/python/IPythonGCP-0.1.0.tar.gz $VM:/build/IPythonGCP.tar.gz
-  gcloud compute copy-files --zone us-central1-a ../../build/ipython.tar.gz $VM:/build/ipython.tar.gz
+  gcloud compute copy-files --zone us-central1-a Dockerfile $VM:~/build/Dockerfile
+  gcloud compute copy-files --zone us-central1-a ../../build/python/PyGCP-0.1.0.tar.gz $VM:~/build/PyGCP.tar.gz
+  gcloud compute copy-files --zone us-central1-a ../../build/python/IPythonGCP-0.1.0.tar.gz $VM:~/build/IPythonGCP.tar.gz
+  gcloud compute copy-files --zone us-central1-a ../../build/ipython.tar.gz $VM:~/build/ipython.tar.gz
 
-  gcloud compute ssh --zone us-central1-a $VM --command="cd /build && gsutil cp gs://datastudio-misc/ijava.tar.gz ijava.tar.gz"
+  gcloud compute ssh --zone us-central1-a $VM --command="cd ~/build && gsutil cp gs://datastudio-misc/ijava.tar.gz ijava.tar.gz"
 
-  gcloud compute ssh --zone us-central1-a $VM --command="cd /build && ls -l"
+  gcloud compute ssh --zone us-central1-a $VM --command="cd ~/build && ls -l"
 fi
 
 if [ "$2" == "image" ]; then
   # Build and publish a docker image.
 
   gcloud compute ssh --zone us-central1-a $VM \
-    --command="cd /build && docker build -t docker-registry:5000/ds:preview . && docker push docker-registry:5000/ds:preview ."
+    --command="cd ~/build && sudo docker build -t docker-registry:5000/ds:preview . && sudo docker push docker-registry:5000/ds:preview ."
 fi

@@ -18,17 +18,23 @@
 #   /var/log/kubelet.log
 #   /var/log/docker.log
 
-if [ "$#" -ne 1 ]; then
-    echo "Usage: preview_vm.sh <instance_name>"
+if [ "$#" -ne 2 ]; then
+    echo "Usage: preview_vm.sh <instance_name> <ip_range>"
     exit
 fi
 
+TAG=ds-preview
+
+gcloud compute firewall-rules update default-allow-$TAG --source-ranges=$2 \
+  --source-tags=$TAG --allow tcp:8080 tcp:8081
+ 
 gcloud compute instances create $1 \
   --image container-vm-v20140731 \
   --image-project google-containers \
   --zone us-central1-a \
   --machine-type n1-standard-1 \
-  --maintenance-policy="TERMINATE" \
-  --tags http-server \
+  --maintenance-policy "TERMINATE" \
+  --tags $TAG \
   --scopes storage-full bigquery datastore sql \
-  --metadata-from-file google-container-manifest=preview_vm.yml
+  --metadata-from-file google-container-manifest=preview_vm.yml \
+      startup-script=preview_vm_startup.sh
