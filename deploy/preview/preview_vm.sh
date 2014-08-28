@@ -25,7 +25,7 @@ fi
 
 TAG=ds-preview
 
-gcloud compute firewall-rules update default-allow-$TAG --source-ranges=$2 \
+gcloud compute firewall-rules create default-allow-$TAG --source-ranges=$2 \
   --source-tags=$TAG --allow tcp:8080 tcp:8081
  
 gcloud compute instances create $1 \

@@ -23,8 +23,9 @@ RUN pip install -U pip
 RUN pip install -U ipython==2.2.0
 
 # Setup java, and jzmq
-RUN apt-get update -y && apt-get install -y openjdk-7-jdk
-RUN apt-get install -y git build-essential pkg-config ant libtool autoconf automake libzmq3-dev
+RUN apt-get update -y && apt-get install --no-install-recommends -y -q \
+  openjdk-7-jdk \
+  git build-essential pkg-config ant libtool autoconf automake libzmq3-dev
 RUN git clone --recursive https://github.com/zeromq/jzmq.git
 RUN cd jzmq && ./autogen.sh && ./configure && make && make install && ldconfig
 
