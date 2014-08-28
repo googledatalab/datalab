@@ -12,6 +12,7 @@
  * the License.
  */
 
+import static groovy.io.FileType.FILES
 
 /**
  * TypeScript compilation task that calls out to tsc
@@ -29,9 +30,16 @@ class TypeScriptCompileTask extends DefaultTask {
 
     @TaskAction
     def compile() {
-        outFile = "${ outDir }${ pathToRootModule }${ rootModule }.js"
+        // Enumerate the typescript files recursively within the given source path
+        def tsFiles = []
+        new File("${ srcDir }${ pathToRootModule }").eachFileRecurse(FILES) {
+            if(it.name.endsWith('.ts')) {
+                tsFiles << it;
+            }
+        }
+        // Call out to the TypeScript compiler (tsc) to compile and emit to the build dir
         """tsc $compilerArgs --module $moduleType \
-               ${ srcDir }${ pathToRootModule }${ rootModule }.ts --out $outFile""".execute()
+           --outDir $outDir${ pathToRootModule } ${ tsFiles.join(' ') }""".execute()
     }
 }
 
@@ -62,11 +70,12 @@ task tscNode(type: TypeScriptCompileTask) {
     moduleType = 'commonjs'
 }
 
+// TODO(bryantd): Add support for JavaScript compilation/minification of the UI js
+// TODO(bryantd): Add tasks for concatenating file sets for both Node and UI
+
 /**
  * Execute all of the tasks necessary to build the DataLab server
  */
 task('build') {
     dependsOn 'copyStaticUi', 'tscUi', 'tscNode'
 }
-
-// TODO(bryantd): Add support for JavaScript compilation/minification of the UI js

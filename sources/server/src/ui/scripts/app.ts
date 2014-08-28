@@ -14,28 +14,12 @@
 
 
 /**
- * RequireJS configuration and angular bootstrapping
- *
- * All third-party JavaScript libraries should be referenced here,
- * other than RequireJS itself.
+ * Top-level angular module
  */
 
-/// <reference path="../../../typedefs/requirejs/require.d.ts" />
 /// <reference path="../../../typedefs/angularjs/angular.d.ts" />
 
+import angular = require('angular');
 
-require.config({
-  paths: {
-    // TODO(bryantd): Update the requirejs typedefs to support a list of paths 
-    // to enable fallback locations
-    // TODO(bryantd): Add local fallbacks if no licensing issues
-    angular: '//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular.min'
-  },
-  shim: {
-    angular: {exports: 'angular'}
-  }
-});
 
-require(['angular', 'app'], (angular) => {
-  angular.bootstrap(document, ['app']);
-});
+export var app = angular.module('app', []);
