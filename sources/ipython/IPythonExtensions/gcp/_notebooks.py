@@ -40,7 +40,6 @@ class SimpleNotebookManager(_NotebookManager):
     """
     super(SimpleNotebookManager, self).__init__(**kwargs)
     self._name = name
-    self._timestamp = _dt.datetime.utcnow()
 
   @property
   def notebook_dir(value):
@@ -67,7 +66,7 @@ class SimpleNotebookManager(_NotebookManager):
     """
     if path != '':
       return False
-    return self._check_file(name)
+    return self._file_exists(name)
 
   def list_dirs(self, path):
     """Retrieves the list of sub-directories.
@@ -81,12 +80,7 @@ class SimpleNotebookManager(_NotebookManager):
     if path != '':
       return None
 
-    return {'type': 'directory',
-            'name': '',
-            'path': '',
-            'created': self._timestamp,
-            'last_modified': self._timestamp
-           }
+    return {'type': 'directory', 'name': '', 'path': ''}
 
   def list_notebooks(self, path=''):
     """Retrieves the list of notebooks contained in the specified path.
@@ -105,7 +99,7 @@ class SimpleNotebookManager(_NotebookManager):
 
     notebook = self._read_file(name, content)
     if notebook is None:
-      return None
+      raise Exception('The notebook could not be read. It may no longer exist.')
 
     data_content = None
     if content:
@@ -138,8 +132,9 @@ class SimpleNotebookManager(_NotebookManager):
     timestamp = model.get('last_modified', _dt.datetime.utcnow())
     notebook = Notebook(new_name, timestamp, data)
 
-    self._write_file(notebook)
-    self._timestamp = notebook.timestamp
+    saved = self._write_file(notebook)
+    if not saved:
+      raise Exception('There was an error saving the notebook.')
 
     return self._create_notebook_model(new_name, timestamp, data)
 
@@ -152,18 +147,19 @@ class SimpleNotebookManager(_NotebookManager):
     new_name = model['name']
     notebook = self._rename_file(name, new_name)
 
-    if notebook is not None:
-      self._modified_at = _dt.datetime.utcnow()
-      return self._create_notebook_model(new_name, notebook.timestamp)
+    if notebook is None:
+      raise Exception('The notebook could not be renamed. The name might already be in use.')
     else:
-      return None
+      return self._create_notebook_model(new_name, notebook.timestamp)
 
   def delete_notebook(self, name, path=''):
     """Deletes the specified notebook.
     """
     if path != '':
       return
-    self._delete_file(name)
+    deleted = self._delete_file(name)
+    if not deleted:
+      raise Exception('The specified notebook could not be deleted. It may no longer exist.')
 
   def create_checkpoint(self, name, path=''):
     """Creates a save checkpoint."""
@@ -203,10 +199,10 @@ class SimpleNotebookManager(_NotebookManager):
   def _list_files(self):
     raise NotImplementedError('Must be implemented in a derived class.')
 
-  def _check_file(self, name):
+  def _file_exists(self, name):
     raise NotImplementedError('Must be implemented in a derived class.')
 
-  def _read_file(self, name, content):
+  def _read_file(self, name, read_content):
     raise NotImplementedError('Must be implemented in a derived class.')
 
   def _write_file(self, notebook):
@@ -231,18 +227,22 @@ class MemoryNotebookManager(SimpleNotebookManager):
   def _list_files(self):
     return self._notebooks.keys()
 
-  def _check_file(self, name):
-    return self._notebooks.has_key(name)
+  def _file_exists(self, name):
+    return name in self._notebooks
 
-  def _read_file(self, name, content):
+  def _read_file(self, name, read_content):
     return self._notebooks.get(name, None)
 
   def _write_file(self, notebook):
     self._notebooks[notebook.name] = notebook
+    return True
 
   def _rename_file(self, name, new_name):
     notebook = self._notebooks.get(name, None)
     if notebook is None:
+      return None
+
+    if new_name in self._notebooks:
       return None
 
     notebook.name = new_name
@@ -254,6 +254,8 @@ class MemoryNotebookManager(SimpleNotebookManager):
   def _delete_file(self, name):
     if name in self._notebooks:
       del self._notebooks[name]
+      return True
+    return False
 
 
 class StorageNotebookManager(SimpleNotebookManager):
@@ -266,22 +268,16 @@ class StorageNotebookManager(SimpleNotebookManager):
   to have names such as <some other project id>-notebooks. Ideally buckets would have
   been project scoped.
 
-  This class manages the list of notebook as a cached set of items. The cache is
-  updated each time notebooks are listed (which happens frequently enough when the
-  list page in the UI is activated).
+  This class manages the list of notebook as a cached set of items. The cache is updated
+  each time notebooks are listed (which happens each time the list page becomes active).
 
   Operations such as checking for existence work against this cache (which is used
   as part of finding an unused number when creating a new notebook for example). The
   cache helps avoid creating a barrage of API calls to GCS.
 
   Operations such as save, rename, delete directly operate against GCS APIs, but update
-  this cache as well. Theoretically, we could just let a subsequent list operation
-  refresh the cache, since it seems to happen often enough, but for the implementation
-  also performs the operation on the cache, to keep it in sync with the just-completed
-  GCS operation.
-
-  TODO(nikhilko): Verify if we can get rid of the cache updating logic, to simplify the
-                  code just a bit.
+  this cache as well. This is because the local list will only be updated when the list
+  page is re-activated by the user. In the interim the list would be out-of-date.
   """
 
   def __init__(self, **kwargs):
@@ -290,7 +286,6 @@ class StorageNotebookManager(SimpleNotebookManager):
     super(StorageNotebookManager, self).__init__('cloud storage', **kwargs)
     self._bucket = None
     self._items = None
-    self._itemset = None
 
   def _ensure_bucket(self):
     if self._bucket is None:
@@ -306,36 +301,42 @@ class StorageNotebookManager(SimpleNotebookManager):
   def _ensure_items(self, update=False):
     self._ensure_bucket()
     if (self._items is None) or update:
-      self._items = []
-      self._itemset = {}
+      self._items = {}
 
       items = self._bucket.items(delimiter='/')
       for item in items:
         if item.key.endswith(self.filename_ext):
-          self._items.append(item)
-          self._itemset[item.key] = item
+          self._items[item.key] = item
 
   def _find_item(self, name):
     self._ensure_items()
-    return self._itemset.get(name, None)
+    return self._items.get(name, None)
 
   def _list_files(self):
     self._ensure_items(update=True)
-    return map(lambda item: item.key, self._items)
+    return map(lambda item: item.key, self._items.values())
 
-  def _check_file(self, name):
+  def _file_exists(self, name):
     return self._find_item(name) is not None
 
-  def _read_file(self, name, content):
+  def _read_file(self, name, read_content):
     item = self._find_item(name)
     if item is not None:
-      metadata = item.metadata()
-      data = None
-      if content:
-        data = unicode(item.read_from())
+      try:
+        metadata = item.metadata()
+        data = None
+        if read_content:
+          data = unicode(item.read_from())
 
-      return Notebook(name, metadata.updated_on, data)
+        return Notebook(name, metadata.updated_on, data)
+      except Exception:
+        return None
     else:
+      # Its possible that the item has been added to the bucket behind the scenes.
+      # Avoid checking GCS, as it defeats the purpose of a cache. A new notebook
+      # operation attempts to read every file in sequence. Looking up GCS here would
+      # significantly slow down the process.
+      # Instead, the list will be updated when the list page loses and regains focus.
       return None
 
   def _write_file(self, notebook):
@@ -346,34 +347,54 @@ class StorageNotebookManager(SimpleNotebookManager):
       creating_new_item = True
       item = self._bucket.item(notebook.name)
 
-    item.write_to(notebook.data, 'application/json')
+    try:
+      item.write_to(notebook.data, 'application/json')
+    except Exception:
+      return False
+
     if creating_new_item:
-      self._items.append(item)
-      self._itemset[item.key] = item
+      # Update the local cache, as the item must exist in the cache for it to be successfully
+      # retrieved in the subsequent read. This is because the list itself will be updated only
+      # when the user returns to the list page, and the list is refreshed.
+      self._items[item.key] = item
     else:
       item.timestamp = _dt.datetime.utcnow()
+    return True
 
   def _rename_file(self, name, new_name):
     item = self._find_item(name)
     if item is None:
       return None
 
-    new_item = item.copy_to(new_name)
-    new_notebook = Notebook(new_name, new_item.metadata().updated_on, '')
+    if self._bucket.items().contains(new_name):
+      return None
 
-    item.delete()
+    try:
+      new_item = item.copy_to(new_name)
+    except Exception:
+      return None
 
-    self._items.remove(item)
-    self._items.append(new_item)
+    try:
+      item.delete()
+    except Exception:
+      # Swallow failures to delete, since the new notebook with the new name was
+      # successfully created.
+      pass
 
-    del self._itemset[name]
-    self._itemset[new_name] = new_item
+    # Update the local cache, so it is in-sync.
+    del self._items[name]
+    self._items[new_name] = new_item
 
-    return new_notebook
+    return Notebook(new_name, new_item.metadata().updated_on, '')
 
   def _delete_file(self, name):
     item = self._find_item(name)
     if item is not None:
-      self._items.remove(item)
-      del self._itemset[name]
-      item.delete()
+      try:
+        item.delete()
+      except Exception:
+        return False
+
+      del self._items[name]
+      return True
+    return False
