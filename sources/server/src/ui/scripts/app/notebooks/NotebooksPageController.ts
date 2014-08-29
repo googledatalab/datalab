@@ -13,13 +13,13 @@
  */
 
 
-/**
- * Top-level angular module
- */
-
-/// <reference path="../../../typedefs/angularjs/angular.d.ts" />
-
-import angular = require('angular');
-
-
-export var app = angular.module('app', []);
+console.log('Loading NotebooksController function');
+export class NotebooksPageController {
+  /**
+   * Constructor and arguments for Angular to inject
+   */
+  static $inject: string[] = [];
+  constructor () {
+    // TODO(bryantd): Add controller logic
+  }
+}

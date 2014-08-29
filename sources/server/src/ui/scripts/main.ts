@@ -19,23 +19,27 @@
  * All third-party JavaScript libraries should be referenced here,
  * other than RequireJS itself.
  */
-
-/// <reference path="../../../typedefs/requirejs/require.d.ts" />
-/// <reference path="../../../typedefs/angularjs/angular.d.ts" />
-
-
 require.config({
   paths: {
+    // Third-party paths
     // TODO(bryantd): Update the requirejs typedefs to support a list of paths 
     // to enable fallback locations
     // TODO(bryantd): Add local fallbacks if no licensing issues
-    angular: '//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular.min'
+    angular: '//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular.min',
+    angularRoute: '//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular-route.min',
+
+    // First-party paths
+    app: './app'
   },
   shim: {
-    angular: {exports: 'angular'}
+    angular: {exports: 'angular'},
+    angularRoute: {deps: ['angular']}
   }
+  // TODO(bryantd): configure bundles here for working with concatenated sets of modules once we
+  // have a build process for generating bundles.
 });
 
-require(['angular', 'app'], (angular) => {
-  angular.bootstrap(document, ['app']);
-});
+require(['app/App']);
+
+// TODO(bryantd): find a way to get something equivalent to log levels and replace console.log
+// statements throughout

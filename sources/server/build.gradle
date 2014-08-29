@@ -26,7 +26,7 @@ class TypeScriptCompileTask extends DefaultTask {
     String outDir = project.buildDir.path
     String outFile = ''
     String moduleType = 'commonjs'
-    String compilerArgs = '--removeComments'
+    String compilerArgs = '--removeComments --noImplicitAny'
 
     @TaskAction
     def compile() {

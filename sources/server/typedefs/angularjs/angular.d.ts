@@ -13,8 +13,15 @@ interface Function {
     $inject?: string[];
 }
 
+// Declare an ambient external module for angular, which allows for it to be imported via
+// "import angular = require('angular');"" rather than through a "<amd-dependency path='...'/>"
+// reference
+declare module 'angular' {
+    export = angular;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
-// ng module (angular.js)
+// Ng module (angular.js)
 ///////////////////////////////////////////////////////////////////////////////
 declare module ng {
 
