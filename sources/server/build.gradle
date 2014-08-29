@@ -38,8 +38,18 @@ class TypeScriptCompileTask extends DefaultTask {
             }
         }
         // Call out to the TypeScript compiler (tsc) to compile and emit to the build dir
-        """tsc $compilerArgs --module $moduleType \
+        def proc = """tsc $compilerArgs --module $moduleType \
            --outDir $outDir${ pathToRootModule } ${ tsFiles.join(' ') }""".execute()
+        if (proc.in.text?.trim()) {
+            println "tsc stdout:\n${ proc.in.text }"
+        }
+
+
+        // Fail the task if the TypeScript compiler returned non-zero exit value
+        if (proc.exitValue() != 0) {
+            println "tsc stderr: \n${ proc.err.text }"
+            throw new GradleException("TypeScript Compilation failed.")
+        }
     }
 }
 
