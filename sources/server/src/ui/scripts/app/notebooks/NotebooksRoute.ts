@@ -18,21 +18,27 @@
  */
 /// <reference path="../../../../../typedefs/angularjs/angular.d.ts" />
 /// <reference path="../../../../../typedefs/angularjs/angular-route.d.ts" />
-import lazyLoader = require('app/common/LazyControllerLoader');
+/// <reference path="../common/Interfaces.ts" />
+import lazyLoader = require('app/common/LazyLoader');
 import constants = require('app/common/Constants');
 
 
-export var controllerName = 'NotebooksPageController';
-export var configure = ($controllerProvider: ng.IControllerProvider): ng.route.IRoute => {
-  return {
-    templateUrl: constants.APP_ROOT_PATH + '/notebooks/notebooks.html',
-    controller: controllerName,
-    controllerAs: 'pageCtrl',
-    resolve: {
-      lazyLoadController: ($q: ng.IQService): ng.IPromise<any> => {
-        return lazyLoader.loadController($q, $controllerProvider, require, controllerName,
-          './NotebooksPageController');
-      }
-    }
+var controllerName: string = constants.notebooks.pageControllerName;
+var controllerPath: string = './' + controllerName;
+
+export function loadController (
+    q: ng.IQService,
+    rootScope: ng.IRootScopeService
+    ): ng.IPromise<any> {
+  return lazyLoader.load(q, rootScope, require, controllerPath);
+}
+loadController.$inject = ['$q', '$rootScope'];
+
+export var route: ng.route.IRoute = {
+  templateUrl: constants.scriptPaths.app + '/notebooks/notebooks.html',
+  controller: controllerName,
+  controllerAs: 'pageCtrl',
+  resolve: {
+    loadController: loadController
   }
 };

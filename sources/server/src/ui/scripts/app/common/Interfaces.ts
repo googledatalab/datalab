@@ -13,20 +13,13 @@
  */
 
 
-/// <reference path="../common/Interfaces.ts" />
-import constants = require('app/common/Constants');
-import app = require('app/App');
+/// <reference path="../../../../../typedefs/angularjs/angular.d.ts" />
 
 
-console.log('Loading notebooks controller function');
-export class NotebooksPageController {
-  /**
-   * Constructor and arguments for Angular to inject
-   */
-  static $inject: string[] = [];
-  constructor () {
-    // TODO(bryantd): Add controller logic
+declare module app {
+
+  interface IRegistrar {
+    controller(name: string, constructor: Function): void;
   }
-}
 
-app.registrar.controller(constants.notebooks.pageControllerName, NotebooksPageController);
+}

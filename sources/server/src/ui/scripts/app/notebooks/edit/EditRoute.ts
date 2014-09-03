@@ -18,21 +18,27 @@
  */
 /// <reference path="../../../../../../typedefs/angularjs/angular.d.ts" />
 /// <reference path="../../../../../../typedefs/angularjs/angular-route.d.ts" />
-import lazyLoader = require('app/common/LazyControllerLoader');
+/// <reference path="../../common/Interfaces.ts" />
+import lazyLoader = require('app/common/LazyLoader');
 import constants = require('app/common/Constants');
 
 
-var controllerName = 'EditPageController';
-export var configure = ($controllerProvider: ng.IControllerProvider): ng.route.IRoute => {
-  return {
-    templateUrl: constants.APP_ROOT_PATH + '/notebooks/edit/edit.html',
-    controller: controllerName,
-    controllerAs: 'pageCtrl',
-    resolve: {
-      lazyLoadController: ($q: ng.IQService): ng.IPromise<any> => {
-        return lazyLoader.loadController($q, $controllerProvider, require, controllerName,
-          './EditPageController');
-      }
-    }
+var controllerName: string = constants.notebooks.edit.pageControllerName;
+var controllerPath: string = './' + controllerName;
+
+export function loadController (
+    q: ng.IQService,
+    rootScope: ng.IRootScopeService
+    ): ng.IPromise<any> {
+  return lazyLoader.load(q, rootScope, require, controllerPath);
+}
+loadController.$inject = ['$q', '$rootScope'];
+
+export var route = {
+  templateUrl: constants.scriptPaths.app + '/notebooks/edit/edit.html',
+  controller: controllerName,
+  controllerAs: 'pageCtrl',
+  resolve: {
+    loadController: loadController
   }
 };
