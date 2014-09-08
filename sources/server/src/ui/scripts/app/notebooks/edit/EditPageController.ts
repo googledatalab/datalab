@@ -13,11 +13,13 @@
  */
 
 
-/// <reference path="../../common/Interfaces.ts" />
+/// <reference path="../../../../../../typedefs/angularjs/angular.d.ts" />
 import constants = require('app/common/Constants');
 import app = require('app/App');
+import logging = require('app/common/Logging');
 
-console.log('Loading edit controller function');
+var log = logging.getLogger('edit.page');
+
 export class EditPageController {
   /**
    * The ID of the notebook to edit
@@ -28,10 +30,12 @@ export class EditPageController {
    * Constructor and arguments for Angular to inject
    */
   static $inject: string[] = ['$routeParams'];
-  constructor (routeParams: ng.route.IRouteParamsService) {
-    this.notebookId = routeParams['notebookId'];
+  constructor ($routeParams: ng.route.IRouteParamsService) {
+    this.notebookId = $routeParams['notebookId'];
     // TODO(bryantd): Add controller logic
+    log.debug('Constructed edit page controller');
   }
 }
 
 app.registrar.controller(constants.notebooks.edit.pageControllerName, EditPageController);
+log.debug('Loaded edit page controller');
