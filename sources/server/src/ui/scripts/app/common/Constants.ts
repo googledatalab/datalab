@@ -21,4 +21,17 @@
 /**
  * Path to the root of the Angular app
  */
-export var APP_ROOT_PATH = 'scripts/app';
+export var scriptPaths = {
+  app: 'scripts/app'
+};
+
+export var appModuleName = 'app';
+
+// Angular injectable names
+export var notebooks = {
+  pageControllerName: 'NotebooksPageController',
+
+  edit: {
+    pageControllerName: 'EditPageController'
+  }
+};
