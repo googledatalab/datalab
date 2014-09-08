@@ -13,7 +13,11 @@
  */
 
 
-console.log('Loading NotebooksController function');
+import logging = require('app/common/Logging');
+
+
+var log = logging.getLogger('notebooks.page');
+
 export class NotebooksPageController {
   /**
    * Constructor and arguments for Angular to inject
@@ -21,5 +25,8 @@ export class NotebooksPageController {
   static $inject: string[] = [];
   constructor () {
     // TODO(bryantd): Add controller logic
+    log.debug('Constructed notebooks page controller');
   }
 }
+
+log.debug('Loaded notebooks page controller');
