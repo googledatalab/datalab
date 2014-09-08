@@ -82,8 +82,8 @@ class Logger { // TODO(bryantd): add type in Interfaces.ts (depends on lazy-load
    * @param {Object []} ...objects [description]
    */
   private _log (...objects: Object []) {
-    var scopeText: Object = '[' + this._scope + ']';
-    console.log.apply(console, [scopeText].concat(objects));
+    var scopePrefix: Object[] = [ '[' + this._scope + ']' ];
+    console.log.apply(console, scopePrefix.concat(objects));
   }
 }
 
