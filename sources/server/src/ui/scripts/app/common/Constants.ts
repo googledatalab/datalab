@@ -27,11 +27,12 @@ export var scriptPaths = {
 
 export var appModuleName = 'app';
 
-// Angular injectable names
 export var notebooks = {
   pageControllerName: 'NotebooksPageController',
-
+  pageLogger: 'notebooks.page',
+  
   edit: {
-    pageControllerName: 'EditPageController'
+    pageControllerName: 'EditPageController',
+    pageLogger: 'edit.page'
   }
 };

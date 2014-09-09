@@ -13,11 +13,15 @@
  */
 
 
+/// <reference path="../../../../../../typedefs/angularjs/angular.d.ts" />
 /// <reference path="../../common/Interfaces.ts" />
+import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import app = require('app/App');
 
-console.log('Loading edit controller function');
+
+var log = logging.getLogger(constants.notebooks.edit.pageLogger);
+
 export class EditPageController {
   /**
    * The ID of the notebook to edit
@@ -31,7 +35,9 @@ export class EditPageController {
   constructor (routeParams: ng.route.IRouteParamsService) {
     this.notebookId = routeParams['notebookId'];
     // TODO(bryantd): Add controller logic
+    log.debug('Constructed edit page controller');
   }
 }
 
 app.registrar.controller(constants.notebooks.edit.pageControllerName, EditPageController);
+log.debug('Registered ', constants.notebooks.edit.pageControllerName);

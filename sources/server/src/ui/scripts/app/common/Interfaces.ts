@@ -22,4 +22,11 @@ declare module app {
     controller(name: string, constructor: Function): void;
   }
 
+  interface ILogger { // FIXME: finish this
+    debug (...objects: Object []): void;
+    info (...objects: Object []): void;
+    warn (...objects: Object []): void;
+    error (...objects: Object []): void;
+  }
+
 }
