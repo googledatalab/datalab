@@ -12,11 +12,13 @@
  * the License.
  */
 
-
+/// <reference path="../common/Interfaces.ts" />
 import logging = require('app/common/Logging');
+import constants = require('app/common/Constants');
+import app = require('app/App');
 
 
-var log = logging.getLogger('notebooks.page');
+var log = logging.getLogger(constants.notebooks.pageLogger);
 
 export class NotebooksPageController {
   /**
@@ -29,4 +31,5 @@ export class NotebooksPageController {
   }
 }
 
-log.debug('Loaded notebooks page controller');
+app.registrar.controller(constants.notebooks.pageControllerName, NotebooksPageController);
+log.debug('Registered ', constants.notebooks.pageControllerName);

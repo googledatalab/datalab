@@ -16,6 +16,8 @@
 /**
  * Logging API
  */
+/// <reference path="Interfaces.ts" />
+
 
 /**
  * Logger that supports levels and scopes.
@@ -24,7 +26,7 @@
  * TODO(bryantd): add support for configuring the log levels externally
  * TODO(bryantd): add support configuring log output by scope
  */
-class Logger { // TODO(bryantd): add type in Interfaces.ts (depends on lazy-loading CL check-in)
+class Logger implements app.ILogger {
   /**
    * Name of the scope under which logs will be emitted
    */
@@ -93,6 +95,6 @@ class Logger { // TODO(bryantd): add type in Interfaces.ts (depends on lazy-load
  * @param scope logging scope to use
  * @return Logger instance
  */
-export function getLogger (scope: string): any { // FIXME app.ILogger
+export function getLogger (scope: string): app.ILogger {
   return new Logger(scope);
 }

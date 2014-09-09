@@ -13,26 +13,20 @@
  */
 
 
-/**
- * Cross-module constants
- */
+/// <reference path="../../../../../typedefs/angularjs/angular.d.ts" />
 
 
-/**
- * Path to the root of the Angular app
- */
-export var scriptPaths = {
-  app: 'scripts/app'
-};
+declare module app {
 
-export var appModuleName = 'app';
-
-export var notebooks = {
-  pageControllerName: 'NotebooksPageController',
-  pageLogger: 'notebooks.page',
-  
-  edit: {
-    pageControllerName: 'EditPageController',
-    pageLogger: 'edit.page'
+  interface IRegistrar {
+    controller(name: string, constructor: Function): void;
   }
-};
+
+  interface ILogger { // FIXME: finish this
+    debug (...objects: Object []): void;
+    info (...objects: Object []): void;
+    warn (...objects: Object []): void;
+    error (...objects: Object []): void;
+  }
+
+}
