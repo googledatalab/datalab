@@ -27,11 +27,20 @@ export var scriptPaths = {
 
 export var appModuleName = 'app';
 
-// Angular injectable names
+// Angular component names used for dependency injection
 export var notebooks = {
   pageControllerName: 'NotebooksPageController',
-
   edit: {
     pageControllerName: 'EditPageController'
+  }
+};
+
+// Logging scope names
+export var scopes = {
+  notebooks: {
+    page: 'notebooks.page',
+    edit: {
+      page: 'notebooks.edit.page'
+    }
   }
 };
