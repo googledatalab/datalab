@@ -27,6 +27,7 @@ require.config({
     // TODO(bryantd): Add local fallbacks if no licensing issues
     angular: '//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular.min',
     angularRoute: '//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular-route.min',
+    codeMirror: '//cdnjs.cloudflare.com/ajax/libs/codemirror/4.5.0/codemirror.min',
 
     // First-party paths
     app: './app'
@@ -40,6 +41,3 @@ require.config({
 });
 
 require(['app/App']);
-
-// TODO(bryantd): find a way to get something equivalent to log levels and replace console.log
-// statements throughout
