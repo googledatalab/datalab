@@ -30,8 +30,8 @@ export class EditPageController {
    * Constructor and arguments for Angular to inject
    */
   static $inject: string[] = ['$routeParams'];
-  constructor ($routeParams: ng.route.IRouteParamsService) {
-    this.notebookId = $routeParams['notebookId'];
+  constructor (routeParams: ng.route.IRouteParamsService) {
+    this.notebookId = routeParams['notebookId'];
     // TODO(bryantd): Add controller logic
     log.debug('Constructed edit page controller');
   }
