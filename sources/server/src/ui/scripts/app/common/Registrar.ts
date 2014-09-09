@@ -109,7 +109,7 @@ export class Registrar implements app.IRegistrar {
    * @param name the name of the decorator
    * @param decorator a decorator function (see angular docs for reference here)
    */
-  decorator (name: string, decorator: Function) {
+  decorator (name: string, decorator: Function): void {
     this._provideService.decorator(name, decorator);
   }
 
@@ -119,7 +119,7 @@ export class Registrar implements app.IRegistrar {
    * @param name the name of the filter
    * @param filterFactory factory function for generating filter instances
    */
-  filter (name: string, filterFactory: Function) {
+  filter (name: string, filterFactory: Function): void {
     this._filterProvider.register(name, filterFactory);
   }
 

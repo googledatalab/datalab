@@ -20,6 +20,13 @@ declare module app {
 
   interface IRegistrar {
     controller(name: string, constructor: Function): void;
+    directive (name: string, directiveFactory: Function): void;
+    service (name: string, constructor: Function): void;
+    factory (name: string, serviceFactory: Function): void;
+    constant (name: string, value: any): void;
+    value (name: string, value: any): void;
+    decorator (name: string, decorator: Function): void;
+    filter (name: string, filterFactory: Function): void;
   }
 
   interface ILogger {
