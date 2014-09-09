@@ -17,6 +17,7 @@
  * Top-level page controller for the notebook editing page
  */
 /// <reference path="../../../../../../typedefs/angularjs/angular.d.ts" />
+/// <amd-dependency path="app/components/codeeditor/CodeEditorDirective" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import app = require('app/App');

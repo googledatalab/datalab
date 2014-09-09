@@ -3,6 +3,13 @@
 // Definitions by: mihailik <https://github.com/mihailik>
 // Definitions: https://github.com/borisyankov/DefinitelyTyped
 
+// Declare an ambient external module, which allows for it to be imported via
+// "import angular = require('angular');"" rather than through a "<amd-dependency path='...'/>"
+// reference
+declare module 'codeMirror' {
+  export = CodeMirror
+}
+
 declare function CodeMirror(host: HTMLElement, options?: CodeMirror.EditorConfiguration): CodeMirror.Editor;
 declare function CodeMirror(callback: (host: HTMLElement) => void , options?: CodeMirror.EditorConfiguration): CodeMirror.Editor;
 
@@ -93,7 +100,13 @@ declare module CodeMirror {
     function signal(target: any, name: string, ...args: any[]): void;
 
     interface Editor {
-    
+
+        /** Get the current editor content. You can pass it an optional argument to specify the string to be used to separate lines (defaults to "\n"). */
+        getValue(seperator?: string): string;
+
+        /** Set the editor content. */
+        setValue(content: string): void;
+
         /** Tells you whether the editor currently has focus. */
         hasFocus(): boolean;
     
