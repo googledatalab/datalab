@@ -34,5 +34,5 @@ export class NotebooksPageController {
   }
 }
 
-app.registrar.controller(constants.notebooks.pageControllerName, NotebooksPageController);
-log.debug('Registered ', constants.notebooks.pageControllerName);
+app.registrar.controller(constants.ng.notebooks.pageControllerName, NotebooksPageController);
+log.debug('Registered ', constants.ng.notebooks.pageControllerName);

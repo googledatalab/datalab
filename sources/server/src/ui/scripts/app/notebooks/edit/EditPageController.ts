@@ -17,6 +17,7 @@
  * Top-level page controller for the notebook editing page
  */
 /// <reference path="../../../../../../typedefs/angularjs/angular.d.ts" />
+/// <amd-dependency path="app/notebooks/edit/CodeEditorDirective" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import app = require('app/App');
@@ -41,5 +42,5 @@ export class EditPageController {
   }
 }
 
-app.registrar.controller(constants.notebooks.edit.pageControllerName, EditPageController);
-log.debug('Registered ', constants.notebooks.edit.pageControllerName);
+app.registrar.controller(constants.ng.notebooks.edit.pageControllerName, EditPageController);
+log.debug('Registered ', constants.ng.notebooks.edit.pageControllerName);
