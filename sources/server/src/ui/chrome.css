@@ -23,3 +23,13 @@
  * within the "editor" module.
  *
  */
+
+/**
+ * Offsets the content following the navbar to account for the navbar height.
+ *
+ * Spacer element is preferred over body margin because the latter will force scrollbars to be
+ * always-on for any 100% height content within the page.
+ */
+.datalab-navbar-spacer {
+  margin-top: 50px;
+}
