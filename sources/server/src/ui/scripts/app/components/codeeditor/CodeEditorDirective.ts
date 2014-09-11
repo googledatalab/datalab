@@ -81,5 +81,5 @@ function codeEditorDirective (): ng.IDirective {
   }
 }
 
-app.registrar.directive(constants.names.codeEditor.directiveName, codeEditorDirective);
+app.registrar.directive(constants.codeEditor.directiveName, codeEditorDirective);
 log.debug('Registered code editor directive');

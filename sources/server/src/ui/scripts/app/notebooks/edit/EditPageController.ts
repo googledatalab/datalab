@@ -42,5 +42,5 @@ export class EditPageController {
   }
 }
 
-app.registrar.controller(constants.names.notebooks.edit.pageControllerName, EditPageController);
-log.debug('Registered ', constants.names.notebooks.edit.pageControllerName);
+app.registrar.controller(constants.notebooks.edit.pageControllerName, EditPageController);
+log.debug('Registered ', constants.notebooks.edit.pageControllerName);
