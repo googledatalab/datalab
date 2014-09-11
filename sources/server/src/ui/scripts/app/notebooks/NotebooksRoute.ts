@@ -23,7 +23,7 @@ import lazyLoader = require('app/common/LazyLoader');
 import constants = require('app/common/Constants');
 
 
-var controllerName: string = constants.ng.notebooks.pageControllerName;
+var controllerName: string = constants.notebooks.pageControllerName;
 var controllerPath: string = './' + controllerName;
 
 export function loadController (
