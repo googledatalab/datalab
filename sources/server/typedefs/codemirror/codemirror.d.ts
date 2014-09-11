@@ -93,7 +93,13 @@ declare module CodeMirror {
     function signal(target: any, name: string, ...args: any[]): void;
 
     interface Editor {
-    
+
+        /** Get the current editor content. You can pass it an optional argument to specify the string to be used to separate lines (defaults to "\n"). */
+        getValue(seperator?: string): string;
+
+        /** Set the editor content. */
+        setValue(content: string): void;
+
         /** Tells you whether the editor currently has focus. */
         hasFocus(): boolean;
     
@@ -806,4 +812,9 @@ declare module CodeMirror {
         By default, a marker appears only in its target document. */
         shared?: boolean;
     }
+}
+
+// FIXME: docs
+declare module 'codeMirror' {
+  export = CodeMirror
 }

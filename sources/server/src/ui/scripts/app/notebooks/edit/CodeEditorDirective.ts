@@ -18,17 +18,11 @@
  */
 /// <reference path="../../../../../../typedefs/angularjs/angular.d.ts" />
 /// <reference path="../../../../../../typedefs/codemirror/codemirror.d.ts" />
-/// <amd-dependency path="codeMirror" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import app = require('app/App');
-// TODO(bryantd): sort out why code mirror cannot be simple imported as other third-party deps
-// It likely has something to do with the fact that CodeMirror is already an AMD module
-// (tsc error TS2071)
-// 
-// Ideally the following line would be "import codeMirror = require('codeMirror')" and the above
-// amd-dependency declaration for codeMirror would be unnecessary
-var codeMirror = require('codeMirror'); // Work-around approach to get CodeMirror module reference
+import codeMirror = require('codeMirror');
+
 
 var log = logging.getLogger(constants.scopes.codeEditor);
 
@@ -53,7 +47,7 @@ function codeEditorDirectiveLink (
     scope: ICodeEditorScope,
     element: ng.IAugmentedJQuery)
     : void {
-  var cmInstance = codeMirror.fromTextArea(element[0], codeMirrorOptions);
+  var cmInstance: CodeMirror.Editor = codeMirror(element.get(0), codeMirrorOptions);
 
   // Sets the inital code editor content equal to the linked template attribute value.
   // The 'code' element attribute will point to a value in the parent scope/controller.
@@ -61,12 +55,12 @@ function codeEditorDirectiveLink (
 
   // Registers a callback to update the scope's 'code' value when the CodeMirror content changes
   cmInstance.on('change', (
-      cmInstance: CodeMirror.Doc,
+      cm: CodeMirror.Editor,
       change: CodeMirror.EditorChange
       ) => {
     // Wraps scope modifications in an $apply to "publish" them to the parent scope/ctrl
     scope.$apply(() => {
-      scope.code = cmInstance.getValue();
+      scope.code = cm.getValue();
     });
   });
 };
@@ -80,7 +74,8 @@ function codeEditorDirective (): ng.IDirective {
   return {
     restrict: 'E',
     replace: true,
-    template: '<textarea></textarea>',
+    // template: '<textarea></textarea>', // FIXME: see if can get rid fo text area
+    template: '<div class="cmhere"></div>',
     scope: {
       code: '=contents'
     },
