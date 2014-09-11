@@ -3,6 +3,13 @@
 // Definitions by: mihailik <https://github.com/mihailik>
 // Definitions: https://github.com/borisyankov/DefinitelyTyped
 
+// Declare an ambient external module, which allows for it to be imported via
+// "import angular = require('angular');"" rather than through a "<amd-dependency path='...'/>"
+// reference
+declare module 'codeMirror' {
+  export = CodeMirror
+}
+
 declare function CodeMirror(host: HTMLElement, options?: CodeMirror.EditorConfiguration): CodeMirror.Editor;
 declare function CodeMirror(callback: (host: HTMLElement) => void , options?: CodeMirror.EditorConfiguration): CodeMirror.Editor;
 
@@ -812,9 +819,4 @@ declare module CodeMirror {
         By default, a marker appears only in its target document. */
         shared?: boolean;
     }
-}
-
-// FIXME: docs
-declare module 'codeMirror' {
-  export = CodeMirror
 }
