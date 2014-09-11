@@ -41,13 +41,14 @@ interface ICodeEditorScope extends ng.IScope {
  * Sets up the event handlers to link the directive scope to the external world.
  *
  * @param scope the directive's (isolate) scope
- * @param element the jqLite-selected directive element (<textarea> here)
+ * @param element the jqLite-selected directive element
  */
 function codeEditorDirectiveLink (
     scope: ICodeEditorScope,
     element: ng.IAugmentedJQuery)
     : void {
-  var cmInstance: CodeMirror.Editor = codeMirror(element.get(0), codeMirrorOptions);
+  var cmContainer = <HTMLTextAreaElement>element[0];
+  var cmInstance: CodeMirror.Editor = codeMirror(cmContainer, codeMirrorOptions);
 
   // Sets the inital code editor content equal to the linked template attribute value.
   // The 'code' element attribute will point to a value in the parent scope/controller.
@@ -73,9 +74,6 @@ function codeEditorDirectiveLink (
 function codeEditorDirective (): ng.IDirective {
   return {
     restrict: 'E',
-    replace: true,
-    // template: '<textarea></textarea>', // FIXME: see if can get rid fo text area
-    template: '<div class="cmhere"></div>',
     scope: {
       code: '=contents'
     },
