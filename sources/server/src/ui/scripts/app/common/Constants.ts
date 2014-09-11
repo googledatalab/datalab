@@ -27,19 +27,19 @@ export var scriptPaths = {
 
 export var appModuleName = 'app';
 
-// Generic angular component names used for dependency injection
-export var components = {
+export var names = {
+  // Generic angular component names used for dependency injection
   codeEditor: {
     controllerName: 'CodeEditorController',
     directiveName: 'datalabCodeEditor'
-  }
-};
+  },
 
-// Route-specific angular component names used for dependency injection
-export var notebooks = {
-  pageControllerName: 'NotebooksPageController',
-  edit: {
-    pageControllerName: 'EditPageController'
+  // Route-specific angular component names used for dependency injection
+  notebooks: {
+    pageControllerName: 'NotebooksPageController',
+    edit: {
+      pageControllerName: 'EditPageController'
+    }
   }
 };
 

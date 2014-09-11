@@ -23,7 +23,7 @@ import lazyLoader = require('app/common/LazyLoader');
 import constants = require('app/common/Constants');
 
 
-var controllerName: string = constants.notebooks.edit.pageControllerName;
+var controllerName: string = constants.names.notebooks.edit.pageControllerName;
 var controllerPath: string = './' + controllerName;
 
 export function loadController (
