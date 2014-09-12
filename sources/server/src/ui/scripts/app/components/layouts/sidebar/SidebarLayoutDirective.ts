@@ -14,26 +14,29 @@
 
 
 /**
- * Top-level page controller for the notebook index page
+ * Directive for creating a two-column layout with common side navigation bar
+ *
+ * The transcluded html will appear within the main content region.
  */
-/// <amd-dependency path="app/components/layouts/sidebar/SidebarLayoutDirective" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import app = require('app/App');
 
 
-var log = logging.getLogger(constants.scopes.notebooks.page);
+var log = logging.getLogger(constants.scopes.layouts);
 
-export class NotebooksPageController {
-  /**
-   * Constructor and arguments for Angular to inject
-   */
-  static $inject: string[] = [];
-  constructor () {
-    // TODO(bryantd): Add controller logic
-    log.debug('Constructed notebooks page controller');
+/**
+ * Creates the sidenav directive definition.
+ * 
+ * @return directive definition
+ */
+function sidebarLayoutDirective (): ng.IDirective {
+  return {
+    restrict: 'E',
+    transclude: true,
+    templateUrl: constants.scriptPaths.app + '/components/layouts/sidebar/sidebarlayout.html'
   }
 }
 
-app.registrar.controller(constants.notebooks.pageControllerName, NotebooksPageController);
-log.debug('Registered ', constants.notebooks.pageControllerName);
+app.registrar.directive(constants.layouts.sidebar.directiveName, sidebarLayoutDirective);
+log.debug('Registered sidebar layout directive');

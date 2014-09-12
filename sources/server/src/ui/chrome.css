@@ -25,11 +25,28 @@
  */
 
 /**
- * Offsets the content following the navbar to account for the navbar height.
- *
- * Spacer element is preferred over body margin because the latter will force scrollbars to be
- * always-on for any 100% height content within the page.
+ * Color palette
+ * - Thin (horz/vert) rules: #eee
+ * - Navigation/toolbar/menu background color: #f5f5f5
  */
-.datalab-navbar-spacer {
-  margin-top: 50px;
+
+body {
+  padding-top: 50px; /* Accounts for 50px (fixed) top navbar height */
+}
+
+/**
+ * Layout sidenav rules
+ */
+.datalab-layout-sidenav-sidebar {
+  /* Sticks the sidebar to the top-left corner of the viewport, just underneath the navbar */
+  position: fixed;
+  top: 51px; /* 50px navbar height + 1px border */
+  bottom: 0;
+  left: 0;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  background-color: #f5f5f5;
+  border-right: 1px solid #eee;
 }

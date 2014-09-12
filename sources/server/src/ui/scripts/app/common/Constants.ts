@@ -28,6 +28,11 @@ export var scriptPaths = {
 export var appModuleName = 'app';
 
 // Generic angular component names used for dependency injection
+export var layouts = {
+  sidebar: {
+    directiveName: 'sidebarLayout'
+  }
+}
 export var codeEditor = {
   directiveName: 'datalabCodeEditor'
 };
@@ -44,6 +49,7 @@ export var notebooks = {
 export var scopes = {
   // Generic components
   codeEditor: 'codeEditor',
+  layouts: 'layouts',
 
   // Route-specific components
   notebooks: {
