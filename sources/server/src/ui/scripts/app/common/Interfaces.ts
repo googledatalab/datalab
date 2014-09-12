@@ -13,7 +13,7 @@
  */
 
 
-/// <reference path="../../../../../typedefs/angularjs/angular.d.ts" />
+/// <reference path="../../../../../../../externs/ts/angularjs/angular.d.ts" />
 
 
 declare module app {

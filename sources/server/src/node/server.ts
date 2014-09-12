@@ -13,8 +13,8 @@
  */
 
 
-/// <reference path="../../typedefs/node/node.d.ts" />
-/// <reference path="../../typedefs/express/express.d.ts" />
+/// <reference path="../../../../externs/ts/node/node.d.ts" />
+/// <reference path="../../../../externs/ts/express/express.d.ts" />
 
 
 import http = require('http');

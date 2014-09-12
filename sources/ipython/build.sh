@@ -16,8 +16,8 @@
 BUILD_DIR=$REPO_DIR/build/ipython
 mkdir -p $BUILD_DIR
 
-cp config.py $BUILD_DIR/config.py
-cp -R static $BUILD_DIR
+cp profile/config.py $BUILD_DIR/config.py
+cp -R profile/static $BUILD_DIR
 
 PYLIB_DIR=$REPO_DIR/build/python
 mkdir -p $PYLIB_DIR

@@ -12,47 +12,6 @@
  * the License.
  */
 
-import static groovy.io.FileType.FILES
-
-/**
- * TypeScript compilation task that calls out to tsc
- *
- * TODO: collect custom Gradle code into a single global location for the project
- */
-class TypeScriptCompileTask extends DefaultTask {
-    String rootModule = ''
-    String pathToRootModule = ''
-    String srcDir = 'src'
-    String outDir = project.buildDir.path
-    String outFile = ''
-    String moduleType = 'commonjs'
-    String compilerArgs = '--removeComments --noImplicitAny'
-
-    @TaskAction
-    def compile() {
-        // Enumerate the typescript files recursively within the given source path
-        def tsFiles = []
-        new File("${ srcDir }${ pathToRootModule }").eachFileRecurse(FILES) {
-            if(it.name.endsWith('.ts')) {
-                tsFiles << it;
-            }
-        }
-        // Call out to the TypeScript compiler (tsc) to compile and emit to the build dir
-        def proc = """tsc $compilerArgs --module $moduleType \
-           --outDir $outDir${ pathToRootModule } ${ tsFiles.join(' ') }""".execute()
-        if (proc.in.text?.trim()) {
-            println "tsc stdout:\n${ proc.in.text }"
-        }
-
-
-        // Fail the task if the TypeScript compiler returned non-zero exit value
-        if (proc.exitValue() != 0) {
-            println "tsc stderr: \n${ proc.err.text }"
-            throw new GradleException("TypeScript Compilation failed.")
-        }
-    }
-}
-
 /**
  * Copy all UI files (except the TypeScript files) to the build dir
  */
