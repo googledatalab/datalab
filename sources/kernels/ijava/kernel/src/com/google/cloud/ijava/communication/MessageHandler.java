@@ -14,9 +14,17 @@
 
 package com.google.cloud.ijava.communication;
 
-/**
- * This class represents any exception that might happen during communication.
- */
-public class CommunicationException extends Exception {
+import com.google.cloud.ijava.runner.JavaExecutionEngine;
 
+/**
+ * Abstract class representing a message handler.
+ */
+abstract class MessageHandler<M extends Message<? extends Message.Content.Request>> {
+
+  /**
+   * @param channel the channel on which the message was received
+   */
+  abstract void handle(M message, CommunicationChannel channel,
+      KernelCommunicationHandler communicationHandler, ConnectionProfile connectionProfile,
+      JavaExecutionEngine javaExecutionEngine) throws CommunicationException;
 }

@@ -54,7 +54,7 @@ import javax.tools.Diagnostic.Kind;
  * This class is responsible for compiling any input string into a compilable Java class in the
  * context of the current execution.
  */
-public class FragmentCodeRunner {
+public class FragmentCodeRunner implements JavaExecutionEngine {
   private static Logger LOGGER = Logger.getLogger(FragmentCodeRunner.class.getName());
 
   public static final String JAVA_FILE_EXTENSION = ".java";
@@ -317,7 +317,7 @@ public class FragmentCodeRunner {
    * @return true for a successful run and false if any error or exception happened during the
    *         execution.
    */
-  public boolean run(String code, InputStream in, PrintStream out, PrintStream err) {
+  boolean run(String code, InputStream in, PrintStream out, PrintStream err) {
     try {
       FragmentCodeCompilationResult fragmentCodeCompilationResult = null;
       try {
@@ -414,5 +414,20 @@ public class FragmentCodeRunner {
         err.println(errorMessage.toString());
       }
     }
+  }
+
+  @Override
+  public void incExecutionCounter() {
+    executionState.executionCounter++;
+  }
+
+  @Override
+  public int getExecutionCounter() {
+    return executionState.executionCounter;
+  }
+
+  @Override
+  public boolean execute(String code, InputStream in, PrintStream out, PrintStream err) {
+    return run(code, in, out, err);
   }
 }
