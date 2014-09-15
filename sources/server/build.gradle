@@ -16,8 +16,8 @@
  * Copy all UI files (except the TypeScript files) to the build dir
  */
 task copyStaticUi(type: Copy) {
-    from 'src'
-    into  project.buildDir
+    from './src/ui'
+    into  new File(project.buildDir, '/ui')
     exclude '**/*.ts'
 }
 
