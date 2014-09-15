@@ -36,8 +36,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Queue;
 import java.util.UUID;
 
 /**
@@ -91,33 +89,5 @@ public class KernelCommunicationHandlerTest extends TestCase {
     assertThat(publishChannel.sent, hasItem("id1"));
     assertThat(publishChannel.sent, hasItem(KernelJsonConverter.GSON.toJson(header)));
     assertThat(publishChannel.sent, hasItem(KernelJsonConverter.GSON.toJson(content)));
-  }
-
-  static class FakeCommunicationChannel implements CommunicationChannel {
-
-    Queue<String> toReceive;
-    List<String> sent;
-
-    FakeCommunicationChannel() {
-      sent = new ArrayList<>();
-    }
-
-    @Override
-    public String recvStr() throws CommunicationException {
-      return toReceive.poll();
-    }
-
-    @Override
-    public boolean send(String data) throws CommunicationException {
-      return sent.add(data);
-    }
-
-    @Override
-    public boolean sendMore(String data) throws CommunicationException {
-      return sent.add(data);
-    }
-
-    @Override
-    public void close() throws CommunicationException {}
   }
 }
