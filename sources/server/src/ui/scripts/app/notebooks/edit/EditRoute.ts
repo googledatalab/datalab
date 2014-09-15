@@ -16,8 +16,8 @@
 /**
  * Angular route configuration for the notebook edit page
  */
-/// <reference path="../../../../../../typedefs/angularjs/angular.d.ts" />
-/// <reference path="../../../../../../typedefs/angularjs/angular-route.d.ts" />
+/// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
+/// <reference path="../../../../../../../../externs/ts/angularjs/angular-route.d.ts" />
 /// <reference path="../../common/Interfaces.ts" />
 import lazyLoader = require('app/common/LazyLoader');
 import constants = require('app/common/Constants');

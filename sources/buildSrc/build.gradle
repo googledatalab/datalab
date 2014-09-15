@@ -12,13 +12,15 @@
  * the License.
  */
 
-allprojects {
-    repositories {
-        mavenCentral()
-    }
+apply plugin: 'groovy'
+
+sourceSets {
+   main {
+       groovy.srcDirs = ['.']
+   }
 }
 
-subprojects {
-    buildDir = new File(rootProject.projectDir, "../build/" + project.name)
+dependencies {
+    compile gradleApi()
+    compile localGroovy()
 }
-

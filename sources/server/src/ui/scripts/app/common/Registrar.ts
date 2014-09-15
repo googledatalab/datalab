@@ -13,7 +13,7 @@
  */
 
 
-/// <reference path="../../../../../typedefs/angularjs/angular.d.ts" />
+/// <reference path="../../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <reference path="Interfaces.ts" />
 
 
@@ -71,7 +71,7 @@ export class Registrar implements app.IRegistrar {
    */
   service (name: string, constructor: Function): void {
     this._provideService.service(name, constructor);
-  } 
+  }
 
   /**
    * Registers the given factory function as an angular "factory"
@@ -105,7 +105,7 @@ export class Registrar implements app.IRegistrar {
 
   /**
    * Registers a decorator with angular
-   * 
+   *
    * @param name the name of the decorator
    * @param decorator a decorator function (see angular docs for reference here)
    */

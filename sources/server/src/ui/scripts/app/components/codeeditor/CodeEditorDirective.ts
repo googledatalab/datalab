@@ -16,8 +16,8 @@
 /**
  * Directive for creating a single code editor element
  */
-/// <reference path="../../../../../../typedefs/angularjs/angular.d.ts" />
-/// <reference path="../../../../../../typedefs/codemirror/codemirror.d.ts" />
+/// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
+/// <reference path="../../../../../../../../externs/ts/codemirror/codemirror.d.ts" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import app = require('app/App');
@@ -68,7 +68,7 @@ function codeEditorDirectiveLink (
 
 /**
  * Creates a code editor directive
- * 
+ *
  * @return a directive definition
  */
 function codeEditorDirective (): ng.IDirective {

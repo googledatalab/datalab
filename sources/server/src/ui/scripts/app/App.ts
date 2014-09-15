@@ -16,8 +16,8 @@
 /**
  * Top-level angular module
  */
-/// <reference path="../../../../typedefs/angularjs/angular.d.ts" />
-/// <reference path="../../../../typedefs/angularjs/angular-route.d.ts" />
+/// <reference path="../../../../../../externs/ts/angularjs/angular.d.ts" />
+/// <reference path="../../../../../../externs/ts/angularjs/angular-route.d.ts" />
 /// <amd-dependency path="angularRoute" />
 import angular = require('angular');
 import constants = require('app/common/Constants');

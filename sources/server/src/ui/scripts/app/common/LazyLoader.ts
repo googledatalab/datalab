@@ -16,7 +16,7 @@
 /**
  * Utilities for lazy-loading Angular components.
  */
-/// <reference path="../../../../../typedefs/requirejs/require.d.ts" />
+/// <reference path="../../../../../../../externs/ts/requirejs/require.d.ts" />
 /// <reference path="Interfaces.ts" />
 
 
