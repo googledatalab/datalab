@@ -29,12 +29,11 @@ import com.google.common.base.Preconditions;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
@@ -125,6 +124,164 @@ class MessageHandlers {
       // shutdown.
       if (doShutdown) {
         System.exit(0);
+      }
+    }
+  }
+
+  /**
+   * This class handles the {@link Message.ExecuteRequest} message. See <a
+   * href="http://ipython.org/ipython-doc/2/development/messaging.html#execute">Execute in
+   * IPython</a> for more information.
+   */
+  static class ExecuteHandler extends MessageHandler<Message<ExecuteRequest>> {
+
+    private static final int EXECUTION_THREAD_COUNT = 4;
+
+    private int maxExecutionTimeMins;
+
+    /**
+     * @param maxExecutionTimeMins maximum execution time for input code in minutes
+     */
+    public ExecuteHandler(int maxExecutionTimeMins) {
+      this.maxExecutionTimeMins = maxExecutionTimeMins;
+    }
+
+    @Override
+    public void handle(final Message<ExecuteRequest> message, CommunicationChannel socket,
+        KernelCommunicationHandler communicationHandler, ConnectionProfile connectionProfile,
+        final JavaExecutionEngine javaExecutionEngine) throws CommunicationException {
+      Preconditions.checkArgument(message.header.msg_type == MessageType.execute_request);
+
+      LOGGER.fine("executionCounter: " + javaExecutionEngine.getExecutionCounter());
+      final String code = message.content.code.trim();
+
+      // On an empty input just send an OK message to the client and do not increment the execution
+      // counter:
+      if (code.isEmpty()) {
+        communicationHandler.sendOk(message, javaExecutionEngine.getExecutionCounter());
+        return;
+      }
+
+      communicationHandler.sendStatus(ExecutionState.busy);
+      try {
+        // Setting up the streams for error and output:
+        // A pipe stream is setup for each of these streams so that we can read what is written
+        // into them.
+
+        // Output stream:
+        final PipedOutputStream outPipedOutputStream = new PipedOutputStream();
+        final InputStream outPipedInputStream = new PipedInputStream(outPipedOutputStream);
+        final PrintStream outPrintStream = new PrintStream(outPipedOutputStream);
+
+        // Error stream:
+        final PipedOutputStream errPipedOutputStream = new PipedOutputStream();
+        final InputStream errPipedInputStream = new PipedInputStream(errPipedOutputStream);
+        final PrintStream errPrintStream = new PrintStream(errPipedOutputStream);
+
+        ExecutorService executorService = Executors.newFixedThreadPool(EXECUTION_THREAD_COUNT);
+        CompletionService<Boolean> ecs = new ExecutorCompletionService<Boolean>(executorService);
+
+        // Submitting two stream publishers for error and output streams:
+        executorService.submit(new InputStreamPublisher(Message.Stream.StreamName.stdout,
+            outPipedInputStream, message, communicationHandler));
+        executorService.submit(new InputStreamPublisher(Message.Stream.StreamName.stderr,
+            errPipedInputStream, message, communicationHandler));
+
+        // Submitting a task for running the input code.
+        ecs.submit(new Callable<Boolean>() {
+          @Override
+          public Boolean call() throws Exception {
+            // TODO(amshali): Figure out what needs to be used instead of System.in for reading from
+            // input:
+            Boolean returnValue =
+                javaExecutionEngine.execute(code, System.in, outPrintStream, errPrintStream);
+            outPrintStream.close();
+            errPrintStream.close();
+            return returnValue;
+          }
+        });
+
+        // There is only one task submitted to completion service which is the code to run. Take the
+        // result of that task. This will be a blocking call and we have set a 20 minute timeout on
+        // it. TODO(amshali): consider reading the timeout values from run settings.
+        Boolean exeStatus = ecs.take().get(maxExecutionTimeMins, TimeUnit.MINUTES);
+        executorService.shutdown();
+        // Waiting for at most 60 seconds for streams to be published.
+        executorService.awaitTermination(1, TimeUnit.MINUTES);
+
+        outPipedInputStream.close();
+        errPipedInputStream.close();
+
+        if (exeStatus) {
+          communicationHandler.sendOk(message, javaExecutionEngine.getExecutionCounter());
+        } else {
+          // TODO(amshali): consider a better error message for this communication:
+          communicationHandler.sendError(message, javaExecutionEngine.getExecutionCounter(), "");
+        }
+      } catch (Exception e) {
+        // Get the stack trace for logging purposes:
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        PrintStream eps = new PrintStream(bos);
+        e.printStackTrace(eps);
+        eps.close();
+        LOGGER.fine(bos.toString());
+      } finally {
+        communicationHandler.sendStatus(ExecutionState.idle);
+        javaExecutionEngine.incExecutionCounter();
+      }
+    }
+  }
+
+  /**
+   * This class is responsible for reading from an input stream and publishes the read data as
+   * stream messages. See <a
+   * href="http://ipython.org/ipython-doc/2/development/messaging.html#streams-stdout-stderr-etc">Streams
+   * in IPython</a> for more information.
+   */
+  static class InputStreamPublisher implements Runnable {
+
+    static final int READ_INTERVALS_MILLIS = 10;
+
+    Message.Stream.StreamName streamName;
+    InputStream inputStream;
+    Message<?> message;
+    KernelCommunicationHandler communicationHandler;
+
+    public InputStreamPublisher(StreamName streamName, InputStream inputStream, Message<?> message,
+        KernelCommunicationHandler communicationHandler) {
+      this.streamName = streamName;
+      this.inputStream = inputStream;
+      this.message = message;
+      this.communicationHandler = communicationHandler;
+    }
+
+    @Override
+    public void run() {
+      int s = 0;
+      byte[] bs = new byte[4096];
+      while (true) {
+        try {
+          // Wait for some time before next read. This is designed to reduce the number of message
+          // that is sent to the client. Note that we have avoided sending data based on the number
+          // of read characters, because we never know how much more data we have in the input.
+          Thread.sleep(READ_INTERVALS_MILLIS);
+        } catch (InterruptedException e) {
+          LOGGER.fine(e.getMessage());
+        }
+        try {
+          s = inputStream.read(bs);
+          // When the input stream closes it will have a -1 value read from it which marks the end
+          // of stream.
+          if (s == -1) {
+            break;
+          }
+          // Publish the data in response to the input message:
+          communicationHandler.publish(message.publish(MessageType.stream,
+              new Message.Stream(streamName, new String(bs, 0, s, StandardCharsets.UTF_8)),
+              Message.emptyMetadata()));
+        } catch (IOException | CommunicationException e) {
+          LOGGER.fine(e.getMessage());
+        }
       }
     }
   }
