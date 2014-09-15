@@ -297,19 +297,17 @@ class Message<T extends Message.Content> {
   }
 
   static class KernelInfoReply extends Message.Content.Reply {
-    String banner;
-    String implementation;
-    String[] implementation_version;
-    String language;
+    String[] protocol_version;
+    String[] ipython_version;
     String[] language_version;
+    String language;
 
-    KernelInfoReply(String language, String[] language_version, String implementation,
-        String[] implementation_version, String banner) {
-      this.language = language;
+    KernelInfoReply(String[] protocol_version, String[] ipython_version, String[] language_version,
+        String language) {
+      this.protocol_version = protocol_version;
+      this.ipython_version = ipython_version;
       this.language_version = language_version;
-      this.implementation = implementation;
-      this.implementation_version = implementation_version;
-      this.banner = banner;
+      this.language = language;
     }
   }
 
