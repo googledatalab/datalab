@@ -26,7 +26,7 @@ class TypeScriptCompileTask extends DefaultTask {
 
     String rootModule = ''
     String pathToRootModule = ''
-    String srcDir = 'src'
+    String srcDir = 'server/src'
     String outDir = project.buildDir.path
     String outFile = ''
     String moduleType = 'commonjs'
