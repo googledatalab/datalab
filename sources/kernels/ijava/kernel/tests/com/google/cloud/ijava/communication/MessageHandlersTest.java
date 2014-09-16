@@ -2,10 +2,12 @@ package com.google.cloud.ijava.communication;
 
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertThat;
 
+import com.google.cloud.ijava.communication.Message.ExecuteReply;
+import com.google.cloud.ijava.communication.Message.Stream;
 import com.google.cloud.ijava.communication.Message.*;
-import com.google.cloud.ijava.runner.FragmentCodeRunner;
 import com.google.cloud.ijava.runner.JavaExecutionEngine;
 
 import junit.framework.TestCase;
@@ -15,10 +17,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -42,7 +47,7 @@ public class MessageHandlersTest extends TestCase {
     profile = new ConnectionProfile("", "", 1, 2, 3, 4, 5, "", null);
     kernelCommunicationHandler =
         new KernelCommunicationHandler(publishChannel, shellChannel, profile, "testuser");
-    javaExecutionEngine = new FragmentCodeRunner();
+    javaExecutionEngine = new NoopJavaExecutionEngine();
   }
 
   @Test
@@ -90,6 +95,113 @@ public class MessageHandlersTest extends TestCase {
     assertThat(reply.content, instanceOf(ShutdownReply.class));
   }
 
+  @Test
+  public void testExecuteEmptyInput() throws CommunicationException {
+    JavaExecutionEngine executionEngine = new CountingJavaExecutionEngine();
+    int currentCounter = executionEngine.getExecutionCounter();
+
+    new MessageHandlers.ExecuteHandler().handle(createExecuteRequestMessage("    "), shellChannel,
+        kernelCommunicationHandler, profile, executionEngine);
+
+    Message<? extends Content.Reply> reply = receiveReply(shellChannel);
+    assertThat(reply.content, instanceOf(ExecuteReply.class));
+    ExecuteReply executeReply = (ExecuteReply) reply.content;
+    // Make sure the counter has not changed.
+    assertThat(executeReply.execution_count, is(currentCounter));
+  }
+
+  @Test
+  public void testGoodExecution() throws CommunicationException {
+    JavaExecutionEngine executionEngine = new AlwaysGoodExecuteJavaExecutionEngine();
+    int currentCounter = executionEngine.getExecutionCounter();
+
+    new MessageHandlers.ExecuteHandler().handle(createExecuteRequestMessage("int a = 0;"),
+        shellChannel, kernelCommunicationHandler, profile, executionEngine);
+
+    Message<? extends Content.Reply> reply = receiveReply(shellChannel);
+    assertThat(reply.content, instanceOf(ExecuteReply.class));
+    ExecuteReply executeReply = (ExecuteReply) reply.content;
+    assertThat(executeReply.status, is(ExecutionStatus.ok));
+    // Make sure the counter has changed:
+    assertThat(executionEngine.getExecutionCounter(), greaterThan(currentCounter));
+  }
+
+  @Test
+  public void testBadExecution() throws CommunicationException {
+    JavaExecutionEngine executionEngine = new CountingJavaExecutionEngine();
+    int currentCounter = executionEngine.getExecutionCounter();
+
+    new MessageHandlers.ExecuteHandler().handle(createExecuteRequestMessage("int a = 0;"),
+        shellChannel, kernelCommunicationHandler, profile, executionEngine);
+
+    Message<? extends Content.Reply> reply = receiveReply(shellChannel);
+    assertThat(reply.content, instanceOf(ExecuteReply.class));
+    ExecuteReply executeReply = (ExecuteReply) reply.content;
+    assertThat(executeReply.status, is(ExecutionStatus.error));
+    // Make sure the counter has changed:
+    assertThat(executionEngine.getExecutionCounter(), greaterThan(currentCounter));
+  }
+
+  @Test
+  public void testPublishedOutputExecution() throws CommunicationException {
+    JavaExecutionEngine executionEngine = new OutPublisherJavaExecutionEngine();
+    int currentCounter = executionEngine.getExecutionCounter();
+
+    new MessageHandlers.ExecuteHandler().handle(createExecuteRequestMessage("int a = 0;"),
+        shellChannel, kernelCommunicationHandler, profile, executionEngine);
+
+    Message<? extends Content.Reply> reply = receiveReply(shellChannel);
+    assertThat(reply.content, instanceOf(ExecuteReply.class));
+    ExecuteReply executeReply = (ExecuteReply) reply.content;
+    assertThat(executeReply.status, is(ExecutionStatus.ok));
+    // Make sure the counter has changed:
+    assertThat(executionEngine.getExecutionCounter(), greaterThan(currentCounter));
+
+    Message<? extends Content.Reply> publishedReply = receiveReply(publishChannel);
+    assertThat(publishedReply.content, instanceOf(Status.class));
+
+    publishedReply = receiveReply(publishChannel);
+    assertThat(publishedReply.content, instanceOf(Stream.class));
+    Stream stream = (Stream) publishedReply.content;
+    assertThat(stream.data, is("hello world!"));
+  }
+
+  @Test
+  public void testPublishedErrorExecution() throws CommunicationException {
+    JavaExecutionEngine executionEngine = new ErrPublisherJavaExecutionEngine();
+    int currentCounter = executionEngine.getExecutionCounter();
+
+    new MessageHandlers.ExecuteHandler().handle(createExecuteRequestMessage("err!"),
+        shellChannel, kernelCommunicationHandler, profile, executionEngine);
+
+    Message<? extends Content.Reply> reply = receiveReply(shellChannel);
+    assertThat(reply.content, instanceOf(ExecuteReply.class));
+    ExecuteReply executeReply = (ExecuteReply) reply.content;
+    assertThat(executeReply.status, is(ExecutionStatus.error));
+    // Make sure the counter has changed:
+    assertThat(executionEngine.getExecutionCounter(), greaterThan(currentCounter));
+
+    Message<? extends Content.Reply> publishedReply = receiveReply(publishChannel);
+    assertThat(publishedReply.content, instanceOf(Status.class));
+
+    publishedReply = receiveReply(publishChannel);
+    assertThat(publishedReply.content, instanceOf(Stream.class));
+    Stream stream = (Stream) publishedReply.content;
+    assertThat(stream.data, is("error!"));
+  }
+
+  private Message<Message.ExecuteRequest> createExecuteRequestMessage(String code) {
+    Message.Header header = new Message.Header(UUID.randomUUID(), "testuser", UUID.randomUUID(),
+        Message.MessageType.execute_request);
+    return new Message<Message.ExecuteRequest>(Arrays.asList("id1"), header, new Message.Header(),
+        Message.emptyMetadata(), new Message.ExecuteRequest(false,
+            code,
+            false,
+            false,
+            new HashMap<String, String>(),
+            new ArrayList<String>()));
+  }
+
   /**
    * Helper method to convert a sent reply into a message that is sent on a channel. This is similar
    * to {@link KernelCommunicationHandler#receive(CommunicationChannel)} implementation except that
@@ -133,6 +245,12 @@ public class MessageHandlersTest extends TestCase {
       case shutdown_reply:
         content = KernelJsonConverter.GSON.fromJson(contentJSON, ShutdownReply.class);
         break;
+      case status:
+        content = KernelJsonConverter.GSON.fromJson(contentJSON, Status.class);
+        break;
+      case stream:
+        content = KernelJsonConverter.GSON.fromJson(contentJSON, Stream.class);
+        break;
       default:
         content = null;
         break;
@@ -140,5 +258,65 @@ public class MessageHandlersTest extends TestCase {
     Message<Content.Reply> message =
         new Message<Message.Content.Reply>(identities, header, parentHeader, metadata, content);
     return message;
+  }
+
+  private static class NoopJavaExecutionEngine implements JavaExecutionEngine {
+    @Override
+    public void incExecutionCounter() {}
+
+    @Override
+    public int getExecutionCounter() {
+      return 0;
+    }
+
+    @Override
+    public boolean execute(String code, InputStream in, PrintStream out, PrintStream err) {
+      return false;
+    }
+  }
+
+  private static class CountingJavaExecutionEngine implements JavaExecutionEngine {
+    int counter;
+
+    @Override
+    public void incExecutionCounter() {
+      counter++;
+    }
+
+    @Override
+    public int getExecutionCounter() {
+      return counter;
+    }
+
+    @Override
+    public boolean execute(String code, InputStream in, PrintStream out, PrintStream err) {
+      return false;
+    }
+  }
+
+  private final static class AlwaysGoodExecuteJavaExecutionEngine extends
+      CountingJavaExecutionEngine {
+    @Override
+    public boolean execute(String code, InputStream in, PrintStream out, PrintStream err) {
+      return true;
+    }
+  }
+
+  private final static class OutPublisherJavaExecutionEngine extends
+      CountingJavaExecutionEngine {
+    @Override
+    public boolean execute(String code, InputStream in, PrintStream out, PrintStream err) {
+      out.append("hello world!");
+      return true;
+    }
+  }
+
+  private final static class ErrPublisherJavaExecutionEngine extends
+      CountingJavaExecutionEngine {
+    @Override
+    public boolean execute(String code, InputStream in, PrintStream out, PrintStream err) {
+      err.append("error!");
+      return false;
+    }
   }
 }
