@@ -16,6 +16,6 @@ echo 'Local URL: http://localhost:9002'
 echo '----------'
 
 # Finally start IPython.
-ipython notebook --config=$REPO_DIR/sources/ipython/config.py \
+ipython notebook --config=$REPO_DIR/sources/ipython/profile/config.py \
   --ip="*" --port=9002 \
   --matplotlib=inline --no-mathjax --no-script --quiet

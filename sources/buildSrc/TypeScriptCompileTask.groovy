@@ -24,11 +24,9 @@ import org.gradle.api.tasks.TaskAction
  */
 class TypeScriptCompileTask extends DefaultTask {
 
-    String rootModule = ''
     String pathToRootModule = ''
-    String srcDir = 'server/src'
+    String srcDir = ''
     String outDir = project.buildDir.path
-    String outFile = ''
     String moduleType = 'commonjs'
     String compilerArgs = '--removeComments --noImplicitAny'
 
