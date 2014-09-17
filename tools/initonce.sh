@@ -41,3 +41,4 @@ if which npm >/dev/null; then
 else
   echo "Please install NodeJS and then re-run this script to install the TypeScript compiler."
 fi
+
