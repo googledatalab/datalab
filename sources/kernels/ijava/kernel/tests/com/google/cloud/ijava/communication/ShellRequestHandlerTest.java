@@ -38,7 +38,7 @@ public class ShellRequestHandlerTest extends MessageHandlersTestBase {
     publishChannel = new FakeCommunicationChannel(true);
     ConnectionProfile connectionProfile = new ConnectionProfile("", "", 1, 2, 3, 4, 5, "", null);
     context = new JavaKernelContext(new KernelCommunicationHandler(publishChannel,
-        shellChannel.channel1, context.connectionProfile, "testuser"), connectionProfile,
+        shellChannel.channel1, connectionProfile, "testuser"), connectionProfile,
         new NoopJavaExecutionEngine());
     requestHandler = new Thread(new ShellRequestHandler(shellChannel.channel1, context));
     requestHandler.start();

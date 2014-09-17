@@ -40,7 +40,7 @@ public class MessageHandlersTest extends MessageHandlersTestBase {
     publishChannel = new FakeCommunicationChannel(true);
     ConnectionProfile connectionProfile = new ConnectionProfile("", "", 1, 2, 3, 4, 5, "", null);
     context = new JavaKernelContext(new KernelCommunicationHandler(publishChannel, shellChannel,
-        context.connectionProfile, "testuser"), connectionProfile, new NoopJavaExecutionEngine());
+        connectionProfile, "testuser"), connectionProfile, new NoopJavaExecutionEngine());
   }
 
   @Test
