@@ -14,21 +14,23 @@
 
 package com.google.cloud.ijava.communication;
 
-import java.util.ArrayDeque;
-import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 class FakeCommunicationChannel implements CommunicationChannel {
 
-  Queue<String> toReceive;
-  Queue<String> sent;
+  protected BlockingQueue<String> toReceive;
+  protected BlockingQueue<String> sent;
 
   /**
    * @param isPipe when true this channel will send the data from sent queue to the receive queue.
    */
   FakeCommunicationChannel(boolean isPipe) {
-    sent = new ArrayDeque<>();
+    sent = new LinkedBlockingQueue<>();
     if (isPipe) {
       toReceive = sent;
+    } else {
+      toReceive = new LinkedBlockingQueue<>();
     }
   }
 
@@ -38,7 +40,11 @@ class FakeCommunicationChannel implements CommunicationChannel {
 
   @Override
   public String recvStr() throws CommunicationException {
-    return toReceive.poll();
+    try {
+      return toReceive.take();
+    } catch (InterruptedException e) {
+      throw new CommunicationException(e);
+    }
   }
 
   @Override
