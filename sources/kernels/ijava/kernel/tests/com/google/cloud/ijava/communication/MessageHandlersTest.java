@@ -100,7 +100,7 @@ public class MessageHandlersTest extends TestCase {
     JavaExecutionEngine executionEngine = new CountingJavaExecutionEngine();
     int currentCounter = executionEngine.getExecutionCounter();
 
-    new MessageHandlers.ExecuteHandler().handle(createExecuteRequestMessage("    "), shellChannel,
+    new MessageHandlers.ExecuteHandler(1).handle(createExecuteRequestMessage("    "), shellChannel,
         kernelCommunicationHandler, profile, executionEngine);
 
     Message<? extends Content.Reply> reply = receiveReply(shellChannel);
@@ -115,7 +115,7 @@ public class MessageHandlersTest extends TestCase {
     JavaExecutionEngine executionEngine = new AlwaysGoodExecuteJavaExecutionEngine();
     int currentCounter = executionEngine.getExecutionCounter();
 
-    new MessageHandlers.ExecuteHandler().handle(createExecuteRequestMessage("int a = 0;"),
+    new MessageHandlers.ExecuteHandler(1).handle(createExecuteRequestMessage("int a = 0;"),
         shellChannel, kernelCommunicationHandler, profile, executionEngine);
 
     Message<? extends Content.Reply> reply = receiveReply(shellChannel);
@@ -131,7 +131,7 @@ public class MessageHandlersTest extends TestCase {
     JavaExecutionEngine executionEngine = new CountingJavaExecutionEngine();
     int currentCounter = executionEngine.getExecutionCounter();
 
-    new MessageHandlers.ExecuteHandler().handle(createExecuteRequestMessage("int a = 0;"),
+    new MessageHandlers.ExecuteHandler(1).handle(createExecuteRequestMessage("int a = 0;"),
         shellChannel, kernelCommunicationHandler, profile, executionEngine);
 
     Message<? extends Content.Reply> reply = receiveReply(shellChannel);
@@ -147,7 +147,7 @@ public class MessageHandlersTest extends TestCase {
     JavaExecutionEngine executionEngine = new OutPublisherJavaExecutionEngine();
     int currentCounter = executionEngine.getExecutionCounter();
 
-    new MessageHandlers.ExecuteHandler().handle(createExecuteRequestMessage("int a = 0;"),
+    new MessageHandlers.ExecuteHandler(1).handle(createExecuteRequestMessage("int a = 0;"),
         shellChannel, kernelCommunicationHandler, profile, executionEngine);
 
     Message<? extends Content.Reply> reply = receiveReply(shellChannel);
@@ -171,7 +171,7 @@ public class MessageHandlersTest extends TestCase {
     JavaExecutionEngine executionEngine = new ErrPublisherJavaExecutionEngine();
     int currentCounter = executionEngine.getExecutionCounter();
 
-    new MessageHandlers.ExecuteHandler().handle(createExecuteRequestMessage("err!"),
+    new MessageHandlers.ExecuteHandler(1).handle(createExecuteRequestMessage("err!"),
         shellChannel, kernelCommunicationHandler, profile, executionEngine);
 
     Message<? extends Content.Reply> reply = receiveReply(shellChannel);
