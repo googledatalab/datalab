@@ -21,10 +21,6 @@
 
 /**
  * Logger that supports levels and scopes.
- *
- * TODO(bryantd): detect support for console.<level> methods and delegate if available.
- * TODO(bryantd): add support for configuring the log levels externally
- * TODO(bryantd): add support configuring log output by scope
  */
 class Logger implements app.ILogger {
   /**
