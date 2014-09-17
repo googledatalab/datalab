@@ -1,0 +1,24 @@
+<div class="datalab-editor-cell">
+  <div class="datalab-editor-cell-controls">
+    <!-- Single-cell controls/buttons go here -->
+  </div>
+  <div class="datalab-editor-cell-input">
+    <div class="datalab-editor-cell-identifier">
+      <span class="datalab-editor-cell-index">[ {{ executionCounter }} ]<span>
+    </div>
+    <div class="datalab-editor-cell-input-content">
+      <datalab-code-editor contents="inputText"></datalab-code-editor>
+    </div>
+  </div>
+  <div class="datalab-editor-cell-output" ng-show="outputs">
+    <div class="datalab-editor-cell-output-indicator">
+      <span class="glyphicon glyphicon-log-out"></span>
+    </div>
+    <div class="datalab-editor-cell-outputs">
+      <div ng-repeat="output in outputs" ng-switch="output.mimetype">
+        <div ng-switch-when="text/html" ng-bind-html="output.content"></div>
+        <!-- Additional mime-types go here (css, js, etc.) -->
+      </div>
+    </div>
+  </div>
+</div>
