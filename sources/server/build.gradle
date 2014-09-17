@@ -25,7 +25,7 @@ task copyStaticUi(type: Copy) {
  * Compile the main UI module and it's dependencies into a single main.js
  */
 task tscUi(type: TypeScriptCompileTask) {
-    rootModule = 'main'
+    srcDir = 'server/src'
     pathToRootModule = '/ui/scripts/'
     moduleType = 'amd'
 }
@@ -34,7 +34,7 @@ task tscUi(type: TypeScriptCompileTask) {
  * Compile the NodeJS modules into a single server.js
  */
 task tscNode(type: TypeScriptCompileTask) {
-    rootModule = 'server'
+    srcDir = 'server/src'
     pathToRootModule = '/node/'
     moduleType = 'commonjs'
 }
