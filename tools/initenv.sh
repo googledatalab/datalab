@@ -8,7 +8,7 @@ SCRIPT=$0
 if [ "$SCRIPT" == "-bash" ]; then
   SCRIPT=${BASH_SOURCE[0]}
 fi
-export REPO_DIR=$(cd "$(dirname "$SCRIPT")/.."; pwd)
+export REPO_DIR=$(git rev-parse --show-toplevel)
 
 # These control where the local emulation of the GCE metadata service exists.
 export METADATA_HOST=localhost
