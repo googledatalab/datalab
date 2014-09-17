@@ -14,8 +14,6 @@
 
 package com.google.cloud.ijava.communication;
 
-import com.google.cloud.ijava.runner.JavaExecutionEngine;
-
 /**
  * Abstract class representing a message handler.
  */
@@ -24,7 +22,6 @@ abstract class MessageHandler<M extends Message<? extends Message.Content.Reques
   /**
    * @param channel the channel on which the message was received
    */
-  abstract void handle(M message, CommunicationChannel channel,
-      KernelCommunicationHandler communicationHandler, ConnectionProfile connectionProfile,
-      JavaExecutionEngine javaExecutionEngine) throws CommunicationException;
+  abstract void handle(M message, CommunicationChannel channel, JavaKernelContext javaKernelContext)
+      throws CommunicationException;
 }

@@ -32,11 +32,11 @@ import org.junit.runners.JUnit4;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Tests for {@link KernelCommunicationHandler}.
@@ -58,7 +58,7 @@ public class KernelCommunicationHandlerTest extends TestCase {
 
   @Test
   public void testReceive() throws CommunicationException {
-    shellChannel.toReceive = new ArrayDeque<>();
+    shellChannel.toReceive = new LinkedBlockingQueue<>();
     shellChannel.toReceive.offer("id1");
     shellChannel.toReceive.offer(KernelCommunicationHandler.DELIMITER);
     // signature

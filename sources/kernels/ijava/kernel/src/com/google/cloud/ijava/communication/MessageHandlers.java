@@ -23,7 +23,6 @@ import com.google.cloud.ijava.communication.Message.MessageType;
 import com.google.cloud.ijava.communication.Message.ShutdownReply;
 import com.google.cloud.ijava.communication.Message.ShutdownRequest;
 import com.google.cloud.ijava.communication.Message.Stream.StreamName;
-import com.google.cloud.ijava.runner.JavaExecutionEngine;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
@@ -59,11 +58,10 @@ class MessageHandlers {
 
     @Override
     public void handle(Message<KernelInfoRequest> message, CommunicationChannel socket,
-        KernelCommunicationHandler communicationHandler, ConnectionProfile connectionProfile,
-        JavaExecutionEngine javaExecutionEngine) throws CommunicationException {
+        JavaKernelContext context) throws CommunicationException {
       Preconditions.checkArgument(message.header.msg_type == MessageType.kernel_info_request);
       String[] javaVersion = System.getProperty("java.version").split("\\.");
-      communicationHandler.send(socket, message.reply(
+      context.kernelCommunicationHandler.send(socket, message.reply(
           MessageType.kernel_info_reply, new Message.KernelInfoReply(new String[] {"1", "0"},
               new String[] {}, javaVersion, "Java"), Message.emptyMetadata()));
     }
@@ -81,13 +79,12 @@ class MessageHandlers {
 
     @Override
     public void handle(Message<ConnectRequest> message, CommunicationChannel socket,
-        KernelCommunicationHandler communicationHandler, ConnectionProfile connectionProfile,
-        JavaExecutionEngine javaExecutionEngine) throws CommunicationException {
+        JavaKernelContext context) throws CommunicationException {
       Preconditions.checkArgument(message.header.msg_type == MessageType.connect_request);
-      communicationHandler.send(socket, message.reply(MessageType.connect_reply, new ConnectReply(
-          connectionProfile.getShell_port(), connectionProfile.getIopub_port(),
-          connectionProfile.getStdin_port(), connectionProfile.getHb_port()),
-          Message.emptyMetadata()));
+      context.kernelCommunicationHandler.send(socket, message.reply(
+          MessageType.connect_reply, new ConnectReply(context.connectionProfile.getShell_port(),
+              context.connectionProfile.getIopub_port(), context.connectionProfile.getStdin_port(),
+              context.connectionProfile.getHb_port()), Message.emptyMetadata()));
     }
   }
 
@@ -114,10 +111,9 @@ class MessageHandlers {
 
     @Override
     public void handle(Message<ShutdownRequest> message, CommunicationChannel socket,
-        KernelCommunicationHandler communicationHandler, ConnectionProfile connectionProfile,
-        JavaExecutionEngine javaExecutionEngine) throws CommunicationException {
+        JavaKernelContext context) throws CommunicationException {
       Preconditions.checkArgument(message.header.msg_type == MessageType.shutdown_request);
-      communicationHandler.send(socket, message.reply(MessageType.shutdown_reply,
+      context.kernelCommunicationHandler.send(socket, message.reply(MessageType.shutdown_reply,
           new ShutdownReply(message.content.restart), Message.emptyMetadata()));
       LOGGER.fine("Shutting down.");
       // The shutdown hook that we setup when we run the kernel will do the required things before
@@ -137,32 +133,23 @@ class MessageHandlers {
 
     private static final int EXECUTION_THREAD_COUNT = 4;
 
-    private int maxExecutionTimeMins;
-
-    /**
-     * @param maxExecutionTimeMins maximum execution time for input code in minutes
-     */
-    public ExecuteHandler(int maxExecutionTimeMins) {
-      this.maxExecutionTimeMins = maxExecutionTimeMins;
-    }
-
     @Override
     public void handle(final Message<ExecuteRequest> message, CommunicationChannel socket,
-        KernelCommunicationHandler communicationHandler, ConnectionProfile connectionProfile,
-        final JavaExecutionEngine javaExecutionEngine) throws CommunicationException {
+        final JavaKernelContext context) throws CommunicationException {
       Preconditions.checkArgument(message.header.msg_type == MessageType.execute_request);
 
-      LOGGER.fine("executionCounter: " + javaExecutionEngine.getExecutionCounter());
+      LOGGER.fine("executionCounter: " + context.javaExecutionEngine.getExecutionCounter());
       final String code = message.content.code.trim();
 
       // On an empty input just send an OK message to the client and do not increment the execution
       // counter:
       if (code.isEmpty()) {
-        communicationHandler.sendOk(message, javaExecutionEngine.getExecutionCounter());
+        context.kernelCommunicationHandler.sendOk(message,
+            context.javaExecutionEngine.getExecutionCounter());
         return;
       }
 
-      communicationHandler.sendStatus(ExecutionState.busy);
+      context.kernelCommunicationHandler.sendStatus(ExecutionState.busy);
       try {
         // Setting up the streams for error and output:
         // A pipe stream is setup for each of these streams so that we can read what is written
@@ -183,9 +170,9 @@ class MessageHandlers {
 
         // Submitting two stream publishers for error and output streams:
         executorService.submit(new InputStreamPublisher(Message.Stream.StreamName.stdout,
-            outPipedInputStream, message, communicationHandler));
+            outPipedInputStream, message, context));
         executorService.submit(new InputStreamPublisher(Message.Stream.StreamName.stderr,
-            errPipedInputStream, message, communicationHandler));
+            errPipedInputStream, message, context));
 
         // Submitting a task for running the input code.
         ecs.submit(new Callable<Boolean>() {
@@ -193,8 +180,8 @@ class MessageHandlers {
           public Boolean call() throws Exception {
             // TODO(amshali): Figure out what needs to be used instead of System.in for reading from
             // input:
-            Boolean returnValue =
-                javaExecutionEngine.execute(code, System.in, outPrintStream, errPrintStream);
+            Boolean returnValue = context.javaExecutionEngine.execute(code, System.in,
+                outPrintStream, errPrintStream);
             outPrintStream.close();
             errPrintStream.close();
             return returnValue;
@@ -204,7 +191,7 @@ class MessageHandlers {
         // There is only one task submitted to completion service which is the code to run. Take the
         // result of that task. This will be a blocking call and we have set a 20 minute timeout on
         // it. TODO(amshali): consider reading the timeout values from run settings.
-        Boolean exeStatus = ecs.take().get(maxExecutionTimeMins, TimeUnit.MINUTES);
+        Boolean exeStatus = ecs.take().get();
         executorService.shutdown();
         // Waiting for at most 60 seconds for streams to be published.
         executorService.awaitTermination(1, TimeUnit.MINUTES);
@@ -213,10 +200,12 @@ class MessageHandlers {
         errPipedInputStream.close();
 
         if (exeStatus) {
-          communicationHandler.sendOk(message, javaExecutionEngine.getExecutionCounter());
+          context.kernelCommunicationHandler.sendOk(message,
+              context.javaExecutionEngine.getExecutionCounter());
         } else {
           // TODO(amshali): consider a better error message for this communication:
-          communicationHandler.sendError(message, javaExecutionEngine.getExecutionCounter(), "");
+          context.kernelCommunicationHandler.sendError(message,
+              context.javaExecutionEngine.getExecutionCounter(), "");
         }
       } catch (Exception e) {
         // Get the stack trace for logging purposes:
@@ -226,8 +215,8 @@ class MessageHandlers {
         eps.close();
         LOGGER.fine(bos.toString());
       } finally {
-        communicationHandler.sendStatus(ExecutionState.idle);
-        javaExecutionEngine.incExecutionCounter();
+        context.kernelCommunicationHandler.sendStatus(ExecutionState.idle);
+        context.javaExecutionEngine.incExecutionCounter();
       }
     }
   }
@@ -245,14 +234,14 @@ class MessageHandlers {
     Message.Stream.StreamName streamName;
     InputStream inputStream;
     Message<?> message;
-    KernelCommunicationHandler communicationHandler;
+    JavaKernelContext context;
 
     public InputStreamPublisher(StreamName streamName, InputStream inputStream, Message<?> message,
-        KernelCommunicationHandler communicationHandler) {
+        JavaKernelContext context) {
       this.streamName = streamName;
       this.inputStream = inputStream;
       this.message = message;
-      this.communicationHandler = communicationHandler;
+      this.context = context;
     }
 
     @Override
@@ -276,7 +265,7 @@ class MessageHandlers {
             break;
           }
           // Publish the data in response to the input message:
-          communicationHandler.publish(message.publish(MessageType.stream,
+          context.kernelCommunicationHandler.publish(message.publish(MessageType.stream,
               new Message.Stream(streamName, new String(bs, 0, s, StandardCharsets.UTF_8)),
               Message.emptyMetadata()));
         } catch (IOException | CommunicationException e) {
