@@ -12,22 +12,51 @@ sourceSets {
     }
 }
 
-configurations {
-    deploy.extendsFrom compile
-}
-
 dependencies {
     compile files("${System.properties['java.home']}/../lib/tools.jar")
-    compile 'com.google.guava:guava:17.0'
-    compile 'org.apache.velocity:velocity:1.7'
-    compile 'org.zeromq:jeromq:0.3.4'
-    compile 'com.google.code.gson:gson:2.3'
+    compile 'com.google.guava:guava:17.0',
+            'org.apache.velocity:velocity:1.7',
+            'org.zeromq:jeromq:0.3.4',
+            'com.google.code.gson:gson:2.3'
 
     testCompile 'org.hamcrest:hamcrest-all:1.3'
     testCompile group: 'junit', name: 'junit', version: '4.11'
 }
 
-artifacts {
-    deploy jar
-    jar {}
+
+task deployJar(type: Jar) {
+    baseName = 'ijava'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+    manifest { attributes 'Main-Class': 'com.google.cloud.ijava.communication.IJava' }
 }
+
+class CreateRunFile extends DefaultTask {
+    // The shell file which runs a jar file
+    @InputFile File stubFile
+    @InputFile File deployJarFile
+
+    @OutputFile File outputFile
+
+    @TaskAction
+    void generate() {
+        outputFile.createNewFile()
+        def files = project.files(stubFile, deployJarFile)
+        files.each{ outputFile.append(it.getBytes()) }
+    }
+}
+
+// Creates a runnable file for running the IJava server.
+task createRunFile(type: CreateRunFile) {
+    dependsOn deployJar
+    stubFile = file("$project.projectDir/stub.sh")
+    deployJarFile = file("$project.buildDir/libs/ijava.jar")
+    outputFile = file("$buildDir/ijava.run")
+
+    doLast {
+        exec {
+            commandLine('chmod', '+x', outputFile)
+        }
+    }
+}
+
