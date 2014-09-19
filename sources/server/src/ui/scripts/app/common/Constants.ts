@@ -36,6 +36,9 @@ export var layouts = {
 export var codeEditor = {
   directiveName: 'datalabCodeEditor'
 };
+export var editorCell = {
+  directiveName: 'datalabEditorCell'
+}
 
 // Route-specific angular component names used for dependency injection
 export var notebooks = {
@@ -49,6 +52,7 @@ export var notebooks = {
 export var scopes = {
   // Generic components
   codeEditor: 'codeEditor',
+  editorCell: 'editorCell',
   layouts: 'layouts',
 
   // Route-specific components

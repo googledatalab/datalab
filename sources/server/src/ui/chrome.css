@@ -50,3 +50,25 @@ body {
   background-color: #f5f5f5;
   border-right: 1px solid #eee;
 }
+
+/**
+ * Cell styling
+ */
+.datalab-editor-cell-identifier {
+  float: left;
+  font-weight: bold;
+}
+.datalab-editor-cell-input-content {
+  float: left;
+  margin-left: 10px;
+}
+.datalab-editor-cell-output {
+  clear: both;
+}
+.datalab-editor-cell-output-indicator {
+  float: left;
+}
+.datalab-editor-cell-outputs {
+  float: left;
+  margin-left: 10px;
+}

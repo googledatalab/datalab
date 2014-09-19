@@ -27,7 +27,7 @@ import codeMirror = require('codeMirror');
 var log = logging.getLogger(constants.scopes.codeEditor);
 
 var codeMirrorOptions: CodeMirror.EditorConfiguration = {
-  lineNumbers: true
+  lineNumbers: false
 };
 
 /**
