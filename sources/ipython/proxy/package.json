@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "node-uuid": "^1.4.1",
     "http-proxy": "^1.4.3"
   }
 }

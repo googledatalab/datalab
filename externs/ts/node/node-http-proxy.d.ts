@@ -1,7 +1,7 @@
-// Type definitions for node-http-proxy node module v1.4.3
+// Type definitions for http-proxy node module v1.4.3
 //
 
-/// <reference path="../node/node.d.ts" />
+/// <reference path="./node.d.ts" />
 
 declare module 'http-proxy' {
   import events = require('events');

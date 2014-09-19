@@ -13,25 +13,23 @@
  */
 
 /// <reference path="../../../externs/ts/node/node.d.ts" />
-/// <reference path="../../../externs/ts/node-http-proxy/node-http-proxy.d.ts" />
+/// <reference path="../../../externs/ts/node/node-http-proxy.d.ts" />
 
 import http = require('http');
 import httpProxy = require('http-proxy');
-import net = require('net');
+import common = require('./Common');
 
-var proxyOptions : httpProxy.ProxyServerOptions = {
-  target: 'http://localhost:8080'
-};
-var proxy = httpProxy.createProxyServer(proxyOptions);
-
-function requestHandler(request: http.ServerRequest, response: http.ServerResponse) {
-  proxy.web(request, response);
+function errorHandler(error: Error, request: http.ServerRequest, response: http.ServerResponse) {
+  response.writeHead(500, { 'Content-Type': 'text/plain' });
+  response.end('Internal Server Error');
 }
 
-function upgradeHandler(request: http.ServerRequest, socket: net.Socket, head: Buffer) {
-  proxy.ws(request, socket, head);
-}
+export function createProxyServer(settings: common.Settings): httpProxy.ProxyServer {
+  var proxyOptions: httpProxy.ProxyServerOptions = {
+    target: 'http://localhost:' + settings.ipythonPort
+  };
+  var proxy = httpProxy.createProxyServer(proxyOptions);
+  proxy.on('error', errorHandler);
 
-var server = http.createServer(requestHandler);
-server.on('upgrade', upgradeHandler);
-server.listen(8000);
+  return proxy;
+}
