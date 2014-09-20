@@ -7,8 +7,8 @@ import com.google.cloud.ijava.runner.FragmentCodeRunner;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Socket;
 
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -26,10 +26,18 @@ public class IJava implements Runnable {
   private CommunicationChannel publish, shell, heartbeat;
 
   public IJava(String[] args) throws InvalidKeyException, NoSuchAlgorithmException, IOException {
+    if (args.length != 1) {
+      System.err.println("Please provide the connection profile file path.");
+      System.exit(-1);
+    }
+    File connectionprofileFile = new File(args[0]);
+    if (!connectionprofileFile.exists()) {
+      System.err.println("Connection profile file does not exist.");
+      System.exit(-1);
+    }
     LOGGER.fine("Running IJava with profile: " + args[0]);
     ConnectionProfile connectionProfile = KernelJsonConverter.GSON.fromJson(
-        new String(Files.readAllBytes(FileSystems.getDefault().getPath(args[0]))),
-        ConnectionProfile.class);
+        new String(Files.readAllBytes(connectionprofileFile.toPath())), ConnectionProfile.class);
     LOGGER.fine("Connection Profile: " + connectionProfile);
 
     initZMQChannels(connectionProfile);
