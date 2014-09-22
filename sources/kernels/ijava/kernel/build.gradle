@@ -60,3 +60,6 @@ task createRunFile(type: CreateRunFile) {
     }
 }
 
+task release() {
+    dependsOn createRunFile
+}
