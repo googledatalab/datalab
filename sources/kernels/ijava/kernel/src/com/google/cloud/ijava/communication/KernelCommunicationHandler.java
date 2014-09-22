@@ -93,7 +93,8 @@ public class KernelCommunicationHandler {
         channel.sendMore(id);
       }
       channel.sendMore(DELIMITER);
-      channel.sendMore(hmac.hash(headerJSON, parentHeaderJSON, metadataJSON, contentJSON));
+      channel.sendMore(
+          hmac.hash(headerJSON, parentHeaderJSON, metadataJSON, contentJSON).toLowerCase());
       channel.sendMore(headerJSON);
       channel.sendMore(parentHeaderJSON);
       channel.sendMore(metadataJSON);
@@ -132,8 +133,9 @@ public class KernelCommunicationHandler {
       metadataJSON = channel.recvStr();
       contentJSON = channel.recvStr();
     }
-    if (!signatureJSON.equals(hmac.hash(headerJSON, parentHeaderJSON, metadataJSON, contentJSON))) {
-      System.err.println("Invalid HMAC signature");
+    if (!signatureJSON.toLowerCase().equals(
+        hmac.hash(headerJSON, parentHeaderJSON, metadataJSON, contentJSON).toLowerCase())) {
+      LOGGER.severe("Invalid HMAC signature");
       return null;
     }
     Header header = KernelJsonConverter.GSON.fromJson(headerJSON, Header.class);
