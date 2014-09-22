@@ -25,5 +25,3 @@ repo_dir = os.environ.get('REPO_DIR')
 ijava_run = os.path.join(repo_dir, 'build', 'kernel', 'ijava.run')
 
 c.KernelManager.kernel_cmd = [ijava_run, '{connection_file}']
-c.Session.key = b''
-c.Session.keyfile = b''

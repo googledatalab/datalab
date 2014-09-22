@@ -86,7 +86,7 @@ public abstract class HMAC {
         StringBuilder sb = new StringBuilder();
         // Create a hex representation of the hash
         for (byte b : mac.doFinal()) {
-          sb.append(String.format("%02X ", b));
+          sb.append(String.format("%02X", b));
         }
         return sb.toString();
       }
