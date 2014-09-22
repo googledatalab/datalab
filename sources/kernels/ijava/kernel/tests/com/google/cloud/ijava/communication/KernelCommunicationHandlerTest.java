@@ -17,6 +17,7 @@ package com.google.cloud.ijava.communication;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 
 import com.google.cloud.ijava.communication.Message.Content.Request;
@@ -89,5 +90,31 @@ public class KernelCommunicationHandlerTest extends TestCase {
     assertThat(publishChannel.sent, hasItem("id1"));
     assertThat(publishChannel.sent, hasItem(KernelJsonConverter.GSON.toJson(header)));
     assertThat(publishChannel.sent, hasItem(KernelJsonConverter.GSON.toJson(content)));
+  }
+
+  @Test
+  public void testSendHMAC() throws CommunicationException, InvalidKeyException,
+      NoSuchAlgorithmException {
+    Message.Header header = new Message.Header(UUID.randomUUID(), "testuser", UUID.randomUUID(),
+        Message.MessageType.execute_reply);
+    Message.ExecuteReply content = new Message.ExecuteReply(ExecutionStatus.ok, 1);
+    // Construct KernelCommunicationHandler with a custom profile which has a key for signing
+    // messages:
+    KernelCommunicationHandler kernelCommunicationHandler = new KernelCommunicationHandler(
+        publishChannel, shellChannel,
+        new ConnectionProfile("", "", 1, 2, 3, 4, 5, UUID.randomUUID().toString(), null),
+        "testuser");
+    kernelCommunicationHandler.send(publishChannel, new Message<ExecuteReply>(Arrays.asList("id1"),
+        header, new Message.Header(), Message.emptyMetadata(), content));
+
+    String hash = publishChannel.sent.toArray(new String[] {})[2];
+    assertThat(hash, not(is("")));
+
+    // Make sure all the letters in the hash are lower case:
+    for (char c : hash.toCharArray()) {
+      if (Character.isLetter(c)) {
+        assertTrue(Character.isLowerCase(c));
+      }
+    }
   }
 }
