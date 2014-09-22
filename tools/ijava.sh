@@ -12,6 +12,14 @@ fi
 
 source $(dirname $0)/initenv.sh
 
+if [ ! -f $REPO_DIR/build/kernel/ijava.run ]; then
+  echo "ijava.run not found in build directory. Running 'gradle release' in the sources directory."
+  pushd `pwd`
+  cd $REPO_DIR/sources
+  gradle release
+  popd
+fi
+
 echo 'Notebooks:' $1
 echo 'Local URL: http://localhost:9001'
 echo '----------'
