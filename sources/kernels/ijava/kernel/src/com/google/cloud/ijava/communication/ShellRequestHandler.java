@@ -49,6 +49,11 @@ class ShellRequestHandler implements Runnable {
       synchronized (this) {
         try {
           LOGGER.fine("Received " + KernelJsonConverter.PRETTY_GSON.toJson(message));
+
+          // Setting the display data publisher for the current message:
+          _.setDisplayDataPublisher(new IDisplayDataPublisher.DisplayDataPublisherImpl(message,
+              context.kernelCommunicationHandler));
+
           switch (message.header.msg_type) {
             case connect_request:
               @SuppressWarnings("unchecked")

@@ -12,6 +12,7 @@
  * the License.
  */
 
+import com.google.cloud.ijava.communication._;
 $imports
 public class $codeClassName
     extends com.google.cloud.ijava.runner.RunnableCode {

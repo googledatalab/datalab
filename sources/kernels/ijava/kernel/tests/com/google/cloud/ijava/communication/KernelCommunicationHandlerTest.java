@@ -117,4 +117,42 @@ public class KernelCommunicationHandlerTest extends TestCase {
       }
     }
   }
+
+  @Test
+  public void testDisplayDataNull() {
+    NoOpDisplayDataPublisher displayDataPublisher = new NoOpDisplayDataPublisher();
+    _.setDisplayDataPublisher(displayDataPublisher);
+    _.show(null);
+    assertThat(displayDataPublisher.mimetype, is("text/plain"));
+    assertThat((String) displayDataPublisher.rawData, is("null"));
+  }
+
+  @Test
+  public void testDisplayDataHTML() {
+    NoOpDisplayDataPublisher displayDataPublisher = new NoOpDisplayDataPublisher();
+    _.setDisplayDataPublisher(displayDataPublisher);
+    _.showHTML("<a href=''>Link</a>");
+    assertThat(displayDataPublisher.mimetype, is("text/html"));
+    assertThat((String) displayDataPublisher.rawData, is("<a href=''>Link</a>"));
+  }
+
+  @Test
+  public void testDisplayDataObject() {
+    NoOpDisplayDataPublisher displayDataPublisher = new NoOpDisplayDataPublisher();
+    _.setDisplayDataPublisher(displayDataPublisher);
+    _.show(Arrays.asList("a", "b"));
+    assertThat(displayDataPublisher.mimetype, is("text/plain"));
+    assertThat(displayDataPublisher.rawData, instanceOf(String.class));
+  }
+
+  class NoOpDisplayDataPublisher implements IDisplayDataPublisher {
+    String mimetype;
+    Object rawData;
+
+    @Override
+    public void publish(String mimetype, Object rawData) throws CommunicationException {
+      this.mimetype = mimetype;
+      this.rawData = rawData;
+    }
+  }
 }
