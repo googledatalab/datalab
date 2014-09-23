@@ -171,15 +171,22 @@ public class FragmentCodeRunner implements JavaExecutionEngine {
   FragmentCodeCompilationResult tryCompile(String code) throws IOException, ClassNotFoundException {
     // Try to compile the input code and see if it is a type declaration.
     {
+      // Just parse the code in order to see if there is any type declarations:
       CompilationResult compilationResult = compiler.parse(code);
       CompilationUnitTree cunit = Iterables.getFirst(compilationResult.compilationUnits, null);
       if (ASTHelper.hasNonStaticTypeDecls(cunit, compilationResult.context)) {
         if (compilationResult.hasAnyDiagnosticError()) {
           return new FragmentCodeCompilationResult(compilationResult, true, null);
         }
+        // Analyzing the code for finding semantic issues:
         String typeName = ASTHelper.publicOrPackageTypeName(cunit, compilationResult.context);
-        compiler.compile(typeName + JAVA_FILE_EXTENSION, ASTHelper.treeToString((JCTree) cunit))
-            .getDiagnostics();
+        compilationResult = compiler.analyze(typeName + JAVA_FILE_EXTENSION,
+            ASTHelper.treeToString((JCTree) cunit));
+        if (compilationResult.hasAnyDiagnosticError()) {
+          return new FragmentCodeCompilationResult(compilationResult, true, null);
+        }
+        // Generate bytecode when there is no error:
+        compiler.compile(typeName + JAVA_FILE_EXTENSION, ASTHelper.treeToString((JCTree) cunit));
         compiler.pushClassLoader();
         return new FragmentCodeCompilationResult(compilationResult, true, null);
       }
