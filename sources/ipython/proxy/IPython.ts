@@ -20,8 +20,10 @@ import httpProxy = require('http-proxy');
 import common = require('./Common');
 
 function errorHandler(error: Error, request: http.ServerRequest, response: http.ServerResponse) {
-  response.writeHead(500, { 'Content-Type': 'text/plain' });
-  response.end('Internal Server Error');
+  console.log(error.toString());
+
+  response.writeHead(500, 'Internal Server Error');
+  response.end();
 }
 
 export function createProxyServer(settings: common.Settings): httpProxy.ProxyServer {

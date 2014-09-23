@@ -15,7 +15,7 @@
 import common = require('./Common');
 import server = require('./Server');
 
-common.loadSettings(function(error: Error, settings: common.Settings) {
+common.loadSettings((error: Error, settings: common.Settings) => {
   if (error) {
     console.log(error);
     return;

@@ -17,33 +17,47 @@
 import http = require('http');
 import https = require('https');
 import qs = require('querystring');
+import util = require('util');
+
+var HTTP_PORT = 80;
+var HTTPS_PORT = 443;
+
+export interface Query {
+  [index: string]: any;
+}
+
+export interface Headers {
+  [index: string]: string;
+}
 
 export interface HttpCallback {
   (error: Error, data: any): void;
 }
 
-export function get(host: string, path: string, args: any, token: string, headers: any,
+export function get(host: string, path: string, args: Query, token: string, headers: Headers,
                     callback: HttpCallback) {
-  request(host, 80, 'GET', path, args, null, token, headers, callback);
+  request(host, HTTP_PORT, 'GET', path, args, null, token, headers, callback);
 }
 
-export function gets(host: string, path: string, args: any, token: string, headers: any,
+export function gets(host: string, path: string, args: Query, token: string, headers: Headers,
                      callback: HttpCallback) {
-  request(host, 443, 'GET', path, args, null, token, headers, callback);
+  request(host, HTTPS_PORT, 'GET', path, args, null, token, headers, callback);
 }
 
-export function post(host: string, path: string, args: any, data: any, token: string, headers: any,
-                     callback: HttpCallback) {
-  request(host, 80, 'POST', path, args, null, token, headers, callback);
+export function post(host: string, path: string, args: Query, data: Object,
+                     token: string, headers: Headers, callback: HttpCallback) {
+  request(host, HTTP_PORT, 'POST', path, args, null, token, headers, callback);
 }
 
-export function posts(host: string, path: string, args: any, data: any, token: string, headers: any,
+export function posts(host: string, path: string, args: Query, data: Object,
+                      token: string, headers: Headers,
                       callback: HttpCallback) {
-  request(host, 443, 'POST', path, args, null, token, headers, callback);
+  request(host, HTTPS_PORT, 'POST', path, args, null, token, headers, callback);
 }
 
-function request(host: string, port: number, method: string, path: string, args: any, data: any,
-                 token: string, headers: any,
+function request(host: string, port: number, method: string, path: string,
+                 args: Query, data: Object,
+                 token: string, headers: Headers,
                  callback: HttpCallback) {
   if (args) {
     path = '?' + qs.stringify(args);
@@ -56,7 +70,7 @@ function request(host: string, port: number, method: string, path: string, args:
     requestBody = JSON.stringify(data);
 
     headers['Content-Type'] = 'application/json';
-    headers['Content-Length'] = requestBody.length;
+    headers['Content-Length'] = requestBody.length.toString();
   }
   if (token) {
     headers['Authorization'] = 'Bearer ' + token
@@ -72,7 +86,8 @@ function request(host: string, port: number, method: string, path: string, args:
 
   function requestCallback(response: http.ClientResponse) {
     if (response.statusCode != 200) {
-      callback(new Error(), null);
+      var error = util.format('Failed %s %s%s: %d', method, host, path, response.statusCode);
+      callback(new Error(error), null);
     }
 
     response.setEncoding('utf8');
@@ -87,7 +102,7 @@ function request(host: string, port: number, method: string, path: string, args:
   }
 
   var request: http.ClientRequest;
-  if (port == 80) {
+  if (port == HTTP_PORT) {
     request = http.request(options, requestCallback);
   }
   else {

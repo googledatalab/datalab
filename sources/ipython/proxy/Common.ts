@@ -42,14 +42,6 @@ export interface SettingsCallback {
   (error: Error, settings: Settings): void;
 }
 
-function loadMetadata(callback: httpApi.HttpCallback) {
-  var host = process.env.METADATA_HOST || 'metadata.google.internal';
-  var path = '/computeMetadata/v1/?recursive=true';
-  var headers = { 'Metadata-Flavor': 'Google' };
-
-  httpApi.get(host, path, /* args */ null, /* token */ null, headers, callback);
-}
-
 function initializeMetadata(settings: Settings, callback: SettingsCallback): void {
   function metadataCallback(e: Error, data: any) {
     if (e) {
@@ -57,21 +49,21 @@ function initializeMetadata(settings: Settings, callback: SettingsCallback): voi
       return;
     }
 
-    var metadata = <Metadata>{};
-    metadata.projectId = data.project['project-id'];
+    var metadata: Metadata = {
+      projectId: data.project['project-id'],
 
-    // Zone returned from metadata is of the form projects/id/zones/zone.
-    metadata.vmZone = data.instance.zone.split('/').slice(-1)[0];
+      // Zone returned from metadata is of the form projects/id/zones/zone.
+      vmZone: data.instance.zone.split('/').slice(-1)[0],
 
-    // Hostname is of the form vm_name.c.project.internal
-    metadata.vmName = data.instance.hostname.split('.')[0];
+      // Hostname is of the form vm_name.c.project.internal
+      vmName: data.instance.hostname.split('.')[0],
 
-    // Create a unique id to identify this instance
-    metadata.vmId = uuid.v4();
+      // Create a unique id to identify this instance for telemetry
+      vmId: uuid.v4(),
 
-    // ID is a unique numeric ID assigned to the VM. We'll use it as the secret value,
-    // for signing purposes.
-    metadata.vmSecret = data.instance.id.toString();
+      // Platform assigned unique numeric ID, to be used as a secret for signing purposes.
+      vmSecret: data.instance.id.toString()
+    };
 
     fs.writeFileSync(METADATA_PATH, JSON.stringify(metadata, null, 2), { encoding: 'utf8' });
 
@@ -81,7 +73,7 @@ function initializeMetadata(settings: Settings, callback: SettingsCallback): voi
 
   var host = process.env.METADATA_HOST || 'metadata.google.internal';
   var path = '/computeMetadata/v1/?recursive=true';
-  var headers = { 'Metadata-Flavor': 'Google' };
+  var headers: httpApi.Headers = { 'Metadata-Flavor': 'Google' };
 
   httpApi.get(host, path, /* args */ null, /* token */ null, headers, metadataCallback);
 }
