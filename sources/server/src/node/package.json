@@ -7,7 +7,9 @@
     "node": "0.10.x"
   },
   "dependencies": {
-    "express": "4.x"
+    "express": "4.x",
+    "zmq": "2.8.x",
+    "node-uuid": "1.4.x"
   },
   "author": "Google DataLab Team",
   "license": "Apache 2.0"
