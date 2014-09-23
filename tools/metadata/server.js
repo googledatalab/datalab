@@ -29,32 +29,41 @@ var http = require('http'),
     gcloud = require('./gcloud.js');
 
 
-/**
- * The default HTTP port that the server listens on.
- * @const
- */
 var DEFAULT_PORT = 80;
+var FAKE_VM_NAME = 'vm';
+var FAKE_VM_ID = 1234567890;
+var FAKE_VM_ZONE = 'projects/123/zones/us-central1-a';
 
+var HTTP_STATUS_OK = 200;
+var HTTP_STATUS_NOTFOUND = 404;
+var HTTP_STATUS_ERROR = 500;
 
 /**
- * HTTP status codes used in the code below.
- * @const
+ * Formats the project id along with other fake metadata.
+ * @param {string} projectId The project id.
+ * @return object The JSON object containing the metadata.
  */
-var HTTP_STATUS = {
-  OK: 200,
-  NOT_FOUND: 404,
-  INTERNAL_SERVER_ERROR: 500
-};
-
+function allMetadataFormatter(projectId) {
+  return {
+    instance: {
+      hostname: FAKE_VM_NAME + '.c.' + projectId + '.internal',
+      zone: FAKE_VM_ZONE,
+      id: FAKE_VM_ID
+    },
+    project: {
+      'project-id': projectId
+    }
+  }
+}
 
 /**
  * Formats the auth token as a JSON object.
- * @param {string} data The auth token data.
+ * @param {string} token The auth token.
  * @return {{access_token: string}} The JSON object containing the auth token.
  */
-function authTokenFormatter(data) {
+function authTokenFormatter(token) {
   return {
-    access_token: data
+    access_token: token
   };
 }
 
@@ -65,6 +74,10 @@ function authTokenFormatter(data) {
  * to produce the response data.
  */
 var metadata = {
+  all: {
+    path: '/computemetadata/v1/?recursive=true',
+    formatter: allMetadataFormatter
+  },
   authToken: {
     path: '/computemetadata/v1/instance/service-accounts/default/token',
     formatter: authTokenFormatter
@@ -84,14 +97,15 @@ function handler(req, resp) {
   console.log(req.url);
 
   function dataCallback(error, data) {
-    var status = HTTP_STATUS.OK;
+    var status = HTTP_STATUS_OK;
     var contentType = 'text/plain';
     var content = data;
 
     if (error) {
-      status = HTTP_STATUS.INTERNAL_SERVER_ERROR;
+      status = HTTP_STATUS_ERROR;
       content = error.toString();
-    } else if (typeof data != 'string') {
+    }
+    else if (typeof data != 'string') {
       contentType = 'application/json';
       content = JSON.stringify(data);
     }
@@ -111,7 +125,7 @@ function handler(req, resp) {
     }
   }
 
-  resp.writeHead(HTTP_STATUS.NOT_FOUND);
+  resp.writeHead(HTTP_STATUS_NOTFOUND);
   resp.end();
 }
 

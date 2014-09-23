@@ -47,6 +47,10 @@ function projectIdParser(data) {
  * processor to process the result of the command.
  */
 var commandConfig = {
+  all: {
+    command: 'gcloud config list project | grep project',
+    parser: projectIdParser
+  },
   projectId: {
     command: 'gcloud config list project | grep project',
     parser: projectIdParser
