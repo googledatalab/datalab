@@ -87,6 +87,17 @@ public class FragmentCodeRunnerTest extends TestCase {
   }
 
   @Test
+  public void testTryCompileTypeDeclSemanticError() throws ClassNotFoundException, IOException {
+    FragmentCodeCompilationResult result =
+        fragmentCodeRunner.tryCompile("class Test { UndefinedType t; }");
+    assertTrue(result.compilationResult.hasAnyDiagnosticError());
+    assertNull(result.compiledClass);
+    assertTrue(result.isTypeDefinition);
+    assertNotNull(result.compilationResult.compilationUnits);
+    assertThat(Iterables.size(result.compilationResult.compilationUnits), equalTo(1));
+  }
+
+  @Test
   public void testTryCompileGoodTypeDecl() throws ClassNotFoundException, IOException {
     FragmentCodeCompilationResult result =
         fragmentCodeRunner.tryCompile("package pkg; class Test { int a = 10; }");
