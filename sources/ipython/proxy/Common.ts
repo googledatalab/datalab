@@ -20,6 +20,9 @@ import http = require('http');
 import httpApi = require('./HttpApi');
 import uuid = require('node-uuid');
 
+var SETTINGS_PATH = './config/settings.json';
+var METADATA_PATH = './config/metadata.json';
+
 export interface Metadata {
   projectId: string;
   vmZone: string;
@@ -70,8 +73,7 @@ function initializeMetadata(settings: Settings, callback: SettingsCallback): voi
     // for signing purposes.
     metadata.vmSecret = data.instance.id.toString();
 
-    fs.writeFileSync('./config/metadata.json', JSON.stringify(metadata, null, 2),
-                     { encoding: 'utf8' });
+    fs.writeFileSync(METADATA_PATH, JSON.stringify(metadata, null, 2), { encoding: 'utf8' });
 
     settings.metadata = metadata;
     callback(null, settings);
@@ -92,14 +94,14 @@ function invokeCallback(callback: SettingsCallback, error: Error, settings: Sett
 
 export function loadSettings(callback: SettingsCallback): void {
   try {
-    var settings = <Settings>JSON.parse(fs.readFileSync('./config/settings.json', 'utf8'));
+    var settings = <Settings>JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf8'));
 
-    if (!fs.existsSync('./config/metadata.json')) {
+    if (!fs.existsSync(METADATA_PATH)) {
       // Do some per-instance one-time setup
       initializeMetadata(settings, callback);
     }
     else {
-      settings.metadata = <Metadata>JSON.parse(fs.readFileSync('./config/metadata.json', 'utf8'));
+      settings.metadata = <Metadata>JSON.parse(fs.readFileSync(METADATA_PATH, 'utf8'));
       invokeCallback(callback, null, settings);
     }
   }
