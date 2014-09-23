@@ -12,10 +12,11 @@
  * the License.
  */
 
-import common = require('./Common');
-import server = require('./Server');
+import common = require('./common');
+import server = require('./server');
+import settings = require('./settings');
 
-common.loadSettings((error: Error, settings: common.Settings) => {
+settings.loadSettings((error: Error, settings: common.Settings) => {
   if (error) {
     console.log(error);
     return;

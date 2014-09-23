@@ -14,6 +14,7 @@
 
 /// <reference path="../../../externs/ts/node/node.d.ts" />
 
+import common = require('./common');
 import http = require('http');
 import https = require('https');
 import qs = require('querystring');
@@ -22,43 +23,34 @@ import util = require('util');
 var HTTP_PORT = 80;
 var HTTPS_PORT = 443;
 
-export interface Query {
-  [index: string]: any;
-}
-
-export interface Headers {
-  [index: string]: string;
-}
-
-export interface HttpCallback {
-  (error: Error, data: any): void;
-}
-
-export function get(host: string, path: string, args: Query, token: string, headers: Headers,
-                    callback: HttpCallback) {
+export function get(host: string, path: string, args: common.Map<any>,
+                    token: string, headers: common.Map<string>,
+                    callback: common.Callback<any>) {
   request(host, HTTP_PORT, 'GET', path, args, null, token, headers, callback);
 }
 
-export function gets(host: string, path: string, args: Query, token: string, headers: Headers,
-                     callback: HttpCallback) {
+export function gets(host: string, path: string, args: common.Map<any>,
+                     token: string, headers: common.Map<string>,
+                     callback: common.Callback<any>) {
   request(host, HTTPS_PORT, 'GET', path, args, null, token, headers, callback);
 }
 
-export function post(host: string, path: string, args: Query, data: Object,
-                     token: string, headers: Headers, callback: HttpCallback) {
+export function post(host: string, path: string, args: common.Map<any>, data: Object,
+                     token: string, headers: common.Map<string>,
+                     callback: common.Callback<any>) {
   request(host, HTTP_PORT, 'POST', path, args, null, token, headers, callback);
 }
 
-export function posts(host: string, path: string, args: Query, data: Object,
-                      token: string, headers: Headers,
-                      callback: HttpCallback) {
+export function posts(host: string, path: string, args: common.Map<any>, data: Object,
+                      token: string, headers: common.Map<string>,
+                      callback: common.Callback<any>) {
   request(host, HTTPS_PORT, 'POST', path, args, null, token, headers, callback);
 }
 
 function request(host: string, port: number, method: string, path: string,
-                 args: Query, data: Object,
-                 token: string, headers: Headers,
-                 callback: HttpCallback) {
+                 args: common.Map<any>, data: Object,
+                 token: string, headers: common.Map<string>,
+                 callback: common.Callback<any>) {
   if (args) {
     path = '?' + qs.stringify(args);
   }

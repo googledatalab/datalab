@@ -15,11 +15,11 @@
 /// <reference path="../../../externs/ts/node/node.d.ts" />
 /// <reference path="../../../externs/ts/node/node-http-proxy.d.ts" />
 
+import common = require('./common');
 import http = require('http');
 import httpProxy = require('http-proxy');
+import ipython = require('./ipython');
 import net = require('net');
-import common = require('./Common');
-import ipython = require('./IPython');
 
 var ipythonServer: httpProxy.ProxyServer;
 

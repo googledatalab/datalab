@@ -15,9 +15,9 @@
 /// <reference path="../../../externs/ts/node/node.d.ts" />
 /// <reference path="../../../externs/ts/node/node-http-proxy.d.ts" />
 
+import common = require('./common');
 import http = require('http');
 import httpProxy = require('http-proxy');
-import common = require('./Common');
 
 function errorHandler(error: Error, request: http.ServerRequest, response: http.ServerResponse) {
   console.log(error.toString());

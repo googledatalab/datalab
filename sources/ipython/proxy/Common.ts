@@ -12,17 +12,6 @@
  * the License.
  */
 
-/// <reference path="../../../externs/ts/node/node.d.ts" />
-/// <reference path="../../../externs/ts/node/node-uuid.d.ts" />
-
-import fs = require('fs');
-import http = require('http');
-import httpApi = require('./HttpApi');
-import uuid = require('node-uuid');
-
-var SETTINGS_PATH = './config/settings.json';
-var METADATA_PATH = './config/metadata.json';
-
 export interface Metadata {
   projectId: string;
   vmZone: string;
@@ -38,66 +27,10 @@ export interface Settings {
   ipythonPort: number;
 }
 
-export interface SettingsCallback {
-  (error: Error, settings: Settings): void;
+export interface Map<T> {
+  [index: string]: T;
 }
 
-function initializeMetadata(settings: Settings, callback: SettingsCallback): void {
-  function metadataCallback(e: Error, data: any) {
-    if (e) {
-      callback(e, null);
-      return;
-    }
-
-    var metadata: Metadata = {
-      projectId: data.project['project-id'],
-
-      // Zone returned from metadata is of the form projects/id/zones/zone.
-      vmZone: data.instance.zone.split('/').slice(-1)[0],
-
-      // Hostname is of the form vm_name.c.project.internal
-      vmName: data.instance.hostname.split('.')[0],
-
-      // Create a unique id to identify this instance for telemetry
-      vmId: uuid.v4(),
-
-      // Platform assigned unique numeric ID, to be used as a secret for signing purposes.
-      vmSecret: data.instance.id.toString()
-    };
-
-    fs.writeFileSync(METADATA_PATH, JSON.stringify(metadata, null, 2), { encoding: 'utf8' });
-
-    settings.metadata = metadata;
-    callback(null, settings);
-  }
-
-  var host = process.env.METADATA_HOST || 'metadata.google.internal';
-  var path = '/computeMetadata/v1/?recursive=true';
-  var headers: httpApi.Headers = { 'Metadata-Flavor': 'Google' };
-
-  httpApi.get(host, path, /* args */ null, /* token */ null, headers, metadataCallback);
-}
-
-function invokeCallback(callback: SettingsCallback, error: Error, settings: Settings): void {
-  process.nextTick(function() {
-    callback(error, settings);
-  });
-}
-
-export function loadSettings(callback: SettingsCallback): void {
-  try {
-    var settings = <Settings>JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf8'));
-
-    if (!fs.existsSync(METADATA_PATH)) {
-      // Do some per-instance one-time setup
-      initializeMetadata(settings, callback);
-    }
-    else {
-      settings.metadata = <Metadata>JSON.parse(fs.readFileSync(METADATA_PATH, 'utf8'));
-      invokeCallback(callback, null, settings);
-    }
-  }
-  catch (e) {
-    invokeCallback(callback, e, null);
-  }
+export interface Callback<T> {
+  (e: Error, result: T): void;
 }
