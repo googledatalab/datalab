@@ -99,7 +99,7 @@ export function loadSettings(callback: SettingsCallback): void {
       initializeMetadata(settings, callback);
     }
     else {
-      settings.metadata = <Metadata>JSON.parse(fs.readFileSync('./metadata.json', 'utf8'));
+      settings.metadata = <Metadata>JSON.parse(fs.readFileSync('./config/metadata.json', 'utf8'));
       invokeCallback(callback, null, settings);
     }
   }
