@@ -12,17 +12,15 @@
  * the License.
  */
 
-task tscNode(type: TypeScriptCompileTask) {
-    srcDir = 'ipython'
-    pathToRootModule = '/proxy'
-}
+import common = require('./common');
+import server = require('./server');
+import settings = require('./settings');
 
-task copyConfiguration(type: Copy) {
-    from './proxy'
-    into new File(project.buildDir, '/proxy')
-    exclude '**/*.ts'
-}
+settings.loadSettings((error: Error, settings: common.Settings) => {
+  if (error) {
+    console.log(error);
+    return;
+  }
 
-task('build') {
-    dependsOn 'tscNode', 'copyConfiguration'
-}
+  server.run(settings);
+});

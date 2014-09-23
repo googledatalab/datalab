@@ -12,17 +12,25 @@
  * the License.
  */
 
-task tscNode(type: TypeScriptCompileTask) {
-    srcDir = 'ipython'
-    pathToRootModule = '/proxy'
+export interface Metadata {
+  projectId: string;
+  vmZone: string;
+  vmName: string;
+  vmId: string;
+  vmSecret: string;
 }
 
-task copyConfiguration(type: Copy) {
-    from './proxy'
-    into new File(project.buildDir, '/proxy')
-    exclude '**/*.ts'
+export interface Settings {
+  metadata: Metadata;
+
+  serverPort: number;
+  ipythonPort: number;
 }
 
-task('build') {
-    dependsOn 'tscNode', 'copyConfiguration'
+export interface Map<T> {
+  [index: string]: T;
+}
+
+export interface Callback<T> {
+  (e: Error, result: T): void;
 }

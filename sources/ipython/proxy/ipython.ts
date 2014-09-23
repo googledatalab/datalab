@@ -18,25 +18,20 @@
 import common = require('./common');
 import http = require('http');
 import httpProxy = require('http-proxy');
-import ipython = require('./ipython');
-import net = require('net');
 
-var ipythonServer: httpProxy.ProxyServer;
+function errorHandler(error: Error, request: http.ServerRequest, response: http.ServerResponse) {
+  console.log(error.toString());
 
-function requestHandler(request: http.ServerRequest, response: http.ServerResponse) {
-  ipythonServer.web(request, response);
+  response.writeHead(500, 'Internal Server Error');
+  response.end();
 }
 
-function upgradeHandler(request: http.ServerRequest, socket: net.Socket, head: Buffer) {
-  ipythonServer.ws(request, socket, head);
-}
+export function createProxyServer(settings: common.Settings): httpProxy.ProxyServer {
+  var proxyOptions: httpProxy.ProxyServerOptions = {
+    target: 'http://localhost:' + settings.ipythonPort
+  };
+  var proxy = httpProxy.createProxyServer(proxyOptions);
+  proxy.on('error', errorHandler);
 
-export function run(settings: common.Settings) {
-  ipythonServer = ipython.createProxyServer(settings);
-
-  var server = http.createServer(requestHandler);
-  server.on('upgrade', upgradeHandler);
-
-  console.log('Starting IPython proxy server at http://localhost:%d ...', settings.serverPort);
-  server.listen(settings.serverPort);
+  return proxy;
 }
