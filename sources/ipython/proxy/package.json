@@ -3,7 +3,8 @@
   "description": "Reverse proxy for IPython",
   "dependencies": {
     "node-uuid": "^1.4.1",
-    "http-proxy": "^1.4.3"
+    "http-proxy": "^1.4.3",
+    "ws": "^0.4.32"
   },
   "engines" : {
     "node": "0.10.x"

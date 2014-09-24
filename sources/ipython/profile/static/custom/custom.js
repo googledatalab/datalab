@@ -14,6 +14,185 @@
  * limitations under the License.
  */
 
+(function(global, WebSocket) {
+
+  var READYSTATE_OPENING = 0;
+  var READYSTATE_OPENED = 1;
+  var READYSTATE_CLOSING = 2;
+  var READYSTATE_CLOSED = 3;
+
+  function placeHolder() {
+  }
+
+  function createWebSocketTransport(socket) {
+    var ws = new WebSocket(socket._url);
+    ws.onopen = function() {
+      socket.readyState = READYSTATE_OPENED;
+      socket.onopen({ target: socket });
+    };
+    ws.onclose = function() {
+      socket.readyState = READYSTATE_CLOSED;
+      socket.onclose({ target: socket });
+    }
+    ws.onmessage = function(e) {
+      socket.onmessage(e);
+    }
+    ws.onerror = function(err) {
+      socket.onerror(err);
+    }
+
+    return {
+      send: function(msg) {
+        ws.send(msg);
+      },
+      close: function() {
+        ws.close();
+        ws = null;
+      }
+    }
+  }
+
+  function xhr(action, data, callback) {
+    callback = callback || placeHolder;
+
+    var request = new XMLHttpRequest();
+    request.open('POST', '/socket/' + action, true);
+    request.onload = function() {
+      if (request.readyState == 4) {
+        request.onload = placeHolder;
+
+        if (request.status == 200) {
+          callback(null, JSON.parse(request.responseText));
+        }
+        else {
+          callback(new Error(request.status));
+        }
+      }
+    }
+
+    if (data) {
+      request.setRequestHeader('Content-Type', 'application/json');
+      data = JSON.stringify(data);
+    }
+    request.send(data);
+  }
+
+  function createXHRTransport(socket) {
+    var id = null;
+    var polling = false;
+
+    function send(msg) {
+      xhr('send?id=' + id, { msg: msg });
+    }
+
+    function close() {
+      polling = false;
+      xhr('close', { socket: id });
+
+      socket.readyState = READYSTATE_CLOSED;
+      try {
+        socket.onclose({ target: socket });
+      }
+      catch(e) {
+      }
+    }
+
+    function pollTick() {
+      xhr('poll?id=' + id, null, function(e, data) {
+        if (socket.readyState >= READYSTATE_CLOSING) {
+          return;
+        }
+
+        if (!e) {
+          var events = data.events || [];
+          events.forEach(function(event) {
+            switch (event.type) {
+              case 'close':
+                close({ target: socket });
+                break;
+              case 'message':
+                try {
+                  socket.onmessage({ target: socket, data: event.msg });
+                }
+                catch (e) {
+                }
+                break;
+            }
+          });
+        }
+        else {
+          socket.onerror(new Error('Error listening to socket.'));
+        }
+
+        poll();
+      });
+    }
+
+    function poll() {
+      if (polling) {
+        setTimeout(pollTick, 0)
+      }
+    }
+
+    xhr('open?url=' + encodeURIComponent(socket._url), null, function(e, data) {
+      if (!e && data.id) {
+        id = data.id;
+        polling = true;
+
+        socket.readyState = READYSTATE_OPENED;
+        try {
+          socket.onopen({ target: socket });
+        }
+        catch(e) {
+        }
+
+        poll();
+      }
+      else {
+        socket.onerror(new Error('Unable to open socket.'));
+      }
+    });
+
+    return {
+      send: send,
+      close: close
+    }
+  }
+
+  function Socket(url) {
+    this._url = url;
+
+    this.readyState = READYSTATE_OPENING;
+    this._transport = createXHRTransport(this);
+  }
+  Socket.prototype = {
+    onopen: placeHolder,
+    onclose: placeHolder,
+    onmessage: placeHolder,
+    onerror: placeHolder,
+
+    send: function(msg) {
+      if (this.readyState != READYSTATE_OPENED) {
+        throw new Error('Socket is not in opened state.');
+      }
+
+      this._transport.send(msg);
+    },
+
+    close: function() {
+      if (this.readyState >= READYSTATE_CLOSING) {
+        return;
+      }
+
+      this.readyState = READYSTATE_CLOSING;
+      this._transport.close();
+      this._transport = null;
+    }
+  }
+
+  global.WebSocket = Socket;
+})(window, window.WebSocket);
+
 // IPython seems to assume local persistence of notebooks - it issues an HTTP
 // request to create a notebook, and on completion opens a window.
 // This is fine and dandy when the round-trip time is small, but sometimes long

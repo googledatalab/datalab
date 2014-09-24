@@ -658,7 +658,7 @@ declare module "url" {
         host: string;
         pathname: string;
         search: string;
-        query: string;
+        query: any;
         slashes: boolean;
         hash?: string;
         path?: string;
@@ -767,13 +767,13 @@ declare module "dgram" {
         port: number;
         size: number;
     }
-    
+
     interface AddressInfo {
-        address: string; 
-        family: string; 
-        port: number; 
+        address: string;
+        family: string;
+        port: number;
     }
-    
+
     export function createSocket(type: string, callback?: (msg: Buffer, rinfo: RemoteInfo) => void): Socket;
 
     interface Socket extends events.EventEmitter {
