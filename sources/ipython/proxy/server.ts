@@ -16,6 +16,7 @@
 /// <reference path="../../../externs/ts/node/node-http-proxy.d.ts" />
 
 import common = require('./common');
+import health = require('./health');
 import http = require('http');
 import httpProxy = require('http-proxy');
 import ipython = require('./ipython');
@@ -25,9 +26,17 @@ import url = require('url');
 
 var ipythonServer: httpProxy.ProxyServer;
 var socketRelay: sockets.SocketRelay;
+var healthStatus: health.StatusProvider;
 
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse) {
   var path = url.parse(request.url).pathname;
+
+  // /_ah/* paths are completed handled in this server, and not forwarded on to
+  // IPython as HTTP calls.
+  if (path.indexOf('/_ah') == 0) {
+    healthStatus(request, response);
+    return;
+  }
 
   // /socket/* paths are completed handled in this server, and not forwarded on to
   // IPython as HTTP calls.
@@ -46,10 +55,11 @@ function upgradeHandler(request: http.ServerRequest, socket: net.Socket, head: B
 export function run(settings: common.Settings) {
   ipythonServer = ipython.createProxyServer(settings);
   socketRelay = sockets.createSocketRelay(settings);
+  healthStatus = health.createStatusProvider(settings);
 
   var server = http.createServer(requestHandler);
   server.on('upgrade', upgradeHandler);
 
   console.log('Starting IPython proxy server at http://localhost:%d ...', settings.serverPort);
-  server.listen(settings.serverPort);
+  server.listen(settings.serverPort, '0.0.0.0');
 }
