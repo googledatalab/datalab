@@ -12,10 +12,15 @@
  * the License.
  */
 
-import common = require('./common');
+/// <reference path="common.d.ts" />
+
 import server = require('./server');
 import settings = require('./settings');
 
+/**
+ * Load the configuration settings, and then start the server, which
+ * runs indefinitely, listening to and processing incoming HTTP requests.
+ */
 settings.loadSettings((error: Error, settings: common.Settings) => {
   if (error) {
     console.log(error);

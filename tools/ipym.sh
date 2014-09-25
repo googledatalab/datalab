@@ -17,5 +17,5 @@ echo '----------'
 
 # Finally start IPython.
 ipython notebook --config=$REPO_DIR/sources/ipython/profile/config.py \
-  --ip="*" --port=9002 \
+  --ip="*" --port=8081 \
   --matplotlib=inline --no-mathjax --no-script --quiet

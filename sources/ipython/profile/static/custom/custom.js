@@ -14,42 +14,19 @@
  * limitations under the License.
  */
 
-(function(global, WebSocket) {
+function overrideWebSocket() {
+  // This replaces the native WebSocket functionality with one that is
+  // similar in API surface area, but uses XMLHttpRequest and long-polling
+  // instead... to account for server scenario that aren't WebSocket friendly.
 
   var READYSTATE_OPENING = 0;
   var READYSTATE_OPENED = 1;
   var READYSTATE_CLOSING = 2;
   var READYSTATE_CLOSED = 3;
 
+  var XHR_LOADED = 4;
+
   function placeHolder() {
-  }
-
-  function createWebSocketTransport(socket) {
-    var ws = new WebSocket(socket._url);
-    ws.onopen = function() {
-      socket.readyState = READYSTATE_OPENED;
-      socket.onopen({ target: socket });
-    };
-    ws.onclose = function() {
-      socket.readyState = READYSTATE_CLOSED;
-      socket.onclose({ target: socket });
-    }
-    ws.onmessage = function(e) {
-      socket.onmessage(e);
-    }
-    ws.onerror = function(err) {
-      socket.onerror(err);
-    }
-
-    return {
-      send: function(msg) {
-        ws.send(msg);
-      },
-      close: function() {
-        ws.close();
-        ws = null;
-      }
-    }
   }
 
   function xhr(action, data, callback) {
@@ -58,7 +35,7 @@
     var request = new XMLHttpRequest();
     request.open('POST', '/socket/' + action, true);
     request.onload = function() {
-      if (request.readyState == 4) {
+      if (request.readyState == XHR_LOADED) {
         request.onload = placeHolder;
 
         if (request.status == 200) {
@@ -98,6 +75,9 @@
     }
 
     function pollTick() {
+      // Issue a poll request to the server to fetch any pending events.
+      // This request will not complete until either there is data, or a
+      // timeout occurs.
       xhr('poll?id=' + id, null, function(e, data) {
         if (socket.readyState >= READYSTATE_CLOSING) {
           return;
@@ -124,12 +104,17 @@
           socket.onerror(new Error('Error listening to socket.'));
         }
 
+        // Immediately queue another poll request. The net result is there
+        // is always one out-going poll request per socket to the server,
+        // which is completed as soon as there are events pending on the server,
+        // or some timeout.
         poll();
       });
     }
 
     function poll() {
       if (polling) {
+        // Complete current event processing and queue next poll.
         setTimeout(pollTick, 0)
       }
     }
@@ -190,8 +175,13 @@
     }
   }
 
-  global.WebSocket = Socket;
-})(window, window.WebSocket);
+  window.WebSocket = Socket;
+}
+
+if ((document.domain != 'localhost') && (document.domain != '127.0.0.1')) {
+  overrideWebSocket();
+}
+
 
 // IPython seems to assume local persistence of notebooks - it issues an HTTP
 // request to create a notebook, and on completion opens a window.

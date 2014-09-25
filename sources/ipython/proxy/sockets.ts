@@ -14,8 +14,8 @@
 
 /// <reference path="../../../externs/ts/node/node.d.ts" />
 /// <reference path="../../../externs/ts/node/node-ws.d.ts" />
+/// <reference path="common.d.ts" />
 
-import common = require('./common');
 import http = require('http');
 import url = require('url');
 import WebSocket = require('ws');
@@ -32,9 +32,23 @@ interface Session {
   pendingCookie?: any;
 }
 
-var socketServer: string;
+/**
+ * The application settings instance.
+ */
+var appSettings: common.Settings;
+
+/**
+ * The set of active socket sessions being managed on the server. Each session represents
+ * an instance of a WebSocket client.
+ */
 var socketSessions: common.Map<Session> = {};
 
+/**
+ * Creates a new socket session. This responds to the client with the id of the WebSocket
+ * opened on behalf of the client, once that WebSocket has reached OPENED state.
+ * @param sessionUrl the url the session being created sent by the client.
+ * @param response the out-going response for the current HTTP request.
+ */
 function createSession(sessionUrl: string, response: http.ServerResponse): void {
   var parsedUrl = url.parse(sessionUrl);
   if ((parsedUrl.protocol == 'ws:') || (parsedUrl.protocol == 'wss:')) {
@@ -42,7 +56,7 @@ function createSession(sessionUrl: string, response: http.ServerResponse): void 
     var pathParts = parsedUrl.pathname.split('/');
     var id = pathParts.slice(-2).join('-');
 
-    var socketUrl = socketServer + parsedUrl.path;
+    var socketUrl = appSettings.ipythonSocketServer + parsedUrl.path;
     var socket = new WebSocket(socketUrl);
     var session: Session = {
       socket: socket,
@@ -61,11 +75,15 @@ function createSession(sessionUrl: string, response: http.ServerResponse): void 
     };
     socket.onmessage = function(e) {
       if (!session.socket) {
+        // We're not tracking this socket anymore... so just go ahead and close it.
         e.target.close();
       }
       else {
         session.events.push({ type: 'message', msg: e.data });
+
         if (session.pendingResponse) {
+          // If there is a pending response, complete it by sending the event that
+          // was just bufffered. This ensures the client is notified as soon as possible.
           sendEvents(session);
         }
       }
@@ -76,6 +94,11 @@ function createSession(sessionUrl: string, response: http.ServerResponse): void 
   }
 }
 
+/**
+ * Closes an existing session.
+ * @param id the id of the socket session to be closed.
+ * @param response the out-going response for the current HTTP request.
+ */
 function closeSession(id: string, response: http.ServerResponse): void {
   var session = socketSessions[id];
   if (session && session.socket) {
@@ -92,6 +115,12 @@ function closeSession(id: string, response: http.ServerResponse): void {
   }
 }
 
+/**
+ * Sends a message to the socket within an existing session.
+ * @param id the id of the socket session containing the receipient socket.
+ * @param message the message data to be sent.
+ * @param response the out-going response for the current HTTP request.
+ */
 function sendMessage(id: string, message: string, response: http.ServerResponse): void {
   var session = socketSessions[id];
   if (session && session.socket) {
@@ -103,20 +132,34 @@ function sendMessage(id: string, message: string, response: http.ServerResponse)
   }
 }
 
+/**
+ * Handles poll requests for messages collected within a socket session.
+ * @param id the id of the socket session whose messages are to be sent.
+ * @param response the out-going response for the current HTTP request.
+ */
 function pollMessages(id: string, response: http.ServerResponse): void {
   var session = socketSessions[id];
   if (session && session.socket) {
+    // Write out the response header early, even if the response won't be
+    // immediately written out.
     response.writeHead(200, { 'Content-Type': 'application/json' });
 
     if (session.events.length) {
+      // Complete the response immediately if there are accumulated events.
       sendEvents(session, response);
     }
     else {
+      // If there aren't, hold on to the response for a short duration. If
+      // events occur in the interim, they will complete the response (and
+      // cancel this timeout), and if there aren't any, an empty resppnse
+      // will be sent, once this timeout completes.
       session.pendingResponse = response;
       session.pendingCookie = setTimeout(function() {
+        // Clear out the cookie, so it isn't attempted to be cleared again,
+        // and then complete the response.
         session.pendingCookie = 0;
         sendEvents(session);
-      }, 60 * 1000);
+      }, appSettings.pollHangingInterval);
     }
   }
   else {
@@ -126,16 +169,25 @@ function pollMessages(id: string, response: http.ServerResponse): void {
 
 function sendEvents(session: Session, response?: http.ServerResponse): void {
   if (!response) {
+    // This is the case when events are being sent if they arrived during
+    // the hanging interval, or upon completion of that interval with no events
+    // to send.
     response = session.pendingResponse;
     session.pendingResponse = null;
   }
   else {
+    // This really shouldn't happen - a new poll request even though a pending
+    // response is in place, since the client is supposed to wait. In case it
+    // doesn't... kill off the old response first.
     if (session.pendingResponse) {
       session.pendingResponse.end();
       session.pendingResponse = null;
     }
   }
 
+  // If the events are being sent in response to events that arrived in the
+  // hanging interval interim, then clear out the cookie, so that the timeout
+  // is canceled.
   if (session.pendingCookie) {
     clearTimeout(session.pendingCookie);
     session.pendingCookie = 0;
@@ -155,6 +207,8 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     errorHandler(response, 405);
     return;
   }
+
+  // TODO: More error handling on the inputs...
 
   var requestUrl = url.parse(request.url, /* parseQueryString */ true);
   var path = requestUrl.pathname;
@@ -182,8 +236,8 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       var content = '';
       request.on('data', function(data: string) {
         content += data;
-        if (content.length > 1e6) {
-          // If the request is over 1MB, kill it.
+        if (content.length > appSettings.maxSocketMessageLength) {
+          // If the request is too large, kill it.
           request.connection.destroy();
         }
       });
@@ -218,7 +272,12 @@ export interface SocketRelay {
   (request: http.ServerRequest, response: http.ServerResponse): any;
 }
 
+/**
+ * Creates the socket relay that will handle HTTP equivalents of socket functionality.
+ * @param settings configuration settings for the application.
+ * @returns the socket relay that can be used to handle socket requests.
+ */
 export function createSocketRelay(settings: common.Settings): SocketRelay {
-  socketServer = 'ws://localhost:' + settings.ipythonPort;
+  appSettings = settings;
   return requestHandler;
 }

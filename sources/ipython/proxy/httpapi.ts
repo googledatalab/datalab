@@ -13,8 +13,8 @@
  */
 
 /// <reference path="../../../externs/ts/node/node.d.ts" />
+/// <reference path="common.d.ts" />
 
-import common = require('./common');
 import http = require('http');
 import https = require('https');
 import qs = require('querystring');
@@ -23,30 +23,46 @@ import util = require('util');
 var HTTP_PORT = 80;
 var HTTPS_PORT = 443;
 
+/**
+ * Sends a GET request over HTTP.
+ */
 export function get(host: string, path: string, args: common.Map<any>,
                     token: string, headers: common.Map<string>,
                     callback: common.Callback<any>) {
   request(host, HTTP_PORT, 'GET', path, args, null, token, headers, callback);
 }
 
+/**
+ * Sends a GET request over HTTPS.
+ */
 export function gets(host: string, path: string, args: common.Map<any>,
                      token: string, headers: common.Map<string>,
                      callback: common.Callback<any>) {
   request(host, HTTPS_PORT, 'GET', path, args, null, token, headers, callback);
 }
 
+/**
+ * Sends a POST request over HTTP.
+ */
 export function post(host: string, path: string, args: common.Map<any>, data: Object,
                      token: string, headers: common.Map<string>,
                      callback: common.Callback<any>) {
   request(host, HTTP_PORT, 'POST', path, args, null, token, headers, callback);
 }
 
+/**
+ * Sends a POST request over HTTPS.
+ */
 export function posts(host: string, path: string, args: common.Map<any>, data: Object,
                       token: string, headers: common.Map<string>,
                       callback: common.Callback<any>) {
   request(host, HTTPS_PORT, 'POST', path, args, null, token, headers, callback);
 }
 
+/**
+ * Sends a request over HTTP, captures and parses the response data to be passed as the
+ * result in the specified callback.
+ */
 function request(host: string, port: number, method: string, path: string,
                  args: common.Map<any>, data: Object,
                  token: string, headers: common.Map<string>,

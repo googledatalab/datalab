@@ -14,8 +14,9 @@
 
 /// <reference path="../../../externs/ts/node/node.d.ts" />
 /// <reference path="../../../externs/ts/node/node-http-proxy.d.ts" />
+/// <reference path="common.d.ts" />
 
-import common = require('./common');
+import fs = require('fs');
 import health = require('./health');
 import http = require('http');
 import httpProxy = require('http-proxy');
@@ -28,6 +29,30 @@ var ipythonServer: httpProxy.ProxyServer;
 var socketRelay: sockets.SocketRelay;
 var healthStatus: health.StatusProvider;
 
+/**
+ * Sends a static file as the response.
+ * @param path the path of the file to send.
+ * @param contentType the associated mime type of the file.
+ * @param response the out-going response associated with the current HTTP request.
+ */
+function sendFile(path: string, contentType: string, response: http.ServerResponse) {
+ fs.readFile(path, function(error, content) {
+   if (error) {
+     response.writeHead(500);
+   }
+   else {
+     response.writeHead(200, { 'Content-Type': contentType });
+     response.end(content);
+   }
+ });
+}
+
+/**
+ * Handles all requests sent to the proxy web server. Most requests are proxied to
+ * the IPython web server, but some are filtered out, and handled completely here.
+ * @param request the incoming HTTP request.
+ * @param response the out-going HTTP response.
+ */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse) {
   var path = url.parse(request.url).pathname;
 
@@ -45,14 +70,37 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     return;
   }
 
+  // Specific resources that are handled in the proxy
+  if (path == '/static/base/images/favicon.ico') {
+    sendFile('./static/favicon.ico', 'image/x-icon', response);
+    return;
+  }
+  else if (path == '/static/base/images/ipynblogo.png') {
+    sendFile('./static/brand.png', 'image/png', response);
+    return;
+  }
+
+  // Proxy the rest of the requests to IPython, and let it generate the response,
+  // that is sent unmodified.
   ipythonServer.web(request, response);
 }
 
+/**
+ * Handles Upgrade requests to initiate web sockets. This will only be called on
+ * servers and environments where websockets are supported.
+ * @param request the incoming HTTP request.
+ * @param socket the socket associated with the request.
+ * @param head the initial data on the request.
+ */
 function upgradeHandler(request: http.ServerRequest, socket: net.Socket, head: Buffer) {
   ipythonServer.ws(request, socket, head);
 }
 
-export function run(settings: common.Settings) {
+/**
+ * Runs the proxy web server.
+ * @param settings the configuration settings to use.
+ */
+export function run(settings: common.Settings): void {
   ipythonServer = ipython.createProxyServer(settings);
   socketRelay = sockets.createSocketRelay(settings);
   healthStatus = health.createStatusProvider(settings);

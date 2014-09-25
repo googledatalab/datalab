@@ -13,11 +13,16 @@
  */
 
 /// <reference path="../../../externs/ts/node/node.d.ts" />
+/// <reference path="common.d.ts" />
 
-import common = require('./common');
 import http = require('http');
 import url = require('url');
 
+/**
+ * Implements the Managed VM application health request handling.
+ * @param request the incoming health request.
+ * @param response the outgoing health response.
+ */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
   var requestUrl = url.parse(request.url);
   var path = requestUrl.pathname;
@@ -45,7 +50,11 @@ export interface StatusProvider {
   (request: http.ServerRequest, response: http.ServerResponse): any;
 }
 
+/**
+ * Creates the health status provider implementation.
+ * @param settings configuration settings for the application.
+ * @returns the health status provider to handle health requests.
+ */
 export function createStatusProvider(settings: common.Settings): StatusProvider {
   return requestHandler;
 }
-

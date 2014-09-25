@@ -14,8 +14,8 @@
 
 /// <reference path="../../../externs/ts/node/node.d.ts" />
 /// <reference path="../../../externs/ts/node/node-http-proxy.d.ts" />
+/// <reference path="common.d.ts" />
 
-import common = require('./common');
 import http = require('http');
 import httpProxy = require('http-proxy');
 
@@ -26,9 +26,14 @@ function errorHandler(error: Error, request: http.ServerRequest, response: http.
   response.end();
 }
 
+/**
+ * Creates a proxy object enabling routing HTTP and WebSocket requests to IPython.
+ * @param settings the configuration settings to use.
+ * @returns the proxy representing the IPython server.
+ */
 export function createProxyServer(settings: common.Settings): httpProxy.ProxyServer {
   var proxyOptions: httpProxy.ProxyServerOptions = {
-    target: 'http://localhost:' + settings.ipythonPort
+    target: settings.ipythonWebServer
   };
   var proxy = httpProxy.createProxyServer(proxyOptions);
   proxy.on('error', errorHandler);
