@@ -27,3 +27,4 @@ mv MANIFEST $PYLIB_DIR/IPythonGCP.manifest
 
 cd $REPO_DIR/build
 tar cvfz ipython.tar.gz ipython
+

@@ -12,25 +12,31 @@
  * the License.
  */
 
-export interface Metadata {
-  projectId: string;
-  vmZone: string;
-  vmName: string;
-  vmId: string;
-  vmSecret: string;
-}
+declare module common {
 
-export interface Settings {
-  metadata: Metadata;
+  interface Metadata {
+    projectId: string;
+    instanceId: string;
+  }
 
-  serverPort: number;
-  ipythonPort: number;
-}
+  interface Settings {
+    metadata: Metadata;
 
-export interface Map<T> {
-  [index: string]: T;
-}
+    serverPort: number;
 
-export interface Callback<T> {
-  (e: Error, result: T): void;
+    ipythonPort: number;
+    ipythonWebServer: string;
+    ipythonSocketServer: string;
+
+    pollHangingInterval: number;
+    maxSocketMessageLength: number;
+  }
+
+  interface Map<T> {
+    [index: string]: T;
+  }
+
+  interface Callback<T> {
+    (e: Error, result: T): void;
+  }
 }

@@ -14,8 +14,8 @@
 
 /// <reference path="../../../externs/ts/node/node.d.ts" />
 /// <reference path="../../../externs/ts/node/node-uuid.d.ts" />
+/// <reference path="common.d.ts" />
 
-import common = require('./common');
 import fs = require('fs');
 import http = require('http');
 import httpApi = require('./httpapi');
@@ -34,18 +34,7 @@ function initializeMetadata(settings: common.Settings,
 
     var metadata: common.Metadata = {
       projectId: data.project['project-id'],
-
-      // Zone returned from metadata is of the form projects/id/zones/zone.
-      vmZone: data.instance.zone.split('/').slice(-1)[0],
-
-      // Hostname is of the form vm_name.c.project.internal
-      vmName: data.instance.hostname.split('.')[0],
-
-      // Create a unique id to identify this instance for telemetry
-      vmId: uuid.v4(),
-
-      // Platform assigned unique numeric ID, to be used as a secret for signing purposes.
-      vmSecret: data.instance.id.toString()
+      instanceId: uuid.v4()
     };
 
     fs.writeFileSync(METADATA_PATH, JSON.stringify(metadata, null, 2), { encoding: 'utf8' });
@@ -68,15 +57,23 @@ function invokeCallback(callback: common.Callback<common.Settings>,
   });
 }
 
+/**
+ * Loads the configuration settings for the application to use.
+ * On first run, this generates any dynamic settings and merges them into the settings result.
+ * @param callback the callback to invoke once settings have been loaded.
+ */
 export function loadSettings(callback: common.Callback<common.Settings>): void {
   try {
     var settings = <common.Settings>JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf8'));
+    settings.ipythonWebServer = 'http://localhost:' + settings.ipythonPort;
+    settings.ipythonSocketServer = 'ws://localhost:' + settings.ipythonPort;
 
     if (!fs.existsSync(METADATA_PATH)) {
-      // Do some per-instance one-time setup
+      // Do some per-instance one-time setup on first-run.
       initializeMetadata(settings, callback);
     }
     else {
+      // Otherwise just reload previously initialized metadata.
       settings.metadata = <common.Metadata>JSON.parse(fs.readFileSync(METADATA_PATH, 'utf8'));
       invokeCallback(callback, null, settings);
     }
