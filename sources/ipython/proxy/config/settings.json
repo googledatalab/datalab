@@ -1,4 +1,5 @@
 {
+  "analyticsId": "UA-54894152-2",
   "serverPort": 8080,
   "ipythonPort": 8081,
   "pollHangingInterval": 60000,

@@ -14,6 +14,53 @@
  * limitations under the License.
  */
 
+// Install Google Analytics - this is the standard tracking code, reformatted.
+(function(i, s, o, g, r, a, m) {
+  i['GoogleAnalyticsObject'] = r;
+  i[r] = i[r] || function() {
+    (i[r].q = i[r].q || []).push(arguments)
+  };
+  i[r].l = 1 * new Date();
+  a = s.createElement(o);
+  m = s.getElementsByTagName(o)[0];
+  a.async = 1;
+  a.src = g;
+  m.parentNode.insertBefore(a, m)
+})(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+
+
+(function() {
+  var cookieString = document.cookie;
+  var cookies = cookieString.split('; ');
+  var gcpCookie = '';
+
+  cookies.forEach(function(cookie) {
+    if (cookie.indexOf('gcp=') == 0) {
+      gcpCookie = cookie.substr(4);
+    }
+  });
+
+  if (gcpCookie) {
+    var cookieData = gcpCookie.split(':');
+    if (cookieData.length == 5) {
+      var analyticsId = cookieData[0];
+      var dimensions = {
+        // project
+        'dimension1': cookieData[1],
+
+        // version
+        'dimension2': cookieData[2],
+
+        // instance
+        'dimension3': cookieData[3]
+      };
+
+      ga('create', analyticsId, 'auto');
+      ga('send', 'pageview', dimensions);
+    }
+  }
+})();
+
 function overrideWebSocket() {
   // This replaces the native WebSocket functionality with one that is
   // similar in API surface area, but uses XMLHttpRequest and long-polling
@@ -181,7 +228,6 @@ function overrideWebSocket() {
 if ((document.domain != 'localhost') && (document.domain != '127.0.0.1')) {
   overrideWebSocket();
 }
-
 
 // IPython seems to assume local persistence of notebooks - it issues an HTTP
 // request to create a notebook, and on completion opens a window.

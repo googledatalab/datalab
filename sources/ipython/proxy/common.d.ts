@@ -16,11 +16,13 @@ declare module common {
 
   interface Metadata {
     projectId: string;
+    versionId: string;
     instanceId: string;
   }
 
   interface Settings {
     metadata: Metadata;
+    analyticsId: string;
 
     serverPort: number;
 

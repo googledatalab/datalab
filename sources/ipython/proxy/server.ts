@@ -20,14 +20,16 @@ import fs = require('fs');
 import health = require('./health');
 import http = require('http');
 import httpProxy = require('http-proxy');
+import info = require('./info');
 import ipython = require('./ipython');
 import net = require('net');
 import sockets = require('./sockets');
 import url = require('url');
 
 var ipythonServer: httpProxy.ProxyServer;
-var socketRelay: sockets.SocketRelay;
-var healthStatus: health.StatusProvider;
+var socketHandler: http.RequestHandler;
+var healthHandler: http.RequestHandler;
+var infoHandler: http.RequestHandler;
 
 /**
  * Sends a static file as the response.
@@ -59,14 +61,14 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   // /_ah/* paths are completed handled in this server, and not forwarded on to
   // IPython as HTTP calls.
   if (path.indexOf('/_ah') == 0) {
-    healthStatus(request, response);
+    healthHandler(request, response);
     return;
   }
 
   // /socket/* paths are completed handled in this server, and not forwarded on to
   // IPython as HTTP calls.
   if (path.indexOf('/socket') == 0) {
-    socketRelay(request, response);
+    socketHandler(request, response);
     return;
   }
 
@@ -77,6 +79,11 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   }
   else if (path == '/static/base/images/ipynblogo.png') {
     sendFile('./static/brand.png', 'image/png', response);
+    return;
+  }
+
+  if (path.indexOf('/_info') == 0) {
+    infoHandler(request, response);
     return;
   }
 
@@ -102,8 +109,10 @@ function upgradeHandler(request: http.ServerRequest, socket: net.Socket, head: B
  */
 export function run(settings: common.Settings): void {
   ipythonServer = ipython.createProxyServer(settings);
-  socketRelay = sockets.createSocketRelay(settings);
-  healthStatus = health.createStatusProvider(settings);
+
+  socketHandler = sockets.createHandler(settings);
+  healthHandler = health.createHandler(settings);
+  infoHandler = info.createHandler(settings);
 
   var server = http.createServer(requestHandler);
   server.on('upgrade', upgradeHandler);
