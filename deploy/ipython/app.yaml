@@ -1,7 +1,8 @@
+module: ipython
+vm: true
 runtime: custom
 api_version: 1
 threadsafe: true
-vm: true
 
 manual_scaling:
   instances: 1

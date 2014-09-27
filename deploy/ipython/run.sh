@@ -15,16 +15,17 @@
 
 # Various commands to run for building and deploying
 
-if [ "$#" -ne 1 ]; then
+if [ "$#" -lt 1 ]; then
   echo "Usage: run.sh <command>"
   echo "Commands -"
   echo "  stage  stages files from the build directory to be referenced by Dockerfile."
   echo "  clean  removes previously staged files."
   echo "  build  builds the docker image."
-  echo "  start  starts a docker instance from a built docker image."
-  echo "  shell  starts a docker instance from a built docker image to launch a shell prompt."
-  echo "  cloud  deploys to a managed VM in the cloud."
-  echo "  local  deploys to a managed VM in the local dev server."
+  echo "  start  starts a docker instance."
+  echo "  shell  starts a docker instance to provide a shell prompt in the container."
+  echo
+  echo "  deploy <project> deploys to a managed VM in the cloud."
+  echo "  devapp <project> deploys to the local dev app server."
   echo
   exit
 fi
@@ -58,19 +59,31 @@ if [ "$1" = "shell" ]; then
   exit
 fi
 
-if [ "$1" = "cloud" ]; then
+if [ "$1" = "deploy" ]; then
+  if [ "$#" -lt 2 ]; then
+    echo "Missing project name argument."
+    exit
+  fi
+
   sudo gcloud preview app deploy . --force \
-    --project data-studio-team \
-    --version ipython \
+    --project $2 \
+    --version preview1 \
     --server preview.appengine.google.com \
     --docker-host unix:///var/run/docker.sock
   exit
 fi
 
-if [ "$1" = "local" ]; then
+if [ "$1" = "devapp" ]; then
+  if [ "$#" -lt 2 ]; then
+    echo "Missing project name argument."
+    exit
+  fi
+
   sudo gcloud preview app run . \
-    --project data-studio-team \
+    --project $2 \
     --docker-host unix:///var/run/docker.sock
   exit
 fi
+
+echo "Unknown command."
 
