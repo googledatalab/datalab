@@ -268,16 +268,12 @@ function successHandler(response: http.ServerResponse, result?: any): void {
   response.end();
 }
 
-export interface SocketRelay {
-  (request: http.ServerRequest, response: http.ServerResponse): any;
-}
-
 /**
- * Creates the socket relay that will handle HTTP equivalents of socket functionality.
+ * Creates the socket handler that will relay HTTP requests to the IPython websocket.
  * @param settings configuration settings for the application.
  * @returns the socket relay that can be used to handle socket requests.
  */
-export function createSocketRelay(settings: common.Settings): SocketRelay {
+export function createHandler(settings: common.Settings): http.RequestHandler {
   appSettings = settings;
   return requestHandler;
 }

@@ -274,6 +274,10 @@ declare module "http" {
     import net = require("net");
     import stream = require("stream");
 
+    export interface RequestHandler {
+        (request: ServerRequest, response: ServerResponse): void;
+    }
+
     export interface Server extends events.EventEmitter {
         listen(port: number, hostname?: string, backlog?: number, callback?: Function): Server;
         listen(path: string, callback?: Function): Server;
@@ -355,7 +359,7 @@ declare module "http" {
         [errorCode: number]: string;
         [errorCode: string]: string;
     };
-    export function createServer(requestListener?: (request: ServerRequest, response: ServerResponse) =>void ): Server;
+    export function createServer(requestListener?: RequestHandler): Server;
     export function createClient(port?: number, host?: string): any;
     export function request(options: any, callback?: Function): ClientRequest;
     export function get(options: any, callback?: Function): ClientRequest;

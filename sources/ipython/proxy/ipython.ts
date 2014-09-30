@@ -19,6 +19,32 @@
 import http = require('http');
 import httpProxy = require('http-proxy');
 
+/**
+ * The application settings instance.
+ */
+var appSettings: common.Settings;
+
+function responseHandler(proxyResponse: http.ClientResponse,
+                         request: http.ServerRequest, response: http.ServerResponse) {
+  if (proxyResponse.headers['access-control-allow-origin'] !== undefined) {
+    // Delete the allow-origin = * header that is sent (likely as a result of a workaround
+    // notebook configuration to allow server-side websocket connections that are
+    // interpreted by IPython as cross-domain).
+    delete proxyResponse.headers['access-control-allow-origin'];
+  }
+
+  // Set a cookie to provide information about the project and authenticated user to the client.
+  // Create a cookie that stays valid for 5 minutes, and is marked as HTTP-only.
+  var cookieData = [
+    appSettings.analyticsId,
+    appSettings.metadata.projectId,
+    appSettings.metadata.versionId,
+    appSettings.metadata.instanceId,
+    request.headers['x-appengine-user-email'] || '---'
+  ];
+  proxyResponse.headers['set-cookie'] = 'gcp=' + cookieData.join(':');
+}
+
 function errorHandler(error: Error, request: http.ServerRequest, response: http.ServerResponse) {
   console.log(error.toString());
 
@@ -32,10 +58,13 @@ function errorHandler(error: Error, request: http.ServerRequest, response: http.
  * @returns the proxy representing the IPython server.
  */
 export function createProxyServer(settings: common.Settings): httpProxy.ProxyServer {
+  appSettings = settings;
+
   var proxyOptions: httpProxy.ProxyServerOptions = {
     target: settings.ipythonWebServer
   };
   var proxy = httpProxy.createProxyServer(proxyOptions);
+  proxy.on('proxyRes', responseHandler);
   proxy.on('error', errorHandler);
 
   return proxy;

@@ -34,6 +34,8 @@ function initializeMetadata(settings: common.Settings,
 
     var metadata: common.Metadata = {
       projectId: data.project['project-id'],
+      versionId: (process.env['GAE_MODULE_NAME'] || 'ipython') + '.' +
+                 (process.env['GAE_MODULE_VERSION'] || 'internal'),
       instanceId: uuid.v4()
     };
 
