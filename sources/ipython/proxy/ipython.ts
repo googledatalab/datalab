@@ -37,9 +37,9 @@ function responseHandler(proxyResponse: http.ClientResponse,
   // Create a cookie that stays valid for 5 minutes, and is marked as HTTP-only.
   var cookieData = [
     appSettings.analyticsId,
-    appSettings.metadata.projectId,
-    appSettings.metadata.versionId,
-    appSettings.metadata.instanceId,
+    appSettings.projectId,
+    appSettings.versionId,
+    appSettings.instanceId,
     request.headers['x-appengine-user-email'] || '---'
   ];
   proxyResponse.headers['set-cookie'] = 'gcp=' + cookieData.join(':');

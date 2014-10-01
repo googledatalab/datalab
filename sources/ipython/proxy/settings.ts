@@ -17,70 +17,55 @@
 /// <reference path="common.d.ts" />
 
 import fs = require('fs');
-import http = require('http');
-import httpApi = require('./httpapi');
 import uuid = require('node-uuid');
+import util = require('util');
 
-var SETTINGS_PATH = './config/settings.json';
+var SETTINGS_PATH = './config/settings.%s.json';
 var METADATA_PATH = './config/metadata.json';
 
-function initializeMetadata(settings: common.Settings,
-                            callback: common.Callback<common.Settings>): void {
-  function metadataCallback(e: Error, data: any) {
-    if (e) {
-      callback(e, null);
-      return;
-    }
-
-    var metadata: common.Metadata = {
-      projectId: data.project['project-id'],
-      versionId: (process.env['GAE_MODULE_NAME'] || 'ipython') + '.' +
-                 (process.env['GAE_MODULE_VERSION'] || 'internal'),
-      instanceId: uuid.v4()
-    };
-
-    fs.writeFileSync(METADATA_PATH, JSON.stringify(metadata, null, 2), { encoding: 'utf8' });
-
-    settings.metadata = metadata;
-    callback(null, settings);
-  }
-
-  var host = process.env.METADATA_HOST || 'metadata.google.internal';
-  var path = '/computeMetadata/v1/?recursive=true';
-  var headers: common.Map<string> = { 'Metadata-Flavor': 'Google' };
-
-  httpApi.get(host, path, /* args */ null, /* token */ null, headers, metadataCallback);
-}
-
-function invokeCallback(callback: common.Callback<common.Settings>,
-                        error: Error, settings: common.Settings): void {
-  process.nextTick(function() {
-    callback(error, settings);
-  });
+interface Metadata {
+  instanceId: string;
 }
 
 /**
  * Loads the configuration settings for the application to use.
  * On first run, this generates any dynamic settings and merges them into the settings result.
- * @param callback the callback to invoke once settings have been loaded.
+ * @returns the settings object for the application to use.
  */
-export function loadSettings(callback: common.Callback<common.Settings>): void {
+export function loadSettings(): common.Settings {
   try {
-    var settings = <common.Settings>JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf8'));
+    var metadata: Metadata = null;
+    if (!fs.existsSync(METADATA_PATH)) {
+      // Create an write out metadata on the first run if it doesn't exist.
+      metadata = { instanceId: uuid.v4() };
+      fs.writeFileSync(METADATA_PATH, JSON.stringify(metadata, null, 2), { encoding: 'utf8' });
+    }
+    else {
+      // Load metadata from the file system. This is written out on the first run.
+      metadata = <Metadata>JSON.parse(fs.readFileSync(METADATA_PATH, 'utf8'));
+    }
+
+    var env = process.env.DATALAB_ENV;
+    var envSettingsPath = util.format(SETTINGS_PATH, env);
+    if (!fs.existsSync(envSettingsPath)) {
+      console.log('Settings file %s not found. Is DATALAB_ENV set in the current environment?',
+                  envSettingsPath);
+      return null;
+    }
+
+    var settings = <common.Settings>JSON.parse(fs.readFileSync(envSettingsPath, 'utf8'));
     settings.ipythonWebServer = 'http://localhost:' + settings.ipythonPort;
     settings.ipythonSocketServer = 'ws://localhost:' + settings.ipythonPort;
 
-    if (!fs.existsSync(METADATA_PATH)) {
-      // Do some per-instance one-time setup on first-run.
-      initializeMetadata(settings, callback);
-    }
-    else {
-      // Otherwise just reload previously initialized metadata.
-      settings.metadata = <common.Metadata>JSON.parse(fs.readFileSync(METADATA_PATH, 'utf8'));
-      invokeCallback(callback, null, settings);
-    }
+    settings.projectId = process.env['GAE_LONG_APP_ID'] || 'test-project';
+    settings.versionId = (process.env['GAE_MODULE_NAME'] || 'ipython') + '.' +
+                         (process.env['GAE_MODULE_VERSION'] || 'internal');
+    settings.instanceId = metadata.instanceId;
+
+    return settings;
   }
   catch (e) {
-    invokeCallback(callback, e, null);
+    console.log(e);
+    return null;
   }
 }
