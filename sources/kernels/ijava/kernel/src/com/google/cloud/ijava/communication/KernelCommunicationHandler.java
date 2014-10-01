@@ -88,6 +88,8 @@ public class KernelCommunicationHandler {
     String parentHeaderJSON = KernelJsonConverter.GSON.toJson(message.parent_header);
     String metadataJSON = KernelJsonConverter.GSON.toJson(message.metadata);
     String contentJSON = KernelJsonConverter.GSON.toJson(message.content);
+    // The synchronized block will make sure that there won't be concurrent access to the channel
+    // for sending messages.
     synchronized (channel) {
       for (String id : message.identities) {
         channel.sendMore(id);
@@ -123,6 +125,8 @@ public class KernelCommunicationHandler {
     String parentHeaderJSON;
     String metadataJSON;
     String contentJSON;
+    // The synchronized block will make sure that there won't be concurrent access to the channel
+    // for receiving messages.
     synchronized (channel) {
       for (String data = channel.recvStr(); !data.equals(DELIMITER); data = channel.recvStr()) {
         identities.add(data);

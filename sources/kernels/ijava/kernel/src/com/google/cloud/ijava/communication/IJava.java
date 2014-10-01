@@ -23,7 +23,7 @@ public class IJava implements Runnable {
   private JavaKernelContext kernelContext;
   private ZMQ.Context zmqContext;
 
-  private CommunicationChannel publish, shell, heartbeat;
+  private CommunicationChannel publish, shell, control, heartbeat;
 
   public IJava(String[] args) throws InvalidKeyException, NoSuchAlgorithmException, IOException {
     if (args.length != 1) {
@@ -45,19 +45,6 @@ public class IJava implements Runnable {
     kernelContext = new JavaKernelContext(new KernelCommunicationHandler(publish, shell,
         connectionProfile, System.getProperty("user.name")), connectionProfile,
         new FragmentCodeRunner());
-
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-      @Override
-      public void run() {
-        LOGGER.fine("Terminating IJava...");
-        try {
-          IJava.this.terminate();
-        } catch (CommunicationException e) {
-          LOGGER.severe(e.getMessage());
-        }
-        System.exit(0);
-      }
-    });
   }
 
   /**
@@ -74,6 +61,11 @@ public class IJava implements Runnable {
     shellSocket.bind(toURI(connectionProfile.getTransport(), connectionProfile.getIp(),
         connectionProfile.getShell_port()));
     shell = new ZMQCommunicationChannel(shellSocket);
+
+    Socket controlSocket = zmqContext.socket(ZMQ.ROUTER);
+    controlSocket.bind(toURI(connectionProfile.getTransport(), connectionProfile.getIp(),
+        connectionProfile.getControl_port()));
+    control = new ZMQCommunicationChannel(controlSocket);
 
     final Socket heartbeatSocket = zmqContext.socket(ZMQ.REP);
     heartbeatSocket.bind(toURI(connectionProfile.getTransport(), connectionProfile.getIp(),
@@ -94,6 +86,7 @@ public class IJava implements Runnable {
     try {
       LOGGER.fine("Starting kernel...");
       kernelContext.kernelCommunicationHandler.sendStatus(ExecutionState.starting);
+      new Thread(new ControlRequestHandler(control, kernelContext), "Control").start();
       new Thread(new ShellRequestHandler(shell, kernelContext), "Shell").start();
       LOGGER.fine("Java Kernel Started!");
     } catch (CommunicationException e) {
@@ -108,6 +101,7 @@ public class IJava implements Runnable {
   private void terminate() throws CommunicationException {
     publish.close();
     shell.close();
+    control.close();
     heartbeat.close();
     zmqContext.close();
     zmqContext.term();
@@ -115,8 +109,19 @@ public class IJava implements Runnable {
 
   public static void main(final String[] args) {
     try {
-      Thread ijavaThread = new Thread(new IJava(args), "IJava");
-      ijavaThread.setDaemon(true);
+      final IJava ijava = new IJava(args);
+      Runtime.getRuntime().addShutdownHook(new Thread() {
+        @Override
+        public void run() {
+          LOGGER.fine("Terminating IJava...");
+          try {
+            ijava.terminate();
+          } catch (Throwable e) {
+            LOGGER.severe(e.getMessage());
+          }
+        }
+      });
+      Thread ijavaThread = new Thread(ijava, "IJava");
       ijavaThread.start();
       ijavaThread.join();
     } catch (InvalidKeyException | InterruptedException | NoSuchAlgorithmException
