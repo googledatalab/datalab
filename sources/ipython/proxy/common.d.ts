@@ -14,14 +14,10 @@
 
 declare module common {
 
-  interface Metadata {
+  interface Settings {
     projectId: string;
     versionId: string;
     instanceId: string;
-  }
-
-  interface Settings {
-    metadata: Metadata;
     analyticsId: string;
 
     serverPort: number;

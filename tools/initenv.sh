@@ -3,6 +3,10 @@
 # This script initializes an dev prompt with the required environment variables
 # and any other environment customizations.
 
+# This indicates local dev environment. When running inside docker, this
+# variable will be set to docker.
+export DATALAB_ENV=dev
+
 # Export a variable corresponding to the root of the repository
 SCRIPT=$0
 if [ "$SCRIPT" == "-bash" ]; then

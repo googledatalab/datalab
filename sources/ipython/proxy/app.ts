@@ -21,11 +21,7 @@ import settings = require('./settings');
  * Load the configuration settings, and then start the server, which
  * runs indefinitely, listening to and processing incoming HTTP requests.
  */
-settings.loadSettings((error: Error, settings: common.Settings) => {
-  if (error) {
-    console.log(error);
-    return;
-  }
-
-  server.run(settings);
-});
+var appSettings = settings.loadSettings();
+if (appSettings != null) {
+  server.run(appSettings);
+}
