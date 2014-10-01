@@ -1,0 +1,13 @@
+{
+  "name": "metadata-server",
+  "description": "Emulates the compute metadata service in cloud VMs",
+  "dependencies": {
+  },
+  "engines" : {
+    "node": "0.10.x"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}
+
