@@ -31,16 +31,12 @@ if [ "$#" -lt 1 ]; then
 fi
 
 if [ "$1" = "stage" ]; then
-  cp ../../build/ipython.tar.gz ipython.tar.gz
-  cp ../../build/python/PyGCP-0.1.0.tar.gz PyGCP-0.1.0.tar.gz
-  cp ../../build/python/IPythonGCP-0.1.0.tar.gz IPythonGCP-0.1.0.tar.gz
+  cp -R ../../build build
   exit
 fi
 
 if [ "$1" = "clean" ]; then
-  rm ipython.tar.gz
-  rm PyGCP-0.1.0.tar.gz
-  rm IPythonGCP-0.1.0.tar.gz
+  rm -rf build
   exit
 fi
 
@@ -55,7 +51,9 @@ if [ "$1" = "start" ]; then
 fi
 
 if [ "$1" = "shell" ]; then
-  sudo docker run -i --entrypoint="/bin/bash" -t gcp-ipython
+  sudo docker run -i --entrypoint="/bin/bash" \
+     -v ~/.config:/.config:rw \
+     -t gcp-ipython
   exit
 fi
 
