@@ -50,6 +50,8 @@ public class MessageHandlersTestBase {
     String parentHeaderJSON;
     String metadataJSON;
     String contentJSON;
+    // The synchronized block will make sure that there won't be concurrent access to the channel
+    // for receiving messages.
     synchronized (channel) {
       for (String data = channel.recvStr(); !data.equals(KernelCommunicationHandler.DELIMITER);
           data = channel.recvStr()) {

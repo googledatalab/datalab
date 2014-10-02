@@ -77,6 +77,7 @@ public abstract class HMAC {
 
     @Override
     public String hash(String... args) {
+      // Guarding against concurrent calls to this method because Mac is stateful.
       synchronized (mac) {
         for (String s : args) {
           if (s != null) {

@@ -18,7 +18,6 @@ import com.google.cloud.ijava.communication.Message.ConnectRequest;
 import com.google.cloud.ijava.communication.Message.Content;
 import com.google.cloud.ijava.communication.Message.ExecuteRequest;
 import com.google.cloud.ijava.communication.Message.KernelInfoRequest;
-import com.google.cloud.ijava.communication.Message.ShutdownRequest;
 
 import java.util.logging.Logger;
 
@@ -42,47 +41,42 @@ class ShellRequestHandler implements Runnable {
       Message<? extends Content.Request> message = null;
       try {
         message = context.kernelCommunicationHandler.receive(shellChannel);
-      } catch (CommunicationException e) {
+      } catch (Exception e) {
         LOGGER.severe(e.getMessage());
-        return;
       }
-      synchronized (this) {
-        try {
-          LOGGER.fine("Received " + KernelJsonConverter.PRETTY_GSON.toJson(message));
+      if (message == null) {
+        continue;
+      }
+      try {
+        LOGGER.fine("Received " + KernelJsonConverter.PRETTY_GSON.toJson(message));
 
-          // Setting the display data publisher for the current message:
-          _.setDisplayDataPublisher(new IDisplayDataPublisher.DisplayDataPublisherImpl(message,
-              context.kernelCommunicationHandler));
+        // Setting the display data publisher for the current message:
+        _.setDisplayDataPublisher(new IDisplayDataPublisher.DisplayDataPublisherImpl(message,
+            context.kernelCommunicationHandler));
 
-          switch (message.header.msg_type) {
-            case connect_request:
-              @SuppressWarnings("unchecked")
-              Message<ConnectRequest> connectMessage = (Message<ConnectRequest>) message;
-              new MessageHandlers.ConnectHandler().handle(connectMessage, shellChannel, context);
-              break;
-            case execute_request:
-              @SuppressWarnings("unchecked")
-              Message<ExecuteRequest> executeMessage = (Message<ExecuteRequest>) message;
-              new MessageHandlers.ExecuteHandler().handle(executeMessage, shellChannel, context);
-              break;
-            case kernel_info_request:
-              @SuppressWarnings("unchecked")
-              Message<KernelInfoRequest> kernelInfoMessage = (Message<KernelInfoRequest>) message;
-              new MessageHandlers.KernelInfoHandler().handle(kernelInfoMessage, shellChannel,
-                  context);
-              break;
-            case shutdown_request:
-              @SuppressWarnings("unchecked")
-              Message<ShutdownRequest> shutdownMessage = (Message<ShutdownRequest>) message;
-              new MessageHandlers.ShutdownHandler().handle(shutdownMessage, shellChannel, context);
-              break;
-            default:
-              LOGGER.warning(String.format("Ignoring %s message.", message.header.msg_type));
-              break;
-          }
-        } catch (CommunicationException e) {
-          LOGGER.severe(e.getMessage());
+        switch (message.header.msg_type) {
+          case connect_request:
+        @SuppressWarnings("unchecked")
+            Message<ConnectRequest> connectMessage = (Message<ConnectRequest>) message;
+            new MessageHandlers.ConnectHandler().handle(connectMessage, shellChannel, context);
+            break;
+          case execute_request:
+        @SuppressWarnings("unchecked")
+            Message<ExecuteRequest> executeMessage = (Message<ExecuteRequest>) message;
+            new MessageHandlers.ExecuteHandler().handle(executeMessage, shellChannel, context);
+            break;
+          case kernel_info_request:
+        @SuppressWarnings("unchecked")
+            Message<KernelInfoRequest> kernelInfoMessage = (Message<KernelInfoRequest>) message;
+            new MessageHandlers.KernelInfoHandler().handle(kernelInfoMessage, shellChannel,
+                context);
+            break;
+          default:
+            LOGGER.warning(String.format("Ignoring %s message.", message.header.msg_type));
+            break;
         }
+      } catch (Exception e) {
+        LOGGER.severe(e.getMessage());
       }
     }
   }
