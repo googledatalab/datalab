@@ -178,9 +178,7 @@ class MessageHandlers {
         ecs.submit(new Callable<Boolean>() {
           @Override
           public Boolean call() throws Exception {
-            // TODO(amshali): Figure out what needs to be used instead of System.in for reading from
-            // input:
-            Boolean returnValue = context.javaExecutionEngine.execute(code, System.in,
+            Boolean returnValue = context.javaExecutionEngine.execute(code, new ClosedInputStream(),
                 outPrintStream, errPrintStream);
             outPrintStream.close();
             errPrintStream.close();
@@ -218,6 +216,16 @@ class MessageHandlers {
         context.kernelCommunicationHandler.sendStatus(ExecutionState.idle);
         context.javaExecutionEngine.incExecutionCounter();
       }
+    }
+  }
+
+  static class ClosedInputStream extends InputStream {
+
+    @Override
+    public int read() throws IOException {
+      throw new UnsupportedOperationException(
+          "All input should be specified in the code in the notebook. "
+          + "Notebooks do not support reading from standard input.");
     }
   }
 
