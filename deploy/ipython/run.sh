@@ -18,8 +18,8 @@
 if [ "$#" -lt 1 ]; then
   echo "Usage: run.sh <command>"
   echo "Commands -"
-  echo "  stage  stages files from the build directory to be referenced by Dockerfile."
-  echo "  clean  removes previously staged files."
+  echo "  pull <source> pulls the base docker image from the specified registry."
+  echo
   echo "  build  builds the docker image."
   echo "  start  starts a docker instance."
   echo "  shell  starts a docker instance to provide a shell prompt in the container."
@@ -30,30 +30,30 @@ if [ "$#" -lt 1 ]; then
   exit
 fi
 
-if [ "$1" = "stage" ]; then
-  cp -R ../../build build
-  exit
-fi
+if [ "$1" = "pull" ]; then
+  if [ "$#" -lt 2 ]; then
+    echo "Missing registry argument."
+    exit
+  fi
 
-if [ "$1" = "clean" ]; then
-  rm -rf build
+  sudo docker pull $2/gcp-ipython
   exit
 fi
 
 if [ "$1" = "build" ]; then
-  sudo docker build -t gcp-ipython .
+  sudo docker build -t gcp-ipython-instance .
   exit
 fi
 
 if [ "$1" = "start" ]; then
-  sudo docker run -p 127.0.0.1:8080:8080 -t gcp-ipython -name ipy
+  sudo docker run -p 127.0.0.1:8080:8080 -t gcp-ipython-instance -name ipy
   exit
 fi
 
 if [ "$1" = "shell" ]; then
   sudo docker run -i --entrypoint="/bin/bash" \
      -v ~/.config:/.config:rw \
-     -t gcp-ipython
+     -t gcp-ipython-instance
   exit
 fi
 
