@@ -70,6 +70,8 @@ ENV PYTHONPATH /env/python
 
 
 # Managed VM Application Setup
+ADD app.yaml /home/vmagent/app/app.yaml
+ADD app.js /home/vmagent/app/app.js
 ADD app.sh /home/vmagent/app/app.sh
 RUN chmod +x /home/vmagent/app/app.sh
 
