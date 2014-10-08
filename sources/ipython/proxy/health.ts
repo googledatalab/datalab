@@ -28,16 +28,16 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   var path = requestUrl.pathname;
 
   if (path == '/_ah/health') {
-    response.writeHead(200, 'OK', { 'Content-Type': 'text/plain' });
-    response.end();
+    response.writeHead(200, { 'Content-Type': 'text/plain' });
+    response.end('ok');
   }
   else if (path == '/_ah/start') {
-    response.writeHead(200, 'OK', { 'Content-Type': 'text/plain' });
-    response.end();
+    response.writeHead(200, { 'Content-Type': 'text/plain' });
+    response.end('ok');
   }
   else if (path == '/_ah/stop') {
-    response.writeHead(200, 'OK', { 'Content-Type': 'text/plain' });
-    response.end();
+    response.writeHead(200, { 'Content-Type': 'text/plain' });
+    response.end('ok');
     process.exit();
   }
   else {
