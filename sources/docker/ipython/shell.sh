@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cp -R ../../../build build
-docker build -t gcp-ipython .
-rm -rf build
+docker run -i --entrypoint="/bin/bash" \
+  -v ~/.config:/.config:rw \
+  -t gcp-ipython
 

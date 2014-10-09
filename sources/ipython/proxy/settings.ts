@@ -18,10 +18,11 @@
 
 import fs = require('fs');
 import uuid = require('node-uuid');
+import path = require('path');
 import util = require('util');
 
-var SETTINGS_PATH = './config/settings.%s.json';
-var METADATA_PATH = './config/metadata.json';
+var SETTINGS_FILE = 'settings.%s.json';
+var METADATA_FILE = 'metadata.json';
 
 interface Metadata {
   instanceId: string;
@@ -33,27 +34,29 @@ interface Metadata {
  * @returns the settings object for the application to use.
  */
 export function loadSettings(): common.Settings {
+  var env = process.env.DATALAB_ENV;
+  var settingsPath = path.join(__dirname, 'config', util.format(SETTINGS_FILE, env));
+  var metadataPath = path.join(__dirname, 'config', METADATA_FILE);
+
+  if (!fs.existsSync(settingsPath)) {
+    console.log('Settings file %s not found. Is DATALAB_ENV set in the current environment?',
+                settingsPath);
+    return null;
+  }
+
   try {
     var metadata: Metadata = null;
-    if (!fs.existsSync(METADATA_PATH)) {
+    if (!fs.existsSync(metadataPath)) {
       // Create an write out metadata on the first run if it doesn't exist.
       metadata = { instanceId: uuid.v4() };
-      fs.writeFileSync(METADATA_PATH, JSON.stringify(metadata, null, 2), { encoding: 'utf8' });
+      fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2), { encoding: 'utf8' });
     }
     else {
       // Load metadata from the file system. This is written out on the first run.
-      metadata = <Metadata>JSON.parse(fs.readFileSync(METADATA_PATH, 'utf8'));
+      metadata = <Metadata>JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
     }
 
-    var env = process.env.DATALAB_ENV;
-    var envSettingsPath = util.format(SETTINGS_PATH, env);
-    if (!fs.existsSync(envSettingsPath)) {
-      console.log('Settings file %s not found. Is DATALAB_ENV set in the current environment?',
-                  envSettingsPath);
-      return null;
-    }
-
-    var settings = <common.Settings>JSON.parse(fs.readFileSync(envSettingsPath, 'utf8'));
+    var settings = <common.Settings>JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
     settings.ipythonWebServer = 'http://localhost:' + settings.ipythonPort;
     settings.ipythonSocketServer = 'ws://localhost:' + settings.ipythonPort;
 

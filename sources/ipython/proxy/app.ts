@@ -25,3 +25,15 @@ var appSettings = settings.loadSettings();
 if (appSettings != null) {
   server.run(appSettings);
 }
+
+
+/**
+ * Handle shutdown of this process, to also stop the server, which will in turn stop the
+ * associated IPython notebook server process.
+ */
+function exit() {
+  server.stop();
+}
+
+process.on('exit', exit);
+process.on('SIGINT', exit);

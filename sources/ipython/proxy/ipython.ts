@@ -16,13 +16,34 @@
 /// <reference path="../../../externs/ts/node/node-http-proxy.d.ts" />
 /// <reference path="common.d.ts" />
 
+import childProcess = require('child_process');
 import http = require('http');
 import httpProxy = require('http-proxy');
+import path = require('path');
 
 /**
  * The application settings instance.
  */
 var appSettings: common.Settings;
+
+/**
+ * The ipython notebook server process.
+ */
+var ipythonProcess: childProcess.ChildProcess;
+
+
+function pipeOutput(stream: NodeJS.ReadableStream, output: (text: string) => void) {
+  stream.setEncoding('utf8');
+  stream.on('data', (data: string) => {
+    output(data);
+  })
+}
+
+function exitHandler(code: number, signal: string): void {
+  console.log('IPython exited due to signal: ' + signal);
+  process.exit();
+}
+
 
 function responseHandler(proxyResponse: http.ClientResponse,
                          request: http.ServerRequest, response: http.ServerResponse) {
@@ -53,13 +74,35 @@ function errorHandler(error: Error, request: http.ServerRequest, response: http.
 }
 
 /**
- * Creates a proxy object enabling routing HTTP and WebSocket requests to IPython.
+ * Starts the IPython notebook server, and then creates a proxy object enabling
+ * routing HTTP and WebSocket requests to IPython.
  * @param settings the configuration settings to use.
  * @returns the proxy representing the IPython server.
  */
 export function createProxyServer(settings: common.Settings): httpProxy.ProxyServer {
   appSettings = settings;
 
+  // Start python, passing in a stub python script that launches IPython.
+  // The python script is passed in all the IPython command-line arguments.
+  var ipythonArgs = appSettings.ipythonArgs;
+  ipythonArgs.push('--port=' + appSettings.ipythonPort);
+  ipythonArgs.push('--config=' + path.join(__dirname, '..', 'config.py'));
+
+  var pythonScript = path.join(__dirname, "config", "ipynb.py");
+  var pythonArgs = [ pythonScript ].concat(ipythonArgs);
+  var pythonOptions = {
+    detached: false,
+    env: process.env
+  };
+
+  ipythonProcess = childProcess.spawn('python', pythonArgs, pythonOptions);
+  ipythonProcess.on('exit', exitHandler);
+
+  // Capture the output, so it can be piped for logging.
+  pipeOutput(ipythonProcess.stdout, console.log);
+  pipeOutput(ipythonProcess.stderr, console.error);
+
+  // Then create the proxy.
   var proxyOptions: httpProxy.ProxyServerOptions = {
     target: settings.ipythonWebServer
   };
@@ -68,4 +111,24 @@ export function createProxyServer(settings: common.Settings): httpProxy.ProxySer
   proxy.on('error', errorHandler);
 
   return proxy;
+}
+
+/**
+ * Stops the IPython notebook server.
+ */
+export function stop(): void {
+  // Ordinarily, the IPython server, being a child process, would automatically
+  // be ended when this process ends - however IPython's behavior to prompt for confirmation
+  // on exit requires more drastic and forced killing.
+
+  if (ipythonProcess) {
+    // Two consecutive kill signals to deal with the confirmation prompt
+    // (apparently with a slight delay in between).
+    ipythonProcess.kill('SIGHUP');
+
+    setTimeout(function() {
+      ipythonProcess.kill('SIGHUP');
+      ipythonProcess = null;
+    }, 100);
+  }
 }

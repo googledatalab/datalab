@@ -1,7 +1,14 @@
 {
   "analyticsId": "UA-54894152-1",
-  "serverPort": 8080,
+  "ipythonArgs": [
+    "notebook",
+    "--no-browser",
+    "--no-mathjax",
+    "--matplotlib=inline",
+    "--ip=\"127.0.0.1\""
+  ],
   "ipythonPort": 8081,
+  "serverPort": 8080,
   "pollHangingInterval": 60000,
   "maxSocketMessageLength": 1000000
 }

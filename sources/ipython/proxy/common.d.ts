@@ -22,6 +22,7 @@ declare module common {
 
     serverPort: number;
 
+    ipythonArgs: string[];
     ipythonPort: number;
     ipythonWebServer: string;
     ipythonSocketServer: string;

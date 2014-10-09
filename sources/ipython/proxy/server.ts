@@ -23,9 +23,11 @@ import httpProxy = require('http-proxy');
 import info = require('./info');
 import ipython = require('./ipython');
 import net = require('net');
+import path = require('path');
 import sockets = require('./sockets');
 import url = require('url');
 
+var server: http.Server;
 var ipythonServer: httpProxy.ProxyServer;
 var socketHandler: http.RequestHandler;
 var healthHandler: http.RequestHandler;
@@ -33,20 +35,21 @@ var infoHandler: http.RequestHandler;
 
 /**
  * Sends a static file as the response.
- * @param path the path of the file to send.
+ * @param fileName the name of the static file to send.
  * @param contentType the associated mime type of the file.
  * @param response the out-going response associated with the current HTTP request.
  */
-function sendFile(path: string, contentType: string, response: http.ServerResponse) {
- fs.readFile(path, function(error, content) {
-   if (error) {
-     response.writeHead(500);
-   }
-   else {
-     response.writeHead(200, { 'Content-Type': contentType });
-     response.end(content);
-   }
- });
+function sendFile(fileName: string, contentType: string, response: http.ServerResponse) {
+  var filePath = path.join(__dirname, 'static', fileName);
+  fs.readFile(filePath, function(error, content) {
+    if (error) {
+      response.writeHead(500);
+    }
+    else {
+      response.writeHead(200, { 'Content-Type': contentType });
+      response.end(content);
+    }
+  });
 }
 
 /**
@@ -73,12 +76,16 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   }
 
   // Specific resources that are handled in the proxy
-  if (path == '/static/base/images/favicon.ico') {
-    sendFile('./static/favicon.ico', 'image/x-icon', response);
+  if (path == '/') {
+    sendFile('about.html', 'text/html', response);
+    return;
+  }
+  else if (path == '/static/base/images/favicon.ico') {
+    sendFile('favicon.ico', 'image/x-icon', response);
     return;
   }
   else if (path == '/static/base/images/ipynblogo.png') {
-    sendFile('./static/brand.png', 'image/png', response);
+    sendFile('brand.png', 'image/png', response);
     return;
   }
 
@@ -114,9 +121,16 @@ export function run(settings: common.Settings): void {
   healthHandler = health.createHandler(settings);
   infoHandler = info.createHandler(settings);
 
-  var server = http.createServer(requestHandler);
+  server = http.createServer(requestHandler);
   server.on('upgrade', upgradeHandler);
 
   console.log('Starting IPython proxy server at http://localhost:%d ...', settings.serverPort);
   server.listen(settings.serverPort, '0.0.0.0');
+}
+
+/**
+ * Stops the server and associated IPython server.
+ */
+export function stop(): void {
+  ipython.stop();
 }
