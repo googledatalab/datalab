@@ -31,15 +31,16 @@ fi
 
 
 # Variables
-
+IMAGE_NAME="gcp-ipython"
 CLOUD_PROJECT=$2
 APP_MODULE=$4
 APP_VERSION=$5
 
+
 if [ "$3" = "" ]; then
-  DOCKER_IMAGE="gcp-ipython"
+  DOCKER_IMAGE=$IMAGE_NAME
 else
-  DOCKER_IMAGE="$3/gcp-ipython"
+  DOCKER_IMAGE="$3/$IMAGE_NAME"
 fi
 
 if [ "$APP_MODULE" = "" ]; then
@@ -58,7 +59,7 @@ echo "Image  : $DOCKER_IMAGE"
 # Generate supporting files
 
 cat > Dockerfile << EOF1
-FROM gcp-ipython
+FROM $DOCKER_IMAGE
 
 EOF1
 
