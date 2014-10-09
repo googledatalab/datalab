@@ -20,7 +20,6 @@ task copyStaticUi(type: Copy) {
     into  new File(project.buildDir, '/ui')
     exclude '**/*.ts'
 }
-
 /**
  * Compile the main UI module and it's dependencies into a single main.js
  */
@@ -31,7 +30,15 @@ task tscUi(type: TypeScriptCompileTask) {
 }
 
 /**
- * Compile the NodeJS modules into a single server.js
+ * Copy over any static files for the NodeJS server
+ */
+task copyStaticNode(type: Copy) {
+    from './src/node'
+    into new File(project.buildDir, '/node')
+    exclude '**/*.ts'
+}
+/**
+ * Compile the NodeJS modules into CommonJS modules
  */
 task tscNode(type: TypeScriptCompileTask) {
     srcDir = 'server/src'
@@ -46,5 +53,5 @@ task tscNode(type: TypeScriptCompileTask) {
  * Execute all of the tasks necessary to build the DataLab server
  */
 task('build') {
-    dependsOn 'copyStaticUi', 'tscUi', 'tscNode'
+    dependsOn 'copyStaticUi', 'tscUi', 'copyStaticNode', 'tscNode'
 }

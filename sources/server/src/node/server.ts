@@ -13,17 +13,26 @@
  */
 
 
+/**
+ * Main entry point for the server.
+ *
+ * Starts an HTTP server on port that can be overridden by environment variable defined in
+ * app.Settings (see: app/config)
+ */
 /// <reference path="../../../../externs/ts/node/node.d.ts" />
 /// <reference path="../../../../externs/ts/express/express.d.ts" />
 
 
 import http = require('http');
 import express = require('express');
+import config = require('./app/config');
 
-var PORT = parseInt(process.env['DATALAB_PORT'] || 8080);
+export function start (settings: app.Settings) {
+  var expressApp = express();
+  var httpServer = http.createServer(expressApp);
 
-var expressApp = express();
-var httpServer = http.createServer(expressApp);
+  console.log("Starting HTTP server on port " + settings.httpPort);
+  httpServer.listen(settings.httpPort);
+}
 
-console.log("Starting DataLab server on port " + PORT);
-httpServer.listen(PORT);
+start(config.getSettings());

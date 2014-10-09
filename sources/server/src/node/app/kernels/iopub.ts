@@ -1,0 +1,121 @@
+/*
+ * Copyright 2014 Google Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+
+import ipy = require('../messages/ipy');
+import channels = require('./channels');
+
+
+/**
+ * Client for communicating with the iopub channel of a running IPython kernel.
+ *
+ * Hides the details of the IPython messaging protocol from the caller.
+ */
+export class IOPubChannelClient extends channels.ChannelClient {
+
+  constructor (connectionUrl: string, port: number) {
+    super (connectionUrl, port, 'iopub-' + port, 'sub');
+  }
+
+  connect () {
+    super.connect();
+    this._socket.subscribe(''); // Subscribe to all topics
+  }
+
+  /**
+   * Default no-op message delegation handlers
+   */
+  _delegateKernelStatusMessage (status: app.KernelStatus): void {}
+  _delegateExecuteResultMessage (result: app.ExecuteResult): void {}
+
+  /**
+   * Specifies a callback to handle kernel status messages
+   */
+  onKernelStatusMessage (callback: app.KernelStatusHandler): void {
+    this._delegateKernelStatusMessage = callback;
+  }
+
+  /**
+   * Specifies a callback to handle execute result messages
+   */
+  onExecuteResultMessage (callback: app.ExecuteResultHandler): void {
+    this._delegateExecuteResultMessage = callback;
+  }
+
+  /**
+   * Note: Upcoming changes to the IPython messaging protocol will remap the (protocol version 4.1)
+   * message types used below. Therefore, using internal names that align with the proposed names
+   * for upcoming protocol versions.
+   *
+   * See: https://github.com/ipython/ipython/wiki/IPEP-13:-Updating-the-Message-Spec
+   *
+   * Notebook server-to-kernel mappings will be 1:1 and thus some iopub messages will be redundant,
+   * because there is effectively a single kernel client, instead of multiple. Because of this,
+   * the pyerr and pyin messages are both swallowed here. The data contained within pyin and pyerr
+   * are both fully captured by the execute_reply/execute_request combination of messages.
+   */
+  _receiveMessage () {
+    var message = ipy.parseIPyMessage(arguments);
+
+    switch (message.header.msg_type) {
+      case 'status':
+        this._handleKernelStatusMessage(message);
+        break;
+
+      case 'pyout':
+        this._handleExecuteResultMessage(message);
+        break;
+
+      case 'pyin':
+        // no-op
+        break;
+
+      case 'pyerr':
+        // no-op
+        break;
+
+      default: // No defined handler for the type, so log it and move on
+        console.log('Unhandled message type "' + message.header.msg_type + '" received');
+        return;
+    }
+
+  }
+
+  /**
+   * Converts IPython message data for a kernel status msg to an internal message and delegates
+   */
+  _handleKernelStatusMessage (message: app.ipy.Message) {
+
+    var status: app.KernelStatus = {
+      status: message.content['execution_state'],
+      requestId: message.parentHeader.msg_id
+    };
+
+    this._delegateKernelStatusMessage (status);
+  }
+
+  /**
+   * Converts IPython message data for a execute_result msg to an internal message and delegates
+   */
+  _handleExecuteResultMessage (message: app.ipy.Message) {
+
+    var result: app.ExecuteResult = {
+      result: message.content['data'],
+      requestId: message.parentHeader.msg_id
+    }
+
+    this._delegateExecuteResultMessage (result);
+  }
+
+}
