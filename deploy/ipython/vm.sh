@@ -89,23 +89,22 @@ cat > app.js << EOF3
 
 EOF3
 
-
-# First pull the IPython docker image
-docker pull $DOCKER_IMAGE
-
 # Build the local docker image
 docker build -t gcp-ipython-instance .
+
+# Pull gcloud dependencies 
+docker pull google/docker-registry
 
 # Deploy to the cloud (as a managed VM application)
 if [ "$1" = "deploy" ]; then
   gcloud preview app deploy . --force \
     --project $CLOUD_PROJECT \
     --server preview.appengine.google.com \
-    --docker-host tcp://192.168.59.103:2375
+    --docker-host tcp://127.0.0.1:2375
 else
   gcloud preview app run . \
     --project $CLOUD_PROJECT \
-    --docker-host tcp://192.168.59.103:2375
+    --docker-host tcp://127.0.0.1:2375
 fi
 
 # Cleanup
