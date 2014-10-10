@@ -13,7 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-docker run -i --entrypoint="/bin/bash" \
+docker run -p 127.0.0.1:8080:8080 -i \
   -v ~/.config:/.config:rw \
   -t gcp-ipython
 
+# Note for using boot2docker
+# The port is not exposed on the host machine. Run this as well:
+# boot2docker ssh -L 8080:localhost:8080
