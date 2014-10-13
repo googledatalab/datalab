@@ -12,17 +12,42 @@
  * the License.
  */
 
-task tscNode(type: TypeScriptCompileTask) {
-    srcDir = 'ipython'
-    pathToRootModule = '/proxy'
+task copyIPythonProfile(type: Copy) {
+  from 'profile'
+  into project.buildDir
 }
 
-task copyConfiguration(type: Copy) {
-    from './proxy'
-    into new File(project.buildDir, '/proxy')
-    exclude '**/*.ts'
+task compileProxyServer(type: TypeScriptCompileTask) {
+  srcDir = 'ipython'
+  pathToRootModule = '/proxy'
+}
+
+task copyProxyServerConfig(type: Copy) {
+  from './proxy'
+  into new File(project.buildDir, '/proxy')
+  exclude '**/*.ts'
+}
+
+task tarIPythonProfile(type: Exec) {
+  workingDir new File(project.buildDir, '..')
+  commandLine 'tar', 'cvfz', 'ipython.tar.gz', 'ipython'
+}
+
+task packageIPythonExtensions(type: Exec) {
+  commandLine 'python', 'setup.py', 'sdist',
+              '--dist-dir=' + new File(rootProject.projectDir, '../build/python')
+}
+
+task moveGeneratedManifest(type: Exec) {
+  commandLine 'mv', 'MANIFEST', new File(rootProject.projectDir, '../build/python/IPythonGCP.manifest')
+  dependsOn packageIPythonExtensions
 }
 
 task('build') {
-    dependsOn 'tscNode', 'copyConfiguration'
+  dependsOn 'compileProxyServer',
+            'copyProxyServerConfig',
+            'copyIPythonProfile',
+            'tarIPythonProfile',
+            'packageIPythonExtensions',
+            'moveGeneratedManifest'
 }
