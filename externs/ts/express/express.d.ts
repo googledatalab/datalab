@@ -537,6 +537,12 @@ declare module "express" {
             sendfile(path: string, options: any, fn: Errback): void;
 
             /**
+             * Set the response HTTP status code to statusCode and send its string representation
+             * as the response body.
+             */
+             sendStatus(status: number): void;
+
+            /**
              * Transfer the file at the given `path` as an attachment.
              *
              * Optionally providing an alternate attachment `filename`,

@@ -21,18 +21,18 @@
  */
 /// <reference path="../../../../externs/ts/node/node.d.ts" />
 /// <reference path="../../../../externs/ts/express/express.d.ts" />
-
-
 import http = require('http');
 import express = require('express');
 import config = require('./app/config');
 
-export function start (settings: app.Settings) {
+
+export function start (settings: app.Settings, apiRouter: express.Router) {
   var expressApp = express();
+  expressApp.use('/api', apiRouter);
   var httpServer = http.createServer(expressApp);
 
   console.log("Starting HTTP server on port " + settings.httpPort);
   httpServer.listen(settings.httpPort);
 }
 
-start(config.getSettings());
+start(config.getSettings(), config.getApiRouter());

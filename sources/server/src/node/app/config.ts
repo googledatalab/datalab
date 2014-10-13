@@ -13,6 +13,12 @@
  */
 
 
+/// <reference path="../../../../../externs/ts/express/express.d.ts" />
+import express = require('express');
+import kernels = require('./kernels/api');
+import manager = require('./kernels/manager');
+
+
 /**
  * Default server configuration with support for environment variable overrides.
  */
@@ -22,4 +28,28 @@ var settings: app.Settings = {
 
 export function getSettings (): app.Settings {
   return settings;
+}
+
+/**
+ * A single, server-wide kernel manager instance
+ */
+var kernelManager: app.IKernelManager = new manager.KernelManager();
+
+/**
+ * Gets the kernel manager singleton
+ */
+export function getKernelManager (): app.IKernelManager {
+  return kernelManager;
+}
+
+/**
+ * Gets the set of HTTP API route handlers that should be enabled for the server.
+ */
+export function getApiRouter (): express.Router {
+  var kernelApi = new kernels.KernelApi(kernelManager);
+  var apiRouter: express.Router = express.Router();
+  kernelApi.register(apiRouter);
+  // TODO(bryantd): register notebooks/datasets/other APIs here eventually
+
+  return apiRouter;
 }

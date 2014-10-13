@@ -25,21 +25,21 @@ import shell = require('./shell');
 /**
  * Client for communication via the IPython protocol to a kernel process.
  */
-export class KernelClient {
+export class KernelClient implements app.IKernel {
 
   static connectionUrl: string = 'tcp://127.0.0.1:';
-  _config: app.KernelConfig;
+  id: string;
+  config: app.KernelConfig;
+
   _kernelProcess: childproc.ChildProcess;
   _iopub: iopub.IOPubChannelClient;
   _shell: shell.ShellChannelClient;
-  _clientId: string;
 
-  constructor (config: app.KernelConfig) {
-    this._config = config;
-    this._clientId = uuid.v4();
+  constructor (id: string, config: app.KernelConfig) {
+    this.id = id;
+    this.config = config;
     this._iopub = new iopub.IOPubChannelClient(KernelClient.connectionUrl, config.iopubPort);
-    this._shell = new shell.ShellChannelClient(KernelClient.connectionUrl, config.shellPort,
-      this._clientId);
+    this._shell = new shell.ShellChannelClient(KernelClient.connectionUrl, config.shellPort, id);
   }
 
   start (): void {
@@ -63,7 +63,7 @@ export class KernelClient {
     this._shell.execute(request);
   }
 
-  onMessage (callback: app.KernelMessageHandler) {
+  onMessage (callback: app.KernelMessageHandler): void {
     this._delegateMessage = callback;
   }
 
@@ -79,12 +79,11 @@ export class KernelClient {
     var args = [
         'kernel',
         '--Session.key=""',
-        '--iopub=' + this._config.iopubPort,
-        '--shell=' + this._config.shellPort,
+        '--iopub=' + this.config.iopubPort,
+        '--shell=' + this.config.shellPort,
         '--log-level="DEBUG"'
         ];
     this._kernelProcess = childproc.spawn(cmd, args);
-    console.log("Started process with id =", this._kernelProcess.pid);
     // For now, consider both disconnected and exitted kernels as "dead"
     this._kernelProcess.on('exit', this._handleKernelDiedEvent.bind(this));
     this._kernelProcess.on('disconnect', this._handleKernelDiedEvent.bind(this));

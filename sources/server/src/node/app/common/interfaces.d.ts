@@ -35,4 +35,21 @@ declare module app {
     (message: any): void;
   }
 
+  interface IKernel {
+    id: string;
+    config: KernelConfig;
+    start (): void;
+    shutdown (): void;
+    onMessage (handler: KernelMessageHandler): void;
+    execute (request: ExecuteRequest): void;
+  }
+
+  interface IKernelManager {
+    create (config: KernelConfig): IKernel;
+    get (id: string): IKernel;
+    list (): IKernel[];
+    shutdown (id: string): void;
+    shutdownAll (): void;
+  }
+
 }
