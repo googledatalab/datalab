@@ -39,13 +39,13 @@ export class ShellChannelClient extends channels.ChannelClient {
   /**
    * Default no-op message delegation handlers
    */
-  _delegateExecuteReplyMessage (reply: app.ExecuteReply): void {}
+  _delegateExecuteReplyHandler (reply: app.ExecuteReply): void {}
 
   /**
    * Specifies a callback to handle execute reply messages
    */
-  onExecuteReplyMessage (callback: app.ExecuteReplyHandler): void {
-    this._delegateExecuteReplyMessage = callback;
+  onExecuteReply (callback: app.EventHandler<app.ExecuteReply>): void {
+    this._delegateExecuteReplyHandler = callback;
   }
 
   /**
@@ -56,7 +56,7 @@ export class ShellChannelClient extends channels.ChannelClient {
   execute (request: app.ExecuteRequest): void {
     // Translate to execute request to the IPython message format and send to the kernel
     var ipyExecuteMessage = this._createIPyExecuteRequest(request);
-    this._sendMessage(ipyExecuteMessage);
+    this._send(ipyExecuteMessage);
   }
 
   /**
@@ -65,13 +65,13 @@ export class ShellChannelClient extends channels.ChannelClient {
    * Converts multipart IPython message format to internal message type and then delegates to an
    * appropriate handler.
    */
-  _receiveMessage () {
+  _receive () {
     var message = ipy.parseIPyMessage(arguments);
 
     // Dispatch to an appropriate handler for the received message type
     switch (message.header.msg_type) {
       case 'execute_reply':
-        this._handleExecuteReplyMessage(message);
+        this._handleExecuteReply(message);
         break;
 
       default: // No handler for this message type, so log it and move on
@@ -80,7 +80,7 @@ export class ShellChannelClient extends channels.ChannelClient {
     }
   }
 
-  _handleExecuteReplyMessage (message: app.ipy.Message): void {
+  _handleExecuteReply (message: app.ipy.Message): void {
     // Translate the IPython message into an internal message type
     var status = message.content['status'];
     var reply: app.ExecuteReply = {
@@ -96,7 +96,7 @@ export class ShellChannelClient extends channels.ChannelClient {
       reply.traceback = <string[]>message.content['traceback'];
     }
 
-    this._delegateExecuteReplyMessage (reply);
+    this._delegateExecuteReplyHandler(reply);
   }
 
   /**

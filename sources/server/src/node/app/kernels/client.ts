@@ -20,7 +20,7 @@ import childproc = require('child_process');
 import util = require('util');
 import iopub = require('./iopub');
 import shell = require('./shell');
-
+import helpers = require('../common/util');
 
 /**
  * Client for communication via the IPython protocol to a kernel process.
@@ -34,43 +34,65 @@ export class KernelClient implements app.IKernel {
   _kernelProcess: childproc.ChildProcess;
   _iopub: iopub.IOPubChannelClient;
   _shell: shell.ShellChannelClient;
+  _delegateKernelStatusHandler: app.EventHandler<app.KernelStatus>;
 
   constructor (id: string, config: app.KernelConfig) {
     this.id = id;
     this.config = config;
     this._iopub = new iopub.IOPubChannelClient(KernelClient.connectionUrl, config.iopubPort);
     this._shell = new shell.ShellChannelClient(KernelClient.connectionUrl, config.shellPort, id);
+    this._delegateKernelStatusHandler = helpers.noop;
   }
 
-  start (): void {
-    this._spawnLocalKernelProcess();
-
-    this._iopub.connect();
-    this._iopub.onKernelStatusMessage(this._handleMessage.bind(this));
-    this._iopub.onExecuteResultMessage(this._handleMessage.bind(this));
-
-    this._shell.connect();
-    this._shell.onExecuteReplyMessage(this._handleMessage.bind(this));
+  /**
+   * Sends an execute request to the connected kernel
+   */
+  execute (request: app.ExecuteRequest): void {
+    this._shell.execute(request);
   }
 
+  /**
+   * Registers a callback to be invoked when an execute reply message arrives from the kernel
+   */
+  onExecuteReply (callback: app.EventHandler<app.ExecuteReply>): void {
+    this._shell.onExecuteReply(callback);
+  }
+
+  /**
+   * Registers a callback to be invoked when an execute result message arrives from the kernel
+   */
+  onExecuteResult (callback: app.EventHandler<app.ExecuteResult>): void {
+    this._iopub.onExecuteResult(callback);
+  }
+
+  /**
+   * Registers a callback to be invoked when a kernel status message arrives from the kernel
+   */
+  onKernelStatus (callback: app.EventHandler<app.KernelStatus>): void {
+    this._delegateKernelStatusHandler = callback;
+    this._iopub.onKernelStatus(callback);
+  }
+
+  /**
+   * Closes socket connections to the kernel process and then kills the kernel process
+   */
   shutdown (): void {
     this._iopub.disconnect();
     this._shell.disconnect();
     this._kernelProcess.kill();
   }
 
-  execute (request: app.ExecuteRequest): void {
-    this._shell.execute(request);
+  /**
+   * Spawns a new kernel process and registers event handlers for per-channel kernel messages
+   */
+  start (): void {
+    this._spawnLocalKernelProcess();
+    this._iopub.connect();
+    this._shell.connect();
   }
 
-  onMessage (callback: app.KernelMessageHandler): void {
-    this._delegateMessage = callback;
-  }
-
-  _delegateMessage (message: any): void {}
-
-  _handleMessage (message: any): void {
-    this._delegateMessage(message);
+  _handleKernelDiedEvent () {
+    this._delegateKernelStatusHandler ({status: 'dead', requestId: null});
   }
 
   _spawnLocalKernelProcess (): void {
@@ -87,10 +109,6 @@ export class KernelClient implements app.IKernel {
     // For now, consider both disconnected and exitted kernels as "dead"
     this._kernelProcess.on('exit', this._handleKernelDiedEvent.bind(this));
     this._kernelProcess.on('disconnect', this._handleKernelDiedEvent.bind(this));
-  }
-
-  _handleKernelDiedEvent () {
-    this._delegateMessage ({status: 'dead', requestId: null});
   }
 
 }

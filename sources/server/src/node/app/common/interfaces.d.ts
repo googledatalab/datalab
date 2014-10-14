@@ -26,22 +26,24 @@ declare module app {
     [index: string]: T;
   }
 
+  interface EventHandler<T> {
+    (event: T): void;
+  }
+
   interface KernelConfig {
     iopubPort: number;
     shellPort: number;
   }
 
-  interface KernelMessageHandler {
-    (message: any): void;
-  }
-
   interface IKernel {
     id: string;
     config: KernelConfig;
-    start (): void;
-    shutdown (): void;
-    onMessage (handler: KernelMessageHandler): void;
     execute (request: ExecuteRequest): void;
+    onExecuteReply (callback: EventHandler<ExecuteReply>): void;
+    onExecuteResult (callback: EventHandler<ExecuteResult>): void;
+    onKernelStatus (callback: EventHandler<KernelStatus>): void;
+    shutdown (): void;
+    start (): void;
   }
 
   interface IKernelManager {
@@ -50,6 +52,28 @@ declare module app {
     list (): IKernel[];
     shutdown (id: string): void;
     shutdownAll (): void;
+  }
+
+  interface ISession {
+    id: string;
+    getKernelId (): string;
+    getUserConnectionId (): string;
+    updateUserConnection (connection: IUserConnection): void;
+  }
+
+  interface IUserConnection {
+    id: string;
+    getSessionId (): string;
+    onDisconnect (callback: EventHandler<IUserConnection>): void;
+    onExecuteRequest (callback: EventHandler<ExecuteRequest>): void;
+    sendExecuteReply (reply: ExecuteReply): void;
+    sendExecuteResult (result: ExecuteResult): void;
+    sendKernelStatus (status: KernelStatus): void;
+  }
+
+  interface IUserConnectionManager {
+    onConnect (callback: EventHandler<IUserConnection>): void;
+    onDisconnect (callback: EventHandler<IUserConnection>): void;
   }
 
 }

@@ -53,7 +53,7 @@ export class KernelManager implements app.IKernelManager {
    * Gets the list of kernel instances managed by this instance
    */
   list (): app.IKernel[] {
-    return this._getIds().map((id: string): app.IKernel => {
+    return this._getIds().map((id) => {
       return this._idToKernel[id];
     });
   }
@@ -82,7 +82,7 @@ export class KernelManager implements app.IKernelManager {
   /**
    * Gets the list of kernel IDs
    */
-  _getIds (): string [] {
+  _getIds (): string[] {
     return Object.keys(this._idToKernel);
   }
 

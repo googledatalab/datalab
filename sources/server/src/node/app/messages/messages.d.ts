@@ -23,24 +23,22 @@
 
 declare module app {
 
-  interface KernelMessageHandler {
-    (message: any): void;
+  interface MessageProcessor {
+    /**
+     * @param message the message to process
+     * @param session session object from which the message originated
+     * @return the processed message or null to indicate message should be filtered
+     */
+    (message: any, session: app.ISession): any;
+  }
+
+  interface MessageHandler {
+    (message: any, session: app.ISession, callback: app.EventHandler<any>): void
   }
 
   interface KernelStatus {
     status: string;
     requestId: string;
-  }
-  interface KernelStatusHandler {
-    (status: KernelStatus): void;
-  }
-
-  interface ExecuteResult {
-    result: any;
-    requestId: string;
-  }
-  interface ExecuteResultHandler {
-    (result: ExecuteResult): void;
   }
 
   interface ExecuteReply {
@@ -53,14 +51,16 @@ declare module app {
     errorMessage?: string;
     traceback?: string[];
   }
-  interface ExecuteReplyHandler {
-    (reply: ExecuteReply): void;
-  }
 
   interface ExecuteRequest {
     code: string;
     // Note: user_variables and user_expressions are slated for removal/reworking in upcoming versions
     // https://github.com/ipython/ipython/wiki/IPEP-13:-Updating-the-Message-Spec
+    requestId: string;
+  }
+
+  interface ExecuteResult {
+    result: any;
     requestId: string;
   }
 

@@ -36,21 +36,21 @@ export class IOPubChannelClient extends channels.ChannelClient {
   /**
    * Default no-op message delegation handlers
    */
-  _delegateKernelStatusMessage (status: app.KernelStatus): void {}
-  _delegateExecuteResultMessage (result: app.ExecuteResult): void {}
+  _delegateKernelStatusHandler (status: app.KernelStatus): void {}
+  _delegateExecuteResultHandler (result: app.ExecuteResult): void {}
 
   /**
    * Specifies a callback to handle kernel status messages
    */
-  onKernelStatusMessage (callback: app.KernelStatusHandler): void {
-    this._delegateKernelStatusMessage = callback;
+  onKernelStatus (callback: app.EventHandler<app.KernelStatus>): void {
+    this._delegateKernelStatusHandler = callback;
   }
 
   /**
    * Specifies a callback to handle execute result messages
    */
-  onExecuteResultMessage (callback: app.ExecuteResultHandler): void {
-    this._delegateExecuteResultMessage = callback;
+  onExecuteResult (callback: app.EventHandler<app.ExecuteResult>): void {
+    this._delegateExecuteResultHandler = callback;
   }
 
   /**
@@ -65,16 +65,16 @@ export class IOPubChannelClient extends channels.ChannelClient {
    * the pyerr and pyin messages are both swallowed here. The data contained within pyin and pyerr
    * are both fully captured by the execute_reply/execute_request combination of messages.
    */
-  _receiveMessage () {
+  _receive () {
     var message = ipy.parseIPyMessage(arguments);
 
     switch (message.header.msg_type) {
       case 'status':
-        this._handleKernelStatusMessage(message);
+        this._handleKernelStatus(message);
         break;
 
       case 'pyout':
-        this._handleExecuteResultMessage(message);
+        this._handleExecuteResult(message);
         break;
 
       case 'pyin':
@@ -95,27 +95,27 @@ export class IOPubChannelClient extends channels.ChannelClient {
   /**
    * Converts IPython message data for a kernel status msg to an internal message and delegates
    */
-  _handleKernelStatusMessage (message: app.ipy.Message) {
+  _handleKernelStatus (message: app.ipy.Message) {
 
     var status: app.KernelStatus = {
       status: message.content['execution_state'],
       requestId: message.parentHeader.msg_id
     };
 
-    this._delegateKernelStatusMessage (status);
+    this._delegateKernelStatusHandler (status);
   }
 
   /**
    * Converts IPython message data for a execute_result msg to an internal message and delegates
    */
-  _handleExecuteResultMessage (message: app.ipy.Message) {
+  _handleExecuteResult (message: app.ipy.Message) {
 
     var result: app.ExecuteResult = {
       result: message.content['data'],
       requestId: message.parentHeader.msg_id
     }
 
-    this._delegateExecuteResultMessage (result);
+    this._delegateExecuteResultHandler (result);
   }
 
 }

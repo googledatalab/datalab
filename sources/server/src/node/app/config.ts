@@ -21,9 +21,11 @@ import manager = require('./kernels/manager');
 
 /**
  * Default server configuration with support for environment variable overrides.
+ *
+ * TODO(bryantd): This should be configured from an external settings file eventually
  */
 var settings: app.Settings = {
-  httpPort: parseInt(process.env['SERVER_HTTP_PORT'] || 8080)
+  httpPort: parseInt(process.env['SERVER_HTTP_PORT'] || 9000)
 };
 
 export function getSettings (): app.Settings {
@@ -52,4 +54,19 @@ export function getApiRouter (): express.Router {
   // TODO(bryantd): register notebooks/datasets/other APIs here eventually
 
   return apiRouter;
+}
+
+/**
+ * Logs all messages to the console
+ */
+function logMessage (message: any, session: app.ISession): any {
+  console.log('Message: ', JSON.stringify(message));
+  return message;
+}
+
+/**
+ * Gets the ordered list of message processors
+ */
+export function getMessageProcessors (): app.MessageProcessor[] {
+  return [logMessage];
 }
