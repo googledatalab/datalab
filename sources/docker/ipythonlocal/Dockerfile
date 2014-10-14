@@ -1,4 +1,3 @@
-#!/bin/sh
 # Copyright 2014 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,5 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-docker run -i --entrypoint="/bin/bash" -t gcp-ipython
+FROM gcp-ipython
+
+# Add gcloud configuration for auth and project information
+ONBUILD ADD gcloud /root/.config/gcloud/
+
+# Add the metadata service emulator tool
+ADD server.js /tools/metadata/server.js
+ENV METADATA_HOST localhost
+ENV METADATA_PORT 8000
+
+ADD commands.sh /commands.sh
+RUN chmod +x /commands.sh
+ENTRYPOINT /commands.sh
 

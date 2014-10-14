@@ -13,101 +13,81 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Starts an IPython managed VM
+# Starts an IPython container deployed to a GCE VM.
 
-if [ "$#" -lt 2 ]; then
-  echo "Usage: vm.sh <command> <cloud project> [<docker registry>]"
-  echo "                       [<module>] [<version>]"
+if [ "$#" -lt 3 ]; then
+  echo "Usage: vm.sh <cloud project> <vm> [<zone>] [<docker registry>]"
   echo
-  echo "  command        : deploy | run"
   echo "  cloud project  : the cloud project to deploy to."
+  echo "  vm             : the name of the VM to create."
+  echo "  zone           : the zone to create the VM in."
   echo "  docker registry: the registry containing the docker image to deploy."
-  echo "  module         : the managed VM module to deploy to."
-  echo "  version        : the managed VM module version to deploy to."
   echo
 
   exit
 fi
 
-
-# Variables
 IMAGE_NAME="gcp-ipython"
-CLOUD_PROJECT=$2
-APP_MODULE=$4
-APP_VERSION=$5
-
+NETWORK_NAME=ipython
+CLOUD_PROJECT=$1
+VM=$2
 
 if [ "$3" = "" ]; then
+  ZONE="us-central1-a"
+else
+  ZONE=$3
+fi
+
+if [ "$4" = "" ]; then
   DOCKER_IMAGE=$IMAGE_NAME
 else
-  DOCKER_IMAGE="$3/$IMAGE_NAME"
+  DOCKER_IMAGE="$4/$IMAGE_NAME"
 fi
 
-if [ "$APP_MODULE" = "" ]; then
-  APP_MODULE=ipython
-fi
-if [ "$APP_VERSION" = "" ]; then
-  APP_VERSION=preview1
-fi
-
-echo "Project: $CLOUD_PROJECT"
-echo "Module : $APP_MODULE"
-echo "Version: $APP_VERSION"
-echo "Image  : $DOCKER_IMAGE"
-
-
-# Generate supporting files
-
-cat > Dockerfile << EOF1
-FROM $DOCKER_IMAGE
+# Generate the VM manifest
+cat > vm.yaml << EOF1
+version: v1beta2
+containers:
+  - name: $VM
+    image: $DOCKER_IMAGE
+    ports:
+      - name: ipython
+        hostPort: 8080
+        containerPort: 8080
 
 EOF1
 
-cat > app.yaml << EOF2
-api_version: 1
-module: $APP_MODULE
-version: $APP_VERSION
-
-vm: true
-manual_scaling:
-  instances: 1
-
-runtime: custom
-threadsafe: true
-
-handlers:
-- url: /.*
-  script: app.js
-  login: admin
-  secure: always
-
-EOF2
-
-cat > app.js << EOF3
-// Stub script referenced by app.yaml
-//
-
-EOF3
-
-# Build the local docker image
-docker build -t gcp-ipython-instance .
-
-# Pull gcloud dependencies 
-docker pull google/docker-registry
-
-# Deploy to the cloud (as a managed VM application)
-if [ "$1" = "deploy" ]; then
-  gcloud preview app deploy . --force \
+# Create the network (if needed) and allow SSH access
+gcloud compute networks describe $NETWORK_NAME --project $CLOUD_PROJECT
+if [ $? -gt 0 ]; then
+  gcloud compute networks create $NETWORK_NAME --project $CLOUD_PROJECT
+  gcloud compute firewall-rules create allow-ssh --allow tcp:22 \
     --project $CLOUD_PROJECT \
-    --server preview.appengine.google.com \
-    --docker-host tcp://127.0.0.1:2375
-else
-  gcloud preview app run . \
+    --network $NETWORK_NAME
+  gcloud compute firewall-rules create allow-ssh --allow tcp:22 \
     --project $CLOUD_PROJECT \
-    --docker-host tcp://127.0.0.1:2375
+    --network $NETWORK_NAME
 fi
 
+
+# Create the VM
+gcloud compute instances create $VM \
+  --image container-vm-v20140731 \
+  --image-project google-containers \
+  --project $CLOUD_PROJECT \
+  --zone $ZONE \
+  --machine-type n1-standard-1 \
+  --network $NETWORK_NAME \
+  --maintenance-policy "MIGRATE" \
+  --scopes storage-full bigquery datastore sql \
+  --metadata-from-file google-container-manifest=vm.yaml
+
 # Cleanup
-rm Dockerfile
-rm app.js
-rm app.yaml
+rm vm.yaml
+
+# Info
+echo ""
+echo "VM has been started..."
+echo "Once the docker container within the VM is up, setup SSH tunneling:"
+echo "gcloud compute ssh --ssh-flag=\"-L 8080:localhost:8080\" --project $CLOUD_PROJECT --zone $ZONE $VM"
+echo ""

@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-docker run -p 127.0.0.1:8080:8080 -i \
-  -v ~/.config:/.config:rw \
-  -t gcp-ipython
+# Commands to run inside the docker container.
+# 1. Start the metadata service emulator
+node /tools/metadata/server.js &
 
-# Note for using boot2docker
-# The port is not exposed on the host machine. Run this as well:
-# boot2docker ssh -L 8080:localhost:8080
+# 2. Start the IPython proxy server (which in turn starts IPython)
+node /ipython/proxy/app.js
+
