@@ -92,8 +92,9 @@ EOF3
 # Build the local docker image
 docker build -t gcp-ipython-instance .
 
-# Pull gcloud dependencies 
-docker pull google/docker-registry
+# NOTE: Might need to run this once, to use gcloud to deploy managed VM
+#       applications.
+# docker pull google/docker-registry
 
 # Deploy to the cloud (as a managed VM application)
 if [ "$1" = "deploy" ]; then
