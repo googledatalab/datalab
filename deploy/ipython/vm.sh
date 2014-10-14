@@ -100,11 +100,11 @@ if [ "$1" = "deploy" ]; then
   gcloud preview app deploy . --force \
     --project $CLOUD_PROJECT \
     --server preview.appengine.google.com \
-    --docker-host tcp://127.0.0.1:2375
+    --docker-host $DOCKER_HOST
 else
   gcloud preview app run . \
     --project $CLOUD_PROJECT \
-    --docker-host tcp://127.0.0.1:2375
+    --docker-host $DOCKER_HOST
 fi
 
 # Cleanup
