@@ -1,4 +1,8 @@
 {
+  "consoleLogging": true,
+  "logFilePath": "/tmp/ipython/logs.log",
+  "logFilePeriod": "300000ms",
+  "logFileCount": 10,
   "analyticsId": "UA-54894152-2",
   "ipythonArgs": [
     "notebook",

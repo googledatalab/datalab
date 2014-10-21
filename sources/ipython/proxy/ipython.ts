@@ -19,6 +19,7 @@
 import childProcess = require('child_process');
 import http = require('http');
 import httpProxy = require('http-proxy');
+import logging = require('./logging');
 import path = require('path');
 
 /**
@@ -32,15 +33,16 @@ var appSettings: common.Settings;
 var ipythonProcess: childProcess.ChildProcess;
 
 
-function pipeOutput(stream: NodeJS.ReadableStream, output: (text: string) => void) {
+function pipeOutput(stream: NodeJS.ReadableStream, error: boolean) {
   stream.setEncoding('utf8');
   stream.on('data', (data: string) => {
-    output(data);
+    logging.logIPythonOutput(data, error);
   })
 }
 
 function exitHandler(code: number, signal: string): void {
-  console.log('IPython exited due to signal: ' + signal);
+  logging.getLogger().error('IPython process %d exited due to signal: %s',
+                            ipythonProcess.pid, signal);
   process.exit();
 }
 
@@ -67,7 +69,7 @@ function responseHandler(proxyResponse: http.ClientResponse,
 }
 
 function errorHandler(error: Error, request: http.ServerRequest, response: http.ServerResponse) {
-  console.log(error.toString());
+  logging.getLogger().error(error, 'IPython server returned error.')
 
   response.writeHead(500, 'Internal Server Error');
   response.end();
@@ -97,10 +99,11 @@ export function createProxyServer(settings: common.Settings): httpProxy.ProxySer
 
   ipythonProcess = childProcess.spawn('python', pythonArgs, pythonOptions);
   ipythonProcess.on('exit', exitHandler);
+  logging.getLogger().info('IPython process started with pid %d', ipythonProcess.pid);
 
   // Capture the output, so it can be piped for logging.
-  pipeOutput(ipythonProcess.stdout, console.log);
-  pipeOutput(ipythonProcess.stderr, console.error);
+  pipeOutput(ipythonProcess.stdout, /* error */ false);
+  pipeOutput(ipythonProcess.stderr, /* error */ true);
 
   // Then create the proxy.
   var proxyOptions: httpProxy.ProxyServerOptions = {
