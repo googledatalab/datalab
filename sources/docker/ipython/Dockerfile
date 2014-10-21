@@ -79,4 +79,5 @@ RUN cd /ipython/proxy && npm install && cd /
 
 # Startup
 EXPOSE 8080
+VOLUME [ "/var/log/ipython" ]
 ENTRYPOINT [ "node", "/ipython/proxy/app.js" ]
