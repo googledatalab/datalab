@@ -15,34 +15,56 @@
 
 # Starts an IPython container deployed to a GCE VM.
 
-if [ "$#" -lt 3 ]; then
-  echo "Usage: vm.sh <cloud project> <vm> [<zone>] [<docker registry>]"
-  echo
-  echo "  cloud project  : the cloud project to deploy to."
-  echo "  vm             : the name of the VM to create."
-  echo "  zone           : the zone to create the VM in."
-  echo "  docker registry: the registry containing the docker image to deploy."
-  echo
+USAGE_ERROR=
 
-  exit
+gcloud -q config list compute/zone --format text | grep -q -i -F "none"
+if [ $? = 0 ]; then
+  USAGE_ERROR="Default compute zone is not set."
 fi
 
-IMAGE_NAME="gcp-ipython"
+gcloud -q config list project --format text | grep -q -i -F "none"
+if [ $? = 0 ]; then
+  USAGE_ERROR="Default cloud project is not set."
+fi
+
+if [ "$DOCKER_REGISTRY" = "" ]; then
+  USAGE_ERROR="Docker registry has not been specified."
+fi
+
+if [ "$#" -lt 1 ]; then
+  USAGE_ERROR="Missing required vm name parameter."
+fi
+
+if [ "$USAGE_ERROR" != "" ]; then
+  echo $USAGE_ERROR
+  echo
+  echo "Usage: $0 <vm name> [<machine type>]"
+  echo "  vm name:      the name of the VM to create."
+  echo "  machine type: the type of VM to create (default: n1-standard-1)"
+  echo
+  echo "Required configuration:"
+  echo "  - default cloud project"
+  echo "    gcloud config set project <project name>"
+  echo "  - default compute zone"
+  echo "    gcloud config set compute/zone <zone name>"
+  echo "  - docker registry (while docker image is unavailable via docker.io)"
+  echo "    export DOCKER_REGISTRY=<docker host:port>"
+  echo
+
+  exit 1
+fi
+
+# Initialize variables
+VM=$1
+if [ "$2" = "" ]; then
+  VM_TYPE="n1-standard-1"
+else
+  VM_TYPE=$2
+fi
+
 NETWORK_NAME=ipython
-CLOUD_PROJECT=$1
-VM=$2
+DOCKER_IMAGE="$DOCKER_REGISTRY/gcp-ipython"
 
-if [ "$3" = "" ]; then
-  ZONE="us-central1-a"
-else
-  ZONE=$3
-fi
-
-if [ "$4" = "" ]; then
-  DOCKER_IMAGE=$IMAGE_NAME
-else
-  DOCKER_IMAGE="$4/$IMAGE_NAME"
-fi
 
 # Generate the VM manifest
 cat > vm.yaml << EOF1
@@ -65,37 +87,52 @@ volumes:
 
 EOF1
 
+
 # Create the network (if needed) and allow SSH access
-gcloud compute networks describe $NETWORK_NAME --project $CLOUD_PROJECT >> /dev/null
+gcloud -q compute networks describe $NETWORK_NAME &> /dev/null
 if [ $? -gt 0 ]; then
-  gcloud compute networks create $NETWORK_NAME --project $CLOUD_PROJECT
-  gcloud compute firewall-rules create allow-ssh --allow tcp:22 \
-    --project $CLOUD_PROJECT \
-    --network $NETWORK_NAME
-  gcloud compute firewall-rules create allow-ssh --allow tcp:22 \
-    --project $CLOUD_PROJECT \
-    --network $NETWORK_NAME
+  echo "Creating network '$NETWORK_NAME' to associate with VM ..."
+
+  gcloud -q compute networks create $NETWORK_NAME &> /dev/null
+  if [ $? != 0 ]; then
+    echo "Failed to create network $NETWORK_NAME"
+    exit 1
+  fi
+
+  gcloud -q compute firewall-rules create allow-ssh --allow tcp:22 \
+    --network $NETWORK_NAME &> /dev/null
+  if [ $? != 0 ]; then
+    echo "Failed to create firewall rule to allow SSH in network $NETWORK_NAME"
+    exit 1
+  fi
 fi
 
 
 # Create the VM
-gcloud compute instances create $VM \
+echo "Creating VM instance '$VM' ..."
+gcloud -q compute instances create $VM \
   --image container-vm-v20140731 \
   --image-project google-containers \
-  --project $CLOUD_PROJECT \
-  --zone $ZONE \
-  --machine-type n1-standard-1 \
+  --machine-type $VM_TYPE \
   --network $NETWORK_NAME \
-  --maintenance-policy "MIGRATE" \
   --scopes storage-full bigquery datastore sql \
-  --metadata-from-file google-container-manifest=vm.yaml
+  --metadata-from-file google-container-manifest=vm.yaml \
+  --tags "ipython"
+if [ $? != 0 ]; then
+  echo "Failed to create VM instance named $VM"
+  exit 1
+fi
+
 
 # Cleanup
 rm vm.yaml
 
+
 # Info
-echo ""
+echo
 echo "VM has been started..."
 echo "Once the docker container within the VM is up, setup SSH tunneling:"
-echo "gcloud compute ssh --ssh-flag=\"-L 8080:localhost:8080\" --project $CLOUD_PROJECT --zone $ZONE $VM"
-echo ""
+echo "gcloud compute ssh --ssh-flag=\"-L 8080:localhost:8080\" $VM"
+echo
+
+exit 0
