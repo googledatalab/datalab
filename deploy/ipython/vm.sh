@@ -54,11 +54,19 @@ containers:
       - name: ipython
         hostPort: 8080
         containerPort: 8080
+    volumeMounts:
+      - name: log
+        mountPath: /var/log/ipython
+volumes:
+  - name: log
+    source:
+      hostDir:
+        path: /ipython/log
 
 EOF1
 
 # Create the network (if needed) and allow SSH access
-gcloud compute networks describe $NETWORK_NAME --project $CLOUD_PROJECT
+gcloud compute networks describe $NETWORK_NAME --project $CLOUD_PROJECT >> /dev/null
 if [ $? -gt 0 ]; then
   gcloud compute networks create $NETWORK_NAME --project $CLOUD_PROJECT
   gcloud compute firewall-rules create allow-ssh --allow tcp:22 \
