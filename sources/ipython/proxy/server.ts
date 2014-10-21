@@ -22,6 +22,7 @@ import http = require('http');
 import httpProxy = require('http-proxy');
 import info = require('./info');
 import ipython = require('./ipython');
+import logging = require('./logging');
 import net = require('net');
 import path = require('path');
 import sockets = require('./sockets');
@@ -59,6 +60,8 @@ function sendFile(fileName: string, contentType: string, response: http.ServerRe
  * @param response the out-going HTTP response.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse) {
+  logging.logRequest(request, response);
+
   var path = url.parse(request.url).pathname;
 
   // /_ah/* paths are completed handled in this server, and not forwarded on to
@@ -124,7 +127,8 @@ export function run(settings: common.Settings): void {
   server = http.createServer(requestHandler);
   server.on('upgrade', upgradeHandler);
 
-  console.log('Starting IPython proxy server at http://localhost:%d ...', settings.serverPort);
+  logging.getLogger().info('Starting IPython proxy server at http://localhost:%d',
+                           settings.serverPort);
   server.listen(settings.serverPort, '0.0.0.0');
 }
 

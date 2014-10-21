@@ -12,35 +12,12 @@
  * the License.
  */
 
-declare module common {
 
-  interface Settings {
-    consoleLogging: boolean;
-    logFilePath: string;
-    logFilePeriod: string;
-    logFileCount: number;
+/**
+ * Type definitions for mkdirp node module v 0.5.0
+ */
 
-    projectId: string;
-    versionId: string;
-    instanceId: string;
-    analyticsId: string;
+declare module 'mkdirp' {
 
-    serverPort: number;
-
-    ipythonArgs: string[];
-    ipythonPort: number;
-    ipythonWebServer: string;
-    ipythonSocketServer: string;
-
-    pollHangingInterval: number;
-    maxSocketMessageLength: number;
-  }
-
-  interface Map<T> {
-    [index: string]: T;
-  }
-
-  interface Callback<T> {
-    (e: Error, result: T): void;
-  }
+  export function sync(path: string): void;
 }

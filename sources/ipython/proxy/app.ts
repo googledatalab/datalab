@@ -14,8 +14,9 @@
 
 /// <reference path="common.d.ts" />
 
-import server = require('./server');
+import logging = require('./logging');
 import settings = require('./settings');
+import server = require('./server');
 
 /**
  * Load the configuration settings, and then start the server, which
@@ -23,6 +24,7 @@ import settings = require('./settings');
  */
 var appSettings = settings.loadSettings();
 if (appSettings != null) {
+  logging.initializeLoggers(appSettings);
   server.run(appSettings);
 }
 
