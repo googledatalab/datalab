@@ -32,14 +32,46 @@ class Notebook(object):
     self.data = data
 
 
+class NotebookList(object):
+  """Represents a flat collection of notebooks."""
+
+  def __init__(self):
+    pass
+
+  def list_files(self):
+    raise NotImplementedError('Must be implemented in a derived class.')
+
+  def file_exists(self, name):
+    raise NotImplementedError('Must be implemented in a derived class.')
+
+  def read_file(self, name, read_content):
+    raise NotImplementedError('Must be implemented in a derived class.')
+
+  def write_file(self, notebook):
+    raise NotImplementedError('Must be implemented in a derived class.')
+
+  def rename_file(self, name, new_name):
+    raise NotImplementedError('Must be implemented in a derived class.')
+
+  def delete_file(self, name):
+    raise NotImplementedError('Must be implemented in a derived class.')
+
+
 class SimpleNotebookManager(_NotebookManager):
-  """Base class for simple notebook managers that support a flat list of notebooks."""
+  """Base class for notebook managers."""
 
   def __init__(self, name, **kwargs):
-    """Initializes an instance of a TransientNotebookManager.
+    """Initializes an instance of a SimpleNotebookManager.
     """
     super(SimpleNotebookManager, self).__init__(**kwargs)
     self._name = name
+    self._notebook_lists = {}
+    self._dirs = []
+
+  def add_notebook_list(self, notebook_list, name=''):
+    self._notebook_lists[name] = notebook_list
+    if len(name) != 0:
+      self._dirs.append(name)
 
   @property
   def notebook_dir(value):
@@ -51,9 +83,8 @@ class SimpleNotebookManager(_NotebookManager):
   def path_exists(self, path):
     """Checks if the specified path exists.
     """
-    # Return true for the top-level path only, since this notebook manager doesn't support
-    # nested paths.
-    return path == ''
+    notebook_list = self._get_notebook_list(path)
+    return notebook_list is not None
 
   def is_hidden(self, path):
     """Checks if the path corresponds to a hidden directory.
@@ -64,40 +95,47 @@ class SimpleNotebookManager(_NotebookManager):
   def notebook_exists(self, name, path=''):
     """Checks if the specified notebook exists.
     """
-    if path != '':
+    notebook_list = self._get_notebook_list(path)
+    if notebook_list is None:
       return False
-    return self._file_exists(name)
+    return notebook_list.file_exists(name)
 
-  def list_dirs(self, path):
+  def list_dirs(self, path=''):
     """Retrieves the list of sub-directories.
     """
-    # Return an empty list, since this notebook manager doesn't support nested paths.
-    return []
+    # No nested sub-directories
+    if path != '':
+      return []
+
+    return map(lambda dir: self.get_dir_model(dir), sorted(self._dirs))
 
   def get_dir_model(self, path=''):
     """Retrieves information about the specified directory path.
     """
-    if path != '':
+    notebook_list = self._get_notebook_list(path)
+    if notebook_list is None:
       return None
 
-    return {'type': 'directory', 'name': '', 'path': ''}
+    return {'type': 'directory', 'name': path, 'path': path}
 
   def list_notebooks(self, path=''):
     """Retrieves the list of notebooks contained in the specified path.
     """
-    if path != '':
+    notebook_list = self._get_notebook_list(path)
+    if notebook_list is None:
       return []
 
-    names = sorted(self._list_files())
+    names = sorted(notebook_list.list_files())
     return map(lambda name: self.get_notebook(name, path, content=False), names)
 
   def get_notebook(self, name, path='', content=True):
     """Retrieves information about the specified notebook.
     """
-    if path != '':
+    notebook_list = self._get_notebook_list(path)
+    if notebook_list is None:
       return None
 
-    notebook = self._read_file(name, content)
+    notebook = notebook_list.read_file(name, content)
     if notebook is None:
       raise Exception('The notebook could not be read. It may no longer exist.')
 
@@ -107,12 +145,13 @@ class SimpleNotebookManager(_NotebookManager):
         data_content = _NotebookFormat.read(stream, u'json')
         self.mark_trusted_cells(data_content, path, name)
 
-    return self._create_notebook_model(name, notebook.timestamp, data_content)
+    return self._create_notebook_model(name, path, notebook.timestamp, data_content)
 
   def save_notebook(self, model, name, path=''):
     """Saves the notebook represented by the specified model object.
     """
-    if path != '':
+    notebook_list = self._get_notebook_list(path)
+    if notebook_list is None:
       return None
 
     new_name = model.get('name', name)
@@ -132,32 +171,35 @@ class SimpleNotebookManager(_NotebookManager):
     timestamp = model.get('last_modified', _dt.datetime.utcnow())
     notebook = Notebook(new_name, timestamp, data)
 
-    saved = self._write_file(notebook)
+    saved = notebook_list.write_file(notebook)
     if not saved:
       raise Exception('There was an error saving the notebook.')
 
-    return self._create_notebook_model(new_name, timestamp, data)
+    return self._create_notebook_model(new_name, path, timestamp, data)
 
   def update_notebook(self, model, name, path=''):
     """Updates the notebook represented by the specified model object.
     """
-    if path != '':
+    notebook_list = self._get_notebook_list(path)
+    if notebook_list is None:
       return None
 
     new_name = model['name']
-    notebook = self._rename_file(name, new_name)
+    notebook = notebook_list.rename_file(name, new_name)
 
     if notebook is None:
       raise Exception('The notebook could not be renamed. The name might already be in use.')
     else:
-      return self._create_notebook_model(new_name, notebook.timestamp)
+      return self._create_notebook_model(new_name, path, notebook.timestamp)
 
   def delete_notebook(self, name, path=''):
     """Deletes the specified notebook.
     """
-    if path != '':
+    notebook_list = self._get_notebook_list(path)
+    if notebook_list is None:
       return
-    deleted = self._delete_file(name)
+
+    deleted = notebook_list.delete_file(name)
     if not deleted:
       raise Exception('The specified notebook could not be deleted. It may no longer exist.')
 
@@ -185,9 +227,9 @@ class SimpleNotebookManager(_NotebookManager):
     # No-op as this implementation does not support checkpoints.
     pass
 
-  def _create_notebook_model(self, name, timestamp, content=None):
+  def _create_notebook_model(self, name, path, timestamp, content=None):
     model = {'type': 'notebook',
-             'path': '',
+             'path': path,
              'name': name,
              'created': timestamp,
              'last_modified': timestamp
@@ -196,48 +238,36 @@ class SimpleNotebookManager(_NotebookManager):
       model['content'] = content
     return model
 
-  def _list_files(self):
-    raise NotImplementedError('Must be implemented in a derived class.')
+  def _get_notebook_list(self, path):
+    # Strip out the leading / that IPython adds
+    if (len(path) != 0) and (path[0] == '/'):
+      path = path[1:]
 
-  def _file_exists(self, name):
-    raise NotImplementedError('Must be implemented in a derived class.')
+    return self._notebook_lists.get(path, None)
 
-  def _read_file(self, name, read_content):
-    raise NotImplementedError('Must be implemented in a derived class.')
+class MemoryNotebookList(NotebookList):
+  """Implements a simple in-memory notebook list."""
 
-  def _write_file(self, notebook):
-    raise NotImplementedError('Must be implemented in a derived class.')
-
-  def _rename_file(self, name, new_name):
-    raise NotImplementedError('Must be implemented in a derived class.')
-
-  def _delete_file(self, name):
-    raise NotImplementedError('Must be implemented in a derived class.')
-
-
-class MemoryNotebookManager(SimpleNotebookManager):
-  """Implements a simple in-memory notebook manager."""
-
-  def __init__(self, **kwargs):
-    """Initializes an instance of a TransientNotebookManager.
+  def __init__(self):
+    """Initializes an instance of a MemoryNotebookList.
     """
-    super(MemoryNotebookManager, self).__init__('in-memory', **kwargs)
+    super(MemoryNotebookList, self).__init__()
     self._notebooks = {}
 
-  def _list_files(self):
+  def list_files(self):
     return self._notebooks.keys()
 
-  def _file_exists(self, name):
+  def file_exists(self, name):
     return name in self._notebooks
 
-  def _read_file(self, name, read_content):
+  def read_file(self, name, read_content):
     return self._notebooks.get(name, None)
 
-  def _write_file(self, notebook):
+  def write_file(self, notebook):
     self._notebooks[notebook.name] = notebook
     return True
 
-  def _rename_file(self, name, new_name):
+  def rename_file(self, name, new_name):
     notebook = self._notebooks.get(name, None)
     if notebook is None:
       return None
@@ -251,22 +281,27 @@ class MemoryNotebookManager(SimpleNotebookManager):
 
     return notebook
 
-  def _delete_file(self, name):
+  def delete_file(self, name):
     if name in self._notebooks:
       del self._notebooks[name]
       return True
     return False
 
 
-class StorageNotebookManager(SimpleNotebookManager):
-  """Implements a simple cloud storage backed notebook manager.
+class MemoryNotebookManager(SimpleNotebookManager):
+  """Implements a simple in-memory notebook manager."""
 
-  This works against a fixed bucket named <project_id>-notebooks, since we don't really
-  have the opportunity to ask the user for a specific bucket. This pattern of using
-  project id-based names seems like an established pattern. Given the bucket names need
-  to be globally unique this builds on assumption that one cloud project is unlikely to
-  to have names such as <some other project id>-notebooks. Ideally buckets would have
-  been project scoped.
+  def __init__(self, **kwargs):
+    """Initializes an instance of a MemoryNotebookManager.
+    """
+    super(MemoryNotebookManager, self).__init__('in-memory', **kwargs)
+    self.add_notebook_list('', MemoryNotebookList())
+
+
+class StorageNotebookList(NotebookList):
+  """Implements a cloud storage backed notebook list.
+
+  This works against a specific item prefix path within a single bucket.
 
   This class manages the list of notebook as a cached set of items. The cache is updated
   each time notebooks are listed (which happens each time the list page becomes active).
@@ -280,46 +315,36 @@ class StorageNotebookManager(SimpleNotebookManager):
   page is re-activated by the user. In the interim the list would be out-of-date.
   """
 
-  def __init__(self, **kwargs):
-    """Initializes an instance of a TransientNotebookManager.
+  def __init__(self, bucket, prefix=''):
+    """Initializes an instance of a StorageNotebookList.
     """
-    super(StorageNotebookManager, self).__init__('cloud storage', **kwargs)
-    self._bucket = None
+    super(StorageNotebookList, self).__init__()
+    self._bucket = bucket
+    self._prefix = prefix
     self._items = None
 
-  def _ensure_bucket(self):
-    if self._bucket is None:
-      project_id = _gcp.Context.default().project_id
-      bucket_name = project_id + '-notebooks'
-
-      buckets = _storage.buckets()
-      if not buckets.contains(bucket_name):
-        self._bucket = buckets.create(bucket_name)
-      else:
-        self._bucket = _storage.bucket(bucket_name)
-
   def _ensure_items(self, update=False):
-    self._ensure_bucket()
     if (self._items is None) or update:
       self._items = {}
 
-      items = self._bucket.items(delimiter='/')
+      items = self._bucket.items(delimiter='/', prefix=self._prefix)
       for item in items:
-        if item.key.endswith(self.filename_ext):
-          self._items[item.key] = item
+        if item.key.endswith('.ipynb'):
+          key = item.key[len(self._prefix):]
+          self._items[key] = item
 
   def _find_item(self, name):
     self._ensure_items()
     return self._items.get(name, None)
 
-  def _list_files(self):
+  def list_files(self):
     self._ensure_items(update=True)
-    return map(lambda item: item.key, self._items.values())
+    return self._items.keys()
 
-  def _file_exists(self, name):
+  def file_exists(self, name):
     return self._find_item(name) is not None
 
-  def _read_file(self, name, read_content):
+  def read_file(self, name, read_content):
     item = self._find_item(name)
     if item is not None:
       try:
@@ -339,13 +364,13 @@ class StorageNotebookManager(SimpleNotebookManager):
       # Instead, the list will be updated when the list page loses and regains focus.
       return None
 
-  def _write_file(self, notebook):
+  def write_file(self, notebook):
     creating_new_item = False
 
     item = self._find_item(notebook.name)
     if item is None:
       creating_new_item = True
-      item = self._bucket.item(notebook.name)
+      item = self._bucket.item(self._prefix + notebook.name)
 
     try:
       item.write_to(notebook.data, 'application/json')
@@ -356,21 +381,22 @@ class StorageNotebookManager(SimpleNotebookManager):
       # Update the local cache, as the item must exist in the cache for it to be successfully
       # retrieved in the subsequent read. This is because the list itself will be updated only
       # when the user returns to the list page, and the list is refreshed.
-      self._items[item.key] = item
+      self._items[notebook.name] = item
     else:
       item.timestamp = _dt.datetime.utcnow()
     return True
 
-  def _rename_file(self, name, new_name):
+  def rename_file(self, name, new_name):
     item = self._find_item(name)
     if item is None:
       return None
 
-    if self._bucket.items().contains(new_name):
+    new_key = self._prefix + new_name
+    if self._bucket.items().contains(new_key):
       return None
 
     try:
-      new_item = item.copy_to(new_name)
+      new_item = item.copy_to(new_key)
     except Exception:
       return None
 
@@ -387,7 +413,7 @@ class StorageNotebookManager(SimpleNotebookManager):
 
     return Notebook(new_name, new_item.metadata().updated_on, '')
 
-  def _delete_file(self, name):
+  def delete_file(self, name):
     item = self._find_item(name)
     if item is not None:
       try:
@@ -398,3 +424,35 @@ class StorageNotebookManager(SimpleNotebookManager):
       del self._items[name]
       return True
     return False
+
+
+class StorageNotebookManager(SimpleNotebookManager):
+  """Implements a simple cloud storage backed notebook manager.
+
+  This works against a fixed bucket named <project_id>-notebooks, since we don't really
+  have the opportunity to ask the user for a specific bucket. This pattern of using
+  project id-based names seems like an established pattern. Given the bucket names need
+  to be globally unique this builds on assumption that one cloud project is unlikely to
+  to have names such as <some other project id>-notebooks. Ideally buckets would have
+  been project scoped.
+  """
+
+  def __init__(self, **kwargs):
+    """Initializes an instance of a StorageNotebookManager.
+    """
+    super(StorageNotebookManager, self).__init__('cloud storage', **kwargs)
+
+    bucket = StorageNotebookManager._create_bucket()
+    self.add_notebook_list(StorageNotebookList(bucket))
+    self.add_notebook_list(StorageNotebookList(bucket, prefix='intro/'), 'intro')
+
+  @staticmethod
+  def _create_bucket():
+    project_id = _gcp.Context.default().project_id
+    bucket_name = project_id + '-notebooks'
+
+    buckets = _storage.buckets()
+    if not buckets.contains(bucket_name):
+      return buckets.create(bucket_name)
+    else:
+      return _storage.bucket(bucket_name)
