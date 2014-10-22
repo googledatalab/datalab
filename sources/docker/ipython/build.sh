@@ -13,7 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Builds the IPython docker image
+
+# Create a versioned Dockerfile based on current date
+VERSION=`date +%Y%m%d`
+SUBSTITUTION="s/_version_/v$VERSION/"
+cat Dockerfile.in | sed $SUBSTITUTION > Dockerfile
+
+# Copy build outputs as a dependency of the Dockerfile
 cp -R ../../../build build
+
+# Build the docker image
 docker build -t gcp-ipython .
+
+# Finally cleanup
 rm -rf build
+rm Dockerfile
 

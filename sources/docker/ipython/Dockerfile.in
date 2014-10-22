@@ -59,6 +59,7 @@ RUN /tools/google-cloud-sdk/install.sh --usage-reporting=false --path-update=tru
 
 # Setup Environment
 ENV PATH $PATH:/node/bin:/tools:/tools/google-cloud-sdk/bin
+ENV IPYTHON_VERSION _version_
 ENV IPYTHON_ENV cloud
 ENV DATALAB_ENV docker
 ENV PYTHONPATH /env/python
