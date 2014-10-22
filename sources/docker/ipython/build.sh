@@ -15,8 +15,11 @@
 
 # Builds the IPython docker image
 
-# Create a versioned Dockerfile based on current date
+# Create a versioned Dockerfile based on current date and git commit hash
 VERSION=`date +%Y%m%d`
+VERSION+=_
+VERSION+=`git log --pretty=format:'%H' -n 1`
+
 SUBSTITUTION="s/_version_/v$VERSION/"
 cat Dockerfile.in | sed $SUBSTITUTION > Dockerfile
 
