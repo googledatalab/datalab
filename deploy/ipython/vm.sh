@@ -62,6 +62,7 @@ else
   VM_TYPE=$2
 fi
 
+CLOUD_PROJECT=`gcloud config list project --format text | sed 's/core\.project: //'`
 NETWORK_NAME=ipython
 DOCKER_IMAGE="$DOCKER_REGISTRY/gcp-ipython"
 
@@ -72,6 +73,9 @@ version: v1beta2
 containers:
   - name: $VM
     image: $DOCKER_IMAGE
+    env:
+      - name: CLOUD_PROJECT
+        value: $CLOUD_PROJECT
     ports:
       - name: ipython
         hostPort: 8080

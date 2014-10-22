@@ -13,6 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-docker tag gcp-ipython $1/gcp-ipython
-docker push $1/gcp-ipython
+docker tag gcp-ipython $DOCKER_REGISTRY/gcp-ipython
+docker push $DOCKER_REGISTRY/gcp-ipython
 

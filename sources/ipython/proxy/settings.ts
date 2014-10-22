@@ -60,9 +60,9 @@ export function loadSettings(): common.Settings {
     settings.ipythonWebServer = 'http://localhost:' + settings.ipythonPort;
     settings.ipythonSocketServer = 'ws://localhost:' + settings.ipythonPort;
 
-    settings.projectId = process.env['GAE_LONG_APP_ID'] || 'test-project';
-    settings.versionId = (process.env['GAE_MODULE_NAME'] || 'ipython') + '.' +
-                         (process.env['GAE_MODULE_VERSION'] || 'internal');
+    settings.projectId = process.env['CLOUD_PROJECT'] || process.env['GAE_LONG_APP_ID'] ||
+                         'test-project';
+    settings.versionId = process.env['IPYTHON_VERSION'] || 'test-version';
     settings.instanceId = metadata.instanceId;
 
     return settings;

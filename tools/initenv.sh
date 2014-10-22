@@ -7,6 +7,9 @@
 # variable will be set to docker.
 export DATALAB_ENV=dev
 
+# The docker registry we're using for development purposes
+export DOCKER_REGISTRY=23.236.54.104:5000
+
 # Export a variable corresponding to the root of the repository
 SCRIPT=$0
 if [ "$SCRIPT" == "-bash" ]; then
