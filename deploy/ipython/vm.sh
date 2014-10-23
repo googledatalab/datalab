@@ -68,6 +68,19 @@ DOCKER_IMAGE="$DOCKER_REGISTRY/gcp-ipython"
 PORT=8092
 
 
+# Check if port is already in use
+PID=$(fuser $PORT/tcp 2> /dev/null)
+if [ $? == 0 ]; then
+  ps $PID | grep -q ssh
+  if [ $? != 0 ]; then
+    fuser -v $PORT/tcp
+    echo "Port $PORT is already in use. To kill proccess accessing the port:"
+    echo "  fuser -k $PORT/tcp"
+    exit 1
+  fi
+fi
+
+
 # Create VM instance if needed
 gcloud -q compute instances describe $VM &> /dev/null
 if [ $? -gt 0 ]; then
@@ -144,26 +157,14 @@ EOF1
     sleep 2
   done
   echo
-
 else 
   echo "Using existing VM instance '$VM'"
 fi
 
 
-# Reclaim ssh tunnel port
-PID=$(fuser $PORT/tcp 2> /dev/null)
-if [ $? == 0 ]; then
-  if (ps $PID | grep -q ssh); then
-    fuser -k $PORT/tcp
-  else
-    echo "Port $PORT is already in use."
-    fuser -v  $PORT/tcp
-    exit 1
-  fi
-fi
-
-
-# Set up ssh tunnel
+# If port was in use by another ssh, reclaim it now
+fuser -s -k $PORT/tcp
+# Set up ssh tunnel to VM
 echo "Creating ssh tunnel to instance '$VM' ..."
 gcloud -q compute ssh --ssh-flag="-L $PORT:localhost:8080" --ssh-flag="-f" --ssh-flag="-N" $VM
 if [ $? != 0 ]; then
@@ -173,15 +174,18 @@ fi
 
 
 # Wait for containers to start
-echo "Waiting for IPython container on instance '$VM' to start ..."
-until $(curl -s -o /dev/null localhost:$PORT); do
-  printf "."
-  sleep 2
-done
-echo
+if [ $(curl -s -o /dev/null localhost:$PORT) == 0 ]; then
+  echo "Waiting for VM containers to start ..."
+  until $(curl -s -o /dev/null localhost:$PORT); do
+    printf "."
+    sleep 2
+  done
+  echo
+fi
 
 
 echo "VM has been started..."
+
 
 # Open IPython in local browser session
 URL="http://localhost:$PORT"
