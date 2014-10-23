@@ -65,10 +65,28 @@ fi
 CLOUD_PROJECT=`gcloud config list project --format text | sed 's/core\.project: //'`
 NETWORK_NAME=ipython
 DOCKER_IMAGE="$DOCKER_REGISTRY/gcp-ipython"
+PORT=8092
 
 
-# Generate the VM manifest
-cat > vm.yaml << EOF1
+# Check if port is already in use
+PID=$(fuser $PORT/tcp 2> /dev/null)
+if [ $? == 0 ]; then
+  ps $PID | grep -q ssh
+  if [ $? != 0 ]; then
+    fuser -v $PORT/tcp
+    echo "Port $PORT is already in use. To kill proccess accessing the port:"
+    echo "  fuser -k $PORT/tcp"
+    exit 1
+  fi
+fi
+
+
+# Create VM instance if needed
+gcloud -q compute instances describe $VM &> /dev/null
+if [ $? -gt 0 ]; then
+
+  # Generate the VM manifest
+  cat > vm.yaml << EOF1
 version: v1beta2
 containers:
   - name: $VM
@@ -92,51 +110,87 @@ volumes:
 EOF1
 
 
-# Create the network (if needed) and allow SSH access
-gcloud -q compute networks describe $NETWORK_NAME &> /dev/null
-if [ $? -gt 0 ]; then
-  echo "Creating network '$NETWORK_NAME' to associate with VM ..."
+  # Create the network (if needed) and allow SSH access
+  gcloud -q compute networks describe $NETWORK_NAME &> /dev/null
+  if [ $? -gt 0 ]; then
+    echo "Creating network '$NETWORK_NAME' to associate with VM ..."
 
-  gcloud -q compute networks create $NETWORK_NAME &> /dev/null
+    gcloud -q compute networks create $NETWORK_NAME &> /dev/null
+    if [ $? != 0 ]; then
+      echo "Failed to create network $NETWORK_NAME"
+      exit 1
+    fi
+
+    gcloud -q compute firewall-rules create allow-ssh --allow tcp:22 \
+      --network $NETWORK_NAME &> /dev/null
+    if [ $? != 0 ]; then
+      echo "Failed to create firewall rule to allow SSH in network $NETWORK_NAME"
+      exit 1
+    fi
+  fi
+
+
+  # Create the VM
+  echo "Creating VM instance '$VM' ..."
+  gcloud -q compute instances create $VM \
+    --image container-vm-v20140731 \
+    --image-project google-containers \
+    --machine-type $VM_TYPE \
+    --network $NETWORK_NAME \
+    --scopes storage-full bigquery datastore sql \
+    --metadata-from-file google-container-manifest=vm.yaml \
+    --tags "ipython"
   if [ $? != 0 ]; then
-    echo "Failed to create network $NETWORK_NAME"
+    echo "Failed to create VM instance named $VM"
     exit 1
   fi
 
-  gcloud -q compute firewall-rules create allow-ssh --allow tcp:22 \
-    --network $NETWORK_NAME &> /dev/null
-  if [ $? != 0 ]; then
-    echo "Failed to create firewall rule to allow SSH in network $NETWORK_NAME"
-    exit 1
-  fi
+
+  # Cleanup
+  rm vm.yaml
+
+
+  # Wait for VM to start
+  echo -e -n "Waiting for VM instance '$VM' to start ...\n."
+  until (gcloud -q compute instances describe $VM 2>/dev/null | grep -q '^status:[ \t]*RUNNING'); do
+    sleep 2
+    echo -n "."
+  done
+  echo
+else 
+  echo "Using existing VM instance '$VM'"
 fi
 
 
-# Create the VM
-echo "Creating VM instance '$VM' ..."
-gcloud -q compute instances create $VM \
-  --image container-vm-v20140731 \
-  --image-project google-containers \
-  --machine-type $VM_TYPE \
-  --network $NETWORK_NAME \
-  --scopes storage-full bigquery datastore sql \
-  --metadata-from-file google-container-manifest=vm.yaml \
-  --tags "ipython"
+# If port was in use by another ssh, reclaim it now
+fuser -s -k $PORT/tcp
+# Set up ssh tunnel to VM
+echo "Creating ssh tunnel to instance '$VM' ..."
+gcloud -q compute ssh --ssh-flag="-L $PORT:localhost:8080" --ssh-flag="-f" --ssh-flag="-N" $VM
 if [ $? != 0 ]; then
-  echo "Failed to create VM instance named $VM"
+  echo "Failed to create ssh tunnel to instance '$VM'"
   exit 1
 fi
 
 
-# Cleanup
-rm vm.yaml
-
-
-# Info
+# Wait for containers to start
+echo -e -n "Waiting for VM containers to start ...\n."
+until (curl -s -o /dev/null localhost:$PORT); do
+  sleep 2
+  echo -n "."
+done
 echo
+
+
 echo "VM has been started..."
-echo "Once the docker container within the VM is up, setup SSH tunneling:"
-echo "gcloud compute ssh --ssh-flag=\"-L 8080:localhost:8080\" $VM"
-echo
+
+
+# Open IPython in local browser session
+URL="http://localhost:$PORT"
+case $(uname) in
+  'Darwin') open $URL ;;
+  'Linux') x-www-browser $URL ;;
+esac
+echo $URL
 
 exit 0
