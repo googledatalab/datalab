@@ -151,10 +151,10 @@ EOF1
 
 
   # Wait for VM to start
-  echo "Waiting for VM instance '$VM' to start ..."
-  until $(gcloud -q compute instances describe $VM | grep -q '^status:[ \t]*RUNNING' ); do
-    printf "."
+  echo -e -n "Waiting for VM instance '$VM' to start ...\n."
+  until (gcloud -q compute instances describe $VM 2>/dev/null | grep -q '^status:[ \t]*RUNNING'); do
     sleep 2
+    echo -n "."
   done
   echo
 else 
@@ -174,14 +174,12 @@ fi
 
 
 # Wait for containers to start
-if [ $(curl -s -o /dev/null localhost:$PORT) == 0 ]; then
-  echo "Waiting for VM containers to start ..."
-  until $(curl -s -o /dev/null localhost:$PORT); do
-    printf "."
-    sleep 2
-  done
-  echo
-fi
+echo -e -n "Waiting for VM containers to start ...\n."
+until (curl -s -o /dev/null localhost:$PORT); do
+  sleep 2
+  echo -n "."
+done
+echo
 
 
 echo "VM has been started..."
