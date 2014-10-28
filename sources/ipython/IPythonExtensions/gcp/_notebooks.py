@@ -295,7 +295,7 @@ class MemoryNotebookManager(SimpleNotebookManager):
     """Initializes an instance of a MemoryNotebookManager.
     """
     super(MemoryNotebookManager, self).__init__('in-memory', **kwargs)
-    self.add_notebook_list('', MemoryNotebookList())
+    self.add_notebook_list(MemoryNotebookList(), '')
 
 
 class StorageNotebookList(NotebookList):

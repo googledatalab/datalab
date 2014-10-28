@@ -62,29 +62,61 @@ else
   VM_TYPE=$2
 fi
 
+echo "Starting IPython setup on VM '$VM' ($VM_TYPE) ..."
+
 CLOUD_PROJECT=`gcloud config list project --format text | sed 's/core\.project: //'`
 NETWORK_NAME=ipython
 DOCKER_IMAGE="$DOCKER_REGISTRY/gcp-ipython"
+NOTEBOOKS_BUCKET="gs://$CLOUD_PROJECT-notebooks"
+NOTEBOOKS_TARGET="gs://$CLOUD_PROJECT-notebooks/intro"
+NOTEBOOKS_SOURCE="gs://datalab-content/ipython/notebooks"
 PORT=8092
+URL="http://localhost:$PORT"
+
 
 
 # Check if port is already in use
-PID=$(fuser $PORT/tcp 2> /dev/null)
-if [ $? == 0 ]; then
-  ps $PID | grep -q ssh
+lsof -i4tcp:8092 >> /dev/null
+if [ $? = 0 ]; then
+  PID=`lsof -t -i4tcp:8092 2> /dev/null`
+  ps $PID
+
+  echo
+  echo "Port $PORT is in use by process $PID. Kill the proccess and free it first."
+  echo "Or browse to $URL (if the process is also an IPython run)."
+
+  exit 1
+fi
+
+
+# First create the network (if it doesn't already exist)
+gcloud -q compute networks describe $NETWORK_NAME &> /dev/null
+if [ $? -gt 0 ]; then
+  echo "Creating network '$NETWORK_NAME' to associate with VM ..."
+
+  gcloud -q compute networks create $NETWORK_NAME &> /dev/null
   if [ $? != 0 ]; then
-    fuser -v $PORT/tcp
-    echo "Port $PORT is already in use. To kill proccess accessing the port:"
-    echo "  fuser -k $PORT/tcp"
+    echo "Failed to create network '$NETWORK_NAME'"
     exit 1
   fi
 fi
 
+# Add a firewall rule to allow SSH (if it doesn't already exist)
+gcloud -q compute firewall-rules describe allow-ssh &> /dev/null
+if [ $? -gt 0 ]; then
+  echo "Adding firewall rule to allow SSH access in network '$NETWORK_NAME' ..."
 
-# Create VM instance if needed
+  gcloud -q compute firewall-rules create allow-ssh --allow tcp:22 \
+    --network $NETWORK_NAME &> /dev/null
+  if [ $? != 0 ]; then
+    echo "Failed to create firewall rule to allow SSH in network '$NETWORK_NAME'"
+    exit 1
+  fi
+fi
+
+# Create VM instance (if it doesn't already exist)
 gcloud -q compute instances describe $VM &> /dev/null
 if [ $? -gt 0 ]; then
-
   # Generate the VM manifest
   cat > vm.yaml << EOF1
 version: v1beta2
@@ -109,27 +141,6 @@ volumes:
 
 EOF1
 
-
-  # Create the network (if needed) and allow SSH access
-  gcloud -q compute networks describe $NETWORK_NAME &> /dev/null
-  if [ $? -gt 0 ]; then
-    echo "Creating network '$NETWORK_NAME' to associate with VM ..."
-
-    gcloud -q compute networks create $NETWORK_NAME &> /dev/null
-    if [ $? != 0 ]; then
-      echo "Failed to create network $NETWORK_NAME"
-      exit 1
-    fi
-
-    gcloud -q compute firewall-rules create allow-ssh --allow tcp:22 \
-      --network $NETWORK_NAME &> /dev/null
-    if [ $? != 0 ]; then
-      echo "Failed to create firewall rule to allow SSH in network $NETWORK_NAME"
-      exit 1
-    fi
-  fi
-
-
   # Create the VM
   echo "Creating VM instance '$VM' ..."
   gcloud -q compute instances create $VM \
@@ -141,56 +152,79 @@ EOF1
     --metadata-from-file google-container-manifest=vm.yaml \
     --tags "ipython"
   if [ $? != 0 ]; then
+    rm vm.yaml
+
     echo "Failed to create VM instance named $VM"
     exit 1
+  else
+    rm vm.yaml
   fi
-
-
-  # Cleanup
-  rm vm.yaml
-
-
-  # Wait for VM to start
-  echo -e -n "Waiting for VM instance '$VM' to start ...\n."
-  until (gcloud -q compute instances describe $VM 2>/dev/null | grep -q '^status:[ \t]*RUNNING'); do
-    sleep 2
-    echo -n "."
-  done
   echo
-else 
+else
   echo "Using existing VM instance '$VM'"
 fi
 
+# Create notebooks bucket within the project (if it doesn't already exist)
+gsutil ls $NOTEBOOKS_BUCKET >> /dev/null
+if [ $? -gt 0 ]; then
+  echo "Creating storage bucket '$NOTEBOOKS_BUCKET' for storing notebooks ..."
+  gsutil mb $NOTEBOOKS_BUCKET
+  if [ $1 != 0]; then
+    echo "Failed to create storage bucket (ignoring and continuing)"
+  fi
+fi
 
-# If port was in use by another ssh, reclaim it now
-fuser -s -k $PORT/tcp
+# Synchronize notebooks into notebooks folder
+echo "Copying intro notebooks into storage:"
+echo "  $NOTEBOOKS_TARGET"
+gsutil -m -q rsync -C $NOTEBOOKS_SOURCE $NOTEBOOKS_TARGET >> /dev/null
+
+
+# Wait for VM to start
+echo "Waiting for VM instance '$VM' to start ..."
+until (gcloud -q compute instances describe $VM 2>/dev/null | grep -q '^status:[ \t]*RUNNING'); do
+  sleep 2
+  printf "."
+done
+printf "\n"
+
+
+# Wait for IPython container to start and become accessible
+echo "Waiting for IPython container to start ..."
+until (gcloud -q compute ssh --command "sudo docker ps" $VM 2> /dev/null | grep -q ipython); do
+  sleep 2
+  printf "."
+done
+printf "\n"
+
+
 # Set up ssh tunnel to VM
-echo "Creating ssh tunnel to instance '$VM' ..."
+echo "Creating SSH tunnel to VM instance '$VM' ..."
 gcloud -q compute ssh --ssh-flag="-L $PORT:localhost:8080" --ssh-flag="-f" --ssh-flag="-N" $VM
 if [ $? != 0 ]; then
-  echo "Failed to create ssh tunnel to instance '$VM'"
+  echo "Failed to create SSH tunnel to VM '$VM'"
   exit 1
 fi
 
 
-# Wait for containers to start
-echo -e -n "Waiting for VM containers to start ...\n."
+# Wait for IPython container to start and become accessible
+echo "Waiting for IPython server to start ..."
 until (curl -s -o /dev/null localhost:$PORT); do
   sleep 2
-  echo -n "."
+  echo ".\c"
 done
 echo
 
-
-echo "VM has been started..."
+echo "VM instance '$VM' is ready for use ..."
 
 
 # Open IPython in local browser session
-URL="http://localhost:$PORT"
+echo "Browsing to $URL ..."
 case $(uname) in
   'Darwin') open $URL ;;
   'Linux') x-www-browser $URL ;;
+  *) echo "Please open a browser instance to $URL to get started."
+    ;;
 esac
-echo $URL
 
 exit 0
