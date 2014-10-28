@@ -42,6 +42,3 @@ elif env == 'memory':
 
 if os.environ.get('IPYTHON_DEBUG', '') != '':
   c.NotebookApp.log_level = 'DEBUG'
-
-# Allow any origin to connect to sockets
-c.NotebookApp.allow_origin = '*'
