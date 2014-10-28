@@ -76,9 +76,9 @@ URL="http://localhost:$PORT"
 
 
 # Check if port is already in use
-lsof -i4tcp:8092 >> /dev/null
+lsof -i4tcp:$PORT >> /dev/null
 if [ $? = 0 ]; then
-  PID=`lsof -t -i4tcp:8092 2> /dev/null`
+  PID=`lsof -t -i4tcp:$PORT 2> /dev/null`
   ps $PID
 
   echo
