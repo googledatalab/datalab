@@ -211,9 +211,9 @@ fi
 echo "Waiting for IPython server to start ..."
 until (curl -s -o /dev/null localhost:$PORT); do
   sleep 2
-  echo ".\c"
+  printf "."
 done
-echo
+printf "\n"
 
 echo "VM instance '$VM' is ready for use ..."
 
