@@ -58,7 +58,7 @@ export class ChannelClient {
 
     this._socket = zmq.socket(this._socketType);
 
-    this._socket.on('message', this._receiveMessage.bind(this));
+    this._socket.on('message', this._receive.bind(this));
   }
 
   /**
@@ -66,14 +66,14 @@ export class ChannelClient {
    *
    * @param messageParts a multipart message
    */
-  _sendMessage (messageParts: string[]): void {
+  _send (messageParts: string[]): void {
     this._socket.send(messageParts);
   }
 
   /**
    * Handles a multipart message received from the zmq socket
    */
-  _receiveMessage () {
+  _receive () {
     throw new Error("Abstract. This method should be implemented by subclass");
   }
 
