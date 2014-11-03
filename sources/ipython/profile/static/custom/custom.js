@@ -129,7 +129,11 @@ function setupOutline() {
 setTimeout(setupOutline, 1000);
 
 
-// Configure code mirror for SQL editing in %%bq_sql magic cells
+// Configure code mirror
+// - Add %%bq_udf to the list of javascript cells to the existing configuration.
+// - Load sql mode and associate %%bq_sql cells with SQL.
+IPython.config.cell_magic_highlight.magic_javascript.reg = [ /^%%javascript/, /^%%bq_udf/ ];
+
 require(['/static/components/codemirror/mode/sql/sql.js'], function() {
   IPython.config.cell_magic_highlight['magic_text/x-sql'] = {
     reg: [
