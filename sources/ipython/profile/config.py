@@ -24,14 +24,19 @@ c.InteractiveShellApp.extensions = [
   'gcp.interactive'
 ]
 
+
 # Startup code.
 c.InteractiveShellApp.exec_lines = [
 ]
 
-# Static files.
+
+# Static files to override the default custom script and stylesheet, as well as include a
+# special location created in the docker container to enable the user to add static files.
 c.NotebookApp.extra_static_paths = [
-  os.path.join(os.path.dirname(__file__), 'static')
+  os.path.join(os.path.dirname(__file__), 'static'),
+  '/env/static'
 ]
+
 
 # Custom notebook manager
 env = os.environ.get('IPYTHON_ENV', '')
@@ -40,5 +45,7 @@ if env == 'cloud':
 elif env == 'memory':
   c.NotebookApp.notebook_manager_class = 'IPythonExtensions.gcp.MemoryNotebookManager'
 
+
+# Development mode support
 if os.environ.get('IPYTHON_DEBUG', '') != '':
   c.NotebookApp.log_level = 'DEBUG'
