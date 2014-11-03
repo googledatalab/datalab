@@ -33,7 +33,7 @@ var codeMirrorOptions: CodeMirror.EditorConfiguration = {
 /**
  * Defines the shape of the directive scope.
  */
-interface ICodeEditorScope extends ng.IScope {
+interface CodeEditorScope extends ng.IScope {
   code: string;
 }
 
@@ -44,7 +44,7 @@ interface ICodeEditorScope extends ng.IScope {
  * @param element the jqLite-selected directive element
  */
 function codeEditorDirectiveLink (
-    scope: ICodeEditorScope,
+    scope: CodeEditorScope,
     element: ng.IAugmentedJQuery)
     : void {
   var cmContainer = <HTMLTextAreaElement>element[0];
