@@ -29,16 +29,6 @@ import app = require('app/App');
 var log = logging.getLogger(constants.scopes.editorCell);
 
 /**
- * Defines the shape of the controller/directive isolate scope.
- */
-interface IEditorCellScope extends ng.IScope {
-  inputText: string;
-  outputHtml: string;
-  trustedOutputHtml: string;
-  cellIndex: number;
-}
-
-/**
  * Creates a directive definition.
  */
 function editorCellDirective (): ng.IDirective {
