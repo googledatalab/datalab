@@ -129,6 +129,32 @@ function setupOutline() {
 setTimeout(setupOutline, 1000);
 
 
+// Configure code mirror for SQL editing in %%bq_sql magic cells
+require(['/static/components/codemirror/mode/sql/sql.js'], function() {
+  IPython.config.cell_magic_highlight['magic_text/x-sql'] = {
+    reg: [
+      /^%%bq_sql/
+    ]
+  };
+});
+
+
+// Configure RequireJS
+// - Enable loading static content easily from static directory
+//   (static/foo -> /static/foo.js)
+// - D3
+require.config({
+  paths: {
+    'static': '/static',
+    'd3': '//cdnjs.cloudflare.com/ajax/libs/d3/3.4.13/d3.min'
+  }
+});
+
+
+// WebSocket shim to send socket messages over vanilla HTTP requests.
+// This is only used when websocket support is not available. Specifically, it is not
+// used when accessing IPython over http://localhost or http://127.0.0.1.
+
 function overrideWebSocket() {
   // This replaces the native WebSocket functionality with one that is
   // similar in API surface area, but uses XMLHttpRequest and long-polling
@@ -297,32 +323,37 @@ if ((document.domain != 'localhost') && (document.domain != '127.0.0.1')) {
   overrideWebSocket();
 }
 
-// IPython seems to assume local persistence of notebooks - it issues an HTTP
-// request to create a notebook, and on completion opens a window.
-// This is fine and dandy when the round-trip time is small, but sometimes long
-// enough when notebooks are remote (as they are with GCS) to trigger the popup
-// blocker in browsers.
-// Patch the new_notebook method to first open the window, and then navigate it
-// rather than open upon completion of the operation.
 
-IPython.NotebookList.prototype.new_notebook = function() {
-  var path = this.notebook_path;
-  var base_url = this.base_url;
-  var notebook_window = window.open('', '_blank');
+// Notebook List page specific functionality
+if (IPython.NotebookList) {
+  // IPython seems to assume local persistence of notebooks - it issues an HTTP
+  // request to create a notebook, and on completion opens a window.
+  // This is fine and dandy when the round-trip time is small, but sometimes long
+  // enough when notebooks are remote (as they are with GCS) to trigger the popup
+  // blocker in browsers.
+  // Patch the new_notebook method to first open the window, and then navigate it
+  // rather than open upon completion of the operation.
 
-  var settings = {
-    processData : false,
-    cache : false,
-    type : 'POST',
-    dataType : 'json',
-    async : false,
-    success : function(data, status, xhr) {
-      var notebook_name = data.name;
-      url = IPython.utils.url_join_encode(base_url, 'notebooks', path, notebook_name);
-      notebook_window.location.href = url;
-    },
-    error : $.proxy(this.new_notebook_failed, this),
-  };
-  var url = IPython.utils.url_join_encode(base_url, 'api/notebooks', path);
-  $.ajax(url, settings);
+  IPython.NotebookList.prototype.new_notebook = function() {
+    var path = this.notebook_path;
+    var base_url = this.base_url;
+    var notebook_window = window.open('', '_blank');
+
+    var settings = {
+      processData : false,
+      cache : false,
+      type : 'POST',
+      dataType : 'json',
+      async : false,
+      success : function(data, status, xhr) {
+        var notebook_name = data.name;
+        url = IPython.utils.url_join_encode(base_url, 'notebooks', path, notebook_name);
+        notebook_window.location.href = url;
+      },
+      error : $.proxy(this.new_notebook_failed, this),
+    };
+    var url = IPython.utils.url_join_encode(base_url, 'api/notebooks', path);
+    $.ajax(url, settings);
+  }
 }
+
