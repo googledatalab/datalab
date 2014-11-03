@@ -24,7 +24,8 @@ import org.gradle.api.tasks.TaskAction
  */
 class TypeScriptCompileTask extends DefaultTask {
 
-    String pathToRootModule = ''
+    String relativePath = ''
+    String outputRelativePath = ''
     String srcDir = ''
     String outDir = project.buildDir.path
     String moduleType = 'commonjs'
@@ -34,15 +35,20 @@ class TypeScriptCompileTask extends DefaultTask {
     def compile() {
         // Enumerate the typescript files recursively within the given source path
         def tsFiles = []
-        new File("${ srcDir }${ pathToRootModule }").eachFileRecurse(FileType.FILES) {
+        new File("${ srcDir }${ relativePath }").eachFileRecurse(FileType.FILES) {
             if (it.name.endsWith('.ts')) {
                 tsFiles << it;
             }
         }
 
+        // If an output relative path was not defined, use the input relative path
+        if (outputRelativePath.isEmpty()) {
+            outputRelativePath = relativePath
+        }
+
         // Call out to the TypeScript compiler (tsc) to compile and emit to the build dir
         def proc = """tsc $compilerArgs --module $moduleType \
-           --outDir $outDir${ pathToRootModule } ${ tsFiles.join(' ') }""".execute()
+           --outDir $outDir${ outputRelativePath } ${ tsFiles.join(' ') }""".execute()
         if (proc.in.text?.trim()) {
             println "tsc stdout:\n${ proc.in.text }"
         }

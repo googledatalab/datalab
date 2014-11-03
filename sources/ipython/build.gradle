@@ -19,7 +19,7 @@ task copyIPythonProfile(type: Copy) {
 
 task compileProxyServer(type: TypeScriptCompileTask) {
   srcDir = 'ipython'
-  pathToRootModule = '/proxy'
+  relativePath = '/proxy'
 }
 
 task copyProxyServerConfig(type: Copy) {
