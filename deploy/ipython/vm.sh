@@ -69,7 +69,7 @@ NETWORK_NAME=ipython
 DOCKER_IMAGE="$DOCKER_REGISTRY/gcp-ipython"
 NOTEBOOKS_BUCKET="gs://$CLOUD_PROJECT-notebooks"
 NOTEBOOKS_TARGET="gs://$CLOUD_PROJECT-notebooks/intro"
-NOTEBOOKS_SOURCE="gs://datalab-content/ipython/notebooks"
+NOTEBOOKS_SOURCE="gs://cloud-datalab/ipython/notebooks"
 PORT=8092
 URL="http://localhost:$PORT"
 
