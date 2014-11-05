@@ -15,31 +15,27 @@
 
 # Starts an IPython container deployed to a GCE VM.
 
-USAGE_ERROR=
+HELP_INFO=
 
 gcloud -q config list compute/zone --format text | grep -q -i -F "none"
 if [ $? = 0 ]; then
-  USAGE_ERROR="Default compute zone is not set."
+  HELP_INFO="Default compute zone is not set."
 fi
 
 gcloud -q config list project --format text | grep -q -i -F "none"
 if [ $? = 0 ]; then
-  USAGE_ERROR="Default cloud project is not set."
+  HELP_INFO="Default cloud project is not set."
 fi
 
-if [ "$DOCKER_REGISTRY" = "" ]; then
-  USAGE_ERROR="Docker registry has not been specified."
+if [ "$#" = "1" ] && [ "$1" = "--help" ]; then
+  HELP_INFO="IPython on Google Cloud Platform"
 fi
 
-if [ "$#" -lt 1 ]; then
-  USAGE_ERROR="Missing required vm name parameter."
-fi
-
-if [ "$USAGE_ERROR" != "" ]; then
-  echo $USAGE_ERROR
+if [ "$HELP_INFO" != "" ]; then
+  echo $HELP_INFO
   echo
-  echo "Usage: $0 <vm name> [<machine type>]"
-  echo "  vm name:      the name of the VM to create."
+  echo "Usage: $0 [<vm name>] [<machine type>]"
+  echo "  vm name:      the name of the VM to create (default: ipython)"
   echo "  machine type: the type of VM to create (default: n1-standard-1)"
   echo
   echo "Required configuration:"
@@ -55,12 +51,20 @@ if [ "$USAGE_ERROR" != "" ]; then
 fi
 
 # Initialize variables
-VM=$1
+if [ "$1" = "" ]; then
+  VM=ipython
+else
+  VM=$1
+fi
 if [ "$2" = "" ]; then
   VM_TYPE="n1-standard-1"
 else
   VM_TYPE=$2
 fi
+if [ "$DOCKER_REGISTRY" = "" ]; then
+  DOCKER_REGISTRY=23.236.54.104:5000
+fi
+
 
 echo "Starting IPython setup on VM '$VM' ($VM_TYPE) ..."
 
