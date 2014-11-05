@@ -14,45 +14,12 @@
 
 
 /**
- * Styles that define the overall page chrome.
- *
- * Elements will be tagged with ID/CSS classnames of the form:
- * "<project>-<module>-<name>" to avoid naming conflicts.
- *
- * For example: "datalab-editor-run-button" might be the id of a button
- * within the "editor" module.
- *
+ * Styles specific to notebook editing
  */
 
-/**
- * Color palette
- * - Thin (horz/vert) rules: #eee
- * - Navigation/toolbar/menu background color: #f5f5f5
- */
-
-body {
-  padding-top: 50px; /* Accounts for 50px (fixed) top navbar height */
-}
 
 /**
- * Layout sidenav rules
- */
-.datalab-layout-sidenav-sidebar {
-  /* Sticks the sidebar to the top-left corner of the viewport, just underneath the navbar */
-  position: fixed;
-  top: 51px; /* 50px navbar height + 1px border */
-  bottom: 0;
-  left: 0;
-
-  overflow-x: hidden;
-  overflow-y: auto;
-
-  background-color: #f5f5f5;
-  border-right: 1px solid #eee;
-}
-
-/**
- * Cell styling
+ * Code editor cell styling
  */
 .datalab-editor-cell-identifier {
   float: left;
@@ -71,4 +38,11 @@ body {
 .datalab-editor-cell-outputs {
   float: left;
   margin-left: 10px;
+}
+
+/**
+ * CodeMirror styling
+ */
+.CodeMirror {
+  height: auto;
 }
