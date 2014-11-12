@@ -173,7 +173,7 @@ gsutil ls $NOTEBOOKS_BUCKET >> /dev/null
 if [ $? -gt 0 ]; then
   echo "Creating storage bucket '$NOTEBOOKS_BUCKET' for storing notebooks ..."
   gsutil mb $NOTEBOOKS_BUCKET
-  if [ $1 != 0]; then
+  if [ $1 != 0 ]; then
     echo "Failed to create storage bucket (ignoring and continuing)"
   fi
 fi
