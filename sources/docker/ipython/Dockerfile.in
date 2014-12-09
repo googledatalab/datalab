@@ -57,6 +57,10 @@ RUN /tools/google-cloud-sdk/install.sh --usage-reporting=false --path-update=tru
     /tools/google-cloud-sdk/bin/gcloud -q components update
 
 
+# Add License file
+ADD License.txt /License.txt
+
+
 # Setup Environment
 ENV PATH $PATH:/node/bin:/tools:/tools/google-cloud-sdk/bin
 ENV IPYTHON_VERSION _version_
