@@ -445,11 +445,12 @@ class StorageNotebookManager(SimpleNotebookManager):
     bucket = StorageNotebookManager._create_bucket()
     self.add_notebook_list(StorageNotebookList(bucket))
     self.add_notebook_list(StorageNotebookList(bucket, prefix='intro/'), 'intro')
+    self.add_notebook_list(StorageNotebookList(bucket, prefix='notebooks/'), 'notebooks')
 
   @staticmethod
   def _create_bucket():
     project_id = _gcp.Context.default().project_id
-    bucket_name = project_id + '-notebooks'
+    bucket_name = project_id + '-ipython'
 
     buckets = _storage.buckets()
     if not buckets.contains(bucket_name):

@@ -71,9 +71,9 @@ echo "Starting IPython setup on VM '$VM' ($VM_TYPE) ..."
 CLOUD_PROJECT=`gcloud config list project --format text | sed 's/core\.project: //'`
 NETWORK_NAME=ipython
 DOCKER_IMAGE="$DOCKER_REGISTRY/gcp-ipython"
-NOTEBOOKS_BUCKET="gs://$CLOUD_PROJECT-notebooks"
-NOTEBOOKS_TARGET="gs://$CLOUD_PROJECT-notebooks/intro/"
-NOTEBOOKS_SOURCE="gs://cloud-datalab/ipython/notebooks/"
+NOTEBOOKS_BUCKET="gs://$CLOUD_PROJECT-ipython"
+NOTEBOOKS_TARGET="gs://$CLOUD_PROJECT-ipython/"
+NOTEBOOKS_SOURCE="gs://cloud-datalab/ipython/"
 PORT=8092
 URL="http://localhost:$PORT"
 
@@ -169,19 +169,19 @@ else
 fi
 
 # Create notebooks bucket within the project (if it doesn't already exist)
-gsutil ls $NOTEBOOKS_BUCKET >> /dev/null
+gsutil -q ls $NOTEBOOKS_BUCKET >> /dev/null
 if [ $? -gt 0 ]; then
-  echo "Creating storage bucket '$NOTEBOOKS_BUCKET' for storing notebooks ..."
-  gsutil mb $NOTEBOOKS_BUCKET
-  if [ $1 != 0 ]; then
+  echo "Creating GCS bucket '$NOTEBOOKS_BUCKET' for storing notebooks ..."
+  gsutil -q mb $NOTEBOOKS_BUCKET
+  if [ $? -gt 0 ]; then
     echo "Failed to create storage bucket (ignoring and continuing)"
   fi
 fi
 
 # Synchronize notebooks into notebooks folder
-echo "Copying intro notebooks into storage:"
+echo "Copying intro notebooks from $NOTEBOOKS_SOURCE into storage:"
 echo "  $NOTEBOOKS_TARGET"
-gsutil -m -q rsync -C $NOTEBOOKS_SOURCE $NOTEBOOKS_TARGET >> /dev/null
+gsutil -m -q rsync -C -R $NOTEBOOKS_SOURCE $NOTEBOOKS_TARGET >> /dev/null
 
 
 # Wait for VM to start
