@@ -74,13 +74,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   // /socket/* paths are completed handled in this server, and not forwarded on to
   // IPython as HTTP calls.
   if (path.indexOf('/socket') == 0) {
-    if (!socketHandler) {
-      response.writeHead(404);
-      response.end();
-    }
-    else {
-      socketHandler(request, response);
-    }
+    socketHandler(request, response);
     return;
   }
 
@@ -126,10 +120,7 @@ function upgradeHandler(request: http.ServerRequest, socket: net.Socket, head: B
 export function run(settings: common.Settings): void {
   ipythonServer = ipython.createProxyServer(settings);
 
-  if (process.env['GAE_VM']) {
-    // Socket handler is only needed in managed VM scenarios.
-    socketHandler = sockets.createHandler(settings);
-  }
+  socketHandler = sockets.createHandler(settings);
   healthHandler = health.createHandler(settings);
   infoHandler = info.createHandler(settings);
 

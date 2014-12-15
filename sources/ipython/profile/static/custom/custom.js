@@ -323,9 +323,10 @@ function overrideWebSocket() {
   window.WebSocket = Socket;
 }
 
-if ((document.domain != 'localhost') && (document.domain != '127.0.0.1')) {
-  overrideWebSocket();
-}
+// This is not needed while running on GCE, where websockets work fine.
+// if ((document.domain != 'localhost') && (document.domain != '127.0.0.1')) {
+//   overrideWebSocket();
+// }
 
 
 // Notebook List page specific functionality
@@ -360,4 +361,3 @@ if (IPython.NotebookList) {
     $.ajax(url, settings);
   }
 }
-
