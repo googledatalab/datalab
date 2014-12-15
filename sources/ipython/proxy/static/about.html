@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>IPython for Google Cloud Platform</title>
+  <title>Google Cloud DataLab</title>
   <style>
     @import url(https://fonts.googleapis.com/css?family=Source+Code+Pro|Open+Sans|Lato:400,700&subset=latin,latin-ext);
     body {
@@ -22,12 +22,13 @@
     #leftSection { float: left; width: 320px; text-align: left; }
     #rightSection { float: right; width: 320px; text-align: left; }
     #bottomSection { clear: both; }
-    #notebooksLink {
+    #bottomSection a {
+      font-family: 'Open Sans', helvetica, sans-serif;
       font-size: 16px; font-weight: bold;
       background-color: #4184f3; color: #fff;
       text-decoration: none;
-      padding: 8px;
-      border: solid 1px rgb(1, 87, 228);
+      padding: 6px;
+      border: solid 1px #2164d3;
       border-radius: 4px;
     }
     footer a {
@@ -38,21 +39,19 @@
 </head>
 <body>
   <header>
-    <h1><img src="/static/base/images/ipynblogo.png"
-           alt="IPython for Google Cloud Platform - Alpha" /></h1>
+    <h1><img src="/static/base/images/ipynblogo.png" alt="Google Cloud DataLab - Alpha" /></h1>
   </header>
   <article>
     <section id="leftSection">
       <p>
-        IPython brings interactive computing via notebooks to let you
-        author and execute code iteratively. On the Google Cloud, notebooks
-        let you work directly with cloud services and APIs such as BigQuery
-        and Google Cloud Storage.
+        Use Cloud DataLab to gain insight from your data. Interactively explore,
+        transform, analyze and visualize your data using Google BigQuery,
+        Google Cloud Storage and python.
       </p>
       <p>
-        Notebooks let you combine SQL, python scripts, markdown content and
-        charts to query, transform, analyze and visualize your data.
-        Notebooks can be shared with other developers in your cloud project,
+        Cloud DataLab builds on top of IPython. IPython Notebooks let you
+        combine SQL, python scripts, markdown content and charts in a simple web
+        interface. Notebooks can be shared with other developers in your cloud project,
         as well as used to share and publish your results.
       </p>
       <p>
@@ -66,18 +65,20 @@
       <h2>Connected and Ready-to-use</h2>
       <p>Access all of your BigQuery data using SQL, analyze and visualize results using Python.</p>
       <h2>Familiar</h2>
-      <p>Use standard open source tools including pandas and many other python libraries.</p>
+      <p>Open source tools including IPython, Pandas and other Python data science libraries.</p>
       <h2>Interactive</h2>
       <p>Analyze your data live, and visualize, share or publish results and insights.</p>
     </section>
     <section id="bottomSection">
-      <a id="notebooksLink" href="/tree">Create or Open Notebooks</a>
+      <a href="/tree/intro" target="_blank">Tutorials</a>
+      &nbsp;
+      <a href="/tree/notebooks" target="_blank">Notebooks</a>
     </section>
   </article>
   <hr />
   <footer>
     <a href="/tree/intro" target="_blank">Learn More</a> |
-    <a href="mailto:datalab-feedback@google.com?subject=IPython+Feedback" target="_blank">Feedback</a> |
+    <a href="mailto:datalab-feedback@google.com?subject=Feedback" target="_blank">Feedback</a> |
     <a href="http://www.google.com/intl/en/policies/" target="_blank">Privacy Policy</a>
   </footer>
 </body>
