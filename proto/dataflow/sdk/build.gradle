@@ -1,0 +1,23 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+sourceCompatibility = 1.7
+version = '1.0'
+
+jar {
+  baseName  'dataflow-sdk-plus'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+  compile files("../extern/dataflow-sdk.jar")
+}
+
+sourceSets {
+  main {
+    java.srcDirs = ['src']
+  }
+}

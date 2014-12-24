@@ -1,0 +1,27 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+sourceCompatibility = 1.7
+version = '1.0'
+
+jar {
+  baseName  'dataflow-shell'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+  compile 'com.fasterxml.jackson.jr:jackson-jr-objects:2.4.0'
+
+  compile files("../extern/ijavart.jar")
+  compile files("../extern/dataflow-sdk.jar")
+  compile files("../sdk/build/libs/dataflow-sdk-plus-1.0.jar")
+}
+
+sourceSets {
+  main {
+    java.srcDirs = ['src']
+  }
+}
