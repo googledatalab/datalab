@@ -12,12 +12,7 @@ require.config({
 
 // Kernel related functionality
 $(function() {
-  IPython.Kernel.prototype.get_values = function(names, callback) {
-    // Values are retrieved from the kernel by executing a %values command
-    // passing in the list of values to retrieve.
-    // The expected result is a dictionary of key/value pairs.
-    var script = '%values ' + names.join(',');
-
+  IPython.Kernel.prototype.get_data = function(code, callback) {
     function shellHandler(reply) {
       var content = reply.content;
       if (!content || (content.status != 'ok')) {
@@ -57,14 +52,10 @@ $(function() {
 
     try {
       var callbacks = {
-        shell: {
-          reply: shellHandler
-        },
-        iopub: {
-          output: iopubHandler
-        }
+        shell: { reply: shellHandler },
+        iopub: { output: iopubHandler }
       };
-      this.execute(script, callbacks, { silent: false, store_history: false });
+      this.execute(code, callbacks, { silent: false, store_history: false });
     }
     catch (e) {
       callback(null, e);
