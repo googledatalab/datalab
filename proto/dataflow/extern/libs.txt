@@ -3,8 +3,8 @@ Extern libraries
 IJava
 Built from https://github.com/nikhilk/ijava
 - ijava
-- ijava.jar
 - ijavart.jar
+- ijavaext-charting.jar
 
 Dataflow
 Dataflow SDK

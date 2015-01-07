@@ -1,3 +1,12 @@
+// dataflow.js
+//
+
+require.config({
+  paths: {
+    dagred3: 'http://cpettitt.github.io/project/dagre-d3/latest/dagre-d3'
+  }
+});
+
 define([ 'd3', 'dagred3' ], function(d3, dagre) {
 
   function extendOutgoingEdges(nodes) {

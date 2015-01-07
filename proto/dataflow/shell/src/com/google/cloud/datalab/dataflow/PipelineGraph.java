@@ -33,7 +33,7 @@ public final class PipelineGraph {
       String script = sb.toString();
 
       HTML html = new HTML("<svg class=\"df-pipeline\" width=\"100%\" height=600><g /></svg>");
-      return html.addScript(script).addScriptDependency("static/dataflow", "dataflow");
+      return html.addScript(script).addScriptDependency("extensions/dataflow", "dataflow");
     }
     catch (IOException e) {
       return null;

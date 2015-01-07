@@ -12,8 +12,10 @@ c.KernelManager.kernel_cmd = [
   '{connection_file}',
   '-dep', 'dataflow-sdk.jar',
   '-dep', 'dataflow-sdk-plus.jar',
-  '-shellDep', 'dataflow-shell.jar',
-  '-ext', 'com.google.cloud.datalab.dataflow.DataflowShellExtension'
+  '-shellDep', 'ijavaext-dataflow.jar',
+  '-shellDep', 'ijavaext-charting.jar',
+  '-ext', 'com.google.cloud.datalab.dataflow.DataflowShellExtension',
+  '-ext', 'ChartingExtension'
 ]
 
 # Protocol signing settings

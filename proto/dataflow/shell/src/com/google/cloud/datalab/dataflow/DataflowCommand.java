@@ -69,7 +69,7 @@ public final class DataflowCommand implements Command {
    * {@link Command}
    */
   @Override
-  public Object evaluate(String arguments, String data, int evaluationID,
+  public Object evaluate(String arguments, String data, long evaluationID,
                          Map<String, Object> metadata) throws Exception {
     if (arguments.equals("run")) {
       return runDataflow();
