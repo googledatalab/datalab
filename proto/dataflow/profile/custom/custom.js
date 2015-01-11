@@ -14,6 +14,10 @@ require.config({
 $(function() {
   IPython.Kernel.prototype.get_data = function(code, callback) {
     function shellHandler(reply) {
+      if (!callback) {
+        return;
+      }
+
       var content = reply.content;
       if (!content || (content.status != 'ok')) {
         callback(null, new Error('Unable to retrieve values.'));
@@ -26,28 +30,31 @@ $(function() {
         return;
       }
 
-      var values = null;
-      var error = null;
-      try {
-        var data = output.content ? output.content.data : null;
-        if (data) {
-          var values = data['application/json'];
-          if (values) {
-            values = JSON.parse(values);
+      if (output.msg_type == 'display_data') {
+        var values = null;
+        var error = null;
+
+        try {
+          var data = output.content.data;
+          if (data) {
+            var values = data['application/json'];
+            if (values) {
+              values = JSON.parse(values);
+            }
           }
         }
-      }
-      catch(e) {
-        error = e;
-      }
+        catch(e) {
+          error = e;
+        }
 
-      if (values) {
-        callback(values);
+        if (values) {
+          callback(values);
+        }
+        else {
+          callback(null, error || new Error('Unexpected value data retrieved.'));
+        }
+        callback = null;
       }
-      else {
-        callback(null, error || new Error('Unexpected value data retrieved.'));
-      }
-      callback = null;
     }
 
     try {
@@ -85,7 +92,7 @@ $(function() {
 
   // %%json and %%text cell support
   IPython.config.cell_magic_highlight['magic_application/ld+json'] = {
-    reg: [ /%%json/ ]
+    reg: [ /%%json/, /%%chart/ ]
   };
   IPython.config.cell_magic_highlight['magic_text/plain'] = {
     reg: [ /%%text/ ]
@@ -134,4 +141,3 @@ $(function() {
     return false;
   }
 });
-

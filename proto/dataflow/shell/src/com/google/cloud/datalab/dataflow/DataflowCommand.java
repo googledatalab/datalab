@@ -11,11 +11,11 @@ import ijava.extensibility.*;
 public final class DataflowCommand implements Command {
 
   private final Shell _shell;
+  private final DataflowExtension _extension;
 
-  private InteractivePipelineResult _pipelineResult;
-
-  public DataflowCommand(Shell shell) {
+  public DataflowCommand(Shell shell, DataflowExtension extension) {
     _shell = shell;
+    _extension = extension;
   }
 
   private Dataflow createDataflow() throws Exception {
@@ -53,6 +53,8 @@ public final class DataflowCommand implements Command {
   }
 
   private Object runDataflowCore() throws Exception {
+    _extension.setPipelineResult(null);
+
     ShellDataRegistry dataRegistry = new ShellDataRegistry(_shell);
     InteractivePipelineRunner runner = new InteractivePipelineRunner(dataRegistry);
 
@@ -60,9 +62,10 @@ public final class DataflowCommand implements Command {
     dataflow.initialize(dataRegistry, /* args */ null);
 
     Pipeline pipeline = dataflow.createPipeline(runner.getPipelineOptions());
-    _pipelineResult = runner.run(pipeline);
+    InteractivePipelineResult result = runner.run(pipeline);
 
-    return _pipelineResult.createGraph().render();
+    _extension.setPipelineResult(result);
+    return result.createGraph().render();
   }
 
   /**

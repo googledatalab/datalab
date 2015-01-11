@@ -12,10 +12,9 @@ c.KernelManager.kernel_cmd = [
   '{connection_file}',
   '-dep', 'dataflow-sdk.jar',
   '-dep', 'dataflow-sdk-plus.jar',
-  '-shellDep', 'ijavaext-dataflow.jar',
-  '-shellDep', 'ijavaext-charting.jar',
-  '-ext', 'com.google.cloud.datalab.dataflow.DataflowShellExtension',
-  '-ext', 'ChartingExtension'
+  '-shellDep', 'ijavaext-cloud.jar',
+  '-ext', 'com.google.cloud.datalab.charting.ChartingExtension',
+  '-ext', 'com.google.cloud.datalab.dataflow.DataflowExtension'
 ]
 
 # Protocol signing settings
@@ -26,4 +25,3 @@ c.Session.keyfile = b''
 c.NotebookApp.extra_static_paths = [
   os.path.join(os.path.dirname(__file__))
 ]
-

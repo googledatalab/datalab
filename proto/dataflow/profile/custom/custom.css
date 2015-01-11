@@ -185,13 +185,47 @@ div.output_subarea {
 
 /* Dataflow specific */
 
-svg.df-pipeline g.label {
-  text-shadow: none;
+div.df-run {
+  background-color: #f6f6f6;
+  padding: 4px;
+}
+
+div.df-data {
+}
+
+div.df-data table.google-visualization-table-table {
+  border: none;
+  font-family: 'Open Sans', 'Helvetica Neue', Helvetica, sans-serf;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+div.df-data table.google-visualization-table-table tr,
+div.df-data table.google-visualization-table-table th,
+div.df-data table.google-visualization-table-table td {
+  border: none;
+}
+div.df-data tr.google-visualization-table-tr-head {
+  background-color: #f0f0f0;
+}
+div.df-data tr.google-visualization-table-tr-head td {
+  text-align: left;
+}
+div.df-data tr.google-visualization-table-tr-sel {
+  background-color: #d6e9f8;
+}
+div.df-data tr.google-visualization-table-tr-over {
+  background-color: #e7e9f9;
+}
+div.df-data .gradient {
+  background: #f0f0f0;
 }
 
 svg.df-pipeline {
   overflow: hidden;
-  background-color: #f6f6f6;
+}
+
+svg.df-pipeline g.label {
+  text-shadow: none;
 }
 
 svg.df-pipeline text {

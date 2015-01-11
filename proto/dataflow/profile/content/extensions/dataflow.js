@@ -76,6 +76,32 @@ define([ 'd3', 'dagred3' ], function(d3, dagre) {
 
     return graphModel;
   }
+  Pipeline.prototype.getNodeData = function(id, cb) {
+    var query = { id: id };
+    this.visitNodes(Pipeline.visitors.findNode, query);
+
+    var node = query.node;
+    if (node) {
+      if (node.data) {
+        setTimeout(function() {
+          cb(node.data);
+        }, 0);
+      }
+      else {
+        var code = '%_dataflowData ' + id;
+        IPython.notebook.kernel.get_data(code, function(data, error) {
+          if (!error) {
+            node.data = data;
+          }
+          cb(data, error);
+        });
+      }
+
+      return true;
+    }
+
+    return false;
+  }
   Pipeline.prototype.toggleNode = function(id) {
     var query = { id: id };
     this.visitNodes(Pipeline.visitors.findNode, query);
@@ -161,7 +187,7 @@ define([ 'd3', 'dagred3' ], function(d3, dagre) {
     }
   };
 
-  function PipelineGraph(svg, pipeline) {
+  function PipelineGraph(svg, dataLabel, dataView, pipeline) {
     svg.append('defs')
        .append('marker').attr('id', 'circle-marker')
                         .attr('viewbox', '0 0 8 8')
@@ -185,6 +211,9 @@ define([ 'd3', 'dagred3' ], function(d3, dagre) {
                             .on('zoom', this._onZoom.bind(this));
     svg.call(this._zoom);
 
+    this._dataLabel = dataLabel;
+    this._dataView = dataView;
+
     this._pipeline = pipeline;
     this._graphModel = pipeline.createGraphModel();
   }
@@ -194,8 +223,9 @@ define([ 'd3', 'dagred3' ], function(d3, dagre) {
     this._svg.selectAll('g.edgePath path').attr('marker-start', 'url(#circle-marker)');
     this._svg.selectAll('g.cluster').each(PipelineGraph.elements.cluster);
     this._svg.selectAll('text').attr('pointer-events', 'none');
-    this._svg.selectAll('rect.expander').on('click', this._onClick.bind(this));
-    this._svg.selectAll('rect.collapser').on('click', this._onClick.bind(this));
+    this._svg.selectAll('rect.expander').on('click', this._onClusterClick.bind(this));
+    this._svg.selectAll('rect.collapser').on('click', this._onClusterClick.bind(this));
+    this._svg.selectAll('rect.node').on('click', this._onNodeClick.bind(this));
 
     this._svg.attr('height', this._graphModel.graph().height * this._zoom.scale() + 40);
   }
@@ -204,7 +234,34 @@ define([ 'd3', 'dagred3' ], function(d3, dagre) {
                               'scale(' + d3.event.scale + ')');
     this._svg.attr('height', this._graphModel.graph().height * d3.event.scale);
   }
-  PipelineGraph.prototype._onClick = function(id) {
+  PipelineGraph.prototype._onNodeClick = function(id) {
+    var self = this;
+    this._pipeline.getNodeData(id, function(data, error) {
+      if (!error && data) {
+        require(['visualization!table'], function(visualization) {
+          var dataTable = new visualization.DataTable(data);
+          var rowLimit = 10;
+          var pageInfo = '';
+
+          if (dataTable.getNumberOfRows() > rowLimit) {
+            pageInfo = ' (rows 1...' + rowLimit + ' of ' + dataTable.getNumberOfRows() + ')';
+            dataTable = new visualization.DataView(dataTable);
+            dataTable.setRows(0, rowLimit - 1);
+          }
+
+          var chart = new visualization.Table(self._dataView);
+          chart.draw(dataTable, { width: "100%", showRowNumber: true });
+
+          self._dataLabel.textContent = 'Transform: ' + id + pageInfo;
+        });
+      }
+      else {
+        self._dataLabel.textContent = '';
+        self._dataView.innerHTML = '';
+      }
+    });
+  }
+  PipelineGraph.prototype._onClusterClick = function(id) {
     if (this._pipeline.toggleNode(id)) {
       this._graphModel = this._pipeline.createGraphModel();
       this.render();
@@ -325,9 +382,11 @@ define([ 'd3', 'dagred3' ], function(d3, dagre) {
 
   function renderPipeline(dom, data) {
     var svg = d3.select(dom.getElementsByTagName('svg')[0]);
+    var dataLabel = dom.getElementsByTagName('label')[0];
+    var dataView = dom.getElementsByTagName('div')[0];
     var pipeline = new Pipeline(data);
 
-    var pipelineGraph = new PipelineGraph(svg, pipeline);
+    var pipelineGraph = new PipelineGraph(svg, dataLabel, dataView, pipeline);
     pipelineGraph.render();
   }
 

@@ -25,6 +25,10 @@ public final class PipelineGraph {
 
   public HTML render() {
     try {
+      String markup = "<svg class=\"df-pipeline\" width=\"100%\" height=600><g /></svg>" +
+          "<label class=\"df-title\"></label>" +
+          "<div class=\"df-data\" width=\"100%\"></div>";
+
       StringBuilder sb = new StringBuilder();
       sb.append("dataflow.renderPipeline(dom, ");
       sb.append(JSON.std.asString(_nodes));
@@ -32,8 +36,9 @@ public final class PipelineGraph {
 
       String script = sb.toString();
 
-      HTML html = new HTML("<svg class=\"df-pipeline\" width=\"100%\" height=600><g /></svg>");
-      return html.addScript(script).addScriptDependency("extensions/dataflow", "dataflow");
+      return new HTML(markup).addClass("df-run")
+          .addScript(script)
+          .addScriptDependency("extensions/dataflow", "dataflow");
     }
     catch (IOException e) {
       return null;

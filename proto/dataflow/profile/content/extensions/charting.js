@@ -25,7 +25,7 @@ define(function() {
     var chartScript = chartInfo.script || 'corechart';
 
     require(['visualization!' + chartScript], function(visualization) {
-      var code = '%_chartTable ' + dataName;
+      var code = '%_chartData ' + dataName;
 
       IPython.notebook.kernel.get_data(code, function(data, error) {
         if (error) {

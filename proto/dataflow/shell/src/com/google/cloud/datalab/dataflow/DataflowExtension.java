@@ -1,4 +1,4 @@
-// DataflowShellExtension.java
+// DataflowExtension.java
 //
 
 package com.google.cloud.datalab.dataflow;
@@ -8,7 +8,17 @@ import ijava.extensibility.*;
 /**
  * Provides the interactive shell and REPL functionality for dataflow development.
  */
-public final class DataflowShellExtension implements ShellExtension {
+public final class DataflowExtension implements ShellExtension {
+
+  private InteractivePipelineResult _currentPipelineResult;
+
+  public InteractivePipelineResult getPipelineResult() {
+    return _currentPipelineResult;
+  }
+
+  public void setPipelineResult(InteractivePipelineResult result) {
+    _currentPipelineResult = result;
+  }
 
   @Override
   public Object initialize(Shell shell) {
@@ -19,7 +29,8 @@ public final class DataflowShellExtension implements ShellExtension {
     shell.addImport("com.google.cloud.dataflow.sdk.values.*", /* staticImport */ false);
 
     // Register the command for handling the %dataflow command
-    shell.registerCommand("dataflow", new DataflowCommand(shell));
+    shell.registerCommand("dataflow", new DataflowCommand(shell, this));
+    shell.registerCommand("_dataflowData", new DataflowDataCommand(this));
 
     return null;
   }

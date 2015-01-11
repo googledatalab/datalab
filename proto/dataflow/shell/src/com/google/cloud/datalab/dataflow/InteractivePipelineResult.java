@@ -33,7 +33,22 @@ public final class InteractivePipelineResult implements PipelineResult {
 
     PTransform transform = finder.getTransform();
     if (transform != null) {
-      return _results.getPCollection((PCollection)_pipeline.getOutput(transform));
+      PCollection collection = null;
+
+      POutput output = _pipeline.getOutput(transform);
+      if (output instanceof PCollection) {
+        collection = (PCollection)output;
+      }
+      else {
+        PInput input = _pipeline.getInput(transform);
+        if (input instanceof PCollection) {
+          collection = (PCollection)input;
+        }
+      }
+
+      if (collection != null) {
+        return _results.getPCollection(collection);
+      }
     }
 
     return null;
@@ -60,6 +75,9 @@ public final class InteractivePipelineResult implements PipelineResult {
 
     @Override
     public void enterCompositeTransform(TransformTreeNode node) {
+      if (node.getFullName().equals(_name)) {
+        _transform = node.getTransform();
+      }
     }
 
     @Override
