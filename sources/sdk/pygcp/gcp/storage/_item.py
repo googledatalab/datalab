@@ -17,7 +17,7 @@
 import dateutil.parser as _dateparser
 from gcp._util import Iterator as _Iterator
 
-# TODO(nikhilko): Read/write operations don't account for larger files, or non-texual content.
+# TODO(nikhilko): Read/write operations don't account for larger files, or non-textual content.
 #                 Use streaming reads into a buffer or StringIO or into a file handle.
 
 

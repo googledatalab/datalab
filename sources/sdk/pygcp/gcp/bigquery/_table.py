@@ -192,7 +192,7 @@ class Table(object):
     m = re.match(Table._REL_NAME_PATTERN, name)
     if m is not None:
       groups = m.groups()
-      return (self._api.project_id, groups[0], groups[1])
+      return self._api.project_id, groups[0], groups[1]
 
     raise Exception('Invalid table name: ' + name)
 
