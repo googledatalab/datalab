@@ -1,3 +1,7 @@
 .ipynb_checkpoints
 build
 .gradle
+.pyc
+.idea
+.iml
+

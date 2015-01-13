@@ -83,7 +83,6 @@ class TestCases(unittest.TestCase):
       _ = q.results()
     self.assertEqual(error.exception[0], 'Unexpected query response.')
 
-
   def _create_query(self, sql=None):
     if sql is None: sql = 'SELECT * ...'
 

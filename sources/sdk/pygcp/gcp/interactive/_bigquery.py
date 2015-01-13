@@ -45,7 +45,7 @@ def bq_sql(declaration, sql):
   ipy = _ipython.get_ipython()
 
   # Use the user_ns dictionary, which contains all current declarations in
-  # in the kernel as the dictionary to use to retrieve values for placeholders
+  # the kernel as the dictionary to use to retrieve values for placeholders
   # within the specified sql statement.
   sql = _bq.sql(sql, **ipy.user_ns)
   query = _bq.query(sql)
