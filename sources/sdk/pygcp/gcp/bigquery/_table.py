@@ -14,7 +14,11 @@
 
 """Implements Table, and related Table BigQuery APIs."""
 
+import json
 import re
+import time
+import uuid
+
 from ._query import Query as _Query
 from ._parser import Parser as _Parser
 from ._sampling import Sampling as _Sampling
@@ -165,6 +169,21 @@ class Table(object):
     """The name of the table, as used when it was constructed."""
     return self._name
 
+  @property
+  def project_id(self):
+    """The project ID for the table."""
+    return self._name_parts[0]
+
+  @property
+  def dataset_id(self):
+    """The dataset ID for the table."""
+    return self._name_parts[1]
+
+  @property
+  def table_id(self):
+    """The table ID for the table."""
+    return self._name_parts[2]
+
   def _load_info(self):
     """Loads metadata about this table."""
     if self._info is None:
@@ -228,6 +247,109 @@ class Table(object):
     q = _Query(self._api, sql)
 
     return q.results(timeout=timeout, use_cache=use_cache)
+
+  def exists(self):
+    """ Test if the file exists.
+
+    Returns:
+      True if the file exists; else False.
+    """
+    response = self._api.tables_list(self.dataset_id)
+    if 'tables' in response:
+      for table in response['tables']:
+        if table['id'] == self._full_name:
+          return True
+
+    return False
+
+  def insert(self, schema):
+    """ Create the table with a specified schema.
+
+    Args:
+      schema: the schema to use to create the table. Should be a dictionary with a single entry 'fields'.
+    Returns:
+      None on failure, or the direct URL to the resulting file on success.
+    """
+    response = self._api.tables_insert(self.dataset_id, self.table_id, schema)
+    return response
+
+  def insertAll(self, dataframe,  schema=None, chunk_size=10000):
+    """ Insert the contents of a Pandas dataframe into the table
+
+    Args:
+      dataframe: the dataframe to insert.
+      schema: the schema to be used for the table. Should be a list of dictionaries or None;
+          if None then a schema will be inferred from the dataframe.
+      chunk_size: for a large dataframe, the max number of records per POST. Note that BigQuery limits each POST
+          to max 1MB in size.
+
+    Returns:
+      NOne on success, else the error object in the POST response.
+    """
+
+    if not schema:
+      schema = self.schema_from_dataframe(dataframe)
+
+    if not self.exists():
+      self.insert(schema)
+    # TODO(gram): else we should make sure the schema is unchanged
+
+    total_rows = len(dataframe)
+    total_pushed = 0
+
+    job_id = uuid.uuid4().hex
+    rows = []
+    for index, dataframe_row in dataframe.reset_index(drop=True).iterrows():
+      encoded = json.loads(dataframe_row.to_json(force_ascii=False, date_unit='s', date_format='iso'))
+      # The JSON encoded data may not be consistent with the schema. For example, if the dataframe is set
+      # up poorly it may default to 'O' (object) for a column that we then tell BQ to treat as a string,
+      # but the actual values may be numeric, and streaming this will fail as BQ wants a string. So we iterate
+      # through the fields, and make sure any that we expect to be strings actually are.
+      for field in schema:
+        if field['type'] == 'STRING':
+          name = field['name']
+          encoded[name] = str(encoded[name])
+      rows.append({
+        'json': encoded,
+        'insertId': job_id + str(index)
+      })
+      total_pushed += 1
+
+      if (total_pushed == total_rows) or (len(rows) == chunk_size):
+        response = self._api.tables_insertAll(self.dataset_id, self.table_id, rows)
+        if 'insertErrors' in response:
+          return response['insertErrors']
+
+        time.sleep(1) # Maintains the inserts "per second" rate per API
+        rows = []
+    return None
+
+  def schema_from_dataframe(self, dataframe, default_type='STRING'):
+    """
+    Infer a BigQuery table schema from a Pandas dataframe. Note that if you don't explicitly set the
+    types of the columns in the dataframe, they may be of a type that forces coercion to STRING.
+
+    Args:
+      dataframe: DataFrame
+      default_type : The default big query type in case the type of the column does not exist in the schema.
+    """
+
+    type_mapping = {
+      'i': 'INTEGER',
+      'b': 'BOOLEAN',
+      'f': 'FLOAT',
+      'O': 'STRING',
+      'S': 'STRING',
+      'U': 'STRING',
+      'M': 'TIMESTAMP'
+    }
+
+    fields = []
+    for column_name, dtype in dataframe.dtypes.iteritems():
+      fields.append({'name': column_name,
+                     'type': type_mapping.get(dtype.kind, default_type)})
+
+    return fields
 
   def schema(self):
     """Retrieves the schema of the table.

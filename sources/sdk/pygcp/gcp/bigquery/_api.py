@@ -147,3 +147,62 @@ class Api(object):
       args['pageToken'] = page_token
 
     return _util.Http.request(url, args=args, credentials=self._credentials)
+
+  def tables_insert(self, dataset_id, table_id, schema, friendly_name=None, description=None):
+    """Issues a request to create a table in the specified dataset with the specified id and schema.
+
+    Args:
+      dataset_id: the name of the dataset containing the table to create.
+      table_id: the id of the table to create.
+      schema: the schema of the data.
+      friendly_name: an optional friendly name.
+      description: an optional description.
+
+    Returns:
+    Raises:
+      Exception if there is an error performing the operation.
+    """
+    url = Api._ENDPOINT + (Api._TABLE_PATH % (self._project_id, dataset_id, ''))
+
+    data = {
+      'kind': 'bigquery#table',
+      'tableReference': {
+        'projectId': self._project_id,
+        'datasetId': dataset_id,
+        'tableId': table_id
+      },
+      'schema': {
+        'fields': schema
+      },
+    }
+
+    if friendly_name:
+      data['friendlyName'] = friendly_name
+    if description:
+      data['description'] = description
+
+    response = _util.Http.request(url, data=data, credentials=self._credentials)
+    if 'selfLink' in response:
+      return response['selfLink']
+    return None
+
+  def tables_insertAll(self, dataset_id, table_id, rows):
+    """Issues a request to insert data into a table.
+
+    Args:
+      dataset_id: the name of the dataset containing the table to populate.
+      table_id: the id of the table to populate
+      rows: the data to populate the table, as a list of dictionaries.
+    Returns:
+      The HTTP response object.
+    Raises:
+      Exception if there is an error performing the operation.
+    """
+    url = Api._ENDPOINT + (Api._TABLE_PATH % (self._project_id, dataset_id, table_id)) + "/insertAll"
+
+    data = {
+      'kind': 'bigquery#tableDataInsertAllRequest',
+      'rows': rows
+    }
+
+    return _util.Http.request(url, data=data, credentials=self._credentials)
