@@ -157,8 +157,8 @@ class Api(object):
       schema: the schema of the data.
       friendly_name: an optional friendly name.
       description: an optional description.
-
     Returns:
+      The "Self link" URL of the file on success, on None on failure.
     Raises:
       Exception if there is an error performing the operation.
     """

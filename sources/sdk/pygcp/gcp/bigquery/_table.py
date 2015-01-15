@@ -278,21 +278,23 @@ class Table(object):
 
     Args:
       dataframe: the dataframe to insert.
-      schema: the schema to be used for the table. Should be a list of dictionaries or None;
-          if None then a schema will be inferred from the dataframe.
+      schema: the schema to be used for the table, if the table does not yet exist. Should be a list of dictionaries
+           or None; if None then a schema will be inferred from the dataframe. If the table already exists the
+           schema will be obtained from the file instead.
       chunk_size: for a large dataframe, the max number of records per POST. Note that BigQuery limits each POST
           to max 1MB in size.
 
     Returns:
-      NOne on success, else the error object in the POST response.
+      None on success, else the error object in the POST response.
     """
 
-    if not schema:
-      schema = self.schema_from_dataframe(dataframe)
-
     if not self.exists():
+      if not schema:
+        schema = self.schema_from_dataframe(dataframe)
       self.insert(schema)
-    # TODO(gram): else we should make sure the schema is unchanged
+    else:
+      schema = self.schema()
+      # TODO(gram): if a schema was passed as a parameter, should we validate that it matches the existing file's?
 
     total_rows = len(dataframe)
     total_pushed = 0
@@ -305,6 +307,7 @@ class Table(object):
       # up poorly it may default to 'O' (object) for a column that we then tell BQ to treat as a string,
       # but the actual values may be numeric, and streaming this will fail as BQ wants a string. So we iterate
       # through the fields, and make sure any that we expect to be strings actually are.
+      # TODO(gram): should we try coerce to other field types too?
       for field in schema:
         if field['type'] == 'STRING':
           name = field['name']
@@ -320,18 +323,23 @@ class Table(object):
         if 'insertErrors' in response:
           return response['insertErrors']
 
-        time.sleep(1) # Maintains the inserts "per second" rate per API
+        time.sleep(1)  # Streaming API is rate-limited
         rows = []
     return None
 
   def schema_from_dataframe(self, dataframe, default_type='STRING'):
     """
-    Infer a BigQuery table schema from a Pandas dataframe. Note that if you don't explicitly set the
-    types of the columns in the dataframe, they may be of a type that forces coercion to STRING.
+      Infer a BigQuery table schema from a Pandas dataframe. Note that if you don't explicitly set the
+      types of the columns in the dataframe, they may be of a type that forces coercion to STRING, so
+      even though the fields in the dataframe themselves may be numeric, the type in the derives schema
+      may not be. Hence it is prudent to make sure the Pandas dataframe is typed correctly.
 
     Args:
       dataframe: DataFrame
       default_type : The default big query type in case the type of the column does not exist in the schema.
+    Returns:
+      A list of dictionaries containing field 'name' and 'type' entries, suitable for use in a BigQuery
+      Tables resource schema.
     """
 
     type_mapping = {
