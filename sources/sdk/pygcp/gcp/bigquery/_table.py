@@ -257,7 +257,13 @@ class Table(object):
     response = self._api.tables_list(self.dataset_id)
     if 'tables' in response:
       for table in response['tables']:
-        if table['id'] == self._full_name:
+        if 'id' in table:
+          name = table['id']
+        else:
+          tableRef = table['tableReference']
+          name = "%s:%s.%s" % (tableRef['projectId'], tableRef['datasetId'], tableRef['tableId'])
+
+        if name == self._full_name:
           return True
 
     return False

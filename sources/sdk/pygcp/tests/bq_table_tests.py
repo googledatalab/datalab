@@ -17,8 +17,9 @@ import unittest
 import gcp
 import gcp.bigquery
 import mock
+import numpy as np
 from oauth2client.client import AccessTokenCredentials
-
+import pandas
 
 class TestCases(unittest.TestCase):
 
@@ -125,6 +126,42 @@ class TestCases(unittest.TestCase):
       _ = gcp.bigquery.tables('testds', context=self._create_context())
     self.assertEqual(error.exception[0], 'Unexpected table list response.')
 
+  @mock.patch('gcp.bigquery._Api.tables_list')
+  def test_exists(self, mock_api_tables_list):
+
+    mock_api_tables_list.return_value = self._create_table_list_result()
+    self.assertFalse(self._create_table('test:testds.testTable0').exists())
+    self.assertTrue(self._create_table('test:testds.testTable1').exists())
+    self.assertTrue(self._create_table('test:testds.testTable2').exists())
+
+  @mock.patch('uuid.uuid4')
+  @mock.patch('time.sleep')
+  @mock.patch('gcp.bigquery._Table.exists')
+  @mock.patch('gcp.bigquery._Table.insert')
+  @mock.patch('gcp.bigquery._Api.tables_insertAll')
+  def test_insertAll(self, mock_api_tables_insertAll, mock_table_insert, mock_table_exists, mock_time_sleep, mock_uuid):
+    mock_uuid.return_value = self._create_uuid()
+    mock_time_sleep.return_value = None
+    mock_table_exists.return_value = False
+    mock_table_insert.return_value = "http://foo"
+    mock_api_tables_insertAll.return_value = {}
+    df = self._create_data_frame()
+    table = self._create_table('test:testds.testTable1')
+    result = table.insertAll(df, chunk_size=2)
+    self.assertIsNone(result)
+    mock_table_insert.assert_called_with(self._create_inferred_schema())
+    # Because of chunking there will be two calls for the four rows; we test the second.
+    mock_api_tables_insertAll.assert_called_with('testds', 'testTable1', [
+      {'insertId': '#2', 'json': {u'column': 'r2', u'headers': 10.0, u'some': 2}},
+      {'insertId': '#3', 'json': {u'column': 'r3', u'headers': 10.0, u'some': 3}}
+    ])
+
+  def test_schema_from_dataframe(self):
+    df = self._create_data_frame()
+    table = self._create_table('test:testds.testTable1')
+    result = table.schema_from_dataframe(df)
+    self.assertEqual(result, self._create_inferred_schema())
+
   def _create_context(self):
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
@@ -196,3 +233,28 @@ class TestCases(unittest.TestCase):
     return {
       'tables': []
     }
+
+  def _create_data_frame(self):
+    columns = ['some', 'column', 'headers']
+    df = pandas.DataFrame(columns=columns)
+
+    for i in range(0, 4):
+      df.loc[i] = [len(df), 'r' + str(len(df)), 10.0]
+
+    df = df.convert_objects(convert_numeric=True)
+    return df
+
+  def _create_inferred_schema(self):
+    return [
+      {'name': 'some', 'type': 'INTEGER'},
+      {'name': 'column', 'type': 'STRING'},
+      {'name': 'headers', 'type': 'FLOAT'},
+    ]
+
+  class _uuid(object):
+    @property
+    def hex(self):
+      return '#'
+
+  def _create_uuid(self):
+    return self._uuid()
