@@ -142,7 +142,7 @@ class BucketList(object):
       Exception if there was an error creating the bucket.
     """
     bucket_info = self._api.buckets_insert(name)
-    return Bucket(self._api, name, bucket_info)
+    return _Bucket(self._api, name, bucket_info)
 
   def _retrieve_buckets(self, page_token):
     list_info = self._api.buckets_list(page_token=page_token)
@@ -150,12 +150,12 @@ class BucketList(object):
     buckets = list_info.get('items', [])
     if len(buckets):
       try:
-        buckets = [Bucket(self._api, info['name'], info) for info in buckets]
+        buckets = [Bucket(self._api, info['name'], info) for info in buckets)
       except KeyError:
         raise Exception('Unexpected item list response.')
 
     page_token = list_info.get('nextPageToken', None)
-    return (buckets, page_token)
+    return buckets, page_token
 
   def __iter__(self):
     return iter(_Iterator(self._retrieve_buckets))
