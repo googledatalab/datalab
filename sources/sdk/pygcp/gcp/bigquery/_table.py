@@ -19,6 +19,7 @@ import re
 import time
 import uuid
 
+from gcp._util import Iterator as _Iterator
 from ._query import Query as _Query
 from ._parser import Parser as _Parser
 from ._sampling import Sampling as _Sampling
@@ -43,7 +44,10 @@ class TableSchema(list):
     self._populate_fields(data)
 
     self._map = {}
-    for field in self:
+    # We can't use "for field in self" below as that uses our custom __iter__ which expects the map to be
+    # populated! Took me a while to find this bug. Instead, iterate using an indexed loop.
+    for i in range(0, len(self)):
+      field = self[i]
       self._map[field.name] = field
 
   def __getitem__(self, key):
@@ -66,6 +70,9 @@ class TableSchema(list):
       if data_type == 'RECORD':
         # Recurse into the nested fields, using this field's name as a prefix.
         self._populate_fields(field_data.get('fields'), name + '.')
+
+  def __iter__(self):
+    return self._map.iteritems()
 
 
 class TableMetadata(object):
@@ -126,6 +133,105 @@ class TableMetadata(object):
     """The size of the table in bytes."""
     return self._info['numBytes']
 
+class TableList(object):
+  """Represents a list of BigQuery tables in a dataset."""
+
+  def __init__(self, api, dataset_id):
+    """Initializes an instance of a TableList.
+
+    Args:
+      api: the BigQuery API object to use to issue requests. The project ID will be inferred from this.
+      dataset_id: the BigQuery dataset ID corresponding to this list.
+    """
+    self._api = api
+    self._dataset_id = dataset_id
+
+  def contains(self, name):
+    """Checks if the specified table exists.
+
+    Args:
+      name: the name of the table to lookup (not including the project and dataset IDs).
+    Returns:
+      True if the table exists; False otherwise.
+    Raises:
+      Exception if there was an error requesting information about the table.
+    """
+    try:
+      project_id = self._api.project_id
+      _ = self._api.tables_get([project_id, self._dataset_id, name])
+    except Exception as e:
+      if (len(e.args[0]) > 1) and (e.args[0][1] == 404):
+        return False
+      raise e
+    return True
+
+  def create(self, name, schema):
+    """ Create a table with a specified name and schema.
+
+    Args:
+      name: the name of the table either as a string or a 3-part tuple (projectid, datasetid, name). If a string,
+          the name can be fully qualified or just be the last component. If the project ID and dataset ID do not
+          match the TableList, creation will fail.
+      schema: the schema to use to create the table. Should be a list of dictionaries, each containing at least a
+          pair of entries, 'name' and 'type'. See https://cloud.google.com/bigquery/docs/reference/v2/tables#resource
+    Returns:
+      None on failure, or the Table instance if successful.
+    """
+    response = self._api.tables_insert(self._dataset_id, name, schema)
+    if response:
+      return Table(self._api, (self._api.project_id, self._dataset_id, name))
+    return None
+
+  def _retrieve_tables(self, page_token):
+    list_info = self._api.tables_list(page_token=page_token)
+
+    tables = list_info.get('tables', [])
+    if len(tables):
+      try:
+        project_id = self._api.project_id
+        tables = map(lambda info: Table(self._api, (project_id, self._dataset_id, info['tableReference']['tableId'])),
+                     tables)
+      except KeyError:
+        raise Exception('Unexpected item list response.')
+
+    page_token = list_info.get('nextPageToken', None)
+    return tables, page_token
+
+  def __iter__(self):
+    return iter(_Iterator(self._retrieve_tables))
+
+  def schema_from_dataframe(self, dataframe, default_type='STRING'):
+    """
+      Infer a BigQuery table schema from a Pandas dataframe. Note that if you don't explicitly set the
+      types of the columns in the dataframe, they may be of a type that forces coercion to STRING, so
+      even though the fields in the dataframe themselves may be numeric, the type in the derives schema
+      may not be. Hence it is prudent to make sure the Pandas dataframe is typed correctly.
+
+    Args:
+      dataframe: DataFrame
+      default_type : The default big query type in case the type of the column does not exist in the schema.
+    Returns:
+      A list of dictionaries containing field 'name' and 'type' entries, suitable for use in a BigQuery
+      Tables resource schema.
+    """
+
+    type_mapping = {
+      'i': 'INTEGER',
+      'b': 'BOOLEAN',
+      'f': 'FLOAT',
+      'O': 'STRING',
+      'S': 'STRING',
+      'U': 'STRING',
+      'M': 'TIMESTAMP'
+    }
+
+    fields = []
+    for column_name, dtype in dataframe.dtypes.iteritems():
+      fields.append({'name': column_name,
+                     'type': type_mapping.get(dtype.kind, default_type)})
+
+    return fields
+
 
 class Table(object):
   """Represents a Table object referencing a BigQuery table.
@@ -150,13 +256,11 @@ class Table(object):
 
     if isinstance(name, basestring):
       self._name_parts = self._parse_name(name)
-      self._full_name = '%s:%s.%s' % self._name_parts
-      self._name = name
     else:
       self._name_parts = name
-      self._full_name = '%s:%s.%s' % self._name_parts
-      self._name = self._full_name
 
+    self._full_name = '%s:%s.%s' % self._name_parts
+    self._name = self._full_name
     self._info = None
 
   @property
@@ -248,59 +352,35 @@ class Table(object):
 
     return q.results(timeout=timeout, use_cache=use_cache)
 
-  def exists(self):
-    """ Test if the file exists.
-
-    Returns:
-      True if the file exists; else False.
-    """
-    response = self._api.tables_list(self.dataset_id)
-    if 'tables' in response:
-      for table in response['tables']:
-        if 'id' in table:
-          name = table['id']
-        else:
-          tableRef = table['tableReference']
-          name = "%s:%s.%s" % (tableRef['projectId'], tableRef['datasetId'], tableRef['tableId'])
-
-        if name == self._full_name:
-          return True
-
-    return False
-
-  def insert(self, schema):
-    """ Create the table with a specified schema.
-
-    Args:
-      schema: the schema to use to create the table. Should be a dictionary with a single entry 'fields'.
-    Returns:
-      None on failure, or the direct URL to the resulting file on success.
-    """
-    response = self._api.tables_insert(self.dataset_id, self.table_id, schema)
-    return response
-
-  def insertAll(self, dataframe,  schema=None, chunk_size=10000):
+  def insertAll(self, dataframe, chunk_size=10000):
     """ Insert the contents of a Pandas dataframe into the table
-
     Args:
       dataframe: the dataframe to insert.
-      schema: the schema to be used for the table, if the table does not yet exist. Should be a list of dictionaries
-           or None; if None then a schema will be inferred from the dataframe. If the table already exists the
-           schema will be obtained from the file instead.
       chunk_size: for a large dataframe, the max number of records per POST. Note that BigQuery limits each POST
           to max 1MB in size.
-
     Returns:
-      None on success, else the error object in the POST response.
+      The table.
+    Raises:
+      Exception if the table doesn't exists, the schema differs from the dataframe's, or the insert failed.
     """
 
-    if not self.exists():
-      if not schema:
-        schema = self.schema_from_dataframe(dataframe)
-      self.insert(schema)
-    else:
-      schema = self.schema()
-      # TODO(gram): if a schema was passed as a parameter, should we validate that it matches the existing file's?
+    # TODO(gram): add different exception types for each failure case.
+    dataset_tables = TableList(self._api, self.dataset_id)
+
+    if not dataset_tables.contains(self.table_id):
+      raise Exception('Table %s does not exist.' % self._full_name)
+
+    data_schema = dataset_tables.schema_from_dataframe(dataframe)
+    table_schema = self.schema()
+    for data_field in data_schema:
+      name = data_field['name']
+      table_field = table_schema[name]
+      if table_field is None:
+        raise Exception('Table does not contain field %s' % name)
+      data_type = data_field['type']
+      table_type = table_field.data_type
+      if table_type != data_type:
+        raise Exception('Field %s in data has type %s but in table has type %s' % (name, data_type, table_type))
 
     total_rows = len(dataframe)
     total_pushed = 0
@@ -309,61 +389,22 @@ class Table(object):
     rows = []
     for index, dataframe_row in dataframe.reset_index(drop=True).iterrows():
       encoded = json.loads(dataframe_row.to_json(force_ascii=False, date_unit='s', date_format='iso'))
-      # The JSON encoded data may not be consistent with the schema. For example, if the dataframe is set
-      # up poorly it may default to 'O' (object) for a column that we then tell BQ to treat as a string,
-      # but the actual values may be numeric, and streaming this will fail as BQ wants a string. So we iterate
-      # through the fields, and make sure any that we expect to be strings actually are.
-      # TODO(gram): should we try coerce to other field types too?
-      for field in schema:
-        if field['type'] == 'STRING':
-          name = field['name']
-          encoded[name] = str(encoded[name])
+
       rows.append({
         'json': encoded,
         'insertId': job_id + str(index)
       })
+
       total_pushed += 1
 
       if (total_pushed == total_rows) or (len(rows) == chunk_size):
         response = self._api.tables_insertAll(self.dataset_id, self.table_id, rows)
         if 'insertErrors' in response:
-          return response['insertErrors']
+          raise Exception('insertAll failed: %s' % response['insertErrors'])
 
         time.sleep(1)  # Streaming API is rate-limited
         rows = []
-    return None
-
-  def schema_from_dataframe(self, dataframe, default_type='STRING'):
-    """
-      Infer a BigQuery table schema from a Pandas dataframe. Note that if you don't explicitly set the
-      types of the columns in the dataframe, they may be of a type that forces coercion to STRING, so
-      even though the fields in the dataframe themselves may be numeric, the type in the derives schema
-      may not be. Hence it is prudent to make sure the Pandas dataframe is typed correctly.
-
-    Args:
-      dataframe: DataFrame
-      default_type : The default big query type in case the type of the column does not exist in the schema.
-    Returns:
-      A list of dictionaries containing field 'name' and 'type' entries, suitable for use in a BigQuery
-      Tables resource schema.
-    """
-
-    type_mapping = {
-      'i': 'INTEGER',
-      'b': 'BOOLEAN',
-      'f': 'FLOAT',
-      'O': 'STRING',
-      'S': 'STRING',
-      'U': 'STRING',
-      'M': 'TIMESTAMP'
-    }
-
-    fields = []
-    for column_name, dtype in dataframe.dtypes.iteritems():
-      fields.append({'name': column_name,
-                     'type': type_mapping.get(dtype.kind, default_type)})
-
-    return fields
+    return self
 
   def schema(self):
     """Retrieves the schema of the table.
@@ -394,13 +435,3 @@ class Table(object):
       The string representation of this object.
     """
     return self._name
-
-
-class TableList(list):
-  """A list of Tables.
-  """
-
-  def __init__(self, *tables):
-    """Initializes the list with a set of Table objects.
-    """
-    list.__init__(self, *tables)

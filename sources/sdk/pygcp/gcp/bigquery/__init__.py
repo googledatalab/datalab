@@ -110,28 +110,14 @@ def table(name, context=None):
   return _Table(api, name)
 
 
-def tables(dataset_id, count=0, context=None):
+def tables(dataset_id, context=None):
   """Retrieves a list of tables with the specified dataset.
 
   Args:
     dataset_id: the name of the dataset.
-    count: optional maximum number of tables to retrieve.
     context: an optional Context object providing project_id and credentials.
   Returns:
     A TableList object that can be used to iterate over the tables.
-  Raises:
-    Exception if the table list could not be retrieved or the table list response was malformed.
   """
   api = _create_api(context)
-  table_list_result = api.tables_list(dataset_id, max_results=count)
-
-  table_objects = []
-  try:
-    for table_info in table_list_result['tables']:
-      table_ref = table_info['tableReference']
-      name = (table_ref['projectId'], dataset_id, table_ref['tableId'])
-      table_objects.append(_Table(api, name))
-  except KeyError:
-    raise Exception('Unexpected table list response.')
-
-  return _TableList(table_objects)
+  return _TableList(api, dataset_id)
