@@ -30,7 +30,7 @@ public final class DataflowExtension implements ShellExtension {
 
     // Register the command for handling the %dataflow command
     shell.registerCommand("dataflow", new DataflowCommand(shell, this));
-    shell.registerCommand("_dataflowData", new DataflowDataCommand(this));
+    shell.registerCommand("_dataflowData", new DataflowDataCommand(shell, this));
 
     return null;
   }

@@ -5,24 +5,25 @@ package com.google.cloud.datalab.dataflow;
 
 import java.util.*;
 import java.util.logging.*;
+import com.beust.jcommander.*;
 import com.google.cloud.dataflow.sdk.*;
 import ijava.extensibility.*;
 
-public final class DataflowCommand implements Command {
+public final class DataflowCommand extends Command<DataflowCommand.Options> {
 
-  private final Shell _shell;
   private final DataflowExtension _extension;
 
   public DataflowCommand(Shell shell, DataflowExtension extension) {
-    _shell = shell;
+    super(shell, Options.class);
     _extension = extension;
   }
 
   private Dataflow createDataflow() throws Exception {
     Class<Dataflow> dataflowClass = Dataflow.class;
 
-    for (String typeName: _shell.getTypeNames()) {
-      Class<?> declaredClass = _shell.getType(typeName);
+    Shell shell = getShell();
+    for (String typeName: shell.getTypeNames()) {
+      Class<?> declaredClass = shell.getType(typeName);
       if (dataflowClass.isAssignableFrom(declaredClass)) {
         try {
           return (Dataflow)declaredClass.newInstance();
@@ -55,7 +56,7 @@ public final class DataflowCommand implements Command {
   private Object runDataflowCore() throws Exception {
     _extension.setPipelineResult(null);
 
-    ShellDataRegistry dataRegistry = new ShellDataRegistry(_shell);
+    ShellDataRegistry dataRegistry = new ShellDataRegistry(getShell());
     InteractivePipelineRunner runner = new InteractivePipelineRunner(dataRegistry);
 
     Dataflow dataflow = createDataflow();
@@ -72,12 +73,31 @@ public final class DataflowCommand implements Command {
    * {@link Command}
    */
   @Override
-  public Object evaluate(String arguments, String data, long evaluationID,
+  public Object evaluate(Options options, long evaluationID,
                          Map<String, Object> metadata) throws Exception {
-    if (arguments.equals("run")) {
+    if (options.getCommand().equals(RunOptions.NAME)) {
       return runDataflow();
     }
 
-    throw new EvaluationError("Unknown dataflow command.");
+    return null;
+  }
+
+
+  public static final class Options extends CommandOptions {
+
+    public RunOptions run = new RunOptions();
+
+    @Override
+    public JCommander createParser(String name, String[] arguments, String content) {
+      JCommander parser = super.createParser(name, arguments, content);
+      parser.addCommand(RunOptions.NAME, run);
+
+      return parser;
+    }
+  }
+
+  public static final class RunOptions {
+
+    public static final String NAME = "run";
   }
 }

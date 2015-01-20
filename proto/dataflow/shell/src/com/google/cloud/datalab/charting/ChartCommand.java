@@ -4,17 +4,16 @@
 package com.google.cloud.datalab.charting;
 
 import java.util.*;
+import com.beust.jcommander.*;
 import ijava.data.*;
 import ijava.extensibility.*;
 
 /**
  * Handles the %%chart command.
  */
-public final class ChartCommand implements Command {
+public final class ChartCommand extends Command<ChartCommand.Options> {
 
   private static final Set<String> ChartTypes;
-
-  private Shell _shell;
 
   static {
     ChartTypes = new HashSet<String>();
@@ -29,37 +28,42 @@ public final class ChartCommand implements Command {
   }
 
   public ChartCommand(Shell shell) {
-    _shell = shell;
+    super(shell, Options.class, /* singleLine */ false);
   }
 
   @Override
-  public Object evaluate(String arguments, String data, long evaluationID,
+  public Object evaluate(Options options, long evaluationID,
                          Map<String, Object> metadata) throws Exception {
-    String[] args = arguments.split(" ");
-    if (args.length != 2) {
-      throw new EvaluationError("Invalid chart command. " +
-          "The chart type and the variable containing the data to be charted must be specified.");
+    if (!ChartCommand.ChartTypes.contains(options.type)) {
+      throw new EvaluationError("The chart type '" + options.type + "' is not a supported.");
     }
 
-    String chartType = args[0];
-    if (!ChartCommand.ChartTypes.contains(chartType)) {
-      throw new EvaluationError("The chart type '" + chartType + "' is not a supported.");
-    }
-
-    String dataVariable = args[1];
-    if (!_shell.getVariableNames().contains(dataVariable) ||
-        !List.class.isAssignableFrom(_shell.getVariable(dataVariable).getClass())) {
-      throw new EvaluationError("The name '" + dataVariable +
+    if (!getShell().getVariableNames().contains(options.data) ||
+        !List.class.isAssignableFrom(getShell().getVariable(options.data).getClass())) {
+      throw new EvaluationError("The name '" + options.data +
           "' does not correspond to a known list variable.");
     }
 
-    if ((data == null) || data.isEmpty()) {
-      data = "{}";
+    String chartOptions = options.getContent();
+    if ((chartOptions == null) || chartOptions.isEmpty()) {
+      chartOptions = "{}";
     }
 
-    String script = "charts.render(dom, '" + chartType + "', '" + dataVariable + "', " + data +");";
+    String script = "charts.render(dom, '" + options.type + "', '" +
+        options.data + "', " + chartOptions +");";
 
     return new HTML("").addScript(script)
         .addScriptDependency("extensions/charting", "charts");
+  }
+
+
+  public static final class Options extends CommandOptions {
+
+    @Parameter(names = "--type", description = "The type of chart to render", required = true)
+    public String type;
+
+    @Parameter(names = "--data", description = "The name of the variable containing chart data",
+        required = true)
+    public String data;
   }
 }

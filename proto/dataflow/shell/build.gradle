@@ -14,6 +14,7 @@ repositories {
 
 dependencies {
   compile 'com.fasterxml.jackson.jr:jackson-jr-objects:2.4.0'
+  compile 'com.beust:jcommander:1.30'
 
   compile files("../extern/ijavart.jar")
   compile files("../extern/dataflow-sdk.jar")
