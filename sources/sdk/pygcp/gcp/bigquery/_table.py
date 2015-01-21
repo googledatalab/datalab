@@ -352,10 +352,12 @@ class Table(object):
 
     return q.results(timeout=timeout, use_cache=use_cache)
 
-  def insertAll(self, dataframe, chunk_size=10000):
-    """ Insert the contents of a Pandas dataframe into the table
+  def insertAll(self, dataframe, include_index=True, chunk_size=10000):
+    """ Insert the contents of a Pandas dataframe into the table. Note that at present, any timeunit values
+      will be truncated to integral seconds. Support for microsecond resolution will come later.
     Args:
       dataframe: the dataframe to insert.
+      include_index: whether to include the DataFrame index as a column in the BQ table.
       chunk_size: for a large dataframe, the max number of records per POST. Note that BigQuery limits each POST
           to max 1MB in size.
     Returns:
@@ -387,7 +389,12 @@ class Table(object):
 
     job_id = uuid.uuid4().hex
     rows = []
-    for index, dataframe_row in dataframe.reset_index(drop=True).iterrows():
+    # reset_index creates a new dataframe so we don't affect the original. reset_index(drop=True) drops the original
+    # index and uses a integer range.
+    # TODO(gram): if we want to support microsecond timestamps, we will need to use date_unit="us" and then
+    # iterate through any timestamp fields and divide the values by 10^6, as BQ expects fractional seconds while
+    # Pandas encodes to integral values of the specified unit only.
+    for index, dataframe_row in dataframe.reset_index(drop=not include_index).iterrows():
       encoded = json.loads(dataframe_row.to_json(force_ascii=False, date_unit='s', date_format='iso'))
 
       rows.append({
