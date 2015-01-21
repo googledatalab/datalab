@@ -263,6 +263,7 @@ class Table(object):
     self._name = self._full_name
     self._info = None
 
+  # TODO(gram): Move these properties to the metadata?
   @property
   def full_name(self):
     """The full name of the table."""
