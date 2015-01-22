@@ -353,7 +353,7 @@ class Table(object):
 
     return q.results(timeout=timeout, use_cache=use_cache)
 
-  def insertAll(self, dataframe, include_index=True, chunk_size=10000):
+  def insertAll(self, dataframe, include_index=False, chunk_size=10000):
     """ Insert the contents of a Pandas dataframe into the table. Note that at present, any timeunit values
       will be truncated to integral seconds. Support for microsecond resolution will come later.
     Args:
