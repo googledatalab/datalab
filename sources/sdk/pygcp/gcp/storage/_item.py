@@ -187,7 +187,7 @@ class ItemList(object):
     items = list_info.get('items', [])
     if len(items):
       try:
-        items = map(lambda info: Item(self._api, self._bucket, info['name'], info), items)
+        items = [Item(self._api, self._bucket, info['name'], info) for info in items]
       except KeyError:
         raise Exception('Unexpected item list response.')
 
