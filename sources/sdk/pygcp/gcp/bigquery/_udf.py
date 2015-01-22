@@ -77,12 +77,12 @@ class FunctionCall(object):
     """
     # Construct a comma-separated list of input field names
     # For example, field1,field2,...
-    input_fields = map(lambda f: f[0], inputs)
+    input_fields = [f[0] for f in inputs]
     input_fields = ','.join(input_fields)
 
     # Construct a json representation of the output schema
     # For example, [{'name':'field1','type':'string'},...]
-    output_fields = map(lambda f: {'name': f[0], 'type': f[1]}, outputs)
+    output_fields = [{'name': f[0], 'type': f[1]} for f in outputs]
     output_fields = _json.dumps(output_fields, sort_keys=True)
 
     # Build the SQL from the individual bits with proper escaping of the implementation
