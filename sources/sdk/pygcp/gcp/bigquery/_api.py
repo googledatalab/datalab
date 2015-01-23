@@ -63,11 +63,13 @@ class Api(object):
     url = Api._ENDPOINT + (Api._JOBS_PATH % self._project_id)
     data = {
       'kind': 'bigquery#job',
-      'query': {
-        'query': sql,
-        'useQueryCache': use_cache
+      'configuration': {
+        'query': {
+          'query': sql,
+          'useQueryCache': use_cache
+        },
+        'dryRun': dry_run,
       },
-      'dryRun': dry_run,
     }
 
     if destination:
@@ -81,7 +83,7 @@ class Api(object):
 
     return _util.Http.request(url, data=data, credentials=self._credentials)
 
-  def jobs_query(self, sql, page_size=0, timeout=0, dry_run=False,
+  def jobs_query(self, sql, page_size=0, timeout=None, dry_run=False,
                  use_cache=True):
     """Issues a request to the jobs/query method.
 
@@ -98,7 +100,7 @@ class Api(object):
     """
     if page_size == 0:
       page_size = Api._DEFAULT_PAGE_SIZE
-    if timeout == 0:
+    if timeout == None:
       timeout = Api._DEFAULT_TIMEOUT
 
     url = Api._ENDPOINT + (Api._QUERY_PATH % self._project_id)
@@ -113,7 +115,7 @@ class Api(object):
 
     return _util.Http.request(url, data=data, credentials=self._credentials)
 
-  def jobs_query_results(self, job_id, page_size=0, timeout=0, start_index=0):
+  def jobs_query_results(self, job_id, page_size=0, timeout=None, start_index=0):
     """Issues a request to the jobs/getQueryResults method.
 
     Args:
@@ -128,7 +130,7 @@ class Api(object):
     """
     if page_size == 0:
       page_size = Api._DEFAULT_PAGE_SIZE
-    if timeout == 0:
+    if timeout == None:
       timeout = Api._DEFAULT_TIMEOUT
 
     args = {
