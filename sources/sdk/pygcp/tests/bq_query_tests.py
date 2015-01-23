@@ -20,9 +20,11 @@ from oauth2client.client import AccessTokenCredentials
 
 class TestCases(unittest.TestCase):
 
-  @mock.patch('gcp.bigquery._Api.jobs_query')
-  def test_single_result_query(self, mock_api_query):
-    mock_api_query.return_value = self._create_single_row_result()
+  @mock.patch('gcp.bigquery._Api.jobs_query_results')
+  @mock.patch('gcp.bigquery._Api.jobs_insert_query')
+  def test_single_result_query(self, mock_api_insert_query, mock_api_query_results):
+    mock_api_insert_query.return_value = self._create_insert_done_result()
+    mock_api_query_results.return_value = self._create_single_row_result()
 
     sql = 'SELECT field1 FROM [table] LIMIT 1'
     q = self._create_query(sql)
@@ -32,9 +34,11 @@ class TestCases(unittest.TestCase):
     self.assertEqual(len(results), 1)
     self.assertEqual(results[0]['field1'], 'value1')
 
-  @mock.patch('gcp.bigquery._Api.jobs_query')
-  def test_empty_result_query(self, mock_api_query):
-    mock_api_query.return_value = self._create_empty_result()
+  @mock.patch('gcp.bigquery._Api.jobs_query_results')
+  @mock.patch('gcp.bigquery._Api.jobs_insert_query')
+  def test_empty_result_query(self, mock_api_insert_query, mock_api_query_results):
+    mock_api_insert_query.return_value = self._create_insert_done_result()
+    mock_api_query_results.return_value = self._create_empty_result()
 
     q = self._create_query()
     results = q.results()
@@ -42,11 +46,11 @@ class TestCases(unittest.TestCase):
     self.assertEqual(len(results), 0)
 
   @mock.patch('gcp.bigquery._Api.jobs_query_results')
-  @mock.patch('gcp.bigquery._Api.jobs_query')
+  @mock.patch('gcp.bigquery._Api.jobs_insert_query')
   def test_incomplete_result_query(self,
-                                   mock_api_query,
+                                   mock_api_insert_query,
                                    mock_api_query_results):
-    mock_api_query.return_value = self._create_incomplete_result()
+    mock_api_insert_query.return_value = self._create_incomplete_result()
     mock_api_query_results.return_value = self._create_single_row_result()
 
     q = self._create_query()
@@ -57,25 +61,23 @@ class TestCases(unittest.TestCase):
     self.assertEqual(mock_api_query_results.call_count, 1)
 
   @mock.patch('gcp.bigquery._Api.jobs_query_results')
-  @mock.patch('gcp.bigquery._Api.jobs_query')
+  @mock.patch('gcp.bigquery._Api.jobs_insert_query')
   def test_multi_page_results_query(self,
-                                    mock_api_query,
+                                    mock_api_insert_query,
                                     mock_api_query_results):
-    mock_api_query.return_value = self._create_page1_result()
-    mock_api_query_results.return_value = self._create_page2_result()
+    mock_api_insert_query.return_value = self._create_insert_done_result()
+    mock_api_query_results.return_value = self._create_page_result()
 
     q = self._create_query()
     results = q.results()
 
     self.assertEqual(len(results), 2)
-    self.assertEqual(mock_api_query_results.call_count, 1)
+    self.assertEqual(mock_api_query_results.call_count, 2)
     self.assertEqual(mock_api_query_results.call_args[0][0], 'test_job')
-    self.assertEqual(mock_api_query_results.call_args[1]['page_token'],
-                     'page2')
 
-  @mock.patch('gcp.bigquery._Api.jobs_query')
-  def test_malformed_response_raises_exception(self, mock_api_query):
-    mock_api_query.return_value = {}
+  @mock.patch('gcp.bigquery._Api.jobs_insert_query')
+  def test_malformed_response_raises_exception(self, mock_api_insert_query):
+    mock_api_insert_query.return_value = {}
 
     q = self._create_query()
 
@@ -91,6 +93,15 @@ class TestCases(unittest.TestCase):
     context = gcp.Context(project_id, creds)
 
     return gcp.bigquery.query(sql, context)
+
+  def _create_insert_done_result(self):
+    # pylint: disable=g-continuation-in-parens-misaligned
+    return {
+      'jobReference': {
+        'jobId': 'test_job'
+      },
+      'jobComplete': True,
+    }
 
   def _create_single_row_result(self):
     # pylint: disable=g-continuation-in-parens-misaligned
@@ -129,7 +140,7 @@ class TestCases(unittest.TestCase):
       'jobComplete': False
     }
 
-  def _create_page1_result(self):
+  def _create_page_result(self):
     # pylint: disable=g-continuation-in-parens-misaligned
     return {
       'jobReference': {
@@ -146,22 +157,4 @@ class TestCases(unittest.TestCase):
         {'f': [{'v': 'value1'}]}
       ],
       'pageToken': 'page2'
-    }
-
-  def _create_page2_result(self):
-    # pylint: disable=g-continuation-in-parens-misaligned
-    return {
-      'jobReference': {
-        'jobId': 'test_job'
-      },
-      'jobComplete': True,
-      'schema': {
-        'fields': [
-          {'name': 'field1', 'type': 'string'}
-        ]
-      },
-      'totalRows': 2,
-      'rows': [
-        {'f': [{'v': 'value2'}]}
-      ]
     }

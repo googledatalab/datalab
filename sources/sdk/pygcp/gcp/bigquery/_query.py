@@ -16,6 +16,7 @@
 
 import codecs
 import csv
+from datetime import datetime
 import os
 import pandas as pd
 from ._parser import Parser as _Parser
@@ -219,6 +220,8 @@ class Query(object):
   This object can be used to execute SQL queries and retrieve results.
   """
 
+  _DEFAULT_TIMEOUT = 60000
+
   def __init__(self, api, sql):
     """Initializes an instance of a Query object.
 
@@ -234,17 +237,15 @@ class Query(object):
   def sql(self):
     return self._sql
 
-  def results(self, page_size=0, timeout=0, use_cache=True):
+  def results(self, page_size=0, timeout= 0, use_cache=True, destination=None, append=False):
     """Retrieves results for the query.
 
     Args:
       page_size: limit to the number of rows to fetch per page.
       timeout: duration (in milliseconds) to wait for the query to complete.
       use_cache: whether to use cached results or not.
-      write_header: if true (the default), write column name header row at start of file
-      dialect: the format to use for the output. By default, csv.excel. See
-          https://docs.python.org/2/library/csv.html#csv-fmt-params for how to customize this.
-      quote_char: the character used for escaping the delimiter and itself; by default backslash '\'
+      destination: the destination table, if any.
+      append: if True, append to an existing table.
     Returns:
       A QueryResults objects representing the result set.
     Raises:
@@ -252,7 +253,7 @@ class Query(object):
       malformed.
     """
     if not use_cache or (self._results is None):
-      self._results = self._execute(page_size, timeout, use_cache)
+      self._results = self._execute(page_size, timeout, use_cache, destination, append)
     return self._results
 
   def save(self, path, page_size=0, timeout=0, use_cache=True, write_header=True, dialect=csv.excel):
@@ -263,6 +264,9 @@ class Query(object):
       page_size: limit to the number of rows to fetch per page.
       timeout: duration (in milliseconds) to wait for the query to complete.
       use_cache: whether to use cached results or not.
+      write_header: if true (the default), write column name header row at start of file
+      dialect: the format to use for the output. By default, csv.excel. See
+          https://docs.python.org/2/library/csv.html#csv-fmt-params for how to customize this.
     """
     try:
       processor = ResultCSVFileSaver(path, write_header, dialect)
@@ -293,7 +297,7 @@ class Query(object):
     sampling_query = Query(self._api, sampling_sql)
     return sampling_query.results(page_size=0, timeout=timeout, use_cache=use_cache)
 
-  def _execute(self, page_size, timeout, use_cache):
+  def _execute(self, page_size, timeout, use_cache, destination, append):
     """Executes a query and retrieve results after waiting for completion.
 
     Args:
@@ -308,37 +312,46 @@ class Query(object):
     """
     try:
       collector = ResultCollector()
-      job_id = self._run_query(page_size, timeout, use_cache, collector)
+      job_id = self._run_query(page_size, timeout, use_cache, collector, destination, append)
       return QueryResults(self._sql, job_id, collector.rows)
     except KeyError:
       raise Exception('Unexpected query response.')
 
-  def _run_query(self, page_size, timeout, use_cache, result_processor):
+  def _run_query(self, page_size, timeout, use_cache, result_processor, destination, append):
     """Executes a query and processes results after waiting for completion.
 
     Args:
       page_size: limit to the number of rows to fetch per page.
-      timeout: duration (in milliseconds) to wait for the query to complete.
+      timeout: duration (in milliseconds) to wait for the query to complete; default 60,000.
       use_cache: whether to use cached results or not.
       result_processor: object used to process the results
     Returns:
-      The job ID for the query.
+      The job ID for the query, or None if the job failed to complete with any results.
     Raises:
       Exception if the query could not be executed or query response was
       malformed.
     """
     try:
-      query_result = self._api.jobs_query(self._sql,
-                                          page_size=page_size,
-                                          timeout=timeout,
-                                          use_cache=use_cache)
+      # We don't use jobs_query as that only supports sync queries to anonymous tables and returns
+      # results in the body, but we are getting the results anyway with jobs_query_results. The latter
+      # blocks even if we created the query as an async query with jobs_insert. So we may as well handle
+      # both queries to a permanent table and an anon table in the same way, by inserting a query
+      # job then blocking with jobs_query_results.
+      query_result = self._api.jobs_insert_query(self._sql, destination=destination, append=append, use_cache=use_cache)
+
       job_id = query_result['jobReference']['jobId']
 
-      while not query_result['jobComplete']:
-        query_result = self._api.jobs_query_results(job_id,
-                                                    page_size=page_size,
-                                                    timeout=timeout,
-                                                    wait_interval=1)
+      if not timeout:
+        timeout = self._DEFAULT_TIMEOUT
+      # Get the start time; we decrement the timeout each time by the elapsed time so the timeout applies to
+      # the overall operation, not individual page requests.
+      start_time = datetime.now()
+      query_result = self._api.jobs_query_results(job_id,
+                                                  page_size=page_size,
+                                                  timeout=timeout,
+                                                  start_index=0)
+      if not query_result['jobComplete']:
+        return None
 
       total_count = int(query_result['totalRows'])
       if total_count != 0:
@@ -350,20 +363,20 @@ class Query(object):
             result_processor.process(r)
 
           if result_processor.result_count < total_count:
-            token = query_result['pageToken']
-            if token is None:
-              # Breaking out to avoid making an API call that will fail or
-              # result in invalid data. More pages of results were expected,
-              # based on total_count, but lack a page token to continue further.
-              # Opt to use existing results, rather than fail the operation.
-              #
-              # TODO(nikhilko): TBD, is that the better choice?
-              break
+
+            # Set the timeout to be the remaining time
+            end_time = datetime.now()
+            elapsed = end_time - start_time
+            start_time = end_time
+            timeout -= elapsed.total_seconds() * 1000
 
             query_result = self._api.jobs_query_results(job_id,
                                                         page_size=page_size,
                                                         timeout=timeout,
-                                                        page_token=token)
+                                                        start_index=result_processor.result_count)
+            if not query_result['jobComplete']:
+              break
+
       result_processor.finish()
       return job_id
     except KeyError:
