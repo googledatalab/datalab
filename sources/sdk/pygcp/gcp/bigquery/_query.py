@@ -328,17 +328,22 @@ class Query(object):
       malformed.
     """
     try:
-      query_result = self._api.jobs_query(self._sql,
-                                          page_size=page_size,
-                                          timeout=timeout,
-                                          use_cache=use_cache)
+      # We don't use jobs_query as that only supports sync queries to anonymous tables and returns
+      # results in the body, but we are getting the results anyway with jobs_query_results. The latter
+      # blocks even if we created the query as an async query with jobs_insert. So we may as well handle
+      # both queries to a permanent table and an anon table in the same way, by inserting a query
+      # job then blocking with jobs_query_results.
+      query_result = self._api.jobs_insert_query(self._sql, use_cache=use_cache)
+
       job_id = query_result['jobReference']['jobId']
 
-      while not query_result['jobComplete']:
-        query_result = self._api.jobs_query_results(job_id,
-                                                    page_size=page_size,
-                                                    timeout=timeout,
-                                                    wait_interval=1)
+      query_result = self._api.jobs_query_results(job_id,
+                                                  page_size=page_size,
+                                                  timeout=timeout,
+                                                  start_index=0)
+      if not query_result['jobComplete']:
+        return None
+        # TODO(gram): What should we do if we time out?
 
       total_count = int(query_result['totalRows'])
       if total_count != 0:
@@ -350,20 +355,13 @@ class Query(object):
             result_processor.process(r)
 
           if result_processor.result_count < total_count:
-            token = query_result['pageToken']
-            if token is None:
-              # Breaking out to avoid making an API call that will fail or
-              # result in invalid data. More pages of results were expected,
-              # based on total_count, but lack a page token to continue further.
-              # Opt to use existing results, rather than fail the operation.
-              #
-              # TODO(nikhilko): TBD, is that the better choice?
-              break
-
             query_result = self._api.jobs_query_results(job_id,
                                                         page_size=page_size,
                                                         timeout=timeout,
-                                                        page_token=token)
+                                                        start_index=result_processor.result_count)
+            if not query_result['jobComplete']:
+              break
+
       result_processor.finish()
       return job_id
     except KeyError:
