@@ -23,6 +23,7 @@ class Api(object):
 
   # TODO(nikhilko): Use named placeholders in these string templates.
   _ENDPOINT = 'https://www.googleapis.com/bigquery/v2'
+  _JOBS_PATH = '/projects/%s/jobs'
   _QUERY_PATH = '/projects/%s/queries'
   _QUERY_RESULT_PATH = '/projects/%s/queries/%s'
   _TABLE_PATH = '/projects/%s/datasets/%s/tables/%s'
@@ -45,7 +46,52 @@ class Api(object):
     """The project_id associated with this API client."""
     return self._project_id
 
-  def jobs_query(self, sql, page_size=0, timeout=0, dry_run=False,
+  def jobs_insert_query(self, sql, dataset_id=None, table_id=None, append=False, overwrite=False,
+                        dry_run=False, use_cache=True):
+    """Issues a request to insert a query job.
+
+    Args:
+      sql: the SQL string representing the query to execute.
+      dataset_id: None for an anonymous table, or the datasetId for a long-lived table.
+      table_id: None for an anonymous table, or the tableId for a long-lived table.
+      append: if True, append to the table if it is non-empty; else the request will fail if table is non-empty
+          unless overwrite is True.
+      overwrite: if the table already exists, truncate it instead of appending or raising an Exception.
+      dry_run: whether to actually execute the query or just dry run it.
+      use_cache: whether to use past query results or ignore cache. Has no effect if destination is specified.
+    Returns:
+      A parsed query result object.
+    Raises:
+      Exception if there is an error performing the operation.
+    """
+    url = Api._ENDPOINT + (Api._JOBS_PATH % self._project_id)
+    data = {
+      'kind': 'bigquery#job',
+      'configuration': {
+        'query': {
+          'query': sql,
+          'useQueryCache': use_cache
+        },
+        'dryRun': dry_run,
+        'priority': 'INTERACTIVE',
+      },
+    }
+
+    if dataset_id and table_id:
+      query_config = data['configuration']['query']
+      query_config['destinationTable'] = {
+        'projectId': self._project_id,
+        'datasetId': dataset_id,
+        'tableId': table_id
+      }
+      if append:
+        query_config['writeDisposition'] = "WRITE_APPEND"
+      elif overwrite:
+        query_config['writeDisposition'] = "WRITE_TRUNCATE"
+
+    return _util.Http.request(url, data=data, credentials=self._credentials)
+
+  def jobs_query(self, sql, page_size=0, timeout=None, dry_run=False,
                  use_cache=True):
     """Issues a request to the jobs/query method.
 
@@ -62,7 +108,7 @@ class Api(object):
     """
     if page_size == 0:
       page_size = Api._DEFAULT_PAGE_SIZE
-    if timeout == 0:
+    if timeout == None:
       timeout = Api._DEFAULT_TIMEOUT
 
     url = Api._ENDPOINT + (Api._QUERY_PATH % self._project_id)
@@ -73,22 +119,18 @@ class Api(object):
         'timeoutMs': timeout,
         'dryRun': dry_run,
         'useQueryCache': use_cache
-        }
+    }
 
     return _util.Http.request(url, data=data, credentials=self._credentials)
 
-  def jobs_query_results(self, job_id, page_size=0, timeout=0, wait_interval=0,
-                         page_token=None):
+  def jobs_query_results(self, job_id, page_size=0, timeout=None, start_index=0):
     """Issues a request to the jobs/getQueryResults method.
 
     Args:
       job_id: the id of job from a previously executed query.
       page_size: limit to the number of rows to fetch per page.
       timeout: duration (in milliseconds) to wait for the query to complete.
-      wait_interval: duration (in seconds) to wait before attempting to
-          retrieve query results.
-      page_token: the page token from a previous set of results to continue
-          retrieving more rows.
+      start_index: the index of the row (0-based) at which to start retrieving the page of result rows.
     Returns:
       A parsed query result object.
     Raises:
@@ -96,19 +138,14 @@ class Api(object):
     """
     if page_size == 0:
       page_size = Api._DEFAULT_PAGE_SIZE
-    if timeout == 0:
+    if timeout == None:
       timeout = Api._DEFAULT_TIMEOUT
-
-    if wait_interval != 0:
-      time.sleep(wait_interval)
 
     args = {
         'maxResults': page_size,
-        'timeoutMs': timeout
-        }
-
-    if page_token is not None:
-      args['pageToken'] = page_token
+        'timeoutMs': timeout,
+        'startIndex': start_index
+      }
 
     url = Api._ENDPOINT + (Api._QUERY_RESULT_PATH % (self._project_id, job_id))
     return _util.Http.request(url, args=args, credentials=self._credentials)

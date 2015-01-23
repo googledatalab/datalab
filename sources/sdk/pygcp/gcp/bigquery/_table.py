@@ -174,6 +174,21 @@ class Table(object):
     """The name of the table, as used when it was constructed."""
     return self._name
 
+  @property
+  def project_id(self):
+    """The project ID for the table."""
+    return self._name_parts[0]
+
+  @property
+  def dataset_id(self):
+    """The dataset ID for the table."""
+    return self._name_parts[1]
+
+  @property
+  def table_id(self):
+    """The dataset ID for the table."""
+    return self._name_parts[2]
+
   def _load_info(self):
     """Loads metadata about this table."""
     if self._info is None:
