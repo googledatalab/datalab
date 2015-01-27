@@ -32,6 +32,15 @@ class TableSchema(list):
       self.mode = mode
       self.description = description
 
+    def _repr_sql_(self):
+      """Returns a representation of the field for embedding into a SQL statement.
+
+      Returns:
+        A formatted field name for use within SQL statements.
+      """
+      return self.name
+
+
   def __init__(self, data):
     """Initializes a TableSchema from its raw JSON representation.
     """
