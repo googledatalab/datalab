@@ -53,8 +53,8 @@ class TableSchema(list):
     self._populate_fields(data)
 
     self._map = {}
-    # We can't use "for field in self" below as that uses our custom __iter__ which expects the map to be
-    # populated! Took me a while to find this bug. Instead, iterate using an indexed loop.
+    # We can't use "for field in self" below as that uses our custom __iter__ which expects the
+    # map to be populated! Took me a while to find this bug. Instead, iterate using an indexed loop.
     for i in range(0, len(self)):
       field = self[i]
       self._map[field.name] = field
@@ -149,7 +149,8 @@ class TableList(object):
     """Initializes an instance of a TableList.
 
     Args:
-      api: the BigQuery API object to use to issue requests. The project ID will be inferred from this.
+      api: the BigQuery API object to use to issue requests. The project ID will be inferred from
+          this.
       dataset_id: the BigQuery dataset ID corresponding to this list.
     """
     self._api = api
@@ -178,11 +179,12 @@ class TableList(object):
     """ Create a table with a specified name and schema.
 
     Args:
-      name: the name of the table either as a string or a 3-part tuple (projectid, datasetid, name). If a string,
-          the name can be fully qualified or just be the last component. If the project ID and dataset ID do not
-          match the TableList, creation will fail.
-      schema: the schema to use to create the table. Should be a list of dictionaries, each containing at least a
-          pair of entries, 'name' and 'type'. See https://cloud.google.com/bigquery/docs/reference/v2/tables#resource
+      name: the name of the table either as a string or a 3-part tuple (projectid, datasetid, name).
+          If a string, the name can be fully qualified or just be the last component. If the project
+          ID and dataset ID do not match the TableList, creation will fail.
+      schema: the schema to use to create the table. Should be a list of dictionaries, each
+          containing at least a pair of entries, 'name' and 'type'.
+          See https://cloud.google.com/bigquery/docs/reference/v2/tables#resource
     Returns:
       None on failure, or the Table instance if successful.
     """
@@ -198,8 +200,9 @@ class TableList(object):
     if len(tables):
       try:
         project_id = self._api.project_id
-        tables = map(lambda info: Table(self._api, (project_id, self._dataset_id, info['tableReference']['tableId'])),
-                     tables)
+        tables = map(lambda info: Table(self._api, (project_id,
+                                                    self._dataset_id,
+                                                    info['tableReference']['tableId'])), tables)
       except KeyError:
         raise Exception('Unexpected item list response.')
 
@@ -211,17 +214,19 @@ class TableList(object):
 
   def schema_from_dataframe(self, dataframe, default_type='STRING'):
     """
-      Infer a BigQuery table schema from a Pandas dataframe. Note that if you don't explicitly set the
-      types of the columns in the dataframe, they may be of a type that forces coercion to STRING, so
-      even though the fields in the dataframe themselves may be numeric, the type in the derives schema
-      may not be. Hence it is prudent to make sure the Pandas dataframe is typed correctly.
+      Infer a BigQuery table schema from a Pandas dataframe. Note that if you don't explicitly set
+      the types of the columns in the dataframe, they may be of a type that forces coercion to
+      STRING, so even though the fields in the dataframe themselves may be numeric, the type in the
+      derived schema may not be. Hence it is prudent to make sure the Pandas dataframe is typed
+      correctly.
 
     Args:
       dataframe: DataFrame
-      default_type : The default big query type in case the type of the column does not exist in the schema.
+      default_type : The default big query type in case the type of the column does not exist in
+          the schema.
     Returns:
-      A list of dictionaries containing field 'name' and 'type' entries, suitable for use in a BigQuery
-      Tables resource schema.
+      A list of dictionaries containing field 'name' and 'type' entries, suitable for use in a
+          BigQuery Tables resource schema.
     """
 
     type_mapping = {
@@ -363,17 +368,19 @@ class Table(object):
     return q.results(timeout=timeout, use_cache=use_cache)
 
   def insertAll(self, dataframe, include_index=False, chunk_size=10000):
-    """ Insert the contents of a Pandas dataframe into the table. Note that at present, any timeunit values
-      will be truncated to integral seconds. Support for microsecond resolution will come later.
+    """ Insert the contents of a Pandas dataframe into the table. Note that at present, any
+        timeunit values will be truncated to integral seconds. Support for microsecond resolution
+        will come later.
     Args:
       dataframe: the dataframe to insert.
       include_index: whether to include the DataFrame index as a column in the BQ table.
-      chunk_size: for a large dataframe, the max number of records per POST. Note that BigQuery limits each POST
-          to max 1MB in size.
+      chunk_size: for a large dataframe, the max number of records per POST. Note that BigQuery
+          limits each POST to max 1MB in size.
     Returns:
       The table.
     Raises:
-      Exception if the table doesn't exists, the schema differs from the dataframe's, or the insert failed.
+      Exception if the table doesn't exists, the schema differs from the dataframe's, or the insert
+          failed.
     """
 
     # TODO(gram): add different exception types for each failure case.
@@ -392,20 +399,24 @@ class Table(object):
       data_type = data_field['type']
       table_type = table_field.data_type
       if table_type != data_type:
-        raise Exception('Field %s in data has type %s but in table has type %s' % (name, data_type, table_type))
+        raise Exception('Field %s in data has type %s but in table has type %s' %
+                        (name, data_type, table_type))
 
     total_rows = len(dataframe)
     total_pushed = 0
 
     job_id = uuid.uuid4().hex
     rows = []
-    # reset_index creates a new dataframe so we don't affect the original. reset_index(drop=True) drops the original
-    # index and uses a integer range.
-    # TODO(gram): if we want to support microsecond timestamps, we will need to use date_unit="us" and then
-    # iterate through any timestamp fields and divide the values by 10^6, as BQ expects fractional seconds while
-    # Pandas encodes to integral values of the specified unit only.
+    # reset_index creates a new dataframe so we don't affect the original. reset_index(drop=True)
+    # drops the original index and uses a integer range.
+    # TODO(gram): if we want to support microsecond timestamps, we will need to use date_unit="us"
+    # and then iterate through any timestamp fields and divide the values by 10^6, as BQ expects
+    # fractional seconds while Pandas encodes to integral values of the specified unit only.
+    # TODO(gram): related to the above, rework to not need the intermediate JSON representation.
+    # And create a separate version which can take a list of Python objects.
     for index, dataframe_row in dataframe.reset_index(drop=not include_index).iterrows():
-      encoded = json.loads(dataframe_row.to_json(force_ascii=False, date_unit='s', date_format='iso'))
+      encoded = json.loads(dataframe_row.to_json(force_ascii=False, date_unit='s',
+                                                 date_format='iso'))
 
       rows.append({
         'json': encoded,
