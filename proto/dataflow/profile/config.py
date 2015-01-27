@@ -9,12 +9,13 @@ kernel_path = os.path.join(os.path.dirname(__file__), '..',
                            'build', 'ijava')
 c.KernelManager.kernel_cmd = [
   kernel_path,
-  '{connection_file}',
-  '-dep', 'dataflow-sdk.jar',
-  '-dep', 'dataflow-sdk-plus.jar',
-  '-shellDep', 'ijavaext-cloud.jar',
-  '-ext', 'com.google.cloud.datalab.charting.ChartingExtension',
-  '-ext', 'com.google.cloud.datalab.dataflow.DataflowExtension'
+  '--dep:dataflow-sdk.jar',
+  '--dep:dataflow-sdk-plus.jar',
+  '--shellDep:ijavaext-cloud.jar',
+  '--ext:com.google.cloud.datalab.charting.ChartingExtension',
+  '--ext:com.google.cloud.datalab.bigquery.BigQueryExtension',
+  '--ext:com.google.cloud.datalab.dataflow.DataflowExtension',
+  '{connection_file}'
 ]
 
 # Protocol signing settings
