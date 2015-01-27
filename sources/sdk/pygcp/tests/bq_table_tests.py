@@ -17,8 +17,9 @@ import unittest
 import gcp
 import gcp.bigquery
 import mock
+import numpy as np
 from oauth2client.client import AccessTokenCredentials
-
+import pandas
 
 class TestCases(unittest.TestCase):
 
@@ -105,9 +106,12 @@ class TestCases(unittest.TestCase):
 
     tl = gcp.bigquery.tables('testds', context=self._create_context())
 
-    self.assertEqual(len(tl), 2)
-    self.assertEqual(tl[0].name, 'test:testds.testTable1')
-    self.assertEqual(tl[1].name, 'test:testds.testTable2')
+    tables = []
+    for table in tl:
+      tables.append(table)
+    self.assertEqual(len(tables), 2)
+    self.assertEqual(tables[0].name, 'test:testds.testTable1')
+    self.assertEqual(tables[1].name, 'test:testds.testTable2')
 
   @mock.patch('gcp.bigquery._Api.tables_list')
   def test_table_list_empty(self, mock_api_tables_list):
@@ -115,15 +119,143 @@ class TestCases(unittest.TestCase):
 
     tl = gcp.bigquery.tables('testds', context=self._create_context())
 
-    self.assertEqual(len(tl), 0)
+    tables = []
+    for table in tl:
+      tables.append(table)
+
+    self.assertEqual(len(tables), 0)
+
+  @mock.patch('gcp.bigquery._Api.tables_get')
+  def test_tables_contains(self, mock_api_tables_get):
+    mock_api_tables_get.return_value = None
+    tl = gcp.bigquery.tables('testds', context=self._create_context())
+    self.assertTrue(tl.contains('testTable0'))
+
+    mock_api_tables_get.side_effect = Exception([None, 404])
+    self.assertFalse(tl.contains('testTable0'))
+
+  @mock.patch('gcp.bigquery._Api.tables_insert')
+  @mock.patch('gcp.bigquery._Api.tables_list')
+  def test_tables_create(self, mock_api_tables_list, mock_api_tables_insert):
+    mock_api_tables_list.return_value = []
+    table_list = self._create_table_list('testds')
+    api = self._create_context()
+    schema = self._create_inferred_schema()
+
+    mock_api_tables_insert.return_value = None
+    self.assertIsNone(table_list.create('testTable0', schema), 'Expected no table')
+
+    mock_api_tables_insert.return_value = 'http://foo'
+    self.assertIsNotNone(table_list.create('testTable0', schema), 'Expected a table')
 
   @mock.patch('gcp.bigquery._Api.tables_list')
-  def test_malformed_list_response_raises_exception(self, mock_api_tables_list):
-    mock_api_tables_list.return_value = {}
+  def test_tables_schema_from_dataframe(self, mock_api_tables_list):
+    mock_api_tables_list.return_value = []
+    df = self._create_data_frame()
+    table_list = self._create_table_list('testds')
+    result = table_list.schema_from_dataframe(df)
+    self.assertEqual(result, self._create_inferred_schema())
+
+  @mock.patch('uuid.uuid4')
+  @mock.patch('time.sleep')
+  @mock.patch('gcp.bigquery._Api.tables_list')
+  @mock.patch('gcp.bigquery._Api.tables_insert')
+  @mock.patch('gcp.bigquery._Api.tables_get')
+  @mock.patch('gcp.bigquery._Api.tables_insertAll')
+  def test_insertAll_no_table(self, mock_api_tables_insertAll, mock_api_tables_get, mock_api_tables_insert,
+                              mock_api_tables_list, mock_time_sleep, mock_uuid):
+    mock_uuid.return_value = self._create_uuid()
+    mock_time_sleep.return_value = None
+    mock_api_tables_list.return_value = []
+    mock_api_tables_insert.return_value = 'http://foo'
+    mock_api_tables_get.side_effect = Exception([None, 404])
+    mock_api_tables_insertAll.return_value = {}
+
+    table = self._create_table_for_dataframe(self._create_inferred_schema())
+    df = self._create_data_frame()
 
     with self.assertRaises(Exception) as error:
-      _ = gcp.bigquery.tables('testds', context=self._create_context())
-    self.assertEqual(error.exception[0], 'Unexpected table list response.')
+      table.insertAll(df, chunk_size=2)
+    self.assertEqual(error.exception[0], 'Table %s does not exist.' % table.full_name)
+
+  @mock.patch('uuid.uuid4')
+  @mock.patch('time.sleep')
+  @mock.patch('gcp.bigquery._Api.tables_list')
+  @mock.patch('gcp.bigquery._Api.tables_insert')
+  @mock.patch('gcp.bigquery._Api.tables_get')
+  @mock.patch('gcp.bigquery._Api.tables_insertAll')
+  def test_insertAll_missing_field(self, mock_api_tables_insertAll, mock_api_tables_get, mock_api_tables_insert,
+                                   mock_api_tables_list, mock_time_sleep, mock_uuid,):
+    # Truncate the schema used when creating the table so we have an unmatched column in insert.
+    schema = self._create_inferred_schema()[:2]
+
+    mock_uuid.return_value = self._create_uuid()
+    mock_time_sleep.return_value = None
+    mock_api_tables_insert.return_value = 'http://foo'
+    mock_api_tables_list.return_value = []
+    mock_api_tables_get.return_value = {'schema': {'fields': schema}}
+    mock_api_tables_insertAll.return_value = {}
+
+    table = self._create_table_for_dataframe(schema)
+    df = self._create_data_frame()
+
+    with self.assertRaises(Exception) as error:
+      table.insertAll(df, chunk_size=2)
+    self.assertEqual(error.exception[0], 'Table does not contain field headers')
+
+  @mock.patch('uuid.uuid4')
+  @mock.patch('time.sleep')
+  @mock.patch('gcp.bigquery._Api.tables_list')
+  @mock.patch('gcp.bigquery._Api.tables_insert')
+  @mock.patch('gcp.bigquery._Api.tables_get')
+  @mock.patch('gcp.bigquery._Api.tables_insertAll')
+  def test_insertAll_mismatched_schema(self, mock_api_tables_insertAll, mock_api_tables_get, mock_api_tables_insert,
+                                       mock_api_tables_list, mock_time_sleep, mock_uuid):
+    # Change the schema used when creating the table so we get a mismatch when inserting.
+    schema = self._create_inferred_schema()
+    schema[2]['type'] = 'STRING'
+
+    mock_uuid.return_value = self._create_uuid()
+    mock_time_sleep.return_value = None
+    mock_api_tables_list.return_value = []
+    mock_api_tables_insert.return_value = 'http://foo'
+    mock_api_tables_get.return_value = {'schema': {'fields': schema}}
+    mock_api_tables_insertAll.return_value = {}
+
+    table = self._create_table_for_dataframe(schema)
+    df = self._create_data_frame()
+
+    with self.assertRaises(Exception) as error:
+      table.insertAll(df, chunk_size=2)
+    self.assertEqual(error.exception[0], 'Field headers in data has type FLOAT but in table has type STRING')
+
+  @mock.patch('uuid.uuid4')
+  @mock.patch('time.sleep')
+  @mock.patch('gcp.bigquery._Api.tables_list')
+  @mock.patch('gcp.bigquery._Api.tables_insert')
+  @mock.patch('gcp.bigquery._Api.tables_get')
+  @mock.patch('gcp.bigquery._Api.tables_insertAll')
+  def test_insertAll(self, mock_api_tables_insertAll, mock_api_tables_get, mock_api_tables_insert, mock_api_tables_list,
+                     mock_time_sleep, mock_uuid):
+    schema = self._create_inferred_schema()
+
+    mock_uuid.return_value = self._create_uuid()
+    mock_time_sleep.return_value = None
+    mock_api_tables_list.return_value = []
+    mock_api_tables_insert.return_value = 'http://foo'
+    mock_api_tables_get.return_value = {'schema': {'fields': schema}}
+    mock_api_tables_insertAll.return_value = {}
+
+    table = self._create_table_for_dataframe(schema)
+    df = self._create_data_frame()
+
+    result = table.insertAll(df, chunk_size=2)
+    self.assertIsNotNone(result, "insertAll should return the table object")
+    # Because of chunking there will be two calls for the four rows; we test the second.
+    mock_api_tables_insertAll.assert_called_with('testds', 'testTable0', [
+      {'insertId': '#2', 'json': {u'column': 'r2', u'headers': 10.0, u'some': 2}},
+      {'insertId': '#3', 'json': {u'column': 'r3', u'headers': 10.0, u'some': 3}}
+    ])
 
   def _create_context(self):
     project_id = 'test'
@@ -131,11 +263,7 @@ class TestCases(unittest.TestCase):
     return gcp.Context(project_id, creds)
 
   def _create_table(self, name):
-    project_id = 'test'
-    creds = AccessTokenCredentials('test_token', 'test_ua')
-    context = gcp.Context(project_id, creds)
-
-    return gcp.bigquery.table(name, context)
+    return gcp.bigquery.table(name, self._create_context())
 
   def _create_table_info_result(self, ts=None):
     if ts is None:
@@ -176,13 +304,16 @@ class TestCases(unittest.TestCase):
           {'name': 'name', 'type': 'STRING', 'mode': 'NULLABLE'},
           {'name': 'val', 'type': 'INTEGER', 'mode': 'NULLABLE'},
           {'name': 'more', 'type': 'RECORD', 'mode': 'REPEATED',
-           'fields':[
-             {'name':'xyz', 'type': 'INTEGER','mode': 'NULLABLE'}
-           ]
-          }
+           'fields': [
+              {'name': 'xyz', 'type': 'INTEGER','mode': 'NULLABLE'}
+            ]
+           }
         ]
-       }
+      }
     }
+
+  def _create_table_list(self, dataset_id):
+    return gcp.bigquery.tables(dataset_id, self._create_context())
 
   def _create_table_list_result(self):
     return {
@@ -196,3 +327,32 @@ class TestCases(unittest.TestCase):
     return {
       'tables': []
     }
+
+  def _create_data_frame(self):
+    columns = ['some', 'column', 'headers']
+    df = pandas.DataFrame(columns=columns)
+
+    for i in range(0, 4):
+      df.loc[i] = [len(df), 'r' + str(len(df)), 10.0]
+
+    df = df.convert_objects(convert_numeric=True)
+    return df
+
+  def _create_inferred_schema(self):
+    return [
+      {'name': 'some', 'type': 'INTEGER'},
+      {'name': 'column', 'type': 'STRING'},
+      {'name': 'headers', 'type': 'FLOAT'},
+    ]
+
+  def _create_table_for_dataframe(self, schema):
+    table_list = self._create_table_list('testds')
+    return table_list.create('testTable0', schema)
+
+  class _uuid(object):
+    @property
+    def hex(self):
+      return '#'
+
+  def _create_uuid(self):
+    return self._uuid()
