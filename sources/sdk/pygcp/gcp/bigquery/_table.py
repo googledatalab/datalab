@@ -15,6 +15,7 @@
 """Implements Table, and related Table BigQuery APIs."""
 
 import json
+import pandas as pd
 import re
 import time
 import uuid
@@ -45,19 +46,62 @@ class TableSchema(list):
       """
       return self.name
 
+    def __eq__(self, other):
+      return self.name == other.name and self.data_type == other.data_type \
+          and self.mode == other.mode
+
+    def __str__(self):
+      # Stringize in the form of a dictionary
+      return "{ 'name': '%s', 'type': '%s', 'mode':'%s', 'description': '%s' }" %\
+             (self.name, self.data_type, self.mode, self.description)
+
+    def __repr__(self):
+      return str(self)
+
+
+  @staticmethod
+  def _from_dataframe(dataframe, default_type='STRING'):
+    """
+      Infer a BigQuery table schema from a Pandas dataframe. Note that if you don't explicitly set
+      the types of the columns in the dataframe, they may be of a type that forces coercion to
+      STRING, so even though the fields in the dataframe themselves may be numeric, the type in the
+      derived schema may not be. Hence it is prudent to make sure the Pandas dataframe is typed
+      correctly.
+
+    Args:
+      dataframe: DataFrame
+      default_type : The default big query type in case the type of the column does not exist in
+          the schema.
+    Returns:
+      A list of dictionaries containing field 'name' and 'type' entries, suitable for use in a
+          BigQuery Tables resource schema.
+    """
+
+    type_mapping = {
+      'i': 'INTEGER',
+      'b': 'BOOLEAN',
+      'f': 'FLOAT',
+      'O': 'STRING',
+      'S': 'STRING',
+      'U': 'STRING',
+      'M': 'TIMESTAMP'
+    }
+
+    fields = []
+    for column_name, dtype in dataframe.dtypes.iteritems():
+      fields.append({'name': column_name,
+                     'type': type_mapping.get(dtype.kind, default_type)})
+
+    return fields
 
   def __init__(self, data):
-    """Initializes a TableSchema from its raw JSON representation.
+    """Initializes a TableSchema from its raw JSON representation or a Pandas Dataframe.
     """
     list.__init__(self)
-    self._populate_fields(data)
-
     self._map = {}
-    # We can't use "for field in self" below as that uses our custom __iter__ which expects the
-    # map to be populated! Took me a while to find this bug. Instead, iterate using an indexed loop.
-    for i in range(0, len(self)):
-      field = self[i]
-      self._map[field.name] = field
+    if isinstance(data, pd.DataFrame):
+      data = TableSchema._from_dataframe(data)
+    self._populate_fields(data)
 
   def __getitem__(self, key):
     """Provides ability to lookup a schema field by position or by name.
@@ -67,6 +111,7 @@ class TableSchema(list):
     return list.__getitem__(self, key)
 
   def _populate_fields(self, data, prefix=''):
+    self._bq_schema = data
     for field_data in data:
       name = prefix + field_data['name']
       data_type = field_data['type']
@@ -75,13 +120,17 @@ class TableSchema(list):
                                  field_data.get('mode', 'NULLABLE'),
                                  field_data.get('description', ''))
       self.append(field)
+      self._map[name] = field
 
       if data_type == 'RECORD':
         # Recurse into the nested fields, using this field's name as a prefix.
         self._populate_fields(field_data.get('fields'), name + '.')
 
   def __iter__(self):
-    return self._map.iteritems()
+    return self._map.itervalues()
+
+  def __str__(self):
+    return str(self._bq_schema)
 
 
 class TableMetadata(object):
@@ -142,11 +191,12 @@ class TableMetadata(object):
     """The size of the table in bytes."""
     return self._info['numBytes']
 
-class TableList(object):
+
+class DataSet(object):
   """Represents a list of BigQuery tables in a dataset."""
 
   def __init__(self, api, dataset_id):
-    """Initializes an instance of a TableList.
+    """Initializes an instance of a DataSet.
 
     Args:
       api: the BigQuery API object to use to issue requests. The project ID will be inferred from
@@ -156,42 +206,55 @@ class TableList(object):
     self._api = api
     self._dataset_id = dataset_id
 
-  def contains(self, name):
-    """Checks if the specified table exists.
+  def exists(self):
+    """ Checks if the dataset exists.
 
     Args:
-      name: the name of the table to lookup (not including the project and dataset IDs).
+      None
     Returns:
-      True if the table exists; False otherwise.
-    Raises:
-      Exception if there was an error requesting information about the table.
+      True if the dataset exists; False otherwise.
     """
     try:
-      project_id = self._api.project_id
-      _ = self._api.tables_get([project_id, self._dataset_id, name])
+      _ = self._api.datasets_get(self._dataset_id)
     except Exception as e:
       if (len(e.args[0]) > 1) and (e.args[0][1] == 404):
         return False
       raise e
     return True
 
-  def create(self, name, schema):
-    """ Create a table with a specified name and schema.
+  def delete(self, delete_contents=False):
+    """Issues a request to delete the dataset.
 
     Args:
-      name: the name of the table either as a string or a 3-part tuple (projectid, datasetid, name).
-          If a string, the name can be fully qualified or just be the last component. If the project
-          ID and dataset ID do not match the TableList, creation will fail.
-      schema: the schema to use to create the table. Should be a list of dictionaries, each
-          containing at least a pair of entries, 'name' and 'type'.
-          See https://cloud.google.com/bigquery/docs/reference/v2/tables#resource
+      delete_contents: if True, any tables in the dataset will be deleted. If False and the
+          dataset is non-empty an exception will be raised.
     Returns:
-      None on failure, or the Table instance if successful.
+      None on success (including if the dataset didn't exist).
+    Raises:
+      Exception if the delete fails.
     """
-    response = self._api.tables_insert(self._dataset_id, name, schema)
-    if response:
-      return Table(self._api, (self._api.project_id, self._dataset_id, name))
+    if self.exists():
+      self._api.datasets_delete(self._dataset_id, delete_contents=delete_contents)
     return None
+
+  def create(self, friendly_name=None, description=None):
+    """Creates the Dataset with the specified friendly name and description.
+
+    Args:
+      friendly_name: (optional) the friendly name for the dataset if it is being created.
+      description: (optional) a description for the dataset if it is being created.
+    Returns:
+      The DataSet.
+    Raises:
+      Exception if the DataSet could not be created.
+    """
+    if not self.exists():
+      response = self._api.datasets_insert(self._dataset_id,
+                                           friendly_name=friendly_name,
+                                           description=description)
+      if not response:
+        raise Exception("Could not create dataset %s.%s" % self.full_name)
+    return self
 
   def _retrieve_tables(self, page_token):
     list_info = self._api.tables_list(page_token=page_token)
@@ -212,39 +275,11 @@ class TableList(object):
   def __iter__(self):
     return iter(_Iterator(self._retrieve_tables))
 
-  def schema_from_dataframe(self, dataframe, default_type='STRING'):
+  def __repr__(self):
+    """Returns an empty representation for the dataset for showing in the notebook.
     """
-      Infer a BigQuery table schema from a Pandas dataframe. Note that if you don't explicitly set
-      the types of the columns in the dataframe, they may be of a type that forces coercion to
-      STRING, so even though the fields in the dataframe themselves may be numeric, the type in the
-      derived schema may not be. Hence it is prudent to make sure the Pandas dataframe is typed
-      correctly.
+    return ''
 
-    Args:
-      dataframe: DataFrame
-      default_type : The default big query type in case the type of the column does not exist in
-          the schema.
-    Returns:
-      A list of dictionaries containing field 'name' and 'type' entries, suitable for use in a
-          BigQuery Tables resource schema.
-    """
-
-    type_mapping = {
-      'i': 'INTEGER',
-      'b': 'BOOLEAN',
-      'f': 'FLOAT',
-      'O': 'STRING',
-      'S': 'STRING',
-      'U': 'STRING',
-      'M': 'TIMESTAMP'
-    }
-
-    fields = []
-    for column_name, dtype in dataframe.dtypes.iteritems():
-      fields.append({'name': column_name,
-                     'type': type_mapping.get(dtype.kind, default_type)})
-
-    return fields
 
 
 class Table(object):
@@ -254,10 +289,62 @@ class Table(object):
   """
 
   # Absolute project-qualified name pattern: <project>:<dataset>.<table>
-  _ABS_NAME_PATTERN = r'^([a-z0-9\-_\.:]+)\:([a-z0-9_]+)\.([a-z0-9_]+)$'
+  _ABS_NAME_PATTERN = r'^([a-z0-9\-_\.:]+)\:([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)$'
 
   # Relative name pattern: <dataset>.<table>
-  _REL_NAME_PATTERN = r'^([a-z0-9_]+)\.([a-z0-9_]+)$'
+  _REL_NAME_PATTERN = r'^([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)$'
+
+  # Table-only name pattern: <table>
+  _TABLE_NAME_PATTERN = r'^([a-zA-Z0-9_]+)$'
+
+  @staticmethod
+  def parse_name(name, project_id=None, dataset_id=None):
+    """Parses a table name into its individual parts.
+
+    The resulting tuple of name parts is a triple consisting of project id,
+    dataset id and table name.
+
+    Args:
+      name: the name to parse, or a triple containing the parts.
+      project_id: the expected project ID. If the name does not contain a project ID,
+          this will be used; if the name does contain a project ID and it does not match
+          this, an exception will be thrown.
+      dataset_id: the expected dataset ID. If the name does not contain a dataset ID,
+          this will be used; if the name does contain a dataset ID and it does not match
+          this, an exception will be thrown.
+    Returns:
+      A triple consisting of the individual name parts.
+    Raises:
+      Exception: raised if the name doesn't match the expected formats.
+    """
+    if isinstance(name, basestring):
+      # Try to parse as absolute name first.
+      m = re.match(Table._ABS_NAME_PATTERN, name, re.IGNORECASE)
+      if m is not None:
+        _project_id, _dataset_id, _table_id = m.groups()
+      else:
+        # Next try to match as a relative name implicitly scoped within current project.
+        m = re.match(Table._REL_NAME_PATTERN, name)
+        if m is not None:
+          groups = m.groups()
+          _project_id, _dataset_id, _table_id = project_id, groups[0], groups[1]
+        else:
+          # Finally try to match as a table name only.
+          m = re.match(Table._TABLE_NAME_PATTERN, name)
+          if m is not None:
+            groups = m.groups()
+            _project_id, _dataset_id, _table_id = project_id, dataset_id, groups[0]
+          else:
+            raise Exception('Invalid table name: ' + name)
+    else:
+      # Treat as a triple.
+      _project_id, _dataset_id, _table_id = name
+
+    if dataset_id and _dataset_id != dataset_id:
+      raise Exception('Invalid dataset ID %s in name %s; expected %s' %
+                      (_dataset_id, name, dataset_id))
+
+    return _project_id, _dataset_id, _table_id
 
   def __init__(self, api, name):
     """Initializes an instance of a Table object.
@@ -268,11 +355,7 @@ class Table(object):
     """
     self._api = api
 
-    if isinstance(name, basestring):
-      self._name_parts = self._parse_name(name)
-    else:
-      self._name_parts = name
-
+    self._name_parts = Table.parse_name(name, api.project_id)
     self._full_name = '%s:%s.%s' % self._name_parts
     self._name = self._full_name
     self._info = None
@@ -308,32 +391,6 @@ class Table(object):
     if self._info is None:
       self._info = self._api.tables_get(self._name_parts)
 
-  def _parse_name(self, name):
-    """Parses a table name into its individual parts.
-
-    The resulting tuple of name parts is a triple consisting of project id,
-    dataset id and table name.
-
-    Args:
-      name: the name to parse
-    Returns:
-      A triple consisting of the individual name parts.
-    Raises:
-      Exception: raised if the name doesn't match the expected formats.
-    """
-    # Try to parse as absolute name first.
-    m = re.match(Table._ABS_NAME_PATTERN, name, re.IGNORECASE)
-    if m is not None:
-      return m.groups()
-
-    # Next try to match as a relative name implicitly scoped within current project.
-    m = re.match(Table._REL_NAME_PATTERN, name)
-    if m is not None:
-      groups = m.groups()
-      return self._api.project_id, groups[0], groups[1]
-
-    raise Exception('Invalid table name: ' + name)
-
   def metadata(self):
     """Retrieves metadata about the table.
 
@@ -344,6 +401,58 @@ class Table(object):
     """
     self._load_info()
     return TableMetadata(self._full_name, self._info)
+
+  def exists(self):
+    """Checks if the table exists.
+
+    Returns:
+      True if the table exists; False otherwise.
+    Raises:
+      Exception if there was an error requesting information about the table.
+    """
+    try:
+      _ = self._api.tables_get(self._name_parts)
+    except Exception as e:
+      if (len(e.args[0]) > 1) and (e.args[0][1] == 404):
+        return False
+      raise e
+    return True
+
+  def delete(self):
+    """ Delete the table.
+
+    Returns:
+      Nothing
+    """
+    try:
+      self._api.table_delete(self.dataset_id, self.table_id)
+    except Exception as e:
+      # TODO(gram): May want to check the error reasons here and if it is not
+      # because the file didn't exist, return an error.
+      pass
+
+  def create(self, schema, truncate=False):
+    """ Create the table with the specified schema.
+
+    Args:
+      schema: the schema to use to create the table. Should be a list of dictionaries, each
+          containing at least a pair of entries, 'name' and 'type'.
+          See https://cloud.google.com/bigquery/docs/reference/v2/tables#resource
+      truncate: if True, delete the table first if it exists. If False and the Table exists,
+          creation will fail and raise an Exception.
+    Returns:
+      The Table instance.
+    Raises:
+      Exception if the table couldn't be created or already exists and truncate was False.
+    """
+    if truncate and self.exists():
+      self.delete()
+    if isinstance(schema, TableSchema):
+      schema = schema._bq_schema
+    response = self._api.tables_insert(self.dataset_id, self.table_id, schema)
+    if not response:
+      raise Exception("Table %s could not be created as it already exists" % self.full_name)
+    return self
 
   def sample(self, fields=None, count=5, sampling=None, timeout=0, use_cache=True):
     """Retrieves a sampling of data from the table.
@@ -384,19 +493,17 @@ class Table(object):
     """
 
     # TODO(gram): add different exception types for each failure case.
-    dataset_tables = TableList(self._api, self.dataset_id)
-
-    if not dataset_tables.contains(self.table_id):
+    if not self.exists():
       raise Exception('Table %s does not exist.' % self._full_name)
 
-    data_schema = dataset_tables.schema_from_dataframe(dataframe)
+    data_schema = TableSchema(dataframe)
     table_schema = self.schema()
     for data_field in data_schema:
-      name = data_field['name']
+      name = data_field.name
       table_field = table_schema[name]
       if table_field is None:
         raise Exception('Table does not contain field %s' % name)
-      data_type = data_field['type']
+      data_type = data_field.data_type
       table_type = table_field.data_type
       if table_type != data_type:
         raise Exception('Field %s in data has type %s but in table has type %s' %
@@ -456,6 +563,11 @@ class Table(object):
     """
     return '[' + self._full_name + ']'
 
+  def __repr__(self):
+    """Returns an empty representation for the table for showing in the notebook.
+    """
+    return ''
+
   def __str__(self):
     """Returns a string representation of the table using its specified name.
 
@@ -463,3 +575,4 @@ class Table(object):
       The string representation of this object.
     """
     return self._name
+
