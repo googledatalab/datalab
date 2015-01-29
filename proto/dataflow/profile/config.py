@@ -10,7 +10,6 @@ kernel_path = os.path.join(os.path.dirname(__file__), '..',
 c.KernelManager.kernel_cmd = [
   kernel_path,
   '--dep:dataflow-sdk.jar',
-  '--dep:dataflow-sdk-plus.jar',
   '--shellDep:ijavaext-cloud.jar',
   '--ext:com.google.cloud.datalab.charting.ChartingExtension',
   '--ext:com.google.cloud.datalab.bigquery.BigQueryExtension',

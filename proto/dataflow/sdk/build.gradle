@@ -1,19 +1,31 @@
+plugins {
+  id 'java'
+  id 'com.github.johnrengelman.shadow' version '1.2.0'
+}
+
 apply plugin: 'java'
 apply plugin: 'eclipse'
+apply plugin: 'com.github.johnrengelman.shadow'
 
 sourceCompatibility = 1.7
 version = '1.0'
 
 jar {
-  baseName  'dataflow-sdk-plus'
+  baseName 'dataflow-sdk-plus'
+  classifier ''
+}
+
+shadowJar {
+  baseName 'dataflow-sdk'
+  classifier ''
 }
 
 repositories {
-    mavenCentral()
+  mavenCentral()
 }
 
 dependencies {
-  compile files("../extern/dataflow-sdk.jar")
+  compile 'com.google.cloud.dataflow:google-cloud-dataflow-java-sdk-all:0.3.150109'
 }
 
 sourceSets {

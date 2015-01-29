@@ -1,5 +1,5 @@
 #!/bin/sh
 
-gradle build -p sdk
+gradle build shadowJar -p sdk
 gradle build -p shell
 

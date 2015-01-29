@@ -41,6 +41,6 @@ public final class ChartDataCommand extends Command<ChartDataCommand.Options> {
   public static final class Options extends CommandOptions {
 
     @Parameter(description  = "The name of the variable to retrieve as chart data")
-    public List<String> names = new ArrayList();
+    public List<String> names = new ArrayList<String>();
   }
 }

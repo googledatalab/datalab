@@ -41,6 +41,6 @@ public final class DataflowDataCommand extends Command<DataflowDataCommand.Optio
   public static final class Options extends CommandOptions {
 
     @Parameter(description  = "The name of the transform to whose data should be retrieved")
-    public List<String> transforms = new ArrayList();
+    public List<String> transforms = new ArrayList<String>();
   }
 }

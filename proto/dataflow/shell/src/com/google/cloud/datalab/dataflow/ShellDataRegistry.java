@@ -8,6 +8,7 @@ import com.google.cloud.dataflow.sdk.*;
 import com.google.cloud.dataflow.sdk.coders.*;
 import com.google.cloud.dataflow.sdk.runners.*;
 import com.google.cloud.dataflow.sdk.transforms.*;
+import com.google.cloud.dataflow.sdk.transforms.windowing.*;
 import com.google.cloud.dataflow.sdk.values.*;
 import ijava.extensibility.*;
 
@@ -81,7 +82,7 @@ public final class ShellDataRegistry implements DataRegistry {
 
     @Override
     public PCollection<T> apply(PInput input) {
-      _collection = PCollection.<T>createPrimitiveOutput();
+      _collection = PCollection.<T>createPrimitiveOutputInternal(new GlobalWindow());
 
       if (_items.size() != 0) {
         CoderRegistry coderRegistry = input.getPipeline().getCoderRegistry();
