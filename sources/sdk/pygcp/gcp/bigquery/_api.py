@@ -26,7 +26,8 @@ class Api(object):
   _JOBS_PATH = '/projects/%s/jobs'
   _QUERY_PATH = '/projects/%s/queries'
   _QUERY_RESULT_PATH = '/projects/%s/queries/%s'
-  _TABLE_PATH = '/projects/%s/datasets/%s/tables/%s'
+  _DATASETS_PATH = '/projects/%s/datasets/%s'
+  _TABLES_PATH = '/projects/%s/datasets/%s/tables/%s'
 
   _DEFAULT_PAGE_SIZE = 10000
   _DEFAULT_TIMEOUT = 60000
@@ -150,6 +151,87 @@ class Api(object):
     url = Api._ENDPOINT + (Api._QUERY_RESULT_PATH % (self._project_id, job_id))
     return _util.Http.request(url, args=args, credentials=self._credentials)
 
+  def datasets_insert(self, dataset_id, friendly_name=None, description=None):
+    """Issues a request to create a dataset.
+
+    Args:
+      dataset_id: the name of the dataset to create.
+      friendly_name: (optional) the friendly name for the dataset
+      description: (optional) a description for the dataset
+    Returns:
+      The "Self link" URL of the file on success, on None on failure.
+    Raises:
+      Exception if there is an error performing the operation.
+    """
+    url = Api._ENDPOINT + (Api._DATASETS_PATH % (self._project_id, ''))
+    data = {
+      'kind': 'bigquery#dataset',
+      'datasetReference': {
+        'projectId': self._project_id,
+        'datasetId': dataset_id,
+      },
+    }
+    if friendly_name:
+      data['friendlyName'] = friendly_name
+    if description:
+      data['description'] = description
+    response = _util.Http.request(url, data=data, credentials=self._credentials)
+    if 'selfLink' in response:
+      return response['selfLink']
+    return None
+
+  def datasets_delete(self, dataset_id, delete_contents=False):
+    """Issues a request to delete a dataset.
+
+    Args:
+      dataset_id: the name of the dataset to delete.
+      delete_contents: if True, any tables in the dataset will be deleted. If False and the
+          dataset is non-empty an exception will be raised.
+    Returns:
+      The response object.
+    Raises:
+      Exception if there is an error performing the operation.
+    """
+    url = Api._ENDPOINT + (Api._DATASETS_PATH % (self._project_id, dataset_id))
+    args = {}
+    if delete_contents:
+      args['deleteContents'] = True
+    return _util.Http.request(url, method='DELETE', credentials=self._credentials)
+
+  def datasets_get(self, dataset_id):
+    """Issues a request to retrieve information about a dataset.
+
+    Args:
+      dataset_id: the id of the dataset
+    Returns:
+      A parsed dataset information object.
+    Raises:
+      Exception if there is an error performing the operation.
+    """
+    url = Api._ENDPOINT + (Api._DATASETS_PATH % (self._project_id, dataset_id))
+    return _util.Http.request(url, credentials=self._credentials)
+
+  def datasets_list(self, max_results=0, page_token=None):
+    """Issues a request to list the datasets in the project.
+
+    Args:
+      max_results: an optional maximum number of tables to retrieve.
+      page_token: an optional token to continue the retrieval.
+    Returns:
+      A parsed dataset list.
+    Raises:
+      Exception if there is an error performing the operation.
+    """
+    url = Api._ENDPOINT + (Api._DATASETS_PATH % (self._project_id, ''))
+
+    args = {}
+    if max_results != 0:
+      args['maxResults'] = max_results
+    if page_token is not None:
+      args['pageToken'] = page_token
+
+    return _util.Http.request(url, args=args, credentials=self._credentials)
+
   def tables_get(self, name_parts):
     """Issues a request to retrieve information about a table.
 
@@ -160,7 +242,7 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    url = Api._ENDPOINT + (Api._TABLE_PATH % name_parts)
+    url = Api._ENDPOINT + (Api._TABLES_PATH % name_parts)
     return _util.Http.request(url, credentials=self._credentials)
 
   def tables_list(self, dataset_id, max_results=0, page_token=None):
@@ -175,7 +257,7 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    url = Api._ENDPOINT + (Api._TABLE_PATH % (self._project_id, dataset_id, ''))
+    url = Api._ENDPOINT + (Api._TABLES_PATH % (self._project_id, dataset_id, ''))
 
     args = {}
     if max_results != 0:
@@ -199,7 +281,7 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    url = Api._ENDPOINT + (Api._TABLE_PATH % (self._project_id, dataset_id, ''))
+    url = Api._ENDPOINT + (Api._TABLES_PATH % (self._project_id, dataset_id, ''))
 
     data = {
       'kind': 'bigquery#table',
@@ -235,7 +317,8 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    url = Api._ENDPOINT + (Api._TABLE_PATH % (self._project_id, dataset_id, table_id)) + "/insertAll"
+    url = Api._ENDPOINT + (Api._TABLES_PATH % (self._project_id, dataset_id, table_id)) +\
+          "/insertAll"
 
     data = {
       'kind': 'bigquery#tableDataInsertAllRequest',
@@ -243,3 +326,15 @@ class Api(object):
     }
 
     return _util.Http.request(url, data=data, credentials=self._credentials)
+
+  def table_delete(self, dataset_id, table_id):
+    """Issues a request to delete a table.
+
+    Args:
+      dataset_id: the name of the dataset containing the table to populate.
+      table_id: the id of the table to populate.
+    Returns:
+      TODO(gram): figure out what this should be
+    """
+    url = Api._ENDPOINT + (Api._TABLES_PATH % (self._project_id, dataset_id, table_id))
+    return _util.Http.request(url, method='DELETE', credentials=self._credentials)

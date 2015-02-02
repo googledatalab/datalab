@@ -369,7 +369,7 @@ class Query(object):
             end_time = datetime.now()
             elapsed = end_time - start_time
             start_time = end_time
-            timeout -= elapsed.total_seconds() * 1000
+            timeout -= int(elapsed.total_seconds() * 1000)
             if timeout <= 0:  # TODO(gram): use a larger threshold; e.g. 1000?
               break
 

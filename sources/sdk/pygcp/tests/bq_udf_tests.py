@@ -22,7 +22,7 @@ class TestCases(unittest.TestCase):
 
   def test_sql_building(self):
     context = self._create_context()
-    table = gcp.bigquery.table('data-studio-team:requestlogs.today', context=context)
+    table = gcp.bigquery.table('test:requestlogs.today', context=context)
 
     inputs = [('field1', 'string'), ('field2', 'integer')]
     outputs = [('output1', 'integer'), ('output2', 'string')]
@@ -31,7 +31,8 @@ class TestCases(unittest.TestCase):
     udf = gcp.bigquery.udf(inputs, outputs, impl, context=context)
     udf = udf(table)
 
-    expected_sql = ('js([data-studio-team:requestlogs.today],\n'
+    expected_sql = ('js([test:requestlogs.today],\n'
+
                     'field1,field2,\n'
                     '\'[{"name": "output1", "type": "integer"}, '
                     '{"name": "output2", "type": "string"}]\',\n'

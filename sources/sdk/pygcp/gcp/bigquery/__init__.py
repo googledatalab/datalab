@@ -20,7 +20,8 @@ from ._api import Api as _Api
 from ._query import Query as _Query
 from ._sampling import Sampling
 from ._table import Table as _Table
-from ._table import TableList as _TableList
+from ._table import DataSet as _DataSet
+from ._table import TableSchema as _TableSchema
 from ._udf import Function as _Function
 
 
@@ -90,7 +91,7 @@ def sql(sql_template, **kwargs):
 
 
 def table(name, context=None):
-  """Creates a BigQuery table object.
+  """Creates a BigQuery table object or returns the Table class for static calls.
 
   If a specific project id or credentials are unspecified, the default ones
   configured at the global level are used.
@@ -110,14 +111,29 @@ def table(name, context=None):
   return _Table(api, name)
 
 
-def tables(dataset_id, context=None):
-  """Retrieves a list of tables with the specified dataset.
+def dataset(dataset_id, context=None, create=False, friendly_name=None, description=None):
+  """Returns the Dataset with the specified dataset_id.
 
   Args:
     dataset_id: the name of the dataset.
     context: an optional Context object providing project_id and credentials.
   Returns:
-    A TableList object that can be used to iterate over the tables.
+    A DataSet object.
   """
+  # TODO(gram): the creation part here is a stopgap until we have an API review and decide
+  # what to do.
   api = _create_api(context)
-  return _TableList(api, dataset_id)
+  return _DataSet(api, dataset_id)
+
+
+def schema(data):
+  """Creates a table schema from its JSON representation or a Pandas dataframe.
+
+  Args:
+    data: the JSON representation or Pandas dataframe to use.
+  Returns:
+    A TableSchema object.
+  """
+  return _TableSchema(data)
+
+# TODO(gram): Need an API to list the datasets in the project
