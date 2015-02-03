@@ -15,6 +15,15 @@
 
 # Starts an IPython container locally
 
+# Instructions related to port-forwarding from the Virtual Box VM to the Local OS
+echo "-------------------------------------------------------------"
+echo "If you're running via boot2docker, run the following as well:"
+echo "boot2docker ssh -L 8080:localhost:8080"
+echo "-------------------------------------------------------------"
+echo ""
+echo ""
+
+
 IMAGE_NAME="gcp-ipython-local"
 if [ "$1" = "" ]; then
   DOCKER_IMAGE=$IMAGE_NAME
@@ -35,10 +44,6 @@ cp -r ~/.config/gcloud gcloud
 # Build and run the local docker image
 docker build -t gcp-ipython-local-instance .
 docker run -p 127.0.0.1:8080:8080 -i -t gcp-ipython-local-instance
-
-# NOTE: When using boot2docker, the port is only exposed to the VM, and
-#       not to the host OS. Run the following in addition:
-# boot2docker ssh -L 8080:localhost:8080
 
 # Cleanup
 rm Dockerfile

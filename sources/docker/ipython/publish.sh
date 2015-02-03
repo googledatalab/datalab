@@ -13,6 +13,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-docker tag gcp-ipython $DOCKER_REGISTRY/gcp-ipython
-docker push $DOCKER_REGISTRY/gcp-ipython
+# Publishes the built docker image to the registry
+
+if [ "$#" != "1" ]; then
+  echo "Usage: $0 <tag>"
+  exit 1
+fi
+
+# Grant read permissions to all users on all objects added in the GCS bucket
+# that holds docker image files by ACLing the bucket and setting the default
+# for any new items added
+gsutil acl ch -g all:R gs://artifacts.cloud-datalab.appspot.com
+gsutil defacl ch -u all:R gs://artifacts.cloud-datalab.appspot.com
+
+LOCAL_IMAGE=gcp-ipython
+REG_IMAGE=gcr.io/cloud_datalab/gcp-ipython:$1
+
+echo "Publishing $LOCAL_IMAGE to $REG_IMAGE ..."
+docker tag -f $LOCAL_IMAGE $REG_IMAGE
+gcloud preview docker push $REG_IMAGE
 
