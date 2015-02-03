@@ -35,7 +35,7 @@ if [ "$HELP_INFO" != "" ]; then
   echo $HELP_INFO
   echo
   echo "Usage: $0 [<version tag>] [<vm name>] [<machine type>]"
-  echo "  version tag:  the docker container version to use (default: current)"
+  echo "  version tag:  the docker container version to use (default: latest)"
   echo "  vm name:      the name of the VM to create (default: ipython)"
   echo "  machine type: the type of VM to create (default: n1-standard-1)"
   echo
@@ -57,6 +57,7 @@ if [ "$1" = "" ]; then
 else
   TAG=$1
 fi
+
 if [ "$2" = "" ]; then
   VM=ipython
 else
@@ -68,18 +69,18 @@ else
   VM_TYPE=$3
 fi
 
-
-echo "Starting IPython (version $TAG) setup on VM '$VM' ($VM_TYPE) ..."
+VM_IMAGE=container-vm-v20150129
+DOCKER_IMAGE="gcr.io/cloud_datalab/gcp-ipython:$TAG"
 
 CLOUD_PROJECT=`gcloud config list project --format text | sed 's/core\.project: //'`
 NETWORK_NAME=ipython
-DOCKER_IMAGE="gcr.io/cloud_datalab/gcp-ipython:$TAG"
 NOTEBOOKS_BUCKET="gs://$CLOUD_PROJECT-ipython"
 NOTEBOOKS_TARGET="gs://$CLOUD_PROJECT-ipython/"
 NOTEBOOKS_SOURCE="gs://cloud-datalab/ipython/"
 PORT=8092
 URL="http://localhost:$PORT"
 
+echo "Starting IPython (version $TAG) setup on VM '$VM' ($VM_TYPE) ..."
 
 
 # Check if port is already in use
@@ -151,7 +152,7 @@ EOF1
   # Create the VM
   echo "Creating VM instance '$VM' ..."
   gcloud -q compute instances create $VM \
-    --image container-vm-v20150129 \
+    --image $VM_IMAGE \
     --image-project google-containers \
     --machine-type $VM_TYPE \
     --network $NETWORK_NAME \
