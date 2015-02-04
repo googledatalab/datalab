@@ -34,10 +34,10 @@ fi
 if [ "$HELP_INFO" != "" ]; then
   echo $HELP_INFO
   echo
-  echo "Usage: $0 [<version tag>] [<vm name>] [<machine type>]"
-  echo "  version tag:  the docker container version to use (default: latest)"
-  echo "  vm name:      the name of the VM to create (default: ipython)"
-  echo "  machine type: the type of VM to create (default: n1-standard-1)"
+  echo "Usage: $0 [<vm name>] [<vm type>] [<version>]"
+  echo "  vm name: the name of the VM to create (default: ipython)"
+  echo "  vm type: the type of VM to create (default: n1-standard-1)"
+  echo "  version: the docker container version to use (default: latest)"
   echo
   echo "Required configuration:"
   echo "  - default cloud project"
@@ -53,20 +53,19 @@ fi
 
 # Initialize variables
 if [ "$1" = "" ]; then
-  TAG=latest
-else
-  TAG=$1
-fi
-
-if [ "$2" = "" ]; then
   VM=ipython
 else
-  VM=$2
+  VM=$1
 fi
-if [ "$3" = "" ]; then
+if [ "$2" = "" ]; then
   VM_TYPE="n1-standard-1"
 else
-  VM_TYPE=$3
+  VM_TYPE=$2
+fi
+if [ "$3" = "" ]; then
+  TAG=latest
+else
+  TAG=$3
 fi
 
 VM_IMAGE=container-vm-v20150129
