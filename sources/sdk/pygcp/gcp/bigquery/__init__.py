@@ -17,6 +17,8 @@
 import gcp as _gcp
 import gcp._util as _util
 from ._api import Api as _Api
+from ._job import Job as _Job
+from ._job import QueryJob as _QueryJob
 from ._query import Query as _Query
 from ._sampling import Sampling
 from ._table import Table as _Table
@@ -135,5 +137,30 @@ def schema(data):
     A TableSchema object.
   """
   return _TableSchema(data)
+
+
+def job(job_id, context=None):
+  """ Create a job reference for a specific job ID.
+
+  Args:
+    job_id: the job ID.
+  Returns:
+    A Job object.
+  """
+  api = _create_api(context)
+  return _Job(api, job_id)
+
+
+def query_job(job_id, table, context=None):
+  """ Create a job reference for a specific query job ID.
+
+  Args:
+    job_id: the job ID.
+    table: the Table that will be used for the query results.
+  Returns:
+    A QueryJob object.
+  """
+  api = _create_api(context)
+  return _QueryJob(api, job_id, table)
 
 # TODO(gram): Need an API to list the datasets in the project
