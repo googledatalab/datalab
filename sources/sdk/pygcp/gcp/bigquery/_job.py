@@ -155,7 +155,7 @@ class QueryJobResultProcessor(object):
     pass
 
   def finish(self):
-    """ Called after all results have been processed. Can do any necessary housekeeping at this point.
+    """ Called after all results have been processed; do any necessary housekeeping here.
     """
     pass
 
@@ -285,11 +285,12 @@ class QueryJob(Job):
 
   @property
   def table(self):
+    """ Get the table used for the results of the query (note: the query may not be complete).
+    """
     return self._table
 
   def process_results(self, result_processor, page_size=0, timeout=None):
-    """ Process the results of a query job. Note that if the job is not complete,
-        this will block.
+    """ Process the results of a query job; this will block if the job is not complete.
 
     Args:
       result_processor: object used to process the results.
@@ -353,6 +354,8 @@ class QueryJob(Job):
     Args:
       page_size: limit to the number of rows to fetch per page.
       timeout: duration (in milliseconds) to wait for the query to complete.
+    Returns:
+      A list of rows of results.
     """
     return self.process_results(ResultCollector(), page_size=page_size, timeout=timeout).rows
 
