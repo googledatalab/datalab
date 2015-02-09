@@ -112,8 +112,8 @@ class TestCases(unittest.TestCase):
     for table in ds:
       tables.append(table)
     self.assertEqual(2, len(tables))
-    self.assertEqual('test:testds.testTable1', tables[0].name)
-    self.assertEqual('test:testds.testTable2', tables[1].name)
+    self.assertEqual('test:testds.testTable1', tables[0].full_name)
+    self.assertEqual('test:testds.testTable2', tables[1].full_name)
 
   @mock.patch('gcp.bigquery._Api.tables_list')
   @mock.patch('gcp.bigquery._Api.datasets_get')
@@ -293,7 +293,7 @@ class TestCases(unittest.TestCase):
 
     result = table.insertAll(df)
     self.assertIsNotNone(result, "insertAll should return the table object")
-    mock_api_tabledata_insertAll.assert_called_with('testds', 'testTable0', [
+    mock_api_tabledata_insertAll.assert_called_with(('test', 'testds', 'testTable0'), [
       {'insertId': '#0', 'json': {u'column': 'r0', u'headers': 10.0, u'some': 0}},
       {'insertId': '#1', 'json': {u'column': 'r1', u'headers': 10.0, u'some': 1}},
       {'insertId': '#2', 'json': {u'column': 'r2', u'headers': 10.0, u'some': 2}},

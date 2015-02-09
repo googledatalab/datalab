@@ -167,8 +167,7 @@ class Query(object):
     if isinstance(table, basestring):
       table = _Table(self._api, table)
     query_result = self._api.jobs_insert_query(self._sql,
-                                               dataset_id=table.dataset_id if table else None,
-                                               table_id=table.table_id if table else None,
+                                               name_parts=table.name if table else None,
                                                append=append,
                                                overwrite=overwrite,
                                                dry_run=False,

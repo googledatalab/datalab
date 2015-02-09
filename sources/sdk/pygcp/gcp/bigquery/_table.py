@@ -14,6 +14,7 @@
 
 """Implements Table, and related Table BigQuery APIs."""
 
+import collections
 from datetime import datetime
 import json
 import pandas as pd
@@ -135,65 +136,6 @@ class TableSchema(list):
     return str(self._bq_schema)
 
 
-class TableMetadata(object):
-  """Represents metadata about a BigQuery table."""
-
-  def __init__(self, name, info):
-    """Initializes an instance of a TableMetadata.
-
-    Args:
-      name: the name of the table.
-      info: The BigQuery information about this table.
-    """
-    self._name = name
-    self._info = info
-
-  @property
-  def created_on(self):
-    """The creation timestamp."""
-    timestamp = self._info.get('creationTime')
-    return _Parser.parse_timestamp(timestamp)
-
-  @property
-  def description(self):
-    """The description of the table if it exists."""
-    return self._info.get('description', '')
-
-  @property
-  def expires_on(self):
-    """The timestamp for when the table will expire."""
-    timestamp = self._info.get('expirationTime', None)
-    if timestamp is None:
-      return None
-    return _Parser.parse_timestamp(timestamp)
-
-  @property
-  def friendly_name(self):
-    """The friendly name of the table if it exists."""
-    return self._info.get('friendlyName', '')
-
-  @property
-  def full_name(self):
-    """The full name of the table."""
-    return self._name
-
-  @property
-  def modified_on(self):
-    """The timestamp for when the table was last modified."""
-    timestamp = self._info.get('lastModifiedTime')
-    return _Parser.parse_timestamp(timestamp)
-
-  @property
-  def rows(self):
-    """The number of rows within the table."""
-    return self._info['numRows']
-
-  @property
-  def size(self):
-    """The size of the table in bytes."""
-    return self._info['numBytes']
-
-
 class DataSet(object):
   """Represents a list of BigQuery tables in a dataset."""
 
@@ -265,9 +207,8 @@ class DataSet(object):
     if len(tables):
       try:
         project_id = self._api.project_id
-        tables = map(lambda info: Table(self._api, (project_id,
-                                                    self._dataset_id,
-                                                    info['tableReference']['tableId'])), tables)
+        tables = [Table(self._api, (project_id, self._dataset_id,
+                                    info['tableReference']['tableId'])) for info in tables]
       except KeyError:
         raise Exception('Unexpected item list response.')
 
@@ -281,6 +222,68 @@ class DataSet(object):
     """Returns an empty representation for the dataset for showing in the notebook.
     """
     return ''
+
+
+class TableMetadata(object):
+  """Represents metadata about a BigQuery table."""
+
+  def __init__(self, name, info):
+    """Initializes an instance of a TableMetadata.
+
+    Args:
+      name: the name of the table.
+      info: The BigQuery information about this table.
+    """
+    self._name = name
+    self._info = info
+
+  @property
+  def created_on(self):
+    """The creation timestamp."""
+    timestamp = self._info.get('creationTime')
+    return _Parser.parse_timestamp(timestamp)
+
+  @property
+  def description(self):
+    """The description of the table if it exists."""
+    return self._info.get('description', '')
+
+  @property
+  def expires_on(self):
+    """The timestamp for when the table will expire."""
+    timestamp = self._info.get('expirationTime', None)
+    if timestamp is None:
+      return None
+    return _Parser.parse_timestamp(timestamp)
+
+  @property
+  def friendly_name(self):
+    """The friendly name of the table if it exists."""
+    return self._info.get('friendlyName', '')
+
+  @property
+  def full_name(self):
+    """The full name of the table."""
+    return self._name
+
+  @property
+  def modified_on(self):
+    """The timestamp for when the table was last modified."""
+    timestamp = self._info.get('lastModifiedTime')
+    return _Parser.parse_timestamp(timestamp)
+
+  @property
+  def rows(self):
+    """The number of rows within the table."""
+    return self._info['numRows']
+
+  @property
+  def size(self):
+    """The size of the table in bytes."""
+    return self._info['numBytes']
+
+
+TableName = collections.namedtuple('TableName', ['project_id', 'dataset_id', 'table_id'])
 
 
 class Table(object):
@@ -305,9 +308,6 @@ class Table(object):
   def parse_name(name, project_id=None, dataset_id=None):
     """Parses a table name into its individual parts.
 
-    The resulting tuple of name parts is a triple consisting of project id,
-    dataset id and table name.
-
     Args:
       name: the name to parse, or a triple containing the parts.
       project_id: the expected project ID. If the name does not contain a project ID,
@@ -317,7 +317,7 @@ class Table(object):
           this will be used; if the name does contain a dataset ID and it does not match
           this, an exception will be thrown.
     Returns:
-      A triple consisting of the individual name parts.
+      A tuple consisting of the full name and individual name parts.
     Raises:
       Exception: raised if the name doesn't match the expected formats.
     """
@@ -348,7 +348,7 @@ class Table(object):
       raise Exception('Invalid dataset ID %s in name %s; expected %s' %
                       (_dataset_id, name, dataset_id))
 
-    return _project_id, _dataset_id, _table_id
+    return TableName(_project_id, _dataset_id, _table_id)
 
   def __init__(self, api, name, is_temporary=False):
     """Initializes an instance of a Table object.
@@ -359,38 +359,20 @@ class Table(object):
       is_temporary: if True, this is a short-lived table for intermediate results (default False).
     """
     self._api = api
-
     self._name_parts = Table.parse_name(name, api.project_id)
     self._full_name = '%s:%s.%s' % self._name_parts
-    self._name = self._full_name
     self._info = None
     self._is_temporary = is_temporary
 
-  # TODO(gram): Move these properties to the metadata?
   @property
   def full_name(self):
-    """The full name of the table."""
+    """The full name for the table."""
     return self._full_name
 
   @property
   def name(self):
-    """The name of the table, as used when it was constructed."""
-    return self._name
-
-  @property
-  def project_id(self):
-    """The project ID for the table."""
-    return self._name_parts[0]
-
-  @property
-  def dataset_id(self):
-    """The dataset ID for the table."""
-    return self._name_parts[1]
-
-  @property
-  def table_id(self):
-    """The table ID for the table."""
-    return self._name_parts[2]
+    """The TableName for the table."""
+    return self._name_parts
 
   @property
   def istemporary(self):
@@ -436,7 +418,7 @@ class Table(object):
       Nothing
     """
     try:
-      self._api.table_delete(self.dataset_id, self.table_id)
+      self._api.table_delete(self._name_parts)
     except Exception as e:
       # TODO(gram): May want to check the error reasons here and if it is not
       # because the file didn't exist, return an error.
@@ -460,7 +442,7 @@ class Table(object):
       self.delete()
     if isinstance(schema, TableSchema):
       schema = schema._bq_schema
-    response = self._api.tables_insert(self.dataset_id, self.table_id, schema)
+    response = self._api.tables_insert(self._name_parts, schema)
     if 'selfLink' in response:
       return self
     raise Exception("Table %s could not be created as it already exists" % self.full_name)
@@ -583,7 +565,7 @@ class Table(object):
       total_pushed += 1
 
       if (total_pushed == total_rows) or (len(rows) == max_rows_per_post):
-        response = self._api.tabledata_insertAll(self.dataset_id, self.table_id, rows)
+        response = self._api.tabledata_insertAll(self._name_parts, rows)
         if 'insertErrors' in response:
           raise Exception('insertAll failed: %s' % response['insertErrors'])
 
@@ -606,7 +588,7 @@ class Table(object):
     Returns:
       A Job object for the export Job if it was started successfully; else None.
     """
-    response = self._api.table_extract(self.dataset_id, self.table_id, destination, format, compress,
+    response = self._api.table_extract(self._name_parts, destination, format, compress,
                                       field_delimiter, print_header)
     return _Job(self._api, response['jobReference']['jobId']) \
         if response and 'jobReference' in response else None
@@ -623,7 +605,7 @@ class Table(object):
     Returns:
       A Job object for the load Job if it was started successfully; else None.
     """
-    response = self._api.jobs_insert_load(source, self.dataset_id, self.table_id,
+    response = self._api.jobs_insert_load(source, self._name_parts,
                                           append=append, overwrite=overwrite,
                                           source_format=source_format)
     return _Job(self._api, response['jobReference']['jobId']) \
@@ -642,7 +624,7 @@ class Table(object):
     rows = []
     schema = self.schema()
     while True:
-      response = self._api.tabledata_list(self.dataset_id, self.table_id, start_index=start_row,
+      response = self._api.tabledata_list(self._name_parts, start_index=start_row,
                                           max_results=max_rows, page_token=page_token)
       page_rows = response['rows']
       page_token = response['pageToken'] if 'pageToken' in response else None
