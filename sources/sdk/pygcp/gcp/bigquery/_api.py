@@ -23,11 +23,11 @@ class Api(object):
 
   # TODO(nikhilko): Use named placeholders in these string templates.
   _ENDPOINT = 'https://www.googleapis.com/bigquery/v2'
-  _JOBS_PATH = '/projects/%s/jobs'
-  _QUERY_PATH = '/projects/%s/queries'
-  _QUERY_RESULT_PATH = '/projects/%s/queries/%s'
+  _JOBS_PATH = '/projects/%s/jobs/%s'
+  _QUERIES_PATH = '/projects/%s/queries/%s'
   _DATASETS_PATH = '/projects/%s/datasets/%s'
   _TABLES_PATH = '/projects/%s/datasets/%s/tables/%s'
+  _TABLEDATA_PATH = '/projects/%s/datasets/%s/tables/%s/data'
 
   _DEFAULT_PAGE_SIZE = 10000
   _DEFAULT_TIMEOUT = 60000
@@ -47,25 +47,73 @@ class Api(object):
     """The project_id associated with this API client."""
     return self._project_id
 
+  def jobs_insert_load(self, source, dataset_id, table_id, append=False, overwrite=False,
+                       source_format='CSV'):
+    """ Issues a request to load data from GCS to a BQ table
+
+    Args:
+      source: the URL of the source bucket(s). Can include wildcards, and can be a single
+          string argument or a list.
+      dataset_id: the dataset id of the destination table.
+      table_id: the table id of the destination table.
+      append: if True append onto existing table contents.
+      overwrite: if True overwrite existing table contents.
+      source_format: the format of the data; default 'CSV'. Other options are DATASTORE_BACKUP
+          or NEWLINE_DELIMITED_JSON.
+    Returns:
+      A parsed result object.
+    Raises:
+      Exception if there is an error performing the operation.
+    """
+    url = Api._ENDPOINT + (Api._JOBS_PATH % self._project_id)
+    if isinstance(source, basestring):
+      source = [source]
+    write_disposition = 'WRITE_EMPTY'
+    if overwrite:
+      write_disposition = 'WRITE_TRUNCATE'
+    if append:
+      write_disposition = 'WRITE_APPEND'
+    data = {
+      'kind': 'bigquery#job',
+      'configuration': {
+        'load': {
+          'sourceUris': source,
+          'destinationTable': {
+            'projectId': self._project_id,
+            'datasetId': dataset_id,
+            'tableId': table_id
+          },
+          'createDisposition': 'CREATE_NEVER',
+          'writeDisposition': write_disposition,
+          'sourceFormat': source_format,
+        }
+      }
+    }
+    return _util.Http.request(url, data=data, credentials=self._credentials)
+
   def jobs_insert_query(self, sql, dataset_id=None, table_id=None, append=False, overwrite=False,
-                        dry_run=False, use_cache=True):
+                        dry_run=False, use_cache=True, batch=True):
     """Issues a request to insert a query job.
 
     Args:
       sql: the SQL string representing the query to execute.
       dataset_id: None for an anonymous table, or the datasetId for a long-lived table.
       table_id: None for an anonymous table, or the tableId for a long-lived table.
-      append: if True, append to the table if it is non-empty; else the request will fail if table is non-empty
-          unless overwrite is True.
-      overwrite: if the table already exists, truncate it instead of appending or raising an Exception.
+      append: if True, append to the table if it is non-empty; else the request will fail if table
+          is non-empty unless overwrite is True.
+      overwrite: if the table already exists, truncate it instead of appending or raising an
+          Exception.
       dry_run: whether to actually execute the query or just dry run it.
-      use_cache: whether to use past query results or ignore cache. Has no effect if destination is specified.
+      use_cache: whether to use past query results or ignore cache. Has no effect if destination is
+          specified.
+      batch: whether to run this as a batch job (lower priority) or as an interactive job (high
+        priority, more expensive).
     Returns:
-      A parsed query result object.
+      A parsed result object.
     Raises:
       Exception if there is an error performing the operation.
     """
-    url = Api._ENDPOINT + (Api._JOBS_PATH % self._project_id)
+    url = Api._ENDPOINT + (Api._JOBS_PATH % (self._project_id, ''))
     data = {
       'kind': 'bigquery#job',
       'configuration': {
@@ -74,7 +122,7 @@ class Api(object):
           'useQueryCache': use_cache
         },
         'dryRun': dry_run,
-        'priority': 'INTERACTIVE',
+        'priority': 'BATCH' if batch else 'INTERACTIVE',
       },
     }
 
@@ -103,16 +151,16 @@ class Api(object):
       dry_run: whether to actually execute the query or just dry run it.
       use_cache: whether to use past query results or ignore cache.
     Returns:
-      A parsed query result object.
+      A parsed result object.
     Raises:
       Exception if there is an error performing the operation.
     """
     if page_size == 0:
       page_size = Api._DEFAULT_PAGE_SIZE
-    if timeout == None:
+    if timeout == None:  # Note: we use == to distinguish with timeout 0.
       timeout = Api._DEFAULT_TIMEOUT
 
-    url = Api._ENDPOINT + (Api._QUERY_PATH % self._project_id)
+    url = Api._ENDPOINT + (Api._QUERIES_PATH % self._project_id, '')
     data = {
         'kind': 'bigquery#queryRequest',
         'query': sql,
@@ -131,15 +179,16 @@ class Api(object):
       job_id: the id of job from a previously executed query.
       page_size: limit to the number of rows to fetch per page.
       timeout: duration (in milliseconds) to wait for the query to complete.
-      start_index: the index of the row (0-based) at which to start retrieving the page of result rows.
+      start_index: the index of the row (0-based) at which to start retrieving the page of result
+          rows.
     Returns:
-      A parsed query result object.
+      A parsed result object.
     Raises:
       Exception if there is an error performing the operation.
     """
     if page_size == 0:
       page_size = Api._DEFAULT_PAGE_SIZE
-    if timeout == None:
+    if timeout == None:  # Note: we use == to distinguish with timeout 0.
       timeout = Api._DEFAULT_TIMEOUT
 
     args = {
@@ -148,8 +197,21 @@ class Api(object):
         'startIndex': start_index
       }
 
-    url = Api._ENDPOINT + (Api._QUERY_RESULT_PATH % (self._project_id, job_id))
+    url = Api._ENDPOINT + (Api._QUERIES_PATH % (self._project_id, job_id))
     return _util.Http.request(url, args=args, credentials=self._credentials)
+
+  def jobs_get(self, job_id):
+    """Issues a request to retrieve information about a job.
+
+    Args:
+      dataset_id: the id of the dataset
+    Returns:
+      A parsed result object.
+    Raises:
+      Exception if there is an error performing the operation.
+    """
+    url = Api._ENDPOINT + (Api._JOBS_PATH % self._project_id, job_id)
+    return _util.Http.request(url, credentials=self._credentials)
 
   def datasets_insert(self, dataset_id, friendly_name=None, description=None):
     """Issues a request to create a dataset.
@@ -159,7 +221,7 @@ class Api(object):
       friendly_name: (optional) the friendly name for the dataset
       description: (optional) a description for the dataset
     Returns:
-      The "Self link" URL of the file on success, on None on failure.
+      A parsed result object.
     Raises:
       Exception if there is an error performing the operation.
     """
@@ -175,10 +237,7 @@ class Api(object):
       data['friendlyName'] = friendly_name
     if description:
       data['description'] = description
-    response = _util.Http.request(url, data=data, credentials=self._credentials)
-    if 'selfLink' in response:
-      return response['selfLink']
-    return None
+    return _util.Http.request(url, data=data, credentials=self._credentials)
 
   def datasets_delete(self, dataset_id, delete_contents=False):
     """Issues a request to delete a dataset.
@@ -188,7 +247,7 @@ class Api(object):
       delete_contents: if True, any tables in the dataset will be deleted. If False and the
           dataset is non-empty an exception will be raised.
     Returns:
-      The response object.
+      A parsed result object.
     Raises:
       Exception if there is an error performing the operation.
     """
@@ -204,7 +263,7 @@ class Api(object):
     Args:
       dataset_id: the id of the dataset
     Returns:
-      A parsed dataset information object.
+      A parsed result object.
     Raises:
       Exception if there is an error performing the operation.
     """
@@ -218,7 +277,7 @@ class Api(object):
       max_results: an optional maximum number of tables to retrieve.
       page_token: an optional token to continue the retrieval.
     Returns:
-      A parsed dataset list.
+      A parsed result object.
     Raises:
       Exception if there is an error performing the operation.
     """
@@ -238,7 +297,7 @@ class Api(object):
     Args:
       name_parts: a tuple representing the full name of the table.
     Returns:
-      A parsed table information object.
+      A parsed result object.
     Raises:
       Exception if there is an error performing the operation.
     """
@@ -253,7 +312,7 @@ class Api(object):
       max_results: an optional maximum number of tables to retrieve.
       page_token: an optional token to continue the retrieval.
     Returns:
-      A parsed table list object.
+      A parsed result object.
     Raises:
       Exception if there is an error performing the operation.
     """
@@ -277,7 +336,7 @@ class Api(object):
       friendly_name: an optional friendly name.
       description: an optional description.
     Returns:
-      The "Self link" URL of the file on success, on None on failure.
+      A parsed result object.
     Raises:
       Exception if there is an error performing the operation.
     """
@@ -300,12 +359,9 @@ class Api(object):
     if description:
       data['description'] = description
 
-    response = _util.Http.request(url, data=data, credentials=self._credentials)
-    if 'selfLink' in response:
-      return response['selfLink']
-    return None
+    return _util.Http.request(url, data=data, credentials=self._credentials)
 
-  def tables_insertAll(self, dataset_id, table_id, rows):
+  def tabledata_insertAll(self, dataset_id, table_id, rows):
     """Issues a request to insert data into a table.
 
     Args:
@@ -313,7 +369,7 @@ class Api(object):
       table_id: the id of the table to populate
       rows: the data to populate the table, as a list of dictionaries.
     Returns:
-      The HTTP response object.
+      A parsed result object.
     Raises:
       Exception if there is an error performing the operation.
     """
@@ -327,6 +383,31 @@ class Api(object):
 
     return _util.Http.request(url, data=data, credentials=self._credentials)
 
+  def tabledata_list(self, dataset_id, table_id, start_index=None, max_results=None,
+                     page_token=None):
+    """ Retrieves the contents of a table.
+
+    Args:
+      dataset_id: the name of the dataset containing the table.
+      table_id: the id of the table to list.
+      start_index: the index of the row at which to start retrieval.
+      max_results: an optional maximum number of rows to retrieve.
+      page_token: an optional token to continue the retrieval.
+    Returns:
+      A parsed result object.
+    Raises:
+      Exception if there is an error performing the operation.
+    """
+    url = Api._ENDPOINT + (Api._TABLEDATA_PATH % (self._project_id, dataset_id, table_id))
+    args = {}
+    if start_index:
+      args['startIndex'] = start_index
+    if max_results:
+      args['maxResults'] = max_results
+    if page_token is not None:
+      args['pageToken'] = page_token
+    return _util.Http.request(url, args=args, credentials=self._credentials)
+
   def table_delete(self, dataset_id, table_id):
     """Issues a request to delete a table.
 
@@ -334,7 +415,52 @@ class Api(object):
       dataset_id: the name of the dataset containing the table to populate.
       table_id: the id of the table to populate.
     Returns:
-      TODO(gram): figure out what this should be
+      A parsed result object.
+    Raises:
+      Exception if there is an error performing the operation.
     """
     url = Api._ENDPOINT + (Api._TABLES_PATH % (self._project_id, dataset_id, table_id))
     return _util.Http.request(url, method='DELETE', credentials=self._credentials)
+
+  def table_extract(self, dataset_id, table_id, destination, format='CSV', compressed=True,
+                   field_delimiter=',', print_header=True):
+    """Exports the table to GCS.
+
+    Args:
+      destination: the destination URI(s). Can be a single URI or a list.
+      format: the format to use for the exported data; one of CSV, NEWLINE_DELIMITED_JSON or AVRO.
+          Defaults to CSV.
+      compress whether to compress the data on export. Compression is not supported for
+          AVRO format. Defaults to False.
+      field_delimiter: for CSV exports, the field delimiter to use. Defaults to ','
+      print_header: for CSV exports, whether to include an initial header line. Default true.
+    Returns:
+      A parsed result object.
+    Raises:
+      Exception if there is an error performing the operation.
+    """
+    # TODO(gram): Do we need to support the case where the project ID for the export is different
+    # to that of the table? This could happen but is not well-supported by our API.
+    url = Api._ENDPOINT + (Api._JOBS_PATH % self._project_id, '')
+    if isinstance(destination, basestring):
+      destination = [destination]
+    data = {
+      #'projectId': self._project_id, # Code sample shows this but it is not in job reference spec
+      # Filed as b/19235843
+      'kind': 'bigquery#job',
+      'configuration': {
+        'extract': {
+          'sourceTable': {
+            'projectId': self._project_id,
+            'datasetId': dataset_id,
+            'tableId': table_id
+          },
+          'compression': 'GZIP' if compressed else 'NONE',
+          'fieldDelimiter': field_delimiter,
+          'printHeader': print_header,
+          'destinationUris': destination,
+          'destinationFormat': format,
+        }
+      }
+    }
+    return _util.Http.request(url, data=data, credentials=self._credentials)

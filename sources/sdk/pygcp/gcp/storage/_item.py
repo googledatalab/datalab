@@ -136,7 +136,7 @@ class Item(object):
     """Writes text content to this item.
 
     Args:
-      content: the text content to be writtent.
+      content: the text content to be written.
       content_type: the type of text content.
     Raises:
       Exception if there was an error requesting the item's content.

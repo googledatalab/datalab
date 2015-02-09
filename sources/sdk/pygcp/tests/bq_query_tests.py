@@ -30,9 +30,9 @@ class TestCases(unittest.TestCase):
     q = self._create_query(sql)
     results = q.results()
 
-    self.assertEqual(results.sql, sql)
-    self.assertEqual(len(results), 1)
-    self.assertEqual(results[0]['field1'], 'value1')
+    self.assertEqual(sql, results.sql)
+    self.assertEqual(1, len(results))
+    self.assertEqual('value1', results[0]['field1'])
 
   @mock.patch('gcp.bigquery._Api.jobs_query_results')
   @mock.patch('gcp.bigquery._Api.jobs_insert_query')
@@ -56,9 +56,9 @@ class TestCases(unittest.TestCase):
     q = self._create_query()
     results = q.results()
 
-    self.assertEqual(len(results), 1)
-    self.assertEqual(results.job_id, 'test_job')
-    self.assertEqual(mock_api_query_results.call_count, 1)
+    self.assertEqual(1, len(results))
+    self.assertEqual('test_job', results.job_id)
+    self.assertEqual(1, mock_api_query_results.call_count)
 
   @mock.patch('gcp.bigquery._Api.jobs_query_results')
   @mock.patch('gcp.bigquery._Api.jobs_insert_query')
@@ -71,9 +71,9 @@ class TestCases(unittest.TestCase):
     q = self._create_query()
     results = q.results()
 
-    self.assertEqual(len(results), 2)
-    self.assertEqual(mock_api_query_results.call_count, 2)
-    self.assertEqual(mock_api_query_results.call_args[0][0], 'test_job')
+    self.assertEqual(2, len(results))
+    self.assertEqual(2, mock_api_query_results.call_count)
+    self.assertEqual('test_job', mock_api_query_results.call_args[0][0])
 
   @mock.patch('gcp.bigquery._Api.jobs_insert_query')
   def test_malformed_response_raises_exception(self, mock_api_insert_query):
@@ -83,7 +83,7 @@ class TestCases(unittest.TestCase):
 
     with self.assertRaises(Exception) as error:
       _ = q.results()
-    self.assertEqual(error.exception[0], 'Unexpected query response.')
+    self.assertEqual('Unexpected query response.', error.exception[0])
 
   def _create_query(self, sql=None):
     if sql is None: sql = 'SELECT * ...'
@@ -99,6 +99,15 @@ class TestCases(unittest.TestCase):
     return {
       'jobReference': {
         'jobId': 'test_job'
+      },
+      'configuration': {
+        'query': {
+          'destinationTable': {
+            'projectId': 'project',
+            'datasetId': 'dataset',
+            'tableId': 'table'
+          }
+        }
       },
       'jobComplete': True,
     }
@@ -136,6 +145,15 @@ class TestCases(unittest.TestCase):
     return {
       'jobReference': {
         'jobId': 'test_job'
+      },
+      'configuration': {
+        'query': {
+          'destinationTable': {
+            'projectId': 'project',
+            'datasetId': 'dataset',
+            'tableId': 'table'
+          }
+        }
       },
       'jobComplete': False
     }

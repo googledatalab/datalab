@@ -14,6 +14,7 @@
 
 """Implements Table, and related Table BigQuery APIs."""
 
+from datetime import datetime
 import json
 import pandas as pd
 import re
@@ -21,9 +22,10 @@ import time
 import uuid
 
 from gcp._util import Iterator as _Iterator
-from ._query import Query as _Query
+from ._job import Job as _Job
 from ._parser import Parser as _Parser
 from ._sampling import Sampling as _Sampling
+import _query
 
 
 class TableSchema(list):
@@ -252,7 +254,7 @@ class DataSet(object):
       response = self._api.datasets_insert(self._dataset_id,
                                            friendly_name=friendly_name,
                                            description=description)
-      if not response:
+      if 'selfLink' not in response:
         raise Exception("Could not create dataset %s.%s" % self.full_name)
     return self
 
@@ -279,7 +281,6 @@ class DataSet(object):
     """Returns an empty representation for the dataset for showing in the notebook.
     """
     return ''
-
 
 
 class Table(object):
@@ -346,12 +347,13 @@ class Table(object):
 
     return _project_id, _dataset_id, _table_id
 
-  def __init__(self, api, name):
+  def __init__(self, api, name, is_temporary=False):
     """Initializes an instance of a Table object.
 
     Args:
       api: the BigQuery API object to use to issue requests.
       name: the name of the table either as a string or a 3-part tuple (projectid, datasetid, name).
+      is_temporary: if True, this is a short-lived table for intermediate results (default False).
     """
     self._api = api
 
@@ -359,6 +361,7 @@ class Table(object):
     self._full_name = '%s:%s.%s' % self._name_parts
     self._name = self._full_name
     self._info = None
+    self._is_temporary = is_temporary
 
   # TODO(gram): Move these properties to the metadata?
   @property
@@ -385,6 +388,11 @@ class Table(object):
   def table_id(self):
     """The table ID for the table."""
     return self._name_parts[2]
+
+  @property
+  def istemporary(self):
+    """ Whether this is a short-lived table or not. """
+    return self._is_temporary
 
   def _load_info(self):
     """Loads metadata about this table."""
@@ -450,9 +458,9 @@ class Table(object):
     if isinstance(schema, TableSchema):
       schema = schema._bq_schema
     response = self._api.tables_insert(self.dataset_id, self.table_id, schema)
-    if not response:
-      raise Exception("Table %s could not be created as it already exists" % self.full_name)
-    return self
+    if 'selfLink' in response:
+      return self
+    raise Exception("Table %s could not be created as it already exists" % self.full_name)
 
   def sample(self, fields=None, count=5, sampling=None, timeout=0, use_cache=True):
     """Retrieves a sampling of data from the table.
@@ -472,25 +480,37 @@ class Table(object):
     if sampling is None:
       sampling = _Sampling.default(fields=fields, count=count)
     sql = sampling(self._repr_sql_())
-    q = _Query(self._api, sql)
+    q = _query.Query(self._api, sql)
 
     return q.results(timeout=timeout, use_cache=use_cache)
 
-  def insertAll(self, dataframe, include_index=False, chunk_size=10000):
+  def insertAll(self, dataframe, include_index=False):
     """ Insert the contents of a Pandas dataframe into the table. Note that at present, any
         timeunit values will be truncated to integral seconds. Support for microsecond resolution
         will come later.
+
     Args:
       dataframe: the dataframe to insert.
       include_index: whether to include the DataFrame index as a column in the BQ table.
-      chunk_size: for a large dataframe, the max number of records per POST. Note that BigQuery
-          limits each POST to max 1MB in size.
     Returns:
       The table.
     Raises:
       Exception if the table doesn't exists, the schema differs from the dataframe's, or the insert
           failed.
     """
+
+    # There are BigQuery limits on the streaming API:
+    #
+    # max_rows_per_post = 500
+    # max_bytes_per_row = 20000
+    # max_rows_per_second = 10000
+    # max_bytes_per_post = 1000000
+    # max_bytes_per_second = 10000000
+    #
+    # It is non-trivial to enforce these here, but as an approximation we enforce the 500 row limit
+    # with a 0.1 sec POST interval.
+    max_rows_per_post = 500
+    post_interval = 0.1
 
     # TODO(gram): add different exception types for each failure case.
     if not self.exists():
@@ -515,15 +535,15 @@ class Table(object):
     job_id = uuid.uuid4().hex
     rows = []
     # reset_index creates a new dataframe so we don't affect the original. reset_index(drop=True)
-    # drops the original index and uses a integer range.
+    # drops the original index and uses an integer range.
     # TODO(gram): if we want to support microsecond timestamps, we will need to use date_unit="us"
     # and then iterate through any timestamp fields and divide the values by 10^6, as BQ expects
     # fractional seconds while Pandas encodes to integral values of the specified unit only.
     # TODO(gram): related to the above, rework to not need the intermediate JSON representation.
     # And create a separate version which can take a list of Python objects.
     for index, dataframe_row in dataframe.reset_index(drop=not include_index).iterrows():
-      encoded = json.loads(dataframe_row.to_json(force_ascii=False, date_unit='s',
-                                                 date_format='iso'))
+      json_row = dataframe_row.to_json(force_ascii=False, date_unit='s', date_format='iso')
+      encoded = json.loads(json_row)
 
       rows.append({
         'json': encoded,
@@ -532,14 +552,93 @@ class Table(object):
 
       total_pushed += 1
 
-      if (total_pushed == total_rows) or (len(rows) == chunk_size):
-        response = self._api.tables_insertAll(self.dataset_id, self.table_id, rows)
+      if (total_pushed == total_rows) or (len(rows) == max_rows_per_post):
+        response = self._api.tabledata_insertAll(self.dataset_id, self.table_id, rows)
         if 'insertErrors' in response:
           raise Exception('insertAll failed: %s' % response['insertErrors'])
 
-        time.sleep(1)  # Streaming API is rate-limited
+        time.sleep(post_interval)  # Streaming API is rate-limited
         rows = []
     return self
+
+  def extract(self, destination, format='CSV', compress=False,
+              field_delimiter=',', print_header=True):
+    """Exports the table to GCS.
+
+    Args:
+      destination: the destination URI(s). Can be a single URI or a list.
+      format: the format to use for the exported data; one of CSV, NEWLINE_DELIMITED_JSON or AVRO.
+          Defaults to CSV.
+      compress whether to compress the data on export. Compression is not supported for
+          AVRO format. Defaults to False.
+      field_delimiter: for CSV exports, the field delimiter to use. Defaults to ','
+      print_header: for CSV exports, whether to include an initial header line. Default true.
+    Returns:
+      A Job object for the export Job if it was started successfully; else None.
+    """
+    response = self._api.table_extract(self.dataset_id, self.table_id, destination, format, compress,
+                                      field_delimiter, print_header)
+    return _Job(self._api, response['jobReference']['jobId']) \
+        if response and 'jobReference' in response else None
+
+  def load(self, source, append=False, overwrite=False, source_format='CSV'):
+    """ Load the table from GCS.
+
+    Args:
+      source: the URL of the source bucket(s). Can include wildcards.
+      append: if True append onto existing table contents.
+      overwrite: if True overwrite existing table contents.
+      source_format: the format of the data; default 'CSV'. Other options are DATASTORE_BACKUP
+          or NEWLINE_DELIMITED_JSON.
+    Returns:
+      A Job object for the load Job if it was started successfully; else None.
+    """
+    response = self._api.jobs_insert_load(source, self.dataset_id, self.table_id,
+                                          append=append, overwrite=overwrite,
+                                          source_format=source_format)
+    return _Job(self._api, response['jobReference']['jobId']) \
+        if response and 'jobReference' in response else None
+
+  def to_dataframe(self, start_row=0, max_rows=None):
+    """ Exports the table to a Pandas dataframe.
+
+    Args:
+      start_row: the row of the table at which to start the export (default 0)
+      max_rows: an upper limit on the number of rows to export (default None)
+    Returns:
+      A dataframe containing the table data.
+    """
+    page_token = None
+    rows = []
+    schema = self.schema()
+    while True:
+      response = self._api.tabledata_list(self.dataset_id, self.table_id, start_index=start_row,
+                                          max_results=max_rows, page_token=page_token)
+      page_rows = response['rows']
+      page_token = response['pageToken'] if 'pageToken' in response else None
+      total_rows = response['totalRows'] if 'totalRows' in response else len(rows)
+
+      if not max_rows or max_rows > total_rows:
+        max_rows = total_rows
+      for row_dict in page_rows:
+        row = row_dict['f']
+        record = {}
+        column_index = 0
+        for col in row:
+          value = col['v']
+          if schema[column_index].data_type == 'TIMESTAMP':
+            value = datetime.utcfromtimestamp(float(value))
+          record[schema[column_index].name] = value
+          column_index += 1
+
+        rows.append(record)
+
+      start_row += len(page_rows)
+      max_rows -= len(page_rows)
+      if max_rows <= 0:
+        break
+
+    return pd.DataFrame(rows)
 
   def schema(self):
     """Retrieves the schema of the table.
