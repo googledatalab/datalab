@@ -47,15 +47,14 @@ class Api(object):
     """The project_id associated with this API client."""
     return self._project_id
 
-  def jobs_insert_load(self, source, dataset_id, table_id, append=False, overwrite=False,
+  def jobs_insert_load(self, source, table_name, append=False, overwrite=False,
                        source_format='CSV'):
     """ Issues a request to load data from GCS to a BQ table
 
     Args:
       source: the URL of the source bucket(s). Can include wildcards, and can be a single
           string argument or a list.
-      dataset_id: the dataset id of the destination table.
-      table_id: the table id of the destination table.
+      table_name: a tuple representing the full name of the destination table.
       append: if True append onto existing table contents.
       overwrite: if True overwrite existing table contents.
       source_format: the format of the data; default 'CSV'. Other options are DATASTORE_BACKUP
@@ -79,9 +78,9 @@ class Api(object):
         'load': {
           'sourceUris': source,
           'destinationTable': {
-            'projectId': self._project_id,
-            'datasetId': dataset_id,
-            'tableId': table_id
+            'projectId': table_name.project_id,
+            'datasetId': table_name.dataset_id,
+            'tableId': table_name.table_id
           },
           'createDisposition': 'CREATE_NEVER',
           'writeDisposition': write_disposition,
@@ -91,14 +90,13 @@ class Api(object):
     }
     return _util.Http.request(url, data=data, credentials=self._credentials)
 
-  def jobs_insert_query(self, sql, dataset_id=None, table_id=None, append=False, overwrite=False,
+  def jobs_insert_query(self, sql, table_name=None, append=False, overwrite=False,
                         dry_run=False, use_cache=True, batch=True):
     """Issues a request to insert a query job.
 
     Args:
       sql: the SQL string representing the query to execute.
-      dataset_id: None for an anonymous table, or the datasetId for a long-lived table.
-      table_id: None for an anonymous table, or the tableId for a long-lived table.
+      table_name: None for an anonymous table, or a name parts tuple for a long-lived table.
       append: if True, append to the table if it is non-empty; else the request will fail if table
           is non-empty unless overwrite is True.
       overwrite: if the table already exists, truncate it instead of appending or raising an
@@ -126,12 +124,12 @@ class Api(object):
       },
     }
 
-    if dataset_id and table_id:
+    if table_name:
       query_config = data['configuration']['query']
       query_config['destinationTable'] = {
-        'projectId': self._project_id,
-        'datasetId': dataset_id,
-        'tableId': table_id
+        'projectId': table_name.project_id,
+        'datasetId': table_name.dataset_id,
+        'tableId': table_name.table_id
       }
       if append:
         query_config['writeDisposition'] = "WRITE_APPEND"
@@ -140,8 +138,7 @@ class Api(object):
 
     return _util.Http.request(url, data=data, credentials=self._credentials)
 
-  def jobs_query(self, sql, page_size=0, timeout=None, dry_run=False,
-                 use_cache=True):
+  def jobs_query(self, sql, page_size=0, timeout=None, dry_run=False, use_cache=True):
     """Issues a request to the jobs/query method.
 
     Args:
@@ -291,17 +288,17 @@ class Api(object):
 
     return _util.Http.request(url, args=args, credentials=self._credentials)
 
-  def tables_get(self, name_parts):
+  def tables_get(self, table_name):
     """Issues a request to retrieve information about a table.
 
     Args:
-      name_parts: a tuple representing the full name of the table.
+      table_name: a tuple representing the full name of the table.
     Returns:
       A parsed result object.
     Raises:
       Exception if there is an error performing the operation.
     """
-    url = Api._ENDPOINT + (Api._TABLES_PATH % name_parts)
+    url = Api._ENDPOINT + (Api._TABLES_PATH % table_name)
     return _util.Http.request(url, credentials=self._credentials)
 
   def tables_list(self, dataset_id, max_results=0, page_token=None):
@@ -326,12 +323,11 @@ class Api(object):
 
     return _util.Http.request(url, args=args, credentials=self._credentials)
 
-  def tables_insert(self, dataset_id, table_id, schema, friendly_name=None, description=None):
+  def tables_insert(self, table_name, schema, friendly_name=None, description=None):
     """Issues a request to create a table in the specified dataset with the specified id and schema.
 
     Args:
-      dataset_id: the name of the dataset containing the table to create.
-      table_id: the id of the table to create.
+      table_name: the name of the table as a tuple of components.
       schema: the schema of the data.
       friendly_name: an optional friendly name.
       description: an optional description.
@@ -340,14 +336,14 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    url = Api._ENDPOINT + (Api._TABLES_PATH % (self._project_id, dataset_id, ''))
+    url = Api._ENDPOINT + (Api._TABLES_PATH % (table_name.project_id, table_name.dataset_id, ''))
 
     data = {
       'kind': 'bigquery#table',
       'tableReference': {
-        'projectId': self._project_id,
-        'datasetId': dataset_id,
-        'tableId': table_id
+        'projectId': table_name.project_id,
+        'datasetId': table_name.dataset_id,
+        'tableId': table_name.table_id
       },
       'schema': {
         'fields': schema
@@ -361,20 +357,18 @@ class Api(object):
 
     return _util.Http.request(url, data=data, credentials=self._credentials)
 
-  def tabledata_insertAll(self, dataset_id, table_id, rows):
+  def tabledata_insertAll(self, table_name, rows):
     """Issues a request to insert data into a table.
 
     Args:
-      dataset_id: the name of the dataset containing the table to populate.
-      table_id: the id of the table to populate
+      table_name: the name of the table as a tuple of components.
       rows: the data to populate the table, as a list of dictionaries.
     Returns:
       A parsed result object.
     Raises:
       Exception if there is an error performing the operation.
     """
-    url = Api._ENDPOINT + (Api._TABLES_PATH % (self._project_id, dataset_id, table_id)) +\
-          "/insertAll"
+    url = Api._ENDPOINT + (Api._TABLES_PATH % table_name) + "/insertAll"
 
     data = {
       'kind': 'bigquery#tableDataInsertAllRequest',
@@ -383,13 +377,11 @@ class Api(object):
 
     return _util.Http.request(url, data=data, credentials=self._credentials)
 
-  def tabledata_list(self, dataset_id, table_id, start_index=None, max_results=None,
-                     page_token=None):
+  def tabledata_list(self, table_name, start_index=None, max_results=None, page_token=None):
     """ Retrieves the contents of a table.
 
     Args:
-      dataset_id: the name of the dataset containing the table.
-      table_id: the id of the table to list.
+      table_name: the name of the table as a tuple of components.
       start_index: the index of the row at which to start retrieval.
       max_results: an optional maximum number of rows to retrieve.
       page_token: an optional token to continue the retrieval.
@@ -398,7 +390,7 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    url = Api._ENDPOINT + (Api._TABLEDATA_PATH % (self._project_id, dataset_id, table_id))
+    url = Api._ENDPOINT + (Api._TABLEDATA_PATH % table_name)
     args = {}
     if start_index:
       args['startIndex'] = start_index
@@ -408,25 +400,25 @@ class Api(object):
       args['pageToken'] = page_token
     return _util.Http.request(url, args=args, credentials=self._credentials)
 
-  def table_delete(self, dataset_id, table_id):
+  def table_delete(self, table_name):
     """Issues a request to delete a table.
 
     Args:
-      dataset_id: the name of the dataset containing the table to populate.
-      table_id: the id of the table to populate.
+      table_name: the name of the table as a tuple of components.
     Returns:
       A parsed result object.
     Raises:
       Exception if there is an error performing the operation.
     """
-    url = Api._ENDPOINT + (Api._TABLES_PATH % (self._project_id, dataset_id, table_id))
+    url = Api._ENDPOINT + (Api._TABLES_PATH % table_name)
     return _util.Http.request(url, method='DELETE', credentials=self._credentials)
 
-  def table_extract(self, dataset_id, table_id, destination, format='CSV', compressed=True,
+  def table_extract(self, table_name, destination, format='CSV', compressed=True,
                    field_delimiter=',', print_header=True):
     """Exports the table to GCS.
 
     Args:
+      table_name: the name of the table as a tuple of components.
       destination: the destination URI(s). Can be a single URI or a list.
       format: the format to use for the exported data; one of CSV, NEWLINE_DELIMITED_JSON or AVRO.
           Defaults to CSV.
@@ -451,9 +443,9 @@ class Api(object):
       'configuration': {
         'extract': {
           'sourceTable': {
-            'projectId': self._project_id,
-            'datasetId': dataset_id,
-            'tableId': table_id
+            'projectId': table_name.project_id,
+            'datasetId': table_name.dataset_id,
+            'tableId': table_name.table_id,
           },
           'compression': 'GZIP' if compressed else 'NONE',
           'fieldDelimiter': field_delimiter,
