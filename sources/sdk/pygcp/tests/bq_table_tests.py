@@ -341,6 +341,11 @@ class TestCases(unittest.TestCase):
     self.assertEquals(3.1415, df['headers'][0])
     self.assertEquals(0.5, df['headers'][1])
 
+  def test_encode_dict_as_row(self):
+    when = dt.datetime(2001, 2, 3, 4, 5, 6, 7)
+    row = gcp.bigquery._Table._encode_dict_as_row({'fo@o': 'b@r', 'b+ar': when}, {})
+    self.assertEqual({'foo': 'b@r', 'bar': '2001-02-03T04:05:06.000007'}, row)
+
   def _create_context(self):
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')

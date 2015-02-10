@@ -298,6 +298,9 @@ class Table(object):
   # Table-only name pattern: <table>
   _TABLE_NAME_PATTERN = r'^([a-zA-Z0-9_]+)$'
 
+  # Allowed characters in a BigQuery table column name
+  _VALID_COLUMN_NAME_CHARACTERS = '_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+
   @staticmethod
   def parse_name(name, project_id=None, dataset_id=None):
     """Parses a table name into its individual parts.
@@ -484,6 +487,35 @@ class Table(object):
 
     return q.results(timeout=timeout, use_cache=use_cache)
 
+  @staticmethod
+  def _encode_dict_as_row(record, column_name_map):
+    """ Encode a dictionary representing a table row in a form suitable for streaming to BQ.
+        This means encoding timestamps as ISO-compatible strings and removing invalid
+        characters from column names.
+
+    Args:
+      record: a Python dictionary representing the table row.
+      column_name_map: a dictionary mapping dictionary keys to column names. This is initially
+        empty and built up by this method when it first encounters each column, then used as a
+        cache subsequently.
+    Returns:
+      The sanitized dictionary.
+    """
+    for k in record.keys():
+      v = record[k]
+      # If the column is a date, convert to ISO string.
+      if isinstance(v, pd.Timestamp) or isinstance(v, datetime):
+        v = record[k] = record[k].isoformat()
+
+      # If k has invalid characters clean it up
+      if k not in column_name_map:
+        column_name_map[k] = ''.join(c for c in k if c in Table._VALID_COLUMN_NAME_CHARACTERS)
+      new_k = column_name_map[k]
+      if k != new_k:
+        record[new_k] = v
+        del record[k]
+    return record
+
   def insertAll(self, dataframe, include_index=False):
     """ Insert the contents of a Pandas dataframe into the table. Note that at present, any
         timeunit values will be truncated to integral seconds. Support for microsecond resolution
@@ -498,6 +530,7 @@ class Table(object):
       Exception if the table doesn't exists, the schema differs from the dataframe's, or the insert
           failed.
     """
+    # TODO(gram): create a version which can take a list of Python objects.
 
     # There are BigQuery limits on the streaming API:
     #
@@ -518,6 +551,8 @@ class Table(object):
 
     data_schema = TableSchema(dataframe)
     table_schema = self.schema()
+
+    # Do some validation of the two schema to make sure they are compatible.
     for data_field in data_schema:
       name = data_field.name
       table_field = table_schema[name]
@@ -534,19 +569,14 @@ class Table(object):
 
     job_id = uuid.uuid4().hex
     rows = []
+    column_name_map = {}
+
     # reset_index creates a new dataframe so we don't affect the original. reset_index(drop=True)
     # drops the original index and uses an integer range.
-    # TODO(gram): if we want to support microsecond timestamps, we will need to use date_unit="us"
-    # and then iterate through any timestamp fields and divide the values by 10^6, as BQ expects
-    # fractional seconds while Pandas encodes to integral values of the specified unit only.
-    # TODO(gram): related to the above, rework to not need the intermediate JSON representation.
-    # And create a separate version which can take a list of Python objects.
     for index, dataframe_row in dataframe.reset_index(drop=not include_index).iterrows():
-      json_row = dataframe_row.to_json(force_ascii=False, date_unit='s', date_format='iso')
-      encoded = json.loads(json_row)
 
       rows.append({
-        'json': encoded,
+        'json': self._encode_dict_as_row(dataframe_row.to_dict(), column_name_map),
         'insertId': job_id + str(index)
       })
 
