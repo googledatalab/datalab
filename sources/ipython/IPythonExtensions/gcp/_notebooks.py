@@ -449,7 +449,12 @@ class StorageNotebookManager(SimpleNotebookManager):
 
   @staticmethod
   def _create_bucket():
+    # Use the project id to construct a valid bucket name (as predictably unique
+    # as we can make it). Some caveats:
+    # - The name cannot contain 'google'
+    # - Project ids maybe domain-qualified, eg. foo.com:bar
     project_id = _gcp.Context.default().project_id
+    project_id = project_id.replace('google.com', 'gcom').replace(':', '-').replace('.', '-')
     bucket_name = project_id + '-ipython'
 
     buckets = _storage.buckets()
