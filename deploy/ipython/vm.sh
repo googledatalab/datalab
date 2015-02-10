@@ -71,7 +71,7 @@ fi
 VM_IMAGE=container-vm-v20150129
 DOCKER_IMAGE="gcr.io/cloud_datalab/gcp-ipython:$TAG"
 
-CLOUD_PROJECT=`gcloud config list project --format text | sed 's/core\.project: //' | sed 's/google\.com/gcom/' | sed 's/:/-/' | sed 's/\./-/'`
+CLOUD_PROJECT=`gcloud config list project --format text | sed 's/core\.project: //' | sed 's/google\.com/gcom/' | sed 's/[:\.]/-/g'`
 NETWORK_NAME=ipython
 NOTEBOOKS_BUCKET="gs://$CLOUD_PROJECT-ipython"
 NOTEBOOKS_TARGET="gs://$CLOUD_PROJECT-ipython/"
