@@ -14,6 +14,7 @@
 
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 
+import argparse
 import json as _json
 import re as _re
 import time as _time
@@ -28,15 +29,59 @@ except ImportError:
 
 
 @_magic.register_cell_magic
-def bq_sql(declaration, sql):
+def bigquery(line, cell):
   """Implements the bigquery cell magic for ipython notebooks.
 
   The supported syntax is:
-  %%bq_sql [<var>]
+  %%bigquery [<line>]
+  <cell>
+
+  Args:
+    line: the contents of the %%bigquery line.
+    cell: the contents of the cell.
+  Returns:
+    The results of executing the cell.
+  """
+  parser = argparse.ArgumentParser(prog='%%bigquery')
+  subparsers = parser.add_subparsers(help='sub-commands')
+
+  sql_parser = subparsers.add_parser('sql', help=
+      'execute a BigQuery SQL statement or create a named query object')
+  sql_parser.add_argument('-n', '--name', nargs=1, help='the name for this query object')
+  sql_parser.set_defaults(func=lambda x: _sql_cell(vars(x), cell))
+
+  udf_parser = subparsers.add_parser('udf', help='create a named Javascript UDF')
+  udf_parser.add_argument('-n', '--name', nargs=1, help='the name for this UDF',
+                          required=True)
+  udf_parser.set_defaults(func=lambda x: _udf_cell(vars(x), cell))
+
+  for p in [parser, sql_parser, udf_parser]:
+    p.exit = _parser_exit  # raise exception, don't call sys.exit
+    p.format_usage = p.format_help  # Show full help always
+
+  args = filter(None, line.split())
+  try:
+    parser.parse_args(args)
+  except Exception as e:
+    pass
+
+
+def _parser_exit(status=0, message=None):
+  """ Replacement exit method for argument parser. We want to stop processing args but not
+      call sys.exit(), so we raise an exception here and catch it in the call to parse_args.
+  """
+  raise Exception()
+
+
+def _sql_cell(args, sql):
+  """Implements the SQL bigquery cell magic for ipython notebooks.
+
+  The supported syntax is:
+  %%bigquery sql [--name <var>]
   <sql>
 
   Args:
-    declaration: the optional variable to be initialized with the resulting query.
+    args: the optional arguments following '%%bigquery sql'.
     sql: the contents of the cell interpreted as the SQL.
   Returns:
     The results of executing the query converted to a dataframe if no variable
@@ -50,7 +95,7 @@ def bq_sql(declaration, sql):
   sql = _bq.sql(sql, **ipy.user_ns)
   query = _bq.query(sql)
 
-  variable_name = declaration.strip()
+  variable_name = args['name']
   if len(variable_name):
     # Update the global namespace with the new variable, or update the value of
     # the existing variable if it already exists.
@@ -62,15 +107,15 @@ def bq_sql(declaration, sql):
     return query.results()
 
 
-@_magic.register_cell_magic
-def bq_udf(declaration, js):
+def _udf_cell(args, js):
   """Implements the bigquery_udf cell magic for ipython notebooks.
 
   The supported syntax is:
-  %%bq_udf <var>
+  %%bigquery udf --name <var>
   <js function>
 
   Args:
+    args: the optional arguments following '%%bigquery udf'.
     declaration: the variable to initialize with the resulting UDF object.
     js: the UDF declaration (inputs and outputs) and implementation in javascript.
   Returns:
@@ -79,9 +124,9 @@ def bq_udf(declaration, js):
   """
   ipy = _ipython.get_ipython()
 
-  variable_name = declaration.strip()
+  variable_name = args['name']
   if len(variable_name) == 0:
-    raise Exception("Declaration must be of the form %%bq_udf -> <variable name>.")
+    raise Exception("Declaration must be of the form %%bigquery udf <variable name>")
 
   # Parse out the input and output specification
   spec_pattern = r'\{\{([^}]+)\}\}'
