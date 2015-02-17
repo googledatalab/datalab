@@ -14,8 +14,8 @@
 
 """Implements Table, and related Table BigQuery APIs."""
 
+import collections
 from datetime import datetime
-import json
 import pandas as pd
 import re
 import time
@@ -24,7 +24,6 @@ import uuid
 from gcp._util import Iterator as _Iterator
 from ._job import Job as _Job
 from ._parser import Parser as _Parser
-from ._sampling import Sampling as _Sampling
 import _query
 
 
@@ -135,6 +134,188 @@ class TableSchema(list):
     return str(self._bq_schema)
 
 
+# TODO(gram): Move dataset to its own file.
+DataSetName = collections.namedtuple('DataSetName', ['project_id', 'dataset_id'])
+
+
+class DataSet(object):
+  """Represents a list of BigQuery tables in a dataset."""
+
+  # Absolute project-qualified name pattern: <project>:<dataset>
+  _ABS_NAME_PATTERN = r'^([a-z0-9\-_\.:]+)\:([a-zA-Z0-9_]+)$'
+
+  # Relative name pattern: <dataset>
+  _REL_NAME_PATTERN = r'^([a-zA-Z0-9_]+)$'
+
+  @staticmethod
+  def _parse_name(name, project_id=None):
+    """Parses a dataset name into its individual parts.
+
+    Args:
+      name: the name to parse, or a tuple, dictionary or array containing the parts.
+      project_id: the expected project ID. If the name does not contain a project ID,
+          this will be used; if the name does contain a project ID and it does not match
+          this, an exception will be thrown.
+    Returns:
+      The DataSetName for the dataset.
+    Raises:
+      Exception: raised if the name doesn't match the expected formats.
+    """
+    _project_id = _dataset_id = None
+    if isinstance(name, basestring):
+      # Try to parse as absolute name first.
+      m = re.match(DataSet._ABS_NAME_PATTERN, name, re.IGNORECASE)
+      if m is not None:
+        _project_id, _dataset_id = m.groups()
+      else:
+        # Next try to match as a relative name implicitly scoped within current project.
+        m = re.match(DataSet._REL_NAME_PATTERN, name)
+        if m is not None:
+          groups = m.groups()
+          _dataset_id = groups[0]
+    else:
+      # Try treat as a dictionary or named tuple
+      try:
+        _dataset_id = name.dataset_id
+        _project_id = name.project_id
+      except AttributeError:
+        if len(name) == 2:
+          # Treat as a tuple or array.
+          _project_id, _dataset_id = name
+    if not _dataset_id:
+      raise Exception('Invalid dataset name: ' + str(name))
+    if not _project_id:
+      _project_id = project_id
+
+    return DataSetName(_project_id, _dataset_id)
+
+  def __init__(self, api, name):
+    """Initializes an instance of a DataSet.
+
+    Args:
+      api: the BigQuery API object to use to issue requests. The project ID will be inferred from
+          this.
+      name: the name of the dataset, as a string or (project_id, dataset_id) tuple.
+    """
+    self._api = api
+    self._name_parts = DataSet._parse_name(name, api.project_id)
+    self._full_name = '%s:%s' % self._name_parts
+
+  @property
+  def full_name(self):
+    """The full name for the dataset."""
+    return self._full_name
+
+  @property
+  def name(self):
+    """The DataSetName for the dataset."""
+    return self._name_parts
+
+  def exists(self):
+    """ Checks if the dataset exists.
+
+    Args:
+      None
+    Returns:
+      True if the dataset exists; False otherwise.
+    """
+    try:
+      _ = self._api.datasets_get(self._name_parts)
+    except Exception as e:
+      if (len(e.args[0]) > 1) and (e.args[0][1] == 404):
+        return False
+      raise e
+    return True
+
+  def delete(self, delete_contents=False):
+    """Issues a request to delete the dataset.
+
+    Args:
+      delete_contents: if True, any tables in the dataset will be deleted. If False and the
+          dataset is non-empty an exception will be raised.
+    Returns:
+      None on success.
+    Raises:
+      Exception if the delete fails (including if table was nonexistent).
+    """
+    if not self.exists():
+      raise Exception('Cannot delete non-existent table %s' % self._full_name)
+    self._api.datasets_delete(self._name_parts, delete_contents=delete_contents)
+    return None
+
+  def create(self, friendly_name=None, description=None):
+    """Creates the Dataset with the specified friendly name and description.
+
+    Args:
+      friendly_name: (optional) the friendly name for the dataset if it is being created.
+      description: (optional) a description for the dataset if it is being created.
+    Returns:
+      The DataSet.
+    Raises:
+      Exception if the DataSet could not be created.
+    """
+    if not self.exists():
+      response = self._api.datasets_insert(self._name_parts,
+                                           friendly_name=friendly_name,
+                                           description=description)
+      if 'selfLink' not in response:
+        raise Exception("Could not create dataset %s.%s" % self.full_name)
+    return self
+
+  def _retrieve_tables(self, page_token):
+    list_info = self._api.tables_list(self._name_parts, page_token=page_token)
+
+    tables = list_info.get('tables', [])
+    if len(tables):
+      try:
+        tables = [Table(self._api, (self._name_parts.project_id, self._name_parts.dataset_id,
+                                    info['tableReference']['tableId'])) for info in tables]
+      except KeyError:
+        raise Exception('Unexpected item list response.')
+
+    page_token = list_info.get('nextPageToken', None)
+    return tables, page_token
+
+  def __iter__(self):
+    """ Supports iterating through the Tables in the dataset.
+    """
+    return iter(_Iterator(self._retrieve_tables))
+
+  def __repr__(self):
+    """Returns an empty representation for the dataset for showing in the notebook.
+    """
+    return ''
+
+
+class DataSetLister(object):
+  """ Helper class for enumerating the datasets in a project.
+  """
+
+  def __init__(self, api, project_id=None):
+    self._api = api
+    self._project_id = project_id if project_id else api.project_id
+
+  def _retrieve_datasets(self, page_token):
+    list_info = self._api.datasets_list(self._project_id, page_token=page_token)
+
+    datasets = list_info.get('datasets', [])
+    if len(datasets):
+      try:
+        datasets = [DataSet(self._api,
+                            (self._project_id, info['datasetReference']['datasetId']))
+                    for info in datasets]
+      except KeyError:
+        raise Exception('Unexpected item list response.')
+
+    page_token = list_info.get('nextPageToken', None)
+    return datasets, page_token
+
+  def __iter__(self):
+    """ Supports iterating through the DataSets in the project.
+    """
+    return iter(_Iterator(self._retrieve_datasets))
+
+
 class TableMetadata(object):
   """Represents metadata about a BigQuery table."""
 
@@ -194,93 +375,7 @@ class TableMetadata(object):
     return self._info['numBytes']
 
 
-class DataSet(object):
-  """Represents a list of BigQuery tables in a dataset."""
-
-  def __init__(self, api, dataset_id):
-    """Initializes an instance of a DataSet.
-
-    Args:
-      api: the BigQuery API object to use to issue requests. The project ID will be inferred from
-          this.
-      dataset_id: the BigQuery dataset ID corresponding to this list.
-    """
-    self._api = api
-    self._dataset_id = dataset_id
-
-  def exists(self):
-    """ Checks if the dataset exists.
-
-    Args:
-      None
-    Returns:
-      True if the dataset exists; False otherwise.
-    """
-    try:
-      _ = self._api.datasets_get(self._dataset_id)
-    except Exception as e:
-      if (len(e.args[0]) > 1) and (e.args[0][1] == 404):
-        return False
-      raise e
-    return True
-
-  def delete(self, delete_contents=False):
-    """Issues a request to delete the dataset.
-
-    Args:
-      delete_contents: if True, any tables in the dataset will be deleted. If False and the
-          dataset is non-empty an exception will be raised.
-    Returns:
-      None on success (including if the dataset didn't exist).
-    Raises:
-      Exception if the delete fails.
-    """
-    if self.exists():
-      self._api.datasets_delete(self._dataset_id, delete_contents=delete_contents)
-    return None
-
-  def create(self, friendly_name=None, description=None):
-    """Creates the Dataset with the specified friendly name and description.
-
-    Args:
-      friendly_name: (optional) the friendly name for the dataset if it is being created.
-      description: (optional) a description for the dataset if it is being created.
-    Returns:
-      The DataSet.
-    Raises:
-      Exception if the DataSet could not be created.
-    """
-    if not self.exists():
-      response = self._api.datasets_insert(self._dataset_id,
-                                           friendly_name=friendly_name,
-                                           description=description)
-      if 'selfLink' not in response:
-        raise Exception("Could not create dataset %s.%s" % self.full_name)
-    return self
-
-  def _retrieve_tables(self, page_token):
-    list_info = self._api.tables_list(page_token=page_token)
-
-    tables = list_info.get('tables', [])
-    if len(tables):
-      try:
-        project_id = self._api.project_id
-        tables = map(lambda info: Table(self._api, (project_id,
-                                                    self._dataset_id,
-                                                    info['tableReference']['tableId'])), tables)
-      except KeyError:
-        raise Exception('Unexpected item list response.')
-
-    page_token = list_info.get('nextPageToken', None)
-    return tables, page_token
-
-  def __iter__(self):
-    return iter(_Iterator(self._retrieve_tables))
-
-  def __repr__(self):
-    """Returns an empty representation for the dataset for showing in the notebook.
-    """
-    return ''
+TableName = collections.namedtuple('TableName', ['project_id', 'dataset_id', 'table_id'])
 
 
 class Table(object):
@@ -302,14 +397,11 @@ class Table(object):
   _VALID_COLUMN_NAME_CHARACTERS = '_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 
   @staticmethod
-  def parse_name(name, project_id=None, dataset_id=None):
+  def _parse_name(name, project_id=None, dataset_id=None):
     """Parses a table name into its individual parts.
 
-    The resulting tuple of name parts is a triple consisting of project id,
-    dataset id and table name.
-
     Args:
-      name: the name to parse, or a triple containing the parts.
+      name: the name to parse, or a tuple, dictionary or array containing the parts.
       project_id: the expected project ID. If the name does not contain a project ID,
           this will be used; if the name does contain a project ID and it does not match
           this, an exception will be thrown.
@@ -317,10 +409,11 @@ class Table(object):
           this will be used; if the name does contain a dataset ID and it does not match
           this, an exception will be thrown.
     Returns:
-      A triple consisting of the individual name parts.
+      A tuple consisting of the full name and individual name parts.
     Raises:
       Exception: raised if the name doesn't match the expected formats.
     """
+    _project_id =  _dataset_id = _table_id = None
     if isinstance(name, basestring):
       # Try to parse as absolute name first.
       m = re.match(Table._ABS_NAME_PATTERN, name, re.IGNORECASE)
@@ -338,17 +431,26 @@ class Table(object):
           if m is not None:
             groups = m.groups()
             _project_id, _dataset_id, _table_id = project_id, dataset_id, groups[0]
-          else:
-            raise Exception('Invalid table name: ' + name)
     else:
-      # Treat as a triple.
-      _project_id, _dataset_id, _table_id = name
+      # Try treat as a dictionary or named tuple
+      try:
+        _table_id = name.table_id
+        _dataset_id = name.dataset_id
+        _project_id = name.project_id
+      except AttributeError:
+        # Treat as a tuple or array.
+        if len(name) == 3:
+          _project_id, _dataset_id, _table_id = name
+        elif len(name) == 2:
+          _dataset_id, _table_id = name
+    if not _table_id:
+      raise Exception('Invalid table name: ' + str(name))
+    if not _project_id:
+      _project_id = project_id
+    if not _dataset_id:
+      _dataset_id = dataset_id
 
-    if dataset_id and _dataset_id != dataset_id:
-      raise Exception('Invalid dataset ID %s in name %s; expected %s' %
-                      (_dataset_id, name, dataset_id))
-
-    return _project_id, _dataset_id, _table_id
+    return TableName(_project_id, _dataset_id, _table_id)
 
   def __init__(self, api, name, is_temporary=False):
     """Initializes an instance of a Table object.
@@ -359,38 +461,20 @@ class Table(object):
       is_temporary: if True, this is a short-lived table for intermediate results (default False).
     """
     self._api = api
-
-    self._name_parts = Table.parse_name(name, api.project_id)
+    self._name_parts = Table._parse_name(name, api.project_id)
     self._full_name = '%s:%s.%s' % self._name_parts
-    self._name = self._full_name
     self._info = None
     self._is_temporary = is_temporary
 
-  # TODO(gram): Move these properties to the metadata?
   @property
   def full_name(self):
-    """The full name of the table."""
+    """The full name for the table."""
     return self._full_name
 
   @property
   def name(self):
-    """The name of the table, as used when it was constructed."""
-    return self._name
-
-  @property
-  def project_id(self):
-    """The project ID for the table."""
-    return self._name_parts[0]
-
-  @property
-  def dataset_id(self):
-    """The dataset ID for the table."""
-    return self._name_parts[1]
-
-  @property
-  def table_id(self):
-    """The table ID for the table."""
-    return self._name_parts[2]
+    """The TableName for the table."""
+    return self._name_parts
 
   @property
   def istemporary(self):
@@ -436,7 +520,7 @@ class Table(object):
       Nothing
     """
     try:
-      self._api.table_delete(self.dataset_id, self.table_id)
+      self._api.table_delete(self._name_parts)
     except Exception as e:
       # TODO(gram): May want to check the error reasons here and if it is not
       # because the file didn't exist, return an error.
@@ -460,10 +544,24 @@ class Table(object):
       self.delete()
     if isinstance(schema, TableSchema):
       schema = schema._bq_schema
-    response = self._api.tables_insert(self.dataset_id, self.table_id, schema)
+    response = self._api.tables_insert(self._name_parts, schema)
     if 'selfLink' in response:
       return self
     raise Exception("Table %s could not be created as it already exists" % self.full_name)
+
+  def sampling_query(self, fields=None, count=5, sampling=None):
+    """Returns a sampling Query for the query.
+
+    Args:
+      fields: an optional list of field names to retrieve.
+      count: an optional count of rows to retrieve which is used if a specific
+          sampling is not specified.
+      sampling: an optional sampling strategy to apply to the table.
+    Returns:
+      A Query object for sampling the table.
+    """
+    return _query.Query._sampling_query(self._api, self._repr_sql_(), count=count, fields=fields,
+                                        sampling=sampling)
 
   def sample(self, fields=None, count=5, sampling=None, timeout=0, use_cache=True):
     """Retrieves a sampling of data from the table.
@@ -476,16 +574,12 @@ class Table(object):
       timeout: duration (in milliseconds) to wait for the query to complete.
       use_cache: whether to use cached results or not.
     Returns:
-      A query results object containing the resulting data.
+      A QueryResults object containing the resulting data.
     Raises:
       Exception if the sample query could not be executed or query response was malformed.
     """
-    if sampling is None:
-      sampling = _Sampling.default(fields=fields, count=count)
-    sql = sampling(self._repr_sql_())
-    q = _query.Query(self._api, sql)
-
-    return q.results(timeout=timeout, use_cache=use_cache)
+    return self.sampling_query(count=count, fields=fields, sampling=sampling).\
+        results(timeout=timeout, use_cache=use_cache)
 
   @staticmethod
   def _encode_dict_as_row(record, column_name_map):
@@ -517,9 +611,7 @@ class Table(object):
     return record
 
   def insertAll(self, dataframe, include_index=False):
-    """ Insert the contents of a Pandas dataframe into the table. Note that at present, any
-        timeunit values will be truncated to integral seconds. Support for microsecond resolution
-        will come later.
+    """ Insert the contents of a Pandas dataframe into the table.
 
     Args:
       dataframe: the dataframe to insert.
@@ -527,7 +619,7 @@ class Table(object):
     Returns:
       The table.
     Raises:
-      Exception if the table doesn't exists, the schema differs from the dataframe's, or the insert
+      Exception if the table doesn't exist, the schema differs from the dataframe's, or the insert
           failed.
     """
     # TODO(gram): create a version which can take a list of Python objects.
@@ -583,7 +675,7 @@ class Table(object):
       total_pushed += 1
 
       if (total_pushed == total_rows) or (len(rows) == max_rows_per_post):
-        response = self._api.tabledata_insertAll(self.dataset_id, self.table_id, rows)
+        response = self._api.tabledata_insertAll(self._name_parts, rows)
         if 'insertErrors' in response:
           raise Exception('insertAll failed: %s' % response['insertErrors'])
 
@@ -606,7 +698,7 @@ class Table(object):
     Returns:
       A Job object for the export Job if it was started successfully; else None.
     """
-    response = self._api.table_extract(self.dataset_id, self.table_id, destination, format, compress,
+    response = self._api.table_extract(self._name_parts, destination, format, compress,
                                       field_delimiter, print_header)
     return _Job(self._api, response['jobReference']['jobId']) \
         if response and 'jobReference' in response else None
@@ -623,7 +715,7 @@ class Table(object):
     Returns:
       A Job object for the load Job if it was started successfully; else None.
     """
-    response = self._api.jobs_insert_load(source, self.dataset_id, self.table_id,
+    response = self._api.jobs_insert_load(source, self._name_parts,
                                           append=append, overwrite=overwrite,
                                           source_format=source_format)
     return _Job(self._api, response['jobReference']['jobId']) \
@@ -642,7 +734,7 @@ class Table(object):
     rows = []
     schema = self.schema()
     while True:
-      response = self._api.tabledata_list(self.dataset_id, self.table_id, start_index=start_row,
+      response = self._api.tabledata_list(self._name_parts, start_index=start_row,
                                           max_results=max_rows, page_token=page_token)
       page_rows = response['rows']
       page_token = response['pageToken'] if 'pageToken' in response else None

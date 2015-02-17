@@ -88,6 +88,26 @@ class Query(object):
   def sql(self):
     return self._sql
 
+  @staticmethod
+  def _sampling_query(api, sql, count=5, fields=None, sampling=None):
+    """Creates a Query to sample the provided SQL query or table.
+
+    Args:
+      api: the BigQuery API object to use to issue requests.
+      sql: the SQL object to sample (a query or table).
+      count: an optional count of rows to retrieve which is used if a specific
+          sampling is not specified.
+      fields: an optional list of field names to retrieve.
+      sampling: an optional sampling strategy to apply to the table.
+    Returns:
+      A Query that will sample the specified object.
+    """
+    if sampling is None:
+      sampling = _Sampling.default(count=count, fields=fields)
+    sampling_sql = sampling(sql)
+
+    return Query(api, sampling_sql)
+
   def results(self, page_size=0, timeout=0, use_cache=True):
     """Retrieves results for the query.
 
@@ -108,7 +128,7 @@ class Query(object):
     return self._results
 
   def save_to_file(self, path, page_size=0, timeout=0, use_cache=True, write_header=True,
-           dialect=csv.excel):
+                   dialect=csv.excel):
     """Save the results to a local file in CSV format.
 
     Args:
@@ -119,12 +139,30 @@ class Query(object):
       write_header: if true (the default), write column name header row at start of file
       dialect: the format to use for the output. By default, csv.excel. See
           https://docs.python.org/2/library/csv.html#csv-fmt-params for how to customize this.
+    Returns:
+      The path to the local file.
+    Raises:
+      An Exception if the operation failed.
     """
     job = self.execute(table=None, use_cache=use_cache, batch=False)
     job.save_results_as_csv(path, write_header, dialect, page_size, timeout=timeout)
     return path
 
-  def sample(self, count=5, sampling=None, timeout=0, use_cache=True):
+  def sampling_query(self, count=5, fields=None, sampling=None):
+    """Returns a sampling Query for the query.
+
+    Args:
+      count: an optional count of rows to retrieve which is used if a specific
+          sampling is not specified.
+      fields: an optional list of field names to retrieve.
+      sampling: an optional sampling strategy to apply to the table.
+    Returns:
+      A new Query for sampling this Query.
+    """
+    return Query._sampling_query(self._api, self._sql, count=count, fields=fields,
+                                 sampling=sampling)
+
+  def sample(self, count=5, fields=None, sampling=None, timeout=0, use_cache=True):
     """Retrieves a sampling of rows for the query.
 
     Args:
@@ -138,19 +176,16 @@ class Query(object):
     Raises:
       Exception if the query could not be executed or query response was malformed.
     """
-    if sampling is None:
-      sampling = _Sampling.default(count=count)
-    sampling_sql = sampling(self._sql)
-
-    sampling_query = Query(self._api, sampling_sql)
-    return sampling_query.results(page_size=0, timeout=timeout, use_cache=use_cache)
+    return self.sampling_query(count=count, fields=fields, sampling=sampling).\
+        results(timeout=timeout, use_cache=use_cache)
 
   def execute(self, table=None, append=False, overwrite=False, use_cache=True, batch=True):
     """ Initiate the query.
 
     Args:
       dataset_id: the datasetId for the result table.
-      table: the result table; either a string name or a Table.
+      table: the result table; either a string name or a Table. If None, then a temporary
+          table will be used.
       append: if True, append to the table if it is non-empty; else the request will fail if table
           is non-empty unless overwrite is True.
       overwrite: if the table already exists, truncate it instead of appending or raising an
@@ -167,8 +202,7 @@ class Query(object):
     if isinstance(table, basestring):
       table = _Table(self._api, table)
     query_result = self._api.jobs_insert_query(self._sql,
-                                               dataset_id=table.dataset_id if table else None,
-                                               table_id=table.table_id if table else None,
+                                               table_name=table.name if table else None,
                                                append=append,
                                                overwrite=overwrite,
                                                dry_run=False,

@@ -23,6 +23,7 @@ from ._query import Query as _Query
 from ._sampling import Sampling
 from ._table import Table as _Table
 from ._table import DataSet as _DataSet
+from ._table import DataSetLister as _DataSetLister
 from ._table import TableSchema as _TableSchema
 from ._udf import Function as _Function
 
@@ -102,7 +103,7 @@ def table(name, context=None):
   <project]:<dataset>.<table> or <dataset>.<table>.
 
   Args:
-    name: the name of the table.
+    name: the name of the table, as a string or (project_id, dataset_id, table_id) tuple.
     context: an optional Context object providing project_id and credentials.
   Returns:
     A Table object that can be used to retrieve table metadata from BigQuery.
@@ -113,11 +114,18 @@ def table(name, context=None):
   return _Table(api, name)
 
 
-def dataset(dataset_id, context=None, create=False, friendly_name=None, description=None):
+def datasets(project_id=None, context=None):
+  api = _create_api(context)
+  if not project_id:
+    project_id = api.project_id
+  return _DataSetLister(api, project_id)
+
+
+def dataset(name, context=None):
   """Returns the Dataset with the specified dataset_id.
 
   Args:
-    dataset_id: the name of the dataset.
+    name: the name of the dataset, as a string or (project_id, dataset_id) tuple.
     context: an optional Context object providing project_id and credentials.
   Returns:
     A DataSet object.
@@ -125,7 +133,7 @@ def dataset(dataset_id, context=None, create=False, friendly_name=None, descript
   # TODO(gram): the creation part here is a stopgap until we have an API review and decide
   # what to do.
   api = _create_api(context)
-  return _DataSet(api, dataset_id)
+  return _DataSet(api, name)
 
 
 def schema(data):
