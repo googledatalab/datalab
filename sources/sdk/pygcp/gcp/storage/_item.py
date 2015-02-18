@@ -179,7 +179,7 @@ class ItemList(object):
       raise e
     return True
 
-  def _retrieve_items(self, page_token):
+  def _retrieve_items(self, page_token, count):
     list_info = self._api.objects_list(self._bucket,
                                        prefix=self._prefix, delimiter=self._delimiter,
                                        page_token=page_token)

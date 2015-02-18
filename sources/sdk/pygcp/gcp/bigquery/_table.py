@@ -262,7 +262,7 @@ class DataSet(object):
         raise Exception("Could not create dataset %s.%s" % self.full_name)
     return self
 
-  def _retrieve_tables(self, page_token):
+  def _retrieve_tables(self, page_token, count):
     list_info = self._api.tables_list(self._name_parts, page_token=page_token)
 
     tables = list_info.get('tables', [])
@@ -295,7 +295,7 @@ class DataSetLister(object):
     self._api = api
     self._project_id = project_id if project_id else api.project_id
 
-  def _retrieve_datasets(self, page_token):
+  def _retrieve_datasets(self, page_token, count):
     list_info = self._api.datasets_list(self._project_id, page_token=page_token)
 
     datasets = list_info.get('datasets', [])
@@ -367,12 +367,12 @@ class TableMetadata(object):
   @property
   def rows(self):
     """The number of rows within the table."""
-    return self._info['numRows']
+    return int(self._info['numRows'])
 
   @property
   def size(self):
     """The size of the table in bytes."""
-    return self._info['numBytes']
+    return int(self._info['numBytes'])
 
 
 TableName = collections.namedtuple('TableName', ['project_id', 'dataset_id', 'table_id'])
@@ -721,27 +721,44 @@ class Table(object):
     return _Job(self._api, response['jobReference']['jobId']) \
         if response and 'jobReference' in response else None
 
-  def to_dataframe(self, start_row=0, max_rows=None):
-    """ Exports the table to a Pandas dataframe.
+  def _get_row_fetcher(self, max_rows=None, start_row=None):
+    """ Get a function that can retrieve a page of rows.
+
+    The function returned is a closure so that it can have a signature suitable for use
+    by Iterator.
 
     Args:
-      start_row: the row of the table at which to start the export (default 0)
-      max_rows: an upper limit on the number of rows to export (default None)
+      max_rows: the maximum number of rows to fetch (across all calls, not per-call). Default
+        is None which means no limit.
+      start_row: the row to start fetching from; default 0.
     Returns:
-      A dataframe containing the table data.
+      A function that can be called repeatedly with a page token and running count, and that
+      will return an array of rows and a next page token; when the returned page token is None
+      the fetch is complete.
     """
-    page_token = None
-    rows = []
+    if not start_row:
+      start_row = 0
+    elif start_row < 0:  # We are measuring from the table end
+      start_row += len(self)
     schema = self.schema()
-    while True:
-      response = self._api.tabledata_list(self._name_parts, start_index=start_row,
-                                          max_results=max_rows, page_token=page_token)
-      page_rows = response['rows']
-      page_token = response['pageToken'] if 'pageToken' in response else None
-      total_rows = response['totalRows'] if 'totalRows' in response else len(rows)
+    name_parts = self._name_parts
 
-      if not max_rows or max_rows > total_rows:
-        max_rows = total_rows
+    def _retrieve_rows(page_token, count):
+      if max_rows and count >= max_rows:
+        page_rows = []
+        page_token = None
+      else:
+        if page_token:
+          max_results = max_rows - count if max_rows else None
+          response = self._api.tabledata_list(name_parts, page_token=page_token,
+                                              max_results=max_results)
+        else:
+          response = self._api.tabledata_list(name_parts, start_index=start_row,
+                                              max_results=max_rows)
+        page_token = response['pageToken'] if 'pageToken' in response else None
+        page_rows = response['rows']
+
+      rows = []
       for row_dict in page_rows:
         row = row_dict['f']
         record = {}
@@ -755,12 +772,48 @@ class Table(object):
 
         rows.append(record)
 
-      start_row += len(page_rows)
-      max_rows -= len(page_rows)
-      if max_rows <= 0:
+      return rows, page_token
+
+    return _retrieve_rows
+
+  def range(self, max_rows, start_row=None):
+    """ Get an iterator to iterate through a set of table rows.
+
+    Args:
+      max_rows: an upper limit on the number of rows to iterate through (default None)
+      start_row: the row of the table at which to start the iteration (default 0)
+
+    Returns:
+      A row iterator.
+    """
+    return iter(_Iterator(self._get_row_fetcher(max_rows, start_row=start_row)))
+
+  def to_dataframe(self, start_row=0, max_rows=None):
+    """ Exports the table to a Pandas dataframe.
+
+    Args:
+      start_row: the row of the table at which to start the export (default 0)
+      max_rows: an upper limit on the number of rows to export (default None)
+    Returns:
+      A dataframe containing the table data.
+    """
+    fetcher = self._get_row_fetcher(max_rows, start_row=start_row)
+    rows = []
+    count = 0
+    page_token = None
+    while True:
+      page_rows, page_token = fetcher(page_token, count)
+      count += len(page_rows)
+      rows.extend(page_rows)
+      if not page_token:
         break
 
     return pd.DataFrame(rows)
+
+  def __len__(self):
+    """ Get the length of the table (number of rows).
+    """
+    return self.metadata().rows
 
   def schema(self):
     """Retrieves the schema of the table.
