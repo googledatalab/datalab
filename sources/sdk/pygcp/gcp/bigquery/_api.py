@@ -212,7 +212,7 @@ class Api(object):
       Exception if there is an error performing the operation.
     """
     # TODO(gram) Do we need to be able to handle other project_ids?
-    url = Api._ENDPOINT + (Api._JOBS_PATH % self._project_id, job_id)
+    url = Api._ENDPOINT + (Api._JOBS_PATH % (self._project_id, job_id))
     return _util.Http.request(url, credentials=self._credentials)
 
   def datasets_insert(self, dataset_name, friendly_name=None, description=None):

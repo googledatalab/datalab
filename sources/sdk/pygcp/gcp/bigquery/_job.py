@@ -285,8 +285,14 @@ class QueryJob(Job):
 
   @property
   def table(self):
-    """ Get the table used for the results of the query (note: the query may not be complete).
+    """ Get the table used for the results of the query. If the query is incomplete, this blocks.
     """
+    if not self.iscomplete:
+      query_result = self._api.jobs_query_results(self._job_id,
+                                                  page_size=0,
+                                                  timeout=self._DEFAULT_TIMEOUT)
+      if not query_result['jobComplete']:
+        return None
     return self._table
 
   def process_results(self, result_processor, page_size=0, timeout=None):
