@@ -279,9 +279,10 @@ class QueryJob(Job):
 
   _DEFAULT_TIMEOUT = 60000
 
-  def __init__(self, api, job_id, table):
+  def __init__(self, api, job_id, table, timeout=0):
     super(QueryJob, self).__init__(api, job_id)
     self._table = table
+    self._timeout = timeout if timeout else self._DEFAULT_TIMEOUT
 
   @property
   def table(self):
@@ -290,11 +291,13 @@ class QueryJob(Job):
     if not self.iscomplete:
       query_result = self._api.jobs_query_results(self._job_id,
                                                   page_size=0,
-                                                  timeout=self._DEFAULT_TIMEOUT)
+                                                  timeout=self._timeout)
       if not query_result['jobComplete']:
+        # TODO(gram): Should we raise an exception instead?
         return None
     return self._table
 
+  # TODO(gram): get rid of this and the results processors
   def process_results(self, result_processor, page_size=0, timeout=None):
     """ Process the results of a query job; this will block if the job is not complete.
 

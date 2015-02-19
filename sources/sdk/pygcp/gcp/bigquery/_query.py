@@ -122,13 +122,14 @@ class Query(object):
       malformed.
     """
     if not use_cache or (self._results is None):
-      job = self.execute(table=None, use_cache=use_cache, batch=False)
+      job = self.execute(table=None, use_cache=use_cache, batch=False, timeout=timeout)
+      # TODO(gram): change QueryResults to take a Table range iterator
       rows = job.collect_results(page_size, timeout=timeout)
       self._results = QueryResults(self._sql, job.id, rows)
     return self._results
 
-  def save_to_file(self, path, page_size=0, timeout=0, use_cache=True, write_header=True,
-                   dialect=csv.excel):
+  def to_file(self, path, page_size=0, timeout=0, use_cache=True, write_header=True,
+              dialect=csv.excel):
     """Save the results to a local file in CSV format.
 
     Args:
@@ -144,8 +145,8 @@ class Query(object):
     Raises:
       An Exception if the operation failed.
     """
-    job = self.execute(table=None, use_cache=use_cache, batch=False)
-    job.save_results_as_csv(path, write_header, dialect, page_size, timeout=timeout)
+    job = self.execute(table=None, use_cache=use_cache, batch=False, timeout=timeout)
+    job.table.to_file(path, write_header, dialect, page_size=page_size)
     return path
 
   def sampling_query(self, count=5, fields=None, sampling=None):
@@ -179,7 +180,8 @@ class Query(object):
     return self.sampling_query(count=count, fields=fields, sampling=sampling).\
         results(timeout=timeout, use_cache=use_cache)
 
-  def execute(self, table=None, append=False, overwrite=False, use_cache=True, batch=True):
+  def execute(self, table=None, append=False, overwrite=False, use_cache=True, batch=True,
+              timeout=0):
     """ Initiate the query.
 
     Args:
@@ -194,6 +196,7 @@ class Query(object):
           specified.
       batch: whether to run this as a batch job (lower priority) or as an interactive job (high
         priority, more expensive).
+      timeout: duration (in milliseconds) to wait for the query to complete.
     Returns:
       A Job for the query
     Raises:
@@ -216,7 +219,7 @@ class Query(object):
       table = _Table(self._api,
                      (destination['projectId'], destination['datasetId'], destination['tableId']),
                      is_temporary=True)
-    return _QueryJob(self._api, job_id, table)
+    return _QueryJob(self._api, job_id, table, timeout)
 
   def _repr_sql_(self):
     """Creates a SQL representation of this object.
