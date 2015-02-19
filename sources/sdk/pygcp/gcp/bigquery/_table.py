@@ -14,7 +14,9 @@
 
 """Implements Table, and related Table BigQuery APIs."""
 
+import codecs
 import collections
+import csv
 from datetime import datetime
 import pandas as pd
 import re
@@ -59,6 +61,19 @@ class TableSchema(list):
     def __repr__(self):
       return str(self)
 
+    def __getitem__(self, item):
+      # TODO(gram): Currently we need this for a Schema object to work with the Parser object.
+      # Eventually if we change Parser to only work with Schema (and not also with the
+      # schema dictionaries in query results) we can remove this.
+
+      if item == 'name':
+        return self.name
+      if item == 'type':
+        return self.data_type
+      if item == 'mode':
+        return self.mode
+      if item == 'description':
+        return self.description
 
   @staticmethod
   def _from_dataframe(dataframe, default_type='STRING'):
@@ -760,17 +775,7 @@ class Table(object):
 
       rows = []
       for row_dict in page_rows:
-        row = row_dict['f']
-        record = {}
-        column_index = 0
-        for col in row:
-          value = col['v']
-          if schema[column_index].data_type == 'TIMESTAMP':
-            value = datetime.utcfromtimestamp(float(value))
-          record[schema[column_index].name] = value
-          column_index += 1
-
-        rows.append(record)
+        rows.append(_Parser.parse_row(schema, row_dict))
 
       return rows, page_token
 
@@ -809,6 +814,30 @@ class Table(object):
         break
 
     return pd.DataFrame(rows)
+
+  def to_file(self, path, start_row=0, max_rows=None, write_header=True, dialect=csv.excel):
+    """Save the results to a local file in CSV format.
+
+    Args:
+      path: path on the local filesystem for the saved results.
+      start_row: the row of the table at which to start the export (default 0)
+      max_rows: an upper limit on the number of rows to export (default None)
+      write_header: if true (the default), write column name header row at start of file
+      dialect: the format to use for the output. By default, csv.excel. See
+          https://docs.python.org/2/library/csv.html#csv-fmt-params for how to customize this.
+    Raises:
+      An Exception if the operation failed.
+    """
+    f = codecs.open(path, 'w', 'utf-8')
+    fieldnames = []
+    for column in self.schema():
+      fieldnames.append(column.name)
+    writer = csv.DictWriter(f, fieldnames=fieldnames, dialect=dialect)
+    if write_header:
+      writer.writeheader()
+    for row in self.range(max_rows, start_row=start_row):
+      writer.writerow(row)
+    f.close()
 
   def __len__(self):
     """ Get the length of the table (number of rows).
