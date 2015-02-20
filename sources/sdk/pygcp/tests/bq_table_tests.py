@@ -23,25 +23,49 @@ import pandas
 
 class TestCases(unittest.TestCase):
 
-  def test_parse_full_name(self):
-    table = self._create_table('test:requestlogs.today')
+  def _check_name_parts(self, table):
     parsed_name = table._name_parts
-
     self.assertEqual('test', parsed_name[0])
     self.assertEqual('requestlogs', parsed_name[1])
     self.assertEqual('today', parsed_name[2])
-
     self.assertEqual('[test:requestlogs.today]', table._repr_sql_())
+
+  def test_parse_full_name(self):
+    table = self._create_table('test:requestlogs.today')
+    self._check_name_parts(table)
 
   def test_parse_local_name(self):
     table = self._create_table('requestlogs.today')
-    parsed_name = table._name_parts
+    self._check_name_parts(table)
 
-    self.assertEqual('test', parsed_name[0])
-    self.assertEqual('requestlogs', parsed_name[1])
-    self.assertEqual('today', parsed_name[2])
+  def test_parse_dict_full_name(self):
+    table = self._create_table({'project_id': 'test', 'dataset_id': 'requestlogs',
+                                'table_id': 'today'})
+    self._check_name_parts(table)
 
-    self.assertEqual(table._repr_sql_(), '[test:requestlogs.today]')
+  def test_parse_dict_local_name(self):
+    table = self._create_table({'dataset_id': 'requestlogs', 'table_id': 'today'})
+    self._check_name_parts(table)
+
+  def test_parse_named_tuple_name(self):
+    table = self._create_table(gcp.bigquery.tablename('test', 'requestlogs', 'today'))
+    self._check_name_parts(table)
+
+  def test_parse_tuple_full_name(self):
+    table = self._create_table(('test', 'requestlogs', 'today'))
+    self._check_name_parts(table)
+
+  def test_parse_tuple_local(self):
+    table = self._create_table(('requestlogs', 'today'))
+    self._check_name_parts(table)
+
+  def test_parse_array_full_name(self):
+    table = self._create_table(['test', 'requestlogs', 'today'])
+    self._check_name_parts(table)
+
+  def test_parse_array_local(self):
+    table = self._create_table(['requestlogs', 'today'])
+    self._check_name_parts(table)
 
   def test_parse_invalid_name(self):
     with self.assertRaises(Exception):

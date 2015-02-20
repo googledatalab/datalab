@@ -57,15 +57,19 @@ class DataSet(object):
         if m is not None:
           groups = m.groups()
           _dataset_id = groups[0]
-    else:
-      # Try treat as a dictionary or named tuple
+    elif isinstance(name, dict):
       try:
-        _dataset_id = name.dataset_id
-        _project_id = name.project_id
-      except AttributeError:
-        if len(name) == 2:
-          # Treat as a tuple or array.
-          _project_id, _dataset_id = name
+        _dataset_id = name['dataset_id']
+        _project_id = name['project_id']
+      except KeyError:
+        pass
+    else:
+      # Try treat as an array or tuple
+      if len(name) == 2:
+        # Treat as a tuple or array.
+        _project_id, _dataset_id = name
+      elif len(name) == 1:
+        _dataset_id = name[0]
     if not _dataset_id:
       raise Exception('Invalid dataset name: ' + str(name))
     if not _project_id:
@@ -146,14 +150,15 @@ class DataSet(object):
         raise Exception("Could not create dataset %s.%s" % self.full_name)
     return self
 
-  def _retrieve_tables(self, page_token, count):
+  def _retrieve_tables(self, page_token, _):
     list_info = self._api.tables_list(self._name_parts, page_token=page_token)
 
     tables = list_info.get('tables', [])
     if len(tables):
       try:
-        tables = [_Table(self._api, (self._name_parts.project_id, self._name_parts.dataset_id,
-                                    info['tableReference']['tableId'])) for info in tables]
+        tables = [_Table(self._api, (info['tableReference']['projectId'],
+                                     info['tableReference']['datasetId'],
+                                     info['tableReference']['tableId'])) for info in tables]
       except KeyError:
         raise Exception('Unexpected item list response.')
 
@@ -186,7 +191,8 @@ class DataSetLister(object):
     if len(datasets):
       try:
         datasets = [DataSet(self._api,
-                            (self._project_id, info['datasetReference']['datasetId']))
+                            (info['datasetReference']['projectId'],
+                             info['datasetReference']['datasetId']))
                     for info in datasets]
       except KeyError:
         raise Exception('Unexpected item list response.')

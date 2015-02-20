@@ -276,18 +276,19 @@ class Table(object):
           if m is not None:
             groups = m.groups()
             _project_id, _dataset_id, _table_id = project_id, dataset_id, groups[0]
-    else:
-      # Try treat as a dictionary or named tuple
+    elif isinstance(name, dict):
       try:
-        _table_id = name.table_id
-        _dataset_id = name.dataset_id
-        _project_id = name.project_id
-      except AttributeError:
-        # Treat as a tuple or array.
-        if len(name) == 3:
-          _project_id, _dataset_id, _table_id = name
-        elif len(name) == 2:
-          _dataset_id, _table_id = name
+        _table_id = name['table_id']
+        _dataset_id = name['dataset_id']
+        _project_id = name['project_id']
+      except KeyError:
+        pass
+    else:
+      # Try treat as an array or tuple
+      if len(name) == 3:
+        _project_id, _dataset_id, _table_id = name
+      elif len(name) == 2:
+        _dataset_id, _table_id = name
     if not _table_id:
       raise Exception('Invalid table name: ' + str(name))
     if not _project_id:
@@ -322,7 +323,7 @@ class Table(object):
     return self._name_parts
 
   @property
-  def istemporary(self):
+  def is_temporary(self):
     """ Whether this is a short-lived table or not. """
     return self._is_temporary
 
@@ -723,7 +724,7 @@ class Table(object):
     """ Get an item or a slice of items from the table. This uses a small cache
         to reduce the number of calls to tabledata.list.
 
-        Note: this is a useful function to have, and supports the current usage like
+        Note: this is a useful function to have, and supports some current usage like
         query.results()[0], but should be used with care.
     """
     if isinstance(item, slice):
