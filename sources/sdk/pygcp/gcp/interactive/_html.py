@@ -28,28 +28,34 @@ class HtmlBuilder(object):
     """Renders an HTML table with the specified list of objects.
 
     Args:
-      items: the list of objects to render.
+      items: the iterable collection objects to render.
       attributes: the optional list of properties or keys to render.
       dictionary: whether the list contains generic object or specifically dict instances.
     """
-    if (items is None) or (len(items) == 0):
+    if not items:
       return
 
     if dictionary:
       getter = lambda obj, attr: obj.get(attr, None)
-      if attributes is None:
-        attributes = items[0].keys()
     else:
       getter = lambda obj, attr: obj.__getattribute__(attr)
 
+    num_segments = len(self._segments)
     self._segments.append('<table>')
-    if attributes is not None:
-      self._segments.append('<tr>')
-      for attr in attributes:
-        self._segments.append('<th>%s</th>' % attr)
-      self._segments.append('</tr>')
 
+    first = True
     for o in items:
+      if first:
+        first = False
+        if dictionary and not attributes:
+          attributes = o.keys()
+
+        if attributes is not None:
+          self._segments.append('<tr>')
+          for attr in attributes:
+            self._segments.append('<th>%s</th>' % attr)
+          self._segments.append('</tr>')
+
       self._segments.append('<tr>')
       if attributes is None:
         self._segments.append('<td>%s</td>' % self._format(o))
@@ -59,6 +65,9 @@ class HtmlBuilder(object):
       self._segments.append('</tr>')
 
     self._segments.append('</table>')
+    if first:
+      # The table was empty; drop it from the segments.
+      self._segments = self._segments[:num_segments]
 
   def render_text(self, text, preformatted=False):
     """Renders an HTML formatted text block with the specified text.

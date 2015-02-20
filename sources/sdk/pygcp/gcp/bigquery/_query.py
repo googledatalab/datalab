@@ -12,59 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Implements Query and QueryResult BigQuery APIs."""
+"""Implements Query BigQuery API."""
 
 
 import csv
-import pandas as pd
-from ._job import QueryJob as _QueryJob
+from ._query_job import QueryJob as _QueryJob
 from ._sampling import Sampling as _Sampling
-from ._table import Table as _Table
-
-
-class QueryResults(list):
-  """Represents a results object holding the results of an executed query.
-  """
-
-  def __init__(self, sql, job_id, rows):
-    """Initializes an instance of a QueryResults with the rows.
-
-    Args:
-      sql: the SQL statement used to produce the result set.
-      job_id: the id of the query job that produced this result set.
-      rows: the rows making up the result set.
-    """
-    list.__init__(self, rows)
-    self._sql = sql
-    self._job_id = job_id
-
-  @property
-  def job_id(self):
-    """The id of the query job that produced this result set.
-
-    Returns:
-      The job id associated with this result.
-    """
-    return self._job_id
-
-  @property
-  def sql(self):
-    """The SQL statement used to produce this result set.
-
-    Returns:
-      The SQL statement as it was sent to the BigQuery API for execution.
-    """
-    return self._sql
-
-  def to_dataframe(self):
-    """Retrieves the result set as a pandas dataframe object.
-
-    Returns:
-      A dataframe representing the data in the result set.
-    """
-    if len(self) == 0:
-      return pd.DataFrame()
-    return pd.DataFrame.from_dict(self)
 
 
 class Query(object):
@@ -88,26 +41,6 @@ class Query(object):
   def sql(self):
     return self._sql
 
-  @staticmethod
-  def _sampling_query(api, sql, count=5, fields=None, sampling=None):
-    """Creates a Query to sample the provided SQL query or table.
-
-    Args:
-      api: the BigQuery API object to use to issue requests.
-      sql: the SQL object to sample (a query or table).
-      count: an optional count of rows to retrieve which is used if a specific
-          sampling is not specified.
-      fields: an optional list of field names to retrieve.
-      sampling: an optional sampling strategy to apply to the table.
-    Returns:
-      A Query that will sample the specified object.
-    """
-    if sampling is None:
-      sampling = _Sampling.default(count=count, fields=fields)
-    sampling_sql = sampling(sql)
-
-    return Query(api, sampling_sql)
-
   def results(self, page_size=0, timeout=0, use_cache=True):
     """Retrieves results for the query.
 
@@ -116,17 +49,15 @@ class Query(object):
       timeout: duration (in milliseconds) to wait for the query to complete.
       use_cache: whether to use cached results or not. Ignored if append is specified.
     Returns:
-      A QueryResults objects representing the result set.
+      A Table representing the result set.
     Raises:
       Exception if the query could not be executed or query response was
       malformed.
     """
     if not use_cache or (self._results is None):
-      job = self.execute(table=None, use_cache=use_cache, batch=False, timeout=timeout)
-      # TODO(gram): change QueryResults to take a Table range iterator
-      rows = job.collect_results(page_size, timeout=timeout)
-      self._results = QueryResults(self._sql, job.id, rows)
-    return self._results
+      self._results = self.execute(use_cache=use_cache, batch=False, page_size=page_size,
+                                   timeout=timeout)
+    return self._results.results
 
   def to_file(self, path, page_size=0, timeout=0, use_cache=True, write_header=True,
               dialect=csv.excel):
@@ -145,23 +76,9 @@ class Query(object):
     Raises:
       An Exception if the operation failed.
     """
-    job = self.execute(table=None, use_cache=use_cache, batch=False, timeout=timeout)
-    job.table.to_file(path, write_header, dialect, page_size=page_size)
+    self.execute(use_cache=use_cache, batch=False, timeout=timeout, page_size=page_size)\
+        .results.to_file(path, write_header, dialect)
     return path
-
-  def sampling_query(self, count=5, fields=None, sampling=None):
-    """Returns a sampling Query for the query.
-
-    Args:
-      count: an optional count of rows to retrieve which is used if a specific
-          sampling is not specified.
-      fields: an optional list of field names to retrieve.
-      sampling: an optional sampling strategy to apply to the table.
-    Returns:
-      A new Query for sampling this Query.
-    """
-    return Query._sampling_query(self._api, self._sql, count=count, fields=fields,
-                                 sampling=sampling)
 
   def sample(self, count=5, fields=None, sampling=None, timeout=0, use_cache=True):
     """Retrieves a sampling of rows for the query.
@@ -177,17 +94,16 @@ class Query(object):
     Raises:
       Exception if the query could not be executed or query response was malformed.
     """
-    return self.sampling_query(count=count, fields=fields, sampling=sampling).\
+    return sampling_query(self._sql, count=count, fields=fields, sampling=sampling).\
         results(timeout=timeout, use_cache=use_cache)
 
-  def execute(self, table=None, append=False, overwrite=False, use_cache=True, batch=True,
-              timeout=0):
+  def execute(self, table_name=None, append=False, overwrite=False, use_cache=True, batch=True,
+              page_size=0, timeout=0):
     """ Initiate the query.
 
     Args:
       dataset_id: the datasetId for the result table.
-      table: the result table; either a string name or a Table. If None, then a temporary
-          table will be used.
+      table: the result table name; if None, then a temporary table will be used.
       append: if True, append to the table if it is non-empty; else the request will fail if table
           is non-empty unless overwrite is True.
       overwrite: if the table already exists, truncate it instead of appending or raising an
@@ -196,16 +112,15 @@ class Query(object):
           specified.
       batch: whether to run this as a batch job (lower priority) or as an interactive job (high
         priority, more expensive).
+      page_size: limit to the number of rows to fetch per page.
       timeout: duration (in milliseconds) to wait for the query to complete.
     Returns:
       A Job for the query
     Raises:
       Exception (KeyError) if query could not be executed.
     """
-    if isinstance(table, basestring):
-      table = _Table(self._api, table)
     query_result = self._api.jobs_insert_query(self._sql,
-                                               table_name=table.name if table else None,
+                                               table_name=table_name,
                                                append=append,
                                                overwrite=overwrite,
                                                dry_run=False,
@@ -214,12 +129,10 @@ class Query(object):
     if 'jobReference' not in query_result:
       raise Exception('Unexpected query response.')
     job_id = query_result['jobReference']['jobId']
-    if not table:
+    if not table_name:
       destination = query_result['configuration']['query']['destinationTable']
-      table = _Table(self._api,
-                     (destination['projectId'], destination['datasetId'], destination['tableId']),
-                     is_temporary=True)
-    return _QueryJob(self._api, job_id, table, timeout)
+      table_name = (destination['projectId'], destination['datasetId'], destination['tableId'])
+    return _QueryJob(self._api, job_id, table_name, self._sql, page_size=page_size, timeout=timeout)
 
   def _repr_sql_(self):
     """Creates a SQL representation of this object.

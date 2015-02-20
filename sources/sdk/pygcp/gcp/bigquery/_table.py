@@ -26,7 +26,6 @@ import uuid
 from gcp._util import Iterator as _Iterator
 from ._job import Job as _Job
 from ._parser import Parser as _Parser
-import _query
 
 
 class TableSchema(list):
@@ -148,187 +147,15 @@ class TableSchema(list):
   def __str__(self):
     return str(self._bq_schema)
 
-
-# TODO(gram): Move dataset to its own file.
-DataSetName = collections.namedtuple('DataSetName', ['project_id', 'dataset_id'])
-
-
-class DataSet(object):
-  """Represents a list of BigQuery tables in a dataset."""
-
-  # Absolute project-qualified name pattern: <project>:<dataset>
-  _ABS_NAME_PATTERN = r'^([a-z0-9\-_\.:]+)\:([a-zA-Z0-9_]+)$'
-
-  # Relative name pattern: <dataset>
-  _REL_NAME_PATTERN = r'^([a-zA-Z0-9_]+)$'
-
-  @staticmethod
-  def _parse_name(name, project_id=None):
-    """Parses a dataset name into its individual parts.
-
-    Args:
-      name: the name to parse, or a tuple, dictionary or array containing the parts.
-      project_id: the expected project ID. If the name does not contain a project ID,
-          this will be used; if the name does contain a project ID and it does not match
-          this, an exception will be thrown.
-    Returns:
-      The DataSetName for the dataset.
-    Raises:
-      Exception: raised if the name doesn't match the expected formats.
-    """
-    _project_id = _dataset_id = None
-    if isinstance(name, basestring):
-      # Try to parse as absolute name first.
-      m = re.match(DataSet._ABS_NAME_PATTERN, name, re.IGNORECASE)
-      if m is not None:
-        _project_id, _dataset_id = m.groups()
-      else:
-        # Next try to match as a relative name implicitly scoped within current project.
-        m = re.match(DataSet._REL_NAME_PATTERN, name)
-        if m is not None:
-          groups = m.groups()
-          _dataset_id = groups[0]
-    else:
-      # Try treat as a dictionary or named tuple
-      try:
-        _dataset_id = name.dataset_id
-        _project_id = name.project_id
-      except AttributeError:
-        if len(name) == 2:
-          # Treat as a tuple or array.
-          _project_id, _dataset_id = name
-    if not _dataset_id:
-      raise Exception('Invalid dataset name: ' + str(name))
-    if not _project_id:
-      _project_id = project_id
-
-    return DataSetName(_project_id, _dataset_id)
-
-  def __init__(self, api, name):
-    """Initializes an instance of a DataSet.
-
-    Args:
-      api: the BigQuery API object to use to issue requests. The project ID will be inferred from
-          this.
-      name: the name of the dataset, as a string or (project_id, dataset_id) tuple.
-    """
-    self._api = api
-    self._name_parts = DataSet._parse_name(name, api.project_id)
-    self._full_name = '%s:%s' % self._name_parts
-
-  @property
-  def full_name(self):
-    """The full name for the dataset."""
-    return self._full_name
-
-  @property
-  def name(self):
-    """The DataSetName for the dataset."""
-    return self._name_parts
-
-  def exists(self):
-    """ Checks if the dataset exists.
-
-    Args:
-      None
-    Returns:
-      True if the dataset exists; False otherwise.
-    """
-    try:
-      _ = self._api.datasets_get(self._name_parts)
-    except Exception as e:
-      if (len(e.args[0]) > 1) and (e.args[0][1] == 404):
+  def __eq__(self, other):
+    if len(self._map) != len(other._map):
+      return False
+    for name in self._map.iterkeys():
+      if not name in other._map:
         return False
-      raise e
+      if not self._map[name] == other._map[name]:
+        return False
     return True
-
-  def delete(self, delete_contents=False):
-    """Issues a request to delete the dataset.
-
-    Args:
-      delete_contents: if True, any tables in the dataset will be deleted. If False and the
-          dataset is non-empty an exception will be raised.
-    Returns:
-      None on success.
-    Raises:
-      Exception if the delete fails (including if table was nonexistent).
-    """
-    if not self.exists():
-      raise Exception('Cannot delete non-existent table %s' % self._full_name)
-    self._api.datasets_delete(self._name_parts, delete_contents=delete_contents)
-    return None
-
-  def create(self, friendly_name=None, description=None):
-    """Creates the Dataset with the specified friendly name and description.
-
-    Args:
-      friendly_name: (optional) the friendly name for the dataset if it is being created.
-      description: (optional) a description for the dataset if it is being created.
-    Returns:
-      The DataSet.
-    Raises:
-      Exception if the DataSet could not be created.
-    """
-    if not self.exists():
-      response = self._api.datasets_insert(self._name_parts,
-                                           friendly_name=friendly_name,
-                                           description=description)
-      if 'selfLink' not in response:
-        raise Exception("Could not create dataset %s.%s" % self.full_name)
-    return self
-
-  def _retrieve_tables(self, page_token, count):
-    list_info = self._api.tables_list(self._name_parts, page_token=page_token)
-
-    tables = list_info.get('tables', [])
-    if len(tables):
-      try:
-        tables = [Table(self._api, (self._name_parts.project_id, self._name_parts.dataset_id,
-                                    info['tableReference']['tableId'])) for info in tables]
-      except KeyError:
-        raise Exception('Unexpected item list response.')
-
-    page_token = list_info.get('nextPageToken', None)
-    return tables, page_token
-
-  def __iter__(self):
-    """ Supports iterating through the Tables in the dataset.
-    """
-    return iter(_Iterator(self._retrieve_tables))
-
-  def __repr__(self):
-    """Returns an empty representation for the dataset for showing in the notebook.
-    """
-    return ''
-
-
-class DataSetLister(object):
-  """ Helper class for enumerating the datasets in a project.
-  """
-
-  def __init__(self, api, project_id=None):
-    self._api = api
-    self._project_id = project_id if project_id else api.project_id
-
-  def _retrieve_datasets(self, page_token, count):
-    list_info = self._api.datasets_list(self._project_id, page_token=page_token)
-
-    datasets = list_info.get('datasets', [])
-    if len(datasets):
-      try:
-        datasets = [DataSet(self._api,
-                            (self._project_id, info['datasetReference']['datasetId']))
-                    for info in datasets]
-      except KeyError:
-        raise Exception('Unexpected item list response.')
-
-    page_token = list_info.get('nextPageToken', None)
-    return datasets, page_token
-
-  def __iter__(self):
-    """ Supports iterating through the DataSets in the project.
-    """
-    return iter(_Iterator(self._retrieve_datasets))
 
 
 class TableMetadata(object):
@@ -467,19 +294,19 @@ class Table(object):
 
     return TableName(_project_id, _dataset_id, _table_id)
 
-  def __init__(self, api, name, is_temporary=False):
+  def __init__(self, api, name):
     """Initializes an instance of a Table object.
 
     Args:
       api: the BigQuery API object to use to issue requests.
       name: the name of the table either as a string or a 3-part tuple (projectid, datasetid, name).
-      is_temporary: if True, this is a short-lived table for intermediate results (default False).
     """
     self._api = api
     self._name_parts = Table._parse_name(name, api.project_id)
     self._full_name = '%s:%s.%s' % self._name_parts
     self._info = None
-    self._is_temporary = is_temporary
+    self._cached_page = None
+    self._cached_page_index = 0
 
   @property
   def full_name(self):
@@ -564,20 +391,6 @@ class Table(object):
       return self
     raise Exception("Table %s could not be created as it already exists" % self.full_name)
 
-  def sampling_query(self, fields=None, count=5, sampling=None):
-    """Returns a sampling Query for the query.
-
-    Args:
-      fields: an optional list of field names to retrieve.
-      count: an optional count of rows to retrieve which is used if a specific
-          sampling is not specified.
-      sampling: an optional sampling strategy to apply to the table.
-    Returns:
-      A Query object for sampling the table.
-    """
-    return _query.Query._sampling_query(self._api, self._repr_sql_(), count=count, fields=fields,
-                                        sampling=sampling)
-
   def sample(self, fields=None, count=5, sampling=None, timeout=0, use_cache=True):
     """Retrieves a sampling of data from the table.
 
@@ -593,7 +406,7 @@ class Table(object):
     Raises:
       Exception if the sample query could not be executed or query response was malformed.
     """
-    return self.sampling_query(count=count, fields=fields, sampling=sampling).\
+    return sampling_query(self._repr_sql_(), count=count, fields=fields, sampling=sampling).\
         results(timeout=timeout, use_cache=use_cache)
 
   @staticmethod
@@ -714,7 +527,7 @@ class Table(object):
       A Job object for the export Job if it was started successfully; else None.
     """
     response = self._api.table_extract(self._name_parts, destination, format, compress,
-                                      field_delimiter, print_header)
+                                       field_delimiter, print_header)
     return _Job(self._api, response['jobReference']['jobId']) \
         if response and 'jobReference' in response else None
 
@@ -822,7 +635,11 @@ class Table(object):
       if not page_token:
         break
 
-    return pd.DataFrame(rows)
+    # TODO(gram): look into building the dataframe a page at a time instead of having to
+    # populate the full array first.
+    if len(rows) == 0:
+      return pd.DataFrame()
+    return pd.DataFrame.from_dict(rows)
 
   def to_file(self, path, start_row=0, max_rows=None, write_header=True, dialect=csv.excel,
               page_size=None):
@@ -850,11 +667,6 @@ class Table(object):
       writer.writerow(row)
     f.close()
 
-  def __len__(self):
-    """ Get the length of the table (number of rows).
-    """
-    return self.metadata().rows
-
   def schema(self):
     """Retrieves the schema of the table.
 
@@ -878,7 +690,7 @@ class Table(object):
     return '[' + self._full_name + ']'
 
   def __repr__(self):
-    """Returns an empty representation for the table for showing in the notebook.
+    """Returns a representation for the table for showing in the notebook.
     """
     return ''
 
@@ -889,4 +701,50 @@ class Table(object):
       The string representation of this object.
     """
     return self._name
+
+  def __len__(self):
+    """ Get the length of the table (number of rows).
+    """
+    return self.metadata().rows
+
+  def __iter__(self):
+    """ Get an iterator for the table.
+    """
+    return self.range(len(self))
+
+  _CACHE_SIZE = 512
+
+  def __getitem__(self, item):
+    """ Get an item or a slice of items from the table. This uses a small cache
+        to reduce the number of calls to tabledata.list.
+
+        Note: this is a useful function to have, and supports the current usage like
+        query.results()[0], but should be used with care.
+    """
+    if isinstance(item, slice):
+      # Just treat this as a set of calls to __getitem__(int)
+      result = []
+      i = item.start
+      step = item.step if item.step else 1
+      while i < item.stop:
+        result.append(self[i])
+        i += step
+      return result
+
+    # Handle the integer index case.
+    if item < 0:
+      item += len(self)
+    if not self._cached_page \
+        or self._cached_page_index > item \
+            or self._cached_page_index + len(self._cached_page) <= item:
+      # cache a new page
+      count = self._CACHE_SIZE
+      remaining = len(self) - item
+      if count > remaining:
+        count = remaining
+      fetcher = self._get_row_fetcher(max_rows=count, start_row=item, page_size=count)
+      self._cached_page_index = item
+      self._cached_page, _ = fetcher(None, 0)
+
+    return self._cached_page[item - self._cached_page_index]
 

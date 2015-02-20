@@ -124,14 +124,16 @@ def _repr_html_query(query):
   builder.render_text(query.sql, preformatted=True)
   return builder.to_html()
 
-def _repr_html_query_results(query_results):
+def _repr_html_query_results_table(table):
   # TODO(nikhilko): Add other pieces of metadata such as time-taken.
   # TODO(nikhilko): Some way of limiting the number of rows, or showing first-few and last-few
   #                 or even better-yet, an interactive display of results.
   builder = _HtmlBuilder()
-  builder.render_text('Number of rows: %d' % len(query_results))
-  builder.render_text('Query job ID  : %s' % query_results.job_id)
-  builder.render_objects(query_results, dictionary=True)
+  builder.render_text('Number of rows: %d' % len(table))
+  builder.render_text('Query job ID  : %s' % table.job_id)
+  # Note: if we decide we don't want table to be iterable, replace the table parameter
+  # below with table.range(len(table)).
+  builder.render_objects(table, dictionary=True)
   return builder.to_html()
 
 def _repr_html_table_list(table_list):
@@ -204,7 +206,8 @@ def _register_html_formatters():
   html_formatter = ipy.display_formatter.formatters['text/html']
 
   html_formatter.for_type_by_name('gcp.bigquery._query', 'Query', _repr_html_query)
-  html_formatter.for_type_by_name('gcp.bigquery._query', 'QueryResults', _repr_html_query_results)
+  html_formatter.for_type_by_name('gcp.bigquery._query_results_table', 'QueryResultsTable',
+                                  _repr_html_query_results_table)
   html_formatter.for_type_by_name('gcp.bigquery._table', 'TableList', _repr_html_table_list)
   html_formatter.for_type_by_name('gcp.bigquery._table', 'TableSchema', _repr_html_table_schema)
   html_formatter.for_type_by_name('gcp.bigquery._udf', 'FunctionEvaluation',

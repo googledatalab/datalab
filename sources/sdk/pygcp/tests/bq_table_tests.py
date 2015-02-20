@@ -418,14 +418,18 @@ class TestCases(unittest.TestCase):
     }
 
   def _create_data_frame(self):
-    columns = ['some', 'column', 'headers']
-    df = pandas.DataFrame(columns=columns)
-
-    for i in range(0, 4):
-      df.loc[i] = [len(df), 'r' + str(len(df)), 10.0]
-
-    df = df.convert_objects(convert_numeric=True)
-    return df
+    data = {
+      'some': [
+        0, 1, 2, 3
+      ],
+      'column': [
+        'r0', 'r1', 'r2', 'r3'
+      ],
+      'headers': [
+        10.0, 10.0, 10.0, 10.0
+      ]
+    }
+    return pandas.DataFrame(data)
 
   def _create_inferred_schema(self):
     return [
