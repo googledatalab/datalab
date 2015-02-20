@@ -171,25 +171,3 @@ def query_job(job_id, table, context=None):
   api = _create_api(context)
   return _QueryJob(api, job_id, table)
 
-
-def sampling_query(sql, fields=None, count=5, sampling=None, context=None):
-    """Returns a sampling Query for the SQL object.
-
-    Args:
-      sql: the SQL object to sample
-      fields: an optional list of field names to retrieve.
-      count: an optional count of rows to retrieve which is used if a specific
-          sampling is not specified.
-      sampling: an optional sampling strategy to apply to the table.
-    Returns:
-      A Query object for sampling the table.
-    """
-    # This was the cause of circular dependencies between Query and Table hence it was
-    # moved here.
-    api = _create_api(context)
-    if sampling is None:
-      sampling = Sampling.default(count=count, fields=fields)
-    sampling_sql = sampling(sql)
-
-    return _Query(api, sampling_sql)
-

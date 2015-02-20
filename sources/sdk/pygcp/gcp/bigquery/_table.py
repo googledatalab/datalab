@@ -26,6 +26,9 @@ import uuid
 from gcp._util import Iterator as _Iterator
 from ._job import Job as _Job
 from ._parser import Parser as _Parser
+# import of Query is at end of module as we have a circular dependency of
+# Query.execute().results -> Table and
+# Table.sample() -> Query
 
 
 class TableSchema(list):
@@ -391,6 +394,7 @@ class Table(object):
       return self
     raise Exception("Table %s could not be created as it already exists" % self.full_name)
 
+
   def sample(self, fields=None, count=5, sampling=None, timeout=0, use_cache=True):
     """Retrieves a sampling of data from the table.
 
@@ -406,7 +410,8 @@ class Table(object):
     Raises:
       Exception if the sample query could not be executed or query response was malformed.
     """
-    return sampling_query(self._repr_sql_(), count=count, fields=fields, sampling=sampling).\
+    sql = self._repr_sql_()
+    return _Query.sampler(self._api, sql, count=count, fields=fields, sampling=sampling).\
         results(timeout=timeout, use_cache=use_cache)
 
   @staticmethod
@@ -748,3 +753,4 @@ class Table(object):
 
     return self._cached_page[item - self._cached_page_index]
 
+from ._query import Query as _Query

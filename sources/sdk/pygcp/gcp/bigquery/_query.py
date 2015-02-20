@@ -26,6 +26,28 @@ class Query(object):
   This object can be used to execute SQL queries and retrieve results.
   """
 
+  @staticmethod
+  def sampler(api, sql, fields=None, count=5, sampling=None):
+    """Returns a sampling Query for the SQL object.
+
+    Args:
+      api: the BigQuery API object to use to issue requests.
+      sql: the SQL object to sample
+      fields: an optional list of field names to retrieve.
+      count: an optional count of rows to retrieve which is used if a specific
+          sampling is not specified.
+      sampling: an optional sampling strategy to apply to the table.
+    Returns:
+      A Query object for sampling the table.
+    """
+    # This was the cause of circular dependencies between Query and Table hence it was
+    # moved here.
+    if sampling is None:
+      sampling = _Sampling.default(count=count, fields=fields)
+    sampling_sql = sampling(sql)
+
+    return Query(api, sampling_sql)
+
   def __init__(self, api, sql):
     """Initializes an instance of a Query object.
 
@@ -94,7 +116,7 @@ class Query(object):
     Raises:
       Exception if the query could not be executed or query response was malformed.
     """
-    return sampling_query(self._sql, count=count, fields=fields, sampling=sampling).\
+    return Query.sampler(self._api, self._sql, count=count, fields=fields, sampling=sampling).\
         results(timeout=timeout, use_cache=use_cache)
 
   def execute(self, table_name=None, append=False, overwrite=False, use_cache=True, batch=True,
