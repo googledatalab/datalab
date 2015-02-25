@@ -130,14 +130,14 @@ setTimeout(setupOutline, 1000);
 
 
 // Configure code mirror
-// - Add %%bq_udf to the list of javascript cells to the existing configuration.
-// - Load sql mode and associate %%bq_sql cells with SQL.
-IPython.config.cell_magic_highlight.magic_javascript.reg = [ /^%%javascript/, /^%%bq_udf/ ];
+// - Add %%bigquery udf to the list of javascript cells to the existing configuration.
+// - Load sql mode and associate %%bigquery sql cells with SQL.
+IPython.config.cell_magic_highlight.magic_javascript.reg = [ /^%%javascript/, /^%%bigquery udf/ ];
 
 require(['/static/components/codemirror/mode/sql/sql.js'], function() {
   IPython.config.cell_magic_highlight['magic_text/x-sql'] = {
     reg: [
-      /^%%bq_sql/
+      /^%%bigquery sql/
     ]
   };
 });
