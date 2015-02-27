@@ -24,10 +24,9 @@ class QueryJob(_Job):
 
   _DEFAULT_TIMEOUT = 60000
 
-  def __init__(self, api, job_id, table_name, sql, page_size=0, timeout=0):
+  def __init__(self, api, job_id, table_name, sql, timeout=0):
     super(QueryJob, self).__init__(api, job_id)
     self._sql = sql
-    self._page_size=page_size
     self._timeout = timeout if timeout else self._DEFAULT_TIMEOUT
     self._table = _QueryResultsTable(api, table_name, self, is_temporary=True)
 
@@ -42,8 +41,10 @@ class QueryJob(_Job):
       Exception if we timed out waiting for results.
     """
     if not self.iscomplete:
+      # Block until done (or timed out). We do this by call Jobs.queryResults but use a
+      # page size of zero because we're not actually fetching any results here.
       query_result = self._api.jobs_query_results(self._job_id,
-                                                  page_size=self._page_size,
+                                                  page_size=0,
                                                   timeout=self._timeout)
       if not query_result['jobComplete']:
         raise Exception('Timed out getting query results')

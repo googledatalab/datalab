@@ -412,7 +412,7 @@ class Table(object):
       Exception if the sample query could not be executed or query response was malformed.
     """
     sql = self._repr_sql_()
-    return _Query.sampler(self._api, sql, count=count, fields=fields, sampling=sampling).\
+    return _Query.sampling_query(self._api, sql, count=count, fields=fields, sampling=sampling).\
         results(timeout=timeout, use_cache=use_cache)
 
   @staticmethod
@@ -555,7 +555,7 @@ class Table(object):
     return _Job(self._api, response['jobReference']['jobId']) \
         if response and 'jobReference' in response else None
 
-  def _get_row_fetcher(self, max_rows=None, start_row=None, page_size=None):
+  def _get_row_fetcher(self, max_rows=None, start_row=None, page_size=1024):
     """ Get a function that can retrieve a page of rows.
 
     The function returned is a closure so that it can have a signature suitable for use
@@ -563,9 +563,9 @@ class Table(object):
 
     Args:
       max_rows: the maximum number of rows to fetch (across all calls, not per-call). Default
-        is None which means no limit.
+          is None which means no limit.
       start_row: the row to start fetching from; default 0.
-      page_size: the maximum number of results to fetch per page.
+      page_size: the maximum number of results to fetch per page; default 1024.
     Returns:
       A function that can be called repeatedly with a page token and running count, and that
       will return an array of rows and a next page token; when the returned page token is None
@@ -584,7 +584,7 @@ class Table(object):
         page_rows = []
         page_token = None
       else:
-        if max_rows and page_size and page_size > (max_rows - count):
+        if max_rows and page_size > (max_rows - count):
           max_results = max_rows - count
         else:
           max_results = page_size
@@ -606,31 +606,28 @@ class Table(object):
 
     return _retrieve_rows
 
-  def range(self, max_rows, start_row=None, page_size=None):
+  def range(self, max_rows, start_row=None):
     """ Get an iterator to iterate through a set of table rows.
 
     Args:
       max_rows: an upper limit on the number of rows to iterate through (default None)
       start_row: the row of the table at which to start the iteration (default 0)
-      page_size: the maximum number of results to fetch per page.
 
     Returns:
       A row iterator.
     """
-    return iter(_Iterator(self._get_row_fetcher(max_rows, start_row=start_row,
-                                                page_size=page_size)))
+    return iter(_Iterator(self._get_row_fetcher(max_rows, start_row=start_row)))
 
-  def to_dataframe(self, start_row=0, max_rows=None, page_size=None):
+  def to_dataframe(self, start_row=0, max_rows=None):
     """ Exports the table to a Pandas dataframe.
 
     Args:
       start_row: the row of the table at which to start the export (default 0)
       max_rows: an upper limit on the number of rows to export (default None)
-      page_size: the maximum number of results to fetch per page.
     Returns:
       A dataframe containing the table data.
     """
-    fetcher = self._get_row_fetcher(max_rows, start_row=start_row, page_size=page_size)
+    fetcher = self._get_row_fetcher(max_rows, start_row=start_row)
     rows = []
     count = 0
     page_token = None
@@ -647,8 +644,7 @@ class Table(object):
       return pd.DataFrame()
     return pd.DataFrame.from_dict(rows)
 
-  def to_file(self, path, start_row=0, max_rows=None, write_header=True, dialect=csv.excel,
-              page_size=None):
+  def to_file(self, path, start_row=0, max_rows=None, write_header=True, dialect=csv.excel):
     """Save the results to a local file in CSV format.
 
     Args:
@@ -658,7 +654,6 @@ class Table(object):
       write_header: if true (the default), write column name header row at start of file
       dialect: the format to use for the output. By default, csv.excel. See
           https://docs.python.org/2/library/csv.html#csv-fmt-params for how to customize this.
-      page_size: the maximum number of results to fetch per page.
     Raises:
       An Exception if the operation failed.
     """
@@ -669,7 +664,7 @@ class Table(object):
     writer = csv.DictWriter(f, fieldnames=fieldnames, dialect=dialect)
     if write_header:
       writer.writeheader()
-    for row in self.range(max_rows, start_row=start_row, page_size=page_size):
+    for row in self.range(max_rows, start_row=start_row):
       writer.writerow(row)
     f.close()
 

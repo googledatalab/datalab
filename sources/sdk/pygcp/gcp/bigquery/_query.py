@@ -27,7 +27,7 @@ class Query(object):
   """
 
   @staticmethod
-  def sampler(api, sql, fields=None, count=5, sampling=None):
+  def sampling_query(api, sql, fields=None, count=5, sampling=None):
     """Returns a sampling Query for the SQL object.
 
     Args:
@@ -63,31 +63,30 @@ class Query(object):
   def sql(self):
     return self._sql
 
-  def results(self, page_size=0, timeout=0, use_cache=True):
+  def results(self, timeout=0, use_cache=True):
     """Retrieves results for the query.
 
     Args:
-      page_size: limit to the number of rows to fetch per page.
       timeout: duration (in milliseconds) to wait for the query to complete.
       use_cache: whether to use cached results or not. Ignored if append is specified.
     Returns:
-      A Table representing the result set.
+      A QueryResultsTable containing the result set.
     Raises:
       Exception if the query could not be executed or query response was
       malformed.
     """
     if not use_cache or (self._results is None):
-      self._results = self.execute(use_cache=use_cache, batch=False, page_size=page_size,
-                                   timeout=timeout)
+      self._results = self.execute(use_cache=use_cache, batch=False, timeout=timeout)
     return self._results.results
 
-  def to_file(self, path, page_size=0, timeout=0, use_cache=True, write_header=True,
+  def to_file(self, path, start_row=0, max_rows=None, timeout=0, use_cache=True, write_header=True,
               dialect=csv.excel):
     """Save the results to a local file in CSV format.
 
     Args:
       path: path on the local filesystem for the saved results.
-      page_size: limit to the number of rows to fetch per page.
+      start_row: the row of the table at which to start the export (default 0)
+      max_rows: an upper limit on the number of rows to export (default None)
       timeout: duration (in milliseconds) to wait for the query to complete.
       use_cache: whether to use cached results or not.
       write_header: if true (the default), write column name header row at start of file
@@ -98,8 +97,9 @@ class Query(object):
     Raises:
       An Exception if the operation failed.
     """
-    self.execute(use_cache=use_cache, batch=False, timeout=timeout, page_size=page_size)\
-        .results.to_file(path, write_header, dialect)
+    self.execute(use_cache=use_cache, batch=False, timeout=timeout)\
+        .results.to_file(path, start_row=start_row, max_rows=max_rows,
+                         write_header=write_header, dialect=dialect)
     return path
 
   def sample(self, count=5, fields=None, sampling=None, timeout=0, use_cache=True):
@@ -112,15 +112,16 @@ class Query(object):
       timeout: duration (in milliseconds) to wait for the query to complete.
       use_cache: whether to use cached results or not.
     Returns:
-      A QueryResults objects representing a sampling of the result set.
+      A QueryResultsTable containing a sampling of the result set.
     Raises:
       Exception if the query could not be executed or query response was malformed.
     """
-    return Query.sampler(self._api, self._sql, count=count, fields=fields, sampling=sampling).\
+    return Query.sampling_query(self._api, self._sql, count=count, fields=fields,
+                                sampling=sampling).\
         results(timeout=timeout, use_cache=use_cache)
 
   def execute(self, table_name=None, append=False, overwrite=False, use_cache=True, batch=True,
-              page_size=0, timeout=0):
+              timeout=0):
     """ Initiate the query.
 
     Args:
@@ -134,7 +135,6 @@ class Query(object):
           specified.
       batch: whether to run this as a batch job (lower priority) or as an interactive job (high
         priority, more expensive).
-      page_size: limit to the number of rows to fetch per page.
       timeout: duration (in milliseconds) to wait for the query to complete.
     Returns:
       A Job for the query
@@ -154,7 +154,7 @@ class Query(object):
     if not table_name:
       destination = query_result['configuration']['query']['destinationTable']
       table_name = (destination['projectId'], destination['datasetId'], destination['tableId'])
-    return _QueryJob(self._api, job_id, table_name, self._sql, page_size=page_size, timeout=timeout)
+    return _QueryJob(self._api, job_id, table_name, self._sql, timeout=timeout)
 
   def _repr_sql_(self):
     """Creates a SQL representation of this object.

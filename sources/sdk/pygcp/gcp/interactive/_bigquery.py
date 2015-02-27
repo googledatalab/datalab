@@ -169,16 +169,16 @@ def _repr_html_query(query):
   builder.render_text(query.sql, preformatted=True)
   return builder.to_html()
 
-def _repr_html_query_results_table(table):
+def _repr_html_query_results_table(results):
   # TODO(nikhilko): Add other pieces of metadata such as time-taken.
   # TODO(nikhilko): Some way of limiting the number of rows, or showing first-few and last-few
   #                 or even better-yet, an interactive display of results.
   builder = _HtmlBuilder()
-  builder.render_text('Number of rows: %d' % len(table))
-  builder.render_text('Query job ID  : %s' % table.job_id)
+  builder.render_text('Number of rows: %d' % len(results))
+  builder.render_text('Query job ID  : %s' % results.job_id)
   # Note: if we decide we don't want table to be iterable, replace the table parameter
   # below with table.range(len(table)).
-  builder.render_objects(table, dictionary=True)
+  builder.render_objects(results, dictionary=True)
   return builder.to_html()
 
 def _repr_html_table_list(table_list):

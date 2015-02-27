@@ -76,37 +76,6 @@ class TestCases(unittest.TestCase):
     self.assertEqual(1, len(results))
     self.assertEqual('test_job', results.job_id)
 
-  @mock.patch('gcp.bigquery._Api.tabledata_list')
-  @mock.patch('gcp.bigquery._Api.jobs_insert_query')
-  @mock.patch('gcp.bigquery._Api.jobs_get')
-  @mock.patch('gcp.bigquery._Api.tables_get')
-  def test_multi_page_results_query(self,
-                                    mock_api_tables_get,
-                                    mock_api_jobs_get,
-                                    mock_api_insert_query,
-                                    mock_api_tabledata_list):
-    mock_api_tables_get.return_value = {
-      'numRows': 2,
-      'schema': {
-        'fields': [
-          {'name': 'field1', 'type': 'string'}
-        ]
-      },
-    }
-    mock_api_jobs_get.return_value = {'state': 'DONE'}
-    mock_api_insert_query.return_value = self._create_insert_done_result()
-
-    q = self._create_query()
-    results = q.results()
-
-    mock_api_tabledata_list.return_value = self._create_page_result(page_token='page2')
-    for _ in results.range(len(results), page_size=1):
-      mock_api_tabledata_list.return_value = self._create_page_result(page_token=None)
-
-    self.assertEqual(2, len(results))
-    self.assertEqual(2, mock_api_tabledata_list.call_count)
-    self.assertEqual('test_job', results.job_id)
-
   @mock.patch('gcp.bigquery._Api.jobs_insert_query')
   def test_malformed_response_raises_exception(self, mock_api_insert_query):
     mock_api_insert_query.return_value = {}

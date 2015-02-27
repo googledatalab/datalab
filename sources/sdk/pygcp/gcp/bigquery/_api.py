@@ -29,7 +29,7 @@ class Api(object):
   _TABLES_PATH = '/projects/%s/datasets/%s/tables/%s'
   _TABLEDATA_PATH = '/projects/%s/datasets/%s/tables/%s/data'
 
-  _DEFAULT_PAGE_SIZE = 10000
+  _DEFAULT_PAGE_SIZE = 1024
   _DEFAULT_TIMEOUT = 60000
 
   def __init__(self, credentials, project_id):
@@ -140,7 +140,8 @@ class Api(object):
 
     return _util.Http.request(url, data=data, credentials=self._credentials)
 
-  def jobs_query(self, sql, page_size=0, timeout=None, dry_run=False, use_cache=True):
+  def jobs_query(self, sql, page_size=_DEFAULT_PAGE_SIZE, timeout=None, dry_run=False,
+                 use_cache=True):
     """Issues a request to the jobs/query method.
 
     Args:
@@ -154,8 +155,6 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    if page_size == 0:
-      page_size = Api._DEFAULT_PAGE_SIZE
     if timeout == None:  # Note: we use == to distinguish with timeout 0.
       timeout = Api._DEFAULT_TIMEOUT
 
@@ -172,12 +171,13 @@ class Api(object):
 
     return _util.Http.request(url, data=data, credentials=self._credentials)
 
-  def jobs_query_results(self, job_id, project_id=None, page_size=0, timeout=None, start_index=0):
+  def jobs_query_results(self, job_id, project_id=None, page_size=_DEFAULT_PAGE_SIZE, timeout=None,
+                         start_index=0):
     """Issues a request to the jobs/getQueryResults method.
 
     Args:
       job_id: the id of job from a previously executed query.
-      page_size: limit to the number of rows to fetch per page.
+      page_size: limit to the number of rows to fetch.
       timeout: duration (in milliseconds) to wait for the query to complete.
       start_index: the index of the row (0-based) at which to start retrieving the page of result
           rows.
@@ -186,8 +186,6 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    if page_size == 0:
-      page_size = Api._DEFAULT_PAGE_SIZE
     if timeout == None:  # Note: we use == to distinguish with timeout 0.
       timeout = Api._DEFAULT_TIMEOUT
     if not project_id:
