@@ -17,13 +17,15 @@
 import gcp as _gcp
 import gcp._util as _util
 from ._api import Api as _Api
+from ._dataset import DataSet as _DataSet
+from ._dataset import DataSetLister as _DataSetLister
+from ._dataset import DataSetName as _DataSetName
 from ._job import Job as _Job
-from ._job import QueryJob as _QueryJob
+from ._query_job import QueryJob as _QueryJob
 from ._query import Query as _Query
 from ._sampling import Sampling
 from ._table import Table as _Table
-from ._table import DataSet as _DataSet
-from ._table import DataSetLister as _DataSetLister
+from ._table import TableName as _TableName
 from ._table import TableSchema as _TableSchema
 from ._udf import Function as _Function
 
@@ -91,6 +93,31 @@ def sql(sql_template, **kwargs):
     a corresponding argument value.
   """
   return _util.Sql.format(sql_template, kwargs)
+
+
+def datasetname(project_id, dataset_id):
+  """ Construct a DataSetName named tuple.
+
+  Args:
+    project_id: the project ID
+    dataset_id: the dataset ID
+  Returns:
+    A DataSetName named-tuple.
+  """
+  return _DataSetName(project_id, dataset_id)
+
+
+def tablename(project_id, dataset_id, table_id):
+  """ Construct a TableName named tuple.
+
+  Args:
+    project_id: the project ID
+    dataset_id: the dataset ID
+    table_id: tha Table ID
+  Returns:
+    A TableName named-tuple.
+  """
+  return _TableName(project_id, dataset_id, table_id)
 
 
 def table(name, context=None):
@@ -171,4 +198,3 @@ def query_job(job_id, table, context=None):
   api = _create_api(context)
   return _QueryJob(api, job_id, table)
 
-# TODO(gram): Need an API to list the datasets in the project

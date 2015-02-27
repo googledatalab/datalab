@@ -20,11 +20,23 @@ from oauth2client.client import AccessTokenCredentials
 
 class TestCases(unittest.TestCase):
 
-  @mock.patch('gcp.bigquery._Api.jobs_query_results')
+  @mock.patch('gcp.bigquery._Api.tabledata_list')
   @mock.patch('gcp.bigquery._Api.jobs_insert_query')
-  def test_single_result_query(self, mock_api_insert_query, mock_api_query_results):
+  @mock.patch('gcp.bigquery._Api.jobs_get')
+  @mock.patch('gcp.bigquery._Api.tables_get')
+  def test_single_result_query(self, mock_api_tables_get, mock_api_jobs_get, mock_api_insert_query,
+                               mock_api_tabledata_list):
+    mock_api_tables_get.return_value = {
+      'numRows': 1,
+      'schema': {
+        'fields': [
+          {'name': 'field1', 'type': 'string'}
+        ]
+      },
+    }
+    mock_api_jobs_get.return_value = {'state': 'DONE'}
     mock_api_insert_query.return_value = self._create_insert_done_result()
-    mock_api_query_results.return_value = self._create_single_row_result()
+    mock_api_tabledata_list.return_value = self._create_single_row_result()
 
     sql = 'SELECT field1 FROM [table] LIMIT 1'
     q = self._create_query(sql)
@@ -34,46 +46,35 @@ class TestCases(unittest.TestCase):
     self.assertEqual(1, len(results))
     self.assertEqual('value1', results[0]['field1'])
 
-  @mock.patch('gcp.bigquery._Api.jobs_query_results')
   @mock.patch('gcp.bigquery._Api.jobs_insert_query')
-  def test_empty_result_query(self, mock_api_insert_query, mock_api_query_results):
+  @mock.patch('gcp.bigquery._Api.jobs_get')
+  @mock.patch('gcp.bigquery._Api.tables_get')
+  def test_empty_result_query(self, mock_api_tables_get, mock_api_jobs_get, mock_api_insert_query):
+    mock_api_tables_get.return_value = {'numRows': 0}
+    mock_api_jobs_get.return_value = {'state': 'DONE'}
     mock_api_insert_query.return_value = self._create_insert_done_result()
-    mock_api_query_results.return_value = self._create_empty_result()
 
     q = self._create_query()
     results = q.results()
 
     self.assertEqual(len(results), 0)
 
-  @mock.patch('gcp.bigquery._Api.jobs_query_results')
   @mock.patch('gcp.bigquery._Api.jobs_insert_query')
+  @mock.patch('gcp.bigquery._Api.jobs_get')
+  @mock.patch('gcp.bigquery._Api.tables_get')
   def test_incomplete_result_query(self,
-                                   mock_api_insert_query,
-                                   mock_api_query_results):
+                                   mock_api_tables_get,
+                                   mock_api_jobs_get,
+                                   mock_api_insert_query):
+    mock_api_tables_get.return_value = {'numRows': 1}
+    mock_api_jobs_get.return_value = {'state': 'DONE'}
     mock_api_insert_query.return_value = self._create_incomplete_result()
-    mock_api_query_results.return_value = self._create_single_row_result()
 
     q = self._create_query()
     results = q.results()
 
     self.assertEqual(1, len(results))
     self.assertEqual('test_job', results.job_id)
-    self.assertEqual(1, mock_api_query_results.call_count)
-
-  @mock.patch('gcp.bigquery._Api.jobs_query_results')
-  @mock.patch('gcp.bigquery._Api.jobs_insert_query')
-  def test_multi_page_results_query(self,
-                                    mock_api_insert_query,
-                                    mock_api_query_results):
-    mock_api_insert_query.return_value = self._create_insert_done_result()
-    mock_api_query_results.return_value = self._create_page_result()
-
-    q = self._create_query()
-    results = q.results()
-
-    self.assertEqual(2, len(results))
-    self.assertEqual(2, mock_api_query_results.call_count)
-    self.assertEqual('test_job', mock_api_query_results.call_args[0][0])
 
   @mock.patch('gcp.bigquery._Api.jobs_insert_query')
   def test_malformed_response_raises_exception(self, mock_api_insert_query):
@@ -115,15 +116,6 @@ class TestCases(unittest.TestCase):
   def _create_single_row_result(self):
     # pylint: disable=g-continuation-in-parens-misaligned
     return {
-      'jobReference': {
-        'jobId': 'test_job'
-       },
-      'jobComplete': True,
-      'schema': {
-        'fields': [
-          {'name': 'field1', 'type': 'string'}
-        ]
-      },
       'totalRows': 1,
       'rows': [
         {'f': [{'v': 'value1'}]}
@@ -133,10 +125,6 @@ class TestCases(unittest.TestCase):
   def _create_empty_result(self):
     # pylint: disable=g-continuation-in-parens-misaligned
     return {
-      'jobReference': {
-        'jobId': 'test_job'
-      },
-      'jobComplete': True,
       'totalRows': 0
     }
 
@@ -158,21 +146,12 @@ class TestCases(unittest.TestCase):
       'jobComplete': False
     }
 
-  def _create_page_result(self):
+  def _create_page_result(self, page_token=None):
     # pylint: disable=g-continuation-in-parens-misaligned
     return {
-      'jobReference': {
-        'jobId': 'test_job'
-      },
-      'jobComplete': True,
-      'schema': {
-        'fields': [
-          {'name': 'field1', 'type': 'string'}
-        ]
-      },
       'totalRows': 2,
       'rows': [
         {'f': [{'v': 'value1'}]}
       ],
-      'pageToken': 'page2'
+      'pageToken': page_token
     }

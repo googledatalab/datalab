@@ -144,7 +144,7 @@ class BucketList(object):
     bucket_info = self._api.buckets_insert(name)
     return _Bucket(self._api, name, bucket_info)
 
-  def _retrieve_buckets(self, page_token):
+  def _retrieve_buckets(self, page_token, count):
     list_info = self._api.buckets_list(page_token=page_token)
 
     buckets = list_info.get('items', [])

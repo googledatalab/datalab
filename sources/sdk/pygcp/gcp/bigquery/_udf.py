@@ -40,11 +40,10 @@ class FunctionCall(object):
     """Gets the underlying SQL representation of this UDF object."""
     return self._sql
 
-  def results(self, page_size=0, timeout=0, use_cache=True):
+  def results(self, timeout=0, use_cache=True):
     """Retrieves results from executing the UDF.
 
     Args:
-      page_size: limit to the number of rows to fetch per page.
       timeout: duration (in milliseconds) to wait for the query to complete.
       use_cache: whether to use cached results or not.
     Returns:
@@ -55,7 +54,7 @@ class FunctionCall(object):
     query_sql = 'SELECT * FROM %s' % self._sql
     q = _Query(self._api, query_sql)
 
-    return q.results(page_size=page_size, timeout=timeout, use_cache=use_cache)
+    return q.results(timeout=timeout, use_cache=use_cache)
 
   def _repr_sql_(self):
     """Returns a SQL representation of the UDF object.

@@ -26,14 +26,16 @@ class Iterator(object):
     self._page_token = None
     self._first_page = True
     self._retriever = retriever
+    self._count = 0
 
   def __iter__(self):
     """Provides iterator functionality."""
     while self._first_page or (self._page_token is not None):
-      items, next_page_token = self._retriever(self._page_token)
+      items, next_page_token = self._retriever(self._page_token, self._count)
 
       self._page_token = next_page_token
       self._first_page = False
+      self._count += len(items)
 
       for item in items:
         yield item
@@ -42,3 +44,4 @@ class Iterator(object):
     """Resets the current iteration."""
     self._page_token = None
     self._first_page = True
+    self._count = 0
