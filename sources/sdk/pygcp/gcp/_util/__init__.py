@@ -17,5 +17,6 @@
 from ._credentials import MetadataCredentials
 from ._http import Http
 from ._iterator import Iterator
+from ._lru_cache import LRUCache
 from ._metadata import MetadataService
 from ._sql import Sql

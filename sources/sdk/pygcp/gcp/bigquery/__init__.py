@@ -198,3 +198,4 @@ def query_job(job_id, table, context=None):
   api = _create_api(context)
   return _QueryJob(api, job_id, table)
 
+
