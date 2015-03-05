@@ -242,6 +242,9 @@ class Table(object):
   # Allowed characters in a BigQuery table column name
   _VALID_COLUMN_NAME_CHARACTERS = '_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 
+  # When fetching table contents, the max number of rows to fetch per HTTP request
+  _DEFAULT_PAGE_SIZE = 1024
+
   @staticmethod
   def _parse_name(name, project_id=None, dataset_id=None):
     """Parses a table name into its individual parts.
@@ -555,16 +558,16 @@ class Table(object):
     return _Job(self._api, response['jobReference']['jobId']) \
         if response and 'jobReference' in response else None
 
-  def _get_row_fetcher(self, max_rows=None, start_row=None, page_size=1024):
+  def _get_row_fetcher(self, start_row=0, max_rows=None, page_size=_DEFAULT_PAGE_SIZE):
     """ Get a function that can retrieve a page of rows.
 
     The function returned is a closure so that it can have a signature suitable for use
     by Iterator.
 
     Args:
+      start_row: the row to start fetching from; default 0.
       max_rows: the maximum number of rows to fetch (across all calls, not per-call). Default
           is None which means no limit.
-      start_row: the row to start fetching from; default 0.
       page_size: the maximum number of results to fetch per page; default 1024.
     Returns:
       A function that can be called repeatedly with a page token and running count, and that
@@ -606,17 +609,18 @@ class Table(object):
 
     return _retrieve_rows
 
-  def range(self, max_rows, start_row=None):
+  def range(self, start_row=0, max_rows=None):
     """ Get an iterator to iterate through a set of table rows.
 
     Args:
-      max_rows: an upper limit on the number of rows to iterate through (default None)
       start_row: the row of the table at which to start the iteration (default 0)
+      max_rows: an upper limit on the number of rows to iterate through (default None)
 
     Returns:
       A row iterator.
     """
-    return iter(_Iterator(self._get_row_fetcher(max_rows, start_row=start_row)))
+    fetcher = self._get_row_fetcher(start_row=start_row, max_rows=max_rows)
+    return iter(_Iterator(fetcher))
 
   def to_dataframe(self, start_row=0, max_rows=None):
     """ Exports the table to a Pandas dataframe.
@@ -627,7 +631,7 @@ class Table(object):
     Returns:
       A dataframe containing the table data.
     """
-    fetcher = self._get_row_fetcher(max_rows, start_row=start_row)
+    fetcher = self._get_row_fetcher(start_row=start_row, max_rows=max_rows)
     rows = []
     count = 0
     page_token = None
@@ -713,8 +717,6 @@ class Table(object):
     """
     return self.range(len(self))
 
-  _CACHE_SIZE = 1024
-
   def __getitem__(self, item):
     """ Get an item or a slice of items from the table. This uses a small cache
         to reduce the number of calls to tabledata.list.
@@ -740,17 +742,16 @@ class Table(object):
             or self._cached_page_index + len(self._cached_page) <= item:
       # cache a new page. To get the start row we round to the nearest multiple of the page
       # size.
-      first = int(math.floor(item / self._CACHE_SIZE)) * self._CACHE_SIZE
-      count = self._CACHE_SIZE
+      first = int(math.floor(item / self._DEFAULT_PAGE_SIZE)) * self._DEFAULT_PAGE_SIZE
+      count = self._DEFAULT_PAGE_SIZE
       remaining = len(self) - first
       if count > remaining:
         count = remaining
-      fetcher = self._get_row_fetcher(max_rows=count, start_row=first, page_size=count)
+      fetcher = self._get_row_fetcher(start_row=first, max_rows=count, page_size=count)
       self._cached_page_index = first
       self._cached_page, _ = fetcher(None, 0)
 
     return self._cached_page[item - self._cached_page_index]
-
 
 
 from ._query import Query as _Query
