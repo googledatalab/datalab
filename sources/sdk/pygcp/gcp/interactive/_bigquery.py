@@ -15,10 +15,12 @@
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 
 import argparse
+from datetime import datetime
 import json as _json
 import re as _re
 import time as _time
 import gcp.bigquery as _bq
+import gcp._util as _util
 from ._html import HtmlBuilder as _HtmlBuilder
 
 try:
@@ -26,7 +28,6 @@ try:
   import IPython.core.magic as _magic
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
-
 
 @_magic.register_cell_magic
 def bigquery(line, cell):
@@ -162,6 +163,62 @@ def _udf_cell(args, js):
 
   return None
 
+# For our table viewer, we want a cache of table instances keyed on the ID used for the
+# DOM elements. We key on the DOM element id rather than the table name so we can have
+# multiple instances of the same table with different internal page caches.
+# TODO(gram): consider moving page caching out of Table, in which case we can key this cache
+# on the table name instead.
+
+_table_cache = _util.LRUCache(10)
+
+
+def _get_rows(table, start_row, count):
+  """ Method to get some rows of the table as a tuple: list of column names and list of row data.
+
+  Args:
+    start_row: the first row to fetch.
+    count: the (maximum) number of rows to fetch.
+
+  Returns:
+    A tuple containing a list of column names and a list of rows of data, where each row is
+    itself a list.
+  """
+  max_rows = len(table)
+  if start_row + count > max_rows:
+    count = max_rows - start_row
+  rows = [table[start_row + i] for i in range(0, count)]
+  labels = []
+  data = []
+  if len(rows):
+    labels = [key for key in rows[0].keys()]
+    for row in rows:
+      record = [row[key] for key in labels]
+      data.append(record)
+  return labels, data
+
+
+@_magic.register_line_magic
+def _get_table_page(line):
+  args = line.split()
+  key = args[0]
+  name = args[1]
+  page = int(args[2])
+  rows_per_page = int(args[3])
+
+  try:
+    table = _table_cache[key]
+  except KeyError:
+    _table_cache[key] = table = _bq.table(name)
+  labels, data = _get_rows(table, (page - 1) * rows_per_page, rows_per_page)
+  model = {
+    'page': page,
+    'rows_per_page': rows_per_page,
+    'total_rows': len(table),
+    'labels': labels,
+    'data': data
+  }
+  return _ipython.core.display.JSON(_json.dumps(model))
+
 
 def _repr_html_query(query):
   # TODO(nikhilko): Pretty print the SQL
@@ -169,22 +226,44 @@ def _repr_html_query(query):
   builder.render_text(query.sql, preformatted=True)
   return builder.to_html()
 
+
 def _repr_html_query_results_table(results):
-  # TODO(nikhilko): Add other pieces of metadata such as time-taken.
-  # TODO(nikhilko): Some way of limiting the number of rows, or showing first-few and last-few
-  #                 or even better-yet, an interactive display of results.
-  builder = _HtmlBuilder()
-  builder.render_text('Number of rows: %d' % len(results))
-  builder.render_text('Query job ID  : %s' % results.job_id)
-  # Note: if we decide we don't want table to be iterable, replace the table parameter
-  # below with table.range(len(table)).
-  builder.render_objects(results, dictionary=True)
-  return builder.to_html()
+  # TODO(gram): Add a dependency on domready to make sure we don't try to access the
+  # table div before it is ready.
+  # TODO(gram): Look into supplying the column headers at this point so we don't need to fetch them
+  # when doing page updates.
+  _HTML_TEMPLATE = """
+    <div id="table_%s">
+    </div>
+    <script>
+      require(['extensions/tableviewer'], function(tv) {
+        tv.make_table_viewer("%s", "%s", "%s");
+      });
+    </script>
+  """
+  div_id = str(int(round(_time.time())))
+  return _HTML_TEMPLATE % (div_id, results.full_name, div_id, results.job_id)
+
+
+def _repr_html_table(results):
+  _HTML_TEMPLATE = """
+    <div id="table_%s">
+    </div>
+    <script>
+      require(['extensions/tableviewer'], function(tv) {
+        tv.make_table_viewer("%s", "%s");
+      });
+    </script>
+  """
+  div_id = str(int(round(_time.time())))
+  return _HTML_TEMPLATE % (div_id, results.full_name, div_id)
+
 
 def _repr_html_table_list(table_list):
   builder = _HtmlBuilder()
   builder.render_objects(table_list, ['name'])
   return builder.to_html()
+
 
 def _repr_html_table_schema(schema):
   # TODO(nikhilko): Temporary static HTML representation. Replace with more interactive
@@ -192,6 +271,7 @@ def _repr_html_table_schema(schema):
   builder = _HtmlBuilder()
   builder.render_objects(schema, ['name', 'data_type', 'mode', 'description'])
   return builder.to_html()
+
 
 def _repr_html_function_evaluation(evaluation):
   # TODO(nikhilko): Most of the javascript logic here should go into an external javascript
@@ -253,6 +333,7 @@ def _register_html_formatters():
   html_formatter.for_type_by_name('gcp.bigquery._query', 'Query', _repr_html_query)
   html_formatter.for_type_by_name('gcp.bigquery._query_results_table', 'QueryResultsTable',
                                   _repr_html_query_results_table)
+  html_formatter.for_type_by_name('gcp.bigquery._table', 'Table', _repr_html_table)
   html_formatter.for_type_by_name('gcp.bigquery._table', 'TableList', _repr_html_table_list)
   html_formatter.for_type_by_name('gcp.bigquery._table', 'TableSchema', _repr_html_table_schema)
   html_formatter.for_type_by_name('gcp.bigquery._udf', 'FunctionEvaluation',

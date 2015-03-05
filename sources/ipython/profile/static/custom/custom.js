@@ -128,6 +128,60 @@ function setupOutline() {
 }
 setTimeout(setupOutline, 1000);
 
+// Kernel related functionality
+$(function() {
+    IPython.Kernel.prototype.get_data = function(code, callback) {
+        function shellHandler(reply) {
+            if (!callback) {
+                return;
+            }
+
+            var content = reply.content;
+            if (!content || (content.status != 'ok')) {
+                callback(null, new Error('Unable to retrieve values.'));
+                callback = null;
+            }
+        }
+
+        function iopubHandler(output) {
+            if (!callback) {
+                return;
+            }
+            var values = null;
+            var error = null;
+            try {
+                if (output.msg_type == 'display_data' || output.msg_type == 'pyout') {
+                    var data = output.content.data;
+                    if (data) {
+                        values = JSON.parse(data['application/json']);
+                    }
+                }
+            }
+            catch(e) {
+                error = e;
+            }
+
+            if (values) {
+                callback(values);
+            }
+            else {
+                callback(null, error || new Error('Unexpected value data retrieved.'));
+            }
+            callback = null;
+        }
+
+        try {
+            var callbacks = {
+                shell: { reply: shellHandler },
+                iopub: { output: iopubHandler }
+            };
+            this.execute(code, callbacks, { silent: false, store_history: false });
+        }
+        catch (e) {
+            callback(null, e);
+        }
+    };
+});
 
 // Configure code mirror
 // - Add %%bigquery udf to the list of javascript cells to the existing configuration.
@@ -150,6 +204,7 @@ require(['/static/components/codemirror/mode/sql/sql.js'], function() {
 require.config({
   paths: {
     'static': '/static',
+    'extensions': '/static/extensions',
     'd3': '//cdnjs.cloudflare.com/ajax/libs/d3/3.4.13/d3.min'
   }
 });

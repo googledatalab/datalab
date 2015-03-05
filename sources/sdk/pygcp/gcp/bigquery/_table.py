@@ -18,6 +18,7 @@ import codecs
 import collections
 import csv
 from datetime import datetime
+import math
 import pandas as pd
 import re
 import time
@@ -258,7 +259,7 @@ class Table(object):
     Raises:
       Exception: raised if the name doesn't match the expected formats.
     """
-    _project_id =  _dataset_id = _table_id = None
+    _project_id = _dataset_id = _table_id = None
     if isinstance(name, basestring):
       # Try to parse as absolute name first.
       m = re.match(Table._ABS_NAME_PATTERN, name, re.IGNORECASE)
@@ -394,7 +395,6 @@ class Table(object):
     if 'selfLink' in response:
       return self
     raise Exception("Table %s could not be created as it already exists" % self.full_name)
-
 
   def sample(self, fields=None, count=5, sampling=None, timeout=0, use_cache=True):
     """Retrieves a sampling of data from the table.
@@ -713,7 +713,7 @@ class Table(object):
     """
     return self.range(len(self))
 
-  _CACHE_SIZE = 512
+  _CACHE_SIZE = 1024
 
   def __getitem__(self, item):
     """ Get an item or a slice of items from the table. This uses a small cache
@@ -738,15 +738,19 @@ class Table(object):
     if not self._cached_page \
         or self._cached_page_index > item \
             or self._cached_page_index + len(self._cached_page) <= item:
-      # cache a new page
+      # cache a new page. To get the start row we round to the nearest multiple of the page
+      # size.
+      first = int(math.floor(item / self._CACHE_SIZE)) * self._CACHE_SIZE
       count = self._CACHE_SIZE
-      remaining = len(self) - item
+      remaining = len(self) - first
       if count > remaining:
         count = remaining
-      fetcher = self._get_row_fetcher(max_rows=count, start_row=item, page_size=count)
-      self._cached_page_index = item
+      fetcher = self._get_row_fetcher(max_rows=count, start_row=first, page_size=count)
+      self._cached_page_index = first
       self._cached_page, _ = fetcher(None, 0)
 
     return self._cached_page[item - self._cached_page_index]
+
+
 
 from ._query import Query as _Query
