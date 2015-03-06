@@ -163,59 +163,27 @@ def _udf_cell(args, js):
 
   return None
 
-# For our table viewer, we want a cache of table instances keyed on the ID used for the
-# DOM elements. We key on the DOM element id rather than the table name so we can have
-# multiple instances of the same table with different internal page caches.
-# TODO(gram): consider moving page caching out of Table, in which case we can key this cache
-# on the table name instead.
 
+# An LRU cache for Tables.
+# TODO(gram): now we fetch more data than a table viewer displays at one time, we may not
+# even need this cache; it doesn't buy us much.
 _table_cache = _util.LRUCache(10)
 
 
-def _get_rows(table, start_row, count):
-  """ Method to get some rows of the table as a tuple: list of column names and list of row data.
-
-  Args:
-    start_row: the first row to fetch.
-    count: the (maximum) number of rows to fetch.
-
-  Returns:
-    A tuple containing a list of column names and a list of rows of data, where each row is
-    itself a list.
-  """
-  max_rows = len(table)
-  if start_row + count > max_rows:
-    count = max_rows - start_row
-  rows = [table[start_row + i] for i in range(0, count)]
-  labels = []
-  data = []
-  if len(rows):
-    labels = [key for key in rows[0].keys()]
-    for row in rows:
-      record = [row[key] for key in labels]
-      data.append(record)
-  return labels, data
-
-
 @_magic.register_line_magic
-def _get_table_page(line):
+def _get_table_rows(line):
   args = line.split()
-  key = args[0]
-  name = args[1]
-  page = int(args[2])
-  rows_per_page = int(args[3])
+  name = args[0]
+  start_row = int(args[1])
+  count = int(args[2])
 
   try:
-    table = _table_cache[key]
+    table = _table_cache[name]
   except KeyError:
-    _table_cache[key] = table = _bq.table(name)
-  labels, data = _get_rows(table, (page - 1) * rows_per_page, rows_per_page)
+    _table_cache[name] = table = _bq.table(name)
+
   model = {
-    'page': page,
-    'rows_per_page': rows_per_page,
-    'total_rows': len(table),
-    'labels': labels,
-    'data': data
+    'data': [row for row in table.range(start_row=start_row, max_rows=count)]
   }
   return _ipython.core.display.JSON(_json.dumps(model))
 
@@ -230,19 +198,21 @@ def _repr_html_query(query):
 def _repr_html_query_results_table(results):
   # TODO(gram): Add a dependency on domready to make sure we don't try to access the
   # table div before it is ready.
-  # TODO(gram): Look into supplying the column headers at this point so we don't need to fetch them
-  # when doing page updates.
   _HTML_TEMPLATE = """
     <div id="table_%s">
     </div>
     <script>
-      require(['extensions/tableviewer'], function(tv) {
-        tv.make_table_viewer("%s", "%s", "%s");
-      });
+      require([ 'extensions/tableviewer' ],
+          function(tv) {
+              tv.makeTableViewer('%s', '%s', %s, %d, '%s');
+          }
+      );
     </script>
   """
+
+  labels = _json.dumps([field.name for field in results.schema()])
   div_id = str(int(round(_time.time())))
-  return _HTML_TEMPLATE % (div_id, results.full_name, div_id, results.job_id)
+  return _HTML_TEMPLATE % (div_id, results.full_name, div_id, labels, len(results), results.job_id)
 
 
 def _repr_html_table(results):
@@ -250,13 +220,16 @@ def _repr_html_table(results):
     <div id="table_%s">
     </div>
     <script>
-      require(['extensions/tableviewer'], function(tv) {
-        tv.make_table_viewer("%s", "%s");
-      });
+      require([ 'extensions/tableviewer' ],
+          function(tv) {
+              tv.makeTableViewer("%s", "%s", %s, %d);
+          }
+      );
     </script>
   """
+  labels = _json.dumps([field.name for field in results.schema()])
   div_id = str(int(round(_time.time())))
-  return _HTML_TEMPLATE % (div_id, results.full_name, div_id)
+  return _HTML_TEMPLATE % (div_id, results.full_name, div_id, labels, len(results))
 
 
 def _repr_html_table_list(table_list):
