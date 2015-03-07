@@ -16,6 +16,9 @@
 
 /* Fonts */
 @import url(https://fonts.googleapis.com/css?family=Source+Code+Pro|Open+Sans|Lato:400,700&subset=latin,latin-ext);
+@import url(https:////cdnjs.cloudflare.com/ajax/libs/dc/1.7.3/dc.css);
+@import '../extensions/tableviewer.css';
+
 body {
   font-family: 'Open Sans', Calibri, helvetica, sans-serif;
 }
@@ -177,3 +180,6 @@ div.text_cell_render code {
 #ipython-main-app #tabs li:nth-child(3) {
   display: none;
 }
+
+
+

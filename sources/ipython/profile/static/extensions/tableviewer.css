@@ -1,0 +1,64 @@
+div.bqtv table.bqtv-table {
+    border:1px solid black;
+    border-collapse:collapse;
+}
+
+div.bqtv .bqtv-table .dc-table-row {
+    display:table-row;
+}
+
+div.bqtv .bqtv-table .dc-table-group {
+    display:none;
+}
+
+div.bqtv .bqtv-table .dc-table-head {
+    background-color:LightGray;
+}
+
+div.bqtv tbody.bqtv-table {
+    display:table-row-group;
+    vertical-align:middle;
+    border-collapse:collapse;
+}
+
+div.bqtv table.bqtv-table {
+    border-width: 0 0 1px 1px;
+    border-spacing: 0px;
+}
+
+div.bqtv .bqtv-table ._0 {
+    background-color:WhiteSmoke
+}
+
+div.bqtv .bqtv-table .dc-table-column {
+    padding: 3px;
+    border-width: 1px 1px 0 0;
+}
+
+div.bqtv .bqtv-meta-left {
+    display:inline;
+    float:left;
+}
+
+div.bqtv .bqtv-meta-right {
+    display:inline;
+    float:right;
+}
+
+div.bqtv .bqtv-meta-text {
+    vertical-align: super;
+}
+
+div.bqtv .bqtv-rpp-selector {
+    width: 60px;
+}
+
+div.bqtv .bqtv-page-input {
+    width: 120px;
+}
+
+div.bqtv .bqtv-table-div {
+    overflow:auto;
+    width:100%;
+}
+

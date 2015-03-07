@@ -213,12 +213,12 @@ class TableMetadata(object):
   @property
   def rows(self):
     """The number of rows within the table."""
-    return int(self._info['numRows'])
+    return int(self._info['numRows']) if 'numRows' in self._info else -1
 
   @property
   def size(self):
     """The size of the table in bytes."""
-    return int(self._info['numBytes'])
+    return int(self._info['numBytes']) if 'numBytes' in self._info else -1
 
 
 TableName = collections.namedtuple('TableName', ['project_id', 'dataset_id', 'table_id'])
@@ -577,7 +577,11 @@ class Table(object):
     if not start_row:
       start_row = 0
     elif start_row < 0:  # We are measuring from the table end
-      start_row += len(self)
+      if self.length >= 0:
+        start_row += self.length
+      else:
+        raise Exception('Cannot use negative indices for table of unknown length')
+
     schema = self.schema()
     name_parts = self._name_parts
 
@@ -705,17 +709,19 @@ class Table(object):
     Returns:
       The string representation of this object.
     """
-    return self._name
+    return self.full_name
 
-  def __len__(self):
-    """ Get the length of the table (number of rows).
+  @property
+  def length(self):
+    """ Get the length of the table (number of rows). We don't use __len__ as this may
+        return -1 for 'unknown'.
     """
     return self.metadata().rows
 
   def __iter__(self):
     """ Get an iterator for the table.
     """
-    return self.range(len(self))
+    return self.range(start_row=0)
 
   def __getitem__(self, item):
     """ Get an item or a slice of items from the table. This uses a small cache
@@ -736,7 +742,11 @@ class Table(object):
 
     # Handle the integer index case.
     if item < 0:
-      item += len(self)
+      if self.length >= 0:
+        item += self.length
+      else:
+        raise Exception('Cannot use negative indices for table of unknown length')
+
     if not self._cached_page \
         or self._cached_page_index > item \
             or self._cached_page_index + len(self._cached_page) <= item:
@@ -744,9 +754,12 @@ class Table(object):
       # size.
       first = int(math.floor(item / self._DEFAULT_PAGE_SIZE)) * self._DEFAULT_PAGE_SIZE
       count = self._DEFAULT_PAGE_SIZE
-      remaining = len(self) - first
-      if count > remaining:
-        count = remaining
+
+      if self.length >= 0:
+        remaining = self.length - first
+        if count > remaining:
+          count = remaining
+
       fetcher = self._get_row_fetcher(start_row=first, max_rows=count, page_size=count)
       self._cached_page_index = first
       self._cached_page, _ = fetcher(None, 0)
