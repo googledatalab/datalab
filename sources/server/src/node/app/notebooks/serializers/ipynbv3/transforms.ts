@@ -48,7 +48,7 @@ export function fromIPyCodeCell (ipyCell: app.ipy.CodeCell): app.notebook.Cell {
         break;
 
       default:
-        console.log('WARNING: skipping unsupported cell output type: ', ipyOutput.output_type);
+        throw new Error('Unsupported cell output type: ', ipyOutput.output_type);
     }
   });
   return cell;
@@ -101,7 +101,7 @@ function fromIPyRichOutput (ipyOutput: any): app.notebook.CellOutput {
         break; // not a mimetype
 
       default:
-        console.log('WARNING: skipping unsupported output mimetype: ', key)
+        throw new Error('Unsupported output mimetype: ', key);
     }
   });
 
@@ -169,7 +169,7 @@ export function fromIPyNotebook (ipyNotebook: app.ipy.Notebook): app.notebook.No
         cell = fromIPyHeadingCell(<app.ipy.HeadingCell>ipyCell);
         break;
       default:
-        console.log('WARNING: skipping unsupported cell type: ', ipyCell.cell_type);
+        throw new Error('Unsupported cell type: ', ipyCell.cell_type);
     }
     // Attach the converted cell to the worksheet
     worksheet.cells.push(cell);
