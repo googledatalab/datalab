@@ -172,7 +172,7 @@ describe('Code cell', () => {
       mimetypeBundle: {
         'text/plain': "NameError: name 'asdf' is not defined"
         // TODO(bryantd): validate content of html traceback once the ansi color code and format
-        // are translated to html with appropriate css classes
+        // are translated to html with appropriate css classes.
       },
       metadata: {
         errorDetails: {

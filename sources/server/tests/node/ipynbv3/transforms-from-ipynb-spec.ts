@@ -202,7 +202,7 @@ describe('IPython .ipynb v3 format serialization of code cells', () => {
       mimetypeBundle: {
         'text/plain': "NameError: name 'asdf' is not defined"
         // TODO(bryantd): validate content of html traceback once the ansi color code and format
-        // are translated to html with appropriate css classes
+        // are translated to html with appropriate css classes.
       },
       metadata: {
         errorDetails: {
@@ -322,7 +322,7 @@ describe('IPython .ipynb v3 format serialization of notebook metadata', () => {
 
   it('should transform from the .ipynb notebook with zero worksheets', () => {
     notebook = xforms.fromIPyNotebook(ipyNotebook);
-    // There should be a single empty worksheet
+    // There should be a single empty worksheet.
     expect(notebook.worksheetIds.length).toBe(1);
     var worksheet = notebook.worksheets[notebook.worksheetIds[0]];
     expect(worksheet.cells.length).toBe(0);

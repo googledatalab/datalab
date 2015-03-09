@@ -14,7 +14,7 @@
 
 
 /**
- * Transformation functions from .ipynb-formatted objects to datalab in-memory notebook types
+ * Transformation functions from .ipynb-formatted objects to datalab in-memory notebook types.
  */
 /// <reference path="../../../../../../../../externs/ts/node/node-uuid.d.ts" />
 import nbutil = require('../../util');
@@ -22,6 +22,9 @@ import util = require('../../../common/util');
 import uuid = require('node-uuid');
 
 
+/**
+ * Creates an internal format code cell from the .ipynb v3 code cell.
+ */
 export function fromIPyCodeCell (ipyCell: app.ipy.CodeCell): app.notebook.Cell {
   var cell = _createCell();
   cell.type = 'code';
@@ -31,10 +34,10 @@ export function fromIPyCodeCell (ipyCell: app.ipy.CodeCell): app.notebook.Cell {
   cell.metadata.language = ipyCell.language;
   cell.outputs = [];
 
-  // Now handle the deserialization of any outputs for the code cell
+  // Now handle the deserialization of any outputs for the code cell.
   ipyCell.outputs.forEach((ipyOutput) => {
     switch (ipyOutput.output_type) {
-      case 'display_data': // equivalent to pyout case, fall-through
+      case 'display_data': // Fall-through (equivalent to pyout case).
       case 'pyout':
         cell.outputs.push(fromIPyRichOutput(ipyOutput));
         break;
@@ -69,9 +72,6 @@ function fromIPyStreamOutput (ipyOutput: any): app.notebook.CellOutput {
   }
 }
 
-/**
- * from an ipython (v3) format mimetype bundle
- */
 function fromIPyRichOutput (ipyOutput: any): app.notebook.CellOutput {
   var output: app.notebook.CellOutput = {
     type: 'result',
@@ -82,7 +82,7 @@ function fromIPyRichOutput (ipyOutput: any): app.notebook.CellOutput {
   Object.keys(ipyOutput).forEach((key) => {
     switch(key) {
       case 'png':
-        // The base64 encoded png data is the value of the property
+        // The base64-encoded png data is the value of the property.
         output.mimetypeBundle['image/png'] = ipyOutput.png;
         break;
 
@@ -94,11 +94,11 @@ function fromIPyRichOutput (ipyOutput: any): app.notebook.CellOutput {
         output.mimetypeBundle['text/plain'] = ipyOutput.text.join('');
         break;
 
-      // non-mimetype properties that can exist within the object
+      // Non-mimetype properties that can exist within the object are skipped.
       case 'metadata':
       case 'output_type':
       case 'prompt_number':
-        break; // not a mimetype
+        break;
 
       default:
         throw new Error('Unsupported output mimetype: ', key);
@@ -109,6 +109,9 @@ function fromIPyRichOutput (ipyOutput: any): app.notebook.CellOutput {
 }
 
 var DEFAULT_HEADING_LEVEL = 1;
+/**
+ * Creates an internal format heading cell from the .ipynb v3 heading cell.
+ */
 export function fromIPyHeadingCell (ipyCell: app.ipy.HeadingCell): app.notebook.Cell {
   var cell = _createCell();
   cell.type = 'heading';
@@ -118,6 +121,9 @@ export function fromIPyHeadingCell (ipyCell: app.ipy.HeadingCell): app.notebook.
   return cell;
 }
 
+/**
+ * Creates an internal format markdown cell from the .ipynb v3 markdown cell.
+ */
 export function fromIPyMarkdownCell (ipyCell: app.ipy.MarkdownCell): app.notebook.Cell {
   var cell = _createCell();
   cell.type = 'markdown';
@@ -126,11 +132,14 @@ export function fromIPyMarkdownCell (ipyCell: app.ipy.MarkdownCell): app.noteboo
   return cell;
 }
 
+/**
+ * Creates an internal format notebook from the .ipynb v3 notebook.
+ */
 export function fromIPyNotebook (ipyNotebook: app.ipy.Notebook): app.notebook.Notebook {
   var notebook = nbutil.createEmptyNotebook();
-  // Copy over the notebook-level metadata if it was defined
+  // Copy over the notebook-level metadata if it was defined,
   notebook.metadata = ipyNotebook.metadata || {};
-  // Remove the sha-256 signature field if it is defined (it's no longer valid)
+  // Remove the sha-256 signature field if it is defined (it's no longer valid),
   delete notebook.metadata.signature;
 
   // Notebooks created by IPython in v3 format will have zero or one worksheet(s)
@@ -142,17 +151,17 @@ export function fromIPyNotebook (ipyNotebook: app.ipy.Notebook): app.notebook.No
   // So, assume zero or one worksheet, but throw an informative error if these expectations are
   // not met.
   if (ipyNotebook.worksheets.length === 0) {
-    // Nothing else to convert from ipynb format
+    // We're done converting the notebook content since there are no worksheets.
     return notebook;
   } else if (ipyNotebook.worksheets.length > 1) {
-    //
+    // Multiple worksheets were found (not supported).
     throw new Error('Multi-worksheet .ipynb notebooks are not currently supported');
   }
 
-  // Then the .ipynb notebook has a single worksheet
+  // We've determined that the .ipynb notebook has a single worksheet.
   var ipynbWorksheet = ipyNotebook.worksheets[0];
 
-  // Get a reference to the first worksheet in the converted notebook
+  // Get a reference to the first worksheet in the converted notebook.
   var worksheet = notebook.worksheets[notebook.worksheetIds[0]];
   worksheet.metadata = ipynbWorksheet.metadata || {};
 
@@ -171,23 +180,26 @@ export function fromIPyNotebook (ipyNotebook: app.ipy.Notebook): app.notebook.No
       default:
         throw new Error('Unsupported cell type: ', ipyCell.cell_type);
     }
-    // Attach the converted cell to the worksheet
+    // Attach the converted cell to the worksheet.
     worksheet.cells.push(cell);
   });
 
   return notebook;
 }
 
+/**
+ * Creates an .ipynb v3 code cell from the internal format code cell
+ */
 export function toIPyCodeCell (cell: app.notebook.Cell): app.ipy.CodeCell {
   var ipyCell: app.ipy.CodeCell = {
     cell_type: 'code',
     input: stringToLineArray(cell.source),
     collapsed: false,
-    // language is promoted to cell-level attribute, remove it from the metadata dict
+    // Remove 'language' from the metadata dict (promoted to cell-level attribute)
     metadata: shallowCopy(cell.metadata || {}, 'language'),
-    // Attempt to set the language for the cell if defined, if not, leave undefined
+    // Attempt to set the language for the cell if defined; if not, leave undefined.
     language: (cell.metadata && cell.metadata.language) || undefined,
-    // Set the prompt number if the value is numeric, otherwise leave undefined
+    // Set the prompt number if the value is numeric; otherwise leave undefined.
     prompt_number: parseInt(cell.prompt) || undefined,
     outputs: []
   };
@@ -274,7 +286,7 @@ function toIPyStreamOutput (output: app.notebook.CellOutput): app.ipy.StreamOutp
 }
 
 /**
- * Convert a string containing newlines into an array of strings, while keeping newlines
+ * Converts a string containing newlines into an array of strings, while keeping newlines
  *
  * s = 'foo\nbar\nbaz' => ['foo\n', 'bar\n', 'baz']
  */
@@ -294,7 +306,7 @@ export function stringToLineArray (s: string): string[] {
 }
 
 /**
- * Creates a shallow copy of the object, excluding the specified property
+ * Creates a shallow copy of the object that excludes the specified property.
  */
 export function shallowCopy (o: any, excludedProperty: string): any {
   var copy = {};
@@ -306,6 +318,9 @@ export function shallowCopy (o: any, excludedProperty: string): any {
   return copy;
 }
 
+/**
+ * Creates an .ipynb v3 heading cell from the internal format heading cell.
+ */
 export function toIPyHeadingCell (cell: app.notebook.Cell): app.ipy.HeadingCell {
   var metadata = shallowCopy(cell.metadata, 'level');
   return {
@@ -316,6 +331,9 @@ export function toIPyHeadingCell (cell: app.notebook.Cell): app.ipy.HeadingCell 
   };
 }
 
+/**
+ * Creates an .ipynb v3 markdown cell from the internal format markdown cell.
+ */
 export function toIPyMarkdownCell (cell: app.notebook.Cell): app.ipy.MarkdownCell {
   return {
     cell_type: 'markdown',
@@ -324,9 +342,12 @@ export function toIPyMarkdownCell (cell: app.notebook.Cell): app.ipy.MarkdownCel
   }
 }
 
+/**
+ * Creates an .ipynb v3 notebook from the internal format notebook
+ */
 export function toIPyNotebook (notebook: app.notebook.Notebook): app.ipy.Notebook {
   var ipyNotebook: app.ipy.Notebook = {
-    nbformat: 3, // i.e., .ipynb v3
+    nbformat: 3, // Indicates .ipynb v3 format.
     nbformat_minor: 0,
     metadata: notebook.metadata || {},
     worksheets: [{
@@ -336,7 +357,7 @@ export function toIPyNotebook (notebook: app.notebook.Notebook): app.ipy.Noteboo
   };
 
   // IPython Notebook only supports rendering/manipulating a single worksheet, so concatenate
-  // the cells from each worksheet in worksheet order
+  // the cells from each worksheet in worksheet order.
   var ipyWorksheet = ipyNotebook.worksheets[0];
   notebook.worksheetIds.forEach((worksheetId) => {
     // TODO(bryantd): not aware of any worksheet-level metadata populated by IPython at the moment,

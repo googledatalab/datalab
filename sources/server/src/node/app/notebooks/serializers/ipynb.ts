@@ -19,22 +19,22 @@ import util = require('../util');
 
 
 /**
- * Serializer for reading/writing the .ipynb (IPython) formats
+ * Serializer for reading/writing the .ipynb (IPython) formats.
  *
- * Only supports .ipynb v3 format currently
+ * Only supports .ipynb v3 format currently.
  */
 export class IPySerializer implements app.INotebookSerializer {
 
   /**
-   * Parses and transforms the given .ipynb formatted JSON string into an in-memory notebook model
+   * Parses and transforms the given .ipynb formatted JSON string into an in-memory notebook model.
    */
   parse (notebookData: string, format: string) {
     this._validateFormatOrThrow(format);
 
-    // Read the raw file contents (json blob) into an object
+    // Read the raw file contents (json blob) into an object.
     var ipynb = JSON.parse(notebookData);
 
-    // Validate that this serializer supports the specified format
+    // Validate that this serializer supports the specified format.
     var ipynbVersion = ipynb.nbformat;
     if (ipynbVersion != 3) {
       throw new Error('Cannot read unsupported .ipynb version "' + ipynbVersion + '"');
@@ -44,14 +44,14 @@ export class IPySerializer implements app.INotebookSerializer {
   }
 
   /**
-   * Serializes the in-memory notebook model to a .ipynb formatted JSON string
+   * Serializes the in-memory notebook model to a .ipynb formatted JSON string.
    */
   stringify (notebook: app.notebook.Notebook, format: string) {
     this._validateFormatOrThrow(format);
     return JSON.stringify(
         transforms.toIPyNotebook(notebook),
-        null, // "replacer"; null value indicates that the entire object should be serialized
-        2); // pretty print the json, and use this number of spaces per identation level
+        null, // Null value indicates that the entire object should be serialized.
+        2); // Pretty print the json and use this number of spaces per identation level.
   }
 
   /**

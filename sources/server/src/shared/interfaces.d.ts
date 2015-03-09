@@ -27,30 +27,30 @@ declare module app {
   }
 
   /**
-   * Typedefs for the in-memory notebook model
+   * Typedefs for the in-memory notebook model are enumerated here.
    */
   module notebook {
 
     interface Notebook {
-      id: string; // the notebook id
+      id: string; // Notebook id
       worksheetIds: string[];
-      worksheets: app.Map<Worksheet>; // worksheetId -> Worksheet
+      worksheets: app.Map<Worksheet>; // {worksheetId: Worksheet}
       metadata: any;
     }
 
     interface Worksheet {
-      id: string; // the worksheet id
-      name: string; // worksheet display name
+      id: string; // Worksheet id
+      name: string; // Worksheet display name
       metadata: any;
       cells: Cell[];
     }
 
     interface Cell {
-      id: string; // the cell id
+      id: string; // Cell id
       type?: string; // 'code' | 'markdown' | 'heading' | 'etc'
 
       /**
-       * Some metadata fields reserved for internal usage
+       * Some metadata fields reserved for internal usage:
        * {
        *   // if cell type is code
        *   language: 'python' | 'java' | 'html' | 'javascript' | etc.
@@ -63,10 +63,10 @@ declare module app {
       */
       metadata?: any;
 
-      source?: string; // source content (e.g., code, markdown text, etc.)
+      source?: string; // Source content (e.g., code, markdown text, etc.)
       outputs?: CellOutput[];
 
-      prompt?: string; // prompt to display; e.g., execution counter value, busy symbol, etc.
+      prompt?: string; // Prompt to display (e.g., execution counter value, busy symbol, etc.)
 
       // Note: The following fields are user-scoped; these should be handled on a per-user basis
       // under any future multi-writer implementation.
@@ -78,7 +78,7 @@ declare module app {
       type: string; // 'result' | 'error' | 'stdout' | 'stderr'
 
       /**
-       * Each output has a mimetype bundle {<mimetype string>: <content string>}
+       * Each output has a mimetype bundle ({<mimetype string>: <content string>}):
        * {
        *   'text/html':  <content for mimetype text/html>,
        *   'text/plain':  <content for mimetype text/plain>,
