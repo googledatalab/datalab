@@ -37,15 +37,15 @@ export function fromIPyCodeCell (ipyCell: app.ipy.CodeCell): app.notebook.Cell {
       case 'display_data': // equivalent to pyout case, fall-through
       case 'pyout':
         cell.outputs.push(fromIPyRichOutput(ipyOutput));
-      break;
+        break;
 
       case 'stream':
         cell.outputs.push(fromIPyStreamOutput(ipyOutput));
-      break;
+        break;
 
       case 'pyerr':
         cell.outputs.push(fromIPyErrorOutput(ipyOutput));
-      break;
+        break;
 
       default:
         console.log('WARNING: skipping unsupported cell output type: ', ipyOutput.output_type);
@@ -84,21 +84,21 @@ function fromIPyRichOutput (ipyOutput: any): app.notebook.CellOutput {
       case 'png':
         // The base64 encoded png data is the value of the property
         output.mimetypeBundle['image/png'] = ipyOutput.png;
-      break;
+        break;
 
       case 'html':
         output.mimetypeBundle['text/html'] = ipyOutput.html.join('');
-      break;
+        break;
 
       case 'text':
         output.mimetypeBundle['text/plain'] = ipyOutput.text.join('');
-      break;
+        break;
 
       // non-mimetype properties that can exist within the object
       case 'metadata':
       case 'output_type':
       case 'prompt_number':
-      break; // not a mimetype
+        break; // not a mimetype
 
       default:
         console.log('WARNING: skipping unsupported output mimetype: ', key)
@@ -196,16 +196,16 @@ export function toIPyCodeCell (cell: app.notebook.Cell): app.ipy.CodeCell {
     switch (output.type) {
       case 'result':
         ipyCell.outputs.push(toIPyDisplayDataOutput(output));
-      break;
+        break;
 
       case 'error':
         ipyCell.outputs.push(toIPyErrorOutput(output));
-      break;
+        break;
 
       case 'stdout':
       case 'stderr':
         ipyCell.outputs.push(toIPyStreamOutput(output));
-      break;
+        break;
 
       default:
         throw new Error('Unsupported output type for conversion to IPython cell output: "'
@@ -228,19 +228,19 @@ function toIPyDisplayDataOutput (output: app.notebook.CellOutput): app.ipy.Displ
     switch (mimetype) {
       case 'text/plain':
         ipyOutput.text = stringToLineArray(data);
-      break;
+        break;
 
       case 'text/html':
         ipyOutput.html = stringToLineArray(data);
-      break;
+        break;
 
       case 'image/png':
         ipyOutput.png = data;
-      break;
+        break;
 
       case 'image/jpeg':
         ipyOutput.jpeg = data;
-      break;
+        break;
 
       default:
         throw new Error('Unsupported mimetype for conversion to ipynb cell output "'+mimetype+'"');
@@ -346,15 +346,15 @@ export function toIPyNotebook (notebook: app.notebook.Notebook): app.ipy.Noteboo
       switch (cell.type) {
         case 'code':
           ipyWorksheet.cells.push(toIPyCodeCell(cell));
-        break;
+          break;
 
         case 'markdown':
           ipyWorksheet.cells.push(toIPyMarkdownCell(cell));
-        break;
+          break;
 
         case 'heading':
           ipyWorksheet.cells.push(toIPyHeadingCell(cell));
-        break;
+          break;
 
         default:
           throw new Error('Unsupported cell type cannot be transformed to .ipynb format: "'
