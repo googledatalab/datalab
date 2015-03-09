@@ -48,7 +48,10 @@ export class IPySerializer implements app.INotebookSerializer {
    */
   stringify (notebook: app.notebook.Notebook, format: string) {
     this._validateFormatOrThrow(format);
-    return JSON.stringify(transforms.toIPyNotebook(notebook), null, 2);
+    return JSON.stringify(
+        transforms.toIPyNotebook(notebook),
+        null, // "replacer"; null value indicates that the entire object should be serialized
+        2); // pretty print the json, and use this number of spaces per identation level
   }
 
   /**
