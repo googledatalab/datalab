@@ -22,10 +22,6 @@ declare module app {
     httpPort: number;
   }
 
-  interface Map<T> {
-    [index: string]: T;
-  }
-
   interface EventHandler<T> {
     (event: T): void;
   }

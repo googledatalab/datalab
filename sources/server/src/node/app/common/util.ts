@@ -13,6 +13,9 @@
  */
 
 
+import util = require('util');
+
+
 /**
  * Finds an open port available for binding.
  *
@@ -28,3 +31,41 @@ export function getAvailablePort (): number {
  * Generic no-op function that takes a single arg
  */
 export function noop (arg1: any): void {}
+
+/**
+ * Creates an error object from the format string and list of args to interpolate.
+ */
+export function createError(format: string, ...formatArgs: any[]) {
+  return new Error(util.format.apply(/* this context */ null, [format].concat(formatArgs)));
+}
+
+/**
+ * Creates a mimetype bundle to represent an error output
+ *
+ * Used when transforming the common set of error fields to a rich cell output
+ * in the case of .ipynb error outputs and kernel error messages.
+ */
+export function createErrorOutput (
+    errorName: string,
+    errorMessage: string,
+    traceback: string[]
+    ): app.notebook.CellOutput {
+  return {
+    type: 'error',
+    mimetypeBundle: {
+      'text/plain': errorName + ': ' + errorMessage
+      // TODO(bryantd): parse and present the traceback data as formatted html content
+      // This requires converting the ANSI color codes embedded in the traceback to appropriate
+      // CSS classes.
+    },
+    // Retain the individual error fields as metadata
+    // Necessary to fully support exporting to .ipynb format
+    metadata: {
+      errorDetails: {
+        errorName: errorName,
+        errorMessage: errorMessage,
+        traceback: traceback
+      }
+    }
+  };
+}

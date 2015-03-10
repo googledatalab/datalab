@@ -24,7 +24,6 @@ import path = require('path');
  */
 export var names = {
   ipynbV3: 'ipynb v3',
-  model: 'model'
 }
 
 /**
@@ -35,7 +34,6 @@ export var names = {
  */
 var extensionToFormat = {
   '.ipynb': names.ipynbV3,
-  '.modelnb': names.model
   // TODO(bryantd): define the format for .nb files here eventually
 };
 

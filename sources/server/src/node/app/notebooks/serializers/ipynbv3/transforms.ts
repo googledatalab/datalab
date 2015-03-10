@@ -51,7 +51,7 @@ export function fromIPyCodeCell (ipyCell: app.ipy.CodeCell): app.notebook.Cell {
         break;
 
       default:
-        throw new Error('Unsupported cell output type: ', ipyOutput.output_type);
+        throw util.createError('Unsupported cell output type: "%s"', ipyOutput.output_type);
     }
   });
   return cell;
@@ -203,7 +203,7 @@ export function fromIPyNotebook (ipyNotebook: app.ipy.Notebook): app.notebook.No
         cell = fromIPyHeadingCell(<app.ipy.HeadingCell>ipyCell);
         break;
       default:
-        throw new Error('Unsupported cell type: ', ipyCell.cell_type);
+        throw util.createError('Unsupported cell type "%s"', ipyCell.cell_type);
     }
     // Attach the converted cell to the worksheet.
     worksheet.cells.push(cell);

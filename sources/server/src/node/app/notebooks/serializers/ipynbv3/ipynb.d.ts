@@ -134,17 +134,15 @@ declare module app {
     }
 
     interface DisplayDataOutput extends CellOutput {
-      text?: string[]; // text/plain
-      png?: string; // image/png
-      jpeg?: string; // image/jpeg
       html?: string[]; // text/html
-
-      // TODO(bryantd): support additional mimetypes
-      // javascript?: string[];
-      // json?: string[];
-      // latex?: string[];
-      // pdf?: string[];
-      // svg?: string[];
+      javascript?: string[]; // application/javascript
+      jpeg?: string; // image/jpeg
+      json?: string[]; // application/json
+      latex?: string[]; // application/x-latex
+      pdf?: string[]; // application/pdf
+      png?: string; // image/png
+      svg?: string[]; // image/svg+xml
+      text?: string[]; // text/plain
     }
 
     interface ExecuteOutput extends DisplayDataOutput {
