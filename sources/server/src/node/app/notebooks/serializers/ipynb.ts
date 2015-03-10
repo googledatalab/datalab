@@ -13,7 +13,6 @@
  */
 
 
-import formats = require('./formats');
 import transforms = require('./ipynbv3/transforms');
 import util = require('../util');
 
