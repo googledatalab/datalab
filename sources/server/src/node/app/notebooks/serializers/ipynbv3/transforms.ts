@@ -81,17 +81,42 @@ function fromIPyRichOutput (ipyOutput: any): app.notebook.CellOutput {
 
   Object.keys(ipyOutput).forEach((key) => {
     switch(key) {
-      case 'png':
-        // The base64-encoded png data is the value of the property.
-        output.mimetypeBundle['image/png'] = ipyOutput.png;
+      case 'html':
+        output.mimetypeBundle[mimetypes.html] = ipyOutput.html.join('');
         break;
 
-      case 'html':
-        output.mimetypeBundle['text/html'] = ipyOutput.html.join('');
+      case 'javascript':
+        output.mimetypeBundle[mimetypes.javascript] = ipyOutput.javascript.join('');
+        break;
+
+      case 'jpeg':
+        // The base64-encoded jpeg data is the value of the property.
+        output.mimetypeBundle[mimetypes.jpeg] = ipyOutput.jpeg;
+        break;
+
+      case 'json':
+        output.mimetypeBundle[mimetypes.json] = ipyOutput.json.join('');
+        break;
+
+      case 'latex':
+        output.mimetypeBundle[mimetypes.latex] = ipyOutput.latex.join('');
+        break;
+
+      case 'pdf':
+        output.mimetypeBundle[mimetypes.pdf] = ipyOutput.pdf;
+        break;
+
+      case 'png':
+        // The base64-encoded png data is the value of the property.
+        output.mimetypeBundle[mimetypes.png] = ipyOutput.png;
+        break;
+
+      case 'svg':
+        output.mimetypeBundle[mimetypes.svg] = ipyOutput.svg.join('');
         break;
 
       case 'text':
-        output.mimetypeBundle['text/plain'] = ipyOutput.text.join('');
+        output.mimetypeBundle[mimetypes.text] = ipyOutput.text.join('');
         break;
 
       // Non-mimetype properties that can exist within the object are skipped.
@@ -101,7 +126,7 @@ function fromIPyRichOutput (ipyOutput: any): app.notebook.CellOutput {
         break;
 
       default:
-        throw new Error('Unsupported output mimetype: ', key);
+        throw new Error('Unsupported output mimetype: ' + key);
     }
   });
 
@@ -238,20 +263,41 @@ function toIPyDisplayDataOutput (output: app.notebook.CellOutput): app.ipy.Displ
   Object.keys(output.mimetypeBundle).forEach((mimetype) => {
     var data = output.mimetypeBundle[mimetype];
     switch (mimetype) {
-      case 'text/plain':
-        ipyOutput.text = stringToLineArray(data);
-        break;
 
-      case 'text/html':
+      case mimetypes.html:
         ipyOutput.html = stringToLineArray(data);
         break;
 
-      case 'image/png':
+      case mimetypes.javascript:
+        ipyOutput.javascript = stringToLineArray(data);
+        break;
+
+      case mimetypes.jpeg:
+        ipyOutput.jpeg = data;
+        break;
+
+      case mimetypes.json:
+        ipyOutput.json = stringToLineArray(data);
+        break;
+
+      case mimetypes.latex:
+        ipyOutput.latex = stringToLineArray(data);
+        break;
+
+      case mimetypes.pdf:
+        ipyOutput.pdf = stringToLineArray(data);
+        break;
+
+      case mimetypes.png:
         ipyOutput.png = data;
         break;
 
-      case 'image/jpeg':
-        ipyOutput.jpeg = data;
+      case mimetypes.svg:
+        ipyOutput.svg = stringToLineArray(data);
+        break;
+
+      case mimetypes.text:
+        ipyOutput.text = stringToLineArray(data);
         break;
 
       default:
@@ -394,3 +440,15 @@ function _createCell (): app.notebook.Cell {
     metadata: {}
   };
 }
+
+var mimetypes = {
+  html: 'text/html',
+  javascript: 'application/javascript',
+  jpeg: 'image/jpeg',
+  json: 'application/json',
+  latex: 'application/x-latex',
+  pdf: 'application/pdf',
+  png: 'image/png',
+  svg: 'image/svg+xml',
+  text: 'text/plain'
+};
