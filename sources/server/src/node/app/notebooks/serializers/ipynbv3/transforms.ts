@@ -126,7 +126,7 @@ function fromIPyRichOutput (ipyOutput: any): app.notebook.CellOutput {
         break;
 
       default:
-        throw new Error('Unsupported output mimetype: ' + key);
+        throw util.createError('Unsupported output mimetype: "%s"', key);
     }
   });
 
@@ -180,7 +180,7 @@ export function fromIPyNotebook (ipyNotebook: app.ipy.Notebook): app.notebook.No
     return notebook;
   } else if (ipyNotebook.worksheets.length > 1) {
     // Multiple worksheets were found (not supported).
-    throw new Error('Multi-worksheet .ipynb notebooks are not currently supported');
+    throw util.createError('Multi-worksheet .ipynb notebooks are not currently supported');
   }
 
   // We've determined that the .ipynb notebook has a single worksheet.
@@ -245,8 +245,8 @@ export function toIPyCodeCell (cell: app.notebook.Cell): app.ipy.CodeCell {
         break;
 
       default:
-        throw new Error('Unsupported output type for conversion to IPython cell output: "'
-          + output.type + '"');
+        throw util.createError(
+          'Unsupported output type for conversion to IPython cell output: "%s"', output.type);
     }
   });
 
@@ -301,7 +301,8 @@ function toIPyDisplayDataOutput (output: app.notebook.CellOutput): app.ipy.Displ
         break;
 
       default:
-        throw new Error('Unsupported mimetype for conversion to ipynb cell output "'+mimetype+'"');
+        throw util.createError(
+          'Unsupported mimetype for conversion to ipynb cell output "%s"', mimetype);
     }
   });
 
@@ -424,8 +425,8 @@ export function toIPyNotebook (notebook: app.notebook.Notebook): app.ipy.Noteboo
           break;
 
         default:
-          throw new Error('Unsupported cell type cannot be transformed to .ipynb format: "'
-            + cell.type + '"');
+          throw util.createError(
+            'Unsupported cell type cannot be transformed to .ipynb format: "%s"', cell.type);
       }
     });
   });
