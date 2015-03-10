@@ -14,7 +14,6 @@
 
 
 /// <reference path="../../../../../externs/ts/jasmine.d.ts"/>
-import formats = require('../app/notebooks/serializers/formats');
 import ipy = require('../app/notebooks/serializers/ipynb');
 
 
@@ -72,7 +71,7 @@ describe('Parse .ipynb format to in-memory notebook model', () => {
   });
 
   it('should generate a .ipynb formatted JSON string', () => {
-    notebook = serializer.parse(ipynbSerialized, formats.names.ipynbV3);
+    notebook = serializer.parse(ipynbSerialized);
     // Expected parse of ipynb content and subsequent transformation to notebook model
     // {
     //   "id": "8c293b25-d5ea-4dcb-816f-2210e84dacc7",
@@ -192,7 +191,7 @@ describe('Serialize in-memory notebook model to .ipynb format', () => {
   });
 
   it('should generate a .ipynb formatted JSON string', () => {
-    ipynbSerialized = serializer.stringify(notebook, formats.names.ipynbV3);
+    ipynbSerialized = serializer.stringify(notebook);
     // The exact string is probably fragile to compare against because insignificant,
     // so parse it back into an object and compare the data contained within
     ipynb = JSON.parse(ipynbSerialized);
