@@ -35,13 +35,13 @@ declare module app {
       id: string; // Notebook id
       worksheetIds: string[];
       worksheets: app.Map<Worksheet>; // {worksheetId: Worksheet}
-      metadata: any;
+      metadata: app.Map<any>;
     }
 
     interface Worksheet {
       id: string; // Worksheet id
       name: string; // Worksheet display name
-      metadata: any;
+      metadata: app.Map<any>;
       cells: Cell[];
     }
 
@@ -61,7 +61,7 @@ declare module app {
        *   // other metadata needed for new/plugin-defined cell types go here
        * }
       */
-      metadata?: any;
+      metadata?: app.Map<any>;
 
       source?: string; // Source content (e.g., code, markdown text, etc.)
       outputs?: CellOutput[];
@@ -86,7 +86,7 @@ declare module app {
        * }
        */
       mimetypeBundle: Map<string>;
-      metadata?: any;
+      metadata?: app.Map<any>;
     }
 
   }

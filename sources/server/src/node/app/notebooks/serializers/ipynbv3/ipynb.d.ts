@@ -86,19 +86,19 @@ declare module app {
       //     language: string; // e.g. 'python'
       //     codemirror_mode?: string; // which CodeMirror mode to load for the notebook
       //   }
-      metadata?: any;
+      metadata?: app.Map<any>;
 
       worksheets: Worksheet[];
     }
 
     interface Worksheet {
-      metadata?: any;
+      metadata?: app.Map<any>;
       cells: Cell[];
     }
 
     interface Cell {
       cell_type: string;
-      metadata?: any;
+      metadata?: app.Map<any>;
     }
 
     interface CodeCell extends Cell {
@@ -117,9 +117,13 @@ declare module app {
       level: number;
     }
 
+    interface RawCell extends Cell {
+      source: string[];
+    }
+
     interface CellOutput {
       output_type: string;
-      metadata?: any;
+      metadata?: app.Map<any>;
     }
 
     interface ErrorOutput extends CellOutput {
