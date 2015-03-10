@@ -22,9 +22,8 @@ declare module app {
     httpPort: number;
   }
 
-  interface CellRef {
-    cellId: string;
-    worksheetId: string;
+  interface Map<T> {
+    [index: string]: T;
   }
 
   interface EventHandler<T> {
@@ -36,19 +35,13 @@ declare module app {
     shellPort: number;
   }
 
-  interface IActiveNotebook { // FIXME: better name for this?
-    apply (action: notebook.action.Action): notebook.update.Update;
-    getSnapshot (): notebook.Notebook;
-    getCell (cellId: string, worksheetId: string): notebook.Cell;
-  }
-
   interface IKernel {
     id: string;
     config: KernelConfig;
     execute (request: ExecuteRequest): void;
     onExecuteReply (callback: EventHandler<ExecuteReply>): void;
+    onExecuteResult (callback: EventHandler<ExecuteResult>): void;
     onKernelStatus (callback: EventHandler<KernelStatus>): void;
-    onOutputData (callback: EventHandler<OutputData>): void;
     shutdown (): void;
     start (): void;
   }
@@ -90,31 +83,22 @@ declare module app {
     stringify (notebook: notebook.Notebook): string;
   }
 
+
   interface ISession {
     id: string;
     getKernelId (): string;
-    getUserConnectionIds (): string[];
+    getUserConnectionId (): string;
     updateUserConnection (connection: IUserConnection): void;
-  }
-
-  interface ISessionManager {
-    renameSession (oldId: string, newId: string): void;
-  }
-
-  interface IStorage {
-    read (path: string): string;
-    write (path: string, data: string): void;
-    delete (path: string): boolean;
-    // move (sourcePath: string, destinationPath: string);
-    // copy (sourcePath: string, destinationPath: string);
   }
 
   interface IUserConnection {
     id: string;
-    getNotebookPath (): string;
+    getSessionId (): string;
     onDisconnect (callback: EventHandler<IUserConnection>): void;
-    onAction (callback: EventHandler<app.notebook.action.Action>): void;
-    sendUpdate (update: notebook.update.Update): void;
+    onExecuteRequest (callback: EventHandler<ExecuteRequest>): void;
+    sendExecuteReply (reply: ExecuteReply): void;
+    sendExecuteResult (result: ExecuteResult): void;
+    sendKernelStatus (status: KernelStatus): void;
   }
 
   interface IUserConnectionManager {
@@ -123,4 +107,3 @@ declare module app {
   }
 
 }
-
