@@ -158,6 +158,17 @@ export function fromIPyMarkdownCell (ipyCell: app.ipy.MarkdownCell): app.noteboo
 }
 
 /**
+ * Creates an internal format raw cell from the .ipynb v3 raw cell.
+ */
+export function fromIPyRawCell (ipyCell: app.ipy.RawCell): app.notebook.Cell {
+  var cell = _createCell();
+  cell.type = 'raw';
+  cell.source = ipyCell.source.join('');
+  cell.metadata = ipyCell.metadata || {};
+  return cell;
+}
+
+/**
  * Creates an internal format notebook from the .ipynb v3 notebook.
  */
 export function fromIPyNotebook (ipyNotebook: app.ipy.Notebook): app.notebook.Notebook {
@@ -193,14 +204,17 @@ export function fromIPyNotebook (ipyNotebook: app.ipy.Notebook): app.notebook.No
   ipynbWorksheet.cells.forEach(function (ipyCell: any) {
     var cell: app.notebook.Cell;
     switch (ipyCell.cell_type) {
-      case 'markdown':
-        cell = fromIPyMarkdownCell(<app.ipy.MarkdownCell>ipyCell);
-        break;
       case 'code':
         cell = fromIPyCodeCell(<app.ipy.CodeCell>ipyCell);
         break;
       case 'heading':
         cell = fromIPyHeadingCell(<app.ipy.HeadingCell>ipyCell);
+        break;
+      case 'markdown':
+        cell = fromIPyMarkdownCell(<app.ipy.MarkdownCell>ipyCell);
+        break;
+      case 'raw':
+        cell = fromIPyRawCell(<app.ipy.RawCell>ipyCell);
         break;
       default:
         throw util.createError('Unsupported cell type "%s"', ipyCell.cell_type);
@@ -390,6 +404,17 @@ export function toIPyMarkdownCell (cell: app.notebook.Cell): app.ipy.MarkdownCel
 }
 
 /**
+ * Creates an .ipynb v3 raw cell from the internal format raw cell.
+ */
+export function toIPyRawCell (cell: app.notebook.Cell): app.ipy.RawCell {
+  return {
+    cell_type: 'raw',
+    source: stringToLineArray(cell.source),
+    metadata: cell.metadata || {}
+  }
+}
+
+/**
  * Creates an .ipynb v3 notebook from the internal format notebook
  */
 export function toIPyNotebook (notebook: app.notebook.Notebook): app.ipy.Notebook {
@@ -416,12 +441,16 @@ export function toIPyNotebook (notebook: app.notebook.Notebook): app.ipy.Noteboo
           ipyWorksheet.cells.push(toIPyCodeCell(cell));
           break;
 
+        case 'heading':
+          ipyWorksheet.cells.push(toIPyHeadingCell(cell));
+          break;
+
         case 'markdown':
           ipyWorksheet.cells.push(toIPyMarkdownCell(cell));
           break;
 
-        case 'heading':
-          ipyWorksheet.cells.push(toIPyHeadingCell(cell));
+        case 'raw':
+          ipyWorksheet.cells.push(toIPyRawCell(cell));
           break;
 
         default:
