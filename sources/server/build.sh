@@ -6,7 +6,7 @@ if [ -z "$REPO_DIR" ];
   exit 1;
 fi
 
-####### CONFIG ########
+### CONFIG
 # Create all of the output paths
 build_root="$REPO_DIR/build/server";
 # TODO(bryantd): using an additonal directory '_' to offset the build path such that
@@ -18,6 +18,10 @@ build_root="$REPO_DIR/build/server";
 #
 # All of this trickery would be unnecessary if TypeScript supported a requirejs-style path config
 # specification, but it does not at the moment.
+#
+# This module path config feature is being actively discussed within the TypeScript community, so
+# opting to see how it plays out before implementing more complex work-arounds. For discussion,
+# see: https://github.com/Microsoft/TypeScript/issues/293
 staging_path="$build_root/staging/_";
 test_path="$build_root/tests";
 build_path="$build_root/build";
@@ -29,6 +33,7 @@ server_root="$REPO_DIR/sources/server";
 common_tsc_args="--removeComments --noImplicitAny";
 
 mkdir -p "$staging_path" "$build_path" "$test_path";
+
 
 ### BUILD
 echo 'Building DataLab server backend...';
