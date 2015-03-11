@@ -106,7 +106,7 @@ declare module app {
       prompt_number?: number
       collapsed?: boolean;
       language: string;
-      outputs: any[];
+      outputs: CellOutput[];
     }
 
     interface MarkdownCell extends Cell {
