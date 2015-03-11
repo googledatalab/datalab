@@ -51,6 +51,9 @@ find "$build_path" -name '*.ts' | xargs rm;
 
 
 ### TEST
+# TODO(bryantd): Find a way to avoid needing to rebuild the src/* .ts files when compiling tests
+# Best solution likely involves generating the *.d.ts typedefs when building /src/* and correctly
+# symlinking these built files to the test directory, before building the tests.
 echo 'Testing DataLab server backend...';
 # Copy node .ts files to test.
 cp -r "$server_root/src/node" "$test_path";
