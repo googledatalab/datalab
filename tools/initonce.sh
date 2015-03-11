@@ -16,29 +16,35 @@ fi
 # Python Linter (http://www.pylint.org)
 pip install pylint
 
-# Node.js check
+# Node.js check (DataLab server)
 if which node >/dev/null; then
   echo "NodeJS installed"
 else
   echo "Please install NodeJS 0.10.x: http://nodejs.org/download"
 fi
 
+# TypeScript compiler (DataLab server)
+if which npm >/dev/null; then
+  npm install -g typescript
+else
+  echo "Please install NodeJS and then re-run this script to install the TypeScript compiler."
+fi
+
+# Jasmine test runner (DataLab server)
+if which npm >/dev/null; then
+  npm install -g jasmine-node
+else
+  echo "Please install NodeJS and then re-run this script to install the Jasmine NodeJS test runner."
+fi
+
 # Gradle 2.0 check
-if which gradle >/dev/null; then  
+if which gradle >/dev/null; then
   gradle_version=`gradle -version | grep Gradle | cut -f2 -d' '`
   gradle_major_version=`echo $gradle_version | cut -f1 -d.`
   if [ "$gradle_major_version" != "2" ]; then
     echo "Please install Gradle 2.x"
   fi
   echo "Found Gradle version '${gradle_version}'"
-else  
+else
   echo "Please install Gradle 2.0: http://www.gradle.org/downloads"
 fi
-
-# TypeScript compiler
-if which npm >/dev/null; then  
-  npm install -g typescript
-else
-  echo "Please install NodeJS and then re-run this script to install the TypeScript compiler."
-fi
-
