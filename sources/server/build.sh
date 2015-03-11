@@ -9,7 +9,15 @@ fi
 ####### CONFIG ########
 # Create all of the output paths
 build_root="$REPO_DIR/build/server";
-# TODO(bryantd):
+# TODO(bryantd): using an additonal directory 'foo' to offset the build path such that
+# the hard-coded dependency paths (dictated by TypeScript module system currently) will
+# line up with the source directory layout. Current issue is that the source code needs
+# to be compiled in multiple locations, each of which must have the correct number of parent
+# directories to the externs/ts typedefs. One workaround would be to symlink externs/ts
+# to each build location and then change all import references to account for this.
+#
+# All of this trickery would be unnecessary if TypeScript supported a requirejs-style path config
+# specification, but it does not at the moment.
 staging_path="$build_root/staging/foo";
 test_path="$build_root/tests";
 build_path="$build_root/build";
