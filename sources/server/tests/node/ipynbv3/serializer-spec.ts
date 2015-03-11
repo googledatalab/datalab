@@ -78,11 +78,7 @@ describe('Parse .ipynb format to in-memory notebook model', () => {
     //   "metadata": {
     //     "name": ""
     //   },
-    //   "worksheetIds": [
-    //     "2e427c22-e88b-4bb7-9b00-e7cae81dfed6"
-    //   ],
-    //   "worksheets": {
-    //     "2e427c22-e88b-4bb7-9b00-e7cae81dfed6": {
+    //   "worksheets": [{
     //       "id": "2e427c22-e88b-4bb7-9b00-e7cae81dfed6",
     //       "name": "Untitled Worksheet",
     //       "metadata": {},
@@ -106,17 +102,16 @@ describe('Parse .ipynb format to in-memory notebook model', () => {
     //           ]
     //         }
     //       ]
-    //     }
-    //   }
+    //   }]
     // }
     expect(notebook.id).toBeDefined();
     expect(notebook.metadata).toEqual({
       // The signature field should not be present
       name: ''
     });
-    expect(notebook.worksheetIds.length).toBe(1);
+    expect(notebook.worksheets.length).toBe(1);
 
-    var worksheet = notebook.worksheets[notebook.worksheetIds[0]];
+    var worksheet = notebook.worksheets[0];
     expect(worksheet.id).toBeDefined();
     expect(worksheet.name).toBeDefined();
     expect(worksheet.metadata).toEqual({});
@@ -152,35 +147,30 @@ describe('Serialize in-memory notebook model to .ipynb format', () => {
       "metadata": {
         "name": ""
       },
-      "worksheetIds": [
-        "c34cb974-49d3-45e1-90fc-d393ec4882dd"
-      ],
-      "worksheets": {
-        "c34cb974-49d3-45e1-90fc-d393ec4882dd": {
-          "id": "c34cb974-49d3-45e1-90fc-d393ec4882dd",
-          "name": "Untitled Worksheet",
-          "metadata": {},
-          "cells": [
-            {
-              "id": "e7a32977-bc05-48b5-963d-35919a846bdd",
-              "metadata": {
-                "language": "python"
-              },
-              "type": "code",
-              "source": "1 + 3",
-              "prompt": "1",
-              "outputs": [
-                {
-                  "type": "result",
-                  "mimetypeBundle": {
-                    "text/plain": "4"
-                  }
+      "worksheets": [{
+        "id": "c34cb974-49d3-45e1-90fc-d393ec4882dd",
+        "name": "Untitled Worksheet",
+        "metadata": {},
+        "cells": [
+          {
+            "id": "e7a32977-bc05-48b5-963d-35919a846bdd",
+            "metadata": {
+              "language": "python"
+            },
+            "type": "code",
+            "source": "1 + 3",
+            "prompt": "1",
+            "outputs": [
+              {
+                "type": "result",
+                "mimetypeBundle": {
+                  "text/plain": "4"
                 }
-              ]
-            }
-          ]
-        }
-      }
+              }
+            ]
+          }
+        ]
+      }]
     };
   });
 
