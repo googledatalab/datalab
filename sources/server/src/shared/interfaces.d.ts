@@ -12,14 +12,6 @@
  * the License.
  */
 
-
-// Explicitly permit o['property'] references on all objects by defining
-// an explicit indexer on Object. For details,
-// see: https://typescript.codeplex.com/discussions/535628
-interface Object {
-  [index: string]: any;
-}
-
 declare module app {
 
   interface Map<T> {
@@ -33,8 +25,7 @@ declare module app {
 
     interface Notebook {
       id: string; // Notebook id
-      worksheetIds: string[];
-      worksheets: app.Map<Worksheet>; // {worksheetId: Worksheet}
+      worksheets: Worksheet[];
       metadata: app.Map<any>;
     }
 
@@ -47,7 +38,7 @@ declare module app {
 
     interface Cell {
       id: string; // Cell id
-      type?: string; // 'code' | 'markdown' | 'heading' | 'etc'
+      type: string; // 'code' | 'markdown' | 'heading' | 'etc'
 
       /**
        * Some metadata fields reserved for internal usage:
@@ -61,16 +52,12 @@ declare module app {
        *   // other metadata needed for new/plugin-defined cell types go here
        * }
       */
-      metadata?: app.Map<any>;
+      metadata: app.Map<any>;
 
-      source?: string; // Source content (e.g., code, markdown text, etc.)
+      source: string; // Source content (e.g., code, markdown text, etc.)
       outputs?: CellOutput[];
 
       prompt?: string; // Prompt to display (e.g., execution counter value, busy symbol, etc.)
-
-      // Note: The following fields are user-scoped; these should be handled on a per-user basis
-      // under any future multi-writer implementation.
-      active?: boolean;
     }
 
 

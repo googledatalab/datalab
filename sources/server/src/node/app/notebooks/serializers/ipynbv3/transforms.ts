@@ -26,13 +26,11 @@ import uuid = require('node-uuid');
  * Creates an internal format code cell from the .ipynb v3 code cell.
  */
 export function fromIPyCodeCell (ipyCell: app.ipy.CodeCell): app.notebook.Cell {
-  var cell = _createCell();
-  cell.type = 'code';
-  cell.source = ipyCell.input.join('');
-  cell.prompt = (ipyCell.prompt_number && ipyCell.prompt_number.toString()) || undefined;
+  var cell = _createCell('code', ipyCell.input.join(''));
   cell.metadata = ipyCell.metadata || {};
-  cell.metadata.language = ipyCell.language;
+  cell.metadata['language'] = ipyCell['language'];
   cell.outputs = [];
+  cell.prompt = (ipyCell.prompt_number && ipyCell.prompt_number.toString()) || undefined;
 
   // Now handle the deserialization of any outputs for the code cell.
   ipyCell.outputs.forEach((ipyOutput) => {
@@ -138,11 +136,9 @@ var DEFAULT_HEADING_LEVEL = 1;
  * Creates an internal format heading cell from the .ipynb v3 heading cell.
  */
 export function fromIPyHeadingCell (ipyCell: app.ipy.HeadingCell): app.notebook.Cell {
-  var cell = _createCell();
-  cell.type = 'heading';
-  cell.source = ipyCell.source.join('');
+  var cell = _createCell('heading', ipyCell.source.join(''));
   cell.metadata = ipyCell.metadata || {};
-  cell.metadata.level = ipyCell.level || DEFAULT_HEADING_LEVEL;
+  cell.metadata['level'] = ipyCell.level || DEFAULT_HEADING_LEVEL;
   return cell;
 }
 
@@ -150,9 +146,7 @@ export function fromIPyHeadingCell (ipyCell: app.ipy.HeadingCell): app.notebook.
  * Creates an internal format markdown cell from the .ipynb v3 markdown cell.
  */
 export function fromIPyMarkdownCell (ipyCell: app.ipy.MarkdownCell): app.notebook.Cell {
-  var cell = _createCell();
-  cell.type = 'markdown';
-  cell.source = ipyCell.source.join('');
+  var cell = _createCell('markdown', ipyCell.source.join(''));
   cell.metadata = ipyCell.metadata || {};
   return cell;
 }
@@ -161,9 +155,7 @@ export function fromIPyMarkdownCell (ipyCell: app.ipy.MarkdownCell): app.noteboo
  * Creates an internal format raw cell from the .ipynb v3 raw cell.
  */
 export function fromIPyRawCell (ipyCell: app.ipy.RawCell): app.notebook.Cell {
-  var cell = _createCell();
-  cell.type = 'raw';
-  cell.source = ipyCell.source.join('');
+  var cell = _createCell('raw', ipyCell.source.join(''));
   cell.metadata = ipyCell.metadata || {};
   return cell;
 }
@@ -176,7 +168,7 @@ export function fromIPyNotebook (ipyNotebook: app.ipy.Notebook): app.notebook.No
   // Copy over the notebook-level metadata if it was defined,
   notebook.metadata = ipyNotebook.metadata || {};
   // Remove the sha-256 signature field if it is defined (it's no longer valid),
-  delete notebook.metadata.signature;
+  delete notebook.metadata['signature'];
 
   // Notebooks created by IPython in v3 format will have zero or one worksheet(s)
   // because no existing IPython tools are capable of creating/reading multiple worksheets.
@@ -198,7 +190,7 @@ export function fromIPyNotebook (ipyNotebook: app.ipy.Notebook): app.notebook.No
   var ipynbWorksheet = ipyNotebook.worksheets[0];
 
   // Get a reference to the first worksheet in the converted notebook.
-  var worksheet = notebook.worksheets[notebook.worksheetIds[0]];
+  var worksheet = notebook.worksheets[0];
   worksheet.metadata = ipynbWorksheet.metadata || {};
 
   ipynbWorksheet.cells.forEach(function (ipyCell: any) {
@@ -237,7 +229,7 @@ export function toIPyCodeCell (cell: app.notebook.Cell): app.ipy.CodeCell {
     // Remove 'language' from the metadata dict (promoted to cell-level attribute)
     metadata: shallowCopy(cell.metadata || {}, 'language'),
     // Attempt to set the language for the cell if defined; if not, leave undefined.
-    language: (cell.metadata && cell.metadata.language) || undefined,
+    language: (cell.metadata && cell.metadata['language']) || undefined,
     // Set the prompt number if the value is numeric; otherwise leave undefined.
     prompt_number: parseInt(cell.prompt) || undefined,
     outputs: []
@@ -327,7 +319,7 @@ function toIPyErrorOutput (output: app.notebook.CellOutput): app.ipy.ErrorOutput
   // Copy over all metadata fields that are not part of the error details
   // (error details are captured as top-level field in ipy outputs)
   var metadata = shallowCopy(output.metadata || {}, 'errorDetails');
-  var error = output.metadata.errorDetails;
+  var error = output.metadata['errorDetails'];
   return {
     output_type: 'pyerr',
     metadata: metadata,
@@ -370,7 +362,7 @@ export function stringToLineArray (s: string): string[] {
  * Creates a shallow copy of the object that excludes the specified property.
  */
 export function shallowCopy (o: any, excludedProperty: string): any {
-  var copy = {};
+  var copy: any = {};
   Object.keys(o).forEach((property) => {
     if (property != excludedProperty) {
       copy[property] = o[property];
@@ -387,7 +379,7 @@ export function toIPyHeadingCell (cell: app.notebook.Cell): app.ipy.HeadingCell 
   return {
     cell_type: 'heading',
     source: stringToLineArray(cell.source),
-    level: cell.metadata.level,
+    level: cell.metadata['level'],
     metadata: metadata
   };
 }
@@ -431,11 +423,11 @@ export function toIPyNotebook (notebook: app.notebook.Notebook): app.ipy.Noteboo
   // IPython Notebook only supports rendering/manipulating a single worksheet, so concatenate
   // the cells from each worksheet in worksheet order.
   var ipyWorksheet = ipyNotebook.worksheets[0];
-  notebook.worksheetIds.forEach((worksheetId) => {
+  notebook.worksheets.forEach((worksheet) => {
     // TODO(bryantd): not aware of any worksheet-level metadata populated by IPython at the moment,
     // but will need to merge the per-worksheet metadata intelligently once multiple worksheets are
     // supported (and we actually store any worksheet metadata)
-    notebook.worksheets[worksheetId].cells.forEach((cell) => {
+    worksheet.cells.forEach((cell) => {
       switch (cell.type) {
         case 'code':
           ipyWorksheet.cells.push(toIPyCodeCell(cell));
@@ -464,9 +456,11 @@ export function toIPyNotebook (notebook: app.notebook.Notebook): app.ipy.Noteboo
 }
 
 
-function _createCell (): app.notebook.Cell {
+function _createCell (cellType: string, source: string): app.notebook.Cell {
   return {
     id: uuid.v4(),
+    type: cellType,
+    source: source,
     metadata: {}
   };
 }

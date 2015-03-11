@@ -30,19 +30,14 @@ export var defaultWorksheetName = 'Untitled Worksheet';
  * Creates an empty notebook with no cells.
  */
 export function createEmptyNotebook (): app.notebook.Notebook {
-  var cells: app.notebook.Cell[] = [];
-  var worksheetId = uuid.v4();
-  var notebook: app.notebook.Notebook = {
+  return {
     id: uuid.v4(),
     metadata: {},
-    worksheetIds: [worksheetId],
-    worksheets: {}
+    worksheets: [{
+      id: uuid.v4(),
+      name: defaultWorksheetName,
+      metadata: {},
+      cells: []
+    }]
   };
-  notebook.worksheets[worksheetId] = {
-    id: worksheetId,
-    name: defaultWorksheetName,
-    metadata: {},
-    cells: cells
-  }
-  return notebook;
 }
