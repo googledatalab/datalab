@@ -12,6 +12,7 @@
  * the License.
  */
 
+
 declare module app {
 
   interface Map<T> {
