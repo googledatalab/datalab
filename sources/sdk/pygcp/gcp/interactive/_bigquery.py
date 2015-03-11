@@ -15,7 +15,6 @@
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 
 import argparse
-from datetime import datetime
 import json as _json
 import re as _re
 import time as _time
@@ -29,49 +28,94 @@ try:
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
-@_magic.register_cell_magic
-def bigquery(line, cell):
+@_magic.register_line_cell_magic
+def bigquery(line, cell=None):
   """Implements the bigquery cell magic for ipython notebooks.
 
   The supported syntax is:
-  %%bigquery [<line>]
-  <cell>
+
+    %%bigquery <line>
+    <cell>
+
+  or:
+
+    %bigquery <line>
 
   Args:
-    line: the contents of the %%bigquery line.
+    line: the contents of the bigquery line.
     cell: the contents of the cell.
   Returns:
     The results of executing the cell.
   """
-  parser = argparse.ArgumentParser(prog='%%bigquery')
+  parser = argparse.ArgumentParser(prog='bigquery')
   subparsers = parser.add_subparsers(help='sub-commands')
 
+  # This is a bit kludgy because we want to handle some line magics and some cell magics
+  # with the bigquery command.
+
+  # %%bigquery sql
   sql_parser = subparsers.add_parser('sql', help=
       'execute a BigQuery SQL statement or create a named query object')
-  sql_parser.add_argument('-n', '--name', nargs=1, help='the name for this query object')
-  sql_parser.set_defaults(func=lambda x: _sql_cell(vars(x), cell))
+  sql_parser.add_argument('-n', '--name', help='the name for this query object')
+  sql_parser.set_defaults(func=lambda x: _dispatch_handler('sql', x, cell, sql_parser, _sql_cell,
+                                                           cell_required=True))
 
+  # %%bigquery udf
   udf_parser = subparsers.add_parser('udf', help='create a named Javascript UDF')
-  udf_parser.add_argument('-n', '--name', nargs=1, help='the name for this UDF',
-                          required=True)
-  udf_parser.set_defaults(func=lambda x: _udf_cell(vars(x), cell))
+  udf_parser.add_argument('-n', '--name', help='the name for this UDF', required=True)
+  udf_parser.set_defaults(func=lambda x: _dispatch_handler('udf', x, cell, udf_parser, _udf_cell,
+                                                           cell_required=True))
 
-  for p in [parser, sql_parser, udf_parser]:
-    p.exit = _parser_exit  # raise exception, don't call sys.exit
+  # %bigquery table
+  table_parser = subparsers.add_parser('table', help='view a BigQuery table')
+  table_parser.add_argument('-r', '--rows', type=int, default=25,
+                            help='rows to display per page')
+  table_parser.add_argument('-c', '--cols',
+                            help='comma-separated list of column names to restrict to')
+  table_parser.add_argument('table', help='the name of the table')
+  table_parser.set_defaults(func=lambda x: _dispatch_handler('table', x, cell, table_parser,
+                                                             _table_line, cell_prohibited=True))
+
+  for p in [parser, sql_parser, udf_parser, table_parser]:
     p.format_usage = p.format_help  # Show full help always
 
   args = filter(None, line.split())
   try:
-    parser.parse_args(args)
-  except Exception as e:
-    pass
+    parsed_args = parser.parse_args(args)
+    return parsed_args.func(vars(parsed_args))
+  except SystemExit as e:
+    if e.message:
+      print e.message
 
 
-def _parser_exit(status=0, message=None):
-  """ Replacement exit method for argument parser. We want to stop processing args but not
-      call sys.exit(), so we raise an exception here and catch it in the call to parse_args.
+def _dispatch_handler(command, args, cell, parser, handler,
+                      cell_required=False, cell_prohibited=False):
+  """ Makes sure cell magics include cell and line magics don't, before dispatching to handler.
+
+  Args:
+    command: the name of the command.
+    args: the optional arguments following 'bigquery <cmd>'.
+    cell: the contents of the cell, if any.
+    parser: the argument parser for <cmd>; used for error message.
+    handler: the handler to call if the cell present/absent check passes.
+    cell_required: True for cell magics, False for line magics that can't be cell magics.
+    cell_prohibited: True for line magics, False for cell magics that can't be line magics.
+  Returns:
+    The result of calling the handler.
+  Raises:
+    SystemExit if the invocation is not valid.
   """
-  raise Exception()
+  if cell_prohibited:
+    if cell and len(cell.strip()):
+      parser.print_help()
+      raise SystemExit('Additional data is not supported with the %s command.' % command)
+    return handler(args)
+
+  if cell_required and not cell:
+    parser.print_help()
+    raise SystemExit('The %s command requires additional data' % command)
+
+  return handler(args, cell)
 
 
 def _sql_cell(args, sql):
@@ -97,7 +141,7 @@ def _sql_cell(args, sql):
   query = _bq.query(sql)
 
   variable_name = args['name']
-  if len(variable_name):
+  if variable_name:
     # Update the global namespace with the new variable, or update the value of
     # the existing variable if it already exists.
     ipy.push({variable_name: query})
@@ -126,7 +170,7 @@ def _udf_cell(args, js):
   ipy = _ipython.get_ipython()
 
   variable_name = args['name']
-  if len(variable_name) == 0:
+  if not variable_name:
     raise Exception("Declaration must be of the form %%bigquery udf <variable name>")
 
   # Parse out the input and output specification
@@ -164,10 +208,24 @@ def _udf_cell(args, js):
   return None
 
 
+def _table_line(args):
+  fields = args['cols'].split(',') if args['cols'] else None
+  return _ipython.core.display.HTML(
+      _table_viewer(_get_table(args['table']), rows_per_page=args['rows'], fields=fields))
+
+
 # An LRU cache for Tables.
 # TODO(gram): now we fetch more data than a table viewer displays at one time, we may not
 # even need this cache; it doesn't buy us much.
 _table_cache = _util.LRUCache(10)
+
+
+def _get_table(name):
+  try:
+    table = _table_cache[name]
+  except KeyError:
+    _table_cache[name] = table = _bq.table(name)
+  return table
 
 
 @_magic.register_line_magic
@@ -177,15 +235,48 @@ def _get_table_rows(line):
   start_row = int(args[1])
   count = int(args[2])
 
-  try:
-    table = _table_cache[name]
-  except KeyError:
-    _table_cache[name] = table = _bq.table(name)
+  table = _get_table(name)
 
   model = {
     'data': [row for row in table.range(start_row=start_row, max_rows=count)]
   }
   return _ipython.core.display.JSON(_json.dumps(model))
+
+
+def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
+  """  Return a table viewer.
+
+  Args:
+    table: the table to view.
+    rows_per_page: how many rows to display at one time.
+    job_id: the ID of the job that created this table, if known.
+    fields: an array of field names to display; default is None which uses the full schema.
+  Returns:
+    A string containing the HTML for the table viewer.
+  """
+  # TODO(gram): Add a dependency on domready to make sure we don't try to access the
+  # table div before it is ready.
+  # TODO(gram): What should we do if the table does not exist?
+  _HTML_TEMPLATE = """
+    <div class="bqtv" id="bqtv_%s">
+    </div>
+    <script>
+      require(['extensions/tableviewer'],
+          function(tv) {
+              tv.makeTableViewer('%s', document.getElementById('bqtv_%s'), %s, %d, %d, '%s');
+          }
+      );
+    </script>
+  """
+
+  fields = fields if fields else [field.name for field in table.schema()]
+  labels = _json.dumps(fields)
+  div_id = str(int(round(_time.time())))
+  # TODO(gram): for some tables the metadata may not include length info, so
+  # need to compensate for that. We should not define __len__ on Table and be prepared tp
+  # deal with None as a length value.
+  return _HTML_TEMPLATE %\
+      (div_id, table.full_name, div_id, labels, table.length, rows_per_page, job_id)
 
 
 def _repr_html_query(query):
@@ -196,40 +287,11 @@ def _repr_html_query(query):
 
 
 def _repr_html_query_results_table(results):
-  # TODO(gram): Add a dependency on domready to make sure we don't try to access the
-  # table div before it is ready.
-  _HTML_TEMPLATE = """
-    <div id="table_%s">
-    </div>
-    <script>
-      require([ 'extensions/tableviewer' ],
-          function(tv) {
-              tv.makeTableViewer('%s', '%s', %s, %d, '%s');
-          }
-      );
-    </script>
-  """
-
-  labels = _json.dumps([field.name for field in results.schema()])
-  div_id = str(int(round(_time.time())))
-  return _HTML_TEMPLATE % (div_id, results.full_name, div_id, labels, len(results), results.job_id)
+  return _table_viewer(results, job_id=results.job_id)
 
 
 def _repr_html_table(results):
-  _HTML_TEMPLATE = """
-    <div id="table_%s">
-    </div>
-    <script>
-      require([ 'extensions/tableviewer' ],
-          function(tv) {
-              tv.makeTableViewer("%s", "%s", %s, %d);
-          }
-      );
-    </script>
-  """
-  labels = _json.dumps([field.name for field in results.schema()])
-  div_id = str(int(round(_time.time())))
-  return _HTML_TEMPLATE % (div_id, results.full_name, div_id, labels, len(results))
+  return _table_viewer(results)
 
 
 def _repr_html_table_list(table_list):
@@ -239,8 +301,7 @@ def _repr_html_table_list(table_list):
 
 
 def _repr_html_table_schema(schema):
-  # TODO(nikhilko): Temporary static HTML representation. Replace with more interactive
-  #                 schema viewer that allows for expand/collapse.
+  # TODO(gram): Replace at some point with schema and/or metadata.
   builder = _HtmlBuilder()
   builder.render_objects(schema, ['name', 'data_type', 'mode', 'description'])
   return builder.to_html()
