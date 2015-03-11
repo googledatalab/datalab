@@ -9,7 +9,7 @@ fi
 ####### CONFIG ########
 # Create all of the output paths
 build_root="$REPO_DIR/build/server";
-# TODO(bryantd): using an additonal directory 'foo' to offset the build path such that
+# TODO(bryantd): using an additonal directory '_' to offset the build path such that
 # the hard-coded dependency paths (dictated by TypeScript module system currently) will
 # line up with the source directory layout. Current issue is that the source code needs
 # to be compiled in multiple locations, each of which must have the correct number of parent
@@ -18,7 +18,7 @@ build_root="$REPO_DIR/build/server";
 #
 # All of this trickery would be unnecessary if TypeScript supported a requirejs-style path config
 # specification, but it does not at the moment.
-staging_path="$build_root/staging/foo";
+staging_path="$build_root/staging/_";
 test_path="$build_root/tests";
 build_path="$build_root/build";
 
