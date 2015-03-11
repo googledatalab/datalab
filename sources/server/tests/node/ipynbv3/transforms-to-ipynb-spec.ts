@@ -74,7 +74,7 @@ describe('Code cell', () => {
     ipyCodeCell = xforms.toIPyCodeCell(cell);
 
     expect(ipyCodeCell.outputs.length).toBe(1);
-    var output = ipyCodeCell.outputs[0];
+    var output = <app.ipy.DisplayDataOutput>ipyCodeCell.outputs[0];
     expect(output.output_type).toBe('display_data');
     expect(output.text).toEqual(['4']);
   });
@@ -90,7 +90,7 @@ describe('Code cell', () => {
     ipyCodeCell = xforms.toIPyCodeCell(cell);
 
     expect(ipyCodeCell.outputs.length).toBe(1);
-    var output = ipyCodeCell.outputs[0];
+    var output = <app.ipy.DisplayDataOutput>ipyCodeCell.outputs[0];
     expect(output.output_type).toBe('display_data');
     expect(output.text).toEqual([
       'first line\n',
@@ -111,7 +111,7 @@ describe('Code cell', () => {
     ipyCodeCell = xforms.toIPyCodeCell(cell);
 
     expect(ipyCodeCell.outputs.length).toBe(1);
-    var output = ipyCodeCell.outputs[0];
+    var output = <app.ipy.DisplayDataOutput>ipyCodeCell.outputs[0];
     expect(output.output_type).toBe('display_data');
     expect(output.text).toEqual([
       'first line\n',
@@ -289,7 +289,7 @@ describe('Heading cell', () => {
   });
 
   it('should transform to the .ipynb heading cell (level 2)', () => {
-    cell.metadata.level = 2;
+    cell.metadata['level'] = 2;
 
     ipyHeadingCell = xforms.toIPyHeadingCell(cell);
 
@@ -310,8 +310,7 @@ describe('Notebook metadata', () => {
     notebook = {
       id: 'notebook-id',
       metadata: {},
-      worksheetIds: [],
-      worksheets: {}
+      worksheets: []
     }
   });
 
@@ -321,13 +320,12 @@ describe('Notebook metadata', () => {
   });
 
   it('should transform to the .ipynb notebook with one worksheet having zero cells', () => {
-    notebook.worksheetIds.push('ws-id');
-    notebook.worksheets['ws-id'] = {
+    notebook.worksheets.push({
       id: 'ws-id',
       name: 'Worksheet 1',
       cells: [],
       metadata: {}
-    };
+    });
 
     ipyNotebook = xforms.toIPyNotebook(notebook);
 
