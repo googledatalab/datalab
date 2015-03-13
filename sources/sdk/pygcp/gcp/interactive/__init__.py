@@ -15,3 +15,4 @@
 """Google Cloud Platform library - IPython Functionality."""
 
 import gcp.interactive._bigquery
+import gcp.interactive._chart
