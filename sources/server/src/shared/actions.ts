@@ -21,28 +21,25 @@
 export var label = 'action'
 
 // Composite action (set of primitive actions).
-export var composite = label + '.composite';
+export var composite = 'action.composite';
 
 // Notebook-level actions.
-var notebookPrefix = label + '.notebook.';
 export var notebook = {
-  clearOutputs: notebookPrefix + 'clearOutputs',
-  executeCells: notebookPrefix + 'executeCells',
-  rename: notebookPrefix + 'rename'
+  clearOutputs: 'action.notebook.clearOutputs',
+  executeCells: 'action.notebook.executeCells',
+  rename: 'action.notebook.rename'
 };
 
 // Worksheet-level actions.
-var worksheetPrefix = label + '.worksheet.';
 export var worksheet = {
-  addCell: worksheetPrefix + 'addCell',
-  deleteCell: worksheetPrefix + 'deleteCell',
-  moveCell: worksheetPrefix + 'moveCell'
+  addCell: 'action.worksheet.addCell',
+  deleteCell: 'action.worksheet.deleteCell',
+  moveCell: 'action.worksheet.moveCell'
 };
 
 // Cell-level actions.
-var cellPrefix = label + '.cell.';
 export var cell = {
-  clearOutput: cellPrefix + 'clearOutput',
-  update: cellPrefix + 'update',
-  execute: cellPrefix + 'execute'
+  clearOutput: 'action.cell.clearOutput',
+  update: 'action.cell.update',
+  execute: 'action.cell.execute'
 };
