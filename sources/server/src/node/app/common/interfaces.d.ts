@@ -31,6 +31,34 @@ declare module app {
     shellPort: number;
   }
 
+  /**
+   * Manages a single notebook's data and provides an API for applying changes captured by Actions.
+   */
+  interface INotebookSession {
+    /**
+     * Applies the Action to the notebook model and returns a corresponding Update message.
+     *
+     * The Update captures the delta necessary for any other copies of the notebook model (e.g.,
+     * that exist on clients) to be synchronized with the notebook model held by this instance
+     * (assuming that they were synchronized before the update arrived).
+     */
+    apply (action: notebooks.actions.Action): notebooks.updates.Update;
+
+    /**
+     * Gets a reference to the notebook data held within the instance.
+     *
+     * Callers should consider the returned reference to be read-only.
+     */
+    getNotebookData (): notebooks.Notebook;
+
+    /**
+     * Gets a reference to the specified cell within the notebook.
+     *
+     * Throws an error if the cell does not exist within the specified worksheet.
+     */
+    getCell (cellId: string, worksheetId: string): notebooks.Cell;
+  }
+
   interface IKernel {
     id: string;
     config: KernelConfig;
@@ -69,14 +97,14 @@ declare module app {
      * Throws an exception if the given notebook data string violates the expected format.
      * specification.
      */
-    parse (data: string): notebook.Notebook;
+    parse (data: string): notebooks.Notebook;
 
     /**
      * Serializes the notebook to the specified format.
      *
      * Throws an exception if unsupported cell or media types are included in the notebook.
      */
-    stringify (notebook: notebook.Notebook): string;
+    stringify (notebook: notebooks.Notebook): string;
   }
 
 

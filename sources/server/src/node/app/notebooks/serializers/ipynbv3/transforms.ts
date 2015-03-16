@@ -25,7 +25,7 @@ import uuid = require('node-uuid');
 /**
  * Creates an internal format code cell from the .ipynb v3 code cell.
  */
-export function fromIPyCodeCell (ipyCell: app.ipy.CodeCell): app.notebook.Cell {
+export function fromIPyCodeCell (ipyCell: app.ipy.CodeCell): app.notebooks.Cell {
   var cell = _createCell('code', ipyCell.input.join(''));
   cell.metadata = ipyCell.metadata || {};
   cell.metadata['language'] = ipyCell['language'];
@@ -55,12 +55,12 @@ export function fromIPyCodeCell (ipyCell: app.ipy.CodeCell): app.notebook.Cell {
   return cell;
 }
 
-function fromIPyErrorOutput (ipyOutput: any): app.notebook.CellOutput {
+function fromIPyErrorOutput (ipyOutput: any): app.notebooks.CellOutput {
   return util.createErrorOutput(
       ipyOutput.ename, ipyOutput.evalue, ipyOutput.traceback);
 }
 
-function fromIPyStreamOutput (ipyOutput: any): app.notebook.CellOutput {
+function fromIPyStreamOutput (ipyOutput: any): app.notebooks.CellOutput {
   return {
     type: ipyOutput.stream,
     mimetypeBundle: {
@@ -70,8 +70,8 @@ function fromIPyStreamOutput (ipyOutput: any): app.notebook.CellOutput {
   }
 }
 
-function fromIPyRichOutput (ipyOutput: any): app.notebook.CellOutput {
-  var output: app.notebook.CellOutput = {
+function fromIPyRichOutput (ipyOutput: any): app.notebooks.CellOutput {
+  var output: app.notebooks.CellOutput = {
     type: 'result',
     mimetypeBundle: {},
     metadata: ipyOutput.metadata || {}
@@ -135,7 +135,7 @@ var DEFAULT_HEADING_LEVEL = 1;
 /**
  * Creates an internal format heading cell from the .ipynb v3 heading cell.
  */
-export function fromIPyHeadingCell (ipyCell: app.ipy.HeadingCell): app.notebook.Cell {
+export function fromIPyHeadingCell (ipyCell: app.ipy.HeadingCell): app.notebooks.Cell {
   var cell = _createCell('heading', ipyCell.source.join(''));
   cell.metadata = ipyCell.metadata || {};
   cell.metadata['level'] = ipyCell.level || DEFAULT_HEADING_LEVEL;
@@ -145,7 +145,7 @@ export function fromIPyHeadingCell (ipyCell: app.ipy.HeadingCell): app.notebook.
 /**
  * Creates an internal format markdown cell from the .ipynb v3 markdown cell.
  */
-export function fromIPyMarkdownCell (ipyCell: app.ipy.MarkdownCell): app.notebook.Cell {
+export function fromIPyMarkdownCell (ipyCell: app.ipy.MarkdownCell): app.notebooks.Cell {
   var cell = _createCell('markdown', ipyCell.source.join(''));
   cell.metadata = ipyCell.metadata || {};
   return cell;
@@ -154,7 +154,7 @@ export function fromIPyMarkdownCell (ipyCell: app.ipy.MarkdownCell): app.noteboo
 /**
  * Creates an internal format raw cell from the .ipynb v3 raw cell.
  */
-export function fromIPyRawCell (ipyCell: app.ipy.RawCell): app.notebook.Cell {
+export function fromIPyRawCell (ipyCell: app.ipy.RawCell): app.notebooks.Cell {
   var cell = _createCell('raw', ipyCell.source.join(''));
   cell.metadata = ipyCell.metadata || {};
   return cell;
@@ -163,7 +163,7 @@ export function fromIPyRawCell (ipyCell: app.ipy.RawCell): app.notebook.Cell {
 /**
  * Creates an internal format notebook from the .ipynb v3 notebook.
  */
-export function fromIPyNotebook (ipyNotebook: app.ipy.Notebook): app.notebook.Notebook {
+export function fromIPyNotebook (ipyNotebook: app.ipy.Notebook): app.notebooks.Notebook {
   var notebook = nbutil.createEmptyNotebook();
   // Copy over the notebook-level metadata if it was defined,
   notebook.metadata = ipyNotebook.metadata || {};
@@ -194,7 +194,7 @@ export function fromIPyNotebook (ipyNotebook: app.ipy.Notebook): app.notebook.No
   worksheet.metadata = ipynbWorksheet.metadata || {};
 
   ipynbWorksheet.cells.forEach(function (ipyCell: any) {
-    var cell: app.notebook.Cell;
+    var cell: app.notebooks.Cell;
     switch (ipyCell.cell_type) {
       case 'code':
         cell = fromIPyCodeCell(<app.ipy.CodeCell>ipyCell);
@@ -221,7 +221,7 @@ export function fromIPyNotebook (ipyNotebook: app.ipy.Notebook): app.notebook.No
 /**
  * Creates an .ipynb v3 code cell from the internal format code cell
  */
-export function toIPyCodeCell (cell: app.notebook.Cell): app.ipy.CodeCell {
+export function toIPyCodeCell (cell: app.notebooks.Cell): app.ipy.CodeCell {
   var ipyCell: app.ipy.CodeCell = {
     cell_type: 'code',
     input: stringToLineArray(cell.source),
@@ -259,7 +259,7 @@ export function toIPyCodeCell (cell: app.notebook.Cell): app.ipy.CodeCell {
   return ipyCell;
 }
 
-function toIPyDisplayDataOutput (output: app.notebook.CellOutput): app.ipy.DisplayDataOutput {
+function toIPyDisplayDataOutput (output: app.notebooks.CellOutput): app.ipy.DisplayDataOutput {
   var ipyOutput: app.ipy.DisplayDataOutput = {
     output_type: 'display_data',
     metadata: output.metadata || {}
@@ -315,7 +315,7 @@ function toIPyDisplayDataOutput (output: app.notebook.CellOutput): app.ipy.Displ
   return ipyOutput;
 }
 
-function toIPyErrorOutput (output: app.notebook.CellOutput): app.ipy.ErrorOutput {
+function toIPyErrorOutput (output: app.notebooks.CellOutput): app.ipy.ErrorOutput {
   // Copy over all metadata fields that are not part of the error details
   // (error details are captured as top-level field in ipy outputs)
   var metadata = shallowCopy(output.metadata || {}, 'errorDetails');
@@ -329,7 +329,7 @@ function toIPyErrorOutput (output: app.notebook.CellOutput): app.ipy.ErrorOutput
   }
 }
 
-function toIPyStreamOutput (output: app.notebook.CellOutput): app.ipy.StreamOutput {
+function toIPyStreamOutput (output: app.notebooks.CellOutput): app.ipy.StreamOutput {
   return {
     output_type: 'stream',
     stream: output.type,
@@ -374,7 +374,7 @@ export function shallowCopy (o: any, excludedProperty: string): any {
 /**
  * Creates an .ipynb v3 heading cell from the internal format heading cell.
  */
-export function toIPyHeadingCell (cell: app.notebook.Cell): app.ipy.HeadingCell {
+export function toIPyHeadingCell (cell: app.notebooks.Cell): app.ipy.HeadingCell {
   var metadata = shallowCopy(cell.metadata, 'level');
   return {
     cell_type: 'heading',
@@ -387,7 +387,7 @@ export function toIPyHeadingCell (cell: app.notebook.Cell): app.ipy.HeadingCell 
 /**
  * Creates an .ipynb v3 markdown cell from the internal format markdown cell.
  */
-export function toIPyMarkdownCell (cell: app.notebook.Cell): app.ipy.MarkdownCell {
+export function toIPyMarkdownCell (cell: app.notebooks.Cell): app.ipy.MarkdownCell {
   return {
     cell_type: 'markdown',
     source: stringToLineArray(cell.source),
@@ -398,7 +398,7 @@ export function toIPyMarkdownCell (cell: app.notebook.Cell): app.ipy.MarkdownCel
 /**
  * Creates an .ipynb v3 raw cell from the internal format raw cell.
  */
-export function toIPyRawCell (cell: app.notebook.Cell): app.ipy.RawCell {
+export function toIPyRawCell (cell: app.notebooks.Cell): app.ipy.RawCell {
   return {
     cell_type: 'raw',
     source: stringToLineArray(cell.source),
@@ -409,7 +409,7 @@ export function toIPyRawCell (cell: app.notebook.Cell): app.ipy.RawCell {
 /**
  * Creates an .ipynb v3 notebook from the internal format notebook
  */
-export function toIPyNotebook (notebook: app.notebook.Notebook): app.ipy.Notebook {
+export function toIPyNotebook (notebook: app.notebooks.Notebook): app.ipy.Notebook {
   var ipyNotebook: app.ipy.Notebook = {
     nbformat: 3, // Indicates .ipynb v3 format.
     nbformat_minor: 0,
@@ -456,7 +456,7 @@ export function toIPyNotebook (notebook: app.notebook.Notebook): app.ipy.Noteboo
 }
 
 
-function _createCell (cellType: string, source: string): app.notebook.Cell {
+function _createCell (cellType: string, source: string): app.notebooks.Cell {
   return {
     id: uuid.v4(),
     type: cellType,

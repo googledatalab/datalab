@@ -12,6 +12,7 @@
  * the License.
  */
 
+
 declare module app {
 
   interface Map<T> {
@@ -21,7 +22,7 @@ declare module app {
   /**
    * Typedefs for the in-memory notebook model are enumerated here.
    */
-  module notebook {
+  module notebooks {
 
     interface Notebook {
       id: string; // Notebook id

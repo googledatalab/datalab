@@ -20,7 +20,7 @@ import cells = require('../app/shared/cells');
 
 describe('Code cell', () => {
   var ipyCodeCell: app.ipy.CodeCell;
-  var cell: app.notebook.Cell;
+  var cell: app.notebooks.Cell;
 
   beforeEach(() => {
     cell = {
@@ -226,7 +226,7 @@ describe('Convert text containing newlines to IPython-style line-array', () => {
 describe('Markdown cell', () => {
 
   var ipyMarkdownCell: app.ipy.MarkdownCell;
-  var cell: app.notebook.Cell;
+  var cell: app.notebooks.Cell;
 
   beforeEach(() => {
     cell = {
@@ -261,7 +261,7 @@ describe('Markdown cell', () => {
 describe('Heading cell', () => {
 
   var ipyHeadingCell: app.ipy.HeadingCell;
-  var cell: app.notebook.Cell;
+  var cell: app.notebooks.Cell;
 
   beforeEach(() => {
     cell = {
@@ -304,7 +304,7 @@ describe('Heading cell', () => {
 
 describe('Notebook metadata', () => {
   var ipyNotebook: app.ipy.Notebook;
-  var notebook: app.notebook.Notebook;
+  var notebook: app.notebooks.Notebook;
 
   beforeEach(() => {
     notebook = {
