@@ -19,8 +19,8 @@
  * Actions are client requests for modifications to a notebook data model.
  */
 declare module app {
-  module notebook {
-    module action {
+  module notebooks {
+    module actions {
       /**
        * Common fields for all action messages.
        *
@@ -143,7 +143,7 @@ declare module app {
         // on the server or fully replace it (false ⇒ merge; true ⇒ replace)
         replaceMetadata?: boolean;
 
-        outputs?: app.notebook.CellOutput[];
+        outputs?: app.notebooks.CellOutput[];
         // Flag determines whether the above list of outputs is appended or replaces existing
         // output list within the cell (false ⇒ append; true ⇒ replace)
         replaceOutputs?: boolean;

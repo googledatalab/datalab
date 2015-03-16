@@ -24,7 +24,7 @@ describe('Notebook model state', () => {
   var worksheetId: string;
 
   beforeEach(() => {
-    var notebookData: app.notebook.Notebook = {
+    var notebookData: app.notebooks.Notebook = {
       "id": "nb-id",
       "metadata": {},
       "worksheets": [
@@ -46,7 +46,7 @@ describe('Notebook model state', () => {
   });
 
   it('should be an empty notebook with one worksheet and zero cells', () => {
-    var notebookData: app.notebook.Notebook = notebook.getNotebookData()
+    var notebookData: app.notebooks.Notebook = notebook.getNotebookData()
     expect(notebookData.worksheets.length).toBe(1);
     var worksheet = notebookData.worksheets[0];
     expect(worksheet.cells.length).toBe(0);
@@ -54,10 +54,10 @@ describe('Notebook model state', () => {
 
   // action = notebook.clearOutputs
   describe('after notebook.clearOutputs action', () => {
-    var notebookData: app.notebook.Notebook;
+    var notebookData: app.notebooks.Notebook;
 
     beforeEach(() => {
-      var output: app.notebook.CellOutput = {
+      var output: app.notebooks.CellOutput = {
         type: 'stdout',
         mimetypeBundle: {'text/plain': 'some stdout here'}
       };
@@ -101,19 +101,19 @@ describe('Notebook model state', () => {
       notebookData.worksheets.forEach((worksheet) => {
         var cells = worksheet.cells;
         expect(cells.length).toBe(2);
-        cells.forEach((cell: app.notebook.Cell) => {
+        cells.forEach((cell: app.notebooks.Cell) => {
           expect(cell.outputs.length).toBe(2);
         });
       });
 
       var action = {action: actions.notebook.clearOutputs};
-      var update = <app.notebook.update.Composite>notebook.apply(action);
+      var update = <app.notebooks.updates.Composite>notebook.apply(action);
 
       // Now each worksheet should still have two cells, each with zero outputs
       notebookData.worksheets.forEach((worksheet) => {
         var cells = worksheet.cells;
         expect(cells.length).toBe(2);
-        cells.forEach((cell: app.notebook.Cell) => {
+        cells.forEach((cell: app.notebooks.Cell) => {
           expect(cell.outputs.length).toBe(0);
         });
       });
@@ -122,10 +122,10 @@ describe('Notebook model state', () => {
 
   // action = cell.update
   describe('after cell.update action', () => {
-    var cellUpdateAction: app.notebook.action.UpdateCell;
-    var cellUpdate: app.notebook.update.CellUpdate;
+    var cellUpdateAction: app.notebooks.actions.UpdateCell;
+    var cellUpdate: app.notebooks.updates.CellUpdate;
     var cellIdToUpdate = 'cell-id-to-update';
-    var cell: app.notebook.Cell;
+    var cell: app.notebooks.Cell;
 
     beforeEach(() => {
       cellUpdateAction = {
@@ -157,7 +157,7 @@ describe('Notebook model state', () => {
 
     it('should have the new source string value', () => {
       cellUpdateAction.source = 'updated source';
-      var cellUpdate = <app.notebook.update.CellUpdate>notebook.apply(cellUpdateAction);
+      var cellUpdate = <app.notebooks.updates.CellUpdate>notebook.apply(cellUpdateAction);
       expect(cellUpdate.source).toBe('updated source');
       expect(cell.source).toBe('updated source');
     });
@@ -167,7 +167,7 @@ describe('Notebook model state', () => {
         type: 'stderr',
         mimetypeBundle: {'text/plain': 'second output'}
       }];
-      var cellUpdate = <app.notebook.update.CellUpdate>notebook.apply(cellUpdateAction);
+      var cellUpdate = <app.notebooks.updates.CellUpdate>notebook.apply(cellUpdateAction);
       // Validate that the update message is as expected
       expect(cellUpdate.outputs.length).toBe(1);
       expect(cellUpdate.outputs[0].mimetypeBundle['text/plain']).toBe('second output');
@@ -184,7 +184,7 @@ describe('Notebook model state', () => {
         mimetypeBundle: {'text/plain': 'second output'}
       }];
       cellUpdateAction.replaceOutputs = true;
-      var cellUpdate = <app.notebook.update.CellUpdate>notebook.apply(cellUpdateAction);
+      var cellUpdate = <app.notebooks.updates.CellUpdate>notebook.apply(cellUpdateAction);
       // Validate that the update message is as expected
       expect(cellUpdate.outputs.length).toBe(1);
       expect(cellUpdate.outputs[0].mimetypeBundle['text/plain']).toBe('second output');
@@ -196,7 +196,7 @@ describe('Notebook model state', () => {
 
     it('should also have the new metadata field', () => {
       cellUpdateAction.metadata = {more: 'meta'};
-      var cellUpdate = <app.notebook.update.CellUpdate>notebook.apply(cellUpdateAction);
+      var cellUpdate = <app.notebooks.updates.CellUpdate>notebook.apply(cellUpdateAction);
       // Validate that the update message is as expected
       // The update message will only carry the updated metadata fields
       expect(Object.keys(cellUpdate.metadata).length).toBe(1);
@@ -212,7 +212,7 @@ describe('Notebook model state', () => {
     it('should have only the new metadata field', () => {
       cellUpdateAction.metadata = {more: 'meta'};
       cellUpdateAction.replaceMetadata = true;
-      var cellUpdate = <app.notebook.update.CellUpdate>notebook.apply(cellUpdateAction);
+      var cellUpdate = <app.notebooks.updates.CellUpdate>notebook.apply(cellUpdateAction);
       // Validate that the update message is as expected
       expect(Object.keys(cellUpdate.metadata).length).toBe(1);
       expect(cellUpdate.metadata['meta']).not.toBeDefined();
@@ -227,7 +227,7 @@ describe('Notebook model state', () => {
     it('should have no metadata fields', () => {
       cellUpdateAction.metadata = {/* empty metadata dict */};
       cellUpdateAction.replaceMetadata = true;
-      var cellUpdate = <app.notebook.update.CellUpdate>notebook.apply(cellUpdateAction);
+      var cellUpdate = <app.notebooks.updates.CellUpdate>notebook.apply(cellUpdateAction);
       // Validate that the update message is as expected
       expect(Object.keys(cellUpdate.metadata).length).toBe(0);
       expect(cellUpdate.replaceMetadata).toBe(true);
@@ -238,8 +238,8 @@ describe('Notebook model state', () => {
 
   // action = cell.clearOutput
   describe('after cell.clearOutput action', () => {
-    var clearOutputAction: app.notebook.action.ClearOutput;
-    var cellUpdate: app.notebook.update.CellUpdate;
+    var clearOutputAction: app.notebooks.actions.ClearOutput;
+    var cellUpdate: app.notebooks.updates.CellUpdate;
     var cellIdToClear = 'cell-id-to-clear';
 
     beforeEach(() => {
@@ -277,7 +277,7 @@ describe('Notebook model state', () => {
       expect(cell.outputs.length).toBeGreaterThan(0);
 
       // Apply the clear output action
-      var cellUpdate = <app.notebook.update.CellUpdate>notebook.apply(clearOutputAction);
+      var cellUpdate = <app.notebooks.updates.CellUpdate>notebook.apply(clearOutputAction);
 
       // Validate the outputs of the cell were cleared within the notebook model
       expect(cell.outputs.length).toBe(0);
@@ -294,10 +294,10 @@ describe('Notebook model state', () => {
   });
 
   describe('after worksheet.deleteCell action', () => {
-    var deleteCellAction: app.notebook.action.DeleteCell;
-    var update: app.notebook.update.DeleteCell;
-    var worksheet: app.notebook.Worksheet;
-    var notebookData: app.notebook.Notebook;
+    var deleteCellAction: app.notebooks.actions.DeleteCell;
+    var update: app.notebooks.updates.DeleteCell;
+    var worksheet: app.notebooks.Worksheet;
+    var notebookData: app.notebooks.Notebook;
 
     beforeEach(() => {
       worksheet = getFirstWorksheet(notebook);
@@ -325,7 +325,7 @@ describe('Notebook model state', () => {
 
     it('should delete the first cell', () => {
       deleteCellAction.cellId = 'first';
-      update = <app.notebook.update.DeleteCell>notebook.apply(deleteCellAction);
+      update = <app.notebooks.updates.DeleteCell>notebook.apply(deleteCellAction);
       // Validate the update message
       expect(update.worksheetId).toBe(worksheet.id);
       expect(update.cellId).toBe('first');
@@ -336,7 +336,7 @@ describe('Notebook model state', () => {
 
     it('should delete the middle cell', () => {
       deleteCellAction.cellId = 'middle';
-      update = <app.notebook.update.DeleteCell>notebook.apply(deleteCellAction);
+      update = <app.notebooks.updates.DeleteCell>notebook.apply(deleteCellAction);
       // Validate the update message
       expect(update.worksheetId).toBe(worksheet.id);
       expect(update.cellId).toBe('middle');
@@ -347,7 +347,7 @@ describe('Notebook model state', () => {
 
     it('should delete the last cell', () => {
       deleteCellAction.cellId = 'last';
-      update = <app.notebook.update.DeleteCell>notebook.apply(deleteCellAction);
+      update = <app.notebooks.updates.DeleteCell>notebook.apply(deleteCellAction);
       // Validate the update message
       expect(update.worksheetId).toBe(worksheet.id);
       expect(update.cellId).toBe('last');
@@ -370,8 +370,8 @@ describe('Notebook model state', () => {
   });
 
   describe('after worksheet.moveCell action', () => {
-    var moveCellAction: app.notebook.action.MoveCell;
-    var worksheet: app.notebook.Worksheet;
+    var moveCellAction: app.notebooks.actions.MoveCell;
+    var worksheet: app.notebooks.Worksheet;
     beforeEach(() => {
       worksheet = getFirstWorksheet(notebook);
       moveCellAction = {
@@ -413,35 +413,35 @@ describe('Notebook model state', () => {
     it('should move the last cell to be first', () => {
       moveCellAction.cellId = 'C';
       moveCellAction.insertAfter = null;
-      var update = <app.notebook.update.MoveCell>notebook.apply(moveCellAction);
+      var update = <app.notebooks.updates.MoveCell>notebook.apply(moveCellAction);
       expect(worksheet.cells.map((cell) => {return cell.id;})).toEqual(['C', 'A', 'B']);
     });
 
     it('should leave the cell order unchanged', () => {
       moveCellAction.cellId = 'A';
       moveCellAction.insertAfter = null;
-      var update = <app.notebook.update.MoveCell>notebook.apply(moveCellAction);
+      var update = <app.notebooks.updates.MoveCell>notebook.apply(moveCellAction);
       expect(worksheet.cells.map((cell) => {return cell.id;})).toEqual(['A', 'B', 'C']);
     });
 
     it('should move the first cell to the middle', () => {
       moveCellAction.cellId = 'A';
       moveCellAction.insertAfter = 'B';
-      var update = <app.notebook.update.MoveCell>notebook.apply(moveCellAction);
+      var update = <app.notebooks.updates.MoveCell>notebook.apply(moveCellAction);
       expect(worksheet.cells.map((cell) => {return cell.id;})).toEqual(['B', 'A', 'C']);
     });
 
     it('should move the first cell to the end', () => {
       moveCellAction.cellId = 'A';
       moveCellAction.insertAfter = 'C';
-      var update = <app.notebook.update.MoveCell>notebook.apply(moveCellAction);
+      var update = <app.notebooks.updates.MoveCell>notebook.apply(moveCellAction);
       expect(worksheet.cells.map((cell) => {return cell.id;})).toEqual(['B', 'C', 'A']);
     });
   });
 
   describe('after worksheet.addCell action', () => {
-    var addCellAction: app.notebook.action.AddCell;
-    var addCellUpdate: app.notebook.update.AddCell;
+    var addCellAction: app.notebooks.actions.AddCell;
+    var addCellUpdate: app.notebooks.updates.AddCell;
 
     beforeEach(() => {
       addCellAction = {
@@ -473,7 +473,7 @@ describe('Notebook model state', () => {
 
     it('should add a cell to the beginning of the worksheet', () => {
       addCellAction.insertAfter = null;
-      var addCellUpdate = <app.notebook.update.AddCell>notebook.apply(addCellAction);
+      var addCellUpdate = <app.notebooks.updates.AddCell>notebook.apply(addCellAction);
 
       // Validate the update message content
       expect(addCellUpdate.update).toBe(updates.worksheet.addCell);

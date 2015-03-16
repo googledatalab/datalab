@@ -20,8 +20,8 @@
  * in a given notebook editing session.
  */
 declare module app {
-  module notebook {
-    module update {
+  module notebooks {
+    module updates {
 
       /**
        * Common fields for all update messages.

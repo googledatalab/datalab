@@ -37,7 +37,7 @@ export class IPySerializer implements app.INotebookSerializer {
   /**
    * Serializes the in-memory notebook model to a .ipynb formatted JSON string.
    */
-  stringify (notebook: app.notebook.Notebook) {
+  stringify (notebook: app.notebooks.Notebook) {
     return JSON.stringify(
         transforms.toIPyNotebook(notebook),
         null, // Null value indicates that the entire object should be serialized.

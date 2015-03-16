@@ -36,7 +36,7 @@ var defaultMarkdownCellContent = 'You **can** write markdown here';
 /**
  * Appends a code cell to the default worksheet within the notebook.
  */
-function appendCodeCell (notebook: app.notebook.Notebook) {
+function appendCodeCell (notebook: app.notebooks.Notebook) {
   var cell = createCodeCell(uuid.v4(), defaultCodeCellContent);
   getDefaultWorksheet(notebook).cells.push(cell);
 }
@@ -44,7 +44,7 @@ function appendCodeCell (notebook: app.notebook.Notebook) {
 /**
  * Appends a heading cell to the default worksheet within the notebook.
  */
-function appendHeadingCell (notebook: app.notebook.Notebook) {
+function appendHeadingCell (notebook: app.notebooks.Notebook) {
   var cell = createHeadingCell(uuid.v4(), defaultHeadingCellContent);
   getDefaultWorksheet(notebook).cells.push(cell);
 }
@@ -52,12 +52,12 @@ function appendHeadingCell (notebook: app.notebook.Notebook) {
 /**
  * Appends a markdown cell to the default worksheet within the notebook.
  */
-function appendMarkdownCell (notebook: app.notebook.Notebook) {
+function appendMarkdownCell (notebook: app.notebooks.Notebook) {
   var cell = createMarkdownCell(uuid.v4(), defaultMarkdownCellContent);
   getDefaultWorksheet(notebook).cells.push(cell);
 }
 
-function createCodeCell (id: string, source: string): app.notebook.Cell {
+function createCodeCell (id: string, source: string): app.notebooks.Cell {
   return {
     id: id,
     type: cells.code,
@@ -66,7 +66,7 @@ function createCodeCell (id: string, source: string): app.notebook.Cell {
   };
 }
 
-function createHeadingCell (id: string, source: string): app.notebook.Cell {
+function createHeadingCell (id: string, source: string): app.notebooks.Cell {
   return {
     id: id,
     type: cells.heading,
@@ -77,7 +77,7 @@ function createHeadingCell (id: string, source: string): app.notebook.Cell {
   };
 }
 
-function createMarkdownCell (id: string, source: string): app.notebook.Cell {
+function createMarkdownCell (id: string, source: string): app.notebooks.Cell {
   return {
     id: id,
     type: cells.markdown,
@@ -92,7 +92,7 @@ function createMarkdownCell (id: string, source: string): app.notebook.Cell {
  * Throws an Error if the given cell type is unsupported.
  */
 export function createCell (type: string, id: string, source: string) {
-  var cell: app.notebook.Cell;
+  var cell: app.notebooks.Cell;
   switch (type) {
     case cells.code:
       cell = createCodeCell(id, source);
@@ -115,7 +115,7 @@ export function createCell (type: string, id: string, source: string) {
 /**
  * Creates an empty notebook with no cells.
  */
-export function createEmptyNotebook (): app.notebook.Notebook {
+export function createEmptyNotebook (): app.notebooks.Notebook {
   return {
     id: uuid.v4(),
     metadata: {},
@@ -137,7 +137,7 @@ export function createEmptyNotebook (): app.notebook.Notebook {
  * Since most notebooks follow a similar initial cell pattern (title cell, summary text cell,
  * code), prepopulate a set of cells that matches this common pattern.
  */
-export function createStarterNotebook (): app.notebook.Notebook {
+export function createStarterNotebook (): app.notebooks.Notebook {
   var notebook = createEmptyNotebook();
   appendHeadingCell(notebook);
   appendMarkdownCell(notebook);
@@ -148,7 +148,7 @@ export function createStarterNotebook (): app.notebook.Notebook {
 /**
  * Gets the default worksheet from the notebook for appending cells.
  */
-function getDefaultWorksheet (notebook: app.notebook.Notebook): app.notebook.Worksheet {
+function getDefaultWorksheet (notebook: app.notebooks.Notebook): app.notebooks.Worksheet {
   if (notebook.worksheets.length === 0) {
     throw util.createError('Cannot return a default worksheet for a notebook with zero worksheets');
   }

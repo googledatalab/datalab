@@ -25,35 +25,35 @@ import util = require('../common/util');
  */
 export class NotebookSession implements app.INotebookSession {
 
-  _notebook: app.notebook.Notebook;
+  _notebook: app.notebooks.Notebook;
 
-  constructor (notebook: app.notebook.Notebook) {
+  constructor (notebook: app.notebooks.Notebook) {
     this._notebook = notebook;
   }
 
   /**
    * Applies the given action to the notebook and returns and notebook model updates generated.
    */
-  apply (action: app.notebook.action.Action): app.notebook.update.Update {
+  apply (action: app.notebooks.actions.Action): app.notebooks.updates.Update {
     // Delegate to the appropriate action handler based upon the action type.
     switch (action.action) {
       case actions.cell.clearOutput:
-        return this._applyClearOutput(<app.notebook.action.ClearOutput>action);
+        return this._applyClearOutput(<app.notebooks.actions.ClearOutput>action);
 
       case actions.cell.update:
-        return this._applyUpdateCell(<app.notebook.action.UpdateCell>action);
+        return this._applyUpdateCell(<app.notebooks.actions.UpdateCell>action);
 
       case actions.notebook.clearOutputs:
-        return this._applyClearOutputs(<app.notebook.action.ClearOutputs>action);
+        return this._applyClearOutputs(<app.notebooks.actions.ClearOutputs>action);
 
       case actions.worksheet.addCell:
-        return this._applyAddCell(<app.notebook.action.AddCell>action);
+        return this._applyAddCell(<app.notebooks.actions.AddCell>action);
 
       case actions.worksheet.deleteCell:
-        return this._applyDeleteCell(<app.notebook.action.DeleteCell>action);
+        return this._applyDeleteCell(<app.notebooks.actions.DeleteCell>action);
 
       case actions.worksheet.moveCell:
-        return this._applyMoveCell(<app.notebook.action.MoveCell>action);
+        return this._applyMoveCell(<app.notebooks.actions.MoveCell>action);
 
       default:
         throw util.createError('Unsupported action "%s" cannot be applied', action.action);
@@ -73,7 +73,7 @@ export class NotebookSession implements app.INotebookSession {
    * when large amounts of data or high-resolution graphics are embedded, so opting to return
    * a reference for now since all current use cases are read-only.
    */
-  getNotebookData (): app.notebook.Notebook {
+  getNotebookData (): app.notebooks.Notebook {
     return this._notebook;
   }
 
@@ -89,7 +89,7 @@ export class NotebookSession implements app.INotebookSession {
   /**
    * Applies the AddCell action to the current notebook model.
    */
-  _applyAddCell (action: app.notebook.action.AddCell): app.notebook.update.AddCell {
+  _applyAddCell (action: app.notebooks.actions.AddCell): app.notebooks.updates.AddCell {
     // Get the worksheet where the cell should be added
     var worksheet = getWorksheetOrThrow(action.worksheetId, this._notebook);
     // Create a cell to insert
@@ -121,16 +121,16 @@ export class NotebookSession implements app.INotebookSession {
   /**
    * Applies the ClearOutput action (single cell) to the current notebook model.
    */
-  _applyClearOutput (action: app.notebook.action.ClearOutput): app.notebook.update.CellUpdate {
+  _applyClearOutput (action: app.notebooks.actions.ClearOutput): app.notebooks.updates.CellUpdate {
     return this._clearCellOutput(action.cellId, action.worksheetId);
   }
 
   /**
    * Applies the ClearOutputs action (all cells) to the current notebook model.
    */
-  _applyClearOutputs (action: app.notebook.action.ClearOutputs): app.notebook.update.Composite {
+  _applyClearOutputs (action: app.notebooks.actions.ClearOutputs): app.notebooks.updates.Composite {
     // Create a composite update message in which the per-cell updates will be bundled.
-    var update: app.notebook.update.Composite = {
+    var update: app.notebooks.updates.Composite = {
       update: updates.composite,
       subUpdates: []
     }
@@ -138,7 +138,7 @@ export class NotebookSession implements app.INotebookSession {
     // Iterate through each worksheet within the notebook.
     this._notebook.worksheets.forEach((worksheet) => {
       // Clear each cell within the worksheet.
-      worksheet.cells.forEach((cell: app.notebook.Cell) => {
+      worksheet.cells.forEach((cell: app.notebooks.Cell) => {
         if (cell.type == cells.code) {
           var cellUpdate = this._clearCellOutput(cell.id, worksheet.id);
           // Add an update for the cleared cell.
@@ -153,7 +153,7 @@ export class NotebookSession implements app.INotebookSession {
   /**
    * Applies the DeleteCell action to the current notebook model.
    */
-  _applyDeleteCell (action: app.notebook.action.DeleteCell): app.notebook.update.DeleteCell {
+  _applyDeleteCell (action: app.notebooks.actions.DeleteCell): app.notebooks.updates.DeleteCell {
     // Get the worksheet from which the cell should be deleted.
     var worksheet = getWorksheetOrThrow(action.worksheetId, this._notebook);
     // Find the index of the cell to delete within the worksheet.
@@ -171,7 +171,7 @@ export class NotebookSession implements app.INotebookSession {
   /**
    * Applies the MoveCell action to the current notebook model.
    */
-  _applyMoveCell (action: app.notebook.action.MoveCell): app.notebook.update.MoveCell {
+  _applyMoveCell (action: app.notebooks.actions.MoveCell): app.notebooks.updates.MoveCell {
     // Find the cell to move within the source worksheet.
     var sourceWorksheet = getWorksheetOrThrow(action.sourceWorksheetId, this._notebook);
     var sourceIndex = getCellIndexOrThrow(sourceWorksheet, action.cellId);
@@ -208,12 +208,12 @@ export class NotebookSession implements app.INotebookSession {
   /**
    * Applies the UpdateCell action to the current notebook model.
    */
-  _applyUpdateCell (action: app.notebook.action.UpdateCell): app.notebook.update.CellUpdate {
+  _applyUpdateCell (action: app.notebooks.actions.UpdateCell): app.notebooks.updates.CellUpdate {
     // Get the cell where the update should be applied.
     var cell = getCellOrThrow(action.cellId, action.worksheetId, this._notebook);
 
     // Create the base cell update and add to it as modifications are made to the notebook model.
-    var cellUpdate: app.notebook.update.CellUpdate = {
+    var cellUpdate: app.notebooks.updates.CellUpdate = {
       update: updates.cell.update,
       worksheetId: action.worksheetId,
       cellId: action.cellId,
@@ -258,7 +258,7 @@ export class NotebookSession implements app.INotebookSession {
   /**
    * Clears the outputs of a single specified cell and returns an update message.
    */
-  _clearCellOutput (cellId: string, worksheetId: string): app.notebook.update.CellUpdate {
+  _clearCellOutput (cellId: string, worksheetId: string): app.notebooks.updates.CellUpdate {
     // Get the cell where the outputs should be cleared
     var cell = getCellOrThrow(cellId, worksheetId, this._notebook);
     // Clear the outputs
@@ -281,7 +281,7 @@ export class NotebookSession implements app.INotebookSession {
  *
  * Throws an error if the specified cell does not exist within the given worksheet.
  */
-export function getCellIndexOrThrow (worksheet: app.notebook.Worksheet, cellId: string) {
+export function getCellIndexOrThrow (worksheet: app.notebooks.Worksheet, cellId: string) {
   var index = indexOf(worksheet, cellId);
   if (index === -1) {
     throw util.createError('Cell id "%s" does not exist within worksheet with id "%s"',
@@ -298,14 +298,14 @@ export function getCellIndexOrThrow (worksheet: app.notebook.Worksheet, cellId: 
 export function getCellOrThrow (
     cellId: string,
     worksheetId: string,
-    notebook: app.notebook.Notebook
-    ): app.notebook.Cell {
+    notebook: app.notebooks.Notebook
+    ): app.notebooks.Cell {
 
   // Get the worksheet where the cell is expected to exist.
   var worksheet = getWorksheetOrThrow(worksheetId, notebook);
   // Find the cell in the worksheet.
   // Note: may be worthwhile to maintain a {cellId: cell} index if this becomes expensive.
-  var cell: app.notebook.Cell;
+  var cell: app.notebooks.Cell;
   for (var i = 0; i < worksheet.cells.length; ++i) {
     if (worksheet.cells[i].id == cellId) {
       // Found the cell of interest.
@@ -327,10 +327,10 @@ export function getCellOrThrow (
  */
 export function getWorksheetOrThrow (
     worksheetId: string,
-    notebook: app.notebook.Notebook
-    ): app.notebook.Worksheet {
+    notebook: app.notebooks.Notebook
+    ): app.notebooks.Worksheet {
 
-  var worksheet: app.notebook.Worksheet;
+  var worksheet: app.notebooks.Worksheet;
   notebook.worksheets.forEach((ws) => {
     if (worksheetId == ws.id) {
       // Found the worksheet of interest.
@@ -355,7 +355,7 @@ export function getWorksheetOrThrow (
  *
  * Note: same sentinel value as Array.indexOf() for consistency with language built-ins.
  */
-export function indexOf (worksheet: app.notebook.Worksheet, cellId: string): number {
+export function indexOf (worksheet: app.notebooks.Worksheet, cellId: string): number {
   for (var i = 0; i < worksheet.cells.length; ++i) {
     if (cellId == worksheet.cells[i].id) {
       return i;

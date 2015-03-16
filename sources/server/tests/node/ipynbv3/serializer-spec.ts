@@ -20,7 +20,7 @@ import ipy = require('../app/notebooks/serializers/ipynb');
 describe('Parse .ipynb format to in-memory notebook model', () => {
   var ipynb: app.ipy.Notebook;
   var ipynbSerialized: string;
-  var notebook: app.notebook.Notebook;
+  var notebook: app.notebooks.Notebook;
   var serializer: app.INotebookSerializer;
 
   beforeEach(() => {
@@ -137,7 +137,7 @@ describe('Parse .ipynb format to in-memory notebook model', () => {
 describe('Serialize in-memory notebook model to .ipynb format', () => {
   var ipynb: app.ipy.Notebook;
   var ipynbSerialized: string;
-  var notebook: app.notebook.Notebook;
+  var notebook: app.notebooks.Notebook;
   var serializer: app.INotebookSerializer;
 
   beforeEach(() => {

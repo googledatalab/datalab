@@ -49,7 +49,7 @@ export function createErrorOutput (
     errorName: string,
     errorMessage: string,
     traceback: string[]
-    ): app.notebook.CellOutput {
+    ): app.notebooks.CellOutput {
   return {
     type: 'error',
     mimetypeBundle: {

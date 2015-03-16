@@ -20,7 +20,7 @@ import cells = require('../app/shared/cells');
 
 describe('IPython .ipynb v3 format serialization of code cells', () => {
   var ipyCodeCell: app.ipy.CodeCell;
-  var cell: app.notebook.Cell;
+  var cell: app.notebooks.Cell;
 
   beforeEach(() => {
     ipyCodeCell = {
@@ -223,7 +223,7 @@ describe('IPython .ipynb v3 format serialization of code cells', () => {
 describe('IPython .ipynb v3 format serialization of markdown cells', () => {
 
   var ipyMarkdownCell: app.ipy.MarkdownCell;
-  var cell: app.notebook.Cell;
+  var cell: app.notebooks.Cell;
 
   beforeEach(() => {
     ipyMarkdownCell = {
@@ -257,7 +257,7 @@ describe('IPython .ipynb v3 format serialization of markdown cells', () => {
 describe('IPython .ipynb v3 format serialization of heading cells', () => {
 
   var ipyHeadingCell: app.ipy.HeadingCell;
-  var cell: app.notebook.Cell;
+  var cell: app.notebooks.Cell;
 
   beforeEach(() => {
     ipyHeadingCell = {
@@ -302,7 +302,7 @@ describe('IPython .ipynb v3 format serialization of heading cells', () => {
 
 describe('IPython .ipynb v3 format serialization of notebook metadata', () => {
   var ipyNotebook: app.ipy.Notebook;
-  var notebook: app.notebook.Notebook;
+  var notebook: app.notebooks.Notebook;
 
   beforeEach(() => {
     ipyNotebook = {
