@@ -12,6 +12,7 @@
  * the License.
  */
 
+
 import actions = require('../shared/actions');
 import cells = require('../shared/cells');
 import nbutil = require('./util');
@@ -22,7 +23,7 @@ import util = require('../common/util');
 /**
  * Wraps raw notebook data and provides an API for applying Actions to the notebook.
  */
-export class ActiveNotebook implements app.IActiveNotebook {
+export class NotebookSession implements app.INotebookSession {
 
   _notebook: app.notebook.Notebook;
 
@@ -82,7 +83,7 @@ export class ActiveNotebook implements app.IActiveNotebook {
    * The caller should consider the returned cell to be read-only.
    */
   getCell (cellId: string, worksheetId: string) {
-    return this._getCellOrThrow(cellId, worksheetId);
+    return getCellOrThrow(cellId, worksheetId, this._notebook);
   }
 
   /**
@@ -90,7 +91,7 @@ export class ActiveNotebook implements app.IActiveNotebook {
    */
   _applyAddCell (action: app.notebook.action.AddCell): app.notebook.update.AddCell {
     // Get the worksheet where the cell should be added
-    var worksheet = this._getWorksheetOrThrow(action.worksheetId);
+    var worksheet = getWorksheetOrThrow(action.worksheetId, this._notebook);
     // Create a cell to insert
     var cell = nbutil.createCell(action.type, action.cellId, action.source);
 
@@ -98,7 +99,7 @@ export class ActiveNotebook implements app.IActiveNotebook {
     var insertIndex: number;
     if (action.insertAfter) {
       // Find the cell to insert after in the worksheet
-      insertIndex = this._getCellIndexOrThrow(worksheet, action.insertAfter);
+      insertIndex = getCellIndexOrThrow(worksheet, action.insertAfter);
       // Increment the index because we want to insert after the "insertAfter" cell id
       ++insertIndex;
     } else {
@@ -154,9 +155,9 @@ export class ActiveNotebook implements app.IActiveNotebook {
    */
   _applyDeleteCell (action: app.notebook.action.DeleteCell): app.notebook.update.DeleteCell {
     // Get the worksheet from which the cell should be deleted.
-    var worksheet = this._getWorksheetOrThrow(action.worksheetId);
+    var worksheet = getWorksheetOrThrow(action.worksheetId, this._notebook);
     // Find the index of the cell to delete within the worksheet.
-    var cellIndex = this._getCellIndexOrThrow(worksheet, action.cellId);
+    var cellIndex = getCellIndexOrThrow(worksheet, action.cellId);
     // Remove the cell from the worksheet.
     var removed = worksheet.cells.splice(cellIndex, 1);
     // Create and return the update message.
@@ -172,20 +173,21 @@ export class ActiveNotebook implements app.IActiveNotebook {
    */
   _applyMoveCell (action: app.notebook.action.MoveCell): app.notebook.update.MoveCell {
     // Find the cell to move within the source worksheet.
-    var sourceWorksheet = this._getWorksheetOrThrow(action.sourceWorksheetId);
-    var sourceIndex = this._getCellIndexOrThrow(sourceWorksheet, action.cellId);
+    var sourceWorksheet = getWorksheetOrThrow(action.sourceWorksheetId, this._notebook);
+    var sourceIndex = getCellIndexOrThrow(sourceWorksheet, action.cellId);
+
+    var destinationWorksheet = getWorksheetOrThrow(action.sourceWorksheetId, this._notebook);
 
     // Remove the cell from the worksheet.
     var cellToMove = sourceWorksheet.cells.splice(sourceIndex, 1)[0];
 
     // Find the insertion point for the cell in the destination worksheet.
-    var destinationWorksheet = this._getWorksheetOrThrow(action.sourceWorksheetId);
     if (action.insertAfter === null) {
       // Then prepend the cell to the destination worksheet.
       destinationWorksheet.cells = [cellToMove].concat(destinationWorksheet.cells);
     } else {
       // Otherwise insert the cell after the specified insertAfter cell id.
-      var destinationIndex = this._getCellIndexOrThrow(sourceWorksheet, action.insertAfter);
+      var destinationIndex = getCellIndexOrThrow(sourceWorksheet, action.insertAfter);
       // The insertion index is one after the "insertAfter" cell's index.
       ++destinationIndex;
       // Insert the cell into the destination index.
@@ -208,7 +210,7 @@ export class ActiveNotebook implements app.IActiveNotebook {
    */
   _applyUpdateCell (action: app.notebook.action.UpdateCell): app.notebook.update.CellUpdate {
     // Get the cell where the update should be applied.
-    var cell = this._getCellOrThrow(action.cellId, action.worksheetId);
+    var cell = getCellOrThrow(action.cellId, action.worksheetId, this._notebook);
 
     // Create the base cell update and add to it as modifications are made to the notebook model.
     var cellUpdate: app.notebook.update.CellUpdate = {
@@ -218,7 +220,7 @@ export class ActiveNotebook implements app.IActiveNotebook {
     };
 
     // Enumerate the attributes that should be updated on the cell and apply the modifications.
-    if (action.source) {
+    if (action.source || action.source === '') {
       // Then update the cell source attribute and the update message.
       cell.source = cellUpdate.source = action.source;
     }
@@ -258,7 +260,7 @@ export class ActiveNotebook implements app.IActiveNotebook {
    */
   _clearCellOutput (cellId: string, worksheetId: string): app.notebook.update.CellUpdate {
     // Get the cell where the outputs should be cleared
-    var cell = this._getCellOrThrow(cellId, worksheetId);
+    var cell = getCellOrThrow(cellId, worksheetId, this._notebook);
     // Clear the outputs
     cell.outputs = [];
     // Create and return the update message
@@ -271,83 +273,94 @@ export class ActiveNotebook implements app.IActiveNotebook {
     };
   }
 
-  /**
-   * Gets the index of the specified cell within the given worksheet.
-   *
-   * Throws an error if the specified cell does not exist within the given worksheet.
-   */
-  _getCellIndexOrThrow (worksheet: app.notebook.Worksheet, cellId: string) {
-    var index = this._indexOf(worksheet, cellId);
-    if (index === -1) {
-      throw util.createError('Cannot find insertAfter cell id "%s"', cellId);
+}
+
+
+/**
+ * Gets the index of the specified cell within the given worksheet.
+ *
+ * Throws an error if the specified cell does not exist within the given worksheet.
+ */
+export function getCellIndexOrThrow (worksheet: app.notebook.Worksheet, cellId: string) {
+  var index = indexOf(worksheet, cellId);
+  if (index === -1) {
+    throw util.createError('Cell id "%s" does not exist within worksheet with id "%s"',
+      cellId, worksheet.id);
+  }
+  return index;
+}
+
+/**
+ * Gets a reference to the specified cell.
+ *
+ * Throws an error if the cell does not exist within the specified worksheet.
+ */
+export function getCellOrThrow (
+    cellId: string,
+    worksheetId: string,
+    notebook: app.notebook.Notebook
+    ): app.notebook.Cell {
+
+  // Get the worksheet where the cell is expected to exist.
+  var worksheet = getWorksheetOrThrow(worksheetId, notebook);
+  // Find the cell in the worksheet.
+  // Note: may be worthwhile to maintain a {cellId: cell} index if this becomes expensive.
+  var cell: app.notebook.Cell;
+  for (var i = 0; i < worksheet.cells.length; ++i) {
+    if (worksheet.cells[i].id == cellId) {
+      // Found the cell of interest.
+      return worksheet.cells[i];
     }
-    return index;
   }
 
-  /**
-   * Gets a reference to the specified cell.
-   *
-   * Throws an error if the cell does not exist within the specified worksheet.
-   */
-  _getCellOrThrow (cellId: string, worksheetId: string): app.notebook.Cell {
-    // Get the worksheet where the cell is expected to exist.
-    var worksheet = this._getWorksheetOrThrow(worksheetId);
-    // Find the cell in the worksheet.
-    // Note: may be worthwhile to maintain a {cellId: cell} index if this becomes expensive.
-    var cell: app.notebook.Cell;
-    for (var i = 0; i < worksheet.cells.length; ++i) {
-      if (worksheet.cells[i].id == cellId) {
-        cell = worksheet.cells[i];
-        break; // Found the cell of interest.
-      }
+  // Cell was not found within the worksheet if we made it here.
+  if (cell === undefined) {
+    throw util.createError('Cell id "%s" does not exist within worksheet with id "%s"',
+        cellId, worksheetId);
+  }
+}
+
+/**
+ * Gets a reference to the specified worksheet.
+ *
+ * Throws an error if the specified worksheet does not exist within the notebook.
+ */
+export function getWorksheetOrThrow (
+    worksheetId: string,
+    notebook: app.notebook.Notebook
+    ): app.notebook.Worksheet {
+
+  var worksheet: app.notebook.Worksheet;
+  notebook.worksheets.forEach((ws) => {
+    if (worksheetId == ws.id) {
+      // Found the worksheet of interest.
+      worksheet = ws;
     }
-    // Verify that the cell was actually found within the worksheet.
-    if (cell === undefined) {
-      throw util.createError('Specified cell id "%s" does not exist within worksheet with id "%s"',
-          cellId, worksheetId);
-    }
-    return cell;
+  });
+
+  if (worksheet === undefined) {
+    throw util.createError('Worksheet id "%s" does not exist', worksheetId);
   }
 
-  /**
-   * Gets a reference to the specified worksheet.
-   *
-   * Throws an error if the specified worksheet does not exist within the notebook.
-   */
-  _getWorksheetOrThrow (worksheetId: string): app.notebook.Worksheet {
-    var worksheet: app.notebook.Worksheet;
-    this._notebook.worksheets.forEach((ws) => {
-      if (worksheetId == ws.id) {
-        // Found the worksheet of interest.
-        worksheet = ws;
-      }
-    });
+  return worksheet;
+}
 
-    if (worksheet === undefined) {
-      throw util.createError('Specified worksheet id "%s" does not exist', worksheetId);
+/**
+ * Finds the index of the cell with given id within the specified worksheet.
+ *
+ * Returns the index of the cell matching the given id if it is found.
+ *
+ * Otherwise, returns -1 to indicate that a cell with specified cell id doesn't exist in the
+ * given worksheet, so return sentinel value to indicate the id was not found.
+ *
+ * Note: same sentinel value as Array.indexOf() for consistency with language built-ins.
+ */
+export function indexOf (worksheet: app.notebook.Worksheet, cellId: string): number {
+  for (var i = 0; i < worksheet.cells.length; ++i) {
+    if (cellId == worksheet.cells[i].id) {
+      return i;
     }
-
-    return worksheet;
   }
-
-  /**
-   * Finds the index of the cell with given id within the specified worksheet.
-   *
-   * Returns the index of the cell matching the given id if it is found.
-   *
-   * Otherwise, returns -1 to indicate that a cell with specified cell id doesn't exist in the
-   * given worksheet, so return sentinel value to indicate the id was not found.
-   *
-   * Note: same sentinel value as Array.indexOf() for consistency with language built-ins.
-   */
-  _indexOf (worksheet: app.notebook.Worksheet, cellId: string): number {
-    for (var i = 0; i < worksheet.cells.length; ++i) {
-      if (cellId == worksheet.cells[i].id) {
-        return i;
-      }
-    }
-    // No cell with the specified id exists within the worksheet.
-    return -1;
-  }
-
+  // No cell with the specified id exists within the worksheet.
+  return -1;
 }

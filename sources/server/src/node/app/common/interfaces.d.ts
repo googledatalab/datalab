@@ -34,7 +34,7 @@ declare module app {
   /**
    * Manages a single notebook's data and provides an API for applying changes captured by Actions.
    */
-  interface IActiveNotebook {
+  interface INotebookSession {
     /**
      * Applies the Action to the notebook model and returns a corresponding Update message.
      *
