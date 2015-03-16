@@ -281,7 +281,7 @@ export class NotebookSession implements app.INotebookSession {
  *
  * Throws an error if the specified cell does not exist within the given worksheet.
  */
-export function getCellIndexOrThrow (worksheet: app.notebooks.Worksheet, cellId: string) {
+function getCellIndexOrThrow (worksheet: app.notebooks.Worksheet, cellId: string) {
   var index = indexOf(worksheet, cellId);
   if (index === -1) {
     throw util.createError('Cell id "%s" does not exist within worksheet with id "%s"',
@@ -295,7 +295,7 @@ export function getCellIndexOrThrow (worksheet: app.notebooks.Worksheet, cellId:
  *
  * Throws an error if the cell does not exist within the specified worksheet.
  */
-export function getCellOrThrow (
+function getCellOrThrow (
     cellId: string,
     worksheetId: string,
     notebook: app.notebooks.Notebook
@@ -325,7 +325,7 @@ export function getCellOrThrow (
  *
  * Throws an error if the specified worksheet does not exist within the notebook.
  */
-export function getWorksheetOrThrow (
+function getWorksheetOrThrow (
     worksheetId: string,
     notebook: app.notebooks.Notebook
     ): app.notebooks.Worksheet {
@@ -355,7 +355,7 @@ export function getWorksheetOrThrow (
  *
  * Note: same sentinel value as Array.indexOf() for consistency with language built-ins.
  */
-export function indexOf (worksheet: app.notebooks.Worksheet, cellId: string): number {
+function indexOf (worksheet: app.notebooks.Worksheet, cellId: string): number {
   for (var i = 0; i < worksheet.cells.length; ++i) {
     if (cellId == worksheet.cells[i].id) {
       return i;
