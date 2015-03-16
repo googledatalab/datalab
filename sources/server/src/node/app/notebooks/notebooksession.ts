@@ -36,7 +36,7 @@ export class NotebookSession implements app.INotebookSession {
    */
   apply (action: app.notebooks.actions.Action): app.notebooks.updates.Update {
     // Delegate to the appropriate action handler based upon the action type.
-    switch (action.action) {
+    switch (action.name) {
       case actions.cell.clearOutput:
         return this._applyClearOutput(<app.notebooks.actions.ClearOutput>action);
 
@@ -56,7 +56,7 @@ export class NotebookSession implements app.INotebookSession {
         return this._applyMoveCell(<app.notebooks.actions.MoveCell>action);
 
       default:
-        throw util.createError('Unsupported action "%s" cannot be applied', action.action);
+        throw util.createError('Unsupported action "%s" cannot be applied', action.name);
     }
   }
 
@@ -111,7 +111,7 @@ export class NotebookSession implements app.INotebookSession {
 
     // Create and return the update message
     return {
-      update: updates.worksheet.addCell,
+      name: updates.worksheet.addCell,
       worksheetId: worksheet.id,
       cell: cell,
       insertAfter: action.insertAfter
@@ -131,7 +131,7 @@ export class NotebookSession implements app.INotebookSession {
   _applyClearOutputs (action: app.notebooks.actions.ClearOutputs): app.notebooks.updates.Composite {
     // Create a composite update message in which the per-cell updates will be bundled.
     var update: app.notebooks.updates.Composite = {
-      update: updates.composite,
+      name: updates.composite,
       subUpdates: []
     }
 
@@ -162,7 +162,7 @@ export class NotebookSession implements app.INotebookSession {
     var removed = worksheet.cells.splice(cellIndex, 1);
     // Create and return the update message.
     return {
-      update: updates.worksheet.deleteCell,
+      name: updates.worksheet.deleteCell,
       worksheetId: action.worksheetId,
       cellId: action.cellId
     };
@@ -197,7 +197,7 @@ export class NotebookSession implements app.INotebookSession {
     // Note: the update message carries the same data as the action message, because all clients
     // need to apply the same cell movement modifications locally.
     return {
-      update: updates.worksheet.moveCell,
+      name: updates.worksheet.moveCell,
       sourceWorksheetId: action.sourceWorksheetId,
       destinationWorksheetId: action.destinationWorksheetId,
       cellId: action.cellId,
@@ -214,7 +214,7 @@ export class NotebookSession implements app.INotebookSession {
 
     // Create the base cell update and add to it as modifications are made to the notebook model.
     var cellUpdate: app.notebooks.updates.CellUpdate = {
-      update: updates.cell.update,
+      name: updates.cell.update,
       worksheetId: action.worksheetId,
       cellId: action.cellId,
     };
@@ -265,7 +265,7 @@ export class NotebookSession implements app.INotebookSession {
     cell.outputs = [];
     // Create and return the update message
     return {
-      update: updates.cell.update,
+      name: updates.cell.update,
       worksheetId: worksheetId,
       cellId: cellId,
       outputs: cell.outputs,

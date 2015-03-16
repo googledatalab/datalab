@@ -27,13 +27,13 @@ declare module app {
        * The action label allows type identification at runtime (when type information is lost).
        */
       interface Action {
-        action: string; // The name/label for the action message type.
+        name: string; // The name for the action message type.
       }
 
       /**
        * Bundle for multiple actions that should be applied in a single transaction.
        *
-       * action == 'composite'
+       * name == 'composite'
        */
       interface Composite extends Action {
         subActions: Action[];
@@ -44,7 +44,7 @@ declare module app {
       /**
        * Remove the outputs for all code cells within the notebook.
        *
-       * action == 'notebook.clearOutputs'
+       * name == 'notebook.clearOutputs'
        */
       interface ClearOutputs extends Action {
         // The action label alone carries sufficient information for processing this action.
@@ -53,7 +53,7 @@ declare module app {
       /**
        * Execute all code cells within the notebook.
        *
-       * action == 'notebook.executeCells'
+       * name == 'notebook.executeCells'
        */
       interface ExecuteCells extends Action {
         // Additional flags here eventually; e.g., flag for performing a "clean run" in sandbox.
@@ -62,7 +62,7 @@ declare module app {
       /**
        * Update the notebook path to match the given path.
        *
-       * action == 'notebook.rename'
+       * name == 'notebook.rename'
        */
       interface Rename extends Action {
         path: string; // New path for the notebook.
@@ -73,7 +73,7 @@ declare module app {
       /**
        * Add a cell to the specified worksheet.
        *
-       * action == 'worksheet.addCell',
+       * name == 'worksheet.addCell',
        */
       interface AddCell extends Action {
         // Fields for specifying the cell insertion point within the notebook.
@@ -93,7 +93,7 @@ declare module app {
       /**
        * Delete a cell from the specified worksheet.
        *
-       * action == 'worksheet.deleteCell'
+       * name == 'worksheet.deleteCell'
        */
       interface DeleteCell extends Action {
         worksheetId: string;
@@ -106,7 +106,7 @@ declare module app {
        * Note: both source and destination can be the same worksheet ID for intra-worksheet
        * movement.
        *
-       * action == 'worksheet.moveCell',
+       * name == 'worksheet.moveCell',
        */
       interface MoveCell extends Action {
         sourceWorksheetId: string;
@@ -120,7 +120,7 @@ declare module app {
       /**
        * Remove all output from the specified cell.
        *
-       * action == 'cell.clearOutput'
+       * name == 'cell.clearOutput'
        */
       interface ClearOutput extends Action {
         worksheetId: string;
@@ -130,7 +130,7 @@ declare module app {
       /**
        * Update the specified cell to have the provided fields.
        *
-       * action == 'cell.update'
+       * name == 'cell.update'
        */
       interface UpdateCell extends Action {
         worksheetId: string;
@@ -152,7 +152,7 @@ declare module app {
       /**
        * Execute the specified cell.
        *
-       * action == 'cell.execute'
+       * name == 'cell.execute'
        */
       interface ExecuteCell extends Action {
         worksheetId: string;

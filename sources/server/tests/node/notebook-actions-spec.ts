@@ -106,7 +106,7 @@ describe('Notebook model state', () => {
         });
       });
 
-      var action = {action: actions.notebook.clearOutputs};
+      var action = {name: actions.notebook.clearOutputs};
       var update = <app.notebooks.updates.Composite>notebook.apply(action);
 
       // Now each worksheet should still have two cells, each with zero outputs
@@ -129,7 +129,7 @@ describe('Notebook model state', () => {
 
     beforeEach(() => {
       cellUpdateAction = {
-        action: actions.cell.update,
+        name: actions.cell.update,
         worksheetId: worksheetId,
         cellId: cellIdToUpdate,
       };
@@ -244,7 +244,7 @@ describe('Notebook model state', () => {
 
     beforeEach(() => {
       clearOutputAction = {
-        action: actions.cell.clearOutput,
+        name: actions.cell.clearOutput,
         worksheetId: worksheetId,
         cellId: cellIdToClear,
       };
@@ -302,7 +302,7 @@ describe('Notebook model state', () => {
     beforeEach(() => {
       worksheet = getFirstWorksheet(notebook);
       deleteCellAction = {
-        action: actions.worksheet.deleteCell,
+        name: actions.worksheet.deleteCell,
         worksheetId: worksheet.id,
         cellId: null
       };
@@ -375,7 +375,7 @@ describe('Notebook model state', () => {
     beforeEach(() => {
       worksheet = getFirstWorksheet(notebook);
       moveCellAction = {
-        action: actions.worksheet.moveCell,
+        name: actions.worksheet.moveCell,
         sourceWorksheetId: worksheet.id,
         destinationWorksheetId: worksheet.id,
         cellId: null,
@@ -445,7 +445,7 @@ describe('Notebook model state', () => {
 
     beforeEach(() => {
       addCellAction = {
-        action: actions.worksheet.addCell,
+        name: actions.worksheet.addCell,
         worksheetId: worksheetId,
         cellId: 'NEW',
         type: 'code',
@@ -476,7 +476,7 @@ describe('Notebook model state', () => {
       var addCellUpdate = <app.notebooks.updates.AddCell>notebook.apply(addCellAction);
 
       // Validate the update message content
-      expect(addCellUpdate.update).toBe(updates.worksheet.addCell);
+      expect(addCellUpdate.name).toBe(updates.worksheet.addCell);
       expect(addCellUpdate.worksheetId).toBe(worksheetId);
       expect(addCellUpdate.cell).toBeDefined();
       // Validate the new cell in the update has the expected structure

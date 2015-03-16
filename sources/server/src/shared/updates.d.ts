@@ -30,13 +30,13 @@ declare module app {
        * been lost).
        */
       interface Update {
-        update: string; // A name/label for the type of update message type.
+        name: string; // A name for the type of update message type.
       }
 
       /**
        * Bundle for multiple updates that should be applied in a single transaction.
        *
-       * update == 'composite'
+       * name == 'composite'
        */
       interface Composite extends Update {
         subUpdates: Update[];
@@ -45,7 +45,7 @@ declare module app {
       /**
        * A snapshot of the notebook data.
        *
-       * update == 'notebook.snapshot'
+       * name == 'notebook.snapshot'
        */
       interface Snapshot extends Update {
         notebook: Notebook;
@@ -56,7 +56,7 @@ declare module app {
       /**
        * Update the notebook metadata to have the provided fields.
        *
-       * update == 'notebook.metadata'
+       * name == 'notebook.metadata'
        */
       interface NotebookMetadata extends Update {
         path: string; // This is a notebook path.
@@ -65,7 +65,7 @@ declare module app {
       /**
        * Update the known status of the notebook's kernel process.
        *
-       * update == 'notebook.sessionStatus'
+       * name == 'notebook.sessionStatus'
        */
       interface SessionStatus extends Update {
         kernelState: string; // State includes: 'starting' | 'idle' | 'busy'
@@ -77,7 +77,7 @@ declare module app {
       /**
        * The given cell has been added to the specified worksheet.
        *
-       * update == 'worksheet.addCell'
+       * name == 'worksheet.addCell'
        */
       interface AddCell extends Update {
         worksheetId: string;
@@ -88,7 +88,7 @@ declare module app {
       /**
        * The given cell has been deleted from the specified worksheet.
        *
-       * update == 'worksheet.deleteCell'
+       * name == 'worksheet.deleteCell'
        */
       interface DeleteCell extends Update {
         worksheetId: string;
@@ -101,7 +101,7 @@ declare module app {
        * Note: source and destination worksheets may be the same for the case of intra-worksheet
        * movements.
        *
-       * update == 'worksheet.moveCell'
+       * name == 'worksheet.moveCell'
        */
       interface MoveCell extends Update {
         sourceWorksheetId: string;
@@ -115,7 +115,7 @@ declare module app {
       /**
        * Update the specified cell with the provided fields.
        *
-       * update == 'cell.update'
+       * name == 'cell.update'
        */
       interface CellUpdate extends Update {
         worksheetId: string;
