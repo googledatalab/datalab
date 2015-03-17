@@ -17,7 +17,6 @@
 import uuid = require('node-uuid');
 import util = require('../common/util');
 import sessions = require('./session');
-import notebooks = require('../notebooks/index');
 
 
 /**
