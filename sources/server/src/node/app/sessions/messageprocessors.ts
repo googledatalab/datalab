@@ -17,6 +17,7 @@
  * Functions for processing messages flowing through sessions.
  */
 import actions = require('../shared/actions');
+import util = require('../common/util');
 
 
 /**
@@ -47,7 +48,7 @@ function processSessionRename (
   // For any notebook rename messages, also update the session id to match
   if (message.action == actions.notebook.rename) {
     if (!message.path) {
-      throw new Error('Invalid session id for renaming "'+message.path+'"');
+      throw util.createError('Invalid session id for renaming "%s"', message.path);
     }
     sessionManager.renameSession(session.id, message.path);
   }
