@@ -59,18 +59,17 @@ export class KernelClient implements app.IKernel {
   }
 
   /**
-   * Registers a callback to be invoked when an execute result message arrives from the kernel
-   */
-  onExecuteResult (callback: app.EventHandler<app.ExecuteResult>): void {
-    this._iopub.onExecuteResult(callback);
-  }
-
-  /**
    * Registers a callback to be invoked when a kernel status message arrives from the kernel
    */
   onKernelStatus (callback: app.EventHandler<app.KernelStatus>): void {
+    // Keep a direct reference to the kernel status callback so that the kernel client itself is
+    // can route its own kernel status messages (e.g., kernel died) to the given callback/handler
     this._delegateKernelStatusHandler = callback;
     this._iopub.onKernelStatus(callback);
+  }
+
+  onOutputData (callback: app.EventHandler<app.OutputData>): void {
+    this._iopub.onOutputData(callback);
   }
 
   /**
@@ -103,7 +102,8 @@ export class KernelClient implements app.IKernel {
         '--Session.key=""',
         '--iopub=' + this.config.iopubPort,
         '--shell=' + this.config.shellPort,
-        '--log-level="DEBUG"'
+        '--log-level="DEBUG"',
+        '--matplotlib=inline'
         ];
     this._kernelProcess = childproc.spawn(cmd, args);
     // For now, consider both disconnected and exitted kernels as "dead"

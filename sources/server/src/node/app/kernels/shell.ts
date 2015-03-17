@@ -88,8 +88,9 @@ export class ShellChannelClient extends channels.ChannelClient {
       requestId: message.parentHeader.msg_id,
     };
     if (status != 'aborted') {
-      reply.executionCount = +message.content['execution_count'];
+      reply.executionCounter = message.content['execution_count'];
     }
+
     if (message.content['status'] == 'error') {
       reply.errorName = <string>message.content['ename'];
       reply.errorMessage = <string>message.content['evalue'];
