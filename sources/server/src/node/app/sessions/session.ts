@@ -245,10 +245,7 @@ export class Session implements app.ISession {
     });
 
     // Retrieve the current state of the cell that should be executed.
-    var cell = this._notebook.getCell(action.cellId, action.worksheetId);
-    if (!cell) {
-      throw ('Attempted to execute non-existent cell with id "%s"', action.cellId);
-    }
+    var cell = this._notebook.getCellOrThrow(action.cellId, action.worksheetId);
 
     // Request that the kernel execute the code snippet.
     this._kernel.execute({

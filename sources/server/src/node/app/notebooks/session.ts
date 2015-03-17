@@ -81,8 +81,10 @@ export class NotebookSession implements app.INotebookSession {
    * Gets a reference to the specified cell.
    *
    * The caller should consider the returned cell to be read-only.
+   *
+   * Throws an error if the specified cell does not exist in the given worksheet.
    */
-  getCell (cellId: string, worksheetId: string) {
+  getCellOrThrow (cellId: string, worksheetId: string) {
     return getCellOrThrow(cellId, worksheetId, this._notebook);
   }
 

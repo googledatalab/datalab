@@ -82,7 +82,7 @@ declare module app {
      *
      * Throws an error if the cell does not exist within the specified worksheet.
      */
-    getCell (cellId: string, worksheetId: string): notebooks.Cell;
+    getCellOrThrow (cellId: string, worksheetId: string): notebooks.Cell;
   }
 
   interface IKernel {
