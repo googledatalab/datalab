@@ -54,7 +54,6 @@ declare module app {
     code: string;
     // Note: user_variables and user_expressions are slated for removal/reworking in upcoming versions
     // https://github.com/ipython/ipython/wiki/IPEP-13:-Updating-the-Message-Spec
-    cellId: string; // FIXME: is there code that reads this value?
   }
 
   interface ExecuteResult extends KernelMessage {

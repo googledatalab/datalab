@@ -253,7 +253,6 @@ export class Session implements app.ISession {
     // Request that the kernel execute the code snippet.
     this._kernel.execute({
       requestId: requestId,
-      cellId: action.cellId,
       code: cell.source
     });
   }
