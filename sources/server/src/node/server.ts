@@ -21,7 +21,8 @@ import express = require('express');
 import socketio = require('socket.io');
 import config = require('./app/config');
 import wsServer = require('./app/users/manager');
-import msgs = require('./app/sessions/messagepipeline');
+import sessions = require('./app/sessions/manager');
+import msgproc = require('./app/sessions/messageprocessors');
 
 
 /**
@@ -42,10 +43,16 @@ export function start (settings: app.Settings, apiRouter: express.Router) {
   console.log("Starting HTTP server on port " + settings.httpPort);
   httpServer.listen(settings.httpPort);
 
-  var messagePipeline = new msgs.MessagePipeline(
-    new wsServer.UserConnectionManager(socketio.listen(httpServer)),
+  var sessionManager = new sessions.SessionManager(
     config.getKernelManager(),
-    config.getMessageProcessors());
+    msgproc.getMessageProcessors(),
+    config.getNotebookStorage(),
+    new wsServer.UserConnectionManager(socketio.listen(httpServer))
+  );
 }
 
+// Ensure that the notebook storage system is fully initialized
+config.initStorage();
+
+// Start the DataLab server running
 start(config.getSettings(), config.getApiRouter());
