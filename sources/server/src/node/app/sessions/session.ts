@@ -162,6 +162,7 @@ export class Session implements app.ISession {
     var update = this._notebook.apply(action);
     // Update connected clients that a change has occured.
     this._broadcastUpdate(update);
+    this._save();
   }
 
   /**
@@ -229,6 +230,7 @@ export class Session implements app.ISession {
     var update = this._notebook.apply(action);
     // Update all clients about the notebook data change.
     this._broadcastUpdate(update);
+    this._save();
   }
 
   /**
@@ -336,6 +338,7 @@ export class Session implements app.ISession {
 
     // Broadcast the update to connectec clients.
     this._broadcastUpdate(update);
+    this._save();
   }
 
   /**
@@ -353,6 +356,14 @@ export class Session implements app.ISession {
     this._kernel.onKernelStatus(this._handleKernelStatusPreDelegate.bind(this));
     this._kernel.onOutputData(this._handleOutputDataPreDelegate.bind(this));
   }
+
+  /**
+   * Persists the current notebook state to the notebook storage.
+   */
+  _save () {
+    this._notebookStorage.write(this._notebookPath, this._notebook);
+  }
+
 
   /* Methods for managing request <-> cell reference mappings */
 
