@@ -275,7 +275,6 @@ export class NotebookSession implements app.INotebookSession {
 
 }
 
-
 /**
  * Gets the index of the specified cell within the given worksheet.
  *
