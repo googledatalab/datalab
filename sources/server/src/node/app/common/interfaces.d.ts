@@ -22,6 +22,12 @@ declare module app {
     httpPort: number;
   }
 
+  /**
+   * A composite cell identifier that bundles cell and worksheet ids.
+   *
+   * Used for maintaining a mapping between kernel request ids and the corresponding cells
+   * for those kernel requests.
+   */
   interface CellRef {
     cellId: string;
     worksheetId: string;
@@ -144,17 +150,35 @@ declare module app {
     getKernelId (): string;
 
     /**
-     * Gets the set of user connections currently associated with the session.
+     * Gets the set of user connection ids currently associated with the session.
      */
     getUserConnectionIds (): string[];
 
     /**
-     * Disassociates a user connection with the session.
+     * Disassociates a user connection from the session.
      */
     removeUserConnection (connection: IUserConnection): void;
   }
 
+  /**
+   * Manages the lifecycle of session instances.
+   *
+   * Routes incoming user connections to existing sessions when possible; creates new
+   * sessions when needed.
+   *
+   * User connections specify a session identifier that dictates the specific session that the
+   * incoming connection should be routed to.
+   */
   interface ISessionManager {
+    /**
+     * Updates the session identifier to the new value.
+     *
+     * Existing connections to this session remain connected when renaming.
+     *
+     * After the rename has been completed, a new connection that specifies the *new* session
+     * id will join the existing session; after the rename, a new connection that specifies the
+     * *old* session id will create a new session with the old identifier.
+     */
     renameSession (oldId: string, newId: string): void;
   }
 
