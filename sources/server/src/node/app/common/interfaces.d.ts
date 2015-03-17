@@ -22,6 +22,11 @@ declare module app {
     httpPort: number;
   }
 
+  interface CellRef {
+    cellId: string;
+    worksheetId: string;
+  }
+
   interface EventHandler<T> {
     (event: T): void;
   }
@@ -29,6 +34,21 @@ declare module app {
   interface KernelConfig {
     iopubPort: number;
     shellPort: number;
+  }
+
+  /**
+   * Manages the persistence of notebook data to/from a given storage path.
+   */
+  interface INotebookStorage {
+    /**
+     * Reads a notebook session from storage if it exists, or creates a new notebook if needed.
+     */
+    readOrCreate (path: string): app.INotebookSession;
+
+    /**
+     * Writes the given notebook session to storage.
+     */
+    write (path: string, notebook: app.INotebookSession): void;
   }
 
   /**
@@ -64,8 +84,8 @@ declare module app {
     config: KernelConfig;
     execute (request: ExecuteRequest): void;
     onExecuteReply (callback: EventHandler<ExecuteReply>): void;
-    onExecuteResult (callback: EventHandler<ExecuteResult>): void;
     onKernelStatus (callback: EventHandler<KernelStatus>): void;
+    onOutputData (callback: EventHandler<OutputData>): void;
     shutdown (): void;
     start (): void;
   }
@@ -107,22 +127,51 @@ declare module app {
     stringify (notebook: notebooks.Notebook): string;
   }
 
-
+  /**
+   * A session binds together a notebook with connected users and a kernel.
+   */
   interface ISession {
     id: string;
+
+    /**
+     * Associates a user connection with the session.
+     */
+    addUserConnection (connection: IUserConnection): void;
+
+    /**
+     * Gets the id of the kernel currently assocated with the session.
+     */
     getKernelId (): string;
-    getUserConnectionId (): string;
-    updateUserConnection (connection: IUserConnection): void;
+
+    /**
+     * Gets the set of user connections currently associated with the session.
+     */
+    getUserConnectionIds (): string[];
+
+    /**
+     * Disassociates a user connection with the session.
+     */
+    removeUserConnection (connection: IUserConnection): void;
+  }
+
+  interface ISessionManager {
+    renameSession (oldId: string, newId: string): void;
+  }
+
+  interface IStorage {
+    read (path: string): string;
+    write (path: string, data: string): void;
+    delete (path: string): boolean;
+    // move (sourcePath: string, destinationPath: string);
+    // copy (sourcePath: string, destinationPath: string);
   }
 
   interface IUserConnection {
     id: string;
-    getSessionId (): string;
+    getHandshakeNotebookPath (): string;
     onDisconnect (callback: EventHandler<IUserConnection>): void;
-    onExecuteRequest (callback: EventHandler<ExecuteRequest>): void;
-    sendExecuteReply (reply: ExecuteReply): void;
-    sendExecuteResult (result: ExecuteResult): void;
-    sendKernelStatus (status: KernelStatus): void;
+    onAction (callback: EventHandler<notebooks.actions.Action>): void;
+    sendUpdate (update: notebooks.updates.Update): void;
   }
 
   interface IUserConnectionManager {
@@ -131,3 +180,4 @@ declare module app {
   }
 
 }
+
