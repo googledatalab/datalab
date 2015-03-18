@@ -207,10 +207,6 @@ export class Session implements app.ISession {
         this._handleActionNotebookData(action);
         break;
 
-      case actions.notebook.rename:
-        this._handleActionRenameNotebook(action);
-        break;
-
       default:
         throw util.createError('No handler found for action message type "%s"', action.name);
     }
@@ -273,20 +269,6 @@ export class Session implements app.ISession {
         }
       });
     });
-  }
-
-  /**
-   * Handles a notebook rename by updating local metadata.
-   *
-   * See also the message middleware stack for further handling of the notebook rename event at the
-   * session manager level.
-   */
-  _handleActionRenameNotebook (action: app.notebooks.actions.Rename) {
-    this._notebookPath = action.path;
-    this._broadcastUpdate({
-      name: updates.notebook.metadata,
-      path: action.path
-    })
   }
 
   /**
