@@ -44,6 +44,7 @@ class QueryJob(_Job):
       # Block until done (or timed out). We do this by call Jobs.queryResults but use a
       # page size of zero because we're not actually fetching any results here.
       query_result = self._api.jobs_query_results(self._job_id,
+                                                  project_id=self._table.name.project_id,
                                                   page_size=0,
                                                   timeout=self._timeout)
       if not query_result['jobComplete']:

@@ -215,9 +215,8 @@ def _table_line(args):
       _table_viewer(_get_table(args['table']), rows_per_page=args['rows'], fields=fields))
 
 
-# An LRU cache for Tables.
-# TODO(gram): now we fetch more data than a table viewer displays at one time, we may not
-# even need this cache; it doesn't buy us much.
+# An LRU cache for Tables. This is mostly useful so that when we cross page boundaries
+# when paging through a table we don't have to re-fetch the schema.
 _table_cache = _util.LRUCache(10)
 
 
