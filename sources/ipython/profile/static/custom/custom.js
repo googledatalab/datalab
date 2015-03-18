@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+var debug = {
+  enabled: true,
+  log: function() { console.log.apply(console, arguments); }
+};
+
 // Install Google Analytics - this is the standard tracking code, reformatted.
 (function(i, s, o, g, r, a, m) {
   i['GoogleAnalyticsObject'] = r;
@@ -129,58 +134,65 @@ function setupOutline() {
 setTimeout(setupOutline, 1000);
 
 // Kernel related functionality
-$(function() {
-    IPython.Kernel.prototype.get_data = function(code, callback) {
-        function shellHandler(reply) {
-            if (!callback) {
-                return;
-            }
+$(function () {
+  IPython.Kernel.prototype.get_data = function (code, callback) {
+    function shellHandler(reply) {
+      if (!callback) {
+        return;
+      }
 
-            var content = reply.content;
-            if (!content || (content.status != 'ok')) {
-                callback(null, new Error('Unable to retrieve values.'));
-                callback = null;
-            }
-        }
+      var content = reply.content;
+      if (!content || (content.status != 'ok')) {
+        callback(null, new Error('Unable to retrieve values.'));
+        callback = null;
+      }
+    }
 
-        function iopubHandler(output) {
-            if (!callback) {
-                return;
-            }
-            var values = null;
-            var error = null;
-            try {
-                if (output.msg_type == 'display_data' || output.msg_type == 'pyout') {
-                    var data = output.content.data;
-                    if (data) {
-                        values = JSON.parse(data['application/json']);
-                    }
-                }
-            }
-            catch(e) {
-                error = e;
-            }
+    function iopubHandler(output) {
 
-            if (values) {
-                callback(values);
-            }
-            else {
-                callback(null, error || new Error('Unexpected value data retrieved.'));
-            }
-            callback = null;
-        }
+      if (output.msg_type == 'stream') {
+        // This is to allow the embedding of print statements for diagnostics.
+        debug.log(output.content.data.toString());
+        return;
+      }
 
-        try {
-            var callbacks = {
-                shell: { reply: shellHandler },
-                iopub: { output: iopubHandler }
-            };
-            this.execute(code, callbacks, { silent: false, store_history: false });
+      if (!callback) {
+        return;
+      }
+      var values = null;
+      var error = null;
+      try {
+        if (output.msg_type == 'display_data' || output.msg_type == 'pyout') {
+          var data = output.content.data;
+          if (data) {
+            values = JSON.parse(data['application/json']);
+          }
         }
-        catch (e) {
-            callback(null, e);
-        }
-    };
+      }
+      catch (e) {
+        error = e;
+      }
+
+      if (values) {
+        callback(values);
+      }
+      else {
+        callback(null, error || new Error('Unexpected value data retrieved.'));
+      }
+      callback = null;
+    }
+
+    try {
+      var callbacks = {
+        shell: {reply: shellHandler},
+        iopub: {output: iopubHandler}
+      };
+      this.execute(code, callbacks, {silent: false, store_history: false});
+    }
+    catch (e) {
+      callback(null, e);
+    }
+  };
 });
 
 // Configure code mirror
@@ -208,7 +220,9 @@ require.config({
     // TODO(gram): change these to minified versions once we are stable.
     'crossfilter': '//cdnjs.cloudflare.com/ajax/libs/crossfilter/1.3.11/crossfilter',
     'dc': '//cdnjs.cloudflare.com/ajax/libs/dc/1.7.3/dc',
-    'd3': '//cdnjs.cloudflare.com/ajax/libs/d3/3.4.13/d3'
+    'd3': '//cdnjs.cloudflare.com/ajax/libs/d3/3.4.13/d3',
+    'element': '/static/require/element',
+    'visualization': '/static/require/visualization'
   },
   shim: {
     'crossfilter': {

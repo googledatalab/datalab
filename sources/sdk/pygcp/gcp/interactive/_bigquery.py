@@ -28,6 +28,7 @@ try:
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
+
 @_magic.register_line_cell_magic
 def bigquery(line, cell=None):
   """Implements the bigquery cell magic for ipython notebooks.
@@ -83,7 +84,7 @@ def bigquery(line, cell=None):
   try:
     parsed_args = parser.parse_args(args)
     return parsed_args.func(vars(parsed_args))
-  except SystemExit as e:
+  except Exception as e:
     if e.message:
       print e.message
 
@@ -230,15 +231,16 @@ def _get_table(name):
 
 @_magic.register_line_magic
 def _get_table_rows(line):
-  args = line.split()
-  name = args[0]
-  start_row = int(args[1])
-  count = int(args[2])
-
-  table = _get_table(name)
+  try:
+    args = line.strip().split()
+    table = _get_table(args[0])
+    data = [row for row in table.range(start_row=int(args[1]), max_rows=int(args[2]))]
+  except Exception, e:
+    print str(e)
+    data = {}
 
   model = {
-    'data': [row for row in table.range(start_row=start_row, max_rows=count)]
+    'data': data
   }
   return _ipython.core.display.JSON(_json.dumps(model))
 
@@ -254,16 +256,16 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
   Returns:
     A string containing the HTML for the table viewer.
   """
-  # TODO(gram): Add a dependency on domready to make sure we don't try to access the
-  # table div before it is ready.
-  # TODO(gram): What should we do if the table does not exist?
+  if not table.exists():
+    return "<div>%s does not exist</div>" % table.full_name
+
   _HTML_TEMPLATE = """
     <div class="bqtv" id="bqtv_%s">
     </div>
     <script>
-      require(['extensions/tableviewer'],
-          function(tv) {
-              tv.makeTableViewer('%s', document.getElementById('bqtv_%s'), %s, %d, %d, '%s');
+      require(['extensions/tableviewer', 'element!bqtv_%s'],
+          function(tv, dom) {
+              tv.makeTableViewer('%s', dom, %s, [], %d, %d, '%s');
           }
       );
     </script>
@@ -272,11 +274,8 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
   fields = fields if fields else [field.name for field in table.schema()]
   labels = _json.dumps(fields)
   div_id = str(int(round(_time.time())))
-  # TODO(gram): for some tables the metadata may not include length info, so
-  # need to compensate for that. We should not define __len__ on Table and be prepared tp
-  # deal with None as a length value.
   return _HTML_TEMPLATE %\
-      (div_id, table.full_name, div_id, labels, table.length, rows_per_page, job_id)
+      (div_id, div_id, table.full_name, labels, table.length, rows_per_page, job_id)
 
 
 def _repr_html_query(query):
@@ -308,56 +307,18 @@ def _repr_html_table_schema(schema):
 
 
 def _repr_html_function_evaluation(evaluation):
-  # TODO(nikhilko): Most of the javascript logic here should go into an external javascript
-  #                 file, once we setup ipython with our own static files.
   _HTML_TEMPLATE = """
-    <div id="%s"></div>
+    <div class="bqtv" id="%s"></div>
     <script>
-    (function() {
-      var html = [];
-      var names = [];
-      var first = true;
-
-      function emitter(result) {
-        if (first) {
-          first = false;
-          html.push('<tr>')
-          for (var n in result) {
-            names.push(n);
-            html.push('<th>' + n + '</th>')
+      require(['extensions/function_evaluator', 'element!%s'],
+          function(fe, dom) {
+              fe.evaluate_function(dom, %s, %s);
           }
-          html.push('</tr>');
-        }
-
-        html.push('<tr>');
-        for (var i = 0; i < names.length; i++) {
-          var name = names[i];
-          var value = result[name] || '';
-          value = value.toString().replace(/&/g,'&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-          html.push('<td>' + value + '</td>')
-        }
-        html.push('</tr>');
-      }
-
-      udf = %s;
-
-      setTimeout(function() {
-        html.push('<table>');
-
-        var data = %s;
-        data.forEach(function(row) { udf(row, emitter); });
-
-        html.push('</table>')
-
-        resultsElement = document.getElementById('%s');
-        resultsElement.innerHTML = html.join('');
-      }, 0);
-    })();
+      );
     </script>
     """
-
   id = 'udf%d' % int(round(_time.time()))
-  return _HTML_TEMPLATE % (id, evaluation.implementation, _json.dumps(evaluation.data), id)
+  return _HTML_TEMPLATE % (id, id, evaluation.implementation, _json.dumps(evaluation.data))
 
 
 def _register_html_formatters():

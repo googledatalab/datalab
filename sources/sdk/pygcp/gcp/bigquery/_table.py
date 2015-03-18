@@ -88,7 +88,7 @@ class TableSchema(list):
       correctly.
 
     Args:
-      dataframe: DataFrame
+      dataframe: The DataFrame.
       default_type : The default big query type in case the type of the column does not exist in
           the schema.
     Returns:
@@ -113,13 +113,51 @@ class TableSchema(list):
 
     return fields
 
+  @staticmethod
+  def _from_list(data):
+    """
+    Infer a BigQuery table schema from a list. The list must be non-empty and be a list
+    of dictionaries (in which case the first item is used), or a list of lists. In the latter
+    case the type of the elements is used and the field names are simply 'Column1', 'Column2', etc.
+
+    Args:
+      data: The list.
+    Returns:
+      A list of dictionaries containing field 'name' and 'type' entries, suitable for use in a
+          BigQuery Tables resource schema.
+    """
+    if not data:
+      return []
+
+    def _get_type(value):
+      if isinstance(value, datetime):
+        return 'TIMESTAMP'
+      elif isinstance(value, int):
+        return 'INTEGER'
+      elif isinstance(value, float):
+        return 'FLOAT'
+      elif isinstance(value, bool):
+        return 'BOOLEAN'
+      else:
+        return 'STRING'
+
+    datum = data[0]
+    if isinstance(datum, dict):
+      return [{'name': key, 'type': _get_type(datum[key])} for key in datum.keys()]
+    else:
+      return [{'name': 'Column%d' % (i + 1), 'type': _get_type(datum[i])}
+              for i in range(0, len(datum))]
+
+
   def __init__(self, data):
-    """Initializes a TableSchema from its raw JSON representation or a Pandas Dataframe.
+    """Initializes a TableSchema from its raw JSON representation, a Pandas Dataframe, or a list.
     """
     list.__init__(self)
     self._map = {}
     if isinstance(data, pd.DataFrame):
       data = TableSchema._from_dataframe(data)
+    elif isinstance(data, list):
+      data = TableSchema._from_list(data)
     self._populate_fields(data)
 
   def __getitem__(self, key):
@@ -144,9 +182,6 @@ class TableSchema(list):
       if data_type == 'RECORD':
         # Recurse into the nested fields, using this field's name as a prefix.
         self._populate_fields(field_data.get('fields'), name + '.')
-
-  def __iter__(self):
-    return self._map.itervalues()
 
   def __str__(self):
     return str(self._bq_schema)
