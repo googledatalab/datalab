@@ -13,10 +13,13 @@
  */
 
 
+/// <reference path="../../../../../../externs/ts/node/socket.io.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
+import conn = require('./connection');
+import sessions = require('./session');
+import socketio = require('socket.io');
 import uuid = require('node-uuid');
 import util = require('../common/util');
-import sessions = require('./session');
 
 
 /**
@@ -30,26 +33,29 @@ import sessions = require('./session');
  */
 export class SessionManager implements app.ISessionManager {
 
+  _connectionIdToConnection: app.Map<app.IUserConnection>;
   _connectionIdToSession: app.Map<app.ISession>;
   _sessionIdToSession: app.Map<app.ISession>;
   _kernelManager: app.IKernelManager;
   _messageProcessors: app.MessageProcessor[];
   _notebookStorage: app.INotebookStorage;
-  _userconnManager: app.IUserConnectionManager;
+  _socketioManager: socketio.SocketManager;
 
   constructor (
       kernelManager: app.IKernelManager,
       messageProcessors: app.MessageProcessor[],
       notebookStorage: app.INotebookStorage,
-      userconnManager: app.IUserConnectionManager) {
+      socketioManager: socketio.SocketManager) {
 
     this._kernelManager = kernelManager;
     this._messageProcessors = messageProcessors;
     this._notebookStorage = notebookStorage;
-    this._userconnManager = userconnManager;
+    this._socketioManager = socketioManager;
 
     this._connectionIdToSession = {};
+    this._connectionIdToConnection = {};
     this._sessionIdToSession = {};
+
     this._registerHandlers();
   }
 
@@ -143,12 +149,23 @@ export class SessionManager implements app.ISessionManager {
   }
 
   /**
-   * Binds the new user connection to a session and configures session event handling.
+   * Binds the new client connection to a session and configures session event handling.
    *
    * If the session for the given connection already exists, the new connection reconnects to the
    * existing session.
    */
-  _handleUserConnect (connection: app.IUserConnection) {
+  _handleClientConnect (socket: socketio.Socket) {
+    var connection = new conn.UserConnection(uuid.v4(), socket);
+    // Register this manager instance to receive disconnect events for the new connection
+    connection.onDisconnect(this._handleClientDisconnect.bind(this));
+    console.log('User has connected: ' + connection.id);
+
+    // Determine which session the connection should be associated with via the session id
+    //
+    // Two clients that specify the same session id will join the same session.
+    //
+    // A single client can also specify a previous session id to re-join a previous session,
+    // assuming that session is still alive.
     var sessionId = this._getSessionId(connection);
 
     // Retrieve an existing session for the specified session id if it exists.
@@ -165,12 +182,19 @@ export class SessionManager implements app.ISessionManager {
     // Store a mapping from connection to the associated session so that the session can be
     // retrieved on disconnect.
     this._connectionIdToSession[connection.id] = session;
+    // Store the mapping of connection id => connection to track the set of connected clients
+    // across all sessions.
+    this._connectionIdToConnection[connection.id] = connection;
   }
 
-  _handleUserDisconnect (connection: app.IUserConnection) {
+  /**
+   * Removes
+   */
+  _handleClientDisconnect (connection: app.IUserConnection) {
+    console.log('User has disconnected: ' + connection.id);
+
     // Find the session associated with this connection.
     var session = this._connectionIdToSession[connection.id];
-
     if (!session) {
       throw util.createError(
         'Associated session not found when attempting to close connection id "%s"', connection.id);
@@ -178,12 +202,15 @@ export class SessionManager implements app.ISessionManager {
 
     // Remove the connection from the session.
     session.removeUserConnection(connection);
+
+    // Remove the connection from the index
+    delete this._connectionIdToConnection[connection.id];
     // Remove the connection => session mapping
     delete this._connectionIdToSession[connection.id];
   }
 
   _registerHandlers () {
-    this._userconnManager.onConnect(this._handleUserConnect.bind(this));
-    this._userconnManager.onDisconnect(this._handleUserDisconnect.bind(this));
+    this._socketioManager.on('connection', this._handleClientConnect.bind(this));
+    // Note: disconnect handlers are at the socket/connection level
   }
 }

@@ -20,7 +20,6 @@ import http = require('http');
 import express = require('express');
 import socketio = require('socket.io');
 import config = require('./app/config');
-import wsServer = require('./app/users/manager');
 import sessions = require('./app/sessions/manager');
 import msgproc = require('./app/sessions/messageprocessors');
 
@@ -47,7 +46,7 @@ export function start (settings: app.Settings, apiRouter: express.Router) {
     config.getKernelManager(),
     msgproc.getMessageProcessors(),
     config.getNotebookStorage(),
-    new wsServer.UserConnectionManager(socketio.listen(httpServer))
+    socketio.listen(httpServer)
   );
 }
 
