@@ -224,6 +224,11 @@ declare module app {
     renameSession (oldId: string, newId: string): void;
   }
 
+  /**
+   * Generic file persistence interface.
+   *
+   * TODO(bryantd): Modify this interface to be async (and implementations of the interface).
+   */
   interface IStorage {
     read (path: string): string;
     write (path: string, data: string): void;
