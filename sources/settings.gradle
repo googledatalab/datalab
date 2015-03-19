@@ -1,1 +1,0 @@
-include 'kernels:ijava:kernel', 'server', 'ipython', 'tools', 'sdk'

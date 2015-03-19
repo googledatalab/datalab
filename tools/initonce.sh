@@ -37,14 +37,3 @@ else
   echo "Please install NodeJS and then re-run this script to install the Jasmine NodeJS test runner."
 fi
 
-# Gradle 2.0 check
-if which gradle >/dev/null; then
-  gradle_version=`gradle -version | grep Gradle | cut -f2 -d' '`
-  gradle_major_version=`echo $gradle_version | cut -f1 -d.`
-  if [ "$gradle_major_version" != "2" ]; then
-    echo "Please install Gradle 2.x"
-  fi
-  echo "Found Gradle version '${gradle_version}'"
-else
-  echo "Please install Gradle 2.0: http://www.gradle.org/downloads"
-fi
