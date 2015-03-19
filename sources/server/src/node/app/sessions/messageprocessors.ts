@@ -32,7 +32,7 @@ export function getMessageProcessors (): app.MessageProcessor[] {
 /**
  * Logs all messages to the console.
  */
-function logMessage (message: any, session: app.ISession): any {
+function logMessage (message: app.Map<any>, session: app.ISession): app.Map<any> {
   console.log('Message: ', JSON.stringify(message));
   return message;
 }
