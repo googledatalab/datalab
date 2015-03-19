@@ -92,7 +92,7 @@ export class Session implements app.ISession {
     // Add the connection to the "connected" set
     this._connections.push(connection);
     // Register event handlers for processing messages arriving from the connection.
-    this._registerUserEventHandlers(connection);
+    this._registerClientEventHandlers(connection);
     // Send the initial notebook state at the time of connection.
     connection.sendUpdate({
       name: updates.notebook.snapshot,
@@ -326,7 +326,7 @@ export class Session implements app.ISession {
   /**
    * Registers event handlers for messages arriving from the given user connection.
    */
-  _registerUserEventHandlers (connection: app.IClientConnection) {
+  _registerClientEventHandlers (connection: app.IClientConnection) {
     connection.onAction(this._handleActionPreDelegate.bind(this));
   }
 

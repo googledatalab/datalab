@@ -64,11 +64,6 @@ declare module app {
     getConnectionData (): ClientConnectionData;
 
     /**
-     * Registers a callback to be invoked with the client disconnects.
-     */
-    onDisconnect (callback: EventHandler<IClientConnection>): void;
-
-    /**
      * Registers a callback to be invoked whenever an Action message arrives from the client.
      */
     onAction (callback: EventHandler<notebooks.actions.Action>): void;

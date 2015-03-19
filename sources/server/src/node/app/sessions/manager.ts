@@ -155,9 +155,10 @@ export class SessionManager implements app.ISessionManager {
    * existing session.
    */
   _handleClientConnect (socket: socketio.Socket) {
-    var connection = new conn.ClientConnection(uuid.v4(), socket);
-    // Register this manager instance to receive disconnect events for the new connection
-    connection.onDisconnect(this._handleClientDisconnect.bind(this));
+    var connection = new conn.ClientConnection(
+        uuid.v4(),
+        socket,
+        this._handleClientDisconnect.bind(this));
     console.log('User has connected: ' + connection.id);
 
     // Determine which session the connection should be associated with via the session id

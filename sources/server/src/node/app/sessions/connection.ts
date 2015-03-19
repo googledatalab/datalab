@@ -14,9 +14,10 @@
 
 
 /// <reference path="../../../../../../externs/ts/node/socket.io.d.ts" />
+import actions = require('../shared/actions');
 import socketio = require('socket.io');
 import updates = require('../shared/updates');
-import actions = require('../shared/actions');
+import util = require('../common/util');
 
 
 /**
@@ -29,10 +30,17 @@ export class ClientConnection implements app.IClientConnection {
   id: string;
 
   _socket: socketio.Socket;
+  _delegateActionHandler: app.EventHandler<app.notebooks.actions.Action>;
+  _delegateDisconnectHandler: app.EventHandler<app.IClientConnection>;
 
-  constructor (id: string, socket: socketio.Socket) {
+  constructor (
+      id: string,
+      socket: socketio.Socket,
+      onDisconnect: app.EventHandler<app.IClientConnection>
+      ) {
     this.id = id;
     this._socket = socket;
+    this._delegateDisconnectHandler = onDisconnect;
 
     this._registerHandlers();
   }
@@ -55,17 +63,10 @@ export class ClientConnection implements app.IClientConnection {
   }
 
   /**
-   * Registers a callback that is invoked whenever an action message is received
+   * Registers a callback to be invoked whenever an Action message arrives from the client.
    */
   onAction (callback: app.EventHandler<app.notebooks.actions.Action>) {
     this._delegateActionHandler = callback;
-  }
-
-  /**
-   * Registers a callback that is invoked whenever the user disconnects
-   */
-  onDisconnect (callback: app.EventHandler<app.IClientConnection>) {
-    this._delegateDisconnectHandler = callback;
   }
 
   /**
@@ -74,10 +75,6 @@ export class ClientConnection implements app.IClientConnection {
   sendUpdate (update: app.notebooks.updates.Update) {
     this._send(updates.label, update);
   }
-
-  _delegateActionHandler (action: app.notebooks.actions.Action) {}
-
-  _delegateDisconnectHandler (connection: app.IClientConnection) {}
 
   /**
    * Handles the received action request by delegating to the session for processing
