@@ -160,9 +160,10 @@ export class Session implements app.ISession {
 
     // Request that the notebook apply the cell update
     var update = this._notebook.apply(action);
+    // Persist the notebook state to storage
+    this._save();
     // Update connected clients that a change has occured.
     this._broadcastUpdate(update);
-    this._save();
   }
 
   /**
@@ -224,9 +225,10 @@ export class Session implements app.ISession {
    */
   _handleActionNotebookData (action: app.notebooks.actions.UpdateCell) {
     var update = this._notebook.apply(action);
+    // Persist the notebook state to storage
+    this._save();
     // Update all clients about the notebook data change.
     this._broadcastUpdate(update);
-    this._save();
   }
 
   /**
@@ -318,9 +320,10 @@ export class Session implements app.ISession {
       }]
     });
 
+    // Persist the notebook state to storage
+    this._save();
     // Broadcast the update to connectec clients.
     this._broadcastUpdate(update);
-    this._save();
   }
 
   /**
