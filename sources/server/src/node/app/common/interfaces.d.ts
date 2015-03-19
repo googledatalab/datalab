@@ -33,6 +33,13 @@ declare module app {
     worksheetId: string;
   }
 
+  /**
+   * Connection establishment metadata.
+   */
+  interface ClientConnectionData {
+    notebookPath: string;
+  }
+
   interface EventHandler<T> {
     (event: T): void;
   }
@@ -40,6 +47,36 @@ declare module app {
   interface KernelConfig {
     iopubPort: number;
     shellPort: number;
+  }
+
+  /**
+   * Wrapper for a socket.io connection.
+   */
+  interface IClientConnection {
+    /**
+     * A unique connection identifier (UUID).
+     */
+    id: string;
+
+    /**
+     * Gets the connection establishment metadata.
+     */
+    getConnectionData (): ClientConnectionData;
+
+    /**
+     * Registers a callback to be invoked with the client disconnects.
+     */
+    onDisconnect (callback: EventHandler<IClientConnection>): void;
+
+    /**
+     * Registers a callback to be invoked whenever an Action message arrives from the client.
+     */
+    onAction (callback: EventHandler<notebooks.actions.Action>): void;
+
+    /**
+     * Sends an Update message to the client over the connection.
+     */
+    sendUpdate (update: notebooks.updates.Update): void;
   }
 
   /**
@@ -142,7 +179,7 @@ declare module app {
     /**
      * Associates a user connection with the session.
      */
-    addUserConnection (connection: IUserConnection): void;
+    addClientConnection (connection: IClientConnection): void;
 
     /**
      * Gets the id of the kernel currently assocated with the session.
@@ -152,12 +189,12 @@ declare module app {
     /**
      * Gets the set of user connection ids currently associated with the session.
      */
-    getUserConnectionIds (): string[];
+    getClientConnectionIds (): string[];
 
     /**
      * Disassociates a user connection from the session.
      */
-    removeUserConnection (connection: IUserConnection): void;
+    removeClientConnection (connection: IClientConnection): void;
   }
 
   /**
@@ -188,19 +225,6 @@ declare module app {
     delete (path: string): boolean;
     // move (sourcePath: string, destinationPath: string);
     // copy (sourcePath: string, destinationPath: string);
-  }
-
-  interface IUserConnection {
-    id: string;
-    getHandshakeNotebookPath (): string;
-    onDisconnect (callback: EventHandler<IUserConnection>): void;
-    onAction (callback: EventHandler<notebooks.actions.Action>): void;
-    sendUpdate (update: notebooks.updates.Update): void;
-  }
-
-  interface IUserConnectionManager {
-    onConnect (callback: EventHandler<IUserConnection>): void;
-    onDisconnect (callback: EventHandler<IUserConnection>): void;
   }
 
 }

@@ -33,7 +33,7 @@ import util = require('../common/util');
  */
 export class SessionManager implements app.ISessionManager {
 
-  _connectionIdToConnection: app.Map<app.IUserConnection>;
+  _connectionIdToConnection: app.Map<app.IClientConnection>;
   _connectionIdToSession: app.Map<app.ISession>;
   _sessionIdToSession: app.Map<app.ISession>;
   _kernelManager: app.IKernelManager;
@@ -87,7 +87,7 @@ export class SessionManager implements app.ISessionManager {
    * This server blocking issue becomes more prominent when in a heavy-usage, multi-user
    * environment (where many sessions are being created).
    */
-  _createSession (sessionId: string, connection: app.IUserConnection) {
+  _createSession (sessionId: string, connection: app.IClientConnection) {
 
     var kernel = this._kernelManager.create({
       iopubPort: util.getAvailablePort(),
@@ -98,7 +98,7 @@ export class SessionManager implements app.ISessionManager {
       sessionId,
       kernel,
       this._handleMessage.bind(this),
-      connection.getHandshakeNotebookPath(),
+      connection.getConnectionData().notebookPath,
       this._notebookStorage,
       connection);
   }
@@ -106,7 +106,7 @@ export class SessionManager implements app.ISessionManager {
   /**
    * Gets the session id for the given user connection.
    */
-  _getSessionId (connection: app.IUserConnection): string {
+  _getSessionId (connection: app.IClientConnection): string {
     // TODO(bryantd): evaluate if there are any cases where the sessionId must be a uuid.
     //
     // For now, ensure that all use cases of the session ID only assume it to be a opaque
@@ -116,7 +116,7 @@ export class SessionManager implements app.ISessionManager {
     // uuid.v5(notebookPath) would be one way of ensuring session id collision whenever the
     // notebookPath is the same for multiple clients, while still having a fixed-size, known
     // character-set, string-based identifier.
-    return connection.getHandshakeNotebookPath();
+    return connection.getConnectionData().notebookPath;
   }
 
   /**
@@ -155,7 +155,7 @@ export class SessionManager implements app.ISessionManager {
    * existing session.
    */
   _handleClientConnect (socket: socketio.Socket) {
-    var connection = new conn.UserConnection(uuid.v4(), socket);
+    var connection = new conn.ClientConnection(uuid.v4(), socket);
     // Register this manager instance to receive disconnect events for the new connection
     connection.onDisconnect(this._handleClientDisconnect.bind(this));
     console.log('User has connected: ' + connection.id);
@@ -176,7 +176,7 @@ export class SessionManager implements app.ISessionManager {
       this._sessionIdToSession[sessionId] = session;
     } else {
       // Update existing session object with new user connection.
-      session.addUserConnection(connection);
+      session.addClientConnection(connection);
     }
 
     // Store a mapping from connection to the associated session so that the session can be
@@ -190,7 +190,7 @@ export class SessionManager implements app.ISessionManager {
   /**
    * Removes
    */
-  _handleClientDisconnect (connection: app.IUserConnection) {
+  _handleClientDisconnect (connection: app.IClientConnection) {
     console.log('User has disconnected: ' + connection.id);
 
     // Find the session associated with this connection.
@@ -201,7 +201,7 @@ export class SessionManager implements app.ISessionManager {
     }
 
     // Remove the connection from the session.
-    session.removeUserConnection(connection);
+    session.removeClientConnection(connection);
 
     // Remove the connection from the index
     delete this._connectionIdToConnection[connection.id];

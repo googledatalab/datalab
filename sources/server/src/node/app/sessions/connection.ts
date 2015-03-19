@@ -24,7 +24,7 @@ import actions = require('../shared/actions');
  *
  * Instances of this class also own the socket.io socket instance for the user connection.
  */
-export class UserConnection implements app.IUserConnection {
+export class ClientConnection implements app.IClientConnection {
 
   id: string;
 
@@ -38,7 +38,7 @@ export class UserConnection implements app.IUserConnection {
   }
 
   /**
-   * Gets the notebook path provided during the connection establishment handshake
+   * Gets the metadata provided during the connection establishment.
    *
    * Note: a notebook rename causes the notebook path to be changed (at the session level)
    * but that change is not reflected in the return value of this method. That is because
@@ -48,8 +48,10 @@ export class UserConnection implements app.IUserConnection {
    * So, only assume the notebook path returned here to match the session notebook path at the
    * time of connection establishment.
    */
-  getHandshakeNotebookPath (): string {
-    return this._socket.handshake.query.notebookPath;
+  getConnectionData (): app.ClientConnectionData {
+    return {
+      notebookPath: this._socket.handshake.query.notebookPath
+    }
   }
 
   /**
@@ -62,7 +64,7 @@ export class UserConnection implements app.IUserConnection {
   /**
    * Registers a callback that is invoked whenever the user disconnects
    */
-  onDisconnect (callback: app.EventHandler<app.IUserConnection>) {
+  onDisconnect (callback: app.EventHandler<app.IClientConnection>) {
     this._delegateDisconnectHandler = callback;
   }
 
@@ -75,7 +77,7 @@ export class UserConnection implements app.IUserConnection {
 
   _delegateActionHandler (action: app.notebooks.actions.Action) {}
 
-  _delegateDisconnectHandler (connection: app.IUserConnection) {}
+  _delegateDisconnectHandler (connection: app.IClientConnection) {}
 
   /**
    * Handles the received action request by delegating to the session for processing

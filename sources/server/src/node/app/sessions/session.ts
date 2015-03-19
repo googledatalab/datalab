@@ -36,7 +36,7 @@ export class Session implements app.ISession {
   _notebookPath: string;
   _notebookStorage: app.INotebookStorage;
   _requestIdToCellRef: app.Map<app.CellRef>;
-  _userconns: app.IUserConnection[];
+  _connections: app.IClientConnection[];
 
   /**
    * All messages flowing in either direction between user<->kernel will pass through this handler.
@@ -49,18 +49,18 @@ export class Session implements app.ISession {
       messageHandler: app.MessageHandler,
       notebookPath: string,
       notebookStorage: app.INotebookStorage,
-      userconn: app.IUserConnection) {
+      connection: app.IClientConnection) {
 
     this.id = id;
     this._kernel = kernel;
     this._messageHandler = messageHandler;
     this._requestIdToCellRef = {};
-    this._userconns = [];
+    this._connections = [];
     this._notebookPath = notebookPath;
     this._notebook = this._notebookStorage.readOrCreate(notebookPath);
 
     this._registerKernelEventHandlers();
-    this.addUserConnection(userconn);
+    this.addClientConnection(connection);
   }
 
   /**
@@ -73,9 +73,9 @@ export class Session implements app.ISession {
   /**
    * Gets the set of user connections currently associated with this session.
    */
-  getUserConnectionIds (): string[] {
-    return this._userconns.map((userconn) => {
-      return userconn.id;
+  getClientConnectionIds (): string[] {
+    return this._connections.map((connection) => {
+      return connection.id;
     });
   }
 
@@ -88,13 +88,13 @@ export class Session implements app.ISession {
    * This method allows a user to reestablish connection with an existing/running kernel, because
    * the kernel is associated with the session, rather than the user connection.
    */
-  addUserConnection (userconn: app.IUserConnection) {
+  addClientConnection (connection: app.IClientConnection) {
     // Add the connection to the "connected" set
-    this._userconns.push(userconn);
+    this._connections.push(connection);
     // Register event handlers for processing messages arriving from the connection.
-    this._registerUserEventHandlers(userconn);
+    this._registerUserEventHandlers(connection);
     // Send the initial notebook state at the time of connection.
-    userconn.sendUpdate({
+    connection.sendUpdate({
       name: updates.notebook.snapshot,
       notebook: this._notebook.getNotebookData()
     });
@@ -105,19 +105,19 @@ export class Session implements app.ISession {
    *
    * Typically called when the connection has been closed.
    */
-  removeUserConnection (userconn: app.IUserConnection) {
+  removeClientConnection (connection: app.IClientConnection) {
     // Find the index of the connection and remove it.
-    for (var i = 0; i < this._userconns.length; ++i) {
-      if (this._userconns[i].id == userconn.id) {
+    for (var i = 0; i < this._connections.length; ++i) {
+      if (this._connections[i].id == connection.id) {
         // Found the connection. Remove it.
-        this._userconns.splice(i, 1);
+        this._connections.splice(i, 1);
         return;
       }
     }
 
     // Unexpectedly, the specified connection was not participating in the session.
     throw util.createError(
-      'Connection id "%s" was not found in session id "%s"', userconn.id, this.id);
+      'Connection id "%s" was not found in session id "%s"', connection.id, this.id);
   }
 
   // Handlers for messages flowing in either direction between user<->kernel.
@@ -169,8 +169,8 @@ export class Session implements app.ISession {
    * Sends the given update message to all user connections associated with this session.
    */
   _broadcastUpdate (update: app.notebooks.updates.Update) {
-    this._userconns.forEach((userconn) => {
-      userconn.sendUpdate(update);
+    this._connections.forEach((connection) => {
+      connection.sendUpdate(update);
     });
   }
 
@@ -326,8 +326,8 @@ export class Session implements app.ISession {
   /**
    * Registers event handlers for messages arriving from the given user connection.
    */
-  _registerUserEventHandlers (userconn: app.IUserConnection) {
-    userconn.onAction(this._handleActionPreDelegate.bind(this));
+  _registerUserEventHandlers (connection: app.IClientConnection) {
+    connection.onAction(this._handleActionPreDelegate.bind(this));
   }
 
   /**
