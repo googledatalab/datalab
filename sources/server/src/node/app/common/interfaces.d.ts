@@ -27,6 +27,14 @@ declare module app {
    *
    * Used for maintaining a mapping between kernel request ids and the corresponding cells
    * for those kernel requests.
+   *
+   * TODO(bryantd): Find a way to pass the cell ref fields through to the kernel, such that code
+   * executing within the kernel will be able to access these fields. Once done, the
+   * (kernel) request id <=> cell ref mapping maintained within a Session instance can be
+   * removed, since the cell ref can be retrieved from the kernel messages directly. That is
+   * if these cell ref fields are returned by kernel execute responses, the response messages
+   * can be mapped to their corresponding notebook cell without maintaining the
+   * request id <=> cell ref mappings explicitly.
    */
   interface CellRef {
     cellId: string;
@@ -79,9 +87,11 @@ declare module app {
    */
   interface INotebookStorage {
     /**
-     * Reads a notebook session from storage if it exists, or creates a new notebook if needed.
+     * Reads a notebook session from storage if it exists.
+     *
+     * Optionally creates a new notebook if needed when flag is set to true.
      */
-    readOrCreate (path: string): app.INotebookSession;
+    read (path: string, createIfNeeded?: boolean): app.INotebookSession;
 
     /**
      * Writes the given notebook session to storage.

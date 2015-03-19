@@ -16,6 +16,7 @@
 import formats = require('./serializers/formats');
 import nb = require('./session');
 import nbutil = require('./util');
+import util = require('../common/util');
 
 
 /**
@@ -35,7 +36,7 @@ export class NotebookStorage implements app.INotebookStorage {
   /**
    * Reads in the notebook if it exists or creates a starter notebook if not.
    */
-  readOrCreate (path: string): app.INotebookSession {
+  read (path: string, createIfNeeded?: boolean): app.INotebookSession {
     console.log('Reading notebook ' + path + ' ...');
 
     // Selects the serializer that has been assigned to the notebook path extension.
@@ -45,8 +46,13 @@ export class NotebookStorage implements app.INotebookStorage {
     var serializedNotebook = this._storage.read(path);
     var notebookData: app.notebooks.Notebook;
     if (serializedNotebook === undefined) {
-      // Notebook didn't exist, so create a starter notebook.
-      notebookData = nbutil.createStarterNotebook();
+      if (createIfNeeded) {
+        // Notebook didn't exist, so create a starter notebook.
+        notebookData = nbutil.createStarterNotebook();
+      } else {
+        // Nothing can be done here since the path doesn't exist.
+        throw util.createError('Cannot read notebook path "%s" because does not exist.');
+      }
     } else {
       // Notebook already existed. Deserialize the notebook data.
       notebookData = serializer.parse(serializedNotebook);
@@ -58,7 +64,7 @@ export class NotebookStorage implements app.INotebookStorage {
   /**
    * Serializes the given notebook and writes it to storage.
    */
-  write (path: string, notebook: app.INotebookSession) {
+  write (path: string, notebook: app.INotebookSession, createIfNeeded?: boolean) {
     console.log('Saving notebook ' + path + ' ...');
     // Selects the serializer that has been assigned to the notebook path extension.
     var serializer = formats.selectSerializer(path);
