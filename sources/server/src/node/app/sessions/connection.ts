@@ -40,6 +40,7 @@ export class ClientConnection implements app.IClientConnection {
       ) {
     this.id = id;
     this._socket = socket;
+    this._delegateActionHandler = util.noop;
     this._delegateDisconnectHandler = onDisconnect;
 
     this._registerHandlers();
