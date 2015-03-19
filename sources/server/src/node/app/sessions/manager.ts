@@ -158,6 +158,7 @@ export class SessionManager implements app.ISessionManager {
     var connection = new conn.ClientConnection(
         uuid.v4(),
         socket,
+        util.noop, // The associated session will ultimately register an action handler
         this._handleClientDisconnect.bind(this));
     console.log('User has connected: ' + connection.id);
 

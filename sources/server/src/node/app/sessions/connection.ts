@@ -36,11 +36,12 @@ export class ClientConnection implements app.IClientConnection {
   constructor (
       id: string,
       socket: socketio.Socket,
+      onAction: app.EventHandler<app.notebooks.actions.Action>,
       onDisconnect: app.EventHandler<app.IClientConnection>
       ) {
     this.id = id;
     this._socket = socket;
-    this._delegateActionHandler = util.noop;
+    this._delegateActionHandler = onAction;
     this._delegateDisconnectHandler = onDisconnect;
 
     this._registerHandlers();
