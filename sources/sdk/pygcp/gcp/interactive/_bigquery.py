@@ -259,13 +259,16 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
     return "<div>%s does not exist</div>" % table.full_name
 
   _HTML_TEMPLATE = """
+    <div style='display:inline;float:left'>%s</div>
+    <div style='display:inline;float:right'>%s</div>
+    <br>
     <div class="bqtv" id="bqtv_%s">
     </div>
     <script>
-      require(['extensions/tableviewer', 'element!bqtv_%s'],
-          function(tv, dom) {
-              tv.makeTableViewer('%s', dom, %s, [], %d, %d, '%s');
-          }
+      require(['extensions/charting', 'element!bqtv_%s'],
+        function(charts, dom) {
+          charts.render("table", dom, "%s", %s, {}, %d, %d);
+        }
       );
     </script>
   """
@@ -273,8 +276,10 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
   fields = fields if fields else [field.name for field in table.schema()]
   labels = _json.dumps(fields)
   div_id = str(int(round(_time.time())))
+  left_meta = "Rows %d" % table.length if table.length >= 0 else ''
+  right_meta = job_id if job_id else table.full_name
   return _HTML_TEMPLATE %\
-      (div_id, div_id, table.full_name, labels, table.length, rows_per_page, job_id)
+      (left_meta, right_meta, div_id, div_id, table.full_name, labels, table.length, rows_per_page)
 
 
 def _repr_html_query(query):

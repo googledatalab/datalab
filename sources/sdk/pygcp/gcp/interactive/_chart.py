@@ -60,14 +60,14 @@ def _chart_cell(args, cell):
     <script>
           require(['extensions/charting', 'element!bqgc_%s'],
               function(charts, dom) {
-                  charts.render(dom, "%s", "%s", %s, "%s");
+                  charts.render("%s", dom, "%s", "%s", %s);
               }
           );
     </script>
   """
   div_id = str(int(round(_time.time())))
   return _ipython.core.display.HTML(
-    _HTML_TEMPLATE % (div_id, div_id, args['chart'], args['data'], chart_options, fields))
+    _HTML_TEMPLATE % (div_id, div_id, args['chart'], args['data'], fields, chart_options))
 
 
 @_magic.register_line_magic
@@ -75,15 +75,17 @@ def _get_chart_data(line):
   try:
     args = line.strip().split()
     name = args[0]
-    fields = args[1].split(',') if len(args) > 1 else None
+    fields = args[1]
+    first_row = int(args[2]) if len(args) > 2 else 0
+    count = int(args[3]) if len(args) > 3 else -1
 
     ipy = _ipython.get_ipython()
-    item = ipy.user_ns[name]
+    item = ipy.user_ns[name] if name in ipy.user_ns else name
     table = None
 
     list_list = None
     dict_list = None
-    dataframe = None
+    data_frame = None
 
     if isinstance(item, list):
       if len(item) == 0:
@@ -92,13 +94,13 @@ def _get_chart_data(line):
       if isinstance(item[0], dict):
         dict_list = item
       elif isinstance(item[0], list):
-        if fields:
+        if fields != '*':
           raise Exception("Fields argument not currently supported with lists of lists.")
         list_list = item
       else:
         raise Exception("To chart a list it must contain dictionaries or lists.")
     elif isinstance(item, pd.DataFrame):
-      dataframe = item
+      data_frame = item
     elif isinstance(item, basestring):
       table = _bq.table(item)
     else:
@@ -120,20 +122,28 @@ def _get_chart_data(line):
       schema = _bq.schema(item)
 
     # If the fields weren't supplied get them from the schema.
-    if not fields:
+    if fields == '*':
       fields = [f.name for f in schema]
+    else:
+      fields = fields.split(',')
 
-    # Get the row data
+    # Get the row data. This is type-specific, and we also use different paths depending on
+    # whether a count was specified, to make the alternate case more efficient.
     rows = []
     if table:
-      rows = [{'c': [{'v': row[c]} for c in fields]} for row in table]
+      gen = table.range(first_row, count) if count >= 0 else table
+      rows = [{'c': [{'v': row[c]} for c in fields]} for row in gen]
     elif dict_list:
-      rows = [{'c': [{'v': row[c]} for c in fields]} for row in dict_list]
+      gen = dict_list[first_row:first_row + count] if count >= 0 else dict_list
+      rows = [{'c': [{'v': row[c]} for c in fields]} for row in gen]
     elif list_list:
-      rows = [{'c': [{'v': row[i]} for i in range(0, len(fields))]} for row in list_list]
-    elif type(dataframe) is not type(None):  # Pandas doesn't like "if dataframe" etc.
-      for index, dataframe_row in dataframe.reset_index(drop=True).iterrows():
-        row = dataframe_row.to_dict()
+      gen = list_list[first_row:first_row + count] if count >= 0 else list_list
+      rows = [{'c': [{'v': row[i]} for i in range(0, len(fields))]} for row in gen]
+    elif type(data_frame) is not type(None):  # Pandas doesn't like "if dataframe" etc.
+
+      # TODO(gram): handle first_row, count
+      for index, data_frame_row in data_frame.reset_index(drop=True).iterrows():
+        row = data_frame_row.to_dict()
         for key in row.keys():
           val = row[key]
           if isinstance(val, pd.Timestamp):
@@ -160,6 +170,8 @@ def _get_chart_data(line):
     data = {'cols': cols, 'rows': rows}
 
   except Exception, e:
+    import traceback
+    traceback.print_exc()
     print str(e)
     data = {}
 
