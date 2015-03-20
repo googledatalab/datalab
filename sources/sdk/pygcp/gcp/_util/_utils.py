@@ -12,14 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Google Cloud Platform library - Internal Helpers."""
+# Utility functions that don't need class wrappers and don't merit their own files.
+"""Miscellaneous simple utility functions."""
 
-from ._credentials import MetadataCredentials
-from ._http import Http
-from ._iterator import Iterator
-from ._json_encoder import JSONEncoder
-from ._lru_cache import LRUCache
-from ._metadata import MetadataService
-from ._sql import Sql
-from ._utils import print_exception_with_last_stack
+import traceback as _tb
 
+def print_exception_with_last_stack(e):
+  _tb.print_exc()
+  print str(e)
