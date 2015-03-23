@@ -157,21 +157,23 @@ def dataset(name, context=None):
   Returns:
     A DataSet object.
   """
-  # TODO(gram): the creation part here is a stopgap until we have an API review and decide
-  # what to do.
   api = _create_api(context)
   return _DataSet(api, name)
 
 
-def schema(data):
-  """Creates a table schema from its JSON representation or a Pandas dataframe.
+def schema(data=None, definition=None):
+  """Creates a table schema from its JSON representation, a list of data, or a Pandas dataframe.
 
   Args:
-    data: the JSON representation or Pandas dataframe to use.
+    data: the Pandas Dataframe or list of data from which to infer the schema.
+    definition: a definition of the schema as a list of dictionaries with 'name' and 'type' entries
+        and possibly 'mode' and 'description' entries. Only used if no data argument was provided.
+        'mode' can be 'NULLABLE', 'REQUIRED' or 'REPEATED'. For the allowed types, see:
+        https://cloud.google.com/bigquery/preparing-data-for-bigquery#datatypes
   Returns:
     A TableSchema object.
   """
-  return _TableSchema(data)
+  return _TableSchema(data=data, definition=definition)
 
 
 def job(job_id, context=None):

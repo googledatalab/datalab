@@ -38,7 +38,7 @@ class TableSchema(list):
 
   class _Field(object):
 
-    def __init__(self, name, data_type, mode, description):
+    def __init__(self, name, data_type, mode='NULLABLE', description=''):
       self.name = name
       self.data_type = data_type
       self.mode = mode
@@ -148,9 +148,15 @@ class TableSchema(list):
       return [{'name': 'Column%d' % (i + 1), 'type': _get_type(datum[i])}
               for i in range(0, len(datum))]
 
-
-  def __init__(self, data):
+  def __init__(self, data=None, definition=None):
     """Initializes a TableSchema from its raw JSON representation, a Pandas Dataframe, or a list.
+
+    Args:
+      data: A Pandas DataFrame or a list of dictionaries or lists from which to infer a schema.
+      definition: a definition of the schema as a list of dictionaries with 'name' and 'type'
+          entries and possibly 'mode' and 'description' entries. Only used if no data argument was
+          provided. 'mode' can be 'NULLABLE', 'REQUIRED' or 'REPEATED'. For the allowed types, see:
+          https://cloud.google.com/bigquery/preparing-data-for-bigquery#datatypes
     """
     list.__init__(self)
     self._map = {}
@@ -158,6 +164,10 @@ class TableSchema(list):
       data = TableSchema._from_dataframe(data)
     elif isinstance(data, list):
       data = TableSchema._from_list(data)
+    elif definition:
+      data = definition
+    else:
+      raise Exception("TableSchema requires either data or json argument.")
     self._populate_fields(data)
 
   def __getitem__(self, key):
@@ -167,17 +177,18 @@ class TableSchema(list):
       return self._map.get(key, None)
     return list.__getitem__(self, key)
 
+  def _add_field(self, name, data_type, mode='NULLABLE', description=''):
+    field = TableSchema._Field(name, data_type, mode, description)
+    self.append(field)
+    self._map[name] = field
+
   def _populate_fields(self, data, prefix=''):
     self._bq_schema = data
     for field_data in data:
       name = prefix + field_data['name']
       data_type = field_data['type']
-
-      field = TableSchema._Field(name, data_type,
-                                 field_data.get('mode', 'NULLABLE'),
-                                 field_data.get('description', ''))
-      self.append(field)
-      self._map[name] = field
+      self._add_field(name, data_type, field_data.get('mode', None),
+                      field_data.get('description', None))
 
       if data_type == 'RECORD':
         # Recurse into the nested fields, using this field's name as a prefix.
@@ -187,12 +198,13 @@ class TableSchema(list):
     return str(self._bq_schema)
 
   def __eq__(self, other):
-    if len(self._map) != len(other._map):
+    other_map = other._map
+    if len(self._map) != len(other_map):
       return False
     for name in self._map.iterkeys():
-      if not name in other._map:
+      if name not in other_map:
         return False
-      if not self._map[name] == other._map[name]:
+      if not self._map[name] == other_map[name]:
         return False
     return True
 
@@ -482,20 +494,20 @@ class Table(object):
         del record[k]
     return record
 
-  def insertAll(self, dataframe, include_index=False):
-    """ Insert the contents of a Pandas dataframe into the table.
+  def insertAll(self, data, include_index=False, index_name=None):
+    """ Insert the contents of a Pandas DataFrame or a list of dictionaries into the table.
 
     Args:
-      dataframe: the dataframe to insert.
-      include_index: whether to include the DataFrame index as a column in the BQ table.
+      data: the DataFrame or list to insert.
+      include_index: whether to include the DataFrame or list index as a column in the BQ table.
+      index_name: for a list, if include_index is True, this should be the name for the index.
+          If not specified, 'Index' will be used.
     Returns:
       The table.
     Raises:
-      Exception if the table doesn't exist, the schema differs from the dataframe's, or the insert
+      Exception if the table doesn't exist, the schema differs from the data's schema, or the insert
           failed.
     """
-    # TODO(gram): create a version which can take a list of Python objects.
-
     # There are BigQuery limits on the streaming API:
     #
     # max_rows_per_post = 500
@@ -513,7 +525,13 @@ class Table(object):
     if not self.exists():
       raise Exception('Table %s does not exist.' % self._full_name)
 
-    data_schema = TableSchema(dataframe)
+    data_schema = TableSchema(data=data)
+    if isinstance(data, list):
+      if include_index:
+        if not index_name:
+          index_name = 'Index'
+        data_schema._add_field(index_name, 'INTEGER')
+
     table_schema = self.schema()
 
     # Do some validation of the two schema to make sure they are compatible.
@@ -528,19 +546,29 @@ class Table(object):
         raise Exception('Field %s in data has type %s but in table has type %s' %
                         (name, data_type, table_type))
 
-    total_rows = len(dataframe)
+    total_rows = len(data)
     total_pushed = 0
 
     job_id = uuid.uuid4().hex
     rows = []
     column_name_map = {}
 
-    # reset_index creates a new dataframe so we don't affect the original. reset_index(drop=True)
-    # drops the original index and uses an integer range.
-    for index, dataframe_row in dataframe.reset_index(drop=not include_index).iterrows():
+    is_dataframe = isinstance(data, pd.DataFrame)
+    if is_dataframe:
+      # reset_index creates a new dataframe so we don't affect the original. reset_index(drop=True)
+      # drops the original index and uses an integer range.
+      gen = data.reset_index(drop=not include_index).iterrows()
+    else:
+      gen = enumerate(data)
+
+    for index, row in gen:
+      if is_dataframe:
+        row = row.to_dict()
+      elif include_index:
+        row[index_name] = index
 
       rows.append({
-        'json': self._encode_dict_as_row(dataframe_row.to_dict(), column_name_map),
+        'json': self._encode_dict_as_row(row, column_name_map),
         'insertId': job_id + str(index)
       })
 
@@ -671,21 +699,21 @@ class Table(object):
       A dataframe containing the table data.
     """
     fetcher = self._get_row_fetcher(start_row=start_row, max_rows=max_rows)
-    rows = []
     count = 0
     page_token = None
+    df = None
     while True:
       page_rows, page_token = fetcher(page_token, count)
-      count += len(page_rows)
-      rows.extend(page_rows)
+      if len(page_rows):
+        count += len(page_rows)
+        if df:
+          df.append(page_rows, ignore_index=True)
+        else:
+          df = pd.DataFrame.from_dict(page_rows)
       if not page_token:
         break
 
-    # TODO(gram): look into building the dataframe a page at a time instead of having to
-    # populate the full array first.
-    if len(rows) == 0:
-      return pd.DataFrame()
-    return pd.DataFrame.from_dict(rows)
+    return df
 
   def to_file(self, path, start_row=0, max_rows=None, write_header=True, dialect=csv.excel):
     """Save the results to a local file in CSV format.
@@ -721,7 +749,7 @@ class Table(object):
     """
     try:
       self._load_info()
-      return TableSchema(self._info['schema']['fields'])
+      return TableSchema(definition=self._info['schema']['fields'])
     except KeyError:
       raise Exception('Unexpected table response.')
 

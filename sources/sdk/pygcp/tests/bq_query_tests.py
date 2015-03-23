@@ -44,7 +44,8 @@ class TestCases(unittest.TestCase):
 
     self.assertEqual(sql, results.sql)
     self.assertEqual(1, results.length)
-    self.assertEqual('value1', results[0]['field1'])
+    first_result = results[0]
+    self.assertEqual('value1', first_result['field1'])
 
   @mock.patch('gcp.bigquery._Api.jobs_insert_query')
   @mock.patch('gcp.bigquery._Api.jobs_get')
@@ -87,7 +88,8 @@ class TestCases(unittest.TestCase):
     self.assertEqual('Unexpected query response.', error.exception[0])
 
   def _create_query(self, sql=None):
-    if sql is None: sql = 'SELECT * ...'
+    if sql is None:
+      sql = 'SELECT * ...'
 
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')

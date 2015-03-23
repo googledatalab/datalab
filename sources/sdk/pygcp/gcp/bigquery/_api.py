@@ -64,7 +64,6 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    # TODO(gram): Should we be using table_name,project_id below?
     url = Api._ENDPOINT + (Api._JOBS_PATH % table_name.project_id)
     if isinstance(source, basestring):
       source = [source]
@@ -112,8 +111,10 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    # TODO(gram): Should we be using table_name,project_id below?
-    url = Api._ENDPOINT + (Api._JOBS_PATH % (self._project_id, ''))
+    if table_name:
+      url = Api._ENDPOINT + (Api._JOBS_PATH % (table_name.project_id, ''))
+    else:
+      url = Api._ENDPOINT + (Api._JOBS_PATH % (self._project_id, ''))
     data = {
       'kind': 'bigquery#job',
       'configuration': {
@@ -140,12 +141,13 @@ class Api(object):
 
     return _util.Http.request(url, data=data, credentials=self._credentials)
 
-  def jobs_query(self, sql, page_size=_DEFAULT_PAGE_SIZE, timeout=None, dry_run=False,
-                 use_cache=True):
+  def jobs_query(self, sql, project_id=None, page_size=_DEFAULT_PAGE_SIZE, timeout=None,
+                 dry_run=False, use_cache=True):
     """Issues a request to the jobs/query method.
 
     Args:
       sql: the SQL string representing the query to execute.
+      project_id: the project id to use to issue the query; use None for the default project.
       page_size: limit to the number of rows to fetch per page.
       timeout: duration (in milliseconds) to wait for the query to complete.
       dry_run: whether to actually execute the query or just dry run it.
@@ -155,11 +157,12 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    if timeout == None:  # Note: we use == to distinguish with timeout 0.
+    if timeout is None:
       timeout = Api._DEFAULT_TIMEOUT
+    if project_id is None:
+      project_id = self._project_id
 
-    # TODO(gram): Do we need to be able to handle other project_ids?
-    url = Api._ENDPOINT + (Api._QUERIES_PATH % self._project_id, '')
+    url = Api._ENDPOINT + (Api._QUERIES_PATH % project_id, '')
     data = {
         'kind': 'bigquery#queryRequest',
         'query': sql,
@@ -177,6 +180,7 @@ class Api(object):
 
     Args:
       job_id: the id of job from a previously executed query.
+      project_id: the project id to use to fetch the results; use None for the default project.
       page_size: limit to the number of rows to fetch.
       timeout: duration (in milliseconds) to wait for the query to complete.
       start_index: the index of the row (0-based) at which to start retrieving the page of result
@@ -186,9 +190,9 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    if timeout == None:  # Note: we use == to distinguish with timeout 0.
+    if timeout is None:
       timeout = Api._DEFAULT_TIMEOUT
-    if not project_id:
+    if project_id is None:
       project_id = self._project_id
 
     args = {
@@ -199,18 +203,20 @@ class Api(object):
     url = Api._ENDPOINT + (Api._QUERIES_PATH % (project_id, job_id))
     return _util.Http.request(url, args=args, credentials=self._credentials)
 
-  def jobs_get(self, job_id):
+  def jobs_get(self, job_id, project_id=None):
     """Issues a request to retrieve information about a job.
 
     Args:
       job_id: the id of the job
+      project_id: the project id to use to fetch the results; use None for the default project.
     Returns:
       A parsed result object.
     Raises:
       Exception if there is an error performing the operation.
     """
-    # TODO(gram) Do we need to be able to handle other project_ids?
-    url = Api._ENDPOINT + (Api._JOBS_PATH % (self._project_id, job_id))
+    if project_id is None:
+      project_id = self._project_id
+    url = Api._ENDPOINT + (Api._JOBS_PATH % (project_id, job_id))
     return _util.Http.request(url, credentials=self._credentials)
 
   def datasets_insert(self, dataset_name, friendly_name=None, description=None):
@@ -270,10 +276,11 @@ class Api(object):
     url = Api._ENDPOINT + (Api._DATASETS_PATH % dataset_name)
     return _util.Http.request(url, credentials=self._credentials)
 
-  def datasets_list(self, project_id = None, max_results=0, page_token=None):
+  def datasets_list(self, project_id=None, max_results=0, page_token=None):
     """Issues a request to list the datasets in the project.
 
     Args:
+      project_id: the project id to use to fetch the results; use None for the default project.
       max_results: an optional maximum number of tables to retrieve.
       page_token: an optional token to continue the retrieval.
     Returns:
@@ -281,7 +288,7 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    if not project_id:
+    if project_id is None:
       project_id = self._project_id
     url = Api._ENDPOINT + (Api._DATASETS_PATH % (project_id, ''))
 
@@ -319,7 +326,7 @@ class Api(object):
       Exception if there is an error performing the operation.
     """
     url = Api._ENDPOINT +\
-          (Api._TABLES_PATH % (dataset_name.project_id, dataset_name.dataset_id, ''))
+        (Api._TABLES_PATH % (dataset_name.project_id, dataset_name.dataset_id, ''))
 
     args = {}
     if max_results != 0:
@@ -420,7 +427,7 @@ class Api(object):
     return _util.Http.request(url, method='DELETE', credentials=self._credentials)
 
   def table_extract(self, table_name, destination, format='CSV', compressed=True,
-                   field_delimiter=',', print_header=True):
+                    field_delimiter=',', print_header=True):
     """Exports the table to GCS.
 
     Args:
@@ -437,7 +444,6 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    # TODO(gram) Do we need to be able to handle other project_ids?
     url = Api._ENDPOINT + (Api._JOBS_PATH % table_name.project_id, '')
     if isinstance(destination, basestring):
       destination = [destination]

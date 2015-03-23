@@ -175,19 +175,19 @@ class TestCases(unittest.TestCase):
 
     mock_api_tables_insert.return_value = {}
     with self.assertRaises(Exception) as error:
-      _ = self._create_table_for_dataframe(schema)
+      _ = self._create_table_with_schema(schema)
     self.assertEqual('Table test:testds.testTable0 could not be created as it already exists',
                      error.exception[0])
 
     mock_api_tables_insert.return_value = {'selfLink': 'http://foo'}
-    self.assertIsNotNone(self._create_table_for_dataframe(schema), 'Expected a table')
+    self.assertIsNotNone(self._create_table_with_schema(schema), 'Expected a table')
 
   @mock.patch('gcp.bigquery._Api.tables_list')
   def test_tables_schema_from_dataframe(self, mock_api_tables_list):
     mock_api_tables_list.return_value = []
     df = self._create_data_frame()
-    result = gcp.bigquery.schema(df)
-    self.assertEqual(gcp.bigquery.schema(self._create_inferred_schema()), result)
+    result = gcp.bigquery.schema(data=df)
+    self.assertEqual(gcp.bigquery.schema(definition=self._create_inferred_schema()), result)
 
   @mock.patch('uuid.uuid4')
   @mock.patch('time.sleep')
@@ -213,7 +213,7 @@ class TestCases(unittest.TestCase):
     mock_api_datasets_get.return_value = None
 
 
-    table = self._create_table_for_dataframe(self._create_inferred_schema())
+    table = self._create_table_with_schema(self._create_inferred_schema())
     df = self._create_data_frame()
 
     with self.assertRaises(Exception) as error:
@@ -246,7 +246,7 @@ class TestCases(unittest.TestCase):
     mock_api_tables_get.return_value = {'schema': {'fields': schema}}
     mock_api_tabledata_insertAll.return_value = {}
 
-    table = self._create_table_for_dataframe(schema)
+    table = self._create_table_with_schema(schema)
     df = self._create_data_frame()
 
     with self.assertRaises(Exception) as error:
@@ -280,7 +280,7 @@ class TestCases(unittest.TestCase):
     mock_api_tabledata_insertAll.return_value = {}
     mock_api_datasets_get.return_value = None
 
-    table = self._create_table_for_dataframe(schema)
+    table = self._create_table_with_schema(schema)
     df = self._create_data_frame()
 
     with self.assertRaises(Exception) as error:
@@ -295,13 +295,13 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._Api.tables_insert')
   @mock.patch('gcp.bigquery._Api.tables_get')
   @mock.patch('gcp.bigquery._Api.tabledata_insertAll')
-  def test_insertAll(self,
-                     mock_api_tabledata_insertAll,
-                     mock_api_tables_get,
-                     mock_api_tables_insert,
-                     mock_api_tables_list,
-                     mock_api_datasets_get,
-                     mock_time_sleep, mock_uuid):
+  def test_insertAll_dataframe(self,
+                               mock_api_tabledata_insertAll,
+                               mock_api_tables_get,
+                               mock_api_tables_insert,
+                               mock_api_tables_list,
+                               mock_api_datasets_get,
+                               mock_time_sleep, mock_uuid):
     schema = self._create_inferred_schema()
 
     mock_uuid.return_value = self._create_uuid()
@@ -312,7 +312,7 @@ class TestCases(unittest.TestCase):
     mock_api_tables_get.return_value = {'schema': {'fields': schema}}
     mock_api_tabledata_insertAll.return_value = {}
 
-    table = self._create_table_for_dataframe(schema)
+    table = self._create_table_with_schema(schema)
     df = self._create_data_frame()
 
     result = table.insertAll(df)
@@ -322,6 +322,126 @@ class TestCases(unittest.TestCase):
       {'insertId': '#1', 'json': {u'column': 'r1', u'headers': 10.0, u'some': 1}},
       {'insertId': '#2', 'json': {u'column': 'r2', u'headers': 10.0, u'some': 2}},
       {'insertId': '#3', 'json': {u'column': 'r3', u'headers': 10.0, u'some': 3}}
+    ])
+
+  @mock.patch('uuid.uuid4')
+  @mock.patch('time.sleep')
+  @mock.patch('gcp.bigquery._Api.datasets_get')
+  @mock.patch('gcp.bigquery._Api.tables_list')
+  @mock.patch('gcp.bigquery._Api.tables_insert')
+  @mock.patch('gcp.bigquery._Api.tables_get')
+  @mock.patch('gcp.bigquery._Api.tabledata_insertAll')
+  def test_insertAll_dictlist(self,
+                              mock_api_tabledata_insertAll,
+                              mock_api_tables_get,
+                              mock_api_tables_insert,
+                              mock_api_tables_list,
+                              mock_api_datasets_get,
+                              mock_time_sleep, mock_uuid):
+    schema = self._create_inferred_schema()
+
+    mock_uuid.return_value = self._create_uuid()
+    mock_time_sleep.return_value = None
+    mock_api_datasets_get.return_value = True
+    mock_api_tables_list.return_value = []
+    mock_api_tables_insert.return_value = {'selfLink': 'http://foo'}
+    mock_api_tables_get.return_value = {'schema': {'fields': schema}}
+    mock_api_tabledata_insertAll.return_value = {}
+
+    table = self._create_table_with_schema(schema)
+
+    result = table.insertAll([
+      {u'column': 'r0', u'headers': 10.0, u'some': 0},
+      {u'column': 'r1', u'headers': 10.0, u'some': 1},
+      {u'column': 'r2', u'headers': 10.0, u'some': 2},
+      {u'column': 'r3', u'headers': 10.0, u'some': 3}
+    ])
+    self.assertIsNotNone(result, "insertAll should return the table object")
+    mock_api_tabledata_insertAll.assert_called_with(('test', 'testds', 'testTable0'), [
+      {'insertId': '#0', 'json': {u'column': 'r0', u'headers': 10.0, u'some': 0}},
+      {'insertId': '#1', 'json': {u'column': 'r1', u'headers': 10.0, u'some': 1}},
+      {'insertId': '#2', 'json': {u'column': 'r2', u'headers': 10.0, u'some': 2}},
+      {'insertId': '#3', 'json': {u'column': 'r3', u'headers': 10.0, u'some': 3}}
+    ])
+
+  @mock.patch('uuid.uuid4')
+  @mock.patch('time.sleep')
+  @mock.patch('gcp.bigquery._Api.datasets_get')
+  @mock.patch('gcp.bigquery._Api.tables_list')
+  @mock.patch('gcp.bigquery._Api.tables_insert')
+  @mock.patch('gcp.bigquery._Api.tables_get')
+  @mock.patch('gcp.bigquery._Api.tabledata_insertAll')
+  def test_insertAll_dictlist_index(self,
+                                    mock_api_tabledata_insertAll,
+                                    mock_api_tables_get,
+                                    mock_api_tables_insert,
+                                    mock_api_tables_list,
+                                    mock_api_datasets_get,
+                                    mock_time_sleep, mock_uuid):
+    schema = self._create_inferred_schema('Index')
+
+    mock_uuid.return_value = self._create_uuid()
+    mock_time_sleep.return_value = None
+    mock_api_datasets_get.return_value = True
+    mock_api_tables_list.return_value = []
+    mock_api_tables_insert.return_value = {'selfLink': 'http://foo'}
+    mock_api_tables_get.return_value = {'schema': {'fields': schema}}
+    mock_api_tabledata_insertAll.return_value = {}
+
+    table = self._create_table_with_schema(schema)
+
+    result = table.insertAll([
+      {u'column': 'r0', u'headers': 10.0, u'some': 0},
+      {u'column': 'r1', u'headers': 10.0, u'some': 1},
+      {u'column': 'r2', u'headers': 10.0, u'some': 2},
+      {u'column': 'r3', u'headers': 10.0, u'some': 3}
+    ], include_index=True)
+    self.assertIsNotNone(result, "insertAll should return the table object")
+    mock_api_tabledata_insertAll.assert_called_with(('test', 'testds', 'testTable0'), [
+      {'insertId': '#0', 'json': {u'column': 'r0', u'headers': 10.0, u'some': 0, 'Index': 0}},
+      {'insertId': '#1', 'json': {u'column': 'r1', u'headers': 10.0, u'some': 1, 'Index': 1}},
+      {'insertId': '#2', 'json': {u'column': 'r2', u'headers': 10.0, u'some': 2, 'Index': 2}},
+      {'insertId': '#3', 'json': {u'column': 'r3', u'headers': 10.0, u'some': 3, 'Index': 3}}
+    ])
+
+  @mock.patch('uuid.uuid4')
+  @mock.patch('time.sleep')
+  @mock.patch('gcp.bigquery._Api.datasets_get')
+  @mock.patch('gcp.bigquery._Api.tables_list')
+  @mock.patch('gcp.bigquery._Api.tables_insert')
+  @mock.patch('gcp.bigquery._Api.tables_get')
+  @mock.patch('gcp.bigquery._Api.tabledata_insertAll')
+  def test_insertAll_dictlist_named_index(self,
+                                          mock_api_tabledata_insertAll,
+                                          mock_api_tables_get,
+                                          mock_api_tables_insert,
+                                          mock_api_tables_list,
+                                          mock_api_datasets_get,
+                                          mock_time_sleep, mock_uuid):
+    schema = self._create_inferred_schema('Row')
+
+    mock_uuid.return_value = self._create_uuid()
+    mock_time_sleep.return_value = None
+    mock_api_datasets_get.return_value = True
+    mock_api_tables_list.return_value = []
+    mock_api_tables_insert.return_value = {'selfLink': 'http://foo'}
+    mock_api_tables_get.return_value = {'schema': {'fields': schema}}
+    mock_api_tabledata_insertAll.return_value = {}
+
+    table = self._create_table_with_schema(schema)
+
+    result = table.insertAll([
+                               {u'column': 'r0', u'headers': 10.0, u'some': 0},
+                               {u'column': 'r1', u'headers': 10.0, u'some': 1},
+                               {u'column': 'r2', u'headers': 10.0, u'some': 2},
+                               {u'column': 'r3', u'headers': 10.0, u'some': 3}
+                             ], include_index=True, index_name='Row')
+    self.assertIsNotNone(result, "insertAll should return the table object")
+    mock_api_tabledata_insertAll.assert_called_with(('test', 'testds', 'testTable0'), [
+      {'insertId': '#0', 'json': {u'column': 'r0', u'headers': 10.0, u'some': 0, 'Row': 0}},
+      {'insertId': '#1', 'json': {u'column': 'r1', u'headers': 10.0, u'some': 1, 'Row': 1}},
+      {'insertId': '#2', 'json': {u'column': 'r2', u'headers': 10.0, u'some': 2, 'Row': 2}},
+      {'insertId': '#3', 'json': {u'column': 'r3', u'headers': 10.0, u'some': 3, 'Row': 3}}
     ])
 
   @mock.patch('gcp.bigquery._Api.jobs_insert_load')
@@ -455,15 +575,18 @@ class TestCases(unittest.TestCase):
     }
     return pandas.DataFrame(data)
 
-  def _create_inferred_schema(self):
-    return [
+  def _create_inferred_schema(self, extra_field=None):
+    schema= [
       {'name': 'some', 'type': 'INTEGER'},
       {'name': 'column', 'type': 'STRING'},
       {'name': 'headers', 'type': 'FLOAT'},
     ]
+    if extra_field:
+      schema.append({'name': extra_field, 'type': 'INTEGER'})
+    return schema
 
-  def _create_table_for_dataframe(self, schema):
-    return gcp.bigquery.table('test:testds.testTable0', self._create_context()).create(schema)
+  def _create_table_with_schema(self, schema, name='test:testds.testTable0'):
+    return gcp.bigquery.table(name, self._create_context()).create(schema)
 
   class _uuid(object):
     @property
