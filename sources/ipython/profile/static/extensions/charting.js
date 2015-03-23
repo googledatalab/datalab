@@ -15,9 +15,7 @@
 define(function () {
 
   // For each chart type, we have a constructor name, and optionally a package to load
-  // ('script'), and an option preprocessor ('optionHandler'). If present, the optionHandler
-  // will be called after fetching data; it can adjust options if necessary and if the data
-  // is unsuitable for the type of chart it can return an error message.
+  // ('script').
   var chartMap = {
     annotation: {name: 'AnnotationChart', script: 'annotationchart'},
     area: {name: 'AreaChart'},

@@ -142,10 +142,10 @@ def _get_chart_data(line):
     elif list_list:
       gen = list_list[first_row:first_row + count] if count >= 0 else list_list
       rows = [{'c': [{'v': row[i]} for i in range(0, len(fields))]} for row in gen]
-    elif type(data_frame) is not type(None):  # Pandas doesn't like "if dataframe" etc.
+    elif not isinstance(data_frame, type(None)):  # Pandas overrides lots of operators hence this.
 
-      dfslice = data_frame.reset_index(drop=True)[first_row:first_row + count]
-      for index, data_frame_row in dfslice.iterrows():
+      df_slice = data_frame.reset_index(drop=True)[first_row:first_row + count]
+      for index, data_frame_row in df_slice.iterrows():
         row = data_frame_row.to_dict()
         for key in row.keys():
           val = row[key]
