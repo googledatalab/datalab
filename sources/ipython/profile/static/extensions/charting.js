@@ -14,38 +14,41 @@
 
 define(function () {
 
+  // For each chart type, we have a constructor name, and optionally a package to load
+  // ('script'), and an option preprocessor ('optionHandler'). If present, the optionHandler
+  // will be called after fetching data; it can adjust options if necessary and if the data
+  // is unsuitable for the type of chart it can return an error message.
   var chartMap = {
+    annotation: {name: 'AnnotationChart', script: 'annotationchart'},
     area: {name: 'AreaChart'},
     columns: {name: 'ColumnChart'},
     bars: {name: 'BarChart'},
+    bubbles: {name: 'BubbleChart'},
+    calendar: {name: 'Calendar', script: 'calendar'},
+    candlestick: {name: 'CandlestickChart'},
+    combo: {name: 'ComboChart'},
+    gauge: {name: 'Gauge', script: 'gauge'},
+    geo: {name: 'GeoChart', script: 'geochart'},
     histogram: {name: 'Histogram'},
     line: {name: 'LineChart'},
+    map: {name: 'Map', script: 'map'},
+    org: {name: 'OrgChart', script: 'orgchart'},
+    paged_table: {name: 'Table', script: 'table'},
     pie: {name: 'PieChart'},
+    sankey: {name: 'Sankey', script: 'sankey'},
     scatter: {name: 'ScatterChart'},
-    // TODO(gram): remove this once renderTable works. Remove from argparse too.
-    table: {script: 'table', name: 'Table', optionHandler: addTableOptions}
+    stepped_area: {name: 'SteppedAreaChart'},
+    table: {name: 'Table', script: 'table'},
+    timeline: {name: 'Timeline', script: 'timeline'},
+    treemap: {name: 'TreeMap', script: 'treemap'},
   };
 
-  function addTableOptions(options, rowsPerPage) {
-    options = options || {};
-    options['sort'] = 'disable';
-    options['page'] = 'event';
-    options['showRowNumber'] = true;
-    if (options['pageSize'] == undefined || options['pageSize'] <= 0) {
-      options['pageSize'] = rowsPerPage;
-    }
-    return options;
-  }
-
-  function render(chartType, dom, dataName, fields, options, totalRows, rowsPerPage) {
-    var chartInfo = chartMap[chartType];
+  function render(chartStyle, dom, dataName, fields, options, totalRows, rowsPerPage) {
+    var chartInfo = chartMap[chartStyle];
     var chartScript = chartInfo.script || 'corechart';
     fields = fields || '*';
     options = options || {};
     totalRows = totalRows || -1;
-    if (chartInfo.optionHandler) {
-      options = chartInfo.optionHandler(options, (rowsPerPage || 25));
-    }
     var data = undefined;
     var fetchCode = '%_get_chart_data ' + dataName + ' ' + fields;
     var dataOffset = 0; // Offset of data array in all data.
@@ -61,9 +64,6 @@ define(function () {
       var getData = function(successCallback, errorCallback, startRow, count) {
 
         var len = data ? data['rows'].length : 0;
-        console.log("In getData - startRow " + startRow + ", count " + count +
-            ", totalRows " + totalRows + ", data.length " + len + ", dataOffset " +
-            dataOffset + ", firstRow " + firstRow);
 
         if (totalRows >= 0) {
           if (!count || count > totalRows - startRow) {
@@ -72,10 +72,19 @@ define(function () {
         }
 
         if (count && startRow >= dataOffset && (startRow + count) <= (dataOffset + len)) {
-          console.log("Can satisfy from cache");
+          // Satisfy the request from our cached data.
           firstRow = startRow;
-          successCallback(startRow, count);
+          var result = successCallback(startRow, count);
+          if (result) {
+            errorCallback(result);
+          }
         } else {
+          // Fetch data. We try fetch up to 1000 lines before and 1000 rows after the page
+          // we are viewing.
+          // TODO(gram): At some point we should optimize this more. If the user paginates
+          // sequentially - which is all they can do right now with gViz - then we will
+          // typically be requesting a new dataset with ~1000 rows overlap with the previous
+          // dataset. We should recycle the rows we have and ask just for the ones we don't.
           var first = startRow - 1000;
           var last;
           if (first < 0) {
@@ -91,10 +100,9 @@ define(function () {
           }
           var code = fetchCode + ' ' + first;
           if (last) {
-            code += ' ' + (last - first + 1);
+            var count = (last - first + 1);
+            code += ' ' + count;
           }
-          // TODO(gram): remove next line; useful for now for debugging cell magic
-          console.log("Running " + code);
           IPython.notebook.kernel.get_data(code, function (newData, error) {
             if (error) {
               errorCallback(error);
@@ -107,20 +115,49 @@ define(function () {
               var len = data['rows'].length;
               if (totalRows < 0 && (!last || len != (last - first + 1))) {
                 totalRows = first + len;
-                console.log("Setting totalRows to " + totalRows);
                 if (!count || (firstRow + count) > totalRows) {
                   count = totalRows - firstRow;
                 }
               }
-              console.log("After fetch: dataOffset " + dataOffset + ", data.length " + len +
-                  ", firstRow " + firstRow + ", startRow " + startRow + ", count " + count);
-              successCallback(startRow, count);
+              // We need to convert any string fields that are date type to JS Dates.
+              for (var i = 0; i < data['cols'].length; i++) {
+                if (data['cols'][i].type == 'datetime') {
+                  var rows = data['rows'];
+                  for (var j = 0; j < rows.length; j++) {
+                    rows[j]['c'][i]['v'] = new Date(rows[j]['c'][i]['v']);
+                  }
+                }
+              }
+              var result = successCallback(startRow, count);
+              if (result) {
+                errorCallback(result);
+              }
             }
           });
         }
       };
 
       var successCallback = function(startRow, count) {
+        if (chartStyle == 'paged_table') {
+          // Adjust the options that affect the page display.
+          if (options['showRowNumber'] == undefined) {
+            options['showRowNumber'] = true;
+          }
+          options['page'] = 'event';
+          options['firstRowNumber'] = startRow + 1;
+          if (totalRows < 0 || startRow + count < totalRows) {
+            options['pagingButtonsConfiguration'] = startRow > 0 ? 'both' : 'next';
+          } else { // no next
+            options['pagingButtonsConfiguration'] = startRow > 0 ? 'prev' : 'none';
+            if (startRow == 0) {
+              options['page'] = 'disable';
+            }
+          }
+          if (options['page'] != 'disable') {
+            // We can't sort if we are paginating.
+            options['sort'] = 'disable';
+          }
+        }
         if (dataOffset = 0 && startRow == 0 && count == data['rows'].length) {
           // No need to slice a page.
           var dt = new visualization.DataTable(data);
@@ -130,18 +167,6 @@ define(function () {
             'rows':data['rows'].slice(startRow - dataOffset, startRow - dataOffset + count)
           };
           var dt = new visualization.DataTable(pageData);
-        }
-        options['firstRowNumber'] = startRow + 1;
-        if (options['pageSize']) {
-          options['startPage'] = startRow / options['pageSize'] + 1;
-        }
-        if (totalRows < 0 || startRow + count < totalRows) {
-          options['pagingButtonsConfiguration'] = startRow > 0 ? 'both' : 'next';
-        } else { // no next
-          options['pagingButtonsConfiguration'] = startRow > 0 ? 'prev' : 'none';
-          if (startRow == 0) {
-            options['page'] = 'disable';
-          }
         }
         chart.draw(dt, options);
       };
@@ -154,14 +179,12 @@ define(function () {
 
       var handlePage = function(properties) {
         var offset = properties['page']; // 1, -1 or 0
-        console.log('offset ' + offset);
-        // For some reason Google Charts API gives a zero if you click the left button.
+        // The Google Charts API gives a zero if you click the left button.
         if (offset == 0) {
           offset = -1;
         }
         var newFirstRow = 0;
         var pageSize = options['pageSize'];
-        console.log("In handlePage, offset="+offset + ", pageSize " + pageSize);
         if (offset != 0) {
           newFirstRow = firstRow + offset * pageSize;
         }
@@ -171,7 +194,10 @@ define(function () {
       };
 
       var count = undefined;
-      if (options['pageSize']) {
+      if (chartStyle == 'paged_table') {
+        if (options['pageSize'] == undefined || options['pageSize'] <= 0) {
+          options['pageSize'] = rowsPerPage || 25;
+        }
         count = options['pageSize'];
         visualization.events.addListener(chart, 'page', function(e) {
           handlePage(e)

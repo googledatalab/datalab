@@ -26,13 +26,16 @@ except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
 import gcp.bigquery as _bq
+from gcp._util import JSONEncoder as _JSONEncoder
 
 
 @_magic.register_line_cell_magic
 def chart(line, cell=None):
   parser = argparse.ArgumentParser(prog='chart')
   subparsers = parser.add_subparsers(help='chart sub-commands')
-  for chart_type in ['area', 'bars', 'columns', 'histogram', 'line', 'pie', 'scatter', 'table']:
+  for chart_type in ['annotation', 'area', 'bars', 'bubbles', 'calendar', 'candlestick', 'columns',
+                     'combo', 'gauge', 'geo', 'histogram', 'line', 'map', 'orgchart', 'paged_table',
+                     'pie', 'sankey', 'scatter', 'stepped_area', 'table', 'timeline', 'treemap']:
     subparser = subparsers.add_parser(chart_type, help='generate a %s chart' % chart_type)
     subparser.add_argument('-f', '--field',
                            help='the field(s) to include in the chart', nargs='*')
@@ -141,8 +144,8 @@ def _get_chart_data(line):
       rows = [{'c': [{'v': row[i]} for i in range(0, len(fields))]} for row in gen]
     elif type(data_frame) is not type(None):  # Pandas doesn't like "if dataframe" etc.
 
-      # TODO(gram): handle first_row, count
-      for index, data_frame_row in data_frame.reset_index(drop=True).iterrows():
+      dfslice = data_frame.reset_index(drop=True)[first_row:first_row + count]
+      for index, data_frame_row in dfslice.iterrows():
         row = data_frame_row.to_dict()
         for key in row.keys():
           val = row[key]
@@ -178,5 +181,5 @@ def _get_chart_data(line):
   model = {
     'data': data
   }
-  return _ipython.core.display.JSON(_json.dumps(model))
+  return _ipython.core.display.JSON(_json.dumps(model, cls=_JSONEncoder))
 

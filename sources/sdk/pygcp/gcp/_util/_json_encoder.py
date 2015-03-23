@@ -1,4 +1,4 @@
-# Copyright 2014 Google Inc. All rights reserved.
+# Copyright 2015 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,12 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Google Cloud Platform library - Internal Helpers."""
+""" JSON encoder that can handle Python datetime objects. """
 
-from ._credentials import MetadataCredentials
-from ._http import Http
-from ._iterator import Iterator
-from ._json_encoder import JSONEncoder
-from ._lru_cache import LRUCache
-from ._metadata import MetadataService
-from ._sql import Sql
+import datetime as _dt
+import json as _json
+
+
+class JSONEncoder(_json.JSONEncoder):
+  def default(self, obj):
+    if isinstance(obj, _dt.date):
+      return obj.isoformat()
+    elif isinstance(obj, _dt.datetime):
+      return obj.isoformat()
+    elif isinstance(obj, _dt.timedelta):
+      return (_dt.datetime.min + obj).time().isoformat()
+    else:
+      return super(JSONEncoder, self).default(obj)

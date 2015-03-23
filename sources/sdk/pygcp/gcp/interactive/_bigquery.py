@@ -267,7 +267,7 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
     <script>
       require(['extensions/charting', 'element!bqtv_%s'],
         function(charts, dom) {
-          charts.render("table", dom, "%s", %s, {}, %d, %d);
+          charts.render("paged_table", dom, "%s", %s, {}, %d, %d);
         }
       );
     </script>
