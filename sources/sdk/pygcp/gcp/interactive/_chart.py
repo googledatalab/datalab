@@ -27,6 +27,7 @@ except ImportError:
 
 import gcp.bigquery as _bq
 from gcp._util import JSONEncoder as _JSONEncoder
+from gcp._util import print_exception_with_last_stack
 
 
 @_magic.register_line_cell_magic
@@ -172,9 +173,7 @@ def _get_chart_data(line):
     data = {'cols': cols, 'rows': rows}
 
   except Exception, e:
-    import traceback
-    traceback.print_exc()
-    print str(e)
+    print_exception_with_last_stack(e)
     data = {}
 
   model = {

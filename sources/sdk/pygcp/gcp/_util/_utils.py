@@ -1,4 +1,4 @@
-# Copyright 2015 Google Inc. All rights reserved.
+# Copyright 2014 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,17 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" JSON encoder that can handle Python datetime objects. """
+# Utility functions that don't need class wrappers and don't merit their own files.
+"""Miscellaneous simple utility functions."""
 
-import datetime as _dt
-import json as _json
+import traceback as _tb
 
-
-class JSONEncoder(_json.JSONEncoder):
-  def default(self, obj):
-    if isinstance(obj, _dt.date) or isinstance(obj, _dt.datetime):
-      return obj.isoformat()
-    elif isinstance(obj, _dt.timedelta):
-      return (_dt.datetime.min + obj).time().isoformat()
-    else:
-      return super(JSONEncoder, self).default(obj)
+def print_exception_with_last_stack(e):
+  _tb.print_exc()
+  print str(e)
