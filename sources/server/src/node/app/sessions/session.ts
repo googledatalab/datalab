@@ -111,7 +111,7 @@ export class Session implements app.ISession {
    * Delegates an incoming execute reply (from kernel) to the middleware stack.
    */
   processExecuteReply (reply: app.ExecuteReply) {
-    var nextAction = this._handleExecuteReplyPostDelegate.bind(this);
+    var nextAction = this._handleExecuteReply.bind(this);
     this._messageHandler(reply, this, nextAction);
   }
 
@@ -170,7 +170,7 @@ export class Session implements app.ISession {
   /**
    * Applies execute reply data to the notebook model and broadcasts an update message.
    */
-  _handleExecuteReplyPostDelegate (message: any) {
+  _handleExecuteReply (message: any) {
     // Lookup the notebook cell to which this message corresponds.
     var cellRef = this._getCellRefForRequestId(message.requestId);
     if (!cellRef) {
