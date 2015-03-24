@@ -38,171 +38,183 @@ define(function () {
     stepped_area: {name: 'SteppedAreaChart'},
     table: {name: 'Table', script: 'table'},
     timeline: {name: 'Timeline', script: 'timeline'},
-    treemap: {name: 'TreeMap', script: 'treemap'},
+    treemap: {name: 'TreeMap', script: 'treemap'}
   };
+
+  // Convert any string fields that are date type to JS Dates.
+  function convertDates(data) {
+    for (var i = 0; i < data.cols.length; i++) {
+      if (data.cols[i].type == 'datetime') {
+        var rows = data.rows;
+        for (var j = 0; j < rows.length; j++) {
+          rows[j].c[i].v = new Date(rows[j].c[i].v);
+        }
+      }
+    }
+  }
+
+  function onError(visualization, dom, error) {
+    var message = 'The data could not be retrieved.' + error.toString();
+    visualization.errors.addError(dom, 'Unable to render the chart',
+        message, {'showInTooltip': false});
+  }
+
+  // Adjust any necessary options for the paged table and update the chart.
+  function chartPage(model, startRow, count) {
+    // Adjust the options that affect the page display.
+    var options = model.options;
+    if (options.showRowNumber == undefined) {
+      options.showRowNumber = true;
+    }
+    options.page = 'event';
+    options.firstRowNumber = startRow + 1;
+    if (model.totalRows < 0 || startRow + count < model.totalRows) {
+      // We either don't know where the end is or we're not at the end, so we can have 'next'.
+      options.pagingButtonsConfiguration = startRow > 0 ? 'both' : 'next';
+    } else { // no next
+      // Reduce count if necessary on the last page.
+      count = model.totalRows - startRow;
+      options.pagingButtonsConfiguration = startRow > 0 ? 'prev' : 'none';
+      if (startRow == 0) {
+        // No next or prev so disable page events.
+        options.page = 'disable';
+      }
+    }
+    if (options.page != 'disable') {
+      // We can't sort if we are paginating.
+      options.sort = 'disable';
+    }
+    model.firstRow = startRow;
+    var dt = new model.visualization.DataTable({
+      'cols': model.data.cols,
+      'rows': model.data.rows.slice(startRow - model.dataOffset,
+          startRow - model.dataOffset + count)
+    });
+    model.chart.draw(dt, model.options);
+  }
+
+  // Check if a row is in the table. Note that if we don't know the total number of rows
+  // we assume the row is in range as long as it is non-negative.
+  function isRowInRange(row, totalRows) {
+    return row >= 0 && (totalRows < 0 || row < totalRows);
+  }
+
+  // Calculate the number of rows we want to display.
+  function getPageRowCount(model, startRow) {
+    var count = model.options.pageSize;
+    if (model.totalRows >= 0) { // We know how many rows we have.
+      var rowsLeft = model.totalRows - startRow;
+      if (count > rowsLeft) {
+        count = rowsLeft;
+      }
+    }
+    return count;
+  }
+
+  // Check if a row range is in the cached data.
+  function isCached(model, startRow, count) {
+    if (count == 0) {
+      return true;
+    }
+    return startRow >= model.dataOffset &&
+        (startRow + count) <= (model.dataOffset + model.data.rows.length);
+  }
+
+  // Function to get a range of data and update chart with one page of data.
+  function getPagedData(model, startRow) {
+
+    // Calculate the number of rows we want to display.
+    var pageCount = getPageRowCount(model, startRow);
+
+    if (isCached(model, startRow, pageCount)) {
+      chartPage(model, startRow, pageCount);
+    } else {
+
+      // Fetch data. We try fetch up to 20 pages before and 20 pages after the page
+      // we are viewing.
+      // TODO(gram): At some point we should optimize this more. If the user paginates
+      // sequentially - which is all they can do right now with gViz - then we will
+      // typically be requesting a new dataset with ~20 pages overlap with the previous
+      // dataset. We should recycle the rows we have and ask just for the ones we don't.
+
+      var first = Math.max(startRow - 20 * model.options.pageSize, 0);
+      var last = startRow + pageCount + 20 * model.options.pageSize;
+      if (model.totalRows >= 0 && last >= model.totalRows) { // Can't go past the end of the data
+        last = model.totalRows - 1;
+      }
+      var fetchCount = last - first + 1;
+      var code = model.fetchCode + ' ' + first + ' ' + fetchCount;
+      IPython.notebook.kernel.get_data(code, function (newData, error) {
+        if (error) {
+          onError(model, error);
+        } else {
+          convertDates(newData.data);
+          model.data = newData.data;
+          model.dataOffset = first;
+          // If we didn't know the data length before we do now if we got less than we asked for.
+          if (model.totalRows < 0) {
+            var len = model.data.rows.length;
+            if (len != fetchCount) {
+              model.totalRows = first + len;
+            }
+          }
+          chartPage(model, startRow, pageCount);
+        }
+      });
+    }
+  }
+
+  // Handle page forward/back events. Page will only be 0 or 1.
+  function handlePageEvent(model, page) {
+    var offset = (page == 0) ? -1 : 1;
+    var newFirstRow = model.firstRow + offset * model.options.pageSize;
+    if (isRowInRange(newFirstRow, model.totalRows)) {
+      getPagedData(model, newFirstRow);
+    }
+  }
 
   function render(chartStyle, dom, dataName, fields, options, totalRows, rowsPerPage) {
     var chartInfo = chartMap[chartStyle];
     var chartScript = chartInfo.script || 'corechart';
-    fields = fields || '*';
-    options = options || {};
-    totalRows = totalRows || -1;
-    var data = undefined;
-    var fetchCode = '%_get_chart_data ' + dataName + ' ' + fields;
-    var dataOffset = 0; // Offset of data array in all data.
-    var firstRow = 0; // Offset of first line being displayed
 
     require(['visualization!' + chartScript], function (visualization) {
       var chartType = visualization[chartInfo.name];
       var chart = new chartType(dom);
+      var fetchCode = '%_get_chart_data ' + dataName + ' ' + (fields || '*');
+      options = options || {};
 
-      // Function to get a range of data and call us back with a DataTable. We must supply
-      // a first row, and optionally a count; if the latter is not supplied then all data
-      // to the end of the object will be fetched.
-      var getData = function(successCallback, errorCallback, startRow, count) {
-
-        var len = data ? data['rows'].length : 0;
-
-        if (totalRows >= 0) {
-          if (!count || count > totalRows - startRow) {
-            count = totalRows - startRow;
-          }
-        }
-
-        if (count && startRow >= dataOffset && (startRow + count) <= (dataOffset + len)) {
-          // Satisfy the request from our cached data.
-          firstRow = startRow;
-          var result = successCallback(startRow, count);
-          if (result) {
-            errorCallback(result);
-          }
-        } else {
-          // Fetch data. We try fetch up to 1000 lines before and 1000 rows after the page
-          // we are viewing.
-          // TODO(gram): At some point we should optimize this more. If the user paginates
-          // sequentially - which is all they can do right now with gViz - then we will
-          // typically be requesting a new dataset with ~1000 rows overlap with the previous
-          // dataset. We should recycle the rows we have and ask just for the ones we don't.
-          var first = startRow - 1000;
-          var last;
-          if (first < 0) {
-            first = 0;
-          }
-          if (count) {
-            last = firstRow + count + 1000;
-            if (totalRows >= 0 && last >= totalRows) {
-              last = totalRows - 1;
-            }
-          } else {
-            last = undefined;
-          }
-          var code = fetchCode + ' ' + first;
-          if (last) {
-            var count = (last - first + 1);
-            code += ' ' + count;
-          }
-          IPython.notebook.kernel.get_data(code, function (newData, error) {
-            if (error) {
-              errorCallback(error);
-            } else {
-              data = newData['data'];
-              dataOffset = first;
-              firstRow = startRow;
-              // If we didn't know the data length before we might now if we had an incomplete
-              // fetch or were fetching all the rows.
-              var len = data['rows'].length;
-              if (totalRows < 0 && (!last || len != (last - first + 1))) {
-                totalRows = first + len;
-                if (!count || (firstRow + count) > totalRows) {
-                  count = totalRows - firstRow;
-                }
-              }
-              // We need to convert any string fields that are date type to JS Dates.
-              for (var i = 0; i < data['cols'].length; i++) {
-                if (data['cols'][i].type == 'datetime') {
-                  var rows = data['rows'];
-                  for (var j = 0; j < rows.length; j++) {
-                    rows[j]['c'][i]['v'] = new Date(rows[j]['c'][i]['v']);
-                  }
-                }
-              }
-              var result = successCallback(startRow, count);
-              if (result) {
-                errorCallback(result);
-              }
-            }
-          });
-        }
-      };
-
-      var successCallback = function(startRow, count) {
-        if (chartStyle == 'paged_table') {
-          // Adjust the options that affect the page display.
-          if (options['showRowNumber'] == undefined) {
-            options['showRowNumber'] = true;
-          }
-          options['page'] = 'event';
-          options['firstRowNumber'] = startRow + 1;
-          if (totalRows < 0 || startRow + count < totalRows) {
-            options['pagingButtonsConfiguration'] = startRow > 0 ? 'both' : 'next';
-          } else { // no next
-            options['pagingButtonsConfiguration'] = startRow > 0 ? 'prev' : 'none';
-            if (startRow == 0) {
-              options['page'] = 'disable';
-            }
-          }
-          if (options['page'] != 'disable') {
-            // We can't sort if we are paginating.
-            options['sort'] = 'disable';
-          }
-        }
-        if (dataOffset = 0 && startRow == 0 && count == data['rows'].length) {
-          // No need to slice a page.
-          var dt = new visualization.DataTable(data);
-        } else {
-          var pageData = {
-            'cols':data['cols'],
-            'rows':data['rows'].slice(startRow - dataOffset, startRow - dataOffset + count)
-          };
-          var dt = new visualization.DataTable(pageData);
-        }
-        chart.draw(dt, options);
-      };
-
-      var errorCallback = function(error) {
-        var message = 'The data could not be retrieved.' + error.toString();
-        visualization.errors.addError(dom, 'Unable to render the chart',
-            message, {'showInTooltip': false});
-      };
-
-      var handlePage = function(properties) {
-        var offset = properties['page']; // 1, -1 or 0
-        // The Google Charts API gives a zero if you click the left button.
-        if (offset == 0) {
-          offset = -1;
-        }
-        var newFirstRow = 0;
-        var pageSize = options['pageSize'];
-        if (offset != 0) {
-          newFirstRow = firstRow + offset * pageSize;
-        }
-        if (newFirstRow >= 0 && (totalRows < 0 || newFirstRow < totalRows)) {
-          getData(successCallback, errorCallback, newFirstRow, pageSize);
-        }
-      };
-
-      var count = undefined;
       if (chartStyle == 'paged_table') {
-        if (options['pageSize'] == undefined || options['pageSize'] <= 0) {
-          options['pageSize'] = rowsPerPage || 25;
+        if (options.pageSize == undefined) {
+          options.pageSize = rowsPerPage || 25;
         }
-        count = options['pageSize'];
+        var model = {
+          'visualization': visualization,
+          'dom': dom,
+          'chart': chart,
+          'fetchCode': fetchCode,
+          'options': options,
+          'totalRows': totalRows || -1, // Total rows in all (server-side) data.
+          'data': { 'rows':[], 'cols':[]},  // Multi-page client-side cache
+          'dataOffset': 0, // Where the cached data[] array starts from.
+          'firstRow': 0  // Index of first row being displayed in page.
+        };
+
         visualization.events.addListener(chart, 'page', function(e) {
-          handlePage(e)
+          handlePageEvent(model, e.page);
+        });
+
+        getPagedData(model, 0);
+      } else {
+        IPython.notebook.kernel.get_data(fetchCode, function (data, error) {
+          if (error) {
+            onError(visualization, dom, error);
+          } else {
+            convertDates(data.data);
+            var dt = new visualization.DataTable(data.data);
+            chart.draw(dt, options);
+          }
         });
       }
-
-      getData(successCallback, errorCallback, firstRow, count);
     });
   }
 
