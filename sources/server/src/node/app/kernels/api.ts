@@ -35,26 +35,6 @@ export class KernelApi {
   }
 
   /**
-   * Creates a new kernel from specified request params
-   */
-  create (request: express.Request, response: express.Response): void {
-    // Validate config extracted from request
-    var iopubPort = parseInt(request.param('iopub', undefined), 10);
-    var shellPort = parseInt(request.param('shell', undefined), 10);
-    if (!iopubPort || !shellPort) {
-      response.sendStatus(400); // Malformed request, ports should exist and be numeric
-      return;
-    }
-
-    // Create the kernel and return its metadata in response
-    var kernel = this._manager.create({
-      iopubPort: iopubPort,
-      shellPort: shellPort
-    });
-    response.send(this._getKernelMetadata(kernel));
-  }
-
-  /**
    * Gets the single kernel specified by the request 'id' param if it exists
    */
   get (request: express.Request, response: express.Response): void {
@@ -91,7 +71,6 @@ export class KernelApi {
    * Registers routes for the kernel API
    */
   register (router: express.Router): void {
-    router.post(KernelApi.kernelsCollectionUrl, this.create.bind(this));
     router.get(KernelApi.singleKernelUrl, this.get.bind(this));
     router.get(KernelApi.kernelsCollectionUrl, this.list.bind(this));
     router.post(KernelApi.singleKernelActionUrl + 'shutdown', this.shutdown.bind(this));

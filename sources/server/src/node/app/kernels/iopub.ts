@@ -24,33 +24,24 @@ import channels = require('./channels');
  */
 export class IOPubChannelClient extends channels.ChannelClient {
 
-  constructor (connectionUrl: string, port: number) {
+  _delegateKernelStatusHandler: app.EventHandler<app.KernelStatus>;
+  _delegateOutputDataHandler: app.EventHandler<app.OutputData>;
+
+  constructor (
+      connectionUrl: string,
+      port: number,
+      onKernelStatus: app.EventHandler<app.KernelStatus>,
+      onOutputData: app.EventHandler<app.OutputData>) {
+
     super (connectionUrl, port, 'iopub-' + port, 'sub');
+
+    this._delegateKernelStatusHandler = onKernelStatus;
+    this._delegateOutputDataHandler = onOutputData;
   }
 
   connect () {
     super.connect();
     this._socket.subscribe(''); // Subscribe to all topics
-  }
-
-  /**
-   * Default no-op message delegation handlers
-   */
-  _delegateKernelStatusHandler (status: app.KernelStatus): void {}
-  _delegateExecuteResultHandler (result: app.ExecuteResult): void {}
-
-  /**
-   * Specifies a callback to handle kernel status messages
-   */
-  onKernelStatus (callback: app.EventHandler<app.KernelStatus>): void {
-    this._delegateKernelStatusHandler = callback;
-  }
-
-  /**
-   * Specifies a callback to handle execute result messages
-   */
-  onExecuteResult (callback: app.EventHandler<app.ExecuteResult>): void {
-    this._delegateExecuteResultHandler = callback;
   }
 
   /**
@@ -69,20 +60,28 @@ export class IOPubChannelClient extends channels.ChannelClient {
     var message = ipy.parseIPyMessage(arguments);
 
     switch (message.header.msg_type) {
-      case 'status':
-        this._handleKernelStatus(message);
+      case 'display_data':
+        this._handleDisplayData(message);
         break;
 
-      case 'pyout':
-        this._handleExecuteResult(message);
+      case 'pyerr':
+        // no-op
         break;
 
       case 'pyin':
         // no-op
         break;
 
-      case 'pyerr':
-        // no-op
+      case 'pyout':
+        this._handleExecuteResult(message);
+        break;
+
+      case 'status':
+        this._handleKernelStatus(message);
+        break;
+
+      case 'stream':
+        this._handleStreamData(message);
         break;
 
       default: // No defined handler for the type, so log it and move on
@@ -93,16 +92,16 @@ export class IOPubChannelClient extends channels.ChannelClient {
   }
 
   /**
-   * Converts IPython message data for a kernel status msg to an internal message and delegates
+   * Converts IPython message data for a display_data msg to an internal message and delegates
    */
-  _handleKernelStatus (message: app.ipy.Message) {
-
-    var status: app.KernelStatus = {
-      status: message.content['execution_state'],
+  _handleDisplayData (message: app.ipy.Message) {
+    var displayData: app.OutputData = {
+      type: 'result',
+      mimetypeBundle: message.content.data,
       requestId: message.parentHeader.msg_id
-    };
+    }
 
-    this._delegateKernelStatusHandler (status);
+    this._delegateOutputDataHandler(displayData);
   }
 
   /**
@@ -110,12 +109,43 @@ export class IOPubChannelClient extends channels.ChannelClient {
    */
   _handleExecuteResult (message: app.ipy.Message) {
 
-    var result: app.ExecuteResult = {
-      result: message.content['data'],
+    var result: app.OutputData = {
+      type: 'result',
+      mimetypeBundle: message.content.data,
+      requestId: message.parentHeader.msg_id
+    };
+
+    this._delegateOutputDataHandler (result);
+  }
+
+  /**
+   * Converts IPython message data for a kernel status msg to an internal message and delegates
+   */
+  _handleKernelStatus (message: app.ipy.Message) {
+
+    var status: app.KernelStatus = {
+      status: message.content.execution_state,
+      requestId: message.parentHeader.msg_id
+    };
+
+    this._delegateKernelStatusHandler (status);
+  }
+
+  /**
+   * Converts IPython message data for a stream output (stdout/stderr) and delegates
+   */
+  _handleStreamData (message: app.ipy.Message) {
+
+    var streamData: app.OutputData = {
+      // the content.name field should have value in {'stdout', 'stderr'}
+      type: message.content.name,
+      mimetypeBundle: {
+        'text/plain': message.content.data
+      },
       requestId: message.parentHeader.msg_id
     }
 
-    this._delegateExecuteResultHandler (result);
+    this._delegateOutputDataHandler(streamData);
   }
 
 }

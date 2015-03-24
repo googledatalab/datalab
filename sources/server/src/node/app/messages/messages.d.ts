@@ -29,39 +29,56 @@ declare module app {
      * @param session session object from which the message originated
      * @return the processed message or null to indicate message should be filtered
      */
-    (message: any, session: app.ISession): any;
+    (message: Map<any>, session: ISession, manager: ISessionManager): Map<any>;
   }
 
   interface MessageHandler {
-    (message: any, session: app.ISession, callback: app.EventHandler<any>): void
+    (message: any, session: ISession, callback: EventHandler<any>): void
   }
 
-  interface KernelStatus {
-    status: string;
-    requestId: string;
+  interface NotebookUpdate extends notebooks.Notebook {
+    // Note: eventually this message will contain a set of changes rather than the full notebook
   }
 
-  interface ExecuteReply {
+  interface ExecuteReply extends KernelMessage {
     success: boolean;
-    requestId: string;
     // When execute has not been aborted, we get back an execution count
-    executionCount?: number;
+    executionCounter?: string;
     // When an error has occurred, the following are populated
     errorName?: string;
     errorMessage?: string;
     traceback?: string[];
   }
 
-  interface ExecuteRequest {
+  interface ExecuteRequest extends KernelMessage {
     code: string;
     // Note: user_variables and user_expressions are slated for removal/reworking in upcoming versions
     // https://github.com/ipython/ipython/wiki/IPEP-13:-Updating-the-Message-Spec
+  }
+
+  interface ExecuteResult extends KernelMessage {
+    result: any;
+  }
+
+  /**
+   * Common fields for kernel messages.
+   */
+  interface KernelMessage {
     requestId: string;
   }
 
-  interface ExecuteResult {
-    result: any;
-    requestId: string;
+  interface KernelStatus extends KernelMessage {
+    status: string;
+  }
+
+  interface OutputData extends KernelMessage {
+    type: string; // 'stdout' | 'stderr' | 'result' | 'error'
+    mimetypeBundle: any;
+  }
+
+  interface SessionStatus {
+    kernelStatus: string;
+    // additional session metadata fields go here eventually (e.g., connected users)
   }
 
   module ipy {
@@ -85,6 +102,7 @@ declare module app {
       store_history: boolean;
       allow_stdin: boolean;
     }
+
   }
 
 }

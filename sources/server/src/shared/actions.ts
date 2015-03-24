@@ -26,8 +26,7 @@ export var composite = 'action.composite';
 // Notebook-level actions.
 export var notebook = {
   clearOutputs: 'action.notebook.clearOutputs',
-  executeCells: 'action.notebook.executeCells',
-  rename: 'action.notebook.rename'
+  executeCells: 'action.notebook.executeCells'
 };
 
 // Worksheet-level actions.
