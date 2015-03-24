@@ -64,7 +64,7 @@ export class NotebookStorage implements app.INotebookStorage {
   /**
    * Serializes the given notebook and writes it to storage.
    */
-  write (path: string, notebook: app.INotebookSession, createIfNeeded?: boolean) {
+  write (path: string, notebook: app.INotebookSession) {
     console.log('Saving notebook ' + path + ' ...');
     // Selects the serializer that has been assigned to the notebook path extension.
     var serializer = formats.selectSerializer(path);
