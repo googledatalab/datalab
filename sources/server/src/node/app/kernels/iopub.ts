@@ -24,35 +24,25 @@ import channels = require('./channels');
  */
 export class IOPubChannelClient extends channels.ChannelClient {
 
-  constructor (connectionUrl: string, port: number) {
+  _delegateKernelStatusHandler: app.EventHandler<app.KernelStatus>;
+  _delegateOutputDataHandler: app.EventHandler<app.OutputData>;
+
+  constructor (
+      connectionUrl: string,
+      port: number,
+      onKernelStatus: app.EventHandler<app.KernelStatus>,
+      onOutputData: app.EventHandler<app.OutputData>) {
+
     super (connectionUrl, port, 'iopub-' + port, 'sub');
+
+    this._delegateKernelStatusHandler = onKernelStatus;
+    this._delegateOutputDataHandler = onOutputData;
   }
 
   connect () {
     super.connect();
     this._socket.subscribe(''); // Subscribe to all topics
   }
-
-  /**
-   * Default no-op message delegation handlers
-   */
-  _delegateKernelStatusHandler (status: app.KernelStatus): void {}
-  _delegateOutputDataHandler (output: app.OutputData): void {}
-
-  /**
-   * Specifies a callback to handle kernel status messages
-   */
-  onKernelStatus (callback: app.EventHandler<app.KernelStatus>): void {
-    this._delegateKernelStatusHandler = callback;
-  }
-
-  /**
-   * Specifies a callback to handle kernel output data messages
-   */
-  onOutputData (callback: app.EventHandler<app.OutputData>): void {
-    this._delegateOutputDataHandler = callback;
-  }
-
 
   /**
    * Note: Upcoming changes to the IPython messaging protocol will remap the (protocol version 4.1)

@@ -67,16 +67,6 @@ declare module app {
     id: string;
 
     /**
-     * Gets the connection establishment metadata.
-     */
-    getConnectionData (): ClientConnectionData;
-
-    /**
-     * Registers a callback to be invoked whenever an Action message arrives from the client.
-     */
-    onAction (callback: EventHandler<notebooks.actions.Action>): void;
-
-    /**
      * Sends an Update message to the client over the connection.
      */
     sendUpdate (update: notebooks.updates.Update): void;
@@ -131,15 +121,18 @@ declare module app {
     id: string;
     config: KernelConfig;
     execute (request: ExecuteRequest): void;
-    onExecuteReply (callback: EventHandler<ExecuteReply>): void;
-    onKernelStatus (callback: EventHandler<KernelStatus>): void;
-    onOutputData (callback: EventHandler<OutputData>): void;
     shutdown (): void;
     start (): void;
   }
 
   interface IKernelManager {
-    create (config: KernelConfig): IKernel;
+    create (
+        id: string,
+        config: KernelConfig,
+        onExecuteReply: EventHandler<ExecuteReply>,
+        onKernelStatus: EventHandler<KernelStatus>,
+        onOutputData: EventHandler<OutputData>
+        ): IKernel;
     get (id: string): IKernel;
     list (): IKernel[];
     shutdown (id: string): void;
@@ -195,6 +188,26 @@ declare module app {
      * Gets the set of user connection ids currently associated with the session.
      */
     getClientConnectionIds (): string[];
+
+    /**
+     * Processes the given action message.
+     */
+    processAction (action: app.notebooks.actions.Action): void;
+
+    /**
+     * Processes the given execute reply message.
+     */
+    processExecuteReply (reply: app.ExecuteReply): void;
+
+    /**
+     * Processes the kernel status message;
+     */
+    processKernelStatus (status: app.KernelStatus): void;
+
+    /**
+     * Processes the given output data message.
+     */
+    processOutputData (outputData: app.OutputData): void;
 
     /**
      * Disassociates a user connection from the session.

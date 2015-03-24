@@ -77,7 +77,7 @@ export class SessionManager implements app.ISessionManager {
   }
 
   /**
-   * Binds the user connection to a new kernel instance via a newly created session object.
+   * Creates a new session for the given notebook path.
    *
    * TODO(bryantd): Consider making this entire session creation call path async
    * to avoid blocking the server on file i/o (reading in notebook state). Persisting notebooks
@@ -87,26 +87,45 @@ export class SessionManager implements app.ISessionManager {
    * This server blocking issue becomes more prominent when in a heavy-usage, multi-user
    * environment (where many sessions are being created).
    */
-  _createSession (sessionId: string, connection: app.IClientConnection) {
-
-    var kernel = this._kernelManager.create({
-      iopubPort: util.getAvailablePort(),
-      shellPort: util.getAvailablePort()
-    });
-
+  _createSession (sessionId: string, notebookPath: string) {
     return new sessions.Session(
-      sessionId,
-      kernel,
-      this._handleMessage.bind(this),
-      connection.getConnectionData().notebookPath,
-      this._notebookStorage,
-      connection);
+        sessionId,
+        this._kernelManager,
+        this._handleMessage.bind(this),
+        notebookPath,
+        this._notebookStorage);
   }
 
   /**
-   * Gets the session id for the given user connection.
+   * Gets the metadata provided during the connection establishment.
+   *
+   * Note: a notebook rename causes the notebook path to be changed (at the session level)
+   * but that change is not reflected in the return value of this method. That is because
+   * this method always returns the value of the notebook path at the time of the connection
+   * establishment; i.e., whatever notebook path was part of the original handshake data.
+   *
+   * So, only assume the notebook path returned here to match the session notebook path at the
+   * time of connection establishment.
    */
-  _getSessionId (connection: app.IClientConnection): string {
+  _getConnectionData (socket: socketio.Socket): app.ClientConnectionData {
+    return {
+      notebookPath: socket.handshake.query.notebookPath
+    }
+  }
+
+  /**
+   * Determines which session the connection should be associated with via the session id.
+   *
+   * Two clients that specify the same session id will join the same session.
+   *
+   * A single client can also specify a previous session id to re-join a previous session, assuming
+   * that session is still alive.
+   */
+  _getOrCreateSession (socket: socketio.Socket) {
+    var notebookPath = this._getConnectionData(socket).notebookPath;
+
+    // The notebook path is currently used as the session "key".
+    //
     // TODO(bryantd): evaluate if there are any cases where the sessionId must be a uuid.
     //
     // For now, ensure that all use cases of the session ID only assume it to be a opaque
@@ -116,7 +135,18 @@ export class SessionManager implements app.ISessionManager {
     // uuid.v5(notebookPath) would be one way of ensuring session id collision whenever the
     // notebookPath is the same for multiple clients, while still having a fixed-size, known
     // character-set, string-based identifier.
-    return connection.getConnectionData().notebookPath;
+    var sessionId = notebookPath;
+
+    // Retrieve an existing session for the specified session id if it exists.
+    var session = this._sessionIdToSession[sessionId];
+    if (!session) {
+      // No existing session with given id, so create a new session.
+      session = this._createSession(sessionId, notebookPath);
+      // Track the session by id
+      this._sessionIdToSession[sessionId] = session;
+    }
+
+    return session;
   }
 
   /**
@@ -155,31 +185,18 @@ export class SessionManager implements app.ISessionManager {
    * existing session.
    */
   _handleClientConnect (socket: socketio.Socket) {
+    var session = this._getOrCreateSession(socket);
+
+    // Delegate all socket.io Action messages to the session.
     var connection = new conn.ClientConnection(
         uuid.v4(),
         socket,
-        util.noop, // The associated session will ultimately register an action handler
+        session.processAction.bind(session),
         this._handleClientDisconnect.bind(this));
     console.log('User has connected: ' + connection.id);
 
-    // Determine which session the connection should be associated with via the session id
-    //
-    // Two clients that specify the same session id will join the same session.
-    //
-    // A single client can also specify a previous session id to re-join a previous session,
-    // assuming that session is still alive.
-    var sessionId = this._getSessionId(connection);
-
-    // Retrieve an existing session for the specified session id if it exists.
-    var session = this._sessionIdToSession[sessionId];
-    if (!session) {
-      // No existing session with given id, so create a new session.
-      session = this._createSession(sessionId, connection);
-      this._sessionIdToSession[sessionId] = session;
-    } else {
-      // Update existing session object with new user connection.
-      session.addClientConnection(connection);
-    }
+    // Update existing session object with new user connection.
+    session.addClientConnection(connection);
 
     // Store a mapping from connection to the associated session so that the session can be
     // retrieved on disconnect.

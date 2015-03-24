@@ -24,6 +24,10 @@ import helpers = require('../common/util');
 
 /**
  * Client for communication via the IPython protocol to a kernel process.
+ *
+ * A kernel client interacts with an IPython kernel process over multiple "channels", each of which
+ * has a separate functionality. See each channel client implementation for details about the
+ * per-channel functionality.
  */
 export class KernelClient implements app.IKernel {
 
@@ -36,44 +40,42 @@ export class KernelClient implements app.IKernel {
   _shell: shell.ShellChannelClient;
   _delegateKernelStatusHandler: app.EventHandler<app.KernelStatus>;
 
-  constructor (id: string, config: app.KernelConfig) {
+  constructor (
+      id: string,
+      config: app.KernelConfig,
+      onExecuteReply: app.EventHandler<app.ExecuteReply>,
+      onKernelStatus: app.EventHandler<app.KernelStatus>,
+      onOutputData: app.EventHandler<app.OutputData>) {
+
     this.id = id;
     this.config = config;
-    this._iopub = new iopub.IOPubChannelClient(KernelClient.connectionUrl, config.iopubPort);
-    this._shell = new shell.ShellChannelClient(KernelClient.connectionUrl, config.shellPort, id);
-    this._delegateKernelStatusHandler = helpers.noop;
+
+    this._iopub = new iopub.IOPubChannelClient(
+        KernelClient.connectionUrl,
+        config.iopubPort,
+        onKernelStatus,
+        onOutputData);
+
+    this._shell = new shell.ShellChannelClient(
+        KernelClient.connectionUrl,
+        config.shellPort,
+        id,
+        onExecuteReply);
+
+    // Keep a direct reference to the kernel status callback so that the kernel client itself is
+    // can route its own kernel status messages (e.g., kernel died) to the given callback/handler.
+    this._delegateKernelStatusHandler = onKernelStatus;
   }
 
   /**
-   * Sends an execute request to the connected kernel
+   * Sends an execute request to the connected kernel.
    */
   execute (request: app.ExecuteRequest): void {
     this._shell.execute(request);
   }
 
   /**
-   * Registers a callback to be invoked when an execute reply message arrives from the kernel
-   */
-  onExecuteReply (callback: app.EventHandler<app.ExecuteReply>): void {
-    this._shell.onExecuteReply(callback);
-  }
-
-  /**
-   * Registers a callback to be invoked when a kernel status message arrives from the kernel
-   */
-  onKernelStatus (callback: app.EventHandler<app.KernelStatus>): void {
-    // Keep a direct reference to the kernel status callback so that the kernel client itself is
-    // can route its own kernel status messages (e.g., kernel died) to the given callback/handler
-    this._delegateKernelStatusHandler = callback;
-    this._iopub.onKernelStatus(callback);
-  }
-
-  onOutputData (callback: app.EventHandler<app.OutputData>): void {
-    this._iopub.onOutputData(callback);
-  }
-
-  /**
-   * Closes socket connections to the kernel process and then kills the kernel process
+   * Closes socket connections to the kernel process and then kills the kernel process.
    */
   shutdown (): void {
     this._iopub.disconnect();
@@ -82,7 +84,7 @@ export class KernelClient implements app.IKernel {
   }
 
   /**
-   * Spawns a new kernel process and registers event handlers for per-channel kernel messages
+   * Spawns a new kernel process and registers event handlers for per-channel kernel messages.
    */
   start (): void {
     this._spawnLocalKernelProcess();
@@ -95,7 +97,7 @@ export class KernelClient implements app.IKernel {
   }
 
   _spawnLocalKernelProcess (): void {
-    // Note: disabling HMAC digest via the Session.key flag for now
+    // Note: disabling HMAC digest via the Session.key flag for now.
     var cmd = 'ipython'
     var args = [
         'kernel',
@@ -106,7 +108,7 @@ export class KernelClient implements app.IKernel {
         '--matplotlib=inline'
         ];
     this._kernelProcess = childproc.spawn(cmd, args);
-    // For now, consider both disconnected and exitted kernels as "dead"
+    // For now, consider both disconnected and exitted kernels as "dead".
     this._kernelProcess.on('exit', this._handleKernelDiedEvent.bind(this));
     this._kernelProcess.on('disconnect', this._handleKernelDiedEvent.bind(this));
   }

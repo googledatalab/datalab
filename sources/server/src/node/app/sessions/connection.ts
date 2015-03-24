@@ -21,7 +21,7 @@ import util = require('../common/util');
 
 
 /**
- * Server-side portion of client-server DataLab websocket message protocol
+ * Server-side portion of client-server DataLab websocket message protocol.
  *
  * Instances of this class also own the socket.io socket instance for the user connection.
  */
@@ -30,6 +30,7 @@ export class ClientConnection implements app.IClientConnection {
   id: string;
 
   _socket: socketio.Socket;
+
   _delegateActionHandler: app.EventHandler<app.notebooks.actions.Action>;
   _delegateDisconnectHandler: app.EventHandler<app.IClientConnection>;
 
@@ -37,8 +38,8 @@ export class ClientConnection implements app.IClientConnection {
       id: string,
       socket: socketio.Socket,
       onAction: app.EventHandler<app.notebooks.actions.Action>,
-      onDisconnect: app.EventHandler<app.IClientConnection>
-      ) {
+      onDisconnect: app.EventHandler<app.IClientConnection>) {
+
     this.id = id;
     this._socket = socket;
     this._delegateActionHandler = onAction;
@@ -48,59 +49,18 @@ export class ClientConnection implements app.IClientConnection {
   }
 
   /**
-   * Gets the metadata provided during the connection establishment.
-   *
-   * Note: a notebook rename causes the notebook path to be changed (at the session level)
-   * but that change is not reflected in the return value of this method. That is because
-   * this method always returns the value of the notebook path at the time of the connection
-   * establishment; i.e., whatever notebook path was part of the original handshake data.
-   *
-   * So, only assume the notebook path returned here to match the session notebook path at the
-   * time of connection establishment.
-   */
-  getConnectionData (): app.ClientConnectionData {
-    return {
-      notebookPath: this._socket.handshake.query.notebookPath
-    }
-  }
-
-  /**
-   * Registers a callback to be invoked whenever an Action message arrives from the client.
-   */
-  onAction (callback: app.EventHandler<app.notebooks.actions.Action>) {
-    this._delegateActionHandler = callback;
-  }
-
-  /**
-   * Sends an update message to the user
+   * Sends an update message to the user.
    */
   sendUpdate (update: app.notebooks.updates.Update) {
     this._send(updates.label, update);
   }
 
   /**
-   * Handles the received action request by delegating to the session for processing
-   */
-  _handleAction (action: app.notebooks.actions.Action) {
-    this._delegateActionHandler(action);
-  }
-
-  /**
-   * Handles connection cleanup and delegates to registered event handler
-   *
-   * Invoked whenever a user disconnects from the server (e.g., closes/refreshes browser)
-   */
-  _handleDisconnect () {
-    // Any connection-level cleanup/finalization goes here
-    this._delegateDisconnectHandler(this);
-  }
-
-  /**
-   * Register callbacks to handle events/messages arriving via socket.io connection
+   * Register callbacks to handle events/messages arriving via socket.io connection.
    */
   _registerHandlers () {
-    this._socket.on('disconnect', this._handleDisconnect.bind(this));
-    this._socket.on(actions.label, this._handleAction.bind(this));
+    this._socket.on(actions.label, this._delegateActionHandler.bind(this));
+    this._socket.on('disconnect', this._delegateDisconnectHandler.bind(this));
   }
 
   _send (type: string, message: any) {

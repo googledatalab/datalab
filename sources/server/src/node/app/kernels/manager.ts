@@ -19,7 +19,7 @@ import client = require('./client');
 
 
 /**
- * Manages the lifecycle of a set of kernel resources
+ * Manages the lifecycle of a set of kernel resources.
  */
 export class KernelManager implements app.IKernelManager {
 
@@ -30,27 +30,36 @@ export class KernelManager implements app.IKernelManager {
   }
 
   /**
-   * Creates and returns a new kernel using given configuration
+   * Creates and returns a new kernel using given configuration.
    */
-  create (config: app.KernelConfig): app.IKernel {
-    var id: string = uuid.v4();
-    var kernel: app.IKernel = new client.KernelClient(id, config);
-    this._idToKernel[id] = kernel;
+   create (
+      id: string,
+      config: app.KernelConfig,
+      onExecuteReply: app.EventHandler<app.ExecuteReply>,
+      onKernelStatus: app.EventHandler<app.KernelStatus>,
+      onOutputData: app.EventHandler<app.OutputData>
+      ): app.IKernel {
 
-    // TODO(bryantd): configure kernel message handlers here
+    var kernel: app.IKernel = new client.KernelClient(
+      id, config, onExecuteReply, onKernelStatus, onOutputData);
+
+    // Track the kernel.
+    this._idToKernel[id] = kernel;
+    // Start the kernel process.
     kernel.start();
+
     return kernel;
   }
 
   /**
-   * Gets a kernel corresponding to the given ID or null
+   * Gets a kernel corresponding to the given ID or null.
    */
   get (id: string): app.IKernel {
     return this._idToKernel[id] || null;
   }
 
   /**
-   * Gets the list of kernel instances managed by this instance
+   * Gets the list of kernel instances managed by this instance.
    */
   list (): app.IKernel[] {
     return this._getIds().map((id) => {
@@ -59,7 +68,7 @@ export class KernelManager implements app.IKernelManager {
   }
 
   /**
-   * Shuts down the kernel for the given ID
+   * Shuts down the kernel for the given ID.
    */
   shutdown (id: string): void {
     var kernel = this.get(id);
@@ -71,7 +80,7 @@ export class KernelManager implements app.IKernelManager {
   }
 
   /**
-   * Shuts down all kernels managed by this object
+   * Shuts down all kernels managed by this object.
    */
   shutdownAll (): void {
     this._getIds().forEach((id: string) => {
@@ -80,7 +89,7 @@ export class KernelManager implements app.IKernelManager {
   }
 
   /**
-   * Gets the list of kernel IDs
+   * Gets the list of kernel IDs.
    */
   _getIds (): string[] {
     return Object.keys(this._idToKernel);

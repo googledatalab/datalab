@@ -27,25 +27,21 @@ import channels = require('./channels');
 export class ShellChannelClient extends channels.ChannelClient {
 
   /**
-   * Used as session id for IPython messaging
+   * The client id here is used by the kernel to identify specific clients.
    */
   _clientId: string;
+  _delegateExecuteReplyHandler: app.EventHandler<app.ExecuteReply>;
 
-  constructor (connectionUrl: string, port: number, clientId: string) {
+  constructor (
+      connectionUrl: string,
+      port: number,
+      clientId: string,
+      onExecuteReply: app.EventHandler<app.ExecuteReply>
+      ) {
     super (connectionUrl, port, 'shell-' + port, 'dealer');
+
     this._clientId = clientId;
-  }
-
-  /**
-   * Default no-op message delegation handlers
-   */
-  _delegateExecuteReplyHandler (reply: app.ExecuteReply): void {}
-
-  /**
-   * Specifies a callback to handle execute reply messages
-   */
-  onExecuteReply (callback: app.EventHandler<app.ExecuteReply>): void {
-    this._delegateExecuteReplyHandler = callback;
+    this._delegateExecuteReplyHandler = onExecuteReply;
   }
 
   /**
