@@ -14,33 +14,39 @@
 
 
 /**
- * Cross-module constants
+ * App-wide constants.
  */
 
 
 /**
- * Path to the root of the Angular app
+ * Path to the root of the Angular app.
  */
 export var scriptPaths = {
   app: 'scripts/app'
 };
 
+/**
+ * The (Angular) module name for the app.
+ */
 export var appModuleName = 'app';
 
-// Generic angular component names used for dependency injection
 export var layouts = {
   sidebar: {
     directiveName: 'sidebarLayout'
   }
-}
-export var codeEditor = {
-  directiveName: 'datalabCodeEditor'
 };
-export var editorCell = {
-  directiveName: 'datalabEditorCell'
-}
 
-// Route-specific angular component names used for dependency injection
+// Generic angular component names used for dependency injection (e.g., services, factories,
+// providers, etc.).
+export var sessionConnection = {
+  name: 'sessionConnection'
+};
+export var sessionEventDispatcher = {
+  name: 'sessionEventDispatcher'
+};
+
+
+// Route-specific angular component names.
 export var notebooks = {
   pageControllerName: 'NotebooksPageController',
   edit: {
@@ -48,18 +54,21 @@ export var notebooks = {
   }
 };
 
-// Logging scope names
+// Logging scope names.
 export var scopes = {
-  // Generic components
-  codeEditor: 'codeEditor',
-  editorCell: 'editorCell',
+  // Generic directives.
   layouts: 'layouts',
 
-  // Route-specific components
+  // Route-specific components.
   notebooks: {
     page: 'notebooks.page',
     edit: {
       page: 'notebooks.edit.page'
     }
-  }
+  },
+
+  // Other injectables (services, factories, providers, etc.).
+  sessionConnection: sessionConnection.name,
+  sessionEventDispatcher: sessionEventDispatcher.name,
 };
+
