@@ -36,6 +36,18 @@ export var layouts = {
   }
 };
 
+// Angular directive names.
+//
+// Note: When using these directive names within templates, the names are expected to be in
+// snake-case; e.g., directiveName:"fooBarBaz" is referred to as <foo-bar-baz /> within
+// an Angular template.
+export var codeEditor = {
+  directiveName: 'datalabCodeEditor'
+};
+export var editorCell = {
+  directiveName: 'datalabEditorCell'
+};
+
 // Generic angular component names used for dependency injection (e.g., services, factories,
 // providers, etc.).
 export var sessionConnection = {
@@ -56,8 +68,12 @@ export var notebooks = {
 
 // Logging scope names.
 export var scopes = {
+  // Cell directives.
+  editorCell: 'editorCell',
+
   // Generic directives.
   layouts: 'layouts',
+  codeEditor: 'codeEditor',
 
   // Route-specific components.
   notebooks: {
@@ -71,4 +87,3 @@ export var scopes = {
   sessionConnection: sessionConnection.name,
   sessionEventDispatcher: sessionEventDispatcher.name,
 };
-

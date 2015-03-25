@@ -92,5 +92,5 @@ class SessionEventDispatcher implements app.ISessionEventDispatcher {
   }
 }
 
-_app.registrar.service(constants.session.name, SessionEventDispatcher);
+_app.registrar.service(constants.sessionEventDispatcher.name, SessionEventDispatcher);
 log.debug('Registered ', constants.scopes.sessionEventDispatcher);
