@@ -1,0 +1,206 @@
+0 info it worked if it ends with ok
+1 verbose cli [ 'node', '/usr/local/bin/npm', 'install', '-g', 'jasmine-node' ]
+2 info using npm@1.4.28
+3 info using node@v0.10.33
+4 verbose cache add [ 'jasmine-node', null ]
+5 verbose cache add name=undefined spec="jasmine-node" args=["jasmine-node",null]
+6 verbose parsed url { protocol: null,
+6 verbose parsed url   slashes: null,
+6 verbose parsed url   auth: null,
+6 verbose parsed url   host: null,
+6 verbose parsed url   port: null,
+6 verbose parsed url   hostname: null,
+6 verbose parsed url   hash: null,
+6 verbose parsed url   search: null,
+6 verbose parsed url   query: null,
+6 verbose parsed url   pathname: 'jasmine-node',
+6 verbose parsed url   path: 'jasmine-node',
+6 verbose parsed url   href: 'jasmine-node' }
+7 silly lockFile bba04ce4-jasmine-node jasmine-node
+8 verbose lock jasmine-node /Users/gram/.npm/bba04ce4-jasmine-node.lock
+9 silly lockFile bba04ce4-jasmine-node jasmine-node
+10 silly lockFile bba04ce4-jasmine-node jasmine-node
+11 verbose addNamed [ 'jasmine-node', '' ]
+12 verbose addNamed [ null, '*' ]
+13 silly lockFile b74de4f8-jasmine-node jasmine-node@
+14 verbose lock jasmine-node@ /Users/gram/.npm/b74de4f8-jasmine-node.lock
+15 silly addNameRange { name: 'jasmine-node', range: '*', hasData: false }
+16 verbose request where is /jasmine-node
+17 verbose request registry https://registry.npmjs.org/
+18 verbose request id 17d9dfb75eb9be37
+19 verbose url raw /jasmine-node
+20 verbose url resolving [ 'https://registry.npmjs.org/', './jasmine-node' ]
+21 verbose url resolved https://registry.npmjs.org/jasmine-node
+22 verbose request where is https://registry.npmjs.org/jasmine-node
+23 info trying registry request attempt 1 at 13:40:42
+24 verbose etag "3CC0TV9F6EFBHLPOEMBOI1STY"
+25 http GET https://registry.npmjs.org/jasmine-node
+26 http 304 https://registry.npmjs.org/jasmine-node
+27 silly registry.get cb [ 304,
+27 silly registry.get   { date: 'Wed, 25 Mar 2015 20:40:42 GMT',
+27 silly registry.get     server: 'Apache',
+27 silly registry.get     via: '1.1 varnish',
+27 silly registry.get     'last-modified': 'Wed, 25 Mar 2015 20:40:42 GMT',
+27 silly registry.get     'cache-control': 'max-age=60',
+27 silly registry.get     etag: '"3CC0TV9F6EFBHLPOEMBOI1STY"',
+27 silly registry.get     age: '31',
+27 silly registry.get     'x-served-by': 'cache-jfk1027-JFK',
+27 silly registry.get     'x-cache': 'HIT',
+27 silly registry.get     'x-cache-hits': '1',
+27 silly registry.get     'x-timer': 'S1427316042.417442,VS0,VE0',
+27 silly registry.get     vary: 'Accept',
+27 silly registry.get     'content-length': '0',
+27 silly registry.get     'keep-alive': 'timeout=10, max=50',
+27 silly registry.get     connection: 'Keep-Alive' } ]
+28 verbose etag https://registry.npmjs.org/jasmine-node from cache
+29 silly addNameRange number 2 { name: 'jasmine-node', range: '*', hasData: true }
+30 silly addNameRange versions [ 'jasmine-node',
+30 silly addNameRange   [ '1.0.1',
+30 silly addNameRange     '1.0.2',
+30 silly addNameRange     '1.0.3',
+30 silly addNameRange     '1.0.4',
+30 silly addNameRange     '1.0.5',
+30 silly addNameRange     '1.0.6',
+30 silly addNameRange     '1.0.7',
+30 silly addNameRange     '1.0.8',
+30 silly addNameRange     '1.0.9',
+30 silly addNameRange     '1.0.10',
+30 silly addNameRange     '1.0.11',
+30 silly addNameRange     '1.0.12',
+30 silly addNameRange     '1.0.13',
+30 silly addNameRange     '1.0.15',
+30 silly addNameRange     '1.0.16',
+30 silly addNameRange     '1.0.17',
+30 silly addNameRange     '1.0.18',
+30 silly addNameRange     '1.0.19',
+30 silly addNameRange     '1.0.20',
+30 silly addNameRange     '1.0.21',
+30 silly addNameRange     '1.0.22',
+30 silly addNameRange     '1.0.23',
+30 silly addNameRange     '1.0.24',
+30 silly addNameRange     '1.0.25',
+30 silly addNameRange     '1.0.26',
+30 silly addNameRange     '1.0.27',
+30 silly addNameRange     '1.0.28',
+30 silly addNameRange     '1.1.0',
+30 silly addNameRange     '1.2.0',
+30 silly addNameRange     '1.2.1',
+30 silly addNameRange     '1.2.2',
+30 silly addNameRange     '1.2.3',
+30 silly addNameRange     '1.3.0',
+30 silly addNameRange     '1.3.1',
+30 silly addNameRange     '1.4.0',
+30 silly addNameRange     '1.5.0',
+30 silly addNameRange     '1.6.0',
+30 silly addNameRange     '1.7.0',
+30 silly addNameRange     '1.7.1',
+30 silly addNameRange     '1.8.0',
+30 silly addNameRange     '1.8.1',
+30 silly addNameRange     '1.9.0',
+30 silly addNameRange     '1.9.1',
+30 silly addNameRange     '1.10.0',
+30 silly addNameRange     '1.10.1',
+30 silly addNameRange     '1.10.2',
+30 silly addNameRange     '1.11.0',
+30 silly addNameRange     '1.12.0',
+30 silly addNameRange     '1.12.1',
+30 silly addNameRange     '1.13.0',
+30 silly addNameRange     '1.13.1',
+30 silly addNameRange     '1.14.0',
+30 silly addNameRange     '1.14.1',
+30 silly addNameRange     '2.0.0',
+30 silly addNameRange     '1.14.2',
+30 silly addNameRange     '2.0.0-beta1',
+30 silly addNameRange     '2.0.0-beta2',
+30 silly addNameRange     '2.0.0-beta3',
+30 silly addNameRange     '1.14.3',
+30 silly addNameRange     '2.0.0-beta4',
+30 silly addNameRange     '1.14.4',
+30 silly addNameRange     '1.14.5',
+30 silly addNameRange     '1.0.0-rc1',
+30 silly addNameRange     '1.0.0-rc2',
+30 silly addNameRange     '1.0.0-rc3' ] ]
+31 verbose addNamed [ 'jasmine-node', '1.14.5' ]
+32 verbose addNamed [ '1.14.5', '1.14.5' ]
+33 silly lockFile 3c9ba918-jasmine-node-1-14-5 jasmine-node@1.14.5
+34 verbose lock jasmine-node@1.14.5 /Users/gram/.npm/3c9ba918-jasmine-node-1-14-5.lock
+35 silly lockFile 3c9ba918-jasmine-node-1-14-5 jasmine-node@1.14.5
+36 silly lockFile 3c9ba918-jasmine-node-1-14-5 jasmine-node@1.14.5
+37 silly lockFile b74de4f8-jasmine-node jasmine-node@
+38 silly lockFile b74de4f8-jasmine-node jasmine-node@
+39 silly resolved [ { name: 'jasmine-node',
+39 silly resolved     version: '1.14.5',
+39 silly resolved     description: 'DOM-less simple JavaScript BDD testing framework for Node',
+39 silly resolved     contributors: [ [Object] ],
+39 silly resolved     homepage: 'https://github.com/mhevery/jasmine-node',
+39 silly resolved     repository:
+39 silly resolved      { type: 'git',
+39 silly resolved        url: 'https://github.com/mhevery/jasmine-node.git' },
+39 silly resolved     keywords: [ 'testing', 'bdd' ],
+39 silly resolved     author: { name: 'Misko Hevery', email: 'misko@hevery.com' },
+39 silly resolved     maintainers: [ [Object], [Object] ],
+39 silly resolved     licenses: [ 'MIT' ],
+39 silly resolved     dependencies:
+39 silly resolved      { 'coffee-script': '>=1.0.1',
+39 silly resolved        'jasmine-reporters': '~1.0.0',
+39 silly resolved        'jasmine-growl-reporter': '~0.0.2',
+39 silly resolved        requirejs: '>=0.27.1',
+39 silly resolved        walkdir: '>= 0.0.1',
+39 silly resolved        underscore: '>= 1.3.1',
+39 silly resolved        gaze: '~0.3.2',
+39 silly resolved        mkdirp: '~0.3.5' },
+39 silly resolved     bin: { 'jasmine-node': 'bin/jasmine-node' },
+39 silly resolved     preferGlobal: true,
+39 silly resolved     main: 'lib/jasmine-node',
+39 silly resolved     scripts: { test: 'node lib/jasmine-node/cli.js spec' },
+39 silly resolved     devDependencies: {},
+39 silly resolved     bugs: { url: 'https://github.com/mhevery/jasmine-node/issues' },
+39 silly resolved     _id: 'jasmine-node@1.14.5',
+39 silly resolved     _shasum: '18e8397b856924ee77003666c3731b5aea50c39d',
+39 silly resolved     _from: 'jasmine-node@',
+39 silly resolved     _npmVersion: '1.4.9',
+39 silly resolved     _npmUser: { name: 'tebriel', email: 'tebriel@gmail.com' },
+39 silly resolved     dist:
+39 silly resolved      { shasum: '18e8397b856924ee77003666c3731b5aea50c39d',
+39 silly resolved        tarball: 'http://registry.npmjs.org/jasmine-node/-/jasmine-node-1.14.5.tgz' },
+39 silly resolved     directories: {},
+39 silly resolved     _resolved: 'https://registry.npmjs.org/jasmine-node/-/jasmine-node-1.14.5.tgz',
+39 silly resolved     readme: 'ERROR: No README data found!' } ]
+40 info install jasmine-node@1.14.5 into /usr/local/lib
+41 info installOne jasmine-node@1.14.5
+42 verbose lib/node_modules/jasmine-node unbuild
+43 verbose tar unpack /Users/gram/.npm/jasmine-node/1.14.5/package.tgz
+44 silly lockFile 5aad16db-al-lib-node-modules-jasmine-node tar:///usr/local/lib/node_modules/jasmine-node
+45 verbose lock tar:///usr/local/lib/node_modules/jasmine-node /Users/gram/.npm/5aad16db-al-lib-node-modules-jasmine-node.lock
+46 silly lockFile 9fd40f87--jasmine-node-1-14-5-package-tgz tar:///Users/gram/.npm/jasmine-node/1.14.5/package.tgz
+47 verbose lock tar:///Users/gram/.npm/jasmine-node/1.14.5/package.tgz /Users/gram/.npm/9fd40f87--jasmine-node-1-14-5-package-tgz.lock
+48 silly gunzTarPerm modes [ '755', '644' ]
+49 error Error: EACCES, mkdir '/usr/local/lib/node_modules/jasmine-node'
+49 error  { [Error: EACCES, mkdir '/usr/local/lib/node_modules/jasmine-node']
+49 error   errno: 3,
+49 error   code: 'EACCES',
+49 error   path: '/usr/local/lib/node_modules/jasmine-node',
+49 error   fstream_type: 'Directory',
+49 error   fstream_path: '/usr/local/lib/node_modules/jasmine-node',
+49 error   fstream_class: 'DirWriter',
+49 error   fstream_stack:
+49 error    [ '/usr/local/lib/node_modules/npm/node_modules/fstream/lib/dir-writer.js:36:23',
+49 error      '/usr/local/lib/node_modules/npm/node_modules/mkdirp/index.js:46:53',
+49 error      'Object.oncomplete (fs.js:107:15)' ] }
+50 error Please try running this command again as root/Administrator.
+51 error System Darwin 14.1.0
+52 error command "node" "/usr/local/bin/npm" "install" "-g" "jasmine-node"
+53 error cwd /Users/gram/datalab
+54 error node -v v0.10.33
+55 error npm -v 1.4.28
+56 error path /usr/local/lib/node_modules/jasmine-node
+57 error fstream_path /usr/local/lib/node_modules/jasmine-node
+58 error fstream_type Directory
+59 error fstream_class DirWriter
+60 error code EACCES
+61 error errno 3
+62 error stack Error: EACCES, mkdir '/usr/local/lib/node_modules/jasmine-node'
+63 error fstream_stack /usr/local/lib/node_modules/npm/node_modules/fstream/lib/dir-writer.js:36:23
+63 error fstream_stack /usr/local/lib/node_modules/npm/node_modules/mkdirp/index.js:46:53
+63 error fstream_stack Object.oncomplete (fs.js:107:15)
+64 verbose exit [ 3, true ]
