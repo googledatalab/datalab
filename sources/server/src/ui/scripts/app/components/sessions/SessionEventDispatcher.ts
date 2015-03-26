@@ -39,7 +39,13 @@ class SessionEventDispatcher implements app.ISessionEventDispatcher {
   _rootScope: ng.IRootScopeService;
 
   static $inject = ['$rootScope', constants.sessionConnection.name];
-  constructor (rootScope: ng.IRootScopeService, connection: app.ISessionConnection) {
+  /**
+   * Constructor.
+   *
+   * @param rootScope The Angular $rootScope.
+   * @param connection A session connection instance.
+   */
+  constructor(rootScope: ng.IRootScopeService, connection: app.ISessionConnection) {
     this._connection = connection;
     this._rootScope = rootScope;
 
@@ -49,16 +55,21 @@ class SessionEventDispatcher implements app.ISessionEventDispatcher {
 
   /**
    * Handles client-side action events by forwarding them to the server.
+   *
+   * @param event An angular event.
+   * @param action A notebook Action message.
    */
-  _handleAction (event: ng.IAngularEvent, action: app.notebooks.actions.Action) {
+  _handleAction(event: ng.IAngularEvent, action: app.notebooks.actions.Action) {
     log.debug('Sending action message to server', action);
     this._connection.emit('action', action);
   }
 
   /**
    * Handles all incoming server updates by publishing them as client-side events.
+   *
+   * @param update A notebook Update message.
    */
-  _handleUpdate (update: app.notebooks.updates.Update) {
+  _handleUpdate(update: app.notebooks.updates.Update) {
     log.debug('Update message received from server:', update);
     this._rootScope.$emit(update.name, update);
   }
@@ -66,7 +77,7 @@ class SessionEventDispatcher implements app.ISessionEventDispatcher {
   /**
    * Register client-side event handlers for each notebook action.
    */
-  _registerEventHandlers () {
+  _registerEventHandlers() {
     // Add an event listener for each action type.
     var eventNames = [
       actions.composite,
@@ -87,7 +98,7 @@ class SessionEventDispatcher implements app.ISessionEventDispatcher {
   /**
    * Register server-side message handlers for update events
    */
-  _registerMessageHandlers () {
+  _registerMessageHandlers() {
     this._connection.on(updates.label, this._handleUpdate.bind(this));
   }
 }

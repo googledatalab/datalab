@@ -21,26 +21,26 @@
 declare module app {
 
   interface ILogger {
-    debug (...objects: Object []): void;
-    info (...objects: Object []): void;
-    warn (...objects: Object []): void;
-    error (...objects: Object []): void;
+    debug(...objects: Object []): void;
+    info(...objects: Object []): void;
+    warn(...objects: Object []): void;
+    error(...objects: Object []): void;
   }
 
   interface IRegistrar {
-    controller (name: string, constructor: Function): void;
-    directive (name: string, directiveFactory: Function): void;
-    service (name: string, constructor: Function): void;
-    factory (name: string, serviceFactory: Function): void;
-    constant (name: string, value: any): void;
-    value (name: string, value: any): void;
-    decorator (name: string, decorator: Function): void;
-    filter (name: string, filterFactory: Function): void;
+    controller(name: string, constructor: Function): void;
+    directive(name: string, directiveFactory: Function): void;
+    service(name: string, constructor: Function): void;
+    factory(name: string, serviceFactory: Function): void;
+    constant(name: string, value: any): void;
+    value(name: string, value: any): void;
+    decorator(name: string, decorator: Function): void;
+    filter(name: string, filterFactory: Function): void;
   }
 
   interface ISessionConnection {
-    on (messageType: string, callback: SessionMessageHandler): void;
-    emit (messageType: string, message: any): void;
+    on(messageType: string, callback: SessionMessageHandler): void;
+    emit(messageType: string, message: any): void;
   }
 
   interface ISessionEventDispatcher {}

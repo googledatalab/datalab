@@ -30,25 +30,31 @@ var log = logging.getLogger(constants.scopes.sessionConnection);
  * join a new session. For detecting, see the angular events: $locationChangeStart and
  * $routeChangeStart. Could be implemented by sending some sort of JoinSession message
  * without require the underlying web socket connection to be torn down and recreated.
+ *
+ * @param rootScope The Angular $rootScope.
+ * @param location The Angular $location service.
+ * @param route The Angular $route service.
+ * @return A session connection instance that wraps a socket.io connection.
  */
-function sessionConnectionFactory (
+function sessionConnectionFactory(
     rootScope: ng.IRootScopeService,
     location: ng.ILocationService,
-    route: ng.route.IRouteService) {
+    route: ng.route.IRouteService
+    ): app.ISessionConnection {
 
   var socket: Socket = socketio(location.host(), {
     query: 'notebookPath=' + route.current.params.notebookPath
   });
 
   return {
-    on: function (messageType: string, callback: app.SessionMessageHandler) {
-      socket.on(messageType, function (message: any) {
+    on: function(messageType: string, callback: app.SessionMessageHandler) {
+      socket.on(messageType, function(message: any) {
         log.debug('socket.io on "' + messageType + '":', message);
 
         // Execute the given callback within a scope.$apply so that angular will
         // know about any variable updates (that it can then propagate).
         // TODO(bryantd): See if possible to do away with this forced digest cycle
-        rootScope.$apply(function () {
+        rootScope.$apply(function() {
           callback(message);
         });
       });
