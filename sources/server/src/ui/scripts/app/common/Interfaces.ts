@@ -27,6 +27,135 @@ declare module app {
     error(...objects: Object []): void;
   }
 
+  /**
+   * Manages a client's view of a single notebook's data and provides an modification API.
+   */
+  interface IClientNotebookSession {
+    /**
+     * A reference to the currently active cell.
+     *
+     * If no cell is currently active, this attribute will have value === undefined.
+     */
+    activeCell: app.notebooks.Cell;
+
+    /**
+     * A reference to the currently active worksheet.
+     */
+    activeWorksheet: app.notebooks.Worksheet;
+
+    /**
+     * A reference to the current notebook data model.
+     */
+    notebook: app.notebooks.Notebook;
+
+    /**
+     * Adds a cell of the given type to the worksheet.
+     *
+     * @param cellType The type of cell to add (e.g., 'markdown').
+     * @param worksheetId The worksheet into which the cell should be inserted.
+     * @param insertAfterCellId The cell id after which the cell should be inserted. A value of
+     *     null indicates that the cell should be insert at the head of the worksheet.
+     */
+    addCell(cellType: string, worksheetId: string, insertAfterCellId: string): void;
+
+    /**
+     * Clears the output of the specified cell.
+     *
+     * @param cellId The id of the cell to clear.
+     * @param worksheetId The id of the worksheet containing the specified cell.
+     */
+    clearOutput(cellId: string, worksheetId: string): void;
+
+    /**
+     * Clears all cell outputs within the notebook.
+     */
+    clearOutputs(): void;
+
+    /**
+     * Deletes the specified cell.
+     *
+     * @param cellId The id of the cell to delete.
+     * @param worksheetId The id of the worksheet containing the specified cell.
+     */
+    deleteCell(cellId: string, worksheetId: string): void;
+
+    /**
+     * Deselects the currently active cell.
+     *
+     * No-op if there is no active cell.
+     */
+    deselectCell(): void;
+
+    /**
+     * Evaluates the specified cell source.
+     *
+     * In the case of all cell types, this implies updating the cell source value.
+     *
+     * In the case of code cells, this additionally implies kernel execution of the source.
+     *
+     * @param cell The cell to evaluate (update + execute).
+     * @param worksheetId The id of the worksheet containing the specified cell.
+     */
+    evaluateCell(cell: notebooks.Cell, worksheetId: string): void;
+
+    /**
+     * Executes the specified cell source without updating.
+     *
+     * @param cell The cell to execute (i.e., execute-only, no source update).
+     * @param worksheetId The id of the worksheet containing the specified cell.
+     */
+    executeCell(cell: notebooks.Cell, worksheetId: string): void;
+
+    /**
+     * Executes all code cells within the notebook.
+     */
+    executeCells(): void;
+
+    /**
+     * Moves the current cell either up or down in the worksheet.
+     *
+     * @param cellId The id of the cell to move.
+     * @param worksheetId The id of the worksheet containing the specified cell.
+     * @param insertAfterCellId The cell id after which the cell should be inserted. A value of
+     *     null indicates that the cell should be insert at the head of the worksheet.
+     */
+    moveCell(cellId: string, worksheetId: string, insertAfterCellId: string): void;
+
+    /**
+     * Moves a cell down (towards tail) within the current worksheet.
+     *
+     * @param cellId The id of the cell to move.
+     * @param worksheetId The id of the worksheet containing the specified cell.
+     */
+    moveCellDown(cellId: string, worksheetId: string): void;
+
+    /**
+     * Moves a cell up (towards head) within the current worksheet.
+     *
+     * @param cellId The id of the cell to move.
+     * @param worksheetId The id of the worksheet containing the specified cell.
+     */
+    moveCellUp(cellId: string, worksheetId: string): void;
+
+    /**
+     * Selects the specified cell.
+     */
+    selectCell(cell: app.notebooks.Cell): void;
+
+    /**
+     * Selects the specified worksheet.
+     */
+    selectWorksheet(workhsheetId: string): void;
+
+    /**
+     * Updates the specified cell.
+     *
+     * @param cellId The id of the cell to update.
+     * @param worksheetId The id of the worksheet containing the specified cell.
+     */
+    updateCell(cell: app.notebooks.Cell, worksheetId: string): void;
+  }
+
   interface IRegistrar {
     controller(name: string, constructor: Function): void;
     directive(name: string, directiveFactory: Function): void;
@@ -47,6 +176,14 @@ declare module app {
 
   interface SessionMessageHandler {
     (message: any): void;
+  }
+
+  // UI-specific extensions to the datalab notebook types.
+  module notebooks {
+    interface AugmentedCellOutput extends notebooks.CellOutput {
+      preferredMimetype?: string;
+      trustedHtml?: string;
+    }
   }
 
 }

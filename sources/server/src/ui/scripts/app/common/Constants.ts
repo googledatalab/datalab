@@ -53,6 +53,9 @@ export var markdownViewer = {
 
 // Generic angular component names used for dependency injection (e.g., services, factories,
 // providers, etc.).
+export var clientNotebookSession = {
+  name: 'clientNotebookSession'
+};
 export var sessionConnection = {
   name: 'sessionConnection'
 };
@@ -88,6 +91,7 @@ export var scopes = {
   },
 
   // Other injectables (services, factories, providers, etc.).
+  clientNotebookSession: clientNotebookSession.name,
   sessionConnection: sessionConnection.name,
   sessionEventDispatcher: sessionEventDispatcher.name,
 };
