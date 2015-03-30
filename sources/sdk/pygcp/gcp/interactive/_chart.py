@@ -119,7 +119,7 @@ def _get_chart_data(line):
     # too that if we fell through to assuming a Table, we really have one.
     if table:
       try:
-        schema = table.schema()
+        schema = table.schema
       except AttributeError:
         raise Exception("Cannot chart %s; unsupported object type" % name)
     else:

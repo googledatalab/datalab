@@ -274,7 +274,7 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
     </script>
   """
 
-  fields = fields if fields else [field.name for field in table.schema()]
+  fields = fields if fields else [field.name for field in table.schema]
   div_id = str(int(round(_time.time())))
   left_meta = "Rows %d" % table.length if table.length >= 0 else ''
   right_meta = job_id if job_id else table.full_name
