@@ -8,6 +8,9 @@ fi
 ### CONFIG
 # Create all of the output paths
 build_root="$REPO_DIR/build/server";
+staging_root="$REPO_DIR/staging/server";
+test_root="$REPO_DIR/test/server";
+
 # TODO(bryantd): using an additonal directory '_' to offset the build path such that
 # the hard-coded dependency paths (dictated by TypeScript module system currently) will
 # line up with the source directory layout. Current issue is that the source code needs
@@ -21,11 +24,12 @@ build_root="$REPO_DIR/build/server";
 # This module path config feature is being actively discussed within the TypeScript community, so
 # opting to see how it plays out before implementing more complex work-arounds. For discussion,
 # see: https://github.com/Microsoft/TypeScript/issues/293
-staging_path="$build_root/staging";
+build_path="$build_root/_";
+staging_path="$staging_root/_";
+test_path="$test_root/_";
+
 ui_staging_path="$staging_path/ui";
 node_staging_path="$staging_path/node";
-test_path="$build_root/tests";
-build_path="$build_root/build";
 
 # Define the source path
 server_root="$REPO_DIR/sources/server";
