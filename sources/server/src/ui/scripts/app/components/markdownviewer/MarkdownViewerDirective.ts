@@ -62,6 +62,7 @@ class MarkdownViewerController {
    * @return Rendered HTML content within a trusted HTML container object.
    */
   renderMarkdownAsTrustedHtml (markdown: string) {
+    // $sce.trustAsHtml does not perform additional escaping.
     return this._sce.trustAsHtml(marked(markdown))
   }
 }
