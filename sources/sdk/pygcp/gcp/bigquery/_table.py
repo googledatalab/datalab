@@ -709,7 +709,7 @@ class Table(object):
         if df is None:
           df = pd.DataFrame.from_dict(page_rows)
         else:
-          df.append(page_rows, ignore_index=True)
+          df = df.append(page_rows, ignore_index=True)
       if not page_token:
         break
 
