@@ -14,7 +14,7 @@
 
 
 /**
- * Commpm notebook data accessors.
+ * Common notebook data accessors.
  *
  * TODO(bryantd): could combine these accessors into a class that wraps a app.notebooks.Notebook
  * instance, so that indices for direct cell and worksheet access by ID can be built, maintained
@@ -48,7 +48,7 @@ function createError (format: string, ...formatArgs: string[]) {
  */
 export function getCellIndexOrThrow (cellId: string, worksheet: app.notebooks.Worksheet) {
   var index = indexOf(cellId, worksheet);
-  if (index === -1) {
+  if (index == -1) {
     throw createError('Cell id "%s" does not exist within worksheet with id "%s"',
       cellId, worksheet.id);
   }
@@ -79,10 +79,8 @@ export function getCellOrThrow (
   }
 
   // Cell was not found within the worksheet if we made it here.
-  if (cell === undefined) {
-    throw createError('Cell id "%s" does not exist within worksheet with id "%s"',
-        cellId, worksheetId);
-  }
+  throw createError('Cell id "%s" does not exist within worksheet with id "%s"',
+      cellId, worksheetId);
 }
 
 /**
@@ -95,19 +93,15 @@ export function getWorksheetOrThrow (
     notebook: app.notebooks.Notebook
     ): app.notebooks.Worksheet {
 
-  var worksheet: app.notebooks.Worksheet;
   notebook.worksheets.forEach((ws) => {
     if (worksheetId == ws.id) {
       // Found the worksheet of interest.
-      worksheet = ws;
+      return ws;
     }
   });
 
-  if (worksheet === undefined) {
-    throw createError('Worksheet id "%s" does not exist', worksheetId);
-  }
-
-  return worksheet;
+  // Worksheet was not found if we made it here.
+  throw createError('Worksheet id "%s" does not exist', worksheetId);
 }
 
 /**
