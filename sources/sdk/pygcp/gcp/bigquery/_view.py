@@ -19,22 +19,33 @@ from _table import Table as _Table
 
 class View(_Table):
   def __init__(self, api, name, query):
+    """ Construct a View virtual table.
+
+    Args:
+      api: the BigQuery API object to use to issue requests.
+      name: the name of the view either as a string or a 3-part tuple (projectid, datasetid, name).
+      query: the query for the view, either a string or a Query object.
+    """
     _Table.__init__(self, api, name)
-    self._query = query
+    self._query = query if isinstance(query, basestring) else query.sql
 
   @property
   def query(self):
     return self._query
 
-  def create(self):
+  def create(self, friendly_name=None, description=None):
     """ Create the view.
 
+    Args:
+      friendly_name: an optional friendly name.
+      description: an optional description.
     Returns:
       The View instance.
     Raises:
       Exception if the view couldn't be created.
     """
-    response = self._api.tables_insert(self._name_parts, view=self._query)
+    response = self._api.tables_insert(self._name_parts, view=self._query,
+                                       friendly_name=friendly_name, description=description)
     if 'selfLink' in response:
       return self
     raise Exception("View %s could not be created")

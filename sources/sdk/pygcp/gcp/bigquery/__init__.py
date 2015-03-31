@@ -153,7 +153,7 @@ def view(name, query, context=None):
 
   Args:
     name: the name of the view, as a string or (project_id, dataset_id, table_id) tuple.
-    query" the query to use for the view.
+    query: the query to use for the view (string or Query).
     context: an optional Context object providing project_id and credentials.
   Returns:
     A Table object that can be used to retrieve table metadata from BigQuery.

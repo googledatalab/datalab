@@ -423,7 +423,7 @@ class Table(object):
       # because the file didn't exist, return an error.
       pass
 
-  def create(self, schema, truncate=False):
+  def create(self, schema, truncate=False, friendly_name=None, description=None):
     """ Create the table with the specified schema.
 
     Args:
@@ -432,6 +432,8 @@ class Table(object):
           See https://cloud.google.com/bigquery/docs/reference/v2/tables#resource
       truncate: if True, delete the table first if it exists. If False and the Table exists,
           creation will fail and raise an Exception.
+      friendly_name: an optional friendly name.
+      description: an optional description.
     Returns:
       The Table instance.
     Raises:
@@ -441,7 +443,8 @@ class Table(object):
       self.delete()
     if isinstance(schema, TableSchema):
       schema = schema._bq_schema
-    response = self._api.tables_insert(self._name_parts, schema)
+    response = self._api.tables_insert(self._name_parts, schema=schema,
+                                       friendly_name=friendly_name, description=description)
     if 'selfLink' in response:
       return self
     raise Exception("Table %s could not be created as it already exists" % self.full_name)
