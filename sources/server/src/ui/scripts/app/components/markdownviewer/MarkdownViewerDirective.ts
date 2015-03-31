@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -79,6 +78,13 @@ function markdownViewerDirectiveLink (
     scope.trustedHtml = ctrl.renderMarkdownAsTrustedHtml(newValue);
   });
 
+  // Configure how the Markdown should be rendered to HTML.
+  marked.setOptions({
+    gfm: true, // GitHub-flavored markdown (GFM)
+    tables: true, // Enable GFM tables
+    breaks: true, // Enable GFM line breaks
+    sanitize: false, // Sanitization escapes HTML in the Markdown. Allow HTML.
+  });
 }
 
 /**
