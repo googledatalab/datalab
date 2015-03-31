@@ -26,12 +26,19 @@ import marked = require('marked');
 
 var log = logging.getLogger(constants.scopes.markdownViewer);
 
-interface MarkdownViewerScope extends ng.IScope { // FIXME: naming convention for local scopes
+/**
+ * Markdown Viewer directive scope typedef.
+ */
+interface MarkdownViewerScope extends ng.IScope {
   source: string;
   trustedHtml?: any;
 }
 
+/**
+ * Markdown Viewer directive controller.
+ */
 class MarkdownViewerController {
+
   _sce: ng.ISCEService;
   _scope: MarkdownViewerScope;
 
@@ -73,7 +80,7 @@ function markdownViewerDirectiveLink (
     attrs: any,
     ctrl: MarkdownViewerController) {
 
-  // Re-render the markdown sourced to html whenever the source value changes
+  // Re-render the markdown sourced to html whenever the source value changes.
   scope.$watch('source', (newValue: any, oldValue: any) => {
     scope.trustedHtml = ctrl.renderMarkdownAsTrustedHtml(newValue);
   });
@@ -96,7 +103,7 @@ function markdownViewerDirective (): ng.IDirective {
   return {
     restrict: 'E',
     scope: {
-      source: '=' // FIXME: possible to make this a one-way (read-only) binding?
+      source: '='
     },
     templateUrl: constants.scriptPaths.app + '/components/markdownviewer/markdownviewer.html',
     replace: true,
