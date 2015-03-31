@@ -24,7 +24,7 @@ def main():
   name1 = 'githubarchive:github.timeline'
   table1 = bq.table(name1)
   print name1
-  for field in table1.schema():
+  for field in table1.schema:
     print field.name + ' [' + field.data_type + ']'
 
   # pylint: disable=protected-access
@@ -34,7 +34,7 @@ def main():
 
   name2 = 'requestlogs.logs20140615'
   table2 = bq.table(name2)
-  table2_md = table2.metadata()
+  table2_md = table2.metadata
   print name2
   print 'full name: ' + table2_md.full_name
   print 'friendly name: ' + table2_md.friendly_name
@@ -43,7 +43,7 @@ def main():
   print 'size: ' + str(table2_md.size)
   print 'created: ' + str(table2_md.created_on)
   print 'modified: ' + str(table2_md.modified_on)
-  for field in table2.schema():
+  for field in table2.schema:
     print field.name + ' [' + field.data_type + ']'
 
   print table2.sample().to_dataframe()

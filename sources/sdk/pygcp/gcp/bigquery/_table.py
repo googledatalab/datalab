@@ -212,14 +212,14 @@ class TableSchema(list):
 class TableMetadata(object):
   """Represents metadata about a BigQuery table."""
 
-  def __init__(self, name, info):
+  def __init__(self, table, info):
     """Initializes an instance of a TableMetadata.
 
     Args:
-      name: the name of the table.
+      table: the table this belongs to.
       info: The BigQuery information about this table.
     """
-    self._name = name
+    self._table = table
     self._info = info
 
   @property
@@ -233,23 +233,38 @@ class TableMetadata(object):
     """The description of the table if it exists."""
     return self._info.get('description', '')
 
+  @description.setter
+  def description(self, description):
+    """Sets the description of the table."""
+    self._table.update(description=description)
+
   @property
-  def expires_on(self):
+  def expiration(self):
     """The timestamp for when the table will expire."""
     timestamp = self._info.get('expirationTime', None)
     if timestamp is None:
       return None
     return _Parser.parse_timestamp(timestamp)
 
+  @expiration.setter
+  def expiration(self, when):
+    """Sets the expiry time for the table."""
+    self._table.update(expiry=when)
+
   @property
   def friendly_name(self):
     """The friendly name of the table if it exists."""
     return self._info.get('friendlyName', '')
 
+  @friendly_name.setter
+  def friendly_name(self, name):
+    """Sets the friendly name of the table."""
+    self._table.update(friendly_name=name)
+
   @property
   def full_name(self):
     """The full name of the table."""
-    return self._name
+    return self._table.full_name
 
   @property
   def modified_on(self):
@@ -383,6 +398,7 @@ class Table(object):
     if self._info is None:
       self._info = self._api.tables_get(self._name_parts)
 
+  @property
   def metadata(self):
     """Retrieves metadata about the table.
 
@@ -532,7 +548,7 @@ class Table(object):
           index_name = 'Index'
         data_schema._add_field(index_name, 'INTEGER')
 
-    table_schema = self.schema()
+    table_schema = self.schema
 
     # Do some validation of the two schema to make sure they are compatible.
     for data_field in data_schema:
@@ -645,7 +661,7 @@ class Table(object):
       else:
         raise Exception('Cannot use negative indices for table of unknown length')
 
-    schema = self.schema()
+    schema = self.schema
     name_parts = self._name_parts
 
     def _retrieve_rows(page_token, count):
@@ -730,7 +746,7 @@ class Table(object):
     """
     f = codecs.open(path, 'w', 'utf-8')
     fieldnames = []
-    for column in self.schema():
+    for column in self.schema:
       fieldnames.append(column.name)
     writer = csv.DictWriter(f, fieldnames=fieldnames, dialect=dialect)
     if write_header:
@@ -739,6 +755,7 @@ class Table(object):
       writer.writerow(row)
     f.close()
 
+  @property
   def schema(self):
     """Retrieves the schema of the table.
 
@@ -752,6 +769,47 @@ class Table(object):
       return TableSchema(definition=self._info['schema']['fields'])
     except KeyError:
       raise Exception('Unexpected table response.')
+
+  @schema.setter
+  def schema(self, schema):
+    """Update the schema for the table.
+
+    Args:
+      schema: if not None, the new schema: either a list of dictionaries or a TableSchema.
+    """
+    self.update(schema=schema)
+
+  def update(self, friendly_name=None, description=None, expiry=None, schema=None):
+    """ Selectively updates Table information.
+
+    Args:
+      friendly_name: if not None, the new friendly name.
+      description: if not None, the new description.
+      expiry: if not None, the new expiry time, either as a DateTime or milliseconds since epoch.
+      schema: if not None, the new schema: either a list of dictionaries or a TableSchema.
+
+    Returns:
+    """
+    if not(friendly_name or description or expiry or schema):
+      return  # Nothing to do.
+    self._load_info()
+    if friendly_name is not None:
+      self._info['friendly_name'] = friendly_name
+    if description is not None:
+      self._info['description'] = description
+    if expiry is not None:
+      if isinstance(expiry, datetime):
+        expiry = time.mktime(expiry.timetuple()) * 1000
+      self._info['expiry'] = expiry
+    if schema is not None:
+      if isinstance(schema, TableSchema):
+        schema = schema._bq_schema
+      self._info['schema']['fields'] = schema
+    try:
+      self._api.table_update(self._name_parts, self._info)
+    except Exception:
+      # The cached metadata is out of sync now; abandon it.
+      self._info = None
 
   def _repr_sql_(self):
     """Returns a representation of the table for embedding into a SQL statement.
@@ -779,7 +837,7 @@ class Table(object):
     """ Get the length of the table (number of rows). We don't use __len__ as this may
         return -1 for 'unknown'.
     """
-    return self.metadata().rows
+    return self.metadata.rows
 
   def __iter__(self):
     """ Get an iterator for the table.

@@ -467,3 +467,15 @@ class Api(object):
       }
     }
     return _util.Http.request(url, data=data, credentials=self._credentials)
+
+  def table_update(self, table_name, table_info):
+    """Updates the Table info.
+
+    Args:
+      table_name: the name of the table to update as a tuple of components.
+      table_info: the Table resource with updated fields.
+    """
+    url = Api._ENDPOINT + (Api._TABLES_PATH % table_name)
+    return _util.Http.request(url, method='PUT', data=table_info, credentials=self._credentials)
+
+

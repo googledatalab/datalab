@@ -79,7 +79,7 @@ class TestCases(unittest.TestCase):
     mock_api_tables.return_value = self._create_table_info_result(ts=ts)
     t = self._create_table(name)
 
-    metadata = t.metadata()
+    metadata = t.metadata
 
     self.assertEqual(name, metadata.full_name)
     self.assertEqual('Logs', metadata.friendly_name)
@@ -93,7 +93,7 @@ class TestCases(unittest.TestCase):
     mock_api_tables.return_value = self._create_table_info_result()
 
     t = self._create_table('test:requestlogs.today')
-    schema = t.schema()
+    schema = t.schema
 
     self.assertEqual(2, len(schema))
     self.assertEqual('name', schema[0].name)
@@ -103,7 +103,7 @@ class TestCases(unittest.TestCase):
     mock_api_tables.return_value = self._create_table_info_nested_schema_result()
 
     t = self._create_table('test:requestlogs.today')
-    schema = t.schema()
+    schema = t.schema
 
     self.assertEqual(4, len(schema))
     self.assertEqual('name', schema[0].name)
@@ -121,7 +121,7 @@ class TestCases(unittest.TestCase):
     t = self._create_table('test:requestlogs.today')
 
     with self.assertRaises(Exception) as error:
-      _ = t.schema()
+      _ = t.schema
     self.assertEqual(error.exception[0], 'Unexpected table response.')
 
   @mock.patch('gcp.bigquery._Api.tables_list')
