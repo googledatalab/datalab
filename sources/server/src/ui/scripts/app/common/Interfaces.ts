@@ -49,6 +49,11 @@ declare module app {
     notebook: app.notebooks.Notebook;
 
     /**
+     * A reference to the current notebook path.
+     */
+    notebookPath: string;
+
+    /**
      * Adds a cell of the given type to the worksheet.
      *
      * @param cellType The type of cell to add (e.g., 'markdown').

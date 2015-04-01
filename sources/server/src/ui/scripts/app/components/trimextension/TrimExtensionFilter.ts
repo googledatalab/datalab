@@ -16,15 +16,18 @@
 import _app = require('app/App');
 
 /**
- * Filter for trimming the file extension off of a file path
+ * Filter for selecting the basename from a file path.
  *
- * e.g., "/path/to/foo.bar" => "/path/to/foo"
+ * e.g., "/path/to/foo.bar" => "foo"
  *
- * Example usage in a template: {{ somePath | trimExtension }}
+ * Example usage in a template: {{ somePath | basename }}
  */
-function trimExtension () {
+function basename () {
   return (path: string) => {
-    var match = /(.*)\.[^.]+$/.exec(path);
+    var parts = path.split('/');
+    var filename = parts[parts.length - 1];
+
+    var match = /(.*)\.[^.]+$/.exec(filename);
     if (!match) {
       // Filename doesn't match the regex -- malformed, so just display it as-is
       return path;
@@ -34,4 +37,4 @@ function trimExtension () {
   };
 }
 
-_app.registrar.filter('trimExtension', trimExtension);
+_app.registrar.filter('basename', basename);
