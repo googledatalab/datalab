@@ -14,27 +14,81 @@
 
 
 /**
- * Directive for creating a single code editor element
+ * Directive for creating a single code editor element.
+ *
+ * This directive wraps a CodeMirror instance and exposes attributes for two-way binding the source
+ * (text) content.
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <reference path="../../../../../../../../externs/ts/codemirror/codemirror.d.ts" />
-import logging = require('app/common/Logging');
-import constants = require('app/common/Constants');
-import app = require('app/App');
+/// <amd-dependency path="codeMirror/mode/python/python" />
+/// <amd-dependency path="codeMirror/addon/edit/matchbrackets" />
 import codeMirror = require('codeMirror');
+import constants = require('app/common/Constants');
+import logging = require('app/common/Logging');
+import _app = require('app/App');
 
 
 var log = logging.getLogger(constants.scopes.codeEditor);
 
+// TODO(bryantd): enable dynamic language selection based upon containing cell attributes.
 var codeMirrorOptions: CodeMirror.EditorConfiguration = {
-  lineNumbers: false
+  // TODO(bryantd): add hook to enable line numbers when containing cell becomes active.
+  lineNumbers: false,
+  indentUnit: 4,
+
+  // Language mode requires additional assets be requested via amd-dependency.
+  mode: {
+    name: "python",
+  },
+
+  // Options below require addons to be loaded via amd-dep as well.
+  matchBrackets: true,
 };
 
 /**
  * Defines the shape of the directive scope.
  */
 interface CodeEditorScope extends ng.IScope {
-  code: string;
+  /**
+   * The source content for the editor (i.e., the displayed text)
+   */
+  source: string;
+
+  /**
+   * Boolean to indicate whether the this editor instance is currently active.
+   *
+   * A user of this component (e.g., an enclosing directive, template, controller, etc.) can
+   * programmatically give focus to the editor element by setting the scope.active attribute to
+   * true.
+   *
+   * Likewise, this also works in the reverse direction. If a user focuses the editor element,
+   * the scope.active attribute becomes true and external components that are bound to this value
+   * will be updated/notified.
+   */
+  active: boolean;
+
+  /**
+   * Getter for the mapping of key commands to callbacks.
+   *
+   * The set of valid keys and key/modifier combinations is dictated by CodeMirror.
+   * For details, see: https://codemirror.net/doc/manual.html#keymaps
+   *
+   * For example:
+   * keymap = {
+   *   'Shift+Enter': <callback for Shift+Enter>
+   *   'Tab': <callback for Tab>,
+   *   // etc.
+   * }
+   */
+  getKeymap: Function;
+
+  /**
+   * Getter for the mapping of editor region DOM events to callbacks.
+   *
+   * An example of a valid DOM event would be 'focus', 'mouseover', etc.
+   */
+  getActionHandlers: Function;
 }
 
 /**
@@ -43,43 +97,91 @@ interface CodeEditorScope extends ng.IScope {
  * @param scope the directive's (isolate) scope
  * @param element the jqLite-selected directive element
  */
-function codeEditorDirectiveLink (
+function codeEditorDirectiveLink(
     scope: CodeEditorScope,
-    element: ng.IAugmentedJQuery)
+    element: ng.IAugmentedJQuery,
+    attrs: any)
     : void {
-  var cmContainer = <HTMLTextAreaElement>element[0];
+
+  var cmContainer = element[0];
+
   var cmInstance: CodeMirror.Editor = codeMirror(cmContainer, codeMirrorOptions);
+  cmInstance.addKeyMap(scope.getKeymap());
 
   // Sets the inital code editor content equal to the linked template attribute value.
   // The 'code' element attribute will point to a value in the parent scope/controller.
-  cmInstance.setValue(scope.code);
+  cmInstance.setValue(scope.source);
 
-  // Registers a callback to update the scope's 'code' value when the CodeMirror content changes
-  cmInstance.on('change', (
-      cm: CodeMirror.Editor,
-      change: CodeMirror.EditorChange
-      ) => {
+  // Watch the scope for new source content values and publish them into the CodeMirror instance.
+  scope.$watch('source', (newValue: any, oldValue: any) => {
+    // Guard agains cyclical updates when editing cells.
+    // i.e., cm.changed -> scope.changed -> cm.changed loops, due to watching the scope.
+    if (cmInstance.getValue() != newValue) {
+      // Overwrite the previous editor contents with the updated version.
+      //
+      // Note: this will kill any "dirty" changes that haven't been persisted,
+      // but this is only a concern in multi-writer environments (unsupported currently) where multiple
+      // users are editting the same cell's content. One approach to avoid needing within-cell content
+      // resolution under multiple writers is to effectively lock a cell for a given user whenever said
+      // user focuses the cell, disallowing any competing edits from other users. Will need UX treatment
+      // to illustrate who owns a given cell (e.g., a cell level user "cursor", maybe based upon the cell
+      // border color or something).
+      cmInstance.setValue(newValue);
+    }
+  });
+
+  // Registers a callback to update the scope's 'code' value when the CodeMirror content changes.
+  cmInstance.on('change', (cm: CodeMirror.Editor, change: CodeMirror.EditorChange) => {
+
+    if (cm.getValue() == scope.source) {
+      // No need to publish an updated value to the scope (already in-sync)
+      return;
+    }
+
     // Wraps scope modifications in an $apply to "publish" them to the parent scope/ctrl
     scope.$apply(() => {
-      scope.code = cm.getValue();
+      scope.source = cm.getValue();
     });
+  });
+
+  // Register handlers for each DOM event we're interested in exposing.
+  var actions: any = scope.getActionHandlers();
+  // If a focus event handler was provided, register it.
+  if (actions.focus) {
+    cmInstance.on('focus', (cm: CodeMirror.Editor) => {
+      actions.focus(cm);
+      // Mark the editor as being in "active" state if a user focuses it (e.g., by clicking within
+      // the editor region).
+      scope.active = true;
+    });
+  }
+
+  // If the editor active property becomes true, give focus to the CodeMirror editor.
+  // This allows external components to programmatically focus the editor region.
+  scope.$watch('active', (isActive: boolean) => {
+    if (isActive) {
+      cmInstance.focus();
+    }
   });
 };
 
 /**
- * Creates a code editor directive
+ * Creates a code editor directive.
  *
- * @return a directive definition
+ * @return A directive definition.
  */
-function codeEditorDirective (): ng.IDirective {
+function codeEditorDirective(): ng.IDirective {
   return {
     restrict: 'E',
     scope: {
-      code: '=contents'
+      source: '=',
+      active: '=',
+      getKeymap: '&keymap',
+      getActionHandlers: '&actions'
     },
-    link: codeEditorDirectiveLink
+    link: codeEditorDirectiveLink,
   }
 }
 
-app.registrar.directive(constants.codeEditor.directiveName, codeEditorDirective);
+_app.registrar.directive(constants.codeEditor.directiveName, codeEditorDirective);
 log.debug('Registered code editor directive');
