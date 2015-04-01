@@ -27,6 +27,12 @@ function basename () {
     var parts = path.split('/');
     var filename = parts[parts.length - 1];
 
+    // Regex structure:
+    //
+    // [filename up to final "." char] ["." char] [extension]
+    //
+    // And '"filename up to the final "."' is the basename, which we capture and
+    // extract below.
     var match = /(.*)\.[^.]+$/.exec(filename);
     if (!match) {
       // Filename doesn't match the regex -- malformed, so just display it as-is
