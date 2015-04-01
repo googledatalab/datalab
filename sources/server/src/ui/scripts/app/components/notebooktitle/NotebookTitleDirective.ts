@@ -33,17 +33,20 @@ class NotebookTitleController {
 
   _scope: NotebookTitleScope;
 
-  static $inject = ['$scope', '$route'];
+  static $inject = ['$scope', constants.clientNotebookSession.name];
 
   /**
    * Constructor.
    *
    * @param scope The directive scope.
-   * @param route Angular's $route service.
+   * @param route The client's notebook session.
    */
-  constructor(scope: NotebookTitleScope, route: ng.route.IRouteService) {
+  constructor(
+      scope: NotebookTitleScope,
+      clientNotebookSession: app.IClientNotebookSession) {
+
     this._scope = scope;
-    this._scope.title = route.current.params.notebookPath;
+    this._scope.title = clientNotebookSession.notebookPath;
   }
 }
 
