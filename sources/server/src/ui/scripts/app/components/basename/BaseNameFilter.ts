@@ -27,7 +27,7 @@ function basename () {
     var parts = path.split('/');
     var filename = parts[parts.length - 1];
 
-    // Find the final period, which marks delimites basename from file extension.
+    // Find the final period, which delimits the basename from the file extension.
     var finalPeriodIndex = filename.lastIndexOf('.');
     if (finalPeriodIndex == -1) {
       // No file extension to trim. Done formatting.
