@@ -27,20 +27,16 @@ function basename () {
     var parts = path.split('/');
     var filename = parts[parts.length - 1];
 
-    // Regex structure:
-    //
-    // [filename up to final "." char] ["." char] [extension]
-    //
-    // And '"filename up to the final "."' is the basename, which we capture and
-    // extract below.
-    var match = /(.*)\.[^.]+$/.exec(filename);
-    if (!match) {
-      // Filename doesn't match the regex -- malformed, so just display it as-is
-      return path;
+    // Find the final period, which marks delimites basename from file extension.
+    var finalPeriodIndex = filename.lastIndexOf('.');
+    if (finalPeriodIndex == -1) {
+      // No file extension to trim. Done formatting.
+      return filename;
     }
-    // A successful regex match returns: [<full text of matched string>, <capturing group we want>]
-    return match[1];
-  };
+
+    // Return the portion of the filename up to the final period.
+    return filename.substr(0, finalPeriodIndex);
+  }
 }
 
 _app.registrar.filter('basename', basename);
