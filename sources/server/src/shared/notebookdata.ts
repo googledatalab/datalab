@@ -93,15 +93,19 @@ export function getWorksheetOrThrow (
     notebook: app.notebooks.Notebook
     ): app.notebooks.Worksheet {
 
+  var worksheet: app.notebooks.Worksheet;
   notebook.worksheets.forEach((ws) => {
     if (worksheetId == ws.id) {
       // Found the worksheet of interest.
-      return ws;
+      worksheet = ws;
     }
   });
 
-  // Worksheet was not found if we made it here.
-  throw createError('Worksheet id "%s" does not exist', worksheetId);
+  if (worksheet === undefined) {
+    throw createError('Worksheet id "%s" does not exist', worksheetId);
+  }
+
+  return worksheet;
 }
 
 /**

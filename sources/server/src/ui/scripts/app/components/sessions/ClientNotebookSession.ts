@@ -61,7 +61,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
    * @param rootScope Angular's $rootScope service.
    * @param sce Angular's $sce (strict contextual escaping) service.
    */
-  constructor(rootScope: ng.IRootScopeService, sce: ng.ISCEService, route: ng.IRouteService) {
+  constructor(rootScope: ng.IRootScopeService, sce: ng.ISCEService, route: ng.route.IRouteService) {
     this._rootScope = rootScope;
     this._sce = sce;
 
@@ -71,7 +71,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
     // the current notebook path.this notebook path reference should be preferred for referencing
     // by other components that require access to the current notebook path (e.g., notebook title
     // component).
-    notebookPath = route.current.params.notebookPath;
+    this.notebookPath = route.current.params.notebookPath;
 
     this._registerEventHandlers();
   }
