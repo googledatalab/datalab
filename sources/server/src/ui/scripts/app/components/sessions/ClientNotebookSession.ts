@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Google Inc. All rights reserved.
+ * Copyright 2015 Google Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -116,6 +116,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
       source: source,
       insertAfter: insertAfterCellId
     };
+
     this._emitAction(addCellAction)
   }
 
@@ -131,6 +132,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
       worksheetId: worksheetId,
       cellId: cellId
     };
+
     this._emitAction(clearOutputAction);
   }
 
@@ -141,6 +143,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
     var clearOutputsAction: app.notebooks.actions.ClearOutputs = {
       name: actions.notebook.clearOutputs
     };
+
     this._emitAction(clearOutputsAction);
   }
 
@@ -156,6 +159,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
       cellId: cellId,
       worksheetId: worksheetId
     }
+
     this._emitAction(deleteCellAction);
   }
 
@@ -192,6 +196,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
         this._createExecuteCellAction(cell.id, worksheetId)
       ]
     }
+
     this._emitAction(compositeAction);
   }
 
@@ -206,6 +211,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
       // Then this is a no-op. Nothing to execute for non-code cells currently.
       return;
     }
+
     // Emit an execute action without a corresponding source update.
     this._emitAction(this._createExecuteCellAction(cell.id, worksheetId));
   }
@@ -217,6 +223,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
     var executeCellsAction: app.notebooks.actions.ExecuteCells = {
       name: actions.notebook.executeCells
     };
+
     this._emitAction(executeCellsAction);
   }
 
@@ -236,6 +243,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
       destinationWorksheetId: worksheetId,
       insertAfter: insertAfterCellId
     };
+
     this._emitAction(moveCellAction);
   }
 
@@ -385,6 +393,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
    */
   _handleAddCell(update: app.notebooks.updates.AddCell) {
     var worksheet = nbdata.getWorksheetOrThrow(update.worksheetId, this.notebook);
+
     // If an insertion point was defined, verify the given cell id exists within the worksheet
     var insertIndex: number;
     if (update.insertAfter) {
@@ -396,6 +405,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
       // Prepend the cell to the beginning of the worksheet
       insertIndex = 0;
     }
+
     // Insert the cell at the insert index;
     worksheet.cells.splice(insertIndex, 0, update.cell);
   }
@@ -470,8 +480,10 @@ class ClientNotebookSession implements app.IClientNotebookSession {
   _handleDeleteCell(update: app.notebooks.updates.DeleteCell) {
     // Get the worksheet from which the cell should be deleted.
     var worksheet = nbdata.getWorksheetOrThrow(update.worksheetId, this.notebook);
+
     // Find the index of the cell to delete within the worksheet.
     var cellIndex = nbdata.getCellIndexOrThrow(update.cellId, worksheet);
+
     // Remove the cell from the worksheet.
     var removed = worksheet.cells.splice(cellIndex, 1);
     log.debug('Deleted cell from worksheet', removed);
@@ -576,15 +588,20 @@ var placeholderMarkdownCellSource = 'Markdown cell';
 var placeholderHeadingCellSource = 'Heading cell';
 
 // Mimetype preference order used by IPython.
+//
+// Until such time that all of these mimetypes are sufficiently well-supported to be exposed,
+// only a subset of the mimetypes will be used for selecting from a mimetype bundle. They remain
+// here commented so that when/if they become supported, the same preference order relative to
+// IPython will be used.
 var preferredMimetypes = [
-  'application/javascript',
+  // 'application/javascript',
   'text/html',
-  'text/markdown',
-  'text/latex',
-  'image/svg+xml',
+  // 'text/markdown',
+  // 'text/latex',
+  // 'image/svg+xml',
   'image/png',
   'image/jpeg',
-  'application/pdf',
+  // 'application/pdf',
   'text/plain'];
 
 _app.registrar.service(constants.clientNotebookSession.name, ClientNotebookSession);
