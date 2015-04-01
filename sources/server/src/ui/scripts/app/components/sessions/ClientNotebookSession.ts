@@ -48,11 +48,12 @@ class ClientNotebookSession implements app.IClientNotebookSession {
   activeCell: app.notebooks.Cell;
   activeWorksheet: app.notebooks.Worksheet;
   notebook: app.notebooks.Notebook;
+  notebookPath: string;
 
   _rootScope: ng.IRootScopeService;
   _sce: ng.ISCEService;
 
-  static $inject = ['$rootScope', '$sce'];
+  static $inject = ['$rootScope', '$sce', '$route'];
 
   /**
    * Constructor.
@@ -60,9 +61,17 @@ class ClientNotebookSession implements app.IClientNotebookSession {
    * @param rootScope Angular's $rootScope service.
    * @param sce Angular's $sce (strict contextual escaping) service.
    */
-  constructor(rootScope: ng.IRootScopeService, sce: ng.ISCEService) {
+  constructor(rootScope: ng.IRootScopeService, sce: ng.ISCEService, route: ng.IRouteService) {
     this._rootScope = rootScope;
     this._sce = sce;
+
+    // Capture the initial notebook path from the address bar.
+    //
+    // Note: consider this value to be the authoritative source of truth for this client's view of
+    // the current notebook path.this notebook path reference should be preferred for referencing
+    // by other components that require access to the current notebook path (e.g., notebook title
+    // component).
+    notebookPath = route.current.params.notebookPath;
 
     this._registerEventHandlers();
   }
@@ -281,12 +290,14 @@ class ClientNotebookSession implements app.IClientNotebookSession {
       case 0:
         // Cannot move cell up, already at top of worksheet (no-op)
         return;
+
       case 1:
         // Move the cell to the top of the worksheet.
         // Because there is not currently an insertBefore option for the move cell action
         // a insertAfter value of null is used to indicate inserting at the head of the worksheet
         this.moveCell(cellId, worksheetId, null);
-      break;
+        break;
+
       default:
         // Given worksheet cell ids [A, B, C, D], if we want to move C "up" (towards beginning of
         // worksheet), we want to insert cell C after cell A, which is two before cell C
