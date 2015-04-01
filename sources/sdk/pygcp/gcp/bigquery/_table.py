@@ -233,11 +233,6 @@ class TableMetadata(object):
     """The description of the table if it exists."""
     return self._info.get('description', '')
 
-  @description.setter
-  def description(self, description):
-    """Sets the description of the table."""
-    self._table.update(description=description)
-
   @property
   def expiration(self):
     """The timestamp for when the table will expire."""
@@ -246,20 +241,10 @@ class TableMetadata(object):
       return None
     return _Parser.parse_timestamp(timestamp)
 
-  @expiration.setter
-  def expiration(self, when):
-    """Sets the expiry time for the table."""
-    self._table.update(expiry=when)
-
   @property
   def friendly_name(self):
     """The friendly name of the table if it exists."""
     return self._info.get('friendlyName', '')
-
-  @friendly_name.setter
-  def friendly_name(self, name):
-    """Sets the friendly name of the table."""
-    self._table.update(friendly_name=name)
 
   @property
   def full_name(self):
@@ -769,15 +754,6 @@ class Table(object):
       return TableSchema(definition=self._info['schema']['fields'])
     except KeyError:
       raise Exception('Unexpected table response.')
-
-  @schema.setter
-  def schema(self, schema):
-    """Update the schema for the table.
-
-    Args:
-      schema: if not None, the new schema: either a list of dictionaries or a TableSchema.
-    """
-    self.update(schema=schema)
 
   def update(self, friendly_name=None, description=None, expiry=None, schema=None):
     """ Selectively updates Table information.
