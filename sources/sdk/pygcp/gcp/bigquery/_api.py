@@ -336,12 +336,14 @@ class Api(object):
 
     return _util.Http.request(url, args=args, credentials=self._credentials)
 
-  def tables_insert(self, table_name, schema, friendly_name=None, description=None):
-    """Issues a request to create a table in the specified dataset with the specified id and schema.
+  def tables_insert(self, table_name, schema=None, query=None, friendly_name=None, description=None):
+    """Issues a request to create a table or view in the specified dataset with the specified id.
+       A schema must be provided to create a Table, or a query must be provided to create a View.
 
     Args:
       table_name: the name of the table as a tuple of components.
-      schema: the schema of the data.
+      schema: the schema, if this is a Table creation.
+      query: the query, if this is a View creation.
       friendly_name: an optional friendly name.
       description: an optional description.
     Returns:
@@ -357,12 +359,12 @@ class Api(object):
         'projectId': table_name.project_id,
         'datasetId': table_name.dataset_id,
         'tableId': table_name.table_id
-      },
-      'schema': {
-        'fields': schema
-      },
+      }
     }
-
+    if schema:
+      data['schema'] = {'fields': schema}
+    if query:
+      data['view'] = {'query': query}
     if friendly_name:
       data['friendlyName'] = friendly_name
     if description:

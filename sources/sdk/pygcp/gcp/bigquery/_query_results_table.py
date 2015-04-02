@@ -43,3 +43,4 @@ class QueryResultsTable(_Table):
   def is_temporary(self):
     """ Whether this is a short-lived table or not. """
     return self._is_temporary
+
