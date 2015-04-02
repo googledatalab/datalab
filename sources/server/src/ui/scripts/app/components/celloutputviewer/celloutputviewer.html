@@ -9,9 +9,7 @@
     <div ng-repeat="output in outputs" ng-switch="output.preferredMimetype">
 
       <!-- Plain text -->
-      <div ng-switch-when="text/plain">
-        {{ output.mimetypeBundle['text/plain'] }}
-      </div>
+      <pre ng-switch-when="text/plain">{{output.mimetypeBundle['text/plain']}}</pre>
 
       <!-- HTML -->
       <div ng-switch-when="text/html"
