@@ -234,7 +234,7 @@ class TableMetadata(object):
     return self._info.get('description', '')
 
   @property
-  def expiration(self):
+  def expires_on(self):
     """The timestamp for when the table will expire."""
     timestamp = self._info.get('expirationTime', None)
     if timestamp is None:
@@ -393,7 +393,7 @@ class Table(object):
       Exception if the request could not be executed or the response was malformed.
     """
     self._load_info()
-    return TableMetadata(self._full_name, self._info)
+    return TableMetadata(self, self._info)
 
   def exists(self):
     """Checks if the table exists.
