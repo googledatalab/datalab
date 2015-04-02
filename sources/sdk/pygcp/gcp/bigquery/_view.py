@@ -18,7 +18,6 @@ from ._table import Table as _Table
 
 # Query import is at end to avoid issues with circular dependencies.
 
-
 class View(object):
   """ An implementation of a BigQuery View. Views in BigQuery are virtual tables, but it
   is useful to have a mixture of both Table and Query semantics; our version thus internally

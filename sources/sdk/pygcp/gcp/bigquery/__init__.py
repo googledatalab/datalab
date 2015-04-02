@@ -17,6 +17,7 @@
 import gcp as _gcp
 import gcp._util as _util
 from ._api import Api as _Api
+from ._base_table import TableName as _TableName
 from ._dataset import DataSet as _DataSet
 from ._dataset import DataSetLister as _DataSetLister
 from ._dataset import DataSetName as _DataSetName
