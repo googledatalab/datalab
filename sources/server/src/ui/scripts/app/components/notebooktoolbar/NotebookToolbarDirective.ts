@@ -26,7 +26,7 @@ import _app = require('app/App');
 var log = logging.getLogger(constants.scopes.notebookToolbar);
 
 interface NotebookToolbarScope extends ng.IScope {
-  clientNotebookSession: app.IClientNotebookSession;
+  notebook: app.IClientNotebookSession;
 }
 
 class NotebookToolbarController {
@@ -45,8 +45,10 @@ class NotebookToolbarController {
   constructor(
       scope: NotebookToolbarScope,
       clientNotebookSession: app.IClientNotebookSession) {
+
     this._scope = scope;
-    this._scope.clientNotebookSession = clientNotebookSession
+
+    this._scope.notebook = clientNotebookSession
   }
 }
 
