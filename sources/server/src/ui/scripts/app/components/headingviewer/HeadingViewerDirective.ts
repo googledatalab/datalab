@@ -28,7 +28,7 @@ var log = logging.getLogger(constants.scopes.headingViewer);
 interface HeadingViewerScope extends ng.IScope {
   // The level attribute controls the heading level (h1 vs h2 vs h3 vs etc.)
   level: number;
-  source: string;
+  text: string;
 }
 
 /**
@@ -40,8 +40,8 @@ function headingViewerDirective (): ng.IDirective {
   return {
     restrict: 'E',
     scope: {
-      level: '='
-      source: '=',
+      level: '=',
+      text: '='
     },
     templateUrl: constants.scriptPaths.app + '/components/headingviewer/headingviewer.html',
     replace: true
