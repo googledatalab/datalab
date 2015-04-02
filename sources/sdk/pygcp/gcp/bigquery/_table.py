@@ -212,7 +212,9 @@ class Table(_BaseTable):
     return _Job(self._api, response['jobReference']['jobId']) \
         if response and 'jobReference' in response else None
 
-  def load(self, source, append=False, overwrite=False, source_format='CSV'):
+  def load(self, source, append=False, overwrite=False, source_format='CSV', field_delimiter=',',
+           allow_jagged_rows=False, allow_quoted_newlines=False, encoding='UTF-8',
+           ignore_unknown_values=False, max_bad_records=0, quote='"', skip_leading_rows=0):
     """ Load the table from GCS.
 
     Args:
@@ -221,12 +223,38 @@ class Table(_BaseTable):
       overwrite: if True overwrite existing table contents.
       source_format: the format of the data; default 'CSV'. Other options are DATASTORE_BACKUP
           or NEWLINE_DELIMITED_JSON.
+      field_delimiter: The separator for fields in a CSV file. BigQuery converts the string to
+          ISO-8859-1 encoding, and then uses the first byte of the encoded string to split the data
+          as raw binary (default ',').
+      allow_jagged_rows: If True, accept rows in CSV files that are missing trailing optional
+          columns; the missing values are treated as nulls (default False).
+      allow_quoted_newlines: If True, allow quoted data sections in CSV files that contain newline
+          characters (default False).
+      encoding: The character encoding of the data, either 'UTF-8' (the default) or 'ISO-8859-1'.
+      ignore_unknown_values: If True, accept rows that contain values that do not match the schema;
+          the unknown values are ignored (default False).
+      max_bad_records The maximum number of bad records that are allowed (and ignored) before
+          returning an 'invalid' error in the Job result (default 0).
+      quote: The value used to quote data sections in a CSV file; default '"'. If your data does
+          not contain quoted sections, set the property value to an empty string. If your data
+          contains quoted newline characters, you must also enable allow_quoted_newlines.
+      skip_leading_rows: A number of rows at the top of a CSV file to skip (default 0).
+
     Returns:
       A Job object for the load Job if it was started successfully; else None.
     """
     response = self._api.jobs_insert_load(source, self._name_parts,
-                                          append=append, overwrite=overwrite,
-                                          source_format=source_format)
+                                          append=append,
+                                          overwrite=overwrite,
+                                          source_format=source_format,
+                                          field_delimiter=field_delimiter,
+                                          allow_jagged_rows=allow_jagged_rows,
+                                          allow_quoted_newlines=allow_quoted_newlines,
+                                          encoding=encoding,
+                                          ignore_unknown_values=ignore_unknown_values,
+                                          max_bad_records=max_bad_records,
+                                          quote=quote,
+                                          skip_leading_rows=skip_leading_rows)
     return _Job(self._api, response['jobReference']['jobId']) \
         if response and 'jobReference' in response else None
 
