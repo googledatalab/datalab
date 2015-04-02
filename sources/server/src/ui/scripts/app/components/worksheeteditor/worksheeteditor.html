@@ -1,23 +1,24 @@
 <div class="datalab-worksheet-editor">
+  <!-- For each cell in the worksheet, create a cell-rendering directive -->
+  <div ng-repeat="cell in worksheet.cells" ng-switch="cell.type">
+    <!-- Create a different cell rendering directive for each flavor of supported cell -->
 
-    <!-- Create a cell rendering directive for each flavor of supported cell -->
-  <div ng-repeat="cell in worksheet.cells">
-    <div ng-switch="cell.type">
-      <datalab-code-cell
-          ng-switch-when="code"
-          cell="cell"
-          worksheet-id="worksheet.id"></datalab-code-cell>
+    <!-- Code cell -->
+    <datalab-code-cell
+        ng-switch-when="code"
+        cell="cell"
+        worksheet-id="worksheet.id"></datalab-code-cell>
 
-      <datalab-markdown-cell
-          ng-switch-when="markdown"
-          cell="cell"
-          worksheet-id="worksheet.id"></datalab-markdown-cell>
+    <!-- Markdown cell -->
+    <datalab-markdown-cell
+        ng-switch-when="markdown"
+        cell="cell"
+        worksheet-id="worksheet.id"></datalab-markdown-cell>
 
-      <datalab-heading-cell
-          ng-switch-when="heading"
-          cell="cell"
-          worksheet-id="worksheet.id"></datalab-heading-cell>
-    </div>
+    <!-- Heading cell -->
+    <datalab-heading-cell
+        ng-switch-when="heading"
+        cell="cell"
+        worksheet-id="worksheet.id"></datalab-heading-cell>
   </div>
-
 </div>
