@@ -2,31 +2,31 @@
 
   <!-- Evaluate cell (update + execute-if-code-cell) -->
   <i class="datalab-toolbar-button fa-play fa"
-      ng-click="clientNotebookSession.evaluateCell(cell, worksheetId)"></i>
+      ng-click="notebook.evaluateCell(cell, worksheetId)"></i>
 
   <!-- TODO(bryantd): all following actions will move into cell  toolbar drop down menu -->
 
   <!-- Add code cell -->
   <i class="datalab-toolbar-button fa-terminal fa"
-      ng-click="clientNotebookSession.addCell('code', worksheetId, cell.id)"></i>
+      ng-click="notebook.addCell('code', worksheetId, cell.id)"></i>
 
   <!-- Add markdown cell -->
   <i class="datalab-toolbar-button fa-edit fa"
-      ng-click="clientNotebookSession.addCell('markdown', worksheetId, cell.id)"></i>
+      ng-click="notebook.addCell('markdown', worksheetId, cell.id)"></i>
 
   <!-- Add heading cell -->
   <i class="datalab-toolbar-button fa-paragraph fa"
-      ng-click="clientNotebookSession.addCell('heading', worksheetId, cell.id)"></i>
+      ng-click="notebook.addCell('heading', worksheetId, cell.id)"></i>
 
   <!-- Delete cell -->
   <i class="datalab-toolbar-button fa-trash fa"
-      ng-click="clientNotebookSession.deleteCell(cell.id, worksheetId)"></i>
+      ng-click="notebook.deleteCell(cell.id, worksheetId)"></i>
 
   <!-- Move cell up -->
   <i class="datalab-toolbar-button fa-level-up fa"
-      ng-click="clientNotebookSession.moveCellUp(cell.id, worksheetId)"></i>
+      ng-click="notebook.moveCellUp(cell.id, worksheetId)"></i>
 
   <!-- Move cell down -->
   <i class="datalab-toolbar-button fa-level-down fa"
-      ng-click="clientNotebookSession.moveCellDown(cell.id, worksheetId)"></i>
+      ng-click="notebook.moveCellDown(cell.id, worksheetId)"></i>
 </div>

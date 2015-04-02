@@ -31,7 +31,7 @@ interface CellToolbarScope extends ng.IScope {
   worksheetId: string;
 
   // Internally configured attributes.
-  clientNotebookSession: app.IClientNotebookSession;
+  notebook: app.IClientNotebookSession;
 }
 
 class CellToolbarController {
@@ -50,7 +50,7 @@ class CellToolbarController {
   constructor (scope: CellToolbarScope, clientNotebookSession: app.IClientNotebookSession) {
     this._scope = scope;
 
-    this._scope.clientNotebookSession = clientNotebookSession;
+    this._scope.notebook = clientNotebookSession;
   }
 }
 
