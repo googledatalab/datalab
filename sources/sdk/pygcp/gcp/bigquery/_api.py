@@ -48,7 +48,9 @@ class Api(object):
     return self._project_id
 
   def jobs_insert_load(self, source, table_name, append=False, overwrite=False,
-                       source_format='CSV'):
+                       source_format='CSV', field_delimiter=',', allow_jagged_rows=False,
+                       allow_quoted_newlines=False, encoding='UTF-8', ignore_unknown_values=False,
+                       max_bad_records=0, quote='"', skip_leading_rows=0):
     """ Issues a request to load data from GCS to a BQ table
 
     Args:
@@ -59,6 +61,22 @@ class Api(object):
       overwrite: if True overwrite existing table contents.
       source_format: the format of the data; default 'CSV'. Other options are DATASTORE_BACKUP
           or NEWLINE_DELIMITED_JSON.
+      field_delimiter: The separator for fields in a CSV file. BigQuery converts the string to
+          ISO-8859-1 encoding, and then uses the first byte of the encoded string to split the data
+          as raw binary (default ',').
+      allow_jagged_rows: If True, accept rows in CSV files that are missing trailing optional
+          columns; the missing values are treated as nulls (default False).
+      allow_quoted_newlines: If True, allow quoted data sections in CSV files that contain newline
+          characters (default False).
+      encoding: The character encoding of the data, either 'UTF-8' (the default) or 'ISO-8859-1'.
+      ignore_unknown_values: If True, accept rows that contain values that do not match the schema;
+          the unknown values are ignored (default False).
+      max_bad_records The maximum number of bad records that are allowed (and ignored) before
+          returning an 'invalid' error in the Job result (default 0).
+      quote: The value used to quote data sections in a CSV file; default '"'. If your data does
+          not contain quoted sections, set the property value to an empty string. If your data
+          contains quoted newline characters, you must also enable allow_quoted_newlines.
+      skip_leading_rows: A number of rows at the top of a CSV file to skip (default 0).
     Returns:
       A parsed result object.
     Raises:
@@ -85,6 +103,14 @@ class Api(object):
           'createDisposition': 'CREATE_NEVER',
           'writeDisposition': write_disposition,
           'sourceFormat': source_format,
+          'fieldDelimiter': field_delimiter,
+          'allowJaggedRows': allow_jagged_rows,
+          'allowQuotedNewlines': allow_quoted_newlines,
+          'encoding': encoding,
+          'ignoreUnknownValues': ignore_unknown_values,
+          'maxBadRecords': max_bad_records,
+          'quote': quote,
+          'skipLeadingRows': skip_leading_rows
         }
       }
     }
