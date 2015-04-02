@@ -1,0 +1,32 @@
+<div class="datalab-cell-toolbar">
+
+  <!-- Evaluate cell (update + execute-if-code-cell) -->
+  <i class="datalab-toolbar-button fa-play fa"
+      ng-click="notebook.evaluateCell(cell, worksheetId)"></i>
+
+  <!-- TODO(bryantd): all following actions will move into cell  toolbar drop down menu -->
+
+  <!-- Add code cell -->
+  <i class="datalab-toolbar-button fa-terminal fa"
+      ng-click="notebook.addCell('code', worksheetId, cell.id)"></i>
+
+  <!-- Add markdown cell -->
+  <i class="datalab-toolbar-button fa-edit fa"
+      ng-click="notebook.addCell('markdown', worksheetId, cell.id)"></i>
+
+  <!-- Add heading cell -->
+  <i class="datalab-toolbar-button fa-paragraph fa"
+      ng-click="notebook.addCell('heading', worksheetId, cell.id)"></i>
+
+  <!-- Delete cell -->
+  <i class="datalab-toolbar-button fa-trash fa"
+      ng-click="notebook.deleteCell(cell.id, worksheetId)"></i>
+
+  <!-- Move cell up -->
+  <i class="datalab-toolbar-button fa-level-up fa"
+      ng-click="notebook.moveCellUp(cell.id, worksheetId)"></i>
+
+  <!-- Move cell down -->
+  <i class="datalab-toolbar-button fa-level-down fa"
+      ng-click="notebook.moveCellDown(cell.id, worksheetId)"></i>
+</div>
