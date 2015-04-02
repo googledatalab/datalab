@@ -1,0 +1,28 @@
+<div class="datalab-editor-cell-output row" ng-show="outputs">
+
+  <div class="datalab-editor-cell-identifier datalab-editor-cell-identifier-output col-md-1">
+    <!-- TODO(bryantd): output region marker goes here, if it exists within finalized mocks -->
+  </div>
+
+  <div class="datalab-editor-cell-outputs col-md-11">
+    <!-- For each output, generate a mimetype-specific element -->
+    <div ng-repeat="output in outputs" ng-switch="output.preferredMimetype">
+
+      <!-- Plain text -->
+      <pre ng-switch-when="text/plain">{{output.mimetypeBundle['text/plain']}}</pre>
+
+      <!-- HTML -->
+      <div ng-switch-when="text/html"
+          ng-bind-html="output.trustedHtml"></div>
+
+      <!-- PNG -->
+      <img ng-switch-when="image/png"
+          ng-src="data:image/png;base64,{{output.mimetypeBundle['image/png']}}"/>
+
+      <!-- JPEG -->
+      <img ng-switch-when="image/jpeg"
+          ng-src="data:image/jpeg;base64,{{output.mimetypeBundle['image/jpeg']}}"/>
+
+    </div>
+  </div>
+</div>
