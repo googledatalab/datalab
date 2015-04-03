@@ -17,30 +17,43 @@
  * Top-level page controller for the notebook editing page
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
-/// <amd-dependency path="app/components/codeeditor/CodeEditorDirective" />
-import logging = require('app/common/Logging');
+/// <amd-dependency path="app/components/worksheeteditor/WorksheetEditorDirective" />
+/// <amd-dependency path="app/components/notebooktitle/NotebookTitleDirective" />
+/// <amd-dependency path="app/components/notebooktoolbar/NotebookToolbarDirective" />
+/// <amd-dependency path="app/components/sessions/ClientNotebookSession" />
+/// <amd-dependency path="app/components/sessions/SessionEventDispatcher" />
+import actions = require('app/shared/actions');
 import constants = require('app/common/Constants');
-import app = require('app/App');
+import logging = require('app/common/Logging');
+import _app = require('app/App');
 
 
 var log = logging.getLogger(constants.scopes.notebooks.edit.page);
 
 export class EditPageController {
-  /**
-   * The ID of the notebook to edit
-   */
-  notebookId: string;
+  clientNotebookSession: app.IClientNotebookSession;
+  notebookPath: string; // The path of the notebook to edit.
 
-  /**
-   * Constructor and arguments for Angular to inject
-   */
-  static $inject: string[] = ['$routeParams'];
-  constructor (routeParams: ng.route.IRouteParamsService) {
-    this.notebookId = routeParams['notebookId'];
-    // TODO(bryantd): Add controller logic
-    log.debug('Constructed edit page controller');
+  _rootScope: ng.IRootScopeService;
+  _requestId: string;
+  _sessionEventDispatcher: app.ISessionEventDispatcher;
+
+  static $inject: string[] = [
+      '$routeParams',
+      '$rootScope',
+      constants.clientNotebookSession.name,
+      constants.sessionEventDispatcher.name];
+
+  constructor (
+      routeParams: ng.route.IRouteParamsService,
+      rootScope: ng.IRootScopeService,
+      clientNotebookSession: any,
+      sessionEventDispatcher: app.ISessionEventDispatcher) {
+    this._rootScope = rootScope;
+    this.clientNotebookSession = clientNotebookSession;
+    this._sessionEventDispatcher = sessionEventDispatcher;
   }
 }
 
-app.registrar.controller(constants.notebooks.edit.pageControllerName, EditPageController);
+_app.registrar.controller(constants.notebooks.edit.pageControllerName, EditPageController);
 log.debug('Registered ', constants.notebooks.edit.pageControllerName);
