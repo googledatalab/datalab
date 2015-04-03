@@ -16,8 +16,14 @@
   <meta charset="utf-8">
   <title>DataLab</title>
   <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+  <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+
+  <!-- TODO(bryantd): add support for on-demand loading of codemirror css assets -->
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/codemirror/4.5.0/codemirror.min.css">
-  <link rel="stylesheet" href="chrome.css">
+  <link rel="stylesheet" href="styles/cm-googley-theme.css">
+
+  <link rel="stylesheet" href="styles/chrome.css">
+  <link rel="stylesheet" href="styles/editor.css">
 </head>
 <body>
   <header>
@@ -25,7 +31,7 @@
       <div class="container-fluid">
         <div class="navbar-header">
           <a class="navbar-brand" href="#">
-            Google DataLab
+            <img class="datalab-branding" src="assets/cloud-datalab-logo.png">
           </a>
         </div>
       </div>
