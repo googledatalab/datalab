@@ -222,7 +222,8 @@ require.config({
     'dc': '//cdnjs.cloudflare.com/ajax/libs/dc/1.7.3/dc',
     'd3': '//cdnjs.cloudflare.com/ajax/libs/d3/3.4.13/d3',
     'element': '/static/require/element',
-    'visualization': '/static/require/visualization'
+    'visualization': '/static/require/visualization',
+    'spin': '//fgnass.github.io/spin.js/spin'
   },
   shim: {
     'crossfilter': {

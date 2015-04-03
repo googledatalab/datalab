@@ -85,8 +85,7 @@ def bigquery(line, cell=None):
     parsed_args = parser.parse_args(args)
     return parsed_args.func(vars(parsed_args))
   except Exception as e:
-    if e.message:
-      print e.message
+    _util.print_exception_with_last_stack(e)
 
 
 def _dispatch_handler(command, args, cell, parser, handler,
@@ -148,9 +147,11 @@ def _sql_cell(args, sql):
     ipy.push({variable_name: query})
     return None
   else:
-    # If a variable was not specified, then simply return the results, so they
+    # If a variable was not specified, then start executing the query, and return a TableViewer.
+    # . Return a simply return the results, so they
     # get rendered as the output of the cell.
-    return query.results()
+    job = query.execute()
+    return _ipython.core.display.HTML(_table_viewer(job.table_name, job_id=job.id))
 
 
 def _udf_cell(args, js):
@@ -255,14 +256,12 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
   Returns:
     A string containing the HTML for the table viewer.
   """
-  if not table.exists():
-    return "<div>%s does not exist</div>" % table.full_name
 
   _HTML_TEMPLATE = """
     <div style='display:inline;float:left'>%s</div>
     <div style='display:inline;float:right'>%s</div>
     <br>
-    <div class="bqtv" id="bqtv_%s">
+    <div class='bqtv' id='bqtv_%s'>
     </div>
     <script>
       require(['extensions/charting', 'element!bqtv_%s'],
@@ -274,12 +273,22 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
     </script>
   """
 
-  fields = fields if fields else [field.name for field in table.schema]
+  if isinstance(table, _bq._Table):
+    if not table.exists():
+      return "<div>%s does not exist</div>" % table.full_name
+    fields = fields if fields else [field.name for field in table.schema]
+    total_rows = table.length
+    table_name = table.full_name
+  else:  # String - e.g. a forthcoming query result table
+    fields = '*'
+    total_rows = -1
+    table_name = table
+
   div_id = str(int(round(_time.time())))
-  left_meta = "Rows %d" % table.length if table.length >= 0 else ''
-  right_meta = job_id if job_id else table.full_name
+  left_meta = "Rows %d" % total_rows if total_rows >= 0 else ''
+  right_meta = job_id if job_id else table_name
   return _HTML_TEMPLATE %\
-      (left_meta, right_meta, div_id, div_id, table.full_name, ','.join(fields), table.length,
+      (left_meta, right_meta, div_id, div_id, table_name, ','.join(fields), total_rows,
        rows_per_page)
 
 

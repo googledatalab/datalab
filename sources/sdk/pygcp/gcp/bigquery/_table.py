@@ -380,7 +380,7 @@ class Table(object):
 
   def _load_info(self):
     """Loads metadata about this table."""
-    if self._info is None:
+    if self._info is None and self.exists():
       self._info = self._api.tables_get(self._name_parts)
 
   @property
@@ -779,6 +779,8 @@ class Table(object):
     """
     try:
       self._load_info()
+      if self._info is None:
+        raise KeyError('No metadata')
       return TableSchema(definition=self._info['schema']['fields'])
     except KeyError:
       raise Exception('Unexpected table response.')

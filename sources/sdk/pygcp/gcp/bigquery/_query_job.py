@@ -31,6 +31,13 @@ class QueryJob(_Job):
     self._table = _QueryResultsTable(api, table_name, self, is_temporary=True)
 
   @property
+  def table_name(self):
+    """ Get the name of the table for the results. This can be called before the query
+        is complete.
+    """
+    return self._table.full_name
+
+  @property
   def results(self):
     """ Get the table used for the results of the query. If the query is incomplete, this blocks.
 
