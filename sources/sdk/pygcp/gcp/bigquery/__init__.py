@@ -17,7 +17,6 @@
 import gcp as _gcp
 import gcp._util as _util
 from ._api import Api as _Api
-from ._base_table import TableName as _TableName
 from ._dataset import DataSet as _DataSet
 from ._dataset import DataSetLister as _DataSetLister
 from ._dataset import DataSetName as _DataSetName
@@ -25,8 +24,9 @@ from ._job import Job as _Job
 from ._query_job import QueryJob as _QueryJob
 from ._query import Query as _Query
 from ._sampling import Sampling
-from ._schema import Schema as _Schema
+from ._table import Schema as _Schema
 from ._table import Table as _Table
+from ._table import TableName as _TableName
 from ._udf import Function as _Function
 from ._view import View as _View
 

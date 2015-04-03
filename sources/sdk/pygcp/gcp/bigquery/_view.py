@@ -14,10 +14,12 @@
 
 """Implements BigQuery Views."""
 
-from ._base_table import BaseTable as _BaseTable
+from ._table import Table as _Table
+
+# Query import is at end to avoid issues with circular dependencies.
 
 
-class View(_BaseTable):
+class View(object):
   """ An implementation of a BigQuery View. Views in BigQuery are virtual tables, but it
   is useful to have a mixture of both Table and Query semantics; our version thus internally
   has a BaseTable and a Query (for materialization; not the same as the view query), and
@@ -31,7 +33,7 @@ class View(_BaseTable):
         api: the BigQuery API object to use to issue requests.
         name: the name of the view either as a string or a 3-part tuple (projectid, datasetid, name).
       """
-    self._table = _BaseTable(api, name)
+    self._table = _Table(api, name)
     self._materialization = _Query(api, 'SELECT * FROM %s' % self._repr_sql_())
 
   @property
@@ -84,7 +86,7 @@ class View(_BaseTable):
     Raises:
       Exception if the view couldn't be created or already exists and overwrite was False.
     """
-    return self._table.create(query=query, overwrite=overwrite)
+    return self._table._create(query=query, overwrite=overwrite)
 
   def sample(self, fields=None, count=5, sampling=None, timeout=0, use_cache=True):
     """Retrieves a sampling of data from the table.
