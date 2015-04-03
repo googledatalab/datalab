@@ -17,7 +17,7 @@
  * Directive for creating a single editor cell.
  *
  * The input region provides and editable text region. The output region appears if there is any
- * output content, and disappears is the output content is falsey (undefined/null/empty).
+ * output content, and disappears if the output content is falsey (undefined/null/empty).
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <amd-dependency path="app/components/celloutputviewer/CellOutputViewerDirective" />
