@@ -1,1 +1,21 @@
-<p>TODO(bryantd): Add editor content
+<div class="container-fluid">
+
+  <div class="row datalab-editor-header">
+    <!-- Notebook title/renaming widget -->
+    <div class="col-sm-6 col-md-4 col-lg-3">
+      <datalab-notebook-title></datalab-notebook-title>
+    </div>
+    <!-- Notebook-level controls widget -->
+    <div class="col-sm-6 col-md-8 col-lg-9">
+      <datalab-notebook-toolbar></datalab-notebook-toolbar>
+    </div>
+  </div>
+
+  <!-- Worksheet editor widget -->
+  <div class="row">
+    <div class="col-md-12">
+      <datalab-worksheet-editor worksheet="pageCtrl.notebookData.activeWorksheet"></datalab-worksheet-editor>
+    </div>
+  </div>
+
+</div>
