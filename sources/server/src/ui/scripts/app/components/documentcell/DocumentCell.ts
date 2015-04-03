@@ -80,7 +80,7 @@ export class DocumentCellController implements app.ICellController {
   /**
    * Creates a map of key stroke to callback for handling key stroke events on the code editor.
    */
-  _createKeymap() {
+  _createKeymap(): app.Map<Function> {
     return {
       'Shift-Enter': this._handleFinishedEditing.bind(this)
     }
