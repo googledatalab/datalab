@@ -25,7 +25,7 @@ cp -r "$server_root/src/ui/" "$ui_staging_path";
 cp -r "$server_root/src/shared" "$ui_staging_path/scripts/app";
 # Compile the typescript code in staging.
 ui_tsc_files=`find $ui_staging_path -name '*.ts' | tr '\n' ' '`;
-tsc $common_tsc_args --module commonjs $ui_tsc_files;
+tsc $common_tsc_args --module amd $ui_tsc_files;
 
 # Merge the compiled backend and frontend components into a single build where NodeJS is serving
 # the static UI content directly.
