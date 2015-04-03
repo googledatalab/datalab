@@ -53,8 +53,14 @@ export var codeEditor = {
 export var editorCell = {
   directiveName: 'datalabEditorCell'
 };
+export var headingCell = {
+  directiveName: 'datalabHeadingCell'
+};
 export var headingViewer = {
   directiveName: 'datalabHeadingViewer'
+};
+export var markdownCell = {
+  directiveName: 'datalabMarkdownCell'
 };
 export var markdownViewer = {
   directiveName: 'datalabMarkdownViewer'
@@ -94,6 +100,8 @@ export var notebooks = {
 export var scopes = {
   // Cell directives.
   editorCell: 'editorCell',
+  headingCell: 'headingCell',
+  markdownCell: 'markdownCell',
 
   // Generic directives.
   cellOutputViewer: 'cellOutputViewer',

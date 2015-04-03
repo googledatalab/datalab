@@ -20,6 +20,48 @@
 // the ever present app module (app.App) (or change the app module name...)
 declare module app {
 
+  /**
+   * Common scope attributes across all cell types.
+   */
+  interface CellScope extends ng.IScope {
+    // Externally assignable attributes.
+    cell: any;
+    worksheetId: string;
+
+    // Internally assigned attributes (i.e., assigned by controller).
+    keymap: Map<Function>;
+    ctrl: ICellController;
+  }
+
+  /**
+   * Common controller interface across all specializations of the editor cell.
+   */
+  interface ICellController {
+    /**
+     * Should the edit region be shown currently.
+     *
+     * Used for data-binding within templates.
+     */
+    showEditRegion: boolean;
+
+    /**
+     * Should the preview region be shown currently.
+     *
+     * Used for data-binding within templates.
+     */
+    showPreviewRegion: boolean;
+
+    /**
+     * Switch the cell into edit mode.
+     */
+    switchToEditMode(): void;
+
+    /**
+     * Switches the cell to view-only mode (no editor shown).
+     */
+    switchToViewMode(): void;
+  }
+
   interface ILogger {
     debug(...objects: Object []): void;
     info(...objects: Object []): void;
