@@ -9,6 +9,7 @@
   "dependencies": {
     "express": "4.x",
     "node-uuid": "1.4.x",
+    "mkdirp": "0.5.x",
     "socket.io": "1.1.x",
     "zmq": "2.8.x"
   },
