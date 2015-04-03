@@ -47,6 +47,9 @@ export var cellOutputViewer = {
 export var cellToolbar = {
   directiveName: 'datalabCellToolbar'
 };
+export var codeCell = {
+  directiveName: 'datalabCodeCell'
+};
 export var codeEditor = {
   directiveName: 'datalabCodeEditor'
 };
@@ -99,6 +102,7 @@ export var notebooks = {
 // Logging scope names.
 export var scopes = {
   // Cell directives.
+  codeCell: 'codeCell',
   editorCell: 'editorCell',
   headingCell: 'headingCell',
   markdownCell: 'markdownCell',
