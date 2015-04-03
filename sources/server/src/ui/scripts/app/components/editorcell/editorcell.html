@@ -1,24 +1,63 @@
-<div class="datalab-editor-cell">
-  <div class="datalab-editor-cell-controls">
-    <!-- Single-cell controls/buttons go here -->
-  </div>
-  <div class="datalab-editor-cell-input">
-    <div class="datalab-editor-cell-identifier">
-      <span class="datalab-editor-cell-index">[ {{ executionCounter }} ]<span>
-    </div>
-    <div class="datalab-editor-cell-input-content">
-      <datalab-code-editor contents="inputText"></datalab-code-editor>
-    </div>
-  </div>
-  <div class="datalab-editor-cell-output" ng-show="outputs">
-    <div class="datalab-editor-cell-output-indicator">
-      <span class="glyphicon glyphicon-log-out"></span>
-    </div>
-    <div class="datalab-editor-cell-outputs">
-      <div ng-repeat="output in outputs" ng-switch="output.mimetype">
-        <div ng-switch-when="text/html" ng-bind-html="output.content"></div>
-        <!-- Additional mime-types go here (css, js, etc.) -->
+<div id="cell-{{cell.id}}"
+    class="datalab-editor-cell row"
+    ng-class="{ 'datalab-editor-cell-active' : active }">
+  <!-- NOTE: this template assumes it is contained by a bootstrap .container grid system -->
+
+  <!-- Cell source editor region -->
+  <div class="datalab-editor-cell-edit-region col-lg-12 col-md-12 col-sm-12 col-xs-12"
+      ng-show="enableEditRegion" >
+    <div class="datalab-editor-cell-input row">
+
+      <!-- Cell "prompt"/indicator/identifier -->
+      <div class="datalab-editor-cell-identifier datalab-editor-cell-identifier-input col-md-1">
+        <!-- Cell indicator -->
+        <!-- TODO(bryantd): currently displaying cell type-specific icon; update to match mocks -->
+        <span class="fa fa-terminal fa-lg" ng-if="cell.type == 'code'"></span>
+        <span class="fa fa-edit fa-lg" ng-if="cell.type == 'markdown'"></span>
+        <span class="fa fa-paragraph fa-lg" ng-if="cell.type == 'heading'"></span>
+      </div>
+
+      <!-- Code editor -->
+      <div class="datalab-editor-cell-input-content col-md-11">
+        <datalab-code-editor
+            source="cell.source"
+            active="active"
+            keymap='keymap'
+            actions='actions'>
+        </datalab-code-editor>
+      </div>
+
+      <!-- Cell toolbar -->
+      <div class="datalab-editor-cell-toolbar">
+        <!-- TODO(bryantd): only show cell toolbar when cell is active  -->
+        <datalab-cell-toolbar
+            cell="cell"
+            worksheet-id="worksheetId">
+        </datalab-cell-toolbar>
       </div>
     </div>
   </div>
+
+  <!-- Cell output region -->
+  <datalab-cell-output-viewer outputs="cell.outputs"></datalab-cell-output-viewer>
+
+  <!-- Cell preview region -->
+  <div class="datalab-editor-cell-preview-region col-lg-12 col-md-12 col-sm-12 col-xs-12"
+      ng-dblclick="onPreviewRegionDoubleClick()"
+      ng-if="enablePreviewRegion">
+
+    <!-- Show a markdown renderer if this is a Markdown cell -->
+    <datalab-markdown-viewer
+        ng-if="cell.type == 'markdown'"
+        source="cell.source">
+    </datalab-markdown-viewer>
+
+    <!-- Show a heading renderer if this is a Heading cell -->
+    <datalab-heading-viewer
+        ng-if="cell.type == 'heading'"
+        text="cell.source"
+        level="cell.metadata.level">
+    </datalab-heading-viewer>
+  </div>
+
 </div>
