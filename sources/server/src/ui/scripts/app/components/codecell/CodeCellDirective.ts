@@ -69,11 +69,16 @@ class CodeCellController implements app.ICellController {
   switchToEditMode() { /* noop: code cell always in edit mode */ }
 
   /**
+   * Switches the cell to view mode.
+   */
+  switchToViewMode() { /* noop: code cell never goes into view mode */}
+
+  /**
    * Creates a map of key stroke to callback for handling key stroke events on the code editor.
    *
    * @return Map of editor key stroke to callback.
    */
-  _createKeymap() {
+  _createKeymap(): app.Map<Function> {
     return {
       'Shift-Enter': this._handleExecute.bind(this)
     };
