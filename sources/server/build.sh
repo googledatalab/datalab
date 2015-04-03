@@ -4,7 +4,7 @@ set -o errexit; # Fail build on first error, instead of carrying on by default
 # Load the common build config
 source config.sh;
 
-mkdir -p "$ui_staging_path" "$node_staging_path" "$build_path";
+mkdir -p "$ui_staging_path" "$node_staging_path" "$build_path" "$build_path/static";
 
 ### BUILD
 # NodeJS backend compilation in staging
@@ -31,9 +31,9 @@ tsc $common_tsc_args --module commonjs $ui_tsc_files;
 # the static UI content directly.
 #
 # Copy the compiled backend .js from staging to the server build.
-cp -r $node_staging_path/* $build_path;
+cp -r $node_staging_path/* "$build_path";
 # Copy the built UI with static assets to the /static content path of the server build.
-# cp -r $ui_staging_path/* $build_path/static;
+cp -r $ui_staging_path/* "$build_path/static";
 # Remove the unneeded .ts files from the build path (both ui and node).
 find "$build_path" -name '*.ts' | xargs rm;
 
