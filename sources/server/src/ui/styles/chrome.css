@@ -34,6 +34,11 @@ body {
   padding-top: 50px; /* Accounts for 50px (fixed) top navbar height */
 }
 
+.datalab-branding {
+  margin-top: -5px;
+  height: 30px;
+}
+
 /**
  * Layout sidenav rules
  */
