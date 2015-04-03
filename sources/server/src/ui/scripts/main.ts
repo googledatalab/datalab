@@ -22,22 +22,58 @@
 require.config({
   paths: {
     // Third-party paths
-    // TODO(bryantd): Update the requirejs typedefs to support a list of paths 
+    // TODO(bryantd): Update the requirejs typedefs to support a list of paths
     // to enable fallback locations
     // TODO(bryantd): Add local fallbacks if no licensing issues
     angular: '//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular.min',
     angularRoute: '//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular-route.min',
-    codeMirror: '//cdnjs.cloudflare.com/ajax/libs/codemirror/4.5.0/codemirror.min',
+    marked: '//cdnjs.cloudflare.com/ajax/libs/marked/0.3.2/marked.min',
+    socketio: '/socket.io/socket.io',
 
     // First-party paths
     app: './app'
   },
+
   shim: {
     angular: {exports: 'angular'},
-    angularRoute: {deps: ['angular']}
+    angularRoute: {deps: ['angular']},
+    socketio: {exports: 'socketio'},
+  },
+
+  // CodeMirror addons (e.g., language modes, configurable editor features) internally make
+  // references to "../../lib/codemirror" (assuming script path is <cmroot>/mode/lang/foo.js)
+  // but CDNJS does not map the main codemirror.js to this relative path. This packages/map
+  // config below fixes the issue by remapping references to the <cmroot>/lib/codemirror to
+  // point to the actual path of the codemirror main js module
+  //
+  // Note: the name 'codeMirror' (camelCase) is defined by the "declare" statement in the
+  // codemirror.d.ts; the string used there to declare the module needs to match the top-level
+  // codemirror module name here
+  packages: [
+    {
+      // Base path for codemirror AMD references
+      name: 'codeMirror',
+      // Base path for the actual resources in CDN
+      location: '//cdnjs.cloudflare.com/ajax/libs/codemirror/4.8.0',
+      // AMD reference to 'codeMirror' resolves to $location/$main (.js implied)
+      main: 'codemirror.min'
+    }
+  ],
+  map: {
+    // Map AMD dependencies for codeMirror/lib/codemirror to the actual location of the main cm
+    // module in the CDN
+    codeMirror: { 'codeMirror/lib/codemirror': 'codeMirror/codemirror.min' }
   }
+
   // TODO(bryantd): configure bundles here for working with concatenated sets of modules once we
   // have a build process for generating bundles.
 });
 
+
+/**
+ * Entry point for the client-side application
+ *
+ * By requiring the top-level "App" module, angular components are registered, angular is
+ * bootstrapped and the application renders a view based upon the current URL route *
+ */
 require(['app/App']);
