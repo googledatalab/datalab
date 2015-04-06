@@ -32,7 +32,8 @@ var log = logging.getLogger(constants.scopes.notebooks.edit.page);
 
 export class EditPageController {
 
-  _clientNotebookSession: app.IClientNotebookSession;
+  notebook: app.IClientNotebookSession;
+
   _rootScope: ng.IRootScopeService;
   _sessionEventDispatcher: app.ISessionEventDispatcher;
 
@@ -54,8 +55,9 @@ export class EditPageController {
       sessionEventDispatcher: app.ISessionEventDispatcher) {
 
     this._rootScope = rootScope;
-    this._clientNotebookSession = clientNotebookSession;
     this._sessionEventDispatcher = sessionEventDispatcher;
+
+    this.notebook = clientNotebookSession;
   }
 }
 
