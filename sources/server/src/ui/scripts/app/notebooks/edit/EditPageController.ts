@@ -14,14 +14,14 @@
 
 
 /**
- * Top-level page controller for the notebook editing page
+ * Top-level page controller for the notebook edit page.
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
-/// <amd-dependency path="app/components/worksheeteditor/WorksheetEditorDirective" />
 /// <amd-dependency path="app/components/notebooktitle/NotebookTitleDirective" />
 /// <amd-dependency path="app/components/notebooktoolbar/NotebookToolbarDirective" />
 /// <amd-dependency path="app/components/sessions/ClientNotebookSession" />
 /// <amd-dependency path="app/components/sessions/SessionEventDispatcher" />
+/// <amd-dependency path="app/components/worksheeteditor/WorksheetEditorDirective" />
 import actions = require('app/shared/actions');
 import constants = require('app/common/Constants');
 import logging = require('app/common/Logging');
@@ -31,26 +31,30 @@ import _app = require('app/App');
 var log = logging.getLogger(constants.scopes.notebooks.edit.page);
 
 export class EditPageController {
-  clientNotebookSession: app.IClientNotebookSession;
-  notebookPath: string; // The path of the notebook to edit.
 
+  _clientNotebookSession: app.IClientNotebookSession;
   _rootScope: ng.IRootScopeService;
-  _requestId: string;
   _sessionEventDispatcher: app.ISessionEventDispatcher;
 
   static $inject: string[] = [
-      '$routeParams',
       '$rootScope',
       constants.clientNotebookSession.name,
       constants.sessionEventDispatcher.name];
 
+  /**
+   * Constructor.
+   *
+   * @param rootScope The root scope for the page.
+   * @param clientNotebookSession Client's notebook session.
+   * @param sessionEventDispatcher The session event dispatcher.
+   */
   constructor (
-      routeParams: ng.route.IRouteParamsService,
       rootScope: ng.IRootScopeService,
-      clientNotebookSession: any,
+      clientNotebookSession: app.IClientNotebookSession,
       sessionEventDispatcher: app.ISessionEventDispatcher) {
+
     this._rootScope = rootScope;
-    this.clientNotebookSession = clientNotebookSession;
+    this._clientNotebookSession = clientNotebookSession;
     this._sessionEventDispatcher = sessionEventDispatcher;
   }
 }
