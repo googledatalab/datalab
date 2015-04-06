@@ -20,11 +20,24 @@
 // the ever present app module (app.App) (or change the app module name...)
 declare module app {
 
+  interface CellScope extends ng.IScope {
+    cell: any;
+    worksheetId: string;
+    keymap: any;
+    ctrl: ICellController;
+  }
+
   interface ILogger {
     debug(...objects: Object []): void;
     info(...objects: Object []): void;
     warn(...objects: Object []): void;
     error(...objects: Object []): void;
+  }
+
+  interface ICellController {
+    showEditRegion: boolean;
+    showPreviewRegion: boolean;
+    switchToEditMode(): void;
   }
 
   /**
