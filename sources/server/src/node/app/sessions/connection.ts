@@ -34,7 +34,7 @@ export class ClientConnection implements app.IClientConnection {
   _delegateActionHandler: app.EventHandler<app.notebooks.actions.Action>;
   _delegateDisconnectHandler: app.EventHandler<app.IClientConnection>;
 
-  constructor (
+  constructor(
       id: string,
       socket: socketio.Socket,
       onAction: app.EventHandler<app.notebooks.actions.Action>,
@@ -51,19 +51,26 @@ export class ClientConnection implements app.IClientConnection {
   /**
    * Sends an update message to the user.
    */
-  sendUpdate (update: app.notebooks.updates.Update) {
+  sendUpdate(update: app.notebooks.updates.Update) {
     this._send(updates.label, update);
   }
 
   /**
    * Register callbacks to handle events/messages arriving via socket.io connection.
    */
-  _registerHandlers () {
+  _registerHandlers() {
     this._socket.on(actions.label, this._delegateActionHandler.bind(this));
-    this._socket.on('disconnect', this._delegateDisconnectHandler.bind(this));
+    this._socket.on('disconnect', this._handleDisconnect.bind(this));
   }
 
-  _send (type: string, message: any) {
+  /**
+   * Calls the delegate disconnection handler, passing the connection instance.
+   */
+  _handleDisconnect(reason: string) {
+    this._delegateDisconnectHandler(this);
+  }
+
+  _send(type: string, message: any) {
     this._socket.emit(type, message);
   }
 }
