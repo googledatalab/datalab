@@ -553,6 +553,11 @@ class ClientNotebookSession implements app.IClientNotebookSession {
 
   /**
    * Selects a mimetype for the cell output from available options provided by the mimetype bundle.
+   *
+   * The cell output will be augmented with additonal fields to denote the preferred display
+   * mime-type (e.g., image preferred over plain text when both are available).
+   *
+   * @param output A cell output to augment with mime-type preference.
    */
   _selectMimetype(output: app.notebooks.AugmentedCellOutput) {
     var bundle = output.mimetypeBundle;
@@ -575,12 +580,32 @@ class ClientNotebookSession implements app.IClientNotebookSession {
   }
 
   /**
+   * Selects preferred display mime-types for any pre-existing cell outputs.
+   *
+   * @param notebook The notebook to select mime-types for.
+   */
+  _selectMimetypes(notebook: app.notebooks.Notebook) {
+    notebook.worksheets.forEach((worksheet) => {
+      worksheet.cells.forEach((cell) => {
+        if (cell.outputs) {
+          cell.outputs.forEach((output) => {
+            this._selectMimetype(output);
+          }, this);
+        }
+      }, this);
+    }, this);
+  }
+
+  /**
    * Overwrites the notebook state with the given notebook snapshot.
    *
    * Also sets the first worksheet to be active.
    */
   _setNotebook(snapshot: app.notebooks.updates.Snapshot) {
     log.debug('setting notebook to snapshot value');
+
+    // Notebooks don't persist mime-type preference data, so populate it when loading a snapshot.
+    this._selectMimetypes(snapshot.notebook);
 
     // Snapshots are used to fully init/overwrite the client-side notebook state.
     this.notebook = snapshot.notebook;
