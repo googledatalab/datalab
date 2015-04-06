@@ -62,6 +62,7 @@ function createCodeCell (id: string, source: string): app.notebooks.Cell {
     id: id,
     type: cells.code,
     source: source,
+    outputs: [],
     metadata: {}
   };
 }
