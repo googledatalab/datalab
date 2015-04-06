@@ -32,12 +32,12 @@ export var notebook = {
 
 // Worksheet-level updates.
 export var worksheet = {
-  addCell: 'action.worksheet.addCell',
-  deleteCell: 'action.worksheet.deleteCell',
-  moveCell: 'action.worksheet.moveCell'
+  addCell: 'update.worksheet.addCell',
+  deleteCell: 'update.worksheet.deleteCell',
+  moveCell: 'update.worksheet.moveCell'
 }
 
 // Cell-level updates.
 export var cell = {
-  update: 'action.cell.update'
+  update: 'update.cell.update'
 }
