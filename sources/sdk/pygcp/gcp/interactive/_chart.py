@@ -35,7 +35,7 @@ def chart(line, cell=None):
   parser = argparse.ArgumentParser(prog='chart')
   subparsers = parser.add_subparsers(help='chart sub-commands')
   for chart_type in ['annotation', 'area', 'bars', 'bubbles', 'calendar', 'candlestick', 'columns',
-                     'combo', 'gauge', 'geo', 'histogram', 'line', 'map', 'orgchart', 'paged_table',
+                     'combo', 'gauge', 'geo', 'histogram', 'line', 'map', 'org', 'paged_table',
                      'pie', 'sankey', 'scatter', 'stepped_area', 'table', 'timeline', 'treemap']:
     subparser = subparsers.add_parser(chart_type, help='generate a %s chart' % chart_type)
     subparser.add_argument('-f', '--field',
