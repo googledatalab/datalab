@@ -65,8 +65,12 @@ export class ClientConnection implements app.IClientConnection {
 
   /**
    * Calls the delegate disconnection handler, passing the connection instance.
+   *
+   * @param reason The reason for the disconnect, provided by socket.io (e.g., 'transport close').
    */
   _handleDisconnect(reason: string) {
+    // Pass the disconnect callback this connection instance so that it has access to any
+    // connection metadata for performing cleanup.
     this._delegateDisconnectHandler(this);
   }
 
