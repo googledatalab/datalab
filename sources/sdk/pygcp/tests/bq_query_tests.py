@@ -26,14 +26,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._Api.tables_get')
   def test_single_result_query(self, mock_api_tables_get, mock_api_jobs_get, mock_api_insert_query,
                                mock_api_tabledata_list):
-    mock_api_tables_get.return_value = {
-      'numRows': 1,
-      'schema': {
-        'fields': [
-          {'name': 'field1', 'type': 'string'}
-        ]
-      },
-    }
+    mock_api_tables_get.return_value = self._create_tables_get_result()
     mock_api_jobs_get.return_value = {'state': 'DONE'}
     mock_api_insert_query.return_value = self._create_insert_done_result()
     mock_api_tabledata_list.return_value = self._create_single_row_result()
@@ -51,7 +44,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._Api.jobs_get')
   @mock.patch('gcp.bigquery._Api.tables_get')
   def test_empty_result_query(self, mock_api_tables_get, mock_api_jobs_get, mock_api_insert_query):
-    mock_api_tables_get.return_value = {'numRows': 0}
+    mock_api_tables_get.return_value = self._create_tables_get_result(0)
     mock_api_jobs_get.return_value = {'state': 'DONE'}
     mock_api_insert_query.return_value = self._create_insert_done_result()
 
@@ -67,7 +60,7 @@ class TestCases(unittest.TestCase):
                                    mock_api_tables_get,
                                    mock_api_jobs_get,
                                    mock_api_insert_query):
-    mock_api_tables_get.return_value = {'numRows': 1}
+    mock_api_tables_get.return_value = self._create_tables_get_result()
     mock_api_jobs_get.return_value = {'state': 'DONE'}
     mock_api_insert_query.return_value = self._create_incomplete_result()
 
@@ -157,3 +150,12 @@ class TestCases(unittest.TestCase):
       ],
       'pageToken': page_token
     }
+
+  def _create_tables_get_result(self, numRows=1, schema=[{'name': 'field1', 'type': 'string'}]):
+    return {
+      'numRows': numRows,
+      'schema': {
+        'fields': schema
+      },
+    }
+

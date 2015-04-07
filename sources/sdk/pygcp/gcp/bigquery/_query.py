@@ -14,9 +14,7 @@
 
 """Implements Query BigQuery API."""
 
-
 import csv
-from ._query_job import QueryJob as _QueryJob
 from ._sampling import Sampling as _Sampling
 
 
@@ -156,6 +154,18 @@ class Query(object):
       table_name = (destination['projectId'], destination['datasetId'], destination['tableId'])
     return _QueryJob(self._api, job_id, table_name, self._sql, timeout=timeout)
 
+  def save_as_view(self, view_name):
+    """ Create a View from this Query.
+
+    Args:
+      view_name: the name of the View either as a string or a 3-part tuple
+      (projectid, datasetid, name).
+
+    Returns:
+      A View for the Query.
+    """
+    return _View(self._api, view_name).create(self.sql)
+
   def _repr_sql_(self):
     """Creates a SQL representation of this object.
 
@@ -171,3 +181,6 @@ class Query(object):
       The string representation of this object.
     """
     return self._sql
+
+from ._query_job import QueryJob as _QueryJob
+from ._view import View as _View

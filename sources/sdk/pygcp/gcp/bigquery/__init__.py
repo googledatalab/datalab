@@ -24,10 +24,11 @@ from ._job import Job as _Job
 from ._query_job import QueryJob as _QueryJob
 from ._query import Query as _Query
 from ._sampling import Sampling
+from ._table import Schema as _Schema
 from ._table import Table as _Table
 from ._table import TableName as _TableName
-from ._table import TableSchema as _TableSchema
 from ._udf import Function as _Function
+from ._view import View as _View
 
 
 def _create_api(context):
@@ -121,7 +122,7 @@ def tablename(project_id, dataset_id, table_id):
 
 
 def table(name, context=None):
-  """Creates a BigQuery table object or returns the Table class for static calls.
+  """Creates a BigQuery table object.
 
   If a specific project id or credentials are unspecified, the default ones
   configured at the global level are used.
@@ -139,6 +140,27 @@ def table(name, context=None):
   """
   api = _create_api(context)
   return _Table(api, name)
+
+
+def view(name, context=None):
+  """Creates a BigQuery View object.
+
+  If a specific project id or credentials are unspecified, the default ones
+  configured at the global level are used.
+
+  The name must be a valid BigQuery view name, which is either
+  <project>:<dataset>.<view> or <dataset>.<view>.
+
+  Args:
+    name: the name of the view, as a string or (project_id, dataset_id, view_id) tuple.
+    context: an optional Context object providing project_id and credentials.
+  Returns:
+    A View object that can be used to retrieve table metadata from BigQuery.
+  Raises:
+    Exception if the name is invalid.
+  """
+  api = _create_api(context)
+  return _View(api, name)
 
 
 def datasets(project_id=None, context=None):
@@ -162,7 +184,8 @@ def dataset(name, context=None):
 
 
 def schema(data=None, definition=None):
-  """Creates a table schema from its JSON representation, a list of data, or a Pandas dataframe.
+  """Creates a table/view schema from its JSON representation, a list of data, or a Pandas
+     dataframe.
 
   Args:
     data: the Pandas Dataframe or list of data from which to infer the schema.
@@ -171,9 +194,9 @@ def schema(data=None, definition=None):
         'mode' can be 'NULLABLE', 'REQUIRED' or 'REPEATED'. For the allowed types, see:
         https://cloud.google.com/bigquery/preparing-data-for-bigquery#datatypes
   Returns:
-    A TableSchema object.
+    A Schema object.
   """
-  return _TableSchema(data=data, definition=definition)
+  return _Schema(data=data, definition=definition)
 
 
 def job(job_id, context=None):
