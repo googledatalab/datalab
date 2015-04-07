@@ -380,12 +380,12 @@ class ClientNotebookSession implements app.IClientNotebookSession {
   }
 
   /**
-   * Finds the preferred mimetype from the options available in a given mimetype bundle.
+   * Finds the preferred MIME type from the options available in a given MIME type bundle.
    *
-   * The preferred mimetype for displaying a given output is modeled on IPython's preference list.
+   * The preferred MIME type for displaying a given output is modeled on IPython's preference list.
    *
-   * @param mimetypeBundle A map of mime-type string (e.g., 'text/html') to a content string.
-   * @return Null if none of the preferred mimetypes are available within the bundle.
+   * @param mimetypeBundle A map of MIME type string (e.g., 'text/html') to a content string.
+   * @return Null if none of the preferred MIME types are available within the bundle.
    */
   _findPreferredMimetype(mimetypeBundle: app.Map<string>) {
     for (var i = 0; i < preferredMimetypes.length; ++i) {
@@ -436,7 +436,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
 
     // Add any outputs provided in the update.
     if (update.outputs) {
-      // Select mimetypes and mark html content as trusted.
+      // Select MIME types and mark html content as trusted.
       update.outputs.forEach(this._selectMimetype.bind(this));
 
       if (update.replaceOutputs) {
@@ -552,24 +552,24 @@ class ClientNotebookSession implements app.IClientNotebookSession {
   }
 
   /**
-   * Selects a mimetype for the cell output from available options provided by the mimetype bundle.
+   * Selects a MIME type from available options provided by the MIME type bundle.
    *
    * The cell output will be augmented with additonal fields to denote the preferred display
-   * mime-type (e.g., image preferred over plain text when both are available).
+   * MIME type (e.g., image preferred over plain text when both are available).
    *
-   * @param output A cell output to augment with mime-type preference.
+   * @param output A cell output to augment with MIME type preference.
    */
   _selectMimetype(output: app.notebooks.AugmentedCellOutput) {
     var bundle = output.mimetypeBundle;
     if (!bundle) {
-      log.warn('Received an output with no mimetype bundle: ', output);
+      log.warn('Received an output with no MIME type bundle: ', output);
       return;
     }
     output.preferredMimetype = this._findPreferredMimetype(bundle);
 
-    // Bail if there isn't a preferred mimetype within the bundle.
+    // Bail if there isn't a preferred MIME type within the bundle.
     if (!output.preferredMimetype) {
-      log.warn('Unable to select a mimetype for cell output: ', output);
+      log.warn('Unable to select a MIME type for cell output: ', output);
       return;
     }
 
@@ -580,9 +580,9 @@ class ClientNotebookSession implements app.IClientNotebookSession {
   }
 
   /**
-   * Selects preferred display mime-types for any pre-existing cell outputs.
+   * Selects preferred display MIME types for any pre-existing cell outputs.
    *
-   * @param notebook The notebook to select mime-types for.
+   * @param notebook The notebook to select MIME types for.
    */
   _selectMimetypes(notebook: app.notebooks.Notebook) {
     notebook.worksheets.forEach((worksheet) => {
@@ -604,7 +604,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
   _setNotebook(snapshot: app.notebooks.updates.Snapshot) {
     log.debug('setting notebook to snapshot value');
 
-    // Notebooks don't persist mime-type preference data, so populate it when loading a snapshot.
+    // Notebooks don't persist MIME type preference data, so populate it when loading a snapshot.
     this._selectMimetypes(snapshot.notebook);
 
     // Snapshots are used to fully init/overwrite the client-side notebook state.
@@ -623,10 +623,10 @@ class ClientNotebookSession implements app.IClientNotebookSession {
 var placeholderMarkdownCellSource = 'Markdown cell';
 var placeholderHeadingCellSource = 'Heading cell';
 
-// Mimetype preference order used by IPython.
+// MIME type preference order used by IPython.
 //
-// Until such time that all of these mimetypes are sufficiently well-supported to be exposed,
-// only a subset of the mimetypes will be used for selecting from a mimetype bundle. They remain
+// Until such time that all of these MIME types are sufficiently well-supported to be exposed,
+// only a subset of the MIME types will be used for selecting from a MIME type bundle. They remain
 // here commented so that when/if they become supported, the same preference order relative to
 // IPython will be used.
 var preferredMimetypes = [
