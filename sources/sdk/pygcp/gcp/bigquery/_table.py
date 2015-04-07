@@ -27,12 +27,12 @@ import uuid
 from gcp._util import Iterator as _Iterator
 from ._job import Job as _Job
 from ._parser import Parser as _Parser
+
 # import of Query is at end of module as we have a circular dependency of
-# Query.execute().results -> Table and
-# Table.sample() -> Query
+# Query.execute().results -> Table and Table.sample() -> Query
 
 
-class TableSchema(list):
+class Schema(list):
   """Represents the schema of a BigQuery table.
   """
 
@@ -54,11 +54,11 @@ class TableSchema(list):
 
     def __eq__(self, other):
       return self.name == other.name and self.data_type == other.data_type \
-          and self.mode == other.mode
+             and self.mode == other.mode
 
     def __str__(self):
       # Stringize in the form of a dictionary
-      return "{ 'name': '%s', 'type': '%s', 'mode':'%s', 'description': '%s' }" %\
+      return "{ 'name': '%s', 'type': '%s', 'mode':'%s', 'description': '%s' }" % \
              (self.name, self.data_type, self.mode, self.description)
 
     def __repr__(self):
@@ -149,7 +149,7 @@ class TableSchema(list):
               for i in range(0, len(datum))]
 
   def __init__(self, data=None, definition=None):
-    """Initializes a TableSchema from its raw JSON representation, a Pandas Dataframe, or a list.
+    """Initializes a Schema from its raw JSON representation, a Pandas Dataframe, or a list.
 
     Args:
       data: A Pandas DataFrame or a list of dictionaries or lists from which to infer a schema.
@@ -161,13 +161,13 @@ class TableSchema(list):
     list.__init__(self)
     self._map = {}
     if isinstance(data, pd.DataFrame):
-      data = TableSchema._from_dataframe(data)
+      data = Schema._from_dataframe(data)
     elif isinstance(data, list):
-      data = TableSchema._from_list(data)
+      data = Schema._from_list(data)
     elif definition:
       data = definition
     else:
-      raise Exception("TableSchema requires either data or json argument.")
+      raise Exception("Schema requires either data or json argument.")
     self._populate_fields(data)
 
   def __getitem__(self, key):
@@ -178,7 +178,7 @@ class TableSchema(list):
     return list.__getitem__(self, key)
 
   def _add_field(self, name, data_type, mode='NULLABLE', description=''):
-    field = TableSchema._Field(name, data_type, mode, description)
+    field = Schema._Field(name, data_type, mode, description)
     self.append(field)
     self._map[name] = field
 
@@ -267,15 +267,22 @@ class TableMetadata(object):
     """The size of the table in bytes."""
     return int(self._info['numBytes']) if 'numBytes' in self._info else -1
 
+  @property
+  def view_query(self):
+    """Returns the query associated with the view, if the Table is really a view."""
+    return self._info['view']['query'] if 'view' in self._info and 'query' in self._info['view'] \
+        else None
+
 
 TableName = collections.namedtuple('TableName', ['project_id', 'dataset_id', 'table_id'])
 
 
 class Table(object):
-  """Represents a Table object referencing a BigQuery table.
+  """Represents a Table object referencing a BigQuery table or view.
 
-  This object can be used to inspect tables and create SQL queries.
+     This object can be used to inspect tables and create SQL queries against tables and views.
   """
+
 
   # Absolute project-qualified name pattern: <project>:<dataset>.<table>
   _ABS_NAME_PATTERN = r'^([a-z0-9\-_\.:]+)\:([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)$'
@@ -350,7 +357,7 @@ class Table(object):
     return TableName(_project_id, _dataset_id, _table_id)
 
   def __init__(self, api, name):
-    """Initializes an instance of a Table object.
+    """Initializes an instance of a BaseTable object.
 
     Args:
       api: the BigQuery API object to use to issue requests.
@@ -376,7 +383,7 @@ class Table(object):
   @property
   def is_temporary(self):
     """ Whether this is a short-lived table or not. """
-    return self._is_temporary
+    return False
 
   def _load_info(self):
     """Loads metadata about this table."""
@@ -424,28 +431,49 @@ class Table(object):
       # because the file didn't exist, return an error.
       pass
 
-  def create(self, schema, truncate=False):
-    """ Create the table with the specified schema.
+  def _create(self, schema=None, query=None, overwrite=False):
+    """ Create the table with the specified schema (if Table) or query (if View).
+        Private because this should not be exposed; it is called from the public create
+        methods for Table and View.
 
     Args:
       schema: the schema to use to create the table. Should be a list of dictionaries, each
           containing at least a pair of entries, 'name' and 'type'.
           See https://cloud.google.com/bigquery/docs/reference/v2/tables#resource
-      truncate: if True, delete the table first if it exists. If False and the Table exists,
+      overwrite: if True, delete the object first if it exists. If False and the object exists,
           creation will fail and raise an Exception.
     Returns:
       The Table instance.
     Raises:
       Exception if the table couldn't be created or already exists and truncate was False.
     """
-    if truncate and self.exists():
+    if overwrite and self.exists():
       self.delete()
-    if isinstance(schema, TableSchema):
+    if isinstance(schema, Schema):
       schema = schema._bq_schema
-    response = self._api.tables_insert(self._name_parts, schema)
+    if isinstance(query, _Query):
+      query = query.sql
+    response = self._api.tables_insert(self._name_parts, schema=schema, query=query)
     if 'selfLink' in response:
       return self
-    raise Exception("Table %s could not be created as it already exists" % self.full_name)
+    raise Exception("%s %s could not be created as it already exists" %
+                    (("View" if query else "Table"), self.full_name))
+
+  def create(self, schema, overwrite=False):
+    """ Create the table with the specified schema.
+
+    Args:
+      schema: the schema to use to create the table. Should be a list of dictionaries, each
+          containing at least a pair of entries, 'name' and 'type'.
+          See https://cloud.google.com/bigquery/docs/reference/v2/tables#resource
+      overwrite: if True, delete the object first if it exists. If False and the object exists,
+          creation will fail and raise an Exception.
+    Returns:
+      The Table instance.
+    Raises:
+      Exception if the table couldn't be created or already exists and overwrite was False.
+    """
+    return self._create(schema=schema, overwrite=overwrite)
 
   def sample(self, fields=None, count=5, sampling=None, timeout=0, use_cache=True):
     """Retrieves a sampling of data from the table.
@@ -463,8 +491,8 @@ class Table(object):
       Exception if the sample query could not be executed or query response was malformed.
     """
     sql = self._repr_sql_()
-    return _Query.sampling_query(self._api, sql, count=count, fields=fields, sampling=sampling).\
-        results(timeout=timeout, use_cache=use_cache)
+    return _Query.sampling_query(self._api, sql, count=count, fields=fields, sampling=sampling)\
+        .results(timeout=timeout, use_cache=use_cache)
 
   @staticmethod
   def _encode_dict_as_row(record, column_name_map):
@@ -526,7 +554,7 @@ class Table(object):
     if not self.exists():
       raise Exception('Table %s does not exist.' % self._full_name)
 
-    data_schema = TableSchema(data=data)
+    data_schema = Schema(data=data)
     if isinstance(data, list):
       if include_index:
         if not index_name:
@@ -773,28 +801,29 @@ class Table(object):
     """Retrieves the schema of the table.
 
     Returns:
-      A TableSchema object containing a list of schema fields and associated metadata.
+      A Schema object containing a list of schema fields and associated metadata.
     Raises
       Exception if the request could not be executed or the response was malformed.
     """
     try:
       self._load_info()
-      return TableSchema(definition=self._info['schema']['fields'])
+      return Schema(definition=self._info['schema']['fields'])
     except KeyError:
       raise Exception('Unexpected table response.')
 
-  def update(self, friendly_name=None, description=None, expiry=None, schema=None):
+  def update(self, friendly_name=None, description=None, expiry=None, schema=None, query=None):
     """ Selectively updates Table information.
 
     Args:
       friendly_name: if not None, the new friendly name.
       description: if not None, the new description.
       expiry: if not None, the new expiry time, either as a DateTime or milliseconds since epoch.
-      schema: if not None, the new schema: either a list of dictionaries or a TableSchema.
+      schema: if not None, the new schema: either a list of dictionaries or a Schema.
+      query: if not None, a new query (used for Views).
 
     Returns:
     """
-    if not(friendly_name or description or expiry or schema):
+    if not(friendly_name or description or expiry or schema or query):
       return  # Nothing to do.
     self._load_info()
     if friendly_name is not None:
@@ -806,9 +835,13 @@ class Table(object):
         expiry = time.mktime(expiry.timetuple()) * 1000
       self._info['expiry'] = expiry
     if schema is not None:
-      if isinstance(schema, TableSchema):
+      if isinstance(schema, Schema):
         schema = schema._bq_schema
-      self._info['schema']['fields'] = schema
+      self._info['schema'] = {'fields': schema}
+    if query is not None:
+      if isinstance(query, _Query):
+        query = query.sql
+      self._info['view'] = {'query': query}
     try:
       self._api.table_update(self._name_parts, self._info)
     except Exception:

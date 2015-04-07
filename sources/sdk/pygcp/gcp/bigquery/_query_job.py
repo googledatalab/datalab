@@ -15,7 +15,6 @@
 """Implements BigQuery query job functionality."""
 
 from ._job import Job as _Job
-from ._query_results_table import QueryResultsTable as _QueryResultsTable
 
 
 class QueryJob(_Job):
@@ -54,3 +53,5 @@ class QueryJob(_Job):
   @property
   def sql(self):
     return self._sql
+
+from ._query_results_table import QueryResultsTable as _QueryResultsTable

@@ -17,7 +17,6 @@ import unittest
 import gcp
 import gcp.bigquery
 import mock
-import numpy as np
 from oauth2client.client import AccessTokenCredentials
 import pandas
 
@@ -72,11 +71,11 @@ class TestCases(unittest.TestCase):
       _ = self._create_table('today@')
 
   @mock.patch('gcp.bigquery._Api.tables_get')
-  def test_table_metadata(self, mock_api_tables):
+  def test_table_metadata(self, mock_api_tables_get):
     name = 'test:requestlogs.today'
     ts = dt.datetime.utcnow()
 
-    mock_api_tables.return_value = self._create_table_info_result(ts=ts)
+    mock_api_tables_get.return_value = self._create_table_info_result(ts=ts)
     t = self._create_table(name)
 
     metadata = t.metadata

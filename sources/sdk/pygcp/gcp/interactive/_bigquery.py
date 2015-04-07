@@ -304,7 +304,7 @@ def _repr_html_table_list(table_list):
   return builder.to_html()
 
 
-def _repr_html_table_schema(schema):
+def _repr_html_schema(schema):
   # TODO(gram): Replace at some point with schema and/or metadata.
   builder = _HtmlBuilder()
   builder.render_objects(schema, ['name', 'data_type', 'mode', 'description'])
@@ -335,7 +335,7 @@ def _register_html_formatters():
                                   _repr_html_query_results_table)
   html_formatter.for_type_by_name('gcp.bigquery._table', 'Table', _repr_html_table)
   html_formatter.for_type_by_name('gcp.bigquery._table', 'TableList', _repr_html_table_list)
-  html_formatter.for_type_by_name('gcp.bigquery._table', 'TableSchema', _repr_html_table_schema)
+  html_formatter.for_type_by_name('gcp.bigquery._schema', 'Schema', _repr_html_schema)
   html_formatter.for_type_by_name('gcp.bigquery._udf', 'FunctionEvaluation',
                                   _repr_html_function_evaluation)
 
