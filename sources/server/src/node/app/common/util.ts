@@ -22,9 +22,11 @@ import util = require('util');
  * TODO(bryantd): this is a stop-gap implementation for port selection
  * Find a robust/reliable way of getting available ports to replace this.
  */
-var portOffset = 0;
+var minPort = 45100;
+var maxPort = 48100;
 export function getAvailablePort (): number {
-  return 45100 + portOffset++;
+  // Randomly select a port within the specified port range.
+  return Math.floor(Math.random() * (maxPort - minPort)) + minPort;
 }
 
 /**
