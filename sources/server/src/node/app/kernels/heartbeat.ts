@@ -20,6 +20,7 @@ import ipy = require('../messages/ipy');
 import uuid = require('node-uuid');
 import zmq = require('zmq');
 
+
 var healthCheckPeriod = 1000;
 var healthCheckTimeout = 3000;
 var heartbeatMessage = 'health check';
@@ -48,7 +49,6 @@ export class HeartbeatChannelClient extends channels.ChannelClient {
    * Starts the periodic heartbeating.
    */
   _start() {
-    console.log('Starting heartbeat...');
     this._heartbeatInterval = setInterval(
       this._sendHeartbeat.bind(this),
       healthCheckPeriod);
@@ -74,7 +74,7 @@ export class HeartbeatChannelClient extends channels.ChannelClient {
       return;
     }
 
-    console.log('Heartbeat channel: sending heartbeat');
+    // Send a heartbeat message to the kernel.
     this._send([heartbeatMessage]);
   }
 
