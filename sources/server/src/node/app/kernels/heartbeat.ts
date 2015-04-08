@@ -20,8 +20,9 @@ import ipy = require('../messages/ipy');
 import uuid = require('node-uuid');
 import zmq = require('zmq');
 
-
-var heartbeatInterval = 1000;
+var healthCheckPeriod = 1000;
+var healthCheckTimeout = 3000;
+var heartbeatMessage = 'health check';
 
 /**
  * Client for communicating with the heartbeat channel of a running IPython kernel.
@@ -30,6 +31,7 @@ export class HeartbeatChannelClient extends channels.ChannelClient {
 
   _delegateHealthCheckHandler: app.EventHandler<boolean>;
   _heartbeatInterval: number;
+  _lastHealthCheckSuccessTimestamp: number;
 
   constructor(
       connectionUrl: string,
@@ -47,7 +49,10 @@ export class HeartbeatChannelClient extends channels.ChannelClient {
    */
   _start() {
     console.log('Starting heartbeat...');
-    this._heartbeatInterval = setInterval(this._sendHeartbeat.bind(this), heartbeatInterval);
+    this._heartbeatInterval = setInterval(
+      this._sendHeartbeat.bind(this),
+      healthCheckPeriod);
+    this._lastHealthCheckSuccessTimestamp = Date.now();
   }
 
   /**
@@ -61,18 +66,31 @@ export class HeartbeatChannelClient extends channels.ChannelClient {
    * Sends a single heartbeat message to the kernel.
    */
   _sendHeartbeat() {
+    // Check to see if the time since last successful health check has been exceeded.
+    if (Date.now() - this._lastHealthCheckSuccessTimestamp > healthCheckTimeout) {
+      this._delegateHealthCheckHandler(false);
+      // No need to send further heartbeats if the health check failed
+      clearInterval(this._heartbeatInterval);
+      return;
+    }
+
     console.log('Heartbeat channel: sending heartbeat');
-    this._send(['!ping!']);
+    this._send([heartbeatMessage]);
   }
 
   _receive() {
-    // Deserialize the multi-part ZeroMQ message into an object.
-    var message = arguments;
-    console.log('Heartbeat channel: received message: ', JSON.stringify(message, null, 2));
+    // Deserialize the multi-part ZeroMQ message into a list of strings;
+    var messageParts = ipy.deserializeZeroMQMessage(arguments);
 
-    // Validate the received message.
+    // Validate the received message contains the expected heartbeat message.
+    var isKernelHealthy = (messageParts[0] == heartbeatMessage);
 
-    // Update the time since last successful health check.
+    if (isKernelHealthy) {
+      this._lastHealthCheckSuccessTimestamp = Date.now();
+    }
+
+    // Send latest health check status via callback.
+    this._delegateHealthCheckHandler(isKernelHealthy);
   }
 
 }
