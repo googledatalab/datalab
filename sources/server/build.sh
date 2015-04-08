@@ -4,7 +4,7 @@ set -o errexit; # Fail build on first error, instead of carrying on by default
 # Load the common build config
 source config.sh;
 
-mkdir -p "$ui_staging_path" "$node_staging_path" "$build_path";
+mkdir -p "$ui_staging_path" "$node_staging_path" "$build_path" "$build_path/static";
 
 ### BUILD
 # NodeJS backend compilation in staging
@@ -25,15 +25,15 @@ cp -r "$server_root/src/ui/" "$ui_staging_path";
 cp -r "$server_root/src/shared" "$ui_staging_path/scripts/app";
 # Compile the typescript code in staging.
 ui_tsc_files=`find $ui_staging_path -name '*.ts' | tr '\n' ' '`;
-tsc $common_tsc_args --module commonjs $ui_tsc_files;
+tsc $common_tsc_args --module amd $ui_tsc_files;
 
 # Merge the compiled backend and frontend components into a single build where NodeJS is serving
 # the static UI content directly.
 #
 # Copy the compiled backend .js from staging to the server build.
-cp -r $node_staging_path/* $build_path;
+cp -r $node_staging_path/* "$build_path";
 # Copy the built UI with static assets to the /static content path of the server build.
-# cp -r $ui_staging_path/* $build_path/static;
+cp -r $ui_staging_path/* "$build_path/static";
 # Remove the unneeded .ts files from the build path (both ui and node).
 find "$build_path" -name '*.ts' | xargs rm;
 

@@ -60,7 +60,7 @@ app.config(configureRegistrar);
 function addRoutes (routeProvider: ng.route.IRouteProvider): void {
   routeProvider
     .when('/notebooks', notebooksRoute.route)
-    .when('/notebooks/:notebookId', notebooksEditRoute.route)
+    .when('/notebooks/:notebookPath', notebooksEditRoute.route)
     .otherwise({
       redirectTo: '/notebooks'
     });

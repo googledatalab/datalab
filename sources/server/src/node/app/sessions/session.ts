@@ -57,6 +57,7 @@ export class Session implements app.ISession {
     this._requestIdToCellRef = {};
     this._connections = [];
     this._notebookPath = notebookPath;
+    this._notebookStorage = notebookStorage;
 
     // Read the notebook if it exists.
     this._notebook = this._notebookStorage.read(notebookPath, /* create if needed */ true);
