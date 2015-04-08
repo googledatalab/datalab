@@ -42,7 +42,7 @@ export class KernelClient implements app.IKernel {
   _kernelProcess: childproc.ChildProcess;
   _shell: shell.ShellChannelClient;
 
-  constructor (
+  constructor(
       id: string,
       config: app.KernelConfig,
       onExecuteReply: app.EventHandler<app.ExecuteReply>,
@@ -78,24 +78,27 @@ export class KernelClient implements app.IKernel {
   /**
    * Sends an execute request to the connected kernel.
    */
-  execute (request: app.ExecuteRequest): void {
+  execute(request: app.ExecuteRequest): void {
     this._shell.execute(request);
   }
 
   /**
    * Closes socket connections to the kernel process and then kills the kernel process.
    */
-  shutdown (): void {
+  shutdown(): void {
+    // Close each channel connection to the kernel.
     this._heartbeat.disconnect();
     this._iopub.disconnect();
     this._shell.disconnect();
+
+    // Kill the kernel process.
     this._kernelProcess.kill();
   }
 
   /**
    * Spawns a new kernel process and registers event handlers for per-channel kernel messages.
    */
-  start (): void {
+  start(): void {
     // Create the kernel process.
     this._spawnLocalKernelProcess();
 
@@ -105,11 +108,11 @@ export class KernelClient implements app.IKernel {
     this._shell.connect();
   }
 
-  _handleKernelDiedEvent () {
+  _handleKernelDiedEvent() {
     this._delegateKernelStatusHandler ({status: 'dead', requestId: null});
   }
 
-  _spawnLocalKernelProcess (): void {
+  _spawnLocalKernelProcess(): void {
     // Note: disabling HMAC digest via the Session.key flag for now.
     var cmd = 'ipython'
     var args = [

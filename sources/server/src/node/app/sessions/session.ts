@@ -116,17 +116,24 @@ export class Session implements app.ISession {
     this._messageHandler(reply, this, nextAction);
   }
 
+  /**
+   * Receives and processes kernel health check events.
+   *
+   * @param kernelIsHealthy Is the kernel currently healthy?
+   */
   processKernelHealthCheck(kernelIsHealthy: boolean) {
-    console.log('processKernelHealthCheck', kernelIsHealthy);
     if (kernelIsHealthy) {
       // Nothing to do if the kernel is still healthy.
       return;
     }
 
-    console.log('Kernel not healthy!... restarting...');
+    // Kernel is not healthy, so spawn a new kernel.
 
     // Notify the user that the kernel is restarting.
-    this.processKernelStatus({status: 'restarting', requestId: uuid.v4()});
+    this.processKernelStatus({
+      status: 'restarting',
+      requestId: uuid.v4()
+    });
 
     // Respawn kernel.
     this._spawnKernel();
@@ -365,7 +372,6 @@ export class Session implements app.ISession {
     // If a previous kernel existed, clean up before respawning.
     if (this._kernel) {
       // Cleanup any connections and resources for the existing kernel.
-      console.log('Shutting down previous kernel', this._kernel);
       this._kernelManager.shutdown(this._kernel.id);
     }
 
@@ -381,7 +387,6 @@ export class Session implements app.ISession {
         this.processKernelHealthCheck.bind(this),
         this.processKernelStatus.bind(this),
         this.processOutputData.bind(this));
-    console.log('Spawned kernel', this._kernel);
   }
 
   // Methods for managing request <-> cell reference mappings
