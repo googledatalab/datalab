@@ -123,12 +123,13 @@ export class Session implements app.ISession {
       return;
     }
 
-    console.log('Kernel not healthy!');
-    // Notify the user.
-    // kernel status=restarting
+    console.log('Kernel not healthy!... restarting...');
+
+    // Notify the user that the kernel is restarting.
+    this.processKernelStatus({status: 'restarting', requestId: uuid.v4()});
 
     // Respawn kernel.
-    // this._spawnKernel();
+    this._spawnKernel();
   }
 
   /**

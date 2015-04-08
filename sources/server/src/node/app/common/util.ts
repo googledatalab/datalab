@@ -17,24 +17,6 @@ import util = require('util');
 
 
 /**
- * Finds an open port available for binding.
- *
- * TODO(bryantd): this is a stop-gap implementation for port selection
- * Find a robust/reliable way of getting available ports to replace this.
- */
-var minPort = 45100;
-var maxPort = 48100;
-export function getAvailablePort (): number {
-  // Randomly select a port within the specified port range.
-  return Math.floor(Math.random() * (maxPort - minPort)) + minPort;
-}
-
-/**
- * Generic no-op function that takes a single arg
- */
-export function noop (arg1: any): void {}
-
-/**
  * Creates an error object from the format string and list of args to interpolate.
  */
 export function createError(format: string, ...formatArgs: any[]) {
@@ -71,3 +53,21 @@ export function createErrorOutput (
     }
   };
 }
+
+/**
+ * Finds an open port available for binding.
+ *
+ * TODO(bryantd): this is a stop-gap implementation for port selection
+ * Find a robust/reliable way of getting available ports to replace this.
+ */
+var minPort = 45100;
+var maxPort = 48100;
+export function getAvailablePort (): number {
+  // Randomly select a port within the specified port range.
+  return Math.floor(Math.random() * (maxPort - minPort)) + minPort;
+}
+
+/**
+ * Generic no-op function that takes a single arg
+ */
+export function noop (arg1: any): void {}
