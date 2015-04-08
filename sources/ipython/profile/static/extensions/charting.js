@@ -173,13 +173,20 @@ define(function () {
     }
   }
 
+  function drawChart(visualization, chart, options, data) {
+    var dt = new visualization.DataTable(data);
+    chart.draw(dt, options);
+  }
+
   // The main render method, called from Python-generated code. dom is the DOM element
   // for the chart, model is a set of parameters from Python, and options is a JSON
   // set of options provided by the user in the cell magic body, which takes precedence over
-  // model.
-  function render(dom, model, options) {
+  // model. An initial set of data can be passed in as a final optional parameter.
+  function render(dom, model, options, data) {
     var chartInfo = chartMap[model.chartStyle];
     var chartScript = chartInfo.script || 'corechart';
+    dom.innerHTML = '';
+
 
     require(['visualization!' + chartScript], function (visualization) {
       var chartType = visualization[chartInfo.name];
@@ -198,25 +205,33 @@ define(function () {
         model.fetchCode = fetchCode;
         model.options = options;
         model.totalRows = model.totalRows || -1; // Total rows in all (server-side) data.
-        model.data = { rows:[], cols:[]};  // Multi-page client-side cache
         model.dataOffset = 0; // Where the cached data[] array starts from.
         model.firstRow = 0;  // Index of first row being displayed in page.
+        if (data == undefined) {
+          model.data = {rows:[], cols:[]};
+        } else {
+          convertDates(data);
+          model.data = data;
+        }
 
         visualization.events.addListener(chart, 'page', function(e) {
           handlePageEvent(model, e.page);
         });
 
         getPagedData(model, 0);
-      } else {
+      } else if (data == undefined) {
         IPython.notebook.kernel.get_data(fetchCode, function (data, error) {
           if (error) {
             onError(visualization, dom, error);
           } else {
             convertDates(data.data);
-            var dt = new visualization.DataTable(data.data);
-            chart.draw(dt, options);
+            drawChart(visualization, chart, options, data.data);
           }
         });
+      } else {
+        // We already have the data as a parameter.
+        convertDates(data);
+        drawChart(visualization, chart, options, data);
       }
     });
   }
