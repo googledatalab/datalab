@@ -21,6 +21,7 @@ import time as _time
 import gcp.bigquery as _bq
 import gcp._util as _util
 from ._html import HtmlBuilder as _HtmlBuilder
+from ._utils import _get_data
 
 try:
   import IPython as _ipython
@@ -282,22 +283,6 @@ def _get_schema(name):
     return None
 
 
-@_magic.register_line_magic
-def _get_table_rows(line):
-  try:
-    args = line.strip().split()
-    table = _get_table(args[0])
-    data = [row for row in table.range(start_row=int(args[1]), max_rows=int(args[2]))]
-  except Exception, e:
-    print str(e)
-    data = {}
-
-  model = {
-    'data': data
-  }
-  return _ipython.core.display.JSON(_json.dumps(model))
-
-
 def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
   """  Return a table viewer.
 
@@ -323,7 +308,13 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
       require(['extensions/charting', 'element!bqtv_%s'],
         function(charts, dom) {
           charts.render(dom,
-              {chartStyle:"paged_table", dataName:"%s", fields:"%s", totalRows:%d, rowsPerPage:%d});
+            {
+              chartStyle:"paged_table",
+              dataName:"%s",
+              fields:"%s",
+              totalRows:%d,
+              rowsPerPage:%d,
+            }, {}, %s);
         }
       );
     </script>
@@ -333,9 +324,11 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
   div_id = str(int(round(_time.time())))
   left_meta = "Rows %d" % table.length if table.length >= 0 else ''
   right_meta = job_id if job_id else table.full_name
+  data = _get_data(table, fields, 0, rows_per_page)
+
   return _HTML_TEMPLATE %\
-      (left_meta, right_meta, div_id, div_id, table.full_name, ','.join(fields), table.length,
-       rows_per_page)
+      (left_meta, right_meta, div_id, div_id, table.full_name, ','.join(fields),
+       table.length, rows_per_page, _json.dumps(data, cls=_util.JSONEncoder))
 
 
 def _schema_viewer(table, fields=None):
