@@ -246,6 +246,22 @@ declare module app {
    * incoming connection should be routed to.
    */
   interface ISessionManager {
+
+    /**
+     * Gets a session by ID if it exists.
+     *
+     * @param sessionId The session ID to get.
+     * @return A session or null if the ID was not found.
+     */
+    get(sessionId: string): app.ISession;
+
+    /**
+     * Gets the list of sessions currently managed by this instance.
+     *
+     * @return The set of active sessions.
+     */
+    list(): app.ISession[];
+
     /**
      * Updates the session identifier to the new value.
      *
@@ -254,8 +270,11 @@ declare module app {
      * After the rename has been completed, a new connection that specifies the *new* session
      * id will join the existing session; after the rename, a new connection that specifies the
      * *old* session id will create a new session with the old identifier.
+     *
+     * @param oldId The current/old session ID to be renamed.
+     * @param newId The updated/new session ID.
      */
-    renameSession (oldId: string, newId: string): void;
+    renameSession(oldId: string, newId: string): void;
   }
 
   /**

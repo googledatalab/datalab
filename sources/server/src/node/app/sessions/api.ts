@@ -36,6 +36,9 @@ export class SessionApi {
 
   /**
    * Gets the single session specified by the request 'id' param if it exists.
+   *
+   * @param request The received HTTP request.
+   * @param response The pending HTTP response.
    */
   get(request: express.Request, response: express.Response) {
     var session = this._getSessionOrFail(request, response);
@@ -43,11 +46,14 @@ export class SessionApi {
       // Response has been handled by getSessionOrFail. Nothing more to do.
       return;
     }
-    response.send(this._getSessionMetadata(kernel));
+    response.send(this._getSessionMetadata(session));
   }
 
   /**
    * Gets the list of existing sessions.
+   *
+   * @param request The received HTTP request.
+   * @param response The pending HTTP response.
    */
   list(request: express.Request, response: express.Response) {
     var sessions = this._manager.list();
@@ -58,18 +64,38 @@ export class SessionApi {
 
   /**
    * Renames the session.
+   *
+   * @param request The received HTTP request.
+   * @param response The pending HTTP response.
    */
-  rename() {
+  rename(request: express.Request, response: express.Response) {
+    var sessionId = this._getSessionIdOrFail(request, response);
+    if (!sessionId) {
+      // Response has been handled. Nothing more to do.
+      return;
+    }
 
+    // TODO(bryantd): get the new session from the request POST body here
+
+    this._manager.renameSession(sessionId, newId);
   }
 
   /**
    * Resets the session's (kernel) state.
    *
    * This will also have the effect of cancelling any queued/pending execution requests.
+   *
+   * @param request The received HTTP request.
+   * @param response The pending HTTP response.
    */
-  reset() {
+  reset(request: express.Request, response: express.Response) {
+    var sessionId = this._getSessionIdOrFail(request, response);
+    if (!sessionId) {
+      // Response has been handled. Nothing more to do.
+      return;
+    }
 
+    this._manager.resetSession(sessionId);
   }
 
   /**
@@ -77,7 +103,7 @@ export class SessionApi {
    *
    * Note: will also shutdown any kernel process associated with the session.
    */
-  shutdown(request: express.Request, response: express.Response): void {
+  shutdown(request: express.Request, response: express.Response) {
     var session = this._getSessionOrFail(request, response);
     if (!session) {
       // Response has been handled by getSessionOrFail. Nothing more to do.
@@ -116,6 +142,7 @@ export class SessionApi {
     if (!id) {
       response.sendStatus(400);
     }
+
     return id;
   }
 

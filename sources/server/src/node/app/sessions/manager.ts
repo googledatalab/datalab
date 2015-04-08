@@ -60,9 +60,33 @@ export class SessionManager implements app.ISessionManager {
   }
 
   /**
-   * Rename a session by modifying its id to be the new session id.
+   * Gets a session by ID if it exists.
+   *
+   * @param sessionId The session ID to get.
+   * @return A session or null if the ID was not found.
    */
-  renameSession (oldId: string, newId: string) {
+  get(sessionId: string): app.ISession {
+    return this._sessionIdToSession[sessionId] || null;
+  }
+
+  /**
+   * Gets the list of sessions currently managed by this instance.
+   *
+   * @return The set of active sessions.
+   */
+  list(): app.ISession[] {
+    return Object.keys(this._sessionIdToSession).map((sessionId) => {
+      return this._sessionIdToSession[sessionId];
+    });
+  }
+
+  /**
+   * Rename a session by modifying its id to be the new session id.
+   *
+   * @param oldId The current/old session ID to be renamed.
+   * @param newId The updated/new session ID.
+   */
+  renameSession(oldId: string, newId: string) {
     // Retrieve the existing session if it exists.
     var session = this._sessionIdToSession[oldId];
     if (!session) {
@@ -74,6 +98,10 @@ export class SessionManager implements app.ISessionManager {
     this._sessionIdToSession[newId] = session;
     // Remove the old id mapping for the session.
     delete this._sessionIdToSession[oldId];
+  }
+
+  resetSession(sessionId: string) {
+    // TODO(bryantd): call some session reset api on the session object.
   }
 
   /**
