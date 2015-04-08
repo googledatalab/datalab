@@ -22,8 +22,18 @@ declare module app {
     httpPort: number;
   }
 
+  /**
+   * A callback accepting both an error and typed data object.
+   */
   interface Callback<T> {
     (error: any, data: T): void;
+  }
+
+  /**
+   * An error-only callback.
+   */
+  interface ErrorCallback {
+    (error: any): void;
   }
 
   /**
@@ -112,7 +122,7 @@ declare module app {
     read(
       path: string,
       createIfNeeded: boolean,
-      callback: app.Callback<app.INotebookSession>
+      callback: Callback<app.INotebookSession>
       ): void;
 
     /**
@@ -120,8 +130,8 @@ declare module app {
      */
     write(
       path: string,
-      notebook: app.INotebookSession,
-      callback: app.Callback<boolean>
+      notebook: INotebookSession,
+      callback: ErrorCallback
       ): void;
   }
 
@@ -257,9 +267,9 @@ declare module app {
    * TODO(bryantd): Modify this interface to be async (and implementations of the interface).
    */
   interface IStorage {
-    read (path: string): string;
-    write (path: string, data: string): void;
-    delete (path: string): boolean;
+    read (path: string, callback: Callback<string>): string;
+    write (path: string, data: string, callback: ErrorCallback): void;
+    delete (path: string, callback: ErrorCallback): boolean;
     // move (sourcePath: string, destinationPath: string);
     // copy (sourcePath: string, destinationPath: string);
   }

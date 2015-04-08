@@ -24,7 +24,7 @@ export class LocalFileSystemStorage implements app.IStorage {
 
   _storageRootPath: string;
 
-  constructor (storageRootPath: string) {
+  constructor(storageRootPath: string) {
     this._storageRootPath = storageRootPath;
   }
 
@@ -33,21 +33,28 @@ export class LocalFileSystemStorage implements app.IStorage {
    *
    * Returns undefined if no file exists at the given path
    */
-  read (path: string) {
-    var data: string;
-    try {
-      data = fs.readFileSync(this._getAbsolutePath(path)).toString('utf8');
-    } catch (e) {
-      // No file exists at the given path, just leave data undefined for caller to handle
-    }
-    return data;
+  read(path: string, callback: app.Callback<string>) {
+    fs.readFile(this._getAbsolutePath(path), { encoding: 'utf8' }, (error: any, data: string) => {
+      if (error) {
+        // No file exists at the given path, just leave data undefined for caller to handle
+        callback(error);
+      } else {
+        callback(null, data);
+      }
+    });
   }
 
   /**
    * Asynchronously writes the given data string to the file referenced by the given path
    */
-  write (path: string, data: string) {
-    fs.writeFile(this._getAbsolutePath(path), data, this._handleError.bind(this));
+  write(path: string, data: string, callback: app.ErrorCallback) {
+    fs.writeFile(this._getAbsolutePath(path), data, (error) => {
+      if (error) {
+        callback(error, false);
+      } else {
+        callback(null, true);
+      }
+    });
   }
 
   /**
@@ -56,14 +63,8 @@ export class LocalFileSystemStorage implements app.IStorage {
    * Returns boolean to indicate success of the operation.
    * TODO(bryantd): make this an idempotent operation
    */
-  delete (path: string) {
-    try {
-      fs.unlinkSync(path);
-    } catch (e) {
-      console.log('ERROR could not delete file at path: ', path);
-      return false;
-    }
-    return true;
+  delete(path: string, callback: app.ErrorCallback) {
+    fs.unlink(path, callback);
   }
 
   _getAbsolutePath (path: string) {
