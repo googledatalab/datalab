@@ -36,12 +36,13 @@ export class KernelManager implements app.IKernelManager {
       id: string,
       config: app.KernelConfig,
       onExecuteReply: app.EventHandler<app.ExecuteReply>,
+      onHealthCheck: app.EventHandler<boolean>,
       onKernelStatus: app.EventHandler<app.KernelStatus>,
       onOutputData: app.EventHandler<app.OutputData>
       ): app.IKernel {
 
     var kernel: app.IKernel = new client.KernelClient(
-      id, config, onExecuteReply, onKernelStatus, onOutputData);
+      id, config, onExecuteReply, onHealthCheck, onKernelStatus, onOutputData);
 
     // Track the kernel.
     this._idToKernel[id] = kernel;

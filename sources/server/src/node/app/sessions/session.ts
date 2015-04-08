@@ -116,6 +116,21 @@ export class Session implements app.ISession {
     this._messageHandler(reply, this, nextAction);
   }
 
+  processKernelHealthCheck(kernelIsHealthy: boolean) {
+    console.log('processKernelHealthCheck', kernelIsHealthy);
+    if (kernelIsHealthy) {
+      // Nothing to do if the kernel is still healthy.
+      return;
+    }
+
+    console.log('Kernel not healthy!');
+    // Notify the user.
+    // kernel status=restarting
+
+    // Respawn kernel.
+    // this._spawnKernel();
+  }
+
   /**
    * Delegates in incoming kernel status (from kernel) to the middleware stack.
    */
@@ -346,24 +361,26 @@ export class Session implements app.ISession {
    * simply Python 2.7+ kernels.
    */
   _spawnKernel () {
-    // Eventually, the logic here will be replaced and the ability to respawn kernels will be
-    // available. For now, it is unexpected for a respawn to occur, so throw an error.
+    // If a previous kernel existed, clean up before respawning.
     if (this._kernel) {
-      throw util.createError(
-        'Attempted to (re)spawn kernel for session "%s". Kernel respawn not supported currently.',
-        this.id);
+      // Cleanup any connections and resources for the existing kernel.
+      console.log('Shutting down previous kernel', this._kernel);
+      this._kernelManager.shutdown(this._kernel.id);
     }
 
-    // Associate a kernel with the session.
+    // Spawn a new kernel for the session.
     this._kernel = this._kernelManager.create(
         uuid.v4(),
         {
+          heartbeatPort: util.getAvailablePort(),
           iopubPort: util.getAvailablePort(),
           shellPort: util.getAvailablePort()
         },
         this.processExecuteReply.bind(this),
+        this.processKernelHealthCheck.bind(this),
         this.processKernelStatus.bind(this),
         this.processOutputData.bind(this));
+    console.log('Spawned kernel', this._kernel);
   }
 
   // Methods for managing request <-> cell reference mappings

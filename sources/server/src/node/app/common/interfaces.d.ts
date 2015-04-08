@@ -53,6 +53,7 @@ declare module app {
   }
 
   interface KernelConfig {
+    heartbeatPort: number;
     iopubPort: number;
     shellPort: number;
   }
@@ -70,6 +71,29 @@ declare module app {
      * Sends an Update message to the client over the connection.
      */
     sendUpdate (update: notebooks.updates.Update): void;
+  }
+
+  interface IKernel {
+    id: string;
+    config: KernelConfig;
+    execute (request: ExecuteRequest): void;
+    shutdown (): void;
+    start (): void;
+  }
+
+  interface IKernelManager {
+    create (
+        id: string,
+        config: KernelConfig,
+        onExecuteReply: EventHandler<ExecuteReply>,
+        onHealthCheck: EventHandler<boolean>,
+        onKernelStatus: EventHandler<KernelStatus>,
+        onOutputData: EventHandler<OutputData>
+        ): IKernel;
+    get (id: string): IKernel;
+    list (): IKernel[];
+    shutdown (id: string): void;
+    shutdownAll (): void;
   }
 
   /**
@@ -115,28 +139,6 @@ declare module app {
      * Throws an error if the cell does not exist within the specified worksheet.
      */
     getCellOrThrow (cellId: string, worksheetId: string): notebooks.Cell;
-  }
-
-  interface IKernel {
-    id: string;
-    config: KernelConfig;
-    execute (request: ExecuteRequest): void;
-    shutdown (): void;
-    start (): void;
-  }
-
-  interface IKernelManager {
-    create (
-        id: string,
-        config: KernelConfig,
-        onExecuteReply: EventHandler<ExecuteReply>,
-        onKernelStatus: EventHandler<KernelStatus>,
-        onOutputData: EventHandler<OutputData>
-        ): IKernel;
-    get (id: string): IKernel;
-    list (): IKernel[];
-    shutdown (id: string): void;
-    shutdownAll (): void;
   }
 
   /**

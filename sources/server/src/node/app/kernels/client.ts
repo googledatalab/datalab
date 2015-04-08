@@ -15,12 +15,13 @@
 
 /// <reference path="../../../../../../externs/ts/node/node.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
-import uuid = require('node-uuid');
 import childproc = require('child_process');
-import util = require('util');
+import heartbeat = require('./heartbeat');
+import helpers = require('../common/util');
 import iopub = require('./iopub');
 import shell = require('./shell');
-import helpers = require('../common/util');
+import util = require('util');
+import uuid = require('node-uuid');
 
 /**
  * Client for communication via the IPython protocol to a kernel process.
@@ -35,15 +36,17 @@ export class KernelClient implements app.IKernel {
   id: string;
   config: app.KernelConfig;
 
-  _kernelProcess: childproc.ChildProcess;
-  _iopub: iopub.IOPubChannelClient;
-  _shell: shell.ShellChannelClient;
   _delegateKernelStatusHandler: app.EventHandler<app.KernelStatus>;
+  _heartbeat: heartbeat.HeartbeatChannelClient;
+  _iopub: iopub.IOPubChannelClient;
+  _kernelProcess: childproc.ChildProcess;
+  _shell: shell.ShellChannelClient;
 
   constructor (
       id: string,
       config: app.KernelConfig,
       onExecuteReply: app.EventHandler<app.ExecuteReply>,
+      onHealthCheck: app.EventHandler<boolean>,
       onKernelStatus: app.EventHandler<app.KernelStatus>,
       onOutputData: app.EventHandler<app.OutputData>) {
 
@@ -55,6 +58,11 @@ export class KernelClient implements app.IKernel {
         config.iopubPort,
         onKernelStatus,
         onOutputData);
+
+    this._heartbeat = new heartbeat.HeartbeatChannelClient(
+        KernelClient.connectionUrl,
+        config.heartbeatPort,
+        onHealthCheck);
 
     this._shell = new shell.ShellChannelClient(
         KernelClient.connectionUrl,
@@ -78,6 +86,7 @@ export class KernelClient implements app.IKernel {
    * Closes socket connections to the kernel process and then kills the kernel process.
    */
   shutdown (): void {
+    this._heartbeat.disconnect();
     this._iopub.disconnect();
     this._shell.disconnect();
     this._kernelProcess.kill();
@@ -87,7 +96,11 @@ export class KernelClient implements app.IKernel {
    * Spawns a new kernel process and registers event handlers for per-channel kernel messages.
    */
   start (): void {
+    // Create the kernel process.
     this._spawnLocalKernelProcess();
+
+    // Connect each of the channels to the ports of the kernel process.
+    this._heartbeat.connect();
     this._iopub.connect();
     this._shell.connect();
   }
@@ -104,6 +117,7 @@ export class KernelClient implements app.IKernel {
         '--Session.key=""',
         '--iopub=' + this.config.iopubPort,
         '--shell=' + this.config.shellPort,
+        '--hb=' + this.config.heartbeatPort,
         '--log-level="DEBUG"',
         '--matplotlib=inline'
         ];
