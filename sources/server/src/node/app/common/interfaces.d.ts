@@ -22,6 +22,10 @@ declare module app {
     httpPort: number;
   }
 
+  interface Callback<T> {
+    (error: any, data: T): void;
+  }
+
   /**
    * A composite cell identifier that bundles cell and worksheet ids.
    *
@@ -105,12 +109,20 @@ declare module app {
      *
      * Optionally creates a new notebook if needed when flag is set to true.
      */
-    read (path: string, createIfNeeded?: boolean): app.INotebookSession;
+    read(
+      path: string,
+      createIfNeeded: boolean,
+      callback: app.Callback<app.INotebookSession>
+      ): void;
 
     /**
      * Writes the given notebook session to storage.
      */
-    write (path: string, notebook: app.INotebookSession): void;
+    write(
+      path: string,
+      notebook: app.INotebookSession,
+      callback: app.Callback<boolean>
+      ): void;
   }
 
   /**
