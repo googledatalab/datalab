@@ -338,9 +338,11 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
        table.length, rows_per_page, _json.dumps(data, cls=_util.JSONEncoder))
 
 
-def _render_schema(builder, schema, title=''):
-  builder.render_objects(schema, ['name', 'data_type', 'mode', 'description'], dictionary=True,
-                         title=title[1:])
+def _render_schema(builder, schema, title='', include_column_headers=False):
+  builder.render_objects(schema, ['name', 'type', 'mode', 'description'], dictionary=True,
+                         title=title[1:], include_table_element=False,
+                         include_column_headers=include_column_headers,
+                         collapse_rows=True)
   for field in schema:
     if field['type'] == 'RECORD':
       _render_schema(builder, field['fields'], title + '.' + field['name'])

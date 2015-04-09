@@ -75,7 +75,12 @@ class HtmlBuilder(object):
     """
     self._segments = []
 
-  def render_objects(self, items, attributes=None, dictionary=False, title=None):
+  def append(self, content):
+    self._segments.append(content)
+
+  def render_objects(self, items, attributes=None, dictionary=False, title=None,
+                     include_table_element=True, include_column_headers=True,
+                     collapse_rows=False):
     """Renders an HTML table with the specified list of objects.
 
     Args:
@@ -83,6 +88,10 @@ class HtmlBuilder(object):
       attributes: the optional list of properties or keys to render.
       dictionary: whether the list contains generic object or specifically dict instances.
       title: if set, show a title in the first row
+      include_table_element: if True, include the outer <table> tags.
+      include_column_headers: if True, add a row of column headers at the start (after title).
+      collapse_rows: if True, only the title will be shown and the rows will be shown only
+        upon clicking the title
     """
     if not items:
       return
@@ -93,9 +102,11 @@ class HtmlBuilder(object):
       getter = lambda obj, attr: obj.__getattribute__(attr)
 
     num_segments = len(self._segments)
-    self._segments.append('<table>')
+    if include_table_element:
+      self.append('<table>')
 
     first = True
+    class_id = None
 
     for o in items:
       if first:
@@ -104,24 +115,43 @@ class HtmlBuilder(object):
           attributes = o.keys()
 
         if title:
-          self._segments.append(
-              '<tr><th colspan=%d style="background-color:LightGray;text-align:center">%s</th></tr>'
-              % (len(attributes) if attributes else 1, title))
-        if attributes is not None:
-          self._segments.append('<tr>')
+          self.append('<tr>')
+          if collapse_rows:
+            class_id = '%s_%d' % (title, int(round(_time.time())))
+            self.append('''
+                <th colspan=%d style="background-color:LightGray"
+                    onclick="Array.prototype.filter.call(document.getElementsByClassName('%s'),
+                        function(e) {
+                            e.style.display = e.style.display == 'none' ? 'table-row' : 'none';
+                        }
+                    )">%s</th>'''
+                        % (len(attributes) if attributes else 1, class_id, title))
+          else:
+            self.append('<th colspan=%d style="background-color:LightGray">%s</th>'
+                        % (len(attributes) if attributes else 1, title))
+          self.append('</tr>')
+        if include_column_headers and attributes is not None:
+          if class_id:
+            self.append('<tr class="%" style="display:none">' % class_id)
+          else:
+            self.append('<tr>')
           for attr in attributes:
-            self._segments.append('<th><em>%s</th>' % attr)
-          self._segments.append('</tr>')
+            self.append('<th><em>%s</th>' % attr)
+          self.append('</tr>')
 
-      self._segments.append('<tr>')
+      if class_id:
+        self.append('<tr class="%s" style="display:none">' % class_id)
+      else:
+        self.append('<tr>')
       if attributes is None:
-        self._segments.append('<td>%s</td>' % self._format(o))
+        self.append('<td>%s</td>' % self._format(o))
       else:
         for attr in attributes:
-          self._segments.append('<td>%s</td>' % self._format(getter(o, attr), nbsp=True))
-      self._segments.append('</tr>')
+          self.append('<td>%s</td>' % self._format(getter(o, attr), nbsp=True))
+      self.append('</tr>')
 
-    self._segments.append('</table>')
+    if include_table_element:
+      self.append('</table>')
     if first:
       # The table was empty; drop it from the segments.
       self._segments = self._segments[:num_segments]
@@ -134,7 +164,7 @@ class HtmlBuilder(object):
       preformatted: whether the text should be rendered as preformatted
     """
     tag = 'pre' if preformatted else 'div'
-    self._segments.append('<%s>%s</%s>' % (tag, self._format(text), tag))
+    self.append('<%s>%s</%s>' % (tag, self._format(text), tag))
 
   def to_html(self):
     """Returns the HTML that has been rendered.
