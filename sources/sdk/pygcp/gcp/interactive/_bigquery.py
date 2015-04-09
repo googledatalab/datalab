@@ -329,9 +329,11 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
        rows_per_page)
 
 
-def _render_schema(builder, schema, title=''):
-  builder.render_objects(schema, ['name', 'data_type', 'mode', 'description'], dictionary=True,
-                         title=title[1:])
+def _render_schema(builder, schema, title='', include_column_headers=False):
+  builder.render_objects(schema, ['name', 'type', 'mode', 'description'], dictionary=True,
+                         title=title[1:], include_table_element=False,
+                         include_column_headers=include_column_headers,
+                         collapse_rows=True)
   for field in schema:
     if field['type'] == 'RECORD':
       _render_schema(builder, field['fields'], title + '.' + field['name'])
@@ -360,7 +362,9 @@ def _repr_html_table_list(table_list):
 
 def _repr_html_table_schema(schema):
   builder = _HtmlBuilder()
-  _render_schema(builder, schema._bq_schema)
+  builder.append('<table>')
+  _render_schema(builder, schema._bq_schema, include_column_headers=True)
+  builder.append('</table>')
   return builder.to_html()
 
 
