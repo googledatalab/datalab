@@ -34,6 +34,10 @@ export class LocalFileSystemStorage implements app.IStorage {
   }
 
   /**
+   *
+   */
+
+  /**
    * Asynchronously opens and reads from the file at the given path.
    *
    * @param path The file system path to read, relative to the root path.
