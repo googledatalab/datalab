@@ -53,7 +53,8 @@ export class NotebookStorage implements app.INotebookStorage {
       serializer = formats.selectSerializer(path);
     } catch (error) {
       // Pass the error to the caller.
-      return callback(error);
+      process.nextTick(callback.bind(null, error));
+      return;
     }
 
     // First, attempt to read in the notebook if it already exists at the defined path.
@@ -61,7 +62,8 @@ export class NotebookStorage implements app.INotebookStorage {
 
       // Pass any read errors back to the caller to handle.
       if (error) {
-        return callback(error);
+        process.nextTick(callback.bind(null, error));
+        return;
       }
 
       // Deserialize the notebook or create a starter notebook.
@@ -73,8 +75,9 @@ export class NotebookStorage implements app.INotebookStorage {
           notebookData = nbutil.createStarterNotebook();
         } else {
           // Nothing can be done here since the path doesn't exist.
-          return callback(util.createError(
-            'Cannot read notebook path "%s" because does not exist.'));
+          process.nextTick(callback.bind(null, util.createError(
+            'Cannot read notebook path "%s" because does not exist.')));
+          return;
         }
 
       } else {
@@ -83,7 +86,7 @@ export class NotebookStorage implements app.INotebookStorage {
       }
 
       // Create the notebook wrapper to manage the notebook model state.
-      callback(null, new nb.NotebookSession(notebookData));
+      process.nextTick(callback.bind(null, null, new nb.NotebookSession(notebookData)));
     });
   }
 
@@ -94,14 +97,15 @@ export class NotebookStorage implements app.INotebookStorage {
    * @param notebook A notebook session to serialize.
    * @param callback Callback to invoke upon completion of the async write operation.
    */
-  write(path: string, notebook: app.INotebookSession, callback: app.ErrorCallback) {
+  write(path: string, notebook: app.INotebookSession, callback: app.Callback<void>) {
 
     // Selects the serializer that has been assigned to the notebook path extension.
     var serializer: app.INotebookSerializer;
     try {
       serializer = formats.selectSerializer(path);
     } catch (error) {
-      return callback(error);
+      process.nextTick(callback.bind(null, error));
+      return;
     }
 
     // Serialize the current notebook model state to the format inferred from the file extension
