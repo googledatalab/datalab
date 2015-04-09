@@ -29,12 +29,21 @@ export class NotebookStorage implements app.INotebookStorage {
 
   _storage: app.IStorage;
 
+  /**
+   * Constructor.
+   *
+   * @param storage The storage instance to use for persistence.
+   */
   constructor(storage: app.IStorage) {
     this._storage = storage;
   }
 
   /**
-   * Reads in the notebook if it exists or creates a starter notebook if not.
+   * Asynchronously reads in the notebook if it exists or creates a starter notebook if not.
+   *
+   * @param path The full notebook path to read (with file extension).
+   * @param createIfNeeded Should a starter notebook be returned if the path doesn't exist?
+   * @param callback Callback to invoke upon completion of the read operation.
    */
   read(path: string, createIfNeeded: boolean, callback: app.Callback<app.INotebookSession>) {
     console.log('Reading notebook ' + path + ' ...');
@@ -44,8 +53,8 @@ export class NotebookStorage implements app.INotebookStorage {
     try {
       serializer = formats.selectSerializer(path);
     } catch (error) {
-      callback(error);
-      return;
+      // Pass the error to the caller.
+      return callback(error);
     }
 
     // First, attempt to read in the notebook if it already exists at the defined path.
@@ -53,14 +62,14 @@ export class NotebookStorage implements app.INotebookStorage {
 
       // If an error occurred, simply pass it back to the caller.
       if (error) {
-        callback(error);
         // Nothing else can be done here.
-        return;
+        return callback(error);
       }
 
       // No error, so deserialze the notebook or create a starter notebook.
       var notebookData: app.notebooks.Notebook;
       if (serializedNotebook === undefined) {
+
         if (createIfNeeded) {
           // Notebook didn't exist, so create a starter notebook.
           notebookData = nbutil.createStarterNotebook();
@@ -68,6 +77,7 @@ export class NotebookStorage implements app.INotebookStorage {
           // Nothing can be done here since the path doesn't exist.
           throw util.createError('Cannot read notebook path "%s" because does not exist.');
         }
+
       } else {
         // Notebook already existed. Deserialize the notebook data.
         notebookData = serializer.parse(serializedNotebook);
@@ -78,20 +88,22 @@ export class NotebookStorage implements app.INotebookStorage {
     });
   }
 
-
   /**
-   * Serializes the given notebook and writes it to storage.
+   * Asynchronously serializes the given notebook and writes it to storage.
+   *
+   * @param path The notebook path to write to.
+   * @param notebook A notebook session to serialize.
+   * @param callback Callback to invoke upon completion of the async write operation.
    */
   write(path: string, notebook: app.INotebookSession, callback: app.ErrorCallback) {
-    console.log('Saving notebook ' + path + ' ...');
+    console.log('Writing notebook ' + path + ' ...');
 
     // Selects the serializer that has been assigned to the notebook path extension.
     var serializer: app.INotebookSerializer;
     try {
       serializer = formats.selectSerializer(path);
     } catch (error) {
-      callback(error);
-      return;
+      return callback(error);
     }
 
     // Serialize the current notebook model state to the format inferred from the file extension

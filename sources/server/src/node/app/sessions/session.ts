@@ -59,26 +59,11 @@ export class Session implements app.ISession {
     this._notebookPath = notebookPath;
     this._notebookStorage = notebookStorage;
 
-    // Read the notebook if it exists.
-    this._notebook = this._notebookStorage.read(notebookPath, /* create if needed */ true);
+    // Initialize the notebook session asynchronously.
+    this._initNotebook();
+
     // Spawn an appropriate kernel for the given notebook.
     this._spawnKernel();
-  }
-
-  /**
-   * Gets the id of the kernel currently associated with this session.
-   */
-  getKernelId (): string {
-    return (this._kernel && this._kernel.id) || undefined;
-  }
-
-  /**
-   * Gets the set of user connections currently associated with this session.
-   */
-  getClientConnectionIds (): string[] {
-    return this._connections.map((connection) => {
-      return connection.id;
-    });
   }
 
   /**
@@ -93,10 +78,28 @@ export class Session implements app.ISession {
   addClientConnection (connection: app.IClientConnection) {
     // Add the connection to the "connected" set
     this._connections.push(connection);
-    // Send the initial notebook state at the time of connection.
-    connection.sendUpdate({
-      name: updates.notebook.snapshot,
-      notebook: this._notebook.getNotebookData()
+
+    // Send the initial notebook state at the time of connection, if it is available.
+    this._broadcastNotebookSnapshot([connection]);
+  }
+
+  /**
+   * Gets the id of the kernel currently associated with this session.
+   *
+   * @return The ID of the associated kernel instance, or null if none exists.
+   */
+  getKernelId(): string {
+    return (this._kernel && this._kernel.id) || null;
+  }
+
+  /**
+   * Gets the set of user connections currently associated with this session.
+   *
+   * @return Array of connection IDs for currently connected clients.
+   */
+  getClientConnectionIds(): string[] {
+    return this._connections.map((connection) => {
+      return connection.id;
     });
   }
 
@@ -175,7 +178,6 @@ export class Session implements app.ISession {
       'Connection id "%s" was not found in session id "%s"', connection.id, this.id);
   }
 
-
   /**
    * Sends the given update message to all user connections associated with this session.
    */
@@ -183,6 +185,31 @@ export class Session implements app.ISession {
     this._connections.forEach((connection) => {
       connection.sendUpdate(update);
     });
+  }
+
+  /**
+   * Sends a snapshot of the current notebook state to all connected clients.
+   *
+   * @param connections The set of connection IDs to broadcast to.
+   */
+  _broadcastNotebookSnapshot(connections: app.IClientConnection[]) {
+    // No-op if there is not an existing notebook to broadcast.
+    //
+    // This will be the case if the async loading of the notebook has not completed before a client
+    // connects to the session.
+    if (this._notebook) {
+
+      // Get a data-only snapshot of the notebook.
+      var snapshot = {
+        name: updates.notebook.snapshot,
+        notebook: this._notebook.getNotebookData()
+      };
+
+      // Send the snapshot to each connected client.
+      connections.forEach((connection) => {
+        connection.sendUpdate(snapshot);
+      });
+    }
   }
 
   // Handlers for messages flowing in either direction between user<->kernel.
@@ -355,10 +382,55 @@ export class Session implements app.ISession {
   }
 
   /**
+   * Asynchronously initializes the notebook state and sends a snapshot to connected clients.
+   */
+  _initNotebook() {
+    this._notebookStorage.read(
+      this._notebookPath,
+      /* create if needed */ true,
+      (error: any, notebook: app.INotebookSession) => {
+        // TODO(bryantd): add some retry logic here, and as a fall-back, destroy
+        // the session and somehow signal that this has occurred to the user.
+        //
+        // For example, send some "notebook loading failed" status message to the frontend so that
+        // the UI can render this state to the user and allow them to decide how to proceed
+        // (e.g., refresh the page, file an issue).
+        if (error) {
+          throw util.createError(
+            'Unexpected error while attempting to read notebook path %s. Caused by: %s',
+            this._notebookPath,
+            error.stack);
+        }
+
+        // Store the notebook.
+        this._notebook = notebook;
+
+        // Send a snapshot of the notebook to any/all connected clients.
+        this._broadcastNotebookSnapshot(this._connections);
+    });
+  }
+
+  /**
    * Persists the current notebook state to the notebook storage.
    */
   _save () {
-    this._notebookStorage.write(this._notebookPath, this._notebook);
+    this._notebookStorage.write(this._notebookPath, this._notebook, (error) => {
+      if (error) {
+        // TODO(bryantd): send message re: persistence failure to clients and allow the client
+        // to proceed as they wish (IPython behavior). e.g., "Save failed" should be displayed
+        // where the auto-save ("last saved at <time>") info is shown.
+        //
+        // Can also wrap this in some retry logic with backoff if that improves write success
+        // rates. Within retry logic, need to be warry of writing stale notebook data over
+        // successful writes that occurred in the interim (and are more recent).
+        //
+        // For the moment, make write errors catastrophic.
+        throw util.createError(
+          'Unexpected error while attempting to write notebook path %s. Caused by: %s',
+          this._notebookPath,
+          error.stack);
+      }
+    });
   }
 
   /**
