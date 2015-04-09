@@ -31,6 +31,8 @@ export class Session implements app.ISession {
 
   id: string;
 
+  _isNotebookModifiedSinceLastSave: boolean;
+  _isNotebookSavePending: boolean;
   _kernel: app.IKernel;
   _kernelManager: app.IKernelManager;
   _notebook: app.INotebookSession;
@@ -52,6 +54,8 @@ export class Session implements app.ISession {
       notebookStorage: app.INotebookStorage) {
 
     this.id = id;
+    this._isNotebookModifiedSinceLastSave = false;
+    this._isNotebookSavePending = false;
     this._kernelManager = kernelManager;
     this._messageHandler = messageHandler;
     this._requestIdToCellRef = {};
@@ -412,9 +416,50 @@ export class Session implements app.ISession {
 
   /**
    * Persists the current notebook state to the notebook storage.
+   *
+   * Because concurrent asynchronous writes to the same notebook path may conflict,
+   * this method serializes writes to the notebook storage backend, such that later
+   * saves are always persisted after an earlier save.
+   *
+   * Furthermore, since the entire notebook snapshot is being written to storage on
+   * each save, intermediate snapshots are not needed for maintaining the notebook
+   * state in the storage backend (i.e., each save is not an incremental changes, but rather
+   * the entire notebook state).
+   *
+   * This means that for a sequence of N snapshots, only the latest (most recent) snapshot is
+   * needed, since it would overwrite all of the intervening snapshots when it is ultimately
+   * applied.
+   *
+   * Given this, save has the followings semantics:
+   * 1) If there is no in-flight/pending save operation, then save the current snapshot immediately
+   * 2) If there is a pending save operation, wait until the operation completes and then save
+   *    the latest snapshot, regardless of the number of save() calls that happened in the interim.
+   *
+   * This strategy ensures that conflicting writes aren't issued concurrently and that the latest
+   * notebook state is updated as soon as possible upon completion of pending writes.
    */
   _save () {
+    // If there is already a pending save operation, we must wait until it completes to save.
+    if (this._isNotebookSavePending) {
+      // Mark the notebook as modified and needing to be saved.
+      this._isNotebookModifiedSinceLastSave = true;
+      // Nothing else can be done at the moment.
+      return;
+    }
+
+    // No pending save operation, so issue the save operation immediately.
+
+    // Clear the modification flag since we are saving the current/latest notebook state.
+    this._isNotebookModifiedSinceLastSave = false;
+    // A new save operation is now pending.
+    this._isNotebookSavePending = true;
+
+    // Write the notebook state to storage asynchronously.
     this._notebookStorage.write(this._notebookPath, this._notebook, (error) => {
+
+      // Save operation completed. Remove pending flag.
+      this._isNotebookSavePending = false;
+
       if (error) {
         // TODO(bryantd): send message re: persistence failure to clients and allow the client
         // to proceed as they wish (IPython behavior). e.g., "Save failed" should be displayed
@@ -429,6 +474,12 @@ export class Session implements app.ISession {
           'Unexpected error while attempting to write notebook path %s. Caused by: %s',
           this._notebookPath,
           error.stack);
+      }
+
+      // If the notebook has been modified since the last save was issued, then we can now save
+      // the current state of the notebook.
+      if (this._isNotebookModifiedSinceLastSave) {
+        this._save();
       }
     });
   }
