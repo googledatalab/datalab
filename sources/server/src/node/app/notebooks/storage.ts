@@ -46,7 +46,6 @@ export class NotebookStorage implements app.INotebookStorage {
    * @param callback Callback to invoke upon completion of the read operation.
    */
   read(path: string, createIfNeeded: boolean, callback: app.Callback<app.INotebookSession>) {
-    console.log('Reading notebook ' + path + ' ...');
 
     // Selects the serializer that has been assigned to the notebook path extension.
     var serializer: app.INotebookSerializer;
@@ -65,7 +64,7 @@ export class NotebookStorage implements app.INotebookStorage {
         return callback(error);
       }
 
-      // Deserialze the notebook or create a starter notebook.
+      // Deserialize the notebook or create a starter notebook.
       var notebookData: app.notebooks.Notebook;
       if (serializedNotebook === undefined) {
 
@@ -74,11 +73,12 @@ export class NotebookStorage implements app.INotebookStorage {
           notebookData = nbutil.createStarterNotebook();
         } else {
           // Nothing can be done here since the path doesn't exist.
-          throw util.createError('Cannot read notebook path "%s" because does not exist.');
+          return callback(util.createError(
+            'Cannot read notebook path "%s" because does not exist.'));
         }
 
       } else {
-        // Notebook already existed. Deserialize the notebook data.
+        // Notebook already exists. Deserialize the notebook data.
         notebookData = serializer.parse(serializedNotebook);
       }
 
@@ -95,7 +95,6 @@ export class NotebookStorage implements app.INotebookStorage {
    * @param callback Callback to invoke upon completion of the async write operation.
    */
   write(path: string, notebook: app.INotebookSession, callback: app.ErrorCallback) {
-    console.log('Writing notebook ' + path + ' ...');
 
     // Selects the serializer that has been assigned to the notebook path extension.
     var serializer: app.INotebookSerializer;
