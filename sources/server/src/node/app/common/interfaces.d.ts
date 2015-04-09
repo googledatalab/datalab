@@ -262,9 +262,7 @@ declare module app {
   }
 
   /**
-   * Generic file persistence interface.
-   *
-   * TODO(bryantd): Modify this interface to be async (and implementations of the interface).
+   * Generic asynchronous file persistence interface.
    */
   interface IStorage {
     read (path: string, callback: Callback<string>): void;
