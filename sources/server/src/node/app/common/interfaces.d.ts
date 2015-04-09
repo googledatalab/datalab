@@ -26,14 +26,7 @@ declare module app {
    * A callback accepting both an error and typed data object.
    */
   interface Callback<T> {
-    (error: any, data?: T): void;
-  }
-
-  /**
-   * An error-only callback.
-   */
-  interface ErrorCallback {
-    (error: any): void;
+    (error: Error, data?: T): void;
   }
 
   /**
@@ -131,7 +124,7 @@ declare module app {
     write(
       path: string,
       notebook: INotebookSession,
-      callback: ErrorCallback
+      callback: Callback<void>
       ): void;
   }
 
@@ -266,8 +259,8 @@ declare module app {
    */
   interface IStorage {
     read (path: string, callback: Callback<string>): void;
-    write (path: string, data: string, callback: ErrorCallback): void;
-    delete (path: string, callback: ErrorCallback): void;
+    write (path: string, data: string, callback: Callback<void>): void;
+    delete (path: string, callback: Callback<void>): void;
     // move (sourcePath: string, destinationPath: string);
     // copy (sourcePath: string, destinationPath: string);
   }

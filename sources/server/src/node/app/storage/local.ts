@@ -65,7 +65,7 @@ export class LocalFileSystemStorage implements app.IStorage {
    * @param data The data string to write.
    * @param callback Callback to invoke upon completion of the write operation.
    */
-  write(path: string, data: string, callback: app.ErrorCallback) {
+  write(path: string, data: string, callback: app.Callback<void>) {
     fs.writeFile(this._getAbsolutePath(path), data, callback);
   }
 
@@ -75,7 +75,7 @@ export class LocalFileSystemStorage implements app.IStorage {
    * @param path The file system path to write to, relative to the root path.
    * @param callback Callback to invoke upon completion of the write operation.
    */
-  delete(path: string, callback: app.ErrorCallback) {
+  delete(path: string, callback: app.Callback<void>) {
     fs.unlink(path, callback);
   }
 

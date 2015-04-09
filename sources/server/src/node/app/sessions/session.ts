@@ -403,7 +403,7 @@ export class Session implements app.ISession {
           throw util.createError(
             'Unexpected error while attempting to read notebook path %s. Caused by: %s',
             this._notebookPath,
-            error.stack);
+            error);
         }
 
         // Store the notebook.
@@ -473,13 +473,13 @@ export class Session implements app.ISession {
         throw util.createError(
           'Unexpected error while attempting to write notebook path %s. Caused by: %s',
           this._notebookPath,
-          error.stack);
+          error);
       }
 
       // If the notebook has been modified since the last save was issued, then we can now save
       // the current state of the notebook.
       if (this._isNotebookModifiedSinceLastSave) {
-        this._save();
+        process.nextTick(this._save.bind(this));
       }
     });
   }
