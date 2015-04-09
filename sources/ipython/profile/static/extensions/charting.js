@@ -121,7 +121,7 @@ define(function () {
   }
 
   // Function to get a range of data and update chart with one page of data.
-  function getPagedData(model, startRow) {
+  function getPagedData(model, startRow, spinner) {
 
     // Calculate the number of rows we want to display.
     var pageCount = getPageRowCount(model, startRow);
@@ -146,8 +146,19 @@ define(function () {
       var code = model.fetchCode + ' ' + first + ' ' + fetchCount;
       IPython.notebook.kernel.get_data(code, function (newData, error) {
         if (error) {
+          if (spinner) spinner.stop();
           onError(model, error);
         } else {
+          if (newData.data.cols == undefined) {
+            // We got nothing. This means that the Table didn't exist yet so it is
+            // probably a query. Schedule a retry and return.
+            // TODO(gram): Should we have some upper limit?
+            setTimeout(function() {
+              getPagedData(model, startRow, spinner);
+            }, 1000);
+            return;
+          }
+          if (spinner) spinner.stop();
           convertDates(newData.data);
           model.data = newData.data;
           model.dataOffset = first;
@@ -173,6 +184,29 @@ define(function () {
     }
   }
 
+  function startSpinner(dom, spin) {
+    var opts = {
+      lines: 13, // The number of lines to draw
+      length: 5, // The length of each line
+      width: 2, // The line thickness
+      radius: 6, // The radius of the inner circle
+      corners: 1, // Corner roundness (0..1)
+      rotate: 0, // The rotation offset
+      direction: 1, // 1: clockwise, -1: counterclockwise
+      color: '#000', // #rgb or #rrggbb or array of colors
+      speed: 1, // Rounds per second
+      trail: 60, // Afterglow percentage
+      shadow: false, // Whether to render a shadow
+      hwaccel: false, // Whether to use hardware acceleration
+      className: 'spinner', // The CSS class to assign to the spinner
+      zIndex: 2e9, // The z-index (defaults to 2000000000)
+      top: '50%', // Top position relative to parent
+      left: '50%' // Left position relative to parent
+    };
+    var spinner = new spin(opts);
+    spinner.spin(dom);
+    return spinner;
+  }
   // The main render method, called from Python-generated code. dom is the DOM element
   // for the chart, model is a set of parameters from Python, and options is a JSON
   // set of options provided by the user in the cell magic body, which takes precedence over
@@ -181,7 +215,9 @@ define(function () {
     var chartInfo = chartMap[model.chartStyle];
     var chartScript = chartInfo.script || 'corechart';
 
-    require(['visualization!' + chartScript], function (visualization) {
+    require(['spin', 'visualization!' + chartScript], function (spin, visualization) {
+
+      var spinner = startSpinner(dom, spin);
       var chartType = visualization[chartInfo.name];
       var chart = new chartType(dom);
       var fetchCode = '%_get_chart_data ' + model.dataName + ' ' + (model.fields || '*');
@@ -206,9 +242,10 @@ define(function () {
           handlePageEvent(model, e.page);
         });
 
-        getPagedData(model, 0);
+        getPagedData(model, 0, spinner);
       } else {
         IPython.notebook.kernel.get_data(fetchCode, function (data, error) {
+          spinner.stop();
           if (error) {
             onError(visualization, dom, error);
           } else {
