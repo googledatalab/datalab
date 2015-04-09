@@ -79,7 +79,7 @@ def bigquery(line, cell=None):
 
   # %bigquery schema
   schema_parser = subparsers.add_parser('schema', help='view a BigQuery table schema')
-  schema_parser.add_argument('item', help='the name of the table')
+  schema_parser.add_argument('item', help='the name of the table or view')
   schema_parser.set_defaults(func=lambda x: _dispatch_handler('schema', x, cell, schema_parser,
                                                               _schema_line, cell_prohibited=True))
 
@@ -255,6 +255,7 @@ def _get_table(name):
     table = _bq.table(name)
     if table.exists():
       _table_cache[name] = table
+<<<<<<< HEAD
       return table
   return None
 
