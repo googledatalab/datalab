@@ -17,32 +17,120 @@
  * Styles specific to notebook editing
  */
 
+.clearer {
+  /* TODO(bryantd): hopefully get rid of this rule if possible
+
+  Currently being used to clear the floating pieces of the output cells that
+  leak outside of the containing div (datalab-editor-cell) otherwise.
+  */
+  clear: both;
+}
+
+/**
+ * CodeMirror editor region styling.
+ */
+.CodeMirror {
+  height: auto;
+  background: #eee;
+}
+
+/**
+ * Places the cell-level toolbar in the upper right corner of the cell "card"
+ */
+.datalab-cell-inserter-toolbar {
+  float: right;
+  position: relative;
+  top: -45px;
+  margin-right: 30px;
+}
+
+/**
+ * Places the cell-level toolbar in the upper right corner of the cell "card"
+ */
+.datalab-cell-toolbar {
+  float: right;
+  position: relative;
+  top: -45px;
+}
 
 /**
  * Code editor cell styling
  */
+.datalab-editor-cell {
+  padding: 10px;
+  margin: 20px;
+  padding-top: 30px;
+}
+
 .datalab-editor-cell-identifier {
   float: left;
   font-weight: bold;
+  font-family: monospace;
+  color: #aaa;
 }
+.datalab-editor-cell-identifier .fa.fa-lg {
+  vertical-align: -25%;
+}
+.datalab-editor-cell-identifier-input {
+  color: #333;
+}
+.datalab-editor-cell-identifier-output {
+  color: #ccc;
+}
+
 .datalab-editor-cell-input-content {
-  float: left;
-  margin-left: 10px;
+  /* TODO(bryantd): Need this to be innermost col full width.
+
+  This hack should go away when the css is transitioned to use flexbox.
+
+  Without the odd-looking expression, this ends up being the full
+  (inner) row width and will wrap below input heading.
+  */
+  width: 100%-1;
 }
+
 .datalab-editor-cell-output {
   clear: both;
 }
 .datalab-editor-cell-output-indicator {
   float: left;
-}
-.datalab-editor-cell-outputs {
-  float: left;
-  margin-left: 10px;
+
 }
 
 /**
- * CodeMirror styling
+ * Displays a drop shadow around the active cell.
  */
-.CodeMirror {
-  height: auto;
+.datalab-editor-cell-active {
+  -webkit-box-shadow: 3px 3px 10px 0px rgba(153,153,153,1);
+  -moz-box-shadow: 3px 3px 10px 0px rgba(153,153,153,1);
+  box-shadow: 3px 3px 10px 0px rgba(153,153,153,1);
+}
+
+.datalab-editor-cell-controls:hover {
+  opacity: 1;
+}
+
+.datalab-editor-header {
+  padding: 10px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.datalab-notebook-title {
+  color: #555;
+  font-size: 18px;
+}
+
+.datalab-notebook-toolbar {
+  float: right;
+  position: relative;
+  top: 5px;
+}
+
+/**
+ * Adds some horizontal spacing to the cell-level toolbar controls
+ */
+.datalab-toolbar-button {
+  margin-left: 15px;
+  display: block;
+  float: left;
 }

@@ -37,6 +37,9 @@ var codeMirrorOptions: CodeMirror.EditorConfiguration = {
   lineNumbers: false,
   indentUnit: 4,
 
+  // Note: themes require additional css imports containing the CodeMirror syntax css rules.
+  theme: 'quantum-light',
+
   // Language mode requires additional assets be requested via amd-dependency.
   mode: {
     name: "python",
