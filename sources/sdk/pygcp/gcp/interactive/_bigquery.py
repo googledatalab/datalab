@@ -225,10 +225,10 @@ def _schema_line(args):
   name = args['item']
   schema = _get_schema(name)
   if not schema:
-    html = "<div>%s does not exist</div>" % name
+    print "%s does not exist" % name
   else:
     html = _repr_html_table_schema(schema)
-  return _ipython.core.display.HTML(html)
+    return _ipython.core.display.HTML(html)
 
 
 # An LRU cache for Tables. This is mostly useful so that when we cross page boundaries
@@ -330,14 +330,17 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
        rows_per_page)
 
 
-def _render_schema(builder, schema, title='', include_column_headers=False):
-  builder.render_objects(schema, ['name', 'type', 'mode', 'description'], dictionary=True,
-                         title=title[1:], include_table_element=False,
-                         include_column_headers=include_column_headers,
-                         collapse_rows=True)
-  for field in schema:
-    if field['type'] == 'RECORD':
-      _render_schema(builder, field['fields'], title + '.' + field['name'])
+def _schema_viewer(table, fields=None):
+  """  Return a schema viewer.
+
+  Args:
+    table: the table whose schema should be displayed.
+  Returns:
+    A string containing the HTML for the schema viewer.
+  """
+  if not table.exists():
+    return "<div>%s does not exist</div>" % table.full_name
+  return _repr_html_table_schema(table.schema)
 
 
 def _repr_html_query(query):
@@ -363,9 +366,6 @@ def _repr_html_table_list(table_list):
 
 def _repr_html_table_schema(schema):
   builder = _HtmlBuilder()
-  builder.append('<table>')
-  _render_schema(builder, schema._bq_schema, include_column_headers=True)
-  builder.append('</table>')
   return builder.to_html()
 
 
