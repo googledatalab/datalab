@@ -235,26 +235,28 @@ export function toIPyCodeCell (cell: app.notebooks.Cell): app.ipy.CodeCell {
     outputs: []
   };
 
-  cell.outputs.forEach((output) => {
-    switch (output.type) {
-      case 'result':
-        ipyCell.outputs.push(toIPyDisplayDataOutput(output));
-        break;
+  if (cell.outputs) {
+    cell.outputs.forEach((output) => {
+      switch (output.type) {
+        case 'result':
+          ipyCell.outputs.push(toIPyDisplayDataOutput(output));
+          break;
 
-      case 'error':
-        ipyCell.outputs.push(toIPyErrorOutput(output));
-        break;
+        case 'error':
+          ipyCell.outputs.push(toIPyErrorOutput(output));
+          break;
 
-      case 'stdout':
-      case 'stderr':
-        ipyCell.outputs.push(toIPyStreamOutput(output));
-        break;
+        case 'stdout':
+        case 'stderr':
+          ipyCell.outputs.push(toIPyStreamOutput(output));
+          break;
 
-      default:
-        throw util.createError(
-          'Unsupported output type for conversion to IPython cell output: "%s"', output.type);
-    }
-  });
+        default:
+          throw util.createError(
+            'Unsupported output type for conversion to IPython cell output: "%s"', output.type);
+      }
+    });
+  }
 
   return ipyCell;
 }

@@ -207,7 +207,7 @@ export class SessionManager implements app.ISessionManager {
   }
 
   /**
-   * Removes the client from any associated session.
+   * Removes
    */
   _handleClientDisconnect (connection: app.IClientConnection) {
     console.log('User has disconnected: ' + connection.id);
