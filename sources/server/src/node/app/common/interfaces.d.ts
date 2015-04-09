@@ -26,7 +26,7 @@ declare module app {
    * A callback accepting both an error and typed data object.
    */
   interface Callback<T> {
-    (error: any, data: T): void;
+    (error: any, data?: T): void;
   }
 
   /**
@@ -267,9 +267,9 @@ declare module app {
    * TODO(bryantd): Modify this interface to be async (and implementations of the interface).
    */
   interface IStorage {
-    read (path: string, callback: Callback<string>): string;
+    read (path: string, callback: Callback<string>): void;
     write (path: string, data: string, callback: ErrorCallback): void;
-    delete (path: string, callback: ErrorCallback): boolean;
+    delete (path: string, callback: ErrorCallback): void;
     // move (sourcePath: string, destinationPath: string);
     // copy (sourcePath: string, destinationPath: string);
   }
