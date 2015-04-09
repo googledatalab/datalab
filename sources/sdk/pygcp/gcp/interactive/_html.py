@@ -69,13 +69,18 @@ class HtmlBuilder(object):
           self.append('<tr>')
           if collapse_rows:
             class_id = '%s_%d' % (title, int(round(_time.time())))
-            self.append('''
+            self.append(u'''
                 <th colspan=%d style="background-color:LightGray"
-                    onclick="Array.prototype.filter.call(document.getElementsByClassName('%s'),
+                    onclick="
+                      var expanded;
+                      Array.prototype.filter.call(document.getElementsByClassName('%s'),
                         function(e) {
-                            e.style.display = e.style.display == 'none' ? 'table-row' : 'none';
+                          expanded = e.style.display == 'none';
+                          e.style.display = expanded ? 'table-row' : 'none';
                         }
-                    )">%s</th>'''
+                      );
+                      var arrow = expanded ? '\\u25be' : '\\u25b8';
+                      this.innerText = arrow + this.innerText.substring(1)">\u25b8 %s</th>'''
                         % (len(attributes) if attributes else 1, class_id, title))
           else:
             self.append('<th colspan=%d style="background-color:LightGray">%s</th>'
