@@ -34,10 +34,6 @@ export class LocalFileSystemStorage implements app.IStorage {
   }
 
   /**
-   *
-   */
-
-  /**
    * Asynchronously opens and reads from the file at the given path.
    *
    * @param path The file system path to read, relative to the root path.
@@ -46,9 +42,17 @@ export class LocalFileSystemStorage implements app.IStorage {
   read(path: string, callback: app.Callback<string>) {
     fs.readFile(this._getAbsolutePath(path), { encoding: 'utf8' }, (error: any, data: string) => {
       if (error) {
-        // No file exists at the given path, just leave data undefined for caller to handle
-        return callback(error);
+        // An error code of ENOENT indicates that the specified read failed because the file
+        // doesn't exist.
+        if (error.code == 'ENOENT') {
+          // Return as a non-error state, but pass undefined to indicate the lack of data.
+          return callback(null, undefined);
+        } else {
+          // Any other error types are surfaced to the caller.
+          return callback(error);
+        }
       } else {
+        // Successful read. Return the data.
         return callback(null, data);
       }
     });
