@@ -60,13 +60,15 @@ export class NotebookStorage implements app.INotebookStorage {
     // First, attempt to read in the notebook if it already exists at the defined path.
     this._storage.read(path, (error: any, serializedNotebook: string) => {
 
-      // If an error occurred, simply pass it back to the caller.
+      // It is expected that the file may not exist, but any other errors should be surfaced to
+      // the caller, as they are unexpected.
       if (error) {
-        // Nothing else can be done here.
-        return callback(error);
+        if (error.code != 'ENOENT') {
+          return callback(error);
+        }
       }
 
-      // No error, so deserialze the notebook or create a starter notebook.
+      // Deserialze the notebook or create a starter notebook.
       var notebookData: app.notebooks.Notebook;
       if (serializedNotebook === undefined) {
 
