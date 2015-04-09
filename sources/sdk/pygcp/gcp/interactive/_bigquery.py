@@ -77,7 +77,13 @@ def bigquery(line, cell=None):
   table_parser.set_defaults(func=lambda x: _dispatch_handler('table', x, cell, table_parser,
                                                              _table_line, cell_prohibited=True))
 
-  for p in [parser, sql_parser, udf_parser, table_parser]:
+  # %bigquery schema
+  schema_parser = subparsers.add_parser('schema', help='view a BigQuery table schema')
+  schema_parser.add_argument('table', help='the name of the table')
+  schema_parser.set_defaults(func=lambda x: _dispatch_handler('schema', x, cell, schema_parser,
+                                                              _schema_line, cell_prohibited=True))
+
+  for p in [parser, sql_parser, udf_parser, table_parser, schema_parser]:
     p.format_usage = p.format_help  # Show full help always
 
   args = filter(None, line.split())
@@ -215,6 +221,9 @@ def _table_line(args):
       _table_viewer(_get_table(args['table']), rows_per_page=args['rows'], fields=fields))
 
 
+def _schema_line(args):
+  return _ipython.core.display.HTML(_schema_viewer(_get_table(args['table'])))
+
 # An LRU cache for Tables. This is mostly useful so that when we cross page boundaries
 # when paging through a table we don't have to re-fetch the schema.
 _table_cache = _util.LRUCache(10)
@@ -224,7 +233,21 @@ def _get_table(name):
   try:
     table = _table_cache[name]
   except KeyError:
-    _table_cache[name] = table = _bq.table(name)
+    table = _bq.table(name)
+    if table.exists():
+      _table_cache[name] = table
+    else:
+      # Could be a variable reference
+      ipy = _ipython.get_ipython()
+      if name in ipy.user_ns:
+        item = ipy.user_ns[name]
+        if isinstance(item, _bq._Table):
+          # TODO(gram): once we have merged the PR which passes first page through in model.data
+          # we can relax the requirement for this to be a Table; we can easily handle Pandas
+          # DataFrames and lists too in the table/schema view cell magics, and there is some
+          # value in doing so, as we can already use these with table viewer, and with Table.create
+          # to create inferred BQ schema.
+          return item
   return table
 
 
@@ -283,6 +306,27 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
        rows_per_page)
 
 
+def _schema_viewer(table, fields=None):
+  """  Return a schema viewer.
+
+  Args:
+    table: the table whose schema should be displayed.
+  Returns:
+    A string containing the HTML for the schema viewer.
+  """
+  if not table.exists():
+    return "<div>%s does not exist</div>" % table.full_name
+  return _repr_html_table_schema(table.schema)
+
+
+def _render_schema(builder, schema, title=''):
+  builder.render_objects(schema, ['name', 'data_type', 'mode', 'description'], dictionary=True,
+                         title=title[1:])
+  for field in schema:
+    if field['type'] == 'RECORD':
+      _render_schema(builder, field['fields'], title + '.' + field['name'])
+
+
 def _repr_html_query(query):
   # TODO(nikhilko): Pretty print the SQL
   builder = _HtmlBuilder()
@@ -305,9 +349,8 @@ def _repr_html_table_list(table_list):
 
 
 def _repr_html_table_schema(schema):
-  # TODO(gram): Replace at some point with schema and/or metadata.
   builder = _HtmlBuilder()
-  builder.render_objects(schema, ['name', 'data_type', 'mode', 'description'])
+  _render_schema(builder, schema._bq_schema)
   return builder.to_html()
 
 

@@ -168,6 +168,7 @@ class TableSchema(list):
       data = definition
     else:
       raise Exception("TableSchema requires either data or json argument.")
+    self._bq_schema = data
     self._populate_fields(data)
 
   def __getitem__(self, key):
@@ -183,7 +184,6 @@ class TableSchema(list):
     self._map[name] = field
 
   def _populate_fields(self, data, prefix=''):
-    self._bq_schema = data
     for field_data in data:
       name = prefix + field_data['name']
       data_type = field_data['type']

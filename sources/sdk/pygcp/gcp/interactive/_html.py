@@ -24,13 +24,14 @@ class HtmlBuilder(object):
     """
     self._segments = []
 
-  def render_objects(self, items, attributes=None, dictionary=False):
+  def render_objects(self, items, attributes=None, dictionary=False, title=None):
     """Renders an HTML table with the specified list of objects.
 
     Args:
       items: the iterable collection objects to render.
       attributes: the optional list of properties or keys to render.
       dictionary: whether the list contains generic object or specifically dict instances.
+      title: if set, show a title in the first row
     """
     if not items:
       return
@@ -44,16 +45,21 @@ class HtmlBuilder(object):
     self._segments.append('<table>')
 
     first = True
+
     for o in items:
       if first:
         first = False
         if dictionary and not attributes:
           attributes = o.keys()
 
+        if title:
+          self._segments.append(
+              '<tr><th colspan=%d style="background-color:LightGray;text-align:center">%s</th></tr>'
+              % (len(attributes) if attributes else 1, title))
         if attributes is not None:
           self._segments.append('<tr>')
           for attr in attributes:
-            self._segments.append('<th>%s</th>' % attr)
+            self._segments.append('<th><em>%s</th>' % attr)
           self._segments.append('</tr>')
 
       self._segments.append('<tr>')
