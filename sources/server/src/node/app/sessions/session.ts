@@ -438,7 +438,7 @@ export class Session implements app.ISession {
   }
 
   /**
-   * Persists the current notebook state to the notebook storage.
+   * Asynchronously persists the current notebook state to the notebook storage.
    *
    * Because concurrent asynchronous writes to the same notebook path may conflict,
    * this method serializes writes to the notebook storage backend, such that later
@@ -493,7 +493,7 @@ export class Session implements app.ISession {
         // Clear the save request flag since we are saving the current/latest notebook state.
         this._isNotebookSaveRequested = false;
         // Save the notebook on next tick.
-        process.nextTick(this._save.bind(this));
+        this._save();
       }
 
       // Current save operation completed. Clear pending flag.

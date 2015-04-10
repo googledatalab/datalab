@@ -62,7 +62,7 @@ export class NotebookStorage implements app.INotebookStorage {
 
       // Pass any read errors back to the caller to handle.
       if (error) {
-        process.nextTick(callback.bind(null, error));
+        callback(error);
         return;
       }
 
@@ -75,8 +75,8 @@ export class NotebookStorage implements app.INotebookStorage {
           notebookData = nbutil.createStarterNotebook();
         } else {
           // Nothing can be done here since the path doesn't exist.
-          process.nextTick(callback.bind(null, util.createError(
-            'Cannot read notebook path "%s" because does not exist.')));
+          callback(util.createError(
+            'Cannot read notebook path "%s" because does not exist.'));
           return;
         }
 
@@ -86,7 +86,7 @@ export class NotebookStorage implements app.INotebookStorage {
       }
 
       // Create the notebook wrapper to manage the notebook model state.
-      process.nextTick(callback.bind(null, null, new nb.NotebookSession(notebookData)));
+      callback(null, new nb.NotebookSession(notebookData));
     });
   }
 
