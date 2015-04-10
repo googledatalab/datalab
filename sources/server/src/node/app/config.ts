@@ -25,7 +25,7 @@ import nbstorage = require('./notebooks/storage');
 /**
  * Gets the set of HTTP API route handlers that should be enabled for the server.
  */
-export function getApiRouter (): express.Router {
+export function getApiRouter(): express.Router {
   var kernelApi = new kernels.Api(kernelManager);
   var apiRouter: express.Router = express.Router();
   kernelApi.register(apiRouter);
@@ -46,7 +46,7 @@ var settings: app.Settings = {
 /**
  * Gets the configurable settings.
  */
-export function getSettings (): app.Settings {
+export function getSettings(): app.Settings {
   return settings;
 }
 
@@ -58,43 +58,49 @@ var kernelManager: app.IKernelManager = new kernels.Manager();
 /**
  * Gets the kernel manager singleton.
  */
-export function getKernelManager (): app.IKernelManager {
+export function getKernelManager(): app.IKernelManager {
   return kernelManager;
-}
-
-/**
- * Path to the root of the notebook storage location on the local file system
- */
-var notebookStoragePath = './notebooks';
-
-/**
- * Initializes the storage system for reading/writing.
- */
-export function initStorage () {
-  // Ensure that the notebook storage path exists.
-  mkdirp.sync(notebookStoragePath);
 }
 
 /**
  * A single stateless server-wide storage backend instance.
  */
-var fsStorage = new storage.LocalFileSystemStorage(notebookStoragePath);
+var fsStorage: app.IStorage;
 
 /**
  * Gets the configured storage backend for persisting arbitrary content.
  */
-export function getStorage (): app.IStorage {
+export function getStorage(): app.IStorage {
   return fsStorage;
 }
 
 /**
  * A single stateless server-wide notebook storage backend instance.
  */
-var notebookStorage = new nbstorage.NotebookStorage(fsStorage);
+var notebookStorage: app.INotebookStorage;
 
 /**
  * Gets the configured notebook storage backend for persisting notebooks.
  */
-export function getNotebookStorage (): app.INotebookStorage {
+export function getNotebookStorage(): app.INotebookStorage {
   return notebookStorage;
+}
+
+/**
+ * Initializes the storage system for reading/writing.
+ */
+export function initStorage(notebookStoragePath: string) {
+  // Ensure that the notebook storage path exists.
+  mkdirp.sync(notebookStoragePath);
+  console.log('Root notebook storage path: ', notebookStoragePath);
+
+  // Create the storage singleton if it hasn't been created before.
+  if (!fsStorage) {
+    fsStorage = new storage.LocalFileSystemStorage(notebookStoragePath);
+  }
+
+  // Create the notebook storage singleton if it hasn't yet been created
+  if (!notebookStorage) {
+     notebookStorage = new nbstorage.NotebookStorage(fsStorage);
+  }
 }

@@ -13,16 +13,30 @@
  */
 
 
-/// <reference path="../../../../externs/ts/node/node.d.ts" />
 /// <reference path="../../../../externs/ts/express/express.d.ts" />
+/// <reference path="../../../../externs/ts/node/node.d.ts" />
+/// <reference path="../../../../externs/ts/node/nomnom.d.ts" />
 /// <reference path="../../../../externs/ts/node/socket.io.d.ts" />
-import http = require('http');
-import express = require('express');
-import socketio = require('socket.io');
 import config = require('./app/config');
-import sessions = require('./app/sessions/manager');
+import express = require('express');
+import http = require('http');
 import msgproc = require('./app/sessions/messageprocessors');
+import nomnom = require('nomnom');
+import sessions = require('./app/sessions/manager');
+import socketio = require('socket.io');
 
+
+/**
+ * Configure and parse command line arguments with defaults.
+ */
+var options = nomnom.option(
+  'notebookPath', {
+    abbr: 'n',
+    full: 'notebook-path',
+    help: 'notebook loading root path',
+    default: './notebooks'
+  }
+).parse();
 
 /**
  * Main entry point for the server.
@@ -51,7 +65,7 @@ export function start (settings: app.Settings, apiRouter: express.Router) {
 }
 
 // Ensure that the notebook storage system is fully initialized
-config.initStorage();
+config.initStorage(options.notebookPath);
 
 // Start the DataLab server running
 start(config.getSettings(), config.getApiRouter());
