@@ -31,7 +31,7 @@ export class Session implements app.ISession {
 
   id: string;
 
-  _isNotebookModifiedSinceLastSave: boolean;
+  _isNotebookSaveRequested: boolean;
   _isNotebookSavePending: boolean;
   _kernel: app.IKernel;
   _kernelManager: app.IKernelManager;
@@ -54,7 +54,7 @@ export class Session implements app.ISession {
       notebookStorage: app.INotebookStorage) {
 
     this.id = id;
-    this._isNotebookModifiedSinceLastSave = false;
+    this._isNotebookSaveRequested = false;
     this._isNotebookSavePending = false;
     this._kernelManager = kernelManager;
     this._messageHandler = messageHandler;
@@ -180,6 +180,34 @@ export class Session implements app.ISession {
     // Unexpectedly, the specified connection was not participating in the session.
     throw util.createError(
       'Connection id "%s" was not found in session id "%s"', connection.id, this.id);
+  }
+
+  /**
+   * Broadcast a notification to connected clients that notebook loading has failed.
+   */
+  _broadcastNotebookLoadFailed() {
+    this._broadcastUpdate({
+      name: updates.notebook.sessionStatus,
+      notebookLoadFailed: true
+    });
+  }
+
+  /**
+   * Broadcast the latest persistence status to clients.
+   *
+   * @param lastSaveSucceeded Did the latest persistence operation succeed?
+   */
+  _broadcastPersistenceStatus(lastSaveSucceeded: boolean) {
+    var sessionStatus: app.notebooks.updates.SessionStatus = {
+      name: updates.notebook.sessionStatus,
+      saveState: lastSaveSucceeded ? 'succeeded' : 'failed'
+    };
+
+    if (lastSaveSucceeded) {
+      // If the most recent save succeeded, also include the current timestamp.
+      sessionStatus.lastSaved = Date.now().toString();
+    }
+    this._broadcastUpdate(sessionStatus);
   }
 
   /**
@@ -393,17 +421,12 @@ export class Session implements app.ISession {
       this._notebookPath,
       /* create if needed */ true,
       (error: any, notebook: app.INotebookSession) => {
-        // TODO(bryantd): add some retry logic here, and as a fall-back, destroy
-        // the session and somehow signal that this has occurred to the user.
-        //
-        // For example, send some "notebook loading failed" status message to the frontend so that
-        // the UI can render this state to the user and allow them to decide how to proceed
-        // (e.g., refresh the page, file an issue).
         if (error) {
-          throw util.createError(
-            'Unexpected error while attempting to read notebook path %s. Caused by: %s',
-            this._notebookPath,
-            error);
+          // TODO(bryantd): add retry with backoff logic here.
+
+          // Notify clients that notebook loading has failed.
+          this._broadcastNotebookLoadFailed();
+          return;
         }
 
         // Store the notebook.
@@ -441,46 +464,40 @@ export class Session implements app.ISession {
   _save () {
     // If there is already a pending save operation, we must wait until it completes to save.
     if (this._isNotebookSavePending) {
-      // Mark the notebook as modified and needing to be saved.
-      this._isNotebookModifiedSinceLastSave = true;
+      // Note the requested save operation.
+      this._isNotebookSaveRequested = true;
       // Nothing else can be done at the moment.
       return;
     }
 
     // No pending save operation, so issue the save operation immediately.
 
-    // Clear the modification flag since we are saving the current/latest notebook state.
-    this._isNotebookModifiedSinceLastSave = false;
     // A new save operation is now pending.
     this._isNotebookSavePending = true;
 
     // Write the notebook state to storage asynchronously.
     this._notebookStorage.write(this._notebookPath, this._notebook, (error) => {
 
-      // Save operation completed. Remove pending flag.
-      this._isNotebookSavePending = false;
+      // Send a persistence state update to clients.
+      //
+      // If the save operattion failed, the UI will surface this to the user and allow the client
+      // to proceed as they wish (IPython behavior). e.g., "Save failed" should be displayed
+      // where the auto-save ("last saved at <time>") info is shown.
+      //
+      // TODO(bryantd): Add retry with backoff logic here for failed save operations.
+      this._broadcastPersistenceStatus(!!error); // Note: !!value converts the object to a boolean.
 
-      if (error) {
-        // TODO(bryantd): send message re: persistence failure to clients and allow the client
-        // to proceed as they wish (IPython behavior). e.g., "Save failed" should be displayed
-        // where the auto-save ("last saved at <time>") info is shown.
-        //
-        // Can also wrap this in some retry logic with backoff if that improves write success
-        // rates. Within retry logic, need to be warry of writing stale notebook data over
-        // successful writes that occurred in the interim (and are more recent).
-        //
-        // For the moment, make write errors catastrophic.
-        throw util.createError(
-          'Unexpected error while attempting to write notebook path %s. Caused by: %s',
-          this._notebookPath,
-          error);
-      }
-
-      // If the notebook has been modified since the last save was issued, then we can now save
+      // If a notebook save has been requested since the last save was issued, then we can now save
       // the current state of the notebook.
-      if (this._isNotebookModifiedSinceLastSave) {
+      if (this._isNotebookSaveRequested) {
+        // Clear the save request flag since we are saving the current/latest notebook state.
+        this._isNotebookSaveRequested = false;
+        // Save the notebook on next tick.
         process.nextTick(this._save.bind(this));
       }
+
+      // Current save operation completed. Clear pending flag.
+      this._isNotebookSavePending = false;
     });
   }
 
