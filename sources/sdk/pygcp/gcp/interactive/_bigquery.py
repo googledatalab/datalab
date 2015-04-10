@@ -77,7 +77,13 @@ def bigquery(line, cell=None):
   table_parser.set_defaults(func=lambda x: _dispatch_handler('table', x, cell, table_parser,
                                                              _table_line, cell_prohibited=True))
 
-  for p in [parser, sql_parser, udf_parser, table_parser]:
+  # %bigquery schema
+  schema_parser = subparsers.add_parser('schema', help='view a BigQuery table schema')
+  schema_parser.add_argument('item', help='the name of the table')
+  schema_parser.set_defaults(func=lambda x: _dispatch_handler('schema', x, cell, schema_parser,
+                                                              _schema_line, cell_prohibited=True))
+
+  for p in [parser, sql_parser, udf_parser, table_parser, schema_parser]:
     p.format_usage = p.format_help  # Show full help always
 
   args = filter(None, line.split())
@@ -215,17 +221,57 @@ def _table_line(args):
       _table_viewer(_get_table(args['table']), rows_per_page=args['rows'], fields=fields))
 
 
+def _schema_line(args):
+  name = args['item']
+  schema = _get_schema(name)
+  if not schema:
+    html = "<div>%s does not exist</div>" % name
+  else:
+    html = _repr_html_table_schema(schema)
+  return _ipython.core.display.HTML(html)
+
+
 # An LRU cache for Tables. This is mostly useful so that when we cross page boundaries
 # when paging through a table we don't have to re-fetch the schema.
 _table_cache = _util.LRUCache(10)
 
 
+def _get_item(name):
+  """ Get an item from the IPython environment. """
+  ipy = _ipython.get_ipython()
+  return ipy.user_ns[name] if name in ipy.user_ns else None
+
+
 def _get_table(name):
+  """ Given a variable or table name, get a Table if it exists. """
+  # If name is a variable referencing a table, use that.
+  item = _get_item(name)
+  if isinstance(item, _bq._Table):
+    return item
+  # Else treat this as a BQ table name and return the (cached) table if it exists.
   try:
-    table = _table_cache[name]
+    return _table_cache[name]
   except KeyError:
-    _table_cache[name] = table = _bq.table(name)
-  return table
+    table = _bq.table(name)
+    if table.exists():
+      _table_cache[name] = table
+      return table
+  return None
+
+
+def _get_schema(name):
+  """ Given a variable or table name, get the Schema if it exists. """
+  item = _get_item(name)
+  if not item:
+    item = _get_table(name)
+
+  if isinstance(item, _bq._TableSchema):
+    return item
+  try:
+    if isinstance(item.schema, _bq._TableSchema):
+      return item.schema
+  except AttributeError:
+    return None
 
 
 @_magic.register_line_magic
@@ -255,7 +301,7 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
   Returns:
     A string containing the HTML for the table viewer.
   """
-  if not table.exists():
+  if not (table and table.exists()):
     return "<div>%s does not exist</div>" % table.full_name
 
   _HTML_TEMPLATE = """
@@ -283,6 +329,16 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
        rows_per_page)
 
 
+def _render_schema(builder, schema, title='', include_column_headers=False):
+  builder.render_objects(schema, ['name', 'type', 'mode', 'description'], dictionary=True,
+                         title=title[1:], include_table_element=False,
+                         include_column_headers=include_column_headers,
+                         collapse_rows=True)
+  for field in schema:
+    if field['type'] == 'RECORD':
+      _render_schema(builder, field['fields'], title + '.' + field['name'])
+
+
 def _repr_html_query(query):
   # TODO(nikhilko): Pretty print the SQL
   builder = _HtmlBuilder()
@@ -305,9 +361,10 @@ def _repr_html_table_list(table_list):
 
 
 def _repr_html_table_schema(schema):
-  # TODO(gram): Replace at some point with schema and/or metadata.
   builder = _HtmlBuilder()
-  builder.render_objects(schema, ['name', 'data_type', 'mode', 'description'])
+  builder.append('<table>')
+  _render_schema(builder, schema._bq_schema, include_column_headers=True)
+  builder.append('</table>')
   return builder.to_html()
 
 

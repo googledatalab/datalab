@@ -38,6 +38,9 @@ class TableSchema(list):
 
   class _Field(object):
 
+    # TODO(gram): consider renaming data_type member to type. Yes, it shadows top-level
+    # name but that is what we are using in __str__ and __getitem__ and is what is used in BQ.
+    # The shadowing is unlikely to cause problems.
     def __init__(self, name, data_type, mode='NULLABLE', description=''):
       self.name = name
       self.data_type = data_type
@@ -168,6 +171,7 @@ class TableSchema(list):
       data = definition
     else:
       raise Exception("TableSchema requires either data or json argument.")
+    self._bq_schema = data
     self._populate_fields(data)
 
   def __getitem__(self, key):
@@ -183,7 +187,6 @@ class TableSchema(list):
     self._map[name] = field
 
   def _populate_fields(self, data, prefix=''):
-    self._bq_schema = data
     for field_data in data:
       name = prefix + field_data['name']
       data_type = field_data['type']
