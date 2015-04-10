@@ -45,8 +45,8 @@ export class LocalFileSystemStorage implements app.IStorage {
         // An error code of ENOENT indicates that the specified read failed because the file
         // doesn't exist.
         if (error.code == 'ENOENT') {
-          // Return as a non-error state, but pass undefined to indicate the lack of data.
-          return callback(null, undefined);
+          // Return as a non-error state, but pass null to indicate the lack of data.
+          return callback(null, null);
         } else {
           // Any other error types are surfaced to the caller.
           return callback(error);
