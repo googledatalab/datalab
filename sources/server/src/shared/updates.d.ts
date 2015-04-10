@@ -63,13 +63,19 @@ declare module app {
       }
 
       /**
-       * Update the known status of the notebook's kernel process.
+       * Update the known status of the notebook's session.
        *
        * name == 'notebook.sessionStatus'
        */
       interface SessionStatus extends Update {
-        kernelState: string; // State includes: 'starting' | 'idle' | 'busy'
-        kernelName: string; // A string that identifies a kernel flavor; e.g., 'Python 2.7'.
+        // Kernel session state.
+        kernelState?: string; // State includes: 'starting' | 'idle' | 'busy' | 'restarting'
+        kernelName?: string; // A string that identifies a kernel flavor; e.g., 'Python 2.7'.
+
+        // Notebook session state.
+        saveState?: string; // State after most recent save operation: 'succeeded' | 'failed'
+        lastSaved?: string; // The time of the last successful persistence operation.
+        notebookLoadFailed?: boolean; // Did the loading of a notebook from storage fail?
       }
 
       /* Worksheet-level updates */
