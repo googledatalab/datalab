@@ -53,7 +53,8 @@ export class LocalFileSystemStorage implements app.IStorage {
         }
       } else {
         // Successful read. Return the data.
-        return callback(null, data);
+        callback(null, data);
+        return;
       }
     });
   }
