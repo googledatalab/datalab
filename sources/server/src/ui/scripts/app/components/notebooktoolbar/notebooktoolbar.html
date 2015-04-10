@@ -1,5 +1,21 @@
 <div class="datalab-notebook-toolbar">
 
+  <span class="datalab-toolbar-divider">&nbsp;</span>
+
+  <!-- Add code cell -->
+  <i class="datalab-toolbar-button fa-terminal fa"
+      ng-click="notebook.addCell('code', notebook.activeWorksheet.id, notebook.activeCell.id)"></i>
+
+  <!-- Add markdown cell -->
+  <i class="datalab-toolbar-button fa-edit fa"
+      ng-click="notebook.addCell('markdown', notebook.activeWorksheet.id, notebook.activeCell.id)"></i>
+
+  <!-- Add heading cell -->
+  <i class="datalab-toolbar-button fa-paragraph fa"
+      ng-click="notebook.addCell('heading', notebook.activeWorksheet.id, notebook.activeCell.id)"></i>
+
+  <span class="datalab-toolbar-divider">&nbsp;</span>
+
   <!-- Execute all cells -->
   <i class="datalab-toolbar-button fa-play fa"
       ng-click="notebook.executeCells()">

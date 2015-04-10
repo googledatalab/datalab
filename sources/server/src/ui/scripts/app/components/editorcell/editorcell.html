@@ -8,17 +8,8 @@
       ng-show="enableEditRegion" >
     <div class="datalab-editor-cell-input row">
 
-      <!-- Cell "prompt"/indicator/identifier -->
-      <div class="datalab-editor-cell-identifier datalab-editor-cell-identifier-input col-md-1">
-        <!-- Cell indicator -->
-        <!-- TODO(bryantd): currently displaying cell type-specific icon; update to match mocks -->
-        <span class="fa fa-terminal fa-lg" ng-if="cell.type == 'code'"></span>
-        <span class="fa fa-edit fa-lg" ng-if="cell.type == 'markdown'"></span>
-        <span class="fa fa-paragraph fa-lg" ng-if="cell.type == 'heading'"></span>
-      </div>
-
       <!-- Code editor -->
-      <div class="datalab-editor-cell-input-content col-md-11">
+      <div class="datalab-editor-cell-input-content col-md-12">
         <datalab-code-editor
             source="cell.source"
             active="active"
