@@ -23,6 +23,13 @@ declare module app {
   }
 
   /**
+   * A callback accepting both an error and typed data object.
+   */
+  interface Callback<T> {
+    (error: Error, data?: T): void;
+  }
+
+  /**
    * A composite cell identifier that bundles cell and worksheet ids.
    *
    * Used for maintaining a mapping between kernel request ids and the corresponding cells
@@ -105,12 +112,20 @@ declare module app {
      *
      * Optionally creates a new notebook if needed when flag is set to true.
      */
-    read (path: string, createIfNeeded?: boolean): app.INotebookSession;
+    read(
+      path: string,
+      createIfNeeded: boolean,
+      callback: Callback<app.INotebookSession>
+      ): void;
 
     /**
      * Writes the given notebook session to storage.
      */
-    write (path: string, notebook: app.INotebookSession): void;
+    write(
+      path: string,
+      notebook: INotebookSession,
+      callback: Callback<void>
+      ): void;
   }
 
   /**
@@ -240,14 +255,12 @@ declare module app {
   }
 
   /**
-   * Generic file persistence interface.
-   *
-   * TODO(bryantd): Modify this interface to be async (and implementations of the interface).
+   * Generic asynchronous file persistence interface.
    */
   interface IStorage {
-    read (path: string): string;
-    write (path: string, data: string): void;
-    delete (path: string): boolean;
+    read (path: string, callback: Callback<string>): void;
+    write (path: string, data: string, callback: Callback<void>): void;
+    delete (path: string, callback: Callback<void>): void;
     // move (sourcePath: string, destinationPath: string);
     // copy (sourcePath: string, destinationPath: string);
   }

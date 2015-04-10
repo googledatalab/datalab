@@ -18,70 +18,69 @@ import pathlib = require('path');
 
 
 /**
- * Manages storage operations backed by a local file system
+ * Manages storage operations backed by a local file system.
  */
 export class LocalFileSystemStorage implements app.IStorage {
 
   _storageRootPath: string;
 
-  constructor (storageRootPath: string) {
+  /**
+   * Constructor.
+   *
+   * @param storageRootPath The root path within the local filesystem to use for storage.
+   */
+  constructor(storageRootPath: string) {
     this._storageRootPath = storageRootPath;
   }
 
   /**
-   * Synchronously opens and reads from the file at the given path
+   * Asynchronously opens and reads from the file at the given path.
    *
-   * Returns undefined if no file exists at the given path
+   * @param path The file system path to read, relative to the root path.
+   * @param callback Callback to invoke upon completion of the read operation.
    */
-  read (path: string) {
-    var data: string;
-    try {
-      data = fs.readFileSync(this._getAbsolutePath(path)).toString('utf8');
-    } catch (e) {
-      // No file exists at the given path, just leave data undefined for caller to handle
-    }
-    return data;
+  read(path: string, callback: app.Callback<string>) {
+    fs.readFile(this._getAbsolutePath(path), { encoding: 'utf8' }, (error: any, data: string) => {
+      if (error) {
+        // An error code of ENOENT indicates that the specified read failed because the file
+        // doesn't exist.
+        if (error.code == 'ENOENT') {
+          // Return as a non-error state, but pass null to indicate the lack of data.
+          return callback(null, null);
+        } else {
+          // Any other error types are surfaced to the caller.
+          return callback(error);
+        }
+      } else {
+        // Successful read. Return the data.
+        callback(null, data);
+        return;
+      }
+    });
   }
 
   /**
-   * Asynchronously writes the given data string to the file referenced by the given path
+   * Asynchronously writes the given data string to the file referenced by the given path.
+   *
+   * @param path The file system path to write to, relative to the root path.
+   * @param data The data string to write.
+   * @param callback Callback to invoke upon completion of the write operation.
    */
-  write (path: string, data: string) {
-    fs.writeFile(this._getAbsolutePath(path), data, this._handleError.bind(this));
+  write(path: string, data: string, callback: app.Callback<void>) {
+    fs.writeFile(this._getAbsolutePath(path), data, callback);
   }
 
   /**
-   * Synchronously deletes the file at the given path
+   * Asynchronously deletes the file at the given path.
    *
-   * Returns boolean to indicate success of the operation.
-   * TODO(bryantd): make this an idempotent operation
+   * @param path The file system path to write to, relative to the root path.
+   * @param callback Callback to invoke upon completion of the write operation.
    */
-  delete (path: string) {
-    try {
-      fs.unlinkSync(path);
-    } catch (e) {
-      console.log('ERROR could not delete file at path: ', path);
-      return false;
-    }
-    return true;
+  delete(path: string, callback: app.Callback<void>) {
+    fs.unlink(path, callback);
   }
 
   _getAbsolutePath (path: string) {
     return pathlib.join(this._storageRootPath, path);
   }
-
-  _handleError (error: any) {
-    if (error) {
-      console.log('ERROR during FileIO', error);
-      // TODO(bryantd): eventually add some nicer error handling here to surface persistence
-      // issues to the server/user
-    } else {
-      // Success
-      //
-      // TODO(bryantd): eventually it would be nice to surface an ack that a file has been
-      // persisted successfully, along with the persisted-at timestamp, so that it can be
-      // surfaced in the UI as (Last saved at <timestamp>)
-    }
-  }
-
 }

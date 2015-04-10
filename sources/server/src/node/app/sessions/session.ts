@@ -31,6 +31,8 @@ export class Session implements app.ISession {
 
   id: string;
 
+  _isNotebookSaveRequested: boolean;
+  _isNotebookSavePending: boolean;
   _kernel: app.IKernel;
   _kernelManager: app.IKernelManager;
   _notebook: app.INotebookSession;
@@ -52,6 +54,8 @@ export class Session implements app.ISession {
       notebookStorage: app.INotebookStorage) {
 
     this.id = id;
+    this._isNotebookSaveRequested = false;
+    this._isNotebookSavePending = false;
     this._kernelManager = kernelManager;
     this._messageHandler = messageHandler;
     this._requestIdToCellRef = {};
@@ -59,26 +63,11 @@ export class Session implements app.ISession {
     this._notebookPath = notebookPath;
     this._notebookStorage = notebookStorage;
 
-    // Read the notebook if it exists.
-    this._notebook = this._notebookStorage.read(notebookPath, /* create if needed */ true);
+    // Initialize the notebook session asynchronously.
+    this._initNotebook();
+
     // Spawn an appropriate kernel for the given notebook.
     this._spawnKernel();
-  }
-
-  /**
-   * Gets the id of the kernel currently associated with this session.
-   */
-  getKernelId (): string {
-    return (this._kernel && this._kernel.id) || undefined;
-  }
-
-  /**
-   * Gets the set of user connections currently associated with this session.
-   */
-  getClientConnectionIds (): string[] {
-    return this._connections.map((connection) => {
-      return connection.id;
-    });
   }
 
   /**
@@ -93,10 +82,28 @@ export class Session implements app.ISession {
   addClientConnection (connection: app.IClientConnection) {
     // Add the connection to the "connected" set
     this._connections.push(connection);
-    // Send the initial notebook state at the time of connection.
-    connection.sendUpdate({
-      name: updates.notebook.snapshot,
-      notebook: this._notebook.getNotebookData()
+
+    // Send the initial notebook state at the time of connection, if it is available.
+    this._broadcastNotebookSnapshot([connection]);
+  }
+
+  /**
+   * Gets the id of the kernel currently associated with this session.
+   *
+   * @return The ID of the associated kernel instance, or null if none exists.
+   */
+  getKernelId(): string {
+    return (this._kernel && this._kernel.id) || null;
+  }
+
+  /**
+   * Gets the set of user connections currently associated with this session.
+   *
+   * @return Array of connection IDs for currently connected clients.
+   */
+  getClientConnectionIds(): string[] {
+    return this._connections.map((connection) => {
+      return connection.id;
     });
   }
 
@@ -175,6 +182,33 @@ export class Session implements app.ISession {
       'Connection id "%s" was not found in session id "%s"', connection.id, this.id);
   }
 
+  /**
+   * Broadcast a notification to connected clients that notebook loading has failed.
+   */
+  _broadcastNotebookLoadFailed() {
+    this._broadcastUpdate({
+      name: updates.notebook.sessionStatus,
+      notebookLoadFailed: true
+    });
+  }
+
+  /**
+   * Broadcast the latest persistence status to clients.
+   *
+   * @param lastSaveSucceeded Did the latest persistence operation succeed?
+   */
+  _broadcastPersistenceStatus(lastSaveSucceeded: boolean) {
+    var sessionStatus: app.notebooks.updates.SessionStatus = {
+      name: updates.notebook.sessionStatus,
+      saveState: lastSaveSucceeded ? 'succeeded' : 'failed'
+    };
+
+    if (lastSaveSucceeded) {
+      // If the most recent save succeeded, also include the current timestamp.
+      sessionStatus.lastSaved = Date.now().toString();
+    }
+    this._broadcastUpdate(sessionStatus);
+  }
 
   /**
    * Sends the given update message to all user connections associated with this session.
@@ -183,6 +217,31 @@ export class Session implements app.ISession {
     this._connections.forEach((connection) => {
       connection.sendUpdate(update);
     });
+  }
+
+  /**
+   * Sends a snapshot of the current notebook state to all connected clients.
+   *
+   * @param connections The set of connection IDs to broadcast to.
+   */
+  _broadcastNotebookSnapshot(connections: app.IClientConnection[]) {
+    // No-op if there is not an existing notebook to broadcast.
+    //
+    // This will be the case if the async loading of the notebook has not completed before a client
+    // connects to the session.
+    if (this._notebook) {
+
+      // Get a data-only snapshot of the notebook.
+      var snapshot = {
+        name: updates.notebook.snapshot,
+        notebook: this._notebook.getNotebookData()
+      };
+
+      // Send the snapshot to each connected client.
+      connections.forEach((connection) => {
+        connection.sendUpdate(snapshot);
+      });
+    }
   }
 
   // Handlers for messages flowing in either direction between user<->kernel.
@@ -355,10 +414,91 @@ export class Session implements app.ISession {
   }
 
   /**
-   * Persists the current notebook state to the notebook storage.
+   * Asynchronously initializes the notebook state and sends a snapshot to connected clients.
+   */
+  _initNotebook() {
+    this._notebookStorage.read(
+      this._notebookPath,
+      /* create if needed */ true,
+      (error: any, notebook: app.INotebookSession) => {
+        if (error) {
+          // TODO(bryantd): add retry with backoff logic here.
+
+          // Notify clients that notebook loading has failed.
+          this._broadcastNotebookLoadFailed();
+          return;
+        }
+
+        // Store the notebook.
+        this._notebook = notebook;
+
+        // Send a snapshot of the notebook to any/all connected clients.
+        this._broadcastNotebookSnapshot(this._connections);
+    });
+  }
+
+  /**
+   * Asynchronously persists the current notebook state to the notebook storage.
+   *
+   * Because concurrent asynchronous writes to the same notebook path may conflict,
+   * this method serializes writes to the notebook storage backend, such that later
+   * saves are always persisted after an earlier save.
+   *
+   * Furthermore, since the entire notebook snapshot is being written to storage on
+   * each save, intermediate snapshots are not needed for maintaining the notebook
+   * state in the storage backend (i.e., each save is not an incremental changes, but rather
+   * the entire notebook state).
+   *
+   * This means that for a sequence of N snapshots, only the latest (most recent) snapshot is
+   * needed, since it would overwrite all of the intervening snapshots when it is ultimately
+   * applied.
+   *
+   * Given this, save has the followings semantics:
+   * 1) If there is no in-flight/pending save operation, then save the current snapshot immediately
+   * 2) If there is a pending save operation, wait until the operation completes and then save
+   *    the latest snapshot, regardless of the number of save() calls that happened in the interim.
+   *
+   * This strategy ensures that conflicting writes aren't issued concurrently and that the latest
+   * notebook state is updated as soon as possible upon completion of pending writes.
    */
   _save () {
-    this._notebookStorage.write(this._notebookPath, this._notebook);
+    // If there is already a pending save operation, we must wait until it completes to save.
+    if (this._isNotebookSavePending) {
+      // Note the requested save operation.
+      this._isNotebookSaveRequested = true;
+      // Nothing else can be done at the moment.
+      return;
+    }
+
+    // No pending save operation, so issue the save operation immediately.
+
+    // A new save operation is now pending.
+    this._isNotebookSavePending = true;
+
+    // Write the notebook state to storage asynchronously.
+    this._notebookStorage.write(this._notebookPath, this._notebook, (error) => {
+
+      // Send a persistence state update to clients.
+      //
+      // If the save operattion failed, the UI will surface this to the user and allow the client
+      // to proceed as they wish (IPython behavior). e.g., "Save failed" should be displayed
+      // where the auto-save ("last saved at <time>") info is shown.
+      //
+      // TODO(bryantd): Add retry with backoff logic here for failed save operations.
+      this._broadcastPersistenceStatus(!!error); // Note: !!value converts the object to a boolean.
+
+      // If a notebook save has been requested since the last save was issued, then we can now save
+      // the current state of the notebook.
+      if (this._isNotebookSaveRequested) {
+        // Clear the save request flag since we are saving the current/latest notebook state.
+        this._isNotebookSaveRequested = false;
+        // Save the notebook on next tick.
+        this._save();
+      }
+
+      // Current save operation completed. Clear pending flag.
+      this._isNotebookSavePending = false;
+    });
   }
 
   /**

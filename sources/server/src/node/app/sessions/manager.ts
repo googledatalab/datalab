@@ -79,13 +79,9 @@ export class SessionManager implements app.ISessionManager {
   /**
    * Creates a new session for the given notebook path.
    *
-   * TODO(bryantd): Consider making this entire session creation call path async
-   * to avoid blocking the server on file i/o (reading in notebook state). Persisting notebooks
-   * to local disk is already done async. When implementing the async route, there are also
-   * a few async json parsing libraries if parsing large notebooks becomes a bottleneck.
-   *
-   * This server blocking issue becomes more prominent when in a heavy-usage, multi-user
-   * environment (where many sessions are being created).
+   * @param sessionId The ID to assign to the newly created session.
+   * @param notebookPath The path of the notebook to associate with the session.
+   * @return A new session instance.
    */
   _createSession (sessionId: string, notebookPath: string) {
     return new sessions.Session(

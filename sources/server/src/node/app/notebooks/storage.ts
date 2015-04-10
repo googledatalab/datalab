@@ -29,49 +29,90 @@ export class NotebookStorage implements app.INotebookStorage {
 
   _storage: app.IStorage;
 
-  constructor (storage: app.IStorage) {
+  /**
+   * Constructor.
+   *
+   * @param storage The storage instance to use for persistence.
+   */
+  constructor(storage: app.IStorage) {
     this._storage = storage;
   }
 
   /**
-   * Reads in the notebook if it exists or creates a starter notebook if not.
+   * Asynchronously reads in the notebook if it exists or creates a starter notebook if not.
+   *
+   * @param path The full notebook path to read (with file extension).
+   * @param createIfNeeded Should a starter notebook be returned if the path doesn't exist?
+   * @param callback Callback to invoke upon completion of the read operation.
    */
-  read (path: string, createIfNeeded?: boolean): app.INotebookSession {
-    console.log('Reading notebook ' + path + ' ...');
+  read(path: string, createIfNeeded: boolean, callback: app.Callback<app.INotebookSession>) {
 
     // Selects the serializer that has been assigned to the notebook path extension.
-    var serializer = formats.selectSerializer(path);
+    var serializer: app.INotebookSerializer;
+    try {
+      serializer = formats.selectSerializer(path);
+    } catch (error) {
+      // Pass the error to the caller.
+      process.nextTick(callback.bind(null, error));
+      return;
+    }
 
     // First, attempt to read in the notebook if it already exists at the defined path.
-    var serializedNotebook = this._storage.read(path);
-    var notebookData: app.notebooks.Notebook;
-    if (serializedNotebook === undefined) {
-      if (createIfNeeded) {
-        // Notebook didn't exist, so create a starter notebook.
-        notebookData = nbutil.createStarterNotebook();
-      } else {
-        // Nothing can be done here since the path doesn't exist.
-        throw util.createError('Cannot read notebook path "%s" because does not exist.');
+    this._storage.read(path, (error: any, serializedNotebook: string) => {
+
+      // Pass any read errors back to the caller to handle.
+      if (error) {
+        callback(error);
+        return;
       }
-    } else {
-      // Notebook already existed. Deserialize the notebook data.
-      notebookData = serializer.parse(serializedNotebook);
-    }
-    // Create the notebook wrapper to manage the notebook model state.
-    return new nb.NotebookSession(notebookData);
+
+      // Deserialize the notebook or create a starter notebook.
+      var notebookData: app.notebooks.Notebook;
+      if (serializedNotebook === null) {
+
+        if (createIfNeeded) {
+          // Notebook didn't exist, so create a starter notebook.
+          notebookData = nbutil.createStarterNotebook();
+        } else {
+          // Nothing can be done here since the path doesn't exist.
+          callback(util.createError(
+            'Cannot read notebook path "%s" because does not exist.'));
+          return;
+        }
+
+      } else {
+        // Notebook already exists. Deserialize the notebook data.
+        notebookData = serializer.parse(serializedNotebook);
+      }
+
+      // Create the notebook wrapper to manage the notebook model state.
+      callback(null, new nb.NotebookSession(notebookData));
+    });
   }
 
   /**
-   * Serializes the given notebook and writes it to storage.
+   * Asynchronously serializes the given notebook and writes it to storage.
+   *
+   * @param path The notebook path to write to.
+   * @param notebook A notebook session to serialize.
+   * @param callback Callback to invoke upon completion of the async write operation.
    */
-  write (path: string, notebook: app.INotebookSession) {
-    console.log('Saving notebook ' + path + ' ...');
+  write(path: string, notebook: app.INotebookSession, callback: app.Callback<void>) {
+
     // Selects the serializer that has been assigned to the notebook path extension.
-    var serializer = formats.selectSerializer(path);
+    var serializer: app.INotebookSerializer;
+    try {
+      serializer = formats.selectSerializer(path);
+    } catch (error) {
+      process.nextTick(callback.bind(null, error));
+      return;
+    }
 
     // Serialize the current notebook model state to the format inferred from the file extension
     var serializedNotebook = serializer.stringify(notebook.getNotebookData());
-    this._storage.write(path, serializedNotebook);
+
+    // Asynchronously write the notebook to storage.
+    this._storage.write(path, serializedNotebook, callback);
   }
 
 }
