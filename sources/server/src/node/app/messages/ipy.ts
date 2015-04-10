@@ -26,7 +26,7 @@ var IPY_MSG_IDS_DELIMITER = '<IDS|MSG>';
 /**
  * Creates an IPython multipart kernel message (protocol version 4.1)
  */
-export function createIPyMessage (
+export function createIPyMessage(
     sessionId: string,
     messageId: string,
     messageType: string,
@@ -51,14 +51,29 @@ export function createIPyMessage (
 }
 
 /**
- * Parses an arguments object containing an IPython multipart kernel message (protocol version 4.1)
+ * Deserializes a multi-part ZeroMQ message.
+ *
+ * @param args The set of arguments supplied by ZeroMQ in a message handling callback.
+ * @return The message parts (array of strings).
  */
-export function parseIPyMessage (args: IArguments): app.ipy.Message {
+export function deserializeZeroMQMessage(args: IArguments): string[] {
   // An IPython message arrives as an array of "buffers" that need to be decoded to strings
   var buffers = <Buffer[]>Array.apply(null, args);
   var messageParts = buffers.map((buffer: Buffer) => {
     return buffer.toString('utf-8');
   });
+
+  return messageParts;
+}
+
+/**
+ * Parses an arguments object containing an IPython multipart kernel message.
+ *
+ * Note: IPython protocol version 4.1
+ */
+export function parseIPyMessage(args: IArguments): app.ipy.Message {
+  // Convert the multi-part message buffers to utf-8 strings.
+  var messageParts = deserializeZeroMQMessage(args);
 
   // Read identities until reaching the message delimiter token
   var identities: string[] = [];
