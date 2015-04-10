@@ -68,7 +68,7 @@ export class NotebookStorage implements app.INotebookStorage {
 
       // Deserialize the notebook or create a starter notebook.
       var notebookData: app.notebooks.Notebook;
-      if (serializedNotebook === undefined) {
+      if (serializedNotebook === null) {
 
         if (createIfNeeded) {
           // Notebook didn't exist, so create a starter notebook.
