@@ -1,10 +1,6 @@
-<div class="datalab-editor-cell-output row" ng-show="outputs">
+<div class="datalab-editor-cell-output-viewer row" ng-show="outputs">
 
-  <div class="datalab-editor-cell-identifier datalab-editor-cell-identifier-output col-md-1">
-    <!-- TODO(bryantd): output region marker goes here, if it exists within finalized mocks -->
-  </div>
-
-  <div class="datalab-editor-cell-outputs col-md-11">
+  <div class="datalab-editor-cell-outputs col-md-12">
     <!-- For each output, generate a mimetype-specific element -->
     <div ng-repeat="output in outputs" ng-switch="output.preferredMimetype">
 
