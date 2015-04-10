@@ -32,11 +32,33 @@
 
 body {
   padding-top: 50px; /* Accounts for 50px (fixed) top navbar height */
+  font-family: "Open Sans","Helvetica Neue",Helvetica,Verdana,Arial,sans-serif;
 }
 
+/**
+ * Adjust Google size to fit toolbar space.
+ */
 .datalab-branding {
-  margin-top: -5px;
   height: 30px;
+}
+
+/**
+ * Styling for the "Cloud Datalab" branding text.
+ */
+.navbar-header .navbar-brand {
+  color: #f5f5f5;
+  margin-top: -5px;
+  font-size: 20px;
+  font-weight: 100;
+  font-family: "Helvetica Neue";
+  border: red;
+}
+
+/**
+ * Top-level page toolbar (contains branding).
+ */
+.navbar-default {
+  background-color: #616161;
 }
 
 /**

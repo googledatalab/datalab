@@ -17,6 +17,7 @@
  * Styles specific to notebook editing
  */
 
+
 .clearer {
   /* TODO(bryantd): hopefully get rid of this rule if possible
 
@@ -35,22 +36,30 @@
 }
 
 /**
- * Places the cell-level toolbar in the upper right corner of the cell "card"
+ * Places the cell toolbar in the upper right corner of the edit region.
+ *
+ * TODO(bryantd): Check our browser compatibility list and see if vendor-specific calc prefixes
+ * are necessary still.
  */
-.datalab-cell-inserter-toolbar {
-  float: right;
-  position: relative;
-  top: -45px;
-  margin-right: 30px;
+.datalab-editor-cell-active .datalab-cell-toolbar {
+  visibility: visible;
 }
-
-/**
- * Places the cell-level toolbar in the upper right corner of the cell "card"
- */
 .datalab-cell-toolbar {
-  float: right;
-  position: relative;
-  top: -45px;
+  position: absolute;
+  visibility: hidden;
+  width: 100px;
+
+  /* Move to the right edge of the edit region, minux the toolbar width */
+  left: -moz-calc(100% - 115px);
+  left: -webkit-calc(100% - 115px);
+  left: -o-calc(100% - 115px);
+  left: calc(100% - 115px);
+
+  /* Move to the top of the edit region with small additional padding */
+  bottom: -moz-calc(100% + 5px);
+  bottom: -webkit-calc(100% + 5px);
+  bottom: -o-calc(100% + 5px);
+  bottom: calc(100% + 5px);
 }
 
 /**
@@ -58,7 +67,7 @@
  */
 .datalab-editor-cell {
   padding: 10px;
-  margin: 20px;
+  margin: 0px 20px;
   padding-top: 30px;
 }
 
@@ -89,12 +98,69 @@
   width: 100%-1;
 }
 
-.datalab-editor-cell-output {
-  clear: both;
+.datalab-editor-cell-output-viewer {
+  /* Add whitespace between the edit and output region of the cell */
+  margin-top: 40px;
 }
-.datalab-editor-cell-output-indicator {
-  float: left;
+/**
+ * Formatting for cell outputs using pre-formatted text (e.g., text/plain MIME-type).
+ */
+.datalab-editor-cell-output-viewer pre {
+  /* Disable the bootstrap styling of pre tags (panel) */
+  border: 0px;
+  background: inherit;
+}
 
+/**
+ * Format tables within cell outputs.
+ */
+.datalab-editor-cell-output-viewer td,
+.datalab-editor-cell-output-viewer th {
+  padding: 4px 5px;
+}
+.datalab-editor-cell-output-viewer table {
+  max-width: 100%;
+  background-color: transparent;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+.datalab-editor-cell-output-viewer table.dataframe {
+  /**
+   * Pandas creates tables with inline element styles that declare borders, so !important
+   * is required here, since we don't control the HTML produced by Pandas.
+   */
+  border: 0px solid black !important;
+}
+.datalab-editor-cell-output-viewer table {
+  width: 100%;
+  margin-bottom: 20px;;
+}
+.datalab-editor-cell-output-viewer th,
+.datalab-editor-cell-output-viewer td {
+  padding: 8px;
+  line-height: 20px;
+  text-align: left;
+  vertical-align: top;
+  border: 0;
+  border-top: 1px solid #dddddd;
+}
+.datalab-editor-cell-output-viewer th {
+  font-weight: bold;
+}
+.datalab-editor-cell-output-viewer thead th {
+  vertical-align: bottom;
+}
+.datalab-editor-cell-output-viewer tbody tr:hover > td,
+.datalab-editor-cell-output-viewer tbody tr:hover > th {
+  /* Table row hover style */
+  background-color: #f5f5f5;
+}
+/* End cell output table formatting */
+
+
+.datalab-editor-cell-outputs {
+  /* Add horizontal padding to output region so that it aligns with edit region */
+  padding: 0 30px;
 }
 
 /**
@@ -112,7 +178,14 @@
 
 .datalab-editor-header {
   padding: 10px 0;
-  border-bottom: 1px solid #ddd;
+  background-color: #e0e0e0;
+  border-bottom: 1px solid #ccc;
+
+  /* Fix the notebook toolbar to the top of the screen */
+  position: fixed;
+  width: 100%;
+  /* Cause the toolbar to be on top of the other page content */
+  z-index: 1;
 }
 
 .datalab-notebook-title {
@@ -133,4 +206,19 @@
   margin-left: 15px;
   display: block;
   float: left;
+}
+
+.datalab-toolbar-divider {
+  display: block;
+  float: left;
+  border-left: 1px solid #ccc;
+  margin-left: 20px;
+  margin-top: -15px;
+  margin-bottom: -10px;
+  height: 45px;
+}
+
+.datalab-worksheet-editor {
+  /* Add some whitespace to between the header and the top of the worksheet */
+  margin-top: 50px;
 }
