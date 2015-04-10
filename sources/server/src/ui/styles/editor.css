@@ -184,8 +184,12 @@
   /* Fix the notebook toolbar to the top of the screen */
   position: fixed;
   width: 100%;
-  /* Cause the toolbar to be on top of the other page content */
-  z-index: 1;
+  /* Cause the toolbar to be on top of the other page content.
+  
+    CodeMirror creates elements on z-index=2, so this value must be at least 3 in order to avoid
+    notebook editor cell content superseding the editor toolbar.
+  */
+  z-index: 3;
 }
 
 .datalab-notebook-title {
