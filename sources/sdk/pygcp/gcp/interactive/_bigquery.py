@@ -78,8 +78,8 @@ def bigquery(line, cell=None):
                                                              _table_line, cell_prohibited=True))
 
   # %bigquery schema
-  schema_parser = subparsers.add_parser('schema', help='view a BigQuery table schema')
-  schema_parser.add_argument('item', help='the name of the table or view')
+  schema_parser = subparsers.add_parser('schema', help='view a BigQuery table or view schema')
+  schema_parser.add_argument('item', help='the name of, or a reference to, the table or view')
   schema_parser.set_defaults(func=lambda x: _dispatch_handler('schema', x, cell, schema_parser,
                                                               _schema_line, cell_prohibited=True))
 
@@ -239,7 +239,7 @@ _table_cache = _util.LRUCache(10)
 def _get_item(name):
   """ Get an item from the IPython environment. """
   ipy = _ipython.get_ipython()
-  return ipy.user_ns[name] if name in ipy.user_ns else None
+  return ipy.user_ns.get(name, None)
 
 
 def _get_table(name):
@@ -303,7 +303,8 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
     A string containing the HTML for the table viewer.
   """
   if not (table and table.exists()):
-    return "<div>%s does not exist</div>" % table.full_name
+    print "%s does not exist" % table.full_name
+    return
 
   _HTML_TEMPLATE = """
     <div style='display:inline;float:left'>%s</div>
