@@ -218,7 +218,7 @@ def _udf_cell(args, js):
 def _table_line(args):
   name = args['table']
   table = _get_table(name)
-  if not (table and table.exists()):
+  if not table:
     print "%s does not exist" % name
   else:
     fields = args['cols'].split(',') if args['cols'] else None
@@ -260,7 +260,6 @@ def _get_table(name):
     table = _bq.table(name)
     if table.exists():
       _table_cache[name] = table
-<<<<<<< HEAD
       return table
   return None
 
@@ -307,7 +306,7 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
   Returns:
     A string containing the HTML for the table viewer.
   """
-  if not (table and table.exists()):
+  if not table.exists():
     print "%s does not exist" % table.full_name
     return
 
