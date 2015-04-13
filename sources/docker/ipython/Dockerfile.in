@@ -38,14 +38,10 @@ RUN apt-get install --no-install-recommends -y -q \
     python-zmq python-tornado python-jinja2 \
     python-numpy python-pandas \
     python-statsmodels python-patsy python-sklearn python-scipy python-sympy \
+    libatlas-base-dev \
     python-matplotlib \
     python-oauth2client python-httplib2
-RUN pip install -U pip && \
-    pip install -U tornado jinja2 pandocfilters && \
-    pip install -U numpy pandas statsmodels patsy scikit-learn scipy sympy && \
-    pip install -U matplotlib ggplot && \
-    pip install -U oauth2client httplib2 && \
-    pip install -U ipython==2.2.0
+RUN pip install -U ipython==2.2.0
 
 
 # Setup Google Cloud SDK

@@ -34,6 +34,7 @@ tsc --module commonjs --removeComments --noImplicitAny \
 
 cp -R ./proxy/config/. $PROXY_DIR/config
 cp -R ./proxy/static/. $PROXY_DIR/static
+cp ./proxy/package.json $PROXY_DIR/
 
 # Package all of the IPython stuff into a tarball
 cd $BUILD_DIR
