@@ -25,15 +25,15 @@ mv MANIFEST $PYLIB_DIR/IPython.manifest
 
 # Copy the IPython customized profile over
 cp ./profile/config.py $IPY_DIR/config.py
-cp -R ./profile/static $IPY_DIR
+cp -R ./profile/static/. $IPY_DIR
 
 # Compile the nodejs proxy server
 tsc --module commonjs --removeComments --noImplicitAny \
     --outDir $PROXY_DIR \
     ./proxy/*.ts
 
-cp -R ./proxy/config $PROXY_DIR/config
-cp -R ./proxy/static $PROXY_DIR/static
+cp -R ./proxy/config/. $PROXY_DIR/config
+cp -R ./proxy/static/. $PROXY_DIR/static
 
 # Package all of the IPython stuff into a tarball
 cd $BUILD_DIR
