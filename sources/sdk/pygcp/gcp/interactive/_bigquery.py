@@ -216,9 +216,14 @@ def _udf_cell(args, js):
 
 
 def _table_line(args):
-  fields = args['cols'].split(',') if args['cols'] else None
-  return _ipython.core.display.HTML(
-      _table_viewer(_get_table(args['table']), rows_per_page=args['rows'], fields=fields))
+  name = args['table']
+  table = _get_table(name)
+  if not (table and table.exists()):
+    print "%s does not exist" % name
+  else:
+    fields = args['cols'].split(',') if args['cols'] else None
+    html = _table_viewer(_get_table(args['table']), rows_per_page=args['rows'], fields=fields)
+    return _ipython.core.display.HTML(html)
 
 
 def _schema_line(args):
@@ -329,19 +334,6 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
   return _HTML_TEMPLATE %\
       (left_meta, right_meta, div_id, div_id, table.full_name, ','.join(fields), table.length,
        rows_per_page)
-
-
-def _schema_viewer(table, fields=None):
-  """  Return a schema viewer.
-
-  Args:
-    table: the table whose schema should be displayed.
-  Returns:
-    A string containing the HTML for the schema viewer.
-  """
-  if not table.exists():
-    return "<div>%s does not exist</div>" % table.full_name
-  return _repr_html_table_schema(table.schema)
 
 
 def _repr_html_query(query):
