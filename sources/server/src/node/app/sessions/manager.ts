@@ -111,7 +111,7 @@ export class SessionManager implements app.ISessionManager {
    * @param notebookPath The path of the notebook to associate with the session.
    * @return A new session instance.
    */
-  _createSession (sessionId: string, notebookPath: string) {
+  createSession (sessionId: string, notebookPath: string) {
     return new sessions.Session(
         sessionId,
         this._kernelManager,
@@ -165,7 +165,7 @@ export class SessionManager implements app.ISessionManager {
     var session = this._sessionIdToSession[sessionId];
     if (!session) {
       // No existing session with given id, so create a new session.
-      session = this._createSession(sessionId, notebookPath);
+      session = this.createSession(sessionId, notebookPath);
       // Track the session by id
       this._sessionIdToSession[sessionId] = session;
     }

@@ -34,6 +34,33 @@ export class SessionApi {
     this._manager = manager;
   }
 
+<<< FIXME: need to key everything off of notebook path here, instead of "session id"
+
+  /**
+   * Creates a new session specified by the request 'id' param.
+   *
+   * Note: idempotent operation. Requesting a session be created for an id that already exists will
+   * have no effect.
+   *
+   * @param request The received HTTP request.
+   * @param response The pending HTTP response.
+   */
+  create(request: express.Request, response: express.Response) {
+    var sessionId = this._getSessionIdOrFail(request, response);
+    if (!sessionId) {
+      // Response has been handled. Nothing more to do.
+      return;
+    }
+
+    this._manager.create(notebookPath, (error: Error, session: app.ISession) => {
+      if (error) {
+        <<< FAIL REQUEST
+      }
+
+      response.send(this._getSessionMetadata(session));
+    });
+  }
+
   /**
    * Gets the single session specified by the request 'id' param if it exists.
    *
@@ -78,6 +105,7 @@ export class SessionApi {
     // TODO(bryantd): get the new session from the request POST body here
 
     this._manager.renameSession(sessionId, newId);
+    response.sendStatus(200);
   }
 
   /**
@@ -96,6 +124,7 @@ export class SessionApi {
     }
 
     this._manager.resetSession(sessionId);
+    response.sendStatus(200);
   }
 
   /**
@@ -109,6 +138,7 @@ export class SessionApi {
       // Response has been handled by getSessionOrFail. Nothing more to do.
       return;
     }
+
     this._manager.shutdown(session.id);
     response.sendStatus(200);
   }
@@ -117,10 +147,14 @@ export class SessionApi {
    * Registers routes for the session API
    */
   register(router: express.Router): void {
+    // Read-only operations
     router.get(SessionApi.singleSessionUrl, this.get.bind(this));
     router.get(SessionApi.sessionsCollectionUrl, this.list.bind(this));
-    router.post(SessionApi.singleSessionActionUrl + 'rename', this.shutdown.bind(this));
-    router.post(SessionApi.singleSessionActionUrl + 'reset', this.shutdown.bind(this));
+
+    // State-modifying operations
+    router.post(SessionApi.singleSessionUrl, this.create.bind(this));
+    router.post(SessionApi.singleSessionActionUrl + 'rename', this.rename.bind(this));
+    router.post(SessionApi.singleSessionActionUrl + 'reset', this.reset.bind(this));
     router.post(SessionApi.singleSessionActionUrl + 'shutdown', this.shutdown.bind(this));
   }
 
