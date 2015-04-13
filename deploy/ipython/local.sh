@@ -38,8 +38,9 @@ FROM $DOCKER_IMAGE
 
 EOF1
 
-# Copy a snapshot of gcloud configuration
-cp -r ~/.config/gcloud gcloud
+# Copy a snapshot of gcloud configuration.
+# -L in case user is using linked gcloud
+cp -Lr ~/.config/gcloud gcloud
 
 # Build and run the local docker image
 docker build -t gcp-ipython-local-instance .

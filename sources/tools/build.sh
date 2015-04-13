@@ -13,4 +13,4 @@ fi
 BUILD_DIR="$REPO_DIR/build"
 
 # Copy the metadata service emulator tool used in the local ipython container
-cp -R ./metadata $BUILD_DIR/metadata
+cp -R ./metadata/. $BUILD_DIR/metadata

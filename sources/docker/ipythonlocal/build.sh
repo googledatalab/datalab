@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cp ../../../build/tools/metadata/server.js server.js
+cp ../../../build/metadata/server.js server.js
 
 docker build -t gcp-ipython-local .
 
