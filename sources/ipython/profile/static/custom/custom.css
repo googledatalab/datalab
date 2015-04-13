@@ -17,6 +17,8 @@
 /* Fonts */
 @import url(https://fonts.googleapis.com/css?family=Source+Code+Pro|Open+Sans|Lato:400,700&subset=latin,latin-ext);
 @import url(https:////cdnjs.cloudflare.com/ajax/libs/dc/1.7.3/dc.css);
+@import '../extensions/bigquery.css';
+
 body {
   font-family: 'Open Sans', Calibri, helvetica, sans-serif;
 }

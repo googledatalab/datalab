@@ -266,10 +266,10 @@ def _get_schema(name):
   if not item:
     item = _get_table(name)
 
-  if isinstance(item, _bq._TableSchema):
+  if isinstance(item, _bq._Schema):
     return item
   try:
-    if isinstance(item.schema, _bq._TableSchema):
+    if isinstance(item.schema, _bq._Schema):
       return item.schema
   except AttributeError:
     return None
@@ -366,8 +366,18 @@ def _repr_html_table_list(table_list):
 
 
 def _repr_html_table_schema(schema):
-  builder = _HtmlBuilder()
-  return builder.to_html()
+  _HTML_TEMPLATE = """
+    <div class="bqsv" id="%s"></div>
+    <script>
+      require(['extensions/bigquery', 'element!%s'],
+          function(bq, dom) {
+              bq.renderSchema(dom, %s);
+          }
+      );
+    </script>
+    """
+  id = 'bqsv%d' % int(round(_time.time()))
+  return _HTML_TEMPLATE % (id, id, _json.dumps(schema._bq_schema))
 
 
 def _repr_html_function_evaluation(evaluation):
@@ -394,7 +404,7 @@ def _register_html_formatters():
                                   _repr_html_query_results_table)
   html_formatter.for_type_by_name('gcp.bigquery._table', 'Table', _repr_html_table)
   html_formatter.for_type_by_name('gcp.bigquery._table', 'TableList', _repr_html_table_list)
-  html_formatter.for_type_by_name('gcp.bigquery._table', 'TableSchema', _repr_html_table_schema)
+  html_formatter.for_type_by_name('gcp.bigquery._table', 'Schema', _repr_html_table_schema)
   html_formatter.for_type_by_name('gcp.bigquery._udf', 'FunctionEvaluation',
                                   _repr_html_function_evaluation)
 

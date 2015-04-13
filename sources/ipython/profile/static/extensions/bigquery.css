@@ -1,0 +1,20 @@
+.bqschema.title {
+    background-color:LightGray;
+}
+
+.bqschema.colheader {
+    font-style: italic;
+}
+
+.bqschema.tbody.hidden {
+    display: 'none';
+}
+
+.bqschema.title.expanded:before {
+    content: '\25be  '
+}
+
+.bqschema.title.collapsed:before {
+    content: '\25b8  '
+}
+
