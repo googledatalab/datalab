@@ -10,7 +10,7 @@ mkdir -p "$ui_staging_path" "$node_staging_path" "$build_path" "$build_path/stat
 # NodeJS backend compilation in staging
 echo 'Building DataLab server backend...';
 # Copy node .ts files to the backend staging area.
-cp -r "$server_root/src/node/" "$node_staging_path";
+cp -r "$server_root/src/node/." "$node_staging_path";
 # Copy shared .ts files to the backend staging area.
 cp -r "$server_root/src/shared" "$node_staging_path/app";
 # Compile the typescript code in staging.
@@ -20,7 +20,7 @@ tsc $common_tsc_args --module commonjs $node_tsc_files;
 # UI compilation in staging
 echo 'Building DataLab server frontend...';
 # Copy UI .ts files to the frontend staging area.
-cp -r "$server_root/src/ui/" "$ui_staging_path";
+cp -r "$server_root/src/ui/." "$ui_staging_path";
 # Copy shared .ts files to the frontend staging area.
 cp -r "$server_root/src/shared" "$ui_staging_path/scripts/app";
 # Compile the typescript code in staging.
