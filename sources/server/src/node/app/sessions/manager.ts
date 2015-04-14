@@ -35,7 +35,7 @@ export class SessionManager implements app.ISessionManager {
 
   _connectionIdToConnection: app.Map<app.IClientConnection>;
   _connectionIdToSession: app.Map<app.ISession>;
-  _sessionIdToSession: app.Map<app.ISession>;
+  _sessionPathToSession: app.Map<app.ISession>;
   _kernelManager: app.IKernelManager;
   _messageProcessors: app.MessageProcessor[];
   _notebookStorage: app.INotebookStorage;
@@ -54,19 +54,19 @@ export class SessionManager implements app.ISessionManager {
 
     this._connectionIdToSession = {};
     this._connectionIdToConnection = {};
-    this._sessionIdToSession = {};
+    this._sessionPathToSession = {};
 
     this._registerHandlers();
   }
 
   /**
-   * Gets a session by ID if it exists.
+   * Gets a session by its path if it exists.
    *
-   * @param sessionId The session ID to get.
-   * @return A session or null if the ID was not found.
+   * @param sessionPath The session path to get.
+   * @return A session or null if the path was not found.
    */
-  get(sessionId: string): app.ISession {
-    return this._sessionIdToSession[sessionId] || null;
+  get(sessionPath: string): app.ISession {
+    return this._sessionPathToSession[sessionPath] || null;
   }
 
   /**
@@ -75,45 +75,58 @@ export class SessionManager implements app.ISessionManager {
    * @return The set of active sessions.
    */
   list(): app.ISession[] {
-    return Object.keys(this._sessionIdToSession).map((sessionId) => {
-      return this._sessionIdToSession[sessionId];
+    return Object.keys(this._sessionPathToSession).map((sessionPath) => {
+      return this._sessionPathToSession[sessionPath];
     });
   }
 
   /**
-   * Rename a session by modifying its id to be the new session id.
+   * Rename a session by modifying its path to be the new session path.
    *
-   * @param oldId The current/old session ID to be renamed.
-   * @param newId The updated/new session ID.
+   * @param oldPath The current/old session path to be renamed.
+   * @param newPath The updated/new session path.
    */
-  renameSession(oldId: string, newId: string) {
+  rename(oldPath: string, newPath: string) {
     // Retrieve the existing session if it exists.
-    var session = this._sessionIdToSession[oldId];
+    var session = this._sessionPathToSession[oldPath];
     if (!session) {
-      throw util.createError('Session id "%s" was not found.', oldId);
+      throw util.createError('Session path "%s" was not found.', oldPath);
     }
     // Rename the session by updating the id.
-    session.id = newId;
+    session.id = newPath;
     // Store the session under the new id.
-    this._sessionIdToSession[newId] = session;
-    // Remove the old id mapping for the session.
-    delete this._sessionIdToSession[oldId];
+    this._sessionPathToSession[newPath] = session;
+    // Remove the old path mapping for the session.
+    delete this._sessionPathToSession[oldPath];
   }
 
-  resetSession(sessionId: string) {
+  reset(sessionPath: string) {
     // TODO(bryantd): call some session reset api on the session object.
+  }
+
+
+  /**
+   * Asynchronously creates a session for the given resource path.
+   *
+   * Idempotent. Subsequent calls to create for a pre-existing session have no effect.
+   *
+   * @param path The resource (e.g., notebook) path for which to create a session.
+   * @param callback Completion callback for handling the outcome of the session creation flow.
+   */
+  create(path: string, callback: Callback<app.ISession>) {
+    // FIXME: merge with following create method, make async
   }
 
   /**
    * Creates a new session for the given notebook path.
    *
-   * @param sessionId The ID to assign to the newly created session.
+   * @param sessionPath The path to assign to the newly created session.
    * @param notebookPath The path of the notebook to associate with the session.
    * @return A new session instance.
    */
-  createSession (sessionId: string, notebookPath: string) {
+  create(sessionPath: string) {
     return new sessions.Session(
-        sessionId,
+        sessionPath,
         this._kernelManager,
         this._handleMessage.bind(this),
         notebookPath,
@@ -131,43 +144,30 @@ export class SessionManager implements app.ISessionManager {
    * So, only assume the notebook path returned here to match the session notebook path at the
    * time of connection establishment.
    */
-  _getConnectionData (socket: socketio.Socket): app.ClientConnectionData {
+  _getConnectionData(socket: socketio.Socket): app.ClientConnectionData {
     return {
       notebookPath: socket.handshake.query.notebookPath
     }
   }
 
   /**
-   * Determines which session the connection should be associated with via the session id.
+   * Determines which session the connection should be associated with via the session path.
    *
-   * Two clients that specify the same session id will join the same session.
+   * Two clients that specify the same session path will join the same session.
    *
-   * A single client can also specify a previous session id to re-join a previous session, assuming
-   * that session is still alive.
+   * A single client can also specify a previous session path to re-join a previous session,
+   * assuming that session is still alive.
    */
-  _getOrCreateSession (socket: socketio.Socket) {
-    var notebookPath = this._getConnectionData(socket).notebookPath;
+  _getOrCreateSession(socket: socketio.Socket) {
+    var sessionPath = this._getConnectionData(socket).notebookPath;
 
-    // The notebook path is currently used as the session "key".
-    //
-    // TODO(bryantd): evaluate if there are any cases where the sessionId must be a uuid.
-    //
-    // For now, ensure that all use cases of the session ID only assume it to be a opaque
-    // string-based identifier so that it's trivial to switch to something like uuid.v5 in the
-    // future; uuid.v4 is not suitable here because the goal is for any client that wants to edit
-    // a specific notebook (uniquely identified by notebookPath) to share a single session. Thus
-    // uuid.v5(notebookPath) would be one way of ensuring session id collision whenever the
-    // notebookPath is the same for multiple clients, while still having a fixed-size, known
-    // character-set, string-based identifier.
-    var sessionId = notebookPath;
-
-    // Retrieve an existing session for the specified session id if it exists.
-    var session = this._sessionIdToSession[sessionId];
+    // Retrieve an existing session for the specified session path if it exists.
+    var session = this._sessionPathToSession[sessionPath];
     if (!session) {
-      // No existing session with given id, so create a new session.
-      session = this.createSession(sessionId, notebookPath);
-      // Track the session by id
-      this._sessionIdToSession[sessionId] = session;
+      // No existing session with given path, so create a new session.
+      session = this.createSession(sessionPath, notebookPath);
+      // Track the session by path
+      this._sessionPathToSession[sessionPath] = session;
     }
 
     return session;
@@ -180,7 +180,7 @@ export class SessionManager implements app.ISessionManager {
    * returning control to the session after the middleware stack has had an opportunity
    * to manipulate a given message.
    */
-  _handleMessage (message: any, session: app.ISession, callback: app.EventHandler<any>) {
+  _handleMessage(message: any, session: app.ISession, callback: app.EventHandler<any>) {
     // Invoke each handler in the chain in order.
     //
     // If a handler returns null, the the message is considered "filtered" and processing

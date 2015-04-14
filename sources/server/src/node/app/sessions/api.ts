@@ -25,7 +25,7 @@ import manager = require('./manager');
 export class SessionApi {
 
   static sessionsCollectionUrl: string = '/sessions';
-  static singleSessionUrl: string = SessionApi.sessionsCollectionUrl + '/:id';
+  static singleSessionUrl: string = SessionApi.sessionsCollectionUrl + '/:path';
   static singleSessionActionUrl: string = SessionApi.singleSessionUrl + '::';
 
   _manager: app.ISessionManager;
@@ -34,10 +34,8 @@ export class SessionApi {
     this._manager = manager;
   }
 
-<<< FIXME: need to key everything off of notebook path here, instead of "session id"
-
   /**
-   * Creates a new session specified by the request 'id' param.
+   * Creates a new session for the resource specified by the request 'path' param.
    *
    * Note: idempotent operation. Requesting a session be created for an id that already exists will
    * have no effect.
@@ -46,23 +44,27 @@ export class SessionApi {
    * @param response The pending HTTP response.
    */
   create(request: express.Request, response: express.Response) {
-    var sessionId = this._getSessionIdOrFail(request, response);
-    if (!sessionId) {
+    var sessionPath = this._getSessionPathOrFail(request, response);
+    if (!sessionPath) {
       // Response has been handled. Nothing more to do.
       return;
     }
 
-    this._manager.create(notebookPath, (error: Error, session: app.ISession) => {
+    this._manager.create(sessionPath, (error: Error, session: app.ISession) => {
       if (error) {
-        <<< FAIL REQUEST
+        // FIXME: enumerate error cases here and decide which HTTP status codes make sense.
+        // For cases where session creation was attempted for non-existent resouce path, probably
+        // makes sense to return a 400 Bad Request.
+        response.send(500);
       }
 
+      // Send the created session's metadata to the user.
       response.send(this._getSessionMetadata(session));
     });
   }
 
   /**
-   * Gets the single session specified by the request 'id' param if it exists.
+   * Gets the single session specified by the request 'path' param if it exists.
    *
    * @param request The received HTTP request.
    * @param response The pending HTTP response.
@@ -73,6 +75,7 @@ export class SessionApi {
       // Response has been handled by getSessionOrFail. Nothing more to do.
       return;
     }
+
     response.send(this._getSessionMetadata(session));
   }
 
@@ -90,25 +93,6 @@ export class SessionApi {
   }
 
   /**
-   * Renames the session.
-   *
-   * @param request The received HTTP request.
-   * @param response The pending HTTP response.
-   */
-  rename(request: express.Request, response: express.Response) {
-    var sessionId = this._getSessionIdOrFail(request, response);
-    if (!sessionId) {
-      // Response has been handled. Nothing more to do.
-      return;
-    }
-
-    // TODO(bryantd): get the new session from the request POST body here
-
-    this._manager.renameSession(sessionId, newId);
-    response.sendStatus(200);
-  }
-
-  /**
    * Resets the session's (kernel) state.
    *
    * This will also have the effect of cancelling any queued/pending execution requests.
@@ -117,13 +101,13 @@ export class SessionApi {
    * @param response The pending HTTP response.
    */
   reset(request: express.Request, response: express.Response) {
-    var sessionId = this._getSessionIdOrFail(request, response);
-    if (!sessionId) {
+    var sessionPath = this._getSessionPathOrFail(request, response);
+    if (!sessionPath) {
       // Response has been handled. Nothing more to do.
       return;
     }
 
-    this._manager.resetSession(sessionId);
+    this._manager.reset(sessionPath);
     response.sendStatus(200);
   }
 
@@ -153,7 +137,6 @@ export class SessionApi {
 
     // State-modifying operations
     router.post(SessionApi.singleSessionUrl, this.create.bind(this));
-    router.post(SessionApi.singleSessionActionUrl + 'rename', this.rename.bind(this));
     router.post(SessionApi.singleSessionActionUrl + 'reset', this.reset.bind(this));
     router.post(SessionApi.singleSessionActionUrl + 'shutdown', this.shutdown.bind(this));
   }
@@ -161,37 +144,38 @@ export class SessionApi {
   /**
    * Transforms a session into a data-only object suitable for string-ification.
    */
-  _getSessionMetadata(session: app.ISession): any {
+  _getSessionMetadata(session: app.ISession): app.SessionMetadata {
     return {
-      id: session.id,
-      // TODO(bryantd): Add fields needed for display here.
+      path: session.path,
+      // TODO(bryantd): Also return a creation time stamp once it is being tracked
+      numClients: session.getClientConnections().length
     };
   }
 
   /**
    * Gets the session ID from the request or fails the response.
    */
-  _getSessionIdOrFail(request: express.Request, response: express.Response): string {
-    var id = request.param('id', null);
-    if (!id) {
+  _getSessionPathOrFail(request: express.Request, response: express.Response): string {
+    var sessionPath = request.param('path', null);
+    if (!sessionPath) {
       response.sendStatus(400);
     }
 
-    return id;
+    return sessionPath;
   }
 
   /**
    * Gets the session specified by the request route or fails the request (via response object).
    */
   _getSessionOrFail(request: express.Request, response: express.Response): app.ISession {
-    // Get the session id from the request.
-    var id = this._getSessionIdOrFail(request, response);
+    // Get the session path from the request.
+    var sessionPath = this._getSessionPathOrFail(request, response);
 
-    // Lookup the session by id.
-    var session = this._manager.get(id);
+    // Lookup the session by sessionPath.
+    var session = this._manager.get(sessionPath);
 
     if (!session) {
-      // Session resource with given id was not found.
+      // Session resource with given sessionPath was not found.
       response.sendStatus(404);
     }
 

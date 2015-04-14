@@ -29,14 +29,13 @@ import uuid = require('node-uuid');
  */
 export class Session implements app.ISession {
 
-  id: string;
+  path: string;
 
   _isNotebookSaveRequested: boolean;
   _isNotebookSavePending: boolean;
   _kernel: app.IKernel;
   _kernelManager: app.IKernelManager;
   _notebook: app.INotebookSession;
-  _notebookPath: string;
   _notebookStorage: app.INotebookStorage;
   _requestIdToCellRef: app.Map<app.CellRef>;
   _connections: app.IClientConnection[];
@@ -47,13 +46,13 @@ export class Session implements app.ISession {
   _messageHandler: app.MessageHandler;
 
   constructor (
-      id: string,
+      path: string,
       kernelManager: app.IKernelManager,
       messageHandler: app.MessageHandler,
       notebookPath: string,
       notebookStorage: app.INotebookStorage) {
 
-    this.id = id;
+    this.path = path;
     this._isNotebookSaveRequested = false;
     this._isNotebookSavePending = false;
     this._kernelManager = kernelManager;
@@ -179,7 +178,7 @@ export class Session implements app.ISession {
 
     // Unexpectedly, the specified connection was not participating in the session.
     throw util.createError(
-      'Connection id "%s" was not found in session id "%s"', connection.id, this.id);
+      'Connection id "%s" was not found in session id "%s"', connection.id, this.path);
   }
 
   /**
