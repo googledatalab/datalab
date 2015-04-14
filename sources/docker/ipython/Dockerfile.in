@@ -34,8 +34,10 @@ RUN mkdir /node && curl http://nodejs.org/dist/v0.10.32/node-v0.10.32-linux-x64.
 
 # Setup Python and Python Libraries
 RUN apt-get install --no-install-recommends -y -q \
-    python2.7 python-pip python-dev libatlas-base-dev gfortran
-RUN pip install -U tornado==4.0.2 pyzmq==14.3.1 jinja2==2.7.3 && \
+    python2.7 python-pip python-dev python-zmq libatlas-base-dev gfortran
+RUN mkdir -p ~/.pip && \
+    printf '[global]\ndownload_cache = ~/.cache/pip\n' >> ~/.pip/pip.conf && \
+    pip install -U tornado==4.0.2 pyzmq==14.3.1 jinja2==2.7.3 && \
     pip install -U pandocfilters==1.2.2 pandas==0.14.1 && \
     pip install -U numpy==1.9.0 && \
     pip install -U patsy==0.3.0 scikit-learn==0.15.2 scipy==0.14.0 && \
