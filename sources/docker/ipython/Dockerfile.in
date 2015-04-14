@@ -34,14 +34,15 @@ RUN mkdir /node && curl http://nodejs.org/dist/v0.10.32/node-v0.10.32-linux-x64.
 
 # Setup Python and Python Libraries
 RUN apt-get install --no-install-recommends -y -q \
-    python2.7 python-pip python-dev python-pandocfilters \
-    python-zmq python-tornado python-jinja2 \
-    python-numpy python-pandas \
-    python-statsmodels python-patsy python-sklearn python-scipy python-sympy \
-    libatlas-base-dev \
-    python-matplotlib \
-    python-oauth2client python-httplib2
-RUN pip install -U ipython==2.2.0
+    python2.7 python-pip python-dev libatlas-base-dev gfortran
+RUN pip install -U tornado==4.0.2 pyzmq==14.3.1 jinja2==2.7.3 && \
+    pip install -U pandocfilters==1.2.2 pandas==0.14.1
+RUN pip install -U numpy==1.9.0
+RUN pip install -U patsy==0.3.0 scikit-learn==0.15.2 scipy==0.14.0
+RUN pip install -U sympy==0.7.5 matplotlib==1.4.0 ggplot==0.6.5
+RUN pip install -U statsmodels==0.5.0 && \
+    pip install -U oauth2client==1.3 httplib2==0.9 && \
+    pip install -U ipython==2.4.0
 
 
 # Setup Google Cloud SDK
