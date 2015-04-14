@@ -20,8 +20,15 @@ function cleanup {
 }
 trap cleanup EXIT
 
-# Starts an IPython container locally
+# Instructions related to gcloud managed vm setup
+echo "-------------------------------------------------------------"
+echo "If you get gcloud errors running this script you may need to run:"
+echo "gcloud preview app setup-managed-vms"
+echo "-------------------------------------------------------------"
+echo ""
+echo ""
 
+# Starts an IPython container locally
 IMAGE_NAME="gcp-ipython-local"
 if [ "$1" = "" ]; then
   DOCKER_IMAGE=$IMAGE_NAME
