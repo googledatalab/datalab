@@ -168,6 +168,7 @@ class Schema(list):
       data = definition
     else:
       raise Exception("Schema requires either data or json argument.")
+    self._bq_schema = data
     self._populate_fields(data)
 
   def __getitem__(self, key):
@@ -183,7 +184,6 @@ class Schema(list):
     self._map[name] = field
 
   def _populate_fields(self, data, prefix=''):
-    self._bq_schema = data
     for field_data in data:
       name = prefix + field_data['name']
       data_type = field_data['type']
@@ -671,7 +671,7 @@ class Table(object):
       else:
         raise Exception('Cannot use negative indices for table of unknown length')
 
-    schema = self.schema
+    schema = self.schema._bq_schema
     name_parts = self._name_parts
 
     def _retrieve_rows(page_token, count):

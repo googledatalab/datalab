@@ -24,7 +24,7 @@ class Parser(object):
     pass
 
   @staticmethod
-  def parse_row(schema, data):
+  def parse_row(schema, data, prefix=''):
     """Parses a row from query results into an equivalent object.
 
     Args:
@@ -52,9 +52,23 @@ class Parser(object):
       return value
 
     row = {}
-    for i, field in enumerate(data['f']):
-      schema_field = schema[i]
-      row[schema_field['name']] = parse_value(schema_field['type'], field['v'])
+    for i, (field, schema_field) in enumerate(zip(data['f'], schema)):
+      val = field['v']
+      name = schema_field['name']
+      data_type = schema_field['type']
+
+      if data_type == 'RECORD':
+        if val is not None:
+          if 'mode' in schema_field and schema_field['mode'] == 'REPEATED':
+            if len(val) > 0 and 'v' in val[0]:
+              # For now we only handle the first entry. What should we do for more?
+              sub_rows = Parser.parse_row(schema_field['fields'], val[0]['v'], prefix + name + '.')
+              row.update(sub_rows)
+          else:
+            sub_rows = Parser.parse_row(schema_field['fields'], val, prefix + name + '.')
+            row.update(sub_rows)
+      else:
+        row[prefix + name] = parse_value(data_type, val)
 
     return row
 
