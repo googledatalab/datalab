@@ -13,22 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Starts an IPython container locally
-
-# Instructions related to port-forwarding from the Virtual Box VM to the Local OS
-echo "-------------------------------------------------------------"
-echo "If you're running via boot2docker, run the following as well:"
-echo "boot2docker ssh -L 8080:localhost:8080"
-echo "-------------------------------------------------------------"
-echo ""
-echo ""
-
 # Fault-tolerant cleanup
 function cleanup {
-  rm Dockerfile
+  rm -f Dockerfile
   rm -rf gcloud
 }
 trap cleanup EXIT
+
+# Starts an IPython container locally
 
 IMAGE_NAME="gcp-ipython-local"
 if [ "$1" = "" ]; then
@@ -48,6 +40,4 @@ EOF1
 # -L in case user is using linked gcloud
 cp -Lr ~/.config/gcloud gcloud
 
-# Build and run the local docker image
-docker build -t gcp-ipython-local-instance .
-docker run -p 127.0.0.1:8080:8080 -i -t gcp-ipython-local-instance
+gcloud preview app run mvm.yaml
