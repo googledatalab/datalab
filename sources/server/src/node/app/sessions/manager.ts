@@ -60,6 +60,40 @@ export class SessionManager implements app.ISessionManager {
   }
 
   /**
+   * Asynchronously creates a session for the given resource path.
+   *
+   * Idempotent. Subsequent calls to create for a pre-existing session have no effect.
+   *
+   * @param path The resource (e.g., notebook) path for which to create a session.
+   * @param callback Completion callback for handling the outcome of the session creation flow.
+   */
+  create(sessionPath: string, callback: Callback<app.ISession>) {
+
+    // Retrieve an existing session for the specified session path if it exists.
+    var session = this._sessionPathToSession[sessionPath];
+    if (session) {
+      // Session already exists, so this is a no-op.
+      process.nextTick(callback);
+      return;
+    }
+
+    var session =  new sessions.Session(
+        sessionPath,
+        this._kernelManager,
+        this._handleMessage.bind(this),
+        notebookPath,
+        this._notebookStorage);
+
+    // Track the session by path
+    this._sessionPathToSession[sessionPath] = session;
+
+    // Start the session and provide the completion callback to be invoked when session is fully
+    // initialized.
+    session.start(callback);
+    return;
+  }
+
+  /**
    * Gets a session by its path if it exists.
    *
    * @param sessionPath The session path to get.
@@ -80,54 +114,29 @@ export class SessionManager implements app.ISessionManager {
     });
   }
 
-  /**
-   * Synchronously renames a session by modifying its path to be the new session path.
-   *
-   * Throws an exception if the given session path does not exist.
-   *
-   * @param oldPath The current/old session path to be renamed.
-   * @param newPath The updated/new session path.
-   */
-  rename(oldPath: string, newPath: string) {
-    // Retrieve the existing session if it exists.
-    var session = this._sessionPathToSession[oldPath];
+  shutdown(sessionPath: string, callback: app.Callback<void>): {
+    // Retrieve the session that should be shut down
+    var session = this._sessionPathToSession[sessionPath];
     if (!session) {
-      throw util.createError('Session path "%s" was not found.', oldPath);
+      process.nextTick(callback.bind(null,
+        util.createError('Session path "%s" does not exist', sessionPath));
     }
-    // Rename the session by updating the id.
-    session.path = newPath;
-    // Store the session under the new id.
-    this._sessionPathToSession[newPath] = session;
-    // Remove the old path mapping for the session.
-    delete this._sessionPathToSession[oldPath];
-  }
 
-  /**
-   * Asynchronously creates a session for the given resource path.
-   *
-   * Idempotent. Subsequent calls to create for a pre-existing session have no effect.
-   *
-   * @param path The resource (e.g., notebook) path for which to create a session.
-   * @param callback Completion callback for handling the outcome of the session creation flow.
-   */
-  create(path: string, callback: Callback<app.ISession>) {
-    // FIXME: merge with following create method, make async
-  }
+    // Ask the session to shutdown asynchronously.
+    session.shutdown((error: Error) => {
+      // Verify that the shutdown was successful.
+      if (error) {
+        // Shutdown failed, so pass error to caller.
+        callback(error);
+        return;
+      }
 
-  /**
-   * Creates a new session for the given notebook path.
-   *
-   * @param sessionPath The path to assign to the newly created session.
-   * @param notebookPath The path of the notebook to associate with the session.
-   * @return A new session instance.
-   */
-  create(sessionPath: string) {
-    return new sessions.Session(
-        sessionPath,
-        this._kernelManager,
-        this._handleMessage.bind(this),
-        notebookPath,
-        this._notebookStorage);
+      // Now that the session has been shutdown, untrack it.
+      delete this._sessionPathToSession[sessionPath];
+
+      // Done with shutdown, so invoke the completion callback.
+      callback();
+    });
   }
 
   /**
@@ -145,31 +154,6 @@ export class SessionManager implements app.ISessionManager {
     return {
       notebookPath: socket.handshake.query.notebookPath
     }
-  }
-
-  /**
-   * Determines which session the connection should be associated with via the session path.
-   *
-   * Two clients that specify the same session path will join the same session.
-   *
-   * A single client can also specify a previous session path to re-join a previous session,
-   * assuming that session is still alive.
-   */
-  _getOrCreateSession(socket: socketio.Socket) {
-    // FIXME: suppose that sessions are pre-created before connection, so fail this if the session doesnt exist
-
-    var sessionPath = this._getConnectionData(socket).notebookPath;
-
-    // Retrieve an existing session for the specified session path if it exists.
-    var session = this._sessionPathToSession[sessionPath];
-    if (!session) {
-      // No existing session with given path, so create a new session.
-      session = this.createSession(sessionPath, notebookPath);
-      // Track the session by path
-      this._sessionPathToSession[sessionPath] = session;
-    }
-
-    return session;
   }
 
   /**
@@ -204,11 +188,28 @@ export class SessionManager implements app.ISessionManager {
   /**
    * Binds the new client connection to a session and configures session event handling.
    *
-   * If the session for the given connection already exists, the new connection reconnects to the
+   * If the session for the given connection already exists, the new connection (re)connects to the
    * existing session.
+   *
+   * Two clients that specify the same session path will join the same session.
+   *
+   * A single client can also specify a previous session path to re-join a previous session,
+   * assuming that session is still alive.
+   *
+   * The current session model assumes that session creation should always be completed before
+   * connections are permitted. So, if the session does not exist, the connection is closed
+   * immediately.
    */
   _handleClientConnect (socket: socketio.Socket) {
-    var session = this._getOrCreateSession(socket);
+    // Get the existing session for the session path specified in the socket connection handshake.
+    var sessionPath = this._getConnectionData(socket).notebookPath
+    var session = this._sessionPathToSession[sessionPath];
+    if (!session) {
+      // Close the socket connection immediately if not existing session for the given resource
+      // path exists.
+      socket.close(); // FIXME: look up the socket.io API for this.
+      return;
+    }
 
     // Delegate all socket.io Action messages to the session.
     var connection = new conn.ClientConnection(

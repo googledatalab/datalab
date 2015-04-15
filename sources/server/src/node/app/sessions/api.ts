@@ -150,13 +150,13 @@ export class SessionApi {
   _getSessionMetadata(session: app.ISession): app.SessionMetadata {
     return {
       path: session.path,
-      // TODO(bryantd): Also return a creation time stamp once it is being tracked
+      // TODO(bryantd): Also return a creation time stamp once it is being tracked.
       numClients: session.getClientConnections().length
     };
   }
 
   /**
-   * Gets the session ID from the request or fails the response.
+   * Gets the session path from the request or fails the request (via response object).
    */
   _getSessionPathOrFail(request: express.Request, response: express.Response): string {
     var sessionPath = request.param('path', null);
