@@ -285,20 +285,6 @@ declare module app {
     list(): app.ISession[];
 
     /**
-     * Synchronously updates the session path to the new value.
-     *
-     * Existing connections to this session remain connected when renaming.
-     *
-     * After the rename has been completed, a new connection that specifies the *new* session
-     * id will join the existing session; after the rename, a new connection that specifies the
-     * *old* session id will create a new session with the old identifier.
-     *
-     * @param oldPath The current/old session path to be renamed.
-     * @param newPath The updated/new session path.
-     */
-    rename(oldPath: string, newPath: string): void;
-
-    /**
      * Asynchronously shuts down the session associated with the given path.
      *
      * Idempotent. Subsequent calls to shutdown for a non-existent session, or a session that is
