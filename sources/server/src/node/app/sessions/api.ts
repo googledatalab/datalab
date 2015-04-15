@@ -37,8 +37,8 @@ export class SessionApi {
   /**
    * Creates a new session for the resource specified by the request 'path' param.
    *
-   * Note: idempotent operation. Requesting a session be created for an id that already exists will
-   * have no effect.
+   * Note: idempotent operation. Requesting a session be created for an path that already exists
+   * will have no effect.
    *
    * @param request The received HTTP request.
    * @param response The pending HTTP response.
@@ -101,13 +101,16 @@ export class SessionApi {
    * @param response The pending HTTP response.
    */
   reset(request: express.Request, response: express.Response) {
-    var sessionPath = this._getSessionPathOrFail(request, response);
-    if (!sessionPath) {
+    var session = this._getSessionOrFail(request, response);
+    if (!session) {
       // Response has been handled. Nothing more to do.
       return;
     }
 
-    this._manager.reset(sessionPath);
+    // TODO(bryantd): make the entire session.reset() callpath async to allow
+    // for better handling of any errors that could occur instead of the current
+    // fire-and-forget reset approach. See Session.reset() for further details.
+    session.reset();
     response.sendStatus(200);
   }
 

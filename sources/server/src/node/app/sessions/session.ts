@@ -501,6 +501,22 @@ export class Session implements app.ISession {
   }
 
   /**
+   * Resets the session state.
+   *
+   * Shuts down any existing kernel and spawns a new kernel.
+   *
+   * TODO(bryantd): Need to make this entire call path async.
+   * For the moment, the respawn is fire-and-forget, in the sense that a kill
+   * signal is sent to the kernel to shutdown (async) and no verification is done.
+   * The spawn is also async/fire-and-forget, but less fragile because should the kernel
+   * process fail to setup properly, the heartbeat health checking will detect and signal
+   * to the system async via the 'dead' kernel state notification.
+   */
+  reset() {
+    this._spawnKernel();
+  }
+
+  /**
    * Spawns an appropriate kernel for the current notebook.
    *
    * TODO(bryantd): eventually it will become necessary to read kernel config metadata from
