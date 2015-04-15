@@ -17,7 +17,7 @@ function show_help() {
   echo "Usage: app.sh <command> <cloud project> [<docker registry>]"
   echo "                        [<module>] [<version>]"
   echo
-  echo "  command        : deploy | run "
+  echo "  command        : deploy | run"
   echo "  cloud project  : the cloud project to deploy to."
   echo "  docker registry: the registry containing the docker image to deploy."
   echo "  module         : the managed VM module to deploy to."
