@@ -16,6 +16,7 @@
 /// <reference path="../../../../../../externs/ts/node/socket.io.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
 import conn = require('./connection');
+import messages = require('../shared/messages');
 import sessions = require('./session');
 import socketio = require('socket.io');
 import uuid = require('node-uuid');
@@ -67,7 +68,7 @@ export class SessionManager implements app.ISessionManager {
    * @param path The resource (e.g., notebook) path for which to create a session.
    * @param callback Completion callback for handling the outcome of the session creation flow.
    */
-  create(sessionPath: string, callback: Callback<app.ISession>) {
+  create(sessionPath: string, callback: app.Callback<app.ISession>) {
 
     // Retrieve an existing session for the specified session path if it exists.
     var session = this._sessionPathToSession[sessionPath];
@@ -77,11 +78,11 @@ export class SessionManager implements app.ISessionManager {
       return;
     }
 
-    var session =  new sessions.Session(
+    // Create a new session since one did not already exist.
+    session =  new sessions.Session(
         sessionPath,
         this._kernelManager,
         this._handleMessage.bind(this),
-        notebookPath,
         this._notebookStorage);
 
     // Track the session by path
@@ -89,7 +90,10 @@ export class SessionManager implements app.ISessionManager {
 
     // Start the session and provide the completion callback to be invoked when session is fully
     // initialized.
-    session.start(callback);
+    session.start((error) => {
+      // Pass the newly created session and any errors that may have occurred back to the caller.
+      callback(error, session);
+    });
     return;
   }
 
@@ -114,12 +118,12 @@ export class SessionManager implements app.ISessionManager {
     });
   }
 
-  shutdown(sessionPath: string, callback: app.Callback<void>): {
+  shutdown(sessionPath: string, callback: app.Callback<void>) {
     // Retrieve the session that should be shut down
     var session = this._sessionPathToSession[sessionPath];
     if (!session) {
       process.nextTick(callback.bind(null,
-        util.createError('Session path "%s" does not exist', sessionPath));
+        util.createError('Session path "%s" does not exist', sessionPath)));
     }
 
     // Ask the session to shutdown asynchronously.
@@ -135,7 +139,7 @@ export class SessionManager implements app.ISessionManager {
       delete this._sessionPathToSession[sessionPath];
 
       // Done with shutdown, so invoke the completion callback.
-      callback();
+      callback(null);
     });
   }
 
@@ -205,9 +209,19 @@ export class SessionManager implements app.ISessionManager {
     var sessionPath = this._getConnectionData(socket).notebookPath
     var session = this._sessionPathToSession[sessionPath];
     if (!session) {
-      // Close the socket connection immediately if not existing session for the given resource
+      // Close the socket connection immediately if no existing session for the given resource
       // path exists.
-      socket.close(); // FIXME: look up the socket.io API for this.
+      //
+      // In theory, it shouldn't be possible for this situation to occur if the editor page (which
+      // makes these connections to the server) blocks on (successful) session creation before
+      // attempting to open a server socket.io connection, but it's not impossible. If the session
+      // was shutdown between the small amount of time the session was created successfully and
+      // the socket.io connection to that session is made, then this situation would occur.
+      //
+      // Terminating the connection from the server side is insufficient, because the client will
+      // attempt to reconnect. So, send a message on the established connection informing the
+      // client that it should close the connection from the client side.
+      socket.emit(messages.terminateConnection);
       return;
     }
 

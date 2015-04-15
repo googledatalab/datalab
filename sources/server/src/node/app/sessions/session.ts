@@ -14,7 +14,9 @@
 
 /// <reference path="../common/interfaces.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
+/// <reference path="../../../../../../externs/ts/node/async.d.ts" />
 import actions = require('../shared/actions');
+import async = require('async');
 import cells = require('../shared/cells');
 import updates = require('../shared/updates');
 import util = require('../common/util');
@@ -49,7 +51,6 @@ export class Session implements app.ISession {
       path: string,
       kernelManager: app.IKernelManager,
       messageHandler: app.MessageHandler,
-      notebookPath: string,
       notebookStorage: app.INotebookStorage) {
 
     this.path = path;
@@ -59,7 +60,6 @@ export class Session implements app.ISession {
     this._messageHandler = messageHandler;
     this._requestIdToCellRef = {};
     this._connections = [];
-    this._notebookPath = notebookPath;
     this._notebookStorage = notebookStorage;
   }
 
@@ -136,7 +136,17 @@ export class Session implements app.ISession {
     });
 
     // Respawn kernel.
-    this._spawnKernel();
+    this.reset((error) => {
+      if (error) {
+        // If restarting the kernel fails, log it.
+        console.log('Error when attempting to restart kernel: ', error);
+        // TODO(bryantd): decide how to attempt recovery if restart fails.
+        // Could destroy the session, or just retry with backoff for a fixed number of times.
+      }
+
+      // Nothing to do in the success case. The kernel will send status update messages as it
+      // comes online and these will be forwarded to connected clients.
+    });
   }
 
   /**
@@ -175,35 +185,53 @@ export class Session implements app.ISession {
       'Connection id "%s" was not found in session id "%s"', connection.id, this.path);
   }
 
-  shutdown(callback: Callback<void>) {
-    this._shutdownKernel();
-    callback(); // FIXME: make the path async and pass this callback to the kernel shutdown path to wait
-  }
-
   /**
-   * Resets the session state.
+   * Asynchronously resets the session state.
    *
    * Shuts down any existing kernel and spawns a new kernel.
    *
-   * FIXME: Need to make this entire call path async.
-   * For the moment, the respawn is fire-and-forget, in the sense that a kill
-   * signal is sent to the kernel to shutdown (async) and no verification is done.
-   * The spawn is also async/fire-and-forget, but less fragile because should the kernel
-   * process fail to setup properly, the heartbeat health checking will detect and signal
-   * to the system async via the 'dead' kernel state notification.
+   * @param callback Completion callback to invoke after the reset has finished.
    */
-  reset() {
-    this._spawnKernel();
+  reset(callback: app.Callback<void>) {
+    this._spawnKernel(callback);
   }
 
+  /**
+   * Asynchronously shuts down the kernel associated with the session.
+   *
+   * @param callback Completion callback to invoke after shutdown has finished.
+   */
+  shutdown(callback: app.Callback<void>) {
+    this._shutdownKernel(callback);
+    // FIXME: send a message to clients to inform them that they should disconnect
+    // otherwise clients will attempt to reconnect upon the server-side connection
+    // end point being closed.
+  }
+
+  /**
+   * Asynchronously starts the session running.
+   *
+   * @param callback Completion callback to invoke upon the startup process concluding.
+   */
   start(callback: app.Callback<void>) {
-    // FIXME: use async.parallel to wait for both of these to complete
+    // Initialize the kernel and notebook session asynchronously and wait for both to complete
+    // or one of them to error before moving on.
+    async.parallel({
 
-    // Spawn an appropriate kernel for the given notebook.
-    this._spawnKernel();
+        // Spawn an appropriate kernel for the given notebook asynchronously.
+        kernel: this._spawnKernel.bind(this),
 
-    // Initialize the notebook session asynchronously.
-    this._initNotebook(callback);
+        // Initialize the notebook session asynchronously.
+        notebook: this._initNotebook.bind(this)
+      },
+
+      // Callback executed upon completion of both kernel and notebook init (or in the case where
+      // either of operation errors out).
+      (error) => {
+        // Regardless of success, inform caller that the start operation is finished processing.
+        callback(error);
+      }
+    );
   }
 
   /**
@@ -444,7 +472,7 @@ export class Session implements app.ISession {
    */
   _initNotebook(callback: app.Callback<void>) {
     this._notebookStorage.read(
-      this._notebookPath,
+      this.path,
       /* create if needed */ true,
       (error: any, notebook: app.INotebookSession) => {
         if (error) {
@@ -456,7 +484,7 @@ export class Session implements app.ISession {
         // Store the notebook.
         this._notebook = notebook;
         // Initialized successfully. Invoke the completion callback.
-        callback();
+        callback(null);
     });
   }
 
@@ -499,7 +527,7 @@ export class Session implements app.ISession {
     this._isNotebookSavePending = true;
 
     // Write the notebook state to storage asynchronously.
-    this._notebookStorage.write(this._notebookPath, this._notebook, (error) => {
+    this._notebookStorage.write(this.path, this._notebook, (error) => {
 
       // Send a persistence state update to clients.
       //
@@ -524,13 +552,21 @@ export class Session implements app.ISession {
     });
   }
 
-  // FIXME: make this call async all of the way down.
-  _shutdownKernel() {
+  /**
+   * Asynchronously shutdown the kernel associated with the session, if one exists.
+   *
+   * @param callback Completion callback to invoke upon the kernel shutdown operation completing.
+   */
+  _shutdownKernel(callback: app.Callback<void>) {
     // If a previous kernel existed, clean up before respawning.
-    if (this._kernel) {
-      // Cleanup any connections and resources for the existing kernel.
-      this._kernelManager.shutdown(this._kernel.id);
+    if (!this._kernel) {
+      // If there's no existing kernel, then nothing needs shutting down.
+      process.nextTick(callback);
+      return;
     }
+
+    // Cleanup any connections and resources for the existing kernel.
+    this._kernelManager.shutdown(this._kernel.id); // FIXME: make async and pass callback
   }
 
   /**
@@ -540,21 +576,34 @@ export class Session implements app.ISession {
    * the persisted notebook file (e.g., kernel language + version). For now, all kernels are
    * simply Python 2.7+ kernels.
    */
-  _spawnKernel () {
-    this._shutdownKernel();
+  _spawnKernel (callback: app.Callback<void>) {
+    this._shutdownKernel((error) => {
+      if (error) {
+        // If an error occurred when shutting down the existing kernel, notify the caller
+        // and don't spawn a new kernel.
+        callback(error);
+        return;
+      }
 
-    // Spawn a new kernel for the session.
-    this._kernel = this._kernelManager.create(
-        uuid.v4(),
-        {
-          heartbeatPort: util.getAvailablePort(),
-          iopubPort: util.getAvailablePort(),
-          shellPort: util.getAvailablePort()
-        },
-        this.processExecuteReply.bind(this),
-        this.processKernelHealthCheck.bind(this),
-        this.processKernelStatus.bind(this),
-        this.processOutputData.bind(this));
+      // Spawn a new kernel for the session.
+      //
+      // Kernel creation is asynchronous and should it fail, the kernel health checking will detect
+      // the setup failure and trigger a kernel respawn and inform connected clients.
+      this._kernel = this._kernelManager.create(
+          uuid.v4(),
+          {
+            heartbeatPort: util.getAvailablePort(),
+            iopubPort: util.getAvailablePort(),
+            shellPort: util.getAvailablePort()
+          },
+          this.processExecuteReply.bind(this),
+          this.processKernelHealthCheck.bind(this),
+          this.processKernelStatus.bind(this),
+          this.processOutputData.bind(this));
+
+      // Successfully triggered kernel (re)spawn.
+      callback(null);
+    });
   }
 
   // Methods for managing request <-> cell reference mappings

@@ -107,17 +107,27 @@ export class SessionApi {
       return;
     }
 
-    // TODO(bryantd): make the entire session.reset() callpath async to allow
-    // for better handling of any errors that could occur instead of the current
-    // fire-and-forget reset approach. See Session.reset() for further details.
-    session.reset();
-    response.sendStatus(200);
+    session.reset((error) => {
+      if (error) {
+        // TODO(bryantd): see if we need more granular response codes used here.
+        // If the session doesn't exist, a 404 is already being returned when the
+        // session lookup happens above.
+        response.sendStatus(500);
+        return;
+      }
+
+      // Reset succeeded.
+      response.sendStatus(200);
+    });
   }
 
   /**
-   * Shuts down the session specified by the request 'id' param.
+   * Shuts down the session specified by the request 'path' param.
    *
    * Note: will also shutdown any kernel process associated with the session.
+   *
+   * @param request The received HTTP request.
+   * @param response The pending HTTP response.
    */
   shutdown(request: express.Request, response: express.Response) {
     var session = this._getSessionOrFail(request, response);
@@ -142,6 +152,8 @@ export class SessionApi {
 
   /**
    * Registers routes for the session API
+   *
+   * @param router The Express router to which each URL route handler should be attached.
    */
   register(router: express.Router): void {
     // Read-only operations
@@ -161,7 +173,7 @@ export class SessionApi {
     return {
       path: session.path,
       // TODO(bryantd): Also return a creation time stamp once it is being tracked.
-      numClients: session.getClientConnections().length
+      numClients: session.getClientConnectionIds().length
     };
   }
 

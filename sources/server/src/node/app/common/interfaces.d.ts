@@ -73,9 +73,9 @@ declare module app {
    * Data-only object for capturing session metadata needed for Sessions API support.
    */
   interface SessionMetadata {
-    path: string;
-    createdAt: string;
+    //createdAt: string; // TODO(bryantd): start tracking session creation time.
     numClients: number;
+    path: string;
   }
 
   /**
@@ -246,6 +246,27 @@ declare module app {
      * Disassociates a user connection from the session.
      */
     removeClientConnection(connection: IClientConnection): void;
+
+    /**
+     * Asynchronously resets the session state.
+     *
+     * @param callback Completion callback to invoke after the reset has finished.
+     */
+    reset(callback: Callback<void>): void;
+
+    /**
+     * Asynchronously shuts down the kernel associated with the session.
+     *
+     * @param callback Completion callback to invoke after shutdown has finished.
+     */
+    shutdown(callback: Callback<void>): void;
+
+    /**
+     * Asynchronously starts the session running.
+     *
+     * @param callback Completion callback to invoke upon the startup process concluding.
+     */
+    start(callback: Callback<void>): void;
   }
 
   /**
