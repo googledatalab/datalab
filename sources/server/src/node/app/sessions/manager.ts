@@ -81,7 +81,9 @@ export class SessionManager implements app.ISessionManager {
   }
 
   /**
-   * Rename a session by modifying its path to be the new session path.
+   * Synchronously renames a session by modifying its path to be the new session path.
+   *
+   * Throws an exception if the given session path does not exist.
    *
    * @param oldPath The current/old session path to be renamed.
    * @param newPath The updated/new session path.
@@ -93,17 +95,12 @@ export class SessionManager implements app.ISessionManager {
       throw util.createError('Session path "%s" was not found.', oldPath);
     }
     // Rename the session by updating the id.
-    session.id = newPath;
+    session.path = newPath;
     // Store the session under the new id.
     this._sessionPathToSession[newPath] = session;
     // Remove the old path mapping for the session.
     delete this._sessionPathToSession[oldPath];
   }
-
-  reset(sessionPath: string) {
-    // TODO(bryantd): call some session reset api on the session object.
-  }
-
 
   /**
    * Asynchronously creates a session for the given resource path.
@@ -159,6 +156,8 @@ export class SessionManager implements app.ISessionManager {
    * assuming that session is still alive.
    */
   _getOrCreateSession(socket: socketio.Socket) {
+    // FIXME: suppose that sessions are pre-created before connection, so fail this if the session doesnt exist
+
     var sessionPath = this._getConnectionData(socket).notebookPath;
 
     // Retrieve an existing session for the specified session path if it exists.
