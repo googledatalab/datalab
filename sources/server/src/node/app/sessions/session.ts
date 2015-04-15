@@ -61,12 +61,6 @@ export class Session implements app.ISession {
     this._connections = [];
     this._notebookPath = notebookPath;
     this._notebookStorage = notebookStorage;
-
-    // Initialize the notebook session asynchronously.
-    this._initNotebook();
-
-    // Spawn an appropriate kernel for the given notebook.
-    this._spawnKernel();
   }
 
   /**
@@ -179,6 +173,37 @@ export class Session implements app.ISession {
     // Unexpectedly, the specified connection was not participating in the session.
     throw util.createError(
       'Connection id "%s" was not found in session id "%s"', connection.id, this.path);
+  }
+
+  shutdown(callback: Callback<void>) {
+    this._shutdownKernel();
+    callback(); // FIXME: make the path async and pass this callback to the kernel shutdown path to wait
+  }
+
+  /**
+   * Resets the session state.
+   *
+   * Shuts down any existing kernel and spawns a new kernel.
+   *
+   * FIXME: Need to make this entire call path async.
+   * For the moment, the respawn is fire-and-forget, in the sense that a kill
+   * signal is sent to the kernel to shutdown (async) and no verification is done.
+   * The spawn is also async/fire-and-forget, but less fragile because should the kernel
+   * process fail to setup properly, the heartbeat health checking will detect and signal
+   * to the system async via the 'dead' kernel state notification.
+   */
+  reset() {
+    this._spawnKernel();
+  }
+
+  start(callback: app.Callback<void>) {
+    // FIXME: use async.parallel to wait for both of these to complete
+
+    // Spawn an appropriate kernel for the given notebook.
+    this._spawnKernel();
+
+    // Initialize the notebook session asynchronously.
+    this._initNotebook(callback);
   }
 
   /**
@@ -414,25 +439,24 @@ export class Session implements app.ISession {
 
   /**
    * Asynchronously initializes the notebook state and sends a snapshot to connected clients.
+   *
+   * @param callback Completion callback to invoke once initialization is complete.
    */
-  _initNotebook() {
+  _initNotebook(callback: app.Callback<void>) {
     this._notebookStorage.read(
       this._notebookPath,
       /* create if needed */ true,
       (error: any, notebook: app.INotebookSession) => {
         if (error) {
           // TODO(bryantd): add retry with backoff logic here.
-
-          // Notify clients that notebook loading has failed.
-          this._broadcastNotebookLoadFailed();
+          callback(error);
           return;
         }
 
         // Store the notebook.
         this._notebook = notebook;
-
-        // Send a snapshot of the notebook to any/all connected clients.
-        this._broadcastNotebookSnapshot(this._connections);
+        // Initialized successfully. Invoke the completion callback.
+        callback();
     });
   }
 
@@ -500,20 +524,13 @@ export class Session implements app.ISession {
     });
   }
 
-  /**
-   * Resets the session state.
-   *
-   * Shuts down any existing kernel and spawns a new kernel.
-   *
-   * TODO(bryantd): Need to make this entire call path async.
-   * For the moment, the respawn is fire-and-forget, in the sense that a kill
-   * signal is sent to the kernel to shutdown (async) and no verification is done.
-   * The spawn is also async/fire-and-forget, but less fragile because should the kernel
-   * process fail to setup properly, the heartbeat health checking will detect and signal
-   * to the system async via the 'dead' kernel state notification.
-   */
-  reset() {
-    this._spawnKernel();
+  // FIXME: make this call async all of the way down.
+  _shutdownKernel() {
+    // If a previous kernel existed, clean up before respawning.
+    if (this._kernel) {
+      // Cleanup any connections and resources for the existing kernel.
+      this._kernelManager.shutdown(this._kernel.id);
+    }
   }
 
   /**
@@ -524,11 +541,7 @@ export class Session implements app.ISession {
    * simply Python 2.7+ kernels.
    */
   _spawnKernel () {
-    // If a previous kernel existed, clean up before respawning.
-    if (this._kernel) {
-      // Cleanup any connections and resources for the existing kernel.
-      this._kernelManager.shutdown(this._kernel.id);
-    }
+    this._shutdownKernel();
 
     // Spawn a new kernel for the session.
     this._kernel = this._kernelManager.create(
