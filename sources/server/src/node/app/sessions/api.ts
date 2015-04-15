@@ -126,8 +126,18 @@ export class SessionApi {
       return;
     }
 
-    this._manager.shutdown(session.id);
-    response.sendStatus(200);
+    this._manager.shutdown(session.path, (error) => {
+      if (error) {
+        // TODO(bryantd): see if we need more granular response codes used here.
+        // If the session doesn't exist, a 404 is already being returned when the
+        // session lookup happens above.
+        response.sendStatus(500);
+        return;
+      }
+
+      // Shutdown succeeded.
+      response.sendStatus(200);
+    });
   }
 
   /**
