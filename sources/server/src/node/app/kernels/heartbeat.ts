@@ -12,7 +12,8 @@
  * the License.
  */
 
-
+/// <reference path="../messages/messages.d.ts" />
+/// <reference path="../common/interfaces.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/zmq.d.ts" />
 import channels = require('./channels');

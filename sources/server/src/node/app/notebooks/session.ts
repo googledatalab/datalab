@@ -12,7 +12,9 @@
  * the License.
  */
 
-
+/// <reference path="../shared/actions.d.ts" />
+/// <reference path="../shared/updates.d.ts" />
+/// <reference path="../common/interfaces.d.ts" />
 import actions = require('../shared/actions');
 import cells = require('../shared/cells');
 import nbdata = require('../shared/notebookdata');

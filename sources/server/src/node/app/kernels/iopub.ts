@@ -12,7 +12,7 @@
  * the License.
  */
 
-
+/// <reference path="../messages/messages.d.ts" />
 import ipy = require('../messages/ipy');
 import channels = require('./channels');
 

@@ -12,7 +12,8 @@
  * the License.
  */
 
-
+/// <reference path="../common/interfaces.d.ts" />
+/// <reference path="../shared/updates.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/socket.io.d.ts" />
 import actions = require('../shared/actions');
 import socketio = require('socket.io');

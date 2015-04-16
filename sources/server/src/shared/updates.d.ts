@@ -12,7 +12,7 @@
  * the License.
  */
 
-
+/// <reference path="./interfaces.d.ts" />
 /**
  * Update message typedefs that define the client-server websocket protocol.
  *

@@ -13,7 +13,10 @@ echo 'Building DataLab server backend...';
 cp -r "$server_root/src/node/." "$node_staging_path";
 # Compile the typescript code in staging.
 node_tsc_files=`find $node_staging_path -name '*.ts' | tr '\n' ' '`;
-tsc $common_tsc_args --module commonjs $node_tsc_files;
+for file in $node_tsc_files
+do
+  tsc $common_tsc_args --module commonjs $file;
+done
 
 # UI compilation in staging
 echo 'Building DataLab server frontend...';
@@ -21,7 +24,10 @@ echo 'Building DataLab server frontend...';
 cp -r "$server_root/src/ui/." "$ui_staging_path";
 # Compile the typescript code in staging.
 ui_tsc_files=`find $ui_staging_path -name '*.ts' | tr '\n' ' '`;
-tsc $common_tsc_args --module amd $ui_tsc_files;
+for file in $ui_tsc_files
+do
+  tsc $common_tsc_args --module amd $file;
+done
 
 # Merge the compiled backend and frontend components into a single build where NodeJS is serving
 # the static UI content directly.

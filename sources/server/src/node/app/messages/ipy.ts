@@ -12,7 +12,8 @@
  * the License.
  */
 
-
+/// <reference path="../common/interfaces.d.ts" />
+/// <reference path="../../../../../../externs/ts/node/node.d.ts" />
 /**
  * Helpers for translating to/from IPython protocol messages
  */
