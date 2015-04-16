@@ -13,6 +13,7 @@
  */
 
 
+/// <reference path="../common/interfaces.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/node.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
 import childproc = require('child_process');

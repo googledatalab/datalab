@@ -12,7 +12,8 @@
  * the License.
  */
 
-
+/// <reference path="../common/interfaces.d.ts" />
+/// <reference path="../messages/messages.d.ts" />
 /**
  * Functions for processing messages flowing through sessions.
  */

@@ -12,7 +12,10 @@
  * the License.
  */
 
-
+/// <reference path="../messages/messages.d.ts" />
+/// <reference path="../shared/interfaces.d.ts" />
+/// <reference path="../shared/actions.d.ts" />
+/// <reference path="../shared/updates.d.ts" />
 /**
  * Interfaces definitions
  */
@@ -263,6 +266,19 @@ declare module app {
     delete (path: string, callback: Callback<void>): void;
     // move (sourcePath: string, destinationPath: string);
     // copy (sourcePath: string, destinationPath: string);
+  }
+
+  interface MessageProcessor {
+    /**
+     * @param message the message to process
+     * @param session session object from which the message originated
+     * @return the processed message or null to indicate message should be filtered
+     */
+    (message: Map<any>, session: ISession, manager: ISessionManager): Map<any>;
+  }
+
+  interface MessageHandler {
+    (message: any, session: ISession, callback: EventHandler<any>): void
   }
 
 }

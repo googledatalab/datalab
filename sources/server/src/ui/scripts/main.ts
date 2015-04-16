@@ -11,8 +11,8 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-
-
+ 
+/// <reference path="../../../../../externs/ts/requirejs/require.d.ts" />
 /**
  * RequireJS configuration and angular bootstrapping
  *

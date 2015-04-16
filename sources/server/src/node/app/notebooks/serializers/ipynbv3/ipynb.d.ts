@@ -11,8 +11,8 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-
-
+ 
+/// <reference path="../../../shared/interfaces.d.ts" />
 /**
  * Type definitions for the IPython notebook v3 format.
  *

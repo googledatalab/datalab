@@ -12,7 +12,7 @@
  * the License.
  */
 
-
+/// <reference path="../common/interfaces.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
 import uuid = require('node-uuid');
 import ipy = require('../messages/ipy');

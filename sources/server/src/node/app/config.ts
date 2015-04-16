@@ -15,6 +15,7 @@
 
 /// <reference path="../../../../../externs/ts/express/express.d.ts" />
 /// <reference path="../../../../../externs/ts/node/mkdirp.d.ts" />
+/// <reference path="./common/interfaces.d.ts" />
 import express = require('express');
 import mkdirp = require('mkdirp');
 import kernels = require('./kernels/index');

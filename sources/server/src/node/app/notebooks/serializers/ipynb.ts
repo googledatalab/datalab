@@ -12,7 +12,7 @@
  * the License.
  */
 
-
+/// <reference path="../../common/interfaces.d.ts" />
 import transforms = require('./ipynbv3/transforms');
 import util = require('../util');
 

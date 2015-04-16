@@ -14,6 +14,8 @@
 
 
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
+/// <reference path="../../shared/actions.d.ts" />
+/// <reference path="../../shared/updates.d.ts" />
 import actions = require('app/shared/actions');
 import cells = require('app/shared/cells');
 import constants = require('app/common/Constants');

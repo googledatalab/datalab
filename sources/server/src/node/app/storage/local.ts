@@ -12,7 +12,8 @@
  * the License.
  */
 
-
+/// <reference path="../common/interfaces.d.ts" />
+/// <reference path="../../../../../../externs/ts/node/node.d.ts" />
 import fs = require('fs');
 import pathlib = require('path');
 

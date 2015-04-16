@@ -15,6 +15,8 @@
 
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <amd-dependency path="app/components/sessions/SessionConnection" />
+/// <reference path="../../shared/actions.d.ts" />
+/// <reference path="../../shared/updates.d.ts" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import _app = require('app/App');

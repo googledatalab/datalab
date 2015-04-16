@@ -16,6 +16,8 @@
 /**
  * Top-level angular module
  */
+
+/// <reference path="./common/Interfaces.ts" /> 
 /// <reference path="../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <reference path="../../../../../../externs/ts/angularjs/angular-route.d.ts" />
 /// <amd-dependency path="angularRoute" />

@@ -12,7 +12,7 @@
  * the License.
  */
 
-
+/// <reference path="./interfaces.d.ts" />
 /**
  * Common notebook data accessors.
  *

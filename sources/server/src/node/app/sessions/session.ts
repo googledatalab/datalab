@@ -12,7 +12,7 @@
  * the License.
  */
 
-
+/// <reference path="../common/interfaces.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
 import actions = require('../shared/actions');
 import cells = require('../shared/cells');

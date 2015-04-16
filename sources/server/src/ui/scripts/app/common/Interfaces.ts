@@ -14,8 +14,7 @@
 
 
 /// <reference path="../../../../../../../externs/ts/angularjs/angular.d.ts" />
-
-
+/// <reference path="../shared/interfaces.d.ts" />
 // TODO(bryantd): change the namespace from 'app' to 'datalab' to avoid colliding with
 // the ever present app module (app.App) (or change the app module name...)
 declare module app {

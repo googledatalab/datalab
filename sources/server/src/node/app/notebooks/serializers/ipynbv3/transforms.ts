@@ -13,6 +13,7 @@
  */
 
 
+/// <reference path="./ipynb.d.ts" />
 /**
  * Transformation functions from .ipynb-formatted objects to datalab in-memory notebook types.
  */

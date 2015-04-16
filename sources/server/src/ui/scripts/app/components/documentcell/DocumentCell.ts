@@ -18,6 +18,7 @@
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <amd-dependency path="app/components/sessions/ClientNotebookSession" />
+/// <reference path="../../common/Interfaces.ts" />
 import constants = require('app/common/Constants');
 
 

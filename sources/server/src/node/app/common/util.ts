@@ -12,7 +12,8 @@
  * the License.
  */
 
-
+/// <reference path="../shared/interfaces.d.ts" />
+/// <reference path="../../../../../../externs/ts/node/node.d.ts" />
 import util = require('util');
 
 

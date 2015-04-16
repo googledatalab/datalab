@@ -12,7 +12,7 @@
  * the License.
  */
 
-
+/// <reference path="../shared/interfaces.d.ts" />
 /**
  * Internal message types for capturing the relevant details of the IPython messaging protocol
  *
@@ -23,18 +23,6 @@
 
 declare module app {
 
-  interface MessageProcessor {
-    /**
-     * @param message the message to process
-     * @param session session object from which the message originated
-     * @return the processed message or null to indicate message should be filtered
-     */
-    (message: Map<any>, session: ISession, manager: ISessionManager): Map<any>;
-  }
-
-  interface MessageHandler {
-    (message: any, session: ISession, callback: EventHandler<any>): void
-  }
 
   interface NotebookUpdate extends notebooks.Notebook {
     // Note: eventually this message will contain a set of changes rather than the full notebook
