@@ -56,6 +56,7 @@ export class SessionApi {
         // For cases where session creation was attempted for non-existent resouce path, probably
         // makes sense to return a 400 Bad Request.
         response.send(500);
+        return;
       }
 
       // Send the created session's metadata to the user.

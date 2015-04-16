@@ -73,7 +73,7 @@ export class SessionManager implements app.ISessionManager {
     // Retrieve an existing session for the specified session path if it exists.
     var session = this._sessionPathToSession[sessionPath];
     if (session) {
-      // Session already exists, so this is a no-op.
+      // Session already exists, so just signal completion.
       process.nextTick(callback);
       return;
     }
@@ -94,7 +94,6 @@ export class SessionManager implements app.ISessionManager {
       // Pass the newly created session and any errors that may have occurred back to the caller.
       callback(error, session);
     });
-    return;
   }
 
   /**
