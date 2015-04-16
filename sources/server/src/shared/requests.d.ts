@@ -42,7 +42,7 @@ declare module app {
    */
   interface Resource {
     /**
-     * The absolute path to the resource (i.e., relative to the storage root).
+     * The absolute path to the resource.
      */
     path: string;
 
