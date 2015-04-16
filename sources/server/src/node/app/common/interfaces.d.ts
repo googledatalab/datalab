@@ -261,9 +261,10 @@ declare module app {
    * Generic asynchronous file persistence interface.
    */
   interface IStorage {
-    read (path: string, callback: Callback<string>): void;
-    write (path: string, data: string, callback: Callback<void>): void;
-    delete (path: string, callback: Callback<void>): void;
+    list(path: string, callback: Callback<Resource[]>): void;
+    read(path: string, callback: Callback<string>): void;
+    write(path: string, data: string, callback: Callback<void>): void;
+    delete(path: string, callback: Callback<void>): void;
     // move (sourcePath: string, destinationPath: string);
     // copy (sourcePath: string, destinationPath: string);
   }
@@ -282,4 +283,3 @@ declare module app {
   }
 
 }
-

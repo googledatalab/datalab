@@ -35,6 +35,26 @@ export class LocalFileSystemStorage implements app.IStorage {
   }
 
   /**
+   * Asynchronously deletes the file at the given path.
+   *
+   * @param path The file system path to write to, relative to the root path.
+   * @param callback Callback to invoke upon completion of the write operation.
+   */
+  delete(path: string, callback: app.Callback<void>) {
+    fs.unlink(path, callback);
+  }
+
+  /**
+   * Asynchronously enumerates the resources that match the given path prefix.
+   *
+   * @param path The path prefix for which to enumerate resources.
+   * @param callback Completion callback to invoke.
+   */
+  list(path: string, callback: app.Callback<app.Resource[]>) {
+    // FIXME: todo
+  }
+
+  /**
    * Asynchronously opens and reads from the file at the given path.
    *
    * @param path The file system path to read, relative to the root path.
@@ -69,16 +89,6 @@ export class LocalFileSystemStorage implements app.IStorage {
    */
   write(path: string, data: string, callback: app.Callback<void>) {
     fs.writeFile(this._getAbsolutePath(path), data, callback);
-  }
-
-  /**
-   * Asynchronously deletes the file at the given path.
-   *
-   * @param path The file system path to write to, relative to the root path.
-   * @param callback Callback to invoke upon completion of the write operation.
-   */
-  delete(path: string, callback: app.Callback<void>) {
-    fs.unlink(path, callback);
   }
 
   _getAbsolutePath (path: string) {
