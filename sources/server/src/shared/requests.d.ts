@@ -47,11 +47,12 @@ declare module app {
     path: string;
 
     /**
-     * The resource type
+     * Does this resource path represent a file/object ("terminal")?
      *
-     * 'file' | 'directory'
+     * true => path represents terminal (file or object).
+     * false => path represents a "directory" (true directory or path prefix).
      */
-    type: string;
+    isTerminal: boolean;
 
     // The following fields are only provided for files
 
