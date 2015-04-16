@@ -15,6 +15,7 @@
 
 /// <reference path="../../../../../../externs/ts/node/node.d.ts" />
 /// <reference path="../../../../../../externs/ts/express/express.d.ts" />
+/// <reference path="../shared/requests.d.ts" />
 import express = require('express');
 
 
