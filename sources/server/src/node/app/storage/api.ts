@@ -24,14 +24,32 @@ import express = require('express');
 export class ResourceApi {
 
   // FIXME: rename these constants... not really the same semantics as sessions/kernels
-  static resourceCollectionUrl: string = '/resources';
-  static singleResource: string = ResourceApi.resourceCollectionUrl + '/:path';
-  static singleResourceActionUrl: string = ResourceApi.singleResource + '::';
+  static resourceCollectionUrl = '/resources';
+  static resourceUrl = ResourceApi.resourceCollectionUrl + '/:path';
+  static resourceActionUrl = ResourceApi.resourceUrl + '::';
 
   _storage: app.IStorage;
 
   constructor (storage: app.IStorage) {
     this._storage = storage;
+  }
+
+  /**
+   *
+   * @param request HTTP request object.
+   * @param response HTTP response object.
+   */
+  create(request: express.Request, response: express.Response): void {
+
+  }
+
+  /**
+   *
+   * @param request HTTP request object.
+   * @param response HTTP response object.
+   */
+  delete(request: express.Request, response: express.Response): void {
+
   }
 
   /**
@@ -62,33 +80,32 @@ export class ResourceApi {
   }
 
   /**
-   * Registers routes for the kernel API
+   *
+   * @param request HTTP request object.
+   * @param response HTTP response object.
+   */
+  rename(request: express.Request, response: express.Response): void {
+
+  }
+
+  /**
+   *
+   * @param request HTTP request object.
+   * @param response HTTP response object.
+   */
+  update(request: express.Request, response: express.Response): void {
+
+  }
+
+  /**
+   * Registers routes for the resources API.
    */
   register (router: express.Router): void {
-
-// FIXME: remove this content
-// List
-// /content/<path>
-// GET
-//
-// Create
-// /content/<path>
-// POST
-//
-// Delete
-// /content/<path>
-// DELETE
-//
-// Rename
-// /content/<path>:rename
-// POST
-//
-// Update
-// /content/<path>
-// PUT
-
-    router.get(ResourceApi.singleResource, this.list.bind(this));
-    // router.post(ResourceApi.singleResourceActionUrl + 'rename', this.rename.bind(this));
+    router.get(ResourceApi.resourceUrl, this.list.bind(this));
+    router.put(ResourceApi.resourceUrl, this.update.bind(this));
+    router.post(ResourceApi.resourceUrl, this.create.bind(this));
+    router.delete(ResourceApi.resourceUrl, this.delete.bind(this));
+    router.post(ResourceApi.resourceActionUrl + 'rename', this.rename.bind(this));
   }
 
   /**
