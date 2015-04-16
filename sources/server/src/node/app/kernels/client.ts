@@ -125,7 +125,11 @@ export class KernelClient implements app.IKernel {
         '--log-level="DEBUG"',
         '--matplotlib=inline'
         ];
+
+    // Asynchronously spawns the kernel process, returning an event emitter for capturing
+    // process events (e.g., failures).
     this._kernelProcess = childproc.spawn(cmd, args);
+
     // For now, consider both disconnected and exitted kernels as "dead".
     this._kernelProcess.on('exit', this._handleKernelDiedEvent.bind(this));
     this._kernelProcess.on('disconnect', this._handleKernelDiedEvent.bind(this));

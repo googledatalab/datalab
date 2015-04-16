@@ -197,15 +197,20 @@ export class Session implements app.ISession {
   }
 
   /**
-   * Asynchronously shuts down the kernel associated with the session.
+   * Shuts down the kernel associated with the session.
    *
    * @param callback Completion callback to invoke after shutdown has finished.
    */
   shutdown(callback: app.Callback<void>) {
-    this._shutdownKernel(callback);
+    // Shutdown is triggered immediately and no waiting for completion/failure is done currently.
+    this._shutdownKernel();
+
     // FIXME: send a message to clients to inform them that they should disconnect
     // otherwise clients will attempt to reconnect upon the server-side connection
     // end point being closed.
+
+    // Provide the expected async semantics by deferring callback invocation until next tick.
+    process.nextTick(callback);
   }
 
   /**
@@ -553,57 +558,56 @@ export class Session implements app.ISession {
   }
 
   /**
-   * Asynchronously shutdown the kernel associated with the session, if one exists.
+   * Synchronously shutdown the kernel associated with the session, if one exists.
    *
    * @param callback Completion callback to invoke upon the kernel shutdown operation completing.
    */
-  _shutdownKernel(callback: app.Callback<void>) {
-    // If a previous kernel existed, clean up before respawning.
-    if (!this._kernel) {
-      // If there's no existing kernel, then nothing needs shutting down.
-      process.nextTick(callback);
-      return;
+  _shutdownKernel() {
+    if (this._kernel) {
+      this._kernelManager.shutdown(this._kernel.id);
     }
-
-    // Cleanup any connections and resources for the existing kernel.
-    this._kernelManager.shutdown(this._kernel.id); // FIXME: make async and pass callback
   }
 
   /**
    * Spawns an appropriate kernel for the current notebook.
    *
+   * Note: at the moment, kernel (re)spawning does two things:
+   *
+   * 1) shut down any existing kernel process
+   * 2) create and start a new kernel process
+   *
+   * Both of these operations are called in a synchronous fashion currently, but this method
+   * provides an async interface, taking a completion callback to facilitate integration into
+   * async flows.
+   *
    * TODO(bryantd): eventually it will become necessary to read kernel config metadata from
    * the persisted notebook file (e.g., kernel language + version). For now, all kernels are
    * simply Python 2.7+ kernels.
+   *
+   * @param callback Completion callback
    */
   _spawnKernel (callback: app.Callback<void>) {
-    this._shutdownKernel((error) => {
-      if (error) {
-        // If an error occurred when shutting down the existing kernel, notify the caller
-        // and don't spawn a new kernel.
-        callback(error);
-        return;
-      }
+    // Kill the existing kernel.
+    this._shutdownKernel();
 
-      // Spawn a new kernel for the session.
-      //
-      // Kernel creation is asynchronous and should it fail, the kernel health checking will detect
-      // the setup failure and trigger a kernel respawn and inform connected clients.
-      this._kernel = this._kernelManager.create(
-          uuid.v4(),
-          {
-            heartbeatPort: util.getAvailablePort(),
-            iopubPort: util.getAvailablePort(),
-            shellPort: util.getAvailablePort()
-          },
-          this.processExecuteReply.bind(this),
-          this.processKernelHealthCheck.bind(this),
-          this.processKernelStatus.bind(this),
-          this.processOutputData.bind(this));
+    // Spawn a new kernel for the session.
+    //
+    // Kernel creation is asynchronous and should it fail, the kernel health checking will detect
+    // the setup failure and trigger a kernel respawn and inform connected clients.
+    this._kernel = this._kernelManager.create(
+        uuid.v4(),
+        {
+          heartbeatPort: util.getAvailablePort(),
+          iopubPort: util.getAvailablePort(),
+          shellPort: util.getAvailablePort()
+        },
+        this.processExecuteReply.bind(this),
+        this.processKernelHealthCheck.bind(this),
+        this.processKernelStatus.bind(this),
+        this.processOutputData.bind(this));
 
-      // Successfully triggered kernel (re)spawn.
-      callback(null);
-    });
+    // Defer callback invocation until the next tick to provide expected async behavior.
+    process.nextTick(callback);
   }
 
   // Methods for managing request <-> cell reference mappings

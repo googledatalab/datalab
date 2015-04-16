@@ -101,7 +101,13 @@ declare module app {
     start(): void;
   }
 
+  /**
+   * Manages the kernel lifecycle.
+   */
   interface IKernelManager {
+    /**
+     * Creates a new kernel.
+     */
     create(
         id: string,
         config: KernelConfig,
@@ -110,10 +116,26 @@ declare module app {
         onKernelStatus: EventHandler<KernelStatus>,
         onOutputData: EventHandler<OutputData>
         ): IKernel;
+
+    /**
+     * Gets a single kernel by ID.
+     *
+     * @param id The kernel ID
+     * @return The kernel
+     */
     get(id: string): IKernel;
+
+    /**
+     * Enumerates the set of kernels managed by this instance.
+     */
     list(): IKernel[];
+
+    /**
+     * Shuts down the kernel specified by ID.
+     *
+     * @param id The ID of the kernel to shutdown.
+     */
     shutdown(id: string): void;
-    shutdownAll(): void;
   }
 
   /**
