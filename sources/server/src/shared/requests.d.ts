@@ -23,7 +23,7 @@ declare module app {
     /**
      * Response object for the resources list operation.
      */
-    interface ListResourcesResponse {
+    interface ListContentResponse {
       /**
        * The path prefix specified in listing request.
        */

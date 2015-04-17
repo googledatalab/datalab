@@ -20,14 +20,12 @@ import express = require('express');
 
 
 /**
- * Resource management HTTP API
+ * Content management HTTP API.
  */
-export class ResourceApi {
+export class ContentApi {
 
-  // FIXME: rename these constants... not really the same semantics as sessions/kernels
-  static resourceCollectionUrl = '/resources';
-  static resourceUrl = ResourceApi.resourceCollectionUrl + '/:path';
-  static resourceActionUrl = ResourceApi.resourceUrl + '::';
+  static contentUrl = '/content/:path';
+  static contentActionUrl = ContentApi.contentUrl + '::';
 
   _storage: app.IStorage;
 
@@ -73,8 +71,9 @@ export class ResourceApi {
         return;
       }
 
-      response.send({
+      response.send(<app.ListResourcesResponse>{
         prefix: path,
+        foo: 'bar',
         resources: resources
       });
     });
@@ -102,11 +101,11 @@ export class ResourceApi {
    * Registers routes for the resources API.
    */
   register (router: express.Router): void {
-    router.get(ResourceApi.resourceUrl, this.list.bind(this));
-    router.put(ResourceApi.resourceUrl, this.update.bind(this));
-    router.post(ResourceApi.resourceUrl, this.create.bind(this));
-    router.delete(ResourceApi.resourceUrl, this.delete.bind(this));
-    router.post(ResourceApi.resourceActionUrl + 'rename', this.rename.bind(this));
+    router.get(ContentApi.contentUrl, this.list.bind(this));
+    router.put(ContentApi.contentUrl, this.update.bind(this));
+    router.post(ContentApi.contentUrl, this.create.bind(this));
+    router.delete(ContentApi.contentUrl, this.delete.bind(this));
+    router.post(ContentApi.contentActionUrl + 'rename', this.rename.bind(this));
   }
 
   /**
