@@ -1,0 +1,56 @@
+<div class="datalab-session-navigator">
+
+  <div class="datalab-session-navigator-header">
+    Sessions
+  </div>
+
+  <table class='datalab-navigator-table table table-striped table-hover'>
+    <thead>
+      <tr>
+        <!-- Cell headers. These can be clicked to sort the table. They have an inline
+             <i> element which is used to show the active sort column and order. -->
+        <th ng-click="ctrl.reSort('path')">
+          <div class="datalab-navigator-header">
+            <span ng-class="ctrl.sortIconClass('path')">
+              Name
+            </span>
+          </div>
+        </th>       
+        <th ng-click="ctrl.reSort('createdAt')">
+          <div class="datalab-navigator-header">
+            <span ng-class="ctrl.sortIconClass('createdAt')">
+              Start Time
+            </span>
+          </div>
+        </th>
+        <th ng-click="ctrl.reSort('numClient')">
+          <div class="datalab-navigator-header">
+            <span ng-class="ctrl.sortIconClass('numClient')">
+              Status
+            </span>
+          </div>
+        </th> 
+        <!--  Empty column for trash -->
+        <th></th>
+      </tr>
+    </thead>
+
+    <!--  Cell rows, in the currently selected sort order -->
+    <tr ng-repeat="resource in resources | orderBy: sortOrder + sortColumn">
+      <td>
+        {{resource.path}}
+      </td>
+      <td>
+        {{resource.createdAt}}
+      </td>
+      <td>
+        {{resource.numClient == 0 ? 'Idle' : 'In use'}}
+      </td>
+      <td>
+        <i class="datalab-navigator-trash fa fa-trash"
+            ng-click="ctrl.shutdownSession(resource.path)">
+        </i>
+      </td>
+    </tr>
+  </table>
+</div>

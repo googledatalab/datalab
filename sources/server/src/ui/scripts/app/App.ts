@@ -25,6 +25,7 @@ import angular = require('angular');
 import constants = require('app/common/Constants');
 import registrarModule = require('app/common/Registrar');
 import notebooksRoute = require('app/notebooks/NotebooksRoute');
+import sessionsRoute = require('app/sessions/SessionsRoute');
 import notebooksEditRoute = require('app/notebooks/edit/EditRoute');
 
 
@@ -63,6 +64,7 @@ function addRoutes (routeProvider: ng.route.IRouteProvider): void {
   routeProvider
     .when('/notebooks', notebooksRoute.route)
     .when('/notebooks/:notebookPath', notebooksEditRoute.route)
+    .when('/sessions', sessionsRoute.route)    
     .otherwise({
       redirectTo: '/notebooks'
     });

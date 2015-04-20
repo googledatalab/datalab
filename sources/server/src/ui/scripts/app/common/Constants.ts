@@ -33,6 +33,9 @@ export var appModuleName = 'app';
 export var layouts = {
   sidebar: {
     directiveName: 'sidebarLayout'
+  },
+  modal: {
+    directiveName: 'modalLayout'
   }
 };
 
@@ -56,6 +59,9 @@ export var codeEditor = {
 export var editorCell = {
   directiveName: 'datalabEditorCell'
 };
+export var fileNavigator = {
+  directiveName: 'datalabFileNavigator'
+};
 export var headingCell = {
   directiveName: 'datalabHeadingCell'
 };
@@ -74,6 +80,9 @@ export var notebookTitle = {
 export var notebookToolbar = {
   directiveName: 'datalabNotebookToolbar'
 };
+export var sessionNavigator = {
+  directiveName: 'datalabSessionNavigator'
+};
 export var worksheetEditor = {
   directiveName: 'datalabWorksheetEditor'
 };
@@ -83,11 +92,17 @@ export var worksheetEditor = {
 export var clientNotebookSession = {
   name: 'clientNotebookSession'
 };
+export var contentService = {
+  name: 'contentService'
+};
 export var sessionConnection = {
   name: 'sessionConnection'
 };
 export var sessionEventDispatcher = {
   name: 'sessionEventDispatcher'
+};
+export var sessionService = {
+  name: 'sessionService'
 };
 
 
@@ -97,6 +112,10 @@ export var notebooks = {
   edit: {
     pageControllerName: 'EditPageController'
   }
+};
+
+export var sessions = {
+  pageControllerName: 'SessionsPageController',
 };
 
 // Logging scope names.
@@ -111,11 +130,13 @@ export var scopes = {
   cellOutputViewer: 'cellOutputViewer',
   cellToolbar: 'cellToolbar',
   codeEditor: 'codeEditor',
+  fileNavigator: 'fileNavigator',
   layouts: 'layouts',
   headingViewer: 'headingViewer',
   markdownViewer: 'markdownViewer',
   notebookTitle: 'notebookTitle',
   notebookToolbar: 'notebookToolbar',
+  sessionNavigator: 'sessionNavigator',  
   worksheetEditor: 'worksheetEditor',
 
   // Route-specific components.
@@ -126,8 +147,14 @@ export var scopes = {
     }
   },
 
+  sessions: {
+    page: 'sessions.page',
+  },
+  
   // Other injectables (services, factories, providers, etc.).
   clientNotebookSession: clientNotebookSession.name,
+  contentService: contentService.name,
   sessionConnection: sessionConnection.name,
   sessionEventDispatcher: sessionEventDispatcher.name,
+  sessionService: sessionService.name,  
 };

@@ -25,16 +25,33 @@ import app = require('app/App');
 
 var log = logging.getLogger(constants.scopes.layouts);
 
+interface SidebarLayoutScope extends ng.IScope {
+  activeTab: string;
+}
+
+class SidebarLayoutController {
+
+  _scope: SidebarLayoutScope;
+
+  static $inject = ['$scope', '$location'];
+
+  constructor (scope: SidebarLayoutScope, location: ng.ILocationService) {
+    this._scope = scope;
+    scope.activeTab = location.path();
+  }
+}
+
 /**
  * Creates the sidenav directive definition.
- * 
+ *
  * @return directive definition
  */
 function sidebarLayoutDirective (): ng.IDirective {
   return {
     restrict: 'E',
     transclude: true,
-    templateUrl: constants.scriptPaths.app + '/components/layouts/sidebar/sidebarlayout.html'
+    templateUrl: constants.scriptPaths.app + '/components/layouts/sidebar/sidebarlayout.html',
+    controller: SidebarLayoutController
   }
 }
 
