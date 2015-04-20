@@ -54,6 +54,10 @@ export class LocalFileSystemStorage implements app.IStorage {
   list(path: string, recursive: boolean, callback: app.Callback<app.Resource[]>) {
     fs.readdir(path, (error, paths) => {
 
+      if (error) {
+        callback(error);
+        return;
+      }
       // FIXME: implement this:
       // so files is a list of strings, no extra info on dir/file
       // convert files to resources and return

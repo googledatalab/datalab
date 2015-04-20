@@ -91,7 +91,7 @@ export class KernelApi {
    * Gets the kernel ID from the request or fails the response
    */
   _getKernelIdOrFail (request: express.Request, response: express.Response): string {
-    var id: string = request.param('id', null);
+    var id: string = request.params.id;
     if (!id) {
       response.sendStatus(400);
     }

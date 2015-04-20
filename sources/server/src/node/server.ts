@@ -13,10 +13,12 @@
  */
 
 
+/// <reference path="../../../../externs/ts/express/body-parser.d.ts" />
 /// <reference path="../../../../externs/ts/express/express.d.ts" />
 /// <reference path="../../../../externs/ts/node/node.d.ts" />
 /// <reference path="../../../../externs/ts/node/nomnom.d.ts" />
 /// <reference path="../../../../externs/ts/node/socket.io.d.ts" />
+import bodyParser = require('body-parser');
 import config = require('./app/config');
 import express = require('express');
 import http = require('http');
@@ -48,7 +50,12 @@ var options = nomnom.option(
  */
 export function start (settings: app.Settings, apiRouter: express.Router) {
   var expressApp = express();
+
+  // Configure express to parse request bodies as JSON for the "application/json" MIME type.
+  expressApp.use(bodyParser.json());
+  // Define the API route handlers.
   expressApp.use('/api', apiRouter);
+  // Configure express to serve the static UI content.
   expressApp.use(express.static(__dirname + '/static'));
 
   var httpServer = http.createServer(expressApp);

@@ -40,7 +40,14 @@ export class ContentApi {
    * @param response HTTP response object.
    */
   create(request: express.Request, response: express.Response): void {
-    request.body;
+    var path = this._getPathOrFail(request, response);
+    if (!path) {
+      // Response has been handled by getPathOrFail.
+      return;
+    }
+
+    console.log('Create request for "/' + path + '"', request.body);
+    response.send(path);
   }
 
   /**
@@ -59,12 +66,12 @@ export class ContentApi {
     // delete/update/move into a single callback if it simplifies.
     this._storage.delete(path, (error) => {
       if (error) {
-        response.send(500);
+        response.sendStatus(500);
         return;
       }
 
       // If no error occurred, then consider the operation successful.
-      response.send(200);
+      response.sendStatus(200);
     });
   }
 
@@ -87,7 +94,7 @@ export class ContentApi {
     // Asynchronously list the resources that exist at the given path prefix within storage.
     this._storage.list(path, isRecursive, (error: Error, resources: app.Resource[]) => {
       if (error) {
-        response.send(500);
+        response.sendStatus(500);
         return;
       }
 
@@ -115,11 +122,11 @@ export class ContentApi {
 
     this._storage.move(path, newPath, (error) => {
       if (error) {
-        response.send(500);
+        response.sendStatus(500);
         return;
       }
 
-      response.send(200);
+      response.sendStatus(200);
     });
   }
 
@@ -136,17 +143,17 @@ export class ContentApi {
     }
 
     // Get the updated content from the body of the request.
-    var body: app.requests.CreateContentRequestBody = JSON.parse(request.body);
+    var body: app.requests.CreateContentRequestBody = request.body;
 
     // Asynchronously write the content to the given path in storage.
     this._storage.write(path, body.content, (error) => {
       if (error) {
-        response.send(500);
+        response.sendStatus(500);
         console.log('ERROR: UPDATE /content request failed', request);
         return;
       }
 
-      response.send(200);
+      response.sendStatus(200);
     });
   }
 
@@ -171,7 +178,7 @@ export class ContentApi {
    * @param response HTTP response object.
    */
   _getPathOrFail(request: express.Request, response: express.Response): string {
-    var path: string = request.param('path', null);
+    var path: string = request.params.path;
     if (!path) {
       response.sendStatus(400);
     }
