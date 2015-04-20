@@ -11,7 +11,7 @@ mkdir -p "$ui_staging_path" "$node_staging_path" "$build_path" "$build_path/stat
 echo 'Building DataLab server backend...';
 # Copy node .ts files to the backend staging area.
 cp -r "$server_root/src/node/." "$node_staging_path";
-# Copy shared .ts files to the backend staging area.
+# Copy shared .ts files to the backend staging area.		
 cp -r "$server_root/src/shared" "$node_staging_path/app";
 # Compile the typescript code in staging.
 node_tsc_files=`find $node_staging_path -name '*.ts' | tr '\n' ' '`;
@@ -21,7 +21,7 @@ tsc $common_tsc_args --module commonjs $node_tsc_files;
 echo 'Building DataLab server frontend...';
 # Copy UI .ts files to the frontend staging area.
 cp -r "$server_root/src/ui/." "$ui_staging_path";
-# Copy shared .ts files to the frontend staging area.
+# Copy shared .ts files to the frontend staging area.		
 cp -r "$server_root/src/shared" "$ui_staging_path/scripts/app";
 # Compile the typescript code in staging.
 ui_tsc_files=`find $ui_staging_path -name '*.ts' | tr '\n' ' '`;
@@ -38,3 +38,4 @@ cp -r $ui_staging_path/* "$build_path/static";
 find "$build_path" -name '*.ts' | xargs rm;
 
 echo 'Build complete!'
+
