@@ -68,4 +68,4 @@ export function start (settings: app.Settings, apiRouter: express.Router) {
 config.initStorage(options.notebookPath);
 
 // Start the DataLab server running
-start(config.getSettings(), config.getApiRouter());
+start(config.getSettings(), config.getApiRouter(config.getStorage()));
