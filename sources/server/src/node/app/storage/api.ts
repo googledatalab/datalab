@@ -34,12 +34,13 @@ export class ContentApi {
   }
 
   /**
+   * Creates a notebook at the path specified by the request.
    *
    * @param request HTTP request object.
    * @param response HTTP response object.
    */
   create(request: express.Request, response: express.Response): void {
-
+    request.body;
   }
 
   /**
@@ -48,7 +49,23 @@ export class ContentApi {
    * @param response HTTP response object.
    */
   delete(request: express.Request, response: express.Response): void {
+    var path = this._getPathOrFail(request, response);
+    if (!path) {
+      // Response has been handled by getPathOrFail.
+      return;
+    }
 
+    // TODO(bryantd): maybe collect common error callback handling for
+    // delete/update/move into a single callback if it simplifies.
+    this._storage.delete(path, (error) => {
+      if (error) {
+        response.send(500);
+        return;
+      }
+
+      // If no error occurred, then consider the operation successful.
+      response.send(200);
+    });
   }
 
   /**
@@ -64,16 +81,18 @@ export class ContentApi {
       return;
     }
 
-    //
-    this._storage.list(path, (error: Error, resources: app.Resource[]) => {
+    // FIXME: get the is recursive flag from the rquest
+    var isRecursive = true;
+
+    // Asynchronously list the resources that exist at the given path prefix within storage.
+    this._storage.list(path, isRecursive, (error: Error, resources: app.Resource[]) => {
       if (error) {
         response.send(500);
         return;
       }
 
-      response.send(<app.ListResourcesResponse>{
+      response.send({
         prefix: path,
-        foo: 'bar',
         resources: resources
       });
     });
@@ -84,8 +103,24 @@ export class ContentApi {
    * @param request HTTP request object.
    * @param response HTTP response object.
    */
-  rename(request: express.Request, response: express.Response): void {
+  move(request: express.Request, response: express.Response): void {
+    var path = this._getPathOrFail(request, response);
+    if (!path) {
+      // Response has been handled by getPathOrFail.
+      return;
+    }
 
+    var body = JSON.parse(request.body);
+    var newPath = body.path;
+
+    this._storage.move(path, newPath, (error) => {
+      if (error) {
+        response.send(500);
+        return;
+      }
+
+      response.send(200);
+    });
   }
 
   /**
@@ -94,7 +129,25 @@ export class ContentApi {
    * @param response HTTP response object.
    */
   update(request: express.Request, response: express.Response): void {
+    var path = this._getPathOrFail(request, response);
+    if (!path) {
+      // Response has been handled by getPathOrFail.
+      return;
+    }
 
+    // Get the updated content from the body of the request.
+    var body: app.requests.CreateContentRequestBody = JSON.parse(request.body);
+
+    // Asynchronously write the content to the given path in storage.
+    this._storage.write(path, body.content, (error) => {
+      if (error) {
+        response.send(500);
+        console.log('ERROR: UPDATE /content request failed', request);
+        return;
+      }
+
+      response.send(200);
+    });
   }
 
   /**
@@ -105,7 +158,7 @@ export class ContentApi {
     router.put(ContentApi.contentUrl, this.update.bind(this));
     router.post(ContentApi.contentUrl, this.create.bind(this));
     router.delete(ContentApi.contentUrl, this.delete.bind(this));
-    router.post(ContentApi.contentActionUrl + 'rename', this.rename.bind(this));
+    router.post(ContentApi.contentActionUrl + 'move', this.move.bind(this));
   }
 
   /**
@@ -126,4 +179,3 @@ export class ContentApi {
   }
 
 }
-

@@ -262,12 +262,10 @@ declare module app {
    */
   interface IStorage {
     delete(path: string, callback: Callback<void>): void;
-    list(path: string, callback: Callback<Resource[]>): void;
+    list(path: string, recursive: boolean, callback: Callback<Resource[]>): void;
+    move(sourcePath: string, destinationPath: string, callback: Callback<void>): void;
     read(path: string, callback: Callback<string>): void;
     write(path: string, data: string, callback: Callback<void>): void;
-
-    // move (sourcePath: string, destinationPath: string);
-    // copy (sourcePath: string, destinationPath: string);
   }
 
   interface MessageProcessor {

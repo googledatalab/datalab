@@ -48,10 +48,30 @@ export class LocalFileSystemStorage implements app.IStorage {
    * Asynchronously enumerates the resources that match the given path prefix.
    *
    * @param path The path prefix for which to enumerate resources.
+   * @param recursive Should the listing operation recursively enumerate sub-directories?
    * @param callback Completion callback to invoke.
    */
-  list(path: string, callback: app.Callback<app.Resource[]>) {
-    // FIXME: todo
+  list(path: string, recursive: boolean, callback: app.Callback<app.Resource[]>) {
+    fs.readdir(path, (error, paths) => {
+
+      // FIXME: implement this:
+      // so files is a list of strings, no extra info on dir/file
+      // convert files to resources and return
+      // Maybe use this: https://www.npmjs.com/package/node-dir
+
+      var resources: app.Resource[] = paths.map(p => {
+        return {
+          path: p,
+          isTerminal: true // FIXME: todo actually classify these
+        }
+      });
+
+      callback(error, resources);
+    });
+  }
+
+  move(sourcePath: string, destinationPath: string, callback: app.Callback<void>) {
+    fs.rename(sourcePath, destinationPath, callback);
   }
 
   /**

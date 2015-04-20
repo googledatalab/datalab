@@ -21,6 +21,16 @@ declare module app {
   module requests {
 
     /**
+     * Request body specification for content creation requests.
+     */
+    interface CreateContentRequestBody {
+      /**
+       * The content for the file to be created.
+       */
+      content: string;
+    }
+
+    /**
      * Response object for the resources list operation.
      */
     interface ListContentResponse {
@@ -32,7 +42,7 @@ declare module app {
       /**
        * The list of resources that exist for the specified path prefix.
        */
-      resources: Resource[]
+      resources: Resource[];
     }
 
   }
