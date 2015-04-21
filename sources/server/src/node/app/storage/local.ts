@@ -58,17 +58,18 @@ export class LocalFileSystemStorage implements app.IStorage {
    * @param callback Completion callback to invoke.
    */
   list(path: string, recursive: boolean, callback: app.Callback<app.Resource[]>) {
-    var fsListingPath = this._toFileSystemPath(path);
-    console.log('fsListingPath: ', fsListingPath);
+    // Normalize the listing path (directory) to always have a trailing slash.
+    var fsListingPath = pathlib.join(this._toFileSystemPath(path), '/');
+    console.log('fsListingPath: ', fsListingPath); // FIXME remove
 
-    console.log('storage.list:', util.format('path: "%s", abspath: "%s"', path, fsListingPath));
+    console.log('storage.list:', util.format('path: "%s", abspath: "%s"', path, fsListingPath)); // FIXME remove
     // Asynchronously enumerate the files and directories matching the given
     nodedir.paths(fsListingPath, (error: Error, paths: NodeDir.Paths) => {
       if (error) {
         callback(error);
         return;
       }
-      console.log('listed: ', paths);
+      console.log('listed: ', paths); // FIXME remove
 
       var resources: app.Resource[] = [];
 
@@ -83,11 +84,10 @@ export class LocalFileSystemStorage implements app.IStorage {
           // Push all resources regardless of depth in the recursive case.
           resources.push(resource);
         } else {
-          var fsDir = this._getDirectory(fsFilepath);
-          console.log(util.format('filter: "%s" == "%s"', fsListingPath, fsDir));
+          console.log(util.format('File filter: "%s" == "%s"', fsListingPath, this._getDirectory(fsFilepath))); // FIXME remove
           // Filter files not within the top-level directory specified by the path if recursive
           // listing is not desired.
-          if (fsListingPath == fsDir) {
+          if (fsListingPath == this._getDirectory(fsFilepath)) {
             resources.push(resource);
           }
         }
@@ -104,9 +104,10 @@ export class LocalFileSystemStorage implements app.IStorage {
           // Push all resources regardless of depth in the recursive case.
           resources.push(resource);
         } else {
-          // Filter files not within the top-level directory specified by the path if recursive
-          // listing is not desired.
-          if (path == pathlib.dirname(fsDirpath)) {
+          console.log(util.format('Dir filter: "%s" == "%s"', fsListingPath, this._getDirectory(fsDirpath))); // FIXME remove
+          // Filter directories not within the top-level directory specified by the path if
+          // recursive listing is not desired.
+          if (fsListingPath == this._getDirectory(fsDirpath)) {
             resources.push(resource);
           }
         }
@@ -173,7 +174,7 @@ export class LocalFileSystemStorage implements app.IStorage {
    */
   _toStoragePath(path: string) {
     console.log(util.format('path trim: "%s" from "%s" => "%s"',
-      path, this._fsRootPath, path.slice(this._fsRootPath.length)));
+      path, this._fsRootPath, path.slice(this._fsRootPath.length))); // FIXME remove
     return path.slice(this._fsRootPath.length);
   }
 

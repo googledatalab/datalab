@@ -24,7 +24,10 @@ import express = require('express');
  */
 export class ContentApi {
 
-  static contentUrl = '/content/:path';
+
+  static contentBaseUrl = '/content';
+  static contentUrl = ContentApi.contentBaseUrl + '/:path*';
+  // static contentActionUrlRegex = /^\/content\/([^:]+):(.+)$/;
   static contentActionUrl = ContentApi.contentUrl + '::';
 
   _storage: app.IStorage;
@@ -40,14 +43,33 @@ export class ContentApi {
    * @param response HTTP response object.
    */
   create(request: express.Request, response: express.Response): void {
+    console.log('CREATE', request);
+
     var path = this._getPathOrFail(request, response);
     if (!path) {
       // Response has been handled by getPathOrFail.
       return;
     }
 
-    console.log('Create request for "/' + path + '"', request.body);
-    response.send(path);
+    // Get the request body, which defines what content should be created at the specified path.
+    var body: app.requests.CreateContentRequestBody = request.body;
+
+    // Select the appropriate content creation scheme depending on the request body content.
+    if (!body.content) {
+      this._sendBadRequest(response,
+          'Missing content field from request body. Content list operation failed.');
+      return;
+    }
+
+    // Then we'll be creating a new file from this specified content.
+    this._storage.write(path, body.content, (error) => {
+      if (error) {
+        this._sendInternalError(response, "Content create operation failed.", error);
+        return;
+      }
+
+      response.sendStatus(200);
+    });
   }
 
   /**
@@ -62,11 +84,9 @@ export class ContentApi {
       return;
     }
 
-    // TODO(bryantd): maybe collect common error callback handling for
-    // delete/update/move into a single callback if it simplifies.
     this._storage.delete(path, (error) => {
       if (error) {
-        response.sendStatus(500);
+        this._sendInternalError(response, "Content list operation failed.", error);
         return;
       }
 
@@ -82,22 +102,23 @@ export class ContentApi {
    * @param response HTTP response object.
    */
   list(request: express.Request, response: express.Response): void {
-    var path = this._getPathOrFail(request, response);
-    if (!path) {
-      // Response has been handled by getPathOrFail.
-      return;
+    // If a path wasn't specified, then the list operation applies to the root.
+    var path = request.params.path;
+    if (path === undefined) {
+      path = '/';
     }
 
-    // FIXME: get the is recursive flag from the rquest
-    var isRecursive = true;
+    // Get the recursive flag from the request if it was provided and convert it to a boolean.
+    var isRecursive = !!request.query.recursive;
 
     // Asynchronously list the resources that exist at the given path prefix within storage.
     this._storage.list(path, isRecursive, (error: Error, resources: app.Resource[]) => {
       if (error) {
-        response.sendStatus(500);
+        this._sendInternalError(response, "Content list operation failed.", error);
         return;
       }
 
+      // Success. Send the list of resources matching the specified path prefix.
       response.send({
         prefix: path,
         resources: resources
@@ -111,18 +132,22 @@ export class ContentApi {
    * @param response HTTP response object.
    */
   move(request: express.Request, response: express.Response): void {
+    console.log('MOVE', request);
+
     var path = this._getPathOrFail(request, response);
     if (!path) {
       // Response has been handled by getPathOrFail.
       return;
     }
 
-    var body = JSON.parse(request.body);
+    var body: app.requests.MoveContentRequestBody = request.body;
+
     var newPath = body.path;
+    console.log('Moving path "' + path + '" to "' + newPath + '"');
 
     this._storage.move(path, newPath, (error) => {
       if (error) {
-        response.sendStatus(500);
+        this._sendInternalError(response, "Content move operation failed.", error);
         return;
       }
 
@@ -148,8 +173,7 @@ export class ContentApi {
     // Asynchronously write the content to the given path in storage.
     this._storage.write(path, body.content, (error) => {
       if (error) {
-        response.sendStatus(500);
-        console.log('ERROR: UPDATE /content request failed', request);
+        this._sendInternalError(response, "Content update operation failed.", error);
         return;
       }
 
@@ -161,11 +185,44 @@ export class ContentApi {
    * Registers routes for the resources API.
    */
   register (router: express.Router): void {
+// FIXME: currently putting the action urls first due to url matching preference order (most specific first)
+// since the other routes have permissive rules (ie .*)
+
+// FIXME: figure out simplest way to match the action url with slashes in path
+// router.post(/^\/content\/([^:]+):(.+)$/, this.move.bind(this));
+    router.post(ContentApi.contentActionUrl + 'move', this.move.bind(this));
+
+    // Allow GET on the /content route (i.e., list operation on storage root).
+    router.get(ContentApi.contentBaseUrl, this.list.bind(this));
+    // Allow GET on the /content/<path> route.
     router.get(ContentApi.contentUrl, this.list.bind(this));
+
     router.put(ContentApi.contentUrl, this.update.bind(this));
     router.post(ContentApi.contentUrl, this.create.bind(this));
     router.delete(ContentApi.contentUrl, this.delete.bind(this));
-    router.post(ContentApi.contentActionUrl + 'move', this.move.bind(this));
+  }
+
+  // TODO(bryantd): use a real logging system for emitting request errors in some conistent
+  // format so that logging output can be easily digested/summarized; e.g., statistics on
+  // 500 Server Error rate for flagging issues).
+
+  _sendBadRequest(response: express.Response, message: string) {
+    console.log('ERROR HTTP 400: ' + message);
+    response.status(400);
+    response.send(message);
+  }
+
+  _sendInternalError(response: express.Response, message: string, error: Error) {
+    // FIXME: log the actual error for debugging
+    console.log('ERROR HTTP 500: ' + message);
+    response.status(500);
+    response.send(message);
+  }
+
+  _sendNotFound(response: express.Response, message: string) {
+    console.log('ERROR HTTP 404: ' + message);
+    response.status(404);
+    response.send(message);
   }
 
   /**
@@ -180,7 +237,7 @@ export class ContentApi {
   _getPathOrFail(request: express.Request, response: express.Response): string {
     var path: string = request.params.path;
     if (!path) {
-      response.sendStatus(400);
+      this._sendBadRequest(response, "Content 'path' missing from request URL.")
     }
     return path;
   }
