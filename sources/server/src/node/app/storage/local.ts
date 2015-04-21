@@ -20,14 +20,14 @@ import fs = require('fs');
 import mkdirp = require('mkdirp');
 import nodedir = require('node-dir');
 import pathlib = require('path');
-
+import util = require('util'); // FIXME: DEBUG
 
 /**
  * Manages storage operations backed by a local file system.
  */
 export class LocalFileSystemStorage implements app.IStorage {
 
-  _storageRootPath: string;
+  _fsRootPath: string;
 
   /**
    * Constructor.
@@ -35,7 +35,9 @@ export class LocalFileSystemStorage implements app.IStorage {
    * @param storageRootPath The root path within the local filesystem to use for storage.
    */
   constructor(storageRootPath: string) {
-    this._storageRootPath = storageRootPath;
+    // Normalize the root path structure.
+    this._fsRootPath = pathlib.join(storageRootPath);
+    console.log('fs root path: ', this._fsRootPath);
   }
 
   /**
@@ -45,7 +47,7 @@ export class LocalFileSystemStorage implements app.IStorage {
    * @param callback Callback to invoke upon completion of the write operation.
    */
   delete(path: string, callback: app.Callback<void>) {
-    fs.unlink(this._getAbsolutePath(path), callback);
+    fs.unlink(this._toFileSystemPath(path), callback);
   }
 
   /**
@@ -56,19 +58,24 @@ export class LocalFileSystemStorage implements app.IStorage {
    * @param callback Completion callback to invoke.
    */
   list(path: string, recursive: boolean, callback: app.Callback<app.Resource[]>) {
+    var fsListingPath = this._toFileSystemPath(path);
+    console.log('fsListingPath: ', fsListingPath);
+
+    console.log('storage.list:', util.format('path: "%s", abspath: "%s"', path, fsListingPath));
     // Asynchronously enumerate the files and directories matching the given
-    nodedir.paths(path, (error: Error, paths: NodeDir.Paths) => {
+    nodedir.paths(fsListingPath, (error: Error, paths: NodeDir.Paths) => {
       if (error) {
         callback(error);
         return;
       }
+      console.log('listed: ', paths);
 
       var resources: app.Resource[] = [];
 
       // Add file (terminal) resources.
-      paths.files.forEach(filepath => {
+      paths.files.forEach(fsFilepath => {
         var resource = {
-          path: filepath,
+          path: this._toStoragePath(fsFilepath),
           isTerminal: true
         };
 
@@ -76,18 +83,20 @@ export class LocalFileSystemStorage implements app.IStorage {
           // Push all resources regardless of depth in the recursive case.
           resources.push(resource);
         } else {
+          var fsDir = this._getDirectory(fsFilepath);
+          console.log(util.format('filter: "%s" == "%s"', fsListingPath, fsDir));
           // Filter files not within the top-level directory specified by the path if recursive
           // listing is not desired.
-          if (path == pathlib.dirname(filepath)) {
+          if (fsListingPath == fsDir) {
             resources.push(resource);
           }
         }
       });
 
       // Add directory (non-terminal) resources.
-      paths.dirs.forEach(dirpath => {
+      paths.dirs.forEach(fsDirpath => {
         var resource = {
-          path: dirpath,
+          path: this._toStoragePath(fsDirpath),
           isTerminal: false
         };
 
@@ -97,20 +106,20 @@ export class LocalFileSystemStorage implements app.IStorage {
         } else {
           // Filter files not within the top-level directory specified by the path if recursive
           // listing is not desired.
-          if (path == pathlib.dirname(dirpath)) {
+          if (path == pathlib.dirname(fsDirpath)) {
             resources.push(resource);
           }
         }
       });
 
-      callback(error, resources);
+      callback(null, resources);
     });
   }
 
   move(sourcePath: string, destinationPath: string, callback: app.Callback<void>) {
     fs.rename(
-        this._getAbsolutePath(sourcePath),
-        this._getAbsolutePath(destinationPath),
+        this._toFileSystemPath(sourcePath),
+        this._toFileSystemPath(destinationPath),
         callback);
   }
 
@@ -121,7 +130,7 @@ export class LocalFileSystemStorage implements app.IStorage {
    * @param callback Callback to invoke upon completion of the read operation.
    */
   read(path: string, callback: app.Callback<string>) {
-    fs.readFile(this._getAbsolutePath(path), { encoding: 'utf8' }, (error: any, data: string) => {
+    fs.readFile(this._toFileSystemPath(path), { encoding: 'utf8' }, (error: any, data: string) => {
       if (error) {
         // An error code of ENOENT indicates that the specified read failed because the file
         // doesn't exist.
@@ -148,11 +157,33 @@ export class LocalFileSystemStorage implements app.IStorage {
    * @param callback Callback to invoke upon completion of the write operation.
    */
   write(path: string, data: string, callback: app.Callback<void>) {
-    fs.writeFile(this._getAbsolutePath(path), data, callback);
+    fs.writeFile(this._toFileSystemPath(path), data, callback);
   }
 
-  _getAbsolutePath(path: string) {
+  _getDirectory(path: string) {
+    // Normalize path to always include a trailing slash for the directory.
+    return pathlib.join(pathlib.dirname(path), '/');
+  }
 
-    return pathlib.join(this._storageRootPath, path);
+  /**
+   * Converts the file system path to the corresponding storage path.
+   *
+   * @param  path The local filesystem path.
+   * @return The corresponding storage path..
+   */
+  _toStoragePath(path: string) {
+    console.log(util.format('path trim: "%s" from "%s" => "%s"',
+      path, this._fsRootPath, path.slice(this._fsRootPath.length)));
+    return path.slice(this._fsRootPath.length);
+  }
+
+  /**
+   * Converts the storage path to the corresponding file system path.
+   *
+   * @param  path The storage path.
+   * @return The corresponding local filesystem path.
+   */
+  _toFileSystemPath(path: string) {
+    return pathlib.join(this._fsRootPath, path);
   }
 }
