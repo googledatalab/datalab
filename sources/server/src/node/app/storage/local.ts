@@ -14,7 +14,11 @@
 
 /// <reference path="../common/interfaces.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/node.d.ts" />
+/// <reference path="../../../../../../externs/ts/node/mkdirp.d.ts" />
+/// <reference path="../../../../../../externs/ts/node/node-dir.d.ts" />
 import fs = require('fs');
+import mkdirp = require('mkdirp');
+import nodedir = require('node-dir');
 import pathlib = require('path');
 
 
@@ -47,26 +51,55 @@ export class LocalFileSystemStorage implements app.IStorage {
   /**
    * Asynchronously enumerates the resources that match the given path prefix.
    *
-   * @param path The path prefix for which to enumerate resources.
+   * @param path The directory path for which to enumerate resources.
    * @param recursive Should the listing operation recursively enumerate sub-directories?
    * @param callback Completion callback to invoke.
    */
   list(path: string, recursive: boolean, callback: app.Callback<app.Resource[]>) {
-    fs.readdir(this._getAbsolutePath(path), (error, paths) => {
-
+    // Asynchronously enumerate the files and directories matching the given
+    nodedir.paths(path, (error: Error, paths: NodeDir.Paths) => {
       if (error) {
         callback(error);
         return;
       }
-      // FIXME: implement this:
-      // so files is a list of strings, no extra info on dir/file
-      // convert files to resources and return
-      // Maybe use this: https://www.npmjs.com/package/node-dir
 
-      var resources: app.Resource[] = paths.map(p => {
-        return {
-          path: p,
-          isTerminal: true // FIXME: todo actually classify these
+      var resources: app.Resource[] = [];
+
+      // Add file (terminal) resources.
+      paths.files.forEach(filepath => {
+        var resource = {
+          path: filepath,
+          isTerminal: true
+        };
+
+        if (recursive) {
+          // Push all resources regardless of depth in the recursive case.
+          resources.push(resource);
+        } else {
+          // Filter files not within the top-level directory specified by the path if recursive
+          // listing is not desired.
+          if (path == pathlib.dirname(filepath)) {
+            resources.push(resource);
+          }
+        }
+      });
+
+      // Add directory (non-terminal) resources.
+      paths.dirs.forEach(dirpath => {
+        var resource = {
+          path: dirpath,
+          isTerminal: false
+        };
+
+        if (recursive) {
+          // Push all resources regardless of depth in the recursive case.
+          resources.push(resource);
+        } else {
+          // Filter files not within the top-level directory specified by the path if recursive
+          // listing is not desired.
+          if (path == pathlib.dirname(dirpath)) {
+            resources.push(resource);
+          }
         }
       });
 
@@ -115,13 +148,11 @@ export class LocalFileSystemStorage implements app.IStorage {
    * @param callback Callback to invoke upon completion of the write operation.
    */
   write(path: string, data: string, callback: app.Callback<void>) {
-// FIXME: mkdirp the directory in case it does not exist
-// FIXME: handle case of an empty "file" part and a non-empty dir-part
-// (i.e., create a directory)
     fs.writeFile(this._getAbsolutePath(path), data, callback);
   }
 
-  _getAbsolutePath (path: string) {
+  _getAbsolutePath(path: string) {
+
     return pathlib.join(this._storageRootPath, path);
   }
 }
