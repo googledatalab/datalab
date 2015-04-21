@@ -26,8 +26,9 @@ export class ContentApi {
 
 
   static contentBaseUrl = '/content';
-  static contentUrl = ContentApi.contentBaseUrl + '/:path*';
-  // static contentActionUrlRegex = /^\/content\/([^:]+):(.+)$/;
+  // Note: the regex passed to the "path" variable capture matches all characters up to a colon,
+  // because a colon, if one exists within the path, delimits the "action" name for the given path.
+  static contentUrl = ContentApi.contentBaseUrl + '/:path([^:]*)';
   static contentActionUrl = ContentApi.contentUrl + '::';
 
   _storage: app.IStorage;
@@ -43,13 +44,12 @@ export class ContentApi {
    * @param response HTTP response object.
    */
   create(request: express.Request, response: express.Response): void {
-    console.log('CREATE', request);
-
     var path = this._getPathOrFail(request, response);
     if (!path) {
       // Response has been handled by getPathOrFail.
       return;
     }
+    console.log('CREATE', path, request.body); // FIXME remove
 
     // Get the request body, which defines what content should be created at the specified path.
     var body: app.requests.CreateContentRequestBody = request.body;
@@ -132,15 +132,15 @@ export class ContentApi {
    * @param response HTTP response object.
    */
   move(request: express.Request, response: express.Response): void {
-    console.log('MOVE', request);
-
     var path = this._getPathOrFail(request, response);
     if (!path) {
       // Response has been handled by getPathOrFail.
       return;
     }
 
+
     var body: app.requests.MoveContentRequestBody = request.body;
+    console.log('MOVE', path, request.body); // FIXME remove
 
     var newPath = body.path;
     console.log('Moving path "' + path + '" to "' + newPath + '"');
@@ -185,11 +185,6 @@ export class ContentApi {
    * Registers routes for the resources API.
    */
   register (router: express.Router): void {
-// FIXME: currently putting the action urls first due to url matching preference order (most specific first)
-// since the other routes have permissive rules (ie .*)
-
-// FIXME: figure out simplest way to match the action url with slashes in path
-// router.post(/^\/content\/([^:]+):(.+)$/, this.move.bind(this));
     router.post(ContentApi.contentActionUrl + 'move', this.move.bind(this));
 
     // Allow GET on the /content route (i.e., list operation on storage root).
