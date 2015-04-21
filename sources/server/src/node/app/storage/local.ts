@@ -47,6 +47,7 @@ export class LocalFileSystemStorage implements app.IStorage {
    * @param callback Callback to invoke upon completion of the write operation.
    */
   delete(path: string, callback: app.Callback<void>) {
+    // TODO(bryantd): Add support for deleting directories with emptiness check.
     fs.unlink(this._toFileSystemPath(path), callback);
   }
 

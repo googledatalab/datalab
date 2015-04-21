@@ -38,7 +38,9 @@ export class ContentApi {
   }
 
   /**
-   * Creates a notebook at the path specified by the request.
+   * Creates a file at the path specified by the request.
+   *
+   * TODO(bryantd): support directory creation.
    *
    * @param request HTTP request object.
    * @param response HTTP response object.
@@ -49,7 +51,6 @@ export class ContentApi {
       // Response has been handled by getPathOrFail.
       return;
     }
-    console.log('CREATE', path, request.body); // FIXME remove
 
     // Get the request body, which defines what content should be created at the specified path.
     var body: app.requests.CreateContentRequestBody = request.body;
@@ -73,6 +74,9 @@ export class ContentApi {
   }
 
   /**
+   * Deletes a file at the specified path.
+   *
+   * TODO(bryantd): support directory deletion with emptiness precondition.
    *
    * @param request HTTP request object.
    * @param response HTTP response object.
@@ -127,6 +131,9 @@ export class ContentApi {
   }
 
   /**
+   * Moves the file at the request path to the new path specified in the request body.
+   *
+   * TODO(bryantd): support directory renaming.
    *
    * @param request HTTP request object.
    * @param response HTTP response object.
@@ -138,12 +145,8 @@ export class ContentApi {
       return;
     }
 
-
     var body: app.requests.MoveContentRequestBody = request.body;
-    console.log('MOVE', path, request.body); // FIXME remove
-
     var newPath = body.path;
-    console.log('Moving path "' + path + '" to "' + newPath + '"');
 
     this._storage.move(path, newPath, (error) => {
       if (error) {
@@ -156,6 +159,7 @@ export class ContentApi {
   }
 
   /**
+   * Updates the content at the request path with the request body content.
    *
    * @param request HTTP request object.
    * @param response HTTP response object.
