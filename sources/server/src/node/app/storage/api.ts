@@ -86,7 +86,7 @@ export class ContentApi {
 
     this._storage.delete(path, (error) => {
       if (error) {
-        this._sendInternalError(response, "Content list operation failed.", error);
+        this._sendInternalError(response, "Content delete operation failed.", error);
         return;
       }
 
