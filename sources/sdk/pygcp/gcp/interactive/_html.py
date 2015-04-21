@@ -14,6 +14,57 @@
 
 """Google Cloud Platform library - IPython HTML display Functionality."""
 
+import time as _time
+
+class Html(object):
+  """A helper to enable generating an HTML representation as display data in a notebook.
+
+  This object supports the combination of HTML markup and/or associated JavaScript.
+  """
+
+  def __init__(self, markup=None):
+    """Initializes an instance of Html.
+    """
+    self._id = '_%d' % int(round(_time.time()))
+    self._class_name = ''
+    self._markup = markup
+    self._dependencies = [('element!' + self._id, 'dom')]
+    self._script = ''
+
+  def add_class(self, class_name):
+    """Adds a CSS class to be generated on the output HTML.
+    """
+    self._class = class_name
+
+  def add_dependency(self, path, name):
+    """Adds a script dependency to be loaded before any script is executed.
+    """
+    self._dependencies.append((path, name))
+
+  def add_script(self, script):
+    """Adds JavaScript that should be included along-side the HTML.
+    """
+    self._script = script
+
+  def _repr_html_(self):
+    """Generates the HTML representation.
+    """
+    parts = []
+    parts.append('<div id="%s" class="%s">%s</div>' % (self._id, self._class, self._markup))
+
+    if len(self._script) != 0:
+      parts.append('<script>')
+      parts.append('require([')
+      parts.append(','.join(map(lambda d: '"%s"' % d[0], self._dependencies)))
+      parts.append('], function(')
+      parts.append(','.join(map(lambda d: d[1], self._dependencies)))
+      parts.append(') {')
+      parts.append(self._script)
+      parts.append('});')
+      parts.append('</script>')
+
+    return ''.join(parts)
+
 
 class HtmlBuilder(object):
   """A set of helpers to build HTML representations of objects.
