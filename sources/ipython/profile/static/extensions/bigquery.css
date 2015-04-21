@@ -1,20 +1,20 @@
-.bqschema.title {
+th.bqsv_expanded, th.bqsv_collapsed {
     background-color:LightGray;
 }
 
-.bqschema.colheader {
+th.bqsv_colheader {
     font-style: italic;
 }
 
-.bqschema.tbody.hidden {
-    display: 'none';
+tbody.bqsv_hidden {
+    display: none;
 }
 
-.bqschema.title.expanded:before {
+th.bqsv_expanded:before {
     content: '\25be  '
 }
 
-.bqschema.title.collapsed:before {
+th.bqsv_collapsed:before {
     content: '\25b8  '
 }
 

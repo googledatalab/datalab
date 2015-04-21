@@ -20,10 +20,10 @@ define(function () {
   // Event handler to toggle visibility of a nested schema table.
   function _toggleNode(e) {
     var node = e.target;
-    var expanded = (node.className == 'bqschema title collapsed');
-    node.className = 'bqschema title ' + (expanded ? 'expanded' : 'collapsed');
+    var expand = node.classList.contains('bqsv_collapsed');
+    node.className = expand ? 'bqsv_expanded' : 'bqsv_collapsed';
     var tgroup = node.parentNode.nextSibling;
-    tgroup.className = 'bqschema tbody' + (expanded ? 'visible' : ' hidden');
+    tgroup.className = expand ? 'bqsv_visible' : 'bqsv_hidden';
   }
 
   // Helper function to recursively render a table schema.
@@ -32,7 +32,6 @@ define(function () {
     // Create a tbody element to hold the entities for this level. We group them so
     // we can easily collapse/expand the level.
     var tbody = document.createElement('tbody');
-    tbody.className = 'bqschema tbody ';
 
     for (var i = 0; i < schema.length; i++) {
       if (i == 0) {
@@ -40,12 +39,12 @@ define(function () {
           // title.length > 0 implies we are in a nested table. Create a title header row
           // for this nested table with a click handler and hide the tbody.
 
-          tbody.className += 'hidden';
+          tbody.className = 'bqsv_hidden';
 
           var th = document.createElement('th');
           th.colSpan = columns.length;
-          th.className = 'bqschema title collapsed';
-          th.innerText = title.substring(1);  // skip the leading '.'
+          th.className = 'bqsv_collapsed';
+          th.textContent = title.substring(1);  // skip the leading '.'
           th.addEventListener('click', _toggleNode);
 
           var tr = document.createElement('tr');
@@ -53,14 +52,14 @@ define(function () {
           table.appendChild(tr);
         } else {
           // We are in the top-level table; add a header row with the column labels.
-          tbody.className += 'visible';
+          tbody.className = 'bqsv_visible';
           if (includeColumnHeaders) {
             // First line; show column headers.
             var tr = document.createElement('tr');
             for (var j = 0; j < columns.length; j++) {
               var th = document.createElement('th');
-              th.innerText = columns[j];
-              th.className += 'bqschema colheader';
+              th.textContent = columns[j];
+              th.className = 'bqsv_colheader';
               tr.appendChild(th);
             }
             table.appendChild(tr);
@@ -74,8 +73,7 @@ define(function () {
       for (var j = 0; j < columns.length; j++) {
         var th = document.createElement('th');
         var v = field[columns[j]];
-        th.innerText = v == undefined ? '' : v;
-        th.className = 'bqschema entity';
+        th.textContent = v == undefined ? '' : v;
         tr.appendChild(th);
       }
       tbody.appendChild(tr);
@@ -97,6 +95,7 @@ define(function () {
   function renderSchema(dom, schema) {
     var columns = ['name', 'type', 'mode', 'description'];
     var table = document.createElement('table');
+    table.className = 'bqsv';
     _renderSchema(table, schema, '', /*includeColumnHeaders*/ true, columns);
     dom.appendChild(table);
   }
