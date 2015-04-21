@@ -17,6 +17,8 @@
 
 import traceback as _tb
 
+
 def print_exception_with_last_stack(e):
   _tb.print_exc()
   print str(e)
+

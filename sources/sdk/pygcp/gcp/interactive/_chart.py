@@ -16,7 +16,6 @@
 
 import argparse
 import json as _json
-import pandas as pd
 import time as _time
 
 try:
@@ -25,9 +24,9 @@ try:
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
-import gcp.bigquery as _bq
 from gcp._util import JSONEncoder as _JSONEncoder
-from gcp._util import print_exception_with_last_stack
+from gcp._util import print_exception_with_last_stack as _print_exception_with_stack
+from ._utils import _get_data
 
 
 @_magic.register_line_cell_magic
@@ -56,7 +55,7 @@ def chart(line, cell=None):
 
 def _chart_cell(args, cell):
   chart_options = cell if cell and len(cell.strip()) else '{}'
-  fields = ','.join(args['field']) if args['field'] else ''
+  fields = ','.join(args['field']) if args['field'] else '*'
 
   _HTML_TEMPLATE = """
     <div class="bqgc" id="bqgc_%s">
@@ -64,120 +63,33 @@ def _chart_cell(args, cell):
     <script>
           require(['extensions/charting', 'element!bqgc_%s'],
               function(charts, dom) {
-                  charts.render(dom, {chartStyle:"%s", dataName:"%s", fields:"%s"}, %s);
+                  charts.render(dom, {chartStyle:'%s', dataName:'%s', fields:'%s'}, %s, %s);
               }
           );
     </script>
   """
   div_id = str(int(round(_time.time())))
+  source = args['data']
+  chart_type = args['chart']
+  count = 25 if chart_type == 'paged_table' else -1
+  data = _get_data(source, fields, 0, count)
   return _ipython.core.display.HTML(
-    _HTML_TEMPLATE % (div_id, div_id, args['chart'], args['data'], fields, chart_options))
+    _HTML_TEMPLATE % (div_id, div_id, chart_type, source, fields, chart_options,
+                      _json.dumps(data, cls=_JSONEncoder)))
 
 
 @_magic.register_line_magic
 def _get_chart_data(line):
   try:
     args = line.strip().split()
-    name = args[0]
+    source = args[0]
     fields = args[1]
     first_row = int(args[2]) if len(args) > 2 else 0
     count = int(args[3]) if len(args) > 3 else -1
-
-    ipy = _ipython.get_ipython()
-    item = ipy.user_ns[name] if name in ipy.user_ns else name
-    table = None
-
-    list_list = None
-    dict_list = None
-    data_frame = None
-
-    if isinstance(item, list):
-      if len(item) == 0:
-        raise Exception("Cannot chart empty list")
-
-      if isinstance(item[0], dict):
-        dict_list = item
-      elif isinstance(item[0], list):
-        if fields != '*':
-          raise Exception("Fields argument not currently supported with lists of lists.")
-        list_list = item
-      else:
-        raise Exception("To chart a list it must contain dictionaries or lists.")
-    elif isinstance(item, pd.DataFrame):
-      data_frame = item
-    elif isinstance(item, basestring):
-      table = _bq.table(item)
-    else:
-      # We don't have direct access to the Query type so we try the below to distinguish between
-      # table and query
-      try:
-        table = item.results()
-      except AttributeError:
-        table = item
-
-    # Get the schema, either from the table or through inference. This is a secondary check
-    # too that if we fell through to assuming a Table, we really have one.
-    if table:
-      try:
-        schema = table.schema
-      except AttributeError:
-        raise Exception("Cannot chart %s; unsupported object type" % name)
-    else:
-      schema = _bq.schema(item)
-
-    # If the fields weren't supplied get them from the schema.
-    if fields == '*':
-      fields = [f.name for f in schema]
-    else:
-      fields = fields.split(',')
-
-    # Get the row data. This is type-specific, and we also use different paths depending on
-    # whether a count was specified, to make the alternate case more efficient.
-    rows = []
-    if table:
-      gen = table.range(first_row, count) if count >= 0 else table
-      rows = [{'c': [{'v': row[c]} for c in fields]} for row in gen]
-    elif dict_list:
-      gen = dict_list[first_row:first_row + count] if count >= 0 else dict_list
-      rows = [{'c': [{'v': row[c]} for c in fields]} for row in gen]
-    elif list_list:
-      gen = list_list[first_row:first_row + count] if count >= 0 else list_list
-      rows = [{'c': [{'v': row[i]} for i in range(0, len(fields))]} for row in gen]
-    elif isinstance(data_frame, pd.DataFrame):  # "if data_frame" fails due to Pandas overrides.
-      df_slice = data_frame.reset_index(drop=True)[first_row:first_row + count]
-      for index, data_frame_row in df_slice.iterrows():
-        row = data_frame_row.to_dict()
-        for key in row.keys():
-          val = row[key]
-          if isinstance(val, pd.Timestamp):
-            row[key] = val.to_pydatetime()
-
-        rows.append({'c': [{'v': row[c]} for c in fields]})
-
-    else:  # shouldn't happen
-      raise Exception("Nothing to chart")
-
-    # Get the column metadata by converting the BQ schema.
-    typemap = {
-      'STRING': 'string',
-      'INTEGER': 'number',
-      'FLOAT': 'number',
-      'BOOLEAN': 'boolean',
-      'TIMESTAMP': 'datetime'
-    }
-    cols = []
-    for col in fields:
-      f = schema[col]
-      cols.append({'id': f.name, 'label': f.name, 'type': typemap[f.data_type]})
-
-    data = {'cols': cols, 'rows': rows}
-
+    data = _get_data(source, fields, first_row, count)
   except Exception, e:
-    print_exception_with_last_stack(e)
+    _print_exception_with_stack(e)
     data = {}
 
-  model = {
-    'data': data
-  }
-  return _ipython.core.display.JSON(_json.dumps(model, cls=_JSONEncoder))
+  return _ipython.core.display.JSON(_json.dumps({'data': data}, cls=_JSONEncoder))
 

@@ -224,3 +224,23 @@ def query_job(job_id, table, context=None):
   return _QueryJob(api, job_id, table)
 
 
+# Type tests. Needed as we don't export the classes (although maybe we should).
+
+def _is_dataset(o):
+  """ Tests if an object is a DataSet. """
+  return isinstance(o, _DataSet)
+
+
+def _is_table(o):
+  """ Tests if an object is a Table. """
+  return isinstance(o, _Table)
+
+
+def _is_query(o):
+  """ Tests if an object is a Query. """
+  return isinstance(o, _Query)
+
+
+def _is_schema(o):
+  """ Tests if an object is a Schema. """
+  return isinstance(o, _TableSchema)
