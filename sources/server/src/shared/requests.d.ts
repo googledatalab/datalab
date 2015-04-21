@@ -30,6 +30,10 @@ declare module app {
       content: string;
     }
 
+    interface MoveContentRequestBody {
+      path: string;
+    }
+
     /**
      * Response object for the resources list operation.
      */
@@ -64,7 +68,7 @@ declare module app {
      */
     isTerminal: boolean;
 
-    // The following fields are only provided for files
+    // The following fields are only provided for files.
 
     /**
      * Last modification timestamp for the file, if one can be determined.
