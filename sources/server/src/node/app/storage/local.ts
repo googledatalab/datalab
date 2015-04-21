@@ -20,7 +20,6 @@ import fs = require('fs');
 import mkdirp = require('mkdirp');
 import nodedir = require('node-dir');
 import pathlib = require('path');
-import util = require('util'); // FIXME: DEBUG
 
 /**
  * Manages storage operations backed by a local file system.
@@ -61,16 +60,13 @@ export class LocalFileSystemStorage implements app.IStorage {
   list(path: string, recursive: boolean, callback: app.Callback<app.Resource[]>) {
     // Normalize the listing path (directory) to always have a trailing slash.
     var fsListingPath = pathlib.join(this._toFileSystemPath(path), '/');
-    console.log('fsListingPath: ', fsListingPath); // FIXME remove
 
-    console.log('storage.list:', util.format('path: "%s", abspath: "%s"', path, fsListingPath)); // FIXME remove
     // Asynchronously enumerate the files and directories matching the given
     nodedir.paths(fsListingPath, (error: Error, paths: NodeDir.Paths) => {
       if (error) {
         callback(error);
         return;
       }
-      console.log('listed: ', paths); // FIXME remove
 
       var resources: app.Resource[] = [];
 
@@ -85,7 +81,6 @@ export class LocalFileSystemStorage implements app.IStorage {
           // Push all resources regardless of depth in the recursive case.
           resources.push(resource);
         } else {
-          console.log(util.format('File filter: "%s" == "%s"', fsListingPath, this._getDirectory(fsFilepath))); // FIXME remove
           // Filter files not within the top-level directory specified by the path if recursive
           // listing is not desired.
           if (fsListingPath == this._getDirectory(fsFilepath)) {
@@ -105,7 +100,6 @@ export class LocalFileSystemStorage implements app.IStorage {
           // Push all resources regardless of depth in the recursive case.
           resources.push(resource);
         } else {
-          console.log(util.format('Dir filter: "%s" == "%s"', fsListingPath, this._getDirectory(fsDirpath))); // FIXME remove
           // Filter directories not within the top-level directory specified by the path if
           // recursive listing is not desired.
           if (fsListingPath == this._getDirectory(fsDirpath)) {
@@ -174,8 +168,6 @@ export class LocalFileSystemStorage implements app.IStorage {
    * @return The corresponding storage path..
    */
   _toStoragePath(path: string) {
-    console.log(util.format('path trim: "%s" from "%s" => "%s"',
-      path, this._fsRootPath, path.slice(this._fsRootPath.length))); // FIXME remove
     return path.slice(this._fsRootPath.length);
   }
 
