@@ -237,16 +237,6 @@ def _schema_line(args):
     return _ipython.core.display.HTML(html)
 
 
-def _schema_line(args):
-  name = args['item']
-  schema = _get_schema(name)
-  if not schema:
-    print "%s does not exist" % name
-  else:
-    html = _repr_html_table_schema(schema)
-    return _ipython.core.display.HTML(html)
-
-
 # An LRU cache for Tables. This is mostly useful so that when we cross page boundaries
 # when paging through a table we don't have to re-fetch the schema.
 _table_cache = _util.LRUCache(10)
