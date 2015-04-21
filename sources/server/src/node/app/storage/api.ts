@@ -109,10 +109,22 @@ export class ContentApi {
     // If a path wasn't specified, then the list operation applies to the root.
     var path = request.params.path;
     if (path === undefined) {
-      path = '/';
+      // This takes care of the GET "/content" and "/content/" path cases.
+      path = ''
     }
 
+    // Prepend a slash '/' to denote that these paths are rooted (i.e., at the storage root).
+    path = '/' + path;
+
     // Get the recursive flag from the request if it was provided and convert it to a boolean.
+    // Any truthy string value will be converted to true, so all of the following would
+    // enable recursive==true:
+    //
+    // ?recursive=true
+    // ?recursive=1
+    //
+    // To make the flag false, it can just be omitted from the query params, or an empty string
+    // passed as it's value.
     var isRecursive = !!request.query.recursive;
 
     // Asynchronously list the resources that exist at the given path prefix within storage.
@@ -204,6 +216,8 @@ export class ContentApi {
   // TODO(bryantd): use a real logging system for emitting request errors in some conistent
   // format so that logging output can be easily digested/summarized; e.g., statistics on
   // 500 Server Error rate for flagging issues).
+  //
+  // Also need to log additional request details for failures to aid in diagnosing issues.
 
   _sendBadRequest(response: express.Response, message: string) {
     console.log('ERROR HTTP 400: ' + message);
@@ -212,7 +226,6 @@ export class ContentApi {
   }
 
   _sendInternalError(response: express.Response, message: string, error: Error) {
-    // FIXME: log the actual error for debugging
     console.log('ERROR HTTP 500: ' + message);
     response.status(500);
     response.send(message);
