@@ -41,7 +41,7 @@ export class LocalFileSystemStorage implements app.IStorage {
    * @param callback Callback to invoke upon completion of the write operation.
    */
   delete(path: string, callback: app.Callback<void>) {
-    fs.unlink(path, callback);
+    fs.unlink(this._getAbsolutePath(path), callback);
   }
 
   /**
@@ -52,7 +52,7 @@ export class LocalFileSystemStorage implements app.IStorage {
    * @param callback Completion callback to invoke.
    */
   list(path: string, recursive: boolean, callback: app.Callback<app.Resource[]>) {
-    fs.readdir(path, (error, paths) => {
+    fs.readdir(this._getAbsolutePath(path), (error, paths) => {
 
       if (error) {
         callback(error);
@@ -75,7 +75,10 @@ export class LocalFileSystemStorage implements app.IStorage {
   }
 
   move(sourcePath: string, destinationPath: string, callback: app.Callback<void>) {
-    fs.rename(sourcePath, destinationPath, callback);
+    fs.rename(
+        this._getAbsolutePath(sourcePath),
+        this._getAbsolutePath(destinationPath),
+        callback);
   }
 
   /**
@@ -112,6 +115,9 @@ export class LocalFileSystemStorage implements app.IStorage {
    * @param callback Callback to invoke upon completion of the write operation.
    */
   write(path: string, data: string, callback: app.Callback<void>) {
+// FIXME: mkdirp the directory in case it does not exist
+// FIXME: handle case of an empty "file" part and a non-empty dir-part
+// (i.e., create a directory)
     fs.writeFile(this._getAbsolutePath(path), data, callback);
   }
 
