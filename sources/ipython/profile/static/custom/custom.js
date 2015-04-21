@@ -222,6 +222,7 @@ require.config({
     'dc': '//cdnjs.cloudflare.com/ajax/libs/dc/1.7.3/dc',
     'd3': '//cdnjs.cloudflare.com/ajax/libs/d3/3.4.13/d3',
     'element': '/static/require/element',
+    'style': '/static/require/style',
     'visualization': '/static/require/visualization'
   },
   shim: {
