@@ -12,7 +12,6 @@
  * the License.
  */
 
-
 /**
  * Type definitions for HTTP API requests and responses.
  */
@@ -21,9 +20,29 @@ declare module app {
   module requests {
 
     /**
+     * Request body specification for content creation requests.
+     */
+    interface CreateContentRequestBody {
+      /**
+       * The content for the file to be created.
+       */
+      content: string;
+    }
+
+    /**
+     * Request body specification for content move requests.
+     */
+    interface MoveContentRequestBody {
+      /**
+       * The storage path to which the specified content should be moved/renamed.
+       */
+      path: string;
+    }
+
+    /**
      * Response object for the resources list operation.
      */
-    interface ListResourcesResponse {
+    interface ListContentResponse {
       /**
        * The path prefix specified in listing request.
        */
@@ -32,9 +51,8 @@ declare module app {
       /**
        * The list of resources that exist for the specified path prefix.
        */
-      resources: Resource[]
+      resources: Resource[];
     }
-
   }
 
   /**
@@ -47,14 +65,14 @@ declare module app {
     path: string;
 
     /**
-     * Does this resource path represent a file/object ("terminal")?
+     * Does this resource path represent a directory?
      *
-     * true => path represents terminal (file or object).
-     * false => path represents a "directory" (true directory or path prefix).
+     * true => path represents a "directory" (true directory or path prefix).
+     * false => path represents terminal (file or object).
      */
-    isTerminal: boolean;
+    isDirectory: boolean;
 
-    // The following fields are only provided for files
+    // The following fields are only provided for files.
 
     /**
      * Last modification timestamp for the file, if one can be determined.

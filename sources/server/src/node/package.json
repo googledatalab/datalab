@@ -7,8 +7,10 @@
     "node": "0.10.x"
   },
   "dependencies": {
+    "body-parser": "1.12.x",
     "express": "4.x",
     "mkdirp": "0.5.x",
+    "node-dir": "0.1.x",
     "node-uuid": "1.4.x",
     "nomnom": "1.8.x",
     "socket.io": "1.1.x",

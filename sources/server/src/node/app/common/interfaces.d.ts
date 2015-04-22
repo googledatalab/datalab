@@ -14,6 +14,7 @@
 
 /// <reference path="../messages/messages.d.ts" />
 /// <reference path="../shared/interfaces.d.ts" />
+/// <reference path="../shared/requests.d.ts" />
 /// <reference path="../shared/actions.d.ts" />
 /// <reference path="../shared/updates.d.ts" />
 /**
@@ -261,11 +262,11 @@ declare module app {
    * Generic asynchronous file persistence interface.
    */
   interface IStorage {
-    read (path: string, callback: Callback<string>): void;
-    write (path: string, data: string, callback: Callback<void>): void;
-    delete (path: string, callback: Callback<void>): void;
-    // move (sourcePath: string, destinationPath: string);
-    // copy (sourcePath: string, destinationPath: string);
+    delete(path: string, callback: Callback<void>): void;
+    list(path: string, recursive: boolean, callback: Callback<Resource[]>): void;
+    move(sourcePath: string, destinationPath: string, callback: Callback<void>): void;
+    read(path: string, callback: Callback<string>): void;
+    write(path: string, data: string, callback: Callback<void>): void;
   }
 
   interface MessageProcessor {
@@ -282,4 +283,3 @@ declare module app {
   }
 
 }
-

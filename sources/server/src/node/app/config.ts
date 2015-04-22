@@ -19,18 +19,21 @@
 import express = require('express');
 import mkdirp = require('mkdirp');
 import kernels = require('./kernels/index');
-import storage = require('./storage/local');
+import content = require('./storage/index');
 import nbstorage = require('./notebooks/storage');
 
 
 /**
  * Gets the set of HTTP API route handlers that should be enabled for the server.
  */
-export function getApiRouter(): express.Router {
-  var kernelApi = new kernels.Api(kernelManager);
+export function getApiRouter(storage: app.IStorage): express.Router {
   var apiRouter: express.Router = express.Router();
+
+  var kernelApi = new kernels.Api(kernelManager);
   kernelApi.register(apiRouter);
-  // TODO(bryantd): register notebooks/datasets/other APIs here eventually
+
+  var contentApi = new content.Api(storage);
+  contentApi.register(apiRouter);
 
   return apiRouter;
 }
@@ -97,7 +100,7 @@ export function initStorage(notebookStoragePath: string) {
 
   // Create the storage singleton if it hasn't been created before.
   if (!fsStorage) {
-    fsStorage = new storage.LocalFileSystemStorage(notebookStoragePath);
+    fsStorage = new content.LocalFileSystem(notebookStoragePath);
   }
 
   // Create the notebook storage singleton if it hasn't yet been created
