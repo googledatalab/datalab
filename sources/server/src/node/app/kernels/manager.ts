@@ -81,15 +81,6 @@ export class KernelManager implements app.IKernelManager {
   }
 
   /**
-   * Shuts down all kernels managed by this object.
-   */
-  shutdownAll (): void {
-    this._getIds().forEach((id: string) => {
-      this.shutdown(id);
-    });
-  }
-
-  /**
    * Gets the list of kernel IDs.
    */
   _getIds (): string[] {

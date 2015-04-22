@@ -76,6 +76,7 @@ declare module app {
         saveState?: string; // State after most recent save operation: 'succeeded' | 'failed'
         lastSaved?: string; // The time of the last successful persistence operation.
         notebookLoadFailed?: boolean; // Did the loading of a notebook from storage fail?
+        shutdown?: boolean; // Is the session shutting down?
       }
 
       /* Worksheet-level updates */

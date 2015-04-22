@@ -16,6 +16,7 @@
 /// <reference path="../../../../../../externs/ts/node/socket.io.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
 import conn = require('./connection');
+import messages = require('../shared/messages');
 import sessions = require('./session');
 import socketio = require('socket.io');
 import uuid = require('node-uuid');
@@ -35,7 +36,7 @@ export class SessionManager implements app.ISessionManager {
 
   _connectionIdToConnection: app.Map<app.IClientConnection>;
   _connectionIdToSession: app.Map<app.ISession>;
-  _sessionIdToSession: app.Map<app.ISession>;
+  _sessionPathToSession: app.Map<app.ISession>;
   _kernelManager: app.IKernelManager;
   _messageProcessors: app.MessageProcessor[];
   _notebookStorage: app.INotebookStorage;
@@ -54,42 +55,91 @@ export class SessionManager implements app.ISessionManager {
 
     this._connectionIdToSession = {};
     this._connectionIdToConnection = {};
-    this._sessionIdToSession = {};
+    this._sessionPathToSession = {};
 
     this._registerHandlers();
   }
 
   /**
-   * Rename a session by modifying its id to be the new session id.
+   * Asynchronously creates a session for the given resource path.
+   *
+   * Idempotent. Subsequent calls to create for a pre-existing session have no effect.
+   *
+   * @param path The resource (e.g., notebook) path for which to create a session.
+   * @param callback Completion callback for handling the outcome of the session creation flow.
    */
-  renameSession (oldId: string, newId: string) {
-    // Retrieve the existing session if it exists.
-    var session = this._sessionIdToSession[oldId];
-    if (!session) {
-      throw util.createError('Session id "%s" was not found.', oldId);
+  create(sessionPath: string, callback: app.Callback<app.ISession>) {
+
+    // Retrieve an existing session for the specified session path if it exists.
+    var session = this._sessionPathToSession[sessionPath];
+    if (session) {
+      // Session already exists, so just signal completion.
+      process.nextTick(callback.bind(null, null, session));
+      return;
     }
-    // Rename the session by updating the id.
-    session.id = newId;
-    // Store the session under the new id.
-    this._sessionIdToSession[newId] = session;
-    // Remove the old id mapping for the session.
-    delete this._sessionIdToSession[oldId];
+
+    // Create a new session since one did not already exist.
+    session =  new sessions.Session(
+        sessionPath,
+        this._kernelManager,
+        this._handleMessage.bind(this),
+        this._notebookStorage);
+
+    // Track the session by path
+    this._sessionPathToSession[sessionPath] = session;
+
+    // Start the session and provide the completion callback to be invoked when session is fully
+    // initialized.
+    session.start((error) => {
+      // Pass the newly created session and any errors that may have occurred back to the caller.
+      callback(error, session);
+    });
   }
 
   /**
-   * Creates a new session for the given notebook path.
+   * Gets a session by its path if it exists.
    *
-   * @param sessionId The ID to assign to the newly created session.
-   * @param notebookPath The path of the notebook to associate with the session.
-   * @return A new session instance.
+   * @param sessionPath The session path to get.
+   * @return A session or null if the path was not found.
    */
-  _createSession (sessionId: string, notebookPath: string) {
-    return new sessions.Session(
-        sessionId,
-        this._kernelManager,
-        this._handleMessage.bind(this),
-        notebookPath,
-        this._notebookStorage);
+  get(sessionPath: string): app.ISession {
+    return this._sessionPathToSession[sessionPath] || null;
+  }
+
+  /**
+   * Gets the list of sessions currently managed by this instance.
+   *
+   * @return The set of active sessions.
+   */
+  list(): app.ISession[] {
+    return Object.keys(this._sessionPathToSession).map((sessionPath) => {
+      return this._sessionPathToSession[sessionPath];
+    });
+  }
+
+  shutdown(sessionPath: string, callback: app.Callback<void>) {
+    // Retrieve the session that should be shut down
+    var session = this._sessionPathToSession[sessionPath];
+    if (!session) {
+      process.nextTick(callback.bind(null,
+        util.createError('Session path "%s" does not exist', sessionPath)));
+    }
+
+    // Ask the session to shutdown asynchronously.
+    session.shutdown((error: Error) => {
+      // Verify that the shutdown was successful.
+      if (error) {
+        // Shutdown failed, so pass error to caller.
+        callback(error);
+        return;
+      }
+
+      // Now that the session has been shutdown, untrack it.
+      delete this._sessionPathToSession[sessionPath];
+
+      // Done with shutdown, so invoke the completion callback.
+      callback(null);
+    });
   }
 
   /**
@@ -103,46 +153,10 @@ export class SessionManager implements app.ISessionManager {
    * So, only assume the notebook path returned here to match the session notebook path at the
    * time of connection establishment.
    */
-  _getConnectionData (socket: socketio.Socket): app.ClientConnectionData {
+  _getConnectionData(socket: socketio.Socket): app.ClientConnectionData {
     return {
       notebookPath: socket.handshake.query.notebookPath
     }
-  }
-
-  /**
-   * Determines which session the connection should be associated with via the session id.
-   *
-   * Two clients that specify the same session id will join the same session.
-   *
-   * A single client can also specify a previous session id to re-join a previous session, assuming
-   * that session is still alive.
-   */
-  _getOrCreateSession (socket: socketio.Socket) {
-    var notebookPath = this._getConnectionData(socket).notebookPath;
-
-    // The notebook path is currently used as the session "key".
-    //
-    // TODO(bryantd): evaluate if there are any cases where the sessionId must be a uuid.
-    //
-    // For now, ensure that all use cases of the session ID only assume it to be a opaque
-    // string-based identifier so that it's trivial to switch to something like uuid.v5 in the
-    // future; uuid.v4 is not suitable here because the goal is for any client that wants to edit
-    // a specific notebook (uniquely identified by notebookPath) to share a single session. Thus
-    // uuid.v5(notebookPath) would be one way of ensuring session id collision whenever the
-    // notebookPath is the same for multiple clients, while still having a fixed-size, known
-    // character-set, string-based identifier.
-    var sessionId = notebookPath;
-
-    // Retrieve an existing session for the specified session id if it exists.
-    var session = this._sessionIdToSession[sessionId];
-    if (!session) {
-      // No existing session with given id, so create a new session.
-      session = this._createSession(sessionId, notebookPath);
-      // Track the session by id
-      this._sessionIdToSession[sessionId] = session;
-    }
-
-    return session;
   }
 
   /**
@@ -152,7 +166,7 @@ export class SessionManager implements app.ISessionManager {
    * returning control to the session after the middleware stack has had an opportunity
    * to manipulate a given message.
    */
-  _handleMessage (message: any, session: app.ISession, callback: app.EventHandler<any>) {
+  _handleMessage(message: any, session: app.ISession, callback: app.EventHandler<any>) {
     // Invoke each handler in the chain in order.
     //
     // If a handler returns null, the the message is considered "filtered" and processing
@@ -174,32 +188,66 @@ export class SessionManager implements app.ISessionManager {
     }
   }
 
+  _getOrCreateSession(sessionPath: string, callback: app.Callback<app.ISession>) {
+    // Lookup the session path in the set of active sessions to see if it already exists.
+    var session = this._sessionPathToSession[sessionPath];
+    if (session) {
+      // Session already exists, so just return it.
+      process.nextTick(callback.bind(null, null, session));
+    }
+
+    // No existing session for given session path, so create one.
+    this.create(sessionPath, callback);
+  }
+
   /**
    * Binds the new client connection to a session and configures session event handling.
    *
-   * If the session for the given connection already exists, the new connection reconnects to the
+   * If the session for the given connection already exists, the new connection (re)connects to the
    * existing session.
+   *
+   * Two clients that specify the same session path will join the same session.
+   *
+   * A single client can also specify a previous session path to re-join a previous session,
+   * assuming that session is still alive.
+   *
+   * The current session model assumes that session creation should always be completed before
+   * connections are permitted. So, if the session does not exist, the connection is closed
+   * immediately.
    */
   _handleClientConnect (socket: socketio.Socket) {
-    var session = this._getOrCreateSession(socket);
+    // Get the existing session for the session path specified in the socket connection handshake.
+    var sessionPath = this._getConnectionData(socket).notebookPath;
 
-    // Delegate all socket.io Action messages to the session.
-    var connection = new conn.ClientConnection(
-        uuid.v4(),
-        socket,
-        session.processAction.bind(session),
-        this._handleClientDisconnect.bind(this));
-    console.log('User has connected: ' + connection.id);
+    this._getOrCreateSession(sessionPath, (error, session) => {
+      if (error) {
+        // Close the socket connection immediately if the session could not be created.
+        //
+        // Terminating the connection from the server side is insufficient, because the client will
+        // attempt to reconnect. So, send a message on the established connection informing the
+        // client that it should close the connection from the client side.
+        socket.emit(messages.terminateConnection);
+        return;
+      }
 
-    // Update existing session object with new user connection.
-    session.addClientConnection(connection);
+      // Delegate all socket.io Action messages to the session.
+      var connection = new conn.ClientConnection(
+          uuid.v4(),
+          socket,
+          session.processAction.bind(session),
+          this._handleClientDisconnect.bind(this));
+      console.log('User has connected: ' + connection.id);
 
-    // Store a mapping from connection to the associated session so that the session can be
-    // retrieved on disconnect.
-    this._connectionIdToSession[connection.id] = session;
-    // Store the mapping of connection id => connection to track the set of connected clients
-    // across all sessions.
-    this._connectionIdToConnection[connection.id] = connection;
+      // Update existing session object with new user connection.
+      session.addClientConnection(connection);
+
+      // Store a mapping from connection to the associated session so that the session can be
+      // retrieved on disconnect.
+      this._connectionIdToSession[connection.id] = session;
+      // Store the mapping of connection id => connection to track the set of connected clients
+      // across all sessions.
+      this._connectionIdToConnection[connection.id] = connection;
+    });
   }
 
   /**

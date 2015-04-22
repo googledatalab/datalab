@@ -70,6 +70,15 @@ declare module app {
   }
 
   /**
+   * Data-only object for capturing session metadata needed for Sessions API support.
+   */
+  interface SessionMetadata {
+    //createdAt: string; // TODO(bryantd): start tracking session creation time.
+    numClients: number;
+    path: string;
+  }
+
+  /**
    * Wrapper for a socket.io connection.
    */
   interface IClientConnection {
@@ -81,19 +90,25 @@ declare module app {
     /**
      * Sends an Update message to the client over the connection.
      */
-    sendUpdate (update: notebooks.updates.Update): void;
+    sendUpdate(update: notebooks.updates.Update): void;
   }
 
   interface IKernel {
     id: string;
     config: KernelConfig;
-    execute (request: ExecuteRequest): void;
-    shutdown (): void;
-    start (): void;
+    execute(request: ExecuteRequest): void;
+    shutdown(): void;
+    start(): void;
   }
 
+  /**
+   * Manages the kernel lifecycle.
+   */
   interface IKernelManager {
-    create (
+    /**
+     * Creates a new kernel.
+     */
+    create(
         id: string,
         config: KernelConfig,
         onExecuteReply: EventHandler<ExecuteReply>,
@@ -101,10 +116,26 @@ declare module app {
         onKernelStatus: EventHandler<KernelStatus>,
         onOutputData: EventHandler<OutputData>
         ): IKernel;
-    get (id: string): IKernel;
-    list (): IKernel[];
-    shutdown (id: string): void;
-    shutdownAll (): void;
+
+    /**
+     * Gets a single kernel by ID.
+     *
+     * @param id The kernel ID
+     * @return The kernel
+     */
+    get(id: string): IKernel;
+
+    /**
+     * Enumerates the set of kernels managed by this instance.
+     */
+    list(): IKernel[];
+
+    /**
+     * Shuts down the kernel specified by ID.
+     *
+     * @param id The ID of the kernel to shutdown.
+     */
+    shutdown(id: string): void;
   }
 
   /**
@@ -143,21 +174,21 @@ declare module app {
      * that exist on clients) to be synchronized with the notebook model held by this instance
      * (assuming that they were synchronized before the update arrived).
      */
-    apply (action: notebooks.actions.Action): notebooks.updates.Update;
+    apply(action: notebooks.actions.Action): notebooks.updates.Update;
 
     /**
      * Gets a reference to the notebook data held within the instance.
      *
      * Callers should consider the returned reference to be read-only.
      */
-    getNotebookData (): notebooks.Notebook;
+    getNotebookData(): notebooks.Notebook;
 
     /**
      * Gets a reference to the specified cell within the notebook.
      *
      * Throws an error if the cell does not exist within the specified worksheet.
      */
-    getCellOrThrow (cellId: string, worksheetId: string): notebooks.Cell;
+    getCellOrThrow(cellId: string, worksheetId: string): notebooks.Cell;
   }
 
   /**
@@ -179,61 +210,85 @@ declare module app {
      * Throws an exception if the given notebook data string violates the expected format.
      * specification.
      */
-    parse (data: string): notebooks.Notebook;
+    parse(data: string): notebooks.Notebook;
 
     /**
      * Serializes the notebook to the specified format.
      *
      * Throws an exception if unsupported cell or media types are included in the notebook.
      */
-    stringify (notebook: notebooks.Notebook): string;
+    stringify(notebook: notebooks.Notebook): string;
   }
 
   /**
-   * A session binds together a notebook with connected users and a kernel.
+   * A session binds together a resource path (e.g., notebook) with connected users and a kernel.
    */
   interface ISession {
-    id: string;
+    /**
+     * The resource (e.g., notebook) path associated with the session.
+     */
+    path: string;
 
     /**
      * Associates a user connection with the session.
      */
-    addClientConnection (connection: IClientConnection): void;
+    addClientConnection(connection: IClientConnection): void;
 
     /**
      * Gets the id of the kernel currently assocated with the session.
      */
-    getKernelId (): string;
+    getKernelId(): string;
 
     /**
      * Gets the set of user connection ids currently associated with the session.
      */
-    getClientConnectionIds (): string[];
+    getClientConnectionIds(): string[];
 
     /**
      * Processes the given action message.
      */
-    processAction (action: app.notebooks.actions.Action): void;
+    processAction(action: app.notebooks.actions.Action): void;
 
     /**
      * Processes the given execute reply message.
      */
-    processExecuteReply (reply: app.ExecuteReply): void;
+    processExecuteReply(reply: app.ExecuteReply): void;
 
     /**
      * Processes the kernel status message;
      */
-    processKernelStatus (status: app.KernelStatus): void;
+    processKernelStatus(status: app.KernelStatus): void;
 
     /**
      * Processes the given output data message.
      */
-    processOutputData (outputData: app.OutputData): void;
+    processOutputData(outputData: app.OutputData): void;
 
     /**
      * Disassociates a user connection from the session.
      */
-    removeClientConnection (connection: IClientConnection): void;
+    removeClientConnection(connection: IClientConnection): void;
+
+    /**
+     * Asynchronously resets the session state.
+     *
+     * @param callback Completion callback to invoke after the reset has finished.
+     */
+    reset(callback: Callback<void>): void;
+
+    /**
+     * Asynchronously shuts down the kernel associated with the session.
+     *
+     * @param callback Completion callback to invoke after shutdown has finished.
+     */
+    shutdown(callback: Callback<void>): void;
+
+    /**
+     * Asynchronously starts the session running.
+     *
+     * @param callback Completion callback to invoke upon the startup process concluding.
+     */
+    start(callback: Callback<void>): void;
   }
 
   /**
@@ -246,16 +301,41 @@ declare module app {
    * incoming connection should be routed to.
    */
   interface ISessionManager {
+
     /**
-     * Updates the session identifier to the new value.
+     * Asynchronously creates a session for the given resource path.
      *
-     * Existing connections to this session remain connected when renaming.
+     * Idempotent. Subsequent calls to create for a pre-existing session have no effect.
      *
-     * After the rename has been completed, a new connection that specifies the *new* session
-     * id will join the existing session; after the rename, a new connection that specifies the
-     * *old* session id will create a new session with the old identifier.
+     * @param path The resource (e.g., notebook) path for which to create a session.
+     * @param callback Completion callback for handling the outcome of the session creation flow.
      */
-    renameSession (oldId: string, newId: string): void;
+    create(path: string, callback: Callback<app.ISession>): void;
+
+    /**
+     * Gets a session by path, if it exists.
+     *
+     * @param path The session path to get.
+     * @return A session or null if the path does not have an active session.
+     */
+    get(path: string): app.ISession;
+
+    /**
+     * Gets the list of sessions currently managed by this instance.
+     *
+     * @return The set of active sessions.
+     */
+    list(): app.ISession[];
+
+    /**
+     * Asynchronously shuts down the session associated with the given path.
+     *
+     * Idempotent. Subsequent calls to shutdown for a non-existent session, or a session that is
+     * in the process of being shutdown have no effect.
+     *
+     * @param path Shutdown the session associated with this path, if one exists.
+     */
+    shutdown(path: string, callback: Callback<void>): void;
   }
 
   /**
