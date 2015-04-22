@@ -47,7 +47,7 @@ export class Session implements app.ISession {
    */
   _messageHandler: app.MessageHandler;
 
-  constructor (
+  constructor(
       path: string,
       kernelManager: app.IKernelManager,
       messageHandler: app.MessageHandler,
@@ -72,7 +72,7 @@ export class Session implements app.ISession {
    * This method allows a user to reestablish connection with an existing/running kernel, because
    * the kernel is associated with the session, rather than the user connection.
    */
-  addClientConnection (connection: app.IClientConnection) {
+  addClientConnection(connection: app.IClientConnection) {
     // Add the connection to the "connected" set
     this._connections.push(connection);
 
@@ -103,7 +103,7 @@ export class Session implements app.ISession {
   /**
    * Delegates an incoming action request (from client) to the middleware stack.
    */
-  processAction (action: app.notebooks.actions.Action) {
+  processAction(action: app.notebooks.actions.Action) {
     var nextAction = this._handleAction.bind(this);
     this._messageHandler(action, this, nextAction);
   }
@@ -111,7 +111,7 @@ export class Session implements app.ISession {
   /**
    * Delegates an incoming execute reply (from kernel) to the middleware stack.
    */
-  processExecuteReply (reply: app.ExecuteReply) {
+  processExecuteReply(reply: app.ExecuteReply) {
     var nextAction = this._handleExecuteReply.bind(this);
     this._messageHandler(reply, this, nextAction);
   }
@@ -152,7 +152,7 @@ export class Session implements app.ISession {
   /**
    * Delegates in incoming kernel status (from kernel) to the middleware stack.
    */
-  processKernelStatus (status: app.KernelStatus) {
+  processKernelStatus(status: app.KernelStatus) {
     var nextAction = this._handleKernelStatus.bind(this);
     this._messageHandler(status, this, nextAction);
   }
@@ -160,7 +160,7 @@ export class Session implements app.ISession {
   /**
    * Delegates incoming kernel output data message to the middleware stack.
    */
-  processOutputData (outputData: app.OutputData) {
+  processOutputData(outputData: app.OutputData) {
     var nextAction = this._handleOutputData.bind(this);
     this._messageHandler(outputData, this, nextAction);
   }
@@ -170,7 +170,7 @@ export class Session implements app.ISession {
    *
    * Typically called when the connection has been closed.
    */
-  removeClientConnection (connection: app.IClientConnection) {
+  removeClientConnection(connection: app.IClientConnection) {
     // Find the index of the connection and remove it.
     for (var i = 0; i < this._connections.length; ++i) {
       if (this._connections[i].id == connection.id) {
@@ -205,9 +205,8 @@ export class Session implements app.ISession {
     // Shutdown is triggered immediately and no waiting for completion/failure is done currently.
     this._shutdownKernel();
 
-    // FIXME: send a message to clients to inform them that they should disconnect
-    // otherwise clients will attempt to reconnect upon the server-side connection
-    // end point being closed.
+    // Notify all connected clients that the session is shutting down.
+    this._broadcastSessionShutdown();
 
     // Provide the expected async semantics by deferring callback invocation until next tick.
     process.nextTick(callback);
@@ -240,39 +239,22 @@ export class Session implements app.ISession {
   }
 
   /**
+   * Broadcast a notification to connected clients that the session is going into shutdown.
+   */
+  _broadcastSessionShutdown() {
+    this._broadcastUpdate({
+      name: updates.notebook.sessionStatus,
+      shutdown: true
+    });
+  }
+
+  /**
    * Broadcast a notification to connected clients that notebook loading has failed.
    */
   _broadcastNotebookLoadFailed() {
     this._broadcastUpdate({
       name: updates.notebook.sessionStatus,
       notebookLoadFailed: true
-    });
-  }
-
-  /**
-   * Broadcast the latest persistence status to clients.
-   *
-   * @param lastSaveSucceeded Did the latest persistence operation succeed?
-   */
-  _broadcastPersistenceStatus(lastSaveSucceeded: boolean) {
-    var sessionStatus: app.notebooks.updates.SessionStatus = {
-      name: updates.notebook.sessionStatus,
-      saveState: lastSaveSucceeded ? 'succeeded' : 'failed'
-    };
-
-    if (lastSaveSucceeded) {
-      // If the most recent save succeeded, also include the current timestamp.
-      sessionStatus.lastSaved = Date.now().toString();
-    }
-    this._broadcastUpdate(sessionStatus);
-  }
-
-  /**
-   * Sends the given update message to all user connections associated with this session.
-   */
-  _broadcastUpdate (update: app.notebooks.updates.Update) {
-    this._connections.forEach((connection) => {
-      connection.sendUpdate(update);
     });
   }
 
@@ -301,6 +283,33 @@ export class Session implements app.ISession {
     }
   }
 
+  /**
+   * Broadcast the latest persistence status to clients.
+   *
+   * @param lastSaveSucceeded Did the latest persistence operation succeed?
+   */
+  _broadcastPersistenceStatus(lastSaveSucceeded: boolean) {
+    var sessionStatus: app.notebooks.updates.SessionStatus = {
+      name: updates.notebook.sessionStatus,
+      saveState: lastSaveSucceeded ? 'succeeded' : 'failed'
+    };
+
+    if (lastSaveSucceeded) {
+      // If the most recent save succeeded, also include the current timestamp.
+      sessionStatus.lastSaved = Date.now().toString();
+    }
+    this._broadcastUpdate(sessionStatus);
+  }
+
+  /**
+   * Sends the given update message to all user connections associated with this session.
+   */
+  _broadcastUpdate(update: app.notebooks.updates.Update) {
+    this._connections.forEach((connection) => {
+      connection.sendUpdate(update);
+    });
+  }
+
   // Handlers for messages flowing in either direction between user<->kernel.
   //
   // Each of the following methods delegates an incoming message to the middleware stack and
@@ -310,7 +319,7 @@ export class Session implements app.ISession {
   /**
    * Applies execute reply data to the notebook model and broadcasts an update message.
    */
-  _handleExecuteReply (message: any) {
+  _handleExecuteReply(message: any) {
     // Lookup the notebook cell to which this message corresponds.
     var cellRef = this._getCellRefForRequestId(message.requestId);
     if (!cellRef) {
@@ -343,7 +352,7 @@ export class Session implements app.ISession {
   /**
    * Handles the action request by updating the notebook model, issuing kernel requests, etc.
    */
-  _handleAction (action: any) {
+  _handleAction(action: any) {
     switch (action.name) {
       case actions.composite:
         this._handleActionComposite(action);
@@ -374,14 +383,14 @@ export class Session implements app.ISession {
   /**
    * Handles a composite action by sequentially applying each contained sub-action.
    */
-  _handleActionComposite (action: app.notebooks.actions.Composite) {
+  _handleActionComposite(action: app.notebooks.actions.Composite) {
     action.subActions.forEach(this._handleAction.bind(this));
   }
 
   /**
    * Handles multiple notebook action types by applying them to the notebook session.
    */
-  _handleActionNotebookData (action: app.notebooks.actions.UpdateCell) {
+  _handleActionNotebookData(action: app.notebooks.actions.UpdateCell) {
     var update = this._notebook.apply(action);
     // Persist the notebook state to storage
     this._save();
@@ -392,7 +401,7 @@ export class Session implements app.ISession {
   /**
    * Handles an execute cell action by generating a kernel execute request.
    */
-  _handleActionExecuteCell (action: app.notebooks.actions.ExecuteCell) {
+  _handleActionExecuteCell(action: app.notebooks.actions.ExecuteCell) {
     // Generate a kernel request ID (kernels are not aware of cells, just "requests").
     var requestId = uuid.v4();
 
@@ -415,7 +424,7 @@ export class Session implements app.ISession {
   /**
    * Handles an execute (all) cells action by executing each code cell within the notebook.
    */
-  _handleActionExecuteCells (action: app.notebooks.actions.ExecuteCells) {
+  _handleActionExecuteCells(action: app.notebooks.actions.ExecuteCells) {
     var notebookData = this._notebook.getNotebookData();
     // Execute all cells in each worksheet
     notebookData.worksheets.forEach((worksheet) => {
@@ -434,7 +443,7 @@ export class Session implements app.ISession {
   /**
    * Forwards the kernel status to the user, post-middleware stack processing.
    */
-  _handleKernelStatus (message: any) {
+  _handleKernelStatus(message: any) {
     this._broadcastUpdate({
       name: updates.notebook.sessionStatus,
       // TODO(bryantd): add other session metdata here such as connected users, etc. eventually.
@@ -445,7 +454,7 @@ export class Session implements app.ISession {
   /**
    * Handles a kernel output data message by attaching the output data to the appropriate cell.
    */
-  _handleOutputData (message: any) {
+  _handleOutputData(message: any) {
     // Lookup the notebook cell to which this kernel message corresponds.
     var cellRef = this._getCellRefForRequestId(message.requestId);
     if (!cellRef) {
@@ -517,7 +526,7 @@ export class Session implements app.ISession {
    * This strategy ensures that conflicting writes aren't issued concurrently and that the latest
    * notebook state is updated as soon as possible upon completion of pending writes.
    */
-  _save () {
+  _save() {
     // If there is already a pending save operation, we must wait until it completes to save.
     if (this._isNotebookSavePending) {
       // Note the requested save operation.
@@ -586,7 +595,7 @@ export class Session implements app.ISession {
    *
    * @param callback Completion callback
    */
-  _spawnKernel (callback: app.Callback<void>) {
+  _spawnKernel(callback: app.Callback<void>) {
     // Kill the existing kernel.
     this._shutdownKernel();
 
@@ -617,7 +626,7 @@ export class Session implements app.ISession {
    *
    * Returns null if the given request id has no corresponding cell id recorded.
    */
-  _getCellRefForRequestId (requestId: string) {
+  _getCellRefForRequestId(requestId: string) {
     var cellRef = this._requestIdToCellRef[requestId];
     if (cellRef) {
       return cellRef;
@@ -642,7 +651,7 @@ export class Session implements app.ISession {
    * allows response/reply messages from the kernel to be mapped to the corresponding cell
    * that should be updated.
    */
-  _setCellRefForRequestId (requestId: string, cellRef: app.CellRef) {
+  _setCellRefForRequestId(requestId: string, cellRef: app.CellRef) {
     // TODO(bryantd): need to implement some policy for removing request->cell mappings
     // when they are no longer needed. Ideally there'd be a way to guarantee
     // that a request will have no further messages.
