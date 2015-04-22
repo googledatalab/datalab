@@ -58,9 +58,6 @@ export class SessionApi {
 
     this._manager.create(sessionPath, (error: Error, session: app.ISession) => {
       if (error) {
-        // FIXME: enumerate error cases here and decide which HTTP status codes make sense.
-        // For cases where session creation was attempted for non-existent resouce path, probably
-        // makes sense to return a 400 Bad Request.
         apiutil.sendInternalError(response, 'Session create operation failed', error);
         return;
       }
@@ -116,9 +113,6 @@ export class SessionApi {
 
     session.reset((error) => {
       if (error) {
-        // TODO(bryantd): see if we need more granular response codes used here.
-        // If the session doesn't exist, a 404 is already being returned when the
-        // session lookup happens above.
         apiutil.sendInternalError(response, 'Session reset operation failed', error);
         return;
       }
@@ -145,9 +139,6 @@ export class SessionApi {
 
     this._manager.shutdown(session.path, (error) => {
       if (error) {
-        // TODO(bryantd): see if we need more granular response codes used here.
-        // If the session doesn't exist, a 404 is already being returned when the
-        // session lookup happens above.
         apiutil.sendInternalError(response, 'Session shutdown operation failed', error);
         return;
       }

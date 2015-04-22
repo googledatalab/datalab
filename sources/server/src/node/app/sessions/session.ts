@@ -491,12 +491,18 @@ export class Session implements app.ISession {
       (error: any, notebook: app.INotebookSession) => {
         if (error) {
           // TODO(bryantd): add retry with backoff logic here.
+
+          // Notify any connected clients that notebook loading has failed.
+          this._broadcastNotebookLoadFailed();
+
           callback(error);
           return;
         }
 
         // Store the notebook.
         this._notebook = notebook;
+        // Broadcast the notebook to any connected clients.
+        this._broadcastNotebookSnapshot(this._connections);
         // Initialized successfully. Invoke the completion callback.
         callback(null);
     });
