@@ -12,7 +12,6 @@
  * the License.
  */
 
-
 /**
  * Type definitions for HTTP API requests and responses.
  */
@@ -30,7 +29,13 @@ declare module app {
       content: string;
     }
 
+    /**
+     * Request body specification for content move requests.
+     */
     interface MoveContentRequestBody {
+      /**
+       * The storage path to which the specified content should be moved/renamed.
+       */
       path: string;
     }
 
@@ -48,7 +53,6 @@ declare module app {
        */
       resources: Resource[];
     }
-
   }
 
   /**

@@ -14,6 +14,7 @@
 
 /// <reference path="../messages/messages.d.ts" />
 /// <reference path="../shared/interfaces.d.ts" />
+/// <reference path="../shared/requests.d.ts" />
 /// <reference path="../shared/actions.d.ts" />
 /// <reference path="../shared/updates.d.ts" />
 /**
