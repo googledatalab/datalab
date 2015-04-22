@@ -18,6 +18,7 @@
 import apiutil = require('../common/api');
 import express = require('express');
 import manager = require('./manager');
+import util = require('util');
 
 
 /**
@@ -199,11 +200,10 @@ export class SessionApi {
 
     if (!session) {
       // Session resource with given sessionPath was not found.
-      apiutil.sendNotFound(response);
+      apiutil.sendNotFound(response, util.format('Session path "%s" was not found.', sessionPath));
     }
 
     return session;
   }
 
 }
-

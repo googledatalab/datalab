@@ -74,7 +74,7 @@ export class SessionManager implements app.ISessionManager {
     var session = this._sessionPathToSession[sessionPath];
     if (session) {
       // Session already exists, so just signal completion.
-      process.nextTick(callback);
+      process.nextTick(callback.bind(null, null, session));
       return;
     }
 
@@ -193,11 +193,11 @@ export class SessionManager implements app.ISessionManager {
     var session = this._sessionPathToSession[sessionPath];
     if (session) {
       // Session already exists, so just return it.
-      process.nextTick(callback(null, session));
+      process.nextTick(callback.bind(null, null, session));
     }
 
     // No existing session for given session path, so create one.
-    this._create(sessionPath, callback);
+    this.create(sessionPath, callback);
   }
 
   /**
