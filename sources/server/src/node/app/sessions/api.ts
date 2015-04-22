@@ -15,6 +15,7 @@
 
 /// <reference path="../../../../../../externs/ts/node/node.d.ts" />
 /// <reference path="../../../../../../externs/ts/express/express.d.ts" />
+import apiutil = require('../common/api');
 import express = require('express');
 import manager = require('./manager');
 
@@ -30,6 +31,11 @@ export class SessionApi {
 
   _manager: app.ISessionManager;
 
+  /**
+   * Constructor.
+   *
+   * @param manager Instance to which session resource operations should be delegated.
+   */
   constructor (manager: app.ISessionManager) {
     this._manager = manager;
   }
@@ -55,7 +61,7 @@ export class SessionApi {
         // FIXME: enumerate error cases here and decide which HTTP status codes make sense.
         // For cases where session creation was attempted for non-existent resouce path, probably
         // makes sense to return a 400 Bad Request.
-        response.send(500);
+        apiutil.sendInternalError(response, 'Session create operation failed', error);
         return;
       }
 
@@ -113,12 +119,12 @@ export class SessionApi {
         // TODO(bryantd): see if we need more granular response codes used here.
         // If the session doesn't exist, a 404 is already being returned when the
         // session lookup happens above.
-        response.sendStatus(500);
+        apiutil.sendInternalError(response, 'Session reset operation failed', error);
         return;
       }
 
       // Reset succeeded.
-      response.sendStatus(200);
+      apiutil.sendSuccessWithoutResponseContent(response);
     });
   }
 
@@ -142,12 +148,12 @@ export class SessionApi {
         // TODO(bryantd): see if we need more granular response codes used here.
         // If the session doesn't exist, a 404 is already being returned when the
         // session lookup happens above.
-        response.sendStatus(500);
+        apiutil.sendInternalError(response, 'Session shutdown operation failed', error);
         return;
       }
 
       // Shutdown succeeded.
-      response.sendStatus(200);
+      apiutil.sendSuccessWithoutResponseContent(response);
     });
   }
 
@@ -184,7 +190,7 @@ export class SessionApi {
   _getSessionPathOrFail(request: express.Request, response: express.Response): string {
     var sessionPath = request.param('path', null);
     if (!sessionPath) {
-      response.sendStatus(400);
+      apiutil.sendBadRequest(response, 'No path was specified in the request URL.');
     }
 
     return sessionPath;
@@ -202,7 +208,7 @@ export class SessionApi {
 
     if (!session) {
       // Session resource with given sessionPath was not found.
-      response.sendStatus(404);
+      apiutil.sendNotFound(response);
     }
 
     return session;
