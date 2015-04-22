@@ -188,6 +188,18 @@ export class SessionManager implements app.ISessionManager {
     }
   }
 
+  _getOrCreateSession(sessionPath: string, callback: app.Callback<app.ISession>) {
+    // Lookup the session path in the set of active sessions to see if it already exists.
+    var session = this._sessionPathToSession[sessionPath];
+    if (session) {
+      // Session already exists, so just return it.
+      process.nextTick(callback(null, session));
+    }
+
+    // No existing session for given session path, so create one.
+    this._create(sessionPath, callback);
+  }
+
   /**
    * Binds the new client connection to a session and configures session event handling.
    *
@@ -205,42 +217,37 @@ export class SessionManager implements app.ISessionManager {
    */
   _handleClientConnect (socket: socketio.Socket) {
     // Get the existing session for the session path specified in the socket connection handshake.
-    var sessionPath = this._getConnectionData(socket).notebookPath
-    var session = this._sessionPathToSession[sessionPath];
-    if (!session) {
-      // Close the socket connection immediately if no existing session for the given resource
-      // path exists.
-      //
-      // In theory, it shouldn't be possible for this situation to occur if the editor page (which
-      // makes these connections to the server) blocks on (successful) session creation before
-      // attempting to open a server socket.io connection, but it's not impossible. If the session
-      // was shutdown between the small amount of time the session was created successfully and
-      // the socket.io connection to that session is made, then this situation would occur.
-      //
-      // Terminating the connection from the server side is insufficient, because the client will
-      // attempt to reconnect. So, send a message on the established connection informing the
-      // client that it should close the connection from the client side.
-      socket.emit(messages.terminateConnection);
-      return;
-    }
+    var sessionPath = this._getConnectionData(socket).notebookPath;
 
-    // Delegate all socket.io Action messages to the session.
-    var connection = new conn.ClientConnection(
-        uuid.v4(),
-        socket,
-        session.processAction.bind(session),
-        this._handleClientDisconnect.bind(this));
-    console.log('User has connected: ' + connection.id);
+    this._getOrCreateSession(sessionPath, (error, session) => {
+      if (error) {
+        // Close the socket connection immediately if the session could not be created.
+        //
+        // Terminating the connection from the server side is insufficient, because the client will
+        // attempt to reconnect. So, send a message on the established connection informing the
+        // client that it should close the connection from the client side.
+        socket.emit(messages.terminateConnection);
+        return;
+      }
 
-    // Update existing session object with new user connection.
-    session.addClientConnection(connection);
+      // Delegate all socket.io Action messages to the session.
+      var connection = new conn.ClientConnection(
+          uuid.v4(),
+          socket,
+          session.processAction.bind(session),
+          this._handleClientDisconnect.bind(this));
+      console.log('User has connected: ' + connection.id);
 
-    // Store a mapping from connection to the associated session so that the session can be
-    // retrieved on disconnect.
-    this._connectionIdToSession[connection.id] = session;
-    // Store the mapping of connection id => connection to track the set of connected clients
-    // across all sessions.
-    this._connectionIdToConnection[connection.id] = connection;
+      // Update existing session object with new user connection.
+      session.addClientConnection(connection);
+
+      // Store a mapping from connection to the associated session so that the session can be
+      // retrieved on disconnect.
+      this._connectionIdToSession[connection.id] = session;
+      // Store the mapping of connection id => connection to track the set of connected clients
+      // across all sessions.
+      this._connectionIdToConnection[connection.id] = connection;
+    });
   }
 
   /**
