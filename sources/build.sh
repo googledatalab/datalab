@@ -42,7 +42,3 @@ do
 done
 
 echo "Build completed." | tee -a $LOG_FILE
-echo | tee -a $LOG_FILE
-echo "Updating build manifest." | tee -a $LOG_FILE
-$REPO_DIR/tools/update-build-manifest.sh
-
