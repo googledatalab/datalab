@@ -9,5 +9,3 @@ BUILD_MANIFEST=$REPO_DIR/build_manifest.txt
 
 echo "----build----" > $BUILD_MANIFEST
 find $REPO_DIR/build | sed "s#$REPO_DIR##g" >> $BUILD_MANIFEST
-printf "\n---staging---\n" >> $BUILD_MANIFEST
-find $REPO_DIR/staging | sed "s#$REPO_DIR##g" >> $BUILD_MANIFEST
