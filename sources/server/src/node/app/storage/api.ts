@@ -18,6 +18,7 @@
 /// <reference path="../shared/requests.d.ts" />
 /// <reference path="../common/interfaces.d.ts" />
 import express = require('express');
+import apiutil = require('../common/api');
 
 
 /**
@@ -63,18 +64,18 @@ export class ContentApi {
 
     // Select the appropriate content creation scheme depending on the request body content.
     if (!body.content) {
-      this._sendBadRequest(response, 'Missing content field from request body.');
+      apiutil.sendBadRequest(response, 'Missing content field from request body.');
       return;
     }
 
     // Then we'll be creating a new file from this specified content.
     this._storage.write(path, body.content, (error) => {
       if (error) {
-        this._sendInternalError(response, "Content create operation failed.", error);
+        apiutil.sendInternalError(response, "Content create operation failed.", error);
         return;
       }
 
-      this._sendSuccessWithoutResponseContent(response);
+      apiutil.sendSuccessWithoutResponseContent(response);
     });
   }
 
@@ -95,11 +96,11 @@ export class ContentApi {
 
     this._storage.delete(path, (error) => {
       if (error) {
-        this._sendInternalError(response, "Content delete operation failed.", error);
+        apiutil.sendInternalError(response, "Content delete operation failed.", error);
         return;
       }
 
-      this._sendSuccessWithoutResponseContent(response);
+      apiutil.sendSuccessWithoutResponseContent(response);
     });
   }
 
@@ -134,7 +135,7 @@ export class ContentApi {
     // Asynchronously list the resources that exist at the given path prefix within storage.
     this._storage.list(path, isRecursive, (error: Error, resources: app.Resource[]) => {
       if (error) {
-        this._sendInternalError(response, "Content list operation failed.", error);
+        apiutil.sendInternalError(response, "Content list operation failed.", error);
         return;
       }
 
@@ -166,11 +167,11 @@ export class ContentApi {
 
     this._storage.move(path, newPath, (error) => {
       if (error) {
-        this._sendInternalError(response, "Content move operation failed.", error);
+        apiutil.sendInternalError(response, "Content move operation failed.", error);
         return;
       }
 
-      this._sendSuccessWithoutResponseContent(response);
+      apiutil.sendSuccessWithoutResponseContent(response);
     });
   }
 
@@ -192,18 +193,18 @@ export class ContentApi {
 
     // Select the appropriate content creation scheme depending on the request body content.
     if (!body.content) {
-      this._sendBadRequest(response, 'Missing content field from request body.');
+      apiutil.sendBadRequest(response, 'Missing content field from request body.');
       return;
     }
 
     // Asynchronously write the content to the given path in storage.
     this._storage.write(path, body.content, (error) => {
       if (error) {
-        this._sendInternalError(response, "Content update operation failed.", error);
+        apiutil.sendInternalError(response, "Content update operation failed.", error);
         return;
       }
 
-      this._sendSuccessWithoutResponseContent(response);
+      apiutil.sendSuccessWithoutResponseContent(response);
     });
   }
 
@@ -237,37 +238,9 @@ export class ContentApi {
   _getPathOrFail(request: express.Request, response: express.Response): string {
     var path: string = request.params.path;
     if (!path) {
-      this._sendBadRequest(response, "Content 'path' missing from request URL.")
+      apiutil.sendBadRequest(response, "Content 'path' missing from request URL.")
     }
     return path;
   }
 
-  // TODO(bryantd): use a real logging system for emitting request errors in some consistent
-  // format so that logging output can be easily digested/summarized; e.g., statistics on
-  // 500 Server Error rate for flagging issues).
-  //
-  // Also need to log additional request details for failures to aid in diagnosing issues.
-
-  _sendBadRequest(response: express.Response, message: string) {
-    console.log('ERROR HTTP 400: ' + message);
-    response.status(400);
-    response.send(message);
-  }
-
-  _sendInternalError(response: express.Response, message: string, error: Error) {
-    console.log('ERROR HTTP 500: ' + message);
-    response.status(500);
-    response.send(message);
-  }
-
-  _sendNotFound(response: express.Response, message: string) {
-    console.log('ERROR HTTP 404: ' + message);
-    response.status(404);
-    response.send(message);
-  }
-
-  _sendSuccessWithoutResponseContent(response: express.Response) {
-    // Notify caller of operation success via 204 to denote no content returned in response body.
-    response.sendStatus(204);
-  }
 }
