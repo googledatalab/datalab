@@ -74,7 +74,7 @@ export class LocalFileSystemStorage implements app.IStorage {
       paths.files.forEach(fsFilepath => {
         var resource = {
           path: this._toStoragePath(fsFilepath),
-          isTerminal: true
+          isDirectory: false
         };
 
         if (recursive) {
@@ -93,7 +93,7 @@ export class LocalFileSystemStorage implements app.IStorage {
       paths.dirs.forEach(fsDirpath => {
         var resource = {
           path: this._toStoragePath(fsDirpath),
-          isTerminal: false
+          isDirectory: true
         };
 
         if (recursive) {

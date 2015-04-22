@@ -61,12 +61,12 @@ declare module app {
     path: string;
 
     /**
-     * Does this resource path represent a file/object ("terminal")?
+     * Does this resource path represent a directory?
      *
-     * true => path represents terminal (file or object).
-     * false => path represents a "directory" (true directory or path prefix).
+     * true => path represents a "directory" (true directory or path prefix).
+     * false => path represents terminal (file or object).
      */
-    isTerminal: boolean;
+    isDirectory: boolean;
 
     // The following fields are only provided for files.
 
