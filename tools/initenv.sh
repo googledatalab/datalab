@@ -28,3 +28,6 @@ export PATH=$PATH:$REPO_DIR/tools
 # Add aliases
 alias pylint='pylint --rcfile=$REPO_DIR/tools/pylint.rc'
 
+# Add all common presubmit hooks
+ln -sf $REPO_DIR/tools/githooks/* $REPO_DIR/.git/hooks/
+
