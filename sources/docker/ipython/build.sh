@@ -24,7 +24,7 @@ SUBSTITUTION="s/_version_/v$VERSION/"
 cat Dockerfile.in | sed $SUBSTITUTION > Dockerfile
 
 # Copy build outputs as a dependency of the Dockerfile
-cp -R ../../../build build
+rsync -avp ../../../build/ build
 
 # Build the docker image
 docker build -t gcp-ipython .

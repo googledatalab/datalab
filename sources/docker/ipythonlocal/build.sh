@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cp ../../../build/metadata/server.js server.js
+rsync -avp ../../../build/metadata/server.js server.js
 
 docker build -t gcp-ipython-local .
 
