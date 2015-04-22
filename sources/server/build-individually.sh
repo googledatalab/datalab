@@ -21,7 +21,7 @@ done
 # UI compilation in staging
 echo 'Building DataLab server frontend...';
 # Copy UI .ts files to the frontend staging area.
-cp -r "$server_root/src/ui/." "$ui_staging_path";
+rsync -avp "$server_root/src/ui/" "$ui_staging_path";
 # Compile the typescript code in staging.
 ui_tsc_files=`find $ui_staging_path -name '*.ts' | tr '\n' ' '`;
 for file in $ui_tsc_files
@@ -33,9 +33,9 @@ done
 # the static UI content directly.
 #
 # Copy the compiled backend .js from staging to the server build.
-cp -r $node_staging_path/* "$build_path";
+rsync -avp $node_staging_path/ "$build_path";
 # Copy the built UI with static assets to the /static content path of the server build.
-cp -r $ui_staging_path/* "$build_path/static";
+rsync -avp $ui_staging_path/ "$build_path/static";
 # Remove the unneeded .ts files from the build path (both ui and node).
 find "$build_path" -name '*.ts' | xargs rm;
 

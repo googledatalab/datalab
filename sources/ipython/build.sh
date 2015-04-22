@@ -24,17 +24,17 @@ python setup.py sdist --dist-dir=$PYLIB_DIR
 mv MANIFEST $PYLIB_DIR/IPython.manifest
 
 # Copy the IPython customized profile over
-cp ./profile/config.py $IPY_DIR/config.py
-cp -R ./profile/static/. $IPY_DIR
+rsync -avp ./profile/config.py $IPY_DIR/config.py
+rsync -avp ./profile/static/ $IPY_DIR
 
 # Compile the nodejs proxy server
 tsc --module commonjs --removeComments --noImplicitAny \
     --outDir $PROXY_DIR \
     ./proxy/*.ts
 
-cp -R ./proxy/config/. $PROXY_DIR/config && \
-cp -R ./proxy/static/. $PROXY_DIR/static && \
-cp ./proxy/package.json $PROXY_DIR/
+rsync -avp ./proxy/config/ $PROXY_DIR/config && \
+rsync -avp ./proxy/static/ $PROXY_DIR/static && \
+rsync -avp ./proxy/package.json $PROXY_DIR/package.json
 
 # Package all of the IPython stuff into a tarball
 cd $BUILD_DIR
