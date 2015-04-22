@@ -33,6 +33,11 @@ export class ContentApi {
 
   _storage: app.IStorage;
 
+  /**
+   * Constructor.
+   *
+   * @param storage The storage backend to use for accessing and manipulating content.
+   */
   constructor (storage: app.IStorage) {
     this._storage = storage;
   }
@@ -57,8 +62,7 @@ export class ContentApi {
 
     // Select the appropriate content creation scheme depending on the request body content.
     if (!body.content) {
-      this._sendBadRequest(response,
-          'Missing content field from request body. Content list operation failed.');
+      this._sendBadRequest(response, 'Missing content field from request body.');
       return;
     }
 
@@ -69,7 +73,7 @@ export class ContentApi {
         return;
       }
 
-      response.sendStatus(200);
+      this._sendSuccessWithoutResponseContent(response);
     });
   }
 
@@ -94,8 +98,7 @@ export class ContentApi {
         return;
       }
 
-      // If no error occurred, then consider the operation successful.
-      response.sendStatus(200);
+      this._sendSuccessWithoutResponseContent(response);
     });
   }
 
@@ -166,7 +169,7 @@ export class ContentApi {
         return;
       }
 
-      response.sendStatus(200);
+      this._sendSuccessWithoutResponseContent(response);
     });
   }
 
@@ -186,6 +189,12 @@ export class ContentApi {
     // Get the updated content from the body of the request.
     var body: app.requests.CreateContentRequestBody = request.body;
 
+    // Select the appropriate content creation scheme depending on the request body content.
+    if (!body.content) {
+      this._sendBadRequest(response, 'Missing content field from request body.');
+      return;
+    }
+
     // Asynchronously write the content to the given path in storage.
     this._storage.write(path, body.content, (error) => {
       if (error) {
@@ -193,12 +202,14 @@ export class ContentApi {
         return;
       }
 
-      response.sendStatus(200);
+      this._sendSuccessWithoutResponseContent(response);
     });
   }
 
   /**
    * Registers routes for the resources API.
+   *
+   * @param route The express router that will manage request routing for this API.
    */
   register (router: express.Router): void {
     router.post(ContentApi.contentActionUrl + 'move', this.move.bind(this));
@@ -213,7 +224,24 @@ export class ContentApi {
     router.delete(ContentApi.contentUrl, this.delete.bind(this));
   }
 
-  // TODO(bryantd): use a real logging system for emitting request errors in some conistent
+  /**
+   * Gets the resource path from the request or fails the request (via response object).
+   *
+   * If a path is not specified by the request, then the request is considered malformed
+   * and a HTTP 400 status (Bad Request) is sent to the caller.
+   *
+   * @param request HTTP request object.
+   * @param response HTTP response object.
+   */
+  _getPathOrFail(request: express.Request, response: express.Response): string {
+    var path: string = request.params.path;
+    if (!path) {
+      this._sendBadRequest(response, "Content 'path' missing from request URL.")
+    }
+    return path;
+  }
+
+  // TODO(bryantd): use a real logging system for emitting request errors in some consistent
   // format so that logging output can be easily digested/summarized; e.g., statistics on
   // 500 Server Error rate for flagging issues).
   //
@@ -237,21 +265,8 @@ export class ContentApi {
     response.send(message);
   }
 
-  /**
-   * Gets the resource path from the request or fails the request (via response object).
-   *
-   * If a path is not specified by the request, then the request is considered malformed
-   * and a HTTP 400 status (Bad Request) is sent to the caller.
-   *
-   * @param request HTTP request object.
-   * @param response HTTP response object.
-   */
-  _getPathOrFail(request: express.Request, response: express.Response): string {
-    var path: string = request.params.path;
-    if (!path) {
-      this._sendBadRequest(response, "Content 'path' missing from request URL.")
-    }
-    return path;
+  _sendSuccessWithoutResponseContent(response: express.Response) {
+    // Notify caller of operation success via 204 to denote no content returned in response body.
+    response.sendStatus(204);
   }
-
 }
