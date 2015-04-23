@@ -53,6 +53,39 @@ declare module app {
        */
       resources: Resource[];
     }
+
+    /**
+     * Response body for the sessions list operation.
+     */
+    interface ListSessionsResponse {
+
+      /**
+       * The list of active sessions.
+       */
+      sessions: SessionMetadata[]
+    }
+  }
+
+  /**
+   * Data-only object for capturing session metadata needed for Sessions API support.
+   */
+  interface SessionMetadata {
+    /**
+     * Time at which the session was created.
+     *
+     * Represented as ISO-8601 extended format string.
+     */
+    createdAt: string;
+
+    /**
+     * Number of active client connections to the session.
+     */
+    numClients: number;
+
+    /**
+     * The resource path for the session.
+     */
+    path: string;
   }
 
   /**

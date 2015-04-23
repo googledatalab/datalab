@@ -31,8 +31,10 @@ import uuid = require('node-uuid');
  */
 export class Session implements app.ISession {
 
+  createdAt: Date;
   path: string;
 
+  _connections: app.IClientConnection[];
   _isNotebookSaveRequested: boolean;
   _isNotebookSavePending: boolean;
   _kernel: app.IKernel;
@@ -40,7 +42,6 @@ export class Session implements app.ISession {
   _notebook: app.INotebookSession;
   _notebookStorage: app.INotebookStorage;
   _requestIdToCellRef: app.Map<app.CellRef>;
-  _connections: app.IClientConnection[];
 
   /**
    * All messages flowing in either direction between user<->kernel will pass through this handler.
@@ -53,14 +54,16 @@ export class Session implements app.ISession {
       messageHandler: app.MessageHandler,
       notebookStorage: app.INotebookStorage) {
 
+    this.createdAt = new Date(); // Record current time.
     this.path = path;
+
+    this._connections = [];
     this._isNotebookSaveRequested = false;
     this._isNotebookSavePending = false;
     this._kernelManager = kernelManager;
     this._messageHandler = messageHandler;
-    this._requestIdToCellRef = {};
-    this._connections = [];
     this._notebookStorage = notebookStorage;
+    this._requestIdToCellRef = {};
   }
 
   /**
