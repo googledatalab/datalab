@@ -217,20 +217,11 @@ require.config({
   paths: {
     'static': '/static',
     'extensions': '/static/extensions',
-    // TODO(gram): change these to minified versions once we are stable.
-    'crossfilter': '//cdnjs.cloudflare.com/ajax/libs/crossfilter/1.3.11/crossfilter',
-    'dc': '//cdnjs.cloudflare.com/ajax/libs/dc/1.7.3/dc',
     'd3': '//cdnjs.cloudflare.com/ajax/libs/d3/3.4.13/d3',
     'element': '/static/require/element',
     'style': '/static/require/style',
     'visualization': '/static/require/visualization'
   },
-  shim: {
-    'crossfilter': {
-      deps: [],
-      exports: 'crossfilter'
-    }
-  }
 });
 
 // WebSocket shim to send socket messages over vanilla HTTP requests.
