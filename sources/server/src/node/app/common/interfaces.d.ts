@@ -70,15 +70,6 @@ declare module app {
   }
 
   /**
-   * Data-only object for capturing session metadata needed for Sessions API support.
-   */
-  interface SessionMetadata {
-    //createdAt: string; // TODO(bryantd): start tracking session creation time.
-    numClients: number;
-    path: string;
-  }
-
-  /**
    * Wrapper for a socket.io connection.
    */
   interface IClientConnection {
@@ -228,6 +219,11 @@ declare module app {
      * The resource (e.g., notebook) path associated with the session.
      */
     path: string;
+
+    /**
+     * The time at which the session was created.
+     */
+    createdAt: Date;
 
     /**
      * Associates a user connection with the session.

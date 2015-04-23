@@ -15,6 +15,8 @@
 
 /// <reference path="../../../../../../externs/ts/node/node.d.ts" />
 /// <reference path="../../../../../../externs/ts/express/express.d.ts" />
+/// <reference path="../shared/requests.d.ts" />
+/// <reference path="../common/interfaces.d.ts" />
 import apiutil = require('../common/api');
 import express = require('express');
 import manager = require('./manager');
@@ -91,10 +93,15 @@ export class SessionApi {
    * @param response The pending HTTP response.
    */
   list(request: express.Request, response: express.Response) {
-    var sessions = this._manager.list();
-    response.send(sessions.map((session) => {
+    var sessions = this._manager.list().map((session) => {
       return this._getSessionMetadata(session);
-    }));
+    });
+
+    var body: app.requests.ListSessionsResponse = {
+      sessions: sessions
+    };
+
+    response.send(body);
   }
 
   /**
@@ -171,7 +178,7 @@ export class SessionApi {
   _getSessionMetadata(session: app.ISession): app.SessionMetadata {
     return {
       path: session.path,
-      // TODO(bryantd): Also return a creation time stamp once it is being tracked.
+      createdAt: session.createdAt.toISOString(),
       numClients: session.getClientConnectionIds().length
     };
   }
