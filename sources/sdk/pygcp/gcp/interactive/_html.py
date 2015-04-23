@@ -145,3 +145,4 @@ class HtmlBuilder(object):
       return value.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
     else:
       return str(value)
+
