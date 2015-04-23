@@ -48,20 +48,9 @@ var options = nomnom.option(
  *
  * Initializes the messaging system to listen for incoming user connections via socket.io
  */
-export function start (settings: app.Settings, apiRouter: express.Router) {
+export function start (settings: app.Settings) {
   var expressApp = express();
-
-  // Configure express to parse request bodies as JSON for the "application/json" MIME type.
-  expressApp.use(bodyParser.json());
-  // Define the API route handlers.
-  expressApp.use('/api', apiRouter);
-  // Configure express to serve the static UI content.
-  expressApp.use(express.static(__dirname + '/static'));
-
   var httpServer = http.createServer(expressApp);
-
-  console.log("Starting HTTP server on port " + settings.httpPort);
-  httpServer.listen(settings.httpPort);
 
   var sessionManager = new sessions.SessionManager(
     config.getKernelManager(),
@@ -69,10 +58,25 @@ export function start (settings: app.Settings, apiRouter: express.Router) {
     config.getNotebookStorage(),
     socketio.listen(httpServer)
   );
+
+  // Configure express to parse request bodies as JSON for the "application/json" MIME type.
+  expressApp.use(bodyParser.json());
+
+  // Define the API route handlers.
+  expressApp.use('/api', config.getApiRouter(
+      config.getStorage(),
+      config.getKernelManager(),
+      sessionManager));
+
+  // Configure express to serve the static UI content.
+  expressApp.use(express.static(__dirname + '/static'));
+
+  console.log("Starting HTTP server on port " + settings.httpPort);
+  httpServer.listen(settings.httpPort);
 }
 
 // Ensure that the notebook storage system is fully initialized
 config.initStorage(options.notebookPath);
 
 // Start the DataLab server running
-start(config.getSettings(), config.getApiRouter(config.getStorage()));
+start(config.getSettings());
