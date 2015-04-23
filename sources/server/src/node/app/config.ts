@@ -20,20 +20,29 @@ import express = require('express');
 import mkdirp = require('mkdirp');
 import kernels = require('./kernels/index');
 import content = require('./storage/index');
+import sessions = require('./sessions/index');
 import nbstorage = require('./notebooks/storage');
 
 
 /**
  * Gets the set of HTTP API route handlers that should be enabled for the server.
  */
-export function getApiRouter(storage: app.IStorage): express.Router {
+export function getApiRouter(
+    storage: app.IStorage,
+    kernelManager: app.IKernelManager,
+    sessionManager: app.ISessionManager
+    ): express.Router {
+
   var apiRouter: express.Router = express.Router();
+
+  var contentApi = new content.Api(storage);
+  contentApi.register(apiRouter);
 
   var kernelApi = new kernels.Api(kernelManager);
   kernelApi.register(apiRouter);
 
-  var contentApi = new content.Api(storage);
-  contentApi.register(apiRouter);
+  var sessionsApi = new sessions.Api(sessionManager);
+  sessionsApi.register(apiRouter);
 
   return apiRouter;
 }
@@ -43,7 +52,7 @@ export function getApiRouter(storage: app.IStorage): express.Router {
  *
  * TODO(bryantd): This should be configured from an external settings file eventually.
  */
-var settings: app.Settings = {
+var _settings: app.Settings = {
   httpPort: parseInt(process.env['SERVER_HTTP_PORT'] || 9000)
 };
 
@@ -51,43 +60,43 @@ var settings: app.Settings = {
  * Gets the configurable settings.
  */
 export function getSettings(): app.Settings {
-  return settings;
+  return _settings;
 }
 
 /**
  * A single, server-wide kernel manager instance.
  */
-var kernelManager: app.IKernelManager = new kernels.Manager();
+var _kernelManager: app.IKernelManager = new kernels.Manager();
 
 /**
  * Gets the kernel manager singleton.
  */
 export function getKernelManager(): app.IKernelManager {
-  return kernelManager;
+  return _kernelManager;
 }
 
 /**
  * A single stateless server-wide storage backend instance.
  */
-var fsStorage: app.IStorage;
+var _fsStorage: app.IStorage;
 
 /**
  * Gets the configured storage backend for persisting arbitrary content.
  */
 export function getStorage(): app.IStorage {
-  return fsStorage;
+  return _fsStorage;
 }
 
 /**
  * A single stateless server-wide notebook storage backend instance.
  */
-var notebookStorage: app.INotebookStorage;
+var _notebookStorage: app.INotebookStorage;
 
 /**
  * Gets the configured notebook storage backend for persisting notebooks.
  */
 export function getNotebookStorage(): app.INotebookStorage {
-  return notebookStorage;
+  return _notebookStorage;
 }
 
 /**
@@ -99,12 +108,12 @@ export function initStorage(notebookStoragePath: string) {
   console.log('Root notebook storage path: ', notebookStoragePath);
 
   // Create the storage singleton if it hasn't been created before.
-  if (!fsStorage) {
-    fsStorage = new content.LocalFileSystem(notebookStoragePath);
+  if (!_fsStorage) {
+    _fsStorage = new content.LocalFileSystem(notebookStoragePath);
   }
 
   // Create the notebook storage singleton if it hasn't yet been created
-  if (!notebookStorage) {
-     notebookStorage = new nbstorage.NotebookStorage(fsStorage);
+  if (!_notebookStorage) {
+     _notebookStorage = new nbstorage.NotebookStorage(_fsStorage);
   }
 }
