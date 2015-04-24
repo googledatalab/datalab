@@ -103,7 +103,17 @@ export class GoogleCloudStorage implements app.IStorage {
    * @param callback Callback to invoke upon completion of the write operation.
    */
   write(path: string, data: string, callback: app.Callback<void>) {
-    // TODO
-  }
+    var file = this._client.file(path);
 
+    file.createWriteStream().end(data, 'utf8', (error: Error) => {
+      if (error) {
+        console.log('Error occurred during write: ', error);
+        callback(error);
+        return;
+      }
+
+      console.log('Done writing... Success!');
+      callback(null);
+    });
+  }
 }

@@ -20,7 +20,7 @@
 declare module GCloud {
 
   interface Module {
-    storage(credentials: any): Storage;
+    storage(credentials?: any): Storage;
   }
 
   interface Storage {
@@ -32,11 +32,16 @@ declare module GCloud {
   }
 
   interface File {
+    createWriteStream(): NodeJS.WritableStream;
     download(callback: ReadCallback): void;
   }
 
+  interface ReadError extends Error {
+    reason: string;
+  }
+
   interface ReadCallback {
-    (error: any, buffer: any): void;
+    (error: ReadError, buffer: Buffer): void;
   }
 
 }
