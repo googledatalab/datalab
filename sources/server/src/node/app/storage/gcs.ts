@@ -24,17 +24,15 @@ import pathlib = require('path');
  */
 export class GoogleCloudStorage implements app.IStorage {
 
-  _bucket: string;
-  _client: GCloud.Bucket;
+  _bucket: GCloud.Bucket;
 
   /**
    * Constructor.
    *
-   * @param bucket The name of the GCS bucket to use for storage.
+   * @param bucket The gcloud bucket client to use for accessing storage.
    */
-  constructor(bucket: string) {
+  constructor(bucket: GCloud.Bucket) {
     this._bucket = bucket;
-    this._client = gcloud.storage().bucket(this._bucket);
   }
 
   /**
@@ -44,7 +42,16 @@ export class GoogleCloudStorage implements app.IStorage {
    * @param callback Callback to invoke upon completion of the write operation.
    */
   delete(path: string, callback: app.Callback<void>) {
-    // TODO
+    var file = this._bucket.file(path);
+    file.delete((error) => {
+      if (error) {
+        console.log('failed to delete ' + path);
+        callback(error);
+        return;
+      }
+      console.log('Delete succeeded!');
+      callback(null);
+    });
   }
 
   /**
@@ -59,7 +66,26 @@ export class GoogleCloudStorage implements app.IStorage {
   }
 
   move(sourcePath: string, destinationPath: string, callback: app.Callback<void>) {
-    // TODO
+    var source = this._bucket.file(sourcePath);
+    source.copy(destinationPath, (error) => {
+      if (error) {
+        console.log('copy to ' + destinationPath + ' failed');
+        callback(error);
+        return;
+      }
+
+      // successfully copied, now delete the source
+      this.delete(sourcePath, (error) => {
+        if (error) {
+          console.log('failed to delete source ' + sourcePath);
+          callback(error);
+          return;
+        }
+
+        console.log('Move succeeded!');
+        callback(null);
+      });
+    });
   }
 
   /**
@@ -69,7 +95,7 @@ export class GoogleCloudStorage implements app.IStorage {
    * @param callback Callback to invoke upon completion of the read operation.
    */
   read(path: string, callback: app.Callback<string>) {
-    var file = this._client.file(path);
+    var file = this._bucket.file(path);
 
     file.download((error, buffer) => {
       console.log('Finished downloading file...');
@@ -103,7 +129,7 @@ export class GoogleCloudStorage implements app.IStorage {
    * @param callback Callback to invoke upon completion of the write operation.
    */
   write(path: string, data: string, callback: app.Callback<void>) {
-    var file = this._client.file(path);
+    var file = this._bucket.file(path);
 
     file.createWriteStream().end(data, 'utf8', (error: Error) => {
       if (error) {
@@ -116,4 +142,5 @@ export class GoogleCloudStorage implements app.IStorage {
       callback(null);
     });
   }
+
 }

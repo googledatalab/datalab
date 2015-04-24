@@ -32,12 +32,18 @@ declare module GCloud {
   }
 
   interface File {
+    copy(destinationPath: string, callback: Callback<Error, void>): void;
     createWriteStream(): NodeJS.WritableStream;
-    download(callback: ReadCallback): void;
+    delete(callback: Callback<Error, void>): void;
+    download(callback: Callback<ReadError, Buffer>): void;
   }
 
   interface ReadError extends Error {
     reason: string;
+  }
+
+  interface Callback<E,D> {
+    (error: E, data: D): void;
   }
 
   interface ReadCallback {
