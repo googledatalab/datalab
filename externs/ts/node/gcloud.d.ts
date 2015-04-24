@@ -19,13 +19,29 @@
 
 declare module GCloud {
 
-    interface Module {
+  interface Module {
+    storage(credentials: any): Storage;
+  }
 
-    }
+  interface Storage {
+    bucket(name: string): Bucket;
+  }
+
+  interface Bucket {
+    file(path: string): File;
+  }
+
+  interface File {
+    download(callback: ReadCallback): void;
+  }
+
+  interface ReadCallback {
+    (error: any, buffer: any): void;
+  }
 
 }
 
 declare var gcloud: GCloud.Module;
-declare module "gcloud-node" {
+declare module "gcloud" {
     export = gcloud;
 }
