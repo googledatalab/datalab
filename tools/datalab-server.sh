@@ -17,11 +17,11 @@ source $REPO_DIR/sources/server/config.sh;
 # Install NodeJS server dependencies
 npm install --prefix "$build_path";
 
-storage_root=`dirname "$1"`
+storage_root=`dirname "$1"`;
 notebook_relative_path=`basename $1`;
 
 # Start the DataLab NodeJS server.
-node "$build_path/server.js" -n "$storage_root" &
+node "$build_path/server.js" -n "$PWD/$storage_root" &
 # Capture the server process id so that we can kill it later.
 server_pid=$!;
 
