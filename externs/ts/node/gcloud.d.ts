@@ -29,13 +29,41 @@ declare module GCloud {
 
   interface Bucket {
     file(path: string): File;
+    getFiles(query: Query, callback: GetFilesCallback): void;
   }
 
   interface File {
+    name: string; // Full path within GCS bucket to the file.
+
     copy(destinationPath: string, callback: Callback<Error, void>): void;
     createWriteStream(): NodeJS.WritableStream;
     delete(callback: Callback<Error, void>): void;
     download(callback: Callback<ReadError, Buffer>): void;
+  }
+
+  interface Query {
+    /**
+     * Results will contain only objects whose names, aside from the prefix, do not contain
+     * delimiter. Objects whose names, aside from the prefix, contain delimiter will have
+     * their name truncated after the delimiter, returned in prefixes. Duplicate prefixes
+     * are omitted.
+     */
+    delimiter: string;
+
+    /**
+     * Filter results to objects whose names begin with this prefix.
+     */
+    prefix: string;
+
+    /**
+     * Maximum number of items plus prefixes to return.
+     */
+    maxResults: number;
+
+    /**
+     * A previously-returned page token representing part of the larger set of results to view.
+     */
+    pageToken: string;
   }
 
   interface ReadError extends Error {
@@ -46,8 +74,8 @@ declare module GCloud {
     (error: E, data: D): void;
   }
 
-  interface ReadCallback {
-    (error: ReadError, buffer: Buffer): void;
+  interface GetFilesCallback {
+    (error: Error, files: File[], nextPageToken: string): void;
   }
 
 }

@@ -57,12 +57,39 @@ export class GoogleCloudStorage implements app.IStorage {
   /**
    * Asynchronously enumerates the resources that match the given path prefix.
    *
-   * @param path The storage path for which to enumerate resources.
+   * @param directoryPath The storage path for which to enumerate resources.
    * @param recursive Should the listing operation recursively enumerate sub-directories?
    * @param callback Completion callback to invoke.
    */
-  list(path: string, recursive: boolean, callback: app.Callback<app.Resource[]>) {
-    // TODO
+  list(directoryPath: string, recursive: boolean, callback: app.Callback<app.Resource[]>) {
+    var query = {
+      prefix: directoryPath.slice(1)
+      // FIXME: include delimiter here depending on whether or not a recursive listing is desired
+    };
+
+
+    bucket.getFiles(query, (error, files, nextPageToken) => {
+      if (error) {
+        console.log('Failed to list objects: ', error);
+        callback(error);
+        return;
+      }
+
+      // TODO(bryantd): add support for paging within the list API eventually via nextQuery GCS
+      // token. For now, truncate the listing response to the first page of results from GCS to
+      // avoid returning a response with unbounded size.
+
+      // Get the paths to all objects/directories within that matched the query.
+      var resources = files.map(file => this._toResource(file.name));
+
+      if (!recursive) {
+        // Filter the resources to only those files and directories directly contained within the
+        // query path/directory if a non-recursive listing was requested.
+        resources = this._selectWithinDirectory(directoryPath, resources);
+      }
+
+      callback(null, this._selectNotebooks(resources));
+    });
   }
 
   move(sourcePath: string, destinationPath: string, callback: app.Callback<void>) {
@@ -141,6 +168,94 @@ export class GoogleCloudStorage implements app.IStorage {
       console.log('Done writing... Success!');
       callback(null);
     });
+  }
+
+  /**
+   * Detects if the given GCS path represents a "directory".
+   */
+  _isGcsDirectory(gcsPath: string): boolean {
+    // GCS denotes "directories" as object paths with a trailing slash.
+    return gcsPath[gcsPath.length - 1] == '/';
+  }
+
+  /**
+   * Selects directories and notebook files from the specified list of resources.
+   *
+   * Currently, notebooks are limited to files with the .ipynb extension.
+   *
+   * @param resources The array of resources to select from.
+   * @return A new array containing only directory and notebook resources.
+   */
+  _selectNotebooks(resources: app.Resource[]): app.Resource[] {
+    var selected: app.Resource[];
+
+    resources.forEach(resource => {
+      // All directories are retained.
+      if (resource.isDirectory) {
+        selected.push(resource);
+        return;
+      }
+
+      // Select only the files having the notebook extension.
+      var notebookExtension = 'ipynb';
+      if (notebookExtension == resource.path.slice(-notebookExtension.length)) {
+        selected.push(resource);
+      }
+    });
+
+    return selected;
+  }
+
+  /**
+   * Selects resources that are directly contained within the specified directory path.
+   *
+   * e.g., given directoryStoragePath='/foo' and resource paths ['/foo/bar', '/foo/baz',
+   * '/foo/baz/quux'], the selection would include only ['/foo/bar', '/foo/baz'].
+   *
+   * @param resources The array of resources to select from.
+   * @return A new array containing only resources directly within the specified directory.
+   */
+  _selectWithinDirectory(directoryStoragePath: string, resources: app.Resource[]): app.Resource[] {
+    // todo
+  }
+
+  /**
+   * Translates a GCS path to the corresponding storage path.
+   *
+   * @param gcsPath The specified GCS path.
+   * @return The corresponding storage path.
+   */
+  _toStoragePath(gcsPath: string): string {
+    // Prepend a slash. All storage paths are absolute.
+    var storagePath = '/' + gcsPath;
+
+    // Strip any trailing slash from the path.
+    if (storagePath[storagePath.length - 1] == '/') {
+      storagePath = storagePath.slice(0, storagePath.length -1);
+    }
+
+    return storagePath;
+  }
+
+  /**
+   * Translates a storage path to the corresponding GCS path.
+   *
+   * @param storagePath The specified storage path.
+   * @return The corresponding GCS path.
+   */
+  _toGcsPath(storagePath: string): string {
+    // Strip the initial slash.
+    var gcsPath = storagePath.slice(1);
+
+    return gcsPath;
+  }
+
+  _toResource(gcsPath: string): app.Resource {
+    // todo: figure out if path is a directory first
+    return {
+      path: this._toStoragePath(gcsPath),
+      isDirectory: this._isGcsDirectory(gcsPath)
+    }
   }
 
 }
