@@ -42,7 +42,7 @@ export class GoogleCloudStorage implements app.IStorage {
    * @param callback Callback to invoke upon completion of the write operation.
    */
   delete(path: string, callback: app.Callback<void>) {
-    var file = this._bucket.file(path);
+    var file = this._bucket.file(this._toGcsPath(path));
     file.delete((error) => {
 
       if (error) {
@@ -99,8 +99,11 @@ export class GoogleCloudStorage implements app.IStorage {
    * @param callback Completion callback.
    */
   move(sourcePath: string, destinationPath: string, callback: app.Callback<void>) {
-    var source = this._bucket.file(sourcePath);
-    source.copy(destinationPath, (error) => {
+    var gcsSourcePath = this._toGcsPath(sourcePath);
+    var gcsDestinationPath = this._toGcsPath(destinationPath);
+
+    var source = this._bucket.file(gcsSourcePath);
+    source.copy(gcsDestinationPath, (error) => {
       if (error) {
         callback(error);
         return;
