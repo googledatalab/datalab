@@ -44,12 +44,12 @@ export class GoogleCloudStorage implements app.IStorage {
   delete(path: string, callback: app.Callback<void>) {
     var file = this._bucket.file(path);
     file.delete((error) => {
+
       if (error) {
-        console.log('failed to delete ' + path);
         callback(error);
         return;
       }
-      console.log('Delete succeeded!');
+
       callback(null);
     });
   }
@@ -69,7 +69,6 @@ export class GoogleCloudStorage implements app.IStorage {
 
     this._bucket.getFiles(query, (error, files, nextPageToken) => {
       if (error) {
-        console.log('Failed to list objects: ', error);
         callback(error);
         return;
       }
@@ -89,24 +88,31 @@ export class GoogleCloudStorage implements app.IStorage {
     });
   }
 
+  /**
+   * Asynchronously moves the resource from source path to destination path.
+   *
+   * Note: this operation only supports moving individual objects, not sets of objects
+   * that share some common prefix ("directories").
+   *
+   * @param sourcePath The path to be moved.
+   * @param destinationPath The path to move to.
+   * @param callback Completion callback.
+   */
   move(sourcePath: string, destinationPath: string, callback: app.Callback<void>) {
     var source = this._bucket.file(sourcePath);
     source.copy(destinationPath, (error) => {
       if (error) {
-        console.log('copy to ' + destinationPath + ' failed');
         callback(error);
         return;
       }
 
-      // successfully copied, now delete the source
+      // Successfully copied to the destination; Now delete the source.
       this.delete(sourcePath, (error) => {
         if (error) {
-          console.log('failed to delete source ' + sourcePath);
           callback(error);
           return;
         }
 
-        console.log('Move succeeded!');
         callback(null);
       });
     });
@@ -122,17 +128,14 @@ export class GoogleCloudStorage implements app.IStorage {
     var file = this._bucket.file(path);
 
     file.download((error, buffer) => {
-      console.log('Finished downloading file...');
       if (error) {
         // An error reason of notFound indicates that the specified read failed because the object
-        // doesn't exist.
+        // doesn't exist. Invoke the callback with a null data value (but no error) to signal this.
         if (error.reason == 'notFound') {
-          console.log("Cannot read " + path + ' because it doesnt exist');
           callback(null, null);
           return;
         } else {
           // Any other errors are passed back to caller to handle.
-          console.log('fail '+ path+ ':', error.message, error);
           callback(error);
           return;
         }
@@ -140,7 +143,6 @@ export class GoogleCloudStorage implements app.IStorage {
 
       // File content is returned as a buffer object, so deserialize it to utf-8.
       var data = buffer.toString('utf8');
-      console.log('success ' + path + ':', data);
       callback(null, data);
     });
   }
@@ -157,18 +159,19 @@ export class GoogleCloudStorage implements app.IStorage {
 
     file.createWriteStream().end(data, 'utf8', (error: Error) => {
       if (error) {
-        console.log('Error occurred during write: ', error);
         callback(error);
         return;
       }
 
-      console.log('Done writing... Success!');
       callback(null);
     });
   }
 
   /**
    * Detects if the given GCS path represents a "directory".
+   *
+   * @param gcsPath The GCS resource path to check.
+   * @return Boolean to indicate if the given resource path represents a GCS "directory".
    */
   _isGcsDirectory(gcsPath: string): boolean {
     // GCS denotes "directories" as object paths with a trailing slash.
@@ -253,19 +256,6 @@ export class GoogleCloudStorage implements app.IStorage {
   }
 
   /**
-   * Translates a GCS path to the corresponding storage path.
-   *
-   * @param gcsPath The specified GCS path.
-   * @return The corresponding storage path.
-   */
-  _toStoragePath(gcsPath: string): string {
-    // Prepend a slash. All storage paths are absolute.
-    var storagePath = '/' + gcsPath;
-    // Remove a trailing slash if one exists.
-    return this._stripTrailingSlash(storagePath);
-  }
-
-  /**
    * Strips a trailing slash character from the string if one exists.
    *
    * @param s The input string.
@@ -294,12 +284,30 @@ export class GoogleCloudStorage implements app.IStorage {
     return this._stripTrailingSlash(gcsPath);
   }
 
+  /**
+   * Creates a resource from the specified GCS path.
+   *
+   * @param gcsPath Path to the resource within GCS.
+   * @return The Resource representation of the GCS resource.
+   */
   _toResource(gcsPath: string): app.Resource {
-    // todo: figure out if path is a directory first
     return {
       path: this._toStoragePath(gcsPath),
       isDirectory: this._isGcsDirectory(gcsPath)
     }
+  }
+
+  /**
+   * Translates a GCS path to the corresponding storage path.
+   *
+   * @param gcsPath The specified GCS path.
+   * @return The corresponding storage path.
+   */
+  _toStoragePath(gcsPath: string): string {
+    // Prepend a slash. All storage paths are absolute.
+    var storagePath = '/' + gcsPath;
+    // Remove a trailing slash if one exists.
+    return this._stripTrailingSlash(storagePath);
   }
 
 }
