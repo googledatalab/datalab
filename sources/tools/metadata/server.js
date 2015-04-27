@@ -95,7 +95,7 @@ function lookupMetadata(md, cb) {
  */
 function requestHandler(req, resp) {
   console.log(req.url);
-  console.log(req);
+  // console.log(req);
 
   function dataCallback(error, data) {
     var status = HTTP_STATUS_OK;
@@ -129,6 +129,10 @@ function requestHandler(req, resp) {
       return;
     }
   }
+
+  // The gcloud-auth-library uses the following "metadata-flavor" header check for validating
+  // the existence of the GCE metadata service.
+  resp.setHeader('metadata-flavor', 'Google');
 
   resp.writeHead(HTTP_STATUS_NOTFOUND);
   resp.end();
