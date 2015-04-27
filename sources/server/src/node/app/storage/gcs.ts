@@ -55,20 +55,19 @@ export class GoogleCloudStorage implements app.IStorage {
   }
 
   /**
-   * Asynchronously enumerates the resources that match the given path prefix.
+   * Asynchronously enumerates the resources that match the given directory path.
    *
    * @param directoryPath The storage path for which to enumerate resources.
    * @param recursive Should the listing operation recursively enumerate sub-directories?
    * @param callback Completion callback to invoke.
    */
   list(directoryPath: string, recursive: boolean, callback: app.Callback<app.Resource[]>) {
-    var query = {
-      prefix: directoryPath.slice(1)
-      // FIXME: include delimiter here depending on whether or not a recursive listing is desired
+    var query: GCloud.Query = {
+      prefix: this._toGcsPath(directoryPath)
     };
 
 
-    bucket.getFiles(query, (error, files, nextPageToken) => {
+    this._bucket.getFiles(query, (error, files, nextPageToken) => {
       if (error) {
         console.log('Failed to list objects: ', error);
         callback(error);
@@ -216,7 +215,7 @@ export class GoogleCloudStorage implements app.IStorage {
    * @return A new array containing only resources directly within the specified directory.
    */
   _selectWithinDirectory(directoryStoragePath: string, resources: app.Resource[]): app.Resource[] {
-    // todo
+    return null; // FIXME todo
   }
 
   /**

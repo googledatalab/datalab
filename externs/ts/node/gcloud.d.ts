@@ -48,22 +48,22 @@ declare module GCloud {
      * their name truncated after the delimiter, returned in prefixes. Duplicate prefixes
      * are omitted.
      */
-    delimiter: string;
+    delimiter?: string;
 
     /**
      * Filter results to objects whose names begin with this prefix.
      */
-    prefix: string;
+    prefix?: string;
 
     /**
      * Maximum number of items plus prefixes to return.
      */
-    maxResults: number;
+    maxResults?: number;
 
     /**
      * A previously-returned page token representing part of the larger set of results to view.
      */
-    pageToken: string;
+    pageToken?: string;
   }
 
   interface ReadError extends Error {
