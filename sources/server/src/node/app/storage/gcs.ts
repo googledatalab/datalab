@@ -24,14 +24,14 @@ import pathlib = require('path');
  */
 export class GoogleCloudStorage implements app.IStorage {
 
-  _bucket: GCloud.Bucket;
+  _bucket: GCloud.Storage.Bucket;
 
   /**
    * Constructor.
    *
    * @param bucket The gcloud bucket client to use for accessing storage.
    */
-  constructor(bucket: GCloud.Bucket) {
+  constructor(bucket: GCloud.Storage.Bucket) {
     this._bucket = bucket;
   }
 
@@ -62,7 +62,7 @@ export class GoogleCloudStorage implements app.IStorage {
    * @param callback Completion callback to invoke.
    */
   list(directoryPath: string, recursive: boolean, callback: app.Callback<app.Resource[]>) {
-    var query: GCloud.Query = {
+    var query: GCloud.Storage.Query = {
       prefix: this._toGcsPath(directoryPath)
     };
 
