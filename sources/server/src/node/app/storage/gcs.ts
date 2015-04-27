@@ -81,11 +81,9 @@ export class GoogleCloudStorage implements app.IStorage {
       // Get the paths to all objects/directories within that matched the query.
       var resources = files.map(file => this._toResource(file.name));
 
-      if (!recursive) {
-        // Filter the resources to only those files and directories directly contained within the
-        // query path/directory if a non-recursive listing was requested.
-        resources = this._selectWithinDirectory(directoryPath, resources);
-      }
+      // Filter the resources to only those files and directories directly contained within the
+      // query path/directory if a non-recursive listing was requested.
+      resources = this._selectWithinDirectory(directoryPath, resources, recursive);
 
       callback(null, this._selectNotebooks(resources));
     });
@@ -208,10 +206,17 @@ export class GoogleCloudStorage implements app.IStorage {
   /**
    * Selects resources that are directly contained within the specified directory path.
    *
+   * @param directoryStoragePath The storage directory path to use for selection.
    * @param resources The array of resources to select from.
+   * @param recursive Select all files/dirs recursively contained within the specified directory.
    * @return A new array containing only resources directly within the specified directory.
    */
-  _selectWithinDirectory(directoryStoragePath: string, resources: app.Resource[]): app.Resource[] {
+  _selectWithinDirectory(
+      directoryStoragePath: string,
+      resources: app.Resource[],
+      recursive: boolean
+      ): app.Resource[] {
+
     var selected: app.Resource[] = [];
 
     resources.forEach(resource => {
@@ -228,13 +233,20 @@ export class GoogleCloudStorage implements app.IStorage {
         return;
       }
 
-      // Take the portion of the resource path that comes after the directory path (+slash).
-      var pathSuffix = resource.path.slice(directoryStoragePath.length + 1);
-      // Check if the suffix indicates that the resource path is directly contained (vs indirectly
-      // via sub directory).
-      if (pathSuffix.split('/').length == 1) {
+      if (recursive) {
         selected.push(resource);
+      } else {
+        // Don't select paths that are contained within subdirectories.
+
+        // Take the portion of the resource path that comes after the directory path (+slash).
+        var pathSuffix = resource.path.slice(directoryStoragePath.length + 1);
+        // Check if the suffix indicates that the resource path is directly contained (vs indirectly
+        // via sub directory).
+        if (pathSuffix.split('/').length == 1) {
+          selected.push(resource);
+        }
       }
+
     });
 
     return selected;

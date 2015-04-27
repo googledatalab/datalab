@@ -21,7 +21,11 @@ import gcs = require('../app/storage/gcs');
  */
 interface GcsStorage extends app.IStorage {
   _selectNotebooks(resources: app.Resource[]): app.Resource[];
-  _selectWithinDirectory(directoryStoragePath: string, resources: app.Resource[]): app.Resource[];
+  _selectWithinDirectory(
+      directoryStoragePath: string,
+      resources: app.Resource[],
+      recursive: boolean
+      ): app.Resource[];
   _toStoragePath(gcsPath: string): string;
   _toGcsPath(storagePath: string): string;
   _toResource(gcsPath: string): app.Resource;
@@ -54,8 +58,15 @@ describe('GCS storage', () => {
     resources = undefined;
   });
 
+  // Resource filters and selection.
+
+  it('selects all files/directories recursively within the root directory', () => {
+    var root = storage._selectWithinDirectory('/', resources, true);
+    expect(root).toEqual(resources);
+  });
+
   it('selects only files/directories within the root directory', () => {
-    var root = storage._selectWithinDirectory('/', resources);
+    var root = storage._selectWithinDirectory('/', resources, false);
     expect(root.length).toBe(3);
     expect(root[0]).toEqual(resources[1]);
     expect(root[1]).toEqual(resources[4]);
@@ -63,15 +74,32 @@ describe('GCS storage', () => {
   });
 
   it('selects only files/directories within a sub directory', () => {
-    var foo = storage._selectWithinDirectory('/foo', resources);
+    var foo = storage._selectWithinDirectory('/foo', resources, false);
     expect(foo.length).toBe(3);
     expect(foo[0]).toEqual(resources[0]);
     expect(foo[1]).toEqual(resources[3]);
     expect(foo[2]).toEqual(resources[6]);
   });
 
+  it('selects files/directories recursively within a sub directory', () => {
+    var foo = storage._selectWithinDirectory('/foo', resources, true);
+    expect(foo.length).toBe(5);
+    expect(foo[0]).toEqual(resources[0]);
+    expect(foo[1]).toEqual(resources[2]);
+    expect(foo[2]).toEqual(resources[3]);
+    expect(foo[3]).toEqual(resources[5]);
+    expect(foo[4]).toEqual(resources[6]);
+  });
+
   it('selects only files/directories within a sub-sub directory', () => {
-    var foobar = storage._selectWithinDirectory('/foo/bar', resources);
+    var foobar = storage._selectWithinDirectory('/foo/bar', resources, false);
+    expect(foobar.length).toBe(2);
+    expect(foobar[0]).toEqual(resources[2]);
+    expect(foobar[1]).toEqual(resources[5]);
+  });
+
+  it('selects files/directories recursively within a sub-sub directory', () => {
+    var foobar = storage._selectWithinDirectory('/foo/bar', resources, false);
     expect(foobar.length).toBe(2);
     expect(foobar[0]).toEqual(resources[2]);
     expect(foobar[1]).toEqual(resources[5]);
