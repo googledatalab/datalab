@@ -25,12 +25,16 @@
 
 var childProcess = require('child_process'),
     http = require('http'),
-    url = require('url');
+    url = require('url'),
+    util = require('util');
 
 var DEFAULT_PORT = 80;
 var HTTP_STATUS_OK = 200;
 var HTTP_STATUS_NOTFOUND = 404;
 var HTTP_STATUS_ERROR = 500;
+
+
+var commandPattern = "sudo -u $USER bash -c 'source $HOME/google-cloud-sdk/path.bash.inc; %s'";
 
 /**
  * The set of metadata names supported. Each name is associated with a request path that the
@@ -38,15 +42,15 @@ var HTTP_STATUS_ERROR = 500;
  */
 var supportedMetadata = {
   authToken: {
-    path: '/computemetadata/v1/instance/service-accounts/default/token',
-    command: 'gcloud auth print-access-token',
+    path: '/computemetadata/v1beta1/instance/service-accounts/default/token',
+    command: util.format(commandPattern, 'gcloud auth print-access-token'),
     formatter: function(output) {
       return { access_token: output.trim() };
     }
   },
   projectId: {
-    path: '/computemetadata/v1/project/project-id',
-    command: 'gcloud config list --format json project',
+    path: '/computemetadata/v1beta1/project/project-id',
+    command: util.format(commandPattern, 'gcloud config list --format json project'),
     formatter: function(output) {
       var data = JSON.parse(output);
       return data.core.project;
@@ -60,6 +64,7 @@ var supportedMetadata = {
  * @param cb Callback to invoke with results.
  */
 function lookupMetadata(md, cb) {
+  console.log('LOOKING UP MD: ', md);
   try {
     process.env['TERM'] = 'vt-100';
     childProcess.exec(md.command, function(error, stdout, stderr) {
@@ -68,12 +73,15 @@ function lookupMetadata(md, cb) {
         cb(error, null);
       }
       else {
+        console.log('got: ', stdout.trim());
         var value = md.formatter(stdout.trim());
+        console.log('Received value from mds: ', value);
         cb(null, value);
       }
     });
   }
   catch (e) {
+    console.log('error: ', e);
     process.nextTick(function() {
       cb(e, null);
     });
@@ -87,6 +95,7 @@ function lookupMetadata(md, cb) {
  */
 function requestHandler(req, resp) {
   console.log(req.url);
+  console.log(req);
 
   function dataCallback(error, data) {
     var status = HTTP_STATUS_OK;
@@ -96,10 +105,12 @@ function requestHandler(req, resp) {
     if (error) {
       status = HTTP_STATUS_ERROR;
       content = error.toString();
+      console.log('error: ', content);
     }
     else if (typeof data != 'string') {
       contentType = 'application/json';
       content = JSON.stringify(data);
+      console.log('data: ', content);
     }
 
     resp.writeHead(status, {'Content-Type': contentType});
@@ -109,9 +120,11 @@ function requestHandler(req, resp) {
 
   var path = url.parse(req.url).path.toLowerCase();
   for (var name in supportedMetadata) {
+    console.log('Requested PATH: ', path);
     var md = supportedMetadata[name];
 
     if (path == md.path) {
+      console.log('calling md...');
       lookupMetadata(md, dataCallback);
       return;
     }
