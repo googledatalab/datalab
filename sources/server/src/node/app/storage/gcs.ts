@@ -125,7 +125,7 @@ export class GoogleCloudStorage implements app.IStorage {
    * @param callback Callback to invoke upon completion of the read operation.
    */
   read(path: string, callback: app.Callback<string>) {
-    var file = this._bucket.file(path);
+    var file = this._bucket.file(this._toGcsPath(path));
 
     file.download((error, buffer) => {
       if (error) {
@@ -155,7 +155,7 @@ export class GoogleCloudStorage implements app.IStorage {
    * @param callback Callback to invoke upon completion of the write operation.
    */
   write(path: string, data: string, callback: app.Callback<void>) {
-    var file = this._bucket.file(path);
+    var file = this._bucket.file(this._toGcsPath(path));
 
     file.createWriteStream().end(data, 'utf8', (error: Error) => {
       if (error) {
