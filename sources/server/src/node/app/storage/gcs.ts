@@ -76,6 +76,9 @@ export class GoogleCloudStorage implements app.IStorage {
       // TODO(bryantd): add support for paging within the list API eventually via nextQuery GCS
       // token. For now, truncate the listing response to the first page of results from GCS to
       // avoid returning a response with unbounded size.
+      if (nextPageToken) {
+        console.log('WARNING storage listing operation returning truncated results.');
+      }
 
       // Get the paths to all objects/directories within that matched the query.
       var resources = files.map(file => this._toResource(file.name));
