@@ -186,7 +186,7 @@ export class GoogleCloudStorage implements app.IStorage {
    * @return A new array containing only directory and notebook resources.
    */
   _selectNotebooks(resources: app.Resource[]): app.Resource[] {
-    var selected: app.Resource[];
+    var selected: app.Resource[] = [];
 
     resources.forEach(resource => {
       // All directories are retained.
@@ -208,14 +208,36 @@ export class GoogleCloudStorage implements app.IStorage {
   /**
    * Selects resources that are directly contained within the specified directory path.
    *
-   * e.g., given directoryStoragePath='/foo' and resource paths ['/foo/bar', '/foo/baz',
-   * '/foo/baz/quux'], the selection would include only ['/foo/bar', '/foo/baz'].
-   *
    * @param resources The array of resources to select from.
    * @return A new array containing only resources directly within the specified directory.
    */
   _selectWithinDirectory(directoryStoragePath: string, resources: app.Resource[]): app.Resource[] {
-    return null; // FIXME todo
+    var selected: app.Resource[] = [];
+
+    resources.forEach(resource => {
+      var pathPrefix = resource.path.slice(0, directoryStoragePath.length);
+      // Check if the current resource path is contained (directly or indirectly) by the specified
+      // directory path.
+      if (directoryStoragePath != pathPrefix) {
+        // This resource path is not contained within the specified directory path, so skip it.
+        return;
+      }
+
+      // Don't add the directory itself.
+      if (directoryStoragePath == resource.path) {
+        return;
+      }
+
+      // Take the portion of the resource path that comes after the directory path (+slash).
+      var pathSuffix = resource.path.slice(directoryStoragePath.length + 1);
+      // Check if the suffix indicates that the resource path is directly contained (vs indirectly
+      // via sub directory).
+      if (pathSuffix.split('/').length == 1) {
+        selected.push(resource);
+      }
+    });
+
+    return selected;
   }
 
   /**
@@ -227,13 +249,24 @@ export class GoogleCloudStorage implements app.IStorage {
   _toStoragePath(gcsPath: string): string {
     // Prepend a slash. All storage paths are absolute.
     var storagePath = '/' + gcsPath;
+    // Remove a trailing slash if one exists.
+    return this._stripTrailingSlash(storagePath);
+  }
 
-    // Strip any trailing slash from the path.
-    if (storagePath[storagePath.length - 1] == '/') {
-      storagePath = storagePath.slice(0, storagePath.length -1);
+  /**
+   * Strips a trailing slash character from the string if one exists.
+   *
+   * @param s The input string.
+   * @return String with a single trailing slash stripped, if one existed.
+   */
+  _stripTrailingSlash(s: string) {
+    if (s[s.length - 1] == '/') {
+      // Then strip a trailing slash.
+      return s.slice(0, s.length -1);
+    } else {
+      // No trailing slash to strip.
+      return s;
     }
-
-    return storagePath;
   }
 
   /**
@@ -245,8 +278,8 @@ export class GoogleCloudStorage implements app.IStorage {
   _toGcsPath(storagePath: string): string {
     // Strip the initial slash.
     var gcsPath = storagePath.slice(1);
-
-    return gcsPath;
+    // Strip any trailing slash.
+    return this._stripTrailingSlash(gcsPath);
   }
 
   _toResource(gcsPath: string): app.Resource {
