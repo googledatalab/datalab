@@ -41,6 +41,28 @@ define(function () {
     treemap: {name: 'TreeMap', script: 'treemap'}
   };
 
+  function convertListToDataTable(list) {
+    if (!list || !list.length) {
+      return { cols: [], rows: [] };
+    }
+
+    var firstItem = list[0];
+    var names = Object.keys(firstItem);
+
+    var columns = names.map(function(name) {
+      return { id: name, label: name, type: typeof firstItem[name] }
+    });
+
+    var rows = list.map(function(item) {
+      var cells = names.map(function(name) {
+        return { v: item[name] };
+      });
+      return { c: cells };
+    });
+
+    return { cols: columns, rows: rows };
+  }
+
   // Convert any string fields that are date type to JS Dates.
   function convertDates(data) {
     for (var i = 0; i < data.cols.length; i++) {
@@ -173,11 +195,6 @@ define(function () {
     }
   }
 
-  function drawChart(visualization, chart, options, data) {
-    var dt = new visualization.DataTable(data);
-    chart.draw(dt, options);
-  }
-
   // The main render method, called from Python-generated code. dom is the DOM element
   // for the chart, model is a set of parameters from Python, and options is a JSON
   // set of options provided by the user in the cell magic body, which takes precedence over
@@ -187,51 +204,53 @@ define(function () {
     var chartScript = chartInfo.script || 'corechart';
     dom.innerHTML = '';
 
+    if (!data.cols && !data.rows) {
+      data = convertListToDataTable(data);
+    }
+    convertDates(data);
 
     require(['visualization!' + chartScript], function (visualization) {
       var chartType = visualization[chartInfo.name];
       var chart = new chartType(dom);
-      var fetchCode = '%_get_chart_data ' + model.dataName + ' ' + (model.fields || '*');
 
       options = options || {};
+      if ((model.chartStyle == 'paged_table') || (model.chartStyle == 'table')) {
+        // Cleanup table rendering
+        options.cssClassNames = {
+          tableRow: 'gchart-table-row',
+          headerRow: 'gchart-table-headerrow',
+          oddTableRow: 'gchart-table-oddrow',
+          selectedTableRow: 'gchart-table-selectedrow',
+          hoverTableRow: 'gchart-table-hoverrow',
+          tableCell: 'gchart-table-cell',
+          headerCell: 'gchart-table-headercell',
+          rowNumberCell: 'gchart-table-rownumcell'
+        };
+      }
 
-      if (model.chartStyle == 'paged_table') {
+      if (model.chartStyle != 'paged_table') {
+        chart.draw(new visualization.DataTable(data), options);
+      }
+      else {
         if (options.pageSize == undefined) {
           options.pageSize = model.rowsPerPage || 25;
         }
         model.dom = dom;
         model.chart = chart;
         model.visualization = visualization;
-        model.fetchCode = fetchCode;
+        model.fetchCode = '%_get_chart_data ' + model.dataName + ' ' + (model.fields || '*');
         model.options = options;
         model.totalRows = model.totalRows || -1; // Total rows in all (server-side) data.
         model.dataOffset = 0; // Where the cached data[] array starts from.
         model.firstRow = 0;  // Index of first row being displayed in page.
-        if (data == undefined) {
-          model.data = {rows:[], cols:[]};
-        } else {
-          convertDates(data);
-          model.data = data;
-        }
+
+        model.data = data;
 
         visualization.events.addListener(chart, 'page', function(e) {
           handlePageEvent(model, e.page);
         });
 
         getPagedData(model, 0);
-      } else if (data == undefined) {
-        IPython.notebook.kernel.get_data(fetchCode, function (data, error) {
-          if (error) {
-            onError(visualization, dom, error);
-          } else {
-            convertDates(data.data);
-            drawChart(visualization, chart, options, data.data);
-          }
-        });
-      } else {
-        // We already have the data as a parameter.
-        convertDates(data);
-        drawChart(visualization, chart, options, data);
       }
     });
   }

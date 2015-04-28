@@ -13,9 +13,18 @@
  * the License.
  */
 
-define(function () {
+define(['extensions/charting'], function(charting) {
 
-  // JS functions to support pygcp.bigquery.
+  function evaluateUDF(dom, udf, data) {
+    var results = [];
+    data.forEach(function(row) {
+      udf(row, function(result) {
+        results.push(result);
+      });
+    });
+
+    charting.render(dom, { chartStyle: 'table' }, null, results);
+  }
 
   // Event handler to toggle visibility of a nested schema table.
   function _toggleNode(e) {
@@ -101,6 +110,7 @@ define(function () {
   }
 
   return {
-    renderSchema: renderSchema
+    renderSchema: renderSchema,
+    evaluateUDF: evaluateUDF
   };
 });

@@ -180,4 +180,35 @@ div.text_cell_render code {
 }
 
 
+/* Google Charts tables and pandas dataframe specific */
+
+table.google-visualization-table-table, table.dataframe {
+  font-family: inherit;
+  font-size: smaller;
+}
+tr.gchart-table-row {
+}
+tr.gchart-table-headerrow, table.dataframe thead th {
+  font-weight: bold;
+  background-color: #e7e7e7;
+}
+tr.gchart-table-oddrow, table.dataframe tr:nth-child(odd) {
+  background-color: #f7f7f7;
+}
+tr.gchart-table-selectedTableRow {
+  background-color: #e3f2fd;
+}
+tr.gchart-table-hoverrow, table.dataframe tr:hover {
+  background-color: #bbdefb;
+}
+td.gchart-table-cell, table.dataframe td {
+  border: solid 1px #cfcfcf;
+}
+td.gchart-table-rownumcell, table.dataframe tr th {
+  border: solid 1px #cfcfcf;
+  color: #999;
+}
+th.gchart-table-headercell, table.dataframe th {
+  border: solid 1px #cfcfcf;
+}
 

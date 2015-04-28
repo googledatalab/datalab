@@ -1,20 +1,23 @@
+table.bqsv {
+  font-family: inherit;
+  font-size: smaller;
+}
+table.bqsv th, table.bqsv td {
+  border: solid 1px #cfcfcf;
+}
 th.bqsv_expanded, th.bqsv_collapsed {
-    background-color:LightGray;
+  background-color: #f7f7f7;
 }
-
 th.bqsv_colheader {
-    font-style: italic;
+  font-weight: bold;
+  background-color: #e7e7e7;
 }
-
 tbody.bqsv_hidden {
-    display: none;
+  display: none;
 }
-
 th.bqsv_expanded:before {
-    content: '\25be  '
+  content: '\25be  '
 }
-
 th.bqsv_collapsed:before {
-    content: '\25b8  '
+  content: '\25b8  '
 }
-

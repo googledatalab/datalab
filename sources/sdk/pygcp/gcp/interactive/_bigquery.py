@@ -296,11 +296,8 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
     return
 
   _HTML_TEMPLATE = """
-    <div style='display:inline;float:left'>%s</div>
-    <div style='display:inline;float:right'>%s</div>
-    <br>
-    <div class="bqtv" id="bqtv_%s">
-    </div>
+    <div class="bqtv" id="bqtv_%s"></div>
+    <div><br />%s<br />%s</div>
     <script>
       require(['extensions/charting', 'element!bqtv_%s'],
         function(charts, dom) {
@@ -319,12 +316,12 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
 
   fields = fields if fields else [field.name for field in table.schema]
   div_id = str(int(round(_time.time())))
-  left_meta = "Rows %d" % table.length if table.length >= 0 else ''
-  right_meta = job_id if job_id else table.full_name
+  meta_count = "rows: %d" % table.length if table.length >= 0 else ''
+  meta_name = job_id if job_id else table.full_name
   data = _get_data(table, fields, 0, rows_per_page)
 
   return _HTML_TEMPLATE %\
-      (left_meta, right_meta, div_id, div_id, table.full_name, ','.join(fields),
+      (div_id, meta_name, meta_count, div_id, table.full_name, ','.join(fields),
        table.length, rows_per_page, _json.dumps(data, cls=_util.JSONEncoder))
 
 
@@ -368,9 +365,9 @@ def _repr_html_function_evaluation(evaluation):
   _HTML_TEMPLATE = """
     <div class="bqtv" id="%s"></div>
     <script>
-      require(['extensions/function_evaluator', 'element!%s'],
-          function(fe, dom) {
-              fe.evaluate_function(dom, %s, %s);
+      require(['extensions/bigquery', 'element!%s'],
+          function(bq, dom) {
+              bq.evaluateUDF(dom, %s, %s);
           }
       );
     </script>
