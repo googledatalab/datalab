@@ -108,18 +108,18 @@ export function getStorage(): app.IStorage {
  * file system storage will be used. If both are specified, then GCS has precedence.
  *
  * @param notebookStoragePath Local filesystem path to use for storage.
- * @param gcsBucketName GCS bucket to use for storage.
+ * @param bucket GCS bucket to use for storage.
  */
-export function initStorage(notebookStoragePath: string, gcsBucketName: string) {
+export function initStorage(notebookStoragePath: string, bucket: string) {
   // Create the storage singleton if it hasn't been created before.
   if (!_storage) {
 
-    if (gcsBucketName) {
+    if (bucket) {
       // Then use GCS for storage.
       // Initialize the GCS storage instance.
-      var client = gcloud.storage().bucket(gcsBucketName);
+      var client = gcloud.storage().bucket(bucket);
       _storage = new content.GoogleCloudStorage(client);
-      console.log('Using GCS storage. Bucket: ', gcsBucketName);
+      console.log('Using GCS storage. Bucket: ', bucket);
 
     } else {
       // Then use the local file system for storage.

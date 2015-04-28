@@ -44,15 +44,7 @@ export class GoogleCloudStorage implements app.IStorage {
    */
   delete(path: string, callback: app.Callback<void>) {
     var file = this._bucket.file(this._toGcsPath(path));
-    file.delete((error) => {
-
-      if (error) {
-        callback(error);
-        return;
-      }
-
-      callback(null);
-    });
+    file.delete(callback);
   }
 
   /**
@@ -174,15 +166,7 @@ export class GoogleCloudStorage implements app.IStorage {
    */
   write(path: string, data: string, callback: app.Callback<void>) {
     var file = this._bucket.file(this._toGcsPath(path));
-
-    file.createWriteStream().end(data, 'utf8', (error: Error) => {
-      if (error) {
-        callback(error);
-        return;
-      }
-
-      callback(null);
-    });
+    file.createWriteStream().end(data, 'utf8', callback);
   }
 
   /**
@@ -263,7 +247,7 @@ export class GoogleCloudStorage implements app.IStorage {
         var pathSuffix = resource.path.slice(directoryStoragePath.length + 1);
         // Check if the suffix indicates that the resource path is directly contained (vs indirectly
         // via sub directory).
-        if (pathSuffix.split('/').length == 1) {
+        if (pathSuffix.indexOf('/') == -1) {
           selected.push(resource);
         }
       }
