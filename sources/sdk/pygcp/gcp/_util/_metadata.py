@@ -33,7 +33,7 @@ class MetadataService(object):
 
   _DEFAULT_HOST = 'metadata.google.internal'
   _DEFAULT_PORT = '80'
-  _SERVICE_URL = 'http://%s:%s/computeMetadata/v1beta/%s'
+  _SERVICE_URL = 'http://%s:%s/computemetadata/v1beta1/%s'
   _PROJECTID_PATH = 'project/project-id'
   _AUTHTOKEN_PATH = 'instance/service-accounts/default/token'
 
@@ -84,8 +84,8 @@ class MetadataService(object):
       RuntimeError: An error occurred in the metadata service request.
     """
 
-    host = os.environ.get('METADATA_HOST', MetadataService._DEFAULT_HOST)
-    port = os.environ.get('METADATA_PORT', MetadataService._DEFAULT_PORT)
+    host = MetadataService._DEFAULT_HOST
+    port = MetadataService._DEFAULT_PORT
 
     url = MetadataService._SERVICE_URL % (host, port, path)
     headers = {'X-Google-Metadata-Request': 'True'}
