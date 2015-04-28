@@ -42,4 +42,3 @@ do
 done
 
 echo "Build completed." | tee -a $LOG_FILE
-

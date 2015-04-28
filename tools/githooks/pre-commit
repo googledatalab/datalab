@@ -1,0 +1,24 @@
+#!/bin/sh
+
+REPO_DIR=$(git rev-parse --show-toplevel)
+
+if [ -z "$REPO_DIR" ];
+  then echo "REPO_DIR is not set. Please run `source tools/initenv.sh` first";
+  exit 1;
+fi
+
+$REPO_DIR/tools/update-build-manifest.sh
+
+DIFF_LIST=$(git diff --name-only $REPO_DIR/tools/build_manifest.txt)
+if [ "$DIFF_LIST" != "" ]; then
+  cat <<EOF
+Error: build_manifest has changed with this commit, but has not been staged.
+
+If you weren't expecting to see this message, your changes likely introduced
+differences in the output of the build.
+
+Either fix the changes to sync to the build_manifest or add $REPO_DIR/tools/build_manifest.txt to this commit.
+EOF
+  git diff $REPO_DIR/tools/build_manifest.txt
+  exit 1
+fi
