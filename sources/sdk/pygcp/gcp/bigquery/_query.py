@@ -77,17 +77,52 @@ class Query(object):
       self._results = self.execute(use_cache=use_cache, batch=False, timeout=timeout)
     return self._results.results
 
+  def extract(self, destination, format='CSV', compress=False,
+              field_delimiter=',', print_header=True, use_cache=True, timeout=0):
+    """Exports the query results to GCS.
+
+    Args:
+      destination: the destination URI(s). Can be a single URI or a list.
+      format: the format to use for the exported data; one of CSV, NEWLINE_DELIMITED_JSON or AVRO
+          (default 'CSV').
+      compress whether to compress the data on export. Compression is not supported for
+          AVRO format (default False).
+      field_delimiter: for CSV exports, the field delimiter to use (default ',').
+      print_header: for CSV exports, whether to include an initial header line (default True).
+      timeout: duration (in milliseconds) to wait for the query to complete (default 0).
+      use_cache: whether to use cached results or not (default True).
+    Returns:
+      A Job object for the export Job if it was started successfully; else None.
+    """
+    return self.results(timeout=timeout, use_cache=use_cache) \
+        .extract(destination, format=format, compress=compress, field_delimiter=field_delimiter,
+                 print_header=print_header)
+
+  def to_dataframe(self, start_row=0, max_rows=None, use_cache=True, timeout=0):
+    """ Exports the query results to a Pandas dataframe.
+
+    Args:
+      start_row: the row of the table at which to start the export (default 0).
+      max_rows: an upper limit on the number of rows to export (default None).
+      timeout: duration (in milliseconds) to wait for the query to complete (default 0).
+      use_cache: whether to use cached results or not (default True).
+    Returns:
+      A dataframe containing the table data.
+    """
+    return self.results(timeout=timeout, use_cache=use_cache) \
+        .to_dataframe(start_row=start_row, max_rows=max_rows)
+
   def to_file(self, path, start_row=0, max_rows=None, timeout=0, use_cache=True, write_header=True,
               dialect=csv.excel):
     """Save the results to a local file in CSV format.
 
     Args:
       path: path on the local filesystem for the saved results.
-      start_row: the row of the table at which to start the export (default 0)
-      max_rows: an upper limit on the number of rows to export (default None)
+      start_row: the row of the table at which to start the export (default 0).
+      max_rows: an upper limit on the number of rows to export (default None).
       timeout: duration (in milliseconds) to wait for the query to complete.
       use_cache: whether to use cached results or not.
-      write_header: if true (the default), write column name header row at start of file
+      write_header: if true (the default), write column name header row at start of file.
       dialect: the format to use for the output. By default, csv.excel. See
           https://docs.python.org/2/library/csv.html#csv-fmt-params for how to customize this.
     Returns:
@@ -95,9 +130,9 @@ class Query(object):
     Raises:
       An Exception if the operation failed.
     """
-    self.execute(use_cache=use_cache, batch=False, timeout=timeout)\
-        .results.to_file(path, start_row=start_row, max_rows=max_rows,
-                         write_header=write_header, dialect=dialect)
+    self.results(timeout=timeout, use_cache=use_cache) \
+        .to_file(path, start_row=start_row, max_rows=max_rows, write_header=write_header,
+                 dialect=dialect)
     return path
 
   def sample(self, count=5, fields=None, sampling=None, timeout=0, use_cache=True):

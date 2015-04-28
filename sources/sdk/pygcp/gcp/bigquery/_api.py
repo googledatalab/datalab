@@ -472,7 +472,7 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    url = Api._ENDPOINT + (Api._JOBS_PATH % table_name.project_id, '')
+    url = Api._ENDPOINT + (Api._JOBS_PATH % (table_name.project_id, ''))
     if isinstance(destination, basestring):
       destination = [destination]
     data = {
