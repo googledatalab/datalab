@@ -112,7 +112,7 @@ docker build -t gcp-ipython-instance .
 
 # Copy a snapshot of gcloud configuration.
 # -L in case user is using linked gcloud
-cp -Lr ~/.config/gcloud gcloud
+rsync -avp ~/.config/gcloud/ gcloud
 
 # Deploy to the cloud (as a managed VM application)
 if [ "$1" == "deploy" ]; then
