@@ -15,6 +15,7 @@
 /// <reference path="../../../../../../externs/ts/node/node.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/gcloud.d.ts" />
 /// <reference path="../common/interfaces.d.ts" />
+import content = require('./content');
 import gcloud = require('gcloud');
 import pathlib = require('path');
 import util = require('util');
@@ -82,7 +83,7 @@ export class GoogleCloudStorage implements app.IStorage {
       // query path/directory if a non-recursive listing was requested.
       resources = this._selectWithinDirectory(directoryPath, resources, recursive);
 
-      callback(null, this._selectNotebooks(resources));
+      callback(null, content.selectNotebooks(resources));
     });
   }
 
@@ -183,34 +184,6 @@ export class GoogleCloudStorage implements app.IStorage {
   }
 
   /**
-   * Selects directories and notebook files from the specified list of resources.
-   *
-   * Currently, notebooks are limited to files with the .ipynb extension.
-   *
-   * @param resources The array of resources to select from.
-   * @return A new array containing only directory and notebook resources.
-   */
-  _selectNotebooks(resources: app.Resource[]): app.Resource[] {
-    var selected: app.Resource[] = [];
-
-    resources.forEach(resource => {
-      // All directories are retained.
-      if (resource.isDirectory) {
-        selected.push(resource);
-        return;
-      }
-
-      // Select only the files having the notebook extension.
-      var notebookExtension = 'ipynb';
-      if (notebookExtension == resource.path.slice(-notebookExtension.length)) {
-        selected.push(resource);
-      }
-    });
-
-    return selected;
-  }
-
-  /**
    * Selects resources that are directly contained within the specified directory path.
    *
    * @param directoryStoragePath The storage directory path to use for selection.
@@ -259,21 +232,6 @@ export class GoogleCloudStorage implements app.IStorage {
     return selected;
   }
 
-  /**
-   * Strips a trailing slash character from the string if one exists.
-   *
-   * @param s The input string.
-   * @return String with a single trailing slash stripped, if one existed.
-   */
-  _stripTrailingSlash(s: string) {
-    if (s[s.length - 1] == '/') {
-      // Then strip a trailing slash.
-      return s.slice(0, s.length -1);
-    } else {
-      // No trailing slash to strip.
-      return s;
-    }
-  }
 
   /**
    * Translates a storage path to the corresponding GCS path.
@@ -285,7 +243,7 @@ export class GoogleCloudStorage implements app.IStorage {
     // Strip the initial slash.
     var gcsPath = storagePath.slice(1);
     // Strip any trailing slash.
-    return this._stripTrailingSlash(gcsPath);
+    return content.stripTrailingSlash(gcsPath);
   }
 
   /**
@@ -311,7 +269,7 @@ export class GoogleCloudStorage implements app.IStorage {
     // Prepend a slash. All storage paths are absolute.
     var storagePath = '/' + gcsPath;
     // Remove a trailing slash if one exists.
-    return this._stripTrailingSlash(storagePath);
+    return content.stripTrailingSlash(storagePath);
   }
 
 }

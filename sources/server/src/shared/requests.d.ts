@@ -108,6 +108,11 @@ declare module app {
     // The following fields are only provided for files.
 
     /**
+     * Textual description of the resource for display within the UI (e.g., "IPython Notebook").
+     */
+    description?: string;
+
+    /**
      * Last modification timestamp for the file, if one can be determined.
      *
      * Timestamp is in ISO-8601 extended format.

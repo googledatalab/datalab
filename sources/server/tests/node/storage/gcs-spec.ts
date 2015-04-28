@@ -20,7 +20,6 @@ import gcs = require('../app/storage/gcs');
  * Define augmented interface with additional internal methods for testing.
  */
 interface GcsStorage extends app.IStorage {
-  _selectNotebooks(resources: app.Resource[]): app.Resource[];
   _selectWithinDirectory(
       directoryStoragePath: string,
       resources: app.Resource[],
@@ -29,7 +28,6 @@ interface GcsStorage extends app.IStorage {
   _toStoragePath(gcsPath: string): string;
   _toGcsPath(storagePath: string): string;
   _toResource(gcsPath: string): app.Resource;
-  _stripTrailingSlash(s: string): string;
 }
 
 
@@ -103,39 +101,6 @@ describe('GCS storage', () => {
     expect(foobar.length).toBe(2);
     expect(foobar[0]).toEqual(resources[2]);
     expect(foobar[1]).toEqual(resources[5]);
-  });
-
-  it('selects only notebook files from the input resources', () => {
-    var filtered = storage._selectNotebooks(resources);
-
-    expect(filtered.length).toBe(5);
-
-    // Directories should be retained.
-    expect(filtered[0]).toEqual(resources[0]);
-    expect(filtered[1]).toEqual(resources[1]);
-
-    // .ipynb files should be retained
-    expect(filtered[2]).toEqual(resources[2]);
-    expect(filtered[3]).toEqual(resources[3]);
-    expect(filtered[4]).toEqual(resources[4]);
-  });
-
-  it('strips a trailing slash when one exists', () => {
-    expect(storage._stripTrailingSlash('/dir/')).toEqual('/dir');
-    expect(storage._stripTrailingSlash('/foo/bar/dir/')).toEqual('/foo/bar/dir');
-    expect(storage._stripTrailingSlash('/')).toEqual('');
-  });
-
-  it('strips a trailing slash when one exists', () => {
-    expect(storage._stripTrailingSlash('/dir/')).toEqual('/dir');
-    expect(storage._stripTrailingSlash('/foo/bar/dir/')).toEqual('/foo/bar/dir');
-    expect(storage._stripTrailingSlash('/')).toEqual('');
-  });
-
-  it('does nothing when a trailing slash does not exist', () => {
-    expect(storage._stripTrailingSlash('/dir')).toEqual('/dir');
-    expect(storage._stripTrailingSlash('/foo/bar/dir')).toEqual('/foo/bar/dir');
-    expect(storage._stripTrailingSlash('')).toEqual('');
   });
 
   // GCS path => Resource
