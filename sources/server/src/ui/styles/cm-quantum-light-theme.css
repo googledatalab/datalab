@@ -12,8 +12,8 @@ div.cm-s-quantum-light .CodeMirror-cursor { border-left: 2px solid #222; }
 .cm-s-quantum-light .cm-atom { color: #F90; }
 .cm-s-quantum-light .cm-number { color:  #DB4437; }
 .cm-s-quantum-light .cm-def { color: #8DA6CE; }
-.cm-s-quantum-light span.cm-variable-2, .cm-s-quantum-light span.cm-tag { color: #CDDC39; }
-.cm-s-quantum-light span.cm-variable-3, .cm-s-quantum-light span.cm-def { color: #03A9F4; }
+.cm-s-quantum-light span.cm-variable-2, .cm-s-quantum-light span.cm-tag { color: #616161; }
+.cm-s-quantum-light span.cm-variable-3, .cm-s-quantum-light span.cm-def { color: #616161; }
 
 .cm-s-quantum-light .cm-variable { color: #616161; }
 .cm-s-quantum-light .cm-property { color: #F4B400; }
@@ -27,7 +27,7 @@ div.cm-s-quantum-light .CodeMirror-cursor { border-left: 2px solid #222; }
 .cm-s-quantum-light .cm-builtin { color: #E91E63; }
 .cm-s-quantum-light .cm-tag { color: #A1887F; }
 .cm-s-quantum-light .cm-attribute { color: #FFCD40; }
-.cm-s-quantum-light .cm-header { color: #FF6400; }
+.cm-s-quantum-light .cm-header { color: #4285F4; }
 .cm-s-quantum-light .cm-hr { color: #AEAEAE; }
 .cm-s-quantum-light .cm-link {   color:#ad9361; font-style:italic; text-decoration:none; }
 .cm-s-quantum-light .cm-error { border-bottom: 1px solid red; }

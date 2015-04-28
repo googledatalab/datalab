@@ -65,6 +65,7 @@ export class DocumentCellController implements app.ICellController {
     var that = this;
     this._rootScope.$evalAsync(() => {
       that.showEditRegion = true;
+      that.showPreviewRegion = false;
     });
   }
 
@@ -75,6 +76,7 @@ export class DocumentCellController implements app.ICellController {
     var that = this;
     this._rootScope.$evalAsync(() => {
       that.showEditRegion = false;
+      that.showPreviewRegion = true;
     });
   }
 

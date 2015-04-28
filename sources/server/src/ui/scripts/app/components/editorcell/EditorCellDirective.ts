@@ -36,6 +36,7 @@ interface EditorCellScope extends ng.IScope {
   enableEditRegion: boolean;
   enablePreviewRegion: boolean;
   getKeymap: Function;
+  language: string;
   onPreviewRegionDoubleClick: Function;
   worksheetId: string;
 
@@ -153,6 +154,7 @@ function editorCellDirective(): ng.IDirective {
       getKeymap: '&keymap',
       enableEditRegion: '=',
       enablePreviewRegion: '=',
+      language: '@',
       onPreviewRegionDoubleClick: '&',
       worksheetId: '='
     },
