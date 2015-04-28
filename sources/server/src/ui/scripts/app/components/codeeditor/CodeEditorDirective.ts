@@ -22,6 +22,7 @@
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <reference path="../../../../../../../../externs/ts/codemirror/codemirror.d.ts" />
 /// <amd-dependency path="codeMirror/mode/python/python" />
+/// <amd-dependency path="codeMirror/mode/markdown/markdown" />
 /// <amd-dependency path="codeMirror/addon/edit/matchbrackets" />
 import codeMirror = require('codeMirror');
 import constants = require('app/common/Constants');
@@ -35,7 +36,9 @@ var log = logging.getLogger(constants.scopes.codeEditor);
 var codeMirrorOptions: CodeMirror.EditorConfiguration = {
   // TODO(bryantd): add hook to enable line numbers when containing cell becomes active.
   lineNumbers: false,
+
   indentUnit: 4,
+  lineWrapping: false,
 
   // Note: themes require additional css imports containing the CodeMirror syntax css rules.
   theme: 'quantum-light',
@@ -92,6 +95,9 @@ interface CodeEditorScope extends ng.IScope {
    * An example of a valid DOM event would be 'focus', 'mouseover', etc.
    */
   getActionHandlers: Function;
+
+  mode: string;
+  linewrap: boolean;
 }
 
 /**
@@ -107,6 +113,9 @@ function codeEditorDirectiveLink(
     : void {
 
   var cmContainer = element[0];
+
+  codeMirrorOptions.lineWrapping = scope.linewrap;
+  codeMirrorOptions.mode.name = scope.mode;
 
   var cmInstance: CodeMirror.Editor = codeMirror(cmContainer, codeMirrorOptions);
   cmInstance.addKeyMap(scope.getKeymap());
@@ -180,7 +189,9 @@ function codeEditorDirective(): ng.IDirective {
       source: '=',
       active: '=',
       getKeymap: '&keymap',
-      getActionHandlers: '&actions'
+      getActionHandlers: '&actions',
+      linewrap: '=',
+      mode: '='
     },
     link: codeEditorDirectiveLink,
   }

@@ -14,7 +14,9 @@
             source="cell.source"
             active="active"
             keymap='keymap'
-            actions='actions'>
+            actions='actions'
+            linewrap="cell.type == 'markdown' || cell.type=='heading'"
+            mode="language">
         </datalab-code-editor>
       </div>
 
