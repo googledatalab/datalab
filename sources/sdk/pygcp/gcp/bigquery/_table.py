@@ -679,8 +679,8 @@ class Table(object):
 
     def _retrieve_rows(page_token, count):
 
+      page_rows = []
       if max_rows and count >= max_rows:
-        page_rows = []
         page_token = None
       else:
         if max_rows and page_size > (max_rows - count):
@@ -695,7 +695,8 @@ class Table(object):
           response = self._api.tabledata_list(name_parts, start_index=start_row,
                                               max_results=max_results)
         page_token = response['pageToken'] if 'pageToken' in response else None
-        page_rows = response['rows']
+        if 'rows' in response:
+          page_rows = response['rows']
 
       rows = []
       for row_dict in page_rows:
