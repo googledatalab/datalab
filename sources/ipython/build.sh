@@ -25,15 +25,15 @@ mv MANIFEST $PYLIB_DIR/IPython.manifest
 
 # Copy the IPython customized profile over
 rsync -avp ./profile/config.py $IPY_DIR/config.py
-rsync -avp ./profile/static/ $IPY_DIR
+rsync -avp ./profile/static $IPY_DIR
 
 # Compile the nodejs proxy server
 tsc --module commonjs --removeComments --noImplicitAny \
     --outDir $PROXY_DIR \
     ./proxy/*.ts
 
-rsync -avp ./proxy/config/ $PROXY_DIR/config && \
-rsync -avp ./proxy/static/ $PROXY_DIR/static && \
+rsync -avp ./proxy/config/ $PROXY_DIR/config
+rsync -avp ./proxy/static/ $PROXY_DIR/static
 rsync -avp ./proxy/package.json $PROXY_DIR/package.json
 
 # Package all of the IPython stuff into a tarball
