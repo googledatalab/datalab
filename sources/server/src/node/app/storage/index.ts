@@ -16,9 +16,11 @@
 /**
  * Define the public API of the storage module
  */
-
-import local = require('./local');
 import api = require('./api');
+import local = require('./local');
+import gcs = require('./gcs');
 
-export var LocalFileSystem = local.LocalFileSystemStorage;
 export var Api = api.ContentApi;
+export var LocalFileSystem = local.LocalFileSystemStorage;
+export var GoogleCloudStorage = gcs.GoogleCloudStorage;
+
