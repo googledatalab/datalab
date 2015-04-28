@@ -39,7 +39,7 @@ declare module GCloud {
       copy(destinationPath: string, callback: Callback<Error, void>): void;
       createWriteStream(): NodeJS.WritableStream;
       delete(callback: Callback<Error, void>): void;
-      download(callback: Callback<ReadError, Buffer>): void;
+      download(callback: Callback<ReadErrorSet, Buffer>): void;
     }
 
     interface Query {
@@ -65,6 +65,10 @@ declare module GCloud {
        * A previously-returned page token representing part of the larger set of results to view.
        */
       pageToken?: string;
+    }
+
+    interface ReadErrorSet {
+      errors: ReadError[];
     }
 
     interface ReadError extends Error {

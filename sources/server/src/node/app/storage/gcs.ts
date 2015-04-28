@@ -17,6 +17,7 @@
 /// <reference path="../common/interfaces.d.ts" />
 import gcloud = require('gcloud');
 import pathlib = require('path');
+import util = require('util');
 
 
 /**
@@ -133,10 +134,21 @@ export class GoogleCloudStorage implements app.IStorage {
   read(path: string, callback: app.Callback<string>) {
     var file = this._bucket.file(this._toGcsPath(path));
 
-    file.download((error, buffer) => {
-      if (error) {
+    file.download((errors, buffer) => {
+      if (errors && errors.errors && errors.errors.length > 0) {
+        // Check if the first error was due to the file not being found.
+        //
         // An error reason of notFound indicates that the specified read failed because the object
         // doesn't exist. Invoke the callback with a null data value (but no error) to signal this.
+        if (errors.errors.length > 1) {
+          console.log(util.format(
+            'Multiple errors returned when attempting to read GCS path "%s": %s',
+            path, errors));
+        }
+
+        // We'll pass the first error back to the caller to handle
+        var error = errors.errors[0];
+
         if (error.reason == 'notFound') {
           callback(null, null);
           return;
