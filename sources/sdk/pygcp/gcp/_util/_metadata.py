@@ -33,7 +33,7 @@ class MetadataService(object):
 
   _DEFAULT_HOST = 'metadata.google.internal'
   _DEFAULT_PORT = '80'
-  _SERVICE_URL = 'http://%s:%s/computeMetadata/v1/%s'
+  _SERVICE_URL = 'http://%s:%s/computeMetadata/v1beta/%s'
   _PROJECTID_PATH = 'project/project-id'
   _AUTHTOKEN_PATH = 'instance/service-accounts/default/token'
 

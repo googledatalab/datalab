@@ -136,12 +136,10 @@ function requestHandler(req, resp) {
  * for incoming requests.
  */
 function main() {
-  var port = parseInt(process.env['METADATA_PORT'] || DEFAULT_PORT, 10);
-
   var server = http.createServer(requestHandler);
-  server.listen(port);
+  server.listen(DEFAULT_PORT);
 
-  console.log('Metadata server started at http://localhost:' + port + '/ ...');
+  console.log('Metadata server started at http://localhost:' + DEFAULT_PORT + '/ ...');
 }
 
 
