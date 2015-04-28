@@ -43,7 +43,8 @@ function sessionConnectionFactory(
     ): app.ISessionConnection {
 
   var socket: Socket = socketio(location.host(), {
-    query: 'notebookPath=' + route.current.params.notebookPath
+    // Note: slash is prepended because all content storage paths are rooted.
+    query: 'notebookPath=/' + route.current.params.notebookPath
   });
 
   return {
