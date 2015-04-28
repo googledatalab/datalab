@@ -13,11 +13,11 @@ mkdir -p "$test_path";
 echo 'Testing DataLab server backend...';
 
 # Copy node .ts files to test.
-cp -r "$server_root/src/node" "$test_path";
+rsync -avp "$server_root/src/node" "$test_path";
 # Copy shared .ts files to the test area.
-cp -r "$server_root/src/shared" "$test_path/node/app";
+rsync -avp "$server_root/src/shared" "$test_path/node/app";
 # Copy the test .ts files to the test area.
-cp -r "$server_root/tests/node/" "$test_path/node";
+rsync -avp "$server_root/tests/node/" "$test_path/node";
 
 # Compile the typescript code in test area (src and tests).
 tsc_files=`find $test_path/node -name '*.ts' | tr '\n' ' '`;

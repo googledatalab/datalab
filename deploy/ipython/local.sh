@@ -46,7 +46,7 @@ EOF1
 
 # Copy a snapshot of gcloud configuration.
 # -L in case user is using linked gcloud
-cp -Lr ~/.config/gcloud gcloud
+rsync -avp ~/.config/gcloud/ gcloud
 
 # Build and run the local docker image
 docker build -t gcp-ipython-local-instance .
