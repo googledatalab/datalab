@@ -241,9 +241,11 @@ export class GoogleCloudStorage implements app.IStorage {
    * @return The Resource representation of the GCS resource.
    */
   _toResource(gcsPath: string): app.Resource {
+    var storagePath = this._toStoragePath(gcsPath);
     return {
-      path: this._toStoragePath(gcsPath),
-      isDirectory: content.isDirectory(gcsPath)
+      path: storagePath,
+      isDirectory: content.isDirectory(gcsPath),
+      description: content.getDescription(storagePath)
     }
   }
 

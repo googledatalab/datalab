@@ -73,9 +73,11 @@ export class LocalFileSystemStorage implements app.IStorage {
 
       // Add file (terminal) resources.
       paths.files.forEach(fsFilepath => {
+        var resourceStoragePath = this._toStoragePath(fsFilepath);
         var resource = {
-          path: this._toStoragePath(fsFilepath),
-          isDirectory: false
+          path: resourceStoragePath,
+          isDirectory: false,
+          description: content.getDescription(resourceStoragePath)
         };
 
         if (recursive) {
@@ -92,9 +94,11 @@ export class LocalFileSystemStorage implements app.IStorage {
 
       // Add directory (non-terminal) resources.
       paths.dirs.forEach(fsDirpath => {
+        var resourceStoragePath = this._toStoragePath(fsDirpath);
         var resource = {
-          path: this._toStoragePath(fsDirpath),
-          isDirectory: true
+          path: resourceStoragePath,
+          isDirectory: true,
+          description: content.getDescription(resourceStoragePath)
         };
 
         if (recursive) {
@@ -109,7 +113,10 @@ export class LocalFileSystemStorage implements app.IStorage {
         }
       });
 
-      callback(null, content.selectNotebooks(resources));
+      // Filter non-notebook resources.
+      resources = content.selectNotebooks(resources);
+
+      callback(null, resources);
     });
   }
 
