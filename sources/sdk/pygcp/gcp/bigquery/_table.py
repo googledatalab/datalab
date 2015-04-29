@@ -15,18 +15,17 @@
 """Implements Table, and related Table BigQuery APIs."""
 
 import codecs
-import collections
 import csv
 from datetime import datetime
 import math
 import pandas as pd
-import re
 import time
 import uuid
 
 from gcp._util import Iterator as _Iterator
 from ._job import Job as _Job
 from ._parser import Parser as _Parser
+from ._utils import parse_table_name as _parse_table_name
 
 # import of Query is at end of module as we have a circular dependency of
 # Query.execute().results -> Table and Table.sample() -> Query
@@ -271,7 +270,7 @@ class TableMetadata(object):
     return int(self._info['numBytes']) if 'numBytes' in self._info else -1
 
 
-TableName = collections.namedtuple('TableName', ['project_id', 'dataset_id', 'table_id'])
+
 
 
 class Table(object):
@@ -292,62 +291,7 @@ class Table(object):
   # When fetching table contents, the max number of rows to fetch per HTTP request
   _DEFAULT_PAGE_SIZE = 1024
 
-  @staticmethod
-  def _parse_name(name, project_id=None, dataset_id=None):
-    """Parses a table name into its individual parts.
 
-    Args:
-      name: the name to parse, or a tuple, dictionary or array containing the parts.
-      project_id: the expected project ID. If the name does not contain a project ID,
-          this will be used; if the name does contain a project ID and it does not match
-          this, an exception will be thrown.
-      dataset_id: the expected dataset ID. If the name does not contain a dataset ID,
-          this will be used; if the name does contain a dataset ID and it does not match
-          this, an exception will be thrown.
-    Returns:
-      A tuple consisting of the full name and individual name parts.
-    Raises:
-      Exception: raised if the name doesn't match the expected formats.
-    """
-    _project_id = _dataset_id = _table_id = None
-    if isinstance(name, basestring):
-      # Try to parse as absolute name first.
-      m = re.match(Table._ABS_NAME_PATTERN, name, re.IGNORECASE)
-      if m is not None:
-        _project_id, _dataset_id, _table_id = m.groups()
-      else:
-        # Next try to match as a relative name implicitly scoped within current project.
-        m = re.match(Table._REL_NAME_PATTERN, name)
-        if m is not None:
-          groups = m.groups()
-          _project_id, _dataset_id, _table_id = project_id, groups[0], groups[1]
-        else:
-          # Finally try to match as a table name only.
-          m = re.match(Table._TABLE_NAME_PATTERN, name)
-          if m is not None:
-            groups = m.groups()
-            _project_id, _dataset_id, _table_id = project_id, dataset_id, groups[0]
-    elif isinstance(name, dict):
-      try:
-        _table_id = name['table_id']
-        _dataset_id = name['dataset_id']
-        _project_id = name['project_id']
-      except KeyError:
-        pass
-    else:
-      # Try treat as an array or tuple
-      if len(name) == 3:
-        _project_id, _dataset_id, _table_id = name
-      elif len(name) == 2:
-        _dataset_id, _table_id = name
-    if not _table_id:
-      raise Exception('Invalid table name: ' + str(name))
-    if not _project_id:
-      _project_id = project_id
-    if not _dataset_id:
-      _dataset_id = dataset_id
-
-    return TableName(_project_id, _dataset_id, _table_id)
 
   def __init__(self, api, name):
     """Initializes an instance of a Table object.
@@ -357,7 +301,7 @@ class Table(object):
       name: the name of the table either as a string or a 3-part tuple (projectid, datasetid, name).
     """
     self._api = api
-    self._name_parts = Table._parse_name(name, api.project_id)
+    self._name_parts = _parse_table_name(name, api.project_id)
     self._full_name = '%s:%s.%s' % self._name_parts
     self._info = None
     self._cached_page = None
@@ -584,8 +528,8 @@ class Table(object):
         rows = []
     return self
 
-  def extract(self, destination, format='CSV', compress=False,
-              field_delimiter=',', print_header=True):
+  def extract(self, destination, format='CSV', compress=False, field_delimiter=',',
+              print_header=True, timeout=None, poll=5):
     """Exports the table to GCS.
 
     Args:
@@ -596,13 +540,20 @@ class Table(object):
           AVRO format. Defaults to False.
       field_delimiter: for CSV exports, the field delimiter to use. Defaults to ','
       print_header: for CSV exports, whether to include an initial header line. Default true.
+      timeout: how long to block waiting for the job to complete; default None which means no
+        limit. If not None, then the call may return an incomplete Job which will have to be
+        checked for completion using Job.wait or Job.iscomplete.
+      poll: interval in seconds between job status polls (default 5).
     Returns:
       A Job object for the export Job if it was started successfully; else None.
     """
     response = self._api.table_extract(self._name_parts, destination, format, compress,
                                        field_delimiter, print_header)
-    return _Job(self._api, response['jobReference']['jobId']) \
-        if response and 'jobReference' in response else None
+    job = None
+    if response and 'jobReference' in response:
+      job = _Job(self._api, response['jobReference']['jobId'])
+      job.wait(timeout=timeout, poll=poll)
+    return job
 
   def load(self, source, append=False, overwrite=False, source_format='CSV', field_delimiter=',',
            allow_jagged_rows=False, allow_quoted_newlines=False, encoding='UTF-8',

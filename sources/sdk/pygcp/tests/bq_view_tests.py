@@ -58,7 +58,7 @@ class TestCases(unittest.TestCase):
     mock_api_insert_query.return_value = self._create_insert_done_result()
     mock_api_tables_insert.return_value = self._create_tables_insert_success_result()
     mock_api_tables_get.return_value = self._create_tables_get_result()
-    mock_api_jobs_get.return_value = {'state': 'DONE'}
+    mock_api_jobs_get.return_value = {'status': {'state': 'DONE'}}
     mock_api_tabledata_list.return_value = self._create_single_row_result()
 
     name = 'test:testds.testView0'
