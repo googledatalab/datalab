@@ -173,17 +173,6 @@ export class GoogleCloudStorage implements app.IStorage {
   }
 
   /**
-   * Detects if the given GCS path represents a "directory".
-   *
-   * @param gcsPath The GCS resource path to check.
-   * @return Boolean to indicate if the given resource path represents a GCS "directory".
-   */
-  _isGcsDirectory(gcsPath: string): boolean {
-    // GCS denotes "directories" as object paths with a trailing slash.
-    return gcsPath[gcsPath.length - 1] == '/';
-  }
-
-  /**
    * Selects resources that are directly contained within the specified directory path.
    *
    * @param directoryStoragePath The storage directory path to use for selection.
@@ -232,7 +221,6 @@ export class GoogleCloudStorage implements app.IStorage {
     return selected;
   }
 
-
   /**
    * Translates a storage path to the corresponding GCS path.
    *
@@ -255,7 +243,7 @@ export class GoogleCloudStorage implements app.IStorage {
   _toResource(gcsPath: string): app.Resource {
     return {
       path: this._toStoragePath(gcsPath),
-      isDirectory: this._isGcsDirectory(gcsPath)
+      isDirectory: content.isDirectory(gcsPath)
     }
   }
 
@@ -267,9 +255,7 @@ export class GoogleCloudStorage implements app.IStorage {
    */
   _toStoragePath(gcsPath: string): string {
     // Prepend a slash. All storage paths are absolute.
-    var storagePath = '/' + gcsPath;
-    // Remove a trailing slash if one exists.
-    return content.stripTrailingSlash(storagePath);
+    return '/' + gcsPath;
   }
 
 }

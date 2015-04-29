@@ -16,6 +16,7 @@
 /// <reference path="../../../../../../externs/ts/node/node.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/mkdirp.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/node-dir.d.ts" />
+import content = require('./content');
 import fs = require('fs');
 import mkdirp = require('mkdirp');
 import nodedir = require('node-dir');
@@ -108,7 +109,7 @@ export class LocalFileSystemStorage implements app.IStorage {
         }
       });
 
-      callback(null, resources);
+      callback(null, content.selectNotebooks(resources));
     });
   }
 
@@ -165,20 +166,20 @@ export class LocalFileSystemStorage implements app.IStorage {
   /**
    * Converts the file system path to the corresponding storage path.
    *
-   * @param  path The local filesystem path.
+   * @param fsPath The local filesystem path.
    * @return The corresponding storage path..
    */
-  _toStoragePath(path: string) {
-    return path.slice(this._fsRootPath.length);
+  _toStoragePath(fsPath: string) {
+    return fsPath.slice(this._fsRootPath.length);
   }
 
   /**
    * Converts the storage path to the corresponding file system path.
    *
-   * @param  path The storage path.
+   * @param storagePath The storage path.
    * @return The corresponding local filesystem path.
    */
-  _toFileSystemPath(path: string) {
-    return pathlib.join(this._fsRootPath, path);
+  _toFileSystemPath(storagePath: string) {
+    return pathlib.join(this._fsRootPath, storagePath);
   }
 }

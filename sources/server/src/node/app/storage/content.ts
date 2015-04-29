@@ -48,11 +48,14 @@ export function isNotebook(path: string): boolean {
   return notebookExtension == path.slice(-notebookExtension.length);
 }
 
+/**
+ * Checks if the specified path represents a directory by checking for a trailing slash.
+ * @param path The path to check.
+ * @return Boolean to indicate if the path represents a directory.
+ */
 export function isDirectory(path: string): boolean {
-  // GCS denotes "directories" as object paths with a trailing slash.
   return path[path.length - 1] == '/';
 }
-
 
 /**
  * Strips a trailing slash character from the string if one exists.

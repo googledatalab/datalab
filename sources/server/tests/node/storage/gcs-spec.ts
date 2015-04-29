@@ -107,14 +107,14 @@ describe('GCS storage', () => {
 
   it('convert bucket root GCS directory path to a Resource', () => {
     expect(storage._toResource('dir/')).toEqual({
-      path: '/dir',
+      path: '/dir/',
       isDirectory: true
     });
   });
 
   it('convert nested GCS directory path to a Resource', () => {
     expect(storage._toResource('foo/bar/dir/')).toEqual({
-      path: '/foo/bar/dir',
+      path: '/foo/bar/dir/',
       isDirectory: true
     });
   });
@@ -138,13 +138,13 @@ describe('GCS storage', () => {
   it('convert bucket root GCS directory path to storage path', () => {
     var gcsPath = 'dir/';
     var storagePath = storage._toStoragePath(gcsPath);
-    expect(storagePath).toBe('/dir');
+    expect(storagePath).toBe('/dir/');
   });
 
   it('convert nested GCS directory path to storage path', () => {
     var gcsPath = 'foo/bar/dir/';
     var storagePath = storage._toStoragePath(gcsPath);
-    expect(storagePath).toBe('/foo/bar/dir');
+    expect(storagePath).toBe('/foo/bar/dir/');
   });
 
   it('convert bucket root GCS object path to storage path', () => {
@@ -168,8 +168,20 @@ describe('GCS storage', () => {
     expect(gcsPath).toBe('dir');
   });
 
+  it('convert storage root directory path to GCS path', () => {
+    var storagePath = '/dir/';
+    var gcsPath = storage._toGcsPath(storagePath);
+    expect(gcsPath).toBe('dir');
+  });
+
   it('convert nested storage directory path to GCS path', () => {
     var storagePath = '/foo/bar/dir';
+    var gcsPath = storage._toGcsPath(storagePath);
+    expect(gcsPath).toBe('foo/bar/dir');
+  });
+
+  it('convert nested storage directory path to GCS path', () => {
+    var storagePath = '/foo/bar/dir/';
     var gcsPath = storage._toGcsPath(storagePath);
     expect(gcsPath).toBe('foo/bar/dir');
   });
