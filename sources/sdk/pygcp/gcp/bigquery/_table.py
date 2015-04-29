@@ -765,7 +765,7 @@ class Table(object):
     writer = csv.DictWriter(f, fieldnames=fieldnames, dialect=dialect)
     if write_header:
       writer.writeheader()
-    for row in self.range(max_rows, start_row=start_row):
+    for row in self.range(start_row, max_rows):
       writer.writerow(row)
     f.close()
 
