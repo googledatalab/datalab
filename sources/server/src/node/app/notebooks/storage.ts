@@ -82,7 +82,16 @@ export class NotebookStorage implements app.INotebookStorage {
 
       } else {
         // Notebook already exists. Deserialize the notebook data.
-        notebookData = serializer.parse(serializedNotebook);
+        try {
+          notebookData = serializer.parse(serializedNotebook);
+        } catch (error) {
+          // Failed to deserialize the notebook.
+          //
+          // This can occur if the JSON data is malformed, or the notebook is not a valid ipynb
+          // for the format specified within the notebook.
+          callback(error);
+          return;
+        }
       }
 
       // Create the notebook wrapper to manage the notebook model state.
@@ -109,7 +118,14 @@ export class NotebookStorage implements app.INotebookStorage {
     }
 
     // Serialize the current notebook model state to the format inferred from the file extension
-    var serializedNotebook = serializer.stringify(notebook.getNotebookData());
+    var serializedNotebook: string;
+    try {
+      serializedNotebook = serializer.stringify(notebook.getNotebookData());
+    } catch (error) {
+      process.nextTick(callback.bind(null, error));
+      return;
+    }
+
 
     // Asynchronously write the notebook to storage.
     this._storage.write(path, serializedNotebook, callback);
