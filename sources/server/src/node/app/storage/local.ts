@@ -132,7 +132,8 @@ export class LocalFileSystemStorage implements app.IStorage {
         // doesn't exist.
         if (error.code == 'ENOENT') {
           // Return as a non-error state, but pass null to indicate the lack of data.
-          return callback(null, null);
+          callback(null, null);
+          return;
         } else {
           // Any other error types are surfaced to the caller.
           return callback(error);

@@ -10,6 +10,7 @@
     "async": "0.9.x",
     "body-parser": "1.12.x",
     "express": "4.x",
+    "gcloud": "git://github.com/GoogleCloudPlatform/gcloud-node.git#6109c42",
     "mkdirp": "0.5.x",
     "node-dir": "0.1.x",
     "node-uuid": "1.4.x",

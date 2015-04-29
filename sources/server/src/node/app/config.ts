@@ -15,13 +15,15 @@
 
 /// <reference path="../../../../../externs/ts/express/express.d.ts" />
 /// <reference path="../../../../../externs/ts/node/mkdirp.d.ts" />
+/// <reference path="../../../../../externs/ts/node/gcloud.d.ts" />
 /// <reference path="./common/interfaces.d.ts" />
-import express = require('express');
-import mkdirp = require('mkdirp');
-import kernels = require('./kernels/index');
 import content = require('./storage/index');
-import sessions = require('./sessions/index');
+import express = require('express');
+import gcloud = require('gcloud');
+import kernels = require('./kernels/index');
+import mkdirp = require('mkdirp');
 import nbstorage = require('./notebooks/storage');
+import sessions = require('./sessions/index');
 
 
 /**
@@ -76,18 +78,6 @@ export function getKernelManager(): app.IKernelManager {
 }
 
 /**
- * A single stateless server-wide storage backend instance.
- */
-var _fsStorage: app.IStorage;
-
-/**
- * Gets the configured storage backend for persisting arbitrary content.
- */
-export function getStorage(): app.IStorage {
-  return _fsStorage;
-}
-
-/**
  * A single stateless server-wide notebook storage backend instance.
  */
 var _notebookStorage: app.INotebookStorage;
@@ -100,20 +90,49 @@ export function getNotebookStorage(): app.INotebookStorage {
 }
 
 /**
- * Initializes the storage system for reading/writing.
+ * A single stateless server-wide storage backend instance.
  */
-export function initStorage(notebookStoragePath: string) {
-  // Ensure that the notebook storage path exists.
-  mkdirp.sync(notebookStoragePath);
-  console.log('Root notebook storage path: ', notebookStoragePath);
+var _storage: app.IStorage;
 
+/**
+ * Gets a storage backend for persisting server content.
+ */
+export function getStorage(): app.IStorage {
+  return _storage;
+}
+
+/**
+ * Initializes the storage system for reading/writing.
+ *
+ * If a GCS bucket name is provided, then a GCS storage backend will be used, otherwise local
+ * file system storage will be used. If both are specified, then GCS has precedence.
+ *
+ * @param notebookStoragePath Local filesystem path to use for storage.
+ * @param bucket GCS bucket to use for storage.
+ */
+export function initStorage(notebookStoragePath: string, bucket: string) {
   // Create the storage singleton if it hasn't been created before.
-  if (!_fsStorage) {
-    _fsStorage = new content.LocalFileSystem(notebookStoragePath);
+  if (!_storage) {
+
+    if (bucket) {
+      // Then use GCS for storage.
+      // Initialize the GCS storage instance.
+      var client = gcloud.storage().bucket(bucket);
+      _storage = new content.GoogleCloudStorage(client);
+      console.log('Using GCS storage. Bucket: ', bucket);
+
+    } else {
+      // Then use the local file system for storage.
+      //
+      // Ensure that the notebook storage path exists.
+      mkdirp.sync(notebookStoragePath);
+      _storage = new content.LocalFileSystem(notebookStoragePath);
+      console.log('Using local storage. Root notebook storage path: ', notebookStoragePath);
+    }
   }
 
   // Create the notebook storage singleton if it hasn't yet been created
   if (!_notebookStorage) {
-     _notebookStorage = new nbstorage.NotebookStorage(_fsStorage);
+     _notebookStorage = new nbstorage.NotebookStorage(_storage);
   }
 }

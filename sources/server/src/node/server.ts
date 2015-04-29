@@ -31,14 +31,21 @@ import socketio = require('socket.io');
 /**
  * Configure and parse command line arguments with defaults.
  */
-var options = nomnom.option(
-  'notebookPath', {
-    abbr: 'n',
-    full: 'notebook-path',
-    help: 'notebook loading root path',
-    default: './notebooks'
-  }
-).parse();
+var options = nomnom
+  .option(
+    'notebookPath', {
+      abbr: 'n',
+      full: 'notebook-path',
+      help: 'notebook loading root path',
+      default: './notebooks'
+    }
+  )
+  .option('gcsStorageBucket', {
+    abbr: 'b',
+    full: 'bucket',
+    help: 'GCS storage bucket to use for server content'
+  })
+  .parse();
 
 /**
  * Main entry point for the server.
@@ -76,7 +83,7 @@ export function start (settings: app.Settings) {
 }
 
 // Ensure that the notebook storage system is fully initialized
-config.initStorage(options.notebookPath);
+config.initStorage(options.notebookPath, options.gcsStorageBucket);
 
 // Start the DataLab server running
 start(config.getSettings());
