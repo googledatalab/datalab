@@ -43,9 +43,21 @@ export function getDescription(path: string): string {
   return descriptions.file;
 }
 
-export function isNotebook(path: string): boolean {
-  var notebookExtension = 'ipynb';
-  return notebookExtension == path.slice(-notebookExtension.length);
+/**
+ * Gets the path of the specified resource relative to the given directory.
+ *
+ * Note: this function assumes that the resource is contained within the directory, either
+ * directly or indirectly (i.e., directory path is a prefix of resource path).
+ *
+ * Note: this function assumes that the directory path contains a trailing slash.
+ *
+ * @param directoryPath The directory path.
+ * @param resourcePath The resource path.
+ * @return The path of the resource relative to the directory.
+ */
+export function getRelativePath(directoryPath: string, resourcePath: string): string {
+  // Strip the directory path prefix from the resource path.
+  return resourcePath.slice(directoryPath.length);
 }
 
 /**
@@ -58,19 +70,14 @@ export function isDirectory(path: string): boolean {
 }
 
 /**
- * Strips a trailing slash character from the string if one exists.
+ * Checks if the specified path represents a notebook by examining the file extension.
  *
- * @param s The input string.
- * @return String with a single trailing slash stripped, if one existed.
+ * @param path The path to check.
+ * @return Boolean to indicate if the path represents a notebook.
  */
-export function stripTrailingSlash(s: string) {
-  if (s[s.length - 1] == '/') {
-    // Then strip a trailing slash.
-    return s.slice(0, s.length -1);
-  } else {
-    // No trailing slash to strip.
-    return s;
-  }
+export function isNotebook(path: string): boolean {
+  var notebookExtension = 'ipynb';
+  return notebookExtension == path.slice(-notebookExtension.length);
 }
 
 /**
@@ -97,4 +104,20 @@ export function selectNotebooks(resources: app.Resource[]): app.Resource[] {
   });
 
   return selected;
+}
+
+/**
+ * Strips a trailing slash character from the string if one exists.
+ *
+ * @param s The input string.
+ * @return String with a single trailing slash stripped, if one existed.
+ */
+export function stripTrailingSlash(s: string) {
+  if (s[s.length - 1] == '/') {
+    // Then strip a trailing slash.
+    return s.slice(0, s.length -1);
+  } else {
+    // No trailing slash to strip.
+    return s;
+  }
 }

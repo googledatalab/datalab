@@ -77,7 +77,7 @@ export class GoogleCloudStorage implements app.IStorage {
       }
 
       // Get the paths to all objects/directories within that matched the query.
-      var resources = files.map(file => this._toResource(file.name, file.metadata.updated));
+      var resources = files.map(file => this._toResource(directoryPath, file.name, file.metadata.updated));
 
       // Filter the resources to only those files and directories directly contained within the
       // query path/directory if a non-recursive listing was requested.
@@ -239,13 +239,15 @@ export class GoogleCloudStorage implements app.IStorage {
    *
    * @param gcsPath Path to the resource within GCS.
    * @param lastModified Last modification time as ISO-8601 timestamp.
+   * @param storageDirectoryPath The storage directory path for relative path computation.
    * @return The Resource representation of the GCS resource.
    */
-  _toResource(gcsPath: string, lastModified: string): app.Resource {
-    var storagePath = this._toStoragePath(gcsPath);
+  _toResource(gcsResourcePath: string, lastModified: string, storageDirectoryPath?: string): app.Resource {
+    var storagePath = this._toStoragePath(gcsResourcePath);
     return {
       path: storagePath,
-      isDirectory: content.isDirectory(gcsPath),
+      relativePath: content.getRelativePath(storageDirectoryPath, storagePath),
+      isDirectory: content.isDirectory(gcsResourcePath),
       description: content.getDescription(storagePath),
       lastModified: lastModified
     }

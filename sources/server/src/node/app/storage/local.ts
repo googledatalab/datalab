@@ -75,12 +75,7 @@ export class LocalFileSystemStorage implements app.IStorage {
 
       // Add file (terminal) resources.
       paths.files.forEach(fsFilepath => {
-        var resourceStoragePath = this._toStoragePath(fsFilepath);
-        var resource = {
-          path: resourceStoragePath,
-          isDirectory: false,
-          description: content.getDescription(resourceStoragePath)
-        };
+        var resource = this._toResource(path, fsFilepath, false);
 
         if (recursive) {
           // Push all resources regardless of depth in the recursive case.
@@ -96,12 +91,7 @@ export class LocalFileSystemStorage implements app.IStorage {
 
       // Add directory (non-terminal) resources.
       paths.dirs.forEach(fsDirpath => {
-        var resourceStoragePath = this._toStoragePath(fsDirpath);
-        var resource = {
-          path: resourceStoragePath,
-          isDirectory: true,
-          description: content.getDescription(resourceStoragePath)
-        };
+        var resource = this._toResource(path, fsDirpath, true);
 
         if (recursive) {
           // Push all resources regardless of depth in the recursive case.
@@ -186,16 +176,6 @@ export class LocalFileSystemStorage implements app.IStorage {
   }
 
   /**
-   * Converts the file system path to the corresponding storage path.
-   *
-   * @param fsPath The local filesystem path.
-   * @return The corresponding storage path..
-   */
-  _toStoragePath(fsPath: string) {
-    return fsPath.slice(this._fsRootPath.length);
-  }
-
-  /**
    * Converts the storage path to the corresponding file system path.
    *
    * @param storagePath The storage path.
@@ -203,5 +183,30 @@ export class LocalFileSystemStorage implements app.IStorage {
    */
   _toFileSystemPath(storagePath: string) {
     return pathlib.join(this._fsRootPath, storagePath);
+  }
+
+  _toResource(
+      directoryStoragePath: string,
+      resourceFileSystemPath: string,
+      isDirectory: boolean
+      ): app.Resource {
+
+    var resourceStoragePath = this._toStoragePath(resourceFileSystemPath);
+    return {
+      path: resourceStoragePath,
+      relativePath: content.getRelativePath(directoryStoragePath, resourceStoragePath),
+      isDirectory: false,
+      description: content.getDescription(resourceStoragePath),
+    };
+  }
+
+  /**
+   * Converts the file system path to the corresponding storage path.
+   *
+   * @param fsPath The local filesystem path.
+   * @return The corresponding storage path..
+   */
+  _toStoragePath(fsPath: string) {
+    return fsPath.slice(this._fsRootPath.length);
   }
 }
