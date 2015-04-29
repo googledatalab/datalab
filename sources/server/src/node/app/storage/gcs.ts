@@ -55,10 +55,12 @@ export class GoogleCloudStorage implements app.IStorage {
    * @param callback Completion callback to invoke.
    */
   list(directoryPath: string, recursive: boolean, callback: app.Callback<app.Resource[]>) {
+    // TODO(bryantd): Use the query.delimiter = '/' setting to fetch both files and sub-directories
+    // in the non-recursive case to avoid needing to list the entire bucket and filter client side.
+    // Depends upon gcloud-node adding support for this GCS "common prefixes" feature.
     var query: GCloud.Storage.Query = {
       prefix: this._toGcsPath(directoryPath)
     };
-
 
     this._bucket.getFiles(query, (error, files, nextPageToken) => {
       if (error) {
