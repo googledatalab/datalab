@@ -110,7 +110,7 @@ declare module app {
     /**
      * Textual description of the resource for display within the UI (e.g., "IPython Notebook").
      */
-    description?: string;
+    description: string;
 
     /**
      * Last modification timestamp for the file, if one can be determined.

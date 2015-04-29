@@ -13,9 +13,11 @@
  */
 
 /// <reference path="../common/interfaces.d.ts" />
+/// <reference path="../../../../../../externs/ts/node/async.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/node.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/mkdirp.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/node-dir.d.ts" />
+import async = require('async');
 import content = require('./content');
 import fs = require('fs');
 import mkdirp = require('mkdirp');
@@ -116,7 +118,20 @@ export class LocalFileSystemStorage implements app.IStorage {
       // Filter non-notebook resources.
       resources = content.selectNotebooks(resources);
 
-      callback(null, resources);
+      // Asynchronously get the last modified time of the files.
+      async.map(resources.map(r => r.path), fs.stat, (error, stats) => {
+        if (error) {
+          callback(error);
+          return;
+        }
+
+        stats.forEach((stat, i) => {
+          // Populate the last modified timestamp for each resource.
+          resources[i].lastModified = stat.mtime.toISOString();
+        });
+
+        callback(null, resources);
+      });
     });
   }
 

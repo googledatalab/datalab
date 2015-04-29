@@ -12,9 +12,9 @@
  * the License.
  */
 
-/// <reference path="../../../../../../externs/ts/node/node.d.ts" />
-/// <reference path="../../../../../../externs/ts/node/gcloud.d.ts" />
 /// <reference path="../common/interfaces.d.ts" />
+/// <reference path="../../../../../../externs/ts/node/gcloud.d.ts" />
+/// <reference path="../../../../../../externs/ts/node/node.d.ts" />
 import content = require('./content');
 import gcloud = require('gcloud');
 import pathlib = require('path');
