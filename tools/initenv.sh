@@ -14,10 +14,6 @@ if [ "$SCRIPT" == "-bash" ]; then
 fi
 export REPO_DIR=$(git rev-parse --show-toplevel)
 
-# These control where the local emulation of the GCE metadata service exists.
-export METADATA_HOST=localhost
-export METADATA_PORT=8089
-
 # Turn off python's default behavior of generating .pyc files, so that we don't
 # end up picking up stale code when running samples or tests during development.
 export PYTHONDONTWRITEBYTECODE=1
@@ -27,4 +23,3 @@ export PATH=$PATH:$REPO_DIR/tools
 
 # Add aliases
 alias pylint='pylint --rcfile=$REPO_DIR/tools/pylint.rc'
-

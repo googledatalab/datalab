@@ -25,12 +25,17 @@
 
 var childProcess = require('child_process'),
     http = require('http'),
-    url = require('url');
+    url = require('url'),
+    util = require('util');
 
 var DEFAULT_PORT = 80;
 var HTTP_STATUS_OK = 200;
 var HTTP_STATUS_NOTFOUND = 404;
 var HTTP_STATUS_ERROR = 500;
+
+
+// Command pattern that allows executing gcloud commands as the current user (vs sudo).
+var commandPattern = "sudo -u $USER bash -c 'source $HOME/google-cloud-sdk/path.bash.inc; %s'";
 
 /**
  * The set of metadata names supported. Each name is associated with a request path that the
@@ -38,15 +43,15 @@ var HTTP_STATUS_ERROR = 500;
  */
 var supportedMetadata = {
   authToken: {
-    path: '/computemetadata/v1/instance/service-accounts/default/token',
-    command: 'gcloud auth print-access-token',
+    path: '/computemetadata/v1beta1/instance/service-accounts/default/token',
+    command: util.format(commandPattern, 'gcloud auth print-access-token'),
     formatter: function(output) {
       return { access_token: output.trim() };
     }
   },
   projectId: {
-    path: '/computemetadata/v1/project/project-id',
-    command: 'gcloud config list --format json project',
+    path: '/computemetadata/v1beta1/project/project-id',
+    command: util.format(commandPattern, 'gcloud config list --format json project'),
     formatter: function(output) {
       var data = JSON.parse(output);
       return data.core.project;
@@ -117,6 +122,10 @@ function requestHandler(req, resp) {
     }
   }
 
+  // The gcloud-auth-library uses the following "metadata-flavor" header check for validating
+  // the existence of the GCE metadata service.
+  resp.setHeader('metadata-flavor', 'Google');
+
   resp.writeHead(HTTP_STATUS_NOTFOUND);
   resp.end();
 }
@@ -127,12 +136,10 @@ function requestHandler(req, resp) {
  * for incoming requests.
  */
 function main() {
-  var port = parseInt(process.env['METADATA_PORT'] || DEFAULT_PORT, 10);
-
   var server = http.createServer(requestHandler);
-  server.listen(port);
+  server.listen(DEFAULT_PORT);
 
-  console.log('Metadata server started at http://localhost:' + port + '/ ...');
+  console.log('Metadata server started at http://localhost:' + DEFAULT_PORT + '/ ...');
 }
 
 

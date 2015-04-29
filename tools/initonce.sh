@@ -2,6 +2,15 @@
 
 # Script to initialize a dev workstation. Installs required packages/tools.
 
+# Check for local metadata service host configuration.
+if [[ -n $(grep metadata /etc/hosts) ]]; then
+    echo "Metadata host names configured."
+else
+    echo "Add the following to your /etc/hosts file to support running the local metadata service"
+    echo "127.0.0.1   metadata.google.internal"
+    echo "127.0.0.1   metadata"
+fi
+
 # Python package manager installation
 # This is the approach recommended by PyPI
 pip_dir='/tmp/pip-install';
@@ -36,4 +45,3 @@ if which npm >/dev/null; then
 else
   echo "Please install NodeJS and then re-run this script to install the Jasmine NodeJS test runner."
 fi
-
