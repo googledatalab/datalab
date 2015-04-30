@@ -191,11 +191,11 @@ export class LocalFileSystemStorage implements app.IStorage {
       isDirectory: boolean
       ): app.Resource {
 
-    var resourceStoragePath = this._toStoragePath(resourceFileSystemPath);
+    var resourceStoragePath = this._toStoragePath(resourceFileSystemPath, isDirectory);
     return {
       path: resourceStoragePath,
       relativePath: content.getRelativePath(directoryStoragePath, resourceStoragePath),
-      isDirectory: false,
+      isDirectory: isDirectory,
       description: content.getDescription(resourceStoragePath),
     };
   }
@@ -206,7 +206,8 @@ export class LocalFileSystemStorage implements app.IStorage {
    * @param fsPath The local filesystem path.
    * @return The corresponding storage path..
    */
-  _toStoragePath(fsPath: string) {
-    return fsPath.slice(this._fsRootPath.length);
+  _toStoragePath(fsPath: string, isDirectory: boolean) {
+    // Remove the root storage path prefix and append a slash if a directory.
+    return fsPath.slice(this._fsRootPath.length) + (isDirectory? '/' : '');
   }
 }
