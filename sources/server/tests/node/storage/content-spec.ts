@@ -202,6 +202,31 @@ describe('Content path/resource utilities', () => {
     expect(selected).toEqual(resources.slice(0, 3));
   })
 
+  // Ensure a leading slash
+  it('ensures the path has a leading slash', () => {
+    expect(content.ensureLeadingSlash('')).toEqual('/');
+    expect(content.ensureLeadingSlash('/')).toEqual('/');
+    expect(content.ensureLeadingSlash('foo')).toEqual('/foo');
+    expect(content.ensureLeadingSlash('/foo')).toEqual('/foo');
+  });
+
+  // Ensure a trailing slash
+  it('ensures the path has a trailing slash', () => {
+    expect(content.ensureTrailingSlash('')).toEqual('/');
+    expect(content.ensureTrailingSlash('/')).toEqual('/');
+    expect(content.ensureTrailingSlash('foo')).toEqual('foo/');
+    expect(content.ensureTrailingSlash('foo/')).toEqual('foo/');
+  });
+
+  // Checks for slash within string
+  it('checks for a slash within the string', () => {
+    expect(content.containsSlash('')).toBe(false);
+    expect(content.containsSlash('/')).toBe(true);
+    expect(content.containsSlash('foo/bar')).toBe(true);
+    expect(content.containsSlash('foo/')).toBe(true);
+    expect(content.containsSlash('/foo')).toBe(true);
+  });
+
   // Strip trailing slash
 
   it('strips a trailing slash when one exists', () => {
@@ -210,10 +235,8 @@ describe('Content path/resource utilities', () => {
     expect(content.stripTrailingSlash('/')).toEqual('');
   });
 
-  it('strips a trailing slash when one exists', () => {
-    expect(content.stripTrailingSlash('/dir/')).toEqual('/dir');
-    expect(content.stripTrailingSlash('/foo/bar/dir/')).toEqual('/foo/bar/dir');
-    expect(content.stripTrailingSlash('/')).toEqual('');
+  it('returns empty string when stripping slash from empty string', () => {
+    expect(content.stripTrailingSlash('')).toEqual('');
   });
 
   it('does nothing when a trailing slash does not exist', () => {

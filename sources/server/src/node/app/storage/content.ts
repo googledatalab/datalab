@@ -172,28 +172,53 @@ export function stripTrailingSlash(s: string) {
   }
 }
 
+/**
+ * Checks if the given path contains a slash (anywhere).
+ *
+ * @param path The path to check.
+ * @return Boolean to indicate if a slash was found.
+ */
 export function containsSlash(path: string): boolean {
+  // String.indexOf returns -1 if no slash exists in the string.
   return path.indexOf('/') >= 0;
 }
 
-export function hasTrailingSlash(directoryPath: string): boolean {
-  return endsWith(directoryPath, '/');
+/**
+ * Checks if the path has a trailing slash.
+ *
+ * @param path The path to check.
+ * @return Boolean to indicate if the path has a trailing slash.
+ */
+export function hasTrailingSlash(path: string): boolean {
+  return endsWith(path, '/');
 }
 
-export function ensureTrailingSlash(directoryPath: string): string {
+/**
+ * Adds a trailing slash to the string if one does not exist.
+ *
+ * @param path The path to ensure has a trailing slash.
+ * @return Path guaranteed to have a trailing slash.
+ */
+export function ensureTrailingSlash(path: string): string {
   // Append a slash if needed.
-  if (!hasTrailingSlash(directoryPath)) {
-    directoryPath = directoryPath + '/';
+  if (!hasTrailingSlash(path)) {
+    path = path + '/';
   }
-  return directoryPath;
+  return path;
 }
 
-export function ensureLeadingSlash(directoryPath: string): string {
+/**
+ * Adds a leading slash to the string if one does not exist.
+ *
+ * @param path The path to ensure has a leading slash.
+ * @return Path guaranteed to have a leading slash.
+ */
+export function ensureLeadingSlash(path: string): string {
   // Prepend a slash if needed.
-  if (!startsWith(directoryPath, '/')) {
-    directoryPath = '/' + directoryPath;
+  if (!startsWith(path, '/')) {
+    path = '/' + path;
   }
-  return directoryPath;
+  return path;
 }
 
 /**
