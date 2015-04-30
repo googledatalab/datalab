@@ -38,6 +38,26 @@ describe('Content path/resource utilities', () => {
     resources = undefined;
   });
 
+  it('gets the relative path of a file directly contained by directory', () => {
+    expect(content.getRelativePath('/', '/foo.txt')).toEqual('foo.txt');
+    expect(content.getRelativePath('/quux/', '/quux/foo.txt')).toEqual('foo.txt');
+  });
+
+  it('gets the relative path of a file in a subdirectory', () => {
+    expect(content.getRelativePath('/', '/bar/foo.txt')).toEqual('bar/foo.txt');
+    expect(content.getRelativePath('/quux/', '/quux/bar/foo.txt')).toEqual('bar/foo.txt');
+  });
+
+  it('gets the relative path of a directory directly contained by the base directory', () => {
+    expect(content.getRelativePath('/', '/foo/')).toEqual('foo/');
+    expect(content.getRelativePath('/quux/', '/quux/foo/')).toEqual('foo/');
+  });
+
+  it('gets the relative path of a directory in a subdirectory', () => {
+    expect(content.getRelativePath('/', '/bar/foo/')).toEqual('bar/foo/');
+    expect(content.getRelativePath('/quux/', '/quux/bar/foo/')).toEqual('bar/foo/');
+  });
+
   it('selects only notebook files from the input resources', () => {
     var filtered = content.selectNotebooks(resources);
 

@@ -237,12 +237,12 @@ export class GoogleCloudStorage implements app.IStorage {
   /**
    * Creates a resource from the specified GCS path.
    *
+   * @param storageDirectoryPath The storage directory path for relative path computation.
    * @param gcsPath Path to the resource within GCS.
    * @param lastModified Last modification time as ISO-8601 timestamp.
-   * @param storageDirectoryPath The storage directory path for relative path computation.
    * @return The Resource representation of the GCS resource.
    */
-  _toResource(gcsResourcePath: string, lastModified: string, storageDirectoryPath?: string): app.Resource {
+  _toResource(storageDirectoryPath: string, gcsResourcePath: string, lastModified: string): app.Resource {
     var storagePath = this._toStoragePath(gcsResourcePath);
     return {
       path: storagePath,

@@ -27,7 +27,11 @@ interface GcsStorage extends app.IStorage {
       ): app.Resource[];
   _toStoragePath(gcsPath: string): string;
   _toGcsPath(storagePath: string): string;
-  _toResource(gcsPath: string): app.Resource;
+  _toResource(
+      storageDirectoryPath: string,
+      gcsResourcePath: string,
+      lastModified: string
+      ): app.Resource;
 }
 
 
@@ -106,30 +110,57 @@ describe('GCS storage', () => {
   // GCS path => Resource
 
   it('convert bucket root GCS directory path to a Resource', () => {
-    expect(storage._toResource('dir/')).toEqual({
+    var lastModified = (new Date()).toISOString();
+    expect(storage._toResource('/', 'dir/', lastModified)).toEqual({
       path: '/dir/',
-      isDirectory: true
+      isDirectory: true,
+      relativePath: 'dir/',
+      description: 'Folder',
+      lastModified: lastModified
     });
   });
 
   it('convert nested GCS directory path to a Resource', () => {
-    expect(storage._toResource('foo/bar/dir/')).toEqual({
+    var lastModified = (new Date()).toISOString();
+    expect(storage._toResource('/', 'foo/bar/dir/', lastModified)).toEqual({
       path: '/foo/bar/dir/',
-      isDirectory: true
+      isDirectory: true,
+      relativePath: 'foo/bar/dir/',
+      description: 'Folder',
+      lastModified: lastModified
     });
   });
 
   it('convert bucket root GCS object path to a Resource', () => {
-    expect(storage._toResource('object')).toEqual({
+    var lastModified = (new Date()).toISOString();
+    expect(storage._toResource('/', 'object', lastModified)).toEqual({
       path: '/object',
-      isDirectory: false
+      isDirectory: false,
+      relativePath: 'object',
+      description: 'File',
+      lastModified: lastModified
     });
   });
 
   it('convert nested GCS object path to a Resource', () => {
-    expect(storage._toResource('foo/bar/object')).toEqual({
+    var lastModified = (new Date()).toISOString();
+    expect(storage._toResource('/', 'foo/bar/object', lastModified)).toEqual({
       path: '/foo/bar/object',
-      isDirectory: false
+      isDirectory: false,
+      relativePath: 'foo/bar/object',
+      description: 'File',
+      lastModified: lastModified
+    });
+  });
+
+  it('convert nested GCS notebook path to a Resource', () => {
+    var lastModified = (new Date()).toISOString();
+    expect(storage._toResource('/', 'foo/bar/object.ipynb', lastModified)).toEqual({
+      path: '/foo/bar/object.ipynb',
+      isDirectory: false,
+      relativePath: 'foo/bar/object.ipynb',
+      description: 'IPython Notebook',
+      lastModified: lastModified
     });
   });
 

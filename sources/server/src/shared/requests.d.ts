@@ -95,7 +95,7 @@ declare module app {
     /**
      * Textual description of the resource for display within the UI (e.g., "IPython Notebook").
      */
-    description: string;
+    description?: string;
 
     /**
      * Does this resource path represent a directory?
@@ -123,6 +123,6 @@ declare module app {
     /**
      * The path to the file relative to a pre-specified prefix.
      */
-    relativePath: string;
+    relativePath?: string;
   }
 }
