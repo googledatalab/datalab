@@ -21,8 +21,8 @@ describe('Content path/resource utilities', () => {
 
   beforeEach(() => {
     resources = [
-      { path: '/foo/bar', isDirectory: true },
-      { path: '/foo', isDirectory: true },
+      { path: '/foo/bar/', isDirectory: true },
+      { path: '/foo/', isDirectory: true },
 
       { path: '/foo/bar/a.ipynb', isDirectory: false },
       { path: '/foo/b.ipynb', isDirectory: false },
@@ -76,6 +76,131 @@ describe('Content path/resource utilities', () => {
     expect(filtered[3]).toEqual(resources[3]);
     expect(filtered[4]).toEqual(resources[4]);
   });
+
+
+  // Select based upon containing directory
+
+  it('selects all files/directories recursively within the root directory', () => {
+    var root = content.selectWithinDirectory('/', resources, true);
+    expect(root).toEqual(resources);
+  });
+
+  it('selects only files/directories within the root directory', () => {
+    // Populate a relative path for each resource.
+    resources.forEach(r => r.relativePath = r.path.slice('/'.length));
+
+    var root = content.selectWithinDirectory('/', resources, false);
+    expect(root.length).toBe(3);
+    expect(root[0]).toEqual(resources[1]);
+    expect(root[1]).toEqual(resources[4]);
+    expect(root[2]).toEqual(resources[7]);
+  });
+
+  it('selects only files/directories within a sub directory', () => {
+    // Only resources within /foo/
+    resources = [
+      { path: '/foo/bar/', isDirectory: true},
+      { path: '/foo/', isDirectory: true },
+      { path: '/foo/bar/a.ipynb', isDirectory: false },
+      { path: '/foo/b.ipynb', isDirectory: false },
+      { path: '/foo/bar/a.txt', isDirectory: false },
+      { path: '/foo/b.txt', isDirectory: false },
+    ];
+    // Populate a relative path for each resource.
+    resources.forEach(r => r.relativePath = r.path.slice('/foo/'.length));
+
+    var foo = content.selectWithinDirectory('/foo/', resources, false);
+    expect(foo.length).toBe(3);
+    expect(foo[0]).toEqual(resources[0]);
+    expect(foo[1]).toEqual(resources[3]);
+    expect(foo[2]).toEqual(resources[5]);
+  });
+
+  it('selects files/directories recursively within a sub directory', () => {
+    // Only resources within /foo/
+    resources = [
+      { path: '/foo/bar/', isDirectory: true},
+      { path: '/foo/', isDirectory: true },
+      { path: '/foo/bar/a.ipynb', isDirectory: false },
+      { path: '/foo/b.ipynb', isDirectory: false },
+      { path: '/foo/bar/a.txt', isDirectory: false },
+      { path: '/foo/b.txt', isDirectory: false },
+    ];
+    // Populate a relative path for each resource.
+    resources.forEach(r => r.relativePath = r.path.slice('/foo/'.length));
+
+    var foo = content.selectWithinDirectory('/foo/', resources, true);
+    expect(foo.length).toBe(5);
+    expect(foo[0]).toEqual(resources[0]);
+    // The directory itself should not appear in the selected resources.
+    expect(foo[1]).toEqual(resources[2]);
+    expect(foo[2]).toEqual(resources[3]);
+    expect(foo[3]).toEqual(resources[4]);
+    expect(foo[4]).toEqual(resources[5]);
+  });
+
+  it('selects only files/directories within a sub-sub directory', () => {
+    // Only resources within /foo/bar/
+    resources = [
+      { path: '/foo/bar/', isDirectory: true},
+      { path: '/foo/bar/a.ipynb', isDirectory: false },
+      { path: '/foo/bar/a.txt', isDirectory: false },
+    ];
+    // Populate a relative path for each resource.
+    resources.forEach(r => r.relativePath = r.path.slice('/foo/bar/'.length));
+
+    var foobar = content.selectWithinDirectory('/foo/bar/', resources, false);
+    expect(foobar.length).toBe(2);
+    expect(foobar[0]).toEqual(resources[1]);
+    expect(foobar[1]).toEqual(resources[2]);
+  });
+
+  it('selects files/directories recursively within a sub-sub directory', () => {
+    // Only resources within /foo/bar/
+    resources = [
+      { path: '/foo/bar/', isDirectory: true},
+      { path: '/foo/bar/a.ipynb', isDirectory: false },
+      { path: '/foo/bar/a.txt', isDirectory: false },
+    ];
+    // Populate a relative path for each resource.
+    resources.forEach(r => r.relativePath = r.path.slice('/foo/bar/'.length));
+
+    var foobar = content.selectWithinDirectory('/foo/bar/', resources, false);
+    expect(foobar.length).toBe(2);
+    // The directory itself should not appear in the selected resources.
+    expect(foobar[0]).toEqual(resources[1]);
+    expect(foobar[1]).toEqual(resources[2]);
+  });
+
+  it('selects directories within a sub directory', () => {
+    var resources = [{
+        "path": "/sub1/",
+        "relativePath": "sub1/",
+        "isDirectory": true,
+        "description": "Folder"
+    },
+    {
+        "path": "/sub2/",
+        "relativePath": "sub2/",
+        "isDirectory": true,
+        "description": "Folder"
+    },
+    {
+        "path": "/sub3/",
+        "relativePath": "sub3/",
+        "isDirectory": true,
+        "description": "Folder"
+    },
+    {
+        "path": "/sub1/subsub/",
+        "relativePath": "sub1/subsub/",
+        "isDirectory": true,
+        "description": "Folder"
+    }]
+    var selected = content.selectWithinDirectory('/', resources, false);
+    expect(selected.length).toBe(3);
+    expect(selected).toEqual(resources.slice(0, 3));
+  })
 
   // Strip trailing slash
 

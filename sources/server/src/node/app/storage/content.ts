@@ -91,15 +91,66 @@ export function selectNotebooks(resources: app.Resource[]): app.Resource[] {
   var selected: app.Resource[] = [];
 
   resources.forEach(resource => {
-    // All directories are retained.
     if (resource.isDirectory) {
+      // All directories are retained.
       selected.push(resource);
+    } else if (isNotebook(resource.path)) {
+      // All notebooks are retained.
+      selected.push(resource);
+    }
+
+    // All other resources types are not selected.
+  });
+
+  return selected;
+}
+
+/**
+ * Selects resources that are directly contained within the specified directory path.
+ *
+ * @param directoryStoragePath The storage directory path to use for selection.
+ * @param resources The array of resources to select from.
+ * @param recursive Select all files/dirs recursively contained within the specified directory.
+ * @return A new array containing only resources directly within the specified directory.
+ */
+export function selectWithinDirectory(
+    directoryStoragePath: string,
+    resources: app.Resource[],
+    recursive: boolean
+    ): app.Resource[] {
+
+  var selected: app.Resource[] = [];
+
+  resources.forEach(resource => {
+    var pathPrefix = resource.path.slice(0, directoryStoragePath.length);
+
+    // Check if the current resource path is contained (directly or indirectly) by the specified
+    // directory path.
+    if (directoryStoragePath != pathPrefix) {
+      // This resource path is not contained within the specified directory path, so skip it.
       return;
     }
 
-    if (isNotebook(resource.path)) {
-      selected.push(resource);
+    // Don't add the directory itself.
+    if (directoryStoragePath == resource.path) {
+      return;
     }
+
+    if (recursive) {
+      selected.push(resource);
+    } else {
+      // Don't select paths that are contained within subdirectories.
+      //
+      // Check if the suffix indicates that the resource path is directly contained (vs indirectly
+      // via sub directory).
+      //
+      // The following strips a trailing slash (e.g., from directories) and then looks for a
+      // remaining slash within the path to identify the presence of a subdirectory.
+      if (!containsSlash(stripTrailingSlash(resource.relativePath))) {
+        selected.push(resource);
+      }
+    }
+
   });
 
   return selected;
@@ -121,6 +172,30 @@ export function stripTrailingSlash(s: string) {
   }
 }
 
+export function containsSlash(path: string): boolean {
+  return path.indexOf('/') >= 0;
+}
+
+export function hasTrailingSlash(directoryPath: string): boolean {
+  return endsWith(directoryPath, '/');
+}
+
+export function ensureTrailingSlash(directoryPath: string): string {
+  // Append a slash if needed.
+  if (!hasTrailingSlash(directoryPath)) {
+    directoryPath = directoryPath + '/';
+  }
+  return directoryPath;
+}
+
+export function ensureLeadingSlash(directoryPath: string): string {
+  // Prepend a slash if needed.
+  if (!startsWith(directoryPath, '/')) {
+    directoryPath = '/' + directoryPath;
+  }
+  return directoryPath;
+}
+
 /**
  * Normalizes the specified path to the expected storage directory path format.
  *
@@ -132,23 +207,14 @@ export function stripTrailingSlash(s: string) {
  * @param directoryPath The directory path to normalize.
  * @return The normalized storage directory path.
  */
-export function normalizeDirectoryPath(directoryPath: string) {
+export function normalizeDirectoryPath(directoryPath: string): string {
   // If a path wasn't specified, then take the path to be the storage root.
   if (directoryPath === undefined) {
     directoryPath = ''
   }
 
-  // Prepend a slash if needed.
-  if (!startsWith(directoryPath, '/')) {
-    directoryPath = '/' + directoryPath;
-  }
-
-  // Append a slash if needed.
-  if (!endsWith(directoryPath, '/')) {
-    directoryPath = directoryPath + '/';
-  }
-
-  return directoryPath;
+  // Ensure that the directory path has a leading and a trailing slash.
+  return ensureTrailingSlash(ensureLeadingSlash(directoryPath));
 }
 
 /**
