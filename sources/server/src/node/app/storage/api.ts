@@ -112,16 +112,8 @@ export class ContentApi {
    * @param response HTTP response object.
    */
   list(request: express.Request, response: express.Response): void {
-    // If a path wasn't specified, then the list operation applies to the root.
-    var path = request.params.path;
-    if (path === undefined) {
-      // This takes care of the GET "/content" and "/content/" path cases.
-      path = ''
-    }
-
-    // Prepend a slash '/' to denote that these paths are rooted (i.e., at the storage root).
-    // Append a slash to denote that the listing should match a slash-delimited prefix.
-    path = content.normalizeDirectoryPath(path);
+    // Normalize the requested storage directory path to list.
+    var storageDirectoryPath = content.normalizeDirectoryPath(request.params.path);
 
     // Get the recursive flag from the request if it was provided and convert it to a boolean.
     // Any truthy string value will be converted to true, so all of the following would
@@ -135,7 +127,11 @@ export class ContentApi {
     var isRecursive = !!request.query.recursive;
 
     // Asynchronously list the resources that exist at the given path prefix within storage.
-    this._storage.list(path, isRecursive, (error: Error, resources: app.Resource[]) => {
+    this._storage.list(
+        storageDirectoryPath,
+        isRecursive,
+        (error: Error, resources: app.Resource[]) => {
+
       if (error) {
         apiutil.sendInternalError(response, "Content list operation failed.", error);
         return;
@@ -143,7 +139,7 @@ export class ContentApi {
 
       // Success. Send the list of resources matching the specified path prefix.
       response.send({
-        prefix: path,
+        prefix: storageDirectoryPath,
         resources: resources
       });
     });

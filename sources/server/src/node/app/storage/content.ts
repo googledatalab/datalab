@@ -127,15 +127,23 @@ export function stripTrailingSlash(s: string) {
  * Transformations done:
  * - Adds a trailing slash if there is not one.
  * - Prepends a slash if there is not one.
+ * - Replaces empty string/undefined paths with root path.
  *
  * @param directoryPath The directory path to normalize.
  * @return The normalized storage directory path.
  */
 export function normalizeDirectoryPath(directoryPath: string) {
+  // If a path wasn't specified, then take the path to be the storage root.
+  if (directoryPath === undefined) {
+    directoryPath = ''
+  }
+
+  // Prepend a slash if needed.
   if (!startsWith(directoryPath, '/')) {
     directoryPath = '/' + directoryPath;
   }
 
+  // Append a slash if needed.
   if (!endsWith(directoryPath, '/')) {
     directoryPath = directoryPath + '/';
   }

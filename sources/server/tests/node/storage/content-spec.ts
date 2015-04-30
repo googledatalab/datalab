@@ -151,4 +151,27 @@ describe('Content path/resource utilities', () => {
     expect(content.startsWith('foo', 'foobar')).toBe(false);
   });
 
+  // Normalize path
+
+  it('normalizes an undefined path to the storage root', () => {
+    expect(content.normalizeDirectoryPath(undefined)).toBe('/');
+  });
+
+  it('normalizes an empty path to the storage root', () => {
+    expect(content.normalizeDirectoryPath('')).toBe('/');
+  });
+
+  it('normalizes a directory path to have a trailing slash', () => {
+    expect(content.normalizeDirectoryPath('/')).toBe('/');
+    expect(content.normalizeDirectoryPath('/foo')).toBe('/foo/');
+    expect(content.normalizeDirectoryPath('/foo/bar')).toBe('/foo/bar/');
+    expect(content.normalizeDirectoryPath('/foo/bar/')).toBe('/foo/bar/');
+  });
+
+  it('normalizes a directory path to have a leading slash', () => {
+    expect(content.normalizeDirectoryPath('/')).toBe('/');
+    expect(content.normalizeDirectoryPath('/foo/')).toBe('/foo/');
+    expect(content.normalizeDirectoryPath('foo/')).toBe('/foo/');
+    expect(content.normalizeDirectoryPath('foo/bar/')).toBe('/foo/bar/');
+  });
 });
