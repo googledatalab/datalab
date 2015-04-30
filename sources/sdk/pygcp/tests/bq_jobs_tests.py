@@ -29,15 +29,15 @@ class TestCases(unittest.TestCase):
     j = gcp.bigquery.job('foo', self._create_context())
     self.assertFalse(j.iscomplete)
     self.assertFalse(j.failed)
-    mock_api_jobs_get.return_value = {'state': 'DONE'}
+    mock_api_jobs_get.return_value = {'status': {'state': 'DONE'}}
     self.assertTrue(j.iscomplete)
     self.assertFalse(j.failed)
 
   @mock.patch('gcp.bigquery._Api.jobs_get')
   def test_job_fatal_error(self, mock_api_jobs_get):
     mock_api_jobs_get.return_value = {
-      'state': 'DONE',
       'status': {
+        'state': 'DONE',
         'errorResult': {
           'location': 'A',
           'message': 'B',
@@ -57,8 +57,8 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._Api.jobs_get')
   def test_job_errors(self, mock_api_jobs_get):
     mock_api_jobs_get.return_value = {
-      'state': 'DONE',
       'status': {
+        'state': 'DONE',
         'errors': [
           {
             'location': 'A',

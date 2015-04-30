@@ -18,64 +18,13 @@ import collections
 import re
 from gcp._util import Iterator as _Iterator
 from ._table import Table as _Table
-
-DataSetName = collections.namedtuple('DataSetName', ['project_id', 'dataset_id'])
+from ._utils import parse_dataset_name as _parse_dataset_name
 
 
 class DataSet(object):
   """Represents a list of BigQuery tables in a dataset."""
 
-  # Absolute project-qualified name pattern: <project>:<dataset>
-  _ABS_NAME_PATTERN = r'^([a-z0-9\-_\.:]+)\:([a-zA-Z0-9_]+)$'
 
-  # Relative name pattern: <dataset>
-  _REL_NAME_PATTERN = r'^([a-zA-Z0-9_]+)$'
-
-  @staticmethod
-  def _parse_name(name, project_id=None):
-    """Parses a dataset name into its individual parts.
-
-    Args:
-      name: the name to parse, or a tuple, dictionary or array containing the parts.
-      project_id: the expected project ID. If the name does not contain a project ID,
-          this will be used; if the name does contain a project ID and it does not match
-          this, an exception will be thrown.
-    Returns:
-      The DataSetName for the dataset.
-    Raises:
-      Exception: raised if the name doesn't match the expected formats.
-    """
-    _project_id = _dataset_id = None
-    if isinstance(name, basestring):
-      # Try to parse as absolute name first.
-      m = re.match(DataSet._ABS_NAME_PATTERN, name, re.IGNORECASE)
-      if m is not None:
-        _project_id, _dataset_id = m.groups()
-      else:
-        # Next try to match as a relative name implicitly scoped within current project.
-        m = re.match(DataSet._REL_NAME_PATTERN, name)
-        if m is not None:
-          groups = m.groups()
-          _dataset_id = groups[0]
-    elif isinstance(name, dict):
-      try:
-        _dataset_id = name['dataset_id']
-        _project_id = name['project_id']
-      except KeyError:
-        pass
-    else:
-      # Try treat as an array or tuple
-      if len(name) == 2:
-        # Treat as a tuple or array.
-        _project_id, _dataset_id = name
-      elif len(name) == 1:
-        _dataset_id = name[0]
-    if not _dataset_id:
-      raise Exception('Invalid dataset name: ' + str(name))
-    if not _project_id:
-      _project_id = project_id
-
-    return DataSetName(_project_id, _dataset_id)
 
   def __init__(self, api, name):
     """Initializes an instance of a DataSet.
@@ -86,7 +35,7 @@ class DataSet(object):
       name: the name of the dataset, as a string or (project_id, dataset_id) tuple.
     """
     self._api = api
-    self._name_parts = DataSet._parse_name(name, api.project_id)
+    self._name_parts = _parse_dataset_name(name, api.project_id)
     self._full_name = '%s:%s' % self._name_parts
 
   @property

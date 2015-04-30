@@ -454,7 +454,9 @@ class TestCases(unittest.TestCase):
     self.assertEquals('bar', job.id)
 
   @mock.patch('gcp.bigquery._Api.table_extract')
-  def test_table_extract(self, mock_api_table_extract):
+  @mock.patch('gcp.bigquery._Api.jobs_get')
+  def test_table_extract(self, mock_api_jobs_get, mock_api_table_extract):
+    mock_api_jobs_get.return_value = {'status': {'state': 'DONE'}}
     mock_api_table_extract.return_value = None
     tbl = gcp.bigquery.table('testds.testTable0', context=self._create_context())
     job = tbl.extract('gs://foo')

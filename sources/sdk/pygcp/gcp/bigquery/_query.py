@@ -16,6 +16,7 @@
 
 import csv
 from ._sampling import Sampling as _Sampling
+from ._utils import parse_table_name as _parse_table_name
 
 
 class Query(object):
@@ -77,8 +78,8 @@ class Query(object):
       self._results = self.execute(use_cache=use_cache, batch=False, timeout=timeout)
     return self._results.results
 
-  def extract(self, destination, format='CSV', compress=False,
-              field_delimiter=',', print_header=True, use_cache=True, timeout=0):
+  def extract(self, destination, format='CSV', compress=False, field_delimiter=',',
+              print_header=True, use_cache=True, timeout=0, extract_timeout=None, poll=5):
     """Exports the query results to GCS.
 
     Args:
@@ -91,12 +92,20 @@ class Query(object):
       print_header: for CSV exports, whether to include an initial header line (default True).
       timeout: duration (in milliseconds) to wait for the query to complete (default 0).
       use_cache: whether to use cached results or not (default True).
+      extract_timeout: how long to block waiting for the extract job to complete; default None
+          which means no limit. If not None, then the call may return an incomplete Job which will
+          have to be checked for completion using Job.wait or Job.iscomplete.
+      poll: interval in seconds between job status polls (default 5).
     Returns:
       A Job object for the export Job if it was started successfully; else None.
+    Raises:
+      An Exception if the query timed out or failed.
     """
-    return self.results(timeout=timeout, use_cache=use_cache) \
-        .extract(destination, format=format, compress=compress, field_delimiter=field_delimiter,
-                 print_header=print_header)
+    query_job = self.results(timeout=timeout, use_cache=use_cache)
+    extract_job = query_job.extract(destination, format=format, compress=compress,
+                                    field_delimiter=field_delimiter, print_header=print_header,
+                                    timeout=extract_timeout, poll=poll)
+    return extract_job
 
   def to_dataframe(self, start_row=0, max_rows=None, use_cache=True, timeout=0):
     """ Exports the query results to a Pandas dataframe.
@@ -140,10 +149,11 @@ class Query(object):
 
     Args:
       count: an optional count of rows to retrieve which is used if a specific
-          sampling is not specified.
+          sampling is not specified (default 5).
+      fields: the list of fields to sample (default None implies all).
       sampling: an optional sampling strategy to apply to the table.
-      timeout: duration (in milliseconds) to wait for the query to complete.
-      use_cache: whether to use cached results or not.
+      timeout: duration (in milliseconds) to wait for the query to complete (default 0).
+      use_cache: whether to use cached results or not (default True).
     Returns:
       A QueryResultsTable containing a sampling of the result set.
     Raises:
@@ -159,21 +169,25 @@ class Query(object):
 
     Args:
       dataset_id: the datasetId for the result table.
-      table: the result table name; if None, then a temporary table will be used.
+      table_name: the result table name as a string or TableName; if None (the default), then a
+          temporary table will be used.
       append: if True, append to the table if it is non-empty; else the request will fail if table
-          is non-empty unless overwrite is True.
+          is non-empty unless overwrite is True (default False).
       overwrite: if the table already exists, truncate it instead of appending or raising an
-          Exception.
+          Exception (default False).
       use_cache: whether to use past query results or ignore cache. Has no effect if destination is
-          specified.
+          specified (default True).
       batch: whether to run this as a batch job (lower priority) or as an interactive job (high
-        priority, more expensive).
-      timeout: duration (in milliseconds) to wait for the query to complete.
+        priority, more expensive) (default True).
+      timeout: duration (in milliseconds) to wait for the query to complete (default 0).
     Returns:
       A Job for the query
     Raises:
       Exception (KeyError) if query could not be executed.
     """
+    if table_name is not None:
+      table_name = _parse_table_name(table_name, self._api.project_id)
+
     query_result = self._api.jobs_insert_query(self._sql,
                                                table_name=table_name,
                                                append=append,
@@ -194,7 +208,7 @@ class Query(object):
 
     Args:
       view_name: the name of the View either as a string or a 3-part tuple
-      (projectid, datasetid, name).
+          (projectid, datasetid, name).
 
     Returns:
       A View for the Query.

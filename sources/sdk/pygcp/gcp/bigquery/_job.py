@@ -15,6 +15,7 @@
 """Implements BigQuery Job functionality."""
 
 import collections
+from time import sleep as _sleep
 
 JobError = collections.namedtuple('JobError', ['location', 'message', 'reason'])
 
@@ -98,21 +99,41 @@ class Job(object):
 
     response = self._api.jobs_get(self._job_id)
 
-    self._is_complete = \
-        response['state'] if 'state' in response and response['state'] == 'DONE' else False
-
-    if self._is_complete:
-      if 'status' in response:
-        status = response['status']
+    if 'status' in response:
+      status = response['status']
+      if 'state' in status and status['state'] == 'DONE':
+        self._is_complete = True
         if 'errorResult' in status:
           error_result = status['errorResult']
-          self._fatal_error = JobError(error_result['location'],
-                                       error_result['message'],
-                                       error_result['reason'])
+          location = error_result.get('location', None)
+          message = error_result.get('message', None)
+          reason = error_result.get('reason', None)
+          self._fatal_error = JobError(location, message, reason)
         if 'errors' in status:
           self._errors = []
           for error in status['errors']:
-            self._errors.append(JobError(error['location'], error['message'], error['reason']))
+            location = error.get('location', None)
+            message = error.get('message', None)
+            reason = error.get('reason', None)
+            self._errors.append(JobError(location, message, reason))
+
+  def wait(self, timeout=None, poll=5):
+    """ Wait for the job to complete, or a timeout to happen.
+
+    Args:
+      timeout: how long to poll before giving up; default None which means no timeout.
+      poll: interval in seconds between polls (default 5)
+
+    Returns:
+      True if job completed; False if wait timed out.
+    """
+    while not self.iscomplete:
+      if timeout is not None:
+        if timeout <= 0:
+          return False
+        timeout -= poll
+      _sleep(poll)
+    return True
 
   def __repr__(self):
     """ Get the notebook representation for the job.
