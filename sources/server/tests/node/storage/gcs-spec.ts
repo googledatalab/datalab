@@ -20,16 +20,13 @@ import gcs = require('../app/storage/gcs');
  * Define augmented interface with additional internal methods for testing.
  */
 interface GcsStorage extends app.IStorage {
-  _selectNotebooks(resources: app.Resource[]): app.Resource[];
-  _selectWithinDirectory(
-      directoryStoragePath: string,
-      resources: app.Resource[],
-      recursive: boolean
-      ): app.Resource[];
   _toStoragePath(gcsPath: string): string;
   _toGcsPath(storagePath: string): string;
-  _toResource(gcsPath: string): app.Resource;
-  _stripTrailingSlash(s: string): string;
+  _toResource(
+      storageDirectoryPath: string,
+      gcsResourcePath: string,
+      lastModified: string
+      ): app.Resource;
 }
 
 
@@ -58,113 +55,60 @@ describe('GCS storage', () => {
     resources = undefined;
   });
 
-  // Resource filters and selection.
-
-  it('selects all files/directories recursively within the root directory', () => {
-    var root = storage._selectWithinDirectory('/', resources, true);
-    expect(root).toEqual(resources);
-  });
-
-  it('selects only files/directories within the root directory', () => {
-    var root = storage._selectWithinDirectory('/', resources, false);
-    expect(root.length).toBe(3);
-    expect(root[0]).toEqual(resources[1]);
-    expect(root[1]).toEqual(resources[4]);
-    expect(root[2]).toEqual(resources[7]);
-  });
-
-  it('selects only files/directories within a sub directory', () => {
-    var foo = storage._selectWithinDirectory('/foo', resources, false);
-    expect(foo.length).toBe(3);
-    expect(foo[0]).toEqual(resources[0]);
-    expect(foo[1]).toEqual(resources[3]);
-    expect(foo[2]).toEqual(resources[6]);
-  });
-
-  it('selects files/directories recursively within a sub directory', () => {
-    var foo = storage._selectWithinDirectory('/foo', resources, true);
-    expect(foo.length).toBe(5);
-    expect(foo[0]).toEqual(resources[0]);
-    expect(foo[1]).toEqual(resources[2]);
-    expect(foo[2]).toEqual(resources[3]);
-    expect(foo[3]).toEqual(resources[5]);
-    expect(foo[4]).toEqual(resources[6]);
-  });
-
-  it('selects only files/directories within a sub-sub directory', () => {
-    var foobar = storage._selectWithinDirectory('/foo/bar', resources, false);
-    expect(foobar.length).toBe(2);
-    expect(foobar[0]).toEqual(resources[2]);
-    expect(foobar[1]).toEqual(resources[5]);
-  });
-
-  it('selects files/directories recursively within a sub-sub directory', () => {
-    var foobar = storage._selectWithinDirectory('/foo/bar', resources, false);
-    expect(foobar.length).toBe(2);
-    expect(foobar[0]).toEqual(resources[2]);
-    expect(foobar[1]).toEqual(resources[5]);
-  });
-
-  it('selects only notebook files from the input resources', () => {
-    var filtered = storage._selectNotebooks(resources);
-
-    expect(filtered.length).toBe(5);
-
-    // Directories should be retained.
-    expect(filtered[0]).toEqual(resources[0]);
-    expect(filtered[1]).toEqual(resources[1]);
-
-    // .ipynb files should be retained
-    expect(filtered[2]).toEqual(resources[2]);
-    expect(filtered[3]).toEqual(resources[3]);
-    expect(filtered[4]).toEqual(resources[4]);
-  });
-
-  it('strips a trailing slash when one exists', () => {
-    expect(storage._stripTrailingSlash('/dir/')).toEqual('/dir');
-    expect(storage._stripTrailingSlash('/foo/bar/dir/')).toEqual('/foo/bar/dir');
-    expect(storage._stripTrailingSlash('/')).toEqual('');
-  });
-
-  it('strips a trailing slash when one exists', () => {
-    expect(storage._stripTrailingSlash('/dir/')).toEqual('/dir');
-    expect(storage._stripTrailingSlash('/foo/bar/dir/')).toEqual('/foo/bar/dir');
-    expect(storage._stripTrailingSlash('/')).toEqual('');
-  });
-
-  it('does nothing when a trailing slash does not exist', () => {
-    expect(storage._stripTrailingSlash('/dir')).toEqual('/dir');
-    expect(storage._stripTrailingSlash('/foo/bar/dir')).toEqual('/foo/bar/dir');
-    expect(storage._stripTrailingSlash('')).toEqual('');
-  });
-
   // GCS path => Resource
 
   it('convert bucket root GCS directory path to a Resource', () => {
-    expect(storage._toResource('dir/')).toEqual({
-      path: '/dir',
-      isDirectory: true
+    var lastModified = (new Date()).toISOString();
+    expect(storage._toResource('/', 'dir/', lastModified)).toEqual({
+      path: '/dir/',
+      isDirectory: true,
+      relativePath: 'dir/',
+      description: 'Folder',
+      lastModified: lastModified
     });
   });
 
   it('convert nested GCS directory path to a Resource', () => {
-    expect(storage._toResource('foo/bar/dir/')).toEqual({
-      path: '/foo/bar/dir',
-      isDirectory: true
+    var lastModified = (new Date()).toISOString();
+    expect(storage._toResource('/', 'foo/bar/dir/', lastModified)).toEqual({
+      path: '/foo/bar/dir/',
+      isDirectory: true,
+      relativePath: 'foo/bar/dir/',
+      description: 'Folder',
+      lastModified: lastModified
     });
   });
 
   it('convert bucket root GCS object path to a Resource', () => {
-    expect(storage._toResource('object')).toEqual({
+    var lastModified = (new Date()).toISOString();
+    expect(storage._toResource('/', 'object', lastModified)).toEqual({
       path: '/object',
-      isDirectory: false
+      isDirectory: false,
+      relativePath: 'object',
+      description: 'File',
+      lastModified: lastModified
     });
   });
 
   it('convert nested GCS object path to a Resource', () => {
-    expect(storage._toResource('foo/bar/object')).toEqual({
+    var lastModified = (new Date()).toISOString();
+    expect(storage._toResource('/', 'foo/bar/object', lastModified)).toEqual({
       path: '/foo/bar/object',
-      isDirectory: false
+      isDirectory: false,
+      relativePath: 'foo/bar/object',
+      description: 'File',
+      lastModified: lastModified
+    });
+  });
+
+  it('convert nested GCS notebook path to a Resource', () => {
+    var lastModified = (new Date()).toISOString();
+    expect(storage._toResource('/', 'foo/bar/object.ipynb', lastModified)).toEqual({
+      path: '/foo/bar/object.ipynb',
+      isDirectory: false,
+      relativePath: 'foo/bar/object.ipynb',
+      description: 'IPython Notebook',
+      lastModified: lastModified
     });
   });
 
@@ -173,13 +117,13 @@ describe('GCS storage', () => {
   it('convert bucket root GCS directory path to storage path', () => {
     var gcsPath = 'dir/';
     var storagePath = storage._toStoragePath(gcsPath);
-    expect(storagePath).toBe('/dir');
+    expect(storagePath).toBe('/dir/');
   });
 
   it('convert nested GCS directory path to storage path', () => {
     var gcsPath = 'foo/bar/dir/';
     var storagePath = storage._toStoragePath(gcsPath);
-    expect(storagePath).toBe('/foo/bar/dir');
+    expect(storagePath).toBe('/foo/bar/dir/');
   });
 
   it('convert bucket root GCS object path to storage path', () => {
@@ -203,8 +147,20 @@ describe('GCS storage', () => {
     expect(gcsPath).toBe('dir');
   });
 
+  it('convert storage root directory path to GCS path', () => {
+    var storagePath = '/dir/';
+    var gcsPath = storage._toGcsPath(storagePath);
+    expect(gcsPath).toBe('dir');
+  });
+
   it('convert nested storage directory path to GCS path', () => {
     var storagePath = '/foo/bar/dir';
+    var gcsPath = storage._toGcsPath(storagePath);
+    expect(gcsPath).toBe('foo/bar/dir');
+  });
+
+  it('convert nested storage directory path to GCS path', () => {
+    var storagePath = '/foo/bar/dir/';
     var gcsPath = storage._toGcsPath(storagePath);
     expect(gcsPath).toBe('foo/bar/dir');
   });

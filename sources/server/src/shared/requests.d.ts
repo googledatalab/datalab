@@ -93,9 +93,9 @@ declare module app {
    */
   interface Resource {
     /**
-     * The absolute path to the resource.
+     * Textual description of the resource for display within the UI (e.g., "IPython Notebook").
      */
-    path: string;
+    description?: string;
 
     /**
      * Does this resource path represent a directory?
@@ -104,8 +104,6 @@ declare module app {
      * false => path represents terminal (file or object).
      */
     isDirectory: boolean;
-
-    // The following fields are only provided for files.
 
     /**
      * Last modification timestamp for the file, if one can be determined.
@@ -116,5 +114,15 @@ declare module app {
      * undefined.
      */
     lastModified?: string;
+
+    /**
+     * The absolute path to the resource.
+     */
+    path: string;
+
+    /**
+     * The path to the file relative to a pre-specified prefix.
+     */
+    relativePath?: string;
   }
 }

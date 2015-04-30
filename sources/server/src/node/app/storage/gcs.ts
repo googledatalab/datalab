@@ -12,9 +12,10 @@
  * the License.
  */
 
-/// <reference path="../../../../../../externs/ts/node/node.d.ts" />
-/// <reference path="../../../../../../externs/ts/node/gcloud.d.ts" />
 /// <reference path="../common/interfaces.d.ts" />
+/// <reference path="../../../../../../externs/ts/node/gcloud.d.ts" />
+/// <reference path="../../../../../../externs/ts/node/node.d.ts" />
+import content = require('./content');
 import gcloud = require('gcloud');
 import pathlib = require('path');
 import util = require('util');
@@ -76,13 +77,13 @@ export class GoogleCloudStorage implements app.IStorage {
       }
 
       // Get the paths to all objects/directories within that matched the query.
-      var resources = files.map(file => this._toResource(file.name));
+      var resources = files.map(file => this._toResource(directoryPath, file.name, file.metadata.updated));
 
       // Filter the resources to only those files and directories directly contained within the
       // query path/directory if a non-recursive listing was requested.
-      resources = this._selectWithinDirectory(directoryPath, resources, recursive);
+      resources = content.selectWithinDirectory(directoryPath, resources, recursive);
 
-      callback(null, this._selectNotebooks(resources));
+      callback(null, content.selectNotebooks(resources));
     });
   }
 
@@ -172,110 +173,6 @@ export class GoogleCloudStorage implements app.IStorage {
   }
 
   /**
-   * Detects if the given GCS path represents a "directory".
-   *
-   * @param gcsPath The GCS resource path to check.
-   * @return Boolean to indicate if the given resource path represents a GCS "directory".
-   */
-  _isGcsDirectory(gcsPath: string): boolean {
-    // GCS denotes "directories" as object paths with a trailing slash.
-    return gcsPath[gcsPath.length - 1] == '/';
-  }
-
-  /**
-   * Selects directories and notebook files from the specified list of resources.
-   *
-   * Currently, notebooks are limited to files with the .ipynb extension.
-   *
-   * @param resources The array of resources to select from.
-   * @return A new array containing only directory and notebook resources.
-   */
-  _selectNotebooks(resources: app.Resource[]): app.Resource[] {
-    var selected: app.Resource[] = [];
-
-    resources.forEach(resource => {
-      // All directories are retained.
-      if (resource.isDirectory) {
-        selected.push(resource);
-        return;
-      }
-
-      // Select only the files having the notebook extension.
-      var notebookExtension = 'ipynb';
-      if (notebookExtension == resource.path.slice(-notebookExtension.length)) {
-        selected.push(resource);
-      }
-    });
-
-    return selected;
-  }
-
-  /**
-   * Selects resources that are directly contained within the specified directory path.
-   *
-   * @param directoryStoragePath The storage directory path to use for selection.
-   * @param resources The array of resources to select from.
-   * @param recursive Select all files/dirs recursively contained within the specified directory.
-   * @return A new array containing only resources directly within the specified directory.
-   */
-  _selectWithinDirectory(
-      directoryStoragePath: string,
-      resources: app.Resource[],
-      recursive: boolean
-      ): app.Resource[] {
-
-    var selected: app.Resource[] = [];
-
-    resources.forEach(resource => {
-      var pathPrefix = resource.path.slice(0, directoryStoragePath.length);
-      // Check if the current resource path is contained (directly or indirectly) by the specified
-      // directory path.
-      if (directoryStoragePath != pathPrefix) {
-        // This resource path is not contained within the specified directory path, so skip it.
-        return;
-      }
-
-      // Don't add the directory itself.
-      if (directoryStoragePath == resource.path) {
-        return;
-      }
-
-      if (recursive) {
-        selected.push(resource);
-      } else {
-        // Don't select paths that are contained within subdirectories.
-
-        // Take the portion of the resource path that comes after the directory path (+slash).
-        var pathSuffix = resource.path.slice(directoryStoragePath.length + 1);
-        // Check if the suffix indicates that the resource path is directly contained (vs indirectly
-        // via sub directory).
-        if (pathSuffix.indexOf('/') == -1) {
-          selected.push(resource);
-        }
-      }
-
-    });
-
-    return selected;
-  }
-
-  /**
-   * Strips a trailing slash character from the string if one exists.
-   *
-   * @param s The input string.
-   * @return String with a single trailing slash stripped, if one existed.
-   */
-  _stripTrailingSlash(s: string) {
-    if (s[s.length - 1] == '/') {
-      // Then strip a trailing slash.
-      return s.slice(0, s.length -1);
-    } else {
-      // No trailing slash to strip.
-      return s;
-    }
-  }
-
-  /**
    * Translates a storage path to the corresponding GCS path.
    *
    * @param storagePath The specified storage path.
@@ -285,19 +182,25 @@ export class GoogleCloudStorage implements app.IStorage {
     // Strip the initial slash.
     var gcsPath = storagePath.slice(1);
     // Strip any trailing slash.
-    return this._stripTrailingSlash(gcsPath);
+    return content.stripTrailingSlash(gcsPath);
   }
 
   /**
    * Creates a resource from the specified GCS path.
    *
+   * @param storageDirectoryPath The storage directory path for relative path computation.
    * @param gcsPath Path to the resource within GCS.
+   * @param lastModified Last modification time as ISO-8601 timestamp.
    * @return The Resource representation of the GCS resource.
    */
-  _toResource(gcsPath: string): app.Resource {
+  _toResource(storageDirectoryPath: string, gcsResourcePath: string, lastModified: string): app.Resource {
+    var storagePath = this._toStoragePath(gcsResourcePath);
     return {
-      path: this._toStoragePath(gcsPath),
-      isDirectory: this._isGcsDirectory(gcsPath)
+      path: storagePath,
+      relativePath: content.getRelativePath(storageDirectoryPath, storagePath),
+      isDirectory: content.isDirectory(gcsResourcePath),
+      description: content.getDescription(storagePath),
+      lastModified: lastModified
     }
   }
 
@@ -309,9 +212,7 @@ export class GoogleCloudStorage implements app.IStorage {
    */
   _toStoragePath(gcsPath: string): string {
     // Prepend a slash. All storage paths are absolute.
-    var storagePath = '/' + gcsPath;
-    // Remove a trailing slash if one exists.
-    return this._stripTrailingSlash(storagePath);
+    return '/' + gcsPath;
   }
 
 }

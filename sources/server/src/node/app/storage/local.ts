@@ -13,9 +13,12 @@
  */
 
 /// <reference path="../common/interfaces.d.ts" />
+/// <reference path="../../../../../../externs/ts/node/async.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/node.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/mkdirp.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/node-dir.d.ts" />
+import async = require('async');
+import content = require('./content');
 import fs = require('fs');
 import mkdirp = require('mkdirp');
 import nodedir = require('node-dir');
@@ -36,7 +39,6 @@ export class LocalFileSystemStorage implements app.IStorage {
   constructor(storageRootPath: string) {
     // Normalize the root path structure.
     this._fsRootPath = pathlib.join(storageRootPath);
-    console.log('fs root path: ', this._fsRootPath);
   }
 
   /**
@@ -59,10 +61,10 @@ export class LocalFileSystemStorage implements app.IStorage {
    */
   list(path: string, recursive: boolean, callback: app.Callback<app.Resource[]>) {
     // Normalize the listing path (directory) to always have a trailing slash.
-    var fsListingPath = pathlib.join(this._toFileSystemPath(path), '/');
+    var fsListingDirectoryPath = content.ensureTrailingSlash(this._toFileSystemPath(path));
 
     // Asynchronously enumerate the files and directories matching the given
-    nodedir.paths(fsListingPath, (error: Error, paths: NodeDir.Paths) => {
+    nodedir.paths(fsListingDirectoryPath, (error: Error, paths: NodeDir.Paths) => {
       if (error) {
         callback(error);
         return;
@@ -71,44 +73,36 @@ export class LocalFileSystemStorage implements app.IStorage {
       var resources: app.Resource[] = [];
 
       // Add file (terminal) resources.
-      paths.files.forEach(fsFilepath => {
-        var resource = {
-          path: this._toStoragePath(fsFilepath),
-          isDirectory: false
-        };
-
-        if (recursive) {
-          // Push all resources regardless of depth in the recursive case.
-          resources.push(resource);
-        } else {
-          // Filter files not within the top-level directory specified by the path if recursive
-          // listing is not desired.
-          if (fsListingPath == this._getDirectory(fsFilepath)) {
-            resources.push(resource);
-          }
-        }
-      });
+      paths.files.forEach(fsFilepath =>
+          resources.push(this._toResource(path, fsFilepath, /* is directory */ false)));
 
       // Add directory (non-terminal) resources.
-      paths.dirs.forEach(fsDirpath => {
-        var resource = {
-          path: this._toStoragePath(fsDirpath),
-          isDirectory: true
-        };
+      paths.dirs.forEach(fsDirpath =>
+          resources.push(this._toResource(path, fsDirpath, /* is directory */ true)));
 
-        if (recursive) {
-          // Push all resources regardless of depth in the recursive case.
-          resources.push(resource);
-        } else {
-          // Filter directories not within the top-level directory specified by the path if
-          // recursive listing is not desired.
-          if (fsListingPath == this._getDirectory(fsDirpath)) {
-            resources.push(resource);
-          }
+      // Filter non-notebook resources.
+      resources = content.selectNotebooks(resources);
+
+      // Filter to listed directory if non-recursive requested
+      resources = content.selectWithinDirectory(
+          this._toStoragePath(fsListingDirectoryPath, /* is directory */ true),
+          resources,
+          recursive);
+
+      // Asynchronously get the last modified time of the files.
+      async.map(resources.map(r => this._toFileSystemPath(r.path)), fs.stat, (error, stats) => {
+        if (error) {
+          callback(error);
+          return;
         }
-      });
 
-      callback(null, resources);
+        stats.forEach((stat, i) => {
+          // Populate the last modified timestamp for each resource.
+          resources[i].lastModified = stat.mtime.toISOString();
+        });
+
+        callback(null, resources);
+      });
     });
   }
 
@@ -157,28 +151,44 @@ export class LocalFileSystemStorage implements app.IStorage {
     fs.writeFile(this._toFileSystemPath(path), data, callback);
   }
 
-  _getDirectory(path: string) {
-    // Normalize path to always include a trailing slash for the directory.
-    return pathlib.join(pathlib.dirname(path), '/');
+  /**
+   * Converts the storage path to the corresponding file system path.
+   *
+   * @param storagePath The storage path.
+   * @return The corresponding local filesystem path.
+   */
+  _toFileSystemPath(storagePath: string) {
+    return content.stripTrailingSlash(pathlib.join(this._fsRootPath, storagePath));
+  }
+
+  _toResource(
+      directoryStoragePath: string,
+      resourceFileSystemPath: string,
+      isDirectory: boolean
+      ): app.Resource {
+
+    var resourceStoragePath = this._toStoragePath(resourceFileSystemPath, isDirectory);
+    return {
+      path: resourceStoragePath,
+      relativePath: content.getRelativePath(directoryStoragePath, resourceStoragePath),
+      isDirectory: isDirectory,
+      description: content.getDescription(resourceStoragePath),
+    };
   }
 
   /**
    * Converts the file system path to the corresponding storage path.
    *
-   * @param  path The local filesystem path.
+   * @param fsPath The local filesystem path.
    * @return The corresponding storage path..
    */
-  _toStoragePath(path: string) {
-    return path.slice(this._fsRootPath.length);
-  }
-
-  /**
-   * Converts the storage path to the corresponding file system path.
-   *
-   * @param  path The storage path.
-   * @return The corresponding local filesystem path.
-   */
-  _toFileSystemPath(path: string) {
-    return pathlib.join(this._fsRootPath, path);
+  _toStoragePath(fsPath: string, isDirectory: boolean): string {
+    // Remove the root storage path prefix and prepend a slash.
+    var storagePath = content.ensureLeadingSlash(fsPath.slice(this._fsRootPath.length));
+    // Ensure that the path includes a trailing slash if it is a directory.
+    if (isDirectory) {
+      storagePath = content.ensureTrailingSlash(storagePath);
+    }
+    return storagePath;
   }
 }

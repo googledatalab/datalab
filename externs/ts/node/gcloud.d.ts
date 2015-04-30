@@ -36,6 +36,28 @@ declare module GCloud {
     interface File {
       name: string; // Full path within GCS bucket to the file.
 
+      metadata: {
+        kind: string;
+        id: string;
+        selfLink: string;
+        name: string;
+        bucket: string;
+        generation: string;
+        metageneration: string;
+        contentType: string;
+        updated: string;
+        storageClass: string;
+        size: string;
+        md5Hash: string;
+        mediaLink: string;
+        owner: {
+          entity: string;
+          entityId: string;
+        };
+        crc32c: string;
+        etag: string;
+      };
+
       copy(destinationPath: string, callback: Callback<Error, void>): void;
       createWriteStream(): NodeJS.WritableStream;
       delete(callback: Callback<Error, void>): void;
