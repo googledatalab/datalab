@@ -109,7 +109,7 @@ export class LocalFileSystemStorage implements app.IStorage {
       resources = content.selectNotebooks(resources);
 
       // Asynchronously get the last modified time of the files.
-      async.map(resources.map(r => r.path), fs.stat, (error, stats) => {
+      async.map(resources.map(r => this._toFileSystemPath(r.path)), fs.stat, (error, stats) => {
         if (error) {
           callback(error);
           return;

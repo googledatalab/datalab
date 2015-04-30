@@ -33,7 +33,7 @@ export function sendBadRequest(response: express.Response, message: string) {
 }
 
 export function sendInternalError(response: express.Response, message: string, error: Error) {
-  console.log('ERROR HTTP 500: ' + message);
+  console.log('ERROR HTTP 500: ' + message, error);
   response.status(500);
   response.send(message);
 }

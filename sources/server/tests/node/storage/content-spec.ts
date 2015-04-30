@@ -38,6 +38,8 @@ describe('Content path/resource utilities', () => {
     resources = undefined;
   });
 
+  // Get relative path
+
   it('gets the relative path of a file directly contained by directory', () => {
     expect(content.getRelativePath('/', '/foo.txt')).toEqual('foo.txt');
     expect(content.getRelativePath('/quux/', '/quux/foo.txt')).toEqual('foo.txt');
@@ -58,6 +60,8 @@ describe('Content path/resource utilities', () => {
     expect(content.getRelativePath('/quux/', '/quux/bar/foo/')).toEqual('bar/foo/');
   });
 
+  // Select notebooks
+
   it('selects only notebook files from the input resources', () => {
     var filtered = content.selectNotebooks(resources);
 
@@ -72,6 +76,8 @@ describe('Content path/resource utilities', () => {
     expect(filtered[3]).toEqual(resources[3]);
     expect(filtered[4]).toEqual(resources[4]);
   });
+
+  // Strip trailing slash
 
   it('strips a trailing slash when one exists', () => {
     expect(content.stripTrailingSlash('/dir/')).toEqual('/dir');
@@ -89,6 +95,60 @@ describe('Content path/resource utilities', () => {
     expect(content.stripTrailingSlash('/dir')).toEqual('/dir');
     expect(content.stripTrailingSlash('/foo/bar/dir')).toEqual('/foo/bar/dir');
     expect(content.stripTrailingSlash('')).toEqual('');
+  });
+
+  // Ends with
+
+  it('checks if an empty string ends with an empty suffix', () => {
+    expect(content.endsWith('', '')).toBe(true);
+  });
+
+  it('checks if an empty string ends with a longer suffix', () => {
+    expect(content.endsWith('', 'foo')).toBe(false);
+  });
+
+  it('checks if a non-empty string ends with an empty suffix', () => {
+    expect(content.endsWith('foo', '')).toBe(true);
+  });
+
+  it('checks if a non-empty string ends with an shorter suffix', () => {
+    expect(content.endsWith('foo', 'o')).toBe(true);
+    expect(content.endsWith('foo', 'x')).toBe(false);
+  });
+
+  it('checks if a non-empty string ends with itself', () => {
+    expect(content.endsWith('foo', 'foo')).toBe(true);
+  });
+
+  it('checks if a non-empty string ends with a longer suffix', () => {
+    expect(content.endsWith('foo', 'foobar')).toBe(false);
+  });
+
+  // Starts with
+
+  it('checks if an empty string starts with an empty prefix', () => {
+    expect(content.startsWith('', '')).toBe(true);
+  });
+
+  it('checks if an empty string starts with a longer prefix', () => {
+    expect(content.startsWith('', 'foo')).toBe(false);
+  });
+
+  it('checks if a non-empty string starts with an empty prefix', () => {
+    expect(content.startsWith('foo', '')).toBe(true);
+  });
+
+  it('checks if a non-empty string starts with a shorter prefix', () => {
+    expect(content.startsWith('foo', 'f')).toBe(true);
+    expect(content.startsWith('foo', 'x')).toBe(false);
+  });
+
+  it('checks if a non-empty string starts with itself', () => {
+    expect(content.startsWith('foo', 'foo')).toBe(true);
+  });
+
+  it('checks if a non-empty string starts with a longer prefix', () => {
+    expect(content.startsWith('foo', 'foobar')).toBe(false);
   });
 
 });

@@ -66,7 +66,7 @@ export function getRelativePath(directoryPath: string, resourcePath: string): st
  * @return Boolean to indicate if the path represents a directory.
  */
 export function isDirectory(path: string): boolean {
-  return path[path.length - 1] == '/';
+  return endsWith(path, '/');
 }
 
 /**
@@ -76,8 +76,7 @@ export function isDirectory(path: string): boolean {
  * @return Boolean to indicate if the path represents a notebook.
  */
 export function isNotebook(path: string): boolean {
-  var notebookExtension = 'ipynb';
-  return notebookExtension == path.slice(-notebookExtension.length);
+  return endsWith(path, '.ipynb');
 }
 
 /**
@@ -113,11 +112,62 @@ export function selectNotebooks(resources: app.Resource[]): app.Resource[] {
  * @return String with a single trailing slash stripped, if one existed.
  */
 export function stripTrailingSlash(s: string) {
-  if (s[s.length - 1] == '/') {
+  if (endsWith(s, '/')) {
     // Then strip a trailing slash.
     return s.slice(0, s.length -1);
   } else {
     // No trailing slash to strip.
     return s;
   }
+}
+
+/**
+ * Normalizes the specified path to the expected storage directory path format.
+ *
+ * Transformations done:
+ * - Adds a trailing slash if there is not one.
+ * - Prepends a slash if there is not one.
+ *
+ * @param directoryPath The directory path to normalize.
+ * @return The normalized storage directory path.
+ */
+export function normalizeDirectoryPath(directoryPath: string) {
+  if (!startsWith(directoryPath, '/')) {
+    directoryPath = '/' + directoryPath;
+  }
+
+  if (!endsWith(directoryPath, '/')) {
+    directoryPath = directoryPath + '/';
+  }
+
+  return directoryPath;
+}
+
+/**
+ * Checks if the string ends with the specified suffix.
+ *
+ * @param s The string to check.
+ * @param suffix The suffix to check for.
+ * @return Boolean to indicate if the specified suffix is a suffix of s.
+ */
+export function endsWith(s: string, suffix: string): boolean {
+  if (suffix === '') {
+    // All strings end with the empty string.
+    //
+    // s.slice(0) has different semantics than s.slice(-x) in that s.slice(0) returns the entire
+    // string, which doesn't work here.
+    return true;
+  }
+  return suffix == s.slice(-suffix.length);
+}
+
+/**
+ * Checks if the string starts with the specified prefix.
+ *
+ * @param s The string to check.
+ * @param prefix The prefix to check for.
+ * @return Boolean to indicate if the specified prefix is a prefix of s.
+ */
+export function startsWith(s: string, prefix: string): boolean {
+  return prefix == s.slice(0, prefix.length);
 }

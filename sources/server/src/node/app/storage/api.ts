@@ -17,8 +17,9 @@
 /// <reference path="../../../../../../externs/ts/express/express.d.ts" />
 /// <reference path="../shared/requests.d.ts" />
 /// <reference path="../common/interfaces.d.ts" />
-import express = require('express');
 import apiutil = require('../common/api');
+import content = require('./content');
+import express = require('express');
 
 
 /**
@@ -119,7 +120,8 @@ export class ContentApi {
     }
 
     // Prepend a slash '/' to denote that these paths are rooted (i.e., at the storage root).
-    path = '/' + path;
+    // Append a slash to denote that the listing should match a slash-delimited prefix.
+    path = content.normalizeDirectoryPath(path);
 
     // Get the recursive flag from the request if it was provided and convert it to a boolean.
     // Any truthy string value will be converted to true, so all of the following would
