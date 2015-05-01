@@ -625,7 +625,7 @@ class Table(object):
       else:
         raise Exception('Cannot use negative indices for table of unknown length')
 
-    schema = self.schema
+    schema = self.schema._bq_schema
     name_parts = self._name_parts
 
     def _retrieve_rows(page_token, count):

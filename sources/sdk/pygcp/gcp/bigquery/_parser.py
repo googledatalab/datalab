@@ -52,9 +52,27 @@ class Parser(object):
       return value
 
     row = {}
-    for i, field in enumerate(data['f']):
-      schema_field = schema[i]
-      row[schema_field['name']] = parse_value(schema_field['type'], field['v'])
+    if data is None:
+      return row
+
+    for i, (field, schema_field) in enumerate(zip(data['f'], schema)):
+      val = field['v']
+      name = schema_field['name']
+      data_type = schema_field['type']
+      repeated = True if 'mode' in schema_field and schema_field['mode'] == 'REPEATED' else False
+
+      if repeated and val is None:
+        row[name] = []
+      elif data_type == 'RECORD':
+        sub_schema = schema_field['fields']
+        if repeated:
+          row[name] = [Parser.parse_row(sub_schema, v['v']) for v in val]
+        else:
+          row[name] = Parser.parse_row(sub_schema, val)
+      elif repeated:
+        row[name] = [parse_value(data_type, v) for v in val]
+      else:
+        row[name] = parse_value(data_type, val)
 
     return row
 
