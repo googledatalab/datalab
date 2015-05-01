@@ -18,6 +18,7 @@
 /// <reference path="../shared/requests.d.ts" />
 /// <reference path="../common/interfaces.d.ts" />
 import apiutil = require('../common/api');
+import content = require('../storage/content');
 import express = require('express');
 import manager = require('./manager');
 import util = require('util');
@@ -27,10 +28,6 @@ import util = require('util');
  * Session management HTTP API
  */
 export class SessionApi {
-
-  static sessionsCollectionUrl: string = '/sessions';
-  static singleSessionUrl: string = SessionApi.sessionsCollectionUrl + '/:path';
-  static singleSessionActionUrl: string = SessionApi.singleSessionUrl + '::';
 
   _manager: app.ISessionManager;
 
@@ -58,7 +55,6 @@ export class SessionApi {
       // Response has been handled. Nothing more to do.
       return;
     }
-
     this._manager.create(sessionPath, (error: Error, session: app.ISession) => {
       if (error) {
         apiutil.sendInternalError(response, 'Session create operation failed', error);
@@ -163,13 +159,13 @@ export class SessionApi {
    */
   register(router: express.Router): void {
     // Read-only operations
-    router.get(SessionApi.singleSessionUrl, this.get.bind(this));
-    router.get(SessionApi.sessionsCollectionUrl, this.list.bind(this));
+    router.get(/^\/sessions\/?$/, this.list.bind(this));
+    router.get(/^\/sessions\/([^:]+)$/, this.get.bind(this));
 
     // State-modifying operations
-    router.post(SessionApi.singleSessionUrl, this.create.bind(this));
-    router.post(SessionApi.singleSessionActionUrl + 'reset', this.reset.bind(this));
-    router.post(SessionApi.singleSessionActionUrl + 'shutdown', this.shutdown.bind(this));
+    router.post(/^\/sessions\/([^:]+)$/, this.create.bind(this));
+    router.post(/^\/sessions\/([^:]+):shutdown$/, this.shutdown.bind(this));
+    router.post(/^\/sessions\/([^:]+):reset$/, this.reset.bind(this));
   }
 
   /**
@@ -187,12 +183,13 @@ export class SessionApi {
    * Gets the session path from the request or fails the request (via response object).
    */
   _getSessionPathOrFail(request: express.Request, response: express.Response): string {
-    var sessionPath = request.param('path', null);
+    var sessionPath = request.param('0', null);
     if (!sessionPath) {
       apiutil.sendBadRequest(response, 'No path was specified in the request URL.');
     }
 
-    return sessionPath;
+    // All resource/session paths should have a leading slash.
+    return content.ensureLeadingSlash(sessionPath);
   }
 
   /**
