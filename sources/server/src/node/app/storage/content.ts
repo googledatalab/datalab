@@ -12,7 +12,7 @@
  * the License.
  */
 
-
+/// <reference path="../shared/requests.d.ts" />
 /**
  * Common helpers for manipulating storage content.
  */
