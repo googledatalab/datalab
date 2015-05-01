@@ -15,6 +15,7 @@
 
 /// <reference path="../../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <reference path="../shared/interfaces.d.ts" />
+/// <reference path="../shared/requests.d.ts" />
 // TODO(bryantd): change the namespace from 'app' to 'datalab' to avoid colliding with
 // the ever present app module (app.App) (or change the app module name...)
 declare module app {
@@ -173,6 +174,14 @@ declare module app {
     updateCell(cell: app.notebooks.Cell, worksheetId: string): void;
   }
 
+  interface IContentService {
+    list(item: string) : ng.IPromise<app.requests.ListContentResponse>;
+    delete(item: string) : ng.IPromise<string>;
+    update(item: string, data: string) : ng.IPromise<string>;
+    move(item: string, newPath: string) : ng.IPromise<string>;
+    create(item: string, data: string) : ng.IPromise<string>;
+  }
+
   interface IRegistrar {
     controller(name: string, constructor: Function): void;
     directive(name: string, directiveFactory: Function): void;
@@ -193,6 +202,13 @@ declare module app {
 
   interface SessionMessageHandler {
     (message: any): void;
+  }
+
+  interface ISessionService {
+    create(item: string) : ng.IPromise<string>;
+    list() : ng.IPromise<app.requests.ListSessionsResponse>;
+    reset(item: string) : ng.IPromise<string>;
+    shutdown(item: string) : ng.IPromise<string>;
   }
 
   // UI-specific extensions to the datalab notebook types.

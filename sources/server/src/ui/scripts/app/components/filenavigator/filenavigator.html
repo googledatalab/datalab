@@ -1,0 +1,138 @@
+<div class="datalab-file-navigator">
+
+  <div class="datalab-file-navigator-header">
+    <span>Files </span>
+
+    <!-- The breadcrumb navigation elements -->
+    <div class="datalab-filenav-breadcrumbs">
+
+      <!-- The clickable root '/' -->
+      <a class="datalab-breadcrumb-link" ng-click="ctrl.updatePath(0)"> / </a>
+
+      <div ng-repeat="component in breadcrumbs track by $index">
+
+        <!-- Use ' / ' in between each segment of the path after the root -->
+        <div class="datalab-breadcrumb-separator" ng-if="$index > 1"> / </div>
+
+        <!--  Use <a> elements for the leading segments of path to show they are click-able -->
+        <a class="datalab-breadcrumb-link" 
+            ng-if="$index > 0 && $index < breadcrumbs.length - 1" 
+            ng-click="ctrl.updatePath($index)">
+          {{component}}
+        </a>
+
+        <!-- Use a plain <div> for the last segment of the path -->
+        <div class="datalab-breadcrumb-link" 
+            ng-if="$index > 0 && $index == breadcrumbs.length - 1">
+          {{component}}
+        </div>
+
+      </div>       
+    </div>
+
+    <!-- The action icons for the list; currently just a plus for add trashcan for delete  -->
+    <!-- TODO(gram) - do we want to pop up a menu on add, or should we have different icons
+         for adding different things, like Folder, IPython Notebook DataLab Notebook?
+    -->
+    <div class="datalab-toolbar" ng-click="dropDownVisible = !dropDownVisible">
+      <i class="fa fa-sort-desc"></i>
+      <i class="fa fa-plus"></i>
+      <div class="datalab-dropdown dropdown clearfix">
+        <ul ng-class="{'active': dropDownVisible, 'inactive': !dropDownVisible}"
+            class="dropdown-menu" role="menu">
+          <li class="datalab-dropdown-item">
+            <a ng-click="ctrl.showModal($event, 'datalab-new-notebook-dialog')">
+              <i class="fa fa-file-text"></i>
+              Notebook
+            </a>
+          </li>
+          <li class="datalab-dropdown-item">
+            <a ng-click="ctrl.showModal($event, 'datalab-new-folder-dialog')">
+              <i class="fa fa-folder"></i>
+              Folder
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  
+  <table class='datalab-navigator-table table table-striped table-hover'>
+    <thead>
+      <tr>
+        <!-- Cell headers. These can be clicked to sort the table. -->
+        <th ng-click="ctrl.reSort('relativePath')">
+          <div class="datalab-navigator-header">
+            <span ng-class="ctrl.sortIconClass('relativePath')">
+              Path
+            </span>
+          </div>
+        </th>
+        <th ng-click="ctrl.reSort('description')">
+          <div class="datalab-navigator-header">
+            <span ng-class="ctrl.sortIconClass('description')" >
+              Type
+            </span>
+          </div>
+        </th>
+        <th ng-click="ctrl.reSort('lastModified')">
+          <div class="datalab-navigator-header">
+            <span ng-class="ctrl.sortIconClass('lastModified')" >
+              Accessed
+            </span>
+          </div>
+        </th>
+        <th>
+          <i class="datalab-navigator-trash fa fa-trash">
+          </i>
+        </th>
+      </tr>
+    </thead>
+
+    <!--  Cell rows, in the currently selected sort order -->
+    <tr ng-repeat="resource in resources | orderBy: sortOrder + sortColumn"
+      ng-dblclick="ctrl.handleClick(null, resource)">
+
+      <td>
+        <!--  This doesn't work for directories as the router doesn't currently handle nested
+          paths, but if that changes we can use <a> elements for them too  -->
+        <a class="datalab-path-link" ng-if="!resource.isDirectory"
+            ng-href="'/#/notebooks' + resource.path" 
+            ng-click="ctrl.handleClick($event, resource)">
+            <i class="fa fa-file-text"></i>
+            {{resource.relativePath}}
+        </a>
+        <div class="datalab-path-link" ng-if="resource.isDirectory"
+            ng-click="ctrl.handleClick($event, resource)">
+            <i class="fa fa-folder"></i>
+            {{resource.relativePath}}
+        </div>
+      </td>
+
+      <td>
+          {{resource.description}}
+      </td>
+
+      <td>
+          {{ctrl.ageMessage(resource.lastModified)}}
+      </td>
+      <td>
+        <i class="datalab-navigator-trash fa fa-trash"
+            ng-click="ctrl.deleteResource(resource)">
+      </i>
+    </tr>
+  </table>
+  
+  <modal-layout mid="datalab-new-folder-dialog" title="Create Folder" 
+      ok-text="Create" cancel-text="Cancel" action="ctrl.createFolder()">
+    <p>Folder name</p>
+    <input type="text" ng-model="properties.newFolderName"></input>
+  </modal-layout>
+
+  <modal-layout mid="datalab-new-notebook-dialog" title="Create Notebook" ok-text="Create"
+      cancel-text="Cancel" action="ctrl.createNotebook()">
+    <p>Notebook Name</p>
+    <input type="text" ng-model="properties.newNotebookName"></input>
+  </modal-layout>
+
+</div>
