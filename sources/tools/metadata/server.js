@@ -43,14 +43,14 @@ var commandPattern = "sudo -u $USER bash -c 'source $HOME/google-cloud-sdk/path.
  */
 var supportedMetadata = {
   authToken: {
-    path: '/computemetadata/v1beta1/instance/service-accounts/default/token',
+    path: '/computemetadata/v1/instance/service-accounts/default/token',
     command: util.format(commandPattern, 'gcloud auth print-access-token'),
     formatter: function(output) {
       return { access_token: output.trim() };
     }
   },
   projectId: {
-    path: '/computemetadata/v1beta1/project/project-id',
+    path: '/computemetadata/v1/project/project-id',
     command: util.format(commandPattern, 'gcloud config list --format json project'),
     formatter: function(output) {
       var data = JSON.parse(output);
