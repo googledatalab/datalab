@@ -1,0 +1,5 @@
+Copyright Google Inc.
+
+Use of this software is governed by the Google Cloud Platform Terms of Service
+found at https://cloud.google.com/terms/
+

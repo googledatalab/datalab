@@ -15,12 +15,10 @@
 /// <reference path="../common/interfaces.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/async.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/node.d.ts" />
-/// <reference path="../../../../../../externs/ts/node/mkdirp.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/node-dir.d.ts" />
 import async = require('async');
 import content = require('./content');
 import fs = require('fs');
-import mkdirp = require('mkdirp');
 import nodedir = require('node-dir');
 import pathlib = require('path');
 
