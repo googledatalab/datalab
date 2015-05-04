@@ -26,7 +26,11 @@ except ImportError:
 
 
 def _get_field_list(fields, schema):
-  """ Convert a field list spec into a real list of field names. """
+  """ Convert a field list spec into a real list of field names.
+
+      For tables, we return only the top-level non-RECORD fields as Google charts
+      can't handle nested data.
+  """
   # If the fields weren't supplied get them from the schema.
   if isinstance(fields, list):
     return fields
@@ -34,7 +38,7 @@ def _get_field_list(fields, schema):
     return fields.split(',')
   if not schema:
     return []
-  return [f.name for f in schema]
+  return [f['name'] for f in schema._bq_schema if f['type'] != 'RECORD']
 
 
 def _get_cols(fields, schema):

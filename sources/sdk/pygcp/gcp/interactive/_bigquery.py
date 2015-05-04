@@ -21,7 +21,7 @@ import time as _time
 import gcp.bigquery as _bq
 import gcp._util as _util
 from ._html import HtmlBuilder as _HtmlBuilder
-from ._utils import _get_data
+from ._utils import _get_data, _get_field_list
 
 try:
   import IPython as _ipython
@@ -314,7 +314,8 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
     </script>
   """
 
-  fields = fields if fields else [field.name for field in table.schema]
+  if fields is None:
+    fields = _get_field_list(fields, table.schema)
   div_id = str(int(round(_time.time())))
   meta_count = "rows: %d" % table.length if table.length >= 0 else ''
   meta_name = job_id if job_id else table.full_name
