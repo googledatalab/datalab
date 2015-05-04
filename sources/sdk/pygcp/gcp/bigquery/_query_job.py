@@ -37,7 +37,7 @@ class QueryJob(_Job):
       timeout: timeout in msec to wait for the query to complete.
 
     Raises:
-      Exception if we timed out waiting for results.
+      Exception if we timed out waiting for results or the query failed.
     """
     if not self.iscomplete:
       # Block until done (or timed out). We do this by call Jobs.queryResults but use a
@@ -48,6 +48,8 @@ class QueryJob(_Job):
                                                   timeout=self._timeout)
       if not query_result['jobComplete']:
         raise Exception('Timed out getting query results')
+    if self.failed:
+      raise Exception('Query failed: %s' % str(self.errors))
     return self._table
 
   @property
