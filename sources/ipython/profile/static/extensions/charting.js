@@ -168,7 +168,7 @@ define(function () {
       var code = model.fetchCode + ' ' + first + ' ' + fetchCount;
       IPython.notebook.kernel.get_data(code, function (newData, error) {
         if (error) {
-          onError(model, error);
+          onError(model.visualization, model.dom, error);
         } else {
           convertDates(newData.data);
           model.data = newData.data;
