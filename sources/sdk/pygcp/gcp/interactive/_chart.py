@@ -38,11 +38,14 @@ def chart(line, cell=None):
                      'pie', 'sankey', 'scatter', 'stepped_area', 'table', 'timeline', 'treemap']:
     subparser = subparsers.add_parser(chart_type, help='generate a %s chart' % chart_type)
     subparser.add_argument('-f', '--field',
-                           help='the field(s) to include in the chart', nargs='*')
+                           help='the field(s) to include in the chart')
     subparser.add_argument('data',
                            help='the name of the variable referencing the Table or Query to chart')
     subparser.set_defaults(chart=chart_type)
+    subparser.exit = _parser_exit  # raise exception, don't call sys.exit
+    subparser.format_usage = parser.format_help  # Show full help always
 
+  parser.exit = _parser_exit  # raise exception, don't call sys.exit
   parser.format_usage = parser.format_help  # Show full help always
   args = filter(None, line.split())
   try:
@@ -53,9 +56,16 @@ def chart(line, cell=None):
       print e.message
 
 
+def _parser_exit(status=0, message=None):
+  """ Replacement exit method for argument parser. We want to stop processing args but not
+      call sys.exit(), so we raise an exception here and catch it in the call to parse_args.
+  """
+  raise Exception()
+
+
 def _chart_cell(args, cell):
   chart_options = cell if cell and len(cell.strip()) else '{}'
-  fields = ','.join(args['field']) if args['field'] else '*'
+  fields = args['field'] if args['field'] else '*'
 
   _HTML_TEMPLATE = """
     <div class="bqgc" id="bqgc_%s">
@@ -68,7 +78,7 @@ def _chart_cell(args, cell):
           );
     </script>
   """
-  div_id = str(int(round(_time.time())))
+  div_id = str(int(round(_time.time() * 100)))
   source = args['data']
   chart_type = args['chart']
   count = 25 if chart_type == 'paged_table' else -1

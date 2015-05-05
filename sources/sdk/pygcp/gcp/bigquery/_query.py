@@ -121,9 +121,8 @@ class Query(object):
     return self.results(timeout=timeout, use_cache=use_cache) \
         .to_dataframe(start_row=start_row, max_rows=max_rows)
 
-  def to_file(self, path, start_row=0, max_rows=None, timeout=0, use_cache=True, write_header=True,
-              dialect=csv.excel):
-    """Save the results to a local file in CSV format.
+  def to_file(self, path, start_row=0, max_rows=None, timeout=0, use_cache=True, write_header=True):
+    """Save the results to a local file in Excel CSV format.
 
     Args:
       path: path on the local filesystem for the saved results.
@@ -132,16 +131,13 @@ class Query(object):
       timeout: duration (in milliseconds) to wait for the query to complete.
       use_cache: whether to use cached results or not.
       write_header: if true (the default), write column name header row at start of file.
-      dialect: the format to use for the output. By default, csv.excel. See
-          https://docs.python.org/2/library/csv.html#csv-fmt-params for how to customize this.
     Returns:
       The path to the local file.
     Raises:
       An Exception if the operation failed.
     """
     self.results(timeout=timeout, use_cache=use_cache) \
-        .to_file(path, start_row=start_row, max_rows=max_rows, write_header=write_header,
-                 dialect=dialect)
+        .to_file(path, start_row=start_row, max_rows=max_rows, write_header=write_header)
     return path
 
   def sample(self, count=5, fields=None, sampling=None, timeout=0, use_cache=True):
@@ -164,7 +160,7 @@ class Query(object):
         results(timeout=timeout, use_cache=use_cache)
 
   def execute(self, table_name=None, append=False, overwrite=False, use_cache=True, batch=True,
-              timeout=0):
+              timeout=0, allowLargeResults=False):
     """ Initiate the query.
 
     Args:
@@ -180,10 +176,12 @@ class Query(object):
       batch: whether to run this as a batch job (lower priority) or as an interactive job (high
         priority, more expensive) (default True).
       timeout: duration (in milliseconds) to wait for the query to complete (default 0).
+      allowLargeResults: whether to allow large results; i.e. compressed data over 100MB. This is
+          slower and requires a table_name to be specified) (default False).
     Returns:
       A Job for the query
     Raises:
-      Exception (KeyError) if query could not be executed.
+      Exception if query could not be executed.
     """
     if table_name is not None:
       table_name = _parse_table_name(table_name, self._api.project_id)
@@ -194,13 +192,18 @@ class Query(object):
                                                overwrite=overwrite,
                                                dry_run=False,
                                                use_cache=use_cache,
-                                               batch=batch)
+                                               batch=batch,
+                                               allowLargeResults=allowLargeResults)
     if 'jobReference' not in query_result:
       raise Exception('Unexpected query response.')
     job_id = query_result['jobReference']['jobId']
     if not table_name:
-      destination = query_result['configuration']['query']['destinationTable']
-      table_name = (destination['projectId'], destination['datasetId'], destination['tableId'])
+      try:
+        destination = query_result['configuration']['query']['destinationTable']
+        table_name = (destination['projectId'], destination['datasetId'], destination['tableId'])
+      except KeyError:
+        # The query was in error
+        raise Exception('Query failed: %s' % str(query_result['status']['errors']))
     return _QueryJob(self._api, job_id, table_name, self._sql, timeout=timeout)
 
   def save_as_view(self, view_name):

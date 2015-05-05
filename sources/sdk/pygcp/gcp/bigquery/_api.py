@@ -22,6 +22,7 @@ class Api(object):
   """A helper class to issue BigQuery HTTP requests."""
 
   # TODO(nikhilko): Use named placeholders in these string templates.
+  # TODO(gram): Remove default params from this class's methods.
   _ENDPOINT = 'https://www.googleapis.com/bigquery/v2'
   _JOBS_PATH = '/projects/%s/jobs/%s'
   _QUERIES_PATH = '/projects/%s/queries/%s'
@@ -117,7 +118,7 @@ class Api(object):
     return _util.Http.request(url, data=data, credentials=self._credentials)
 
   def jobs_insert_query(self, sql, table_name=None, append=False, overwrite=False,
-                        dry_run=False, use_cache=True, batch=True):
+                        dry_run=False, use_cache=True, batch=True, allowLargeResults=False):
     """Issues a request to insert a query job.
 
     Args:
@@ -131,7 +132,9 @@ class Api(object):
       use_cache: whether to use past query results or ignore cache. Has no effect if destination is
           specified.
       batch: whether to run this as a batch job (lower priority) or as an interactive job (high
-        priority, more expensive).
+          priority, more expensive).
+      allowLargeResults: whether to allow large results (slower with some restrictions but
+          can handle big jobs).
     Returns:
       A parsed result object.
     Raises:
@@ -146,7 +149,8 @@ class Api(object):
       'configuration': {
         'query': {
           'query': sql,
-          'useQueryCache': use_cache
+          'useQueryCache': use_cache,
+          'allowLargeResults': allowLargeResults
         },
         'dryRun': dry_run,
         'priority': 'BATCH' if batch else 'INTERACTIVE',
