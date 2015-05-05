@@ -85,6 +85,7 @@ def bigquery(line, cell=None):
                                                               _schema_line, cell_prohibited=True))
 
   for p in [parser, sql_parser, udf_parser, table_parser, schema_parser]:
+    p.exit = _parser_exit  # raise exception, don't call sys.exit
     p.format_usage = p.format_help  # Show full help always
 
   args = filter(None, line.split())
@@ -94,6 +95,13 @@ def bigquery(line, cell=None):
   except Exception as e:
     if e.message:
       print e.message
+
+
+def _parser_exit(status=0, message=None):
+  """ Replacement exit method for argument parser. We want to stop processing args but not
+      call sys.exit(), so we raise an exception here and catch it in the call to parse_args.
+  """
+  raise Exception()
 
 
 def _dispatch_handler(command, args, cell, parser, handler,
@@ -111,17 +119,17 @@ def _dispatch_handler(command, args, cell, parser, handler,
   Returns:
     The result of calling the handler.
   Raises:
-    SystemExit if the invocation is not valid.
+    Exception if the invocation is not valid.
   """
   if cell_prohibited:
     if cell and len(cell.strip()):
       parser.print_help()
-      raise SystemExit('Additional data is not supported with the %s command.' % command)
+      raise Exception('Additional data is not supported with the %s command.' % command)
     return handler(args)
 
   if cell_required and not cell:
     parser.print_help()
-    raise SystemExit('The %s command requires additional data' % command)
+    raise Exception('The %s command requires additional data' % command)
 
   return handler(args, cell)
 
@@ -358,7 +366,7 @@ def _repr_html_table_schema(schema):
       );
     </script>
     """
-  id = 'bqsv%d' % int(round(_time.time()))
+  id = 'bqsv%d' % int(round(_time.time() * 100))
   return _HTML_TEMPLATE % (id, id, _json.dumps(schema._bq_schema))
 
 
@@ -373,7 +381,7 @@ def _repr_html_function_evaluation(evaluation):
       );
     </script>
     """
-  id = 'udf%d' % int(round(_time.time()))
+  id = 'udf%d' % int(round(_time.time() * 100))
   return _HTML_TEMPLATE % (id, id, evaluation.implementation, _json.dumps(evaluation.data))
 
 
