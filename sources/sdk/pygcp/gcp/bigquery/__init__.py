@@ -128,7 +128,7 @@ def table(name, context=None):
   configured at the global level are used.
 
   The name must be a valid BigQuery table name, which is either
-  <project]:<dataset>.<table> or <dataset>.<table>.
+  <project>:<dataset>.<table> or <dataset>.<table>.
 
   Args:
     name: the name of the table, as a string or (project_id, dataset_id, table_id) tuple.
