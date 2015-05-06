@@ -16,6 +16,7 @@
 
 /* Fonts */
 @import url(https://fonts.googleapis.com/css?family=Source+Code+Pro|Open+Sans|Lato:400,700&subset=latin,latin-ext);
+@import url(gchart-table.css);
 
 body {
   font-family: 'Open Sans', Calibri, helvetica, sans-serif;
@@ -172,43 +173,8 @@ div.text_cell_render code {
   margin: 1em 2em;
 }
 
-
 /* Home page specific */
 
 #ipython-main-app #tabs li:nth-child(3) {
   display: none;
 }
-
-
-/* Google Charts tables and pandas dataframe specific */
-
-table.google-visualization-table-table, table.dataframe {
-  font-family: inherit;
-  font-size: smaller;
-}
-tr.gchart-table-row {
-}
-tr.gchart-table-headerrow, table.dataframe thead th {
-  font-weight: bold;
-  background-color: #e7e7e7;
-}
-tr.gchart-table-oddrow, table.dataframe tr:nth-child(odd) {
-  background-color: #f7f7f7;
-}
-tr.gchart-table-selectedTableRow {
-  background-color: #e3f2fd;
-}
-tr.gchart-table-hoverrow, table.dataframe tr:hover {
-  background-color: #bbdefb;
-}
-td.gchart-table-cell, table.dataframe td {
-  border: solid 1px #cfcfcf;
-}
-td.gchart-table-rownumcell, table.dataframe tr th {
-  border: solid 1px #cfcfcf;
-  color: #999;
-}
-th.gchart-table-headercell, table.dataframe th {
-  border: solid 1px #cfcfcf;
-}
-

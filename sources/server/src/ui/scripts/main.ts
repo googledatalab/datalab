@@ -11,7 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
- 
+
 /// <reference path="../../../../../externs/ts/requirejs/require.d.ts" />
 /**
  * RequireJS configuration and angular bootstrapping
@@ -29,9 +29,17 @@ require.config({
     angularRoute: '//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular-route.min',
     marked: '//cdnjs.cloudflare.com/ajax/libs/marked/0.3.2/marked.min',
     socketio: '/socket.io/socket.io',
+    d3: '//cdnjs.cloudflare.com/ajax/libs/d3/3.4.13/d3',
 
     // First-party paths
-    app: './app'
+    app: './app',
+
+    // Profile configuration paths
+    static: '/profile',
+    extensions: '/profile/extensions',
+    element: '/profile/require/element',
+    style: '/profile/require/style',
+    visualization: '/profile/require/visualization'
   },
 
   shim: {
