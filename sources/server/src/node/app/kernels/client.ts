@@ -126,6 +126,11 @@ export class KernelClient implements app.IKernel {
         '--matplotlib=inline'
         ];
 
+    // Add a flag for the IPython kernel configuration file path if one was provided.
+    if (this.config.configPath) {
+      args.push('--config=' + this.config.configPath);
+    }
+
     // Asynchronously spawns the kernel process, returning an event emitter for capturing
     // process events (e.g., failures).
     this._kernelProcess = childproc.spawn(cmd, args);

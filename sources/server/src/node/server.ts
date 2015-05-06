@@ -32,18 +32,20 @@ import socketio = require('socket.io');
  * Configure and parse command line arguments with defaults.
  */
 var options = nomnom
-  .option(
-    'notebookPath', {
-      abbr: 'n',
-      full: 'notebook-path',
-      help: 'notebook loading root path',
-      default: './notebooks'
-    }
-  )
+  .option('notebookPath', {
+    abbr: 'n',
+    full: 'notebook-path',
+    help: 'notebook loading root path',
+    default: './notebooks'
+  })
   .option('gcsStorageBucket', {
     abbr: 'b',
     full: 'bucket',
     help: 'GCS storage bucket to use for server content'
+  })
+  .option('ipythonKernelConfigPath', {
+    full: 'ipy-config',
+    help: 'IPython kernel configuration file path'
   })
   .parse();
 
@@ -84,6 +86,8 @@ export function start (settings: app.Settings) {
 
 // Ensure that the notebook storage system is fully initialized
 config.initStorage(options.notebookPath, options.gcsStorageBucket);
+// Initialize the kernel manager with additional configuration.
+config.initKernelManager(options.ipythonKernelConfigPath);
 
 // Start the DataLab server running
 start(config.getSettings());

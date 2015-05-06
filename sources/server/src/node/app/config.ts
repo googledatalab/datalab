@@ -68,7 +68,7 @@ export function getSettings(): app.Settings {
 /**
  * A single, server-wide kernel manager instance.
  */
-var _kernelManager: app.IKernelManager = new kernels.Manager();
+var _kernelManager: app.IKernelManager;
 
 /**
  * Gets the kernel manager singleton.
@@ -81,6 +81,15 @@ export function getKernelManager(): app.IKernelManager {
  * A single stateless server-wide notebook storage backend instance.
  */
 var _notebookStorage: app.INotebookStorage;
+
+export function initKernelManager(ipythonKernelConfigPath: string) {
+  if (_kernelManager) {
+    // Kernel manager already initialized.
+    return;
+  }
+
+  _kernelManager = new kernels.Manager(ipythonKernelConfigPath);
+}
 
 /**
  * Gets the configured notebook storage backend for persisting notebooks.

@@ -31,9 +31,9 @@ tsc $common_tsc_args --module amd $ui_tsc_files;
 # the static UI content directly.
 #
 # Copy the compiled backend .js from staging to the server build.
-rsync -avp $node_staging_path/ "$build_path";
+rsync -avp "$node_staging_path/" "$build_path";
 # Copy the built UI with static assets to the /static content path of the server build.
-rsync -avp $ui_staging_path/ "$build_path/static";
+rsync -avp "$ui_staging_path/" "$build_path/static";
 # Remove the unneeded .ts files from the build path (both ui and node).
 find "$build_path" -name '*.ts' | xargs rm;
 
@@ -43,6 +43,8 @@ rsync -avp "$profile_root/static/extensions/" "$build_path/static/profile/extens
 rsync -avp "$profile_root/static/require/" "$build_path/static/profile/require";
 # Copy over profile custom CSS that is not IPython-specific.
 rsync -avp "$profile_root/static/custom/gchart-table.css" "$build_path/static/profile/custom";
+# Copy the kernel profile configuration.
+rsync -avp "$server_root/profile" "$build_path";
 
 
 echo 'Build complete!'
