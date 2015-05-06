@@ -27,10 +27,10 @@ class TestCases(unittest.TestCase):
   def test_job_complete(self, mock_api_jobs_get):
     mock_api_jobs_get.return_value = {}
     j = gcp.bigquery.job('foo', self._create_context())
-    self.assertFalse(j.iscomplete)
+    self.assertFalse(j.is_complete)
     self.assertFalse(j.failed)
     mock_api_jobs_get.return_value = {'status': {'state': 'DONE'}}
-    self.assertTrue(j.iscomplete)
+    self.assertTrue(j.is_complete)
     self.assertFalse(j.failed)
 
   @mock.patch('gcp.bigquery._Api.jobs_get')
@@ -46,7 +46,7 @@ class TestCases(unittest.TestCase):
       }
     }
     j = gcp.bigquery.job('foo', self._create_context())
-    self.assertTrue(j.iscomplete)
+    self.assertTrue(j.is_complete)
     self.assertTrue(j.failed)
     e = j.fatal_error
     self.assertIsNotNone(e)
@@ -74,7 +74,7 @@ class TestCases(unittest.TestCase):
       }
     }
     j = gcp.bigquery.job('foo', self._create_context())
-    self.assertTrue(j.iscomplete)
+    self.assertTrue(j.is_complete)
     self.assertFalse(j.failed)
     self.assertEqual(2, len(j.errors))
     self.assertEqual('A', j.errors[0].location)

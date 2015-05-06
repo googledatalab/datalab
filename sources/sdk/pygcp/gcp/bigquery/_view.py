@@ -18,6 +18,7 @@ from ._table import Table as _Table
 
 # Query import is at end to avoid issues with circular dependencies.
 
+
 class View(object):
   """ An implementation of a BigQuery View. """
 
@@ -96,23 +97,21 @@ class View(object):
       return self
     raise Exception("View %s could not be created as it already exists" % self.full_name)
 
-  def sample(self, fields=None, count=5, sampling=None, timeout=0, use_cache=True):
-    """Retrieves a sampling of data from the table.
+  def sample(self, fields=None, count=5, sampling=None, use_cache=True):
+    """Retrieves a sampling of data from the view.
 
     Args:
       fields: an optional list of field names to retrieve.
       count: an optional count of rows to retrieve which is used if a specific
           sampling is not specified.
-      sampling: an optional sampling strategy to apply to the table.
-      timeout: duration (in milliseconds) to wait for the query to complete.
+      sampling: an optional sampling strategy to apply to the view.
       use_cache: whether to use cached results or not.
     Returns:
       A QueryResults object containing the resulting data.
     Raises:
       Exception if the sample query could not be executed or query response was malformed.
     """
-    return self._table.sample(fields=fields, count=count, sampling=sampling, timeout=timeout,
-                              use_cache=use_cache)
+    return self._table.sample(fields=fields, count=count, sampling=sampling, use_cache=use_cache)
 
   @property
   def schema(self):
@@ -143,11 +142,10 @@ class View(object):
       self._table._info['view'] = {'query': query}
     self._table.update(friendly_name=friendly_name, description=description)
 
-  def results(self, timeout=0, use_cache=True):
+  def results(self, use_cache=True):
     """Materialize the view synchronously.
 
     Args:
-      timeout: duration (in milliseconds) to wait for the query to complete.
       use_cache: whether to use cached results or not. Ignored if append is specified.
     Returns:
       A QueryResultsTable containing the result set.
@@ -155,10 +153,10 @@ class View(object):
       Exception if the query could not be executed or query response was
       malformed.
     """
-    return self._materialization.results(timeout=timeout, use_cache=use_cache)
+    return self._materialization.results(use_cache=use_cache)
 
-  def execute(self, table_name=None, append=False, overwrite=False, use_cache=True, batch=True,
-              timeout=0):
+  def execute_async(self, table_name=None, append=False, overwrite=False, use_cache=True,
+                    batch=True):
     """Materialize the View asynchronously.
 
     Args:
@@ -172,7 +170,29 @@ class View(object):
           specified.
       batch: whether to run this as a batch job (lower priority) or as an interactive job (high
         priority, more expensive).
-      timeout: duration (in milliseconds) to wait for the materialization to complete.
+    Returns:
+      A Job for the materialization
+    Raises:
+      Exception (KeyError) if View could not be materialized.
+    """
+    return self.materialization \
+        .execute_async(table_name=table_name, append=append, overwrite=overwrite,
+                       use_cache=use_cache, batch=batch)
+
+  def execute(self, table_name=None, append=False, overwrite=False, use_cache=True, batch=True):
+    """Materialize the View synchronously.
+
+    Args:
+      dataset_id: the datasetId for the result table.
+      table: the result table name; if None, then a temporary table will be used.
+      append: if True, append to the table if it is non-empty; else the request will fail if table
+          is non-empty unless overwrite is True.
+      overwrite: if the table already exists, truncate it instead of appending or raising an
+          Exception.
+      use_cache: whether to use past results or ignore cache. Has no effect if destination is
+          specified.
+      batch: whether to run this as a batch job (lower priority) or as an interactive job (high
+        priority, more expensive).
     Returns:
       A Job for the materialization
     Raises:
@@ -180,7 +200,7 @@ class View(object):
     """
     return self.materialization\
         .execute(table_name=table_name, append=append, overwrite=overwrite,
-                 use_cache=use_cache, batch=batch, timeout=timeout)
+                 use_cache=use_cache, batch=batch)
 
   def _repr_sql_(self):
     """Returns a representation of the view for embedding into a SQL statement.
