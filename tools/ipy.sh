@@ -7,6 +7,17 @@ if [ "$#" -ne 1 ]; then
     exit
 fi
 
+# Explicit cleanup since ipython/python may not cleanly shutdown
+# if this script is killed.
+function cleanup() {
+  dep_jobs=$(jobs -p)
+  if [ -n "$dep_jobs" ]; then
+    kill $dep_jobs
+  fi
+}
+trap cleanup EXIT
+
+
 # Setup python path to include modules being developed as well as any
 # developer specific modules.
 LIBS=$REPO_DIR/sources/sdk/pygcp:$REPO_DIR/sources/ipython
