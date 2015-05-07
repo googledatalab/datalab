@@ -21,33 +21,49 @@ class QueryJob(_Job):
   """ Represents a BigQuery Query Job.
   """
 
-  _DEFAULT_TIMEOUT = 60000
-
-  def __init__(self, api, job_id, table_name, sql, timeout=0):
+  def __init__(self, api, job_id, table_name, sql):
     super(QueryJob, self).__init__(api, job_id)
     self._sql = sql
-    self._timeout = timeout if timeout else self._DEFAULT_TIMEOUT
     self._table = _QueryResultsTable(api, table_name, self, is_temporary=True)
+
+  def wait(self, timeout=None):
+    """ Wait for the job to complete, or a timeout to happen.
+
+      This is more efficient than the version in the base Job class, in that we can
+      use a call that blocks for the poll duration rather than a sleep. That means we
+      shouldn't block unnecessarily long and can also poll less.
+
+    Args:
+      timeout: how long to wait (in seconds) before giving up; default None which means no timeout.
+
+    Returns:
+      The Job
+    """
+    poll = 30
+    while not self._is_complete:
+      query_result = self._api.jobs_query_results(self._job_id,
+                                                  project_id=self._table.name.project_id,
+                                                  page_size=0,
+                                                  timeout=poll * 1000)
+      if query_result['jobComplete']:
+        break
+
+      if timeout is not None:
+        timeout -= poll
+        if timeout <= 0:
+          break
+
+    self._refresh_state()
+    return self
 
   @property
   def results(self):
     """ Get the table used for the results of the query. If the query is incomplete, this blocks.
 
-    Args:
-      timeout: timeout in msec to wait for the query to complete.
-
     Raises:
       Exception if we timed out waiting for results or the query failed.
     """
-    if not self.iscomplete:
-      # Block until done (or timed out). We do this by call Jobs.queryResults but use a
-      # page size of zero because we're not actually fetching any results here.
-      query_result = self._api.jobs_query_results(self._job_id,
-                                                  project_id=self._table.name.project_id,
-                                                  page_size=0,
-                                                  timeout=self._timeout)
-      if not query_result['jobComplete']:
-        raise Exception('Timed out getting query results')
+    self.wait()
     if self.failed:
       raise Exception('Query failed: %s' % str(self.errors))
     return self._table

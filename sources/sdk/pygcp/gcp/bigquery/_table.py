@@ -270,9 +270,6 @@ class TableMetadata(object):
     return int(self._info['numBytes']) if 'numBytes' in self._info else -1
 
 
-
-
-
 class Table(object):
   """Represents a Table object referencing a BigQuery table. """
 
@@ -290,8 +287,6 @@ class Table(object):
 
   # When fetching table contents, the max number of rows to fetch per HTTP request
   _DEFAULT_PAGE_SIZE = 1024
-
-
 
   def __init__(self, api, name):
     """Initializes an instance of a Table object.
@@ -391,7 +386,7 @@ class Table(object):
       return self
     raise Exception("Table %s could not be created as it already exists" % self.full_name)
 
-  def sample(self, fields=None, count=5, sampling=None, timeout=0, use_cache=True):
+  def sample(self, fields=None, count=5, sampling=None, use_cache=True):
     """Retrieves a sampling of data from the table.
 
     Args:
@@ -399,7 +394,6 @@ class Table(object):
       count: an optional count of rows to retrieve which is used if a specific
           sampling is not specified.
       sampling: an optional sampling strategy to apply to the table.
-      timeout: duration (in milliseconds) to wait for the query to complete.
       use_cache: whether to use cached results or not.
     Returns:
       A QueryResults object containing the resulting data.
@@ -408,7 +402,7 @@ class Table(object):
     """
     sql = self._repr_sql_()
     return _Query.sampling_query(self._api, sql, count=count, fields=fields, sampling=sampling)\
-        .results(timeout=timeout, use_cache=use_cache)
+        .results(use_cache=use_cache)
 
   @staticmethod
   def _encode_dict_as_row(record, column_name_map):
@@ -528,9 +522,16 @@ class Table(object):
         rows = []
     return self
 
-  def extract(self, destination, format='CSV', compress=False, field_delimiter=',',
-              print_header=True, timeout=None, poll=5):
-    """Exports the table to GCS.
+  def _init_job_from_response(self, response):
+    """ Helper function to create a Job instance. """
+    job = None
+    if response and 'jobReference' in response:
+      job = _Job(self._api, response['jobReference']['jobId'])
+    return job
+
+  def extract_async(self, destination, format='CSV', compress=False, field_delimiter=',',
+                    print_header=True):
+    """Start a job to export the table to GCS and return immediately.
 
     Args:
       destination: the destination URI(s). Can be a single URI or a list.
@@ -540,24 +541,41 @@ class Table(object):
           AVRO format. Defaults to False.
       field_delimiter: for CSV exports, the field delimiter to use. Defaults to ','
       print_header: for CSV exports, whether to include an initial header line. Default true.
-      timeout: how long to block waiting for the job to complete; default None which means no
-        limit. If not None, then the call may return an incomplete Job which will have to be
-        checked for completion using Job.wait or Job.iscomplete.
-      poll: interval in seconds between job status polls (default 5).
     Returns:
       A Job object for the export Job if it was started successfully; else None.
     """
     response = self._api.table_extract(self._name_parts, destination, format, compress,
                                        field_delimiter, print_header)
-    job = None
-    if response and 'jobReference' in response:
-      job = _Job(self._api, response['jobReference']['jobId'])
-      job.wait(timeout=timeout, poll=poll)
+    return self._init_job_from_response(response)
+
+  def extract(self, destination, format='CSV', compress=False, field_delimiter=',',
+              print_header=True):
+    """Exports the table to GCS; blocks until complete.
+
+    Args:
+      destination: the destination URI(s). Can be a single URI or a list.
+      format: the format to use for the exported data; one of CSV, NEWLINE_DELIMITED_JSON or AVRO.
+          Defaults to CSV.
+      compress whether to compress the data on export. Compression is not supported for
+          AVRO format. Defaults to False.
+      field_delimiter: for CSV exports, the field delimiter to use. Defaults to ','
+      print_header: for CSV exports, whether to include an initial header line. Default true.
+    Returns:
+      A Job object for the export Job if it was started successfully; else None.
+    """
+    job = self.extract_async(destination=destination,
+                             format=format,
+                             compress=compress,
+                             field_delimiter=field_delimiter,
+                             print_header=print_header)
+    if job is not None:
+      job.wait()
     return job
 
-  def load(self, source, append=False, overwrite=False, source_format='CSV', field_delimiter=',',
-           allow_jagged_rows=False, allow_quoted_newlines=False, encoding='UTF-8',
-           ignore_unknown_values=False, max_bad_records=0, quote='"', skip_leading_rows=0):
+  def load_async(self, source, append=False, overwrite=False, source_format='CSV',
+                 field_delimiter=',', allow_jagged_rows=False, allow_quoted_newlines=False,
+                 encoding='UTF-8', ignore_unknown_values=False, max_bad_records=0, quote='"',
+                 skip_leading_rows=0):
     """ Load the table from GCS.
 
     Args:
@@ -598,8 +616,54 @@ class Table(object):
                                           max_bad_records=max_bad_records,
                                           quote=quote,
                                           skip_leading_rows=skip_leading_rows)
-    return _Job(self._api, response['jobReference']['jobId']) \
-        if response and 'jobReference' in response else None
+    return self._init_job_from_response(response)
+
+  def load(self, source, append=False, overwrite=False, source_format='CSV', field_delimiter=',',
+           allow_jagged_rows=False, allow_quoted_newlines=False, encoding='UTF-8',
+           ignore_unknown_values=False, max_bad_records=0, quote='"', skip_leading_rows=0):
+    """ Load the table from GCS.
+
+    Args:
+      source: the URL of the source bucket(s). Can include wildcards.
+      append: if True append onto existing table contents.
+      overwrite: if True overwrite existing table contents.
+      source_format: the format of the data; default 'CSV'. Other options are DATASTORE_BACKUP
+          or NEWLINE_DELIMITED_JSON.
+      field_delimiter: The separator for fields in a CSV file. BigQuery converts the string to
+          ISO-8859-1 encoding, and then uses the first byte of the encoded string to split the data
+          as raw binary (default ',').
+      allow_jagged_rows: If True, accept rows in CSV files that are missing trailing optional
+          columns; the missing values are treated as nulls (default False).
+      allow_quoted_newlines: If True, allow quoted data sections in CSV files that contain newline
+          characters (default False).
+      encoding: The character encoding of the data, either 'UTF-8' (the default) or 'ISO-8859-1'.
+      ignore_unknown_values: If True, accept rows that contain values that do not match the schema;
+          the unknown values are ignored (default False).
+      max_bad_records The maximum number of bad records that are allowed (and ignored) before
+          returning an 'invalid' error in the Job result (default 0).
+      quote: The value used to quote data sections in a CSV file; default '"'. If your data does
+          not contain quoted sections, set the property value to an empty string. If your data
+          contains quoted newline characters, you must also enable allow_quoted_newlines.
+      skip_leading_rows: A number of rows at the top of a CSV file to skip (default 0).
+
+    Returns:
+      A Job object for the load Job if it was started successfully; else None.
+    """
+    job = self.load_async(source,
+                          append=append,
+                          overwrite=overwrite,
+                          source_format=source_format,
+                          field_delimiter=field_delimiter,
+                          allow_jagged_rows=allow_jagged_rows,
+                          allow_quoted_newlines=allow_quoted_newlines,
+                          encoding=encoding,
+                          ignore_unknown_values=ignore_unknown_values,
+                          max_bad_records=max_bad_records,
+                          quote=quote,
+                          skip_leading_rows=skip_leading_rows)
+    if job is not None:
+      job.wait()
+    return job
 
   def _get_row_fetcher(self, start_row=0, max_rows=None, page_size=_DEFAULT_PAGE_SIZE):
     """ Get a function that can retrieve a page of rows.

@@ -62,11 +62,10 @@ class Query(object):
   def sql(self):
     return self._sql
 
-  def results(self, timeout=0, use_cache=True):
+  def results(self, use_cache=True):
     """Retrieves results for the query.
 
     Args:
-      timeout: duration (in milliseconds) to wait for the query to complete.
       use_cache: whether to use cached results or not. Ignored if append is specified.
     Returns:
       A QueryResultsTable containing the result set.
@@ -75,11 +74,11 @@ class Query(object):
       malformed.
     """
     if not use_cache or (self._results is None):
-      self._results = self.execute(use_cache=use_cache, batch=False, timeout=timeout)
+      self._results = self.execute(use_cache=use_cache, batch=False)
     return self._results.results
 
   def extract(self, destination, format='CSV', compress=False, field_delimiter=',',
-              print_header=True, use_cache=True, timeout=0, extract_timeout=None, poll=5):
+              print_header=True, use_cache=True):
     """Exports the query results to GCS.
 
     Args:
@@ -90,45 +89,36 @@ class Query(object):
           AVRO format (default False).
       field_delimiter: for CSV exports, the field delimiter to use (default ',').
       print_header: for CSV exports, whether to include an initial header line (default True).
-      timeout: duration (in milliseconds) to wait for the query to complete (default 0).
       use_cache: whether to use cached results or not (default True).
-      extract_timeout: how long to block waiting for the extract job to complete; default None
-          which means no limit. If not None, then the call may return an incomplete Job which will
-          have to be checked for completion using Job.wait or Job.iscomplete.
-      poll: interval in seconds between job status polls (default 5).
     Returns:
       A Job object for the export Job if it was started successfully; else None.
     Raises:
       An Exception if the query timed out or failed.
     """
-    query_job = self.results(timeout=timeout, use_cache=use_cache)
-    extract_job = query_job.extract(destination, format=format, compress=compress,
-                                    field_delimiter=field_delimiter, print_header=print_header,
-                                    timeout=extract_timeout, poll=poll)
-    return extract_job
+    return self.results(use_cache=use_cache)\
+        .extract(destination, format=format, compress=compress, field_delimiter=field_delimiter,
+                 print_header=print_header)
 
-  def to_dataframe(self, start_row=0, max_rows=None, use_cache=True, timeout=0):
+  def to_dataframe(self, start_row=0, max_rows=None, use_cache=True):
     """ Exports the query results to a Pandas dataframe.
 
     Args:
       start_row: the row of the table at which to start the export (default 0).
       max_rows: an upper limit on the number of rows to export (default None).
-      timeout: duration (in milliseconds) to wait for the query to complete (default 0).
       use_cache: whether to use cached results or not (default True).
     Returns:
       A dataframe containing the table data.
     """
-    return self.results(timeout=timeout, use_cache=use_cache) \
+    return self.results(use_cache=use_cache) \
         .to_dataframe(start_row=start_row, max_rows=max_rows)
 
-  def to_file(self, path, start_row=0, max_rows=None, timeout=0, use_cache=True, write_header=True):
+  def to_file(self, path, start_row=0, max_rows=None, use_cache=True, write_header=True):
     """Save the results to a local file in Excel CSV format.
 
     Args:
       path: path on the local filesystem for the saved results.
       start_row: the row of the table at which to start the export (default 0).
       max_rows: an upper limit on the number of rows to export (default None).
-      timeout: duration (in milliseconds) to wait for the query to complete.
       use_cache: whether to use cached results or not.
       write_header: if true (the default), write column name header row at start of file.
     Returns:
@@ -136,11 +126,11 @@ class Query(object):
     Raises:
       An Exception if the operation failed.
     """
-    self.results(timeout=timeout, use_cache=use_cache) \
+    self.results(use_cache=use_cache) \
         .to_file(path, start_row=start_row, max_rows=max_rows, write_header=write_header)
     return path
 
-  def sample(self, count=5, fields=None, sampling=None, timeout=0, use_cache=True):
+  def sample(self, count=5, fields=None, sampling=None, use_cache=True):
     """Retrieves a sampling of rows for the query.
 
     Args:
@@ -148,7 +138,6 @@ class Query(object):
           sampling is not specified (default 5).
       fields: the list of fields to sample (default None implies all).
       sampling: an optional sampling strategy to apply to the table.
-      timeout: duration (in milliseconds) to wait for the query to complete (default 0).
       use_cache: whether to use cached results or not (default True).
     Returns:
       A QueryResultsTable containing a sampling of the result set.
@@ -157,11 +146,11 @@ class Query(object):
     """
     return Query.sampling_query(self._api, self._sql, count=count, fields=fields,
                                 sampling=sampling).\
-        results(timeout=timeout, use_cache=use_cache)
+        results(use_cache=use_cache)
 
-  def execute(self, table_name=None, append=False, overwrite=False, use_cache=True, batch=True,
-              timeout=0, allowLargeResults=False):
-    """ Initiate the query.
+  def execute_async(self, table_name=None, append=False, overwrite=False, use_cache=True,
+                    batch=True, allow_large_results=False):
+    """ Initiate the query and return immediately.
 
     Args:
       dataset_id: the datasetId for the result table.
@@ -175,8 +164,7 @@ class Query(object):
           specified (default True).
       batch: whether to run this as a batch job (lower priority) or as an interactive job (high
         priority, more expensive) (default True).
-      timeout: duration (in milliseconds) to wait for the query to complete (default 0).
-      allowLargeResults: whether to allow large results; i.e. compressed data over 100MB. This is
+      allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
           slower and requires a table_name to be specified) (default False).
     Returns:
       A Job for the query
@@ -193,7 +181,7 @@ class Query(object):
                                                dry_run=False,
                                                use_cache=use_cache,
                                                batch=batch,
-                                               allowLargeResults=allowLargeResults)
+                                               allow_large_results=allow_large_results)
     if 'jobReference' not in query_result:
       raise Exception('Unexpected query response.')
     job_id = query_result['jobReference']['jobId']
@@ -204,7 +192,38 @@ class Query(object):
       except KeyError:
         # The query was in error
         raise Exception('Query failed: %s' % str(query_result['status']['errors']))
-    return _QueryJob(self._api, job_id, table_name, self._sql, timeout=timeout)
+    return _QueryJob(self._api, job_id, table_name, self._sql)
+
+  def execute(self, table_name=None, append=False, overwrite=False, use_cache=True, batch=True,
+              allow_large_results=False):
+    """ Initiate the query and block waiting for completion.
+
+    Args:
+      dataset_id: the datasetId for the result table.
+      table_name: the result table name as a string or TableName; if None (the default), then a
+          temporary table will be used.
+      append: if True, append to the table if it is non-empty; else the request will fail if table
+          is non-empty unless overwrite is True (default False).
+      overwrite: if the table already exists, truncate it instead of appending or raising an
+          Exception (default False).
+      use_cache: whether to use past query results or ignore cache. Has no effect if destination is
+          specified (default True).
+      batch: whether to run this as a batch job (lower priority) or as an interactive job (high
+        priority, more expensive) (default True).
+      allowLargeResults: whether to allow large results; i.e. compressed data over 100MB. This is
+          slower and requires a table_name to be specified) (default False).
+    Returns:
+      A Job for the query
+    Raises:
+      Exception if query could not be executed.
+    """
+    self._results = self.execute_async(table_name=table_name,
+                                       append=append,
+                                       overwrite=overwrite,
+                                       use_cache=use_cache,
+                                       batch=batch,
+                                       allow_large_results=allow_large_results).wait()
+    return self._results
 
   def save_as_view(self, view_name):
     """ Create a View from this Query.
