@@ -67,6 +67,11 @@ declare module app {
     heartbeatPort: number;
     iopubPort: number;
     shellPort: number;
+
+    /**
+     * Path to an IPython kernel config.py file to use.
+     */
+    configPath?: string;
   }
 
   /**

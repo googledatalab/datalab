@@ -7,29 +7,33 @@ if [ -z "$REPO_DIR" ]; then
 fi
 
 if [ -z "$1" ]; then
-  echo "Please specify the path to a notebook (.ipynb).";
+  echo "Please specify the notebook directory path.";
   exit 1;
 fi
 
 # Load the common build config
 source $REPO_DIR/sources/server/config.sh;
 
+# Add GCP libraries to the python path.
+LIBS=$REPO_DIR/sources/sdk/pygcp:$REPO_DIR/sources/ipython
+export PYTHONPATH=$PYTHONPATH:$LIBS
+echo 'Python path: ' $PYTHONPATH
+
 # Install NodeJS server dependencies
 npm install --prefix "$build_path";
 
-storage_root=`dirname "$1"`;
-notebook_relative_path=`basename $1`;
+storage_root="$1";
+profile_path="$build_path/profile/kernel_config.py"
 
 # Start the DataLab NodeJS server.
-node "$build_path/server.js" -n "$PWD/$storage_root" &
+node "$build_path/server.js" -n "$PWD/$storage_root" --ipy-config $profile_path &
 # Capture the server process id so that we can kill it later.
 server_pid=$!;
 
 # Wait a moment for server to start before opening a connection.
 sleep 1;
-echo "Opening notebook $notebook_relative_path";
-
-notebook_url="http://localhost:9000/#/notebooks/$notebook_relative_path";
+export SERVER_HTTP_PORT=9000;
+notebook_url="http://localhost:$SERVER_HTTP_PORT";
 
 # Open the default browser to the specified notebook path
 echo "Opening your browser to notebook: $notebook_url"

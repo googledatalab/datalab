@@ -24,9 +24,16 @@ import client = require('./client');
 export class KernelManager implements app.IKernelManager {
 
   _idToKernel: app.Map<app.IKernel>;
+  _kernelConfigPath: string;
 
-  constructor () {
+  /**
+   * Constructor.
+   *
+   * @param kernelConfigPath IPython kernel configuration file path.
+   */
+  constructor (kernelConfigPath: string) {
     this._idToKernel = {};
+    this._kernelConfigPath = kernelConfigPath;
   }
 
   /**
@@ -40,6 +47,11 @@ export class KernelManager implements app.IKernelManager {
       onKernelStatus: app.EventHandler<app.KernelStatus>,
       onOutputData: app.EventHandler<app.OutputData>
       ): app.IKernel {
+
+    // Set the kernel configuration file path if one was specified.
+    if (this._kernelConfigPath) {
+      config.configPath = this._kernelConfigPath;
+    }
 
     var kernel: app.IKernel = new client.KernelClient(
       id, config, onExecuteReply, onHealthCheck, onKernelStatus, onOutputData);
