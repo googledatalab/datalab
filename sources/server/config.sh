@@ -33,6 +33,7 @@ node_staging_path="$staging_path/node";
 
 # Define the source path
 server_root="$REPO_DIR/sources/server";
+profile_root="$REPO_DIR/sources/ipython/profile";
 
 # TypeScript compiler args for both backend and frontend code
 common_tsc_args="--removeComments --noImplicitAny";
