@@ -49,3 +49,9 @@ elif env == 'memory':
 # Development mode support
 if os.environ.get('IPYTHON_DEBUG', '') != '':
   c.NotebookApp.log_level = 'DEBUG'
+
+# Trust all our notebooks for now.
+# TODO(gram): Remove before GA (see issue 314)
+import IPython.nbformat.sign as _sign
+_sign.NotebookNotary.check_signature = lambda self, nb: True
+
