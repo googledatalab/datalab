@@ -16,9 +16,7 @@ function cleanup() {
   fi
   dep_jobs=$(jobs -p)
   if [ -n "$dep_jobs" ]; then
-    echo "Cleaning up the jobs I started: $dep_jobs"
-    echo "$(ps)"
-    kill -9 $dep_jobs
+    kill $dep_jobs
   fi
 }
 trap cleanup EXIT
