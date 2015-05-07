@@ -51,7 +51,7 @@ class SessionService implements app.ISessionService {
     var deferred = this._q.defer();
     this._http.post(this.url(session), '').then((response) =>
         response.status >= 200 && response.status < 300
-            ? deferred.resolve(item)
+            ? deferred.resolve(response.data)
             : deferred.reject(response.statusText));
     return deferred.promise;
   }
@@ -80,7 +80,7 @@ class SessionService implements app.ISessionService {
     var deferred = this._q.defer();
     this._http.post(this.url(session) + ':reset', '').then((response) =>
         response.status >= 200 && response.status < 300
-            ? deferred.resolve(item)
+            ? deferred.resolve(response.data)
             : deferred.reject(response.statusText));
     return deferred.promise;
   }
@@ -95,7 +95,7 @@ class SessionService implements app.ISessionService {
     var deferred = this._q.defer();
     this._http.post(this.url(session) + ':shutdown', '').then((response) =>
         response.status >= 200 && response.status < 300
-            ? deferred.resolve(item)
+            ? deferred.resolve(response.data)
             : deferred.reject(response.statusText));
     return deferred.promise;
   }
