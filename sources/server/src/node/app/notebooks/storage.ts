@@ -39,13 +39,25 @@ export class NotebookStorage implements app.INotebookStorage {
   }
 
   /**
+   * Asynchronously creates a starter notebook.
+   *
+   * @param path The storage path for the starter notebook.
+   * @param callback Callback to invoke upon write completion.
+   */
+  create(path: string, callback: app.Callback<void>) {
+    // Generate starter notebook content.
+    var notebookData: app.notebooks.Notebook = nbutil.createStarterNotebook();
+    // Write the notebook content to storage.
+    this.write(path, new nb.NotebookSession(notebookData), callback);
+  }
+
+  /**
    * Asynchronously reads in the notebook if it exists or creates a starter notebook if not.
    *
    * @param path The full notebook path to read (with file extension).
-   * @param createIfNeeded Should a starter notebook be returned if the path doesn't exist?
    * @param callback Callback to invoke upon completion of the read operation.
    */
-  read(path: string, createIfNeeded: boolean, callback: app.Callback<app.INotebookSession>) {
+  read(path: string, callback: app.Callback<app.INotebookSession>) {
 
     // Selects the serializer that has been assigned to the notebook path extension.
     var serializer: app.INotebookSerializer;
@@ -69,33 +81,26 @@ export class NotebookStorage implements app.INotebookStorage {
       // Deserialize the notebook or create a starter notebook.
       var notebookData: app.notebooks.Notebook;
       if (serializedNotebook === null) {
-
-        if (createIfNeeded) {
-          // Notebook didn't exist, so create a starter notebook.
-          notebookData = nbutil.createStarterNotebook();
-        } else {
-          // Nothing can be done here since the path doesn't exist.
-          callback(util.createError(
-            'Cannot read notebook path "%s" because does not exist.'));
-          return;
-        }
+        // Nothing can be done here since the path doesn't exist.
+        callback(util.createError(
+          'Cannot read notebook path "%s" because does not exist.'));
 
       } else {
+
         // Notebook already exists. Deserialize the notebook data.
         try {
           notebookData = serializer.parse(serializedNotebook);
+          // Create the notebook wrapper to manage the notebook model state.
+          callback(null, new nb.NotebookSession(notebookData));
         } catch (error) {
+
           // Failed to deserialize the notebook.
           //
           // This can occur if the JSON data is malformed, or the notebook is not a valid ipynb
           // for the format specified within the notebook.
           callback(error);
-          return;
         }
       }
-
-      // Create the notebook wrapper to manage the notebook model state.
-      callback(null, new nb.NotebookSession(notebookData));
     });
   }
 

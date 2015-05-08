@@ -490,7 +490,6 @@ export class Session implements app.ISession {
   _initNotebook(callback: app.Callback<void>) {
     this._notebookStorage.read(
       this.path,
-      /* create if needed */ true,
       (error: any, notebook: app.INotebookSession) => {
         if (error) {
           // TODO(bryantd): add retry with backoff logic here.
