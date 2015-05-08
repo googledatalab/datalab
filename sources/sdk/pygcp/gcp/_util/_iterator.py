@@ -14,6 +14,7 @@
 
 """Iterator class for iterable cloud lists."""
 
+
 class Iterator(object):
   """An iterator implementation that handles paging over a cloud list."""
 

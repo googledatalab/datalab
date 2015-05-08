@@ -14,5 +14,36 @@
 
 """Google Cloud Platform library - IPython Functionality."""
 
+import httplib2 as _httplib2
+import requests as _requests
+
 import gcp.interactive._bigquery
 import gcp.interactive._chart
+
+
+# Inject our user agent on all requests by monkey-patching a wrapper around httplib2.Http.request.
+_orig_request = _httplib2.Http.request
+
+
+def _request(self, uri, method="GET", body=None, headers=None,
+             redirections=_httplib2.DEFAULT_MAX_REDIRECTS, connection_type=None):
+  if headers is None:
+    headers = {}
+  headers['user-agent'] = 'GoogleCloudDataLab/1.0'
+  return _orig_request(self, uri, method=method, body=body, headers=headers,
+                       redirections=redirections, connection_type=connection_type)
+
+
+_httplib2.Http.request = _request
+
+# Similarly for the requests library.
+_orig_init = _requests.Session.__init__
+
+
+def _init_session(self):
+  _orig_init(self)
+  self.headers['User-Agent'] = 'GoogleCloudDataLab/1.0'
+
+
+_requests.Session.__init__ = _init_session
+
