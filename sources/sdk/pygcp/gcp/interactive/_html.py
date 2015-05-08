@@ -16,6 +16,7 @@
 
 import time as _time
 
+
 class Html(object):
   """A helper to enable generating an HTML representation as display data in a notebook.
 

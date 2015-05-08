@@ -14,7 +14,6 @@
 
 """Implements Query BigQuery API."""
 
-import csv
 from ._sampling import Sampling as _Sampling
 from ._utils import parse_table_name as _parse_table_name
 

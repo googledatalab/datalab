@@ -24,8 +24,6 @@ from ._utils import parse_dataset_name as _parse_dataset_name
 class DataSet(object):
   """Represents a list of BigQuery tables in a dataset."""
 
-
-
   def __init__(self, api, name):
     """Initializes an instance of a DataSet.
 

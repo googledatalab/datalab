@@ -14,7 +14,6 @@
 
 """Implements BigQuery HTTP API wrapper."""
 
-import time
 import gcp._util as _util
 
 

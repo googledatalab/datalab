@@ -55,3 +55,4 @@ if os.environ.get('IPYTHON_DEBUG', '') != '':
 import IPython.nbformat.sign as _sign
 _sign.NotebookNotary.check_signature = lambda self, nb: True
 
+

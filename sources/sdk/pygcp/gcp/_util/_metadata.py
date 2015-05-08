@@ -14,10 +14,8 @@
 
 """Implements service wrapper for the compute metadata service."""
 
-import json
-import os
-
 import httplib2
+import json
 
 
 class MetadataService(object):
