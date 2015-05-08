@@ -51,6 +51,7 @@ class Http(object):
     if headers is None:
       headers = {}
 
+    headers['user-agent'] = 'GoogleCloudDataLab/1.0'
     # Add querystring to the URL if there are any arguments.
     if args is not None:
       qs = urllib.urlencode(args)
