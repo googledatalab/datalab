@@ -65,7 +65,7 @@ def _get_cols(fields, schema):
 def _get_data_from_empty_list(source, fields, first_row, count):
   """ Helper function for _get_data that handles empty lists. """
   fields = _get_field_list(fields, None)
-  return {'cols': _get_cols(fields, None), 'rows': []}
+  return {'cols': _get_cols(fields, None), 'rows': []}, 0
 
 
 def _get_data_from_list_of_dicts(source, fields, first_row, count):
@@ -74,7 +74,7 @@ def _get_data_from_list_of_dicts(source, fields, first_row, count):
   fields = _get_field_list(fields, schema)
   gen = source[first_row:first_row + count] if count >= 0 else source
   rows = [{'c': [{'v': row[c]} for c in fields]} for row in gen]
-  return {'cols': _get_cols(fields, schema), 'rows': rows}
+  return {'cols': _get_cols(fields, schema), 'rows': rows}, len(source)
 
 
 def _get_data_from_list_of_lists(source, fields, first_row, count):
@@ -83,7 +83,7 @@ def _get_data_from_list_of_lists(source, fields, first_row, count):
   fields = _get_field_list(fields, schema)
   gen = source[first_row:first_row + count] if count >= 0 else source
   rows = [{'c': [{'v': row[i]} for i in range(0, len(fields))]} for row in gen]
-  return {'cols': _get_cols(fields, schema), 'rows': rows}
+  return {'cols': _get_cols(fields, schema), 'rows': rows}, len(source)
 
 
 def _get_data_from_dataframe(source, fields, first_row, count):
@@ -101,7 +101,7 @@ def _get_data_from_dataframe(source, fields, first_row, count):
 
     rows.append({'c': [{'v': row[c]} for c in fields]})
   cols = _get_cols(fields, schema)
-  return {'cols': cols, 'rows': rows}
+  return {'cols': cols, 'rows': rows}, len(source)
 
 
 def _get_data_from_table(source, fields, first_row, count):
@@ -112,7 +112,7 @@ def _get_data_from_table(source, fields, first_row, count):
   fields = _get_field_list(fields, schema)
   gen = source.range(first_row, count) if count >= 0 else source
   rows = [{'c': [{'v': row[c]} for c in fields]} for row in gen]
-  return {'cols': _get_cols(fields, schema), 'rows': rows}
+  return {'cols': _get_cols(fields, schema), 'rows': rows}, source.length
 
 
 def _get_data(source, fields, first_row, count):

@@ -82,7 +82,7 @@ def _chart_cell(args, cell):
   source = args['data']
   chart_type = args['chart']
   count = 25 if chart_type == 'paged_table' else -1
-  data = _get_data(source, fields, 0, count)
+  data, _ = _get_data(source, fields, 0, count)
   return _ipython.core.display.HTML(
     _HTML_TEMPLATE % (div_id, div_id, chart_type, source, fields, chart_options,
                       _json.dumps(data, cls=_JSONEncoder)))
@@ -96,7 +96,7 @@ def _get_chart_data(line):
     fields = args[1]
     first_row = int(args[2]) if len(args) > 2 else 0
     count = int(args[3]) if len(args) > 3 else -1
-    data = _get_data(source, fields, first_row, count)
+    data, _ = _get_data(source, fields, first_row, count)
   except Exception, e:
     _print_exception_with_stack(e)
     data = {}
