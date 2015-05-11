@@ -407,6 +407,12 @@ class ClientNotebookSession implements app.IClientNotebookSession {
   _handleAddCell(update: app.notebooks.updates.AddCell) {
     var worksheet = nbdata.getWorksheetOrThrow(update.worksheetId, this.notebook);
 
+    // Ensure that the worksheet does not already contain the specified cell.
+    if (nbdata.cellExists(update.cell.id, worksheet)) {
+      // Cell already exists, do not insert a second cell with the same ID.
+      return;
+    }
+
     // If an insertion point was defined, verify the given cell id exists within the worksheet
     var insertIndex: number;
     if (update.insertAfter) {

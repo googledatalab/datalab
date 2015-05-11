@@ -97,6 +97,14 @@ export class NotebookSession implements app.INotebookSession {
   _applyAddCell (action: app.notebooks.actions.AddCell): app.notebooks.updates.AddCell {
     // Get the worksheet where the cell should be added
     var worksheet = nbdata.getWorksheetOrThrow(action.worksheetId, this._notebook);
+
+    // Ensure that the worksheet does not already contain the specified cell.
+    if (nbdata.cellExists(action.cellId, worksheet)) {
+      // Cell with specified ID already exists. Not possible to complete the requested action.
+      throw util.createError('Cannot insert cell with ID "%s". Cell ID already exists.',
+          action.cellId);
+    }
+
     // Create a cell to insert
     var cell = nbutil.createCell(action.type, action.cellId, action.source);
 
