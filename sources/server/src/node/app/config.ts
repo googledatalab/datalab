@@ -14,12 +14,13 @@
 
 
 /// <reference path="../../../../../externs/ts/express/express.d.ts" />
-/// <reference path="../../../../../externs/ts/node/mkdirp.d.ts" />
+/// <reference path="../../../../../externs/ts/node/mkdirp-async.d.ts" />
 /// <reference path="../../../../../externs/ts/node/gcloud.d.ts" />
 /// <reference path="./common/interfaces.d.ts" />
 import content = require('./storage/index');
 import express = require('express');
 import gcloud = require('gcloud');
+import gcp = require('./common/gcp');
 import kernels = require('./kernels/index');
 import mkdirp = require('mkdirp');
 import nbstorage = require('./notebooks/storage');
@@ -111,37 +112,96 @@ export function getStorage(): app.IStorage {
 }
 
 /**
- * Initializes the storage system for reading/writing.
+ * Asynchronously initializes the storage system for reading/writing.
  *
- * If a GCS bucket name is provided, then a GCS storage backend will be used, otherwise local
- * file system storage will be used. If both are specified, then GCS has precedence.
+ * Takes storage configuration options and selects an appropriate storage backend.
+ *
+ * Precedence:
+ * - cloud project storage (highest)
+ * - user-specified GCS bucket
+ * - local filesystem (lowest)
  *
  * @param notebookStoragePath Local filesystem path to use for storage.
  * @param bucket GCS bucket to use for storage.
+ * @param useCloudProjectStorage Boolean to use project-associated cloud storage.
+ * @param callback Completion callback to invoke once storage is initialized.
  */
-export function initStorage(notebookStoragePath: string, bucket: string) {
-  // Create the storage singleton if it hasn't been created before.
-  if (!_storage) {
+export function initStorage(
+    notebookStoragePath: string,
+    bucket: string,
+    useCloudProjectStorage: boolean,
+    callback: app.Callback<void>
+    ): void {
 
-    if (bucket) {
-      // Then use GCS for storage.
-      // Initialize the GCS storage instance.
-      var client = gcloud.storage().bucket(bucket);
-      _storage = new content.GoogleCloudStorage(client);
-      console.log('Using GCS storage. Bucket: ', bucket);
-
-    } else {
-      // Then use the local file system for storage.
-      //
-      // Ensure that the notebook storage path exists.
-      mkdirp.sync(notebookStoragePath);
-      _storage = new content.LocalFileSystem(notebookStoragePath);
-      console.log('Using local storage. Root notebook storage path: ', notebookStoragePath);
+  // Define common callback for initializing the notebook storage.
+  var initNotebookStorageThenCallback = (error: Error) => {
+    if (error) {
+      callback(error);
+      return;
     }
+
+    initNotebookStorage();
+    callback(null);
+  };
+
+  if (_storage) {
+    // Already initialized storage.
+    process.nextTick(initNotebookStorageThenCallback.bind(null, null));
+    return;
   }
 
+  // Select a storage backend based upon the specified arguments.
+  if (useCloudProjectStorage) {
+    initCloudProjectStorage(initNotebookStorageThenCallback);
+  } else if (bucket) {
+    // Then use GCS for storage.
+    initGcsStorage(bucket, initNotebookStorageThenCallback);
+  } else {
+    // Then use the local file system for storage.
+    initLocalFileSystemStorage(notebookStoragePath, initNotebookStorageThenCallback);
+  }
+}
+
+function initNotebookStorage() {
   // Create the notebook storage singleton if it hasn't yet been created
   if (!_notebookStorage) {
      _notebookStorage = new nbstorage.NotebookStorage(_storage);
   }
+}
+
+function initCloudProjectStorage(callback: app.Callback<void>) {
+  // Get the project-associated GCS bucket.
+  gcp.getProjectStorageBucket((error, projectBucket) => {
+    if (error) {
+      callback(error);
+      return;
+    }
+
+    initGcsStorage(projectBucket, callback);
+  });
+}
+
+function initGcsStorage(bucket: string, callback: app.Callback<void>) {
+  // Initialize the GCS storage instance.
+  var client = gcloud.storage().bucket(bucket);
+
+  console.log('Using GCS storage. Bucket: ', bucket);
+  _storage = new content.GoogleCloudStorage(client);
+
+  callback(null);
+}
+
+function initLocalFileSystemStorage(notebookStoragePath: string, callback: app.Callback<void>) {
+  // Ensure that the notebook storage path exists.
+  mkdirp(notebookStoragePath, (error: Error) => {
+    if (error) {
+      callback(error);
+      return;
+    }
+
+    console.log('Using local storage. Root notebook storage path: ', notebookStoragePath);
+    _storage = new content.LocalFileSystem(notebookStoragePath);
+
+    callback(null);
+  });
 }

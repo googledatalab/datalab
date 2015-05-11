@@ -47,6 +47,12 @@ var options = nomnom
     full: 'ipy-config',
     help: 'IPython kernel configuration file path'
   })
+  .option('cloudProjectStorage', {
+    abbr: 'c',
+    full: 'cloud-project',
+    flag: true,
+    help: 'Use the notebook storage associated with a GCP cloud project'
+  })
   .parse();
 
 /**
@@ -84,10 +90,23 @@ export function start (settings: app.Settings) {
   httpServer.listen(settings.httpPort);
 }
 
-// Ensure that the notebook storage system is fully initialized
-config.initStorage(options.notebookPath, options.gcsStorageBucket);
-// Initialize the kernel manager with additional configuration.
-config.initKernelManager(options.ipythonKernelConfigPath);
 
-// Start the DataLab server running
-start(config.getSettings());
+// Ensure that the notebook storage system is fully initialized.
+config.initStorage(
+    options.notebookPath,
+    options.gcsStorageBucket,
+    options.cloudProjectStorage,
+    (error, callback) => {
+
+  if (error) {
+    // Storage init failed. Do not start server.
+    console.log('Aborting server startup due to error during storage initialization', error);
+    return;
+  }
+
+  // Initialize the kernel manager with additional configuration.
+  config.initKernelManager(options.ipythonKernelConfigPath);
+
+  // Start the DataLab server running.
+  start(config.getSettings());
+});
