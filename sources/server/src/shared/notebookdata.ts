@@ -31,10 +31,27 @@
  * This exists to provide a solution that is both NodeJS and browser-compatible (no util.format
  * in the browser currently).
  */
-function createError (format: string, ...formatArgs: string[]) {
+function createError(format: string, ...formatArgs: string[]) {
   // TODO(bryantd): Improve the error formatting here. Some simple printf string replacement for
   // consistency with Node.js' util.format() method.
   throw new Error(format + JSON.stringify(formatArgs));
+}
+
+/**
+ * Checks if a cell with given ID exists in the worksheet.
+ *
+ * @param cellId The cell ID to check for.
+ * @param worksheet The worksheet to search within.
+ * @return Boolean to indicate if a cell with specified ID existed within the worksheet.
+ */
+export function cellExists(cellId: string, worksheet: app.notebooks.Worksheet): boolean {
+  for (var i = 0; i < worksheet.cells.length; ++i) {
+    if (cellId == worksheet.cells[i].id) {
+      return true;
+    }
+  }
+  // No cell matching ID was found in the worksheet.
+  return false;
 }
 
 /**
@@ -46,7 +63,7 @@ function createError (format: string, ...formatArgs: string[]) {
  * @param worksheet The worksheet from which to retrieve the cell.
  * @return The index of the specified cell.
  */
-export function getCellIndexOrThrow (cellId: string, worksheet: app.notebooks.Worksheet) {
+export function getCellIndexOrThrow(cellId: string, worksheet: app.notebooks.Worksheet) {
   var index = indexOf(cellId, worksheet);
   if (index == -1) {
     throw createError('Cell id "%s" does not exist within worksheet with id "%s"',
@@ -60,7 +77,7 @@ export function getCellIndexOrThrow (cellId: string, worksheet: app.notebooks.Wo
  *
  * Throws an error if the cell does not exist within the specified worksheet.
  */
-export function getCellOrThrow (
+export function getCellOrThrow(
     cellId: string,
     worksheetId: string,
     notebook: app.notebooks.Notebook
@@ -88,7 +105,7 @@ export function getCellOrThrow (
  *
  * Throws an error if the specified worksheet does not exist within the notebook.
  */
-export function getWorksheetOrThrow (
+export function getWorksheetOrThrow(
     worksheetId: string,
     notebook: app.notebooks.Notebook
     ): app.notebooks.Worksheet {
@@ -122,7 +139,7 @@ export function getWorksheetOrThrow (
  * @param worksheet The worksheet to search for the specified cell within.
  * @return Index of the cell (>= 0) if found, or -1 if the cell was not found.
  */
-export function indexOf (cellId: string, worksheet: app.notebooks.Worksheet): number {
+export function indexOf(cellId: string, worksheet: app.notebooks.Worksheet): number {
   for (var i = 0; i < worksheet.cells.length; ++i) {
     if (cellId == worksheet.cells[i].id) {
       return i;
