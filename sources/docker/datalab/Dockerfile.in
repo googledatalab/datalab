@@ -75,9 +75,10 @@ RUN cd /sdk/PyGCP-0.1.0 && python setup.py install && \
 ADD build/server/_/ /datalab/server
 RUN cd /datalab/server && npm install && cd /
 
-
 # Startup
 ENV SERVER_HTTP_PORT 8080
 EXPOSE 8080
 VOLUME [ "/var/log/datalab" ]
-ENTRYPOINT [ "node", "/datalab/server/server.js", "--cloud-project"]
+ENTRYPOINT [ "node", "/datalab/server/server.js", \
+    "--cloud-project", \
+    "--ipy-config=/datalab/server/profile/kernel_config.py" ]
