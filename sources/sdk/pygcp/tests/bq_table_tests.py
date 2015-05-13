@@ -27,6 +27,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual('test', parsed_name[0])
     self.assertEqual('requestlogs', parsed_name[1])
     self.assertEqual('today', parsed_name[2])
+    self.assertEqual('', parsed_name[3])
     self.assertEqual('[test:requestlogs.today]', table._repr_sql_())
 
   def test_parse_full_name(self):
@@ -47,7 +48,7 @@ class TestCases(unittest.TestCase):
     self._check_name_parts(table)
 
   def test_parse_named_tuple_name(self):
-    table = self._create_table(gcp.bigquery.tablename('test', 'requestlogs', 'today'))
+    table = self._create_table(gcp.bigquery.tablename('test', 'requestlogs', 'today', ''))
     self._check_name_parts(table)
 
   def test_parse_tuple_full_name(self):
@@ -316,7 +317,7 @@ class TestCases(unittest.TestCase):
 
     result = table.insertAll(df)
     self.assertIsNotNone(result, "insertAll should return the table object")
-    mock_api_tabledata_insertAll.assert_called_with(('test', 'testds', 'testTable0'), [
+    mock_api_tabledata_insertAll.assert_called_with(('test', 'testds', 'testTable0', ''), [
       {'insertId': '#0', 'json': {u'column': 'r0', u'headers': 10.0, u'some': 0}},
       {'insertId': '#1', 'json': {u'column': 'r1', u'headers': 10.0, u'some': 1}},
       {'insertId': '#2', 'json': {u'column': 'r2', u'headers': 10.0, u'some': 2}},
@@ -356,7 +357,7 @@ class TestCases(unittest.TestCase):
       {u'column': 'r3', u'headers': 10.0, u'some': 3}
     ])
     self.assertIsNotNone(result, "insertAll should return the table object")
-    mock_api_tabledata_insertAll.assert_called_with(('test', 'testds', 'testTable0'), [
+    mock_api_tabledata_insertAll.assert_called_with(('test', 'testds', 'testTable0', ''), [
       {'insertId': '#0', 'json': {u'column': 'r0', u'headers': 10.0, u'some': 0}},
       {'insertId': '#1', 'json': {u'column': 'r1', u'headers': 10.0, u'some': 1}},
       {'insertId': '#2', 'json': {u'column': 'r2', u'headers': 10.0, u'some': 2}},
@@ -396,7 +397,7 @@ class TestCases(unittest.TestCase):
       {u'column': 'r3', u'headers': 10.0, u'some': 3}
     ], include_index=True)
     self.assertIsNotNone(result, "insertAll should return the table object")
-    mock_api_tabledata_insertAll.assert_called_with(('test', 'testds', 'testTable0'), [
+    mock_api_tabledata_insertAll.assert_called_with(('test', 'testds', 'testTable0', ''), [
       {'insertId': '#0', 'json': {u'column': 'r0', u'headers': 10.0, u'some': 0, 'Index': 0}},
       {'insertId': '#1', 'json': {u'column': 'r1', u'headers': 10.0, u'some': 1, 'Index': 1}},
       {'insertId': '#2', 'json': {u'column': 'r2', u'headers': 10.0, u'some': 2, 'Index': 2}},
@@ -436,7 +437,7 @@ class TestCases(unittest.TestCase):
                                {u'column': 'r3', u'headers': 10.0, u'some': 3}
                              ], include_index=True, index_name='Row')
     self.assertIsNotNone(result, "insertAll should return the table object")
-    mock_api_tabledata_insertAll.assert_called_with(('test', 'testds', 'testTable0'), [
+    mock_api_tabledata_insertAll.assert_called_with(('test', 'testds', 'testTable0', ''), [
       {'insertId': '#0', 'json': {u'column': 'r0', u'headers': 10.0, u'some': 0, 'Row': 0}},
       {'insertId': '#1', 'json': {u'column': 'r1', u'headers': 10.0, u'some': 1, 'Row': 1}},
       {'insertId': '#2', 'json': {u'column': 'r2', u'headers': 10.0, u'some': 2, 'Row': 2}},
@@ -492,6 +493,83 @@ class TestCases(unittest.TestCase):
     when = dt.datetime(2001, 2, 3, 4, 5, 6, 7)
     row = gcp.bigquery._Table._encode_dict_as_row({'fo@o': 'b@r', 'b+ar': when}, {})
     self.assertEqual({'foo': 'b@r', 'bar': '2001-02-03T04:05:06.000007'}, row)
+
+  def test_decorators(self):
+    tbl = gcp.bigquery.table('testds.testTable0', context=self._create_context())
+    tbl2 = tbl.snapshot(dt.timedelta(hours=-1))
+    self.assertEquals('test:testds.testTable0@-3600000', tbl2.full_name)
+
+    with self.assertRaises(Exception) as error:
+      tbl2 = tbl2.snapshot(dt.timedelta(hours=-2))
+    self.assertEqual('Cannot use snapshot() on an already decorated table',
+                     error.exception[0])
+
+    with self.assertRaises(Exception) as error:
+      tbl2 = tbl2.window(dt.timedelta(hours=-2), 0)
+    self.assertEqual('Cannot use window() on an already decorated table',
+                     error.exception[0])
+
+    with self.assertRaises(Exception) as error:
+      tbl2 = tbl.snapshot(dt.timedelta(days=-8))
+    self.assertEqual('Invalid snapshot relative when argument: must be within 7 days: -8 days, 0:00:00',
+                     error.exception[0])
+
+    with self.assertRaises(Exception) as error:
+      tbl2 = tbl.snapshot(dt.timedelta(days=-8))
+    self.assertEqual('Invalid snapshot relative when argument: must be within 7 days: -8 days, 0:00:00',
+                     error.exception[0])
+
+    tbl2 = tbl.snapshot(dt.timedelta(days=-1))
+    self.assertEquals('test:testds.testTable0@-86400000', tbl2.full_name)
+
+    with self.assertRaises(Exception) as error:
+      tbl2 = tbl.snapshot(dt.timedelta(days=1))
+    self.assertEqual('Invalid snapshot relative when argument: 1 day, 0:00:00',
+                     error.exception[0])
+
+    with self.assertRaises(Exception) as error:
+      tbl2 = tbl.snapshot(1000)
+    self.assertEqual('Invalid snapshot when argument type: 1000',
+                     error.exception[0])
+
+    when = dt.datetime.utcnow() - dt.timedelta(1)
+    self.assertEquals('test:testds.testTable0@-86400000', tbl2.full_name)
+
+    when = dt.datetime.utcnow() + dt.timedelta(1)
+    with self.assertRaises(Exception) as error:
+      tbl2 = tbl.snapshot(when)
+    self.assertEqual('Invalid snapshot absolute when argument: %s' % when,
+                     error.exception[0])
+
+    when = dt.datetime.utcnow() - dt.timedelta(8)
+    with self.assertRaises(Exception) as error:
+      tbl2 = tbl.snapshot(when)
+    self.assertEqual('Invalid snapshot absolute when argument: %s' % when,
+                     error.exception[0])
+
+  def test_window_decorators(self):
+    # The at test above already tests many of the conversion cases. The extra things we
+    # have to test are that we can use two values, we get a meaningful default for the second
+    # if we pass None, and that the first time comes before the second.
+    tbl = gcp.bigquery.table('testds.testTable0', context=self._create_context())
+
+    tbl2 = tbl.window(dt.timedelta(hours=-1))
+    self.assertEquals('test:testds.testTable0@-3600000-0', tbl2.full_name)
+
+    with self.assertRaises(Exception) as error:
+      tbl2 = tbl2.window(-400000, 0)
+    self.assertEqual('Cannot use window() on an already decorated table',
+                     error.exception[0])
+
+    with self.assertRaises(Exception) as error:
+      tbl2 = tbl2.snapshot(-400000)
+    self.assertEqual('Cannot use snapshot() on an already decorated table',
+                     error.exception[0])
+
+    with self.assertRaises(Exception) as error:
+      tbl2 = tbl.window(dt.timedelta(0), dt.timedelta(hours=-1))
+    self.assertEqual('window: Between arguments: begin must be before end: 0:00:00, -1 day, 23:00:00',
+                     error.exception[0])
 
   def _create_context(self):
     project_id = 'test'

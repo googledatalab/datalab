@@ -16,7 +16,7 @@
 
 import codecs
 import csv
-from datetime import datetime
+from datetime import datetime, timedelta
 import math
 import pandas as pd
 import time
@@ -288,6 +288,9 @@ class Table(object):
   # When fetching table contents, the max number of rows to fetch per HTTP request
   _DEFAULT_PAGE_SIZE = 1024
 
+  # Milliseconds per week
+  _MSEC_PER_WEEK = 7 * 24 * 3600 * 1000
+
   def __init__(self, api, name):
     """Initializes an instance of a Table object.
 
@@ -297,7 +300,7 @@ class Table(object):
     """
     self._api = api
     self._name_parts = _parse_table_name(name, api.project_id)
-    self._full_name = '%s:%s.%s' % self._name_parts
+    self._full_name = '%s:%s.%s%s' % self._name_parts
     self._info = None
     self._cached_page = None
     self._cached_page_index = 0
@@ -905,5 +908,97 @@ class Table(object):
 
     return self._cached_page[item - self._cached_page_index]
 
+  @staticmethod
+  def _convert_decorator_time(when):
+    if isinstance(when, datetime):
+      value = 1000 * (when - datetime.utcfromtimestamp(0)).total_seconds()
+    elif isinstance(when, timedelta):
+      value = when.total_seconds() * 1000
+      if value > 0:
+        raise Exception("Invalid snapshot relative when argument: %s" % str(when))
+    else:
+      raise Exception("Invalid snapshot when argument type: %s" % str(when))
+
+    if value < -Table._MSEC_PER_WEEK:
+      raise Exception("Invalid snapshot relative when argument: must be within 7 days: %s"
+                      % str(when))
+
+    if value > 0:
+      now = 1000 * (datetime.utcnow() - datetime.utcfromtimestamp(0)).total_seconds()
+      # Check that an abs value is not more than 7 days in the past and is
+      # not in the future
+      if not ((now - Table._MSEC_PER_WEEK) < value < now):
+        raise Exception("Invalid snapshot absolute when argument: %s" % str(when))
+
+    return int(value)
+
+  def snapshot(self, at):
+    """ Return a new Table which is a snapshot of this table at the specified time.
+
+    Args:
+      at: the time of the snapshot. This can be a Python datetime (absolute) or timedelta
+          (relative to current time). The result must be after the table was created and no more
+          than seven days in the past. Passing None will get a reference the oldest snapshot.
+
+          Note that using a datetime will get a snapshot at an absolute point in time, while
+          a timedelta will provide a varying snapshot; any queries issued against such a Table
+          will be done against a snapshot that has an age relative to the execution time of the
+          query.
+
+    Returns:
+      A new Table object referencing the snapshot.
+
+    Raises:
+      An exception if this Table is already decorated, or if the time specified is invalid.
+    """
+    if self._name_parts.decorator != '':
+      raise Exception("Cannot use snapshot() on an already decorated table")
+
+    value = Table._convert_decorator_time(at)
+    return Table(self._api, "%s@%s" % (self.full_name, str(value)))
+
+  def window(self, begin, end=None):
+    """ Return a new Table limited to the rows added to this Table during the specified time range.
+
+    Args:
+      begin: the start time of the window. This can be a Python datetime (absolute) or timedelta
+          (relative to current time). The result must be after the table was created and no more
+          than seven days in the past.
+
+          Note that using a relative value will provide a varying snapshot, not a fixed
+          snapshot; any queries issued against such a Table will be done against a snapshot
+          that has an age relative to the execution time of the query.
+
+      end: the end time of the snapshot; if None, then the current time is used. The types and
+          interpretation of values is as for start.
+
+    Returns:
+      A new Table object referencing the window.
+
+    Raises:
+      An exception if this Table is already decorated, or if the time specified is invalid.
+    """
+    if self._name_parts.decorator != '':
+      raise Exception("Cannot use window() on an already decorated table")
+
+    start = Table._convert_decorator_time(begin)
+    if end is None:
+      if isinstance(begin, timedelta):
+        end = timedelta(0)
+      else:
+        end = datetime.utcnow()
+    stop = Table._convert_decorator_time(end)
+
+    # Both values must have the same sign
+    if (start > 0 >= stop) or (stop > 0 >= start):
+      raise Exception("window: Between arguments must both be absolute or relative: %s, %s" %
+                      (str(begin), str(end)))
+
+    # start must be less than stop
+    if start > stop:
+      raise Exception("window: Between arguments: begin must be before end: %s, %s" %
+                      (str(begin), str(end)))
+
+    return Table(self._api, "%s@%s-%s" % (self.full_name, str(start), str(stop)))
 
 from ._query import Query as _Query
