@@ -29,7 +29,7 @@ export class ChannelClient {
   _socketIdentity: string
   _socket: zmq.Socket;
 
-  constructor (connectionUrl: string, port: number, socketIdentity: string, socketType: string) {
+  constructor(connectionUrl: string, port: number, socketIdentity: string, socketType: string) {
     this._connectionUrl = connectionUrl;
     this._port = port;
     this._socketIdentity = socketIdentity;
@@ -37,21 +37,21 @@ export class ChannelClient {
     this._socket = null; // initialized on connect()
   }
 
-  connect (): void {
+  connect(): void {
     if (!this._socket) {
       this._createSocket();
     }
     this._socket.connect(this._connectionUrl + this._port);
   }
 
-  disconnect (): void {
+  disconnect(): void {
     this._socket.close();
   }
 
   /**
    * Creates a zmq socket and initializes it with appropriate event handlers.
    */
-  _createSocket () {
+  _createSocket() {
     if (!this._socketType) {
       throw new Error("Improperly initialized channel client. Define a socket type.");
     }
@@ -66,7 +66,7 @@ export class ChannelClient {
    *
    * @param messageParts a multipart message
    */
-  _send (messageParts: string[]): void {
+  _send(messageParts: string[]): void {
     this._socket.send(messageParts);
   }
 
