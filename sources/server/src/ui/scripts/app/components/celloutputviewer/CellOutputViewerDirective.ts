@@ -18,6 +18,7 @@
  * Renders the list of outputs for a cell.
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
+/// <amd-dependency path="app/components/htmlviewer/HtmlViewerDirective" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import _app = require('app/App');

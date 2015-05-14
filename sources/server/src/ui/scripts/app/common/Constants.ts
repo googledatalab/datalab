@@ -68,6 +68,9 @@ export var headingCell = {
 export var headingViewer = {
   directiveName: 'datalabHeadingViewer'
 };
+export var htmlViewer = {
+  directiveName: 'datalabHtmlViewer'
+};
 export var markdownCell = {
   directiveName: 'datalabMarkdownCell'
 };
@@ -133,10 +136,11 @@ export var scopes = {
   fileNavigator: 'fileNavigator',
   layouts: 'layouts',
   headingViewer: 'headingViewer',
+  htmlViewer: 'htmlViewer',
   markdownViewer: 'markdownViewer',
   notebookTitle: 'notebookTitle',
   notebookToolbar: 'notebookToolbar',
-  sessionNavigator: 'sessionNavigator',  
+  sessionNavigator: 'sessionNavigator',
   worksheetEditor: 'worksheetEditor',
 
   // Route-specific components.
@@ -150,11 +154,11 @@ export var scopes = {
   sessions: {
     page: 'sessions.page',
   },
-  
+
   // Other injectables (services, factories, providers, etc.).
   clientNotebookSession: clientNotebookSession.name,
   contentService: contentService.name,
   sessionConnection: sessionConnection.name,
   sessionEventDispatcher: sessionEventDispatcher.name,
-  sessionService: sessionService.name,  
+  sessionService: sessionService.name,
 };
