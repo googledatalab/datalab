@@ -65,7 +65,8 @@ class Sampling(object):
     """
     def _hashed_sampling(sql):
       projection = Sampling._create_projection(fields)
-      sql = 'SELECT %s FROM (%s) WHERE ABS(HASH(%s)) < %d' % (projection, sql, field_name, percent)
+      sql = 'SELECT %s FROM (%s) WHERE ABS(HASH(%s)) %% 100 < %d' % \
+          (projection, sql, field_name, percent)
       if count != 0:
         sql = sql + (' LIMIT %d' % count)
       return sql
@@ -87,3 +88,26 @@ class Sampling(object):
     projection = Sampling._create_projection(fields)
     return lambda sql: 'SELECT %s FROM (%s) ORDER BY %s%s LIMIT %d' % (projection, sql, field_name,
                                                                        direction, count)
+
+  @staticmethod
+  def random(percent, fields=None, count=0):
+    """Provides a sampling strategy that picks a semi-random set of rows.
+
+    Args:
+      percent: the percentage of the resulting hashes to select.
+      fields: an optional list of field names to retrieve.
+      count: maximum number of rows to limit the sampled results to (default 5).
+    Returns:
+      A sampling function that can be applied to get some random rows. In order for this to
+      provide a good random sample percent should be chosen to be ~count/#rows where #rows
+      is the number of rows in the object (query, view or table) being sampled.
+      The rows will be returned in order; i.e. the order itself is not randomized.
+    """
+    def _random_sampling(sql):
+      projection = Sampling._create_projection(fields)
+      sql = 'SELECT %s FROM (%s) WHERE rand() < %f' % (projection, sql, percent / 100.0)
+      if count != 0:
+        sql = sql + (' LIMIT %d' % count)
+      return sql
+    return _random_sampling
+
