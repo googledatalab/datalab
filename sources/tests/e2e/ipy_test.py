@@ -1,36 +1,27 @@
+import IPyTestRunner
+import sys
+try:
+  from IPythonTestCase import IPythonTestCase
+  from selenium.webdriver.common.by import By
+  from selenium.webdriver.support import expected_conditions as EC
+  from selenium.webdriver.support.ui import WebDriverWait
+except ImportError:
+  IPyTestRunner.help_driver()
+  sys.exit(0)
 
-from selenium import webdriver
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-from selenium.common.exceptions import RemoteDriverServerException
-import unittest
+IPyTestRunner.FLAGS.add_argument('--notebook-server',
+                                 dest='notebook_server',
+                                 type=str,
+                                 help='Python notebook server to test against',
+                                 default='http://localhost:9000')
 
-
-class IpyTest(unittest.TestCase):
-
-  def setUp(self):
-    self.driver = None
-    wait_count = 10;
-    while(self.driver is None):
-      try:
-        self.driver = webdriver.Remote(
-            command_executor='http://127.0.0.1:4444/wd/hub',
-            desired_capabilities=DesiredCapabilities.CHROME)
-      except RemoteDriverServerException as e:
-        wait_count-=1
-        if(wait_count>0):
-          pass
-  def tearDown(self):
-    if self.driver:
-      self.driver.quit()
+class IPyTest(IPythonTestCase):
   def testBasicTest(self):
     driver = self.driver
-    driver.get('localhost:9000');
+    driver.get(self.args.notebook_server)
     self.assertEqual(u'Home', driver.title)
     button = driver.find_element_by_partial_link_text('BigQuery - Basics')
-    button.click();
+    button.click()
     WebDriverWait(driver, 10).until(
         lambda driver: len(driver.window_handles) > 1)
     driver.switch_to_window(driver.window_handles[1])
@@ -43,9 +34,8 @@ class IpyTest(unittest.TestCase):
       # not_there = 'Pandas'
       element = driver.find_element_by_partial_link_text(not_there)
       self.fail('Found extraneous text (e.g., "{}")'.format(not_there))
-    except EC.NoSuchElementException as e:
+    except EC.NoSuchElementException:
       pass
 
-
 if __name__ == '__main__':
-  unittest.main()
+  IPyTestRunner.run(IPyTest)
