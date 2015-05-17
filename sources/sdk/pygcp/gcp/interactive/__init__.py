@@ -14,5 +14,12 @@
 
 """Google Cloud Platform library - IPython Functionality."""
 
+try:
+  import IPython as _ipython
+  import IPython.core.magic as _magic
+except ImportError:
+  raise Exception('This module can only be loaded in ipython.')
+
 import gcp.interactive._bigquery
 import gcp.interactive._chart
+import gcp.interactive._modules

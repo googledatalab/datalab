@@ -17,13 +17,8 @@
 import argparse
 import json as _json
 import time as _time
-
-try:
-  import IPython as _ipython
-  import IPython.core.magic as _magic
-except ImportError:
-  raise Exception('This module can only be loaded in ipython.')
-
+import IPython as _ipython
+import IPython.core.magic as _magic
 from gcp._util import JSONEncoder as _JSONEncoder
 from gcp._util import print_exception_with_last_stack as _print_exception_with_stack
 from ._utils import _get_data
