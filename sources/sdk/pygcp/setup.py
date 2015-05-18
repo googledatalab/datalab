@@ -35,5 +35,11 @@ setup(
               'gcp.storage',
               'gcp.interactive'
              ],
-    description='Google Cloud APIs for data analysis scenarios.'
+    description='Google Cloud APIs for data analysis scenarios.',
+    requires=['httplib2',
+              'IPython',
+              'oauth2client',
+              'pandas',
+              'requests'
+             ]
 )
