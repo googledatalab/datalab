@@ -30,6 +30,7 @@ declare module app {
 
   interface ExecuteReply extends KernelMessage {
     success: boolean;
+    requestContext: RequestContext;
     // When execute has not been aborted, we get back an execution count
     executionCounter?: string;
     // When an error has occurred, the following are populated
@@ -40,12 +41,11 @@ declare module app {
 
   interface ExecuteRequest extends KernelMessage {
     code: string;
-    // Note: user_variables and user_expressions are slated for removal/reworking in upcoming versions
-    // https://github.com/ipython/ipython/wiki/IPEP-13:-Updating-the-Message-Spec
-  }
-
-  interface ExecuteResult extends KernelMessage {
-    result: any;
+    /**
+     * Metadata properties for a given request will be returned within all corresponding reply
+     * messages produced by the execution (e.g., ExecuteResult, OutputData, etc.).
+     */
+    requestContext: RequestContext;
   }
 
   /**
@@ -62,6 +62,13 @@ declare module app {
   interface OutputData extends KernelMessage {
     type: string; // 'stdout' | 'stderr' | 'result' | 'error'
     mimetypeBundle: any;
+    requestContext: RequestContext;
+  }
+
+  interface RequestContext {
+    cellId?: string;
+    worksheetId?: string;
+    connectionId?: string;
   }
 
   interface SessionStatus {
@@ -74,6 +81,7 @@ declare module app {
     interface Header {
       msg_id: string;
       msg_type: string;
+      msg_context: any;
     }
 
     interface Message {

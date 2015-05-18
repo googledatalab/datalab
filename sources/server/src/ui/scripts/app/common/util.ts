@@ -14,26 +14,22 @@
 
 
 /**
- * Message type constants used by socket.io for client-server communication.
+ * Common utility functions.
  */
-
 
 /**
- * Message type sent from client to server to invoke a kernel or notebook action.
+ * Registers a single callback to process a specified event and issue async scope digest after.
+ *
+ * @param scope The scope on which to listen for events.
+ * @param eventName The name of the event to listen for.
+ * @param callback The callback to invoke with the event message whenever the event occurs.
  */
-export var action = 'action';
+export function registerEventHandler(
+    scope: ng.IScope,
+    eventName: string,
+    callback: app.Callback<any>) {
 
-/**
- * Message type sent from client to server when a client disconnects.
- */
-export var disconnect = 'disconnect';
-
-/**
- * Message type from server to client to request that the WebSocket connection be terminated.
- */
-export var terminateConnection = 'terminate connection';
-
-/**
- * Message type sent from server to client(s) to update their session state.
- */
-export var update = 'update';
+  scope.$on(eventName, (event: any, message: any) => {
+    scope.$evalAsync(() => { callback(message) });
+  });
+}

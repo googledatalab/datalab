@@ -17,9 +17,6 @@
  * Constants used to label notebook updates types.
  */
 
-// All update event/message types are bucketed under this label.
-export var label = 'update'
-
 // Composite update (sequence of updates).
 export var composite = 'update.composite';
 
@@ -40,4 +37,9 @@ export var worksheet = {
 // Cell-level updates.
 export var cell = {
   update: 'update.cell.update'
+}
+
+// Kernel updates.
+export var kernel = {
+  executeResult: 'update.kernel.executeResult'
 }

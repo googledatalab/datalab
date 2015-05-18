@@ -18,7 +18,7 @@
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <amd-dependency path="app/components/editorcell/EditorCellDirective" />
-/// <amd-dependency path="app/components/sessions/ClientNotebookSession" />
+/// <amd-dependency path="app/components/sessions/ClientNotebook" />
 import actions = require('app/shared/actions');
 import constants = require('app/common/Constants');
 import logging = require('app/common/Logging');
@@ -29,28 +29,28 @@ var log = logging.getLogger(constants.scopes.codeCell);
 
 class CodeCellController implements app.ICellController {
 
-  _clientNotebookSession: app.IClientNotebookSession;
+  _clientNotebook: app.IClientNotebook;
   _rootScope: ng.IRootScopeService;
   _scope: app.CellScope;
 
   showEditRegion: boolean;
   showPreviewRegion: boolean;
 
-  static $inject: string[] = ['$scope', '$rootScope', constants.clientNotebookSession.name];
+  static $inject: string[] = ['$scope', '$rootScope', constants.clientNotebook.name];
 
   /**
    * Constructor.
    *
    * @param scope The directive's scope.
    * @param rootScope The root scope for the page.
-   * @param clientNotebookSession Client's notebook session.
+   * @param clientNotebook Client's notebook session.
    */
   constructor(
       scope: app.CellScope,
       rootScope: ng.IRootScopeService,
-      clientNotebookSession: app.IClientNotebookSession) {
+      clientNotebook: app.IClientNotebook) {
 
-    this._clientNotebookSession = clientNotebookSession;
+    this._clientNotebook = clientNotebook;
     this._rootScope = rootScope;
     this._scope = scope;
 
@@ -89,7 +89,7 @@ class CodeCellController implements app.ICellController {
    */
   _handleExecute() {
     // TODO(bryantd): apply a visual treatment to show that the cell is in an "executing" state.
-    this._clientNotebookSession.evaluateCell(this._scope.cell, this._scope.worksheetId);
+    this._clientNotebook.evaluateCell(this._scope.cell, this._scope.worksheetId);
   }
 }
 

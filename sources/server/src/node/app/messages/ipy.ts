@@ -20,31 +20,34 @@
 
 
 /**
- * Delimits a list of message identities from the message in the multipart IPython message format
+ * Delimits a list of message identities from the message in the multipart IPython message format.
  */
 var IPY_MSG_IDS_DELIMITER = '<IDS|MSG>';
 
 /**
- * Creates an IPython multipart kernel message (protocol version 4.1)
+ * Creates an IPython multipart kernel message (protocol version 4.1).
  */
 export function createIPyMessage(
     sessionId: string,
     messageId: string,
     messageType: string,
-    content: any
+    content: any,
+    requestContext: any
     ): string[] {
 
   var header = {
     msg_id: messageId,
     session: sessionId,
     msg_type: messageType,
+    msg_context: requestContext
   };
+
   var parentHeader = {};
   var metadata = {};
 
-  // A multipart message is simply an array of messages
+  // A multipart message is simply an array of messages.
   return [IPY_MSG_IDS_DELIMITER,
-      '', // TODO: compute/enable HMAC digest
+      '', // HMAC digest
       JSON.stringify(header),
       JSON.stringify(parentHeader),
       JSON.stringify(metadata),
@@ -76,7 +79,7 @@ export function parseIPyMessage(args: IArguments): app.ipy.Message {
   // Convert the multi-part message buffers to utf-8 strings.
   var messageParts = deserializeZeroMQMessage(args);
 
-  // Read identities until reaching the message delimiter token
+  // Read identities until reaching the message delimiter token.
   var identities: string[] = [];
   var offset = 0;
   for (offset = 0; offset < messageParts.length; ++offset) {
@@ -89,7 +92,7 @@ export function parseIPyMessage(args: IArguments): app.ipy.Message {
 
   ++offset; // Skip the HMAC digest
 
-  // The offset index now points to header dict index
+  // The offset index now points to header dict index.
   return {
     identities: identities,
     header: JSON.parse(messageParts[offset]),

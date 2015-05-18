@@ -92,8 +92,14 @@ export var worksheetEditor = {
 
 // Generic angular component names used for dependency injection (e.g., services, factories,
 // providers, etc.).
-export var clientNotebookSession = {
-  name: 'clientNotebookSession'
+export var clientApi = {
+  name: 'clientApi'
+};
+export var clientSession = {
+  name: 'clientSession'
+};
+export var clientNotebook = {
+  name: 'clientNotebook'
 };
 export var contentService = {
   name: 'contentService'
@@ -156,7 +162,9 @@ export var scopes = {
   },
 
   // Other injectables (services, factories, providers, etc.).
-  clientNotebookSession: clientNotebookSession.name,
+  clientApi: clientApi.name,
+  clientSession: clientSession.name,
+  clientNotebook: clientNotebook.name,
   contentService: contentService.name,
   sessionConnection: sessionConnection.name,
   sessionEventDispatcher: sessionEventDispatcher.name,

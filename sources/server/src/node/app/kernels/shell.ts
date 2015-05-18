@@ -82,6 +82,7 @@ export class ShellChannelClient extends channels.ChannelClient {
     var reply: app.ExecuteReply = {
       success: status == 'ok',
       requestId: message.parentHeader.msg_id,
+      requestContext: message.parentHeader.msg_context
     };
     if (status != 'aborted') {
       reply.executionCounter = message.content['execution_count'];
@@ -106,7 +107,13 @@ export class ShellChannelClient extends channels.ChannelClient {
       store_history: true,
       allow_stdin: false
     };
-    return ipy.createIPyMessage(this._clientId, request.requestId, 'execute_request', content);
+
+    return ipy.createIPyMessage(
+      this._clientId,
+      request.requestId,
+      'execute_request',
+      content,
+      request.requestContext);
   }
 
 }

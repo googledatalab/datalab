@@ -41,7 +41,6 @@ export class Session implements app.ISession {
   _kernelManager: app.IKernelManager;
   _notebook: app.INotebookSession;
   _notebookStorage: app.INotebookStorage;
-  _requestIdToCellRef: app.Map<app.CellRef>;
 
   /**
    * All messages flowing in either direction between user<->kernel will pass through this handler.
@@ -63,7 +62,6 @@ export class Session implements app.ISession {
     this._kernelManager = kernelManager;
     this._messageHandler = messageHandler;
     this._notebookStorage = notebookStorage;
-    this._requestIdToCellRef = {};
   }
 
   /**
@@ -106,8 +104,8 @@ export class Session implements app.ISession {
   /**
    * Delegates an incoming action request (from client) to the middleware stack.
    */
-  processAction(action: app.notebooks.actions.Action) {
-    var nextAction = this._handleAction.bind(this);
+  processAction(connection: app.IClientConnection, action: app.notebooks.actions.Action) {
+    var nextAction = this._handleAction.bind(this, connection);
     this._messageHandler(action, this, nextAction);
   }
 
@@ -313,6 +311,67 @@ export class Session implements app.ISession {
     });
   }
 
+  /**
+   * Gets a connection by ID.
+   *
+   * Throws an exception if no connection with the given ID exists.
+   *
+   * @param connectionId The ID of the connection to get.
+   * @return The requested connection.
+   */
+  _getConnectionOrThrow(connectionId: string) {
+    for (var i = 0; i < this._connections.length; ++i) {
+      if (connectionId == this._connections[i].id) {
+        return this._connections[i];
+      }
+    }
+    throw util.createError('No connection with ID "%s" exists.', connectionId);
+  }
+
+  _handleExecuteReply(message: any) {
+    // Determine if the execute reply corresponds to a cell or kernel execute request.
+    var metadata = message.requestContext;
+    if (metadata.connectionId) {
+      this._handleKernelExecuteReply(<app.ExecuteReply>message);
+    } else if (metadata.cellId && metadata.worksheetId) {
+      this._handleCellExecuteReply(<app.ExecuteReply>message);
+    } else {
+      // Missing request routing metadata. Nothing can be done with the message.
+      console.log('ERROR Received execute reply message with no recipient: ', message);
+    }
+  }
+
+  /**
+   * Send the execute reply message back to the single client that requested it.
+   *
+   * @param reply The execute reply message received.
+   */
+  _handleKernelExecuteReply(reply: app.ExecuteReply) {
+    // The execute reply contains any errors if the request failed, but not the actual execution
+    // result (which arrives separately as output data of type="result").
+    //
+    // So, only send the client a message if there was an error here.
+    if (reply.success) {
+      // Nothing available to return to the client from a successful reply message.
+      return;
+    }
+
+    // An error occurred; respond with the details.
+    try {
+      var connection = this._getConnectionOrThrow(reply.requestContext.connectionId);
+      connection.sendUpdate({
+        name: updates.kernel.executeResult,
+        // Respond with the request ID provided by the client in the original execute request.
+        requestId: reply.requestId,
+        // Return an output/result with type=error and error details.
+        result: util.createErrorOutput(reply.errorName, reply.errorMessage, reply.traceback)
+      });
+    } catch(error) {
+      // Nothing can be done if the given connection does not exist.
+      console.log(error);
+    }
+  }
+
   // Handlers for messages flowing in either direction between user<->kernel.
   //
   // Each of the following methods delegates an incoming message to the middleware stack and
@@ -322,21 +381,15 @@ export class Session implements app.ISession {
   /**
    * Applies execute reply data to the notebook model and broadcasts an update message.
    */
-  _handleExecuteReply(message: any) {
-    // Lookup the notebook cell to which this message corresponds.
-    var cellRef = this._getCellRefForRequestId(message.requestId);
-    if (!cellRef) {
-      // Nothing to update.
-      return;
-    }
-
+  _handleCellExecuteReply(message: any) {
     // Capture the cell modifications as an update action.
     var action: app.notebooks.actions.UpdateCell = {
       name: actions.cell.update,
-      worksheetId: cellRef.worksheetId,
-      cellId: cellRef.cellId,
+      worksheetId: message.requestContext.worksheetId,
+      cellId: message.requestContext.cellId,
       prompt: message.executionCounter
     };
+
     // Also add the error messaging as a cell output if an error has occurred.
     if (message.errorName) {
       action.outputs = [
@@ -351,10 +404,10 @@ export class Session implements app.ISession {
   /**
    * Handles the action request by updating the notebook model, issuing kernel requests, etc.
    */
-  _handleAction(action: any) {
+  _handleAction(connection: app.IClientConnection, action: any) {
     switch (action.name) {
       case actions.composite:
-        this._handleActionComposite(action);
+        this._handleActionComposite(connection, action);
         break;
 
       case actions.cell.execute:
@@ -363,6 +416,10 @@ export class Session implements app.ISession {
 
       case actions.notebook.executeCells:
         this._handleActionExecuteCells(action);
+        break;
+
+      case actions.kernel.execute:
+        this._handleActionExecute(connection, action);
         break;
 
       case actions.cell.clearOutput:
@@ -382,8 +439,8 @@ export class Session implements app.ISession {
   /**
    * Handles a composite action by sequentially applying each contained sub-action.
    */
-  _handleActionComposite(action: app.notebooks.actions.Composite) {
-    action.subActions.forEach(this._handleAction.bind(this));
+  _handleActionComposite(connection: app.IClientConnection, action: app.notebooks.actions.Composite) {
+    action.subActions.forEach(this._handleAction.bind(this, connection));
   }
 
   /**
@@ -406,19 +463,21 @@ export class Session implements app.ISession {
     }
   }
 
+  _handleActionExecute(connection: app.IClientConnection, action: app.notebooks.actions.Execute) {
+    // Request will have a declared request ID that should be used for tracking.
+    this._kernel.execute({
+      requestId: action.requestId,
+      requestContext: {
+        connectionId: connection.id
+      },
+      code: action.source
+    });
+  }
+
   /**
    * Handles an execute cell action by generating a kernel execute request.
    */
   _handleActionExecuteCell(action: app.notebooks.actions.ExecuteCell) {
-    // Generate a kernel request ID (kernels are not aware of cells, just "requests").
-    var requestId = uuid.v4();
-
-    // Store the mapping of request ID -> cellref for joining kernel response messages later.
-    this._setCellRefForRequestId(requestId, {
-      cellId: action.cellId,
-      worksheetId: action.worksheetId
-    });
-
     // Retrieve the current state of the cell that should be executed.
     var cell: app.notebooks.Cell;
     try {
@@ -435,10 +494,15 @@ export class Session implements app.ISession {
           action.cellId, error));
     }
 
-
     // Request that the kernel execute the code snippet.
     this._kernel.execute({
-      requestId: requestId,
+      // Generate a kernel request ID (kernels are not aware of cells, just "requests").
+      requestId: uuid.v4(),
+      // Messages generated in response to this request will have the following metadata.
+      requestContext: {
+        cellId: action.cellId,
+        worksheetId: action.worksheetId
+      },
       code: cell.source
     });
   }
@@ -473,25 +537,47 @@ export class Session implements app.ISession {
     });
   }
 
+  _handleOutputData(message: any) {
+    // Determine if the output data corresponds to a cell or kernel execute request.
+    var metadata = message.requestContext;
+    if (metadata.connectionId) {
+      this._handleKernelOutputData(<app.OutputData>message);
+    } else if (metadata.cellId && metadata.worksheetId) {
+      this._handleCellOutputData(<app.OutputData>message);
+    } else {
+      // Missing request routing metadata. Nothing can be done with the message.
+      console.log('ERROR Received output data message with no recipient: ', message);
+    }
+  }
+
+  _handleKernelOutputData(output: app.OutputData) {
+    try {
+      // Send the execution output the requesting client.
+      var connection = this._getConnectionOrThrow(output.requestContext.connectionId);
+      connection.sendUpdate({
+        name: updates.kernel.executeResult,
+        // Respond with the request ID provided by the client in the original execute request.
+        requestId: output.requestId,
+        result: output
+      });
+    } catch(error) {
+      // Nothing can be done if the connection does not exist.
+      console.log(error);
+    }
+  }
+
   /**
    * Handles a kernel output data message by attaching the output data to the appropriate cell.
    */
-  _handleOutputData(message: any) {
-    // Lookup the notebook cell to which this kernel message corresponds.
-    var cellRef = this._getCellRefForRequestId(message.requestId);
-    if (!cellRef) {
-      // Nothing to update.
-      return;
-    }
-
+  _handleCellOutputData(output: app.OutputData) {
     // Construct an update to append the specified output data.
     var action: app.notebooks.actions.UpdateCell = {
       name: actions.cell.update,
-      worksheetId: cellRef.worksheetId,
-      cellId: cellRef.cellId,
+      worksheetId: output.requestContext.worksheetId,
+      cellId: output.requestContext.cellId,
       outputs: [{
-        type: message.type,
-        mimetypeBundle: message.mimetypeBundle
+        type: output.type,
+        mimetypeBundle: output.mimetypeBundle
       }]
     };
 
@@ -642,60 +728,5 @@ export class Session implements app.ISession {
 
     // Defer callback invocation until the next tick to provide expected async behavior.
     process.nextTick(callback);
-  }
-
-  // Methods for managing request <-> cell reference mappings
-
-  /**
-   * Gets the cell id that corresponds to the given request id.
-   *
-   * Returns null if the given request id has no corresponding cell id recorded.
-   */
-  _getCellRefForRequestId(requestId: string) {
-    var cellRef = this._requestIdToCellRef[requestId];
-    if (cellRef) {
-      return cellRef;
-    } else {
-      // If a message referencing an unknown request id were to arrive, it likely indicates
-      // that the message is sufficiently old enough to be ignored, because the
-      // cellRef => request Id mapping has been deleted.
-      //
-      // Log these instances if they ever occur and return null to inform the caller that the
-      // specified request id is not currently mapped to a cell.
-      console.log(util.createError(
-          'Request for unknown cell ref arrived: request id="%s", cell ref="%s"; Ignoring.',
-          requestId, JSON.stringify(cellRef)));
-      return null;
-    }
-  }
-
-  /**
-   * Stores the mapping of request id to cellref.
-   *
-   * The kernel doesn't know anything about cells or notebooks, just requests, so this mapping
-   * allows response/reply messages from the kernel to be mapped to the corresponding cell
-   * that should be updated.
-   */
-  _setCellRefForRequestId(requestId: string, cellRef: app.CellRef) {
-    // TODO(bryantd): need to implement some policy for removing request->cell mappings
-    // when they are no longer needed. Ideally there'd be a way to guarantee
-    // that a request will have no further messages.
-    //
-    // Best case would be to somehow store the cell reference within the kernel request message
-    // and have the cell reference returned in all replies to that message, which would remove the
-    // need to store the requestId => cellRef mapping in the first place. This would rely upon
-    // adding an extra field to the ipython message header, which is then returned as the
-    // "parent header" in all reply messages. If all kernels simply copy the header data to parent
-    // header in responses, this will work, but needs verification. Since a generic header metadata
-    // dict isn't part of the current message spec, there are likely no guarantees w.r.t.
-    // additional/non-standard header fields.
-    //
-    // Worst case evict request IDs based upon a TTL value or implement something like a
-    // fixed-size LRU cache, to avoid growing without bound.
-    //
-    // Another option would be to serialize the cell reference to string and use that for the
-    // request id. All responses would include the parent request id, which could then be
-    // deserialized back into a cell reference.
-    this._requestIdToCellRef[requestId] = cellRef;
   }
 }

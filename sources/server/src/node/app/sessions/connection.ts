@@ -15,9 +15,8 @@
 /// <reference path="../common/interfaces.d.ts" />
 /// <reference path="../shared/updates.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/socket.io.d.ts" />
-import actions = require('../shared/actions');
+import messages = require('../shared/messages');
 import socketio = require('socket.io');
-import updates = require('../shared/updates');
 import util = require('../common/util');
 
 
@@ -53,15 +52,15 @@ export class ClientConnection implements app.IClientConnection {
    * Sends an update message to the user.
    */
   sendUpdate(update: app.notebooks.updates.Update) {
-    this._send(updates.label, update);
+    this._send(messages.update, update);
   }
 
   /**
    * Register callbacks to handle events/messages arriving via socket.io connection.
    */
   _registerHandlers() {
-    this._socket.on(actions.label, this._delegateActionHandler.bind(this));
-    this._socket.on('disconnect', this._handleDisconnect.bind(this));
+    this._socket.on(messages.disconnect, this._handleDisconnect.bind(this));
+    this._socket.on(messages.action, this._delegateActionHandler.bind(null, this));
   }
 
   /**

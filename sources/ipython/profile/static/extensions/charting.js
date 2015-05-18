@@ -166,7 +166,8 @@ define(function () {
       }
       var fetchCount = last - first + 1;
       var code = model.fetchCode + ' ' + first + ' ' + fetchCount;
-      IPython.notebook.kernel.get_data(code, function (newData, error) {
+
+      datalab.kernel.getData(code, function (error, newData) {
         if (error) {
           onError(model.visualization, model.dom, error);
         } else {

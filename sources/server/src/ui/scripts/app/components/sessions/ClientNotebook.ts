@@ -22,11 +22,12 @@ import constants = require('app/common/Constants');
 import logging = require('app/common/Logging');
 import updates = require('app/shared/updates');
 import nbdata = require('app/shared/notebookdata');
+import util = require('app/common/util');
 import uuid = require('app/common/uuid');
 import _app = require('app/App');
 
 
-var log = logging.getLogger(constants.scopes.clientNotebookSession);
+var log = logging.getLogger(constants.scopes.clientNotebook);
 
 /**
  * An instance of this class manages a single notebook's data, client-side. Handles updating the
@@ -45,7 +46,7 @@ var log = logging.getLogger(constants.scopes.clientNotebookSession);
  * the danger of causing local and server states to diverge. Thus, any local modifications to the
  * notebook model for responsiveness purposes need to be handled with great caution.
  */
-class ClientNotebookSession implements app.IClientNotebookSession {
+class ClientNotebook implements app.IClientNotebook {
 
   activeCell: app.notebooks.Cell;
   activeWorksheet: app.notebooks.Worksheet;
@@ -541,22 +542,35 @@ class ClientNotebookSession implements app.IClientNotebookSession {
    * Register all callbacks for handling notebook update events.
    */
   _registerEventHandlers() {
-    this._registerEventHandler(updates.cell.update, this._handleCellUpdate.bind(this));
-    this._registerEventHandler(updates.composite, this._handleCompositeUpdate.bind(this));
-    this._registerEventHandler(updates.notebook.snapshot, this._setNotebook.bind(this));
-    this._registerEventHandler(updates.worksheet.addCell, this._handleAddCell.bind(this));
-    this._registerEventHandler(updates.worksheet.deleteCell, this._handleDeleteCell.bind(this));
-    this._registerEventHandler(updates.worksheet.moveCell, this._handleMoveCell.bind(this));
-  }
+    util.registerEventHandler(
+        <ng.IScope>this._rootScope,
+        updates.cell.update,
+        this._handleCellUpdate.bind(this));
 
-  /**
-   * Registers a single callback to process a specified event and issue async scope digest after.
-   */
-  _registerEventHandler(eventName: string, callback: Function) {
-    var rootScope = this._rootScope;
-    rootScope.$on(eventName, (event: any, message: any) => {
-      rootScope.$evalAsync(() => { callback(message) });
-    });
+    util.registerEventHandler(
+        <ng.IScope>this._rootScope,
+        updates.composite,
+        this._handleCompositeUpdate.bind(this));
+
+    util.registerEventHandler(
+        <ng.IScope>this._rootScope,
+        updates.notebook.snapshot,
+        this._setNotebook.bind(this));
+
+    util.registerEventHandler(
+        <ng.IScope>this._rootScope,
+        updates.worksheet.addCell,
+        this._handleAddCell.bind(this));
+
+    util.registerEventHandler(
+        <ng.IScope>this._rootScope,
+        updates.worksheet.deleteCell,
+        this._handleDeleteCell.bind(this));
+
+    util.registerEventHandler(
+        <ng.IScope>this._rootScope,
+        updates.worksheet.moveCell,
+        this._handleMoveCell.bind(this));
   }
 
   /**
@@ -648,5 +662,5 @@ var preferredMimetypes = [
   // 'application/pdf',
   'text/plain'];
 
-_app.registrar.service(constants.clientNotebookSession.name, ClientNotebookSession);
-log.debug('Registered', constants.clientNotebookSession.name);
+_app.registrar.service(constants.clientNotebook.name, ClientNotebook);
+log.debug('Registered', constants.clientNotebook.name);

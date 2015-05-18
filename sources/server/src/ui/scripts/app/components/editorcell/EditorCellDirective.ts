@@ -23,6 +23,7 @@
 /// <amd-dependency path="app/components/celloutputviewer/CellOutputViewerDirective" />
 /// <amd-dependency path="app/components/celltoolbar/CellToolbarDirective" />
 /// <amd-dependency path="app/components/codeeditor/CodeEditorDirective" />
+/// <amd-dependency path="app/components/sessions/ClientNotebook" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import _app = require('app/App');
@@ -44,28 +45,28 @@ interface EditorCellScope extends ng.IScope {
   actions?: app.Map<Function>;
   active?: boolean;
   keymap?: app.Map<Function>;
-  notebook?: app.IClientNotebookSession;
+  notebook?: app.IClientNotebook;
 }
 
 class EditorCellController {
 
   _scope: EditorCellScope;
 
-  static $inject = ['$scope', constants.clientNotebookSession.name];
+  static $inject = ['$scope', constants.clientNotebook.name];
 
   /**
    * Constructor.
    *
    * @param scope The directive's scope.
-   * @param clientNotebookSession Client's notebook session object.
+   * @param clientNotebook Client's notebook session object.
    */
-  constructor(scope: EditorCellScope, clientNotebookSession: app.IClientNotebookSession) {
+  constructor(scope: EditorCellScope, clientNotebook: app.IClientNotebook) {
     this._scope = scope;
 
     scope.active = false;
     scope.actions = this._createActionHandlers();
     scope.keymap = scope.getKeymap();
-    scope.notebook = clientNotebookSession;
+    scope.notebook = clientNotebook;
   }
 
   /**

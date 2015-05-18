@@ -17,35 +17,35 @@
  * Directive controller for document-based cells (markdown and heading).
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
-/// <amd-dependency path="app/components/sessions/ClientNotebookSession" />
+/// <amd-dependency path="app/components/sessions/ClientNotebook" />
 /// <reference path="../../common/Interfaces.ts" />
 import constants = require('app/common/Constants');
 
 
 export class DocumentCellController implements app.ICellController {
 
-  _clientNotebookSession: app.IClientNotebookSession;
+  _clientNotebook: app.IClientNotebook;
   _rootScope: ng.IRootScopeService;
   _scope: app.CellScope;
 
   showEditRegion: boolean;
   showPreviewRegion: boolean;
 
-  static $inject: string[] = ['$scope', '$rootScope', constants.clientNotebookSession.name];
+  static $inject: string[] = ['$scope', '$rootScope', constants.clientNotebook.name];
 
   /**
    * Constructor.
    *
    * @param scope The directive scope.
    * @param rootScope The root scope for the page.
-   * @param clientNotebookSession The client's notebook session.
+   * @param clientNotebook The client's notebook session.
    */
   constructor(
       scope: app.CellScope,
       rootScope: ng.IRootScopeService,
-      clientNotebookSession: app.IClientNotebookSession) {
+      clientNotebook: app.IClientNotebook) {
 
-    this._clientNotebookSession = clientNotebookSession;
+    this._clientNotebook = clientNotebook;
     this._rootScope = rootScope;
     this._scope = scope;
 
@@ -93,7 +93,7 @@ export class DocumentCellController implements app.ICellController {
    * Switches the cell to view mode and issues an update for the modified cell content.
    */
   _handleFinishedEditing() {
-    this._clientNotebookSession.updateCell(this._scope.cell, this._scope.worksheetId);
+    this._clientNotebook.updateCell(this._scope.cell, this._scope.worksheetId);
     this.switchToViewMode();
   }
 }

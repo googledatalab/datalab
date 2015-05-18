@@ -27,7 +27,7 @@ export class IOPubChannelClient extends channels.ChannelClient {
   _delegateKernelStatusHandler: app.EventHandler<app.KernelStatus>;
   _delegateOutputDataHandler: app.EventHandler<app.OutputData>;
 
-  constructor (
+  constructor(
       connectionUrl: string,
       port: number,
       onKernelStatus: app.EventHandler<app.KernelStatus>,
@@ -39,7 +39,7 @@ export class IOPubChannelClient extends channels.ChannelClient {
     this._delegateOutputDataHandler = onOutputData;
   }
 
-  connect () {
+  connect() {
     super.connect();
     this._socket.subscribe(''); // Subscribe to all topics
   }
@@ -56,7 +56,7 @@ export class IOPubChannelClient extends channels.ChannelClient {
    * the pyerr and pyin messages are both swallowed here. The data contained within pyin and pyerr
    * are both fully captured by the execute_reply/execute_request combination of messages.
    */
-  _receive () {
+  _receive() {
     var message = ipy.parseIPyMessage(arguments);
 
     switch (message.header.msg_type) {
@@ -94,11 +94,12 @@ export class IOPubChannelClient extends channels.ChannelClient {
   /**
    * Converts IPython message data for a display_data msg to an internal message and delegates
    */
-  _handleDisplayData (message: app.ipy.Message) {
+  _handleDisplayData(message: app.ipy.Message) {
     var displayData: app.OutputData = {
       type: 'result',
       mimetypeBundle: message.content.data,
-      requestId: message.parentHeader.msg_id
+      requestId: message.parentHeader.msg_id,
+      requestContext: message.parentHeader.msg_context
     }
 
     this._delegateOutputDataHandler(displayData);
@@ -107,34 +108,35 @@ export class IOPubChannelClient extends channels.ChannelClient {
   /**
    * Converts IPython message data for a execute_result msg to an internal message and delegates
    */
-  _handleExecuteResult (message: app.ipy.Message) {
+  _handleExecuteResult(message: app.ipy.Message) {
 
     var result: app.OutputData = {
       type: 'result',
       mimetypeBundle: message.content.data,
-      requestId: message.parentHeader.msg_id
+      requestId: message.parentHeader.msg_id,
+      requestContext: message.parentHeader.msg_context
     };
 
-    this._delegateOutputDataHandler (result);
+    this._delegateOutputDataHandler(result);
   }
 
   /**
    * Converts IPython message data for a kernel status msg to an internal message and delegates
    */
-  _handleKernelStatus (message: app.ipy.Message) {
+  _handleKernelStatus(message: app.ipy.Message) {
 
     var status: app.KernelStatus = {
       status: message.content.execution_state,
       requestId: message.parentHeader.msg_id
     };
 
-    this._delegateKernelStatusHandler (status);
+    this._delegateKernelStatusHandler(status);
   }
 
   /**
    * Converts IPython message data for a stream output (stdout/stderr) and delegates
    */
-  _handleStreamData (message: app.ipy.Message) {
+  _handleStreamData(message: app.ipy.Message) {
 
     var streamData: app.OutputData = {
       // the content.name field should have value in {'stdout', 'stderr'}
@@ -142,7 +144,8 @@ export class IOPubChannelClient extends channels.ChannelClient {
       mimetypeBundle: {
         'text/plain': message.content.data
       },
-      requestId: message.parentHeader.msg_id
+      requestId: message.parentHeader.msg_id,
+      requestContext: message.parentHeader.msg_context
     }
 
     this._delegateOutputDataHandler(streamData);
