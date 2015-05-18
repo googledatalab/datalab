@@ -56,7 +56,7 @@ def run(test):
   # All tests have Webdriver and Notebook Server arguments defined.
   test.REMOTE_WEBDRIVER = args.remote_webdriver
   test.CHROME_WEBDRIVER = args.chrome_webdriver
-  test.NOTEBOOK_SERVER = args.chrome_webdriver
+  test.NOTEBOOK_SERVER = args.notebook_server
   # Tests can access args they add themselves via self.args.
   test.args = args
   suite = unittest.TestLoader().loadTestsFromTestCase(test)
