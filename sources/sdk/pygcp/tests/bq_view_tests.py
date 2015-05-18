@@ -50,13 +50,15 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._Api.tables_insert')
   @mock.patch('gcp.bigquery._Api.tabledata_list')
   @mock.patch('gcp.bigquery._Api.jobs_insert_query')
+  @mock.patch('gcp.bigquery._Api.jobs_query_results')
   @mock.patch('gcp.bigquery._Api.jobs_get')
   @mock.patch('gcp.bigquery._Api.tables_get')
-  def test_view_result(self, mock_api_tables_get, mock_api_jobs_get, mock_api_insert_query,
-                       mock_api_tabledata_list, mock_api_tables_insert):
+  def test_view_result(self, mock_api_tables_get, mock_api_jobs_get, mock_api_jobs_query_results,
+                       mock_api_insert_query, mock_api_tabledata_list, mock_api_tables_insert):
 
     mock_api_insert_query.return_value = self._create_insert_done_result()
     mock_api_tables_insert.return_value = self._create_tables_insert_success_result()
+    mock_api_jobs_query_results.return_value = {'jobComplete': True}
     mock_api_tables_get.return_value = self._create_tables_get_result()
     mock_api_jobs_get.return_value = {'status': {'state': 'DONE'}}
     mock_api_tabledata_list.return_value = self._create_single_row_result()

@@ -4,7 +4,7 @@ set -o errexit; # Fail build on first error, instead of carrying on by default
 # Load the common build config
 source config.sh;
 
-mkdir -p "$ui_staging_path" "$node_staging_path" "$build_path" "$build_path/static/profile/custom";
+mkdir -p "$ui_staging_path" "$node_staging_path" "$build_path" "$build_path/static/static/custom";
 
 ### BUILD
 # NodeJS backend compilation in staging
@@ -38,11 +38,12 @@ rsync -avp "$ui_staging_path/" "$build_path/static";
 find "$build_path" -name '*.ts' | xargs rm;
 
 # Copy over the extensions.
-rsync -avp "$profile_root/static/extensions/" "$build_path/static/profile/extensions";
+rsync -avp "$profile_root/static/extensions/" "$build_path/static/static/extensions";
 # Copy over the RequireJS plugins.
-rsync -avp "$profile_root/static/require/" "$build_path/static/profile/require";
+rsync -avp "$profile_root/static/require/" "$build_path/static/static/require";
 # Copy over profile custom CSS that is not IPython-specific.
-rsync -avp "$profile_root/static/custom/gchart-table.css" "$build_path/static/profile/custom";
+rsync -avp "$profile_root/static/custom/gchart-table.css" "$build_path/static/static/custom";
+
 # Copy the kernel profile configuration.
 rsync -avp "$server_root/profile" "$build_path";
 

@@ -35,11 +35,11 @@ require.config({
     app: './app',
 
     // Profile configuration paths
-    static: '/profile',
-    extensions: '/profile/extensions',
-    element: '/profile/require/element',
-    style: '/profile/require/style',
-    visualization: '/profile/require/visualization'
+    static: '/static',
+    extensions: '/static/extensions',
+    element: '/static/require/element',
+    style: '/static/require/style',
+    visualization: '/static/require/visualization'
   },
 
   shim: {

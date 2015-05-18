@@ -91,8 +91,20 @@ export class SessionManager implements app.ISessionManager {
     // Start the session and provide the completion callback to be invoked when session is fully
     // initialized.
     session.start((error) => {
+      if (error) {
+        // If an error occurred when starting the session, immediately shutdown the session
+        // to clean up any resources.
+        this.shutdown(session.path, (shutdownError) => {
+          // If shutdown failed, log the error.
+          console.log('Failed to shutdown session:', shutdownError);
+          // Pass the original session startup error back to the caller.
+          callback(error);
+        });
+        return;
+      }
+
       // Pass the newly created session and any errors that may have occurred back to the caller.
-      callback(error, session);
+      callback(null, session);
     });
   }
 

@@ -311,7 +311,7 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
         function(charts, dom) {
           charts.render(dom,
             {
-              chartStyle:"paged_table",
+              chartStyle:"%s",
               dataName:"%s",
               fields:"%s",
               totalRows:%d,
@@ -327,11 +327,20 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
   div_id = str(int(round(_time.time())))
   meta_count = "rows: %d" % table.length if table.length >= 0 else ''
   meta_name = job_id if job_id else table.full_name
-  data = _get_data(table, fields, 0, rows_per_page)
+  data, total_count = _get_data(table, fields, 0, rows_per_page)
+
+  if total_count < 0:
+    # The table doesn't have a length metadata property but may still be small if we fetched less
+    # rows than we asked for.
+    fetched_count = len(data['rows'])
+    if fetched_count < rows_per_page:
+      total_count = fetched_count
+
+  chart = 'table' if 0 <= total_count <= rows_per_page else 'paged_table'
 
   return _HTML_TEMPLATE %\
-      (div_id, meta_name, meta_count, div_id, table.full_name, ','.join(fields),
-       table.length, rows_per_page, _json.dumps(data, cls=_util.JSONEncoder))
+      (div_id, meta_name, meta_count, div_id, chart, table.full_name, ','.join(fields),
+       total_count, rows_per_page, _json.dumps(data, cls=_util.JSONEncoder))
 
 
 def _repr_html_query(query):

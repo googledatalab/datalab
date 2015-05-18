@@ -48,7 +48,7 @@ class Job(object):
     return self._job_id
 
   @property
-  def iscomplete(self):
+  def is_complete(self):
     """ Get the completion state of the job.
 
     Returns:
@@ -117,23 +117,25 @@ class Job(object):
             reason = error.get('reason', None)
             self._errors.append(JobError(location, message, reason))
 
-  def wait(self, timeout=None, poll=5):
+  def wait(self, timeout=None):
     """ Wait for the job to complete, or a timeout to happen.
 
+      This polls the job status every 5 seconds.
+
     Args:
-      timeout: how long to poll before giving up; default None which means no timeout.
-      poll: interval in seconds between polls (default 5)
+      timeout: how long to poll before giving up (in seconds); default None which means no timeout.
 
     Returns:
-      True if job completed; False if wait timed out.
+      The Job
     """
-    while not self.iscomplete:
+    poll = 5
+    while not self.is_complete:
       if timeout is not None:
         if timeout <= 0:
-          return False
+          break
         timeout -= poll
       _sleep(poll)
-    return True
+    return self
 
   def __repr__(self):
     """ Get the notebook representation for the job.

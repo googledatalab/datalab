@@ -20,6 +20,7 @@
 import apiutil = require('../common/api');
 import content = require('./content');
 import express = require('express');
+import nbstorage = require('../notebooks/storage');
 
 
 /**
@@ -35,6 +36,7 @@ export class ContentApi {
   static contentActionUrl = ContentApi.contentUrl + '::';
 
   _storage: app.IStorage;
+  _notebookStorage: app.INotebookStorage;
 
   /**
    * Constructor.
@@ -43,6 +45,8 @@ export class ContentApi {
    */
   constructor (storage: app.IStorage) {
     this._storage = storage;
+    // Create a notebook storage wrapper for handling notebook-specific storage operations.
+    this._notebookStorage = new nbstorage.NotebookStorage(storage);
   }
 
   /**
@@ -63,21 +67,30 @@ export class ContentApi {
     // Get the request body, which defines what content should be created at the specified path.
     var body: app.requests.CreateContentRequestBody = request.body;
 
-    // Select the appropriate content creation scheme depending on the request body content.
-    if (!body.content) {
-      apiutil.sendBadRequest(response, 'Missing content field from request body.');
-      return;
-    }
-
-    // Then we'll be creating a new file from this specified content.
-    this._storage.write(path, body.content, (error) => {
+    var callback = (error: Error) => {
       if (error) {
         apiutil.sendInternalError(response, "Content create operation failed.", error);
         return;
       }
 
       apiutil.sendSuccessWithoutResponseContent(response);
-    });
+    };
+
+    // Select the appropriate content creation scheme depending on the request body content.
+    var notebookData: app.notebooks.Notebook;
+    if (!body.content) {
+      // The only file extension with a declared default template
+      if (!content.endsWith(path, '.ipynb')) {
+        apiutil.sendBadRequest(response,
+          'Content creation for non-ipynb files requires content specification');
+        return;
+      }
+      // If no body was sent, then select an appropriate template based upon the file extension.
+      this._notebookStorage.create(path, callback);
+    } else {
+      // Then we'll be creating a new file from this specified content.
+      this._storage.write(path, body.content, callback);
+    }
   }
 
   /**
@@ -238,7 +251,7 @@ export class ContentApi {
     if (!path) {
       apiutil.sendBadRequest(response, "Content 'path' missing from request URL.")
     }
-    return path;
+    return content.ensureLeadingSlash(path);
   }
 
 }

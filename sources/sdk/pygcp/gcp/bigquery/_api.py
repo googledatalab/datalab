@@ -118,7 +118,7 @@ class Api(object):
     return _util.Http.request(url, data=data, credentials=self._credentials)
 
   def jobs_insert_query(self, sql, table_name=None, append=False, overwrite=False,
-                        dry_run=False, use_cache=True, batch=True, allowLargeResults=False):
+                        dry_run=False, use_cache=True, batch=True, allow_large_results=False):
     """Issues a request to insert a query job.
 
     Args:
@@ -133,7 +133,7 @@ class Api(object):
           specified.
       batch: whether to run this as a batch job (lower priority) or as an interactive job (high
           priority, more expensive).
-      allowLargeResults: whether to allow large results (slower with some restrictions but
+      allow_large_results: whether to allow large results (slower with some restrictions but
           can handle big jobs).
     Returns:
       A parsed result object.
@@ -150,7 +150,7 @@ class Api(object):
         'query': {
           'query': sql,
           'useQueryCache': use_cache,
-          'allowLargeResults': allowLargeResults
+          'allowLargeResults': allow_large_results
         },
         'dryRun': dry_run,
         'priority': 'BATCH' if batch else 'INTERACTIVE',
@@ -171,41 +171,7 @@ class Api(object):
 
     return _util.Http.request(url, data=data, credentials=self._credentials)
 
-  def jobs_query(self, sql, project_id=None, page_size=_DEFAULT_PAGE_SIZE, timeout=None,
-                 dry_run=False, use_cache=True):
-    """Issues a request to the jobs/query method.
-
-    Args:
-      sql: the SQL string representing the query to execute.
-      project_id: the project id to use to issue the query; use None for the default project.
-      page_size: limit to the number of rows to fetch per page.
-      timeout: duration (in milliseconds) to wait for the query to complete.
-      dry_run: whether to actually execute the query or just dry run it.
-      use_cache: whether to use past query results or ignore cache.
-    Returns:
-      A parsed result object.
-    Raises:
-      Exception if there is an error performing the operation.
-    """
-    if timeout is None:
-      timeout = Api._DEFAULT_TIMEOUT
-    if project_id is None:
-      project_id = self._project_id
-
-    url = Api._ENDPOINT + (Api._QUERIES_PATH % project_id, '')
-    data = {
-        'kind': 'bigquery#queryRequest',
-        'query': sql,
-        'maxResults': page_size,
-        'timeoutMs': timeout,
-        'dryRun': dry_run,
-        'useQueryCache': use_cache
-    }
-
-    return _util.Http.request(url, data=data, credentials=self._credentials)
-
-  def jobs_query_results(self, job_id, project_id=None, page_size=_DEFAULT_PAGE_SIZE, timeout=None,
-                         start_index=0):
+  def jobs_query_results(self, job_id, project_id, page_size, timeout, start_index=0):
     """Issues a request to the jobs/getQueryResults method.
 
     Args:

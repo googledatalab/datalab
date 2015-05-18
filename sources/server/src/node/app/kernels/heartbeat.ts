@@ -43,7 +43,16 @@ export class HeartbeatChannelClient extends channels.ChannelClient {
     super(connectionUrl, port, 'heartbeat-' + port, 'req');
 
     this._delegateHealthCheckHandler = onHealthCheck;
+  }
+
+  connect(): void {
+    super.connect();
     this._start();
+  }
+
+  disconnect(): void {
+    this._stop();
+    super.disconnect();
   }
 
   /**

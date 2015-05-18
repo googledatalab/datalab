@@ -444,7 +444,9 @@ class TestCases(unittest.TestCase):
     ])
 
   @mock.patch('gcp.bigquery._Api.jobs_insert_load')
-  def test_table_load(self, mock_api_jobs_insert_load):
+  @mock.patch('gcp.bigquery._Api.jobs_get')
+  def test_table_load(self, mock_api_jobs_get, mock_api_jobs_insert_load):
+    mock_api_jobs_get.return_value = {'status': {'state': 'DONE'}}
     mock_api_jobs_insert_load.return_value = None
     tbl = gcp.bigquery.table('testds.testTable0', context=self._create_context())
     job = tbl.load('gs://foo')

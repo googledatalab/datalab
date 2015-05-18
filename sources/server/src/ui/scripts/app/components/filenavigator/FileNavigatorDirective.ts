@@ -65,7 +65,7 @@ class FileNavigatorController {
     this._window = window;
     this._document = document;
     this._service = service;
-    
+
     this._scope.ctrl = this;
     this._scope.sortColumn = 'relativePath';
     this._scope.sortOrder = '+';
@@ -73,7 +73,7 @@ class FileNavigatorController {
     this._scope.breadcrumbs = ['/'];
     this._scope.dropDownVisible = false;
     this._scope.properties = {};
-    	
+
     this.updateView(); // Get initial page.
   }
 
@@ -116,7 +116,7 @@ class FileNavigatorController {
   }
 
   /**
-   * Handle a click on a resource name. If it is a directory, switch to it; if it is a 
+   * Handle a click on a resource name. If it is a directory, switch to it; if it is a
    * notebook, open it in a new browser tab.
    *
    * @param event: the click event.
@@ -188,7 +188,7 @@ class FileNavigatorController {
   }
 
  /**
-  * Generate a "<n> <units> ago" style message from the lastModified property of a 
+  * Generate a "<n> <units> ago" style message from the lastModified property of a
   * resource.
   *
   * @param lastModified: the date string to convert.
@@ -216,7 +216,7 @@ class FileNavigatorController {
             unit = 'day';
           } else if (delta >= 365.25) {
             delta = Math.floor(delta / 365.25);
-            unit = 'year';	
+            unit = 'year';
           } else {
             delta = Math.floor(delta / 7);
             unit = 'week';
@@ -247,20 +247,19 @@ class FileNavigatorController {
   }
 
   /**
-   * Create a new notebook. The folder name comes from the property bag shared with the 
+   * Create a new notebook. The folder name comes from the property bag shared with the
    * modal.
    */
   createNotebook() {
-    var path = this._scope.path + '/' + this._scope.properties.newNotebookName;
+    var path = this._scope.path + this._scope.properties.newNotebookName;
     log.debug('Create notebook ' + path);
-    var data = "{isDirectory: false, template: 'starter-ipynb'}";
-    this._service.create(path, data).then(
+    this._service.create(path, undefined).then(
       (item: string) => this.updateView()
     );
   }
 
   /**
-   * Create a folder. The folder name comes from the property bag shared with the 
+   * Create a folder. The folder name comes from the property bag shared with the
    * modal.
    */
   createFolder() {
@@ -293,4 +292,3 @@ function fileNavigatorDirective (): ng.IDirective {
 
 _app.registrar.directive(constants.fileNavigator.directiveName, fileNavigatorDirective);
 log.debug('Registered file navigator directive');
-

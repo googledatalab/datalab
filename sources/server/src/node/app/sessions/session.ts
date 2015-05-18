@@ -185,7 +185,7 @@ export class Session implements app.ISession {
 
     // Unexpectedly, the specified connection was not participating in the session.
     throw util.createError(
-      'Connection id "%s" was not found in session id "%s"', connection.id, this.path);
+        'Connection id "%s" was not found in session id "%s"', connection.id, this.path);
   }
 
   /**
@@ -344,12 +344,8 @@ export class Session implements app.ISession {
       ];
     }
 
-    // Request that the notebook apply the cell update
-    var update = this._notebook.apply(action);
-    // Persist the notebook state to storage
-    this._save();
-    // Update connected clients that a change has occured.
-    this._broadcastUpdate(update);
+    // Apply the upate to the notebook.
+    this._handleActionNotebookData(action);
   }
 
   /**
@@ -394,11 +390,20 @@ export class Session implements app.ISession {
    * Handles multiple notebook action types by applying them to the notebook session.
    */
   _handleActionNotebookData(action: app.notebooks.actions.UpdateCell) {
-    var update = this._notebook.apply(action);
-    // Persist the notebook state to storage
-    this._save();
-    // Update all clients about the notebook data change.
-    this._broadcastUpdate(update);
+    try {
+      var update = this._notebook.apply(action);
+      // Persist the notebook state to storage
+      this._save();
+      // Update all clients about the notebook data change.
+      this._broadcastUpdate(update);
+    } catch (error) {
+      // It is possible that the notebook state changed such that it is no longer possible to
+      // apply a given action.
+      //
+      // TODO(bryantd): surface action application errors back to the client.
+      console.log(util.createError('Could not apply requested notebook action %s due to %s',
+          JSON.stringify(action), error));
+    }
   }
 
   /**
@@ -415,7 +420,21 @@ export class Session implements app.ISession {
     });
 
     // Retrieve the current state of the cell that should be executed.
-    var cell = this._notebook.getCellOrThrow(action.cellId, action.worksheetId);
+    var cell: app.notebooks.Cell;
+    try {
+      cell = this._notebook.getCellOrThrow(action.cellId, action.worksheetId);
+    } catch (error) {
+      // Cell was not found within the expected worksheet.
+      //
+      // It is possible that the notebook state changed between when the user issued the execute
+      // request and when the request reached the server for processing, thereby invalidating the
+      // execute request.
+      //
+      // TODO(bryantd): surface execute request failure back to the client.
+      console.log(util.createError('Could not execute specified cell %s due to %s',
+          action.cellId, error));
+    }
+
 
     // Request that the kernel execute the code snippet.
     this._kernel.execute({
@@ -465,8 +484,8 @@ export class Session implements app.ISession {
       return;
     }
 
-    // Apply the output data update to the notebook model.
-    var update = this._notebook.apply({
+    // Construct an update to append the specified output data.
+    var action: app.notebooks.actions.UpdateCell = {
       name: actions.cell.update,
       worksheetId: cellRef.worksheetId,
       cellId: cellRef.cellId,
@@ -474,12 +493,10 @@ export class Session implements app.ISession {
         type: message.type,
         mimetypeBundle: message.mimetypeBundle
       }]
-    });
+    };
 
-    // Persist the notebook state to storage
-    this._save();
-    // Broadcast the update to connectec clients.
-    this._broadcastUpdate(update);
+    // Apply the output data update to the notebook model.
+    this._handleActionNotebookData(action);
   }
 
   /**
@@ -490,7 +507,6 @@ export class Session implements app.ISession {
   _initNotebook(callback: app.Callback<void>) {
     this._notebookStorage.read(
       this.path,
-      /* create if needed */ true,
       (error: any, notebook: app.INotebookSession) => {
         if (error) {
           // TODO(bryantd): add retry with backoff logic here.
@@ -647,8 +663,8 @@ export class Session implements app.ISession {
       // Log these instances if they ever occur and return null to inform the caller that the
       // specified request id is not currently mapped to a cell.
       console.log(util.createError(
-        'Request for unknown cell ref arrived: request id="%s", cell ref="%s"; ignoring message.',
-        requestId, JSON.stringify(cellRef)));
+          'Request for unknown cell ref arrived: request id="%s", cell ref="%s"; Ignoring.',
+          requestId, JSON.stringify(cellRef)));
       return null;
     }
   }

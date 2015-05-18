@@ -139,24 +139,29 @@ declare module app {
    */
   interface INotebookStorage {
     /**
+     * Creates a starter notebook at the specified storage path.
+     *
+     * @param path The storage path at which the notebook should be created.
+     * @param callback Callback to invoke upon completion of the create operation.
+     */
+    create(path: string, callback: Callback<void>): void;
+
+    /**
      * Reads a notebook session from storage if it exists.
      *
-     * Optionally creates a new notebook if needed when flag is set to true.
+     * @param path The storage path for the notebook to read.
+     * @callback Completion callback to invoke with notebook session upon read + deserialization.
      */
-    read(
-      path: string,
-      createIfNeeded: boolean,
-      callback: Callback<app.INotebookSession>
-      ): void;
+    read(path: string, callback: Callback<app.INotebookSession>): void;
 
     /**
      * Writes the given notebook session to storage.
+     *
+     * @param path The storage path to which the notebook should be written.
+     * @notebook Notebook session to serialize and write to storage.
+     * @callback Callback to invoke upon completion of the write operation.
      */
-    write(
-      path: string,
-      notebook: INotebookSession,
-      callback: Callback<void>
-      ): void;
+    write(path: string, notebook: INotebookSession, callback: Callback<void>): void;
   }
 
   /**

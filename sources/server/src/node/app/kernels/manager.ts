@@ -86,7 +86,8 @@ export class KernelManager implements app.IKernelManager {
   shutdown (id: string): void {
     var kernel = this.get(id);
     if (!kernel) {
-      throw new Error('No kernel exists with ID="' + id + '"');
+      // Kernel does not exist or has already been shutdown. Nothing to do.
+      return;
     }
     kernel.shutdown();
     delete this._idToKernel[id];

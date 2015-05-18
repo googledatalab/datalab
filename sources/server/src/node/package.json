@@ -15,6 +15,7 @@
     "node-dir": "0.1.x",
     "node-uuid": "1.4.x",
     "nomnom": "1.8.x",
+    "request": "2.55.x",
     "socket.io": "1.1.x",
     "zmq": "2.8.x"
   },
