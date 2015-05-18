@@ -97,13 +97,16 @@ class Http(object):
                                        method=method,
                                        body=data,
                                        headers=headers)
-      if response.status == 200:
+      if 200 <= response.status < 300:
         if raw_response:
           return content
-        return json.loads(content)
+        try:
+          return json.loads(content)
+        except ValueError:
+          return content
       else:
         raise Exception(('HTTP request failed.', response.status, content))
-    except ValueError:
-      raise Exception('Failed to process HTTP response.')
-    except httplib2.HttpLib2Error:
-      raise Exception('Failed to send HTTP request.')
+    except ValueError as e:
+      raise Exception('Failed to process HTTP response: %s' % e)
+    except httplib2.HttpLib2Error as e:
+      raise Exception('Failed to send HTTP request: %s' % e)

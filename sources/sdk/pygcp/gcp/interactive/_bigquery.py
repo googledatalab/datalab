@@ -54,13 +54,13 @@ def bigquery(line, cell=None):
   sql_parser = parser.subcommand('sql',
       'execute a BigQuery SQL statement or create a named query object')
   sql_parser.add_argument('-n', '--name', help='the name for this query object')
-  sql_parser.set_defaults(func=lambda x: _dispatch_handler('sql', x, cell, sql_parser, _sql_cell,
+  sql_parser.set_defaults(func=lambda x: _dispatch_handler(x, cell, sql_parser, _sql_cell,
                                                            cell_required=True))
 
   # %%bigquery udf
   udf_parser = parser.subcommand('udf', 'create a named Javascript UDF')
   udf_parser.add_argument('-n', '--name', help='the name for this UDF', required=True)
-  udf_parser.set_defaults(func=lambda x: _dispatch_handler('udf', x, cell, udf_parser, _udf_cell,
+  udf_parser.set_defaults(func=lambda x: _dispatch_handler(x, cell, udf_parser, _udf_cell,
                                                            cell_required=True))
 
   # %bigquery table
@@ -70,24 +70,23 @@ def bigquery(line, cell=None):
   table_parser.add_argument('-c', '--cols',
                             help='comma-separated list of column names to restrict to')
   table_parser.add_argument('table', help='the name of the table')
-  table_parser.set_defaults(func=lambda x: _dispatch_handler('table', x, cell, table_parser,
+  table_parser.set_defaults(func=lambda x: _dispatch_handler(x, cell, table_parser,
                                                              _table_line, cell_prohibited=True))
 
   # %bigquery schema
   schema_parser = parser.subcommand('schema', 'view a BigQuery table or view schema')
   schema_parser.add_argument('item', help='the name of, or a reference to, the table or view')
-  schema_parser.set_defaults(func=lambda x: _dispatch_handler('schema', x, cell, schema_parser,
+  schema_parser.set_defaults(func=lambda x: _dispatch_handler(x, cell, schema_parser,
                                                               _schema_line, cell_prohibited=True))
 
   return _handle_magic_line(line, parser)
 
 
-def _dispatch_handler(command, args, cell, parser, handler,
+def _dispatch_handler(args, cell, parser, handler,
                       cell_required=False, cell_prohibited=False):
   """ Makes sure cell magics include cell and line magics don't, before dispatching to handler.
 
   Args:
-    command: the name of the command.
     args: the optional arguments following 'bigquery <cmd>'.
     cell: the contents of the cell, if any.
     parser: the argument parser for <cmd>; used for error message.
@@ -102,12 +101,12 @@ def _dispatch_handler(command, args, cell, parser, handler,
   if cell_prohibited:
     if cell and len(cell.strip()):
       parser.print_help()
-      raise Exception('Additional data is not supported with the %s command.' % command)
+      raise Exception('Additional data is not supported with the %s command.' % parser.prog)
     return handler(args)
 
   if cell_required and not cell:
     parser.print_help()
-    raise Exception('The %s command requires additional data' % command)
+    raise Exception('The %s command requires additional data' % parser.prog)
 
   return handler(args, cell)
 

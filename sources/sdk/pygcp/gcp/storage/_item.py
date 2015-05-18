@@ -81,18 +81,28 @@ class Item(object):
     """Returns the key of the item."""
     return self._key
 
-  def copy_to(self, new_key):
+  def copy_to(self, new_key, bucket=None):
     """Copies this item to the specified new key.
 
     Args:
       new_key: the new key to copy this item to.
+      bucket: the bucket of the new item; if None (the default) use the same bucket.
     Returns:
       An Item corresponding to new key.
     Raises:
       Exception if there was an error copying the item.
     """
-    new_info = self._api.objects_copy(self._bucket, self._key, self._bucket, new_key)
-    return Item(self._api, self._bucket, new_key, new_info)
+    if bucket is None:
+      bucket = self._bucket
+    new_info = self._api.objects_copy(self._bucket, self._key, bucket, new_key)
+    return Item(self._api, bucket, new_key, new_info)
+
+  def exists(self):
+    """ Checks if the item exists. """
+    try:
+      return self.metadata() is not None
+    except Exception:
+      return False
 
   def delete(self):
     """Deletes this item from its bucket.

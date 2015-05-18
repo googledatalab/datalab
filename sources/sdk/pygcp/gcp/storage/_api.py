@@ -63,6 +63,22 @@ class Api(object):
     url = Api._ENDPOINT + (Api._BUCKET_PATH % '')
     return _util.Http.request(url, args=args, data=data, credentials=self._credentials)
 
+  def buckets_delete(self, bucket, projection='noAcl'):
+    """Issues a request to delete a bucket.
+
+    Args:
+      bucket: the name of the bucket.
+      projection: the projection of the bucket information to retrieve.
+    Returns:
+      A parsed bucket information dictionary.
+    Raises:
+      Exception if there is an error performing the operation.
+    """
+    args = {'project': self._project_id}
+
+    url = Api._ENDPOINT + (Api._BUCKET_PATH % bucket)
+    return _util.Http.request(url, args=args, method='DELETE', credentials=self._credentials)
+
   def buckets_get(self, bucket, projection='noAcl'):
     """Issues a request to retrieve information about a bucket.
 
@@ -122,8 +138,8 @@ class Api(object):
 
     Args:
       bucket: the name of the bucket containing the object.
-      key: the key of the object to be read.
-      content: the text content to be writtent.
+      key: the key of the object to be written.
+      content: the text content to be written.
       content_type: the type of text content.
     Raises:
       Exception if the object could not be written to.
@@ -217,6 +233,21 @@ class Api(object):
 
     url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, ''))
     return _util.Http.request(url, args=args, credentials=self._credentials)
+
+  def objects_patch(self, bucket, key, info):
+    """Updates the metadata associated with an object.
+
+    Args:
+      bucket: the name of the bucket containing the object.
+      key: the key of the object being updated.
+      info: the metadata to update.
+    Returns:
+      A parsed object information dictionary.
+    Raises:
+      Exception if there is an error performing the operation.
+    """
+    url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, Api._escape_key(key)))
+    return _util.Http.request(url, method='PATCH', data=info, credentials=self._credentials)
 
   @staticmethod
   def _escape_key(key):

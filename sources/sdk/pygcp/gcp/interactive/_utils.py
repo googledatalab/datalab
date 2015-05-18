@@ -15,6 +15,7 @@
 # Utility functions that don't need class wrappers and don't merit their own files.
 """Utility functions."""
 
+import json
 import pandas as pd
 import gcp.bigquery as _bq
 
@@ -169,3 +170,24 @@ def _handle_magic_line(line, parser):
     except Exception as e:
       return e.message
   return None
+
+
+def _extract_error(message):
+  """ A helper function to extract user-friendly error messages from service exceptions.
+
+  Args:
+    message: An error message from an exception. If this is from our HTTP client code, it
+        will actually be a tuple.
+
+  Returns:
+    A modified version of the message that is less cryptic.
+  """
+  try:
+    if len(message) == 3:
+      # Try treat the last part as JSON
+      data = json.loads(message[2])
+      return data['error']['errors'][0]['message']
+  except Exception:
+    pass
+  return message
+

@@ -14,10 +14,35 @@
 
 """Implements Bucket-related Cloud Storage APIs."""
 
+import re
+
 import dateutil.parser as _dateparser
 from gcp._util import Iterator as _Iterator
 from ._item import Item as _Item
 from ._item import ItemList as _ItemList
+
+
+# REs to match bucket names and optionally object names
+_BUCKET_NAME = '[a-z\d][a-z\d_\.\-]+[a-z\d]'
+_OBJECT_NAME = '[^\n\r]+'
+_STORAGE_NAME = 'gs://(' + _BUCKET_NAME + ')(/' + _OBJECT_NAME + ')?'
+
+
+def parse_name(name):
+  bucket = None
+  object = None
+  m = re.match(_STORAGE_NAME, name)
+  if m:
+    # We want to return the last two groups as first group is the optional 'gs://'
+    bucket = m.group(1)
+    object = m.group(2)
+    if object is not None:
+      object = object[1:]  # Strip '/'
+  else:
+    m = re.match('(' + _OBJECT_NAME + ')', name)
+    if m:
+      object = m.group(1)
+  return bucket, object
 
 
 class BucketMetadata(object):
@@ -101,6 +126,34 @@ class Bucket(object):
     """
     return _ItemList(self._api, self._name, prefix, delimiter)
 
+  def exists(self):
+    """ Checks if the bucket exists. """
+    try:
+      return self.metadata() is not None
+    except Exception:
+      return False
+
+  def create(self):
+    """Creates the bucket.
+
+    Returns:
+      The bucket.
+    Raises:
+      Exception if there was an error creating the bucket.
+    """
+    self._info = self._api.buckets_insert(self._name)
+    return self
+
+  def delete(self):
+    """Deletes the bucket.
+
+    Returns:
+      Nothing.
+    Raises:
+      Exception if there was an error deleting the bucket.
+    """
+    self._api.buckets_delete(self._name)
+
 
 class BucketList(object):
   """Represents a list of Cloud Storage buckets."""
@@ -141,7 +194,7 @@ class BucketList(object):
     Raises:
       Exception if there was an error creating the bucket.
     """
-    bucket_info = self._api.buckets_insert(name)
+    bucket_info = self._api.bucket_insert(name)
     return _Bucket(self._api, name, bucket_info)
 
   def _retrieve_buckets(self, page_token, count):
