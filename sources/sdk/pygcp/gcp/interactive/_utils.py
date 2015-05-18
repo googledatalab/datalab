@@ -12,17 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Utility functions that don't need class wrappers and don't merit their own files.
 """Utility functions."""
 
 import pandas as pd
+import IPython as _ipython
 import gcp.bigquery as _bq
-
-
-try:
-  import IPython as _ipython
-except ImportError:
-  raise Exception('This module can only be loaded in ipython.')
 
 
 def _get_field_list(fields, schema):
