@@ -57,11 +57,9 @@ def run(test):
       test: Test derived from IPythonTestCase.
   """
   args = FLAGS.parse_args()
-  # All tests have Webdriver and Notebook Server arguments defined.
   test.REMOTE_WEBDRIVER = args.remote_webdriver
   test.CHROME_WEBDRIVER = args.chrome_webdriver
   test.NOTEBOOK_SERVER = args.notebook_server
-  # Tests can access args added by arg_argument with self.args.
   test.args = args
   suite = unittest.TestLoader().loadTestsFromTestCase(test)
   unittest.TextTestRunner(verbosity=args.verbosity).run(suite)
