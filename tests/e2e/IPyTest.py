@@ -18,17 +18,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-IPythonTestRunner.add_argument('--notebook-server',
-                               dest='notebook_server',
-                               type=str,
-                               help='Python notebook server to test against',
-                               default='http://localhost:9000')
-
 class IPyTest(IPythonTestCase):
   def testBasicTest(self):
     driver = self.driver
     # Loads the main page of the notebook server.
-    driver.get(self.args.notebook_server)
+    driver.get(self.NOTEBOOK_SERVER)
 
     # Tests that the title of the main page is as expected.
     self.assertEqual(u'Home', driver.title)

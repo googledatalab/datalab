@@ -41,6 +41,8 @@ class IPythonTestCase(unittest.TestCase):
   REMOTE_WEBDRIVER = None
   CHROME_WEBDRIVER = ('/usr/local/lib/node_modules/protractor'
                       '/selenium/chromedriver')
+  NOTEBOOK_SERVER = 'http://localhost:9000'
+
   def setUp(self):
     """Common setup for all ipython tests, initializes webdriver."""
     self.driver = None

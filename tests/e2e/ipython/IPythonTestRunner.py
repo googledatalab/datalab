@@ -31,6 +31,13 @@ FLAGS.add_argument(
     type=str,
     default='/usr/local/lib/node_modules/protractor/selenium/chromedriver',
     help='Location of selenium''s chromedriver.')
+
+FLAGS.add_argument('--notebook-server',
+                   dest='notebook_server',
+                   type=str,
+                   help='Python notebook server to test against',
+                   default='http://localhost:9000')
+
 FLAGS.add_argument('--verbosity',
                    type=int,
                    default=1)
@@ -46,8 +53,11 @@ def run(test):
       test: Test derived from IPythonTestCase.
   """
   args = FLAGS.parse_args()
+  # All tests have Webdriver and Notebook Server arguments defined.
   test.REMOTE_WEBDRIVER = args.remote_webdriver
   test.CHROME_WEBDRIVER = args.chrome_webdriver
+  test.NOTEBOOK_SERVER = args.chrome_webdriver
+  # Tests can access args they add themselves via self.args.
   test.args = args
   suite = unittest.TestLoader().loadTestsFromTestCase(test)
   unittest.TextTestRunner(verbosity=args.verbosity).run(suite)
