@@ -49,6 +49,10 @@ add_argument = FLAGS.add_argument
 def run(test):
   """Main run method, call instead of unittest.main().
 
+  Sets REMOTE_WEBDRIVER, CHROME_WEBDRIVER and NOTEBOOK_SERVER to values supplied
+  by command line arguments. A complete list of arguments is available in
+  test.args.
+
     Args:
       test: Test derived from IPythonTestCase.
   """
@@ -57,7 +61,7 @@ def run(test):
   test.REMOTE_WEBDRIVER = args.remote_webdriver
   test.CHROME_WEBDRIVER = args.chrome_webdriver
   test.NOTEBOOK_SERVER = args.notebook_server
-  # Tests can access args they add themselves via self.args.
+  # Tests can access args added by arg_argument with self.args.
   test.args = args
   suite = unittest.TestLoader().loadTestsFromTestCase(test)
   unittest.TextTestRunner(verbosity=args.verbosity).run(suite)
