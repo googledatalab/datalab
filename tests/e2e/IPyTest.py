@@ -14,6 +14,7 @@
 
 from ipython import IPythonTestRunner
 from ipython.IPythonTestCase import IPythonTestCase
+from selenium.common import exceptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -22,7 +23,11 @@ class IPyTest(IPythonTestCase):
   def testBasicTest(self):
     driver = self.driver
     # Loads the main page of the notebook server.
-    driver.get(self.NOTEBOOK_SERVER)
+    try:
+      driver.get(self.NOTEBOOK_SERVER)
+    except exceptions.WebDriverException:
+      print "Could not navigate to %s" % self.NOTEBOOK_SERVER
+      raise
 
     # Tests that the title of the main page is as expected.
     self.assertEqual(u'Home', driver.title)
