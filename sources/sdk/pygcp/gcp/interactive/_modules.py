@@ -46,6 +46,7 @@ def _create_python_module(name, code):
   # By convention the module is associated with a file name matching the module name
   module = _types.ModuleType(name)
   module.__file__ = name
+  module.__name__ = name
 
   exec code in module.__dict__
 
