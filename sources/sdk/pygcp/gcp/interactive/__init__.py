@@ -17,8 +17,15 @@
 import httplib2 as _httplib2
 import requests as _requests
 
+try:
+  import IPython as _ipython
+  import IPython.core.magic as _magic
+except ImportError:
+  raise Exception('This module can only be loaded in ipython.')
+
 import gcp.interactive._bigquery
 import gcp.interactive._chart
+import gcp.interactive._modules
 
 
 # Inject our user agent on all requests by monkey-patching a wrapper around httplib2.Http.request.
