@@ -18,16 +18,12 @@ import argparse
 import json as _json
 import re as _re
 import time as _time
+import IPython as _ipython
+import IPython.core.magic as _magic
 import gcp.bigquery as _bq
 import gcp._util as _util
 from ._html import HtmlBuilder as _HtmlBuilder
 from ._utils import _get_data, _get_field_list
-
-try:
-  import IPython as _ipython
-  import IPython.core.magic as _magic
-except ImportError:
-  raise Exception('This module can only be loaded in ipython.')
 
 
 @_magic.register_line_cell_magic
