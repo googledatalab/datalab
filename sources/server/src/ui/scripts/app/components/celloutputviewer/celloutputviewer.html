@@ -8,8 +8,8 @@
       <pre ng-switch-when="text/plain">{{output.mimetypeBundle['text/plain']}}</pre>
 
       <!-- HTML -->
-      <div ng-switch-when="text/html"
-          ng-bind-html="output.trustedHtml"></div>
+      <datalab-html-viewer ng-switch-when="text/html"
+          source="output.mimetypeBundle['text/html']"></datalab-html-viewer>
 
       <!-- PNG -->
       <img ng-switch-when="image/png"
