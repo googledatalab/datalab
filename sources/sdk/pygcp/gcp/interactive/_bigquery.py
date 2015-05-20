@@ -20,8 +20,9 @@ import re as _re
 import time as _time
 import IPython as _ipython
 import IPython.core.magic as _magic
-import gcp.bigquery as _bq
 import gcp._util as _util
+import gcp.bigquery as _bq
+from gcp.utils import JSONEncoder as _JSONEncoder
 from ._html import HtmlBuilder as _HtmlBuilder
 from ._utils import _get_data, _get_field_list
 
@@ -336,7 +337,7 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
 
   return _HTML_TEMPLATE %\
       (div_id, meta_name, meta_count, div_id, chart, table.full_name, ','.join(fields),
-       total_count, rows_per_page, _json.dumps(data, cls=_util.JSONEncoder))
+       total_count, rows_per_page, _json.dumps(data, cls=_JSONEncoder))
 
 
 def _repr_html_query(query):

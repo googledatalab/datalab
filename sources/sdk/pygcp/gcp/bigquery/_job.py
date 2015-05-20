@@ -140,5 +140,13 @@ class Job(object):
   def __repr__(self):
     """ Get the notebook representation for the job.
     """
-    return 'Job %s' % str(self._job_id)
+    state = 'in progress'
+    if self.is_complete:
+      if self.failed:
+        state = 'failed with error: %s' % self._fatal_error
+      elif self._errors:
+        state = 'completed with some non-fatal errors'
+      else:
+        state = 'completed'
+    return 'Job %s (%s)' % (self._job_id, state)
 

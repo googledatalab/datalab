@@ -23,6 +23,7 @@ import time
 import uuid
 
 from gcp._util import Iterator as _Iterator
+from gcp.utils import async_method
 from ._job import Job as _Job
 from ._parser import Parser as _Parser
 from ._utils import parse_table_name as _parse_table_name
@@ -529,9 +530,9 @@ class Table(object):
       job = _Job(self._api, response['jobReference']['jobId'])
     return job
 
-  def extract_async(self, destination, format='CSV', compress=False, field_delimiter=',',
-                    print_header=True):
-    """Start a job to export the table to GCS and return immediately.
+  def extract(self, destination, format='CSV', compress=False, field_delimiter=',',
+              print_header=True):
+    """Runs a job to export the table to GCS.
 
     Args:
       destination: the destination URI(s). Can be a single URI or a list.
@@ -546,10 +547,14 @@ class Table(object):
     """
     response = self._api.table_extract(self._name_parts, destination, format, compress,
                                        field_delimiter, print_header)
-    return self._init_job_from_response(response)
+    job = self._init_job_from_response(response)
+    if job is not None:
+      job.wait()
+    return job
 
-  def extract(self, destination, format='CSV', compress=False, field_delimiter=',',
-              print_header=True):
+  @async_method
+  def extract_async(self, destination, format='CSV', compress=False, field_delimiter=',',
+                    print_header=True):
     """Exports the table to GCS; blocks until complete.
 
     Args:
@@ -563,19 +568,13 @@ class Table(object):
     Returns:
       A Job object for the export Job if it was started successfully; else None.
     """
-    job = self.extract_async(destination=destination,
-                             format=format,
-                             compress=compress,
-                             field_delimiter=field_delimiter,
-                             print_header=print_header)
-    if job is not None:
-      job.wait()
-    return job
+    return self.extract_async(destination, format=format, compress=compress,
+                              field_delimiter=field_delimiter, print_header=print_header)
 
-  def load_async(self, source, append=False, overwrite=False, source_format='CSV',
-                 field_delimiter=',', allow_jagged_rows=False, allow_quoted_newlines=False,
-                 encoding='UTF-8', ignore_unknown_values=False, max_bad_records=0, quote='"',
-                 skip_leading_rows=0):
+  def load(self, source, append=False, overwrite=False, source_format='CSV',
+           field_delimiter=',', allow_jagged_rows=False, allow_quoted_newlines=False,
+           encoding='UTF-8', ignore_unknown_values=False, max_bad_records=0, quote='"',
+           skip_leading_rows=0):
     """ Load the table from GCS.
 
     Args:
@@ -616,12 +615,17 @@ class Table(object):
                                           max_bad_records=max_bad_records,
                                           quote=quote,
                                           skip_leading_rows=skip_leading_rows)
-    return self._init_job_from_response(response)
+    job = self._init_job_from_response(response)
+    if job is not None:
+      job.wait()
+    return job
 
-  def load(self, source, append=False, overwrite=False, source_format='CSV', field_delimiter=',',
-           allow_jagged_rows=False, allow_quoted_newlines=False, encoding='UTF-8',
-           ignore_unknown_values=False, max_bad_records=0, quote='"', skip_leading_rows=0):
-    """ Load the table from GCS.
+  @async_method
+  def load_async(self, source, append=False, overwrite=False, source_format='CSV',
+                 field_delimiter=',', allow_jagged_rows=False, allow_quoted_newlines=False,
+                 encoding='UTF-8', ignore_unknown_values=False, max_bad_records=0, quote='"',
+                 skip_leading_rows=0):
+    """ Start loading the table from GCS and return a Future.
 
     Args:
       source: the URL of the source bucket(s). Can include wildcards.
@@ -647,23 +651,21 @@ class Table(object):
       skip_leading_rows: A number of rows at the top of a CSV file to skip (default 0).
 
     Returns:
-      A Job object for the load Job if it was started successfully; else None.
+      A Future that returns a Job object for the load Job if it was started successfully or
+      None if not.
     """
-    job = self.load_async(source,
-                          append=append,
-                          overwrite=overwrite,
-                          source_format=source_format,
-                          field_delimiter=field_delimiter,
-                          allow_jagged_rows=allow_jagged_rows,
-                          allow_quoted_newlines=allow_quoted_newlines,
-                          encoding=encoding,
-                          ignore_unknown_values=ignore_unknown_values,
-                          max_bad_records=max_bad_records,
-                          quote=quote,
-                          skip_leading_rows=skip_leading_rows)
-    if job is not None:
-      job.wait()
-    return job
+    return self.load(source,
+                     append=append,
+                     overwrite=overwrite,
+                     source_format=source_format,
+                     field_delimiter=field_delimiter,
+                     allow_jagged_rows=allow_jagged_rows,
+                     allow_quoted_newlines=allow_quoted_newlines,
+                     encoding=encoding,
+                     ignore_unknown_values=ignore_unknown_values,
+                     max_bad_records=max_bad_records,
+                     quote=quote,
+                     skip_leading_rows=skip_leading_rows)
 
   def _get_row_fetcher(self, start_row=0, max_rows=None, page_size=_DEFAULT_PAGE_SIZE):
     """ Get a function that can retrieve a page of rows.

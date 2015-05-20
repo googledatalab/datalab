@@ -14,6 +14,7 @@
 
 """Implements Query BigQuery API."""
 
+from gcp.utils import async_method
 from ._sampling import Sampling as _Sampling
 from ._utils import parse_table_name as _parse_table_name
 
@@ -73,8 +74,8 @@ class Query(object):
       malformed.
     """
     if not use_cache or (self._results is None):
-      self._results = self.execute(use_cache=use_cache, batch=False)
-    return self._results.results
+      self.execute(use_cache=use_cache, batch=False)
+    return self._results
 
   def extract(self, destination, format='CSV', compress=False, field_delimiter=',',
               print_header=True, use_cache=True):
@@ -94,9 +95,35 @@ class Query(object):
     Raises:
       An Exception if the query timed out or failed.
     """
-    return self.results(use_cache=use_cache)\
+    job = self.results(use_cache=use_cache)\
         .extract(destination, format=format, compress=compress, field_delimiter=field_delimiter,
                  print_header=print_header)
+    if job is not None:
+      job.wait()
+    return job
+
+  @async_method
+  def extract_async(self, destination, format='CSV', compress=False, field_delimiter=',',
+              print_header=True, use_cache=True):
+    """Exports the query results to GCS. Returns a Future immediately.
+
+    Args:
+      destination: the destination URI(s). Can be a single URI or a list.
+      format: the format to use for the exported data; one of CSV, NEWLINE_DELIMITED_JSON or AVRO
+          (default 'CSV').
+      compress whether to compress the data on export. Compression is not supported for
+          AVRO format (default False).
+      field_delimiter: for CSV exports, the field delimiter to use (default ',').
+      print_header: for CSV exports, whether to include an initial header line (default True).
+      use_cache: whether to use cached results or not (default True).
+    Returns:
+      A Future that returns a Job object for the export Job if it was started successfully; else None.
+    Raises:
+      An Exception if the query timed out or failed.
+    """
+    return self.extract(destination, format=format, compress=compress,
+                        field_delimiter=field_delimiter, print_header=print_header,
+                        use_cache=use_cache)
 
   def to_dataframe(self, start_row=0, max_rows=None, use_cache=True):
     """ Exports the query results to a Pandas dataframe.
@@ -129,6 +156,24 @@ class Query(object):
         .to_file(path, start_row=start_row, max_rows=max_rows, write_header=write_header)
     return path
 
+  @async_method
+  def to_file_async(self, path, start_row=0, max_rows=None, use_cache=True, write_header=True):
+    """Save the results to a local file in Excel CSV format. Returns a Future immediately.
+
+    Args:
+      path: path on the local filesystem for the saved results.
+      start_row: the row of the table at which to start the export (default 0).
+      max_rows: an upper limit on the number of rows to export (default None).
+      use_cache: whether to use cached results or not.
+      write_header: if true (the default), write column name header row at start of file.
+    Returns:
+      A Future returning the path to the local file.
+    Raises:
+      An Exception if the operation failed.
+    """
+    return self.to_file(path, start_row=start_row, max_rows=max_rows, use_cache=use_cache,
+                        write_header=write_header)
+
   def sample(self, count=5, fields=None, sampling=None, use_cache=True):
     """Retrieves a sampling of rows for the query.
 
@@ -147,9 +192,9 @@ class Query(object):
                                 sampling=sampling).\
         results(use_cache=use_cache)
 
-  def execute_async(self, table_name=None, append=False, overwrite=False, use_cache=True,
-                    batch=True, allow_large_results=False):
-    """ Initiate the query and return immediately.
+  def execute(self, table_name=None, append=False, overwrite=False, use_cache=True,
+               batch=True, allow_large_results=False):
+    """ Initiate the query, block until complete and return the results.
 
     Args:
       dataset_id: the datasetId for the result table.
@@ -166,7 +211,7 @@ class Query(object):
       allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
           slower and requires a table_name to be specified) (default False).
     Returns:
-      A Job for the query
+      The Query results Table.
     Raises:
       Exception if query could not be executed.
     """
@@ -191,11 +236,15 @@ class Query(object):
       except KeyError:
         # The query was in error
         raise Exception('Query failed: %s' % str(query_result['status']['errors']))
-    return _QueryJob(self._api, job_id, table_name, self._sql)
+    job = _QueryJob(self._api, job_id, table_name, self._sql)
+    job.wait()
+    self._results = job.results
+    return self._results
 
-  def execute(self, table_name=None, append=False, overwrite=False, use_cache=True, batch=True,
-              allow_large_results=False):
-    """ Initiate the query and block waiting for completion.
+  @async_method
+  def execute_async(self, table_name=None, append=False, overwrite=False, use_cache=True,
+                    batch=True, allow_large_results=False):
+    """ Initiate the query and return immediately.
 
     Args:
       dataset_id: the datasetId for the result table.
@@ -212,17 +261,12 @@ class Query(object):
       allowLargeResults: whether to allow large results; i.e. compressed data over 100MB. This is
           slower and requires a table_name to be specified) (default False).
     Returns:
-      A Job for the query
+      A QueryResultsTable Future for the query.
     Raises:
       Exception if query could not be executed.
     """
-    self._results = self.execute_async(table_name=table_name,
-                                       append=append,
-                                       overwrite=overwrite,
-                                       use_cache=use_cache,
-                                       batch=batch,
-                                       allow_large_results=allow_large_results).wait()
-    return self._results
+    return self.execute(table_name=table_name, append=append, overwrite=overwrite,
+                        use_cache=use_cache, batch=batch, allow_large_results=allow_large_results)
 
   def save_as_view(self, view_name):
     """ Create a View from this Query.

@@ -157,3 +157,4 @@ def _get_data(source, fields, first_row, count):
     return _get_data_from_table(source, fields, first_row, count)
   else:
     raise Exception("Cannot chart %s; unsupported object type" % source)
+
