@@ -14,7 +14,6 @@
 
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 
-import argparse
 import json as _json
 import re as _re
 import time as _time
@@ -22,8 +21,9 @@ import IPython as _ipython
 import IPython.core.magic as _magic
 import gcp.bigquery as _bq
 import gcp._util as _util
+from ._commands import CommandParser as _CommandParser
 from ._html import HtmlBuilder as _HtmlBuilder
-from ._utils import _get_data, _get_field_list
+from ._utils import _get_data, _get_field_list, _handle_magic_line
 
 
 @_magic.register_line_cell_magic
@@ -45,27 +45,26 @@ def bigquery(line, cell=None):
   Returns:
     The results of executing the cell.
   """
-  parser = argparse.ArgumentParser(prog='bigquery')
-  subparsers = parser.add_subparsers(help='sub-commands')
+  parser = _CommandParser.create('bigquery')
 
   # This is a bit kludgy because we want to handle some line magics and some cell magics
   # with the bigquery command.
 
   # %%bigquery sql
-  sql_parser = subparsers.add_parser('sql', help=
+  sql_parser = parser.subcommand('sql',
       'execute a BigQuery SQL statement or create a named query object')
   sql_parser.add_argument('-n', '--name', help='the name for this query object')
   sql_parser.set_defaults(func=lambda x: _dispatch_handler('sql', x, cell, sql_parser, _sql_cell,
                                                            cell_required=True))
 
   # %%bigquery udf
-  udf_parser = subparsers.add_parser('udf', help='create a named Javascript UDF')
+  udf_parser = parser.subcommand('udf', 'create a named Javascript UDF')
   udf_parser.add_argument('-n', '--name', help='the name for this UDF', required=True)
   udf_parser.set_defaults(func=lambda x: _dispatch_handler('udf', x, cell, udf_parser, _udf_cell,
                                                            cell_required=True))
 
   # %bigquery table
-  table_parser = subparsers.add_parser('table', help='view a BigQuery table')
+  table_parser = parser.subcommand('table', 'view a BigQuery table')
   table_parser.add_argument('-r', '--rows', type=int, default=25,
                             help='rows to display per page')
   table_parser.add_argument('-c', '--cols',
@@ -75,29 +74,12 @@ def bigquery(line, cell=None):
                                                              _table_line, cell_prohibited=True))
 
   # %bigquery schema
-  schema_parser = subparsers.add_parser('schema', help='view a BigQuery table or view schema')
+  schema_parser = parser.subcommand('schema', 'view a BigQuery table or view schema')
   schema_parser.add_argument('item', help='the name of, or a reference to, the table or view')
   schema_parser.set_defaults(func=lambda x: _dispatch_handler('schema', x, cell, schema_parser,
                                                               _schema_line, cell_prohibited=True))
 
-  for p in [parser, sql_parser, udf_parser, table_parser, schema_parser]:
-    p.exit = _parser_exit  # raise exception, don't call sys.exit
-    p.format_usage = p.format_help  # Show full help always
-
-  args = filter(None, line.split())
-  try:
-    parsed_args = parser.parse_args(args)
-    return parsed_args.func(vars(parsed_args))
-  except Exception as e:
-    if e.message:
-      print e.message
-
-
-def _parser_exit(status=0, message=None):
-  """ Replacement exit method for argument parser. We want to stop processing args but not
-      call sys.exit(), so we raise an exception here and catch it in the call to parse_args.
-  """
-  raise Exception()
+  return _handle_magic_line(line, parser)
 
 
 def _dispatch_handler(command, args, cell, parser, handler,

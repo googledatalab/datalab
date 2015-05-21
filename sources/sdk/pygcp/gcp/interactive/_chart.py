@@ -21,41 +21,25 @@ import IPython as _ipython
 import IPython.core.magic as _magic
 from gcp._util import JSONEncoder as _JSONEncoder
 from gcp._util import print_exception_with_last_stack as _print_exception_with_stack
-from ._utils import _get_data
+from _commands import CommandParser as _CommandParser
+from ._utils import _get_data, _handle_magic_line
 
 
 @_magic.register_line_cell_magic
 def chart(line, cell=None):
-  parser = argparse.ArgumentParser(prog='chart')
-  subparsers = parser.add_subparsers(help='chart sub-commands')
+  parser = _CommandParser.create('chart')
   for chart_type in ['annotation', 'area', 'bars', 'bubbles', 'calendar', 'candlestick', 'columns',
                      'combo', 'gauge', 'geo', 'histogram', 'line', 'map', 'org', 'paged_table',
                      'pie', 'sankey', 'scatter', 'stepped_area', 'table', 'timeline', 'treemap']:
-    subparser = subparsers.add_parser(chart_type, help='generate a %s chart' % chart_type)
+    subparser = parser.subcommand(chart_type, 'generate a %s chart' % chart_type)
     subparser.add_argument('-f', '--field',
                            help='the field(s) to include in the chart')
     subparser.add_argument('data',
                            help='the name of the variable referencing the Table or Query to chart')
     subparser.set_defaults(chart=chart_type)
-    subparser.exit = _parser_exit  # raise exception, don't call sys.exit
-    subparser.format_usage = parser.format_help  # Show full help always
 
-  parser.exit = _parser_exit  # raise exception, don't call sys.exit
-  parser.format_usage = parser.format_help  # Show full help always
-  args = filter(None, line.split())
-  try:
-    parsed_args = parser.parse_args(args)
-    return _chart_cell(vars(parsed_args), cell)
-  except Exception as e:
-    if e.message:
-      print e.message
-
-
-def _parser_exit(status=0, message=None):
-  """ Replacement exit method for argument parser. We want to stop processing args but not
-      call sys.exit(), so we raise an exception here and catch it in the call to parse_args.
-  """
-  raise Exception()
+  parser.set_defaults(func=lambda x: _chart_cell(x, cell))
+  return _handle_magic_line(line, parser)
 
 
 def _chart_cell(args, cell):

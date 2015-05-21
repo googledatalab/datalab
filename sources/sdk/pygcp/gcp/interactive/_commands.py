@@ -15,6 +15,7 @@
 """Implementation of command parsing and handling within magics."""
 
 import argparse as _argparse
+import shlex as _shlex
 
 
 class CommandParser(_argparse.ArgumentParser):
@@ -43,14 +44,30 @@ class CommandParser(_argparse.ArgumentParser):
     """
     return self.format_help()
 
-  def parse(self, line):
-    """Parses a magic line into a dictionary of arguments.
-    """
-    args = filter(None, line.split())
+  @staticmethod
+  def create_args(line, namespace):
+    """ Expand any metavariable references in the argument list. """
+    args = []
+    # Using shlex.split handles quotes args and escape characters.
+    for arg in _shlex.split(line):
+      if not arg:
+         continue
+      if arg[0] == '$':
+        var_name = arg[1:]
+        if var_name in namespace:
+          args.append((namespace[var_name]))
+        else:
+          raise Exception('Undefined variable referenced in command line: %s' % arg)
+      else:
+        args.append(arg)
+    return args
+
+  def parse(self, line, namespace={}):
+    """Parses a line into a dictionary of arguments, expanding metavariables from a namespace. """
     try:
-      return vars(self.parse_args(args))
+      args = CommandParser.create_args(line, namespace)
+      return self.parse_args(args)
     except Exception as e:
-      args = None
       if e.message:
         print e.message
       return None
