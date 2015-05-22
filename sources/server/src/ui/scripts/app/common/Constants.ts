@@ -44,6 +44,9 @@ export var layouts = {
 // Note: When using these directive names within templates, the names are expected to be in
 // snake-case; e.g., directiveName:"fooBarBaz" is referred to as <foo-bar-baz /> within
 // an Angular template.
+export var busyIndicator = {
+  directiveName: 'datalabBusyIndicator'
+};
 export var cellOutputViewer = {
   directiveName: 'datalabCellOutputViewer'
 };
@@ -136,6 +139,7 @@ export var scopes = {
   markdownCell: 'markdownCell',
 
   // Generic directives.
+  busyIndicator: 'busyIndicator',
   cellOutputViewer: 'cellOutputViewer',
   cellToolbar: 'cellToolbar',
   codeEditor: 'codeEditor',

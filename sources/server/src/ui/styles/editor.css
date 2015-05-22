@@ -185,11 +185,25 @@
   position: fixed;
   width: 100%;
   /* Cause the toolbar to be on top of the other page content.
-  
+
     CodeMirror creates elements on z-index=2, so this value must be at least 3 in order to avoid
     notebook editor cell content superseding the editor toolbar.
   */
   z-index: 3;
+}
+
+.datalab-busy-indicator .progress {
+  height: 6px;
+  width: 250px;
+  margin-left: 35px;
+}
+
+.datalab-busy-indicator .progress-bar {
+  width: 100%;
+}
+
+.datalab-busy-indicator .progress-bar.idle {
+  background-color: #ccc;
 }
 
 .datalab-notebook-title {

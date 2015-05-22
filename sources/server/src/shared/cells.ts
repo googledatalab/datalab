@@ -14,9 +14,21 @@
 
 
 /**
- * Cell type string constants
+ * Cell type string constants.
  */
 export var code = 'code';
 export var heading = 'heading';
 export var markdown = 'markdown';
 export var raw = 'raw';
+
+
+/**
+ * Cell states.
+ */
+export var states = {
+  default: 'default',
+  error: 'error',
+  executing: 'executing',
+  pending: 'pending',
+  success: 'success'
+}

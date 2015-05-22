@@ -20,6 +20,7 @@
  * output content, and disappears if the output content is falsey (undefined/null/empty).
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
+/// <amd-dependency path="app/components/busyindicator/BusyIndicatorDirective" />
 /// <amd-dependency path="app/components/celloutputviewer/CellOutputViewerDirective" />
 /// <amd-dependency path="app/components/celltoolbar/CellToolbarDirective" />
 /// <amd-dependency path="app/components/codeeditor/CodeEditorDirective" />
@@ -44,6 +45,7 @@ interface EditorCellScope extends ng.IScope {
   // Internally assigned scope attributes.
   actions?: app.Map<Function>;
   active?: boolean;
+  executing?: boolean;
   keymap?: app.Map<Function>;
   notebook?: app.IClientNotebook;
 }

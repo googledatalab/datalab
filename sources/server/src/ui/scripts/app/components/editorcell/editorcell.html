@@ -31,8 +31,19 @@
     </div>
   </div>
 
+  <!-- Busy indicator shown during code cell execution -->
+  <datalab-busy-indicator
+      ng-if="cell.type == 'code'"
+      delay="5000"
+      busy="cell.state == 'executing'"
+      enabled="cell.state == 'executing' || cell.state == 'pending'">
+  </datalab-busy-indicator>
+
   <!-- Cell output region -->
-  <datalab-cell-output-viewer outputs="cell.outputs"></datalab-cell-output-viewer>
+  <datalab-cell-output-viewer
+      ng-if="cell.type == 'code'"
+      outputs="cell.outputs">
+  </datalab-cell-output-viewer>
 
   <!-- Cell preview region -->
   <div class="datalab-editor-cell-preview-region col-lg-12 col-md-12 col-sm-12 col-xs-12"
