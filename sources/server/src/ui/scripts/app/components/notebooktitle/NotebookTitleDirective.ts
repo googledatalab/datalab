@@ -18,6 +18,7 @@
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <amd-dependency path="app/components/basename/BaseNameFilter" />
+/// <amd-dependency path="app/components/sessions/ClientNotebook" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import _app = require('app/App');
@@ -33,7 +34,7 @@ class NotebookTitleController {
 
   _scope: NotebookTitleScope;
 
-  static $inject = ['$scope', constants.clientNotebookSession.name];
+  static $inject = ['$scope', constants.clientNotebook.name];
 
   /**
    * Constructor.
@@ -43,10 +44,10 @@ class NotebookTitleController {
    */
   constructor(
       scope: NotebookTitleScope,
-      clientNotebookSession: app.IClientNotebookSession) {
+      clientNotebook: app.IClientNotebook) {
 
     this._scope = scope;
-    this._scope.title = clientNotebookSession.notebookPath;
+    this._scope.title = clientNotebook.notebookPath;
   }
 }
 

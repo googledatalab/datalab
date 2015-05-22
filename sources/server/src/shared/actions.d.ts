@@ -158,6 +158,16 @@ declare module app {
         worksheetId: string;
         cellId: string;
       }
+
+      /**
+       * Execute the specified code outside of a cell context.
+       *
+       * name == 'kernel.execute'
+       */
+      interface Execute extends Action {
+        requestId: string;
+        source: string;
+      }
     }
   }
 }

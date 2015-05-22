@@ -17,9 +17,10 @@
  * Top-level page controller for the notebook edit page.
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
+/// <amd-dependency path="app/components/clientapi/ClientApi" />
 /// <amd-dependency path="app/components/notebooktitle/NotebookTitleDirective" />
 /// <amd-dependency path="app/components/notebooktoolbar/NotebookToolbarDirective" />
-/// <amd-dependency path="app/components/sessions/ClientNotebookSession" />
+/// <amd-dependency path="app/components/sessions/ClientNotebook" />
 /// <amd-dependency path="app/components/sessions/SessionEventDispatcher" />
 /// <amd-dependency path="app/components/worksheeteditor/WorksheetEditorDirective" />
 import actions = require('app/shared/actions');
@@ -32,32 +33,37 @@ var log = logging.getLogger(constants.scopes.notebooks.edit.page);
 
 export class EditPageController {
 
-  notebook: app.IClientNotebookSession;
+  notebook: app.IClientNotebook;
 
+  _clientApi: app.IClientApi;
   _rootScope: ng.IRootScopeService;
   _sessionEventDispatcher: app.ISessionEventDispatcher;
 
   static $inject: string[] = [
       '$rootScope',
-      constants.clientNotebookSession.name,
+      constants.clientApi.name,
+      constants.clientNotebook.name,
       constants.sessionEventDispatcher.name];
 
   /**
    * Constructor.
    *
    * @param rootScope The root scope for the page.
-   * @param clientNotebookSession Client's notebook session.
+   * @param clientApi Client-side API object.
+   * @param clientNotebook Client's notebook session.
    * @param sessionEventDispatcher The session event dispatcher.
    */
   constructor (
       rootScope: ng.IRootScopeService,
-      clientNotebookSession: app.IClientNotebookSession,
+      clientApi: app.IClientApi,
+      clientNotebook: app.IClientNotebook,
       sessionEventDispatcher: app.ISessionEventDispatcher) {
 
+    this._clientApi = clientApi;
     this._rootScope = rootScope;
     this._sessionEventDispatcher = sessionEventDispatcher;
 
-    this.notebook = clientNotebookSession;
+    this.notebook = clientNotebook;
   }
 }
 

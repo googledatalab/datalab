@@ -140,6 +140,14 @@ declare module app {
         // on the client or fully replace it (false => merge; true => replace).
         replaceMetadata?: boolean;
       }
+
+      /**
+       * Response for a kernel execution request.
+       */
+      interface ExecuteResult extends Update {
+        requestId: string;
+        result: app.notebooks.CellOutput;
+      }
     }
   }
 }

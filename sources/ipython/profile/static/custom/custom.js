@@ -143,7 +143,7 @@ $(function () {
 
       var content = reply.content;
       if (!content || (content.status != 'ok')) {
-        callback(null, new Error('Unable to retrieve values.'));
+        callback(new Error('Unable to retrieve values.'), null);
         callback = null;
       }
     }
@@ -174,10 +174,10 @@ $(function () {
       }
 
       if (values) {
-        callback(values);
+        callback(null, values);
       }
       else {
-        callback(null, error || new Error('Unexpected value data retrieved.'));
+        callback(error || new Error('Unexpected value data retrieved.'), null);
       }
       callback = null;
     }
@@ -190,9 +190,19 @@ $(function () {
       this.execute(code, callbacks, {silent: false, store_history: false});
     }
     catch (e) {
-      callback(null, e);
+      callback(e, null);
     }
   };
+
+  // Create a shim object to emulate the datalab global's interface.
+  window.datalab = {
+    kernel: {
+      // Provide a shimmed getData() method that delegates to the IPython global.
+      getData: function(code, callback) {
+        IPython.notebook.kernel.get_data(code, callback);
+      }
+    }
+  }
 });
 
 // Configure code mirror

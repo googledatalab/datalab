@@ -14,16 +14,15 @@
 
 
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
-/// <amd-dependency path="app/components/sessions/SessionConnection" />
 /// <reference path="../../shared/actions.d.ts" />
 /// <reference path="../../shared/updates.d.ts" />
-import logging = require('app/common/Logging');
-import constants = require('app/common/Constants');
-import _app = require('app/App');
+/// <amd-dependency path="app/components/sessions/SessionConnection" />
 import actions = require('app/shared/actions');
-import updates = require('app/shared/updates');
+import constants = require('app/common/Constants');
+import logging = require('app/common/Logging');
+import messages = require('app/shared/messages');
 import uuid = require('app/common/uuid');
-
+import _app = require('app/App');
 
 var log = logging.getLogger(constants.scopes.sessionEventDispatcher);
 
@@ -63,7 +62,7 @@ class SessionEventDispatcher implements app.ISessionEventDispatcher {
    */
   _handleAction(event: ng.IAngularEvent, action: app.notebooks.actions.Action) {
     log.debug('Sending action message to server', action);
-    this._connection.emit('action', action);
+    this._connection.emit(messages.action, action);
   }
 
   /**
@@ -90,7 +89,8 @@ class SessionEventDispatcher implements app.ISessionEventDispatcher {
       actions.worksheet.moveCell,
       actions.cell.clearOutput,
       actions.cell.update,
-      actions.cell.execute
+      actions.cell.execute,
+      actions.kernel.execute
     ];
     eventNames.forEach((eventName) => {
       this._rootScope.$on(eventName, this._handleAction.bind(this));
@@ -101,7 +101,7 @@ class SessionEventDispatcher implements app.ISessionEventDispatcher {
    * Register server-side message handlers for update events
    */
   _registerMessageHandlers() {
-    this._connection.on(updates.label, this._handleUpdate.bind(this));
+    this._connection.on(messages.update, this._handleUpdate.bind(this));
   }
 }
 

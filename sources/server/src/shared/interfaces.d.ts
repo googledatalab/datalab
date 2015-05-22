@@ -15,6 +15,13 @@
 
 declare module app {
 
+  /**
+   * A callback accepting both an error and typed data object.
+   */
+  interface Callback<T> {
+    (error: Error, data?: T): void;
+  }
+
   interface Map<T> {
     [index: string]: T;
   }

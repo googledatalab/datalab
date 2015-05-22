@@ -27,32 +27,6 @@ declare module app {
   }
 
   /**
-   * A callback accepting both an error and typed data object.
-   */
-  interface Callback<T> {
-    (error: Error, data?: T): void;
-  }
-
-  /**
-   * A composite cell identifier that bundles cell and worksheet ids.
-   *
-   * Used for maintaining a mapping between kernel request ids and the corresponding cells
-   * for those kernel requests.
-   *
-   * TODO(bryantd): Find a way to pass the cell ref fields through to the kernel, such that code
-   * executing within the kernel will be able to access these fields. Once done, the
-   * (kernel) request id <=> cell ref mapping maintained within a Session instance can be
-   * removed, since the cell ref can be retrieved from the kernel messages directly. That is
-   * if these cell ref fields are returned by kernel execute responses, the response messages
-   * can be mapped to their corresponding notebook cell without maintaining the
-   * request id <=> cell ref mappings explicitly.
-   */
-  interface CellRef {
-    cellId: string;
-    worksheetId: string;
-  }
-
-  /**
    * Connection establishment metadata.
    */
   interface ClientConnectionData {
@@ -253,7 +227,7 @@ declare module app {
     /**
      * Processes the given action message.
      */
-    processAction(action: app.notebooks.actions.Action): void;
+    processAction(connection: app.IClientConnection, action: app.notebooks.actions.Action): void;
 
     /**
      * Processes the given execute reply message.

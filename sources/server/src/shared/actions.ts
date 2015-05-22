@@ -17,9 +17,6 @@
  * Constants used to label notebook actions.
  */
 
-// All of the action types are bucketed under this event/message label.
-export var label = 'action'
-
 // Composite action (set of primitive actions).
 export var composite = 'action.composite';
 
@@ -42,3 +39,8 @@ export var cell = {
   update: 'action.cell.update',
   execute: 'action.cell.execute'
 };
+
+// Kernel actions.
+export var kernel = {
+  execute: 'action.kernel.execute'
+}

@@ -40,10 +40,19 @@ declare module app {
     switchToEditMode(): void;
   }
 
+  interface IClientApi {
+    kernel: app.IClientSession;
+    notebook: app.IClientNotebook;
+  }
+
+  interface IClientSession {
+    execute(source: string, callback: Callback<notebooks.CellOutput>): void;
+  }
+
   /**
    * Manages a client's view of a single notebook's data and provides an modification API.
    */
-  interface IClientNotebookSession {
+  interface IClientNotebook {
     /**
      * A reference to the currently active cell.
      *
