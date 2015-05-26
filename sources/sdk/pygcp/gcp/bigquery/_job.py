@@ -14,13 +14,10 @@
 
 """Implements BigQuery Job functionality."""
 
-import collections
-from time import sleep as _sleep
-
-JobError = collections.namedtuple('JobError', ['location', 'message', 'reason'])
+from gcp._util import Job as _Job, JobError as _JobError
 
 
-class Job(object):
+class Job(_Job):
   """Represents a BigQuery Job.
   """
 
@@ -32,61 +29,8 @@ class Job(object):
           this.
       job_id: the BigQuery job ID corresponding to this job.
     """
+    super(Job, self).__init__(job_id)
     self._api = api
-    self._job_id = job_id
-    self._is_complete = False
-    self._errors = None
-    self._fatal_error = None
-
-  @property
-  def id(self):
-    """ Get the Job ID.
-
-    Returns:
-      The ID of the job.
-    """
-    return self._job_id
-
-  @property
-  def is_complete(self):
-    """ Get the completion state of the job.
-
-    Returns:
-      True if the job is complete; False if it is still running.
-    """
-    self._refresh_state()
-    return self._is_complete
-
-  @property
-  def failed(self):
-    """ Get the success state of the job.
-
-    Returns:
-      True if the job failed; False if it is still running or succeeded (possibly with partial
-      failure).
-    """
-    self._refresh_state()
-    return self._is_complete and self._fatal_error
-
-  @property
-  def fatal_error(self):
-    """ Get the job error.
-
-    Returns:
-      None if the job succeeded or is still running, else the error tuple for the failure.
-    """
-    self._refresh_state()
-    return self._fatal_error
-
-  @property
-  def errors(self):
-    """ Get the errors in the job.
-
-    Returns:
-      None if the job is still running, else the list of errors that occurred.
-    """
-    self._refresh_state()
-    return self._errors
 
   def _refresh_state(self):
     """ Get the state of a job. If the job is complete this does nothing
@@ -108,45 +52,14 @@ class Job(object):
           location = error_result.get('location', None)
           message = error_result.get('message', None)
           reason = error_result.get('reason', None)
-          self._fatal_error = JobError(location, message, reason)
+          self._fatal_error = Exception(_JobError(location, message, reason))
         if 'errors' in status:
           self._errors = []
           for error in status['errors']:
             location = error.get('location', None)
             message = error.get('message', None)
             reason = error.get('reason', None)
-            self._errors.append(JobError(location, message, reason))
+            self._errors.append(_JobError(location, message, reason))
 
-  def wait(self, timeout=None):
-    """ Wait for the job to complete, or a timeout to happen.
 
-      This polls the job status every 5 seconds.
-
-    Args:
-      timeout: how long to poll before giving up (in seconds); default None which means no timeout.
-
-    Returns:
-      The Job
-    """
-    poll = 5
-    while not self.is_complete:
-      if timeout is not None:
-        if timeout <= 0:
-          break
-        timeout -= poll
-      _sleep(poll)
-    return self
-
-  def __repr__(self):
-    """ Get the notebook representation for the job.
-    """
-    state = 'in progress'
-    if self.is_complete:
-      if self.failed:
-        state = 'failed with error: %s' % self._fatal_error
-      elif self._errors:
-        state = 'completed with some non-fatal errors'
-      else:
-        state = 'completed'
-    return 'Job %s (%s)' % (self._job_id, state)
 

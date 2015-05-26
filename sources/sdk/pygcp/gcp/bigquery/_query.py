@@ -14,7 +14,7 @@
 
 """Implements Query BigQuery API."""
 
-from gcp.utils import async_method
+from gcp._util import async_method
 from ._sampling import Sampling as _Sampling
 from ._utils import parse_table_name as _parse_table_name
 
@@ -91,20 +91,20 @@ class Query(object):
       print_header: for CSV exports, whether to include an initial header line (default True).
       use_cache: whether to use cached results or not (default True).
     Returns:
-      A Job object for the export Job if it was started successfully; else None.
+      A Job object for the export Job if it was completed successfully; else None.
     Raises:
-      An Exception if the query timed out or failed.
+      An Exception if the query or extract failed.
     """
-    job = self.results(use_cache=use_cache)\
-        .extract(destination, format=format, compress=compress, field_delimiter=field_delimiter,
-                 print_header=print_header)
+    results = self.results(use_cache=use_cache)
+    job = results.extract(destination, format=format, compress=compress,
+                          field_delimiter=field_delimiter, print_header=print_header)
     if job is not None:
       job.wait()
     return job
 
   @async_method
   def extract_async(self, destination, format='CSV', compress=False, field_delimiter=',',
-              print_header=True, use_cache=True):
+                    print_header=True, use_cache=True):
     """Exports the query results to GCS. Returns a Future immediately.
 
     Args:
@@ -117,9 +117,9 @@ class Query(object):
       print_header: for CSV exports, whether to include an initial header line (default True).
       use_cache: whether to use cached results or not (default True).
     Returns:
-      A Future that returns a Job object for the export Job if it was started successfully; else None.
+      A Future that returns a Job object for the export if it was started successfully; else None.
     Raises:
-      An Exception if the query timed out or failed.
+      An Exception if the query failed.
     """
     return self.extract(destination, format=format, compress=compress,
                         field_delimiter=field_delimiter, print_header=print_header,
@@ -158,7 +158,7 @@ class Query(object):
 
   @async_method
   def to_file_async(self, path, start_row=0, max_rows=None, use_cache=True, write_header=True):
-    """Save the results to a local file in Excel CSV format. Returns a Future immediately.
+    """Save the results to a local file in Excel CSV format. Returns a Job immediately.
 
     Args:
       path: path on the local filesystem for the saved results.
@@ -167,7 +167,7 @@ class Query(object):
       use_cache: whether to use cached results or not.
       write_header: if true (the default), write column name header row at start of file.
     Returns:
-      A Future returning the path to the local file.
+      A Job returning the path to the local file.
     Raises:
       An Exception if the operation failed.
     """
@@ -192,9 +192,9 @@ class Query(object):
                                 sampling=sampling).\
         results(use_cache=use_cache)
 
-  def execute(self, table_name=None, append=False, overwrite=False, use_cache=True,
-               batch=True, allow_large_results=False):
-    """ Initiate the query, block until complete and return the results.
+  def execute_async(self, table_name=None, append=False, overwrite=False, use_cache=True,
+                    batch=True, allow_large_results=False):
+    """ Initiate the query and return the Job.
 
     Args:
       dataset_id: the datasetId for the result table.
@@ -211,7 +211,7 @@ class Query(object):
       allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
           slower and requires a table_name to be specified) (default False).
     Returns:
-      The Query results Table.
+      The QueryJob.
     Raises:
       Exception if query could not be executed.
     """
@@ -236,18 +236,13 @@ class Query(object):
       except KeyError:
         # The query was in error
         raise Exception('Query failed: %s' % str(query_result['status']['errors']))
-    job = _QueryJob(self._api, job_id, table_name, self._sql)
-    job.wait()
-    self._results = job.results
-    return self._results
+    return _QueryJob(self._api, job_id, table_name, self._sql)
 
-  @async_method
-  def execute_async(self, table_name=None, append=False, overwrite=False, use_cache=True,
-                    batch=True, allow_large_results=False):
-    """ Initiate the query and return immediately.
+  def execute(self, table_name=None, append=False, overwrite=False, use_cache=True,
+               batch=True, allow_large_results=False):
+    """ Initiate the query, block until complete and return the results.
 
     Args:
-      dataset_id: the datasetId for the result table.
       table_name: the result table name as a string or TableName; if None (the default), then a
           temporary table will be used.
       append: if True, append to the table if it is non-empty; else the request will fail if table
@@ -258,15 +253,18 @@ class Query(object):
           specified (default True).
       batch: whether to run this as a batch job (lower priority) or as an interactive job (high
         priority, more expensive) (default True).
-      allowLargeResults: whether to allow large results; i.e. compressed data over 100MB. This is
+      allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
           slower and requires a table_name to be specified) (default False).
     Returns:
-      A QueryResultsTable Future for the query.
+      The Query results Table.
     Raises:
       Exception if query could not be executed.
     """
-    return self.execute(table_name=table_name, append=append, overwrite=overwrite,
-                        use_cache=use_cache, batch=batch, allow_large_results=allow_large_results)
+    job = self.execute_async(table_name=table_name, append=append, overwrite=overwrite,
+                             use_cache=use_cache, batch=batch,
+                             allow_large_results=allow_large_results)
+    self._results = job.results
+    return self._results
 
   def save_as_view(self, view_name):
     """ Create a View from this Query.

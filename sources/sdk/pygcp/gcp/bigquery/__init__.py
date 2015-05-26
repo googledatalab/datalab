@@ -199,29 +199,31 @@ def schema(data=None, definition=None):
   return _Schema(data=data, definition=definition)
 
 
-def job(job_id, context=None):
-  """ Create a job reference for a specific job ID.
+def wait_one(jobs, timeout=None):
+  """ Return when at least one of the specified jobs has completed or timeout expires.
 
   Args:
-    job_id: the job ID.
+    jobs: a list of Jobs to wait on.
+    timeout: a timeout in seconds to wait for. None (the default) means no timeout.
   Returns:
-    A Job object.
+    A Job that has now completed or None if there were no jobs.
+  Raises:
+    TimeoutError on timeout.
+
   """
-  api = _create_api(context)
-  return _Job(api, job_id)
+  return _util.Job.wait_one(jobs, timeout)
 
 
-def query_job(job_id, table, context=None):
-  """ Create a job reference for a specific query job ID.
+def wait_all(jobs, timeout=None):
+  """ Return when at all of the specified jobs have completed or timeout expires.
 
   Args:
-    job_id: the job ID.
-    table: the Table that will be used for the query results.
-  Returns:
-    A QueryJob object.
+    jobs: a single Job or list of Jobs to wait on.
+    timeout: a timeout in seconds to wait for. None (the default) means no timeout.
+  Raises:
+    TimeoutError on timeout.
   """
-  api = _create_api(context)
-  return _QueryJob(api, job_id, table)
+  return _util.Job.wait_all(jobs, timeout)
 
 
 # Type tests. Needed as we don't export the classes (although maybe we should).
@@ -243,4 +245,4 @@ def _is_query(o):
 
 def _is_schema(o):
   """ Tests if an object is a Schema. """
-  return isinstance(o, _TableSchema)
+  return isinstance(o, _Schema)

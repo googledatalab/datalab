@@ -26,7 +26,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._Api.jobs_get')
   def test_job_complete(self, mock_api_jobs_get):
     mock_api_jobs_get.return_value = {}
-    j = gcp.bigquery.job('foo', self._create_context())
+    j = gcp.bigquery._Job(self._create_api(), 'foo')
     self.assertFalse(j.is_complete)
     self.assertFalse(j.failed)
     mock_api_jobs_get.return_value = {'status': {'state': 'DONE'}}
@@ -45,14 +45,14 @@ class TestCases(unittest.TestCase):
         }
       }
     }
-    j = gcp.bigquery.job('foo', self._create_context())
+    j = gcp.bigquery._Job(self._create_api(), 'foo')
     self.assertTrue(j.is_complete)
     self.assertTrue(j.failed)
     e = j.fatal_error
     self.assertIsNotNone(e)
-    self.assertEqual('A', e.location)
-    self.assertEqual('B', e.message)
-    self.assertEqual('C', e.reason)
+    self.assertEqual('A', e.message.location)
+    self.assertEqual('B', e.message.message)
+    self.assertEqual('C', e.message.reason)
 
   @mock.patch('gcp.bigquery._Api.jobs_get')
   def test_job_errors(self, mock_api_jobs_get):
@@ -73,7 +73,7 @@ class TestCases(unittest.TestCase):
         ]
       }
     }
-    j = gcp.bigquery.job('foo', self._create_context())
+    j = gcp.bigquery._Job(self._create_api(), 'foo')
     self.assertTrue(j.is_complete)
     self.assertFalse(j.failed)
     self.assertEqual(2, len(j.errors))
@@ -84,7 +84,8 @@ class TestCases(unittest.TestCase):
     self.assertEqual('E', j.errors[1].message)
     self.assertEqual('F', j.errors[1].reason)
 
-  def _create_context(self):
+  def _create_api(self):
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return gcp.Context(project_id, creds)
+    context = gcp.Context(project_id, creds)
+    return gcp.bigquery._Api(context.credentials, context.project_id)

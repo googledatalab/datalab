@@ -14,18 +14,16 @@
 
 """Decorators for async methods and functions to dispatch on threads and support chained calls."""
 
-from concurrent.futures import ALL_COMPLETED as _ALL_COMPLETED
-from concurrent.futures import as_completed as _as_completed
-from concurrent.futures import FIRST_COMPLETED as _FIRST_COMPLETED
 from concurrent.futures import Future as _Future
 from concurrent.futures import ThreadPoolExecutor as _Executor
-from concurrent.futures import wait as _wait
 from functools import update_wrapper as _update_wrapper
+
+from ._job import Job as _Job
 
 
 class async(object):
   """ This decorator can be applied to any method that makes blocking calls to create
-      a modified version that creates a Future and returns immediately; the original
+      a modified version that creates a Job and returns immediately; the original
       method will be called on a thread pool worker thread.
   """
 
@@ -48,45 +46,7 @@ class async(object):
 
   def __call__(self, *args, **kwargs):
     # Queue the call up in the thread pool.
-    return self.executor.submit(self._call, *args, **kwargs)
-
-  @staticmethod
-  def as_completed(futures, timeout=None):
-    """ Returns an iterator over the Future instances that returns them as they complete.
-
-    Args:
-      futures: the list of Futures to iterate over.
-      timeout: a timeout in seconds to wait for. None (the default) means no timeout.
-    Returns:
-      An iterator over the Futures.
-    Raises:
-      TimeoutError if the timeout expires before all the Futures complete.
-    """
-    return _as_completed(futures, timeout=timeout)
-
-  @staticmethod
-  def wait_one(futures, timeout=None):
-    """ Return when at least one of the specified Futures has completed or timeout expires.
-
-    Args:
-      futures: the list of Futures to wait on.
-      timeout: a timeout in seconds to wait for. None (the default) means no timeout.
-    Returns:
-      The set of completed Futures.
-    """
-    return _wait(futures, timeout=timeout, return_when=_FIRST_COMPLETED).done
-
-  @staticmethod
-  def wait_all(futures, timeout=None):
-    """ Return when at all of the specified Futures have completed or timeout expires.
-
-    Args:
-      futures: the list of Futures to wait on.
-      timeout: a timeout in seconds to wait for. None (the default) means no timeout.
-    Returns:
-      The set of completed Futures.
-    """
-    return _wait(futures, timeout=timeout, return_when=_ALL_COMPLETED).done
+    return _Job(future=self.executor.submit(self._call, *args, **kwargs))
 
 
 class async_function(async):

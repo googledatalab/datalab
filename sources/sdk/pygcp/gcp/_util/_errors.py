@@ -12,8 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Google Cloud Platform library - Support utilities."""
+"""Custom Error classes."""
 
-from ._async import async, async_method, async_function
-from ._json_encoder import JSONEncoder
+class TimeoutError(BaseException):
+
+  def __init__(self, message='Timed out'):
+    self._message = message
+
+  def __str__(self):
+    return self._message
+
 

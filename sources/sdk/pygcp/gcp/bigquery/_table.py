@@ -23,7 +23,7 @@ import time
 import uuid
 
 from gcp._util import Iterator as _Iterator
-from gcp.utils import async_method
+from gcp._util import async_method
 from ._job import Job as _Job
 from ._parser import Parser as _Parser
 from ._utils import parse_table_name as _parse_table_name
@@ -571,56 +571,6 @@ class Table(object):
     return self.extract_async(destination, format=format, compress=compress,
                               field_delimiter=field_delimiter, print_header=print_header)
 
-  def load(self, source, append=False, overwrite=False, source_format='CSV',
-           field_delimiter=',', allow_jagged_rows=False, allow_quoted_newlines=False,
-           encoding='UTF-8', ignore_unknown_values=False, max_bad_records=0, quote='"',
-           skip_leading_rows=0):
-    """ Load the table from GCS.
-
-    Args:
-      source: the URL of the source bucket(s). Can include wildcards.
-      append: if True append onto existing table contents.
-      overwrite: if True overwrite existing table contents.
-      source_format: the format of the data; default 'CSV'. Other options are DATASTORE_BACKUP
-          or NEWLINE_DELIMITED_JSON.
-      field_delimiter: The separator for fields in a CSV file. BigQuery converts the string to
-          ISO-8859-1 encoding, and then uses the first byte of the encoded string to split the data
-          as raw binary (default ',').
-      allow_jagged_rows: If True, accept rows in CSV files that are missing trailing optional
-          columns; the missing values are treated as nulls (default False).
-      allow_quoted_newlines: If True, allow quoted data sections in CSV files that contain newline
-          characters (default False).
-      encoding: The character encoding of the data, either 'UTF-8' (the default) or 'ISO-8859-1'.
-      ignore_unknown_values: If True, accept rows that contain values that do not match the schema;
-          the unknown values are ignored (default False).
-      max_bad_records The maximum number of bad records that are allowed (and ignored) before
-          returning an 'invalid' error in the Job result (default 0).
-      quote: The value used to quote data sections in a CSV file; default '"'. If your data does
-          not contain quoted sections, set the property value to an empty string. If your data
-          contains quoted newline characters, you must also enable allow_quoted_newlines.
-      skip_leading_rows: A number of rows at the top of a CSV file to skip (default 0).
-
-    Returns:
-      A Job object for the load Job if it was started successfully; else None.
-    """
-    response = self._api.jobs_insert_load(source, self._name_parts,
-                                          append=append,
-                                          overwrite=overwrite,
-                                          source_format=source_format,
-                                          field_delimiter=field_delimiter,
-                                          allow_jagged_rows=allow_jagged_rows,
-                                          allow_quoted_newlines=allow_quoted_newlines,
-                                          encoding=encoding,
-                                          ignore_unknown_values=ignore_unknown_values,
-                                          max_bad_records=max_bad_records,
-                                          quote=quote,
-                                          skip_leading_rows=skip_leading_rows)
-    job = self._init_job_from_response(response)
-    if job is not None:
-      job.wait()
-    return job
-
-  @async_method
   def load_async(self, source, append=False, overwrite=False, source_format='CSV',
                  field_delimiter=',', allow_jagged_rows=False, allow_quoted_newlines=False,
                  encoding='UTF-8', ignore_unknown_values=False, max_bad_records=0, quote='"',
@@ -654,18 +604,67 @@ class Table(object):
       A Future that returns a Job object for the load Job if it was started successfully or
       None if not.
     """
-    return self.load(source,
-                     append=append,
-                     overwrite=overwrite,
-                     source_format=source_format,
-                     field_delimiter=field_delimiter,
-                     allow_jagged_rows=allow_jagged_rows,
-                     allow_quoted_newlines=allow_quoted_newlines,
-                     encoding=encoding,
-                     ignore_unknown_values=ignore_unknown_values,
-                     max_bad_records=max_bad_records,
-                     quote=quote,
-                     skip_leading_rows=skip_leading_rows)
+    response = self._api.jobs_insert_load(source, self._name_parts,
+                                          append=append,
+                                          overwrite=overwrite,
+                                          source_format=source_format,
+                                          field_delimiter=field_delimiter,
+                                          allow_jagged_rows=allow_jagged_rows,
+                                          allow_quoted_newlines=allow_quoted_newlines,
+                                          encoding=encoding,
+                                          ignore_unknown_values=ignore_unknown_values,
+                                          max_bad_records=max_bad_records,
+                                          quote=quote,
+                                          skip_leading_rows=skip_leading_rows)
+    return self._init_job_from_response(response)
+
+  def load(self, source, append=False, overwrite=False, source_format='CSV',
+           field_delimiter=',', allow_jagged_rows=False, allow_quoted_newlines=False,
+           encoding='UTF-8', ignore_unknown_values=False, max_bad_records=0, quote='"',
+           skip_leading_rows=0):
+    """ Load the table from GCS.
+
+    Args:
+      source: the URL of the source bucket(s). Can include wildcards.
+      append: if True append onto existing table contents.
+      overwrite: if True overwrite existing table contents.
+      source_format: the format of the data; default 'CSV'. Other options are DATASTORE_BACKUP
+          or NEWLINE_DELIMITED_JSON.
+      field_delimiter: The separator for fields in a CSV file. BigQuery converts the string to
+          ISO-8859-1 encoding, and then uses the first byte of the encoded string to split the data
+          as raw binary (default ',').
+      allow_jagged_rows: If True, accept rows in CSV files that are missing trailing optional
+          columns; the missing values are treated as nulls (default False).
+      allow_quoted_newlines: If True, allow quoted data sections in CSV files that contain newline
+          characters (default False).
+      encoding: The character encoding of the data, either 'UTF-8' (the default) or 'ISO-8859-1'.
+      ignore_unknown_values: If True, accept rows that contain values that do not match the schema;
+          the unknown values are ignored (default False).
+      max_bad_records The maximum number of bad records that are allowed (and ignored) before
+          returning an 'invalid' error in the Job result (default 0).
+      quote: The value used to quote data sections in a CSV file; default '"'. If your data does
+          not contain quoted sections, set the property value to an empty string. If your data
+          contains quoted newline characters, you must also enable allow_quoted_newlines.
+      skip_leading_rows: A number of rows at the top of a CSV file to skip (default 0).
+
+    Returns:
+      A Job object for the load Job if it was started successfully; else None.
+    """
+    job = self.load_async(source,
+                          append=append,
+                          overwrite=overwrite,
+                          source_format=source_format,
+                          field_delimiter=field_delimiter,
+                          allow_jagged_rows=allow_jagged_rows,
+                          allow_quoted_newlines=allow_quoted_newlines,
+                          encoding=encoding,
+                          ignore_unknown_values=ignore_unknown_values,
+                          max_bad_records=max_bad_records,
+                          quote=quote,
+                          skip_leading_rows=skip_leading_rows)
+    if job is not None:
+      job.wait()
+    return job
 
   def _get_row_fetcher(self, start_row=0, max_rows=None, page_size=_DEFAULT_PAGE_SIZE):
     """ Get a function that can retrieve a page of rows.
@@ -785,6 +784,25 @@ class Table(object):
     for row in self.range(start_row, max_rows):
       writer.writerow(row)
     f.close()
+
+  @async_method
+  def to_file_async(self, path, start_row=0, max_rows=None, write_header=True, dialect=csv.excel):
+    """Start saving the results to a local file in CSV format and return a Job for completion.
+
+    Args:
+      path: path on the local filesystem for the saved results.
+      start_row: the row of the table at which to start the export (default 0)
+      max_rows: an upper limit on the number of rows to export (default None)
+      write_header: if true (the default), write column name header row at start of file
+      dialect: the format to use for the output. By default, csv.excel. See
+          https://docs.python.org/2/library/csv.html#csv-fmt-params for how to customize this.
+    Returns:
+      A Job for the async save operation.
+    Raises:
+      An Exception if the operation failed.
+    """
+    self.to_file(path, start_row=start_row, max_rows=max_rows, write_header=write_header,
+                 dialect=dialect)
 
   @property
   def schema(self):

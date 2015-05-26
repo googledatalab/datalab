@@ -19,8 +19,8 @@ import json as _json
 import time as _time
 import IPython as _ipython
 import IPython.core.magic as _magic
+from gcp._util import JSONEncoder as _JSONEncoder
 from gcp._util import print_exception_with_last_stack as _print_exception_with_stack
-from gcp.utils import JSONEncoder as _JSONEncoder
 from ._utils import _get_data
 
 
