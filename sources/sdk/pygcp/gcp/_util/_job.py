@@ -202,6 +202,8 @@ class Job(object):
       if timeout is not None and timeout < 0:
         raise _TimeoutError()
 
+      # Need to block for some time. Favor using concurrent.futures.wait if possible
+      # as it can return early if a (thread) job is ready; else fall back to time.sleep.
       futures = [job._future for job in jobs if job._future]
       if len(futures) == 0:
         _sleep(Job._POLL_INTERVAL)
