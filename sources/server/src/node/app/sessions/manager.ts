@@ -226,8 +226,10 @@ export class SessionManager implements app.ISessionManager {
    * The current session model assumes that session creation should always be completed before
    * connections are permitted. So, if the session does not exist, the connection is closed
    * immediately.
+   *
+   * @param socket A socket.io connection.
    */
-  _handleClientConnect (socket: socketio.Socket) {
+  _handleClientConnect(socket: socketio.Socket) {
     // Get the existing session for the session path specified in the socket connection handshake.
     var sessionPath = this._getConnectionData(socket).notebookPath;
 
@@ -242,16 +244,24 @@ export class SessionManager implements app.ISessionManager {
         return;
       }
 
+      var connectionId = socket.id;
+
+      // Avoid duplicate socket.io connect events that can occur for a single (active) connection.
+      if (this._connectionIdToSession[connectionId]) {
+        // Duplicate connect event for existing connection. Nothing to do.
+        return;
+      }
+
       // Delegate all socket.io Action messages to the session.
       var connection = new conn.ClientConnection(
-          uuid.v4(),
+          connectionId,
           socket,
           session.processAction.bind(session),
           this._handleClientDisconnect.bind(this));
-      console.log('User has connected: ' + connection.id);
 
       // Update existing session object with new user connection.
       session.addClientConnection(connection);
+      console.log('User has connected: ' + connection.id);
 
       // Store a mapping from connection to the associated session so that the session can be
       // retrieved on disconnect.
@@ -263,20 +273,23 @@ export class SessionManager implements app.ISessionManager {
   }
 
   /**
-   * Removes
+   * Removes the connection upon client disconnect.
+   *
+   * @param connection A client connection.
    */
-  _handleClientDisconnect (connection: app.IClientConnection) {
-    console.log('User has disconnected: ' + connection.id);
-
+  _handleClientDisconnect(connection: app.IClientConnection) {
     // Find the session associated with this connection.
     var session = this._connectionIdToSession[connection.id];
     if (!session) {
-      throw util.createError(
-        'Associated session not found when attempting to close connection id "%s"', connection.id);
+      // Could have received a duplicate disconnect event if the session is already untracked.
+      //
+      // Nothing to do if there is no session mapped to the connection.
+      return;
     }
 
     // Remove the connection from the session.
     session.removeClientConnection(connection);
+    console.log('User has disconnected: ' + connection.id);
 
     // Remove the connection from the index
     delete this._connectionIdToConnection[connection.id];
@@ -284,7 +297,7 @@ export class SessionManager implements app.ISessionManager {
     delete this._connectionIdToSession[connection.id];
   }
 
-  _registerHandlers () {
+  _registerHandlers() {
     this._socketioManager.on('connection', this._handleClientConnect.bind(this));
     // Note: disconnect handlers are at the socket/connection level
   }
