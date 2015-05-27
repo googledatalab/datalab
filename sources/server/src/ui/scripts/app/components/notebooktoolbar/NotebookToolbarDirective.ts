@@ -18,6 +18,7 @@
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <amd-dependency path="app/components/sessions/ClientNotebook" />
+/// <amd-dependency path="app/services/SessionService" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import _app = require('app/App');
@@ -27,28 +28,31 @@ var log = logging.getLogger(constants.scopes.notebookToolbar);
 
 interface NotebookToolbarScope extends ng.IScope {
   notebook: app.IClientNotebook;
+  session: app.ISessionService;
 }
 
 class NotebookToolbarController {
 
-  _clientNotebook: app.IClientNotebook;
   _scope: NotebookToolbarScope;
 
-  static $inject = ['$scope', constants.clientNotebook.name];
+  static $inject = ['$scope', constants.clientNotebook.name, constants.sessionService.name];
 
   /**
    * Constructor.
    *
    * @param scope The directive scope.
-   * @param clientNotebook The client's notebook session.
+   * @param notebook The client's notebook session.
+   * @param session The session API service.
    */
   constructor(
       scope: NotebookToolbarScope,
-      clientNotebook: app.IClientNotebook) {
+      notebook: app.IClientNotebook,
+      session: app.ISessionService) {
 
     this._scope = scope;
 
-    this._scope.notebook = clientNotebook
+    this._scope.notebook = notebook
+    this._scope.session = session
   }
 }
 

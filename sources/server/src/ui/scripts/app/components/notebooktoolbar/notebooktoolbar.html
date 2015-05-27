@@ -26,4 +26,9 @@
       ng-click="notebook.clearOutputs()">
   </i>
 
+  <!-- Reset the session (kernel) state -->
+  <i class="datalab-toolbar-button fa-power-off fa"
+      ng-click="session.reset(notebook.notebookPath)">
+  </i>
+
 </div>

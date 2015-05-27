@@ -39,12 +39,12 @@ var log = logging.getLogger(constants.scopes.sessionConnection);
 function sessionConnectionFactory(
     rootScope: ng.IRootScopeService,
     location: ng.ILocationService,
-    route: ng.route.IRouteService
+    route: ng.route.IRouteService,
+    notebook: app.IClientNotebook
     ): app.ISessionConnection {
 
   var socket: Socket = socketio(location.host(), {
-    // Note: slash is prepended because all content storage paths are rooted.
-    query: 'notebookPath=/' + route.current.params.notebookPath
+    query: 'notebookPath=' + notebook.notebookPath
   });
 
   return {
@@ -66,7 +66,7 @@ function sessionConnectionFactory(
     }
   };
 }
-sessionConnectionFactory.$inject = ['$rootScope', '$location', '$route'];
+sessionConnectionFactory.$inject = ['$rootScope', '$location', '$route', constants.clientNotebook.name];
 
 
 _app.registrar.factory(constants.sessionConnection.name, sessionConnectionFactory);
