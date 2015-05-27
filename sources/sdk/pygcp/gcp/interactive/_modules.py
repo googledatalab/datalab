@@ -34,13 +34,13 @@ def pymodule(line, cell=None):
       print 'The code for the module must be included'
       return
 
-    name = str(args['name'])
+    name = str(args.name)
     module = _create_python_module(name, cell)
 
     # Automatically import the newly created module by assigning it to a variable
     # named the same name as the module name.
     ipy = _ipython.get_ipython()
-    ipy.push({ name: module })
+    ipy.push({name: module})
 
 def _create_python_module(name, code):
   # By convention the module is associated with a file name matching the module name
