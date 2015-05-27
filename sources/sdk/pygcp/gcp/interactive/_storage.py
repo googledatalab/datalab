@@ -17,8 +17,9 @@
 import argparse
 import fnmatch
 import gcp.storage as _storage
+from ._commands import CommandParser as _CommandParser
 from ._html import HtmlBuilder as _HtmlBuilder
-from ._utils import _extract_storage_api_response_error
+from ._utils import _extract_storage_api_response_error, _handle_magic_line
 
 try:
   import IPython as _ipython
@@ -36,10 +37,7 @@ def storage(line, cell=None):
   Returns:
     The results of executing the cell.
   """
-  parsers = []
-  parser = argparse.ArgumentParser(prog='storage')
-  parsers.append(parser)
-  subparsers = parser.add_subparsers(help='sub-commands')
+  parser = _CommandParser.create('storage')
 
   # TODO(gram): consider adding a move command too. I did try this already using the
   # objects.patch API to change the object name but that fails with an error:
@@ -49,37 +47,30 @@ def storage(line, cell=None):
   #
   # This is despite 'name' being identified as writable in the storage API docs.
   # The alternative would be to use a copy/delete.
-  copy_parser = subparsers.add_parser('copy', help='copy a storage object')
-  parsers.append(copy_parser)
+  copy_parser = parser.subcommand('copy', 'copy a storage object')
   copy_parser.add_argument('source', help='the name of the object(s) to copy', nargs='+')
   copy_parser.add_argument('destination', help='the copy destination')
   copy_parser.set_defaults(func=_storage_copy)
 
-  create_parser = subparsers.add_parser('create', help='make one or more buckets')
-  parsers.append(create_parser)
+  create_parser = parser.subcommand('create', 'make one or more buckets')
   create_parser.add_argument('bucket', help='the name of the bucket(s) to create', nargs='+')
   create_parser.set_defaults(func=_storage_create)
 
-  delete_parser = subparsers.add_parser('delete', help='remove one or more buckets or objects')
-  parsers.append(delete_parser)
+  delete_parser = parser.subcommand('delete', 'remove one or more buckets or objects')
   delete_parser.add_argument('item', nargs='+',
                              help='the name of the bucket(s) or object(s) to remove')
   delete_parser.set_defaults(func=_storage_delete)
 
-  list_parser = subparsers.add_parser('list', help='list buckets or contents of a bucket')
-  parsers.append(list_parser)
+  list_parser = parser.subcommand('list', 'list buckets or contents of a bucket')
   list_parser.add_argument('path', help='the name of the objects(s) to list', nargs='?')
   list_parser.set_defaults(func=_storage_list)
 
-  read_parser = subparsers.add_parser('read',
-                                      help='read contents of storage object into Python variable')
-  parsers.append(read_parser)
+  read_parser = parser.subcommand('read', 'read contents of storage object into Python variable')
   read_parser.add_argument('item', help='the name of the object to read')
   read_parser.add_argument('variable', help='the name of variable to set')
   read_parser.set_defaults(func=_storage_read)
 
-  view_parser = subparsers.add_parser('view', help='view contents of storage object')
-  parsers.append(view_parser)
+  view_parser = parser.subcommand('view', 'view contents of storage object')
   view_parser.add_argument('-n', '--head', type=int, default=20,
                            help='the number of lines from start to view')
   view_parser.add_argument('-t', '--tail', type=int, default=20,
@@ -87,24 +78,12 @@ def storage(line, cell=None):
   view_parser.add_argument('source', help='the name of the object to view')
   view_parser.set_defaults(func=_storage_view)
 
-  write_parser = subparsers.add_parser('write',
-                                       help='write value of Python variable to storage object')
-  parsers.append(write_parser)
+  write_parser = parser.subcommand('write', 'write value of Python variable to storage object')
   write_parser.add_argument('variable', help='the name of the variable')
   write_parser.add_argument('item', help='the name of the object to write')
   write_parser.set_defaults(func=_storage_write)
 
-  for p in parsers:
-    p.exit = _parser_exit  # raise exception, don't call sys.exit.
-    p.format_usage = p.format_help  # Show full help always.
-
-  args = filter(None, line.split())
-  try:
-    parsed_args = parser.parse_args(args)
-    return parsed_args.func(vars(parsed_args))
-  except Exception as e:
-    if e.message:
-      print e.message
+  return _handle_magic_line(line, parser)
 
 
 def _parser_exit(status=0, message=None):
@@ -158,7 +137,7 @@ def _storage_copy(args):
   if len(sources) > 1:
     # Multiple sources; target must be a bucket
     if target_bucket is None or target_key is not None:
-      raise Exception('Invalid target object %s' % target_name)
+      raise Exception('Invalid target object %s' % target)
 
   for source in sources:
     source_bucket, source_key = _storage._bucket.parse_name(source)
@@ -169,7 +148,8 @@ def _storage_copy(args):
     try:
       _storage.item(source_bucket, source_key).copy_to(destination_key, bucket=destination_bucket)
     except Exception as e:
-      print 'Couldn\'t copy %s to %s: %s' % (source, target, _extract_storage_api_response_error(e.message))
+      print "Couldn't copy %s to %s: %s" %\
+            (source, target, _extract_storage_api_response_error(e.message))
 
 
 def _storage_create(args):
@@ -182,7 +162,7 @@ def _storage_create(args):
       else:
         raise Exception("Invalid name %s" % name)
     except Exception as e:
-      print 'Couldn\'t create %s: %s' % (bucket, _extract_storage_api_response_error(e.message))
+      print "Couldn't create %s: %s" % (bucket, _extract_storage_api_response_error(e.message))
 
 
 def _storage_delete(args):
@@ -198,7 +178,7 @@ def _storage_delete(args):
       else:
         raise Exception('Invalid name %s' % item)
     except Exception as e:
-      print 'Couldn\'t delete %s: %s' % (item, _extract_storage_api_response_error(e.message))
+      print "Couldn't delete %s: %s" % (item, _extract_storage_api_response_error(e.message))
 
 
 def _render_dictionary(data, headers):
@@ -252,7 +232,7 @@ def _storage_list(args):
 
   # Bucket doesn't exist.
   if key:
-    raise Exception('%s doesn\'t exist' % target)
+    raise Exception('%s does not exist' % target)
 
   # Treat the bucket name as a pattern and show matches. We don't use bucket_name as that
   # can strip off wildchars and so we need to strip off gs:// here.
