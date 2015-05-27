@@ -74,7 +74,9 @@ class ClientNotebook implements app.IClientNotebook {
     // the current notebook path.this notebook path reference should be preferred for referencing
     // by other components that require access to the current notebook path (e.g., notebook title
     // component).
-    this.notebookPath = route.current.params.notebookPath;
+    //
+    // Note that a slash is prepended because all notebook paths are rooted.
+    this.notebookPath = '/' + route.current.params.notebookPath;
 
     this._registerEventHandlers();
   }
