@@ -35,6 +35,8 @@ export class Session implements app.ISession {
   path: string;
 
   _connections: app.IClientConnection[];
+  _executionQueue: app.ExecuteRequest[];
+  _isKernelExecutionPending: boolean;
   _isNotebookSaveRequested: boolean;
   _isNotebookSavePending: boolean;
   _kernel: app.IKernel;
@@ -312,6 +314,63 @@ export class Session implements app.ISession {
   }
 
   /**
+   * Clears the kernel execution queue.
+   */
+  _clearExecutionQueue() {
+    this._executionQueue = [];
+  }
+
+  /**
+   * Queues a given execute request for kernel execution (FIFO ordering).
+   *
+   * @param request The execution request to queue.
+   */
+  _execute(request: app.ExecuteRequest) {
+    // Queue the request for execution.
+    this._executionQueue.push(request);
+
+    // Update the cell's state to denote it is waiting to be executed.
+    if (request.requestContext.cellId) {
+      this._handleActionNotebookData({
+        name: actions.cell.update,
+        worksheetId: request.requestContext.worksheetId,
+        cellId: request.requestContext.cellId,
+        state: cells.states.pending
+      });
+    }
+
+    // Attempt to execute the request immediately if possible.
+    this._executeNextQueued();
+  }
+
+  /**
+   * Sends the execute request at the front of the (FIFO) queue to the kernel.
+   */
+  _executeNextQueued() {
+    if (this._executionQueue.length == 0 || this._isKernelExecutionPending) {
+      // Kernel is busy or there is nothing to execute. Nothing to do for now.
+      return;
+    }
+
+    // Get the next request at the front of the queue.
+    var request = this._executionQueue.shift();
+
+    // Update the state of the cell being executed, if the request corresponds to a cell.
+    if (request.requestContext.cellId) {
+      this._handleActionNotebookData({
+        name: actions.cell.update,
+        worksheetId: request.requestContext.worksheetId,
+        cellId: request.requestContext.cellId,
+        state: cells.states.executing
+      });
+    }
+
+    // Send the execution request to the kernel.
+    this._isKernelExecutionPending = true;
+    this._kernel.execute(request);
+  }
+
+  /**
    * Gets a connection by ID.
    *
    * Throws an exception if no connection with the given ID exists.
@@ -339,6 +398,11 @@ export class Session implements app.ISession {
       // Missing request routing metadata. Nothing can be done with the message.
       console.log('ERROR Received execute reply message with no recipient: ', message);
     }
+
+    // Kernel is now available if a reply has been received.
+    this._isKernelExecutionPending = false;
+    // Attempt to execute the next queued request, if there is one.
+    this._executeNextQueued();
   }
 
   /**
@@ -370,6 +434,9 @@ export class Session implements app.ISession {
       // Nothing can be done if the given connection does not exist.
       console.log(error);
     }
+
+    // Cancel any waiting executions since an error occurred.
+    this._clearExecutionQueue();
   }
 
   // Handlers for messages flowing in either direction between user<->kernel.
@@ -390,11 +457,19 @@ export class Session implements app.ISession {
       prompt: message.executionCounter
     };
 
-    // Also add the error messaging as a cell output if an error has occurred.
-    if (message.errorName) {
+    if (message.success) {
+      // Mark the cell as having executed successfully.
+      action.state = cells.states.success;
+    } else {
+      // Also add the error messaging as a cell output if an error has occurred.
       action.outputs = [
         util.createErrorOutput(message.errorName, message.errorMessage, message.traceback)
       ];
+
+      action.state = cells.states.error;
+
+      // Cancel any waiting executions since an error occurred.
+      this._clearExecutionQueue();
     }
 
     // Apply the upate to the notebook.
@@ -465,7 +540,7 @@ export class Session implements app.ISession {
 
   _handleActionExecute(connection: app.IClientConnection, action: app.notebooks.actions.Execute) {
     // Request will have a declared request ID that should be used for tracking.
-    this._kernel.execute({
+    this._execute({
       requestId: action.requestId,
       requestContext: {
         connectionId: connection.id
@@ -478,10 +553,21 @@ export class Session implements app.ISession {
    * Handles an execute cell action by generating a kernel execute request.
    */
   _handleActionExecuteCell(action: app.notebooks.actions.ExecuteCell) {
-    // Retrieve the current state of the cell that should be executed.
-    var cell: app.notebooks.Cell;
     try {
-      cell = this._notebook.getCellOrThrow(action.cellId, action.worksheetId);
+      // Retrieve the current state of the cell that should be executed.
+      var cell = this._notebook.getCellOrThrow(action.cellId, action.worksheetId);
+
+      // Request that the kernel execute the code snippet.
+      this._execute({
+        // Generate a kernel request ID (kernels are not aware of cells, just "requests").
+        requestId: uuid.v4(),
+        // Messages generated in response to this request will have the following metadata.
+        requestContext: {
+          cellId: action.cellId,
+          worksheetId: action.worksheetId
+        },
+        code: cell.source
+      });
     } catch (error) {
       // Cell was not found within the expected worksheet.
       //
@@ -493,18 +579,6 @@ export class Session implements app.ISession {
       console.log(util.createError('Could not execute specified cell %s due to %s',
           action.cellId, error));
     }
-
-    // Request that the kernel execute the code snippet.
-    this._kernel.execute({
-      // Generate a kernel request ID (kernels are not aware of cells, just "requests").
-      requestId: uuid.v4(),
-      // Messages generated in response to this request will have the following metadata.
-      requestContext: {
-        cellId: action.cellId,
-        worksheetId: action.worksheetId
-      },
-      code: cell.source
-    });
   }
 
   /**
@@ -709,6 +783,10 @@ export class Session implements app.ISession {
   _spawnKernel(callback: app.Callback<void>) {
     // Kill the existing kernel.
     this._shutdownKernel();
+
+    // Initialize the execution queue for the kernel.
+    this._executionQueue = [];
+    this._isKernelExecutionPending = false;
 
     // Spawn a new kernel for the session.
     //

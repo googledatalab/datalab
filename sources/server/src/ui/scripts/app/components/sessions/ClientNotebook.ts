@@ -81,19 +81,6 @@ class ClientNotebook implements app.IClientNotebook {
     this._registerEventHandlers();
   }
 
-  /**
-   * Sets the given cell to be active.
-   *
-   * There can only be a single active cell within a notebook at any time; equivalent to the
-   * notion of DOM element focus.
-   *
-   * @param cell The cell to select.
-   */
-  selectCell(cell: app.notebooks.Cell) {
-    this.activeCell = cell;
-  }
-
-
   // TODO(bryantd): decide if we want a local "predictive modification" for the various insert functions
   // to make the UI more responsive given the latency in getting back a server response for any of the
   // notebook modification operations (e.g., add/delete/move cell).
@@ -312,6 +299,18 @@ class ClientNotebook implements app.IClientNotebook {
   }
 
   /**
+   * Sets the given cell to be active.
+   *
+   * There can only be a single active cell within a notebook at any time; equivalent to the
+   * notion of DOM element focus.
+   *
+   * @param cell The cell to select.
+   */
+  selectCell(cell: app.notebooks.Cell) {
+    this.activeCell = cell;
+  }
+
+  /**
    * Selects the specified cell.
    *
    * @param worksheetId The id of the worksheet to select.
@@ -443,6 +442,11 @@ class ClientNotebook implements app.IClientNotebook {
     // Update the source content if it was provided in the update.
     if (update.source || update.source === '') {
       cell.source = update.source;
+    }
+
+    // Update the cell state if it was provided in the update.
+    if (update.state || update.state == '') {
+      cell.state = update.state;
     }
 
     // Add any outputs provided in the update.

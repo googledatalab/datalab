@@ -46,8 +46,8 @@ export class ShellChannelClient extends channels.ChannelClient {
 
   /**
    * Sends a code execution request to the kernel.
-   * @param request an execution request
-   * @returns promise that will resolve to an execute reply message upon code execution completing
+   *
+   * @param request An execution request.
    */
   execute (request: app.ExecuteRequest): void {
     // Translate to execute request to the IPython message format and send to the kernel

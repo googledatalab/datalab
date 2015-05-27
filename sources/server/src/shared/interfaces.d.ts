@@ -66,6 +66,7 @@ declare module app {
       outputs?: CellOutput[];
 
       prompt?: string; // Prompt to display (e.g., execution counter value, busy symbol, etc.)
+      state?: string; // 'error' | 'success' | 'executing'
     }
 
 

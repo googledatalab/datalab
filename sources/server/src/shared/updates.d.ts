@@ -130,6 +130,8 @@ declare module app {
 
         source?: string; // The new source string value for the cell.
 
+        state?: string;
+
         outputs?: CellOutput[];
         // Flag determines whether the above list of outputs is appended or replaces existing
         // output list within the cell (false => append; true => replace).

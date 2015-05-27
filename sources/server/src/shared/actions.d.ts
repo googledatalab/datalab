@@ -137,6 +137,7 @@ declare module app {
         cellId: string;
         source?: string; // cell content string (e.g., code, markdown, etc.)
         prompt?: string;
+        state?: string;
 
         metadata?: app.Map<any>;
         // Flag to indicate whether the metadata dict should be merged with existing metadata

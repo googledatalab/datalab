@@ -238,6 +238,10 @@ export class NotebookSession implements app.INotebookSession {
       cell.source = cellUpdate.source = action.source;
     }
 
+    if (action.state || action.state === '') {
+      cell.state = cellUpdate.state = action.state;
+    }
+
     if (action.outputs) {
       if (action.replaceOutputs) {
         // Simple case, replace the cell's outputs with the output list in the action message.
