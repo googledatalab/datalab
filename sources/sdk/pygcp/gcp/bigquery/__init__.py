@@ -100,25 +100,26 @@ def datasetname(project_id, dataset_id):
   """ Construct a DataSetName named tuple.
 
   Args:
-    project_id: the project ID
-    dataset_id: the dataset ID
+    project_id: the project ID.
+    dataset_id: the dataset ID.
   Returns:
     A DataSetName named-tuple.
   """
   return _DataSetName(project_id, dataset_id)
 
 
-def tablename(project_id, dataset_id, table_id):
+def tablename(project_id, dataset_id, table_id, decorator=''):
   """ Construct a TableName named tuple.
 
   Args:
-    project_id: the project ID
-    dataset_id: the dataset ID
-    table_id: tha Table ID
+    project_id: the project ID.
+    dataset_id: the dataset ID.
+    table_id: tha Table ID.
+    decorator: the decorator part.
   Returns:
     A TableName named-tuple.
   """
-  return _TableName(project_id, dataset_id, table_id)
+  return _TableName(project_id, dataset_id, table_id, decorator)
 
 
 def table(name, context=None):

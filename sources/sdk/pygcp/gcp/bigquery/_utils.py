@@ -19,22 +19,23 @@ import re
 
 
 DataSetName = collections.namedtuple('DataSetName', ['project_id', 'dataset_id'])
-TableName = collections.namedtuple('TableName', ['project_id', 'dataset_id', 'table_id'])
+TableName = collections.namedtuple('TableName',
+                                   ['project_id', 'dataset_id', 'table_id', 'decorator'])
 
 # Absolute project-qualified name pattern: <project>:<dataset>
-_ABS_DATASET_NAME_PATTERN = r'^([a-z0-9\-_\.:]+)\:([a-zA-Z0-9_]+)$'
+_ABS_DATASET_NAME_PATTERN = r'^([a-z\d\-_\.:]+)\:(\w+)$'
 
 # Relative name pattern: <dataset>
-_REL_DATASET_NAME_PATTERN = r'^([a-zA-Z0-9_]+)$'
+_REL_DATASET_NAME_PATTERN = r'^(\w+)$'
 
 # Absolute project-qualified name pattern: <project>:<dataset>.<table>
-_ABS_TABLE_NAME_PATTERN = r'^([a-z0-9\-_\.:]+)\:([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)$'
+_ABS_TABLE_NAME_PATTERN = r'^([a-z\d\-_\.:]+)\:(\w+)\.(\w+)(@[\d\-]+)?$'
 
 # Relative name pattern: <dataset>.<table>
-_REL_TABLE_NAME_PATTERN = r'^([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)$'
+_REL_TABLE_NAME_PATTERN = r'^(\w+)\.(\w+)(@[\d\-]+)?$'
 
-# Table-only name pattern: <table>
-_TABLE_NAME_PATTERN = r'^([a-zA-Z0-9_]+)$'
+# Table-only name pattern: <table>. Includes an optional decorator.
+_TABLE_NAME_PATTERN = r'^(\w+)(@[\d\-]+)$'
 
 
 def parse_dataset_name(name, project_id=None):
@@ -99,24 +100,26 @@ def parse_table_name(name, project_id=None, dataset_id=None):
   Raises:
     Exception: raised if the name doesn't match the expected formats.
   """
-  _project_id = _dataset_id = _table_id = None
+  _project_id = _dataset_id = _table_id = _decorator = None
   if isinstance(name, basestring):
     # Try to parse as absolute name first.
     m = re.match(_ABS_TABLE_NAME_PATTERN, name, re.IGNORECASE)
     if m is not None:
-      _project_id, _dataset_id, _table_id = m.groups()
+      _project_id, _dataset_id, _table_id, _decorator = m.groups()
     else:
       # Next try to match as a relative name implicitly scoped within current project.
       m = re.match(_REL_TABLE_NAME_PATTERN, name)
       if m is not None:
         groups = m.groups()
-        _project_id, _dataset_id, _table_id = project_id, groups[0], groups[1]
+        _project_id, _dataset_id, _table_id, _decorator =\
+            project_id, groups[0], groups[1], groups[2]
       else:
         # Finally try to match as a table name only.
         m = re.match(_TABLE_NAME_PATTERN, name)
         if m is not None:
           groups = m.groups()
-          _project_id, _dataset_id, _table_id = project_id, dataset_id, groups[0]
+          _project_id, _dataset_id, _table_id, _decorator =\
+              project_id, dataset_id, groups[0], groups[1]
   elif isinstance(name, dict):
     try:
       _table_id = name['table_id']
@@ -126,7 +129,9 @@ def parse_table_name(name, project_id=None, dataset_id=None):
       pass
   else:
     # Try treat as an array or tuple
-    if len(name) == 3:
+    if len(name) == 4:
+      _project_id, _dataset_id, _table_id, _decorator = name
+    elif len(name) == 3:
       _project_id, _dataset_id, _table_id = name
     elif len(name) == 2:
       _dataset_id, _table_id = name
@@ -136,5 +141,7 @@ def parse_table_name(name, project_id=None, dataset_id=None):
     _project_id = project_id
   if not _dataset_id:
     _dataset_id = dataset_id
+  if not _decorator:
+    _decorator = ''
 
-  return TableName(_project_id, _dataset_id, _table_id)
+  return TableName(_project_id, _dataset_id, _table_id, _decorator)
