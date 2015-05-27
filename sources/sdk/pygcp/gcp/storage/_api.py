@@ -69,15 +69,14 @@ class Api(object):
     Args:
       bucket: the name of the bucket.
       projection: the projection of the bucket information to retrieve.
-    Returns:
-      A parsed bucket information dictionary.
     Raises:
       Exception if there is an error performing the operation.
     """
     args = {'project': self._project_id}
 
     url = Api._ENDPOINT + (Api._BUCKET_PATH % bucket)
-    return _util.Http.request(url, args=args, method='DELETE', credentials=self._credentials)
+    _util.Http.request(url, args=args, method='DELETE', credentials=self._credentials,
+                       raw_response=True)
 
   def buckets_get(self, bucket, projection='noAcl'):
     """Issues a request to retrieve information about a bucket.
@@ -90,8 +89,9 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
+    args = {'projection': projection}
     url = Api._ENDPOINT + (Api._BUCKET_PATH % bucket)
-    return _util.Http.request(url, credentials=self._credentials)
+    return _util.Http.request(url, credentials=self._credentials, args=args)
 
   def buckets_list(self, projection='noAcl', max_results=0, page_token=None):
     """Issues a request to retrieve the list of buckets.
@@ -178,7 +178,7 @@ class Api(object):
       Exception if there is an error performing the operation.
     """
     url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, Api._escape_key(key)))
-    return _util.Http.request(url, method='DELETE', credentials=self._credentials)
+    _util.Http.request(url, method='DELETE', credentials=self._credentials, raw_response=True)
 
   def objects_get(self, bucket, key, projection='noAcl'):
     """Issues a request to retrieve information about an object.

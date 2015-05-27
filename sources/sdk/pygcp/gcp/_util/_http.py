@@ -31,8 +31,7 @@ class Http(object):
 
   @staticmethod
   def request(url, args=None, data=None, headers=None, method=None,
-              credentials=None,
-              raw_response=False):
+              credentials=None, raw_response=False):
     """Issues HTTP requests.
 
     Args:
@@ -100,10 +99,7 @@ class Http(object):
       if 200 <= response.status < 300:
         if raw_response:
           return content
-        try:
-          return json.loads(content)
-        except ValueError:
-          return content
+        return json.loads(content)
       else:
         raise Exception(('HTTP request failed.', response.status, content))
     except ValueError as e:

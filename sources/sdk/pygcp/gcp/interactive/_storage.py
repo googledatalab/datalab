@@ -18,7 +18,7 @@ import argparse
 import fnmatch
 import gcp.storage as _storage
 from ._html import HtmlBuilder as _HtmlBuilder
-from ._utils import _extract_error
+from ._utils import _extract_storage_api_response_error
 
 try:
   import IPython as _ipython
@@ -68,32 +68,35 @@ def storage(line, cell=None):
 
   list_parser = subparsers.add_parser('list', help='list buckets or contents of a bucket')
   parsers.append(list_parser)
-  list_parser.add_argument('target', help='the name of the objects(s) to list', nargs='?')
+  list_parser.add_argument('path', help='the name of the objects(s) to list', nargs='?')
   list_parser.set_defaults(func=_storage_list)
 
   read_parser = subparsers.add_parser('read',
                                       help='read contents of storage object into Python variable')
   parsers.append(read_parser)
-  read_parser.add_argument('source', help='the name of the object to read')
-  read_parser.add_argument('target', help='the name of variable to set')
+  read_parser.add_argument('item', help='the name of the object to read')
+  read_parser.add_argument('variable', help='the name of variable to set')
   read_parser.set_defaults(func=_storage_read)
 
-  view_parser = subparsers.add_parser('read',
-                                      help='view contents of storage object')
+  view_parser = subparsers.add_parser('view', help='view contents of storage object')
   parsers.append(view_parser)
+  view_parser.add_argument('-n', '--head', type=int, default=20,
+                           help='the number of lines from start to view')
+  view_parser.add_argument('-t', '--tail', type=int, default=20,
+                           help='the number of lines from end to view')
   view_parser.add_argument('source', help='the name of the object to view')
   view_parser.set_defaults(func=_storage_view)
 
   write_parser = subparsers.add_parser('write',
                                        help='write value of Python variable to storage object')
   parsers.append(write_parser)
-  write_parser.add_argument('source', help='the name of the variable')
-  write_parser.add_argument('target', help='the name of the object to write')
+  write_parser.add_argument('variable', help='the name of the variable')
+  write_parser.add_argument('item', help='the name of the object to write')
   write_parser.set_defaults(func=_storage_write)
 
   for p in parsers:
-    p.exit = _parser_exit  # raise exception, don't call sys.exit
-    p.format_usage = p.format_help  # Show full help always
+    p.exit = _parser_exit  # raise exception, don't call sys.exit.
+    p.format_usage = p.format_help  # Show full help always.
 
   args = filter(None, line.split())
   try:
@@ -118,26 +121,26 @@ def _expand_list(names):
     Currently we support wildchars in the bucket name or the key name but not both.
   """
 
-  results = []  # The expanded list
-  items = {}  # Cached contents of buckets; used for matching
+  results = []  # The expanded list.
+  items = {}  # Cached contents of buckets; used for matching.
   for name in names:
     bucket, key = _storage._bucket.parse_name(name)
     results_len = len(results)  # If we fail to add any we add name and let caller deal with it.
     if bucket:
       if not key:
-        # Just a bucket; add it
+        # Just a bucket; add it.
         results.append('gs://%s' % bucket)
       elif _storage.item(bucket, key).exists():
         results.append('gs://%s/%s', bucket, key)
       else:
-        # Expand possible key values
+        # Expand possible key values.
         if bucket not in items:
           items[bucket] = [item.metadata().name for item in _storage.bucket(bucket).items()]
         for item in items[bucket]:
           if fnmatch.fnmatch(item, key):
             results.append('gs://%s/%s' % (bucket, item))
 
-    # If we added at no matches, add the original name and let caller deal with it
+    # If we added no matches, add the original name and let caller deal with it.
     if len(results) == results_len:
       results.append(name)
 
@@ -166,7 +169,7 @@ def _storage_copy(args):
     try:
       _storage.item(source_bucket, source_key).copy_to(destination_key, bucket=destination_bucket)
     except Exception as e:
-      print 'Couldn\'t copy %s to %s: %s' % (source, target, _extract_error(e.message))
+      print 'Couldn\'t copy %s to %s: %s' % (source, target, _extract_storage_api_response_error(e.message))
 
 
 def _storage_create(args):
@@ -179,7 +182,7 @@ def _storage_create(args):
       else:
         raise Exception("Invalid name %s" % name)
     except Exception as e:
-      print 'Couldn\'t create %s: %s' % (bucket, _extract_error(e.message))
+      print 'Couldn\'t create %s: %s' % (bucket, _extract_storage_api_response_error(e.message))
 
 
 def _storage_delete(args):
@@ -195,7 +198,7 @@ def _storage_delete(args):
       else:
         raise Exception('Invalid name %s' % item)
     except Exception as e:
-      print 'Couldn\'t delete %s: %s' % (item, _extract_error(e.message))
+      print 'Couldn\'t delete %s: %s' % (item, _extract_storage_api_response_error(e.message))
 
 
 def _render_dictionary(data, headers):
@@ -234,7 +237,7 @@ def _storage_list(args):
   This command is a bit different in that we allow wildchars in the bucket name and will list
   the buckets that match.
   """
-  target = args['target']
+  target = args['path']
   if target is None:
     return _storage_list_buckets('*')  # List all buckets.
 
@@ -267,23 +270,34 @@ def _get_item_contents(source_name):
 
 
 def _storage_read(args):
-  contents = _get_item_contents(args['source'])
+  contents = _get_item_contents(args['item'])
   ipy = _ipython.get_ipython()
-  ipy.push({args['target']: contents})
+  ipy.push({args['variable']: contents})
 
 
 def _storage_view(args):
-  return str(_get_item_contents(args['source']))
+  contents = _get_item_contents(args['source'])
+  if not isinstance(contents, basestring):
+    contents = str(contents)
+  lines = contents.split('\n')
+  head_count = args['head']
+  tail_count = args['tail']
+  if len(lines) > head_count + tail_count:
+    head = '\n'.join(lines[:head_count])
+    tail = '\n'.join(lines[-tail_count:])
+    return head + '\n...\n' + tail
+  else:
+    return contents
 
 
 def _storage_write(args):
-  target_name = args['target']
+  target_name = args['item']
   target_bucket, target_key = _storage._bucket.parse_name(target_name)
   if target_bucket is None or target_key is None:
     raise Exception('Invalid target object %s' % target_name)
   target = _storage.item(target_bucket, target_key)
   ipy = _ipython.get_ipython()
-  contents = ipy.user_ns[args['source']]
+  contents = ipy.user_ns[args['variable']]
   # TODO(gram): would we want to to do any special handling here; e.g. for DataFrames?
   target.write_to(str(contents), 'text/plain')
 

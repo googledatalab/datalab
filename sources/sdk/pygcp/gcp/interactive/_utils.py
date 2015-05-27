@@ -172,7 +172,7 @@ def _handle_magic_line(line, parser):
   return None
 
 
-def _extract_error(message):
+def _extract_storage_api_response_error(message):
   """ A helper function to extract user-friendly error messages from service exceptions.
 
   Args:
