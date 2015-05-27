@@ -199,7 +199,7 @@ def schema(data=None, definition=None):
   return _Schema(data=data, definition=definition)
 
 
-def wait_one(jobs, timeout=None):
+def wait_any(jobs, timeout=None):
   """ Return when at least one of the specified jobs has completed or timeout expires.
 
   Args:
@@ -211,7 +211,7 @@ def wait_one(jobs, timeout=None):
     TimeoutError on timeout.
 
   """
-  return _util.Job.wait_one(jobs, timeout)
+  return _util.Job.wait_any(jobs, timeout)
 
 
 def wait_all(jobs, timeout=None):

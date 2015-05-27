@@ -16,7 +16,7 @@
 
 class TimeoutError(BaseException):
 
-  def __init__(self, message='Timed out'):
+  def __init__(self, message):
     self._message = message
 
   def __str__(self):

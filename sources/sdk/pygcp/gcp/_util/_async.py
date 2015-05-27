@@ -14,35 +14,41 @@
 
 """Decorators for async methods and functions to dispatch on threads and support chained calls."""
 
-from concurrent.futures import Future as _Future
-from concurrent.futures import ThreadPoolExecutor as _Executor
-from functools import update_wrapper as _update_wrapper
+import abc
+import concurrent.futures
+import functools
 
 from ._job import Job as _Job
 
 
 class async(object):
-  """ This decorator can be applied to any method that makes blocking calls to create
-      a modified version that creates a Job and returns immediately; the original
-      method will be called on a thread pool worker thread.
+  """ Base class for async_function/async_method. Creates a wrapped function/method that will
+      run the original function/method on a thread pool worker thread and return a Job instance
+      for monitoring the status of the thread.
   """
 
-  executor = _Executor(max_workers=50)  # Thread pool for doing the work.
+  __metaclass__ = abc.ABCMeta
+  executor = concurrent.futures.ThreadPoolExecutor(max_workers=50)  # Pool for doing the work.
 
   def __init__(self, function):
     self._function = function
     # Make the wrapper get attributes like docstring from wrapped method.
-    _update_wrapper(self, function)
+    functools.update_wrapper(self, function)
 
   @staticmethod
   def _preprocess_args(*args):
     # Pre-process arguments - if any are themselves Futures block until they can be resolved.
-    return [arg.result() if isinstance(arg, _Future) else arg for arg in args]
+    return [arg.result() if isinstance(arg, concurrent.futures.Future) else arg for arg in args]
 
   @staticmethod
   def _preprocess_kwargs(**kwargs):
     # Pre-process keyword arguments - if any are Futures block until they can be resolved.
-    return {kw: (arg.result() if isinstance(arg, _Future) else arg) for kw, arg in kwargs.items()}
+    return {kw: (arg.result() if isinstance(arg, concurrent.futures.Future) else arg)
+            for kw, arg in kwargs.items()}
+
+  @abc.abstractmethod
+  def _call(self, *args, **kwargs):
+    return
 
   def __call__(self, *args, **kwargs):
     # Queue the call up in the thread pool.
@@ -50,6 +56,10 @@ class async(object):
 
 
 class async_function(async):
+  """ This decorator can be applied to any static function that makes blocking calls to create
+      a modified version that creates a Job and returns immediately; the original
+      method will be called on a thread pool worker thread.
+  """
 
   def _call(self, *args, **kwargs):
     # Call the wrapped method.
@@ -57,6 +67,10 @@ class async_function(async):
 
 
 class async_method(async):
+  """ This decorator can be applied to any class instance method that makes blocking calls to create
+      a modified version that creates a Job and returns immediately; the original method will be
+      called on a thread pool worker thread.
+  """
 
   def _call(self, *args, **kwargs):
     # Call the wrapped method.

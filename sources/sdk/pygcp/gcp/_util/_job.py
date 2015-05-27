@@ -25,7 +25,10 @@ from traceback import format_exc as _format_exc
 from uuid import uuid4 as _gen_uuid
 from ._errors import TimeoutError as _TimeoutError
 
-JobError = collections.namedtuple('JobError', ['location', 'message', 'reason'])
+_JobError = collections.namedtuple('JobError', ['location', 'message', 'reason'])
+
+class JobError(_JobError):
+  """ A helper class to capture multiple components of Job errors.  """
 
 
 class Job(object):
@@ -38,9 +41,7 @@ class Job(object):
      we can use more reactive ways of monitoring groups of Jobs.
   """
 
-  _POLL_INTERVAL = 5
-
-  executor = _Executor(max_workers=50)  # Thread pool for doing the work.
+  _POLL_INTERVAL_SECONDS = 5
 
   def __init__(self, job_id=None, future=None):
     """Initializes an instance of a Job.
@@ -164,8 +165,8 @@ class Job(object):
         if timeout is not None:
           if timeout <= 0:
             self._timeout()
-          timeout -= Job._POLL_INTERVAL
-        _sleep(Job._POLL_INTERVAL)
+          timeout -= Job._POLL_INTERVAL_SECONDS
+        _sleep(Job._POLL_INTERVAL_SECONDS)
     return self
 
   def __repr__(self):
@@ -186,13 +187,14 @@ class Job(object):
     # If a single job is passed in, make it an array for consistency
     if isinstance(jobs, Job):
       jobs = [jobs]
+    wait_on_one = return_when == _FIRST_COMPLETED
     while True:
       if timeout is not None:
-        timeout -= Job._POLL_INTERVAL
+        timeout -= Job._POLL_INTERVAL_SECONDS
 
       completed = [job for job in jobs if job.is_complete]
       if len(completed):
-        if return_when == _FIRST_COMPLETED:
+        if wait_on_one:
           return completed[0]
         jobs.remove_all(completed)
 
@@ -200,18 +202,19 @@ class Job(object):
         return None
 
       if timeout is not None and timeout < 0:
-        raise _TimeoutError()
+        raise _TimeoutError('Timed out waiting for %s to complete' %
+                            ('a job' if wait_on_one else 'all jobs'))
 
       # Need to block for some time. Favor using concurrent.futures.wait if possible
       # as it can return early if a (thread) job is ready; else fall back to time.sleep.
       futures = [job._future for job in jobs if job._future]
       if len(futures) == 0:
-        _sleep(Job._POLL_INTERVAL)
+        _sleep(Job._POLL_INTERVAL_SECONDS)
       else:
-        _wait(futures, timeout=Job._POLL_INTERVAL, return_when=return_when)
+        _wait(futures, timeout=Job._POLL_INTERVAL_SECONDS, return_when=return_when)
 
   @staticmethod
-  def wait_one(jobs, timeout=None):
+  def wait_any(jobs, timeout=None):
     """ Return when at least one of the specified jobs has completed or timeout expires.
 
     Args:
