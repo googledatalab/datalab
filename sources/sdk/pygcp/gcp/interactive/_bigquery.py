@@ -54,6 +54,18 @@ def bigquery(line, cell=None):
   sql_parser = parser.subcommand('sql',
       'execute a BigQuery SQL statement or create a named query object')
   sql_parser.add_argument('-n', '--name', help='the name for this query object')
+  sql_parser.add_argument('-s', '--sample', action='store_true',
+                          help='execute the query and get a sample of results')
+  sql_parser.add_argument('-sc', '--samplecount', type=int, default=10,
+                          help='number of rows to limit to if sampling')
+  sql_parser.add_argument('-sm', '--samplemethod', help='the type of sampling to use',
+                          choices=['limit', 'random', 'hashed', 'sorted'], default='limit')
+  sql_parser.add_argument('-sp', '--samplepercent', type=int, default=1,
+                          help='For random or hashed sampling, what percentage to sample from')
+  sql_parser.add_argument('-sf', '--samplefield',
+                          help='field to use for sorted or hashed sampling')
+  sql_parser.add_argument('-so', '--sampleorder', choices=['ascending', 'descending'],
+                          default='ascending', help='sort order to use for sorted sampling')
   sql_parser.set_defaults(func=lambda x: _dispatch_handler('sql', x, cell, sql_parser, _sql_cell,
                                                            cell_required=True))
 
@@ -139,11 +151,25 @@ def _sql_cell(args, sql):
     # Update the global namespace with the new variable, or update the value of
     # the existing variable if it already exists.
     ipy.push({variable_name: query})
-    return None
-  else:
-    # If a variable was not specified, then simply return the results, so they
-    # get rendered as the output of the cell.
+    if not args['sample']:
+      return None
+
+  if args['samplemethod'] is None:
     return query.results()
+
+  count = args['samplecount']
+  method = args['samplemethod']
+  if method == 'random':
+    sampling = _bq.Sampling.random(percent=args['samplepercent'], count=count)
+  elif method == 'hashed':
+    sampling = _bq.Sampling.hashed(field_name=args['samplefield'], percent=args['samplepercent'],
+                                   count=count)
+  elif method == 'sorted':
+    ascending = args['sampleorder'] == 'ascending'
+    sampling = _bq.Sampling.sorted(args['samplefield'], ascending=ascending, count=count)
+  elif method == 'limit':
+    sampling = _bq.Sampling.default(count=count)
+  return query.sample(sampling=sampling)
 
 
 def _udf_cell(args, js):

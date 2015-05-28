@@ -37,15 +37,16 @@ class TestCases(unittest.TestCase):
     self._apply_sampling(bq.Sampling.default(fields=[]), expected_sql)
 
   def test_hashed(self):
-    expected_sql = 'SELECT * FROM (%s) WHERE ABS(HASH(f1)) < 5' % TestCases.BASE_SQL
+    expected_sql = 'SELECT * FROM (%s) WHERE ABS(HASH(f1)) %% 100 < 5' % TestCases.BASE_SQL
     self._apply_sampling(bq.Sampling.hashed('f1', 5), expected_sql)
 
   def test_hashed_and_limited(self):
-    expected_sql = 'SELECT * FROM (%s) WHERE ABS(HASH(f1)) < 5 LIMIT 100' % TestCases.BASE_SQL
+    expected_sql = 'SELECT * FROM (%s) WHERE ABS(HASH(f1)) %% 100 < 5 LIMIT 100' \
+                   % TestCases.BASE_SQL
     self._apply_sampling(bq.Sampling.hashed('f1', 5, count=100), expected_sql)
 
   def test_hashed_with_fields(self):
-    expected_sql = 'SELECT f1 FROM (%s) WHERE ABS(HASH(f1)) < 5' % TestCases.BASE_SQL
+    expected_sql = 'SELECT f1 FROM (%s) WHERE ABS(HASH(f1)) %% 100 < 5' % TestCases.BASE_SQL
     self._apply_sampling(bq.Sampling.hashed('f1', 5, fields=['f1']), expected_sql)
 
   def test_sorted_ascending(self):
