@@ -79,6 +79,23 @@ def bigquery(line, cell=None):
   schema_parser.set_defaults(func=lambda x: _dispatch_handler('schema', x, cell, schema_parser,
                                                               _schema_line, cell_prohibited=True))
 
+  # %bigquery datasets
+  datasets_parser = parser.subcommand('datasets', 'list the datasets in a BigQuery project')
+  datasets_parser.add_argument('-p', '--project',
+                               help='the project whose datasets should be listed')
+  datasets_parser.set_defaults(
+      func=lambda x: _dispatch_handler('datasets', x, cell, datasets_parser, _datasets_line,
+                                       cell_prohibited=True))
+
+  # %bigquery tables
+  tables_parser = parser.subcommand('tables', 'list the tables in a BigQuery project or dataset')
+  tables_parser.add_argument('-p', '--project',
+                             help='the project whose tables should be listed')
+  tables_parser.add_argument('-d', '--dataset',
+                             help='the dataset to restrict to')
+  tables_parser.set_defaults(func=lambda x: _dispatch_handler('tables', x, cell, tables_parser,
+                                                              _tables_line, cell_prohibited=True))
+
   return _handle_magic_line(line, parser)
 
 
@@ -223,6 +240,30 @@ def _schema_line(args):
     return _ipython.core.display.HTML(html)
 
 
+def _render_table(data, fields=None):
+  """ Helper to render a list of dictionaries as an HTML display object. """
+  builder = _HtmlBuilder()
+  builder.render_objects(data, fields, dictionary=True)
+  html = builder.to_html()
+  return _ipython.core.display.HTML(html)
+
+
+def _datasets_line(args):
+  return _render_table([{'Name': dataset.full_name} for dataset in _bq.datasets(args['project'])])
+
+
+def _tables_line(args):
+  if args['dataset']:
+    datasets = [_bq.dataset((args['project'], args['dataset']))]
+  else:
+    datasets = _bq.datasets(args['project'])
+
+  tables = []
+  for dataset in datasets:
+    tables.extend([{'Name': table.full_name} for table in dataset])
+
+  return _render_table(tables)
+
 # An LRU cache for Tables. This is mostly useful so that when we cross page boundaries
 # when paging through a table we don't have to re-fetch the schema.
 _table_cache = _util.LRUCache(10)
@@ -337,9 +378,7 @@ def _repr_html_table(results):
 
 
 def _repr_html_table_list(table_list):
-  builder = _HtmlBuilder()
-  builder.render_objects(table_list, ['name'])
-  return builder.to_html()
+  return _render_table(table_list, ['name'])
 
 
 def _repr_html_table_schema(schema):
