@@ -17,13 +17,11 @@
 import collections
 from concurrent.futures import ALL_COMPLETED as _ALL_COMPLETED
 from concurrent.futures import FIRST_COMPLETED as _FIRST_COMPLETED
-from concurrent.futures import ThreadPoolExecutor as _Executor
 from concurrent.futures import TimeoutError as _FuturesTimeoutError
 from concurrent.futures import wait as _wait
 from time import sleep as _sleep
 from traceback import format_exc as _format_exc
 from uuid import uuid4 as _gen_uuid
-from ._errors import TimeoutError as _TimeoutError
 
 _JobError = collections.namedtuple('JobError', ['location', 'message', 'reason'])
 
@@ -187,23 +185,26 @@ class Job(object):
     # If a single job is passed in, make it an array for consistency
     if isinstance(jobs, Job):
       jobs = [jobs]
+    elif len(jobs) == 0:
+      return jobs
+
     wait_on_one = return_when == _FIRST_COMPLETED
+    completed = []
     while True:
       if timeout is not None:
         timeout -= Job._POLL_INTERVAL_SECONDS
 
-      completed = [job for job in jobs if job.is_complete]
-      if len(completed):
-        if wait_on_one:
-          return completed[0]
-        jobs.remove_all(completed)
+      done = [job for job in jobs if job.is_complete]
 
-      if len(jobs) == 0:
-        return None
+      if len(done):
+        completed.extend(done)
+        for job in done:
+          jobs.remove(job)
+        if wait_on_one or len(jobs) == 0:
+          return completed
 
       if timeout is not None and timeout < 0:
-        raise _TimeoutError('Timed out waiting for %s to complete' %
-                            ('a job' if wait_on_one else 'all jobs'))
+        return completed
 
       # Need to block for some time. Favor using concurrent.futures.wait if possible
       # as it can return early if a (thread) job is ready; else fall back to time.sleep.
@@ -238,5 +239,5 @@ class Job(object):
     Raises:
       TimeoutError on timeout.
     """
-    Job._wait(jobs, timeout, _ALL_COMPLETED)
+    return Job._wait(jobs, timeout, _ALL_COMPLETED)
 

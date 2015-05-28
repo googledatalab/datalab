@@ -206,9 +206,8 @@ def wait_any(jobs, timeout=None):
     jobs: a list of Jobs to wait on.
     timeout: a timeout in seconds to wait for. None (the default) means no timeout.
   Returns:
-    A Job that has now completed or None if there were no jobs.
-  Raises:
-    TimeoutError on timeout.
+    Once at least one job completes, a list of all completed jobs.
+    If the call times out then an empty list will be returned.
 
   """
   return _util.Job.wait_any(jobs, timeout)
@@ -220,8 +219,9 @@ def wait_all(jobs, timeout=None):
   Args:
     jobs: a single Job or list of Jobs to wait on.
     timeout: a timeout in seconds to wait for. None (the default) means no timeout.
-  Raises:
-    TimeoutError on timeout.
+  Returns:
+    A list of completed Jobs. If the call timed out this will be shorter than the
+    list of jobs supplied as a parameter.
   """
   return _util.Job.wait_all(jobs, timeout)
 
