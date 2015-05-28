@@ -30,6 +30,14 @@ class TestCases(unittest.TestCase):
     self.assertEqual('', parsed_name[3])
     self.assertEqual('[test:requestlogs.today]', table._repr_sql_())
 
+  def test_api_paths(self):
+    name = gcp.bigquery.tablename('a', 'b', 'c', 'd')
+    self.assertEqual('/projects/a/datasets/b/tables/cd', gcp.bigquery._api.Api._TABLES_PATH % name)
+    self.assertEqual('/projects/a/datasets/b/tables/cd/data',
+                     gcp.bigquery._api.Api._TABLEDATA_PATH % name)
+    name = gcp.bigquery.datasetname('a', 'b')
+    self.assertEqual('/projects/a/datasets/b', gcp.bigquery._api.Api._DATASETS_PATH % name)
+
   def test_parse_full_name(self):
     table = self._create_table('test:requestlogs.today')
     self._check_name_parts(table)

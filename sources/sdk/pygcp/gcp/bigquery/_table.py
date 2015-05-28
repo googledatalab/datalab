@@ -273,15 +273,6 @@ class TableMetadata(object):
 class Table(object):
   """Represents a Table object referencing a BigQuery table. """
 
-  # Absolute project-qualified name pattern: <project>:<dataset>.<table>
-  _ABS_NAME_PATTERN = r'^([a-z0-9\-_\.:]+)\:([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)$'
-
-  # Relative name pattern: <dataset>.<table>
-  _REL_NAME_PATTERN = r'^([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)$'
-
-  # Table-only name pattern: <table>
-  _TABLE_NAME_PATTERN = r'^([a-zA-Z0-9_]+)$'
-
   # Allowed characters in a BigQuery table column name
   _VALID_COLUMN_NAME_CHARACTERS = '_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 

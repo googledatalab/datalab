@@ -26,8 +26,8 @@ class Api(object):
   _JOBS_PATH = '/projects/%s/jobs/%s'
   _QUERIES_PATH = '/projects/%s/queries/%s'
   _DATASETS_PATH = '/projects/%s/datasets/%s'
-  _TABLES_PATH = '/projects/%s/datasets/%s/tables/%s'
-  _TABLEDATA_PATH = '/projects/%s/datasets/%s/tables/%s/data'
+  _TABLES_PATH = '/projects/%s/datasets/%s/tables/%s%s'
+  _TABLEDATA_PATH = '/projects/%s/datasets/%s/tables/%s%s/data'
 
   _DEFAULT_PAGE_SIZE = 1024
   _DEFAULT_TIMEOUT = 60000
@@ -321,7 +321,7 @@ class Api(object):
       Exception if there is an error performing the operation.
     """
     url = Api._ENDPOINT +\
-        (Api._TABLES_PATH % (dataset_name.project_id, dataset_name.dataset_id, ''))
+        (Api._TABLES_PATH % (dataset_name.project_id, dataset_name.dataset_id, '', ''))
 
     args = {}
     if max_results != 0:
@@ -346,7 +346,8 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    url = Api._ENDPOINT + (Api._TABLES_PATH % (table_name.project_id, table_name.dataset_id, ''))
+    url = Api._ENDPOINT + \
+          (Api._TABLES_PATH % (table_name.project_id, table_name.dataset_id, '', ''))
 
     data = {
       'kind': 'bigquery#table',
