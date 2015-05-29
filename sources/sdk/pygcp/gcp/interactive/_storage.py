@@ -16,6 +16,8 @@
 
 import argparse
 import fnmatch
+import re
+
 import gcp.storage as _storage
 from ._commands import CommandParser as _CommandParser
 from ._html import HtmlBuilder as _HtmlBuilder
@@ -53,6 +55,7 @@ def storage(line, cell=None):
   copy_parser.set_defaults(func=_storage_copy)
 
   create_parser = parser.subcommand('create', 'make one or more buckets')
+  create_parser.add_argument('-p', '--project', help='the project associated with the objects')
   create_parser.add_argument('bucket', help='the name of the bucket(s) to create', nargs='+')
   create_parser.set_defaults(func=_storage_create)
 
@@ -62,6 +65,7 @@ def storage(line, cell=None):
   delete_parser.set_defaults(func=_storage_delete)
 
   list_parser = parser.subcommand('list', 'list buckets or contents of a bucket')
+  list_parser.add_argument('-p', '--project', help='the project associated with the objects')
   list_parser.add_argument('path', help='the name of the objects(s) to list', nargs='?')
   list_parser.set_defaults(func=_storage_list)
 
@@ -97,7 +101,7 @@ def _expand_list(names):
   """ Do a wildchar name expansion of object names in a list and return expanded list.
 
     The items are expected to exist as this is used for copy sources or delete targets.
-    Currently we support wildchars in the bucket name or the key name but not both.
+    Currently we support wildchars in the key name only.
   """
 
   results = []  # The expanded list.
@@ -113,9 +117,25 @@ def _expand_list(names):
         results.append('gs://%s/%s', bucket, key)
       else:
         # Expand possible key values.
-        if bucket not in items:
+        if bucket not in items and key[:1] == '*':
+          # We need the full list; cache a copy for efficiency.
           items[bucket] = [item.metadata().name for item in _storage.bucket(bucket).items()]
-        for item in items[bucket]:
+        # If we have a cached copy use it
+        if bucket in items:
+          candidates = items[bucket]
+        # else we have no cached copy but can use prefix matching which is more efficient than
+        # getting the full contents.
+        else:
+          # Get the non-wildchar prefix.
+          match = re.search('\?|\*|\[', key)
+          prefix = key
+          if match:
+            prefix = key[0:match.start()]
+
+          candidates = [item.metadata().name
+                        for item in _storage.bucket(bucket).items(prefix=prefix)]
+
+        for item in candidates:
           if fnmatch.fnmatch(item, key):
             results.append('gs://%s/%s' % (bucket, item))
 
@@ -154,11 +174,12 @@ def _storage_copy(args):
 
 def _storage_create(args):
   """ Create one or more buckets. """
+  buckets = _storage.buckets(project_id=args['project'])
   for name in args['bucket']:
     try:
       bucket, key = _storage._bucket.parse_name(name)
       if bucket and not key:
-        _storage.bucket(bucket).create()
+        buckets.create(bucket)
       else:
         raise Exception("Invalid name %s" % name)
     except Exception as e:
@@ -181,7 +202,7 @@ def _storage_delete(args):
       print "Couldn't delete %s: %s" % (item, _extract_storage_api_response_error(e.message))
 
 
-def _render_dictionary(data, headers):
+def _render_dictionary(data, headers=None):
   """ Return a dictionary list formatted as a HTML table.
 
   Args:
@@ -194,21 +215,32 @@ def _render_dictionary(data, headers):
   return _ipython.core.display.HTML(html)
 
 
-def _storage_list_buckets(pattern):
+def _storage_list_buckets(project, pattern):
   """ List all storage buckets that match a pattern. """
-  data = [{'name': 'gs://' + bucket.name, 'created': bucket.metadata().created_on}
-          for bucket in _storage.buckets() if fnmatch.fnmatch(bucket.name, pattern)]
-  return _render_dictionary(data, ['name', 'created'])
+  data = [{'Bucket': 'gs://' + bucket.name, 'Created': bucket.metadata().created_on}
+          for bucket in _storage.buckets(project_id=project)
+          if fnmatch.fnmatch(bucket.name, pattern)]
+  return _render_dictionary(data, ['Bucket', 'Created'])
+
+
+def _storage_get_keys(bucket, pattern):
+  """ Get names of all storage keys in a specified bucket that match a pattern. """
+  return [item for item in bucket.items() if fnmatch.fnmatch(item.metadata().name, pattern)]
+
+
+def _storage_get_key_names(bucket, pattern):
+  """ Get names of all storage keys in a specified bucket that match a pattern. """
+  return [item.metadata().name for item in _storage_get_keys(bucket, pattern)]
 
 
 def _storage_list_keys(bucket, pattern):
   """ List all storage keys in a specified bucket that match a pattern. """
-  data = [{'name': item.metadata().name,
-           'type': item.metadata().content_type,
-           'size': item.metadata().size,
-           'updated': item.metadata().updated_on} for item in bucket.items()
-          if fnmatch.fnmatch(item.metadata().name, pattern)]
-  return _render_dictionary(data, ['name', 'type', 'size', 'updated'])
+  data = [{'Name': item.metadata().name,
+           'Type': item.metadata().content_type,
+           'Size': item.metadata().size,
+           'Updated': item.metadata().updated_on}
+          for item in _storage_get_keys(bucket, pattern)]
+  return _render_dictionary(data, ['Name', 'Type', 'Size', 'Updated'])
 
 
 def _storage_list(args):
@@ -218,25 +250,37 @@ def _storage_list(args):
   the buckets that match.
   """
   target = args['path']
+  project = args['project']
   if target is None:
-    return _storage_list_buckets('*')  # List all buckets.
+    return _storage_list_buckets(project, '*')  # List all buckets.
 
-  # List the contents of the bucket
   bucket_name, key = _storage._bucket.parse_name(target)
   if bucket_name is None:
     raise Exception('Invalid name: %s' % target)
 
-  bucket = _storage.bucket(bucket_name)
-  if bucket.exists():
-    return _storage_list_keys(bucket, key if key else '*')
+  if key or not re.search('\?|\*|\[', target):
+    # List the contents of the bucket
+    if not key:
+      key = '*'
+    if project:
+      # Only list if the bucket is in the project
+      for bucket in _storage.buckets(project_id=project):
+        if bucket.name == bucket_name:
+          break
+      else:
+        raise Exception('%s does not exist in project %s' % (target, project))
+    else:
+      bucket = _storage.bucket(bucket_name)
 
-  # Bucket doesn't exist.
-  if key:
-    raise Exception('%s does not exist' % target)
+    if bucket.exists():
+      return _storage_list_keys(bucket, key)
+    else:
+      raise Exception('%s does not exist' % target)
 
-  # Treat the bucket name as a pattern and show matches. We don't use bucket_name as that
-  # can strip off wildchars and so we need to strip off gs:// here.
-  return _storage_list_buckets(target[5:])
+  else:
+    # Treat the bucket name as a pattern and show matches. We don't use bucket_name as that
+    # can strip off wildchars and so we need to strip off gs:// here.
+    return _storage_list_buckets(project, target[5:])
 
 
 def _get_item_contents(source_name):

@@ -133,15 +133,19 @@ class Bucket(object):
     except Exception:
       return False
 
-  def create(self):
+  def create(self, project_id=None):
     """Creates the bucket.
 
+    Args:
+      The project in which to create the bucket.
     Returns:
       The bucket.
     Raises:
       Exception if there was an error creating the bucket.
     """
-    self._info = self._api.buckets_insert(self._name)
+    if project_id is None:
+      project_id = self._api.project_id
+    self._info = self._api.buckets_insert(self._name, project_id=project_id)
     return self
 
   def delete(self):
@@ -156,15 +160,18 @@ class Bucket(object):
 
 
 class BucketList(object):
-  """Represents a list of Cloud Storage buckets."""
+  """Represents a list of Cloud Storage buckets for a project."""
 
-  def __init__(self, api):
+  def __init__(self, api, project_id=None):
     """Initializes an instance of a BucketList.
 
     Args:
       api: the Storage API object to use to issue requests.
+      project_id: an optional project whose buckets we want to manipulate. If None this
+          is obtained from the api object.
     """
     self._api = api
+    self._project_id = project_id if project_id else api.project_id
 
   def contains(self, name):
     """Checks if the specified bucket exists.
@@ -194,11 +201,10 @@ class BucketList(object):
     Raises:
       Exception if there was an error creating the bucket.
     """
-    bucket_info = self._api.bucket_insert(name)
-    return _Bucket(self._api, name, bucket_info)
+    return Bucket(self._api, name).create(self._project_id)
 
-  def _retrieve_buckets(self, page_token, count):
-    list_info = self._api.buckets_list(page_token=page_token)
+  def _retrieve_buckets(self, page_token, _):
+    list_info = self._api.buckets_list(page_token=page_token, project_id=self._project_id)
 
     buckets = list_info.get('items', [])
     if len(buckets):

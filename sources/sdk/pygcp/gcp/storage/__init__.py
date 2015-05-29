@@ -47,16 +47,17 @@ def bucket(name, context=None):
   return _Bucket(api, name)
 
 
-def buckets(context=None):
+def buckets(context=None, project_id=None):
   """Retrieves a list of Storage buckets.
 
   Args:
     context: an optional Context object providing project_id and credentials.
+    project_id: the project whose buckets we want to list if different to context.
   Returns:
     An iteratable list of buckets.
   """
   api = _create_api(context)
-  return _BucketList(api)
+  return _BucketList(api, project_id=project_id)
 
 
 def item(bucket, key, context=None):
