@@ -47,7 +47,7 @@ class Api(object):
     """The project_id associated with this API client."""
     return self._project_id
 
-  def jobs_insert_load(self, source, table_name, append=False, overwrite=False,
+  def jobs_insert_load(self, source, table_name, append=False, overwrite=False, create=False,
                        source_format='CSV', field_delimiter=',', allow_jagged_rows=False,
                        allow_quoted_newlines=False, encoding='UTF-8', ignore_unknown_values=False,
                        max_bad_records=0, quote='"', skip_leading_rows=0):
@@ -59,6 +59,7 @@ class Api(object):
       table_name: a tuple representing the full name of the destination table.
       append: if True append onto existing table contents.
       overwrite: if True overwrite existing table contents.
+      create: if True, create the table if it doesn't exist
       source_format: the format of the data; default 'CSV'. Other options are DATASTORE_BACKUP
           or NEWLINE_DELIMITED_JSON.
       field_delimiter: The separator for fields in a CSV file. BigQuery converts the string to
@@ -82,7 +83,7 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    url = Api._ENDPOINT + (Api._JOBS_PATH % table_name.project_id)
+    url = Api._ENDPOINT + (Api._JOBS_PATH % (table_name.project_id, ''))
     if isinstance(source, basestring):
       source = [source]
     write_disposition = 'WRITE_EMPTY'
@@ -100,7 +101,7 @@ class Api(object):
             'datasetId': table_name.dataset_id,
             'tableId': table_name.table_id
           },
-          'createDisposition': 'CREATE_NEVER',
+          'createDisposition': 'CREATE_IF_NEEDED' if create else 'CREATE_NEVER',
           'writeDisposition': write_disposition,
           'sourceFormat': source_format,
           'fieldDelimiter': field_delimiter,
@@ -331,7 +332,8 @@ class Api(object):
 
     return _util.Http.request(url, args=args, credentials=self._credentials)
 
-  def tables_insert(self, table_name, schema=None, query=None, friendly_name=None, description=None):
+  def tables_insert(self, table_name, schema=None, query=None, friendly_name=None,
+                    description=None):
     """Issues a request to create a table or view in the specified dataset with the specified id.
        A schema must be provided to create a Table, or a query must be provided to create a View.
 
@@ -347,7 +349,7 @@ class Api(object):
       Exception if there is an error performing the operation.
     """
     url = Api._ENDPOINT + \
-          (Api._TABLES_PATH % (table_name.project_id, table_name.dataset_id, '', ''))
+        (Api._TABLES_PATH % (table_name.project_id, table_name.dataset_id, '', ''))
 
     data = {
       'kind': 'bigquery#table',
