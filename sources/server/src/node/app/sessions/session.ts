@@ -18,10 +18,13 @@
 import actions = require('../shared/actions');
 import async = require('async');
 import cells = require('../shared/cells');
+import logging = require('../common/logging');
 import updates = require('../shared/updates');
 import util = require('../common/util');
 import uuid = require('node-uuid');
 
+
+var logger = logging.getLogger();
 
 /**
  * Binds a user connection to a kernel and routes communication between them.
@@ -142,7 +145,7 @@ export class Session implements app.ISession {
     this.reset((error) => {
       if (error) {
         // If restarting the kernel fails, log it.
-        console.log('Error when attempting to restart kernel: ', error);
+        logger.error('Error when attempting to restart kernel: ', error);
         // TODO(bryantd): decide how to attempt recovery if restart fails.
         // Could destroy the session, or just retry with backoff for a fixed number of times.
       }
@@ -396,7 +399,7 @@ export class Session implements app.ISession {
       this._handleCellExecuteReply(<app.ExecuteReply>message);
     } else {
       // Missing request routing metadata. Nothing can be done with the message.
-      console.log('ERROR Received execute reply message with no recipient: ', message);
+      logger.error('Received execute reply message with no recipient: ', message);
     }
 
     // Kernel is now available if a reply has been received.
@@ -432,7 +435,7 @@ export class Session implements app.ISession {
       });
     } catch(error) {
       // Nothing can be done if the given connection does not exist.
-      console.log(error);
+      logger.debug('Kernel execute reply arrived but, receiving client is unavailable: %s', error);
     }
 
     // Cancel any waiting executions since an error occurred.
@@ -533,8 +536,8 @@ export class Session implements app.ISession {
       // apply a given action.
       //
       // TODO(bryantd): surface action application errors back to the client.
-      console.log(util.createError('Could not apply requested notebook action %s due to %s',
-          JSON.stringify(action), error));
+      logger.error('Could not apply requested notebook action %s due to %s',
+          JSON.stringify(action), error);
     }
   }
 
@@ -576,8 +579,7 @@ export class Session implements app.ISession {
       // execute request.
       //
       // TODO(bryantd): surface execute request failure back to the client.
-      console.log(util.createError('Could not execute specified cell %s due to %s',
-          action.cellId, error));
+      logger.error('Could not execute specified cell %s due to %s', action.cellId, error);
     }
   }
 
@@ -620,7 +622,7 @@ export class Session implements app.ISession {
       this._handleCellOutputData(<app.OutputData>message);
     } else {
       // Missing request routing metadata. Nothing can be done with the message.
-      console.log('ERROR Received output data message with no recipient: ', message);
+      logger.error('Received output data message with no recipient: %s', message);
     }
   }
 
@@ -636,7 +638,7 @@ export class Session implements app.ISession {
       });
     } catch(error) {
       // Nothing can be done if the connection does not exist.
-      console.log(error);
+      logger.debug('Received output data, but receiving client no longer available: %s', output);
     }
   }
 

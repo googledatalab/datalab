@@ -16,12 +16,15 @@
 /// <reference path="../../../../../../externs/ts/node/socket.io.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
 import conn = require('./connection');
+import logging = require('../common/logging');
 import messages = require('../shared/messages');
 import sessions = require('./session');
 import socketio = require('socket.io');
 import uuid = require('node-uuid');
 import util = require('../common/util');
 
+
+var logger = logging.getLogger();
 
 /**
  * Manages the lifecycles of a set of sessions between users and kernels.
@@ -69,7 +72,6 @@ export class SessionManager implements app.ISessionManager {
    * @param callback Completion callback for handling the outcome of the session creation flow.
    */
   create(sessionPath: string, callback: app.Callback<app.ISession>) {
-
     // Retrieve an existing session for the specified session path if it exists.
     var session = this._sessionPathToSession[sessionPath];
     if (session) {
@@ -96,7 +98,7 @@ export class SessionManager implements app.ISessionManager {
         // to clean up any resources.
         this.shutdown(session.path, (shutdownError) => {
           // If shutdown failed, log the error.
-          console.log('Failed to shutdown session:', shutdownError);
+          logger.error('Failed to shutdown session "%s" due to %s', sessionPath, shutdownError);
           // Pass the original session startup error back to the caller.
           callback(error);
         });
@@ -188,7 +190,7 @@ export class SessionManager implements app.ISessionManager {
       processedMessage = this._messageProcessors[i](processedMessage, session, this);
       if (processedMessage === null) {
         // Then this message has been filtered, no further processing.
-        console.log('Filtered: ', JSON.stringify(message));
+        logger.debug('Filtered: ', JSON.stringify(message));
         break;
       }
     }
@@ -261,7 +263,7 @@ export class SessionManager implements app.ISessionManager {
 
       // Update existing session object with new user connection.
       session.addClientConnection(connection);
-      console.log('User has connected: ' + connection.id);
+      logger.info('User %s has connected', connection.id);
 
       // Store a mapping from connection to the associated session so that the session can be
       // retrieved on disconnect.
@@ -289,7 +291,7 @@ export class SessionManager implements app.ISessionManager {
 
     // Remove the connection from the session.
     session.removeClientConnection(connection);
-    console.log('User has disconnected: ' + connection.id);
+    logger.info('User %s has disconnected.', connection.id);
 
     // Remove the connection from the index
     delete this._connectionIdToConnection[connection.id];

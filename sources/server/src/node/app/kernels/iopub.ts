@@ -13,9 +13,11 @@
  */
 
 /// <reference path="../messages/messages.d.ts" />
-import ipy = require('../messages/ipy');
 import channels = require('./channels');
+import ipy = require('../messages/ipy');
+import logging = require('../common/logging');
 
+var logger = logging.getLogger();
 
 /**
  * Client for communicating with the iopub channel of a running IPython kernel.
@@ -85,7 +87,7 @@ export class IOPubChannelClient extends channels.ChannelClient {
         break;
 
       default: // No defined handler for the type, so log it and move on
-        console.log('Unhandled message type "' + message.header.msg_type + '" received');
+        logger.warn('Unhandled message type "%s" received', message.header.msg_type);
         return;
     }
 

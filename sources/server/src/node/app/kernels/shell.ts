@@ -17,7 +17,9 @@
 import uuid = require('node-uuid');
 import ipy = require('../messages/ipy');
 import channels = require('./channels');
+import logging = require('../common/logging');
 
+var logger = logging.getLogger();
 
 /**
  * Client for communicating with the shell channel of a running IPython kernel.
@@ -71,7 +73,7 @@ export class ShellChannelClient extends channels.ChannelClient {
         break;
 
       default: // No handler for this message type, so log it and move on
-        console.log('Unhandled message type "' + message.header.msg_type + '" received');
+        logger.warn('Unhandled message type "%s" received', message.header.msg_type);
         return;
     }
   }

@@ -19,7 +19,9 @@
  */
 import actions = require('../shared/actions');
 import util = require('../common/util');
+import logging = require('../common/logging');
 
+var logger = logging.getLogger();
 
 /**
  * Gets the ordered list of message processors.
@@ -34,6 +36,6 @@ export function getMessageProcessors (): app.MessageProcessor[] {
  * Logs all messages to the console.
  */
 function logMessage (message: app.Map<any>, session: app.ISession): app.Map<any> {
-  console.log('Message: ', JSON.stringify(message));
+  logger.debug('Message: ', JSON.stringify(message));
   return message;
 }

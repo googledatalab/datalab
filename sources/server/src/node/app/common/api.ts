@@ -18,6 +18,9 @@
  */
 /// <reference path="../../../../../../externs/ts/express/express.d.ts" />
 import express = require('express');
+import logging = require('./logging');
+
+var logger = logging.getLogger();
 
 
 // TODO(bryantd): use a real logging system for emitting request errors in some consistent
@@ -27,19 +30,19 @@ import express = require('express');
 // Also need to log additional request details for failures to aid in diagnosing issues.
 
 export function sendBadRequest(response: express.Response, message: string) {
-  console.log('ERROR HTTP 400: ' + message);
+  logger.error('HTTP 400: %s', message);
   response.status(400);
   response.send(message);
 }
 
 export function sendInternalError(response: express.Response, message: string, error: Error) {
-  console.log('ERROR HTTP 500: ' + message, error);
+  logger.error('HTTP 500: %s; %s', message, error);
   response.status(500);
   response.send(message);
 }
 
 export function sendNotFound(response: express.Response, message: string) {
-  console.log('ERROR HTTP 404: ' + message);
+  logger.error('HTTP 404: %s', message);
   response.status(404);
   response.send(message);
 }

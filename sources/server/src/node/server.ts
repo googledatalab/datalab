@@ -18,15 +18,16 @@
 /// <reference path="../../../../externs/ts/node/node.d.ts" />
 /// <reference path="../../../../externs/ts/node/nomnom.d.ts" />
 /// <reference path="../../../../externs/ts/node/socket.io.d.ts" />
+/// <reference path="../../../../externs/ts/node/winston.d.ts" />
 import bodyParser = require('body-parser');
 import config = require('./app/config');
 import express = require('express');
 import http = require('http');
+import logging = require('./app/common/logging');
 import msgproc = require('./app/sessions/messageprocessors');
 import nomnom = require('nomnom');
 import sessions = require('./app/sessions/manager');
 import socketio = require('socket.io');
-
 
 /**
  * Configure and parse command line arguments with defaults.
@@ -53,7 +54,24 @@ var options = nomnom
     flag: true,
     help: 'Use the notebook storage associated with a GCP cloud project'
   })
+  .option('logLevel', {
+    full: 'log-level',
+    help: 'Logging level: debug, info, warn, error',
+    default: 'info'
+  })
+  .option('logDir', {
+    full: 'log-dirpath',
+    help: 'Directory in which to output log files'
+  })
+  .option('logFile', {
+    full: 'log-file',
+    help: 'Log filename prefix.',
+    default: 'datalab'
+  })
   .parse();
+
+logging.configure(options.logLevel, options.logDir, options.logFile);
+var logger = logging.getLogger();
 
 /**
  * Main entry point for the server.
@@ -86,7 +104,7 @@ export function start (settings: app.Settings) {
   // Configure express to serve the static UI content.
   expressApp.use(express.static(__dirname + '/static'));
 
-  console.log("Starting HTTP server on port " + settings.httpPort);
+  logger.info('Starting HTTP server on port %s', settings.httpPort);
   httpServer.listen(settings.httpPort);
 }
 
@@ -100,9 +118,10 @@ config.initStorage(
 
   if (error) {
     // Storage init failed. Do not start server.
-    console.log('Aborting server startup due to error during storage initialization', error);
+    logger.error('Aborting server startup due to error during storage initialization', error);
     return;
   }
+  logger.info('Storage configured');
 
   // Initialize the kernel manager with additional configuration.
   config.initKernelManager(options.ipythonKernelConfigPath);
