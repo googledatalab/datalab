@@ -108,6 +108,18 @@ def bigquery(line, cell=None):
   tables_parser.set_defaults(func=lambda x: _dispatch_handler('tables', x, cell, tables_parser,
                                                               _tables_line, cell_prohibited=True))
 
+  # % bigquery extract
+  extract_parser = parser.subcommand('extract', 'Extract BigQuery table to GCS')
+  extract_parser.add_argument('table', help='the table to extract')
+  extract_parser.add_argument('-f', '--format', choices=['csv', 'json'], default='csv',
+                              help='format to use for the export')
+  extract_parser.add_argument('-c', '--compress', action='store_true', help='compress the data')
+  extract_parser.add_argument('-H', '--header', action='store_true', help='include a header line')
+  extract_parser.add_argument('-d', '--delimiter', default=',', help='field delimiter')
+  extract_parser.add_argument('destination', help='the URL of the destination')
+  extract_parser.set_defaults(func=lambda x: _dispatch_handler('extract', x, cell, extract_parser,
+                                                               _extract_line, cell_prohibited=True))
+
   return _handle_magic_line(line, parser)
 
 
@@ -289,6 +301,18 @@ def _tables_line(args):
     tables.extend([{'Name': table.full_name} for table in dataset])
 
   return _render_table(tables)
+
+def _extract_line(args):
+  name = args['table']
+  table = _get_table(name)
+  if not table or not table.exists():
+    print 'Table %s does not exist' % name
+    return
+  table.extract(args['destination'],
+                format='CSV' if args['format'] == 'csv' else 'NEWLINE_DELIMITED_JSON',
+                compress=args['compress'],
+                field_delimiter=args['delimiter'],
+                print_header=args['header'])
 
 # An LRU cache for Tables. This is mostly useful so that when we cross page boundaries
 # when paging through a table we don't have to re-fetch the schema.
