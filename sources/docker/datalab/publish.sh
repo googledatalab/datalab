@@ -31,4 +31,4 @@ REG_IMAGE=gcr.io/cloud_datalab/gcp-datalab:$1
 
 echo "Publishing $LOCAL_IMAGE to $REG_IMAGE ..."
 docker tag -f $LOCAL_IMAGE $REG_IMAGE
-gcloud preview docker push $REG_IMAGE
+gcloud docker push $REG_IMAGE

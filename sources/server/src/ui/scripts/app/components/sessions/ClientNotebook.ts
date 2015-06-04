@@ -109,6 +109,7 @@ export class ClientNotebook implements app.IClientNotebook {
 
     var addCellAction: app.notebooks.actions.AddCell = {
       name: actions.worksheet.addCell,
+      requestId: uuid.v4(),
       worksheetId: worksheetId,
       cellId: uuid.v4(),
       type: cellType,
@@ -128,6 +129,7 @@ export class ClientNotebook implements app.IClientNotebook {
   clearOutput(cellId: string, worksheetId: string) {
     var clearOutputAction: app.notebooks.actions.ClearOutput = {
       name: actions.cell.clearOutput,
+      requestId: uuid.v4(),
       worksheetId: worksheetId,
       cellId: cellId
     };
@@ -140,7 +142,8 @@ export class ClientNotebook implements app.IClientNotebook {
    */
   clearOutputs() {
     var clearOutputsAction: app.notebooks.actions.ClearOutputs = {
-      name: actions.notebook.clearOutputs
+      name: actions.notebook.clearOutputs,
+      requestId: uuid.v4()
     };
 
     this._emitAction(clearOutputsAction);
@@ -155,6 +158,7 @@ export class ClientNotebook implements app.IClientNotebook {
   deleteCell(cellId: string, worksheetId: string) {
     var deleteCellAction: app.notebooks.actions.DeleteCell = {
       name: actions.worksheet.deleteCell,
+      requestId: uuid.v4(),
       cellId: cellId,
       worksheetId: worksheetId
     }
@@ -190,6 +194,7 @@ export class ClientNotebook implements app.IClientNotebook {
 
     var compositeAction: app.notebooks.actions.Composite = {
       name: actions.composite,
+      requestId: uuid.v4(),
       subActions: [
         this._createUpdateCellAction(cell, worksheetId),
         this._createExecuteCellAction(cell.id, worksheetId)
@@ -220,7 +225,8 @@ export class ClientNotebook implements app.IClientNotebook {
    */
   executeCells() {
     var executeCellsAction: app.notebooks.actions.ExecuteCells = {
-      name: actions.notebook.executeCells
+      name: actions.notebook.executeCells,
+      requestId: uuid.v4()
     };
 
     this._emitAction(executeCellsAction);
@@ -237,6 +243,7 @@ export class ClientNotebook implements app.IClientNotebook {
   moveCell(cellId: string, worksheetId: string, insertAfterCellId: string) {
     var moveCellAction: app.notebooks.actions.MoveCell = {
       name: actions.worksheet.moveCell,
+      requestId: uuid.v4(),
       cellId: cellId,
       sourceWorksheetId: worksheetId,
       destinationWorksheetId: worksheetId,
@@ -341,6 +348,7 @@ export class ClientNotebook implements app.IClientNotebook {
 
     return {
       name: actions.cell.execute,
+      requestId: uuid.v4(),
       worksheetId: worksheetId,
       cellId: cellId
     }
@@ -362,6 +370,7 @@ export class ClientNotebook implements app.IClientNotebook {
 
     return {
       name: actions.cell.update,
+      requestId: uuid.v4(),
       worksheetId: worksheetId,
       cellId: cell.id,
       source: cell.source,

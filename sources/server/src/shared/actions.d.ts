@@ -28,6 +28,7 @@ declare module app {
        */
       interface Action {
         name: string; // The name for the action message type.
+        requestId: string;
       }
 
       /**
@@ -166,7 +167,6 @@ declare module app {
        * name == 'kernel.execute'
        */
       interface Execute extends Action {
-        requestId: string;
         source: string;
       }
     }

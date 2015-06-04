@@ -34,7 +34,7 @@ export class ShellChannelClient extends channels.ChannelClient {
   _clientId: string;
   _delegateExecuteReplyHandler: app.EventHandler<app.ExecuteReply>;
 
-  constructor (
+  constructor(
       connectionUrl: string,
       port: number,
       clientId: string,
@@ -51,7 +51,7 @@ export class ShellChannelClient extends channels.ChannelClient {
    *
    * @param request An execution request.
    */
-  execute (request: app.ExecuteRequest): void {
+  execute(request: app.ExecuteRequest): void {
     // Translate to execute request to the IPython message format and send to the kernel
     var ipyExecuteMessage = this._createIPyExecuteRequest(request);
     this._send(ipyExecuteMessage);
@@ -63,7 +63,7 @@ export class ShellChannelClient extends channels.ChannelClient {
    * Converts multipart IPython message format to internal message type and then delegates to an
    * appropriate handler.
    */
-  _receive () {
+  _receive() {
     var message = ipy.parseIPyMessage(arguments);
 
     // Dispatch to an appropriate handler for the received message type
@@ -78,12 +78,11 @@ export class ShellChannelClient extends channels.ChannelClient {
     }
   }
 
-  _handleExecuteReply (message: app.ipy.Message): void {
+  _handleExecuteReply(message: app.ipy.Message): void {
     // Translate the IPython message into an internal message type
     var status = message.content['status'];
     var reply: app.ExecuteReply = {
       success: status == 'ok',
-      requestId: message.parentHeader.msg_id,
       requestContext: message.parentHeader.msg_context
     };
     if (status != 'aborted') {
@@ -102,7 +101,7 @@ export class ShellChannelClient extends channels.ChannelClient {
   /**
    * Creates a multipart IPython protocol message for kernel code execution
    */
-  _createIPyExecuteRequest (request: app.ExecuteRequest): string[] {
+  _createIPyExecuteRequest(request: app.ExecuteRequest): string[] {
     var content: app.ipy.ExecuteRequestContent = {
       code: request.code,
       silent: false,
@@ -112,7 +111,6 @@ export class ShellChannelClient extends channels.ChannelClient {
 
     return ipy.createIPyMessage(
       this._clientId,
-      request.requestId,
       'execute_request',
       content,
       request.requestContext);

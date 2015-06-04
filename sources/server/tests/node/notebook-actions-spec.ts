@@ -106,7 +106,7 @@ describe('Notebook model state', () => {
         });
       });
 
-      var action = {name: actions.notebook.clearOutputs};
+      var action = {name: actions.notebook.clearOutputs, requestId: ''};
       var update = <app.notebooks.updates.Composite>notebook.apply(action);
 
       // Now each worksheet should still have two cells, each with zero outputs
@@ -132,6 +132,7 @@ describe('Notebook model state', () => {
         name: actions.cell.update,
         worksheetId: worksheetId,
         cellId: cellIdToUpdate,
+        requestId: null
       };
       // Create a cell to be updated
       cell = {
@@ -247,6 +248,7 @@ describe('Notebook model state', () => {
         name: actions.cell.clearOutput,
         worksheetId: worksheetId,
         cellId: cellIdToClear,
+        requestId: null
       };
 
       // Create a cell with a non-zero number of outputs to be cleared
@@ -304,7 +306,8 @@ describe('Notebook model state', () => {
       deleteCellAction = {
         name: actions.worksheet.deleteCell,
         worksheetId: worksheet.id,
-        cellId: null
+        cellId: null,
+        requestId: null
       };
 
       // Create three cells to validate deleting in various positions
@@ -379,7 +382,8 @@ describe('Notebook model state', () => {
         sourceWorksheetId: worksheet.id,
         destinationWorksheetId: worksheet.id,
         cellId: null,
-        insertAfter: null
+        insertAfter: null,
+        requestId: null
       };
       // Add 3 cells to the worksheet
       worksheet.cells.push({
@@ -449,7 +453,8 @@ describe('Notebook model state', () => {
         worksheetId: worksheetId,
         cellId: 'NEW',
         type: 'code',
-        source: 'some code here'
+        source: 'some code here',
+        requestId: null
       };
       var worksheet = getFirstWorksheet(notebook);
       worksheet.cells.push({
