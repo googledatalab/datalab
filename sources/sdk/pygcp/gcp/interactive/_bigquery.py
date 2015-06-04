@@ -128,8 +128,8 @@ def bigquery(line, cell=None):
                                                               _tables_line, cell_prohibited=True))
 
   # % bigquery extract
-  extract_parser = parser.subcommand('extract', 'Extract BigQuery table to GCS')
-  extract_parser.add_argument('table', help='the table to extract')
+  extract_parser = parser.subcommand('extract', 'Extract BigQuery query results or table to GCS')
+  extract_parser.add_argument('source', help='the query or table to extract')
   extract_parser.add_argument('-f', '--format', choices=['csv', 'json'], default='csv',
                               help='format to use for the export')
   extract_parser.add_argument('-c', '--compress', action='store_true', help='compress the data')
@@ -368,16 +368,27 @@ def _tables_line(args):
   return _render_table(tables)
 
 def _extract_line(args):
-  name = args['table']
-  table = _get_table(name)
-  if not table or not table.exists():
-    print 'Table %s does not exist' % name
-    return
-  table.extract(args['destination'],
-                format='CSV' if args['format'] == 'csv' else 'NEWLINE_DELIMITED_JSON',
-                compress=args['compress'],
-                field_delimiter=args['delimiter'],
-                print_header=args['header'])
+  name = args['source']
+  source = _get_item(name)
+  if not source:
+    source = _get_table(name)
+
+  if not source:
+    print 'No such source: %s' % name
+  elif isinstance(source, _bq._Table) and not source.exists():
+    print 'Source %s does not exist' % name
+  else:
+
+    job = source.extract(args['destination'],
+                         format='CSV' if args['format'] == 'csv' else 'NEWLINE_DELIMITED_JSON',
+                         compress=args['compress'],
+                         field_delimiter=args['delimiter'],
+                         print_header=args['header'])
+    if job.failed:
+      print 'Extract failed: %s' % str(job.fatal_error)
+    elif job.errors:
+      print 'Extract completed with errors: %s' % str(job.errors)
+
 
 def _load_cell(args, schema):
   name = args['table']
