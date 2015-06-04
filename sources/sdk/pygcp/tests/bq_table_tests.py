@@ -130,7 +130,7 @@ class TestCases(unittest.TestCase):
 
     with self.assertRaises(Exception) as error:
       _ = t.schema
-    self.assertEqual(error.exception[0], 'Unexpected table response.')
+    self.assertEqual(error.exception[0], 'Unexpected table response: missing schema')
 
   @mock.patch('gcp.bigquery._Api.tables_list')
   @mock.patch('gcp.bigquery._Api.datasets_get')

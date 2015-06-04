@@ -566,7 +566,7 @@ class Table(object):
       job.wait()
     return job
 
-  def load_async(self, source, append=False, overwrite=False, source_format='CSV',
+  def load_async(self, source, append=False, overwrite=False, create=False, source_format='CSV',
                  field_delimiter=',', allow_jagged_rows=False, allow_quoted_newlines=False,
                  encoding='UTF-8', ignore_unknown_values=False, max_bad_records=0, quote='"',
                  skip_leading_rows=0):
@@ -576,6 +576,7 @@ class Table(object):
       source: the URL of the source bucket(s). Can include wildcards.
       append: if True append onto existing table contents.
       overwrite: if True overwrite existing table contents.
+      create: if True attempt to create the Table if needed, inferring the schema.
       source_format: the format of the data; default 'CSV'. Other options are DATASTORE_BACKUP
           or NEWLINE_DELIMITED_JSON.
       field_delimiter: The separator for fields in a CSV file. BigQuery converts the string to
@@ -601,6 +602,7 @@ class Table(object):
     response = self._api.jobs_insert_load(source, self._name_parts,
                                           append=append,
                                           overwrite=overwrite,
+                                          create=create,
                                           source_format=source_format,
                                           field_delimiter=field_delimiter,
                                           allow_jagged_rows=allow_jagged_rows,
@@ -612,7 +614,8 @@ class Table(object):
                                           skip_leading_rows=skip_leading_rows)
     return self._init_job_from_response(response)
 
-  def load(self, source, append=False, overwrite=False, source_format='CSV', field_delimiter=',',
+  def load(self, source, append=False, overwrite=False, create=False,
+           source_format='CSV', field_delimiter=',',
            allow_jagged_rows=False, allow_quoted_newlines=False, encoding='UTF-8',
            ignore_unknown_values=False, max_bad_records=0, quote='"', skip_leading_rows=0):
     """ Load the table from GCS.
@@ -621,6 +624,7 @@ class Table(object):
       source: the URL of the source bucket(s). Can include wildcards.
       append: if True append onto existing table contents.
       overwrite: if True overwrite existing table contents.
+      create: if True attempt to create the Table if needed, inferring the schema.
       source_format: the format of the data; default 'CSV'. Other options are DATASTORE_BACKUP
           or NEWLINE_DELIMITED_JSON.
       field_delimiter: The separator for fields in a CSV file. BigQuery converts the string to
@@ -646,6 +650,7 @@ class Table(object):
     job = self.load_async(source,
                           append=append,
                           overwrite=overwrite,
+                          create=create,
                           source_format=source_format,
                           field_delimiter=field_delimiter,
                           allow_jagged_rows=allow_jagged_rows,
@@ -791,7 +796,7 @@ class Table(object):
       self._load_info()
       return Schema(definition=self._info['schema']['fields'])
     except KeyError:
-      raise Exception('Unexpected table response.')
+      raise Exception('Unexpected table response: missing schema')
 
   def update(self, friendly_name=None, description=None, expiry=None, schema=None):
     """ Selectively updates Table information.

@@ -120,6 +120,31 @@ def bigquery(line, cell=None):
   extract_parser.set_defaults(func=lambda x: _dispatch_handler('extract', x, cell, extract_parser,
                                                                _extract_line, cell_prohibited=True))
 
+  # %bigquery load
+  # TODO(gram): need some additional help, esp. around the option of specifying schema in
+  # cell body and how schema infer may fail.
+  load_parser = parser.subcommand('load', 'load data into a BigQuery table')
+  load_parser.add_argument('-a', '--append', help='append to existing file',
+                           action='store_true')
+  load_parser.add_argument('-o', '--overwrite', help='overwrite existing file',
+                           action='store_true')
+  load_parser.add_argument('-f', '--format', help='source format', choices=['json', 'csv'],
+                           default='csv')
+  load_parser.add_argument('-n', '--skip', help='number of initial lines to skip',
+                           type=int, default=0)
+  load_parser.add_argument('-s', '--strict', help='reject bad values and jagged lines',
+                           action='store_true')
+  load_parser.add_argument('-d', '--delimiter', default=',',
+                           help='the inter-field delimiter (default ,)')
+  load_parser.add_argument('-q', '--quote', default='"',
+                           help='the quoted field delimiter (default ")')
+  load_parser.add_argument('-i', '--infer', help='attempt to infer schema from source',
+                           action='store_true')
+  load_parser.add_argument('source', help='URL of the GCS source(s)')
+  load_parser.add_argument('table', help='the destination table')
+  load_parser.set_defaults(func=lambda x: _dispatch_handler('load', x, cell, load_parser,
+                                                            _load_cell))
+
   return _handle_magic_line(line, parser)
 
 
@@ -260,22 +285,22 @@ def _udf_cell(args, js):
 def _table_line(args):
   name = args['table']
   table = _get_table(name)
-  if not (table and table.exists()):
-    print "%s does not exist" % name
-  else:
+  if table and table.exists():
     fields = args['cols'].split(',') if args['cols'] else None
-    html = _table_viewer(_get_table(args['table']), rows_per_page=args['rows'], fields=fields)
+    html = _table_viewer(table, rows_per_page=args['rows'], fields=fields)
     return _ipython.core.display.HTML(html)
+  else:
+    print "%s does not exist" % name
 
 
 def _schema_line(args):
   name = args['item']
   schema = _get_schema(name)
-  if not schema:
-    print "%s does not exist" % name
-  else:
+  if schema:
     html = _repr_html_table_schema(schema)
     return _ipython.core.display.HTML(html)
+  else:
+    print "%s does not exist" % name
 
 
 def _render_table(data, fields=None):
@@ -313,6 +338,39 @@ def _extract_line(args):
                 compress=args['compress'],
                 field_delimiter=args['delimiter'],
                 print_header=args['header'])
+
+def _load_cell(args, schema):
+  name = args['table']
+  table = _get_table(name)
+  if not table:
+    table = _bq.table(name)
+
+  if table.exists():
+    if not (args['append'] or args['overwrite']):
+      print "%s already exists; use --append or --overwrite" % name
+  elif schema:
+    table.create(_json.loads(schema))
+  elif not args['infer']:
+    print 'Table does not exist, no schema specified in cell and no --infer flag; cannot load'
+    return
+
+  # TODO(gram): we should probably try do the schema infer ourselves as BQ doesn't really seem
+  # to be able to do it. Alternatively we can drop the --infer argument and force the user
+  # to use a pre-existing table or supply a JSON schema.
+  job = table.load(args['source'],
+                   append=args['append'],
+                   overwrite=args['overwrite'],
+                   create=not table.exists(),
+                   source_format=('CSV' if args['format'] == 'csv' else 'NEWLINE_DELIMITED_JSON'),
+                   skip_leading_rows=args['skip'],
+                   allow_jagged_rows=not args['strict'],
+                   ignore_unknown_values=not args['strict'],
+                   field_delimiter=args['delimiter'],
+                   quote=args['quote'])
+  if job.failed:
+    print 'Load failed: %s' % str(job.fatal_error)
+  elif job.errors:
+    print 'Load completed with errors: %s' % str(job.errors)
 
 # An LRU cache for Tables. This is mostly useful so that when we cross page boundaries
 # when paging through a table we don't have to re-fetch the schema.
