@@ -17,6 +17,7 @@
     "nomnom": "1.8.x",
     "request": "2.55.x",
     "socket.io": "1.1.x",
+    "winston": "1.0.x",
     "zmq": "2.8.x"
   },
   "author": "Google DataLab Team",

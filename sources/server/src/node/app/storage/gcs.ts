@@ -17,9 +17,11 @@
 /// <reference path="../../../../../../externs/ts/node/node.d.ts" />
 import content = require('./content');
 import gcloud = require('gcloud');
+import logging = require('../common/logging');
 import pathlib = require('path');
 import util = require('util');
 
+var logger = logging.getLogger();
 
 /**
  * Manages storage operations backed by Google Cloud Storage (GCS).
@@ -73,7 +75,7 @@ export class GoogleCloudStorage implements app.IStorage {
       // token. For now, truncate the listing response to the first page of results from GCS to
       // avoid returning a response with unbounded size.
       if (nextPageToken) {
-        console.log('WARNING storage listing operation returning truncated results.');
+        logger.warn('Storage listing operation returning truncated results.');
       }
 
       // Get the paths to all objects/directories within that matched the query.
@@ -136,9 +138,8 @@ export class GoogleCloudStorage implements app.IStorage {
         // An error reason of notFound indicates that the specified read failed because the object
         // doesn't exist. Invoke the callback with a null data value (but no error) to signal this.
         if (errors.errors.length > 1) {
-          console.log(util.format(
-            'Multiple errors returned when attempting to read GCS path "%s": %s',
-            path, errors));
+          logger.error('Multiple errors returned when attempting to read GCS path "%s": %s',
+              path, errors);
         }
 
         // We'll pass the first error back to the caller to handle

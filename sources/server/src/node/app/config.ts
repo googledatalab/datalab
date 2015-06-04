@@ -22,6 +22,7 @@ import express = require('express');
 import gcloud = require('gcloud');
 import gcp = require('./common/gcp');
 import kernels = require('./kernels/index');
+import logger = require('winston');
 import mkdirp = require('mkdirp');
 import nbstorage = require('./notebooks/storage');
 import sessions = require('./sessions/index');
@@ -185,7 +186,7 @@ function initGcsStorage(bucket: string, callback: app.Callback<void>) {
   // Initialize the GCS storage instance.
   var client = gcloud.storage().bucket(bucket);
 
-  console.log('Using GCS storage. Bucket: ', bucket);
+  logger.info('Using GCS storage. Bucket: ', bucket);
   _storage = new content.GoogleCloudStorage(client);
 
   callback(null);
@@ -199,7 +200,7 @@ function initLocalFileSystemStorage(notebookStoragePath: string, callback: app.C
       return;
     }
 
-    console.log('Using local storage. Root notebook storage path: ', notebookStoragePath);
+    logger.info('Using local storage. Root notebook storage path: ', notebookStoragePath);
     _storage = new content.LocalFileSystem(notebookStoragePath);
 
     callback(null);

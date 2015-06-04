@@ -109,6 +109,43 @@ declare module app {
   }
 
   /**
+   * Generic multi-level log interface with message formatting support.
+   */
+  interface ILogger {
+    /**
+     * Log message at the debug level.
+     *
+     * @param message Message to log.
+     * @param params Zero or more message format parameters.
+     */
+    debug(message: string, ...params: any[]): void;
+
+    /**
+     * Log message at the info level.
+     *
+     * @param message Message to log.
+     * @param params Zero or more message format parameters.
+     */
+    info(message: string, ...params: any[]): void;
+
+    /**
+     * Log message at the warn level.
+     *
+     * @param message Message to log.
+     * @param params Zero or more message format parameters.
+     */
+    warn(message: string, ...params: any[]): void;
+
+    /**
+     * Log message at the error level.
+     *
+     * @param message Message to log.
+     * @param params Zero or more message format parameters.
+     */
+    error(message: string, ...params: any[]): void;
+  }
+
+  /**
    * Manages the persistence of notebook data to/from a given storage path.
    */
   interface INotebookStorage {

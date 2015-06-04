@@ -26,7 +26,11 @@ storage_root="$1";
 profile_path="$build_path/profile/kernel_config.py"
 
 # Start the DataLab NodeJS server.
-node "$build_path/server.js" -n "$PWD/$storage_root" --ipy-config $profile_path &
+node "$build_path/server.js" \
+    -n "$PWD/$storage_root" \
+    --ipy-config $profile_path \
+    --log-level=debug \
+    --log-dirpath=$build_path  &
 # Capture the server process id so that we can kill it later.
 server_pid=$!;
 
