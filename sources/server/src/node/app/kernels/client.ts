@@ -110,7 +110,12 @@ export class KernelClient implements app.IKernel {
   }
 
   _handleKernelDiedEvent() {
-    this._delegateKernelStatusHandler ({status: 'dead', requestId: null});
+    this._delegateKernelStatusHandler({
+      status: 'dead',
+      requestContext: {
+        requestId: null
+      }
+    });
   }
 
   _spawnLocalKernelProcess(): void {

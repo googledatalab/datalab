@@ -22,6 +22,7 @@
 import bodyParser = require('body-parser');
 import config = require('./app/config');
 import express = require('express');
+import gcp = require('./app/common/gcp');
 import http = require('http');
 import logging = require('./app/common/logging');
 import msgproc = require('./app/sessions/messageprocessors');
@@ -94,6 +95,13 @@ export function start (settings: app.Settings) {
 
   // Configure express to parse request bodies as JSON for the "application/json" MIME type.
   expressApp.use(bodyParser.json());
+
+  // Log all requests.
+  expressApp.use(logging.requestLogger);
+
+  // Required lifecycle handlers for running within ManagedVM context.
+  expressApp.get('/_ah', gcp.appHandler);
+  expressApp.get('/ping', gcp.pingHandler);
 
   // Define the API route handlers.
   expressApp.use('/api', config.getApiRouter(

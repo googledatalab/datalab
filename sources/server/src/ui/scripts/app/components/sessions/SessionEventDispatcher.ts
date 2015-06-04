@@ -61,7 +61,9 @@ class SessionEventDispatcher implements app.ISessionEventDispatcher {
    * @param action A notebook Action message.
    */
   _handleAction(event: ng.IAngularEvent, action: app.notebooks.actions.Action) {
-    log.debug('Sending action message to server', action);
+    // Generate an ID for the message to trace it through to the server.
+    action.requestId = uuid.v4();
+    log.debug('Sending action message to server', action.requestId, action.name);
     this._connection.emit(messages.action, action);
   }
 

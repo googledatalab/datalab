@@ -100,7 +100,6 @@ export class IOPubChannelClient extends channels.ChannelClient {
     var displayData: app.OutputData = {
       type: 'result',
       mimetypeBundle: message.content.data,
-      requestId: message.parentHeader.msg_id,
       requestContext: message.parentHeader.msg_context
     }
 
@@ -115,7 +114,6 @@ export class IOPubChannelClient extends channels.ChannelClient {
     var result: app.OutputData = {
       type: 'result',
       mimetypeBundle: message.content.data,
-      requestId: message.parentHeader.msg_id,
       requestContext: message.parentHeader.msg_context
     };
 
@@ -129,7 +127,9 @@ export class IOPubChannelClient extends channels.ChannelClient {
 
     var status: app.KernelStatus = {
       status: message.content.execution_state,
-      requestId: message.parentHeader.msg_id
+      requestContext: {
+        requestId: null
+      }
     };
 
     this._delegateKernelStatusHandler(status);
@@ -146,7 +146,6 @@ export class IOPubChannelClient extends channels.ChannelClient {
       mimetypeBundle: {
         'text/plain': message.content.data
       },
-      requestId: message.parentHeader.msg_id,
       requestContext: message.parentHeader.msg_context
     }
 

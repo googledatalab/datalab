@@ -29,14 +29,13 @@ var IPY_MSG_IDS_DELIMITER = '<IDS|MSG>';
  */
 export function createIPyMessage(
     sessionId: string,
-    messageId: string,
     messageType: string,
     content: any,
     requestContext: any
     ): string[] {
 
   var header = {
-    msg_id: messageId,
+    msg_id: requestContext.requestId,
     session: sessionId,
     msg_type: messageType,
     msg_context: requestContext

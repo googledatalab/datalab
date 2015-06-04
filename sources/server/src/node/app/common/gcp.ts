@@ -14,10 +14,11 @@
 
 
 /**
- * Utilities for interacting with the GCE metadata service.
+ * Utilities for running DataLab on Google Cloud Platform.
  */
 /// <reference path="../../../../../../externs/ts/node/node.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/request.d.ts" />
+import express = require('express');
 import request = require('request');
 import util = require('util');
 
@@ -30,9 +31,9 @@ var projectIdMetadataUrl = 'http://metadata.google.internal/computeMetadata/v1/p
 /**
  * GCS bucket name pattern for notebook persistence.
  *
- * Pattern: "<project id>-ipython"
+ * Pattern: "<project id>-datalab"
  */
-var notebookStorageBucketPattern = '%s-ipython';
+var notebookStorageBucketPattern = '%s-datalab';
 
 /**
  * Gets the current GCP project ID from the GCE metadata service.
@@ -69,4 +70,47 @@ export function getProjectStorageBucket(callback: app.Callback<string>): void {
 
     callback(null, util.format(notebookStorageBucketPattern, projectId));
   });
+}
+
+/**
+ * Implements a ping endpoint to allow checking for app existence.
+ */
+export function pingHandler(request: express.Request, response: express.Response): void {
+  // Allow all cross-origin requests to succeed for this path, so that the
+  // deployment application (running on separate domains) can check for
+  // successful deployment.
+  response.set({
+    'Content-Type': 'text/plain',
+    'Access-Control-Allow-Origin': '*'
+  });
+  response.status(200).send('OK');
+}
+
+/**
+ * Implements the app status and health handler for managed VMs infrastructure.
+ */
+export function appHandler(request: express.Request, response: express.Response): void {
+  response.set({
+    'Content-Type': 'text/plain'
+  });
+
+  var path = request.path;
+  if (path == '/_ah/start') {
+    response.status(200).send('OK');
+  }
+  else if (path == '/_ah/stop') {
+    response.status(200).send('OK');
+
+    // TODO: Ideally invoke some actual shutdown logic to end sessions,
+    // notify clients etc.
+    process.nextTick(function() {
+      process.exit();
+    });
+  }
+  else if (path == '/_ah/health') {
+    response.status(200).send('OK');
+  }
+  else {
+    response.status(404).end();
+  }
 }

@@ -73,8 +73,8 @@ DOCKER_IMAGE="gcr.io/cloud_datalab/gcp-datalab:$TAG"
 
 CLOUD_PROJECT=`gcloud config list project --format text | sed 's/core\.project: //' | sed 's/google\.com/gcom/' | sed 's/[:\.]/-/g'`
 NETWORK_NAME=datalab
-NOTEBOOKS_BUCKET="gs://$CLOUD_PROJECT-ipython"
-NOTEBOOKS_TARGET="gs://$CLOUD_PROJECT-ipython/"
+NOTEBOOKS_BUCKET="gs://$CLOUD_PROJECT-datalab"
+NOTEBOOKS_TARGET="gs://$CLOUD_PROJECT-datalab/"
 NOTEBOOKS_SOURCE="gs://cloud-datalab/ipython/"
 PORT=8092
 URL="http://localhost:$PORT"

@@ -138,7 +138,9 @@ export class Session implements app.ISession {
     // Notify the user that the kernel is restarting.
     this.processKernelStatus({
       status: 'restarting',
-      requestId: uuid.v4()
+      requestContext: {
+        requestId: null
+      }
     });
 
     // Respawn kernel.
@@ -336,6 +338,7 @@ export class Session implements app.ISession {
     if (request.requestContext.cellId) {
       this._handleActionNotebookData({
         name: actions.cell.update,
+        requestId: request.requestContext.requestId,
         worksheetId: request.requestContext.worksheetId,
         cellId: request.requestContext.cellId,
         state: cells.states.pending
@@ -362,6 +365,7 @@ export class Session implements app.ISession {
     if (request.requestContext.cellId) {
       this._handleActionNotebookData({
         name: actions.cell.update,
+        requestId: request.requestContext.requestId,
         worksheetId: request.requestContext.worksheetId,
         cellId: request.requestContext.cellId,
         state: cells.states.executing
@@ -429,7 +433,7 @@ export class Session implements app.ISession {
       connection.sendUpdate({
         name: updates.kernel.executeResult,
         // Respond with the request ID provided by the client in the original execute request.
-        requestId: reply.requestId,
+        requestId: reply.requestContext.requestId,
         // Return an output/result with type=error and error details.
         result: util.createErrorOutput(reply.errorName, reply.errorMessage, reply.traceback)
       });
@@ -451,22 +455,23 @@ export class Session implements app.ISession {
   /**
    * Applies execute reply data to the notebook model and broadcasts an update message.
    */
-  _handleCellExecuteReply(message: any) {
+  _handleCellExecuteReply(reply: app.ExecuteReply) {
     // Capture the cell modifications as an update action.
     var action: app.notebooks.actions.UpdateCell = {
       name: actions.cell.update,
-      worksheetId: message.requestContext.worksheetId,
-      cellId: message.requestContext.cellId,
-      prompt: message.executionCounter
+      requestId: reply.requestContext.requestId,
+      worksheetId: reply.requestContext.worksheetId,
+      cellId: reply.requestContext.cellId,
+      prompt: reply.executionCounter
     };
 
-    if (message.success) {
+    if (reply.success) {
       // Mark the cell as having executed successfully.
       action.state = cells.states.success;
     } else {
       // Also add the error messaging as a cell output if an error has occurred.
       action.outputs = [
-        util.createErrorOutput(message.errorName, message.errorMessage, message.traceback)
+        util.createErrorOutput(reply.errorName, reply.errorMessage, reply.traceback)
       ];
 
       action.state = cells.states.error;
@@ -544,8 +549,8 @@ export class Session implements app.ISession {
   _handleActionExecute(connection: app.IClientConnection, action: app.notebooks.actions.Execute) {
     // Request will have a declared request ID that should be used for tracking.
     this._execute({
-      requestId: action.requestId,
       requestContext: {
+        requestId: action.requestId,
         connectionId: connection.id
       },
       code: action.source
@@ -562,10 +567,9 @@ export class Session implements app.ISession {
 
       // Request that the kernel execute the code snippet.
       this._execute({
-        // Generate a kernel request ID (kernels are not aware of cells, just "requests").
-        requestId: uuid.v4(),
         // Messages generated in response to this request will have the following metadata.
         requestContext: {
+          requestId: action.requestId,
           cellId: action.cellId,
           worksheetId: action.worksheetId
         },
@@ -590,10 +594,11 @@ export class Session implements app.ISession {
     var notebookData = this._notebook.getNotebookData();
     // Execute all cells in each worksheet
     notebookData.worksheets.forEach((worksheet) => {
-      worksheet.cells.forEach((cell) => {
+      worksheet.cells.forEach(cell => {
         if (cell.type == cells.code) {
           this._handleActionExecuteCell({
             name: actions.cell.execute,
+            requestId: uuid.v4(),
             worksheetId: worksheet.id,
             cellId: cell.id
           });
@@ -633,7 +638,7 @@ export class Session implements app.ISession {
       connection.sendUpdate({
         name: updates.kernel.executeResult,
         // Respond with the request ID provided by the client in the original execute request.
-        requestId: output.requestId,
+        requestId: output.requestContext.requestId,
         result: output
       });
     } catch(error) {
@@ -649,6 +654,7 @@ export class Session implements app.ISession {
     // Construct an update to append the specified output data.
     var action: app.notebooks.actions.UpdateCell = {
       name: actions.cell.update,
+      requestId: output.requestContext.requestId,
       worksheetId: output.requestContext.worksheetId,
       cellId: output.requestContext.cellId,
       outputs: [{
@@ -714,8 +720,11 @@ export class Session implements app.ISession {
    * notebook state is updated as soon as possible upon completion of pending writes.
    */
   _save() {
+    logger.debug('Saving notebook "%s".', this.path);
     // If there is already a pending save operation, we must wait until it completes to save.
     if (this._isNotebookSavePending) {
+      logger.debug('Deferring save operation for "%s" until in-progress save is complete.',
+          this.path)
       // Note the requested save operation.
       this._isNotebookSaveRequested = true;
       // Nothing else can be done at the moment.
@@ -729,6 +738,11 @@ export class Session implements app.ISession {
 
     // Write the notebook state to storage asynchronously.
     this._notebookStorage.write(this.path, this._notebook, (error) => {
+      if (error) {
+        logger.error('Save operation for "%s" completed with error. %s', this.path, error);
+      } else {
+        logger.debug('Save operation succeeded for "%s".', this.path);
+      }
 
       // Send a persistence state update to clients.
       //
@@ -737,19 +751,23 @@ export class Session implements app.ISession {
       // where the auto-save ("last saved at <time>") info is shown.
       //
       // TODO(bryantd): Add retry with backoff logic here for failed save operations.
-      this._broadcastPersistenceStatus(!!error); // Note: !!value converts the object to a boolean.
+      this._broadcastPersistenceStatus(!error); // Note: !value converts the object to a boolean.
 
       // If a notebook save has been requested since the last save was issued, then we can now save
       // the current state of the notebook.
       if (this._isNotebookSaveRequested) {
+        logger.debug(
+            'Pending save operation completed for "%s", issuing next requested save operation',
+            this.path);
         // Clear the save request flag since we are saving the current/latest notebook state.
         this._isNotebookSaveRequested = false;
         // Save the notebook on next tick.
-        this._save();
+        process.nextTick(this._save.bind(this));
       }
 
       // Current save operation completed. Clear pending flag.
       this._isNotebookSavePending = false;
+      logger.debug('Cleared save pending flag for "%s".', this.path);
     });
   }
 
