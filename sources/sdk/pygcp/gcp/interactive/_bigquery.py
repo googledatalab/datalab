@@ -108,6 +108,27 @@ def bigquery(line, cell=None):
   tables_parser.set_defaults(func=lambda x: _dispatch_handler('tables', x, cell, tables_parser,
                                                               _tables_line, cell_prohibited=True))
 
+  # %bigquery tablequery
+  table_query_parser = parser.subcommand('tablequery',
+      'define a BigQuery table set of tables in a dataset that match an expression')
+  table_query_parser.add_argument('name', help='the name for this table query')
+  table_query_parser.add_argument('dataset', help='the dataset for this table query')
+  table_query_parser.set_defaults(func=lambda x: _dispatch_handler('tablequery', x, cell,
+                                                                   table_query_parser,
+                                                                   _table_query_cell,
+                                                                   cell_required=True))
+  # %bigquery tablerange
+  table_range_parser = parser.subcommand('tablerange',
+      'define a BigQuery table set of tables with a given prefix and date range')
+  table_range_parser.add_argument('-s', '--strict', action='store_true',
+                                  help='fail if there are missing days')
+  table_range_parser.add_argument('name', help='the name for this table query')
+  table_range_parser.add_argument('prefix', help='the table name prefix')
+  table_range_parser.set_defaults(func=lambda x: _dispatch_handler('tablerange', x, cell,
+                                                                   table_range_parser,
+                                                                   _table_range_cell,
+                                                                   cell_required=True))
+
   # % bigquery extract
   extract_parser = parser.subcommand('extract', 'Extract BigQuery table to GCS')
   extract_parser.add_argument('table', help='the table to extract')
@@ -371,6 +392,18 @@ def _load_cell(args, schema):
     print 'Load failed: %s' % str(job.fatal_error)
   elif job.errors:
     print 'Load completed with errors: %s' % str(job.errors)
+
+
+def _table_range_cell(args, bounds):
+  ipy = _ipython.get_ipython()
+  ts = _bq._table_set.table_range_cell(args['prefix'], cell=bounds, strict=args['strict'])
+  ipy.push({args['name']: ts})
+
+
+def _table_query_cell(args, query):
+  ipy = _ipython.get_ipython()
+  ts = _bq.table_query(args['dataset'], query)
+  ipy.push({args['name']: ts})
 
 # An LRU cache for Tables. This is mostly useful so that when we cross page boundaries
 # when paging through a table we don't have to re-fetch the schema.

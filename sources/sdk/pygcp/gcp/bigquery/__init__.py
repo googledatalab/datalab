@@ -25,6 +25,7 @@ from ._query import Query as _Query
 from ._sampling import Sampling
 from ._table import Schema as _Schema
 from ._table import Table as _Table
+from ._table_set import TableSet as _TableSet
 from ._udf import Function as _Function
 from ._utils import DataSetName as _DataSetName
 from ._utils import TableName as _TableName
@@ -223,6 +224,32 @@ def query_job(job_id, table, context=None):
   """
   api = _create_api(context)
   return _QueryJob(api, job_id, table)
+
+
+def table_range(prefix, start, end, strict=False):
+  """ Constructor used for range-style TableSets.
+
+  Args:
+    prefix: a table name prefix that tables must match.
+    start: a SQL expression as a string, or a Python DateTime, for the start of the range.
+    end: a SQL expression as a string, or a Python DateTime, for the end of the range.
+    strict: whether to expand with TABLE_DATE_RANGE or TABLE_DATE_RANGE_STRICT.
+  Returns:
+    A TableSet for the table range.
+  """
+  return _TableSet.table_range(prefix=prefix, start=start, end=end, strict=strict)
+
+
+def table_query(dataset, expr):
+  """ Constructor used for query-style TableSets.
+
+  Args:
+    dataset: a dataset name from which tables are selected.
+    expr: a SQL expression evaluated for each table to see if it is in the set.
+  Returns:
+    A TableSet for the table query.
+  """
+  return _TableSet.table_query(dataset=dataset, expr=expr)
 
 
 # Type tests. Needed as we don't export the classes (although maybe we should).
