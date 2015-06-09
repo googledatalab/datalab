@@ -111,8 +111,10 @@ def bigquery(line, cell=None):
   # %bigquery tablequery
   table_query_parser = parser.subcommand('tablequery',
       'define a BigQuery table set of tables in a dataset that match an expression')
-  table_query_parser.add_argument('name', help='the name for this table query')
-  table_query_parser.add_argument('dataset', help='the dataset for this table query')
+  table_query_parser.add_argument('-n', '--name', required=True,
+                                  help='the name for this table query')
+  table_query_parser.add_argument('-d', '--dataset', required=True,
+                                  help='the dataset for this table query')
   table_query_parser.set_defaults(func=lambda x: _dispatch_handler('tablequery', x, cell,
                                                                    table_query_parser,
                                                                    _table_query_cell,
@@ -122,8 +124,10 @@ def bigquery(line, cell=None):
       'define a BigQuery table set of tables with a given prefix and date range')
   table_range_parser.add_argument('-s', '--strict', action='store_true',
                                   help='fail if there are missing days')
-  table_range_parser.add_argument('name', help='the name for this table query')
-  table_range_parser.add_argument('prefix', help='the table name prefix')
+  table_range_parser.add_argument('-n', '--name', required=True,
+                                  help='the name for this table query')
+  table_range_parser.add_argument('-p', '--prefix', required=True,
+                                  help='the table name prefix')
   table_range_parser.set_defaults(func=lambda x: _dispatch_handler('tablerange', x, cell,
                                                                    table_range_parser,
                                                                    _table_range_cell,
