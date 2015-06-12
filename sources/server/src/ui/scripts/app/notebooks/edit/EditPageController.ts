@@ -34,6 +34,7 @@ var log = logging.getLogger(constants.scopes.notebooks.edit.page);
 export class EditPageController {
 
   notebook: app.IClientNotebook;
+  tab: string; // Name of the currently active tab (e.g., 'deploy').
 
   _clientApi: app.IClientApi;
   _rootScope: ng.IRootScopeService;
@@ -64,6 +65,7 @@ export class EditPageController {
     this._sessionEventDispatcher = sessionEventDispatcher;
 
     this.notebook = clientNotebook;
+    this.tab = 'outline'; // Default tab selection.
   }
 }
 
