@@ -52,7 +52,7 @@ def bigquery(line, cell=None):
 
   # %%bigquery sql
   sql_parser = parser.subcommand('sql',
-      'execute a BigQuery SQL statement or create a named query object')
+      'execute a BigQuery SQL statement and display results or create a named query object')
   sql_parser.add_argument('-n', '--name', help='the name for this query object')
   sql_parser.add_argument('-s', '--sample', action='store_true',
                           help='execute the query and get a sample of results')
@@ -74,6 +74,25 @@ def bigquery(line, cell=None):
   udf_parser.add_argument('-n', '--name', help='the name for this UDF', required=True)
   udf_parser.set_defaults(func=lambda x: _dispatch_handler('udf', x, cell, udf_parser, _udf_cell,
                                                            cell_required=True))
+
+  # %%bigquery execute
+  execute_parser = parser.subcommand('execute',
+      'execute a BigQuery SQL statement sending results to a named table')
+  execute_parser.add_argument('-b', '--batch', help='run as lower-priority batch job',
+                              action='store_true')
+  execute_parser.add_argument('-nc', '--nocache', help='don\'t used previously cached results',
+                              action='store_true')
+  execute_parser.add_argument('-a', '--append', help='append results to table',
+                              action='store_true')
+  execute_parser.add_argument('-o', '--overwrite', help='overwrite existing content in table',
+                              action='store_true')
+  execute_parser.add_argument('-l', '--large', help='allow large results',
+                              action='store_true')
+  execute_parser.add_argument('-q', '--query', help='name of query to run, if not in cell body',
+                              nargs='?')
+  execute_parser.add_argument('table', help='target table name')
+  execute_parser.set_defaults(func=lambda x: _dispatch_handler('execute', x, cell, execute_parser,
+                                                               _execute_cell))
 
   # %bigquery table
   table_parser = parser.subcommand('table', 'view a BigQuery table')
@@ -280,6 +299,27 @@ def _udf_cell(args, js):
   ipy.push({variable_name: udf})
 
   return None
+
+
+def _execute_cell(args, sql):
+  ipy = _ipython.get_ipython()
+
+  # Use the user_ns dictionary, which contains all current declarations in
+  # the kernel as the dictionary to use to retrieve values for placeholders
+  # within the specified sql statement.
+  if sql:
+    if args['query']:
+      return "Cannot have a query parameter and a query cell body"
+    sql = _bq.sql(sql, **ipy.user_ns)
+    query = _bq.query(sql)
+  else:
+    if not args['query']:
+      return "Need a query parameter or a query cell body"
+    query = _get_item(args['query'])
+    if not query:
+      return "%s does not refer to a query" % args['query']
+  return query.execute(args['table'], args['append'], args['overwrite'], not args['nocache'],
+                       args['batch'], args['large']).results
 
 
 def _table_line(args):
