@@ -35,6 +35,12 @@
   background: #eee;
 }
 
+.datalab-editor-body {
+  /* Shift the body region down so that it doesn't overlap the header */
+  margin-top: 45px;
+  background-color: #f0f0f0;
+}
+
 /**
  * Places the cell toolbar in the upper right corner of the edit region.
  *
@@ -178,7 +184,7 @@
 
 .datalab-editor-header {
   padding: 10px 0;
-  background-color: #e0e0e0;
+  background-color: #f0f0f0;
   border-bottom: 1px solid #ccc;
 
   /* Fix the notebook toolbar to the top of the screen */
@@ -190,6 +196,31 @@
     notebook editor cell content superseding the editor toolbar.
   */
   z-index: 3;
+}
+
+.datalab-editor-notebook {
+  background-color: #fff;
+  /* Make the notebook editor sit on top of the side panel */
+  z-index: 1;
+
+  -webkit-box-shadow: 3px 3px 10px 0px rgba(153,153,153,1);
+  -moz-box-shadow: 3px 3px 10px 0px rgba(153,153,153,1);
+  box-shadow: 3px 3px 10px 0px rgba(153,153,153,1);
+}
+
+.datalab-editor-tabs {
+  background-color: #ccc;
+}
+
+.datalab-editor-tab {
+
+}
+
+.datalab-editor-tab-active {
+  border-right: #aaa;
+  border-left: #aaa;
+  border-bottom: 2px solid #2196f3;
+  background-color: #eee;
 }
 
 .datalab-busy-indicator .progress {
@@ -236,7 +267,8 @@
   height: 45px;
 }
 
-.datalab-worksheet-editor {
-  /* Add some whitespace to between the header and the top of the worksheet */
-  margin-top: 50px;
+/* Add to a row to make it full width, but still responsive */
+.no-gutter > [class*='col-'] {
+    padding-right:0;
+    padding-left:0;
 }
