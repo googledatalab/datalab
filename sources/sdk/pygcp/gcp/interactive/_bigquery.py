@@ -26,31 +26,7 @@ from ._html import HtmlBuilder as _HtmlBuilder
 from ._utils import _get_data, _get_field_list, _handle_magic_line
 
 
-@_magic.register_line_cell_magic
-def bigquery(line, cell=None):
-  """Implements the bigquery cell magic for ipython notebooks.
-
-  The supported syntax is:
-
-    %%bigquery <line>
-    <cell>
-
-  or:
-
-    %bigquery <line>
-
-  Args:
-    line: the contents of the bigquery line.
-    cell: the contents of the cell.
-  Returns:
-    The results of executing the cell.
-  """
-  parser = _CommandParser.create('bigquery')
-
-  # This is a bit kludgy because we want to handle some line magics and some cell magics
-  # with the bigquery command.
-
-  # %%bigquery sql
+def _create_sql_subparser(parser):
   sql_parser = parser.subcommand('sql',
       'execute a BigQuery SQL statement and display results or create a named query object')
   sql_parser.add_argument('-n', '--name', help='the name for this query object')
@@ -66,16 +42,16 @@ def bigquery(line, cell=None):
                           help='field to use for sorted or hashed sampling')
   sql_parser.add_argument('-so', '--sampleorder', choices=['ascending', 'descending'],
                           default='ascending', help='sort order to use for sorted sampling')
-  sql_parser.set_defaults(func=lambda x: _dispatch_handler('sql', x, cell, sql_parser, _sql_cell,
-                                                           cell_required=True))
+  return sql_parser
 
-  # %%bigquery udf
+
+def _create_udf_subparser(parser):
   udf_parser = parser.subcommand('udf', 'create a named Javascript UDF')
   udf_parser.add_argument('-n', '--name', help='the name for this UDF', required=True)
-  udf_parser.set_defaults(func=lambda x: _dispatch_handler('udf', x, cell, udf_parser, _udf_cell,
-                                                           cell_required=True))
+  return udf_parser
 
-  # %%bigquery execute
+
+def _create_execute_subparser(parser):
   execute_parser = parser.subcommand('execute',
       'execute a BigQuery SQL statement sending results to a named table')
   execute_parser.add_argument('-b', '--batch', help='run as lower-priority batch job',
@@ -91,43 +67,41 @@ def bigquery(line, cell=None):
   execute_parser.add_argument('-q', '--query', help='name of query to run, if not in cell body',
                               nargs='?')
   execute_parser.add_argument('table', help='target table name')
-  execute_parser.set_defaults(func=lambda x: _dispatch_handler('execute', x, cell, execute_parser,
-                                                               _execute_cell))
+  return execute_parser
 
-  # %bigquery table
+
+def _create_table_subparser(parser):
   table_parser = parser.subcommand('table', 'view a BigQuery table')
   table_parser.add_argument('-r', '--rows', type=int, default=25,
                             help='rows to display per page')
   table_parser.add_argument('-c', '--cols',
                             help='comma-separated list of column names to restrict to')
-  table_parser.add_argument('table', help='the name of the table')
-  table_parser.set_defaults(func=lambda x: _dispatch_handler('table', x, cell, table_parser,
-                                                             _table_line, cell_prohibited=True))
+  return table_parser
 
-  # %bigquery schema
+
+def _create_schema_subparser(parser):
   schema_parser = parser.subcommand('schema', 'view a BigQuery table or view schema')
   schema_parser.add_argument('item', help='the name of, or a reference to, the table or view')
-  schema_parser.set_defaults(func=lambda x: _dispatch_handler('schema', x, cell, schema_parser,
-                                                              _schema_line, cell_prohibited=True))
+  return schema_parser
 
-  # %bigquery datasets
+
+def _create_datasets_subparser(parser):
   datasets_parser = parser.subcommand('datasets', 'list the datasets in a BigQuery project')
   datasets_parser.add_argument('-p', '--project',
                                help='the project whose datasets should be listed')
-  datasets_parser.set_defaults(
-      func=lambda x: _dispatch_handler('datasets', x, cell, datasets_parser, _datasets_line,
-                                       cell_prohibited=True))
+  return datasets_parser
 
-  # %bigquery tables
+
+def _create_tables_subparser(parser):
   tables_parser = parser.subcommand('tables', 'list the tables in a BigQuery project or dataset')
   tables_parser.add_argument('-p', '--project',
                              help='the project whose tables should be listed')
   tables_parser.add_argument('-d', '--dataset',
                              help='the dataset to restrict to')
-  tables_parser.set_defaults(func=lambda x: _dispatch_handler('tables', x, cell, tables_parser,
-                                                              _tables_line, cell_prohibited=True))
+  return tables_parser
 
-  # % bigquery extract
+
+def _create_extract_subparser(parser):
   extract_parser = parser.subcommand('extract', 'Extract BigQuery query results or table to GCS')
   extract_parser.add_argument('source', help='the query or table to extract')
   extract_parser.add_argument('-f', '--format', choices=['csv', 'json'], default='csv',
@@ -136,12 +110,10 @@ def bigquery(line, cell=None):
   extract_parser.add_argument('-H', '--header', action='store_true', help='include a header line')
   extract_parser.add_argument('-d', '--delimiter', default=',', help='field delimiter')
   extract_parser.add_argument('destination', help='the URL of the destination')
-  extract_parser.set_defaults(func=lambda x: _dispatch_handler('extract', x, cell, extract_parser,
-                                                               _extract_line, cell_prohibited=True))
+  return extract_parser
 
-  # %bigquery load
-  # TODO(gram): need some additional help, esp. around the option of specifying schema in
-  # cell body and how schema infer may fail.
+
+def _create_load_subparser(parser):
   load_parser = parser.subcommand('load', 'load data into a BigQuery table')
   load_parser.add_argument('-a', '--append', help='append to existing file',
                            action='store_true')
@@ -161,10 +133,102 @@ def bigquery(line, cell=None):
                            action='store_true')
   load_parser.add_argument('source', help='URL of the GCS source(s)')
   load_parser.add_argument('table', help='the destination table')
-  load_parser.set_defaults(func=lambda x: _dispatch_handler('load', x, cell, load_parser,
-                                                            _load_cell))
+  return load_parser
 
-  return _handle_magic_line(line, parser)
+
+def _create_bigquery_parser():
+  """ Create the parser for the %bigquery magics.
+
+  Note that because we use the func default handler dispatch mechanism of argparse,
+  our handlers can take only one argument which is the parsed args. So we must create closures
+  for the handlers that bind the cell contents and thus must recreate this parser for each
+  cell upon execution.
+  """
+  parser = _CommandParser.create('bigquery')
+
+  # This is a bit kludgy because we want to handle some line magics and some cell magics
+  # with the bigquery command.
+
+  # %%bigquery sql
+  sql_parser = _create_sql_subparser(parser)
+  sql_parser.set_defaults(
+      func=lambda args, cell: _dispatch_handler('sql', args, cell, sql_parser,
+                                                _sql_cell, cell_required=True))
+
+  # %%bigquery udf
+  udf_parser = _create_udf_subparser(parser)
+  udf_parser.set_defaults(
+      func=lambda args, cell: _dispatch_handler('udf', args, cell, udf_parser,
+                                                _udf_cell, cell_required=True))
+
+  # %%bigquery execute
+  execute_parser = _create_execute_subparser(parser)
+  execute_parser.set_defaults(
+      func=lambda args, cell: _dispatch_handler('execute', args, cell,
+                                                execute_parser, _execute_cell))
+
+  # %bigquery table
+  table_parser = _create_table_subparser(parser)
+  table_parser.set_defaults(
+      func=lambda args, cell: _dispatch_handler('table', args, cell, table_parser,
+                                                _table_line, cell_prohibited=True))
+
+  # %bigquery schema
+  schema_parser = _create_schema_subparser(parser)
+  schema_parser.set_defaults(
+      func=lambda args, cell: _dispatch_handler('schema', args, cell,
+                                                schema_parser, _schema_line, cell_prohibited=True))
+
+  # %bigquery datasets
+  datasets_parser = _create_datasets_subparser(parser)
+  datasets_parser.set_defaults(
+      func=lambda args, cell: _dispatch_handler('datasets', args, cell, datasets_parser,
+                                                _datasets_line, cell_prohibited=True))
+
+  # %bigquery tables
+  tables_parser = _create_tables_subparser(parser)
+  tables_parser.set_defaults(
+      func=lambda args, cell: _dispatch_handler('tables', args, cell, tables_parser,
+                                                _tables_line, cell_prohibited=True))
+
+  # % bigquery extract
+  extract_parser = _create_extract_subparser(parser)
+  extract_parser.set_defaults(
+      func=lambda args, cell: _dispatch_handler('extract', args, cell, extract_parser,
+                                                _extract_line, cell_prohibited=True))
+
+  # %bigquery load
+  # TODO(gram): need some additional help, esp. around the option of specifying schema in
+  # cell body and how schema infer may fail.
+  load_parser = _create_load_subparser(parser)
+  load_parser.set_defaults(
+      func=lambda args, cell: _dispatch_handler('load', args, cell, load_parser, _load_cell))
+  return parser
+
+
+_bigquery_parser = _create_bigquery_parser()
+
+
+@_magic.register_line_cell_magic
+def bigquery(line, cell=None):
+  """Implements the bigquery cell magic for ipython notebooks.
+
+  The supported syntax is:
+
+    %%bigquery <line>
+    <cell>
+
+  or:
+
+    %bigquery <line>
+
+  Args:
+    line: the contents of the bigquery line.
+    cell: the contents of the cell.
+  Returns:
+    The results of executing the cell.
+  """
+  return _handle_magic_line(line, cell, _bigquery_parser)
 
 
 def _dispatch_handler(command, args, cell, parser, handler,
@@ -173,7 +237,7 @@ def _dispatch_handler(command, args, cell, parser, handler,
 
   Args:
     command: the name of the command.
-    args: the optional arguments following 'bigquery <cmd>'.
+    args: the parsed arguments from the magic line.
     cell: the contents of the cell, if any.
     parser: the argument parser for <cmd>; used for error message.
     handler: the handler to call if the cell present/absent check passes.

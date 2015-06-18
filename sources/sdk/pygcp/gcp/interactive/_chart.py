@@ -38,8 +38,8 @@ def chart(line, cell=None):
                            help='the name of the variable referencing the Table or Query to chart')
     subparser.set_defaults(chart=chart_type)
 
-  parser.set_defaults(func=lambda x: _chart_cell(x, cell))
-  return _handle_magic_line(line, parser)
+  parser.set_defaults(func=_chart_cell)
+  return _handle_magic_line(line, cell, parser)
 
 
 def _chart_cell(args, cell):
