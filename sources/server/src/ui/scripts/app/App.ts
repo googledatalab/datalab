@@ -17,7 +17,7 @@
  * Top-level angular module
  */
 
-/// <reference path="./common/Interfaces.ts" /> 
+/// <reference path="./common/Interfaces.ts" />
 /// <reference path="../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <reference path="../../../../../../externs/ts/angularjs/angular-route.d.ts" />
 /// <amd-dependency path="angularRoute" />
@@ -29,11 +29,11 @@ import sessionsRoute = require('app/sessions/SessionsRoute');
 import notebooksEditRoute = require('app/notebooks/edit/EditRoute');
 
 
-// Create the root Angular module for the app
+// Create the root Angular module for the app.
 export var app: ng.IModule = angular.module(constants.appModuleName, ['ngRoute']);
 
-// Expose a post-bootstrap registration object to allow for lazy-loaded Angular components
-export var registrar: app.IRegistrar;
+// Expose a post-bootstrap registration object to allow for lazy-loaded Angular components.
+export var registrar: app.IRegistrar = registrarModule.noopRegistrar;
 
 /**
  * Captures pre-bootstrap provider instances for creating a Registrar singleton.
@@ -64,7 +64,7 @@ function addRoutes (routeProvider: ng.route.IRouteProvider): void {
   routeProvider
     .when('/notebooks', notebooksRoute.route)
     .when('/notebooks/:notebookPath', notebooksEditRoute.route)
-    .when('/sessions', sessionsRoute.route)    
+    .when('/sessions', sessionsRoute.route)
     .otherwise({
       redirectTo: '/notebooks'
     });

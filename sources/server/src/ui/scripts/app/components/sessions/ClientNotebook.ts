@@ -46,7 +46,7 @@ var log = logging.getLogger(constants.scopes.clientNotebook);
  * the danger of causing local and server states to diverge. Thus, any local modifications to the
  * notebook model for responsiveness purposes need to be handled with great caution.
  */
-class ClientNotebook implements app.IClientNotebook {
+export class ClientNotebook implements app.IClientNotebook {
 
   activeCell: app.notebooks.Cell;
   activeWorksheet: app.notebooks.Worksheet;
@@ -54,19 +54,17 @@ class ClientNotebook implements app.IClientNotebook {
   notebookPath: string;
 
   _rootScope: ng.IRootScopeService;
-  _sce: ng.ISCEService;
 
-  static $inject = ['$rootScope', '$sce', '$route'];
+  static $inject = ['$rootScope', '$route'];
 
   /**
    * Constructor.
    *
    * @param rootScope Angular's $rootScope service.
-   * @param sce Angular's $sce (strict contextual escaping) service.
+   * @param route Angular's $route service
    */
-  constructor(rootScope: ng.IRootScopeService, sce: ng.ISCEService, route: ng.route.IRouteService) {
+  constructor(rootScope: ng.IRootScopeService, route: ng.route.IRouteService) {
     this._rootScope = rootScope;
-    this._sce = sce;
 
     // Capture the initial notebook path from the address bar.
     //
@@ -600,11 +598,6 @@ class ClientNotebook implements app.IClientNotebook {
       log.warn('Unable to select a MIME type for cell output: ', output);
       return;
     }
-
-    // Create a trusted html wrapper for the html content so that it is display-able.
-    if (output.preferredMimetype == 'text/html') {
-      output.trustedHtml = this._sce.trustAsHtml(bundle['text/html']);
-    }
   }
 
   /**
@@ -630,8 +623,6 @@ class ClientNotebook implements app.IClientNotebook {
    * Also sets the first worksheet to be active.
    */
   _setNotebook(snapshot: app.notebooks.updates.Snapshot) {
-    log.debug('setting notebook to snapshot value');
-
     // Notebooks don't persist MIME type preference data, so populate it when loading a snapshot.
     this._selectMimetypes(snapshot.notebook);
 
