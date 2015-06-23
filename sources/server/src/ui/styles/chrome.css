@@ -24,56 +24,112 @@
  *
  */
 
-/**
- * Color palette
- * - Thin (horz/vert) rules: #eee
- * - Navigation/toolbar/menu background color: #f5f5f5
+/* Shell CSS values. Note - variables are not used
+.root {
+--HeaderBackgroundColor: #37474f;
+--HeaderHeight: 48px;
+
+--ActionBarBackgroundColor: #445963;
+--ActionBarHeight: 56px;
+--ActionButtonHeight: 56px;
+--ActionButtonHoverColor: rgba(255,255,255,.05); // overlay on dark background
+
+--LeftNavBackground: #f2f2f2;
+--LeftNavButtonHeight: 56px;
+--LeftNavButtonSelectedColor:rgba(0,0,0,0.1);
+--LeftNavButtonHoverColor: rgba(0,0,0,0.05); // overlay on light background
+
+--BreadcrumbHeight: 56px;
+
+--TabGroupHeight: 56px;
+--TabSelectedColor: rgba(0,0,0,0.1);
+--TabHoverColor: rgba(255,255,255,.05);
+
+--TBodyRowBackground: #f9f9f9;
+
+}
+
+
+
  */
+
+html, body {height: 100%; width: 100%; margin: 0; padding: 0;}
 
 body {
-  padding-top: 50px; /* Accounts for 50px (fixed) top navbar height */
-  font-family: "Open Sans","Helvetica Neue",Helvetica,Verdana,Arial,sans-serif;
+  font-family: 'Roboto', RobotoDraft, "Open Sans","Helvetica Neue",Helvetica,Verdana,Arial,sans-serif;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* align items in Main Axis */
+  align-items: stretch; /* align items in Cross Axis */
+  align-content: stretch; /* Extra space in Cross Axis */
+  overflow: hidden;
 }
 
-/**
- * Adjust Google size to fit toolbar space.
- */
-.datalab-branding {
-  height: 30px;
+header {
+  height: 48px;
+  display: block;
+  background-color: #37474f;
 }
 
-/**
- * Styling for the "Cloud Datalab" branding text.
- */
-.navbar-header .navbar-brand {
-  color: #f5f5f5;
-  margin-top: -5px;
-  font-size: 20px;
-  font-weight: 100;
-  font-family: "Helvetica Neue";
-  border: red;
+.navbar {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-basis: 48px;
+  flex-basis: 48px;
+  -webkit-flex-grow: 0;
+  flex-grow: 0;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  height: 48px;
+  padding: 0;
+  margin: 0;
+  min-height: 48px;
+  border: none;
+}
+.navbar > .navbar-header {
+  -webkit-flex-grow: 0;
+  flex-grow: 0;
+  align-items: center;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+.navbar > .navbar-header > *  {
+  margin: 0;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-grow: 0;
+  flex-grow: 0;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+  -webkit-order: 0;
+  order: 0;
+}
+.navbar > .navbar-header> .navbar-brand {
+  display: table-cell;
+  margin: 0 24px;
+  padding: 0;
+  line-height: 48px;
+  vertical-align: middle;
+}
+.navbar >  .navbar-header> .navbar-brand > .datalab-logo {
+  height: 24px;
+  vertical-align: middle;
 }
 
-/**
- * Top-level page toolbar (contains branding).
- */
-.navbar-default {
-  background-color: #2196f3;
+.container-fluid, .row {
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
 }
 
-/**
- * Layout sidenav rules
- */
-.datalab-layout-sidenav-sidebar {
-  /* Sticks the sidebar to the top-left corner of the viewport, just underneath the navbar */
-  position: fixed;
-  top: 51px; /* 50px navbar height + 1px border */
-  bottom: 0;
-  left: 0;
-
-  overflow-x: hidden;
-  overflow-y: auto;
-
-  background-color: #f5f5f5;
-  border-right: 1px solid #eee;
+.datalab-route-content {
+  flex: 1;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
 }
