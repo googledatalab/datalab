@@ -1,0 +1,8 @@
+<svg width="16px" height="18px" viewBox="0 0 16 18" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <g id="Group-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+    <g id="iconClearOutput" transform="translate(-5.000000, -4.000000)">
+      <path d="M11,12.3106602 L11,20 L13.4,20 L13.4,14.7106602 L17,18.3106602 L17,20 L18.6893398,20 L19.8041937,21.1148539 L20.8648539,20.0541937 L6.01561146,5.20495129 L4.95495129,6.26561146 L11,12.3106602 L11,12.3106602 Z M11,8.18933983 L11,4 L13.4,4 L13.4,10.5893398 L11,8.18933983 L11,8.18933983 Z M17,14.1893398 L17,7 L19.4,7 L19.4,16.5893398 L17,14.1893398 L17,14.1893398 Z M7.4,20 L5,20 L5,11 L7.4,11 L7.4,20 L7.4,20 Z" id="Path" fill="#FFFFFF"></path>
+      <path d="M0,0 L24,0 L24,24 L0,24 L0,0 L0,0 Z"></path>
+    </g>
+  </g>
+</svg>

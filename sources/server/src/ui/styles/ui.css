@@ -1,113 +1,339 @@
-.datalab-file-navigator-header, .datalab-session-navigator-header {
-  padding-top: 25px;
+/*
+ * Copyright 2014 Google Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+/*File-browsing tree
+ datalab-route-content
+ |
+ |- sidebar-layout
+    |- datalab-leftnav
+        |- datalab-layout-sidenav-sidebar
+            |- datalab-top-actionsbar
+            |- datalab-sidebar-tab (img, span)
+    |- datalab-layout-sidenav-main
+
+ */
+
+
+.datalab-route-content > sidebar-layout {
+  display: flex;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  flex-direction: row;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+  height: 100%;
+  width: 100%;
 }
 
-.datalab-navigator-header {
-  display: inline;
+/* Overall wrapper */
+
+.datalab-leftnav{
+  display: flex;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  flex-direction: column;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex: 0 0 240px;
+  -webkit-flex: 0 0 240px;
+  -ms-flex: 0 0 240px;
+  margin: 0;
+  padding: 0;
+  width: 240px;
+  height: 100%;
+  background: #f2f2f2;
+  box-shadow: inset -1px 0 0 0 rgba(0, 0, 0, 0.22);
 }
 
-.datalab-navigator-header > .sort-up:after {
-  content: ' \25b2';
+.datalab-layout-sidenav-main {
+  display: flex;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  flex-direction: column;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex:1;
+  -webkit-flex:1;
+  -ms-flex:1;
+  min-width: 400px;
+  min-height: 400px;
+  width: 100%;
+  height:100%;
 }
 
-.datalab-navigator-header > .sort-down:after {
-  content: ' \25bc';
+/**
+ * Layout sidenav rules
+ */
+
+.datalab-top-actionsbar {
+  flex-basis: 56px;
+  -webkit-flex-basis: 56px;
+  align-items: center;
+  -webkit-align-items: center;
+  display: flex;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+  background-color: #445963;
+  height: 56px;
+  margin: 0;
+  padding: 0;
+  box-shadow: inset -1px 0 0 0 rgba(0, 0, 0, 0.22);
+  /*define actionbar region as a row list*/
 }
 
-.datalab-navigator-trash:hover {
-  color: #f00;
+.datalab-top-actionsbar-actions {
+  display: flex;
+  display: -webkit-flex;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  float:left;
+  /*position: relative;*/
+  margin: 0 16px 0 0;
+  padding: 0;
+  height: 56px;
 }
 
-.datalab-filenav-breadcrumbs {
-  display:inline;
-  float:left";
-}
-
-.datalab-file-navigator-header, .datalab-session-navigator-header {
-  font-family: 'open sans', arial, sans-serif;
-  font-size: 20px;
-  font-weight: bold;
+.datalab-headertext {
+  font-family: 'Robot', RobotDraft, "Open Sans", "Helvetica Neue", Helvetica, Verdana, Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 200;
+  line-height: 56px;
+  padding: 0 24px;
+  color: #ffffff;
+  width: inherit;
 }
 
 .datalab-sidebar-tab {
-  width: 100px;
-  height: 100px;
-
-  /*list-style-type: none;*/
+  -webkit-flex-basis: 56px;
+  flex-basis: 56px;
+  -webkit-align-items: center;
+  align-items: center;
+  /*background-color: #616161;*/
+  box-shadow: inset -1px 0 0 0 rgba(0, 0, 0, 0.22);
+  height: 56px;
   display: block;
-  float: right;
-  padding-right: 0px;
-  margin-right: 0px;
+  padding: 0 24px;
 }
-
+.datalab-sidebar-tab > span, i {
+  font-weight: 400;
+  text-align: left;
+  color: #000;
+  font-size: 15px;
+  display:inline;
+  line-height: 56px;
+  vertical-align: middle;
+}
 .datalab-sidebar-tab:hover,
 .datalab-sidebar-tab:link,
 .datalab-sidebar-tab:visited,
 .datalab-sidebar-tab:active {
   text-decoration: none;
 }
+.datalab-layout-sidenav-sidebar > .datalab-sidebar-tab:hover {
+  cursor: pointer;
+  background-color: rgba(0,0,0,0.05);
+}
 
 
+
+/* Left nav */
+
+
+
+.datalab-layout-sidenav-sidebar {
+  flex: 1;
+  -webkit-flex: 1;
+  -ms-flex: 1;
+  background-color: #f5f5f5;
+  box-shadow: inset -1px 0 0 0 rgba(0, 0, 0, 0.22);
+  display: flex;
+  display: -webkit-flex;
+  display: -ms-flex;
+  flex-direction: column;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  height: 100%;
+  min-height: 400px;
+}
 .datalab-layout-sidenav-sidebar .active .fa {
   color: #2196f3;
 }
-
-.datalab-layout-sidenav-sidebar {
-  /* Put sidebar tabs flush with workspace */
-  padding-right: 0px;
-  border-right: 0px;
-}
-
-.datalab-sidebar-tab:hover {
-  background-color: #d0d0d0;
-  border-color: #d0d0d0;
-}
-
 .datalab-layout-sidenav-sidebar .active {
   background-color: #e0e0e0;
   border-color: #e0e0e0;
 }
-
 .datalab-layout-sidenav-sidebar .inactive {
   background-color: #f5f5f5;
   border-color: #f5f5f5;
 }
 
-.datalab-sidebar-tab > span {
-  font-family: 'open sans', arial, sans-serif;
-  font-weight: bold;
-  text-align: center;
+
+
+/* File table region */
+
+
+
+.datalab-file-navigator {
+  height: 100%;
+}
+
+.datalab-file-navigator-header {
+  display: block;
+  padding: 0;
+  font-size: 13px;
+  height: calc(100% - 104px);
+  border-bottom: thin solid #f2f2f2;
+}
+
+.datalab-navigator-header {
+  display: inline;
+}
+.datalab-navigator-header > .sort-up:after {
+  content: ' \25b2';
+}
+.datalab-navigator-header > .sort-down:after {
+  content: ' \25bc';
+}
+
+.datalab-navigator-trash {
+  color: #445963;
+}
+.datalab-navigator-trash:hover {
   color: #000;
+}
+
+.datalab-table-scroller {
+  display: block;
+  position: relative;
+  height: calc(100% - 56px);
+  /*padding-bottom: 60px;*/
+  overflow-y: auto;
+}
+
+.datalab-table-tbody > tr > td:nth-child(1) {
+  padding-left:24px;
+}
+.table-striped>tbody>tr>td
+{
+  background: transparent;
+}
+.table-striped>tbody>tr:nth-child(odd)>td
+{
+  background: rgba(0,0,0,0.005);
+}
+.datalab-navigator-table tr>td:hover
+{
+  /*background: rgba(0,0,0,0.05);*/
+}
+.datalab-navigator-table tr:hover
+{
+  background: rgba(0,0,0,0.05);
+}
+.table>tbody > tr >td:nth-child(1),
+.table>thead > tr >th:nth-child(1){
+  padding-left:24px;
+}
+
+/* Flat button style */
+
+
+
+.datalab-flat-button {
+  display: inline-block;
+  float: left;
+  position: relative;
+  color: white;
+  cursor: pointer;
+  vertical-align: middle;
+  padding: 2px 8px 0 8px;
+  margin: 0px 4px 0 0;
+}
+.datalab-flat-button:hover {
+  background: rgba(255,255,255,.05);
+}
+.datalab-flat-button:hover,
+.datalab-sidebar-tab:hover,
+.datalab-breadcrumb-link:hover {
+  cursor: pointer;
+}
+.datalab-flat-button-inner {
+  height: 56px;
+  padding: 16px 0;
+}
+.datalab-flat-button-inner > img,
+.datalab-flat-button > img,
+{
+  display:inline;
+  vertical-align: middle;
+  width:16px;
+  height: 16px;
+  padding-top: -2px;
+}
+.datalab-flat-button-text {
+  display: inline;
+  font-size: 13px;
+  color:#FFFFFF;
+  text-decoration: none;
+  margin-left: 2px;
+  vertical-align: middle;
+  text-transform: uppercase;
+}
+
+
+
+/* Path breadcrumbs */
+
+
+
+.datalab-filenav-breadcrumbs {
   display:block;
+  width: inherit;
+  /*float:left;*/
+  font-size: 14px;
+  color:#424242;
+  height: 56px;
+  padding: 16px 24px;
 }
-
-.datalab-sidebar-tab > i {
-  margin-left:25%;
-  margin-top:25%;
-  width: 50%;
-  height:50%;
-  align: middle;
-  color: #333;
-}
-
-.datalab-filenav-breadcrumbs div {
+.datalab-filenav-breadcrumbs > a,
+.datalab-filenav-breadcrumbs > div {
   display: inline;
 }
 
-.datalab-filenav-breadcrumbs a {
+.datalab-breadcrumb-link,
+.datalab-breadcrumb-link:hover {
   display: inline;
+  line-height: 24px;
+  font-size: inherit;
+  font-weight: inherit;
+  color: #424242;
+  text-decoration: none;
+  cursor: pointer;
+  width: 100%;
 }
-
-/* Breadcrumbs in file navigator. */
-.datalab-breadcrumb-link, .datalab-breadcrumb-link:hover {
-  color: #333;
-}
-
 .datalab-breadcrumb-link:hover {
   text-decoration: underline;
 }
 
+
+
 /* Toolbar icon at top right plus its dropdown menu */
+
+
+
 .datalab-toolbar {
   display: inline;
   float:right;
@@ -116,47 +342,72 @@
 
 .datalab-dropdown {
   position: absolute;
-  right: 0;
-  top: 40px;
+  left: -8px;
+  top: 56px;
 }
-
-.dropdown-menu {
-  display:block;
-  position:static;
-  margin-bottom:5px;
-}
-
 .datalab-dropdown .active {
   display: block;
 }
-
 .datalab-dropdown .inactive {
   display:none;
 }
-
 .datalab-dropdown-item {
-  margin-left: 10px;
-  margin-right: 10px;
+  margin-left: 0;
+  margin-right:0;
+  padding: 0 16px;
+  height: 36px;
+  line-height: 36px;
+  vertical-align: middle;
+}
+.datalab-dropdown-item > a > .fa {
+  margin-right: 6px;
+}
+.datalab-dropdown-item:hover {
+  background-color: #f2f2f2;
+}
+.dropdown-menu {
+  display:block;
+  position:static;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: auto;
+  border-radius: 2px;
+  font-size: 13px;
+  font-weight: normal;
+  color: #424242;
+}
+.dropdown-menu > li > a {
+  display: block;
+  padding: 0;
+  color: #424242;
+  white-space: nowrap;
+  cursor: pointer;
+  line-height: 36px;
+  text-align: left;
+  vertical-align: middle;
 }
 
-.datalab-dropdown-item:hover {
-  background-color: #d0d0d0;
-  border-color: #d0d0d0;
-}
+
+
+
 
 /* Session and file/directory paths in the lists. */
-.datalab-path-link, .datalab-path-link:hover {
+
+
+
+.datalab-path-link,
+.datalab-path-link:hover {
   color: #333;
   display: inline;
   font-family: 'open sans', arial, sans-serif;
 }
-
 .datalab-path-link:hover {
   text-decoration: underline;
 }
-
 .datalab-path-link .fa {
-  color: #2196f3;
+  color: #445963;
+  margin-right: 6px;
 }
 
 .datalab-modal {
@@ -166,9 +417,111 @@
   right: 0;
   bottom: 0;
   left: 0;
-  z-index: 99999;
+  z-index: 5999;
+}
+.datalab-modal > .modal-background {
+  display: block;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  /*filter:alpha(opacity=85);*/
+  /*-moz-opacity:0.85;*/
+  /*-khtml-opacity: 0.75;*/
+  /*opacity: 0.85;*/
+  background:rgba(255,255,255,0.85);
+}
+.datalab-modal > .modal-dialog {
+  display: block;
+  margin: 15% auto;
+  z-index:9999;
+  width: 600px;
+}
+.modal-dialog > .modal-content {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 24px 24px;
+  border: 1px solid #d3d3d3;
+  -webkit-border-radius: 2;
+  -moz-border-radius: 2;
+  border-radius: 2px;
+  -webkit-background-clip: no-clip;
+  -moz-background-clip: no-clip;
+  /*background-clip: no-clip;*/
+  box-shadow: 0 1px 3px rgba(0,0,0,.12);
+  -webkit-box-shadow: 0 1px 3px rgba(0,0,0,.12);
+}
+.modal-dialog > .modal-content > .modal-header {
+  display: block;
+  border: none;
+  margin: 0 0 16px 0;
+  padding: 0;
+}
+.modal-dialog > .modal-content > .modal-header  > button {
+  visibility: hidden;
+}
+.modal-dialog > .modal-content >.modal-header > h4 {
+  display: block;
+  font-size: 18px;
+  color: #424242;
+  font-weight: normal;
+  line-height: 20px;
+  margin: 0;
+  padding: 0;
 }
 
-.datalab-model > div {
-  position: relative;
+.modal-dialog > .modal-content > .modal-body {
+  display: block;
+  border: none;
+  width: 100%;
+  padding: 0;
+  margin: 0 0 16px 0;
 }
+.modal-dialog > .modal-content > .modal-body > p {
+  display: block;
+  border: none;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: #222222;
+  font-weight: normal;
+  width: inherit;
+}
+.modal-dialog > .modal-content > .modal-body > input {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: #222222;
+  font-weight: normal;
+  width: 100%;
+  height: 28px;
+}
+
+
+.modal-dialog > .modal-content > .modal-footer {
+  display: block;
+  border: none;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+.btn {
+  font-size: 13px;
+  border-radius: 2px;
+  height: 28px;
+  line-height: 14px;
+  padding: 4px 12px;
+  color: #000000;
+}
+
+.btn-primary {
+  color: white;
+  background-color: #445963;
+  border-color: #37474f;
+}
+
+
+/* Modal dialog button style: override bootstrap */
+
