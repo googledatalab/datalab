@@ -430,7 +430,9 @@ def _args_cell(_, cell):
   """Implements the bqmodule arguments cell magic for ipython notebooks.
 
   Args:
-    cell: the contents of the cell interpreted as the SQL.
+    cell: the contents of the cell interpreted as Python code. This should be calls to arg()
+        only; anything else will not have any effect in a deployed pipeline.
+
   """
   try:
     _exec_in_pipeline_module(
@@ -439,7 +441,7 @@ import datetime as _datetime
 import re as _re
 import time as _time
 
-class Table:
+class _Table:
   def _repr_sql_(self):
     return '[%s]' % self._val
 
@@ -498,7 +500,7 @@ def string(val):
 
 
 def table(val):
-  return Table(val)
+  return _Table(val)
 
 
 def make_formatter(f, offset=None):
@@ -515,7 +517,7 @@ def make_date(offset):
 arg_parser = _argparse.ArgumentParser('bqpipeline')
 
 
-def add(name, default=None, offset=None, type=string, format=None, help=None):
+def arg(name, default=None, offset=None, type=string, format=None, help=None):
   if offset is not None:
     if format is not None:
       arg_parser.add_argument('--%s' % name, default=default, type=make_formatter(format, offset),
