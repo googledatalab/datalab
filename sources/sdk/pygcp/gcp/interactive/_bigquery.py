@@ -16,7 +16,10 @@
 
 import json as _json
 import re as _re
+import shlex as _shlex
+import sys as _sys
 import time as _time
+import types as _types
 import IPython as _ipython
 import IPython.core.magic as _magic
 import gcp.bigquery as _bq
@@ -26,22 +29,26 @@ from ._html import HtmlBuilder as _HtmlBuilder
 from ._utils import _get_data, _get_field_list, _handle_magic_line
 
 
-def _create_sql_subparser(parser):
+_pipeline_module = '_bqpipeline'
+
+
+def _create_sql_subparser(parser, allow_sampling=True):
   sql_parser = parser.subcommand('sql',
       'execute a BigQuery SQL statement and display results or create a named query object')
   sql_parser.add_argument('-n', '--name', help='the name for this query object')
-  sql_parser.add_argument('-s', '--sample', action='store_true',
-                          help='execute the query and get a sample of results')
-  sql_parser.add_argument('-sc', '--samplecount', type=int, default=10,
-                          help='number of rows to limit to if sampling')
-  sql_parser.add_argument('-sm', '--samplemethod', help='the type of sampling to use',
-                          choices=['limit', 'random', 'hashed', 'sorted'], default='limit')
-  sql_parser.add_argument('-sp', '--samplepercent', type=int, default=1,
-                          help='For random or hashed sampling, what percentage to sample from')
-  sql_parser.add_argument('-sf', '--samplefield',
-                          help='field to use for sorted or hashed sampling')
-  sql_parser.add_argument('-so', '--sampleorder', choices=['ascending', 'descending'],
-                          default='ascending', help='sort order to use for sorted sampling')
+  if allow_sampling:
+    sql_parser.add_argument('-s', '--sample', action='store_true',
+                            help='execute the query and get a sample of results')
+    sql_parser.add_argument('-sc', '--samplecount', type=int, default=10,
+                            help='number of rows to limit to if sampling')
+    sql_parser.add_argument('-sm', '--samplemethod', help='the type of sampling to use',
+                            choices=['limit', 'random', 'hashed', 'sorted'], default='limit')
+    sql_parser.add_argument('-sp', '--samplepercent', type=int, default=1,
+                            help='For random or hashed sampling, what percentage to sample from')
+    sql_parser.add_argument('-sf', '--samplefield',
+                            help='field to use for sorted or hashed sampling')
+    sql_parser.add_argument('-so', '--sampleorder', choices=['ascending', 'descending'],
+                            default='ascending', help='sort order to use for sorted sampling')
   return sql_parser
 
 
@@ -136,6 +143,18 @@ def _create_load_subparser(parser):
   return load_parser
 
 
+def _create_run_subparser(parser):
+  run_parser = parser.subcommand('run', 'Execute a pipeline query in the notebook')
+  run_parser.add_argument('query', help='the query to run')
+  return run_parser
+
+
+def _create_source_subparser(parser):
+  source_parser = parser.subcommand('source', 'Specify a query source in SQL')
+  source_parser.add_argument('name', help='the name of the source')
+  return source_parser
+
+
 def _create_bigquery_parser():
   """ Create the parser for the %bigquery magics.
 
@@ -206,7 +225,67 @@ def _create_bigquery_parser():
   return parser
 
 
+def _create_bqmodule_parser():
+  """ Create the parser for the %bqmodule magics. """
+  parser = _CommandParser.create('bqmodule')
+  # %%bqmodule arguments
+  args_parser = parser.subcommand('arguments', 'specify the deployment argumemts for a BQ pipeline')
+  args_parser.set_defaults(
+    func=lambda args, cell: _dispatch_handler('arguments', args, cell, args_parser,
+                                              _args_cell, cell_required=True,
+                                              deployable=True))
+
+  # %%bqmodule source
+  source_parser = _create_source_subparser(parser)
+  source_parser.set_defaults(
+    func=lambda args, cell: _dispatch_handler('source', args, cell, source_parser,
+                                              _source_cell, cell_required=True,
+                                              deployable=True))
+
+  # %%bqmodule sql
+  sql_parser = _create_sql_subparser(parser, allow_sampling=False)
+  sql_parser.set_defaults(
+    func=lambda args, cell: _dispatch_handler('sql', args, cell, sql_parser,
+                                              _sql_cell, cell_required=True,
+                                              deployable=True))
+
+  # %%bqmodule udf
+  udf_parser = _create_udf_subparser(parser)
+  udf_parser.set_defaults(
+    func=lambda args, cell: _dispatch_handler('udf', args, cell, udf_parser,
+                                              _udf_cell, cell_required=True,
+                                              deployable=True))
+
+  # %%bqmodule execute
+  execute_parser = _create_execute_subparser(parser)
+  execute_parser.set_defaults(
+    func=lambda args, cell: _dispatch_handler('run', args, cell,
+                                              execute_parser, _execute_cell,
+                                              deployable=True))
+
+  # %bqmodule extract
+  extract_parser = _create_extract_subparser(parser)
+  extract_parser.set_defaults(
+    func=lambda args, cell: _dispatch_handler('extract', args, cell, extract_parser,
+                                              _extract_line, cell_prohibited=True,
+                                              deployable=True))
+
+  # %bqmodule load
+  # TODO(gram): need some additional help, esp. around the option of specifying schema in
+  # cell body and how schema infer may fail.
+  load_parser = _create_load_subparser(parser)
+  load_parser.set_defaults(
+    func=lambda args, cell: _dispatch_handler('load', args, cell, load_parser, _load_cell,
+                                              deployable=True))
+  # %bqmodule run
+  run_parser = _create_run_subparser(parser)
+  run_parser.set_defaults(
+    func=lambda args, cell: _dispatch_handler('run', args, cell, run_parser, _run_cell))
+  return parser
+
+
 _bigquery_parser = _create_bigquery_parser()
+_bqmodule_parser = _create_bqmodule_parser()
 
 
 @_magic.register_line_cell_magic
@@ -231,8 +310,30 @@ def bigquery(line, cell=None):
   return _handle_magic_line(line, cell, _bigquery_parser)
 
 
+@_magic.register_line_cell_magic
+def bqmodule(line, cell=None):
+  """Implements the bqmodule cell magic for ipython notebooks.
+
+  The supported syntax is:
+
+    %%bqmodule <line>
+    <cell>
+
+  or:
+
+    %bqmodule <line>
+
+  Args:
+    line: the contents of the bqmodule line.
+    cell: the contents of the cell.
+  Returns:
+    The results of executing the cell.
+  """
+  return _handle_magic_line(line, cell, _bqmodule_parser)
+
+
 def _dispatch_handler(command, args, cell, parser, handler,
-                      cell_required=False, cell_prohibited=False):
+                      cell_required=False, cell_prohibited=False, deployable=False):
   """ Makes sure cell magics include cell and line magics don't, before dispatching to handler.
 
   Args:
@@ -243,11 +344,13 @@ def _dispatch_handler(command, args, cell, parser, handler,
     handler: the handler to call if the cell present/absent check passes.
     cell_required: True for cell magics, False for line magics that can't be cell magics.
     cell_prohibited: True for line magics, False for cell magics that can't be line magics.
+    deployable: if True, this is a bqmodule command.
   Returns:
     The result of calling the handler.
   Raises:
     Exception if the invocation is not valid.
   """
+  args['deployable'] = deployable
   if cell_prohibited:
     if cell and len(cell.strip()):
       parser.print_help()
@@ -259,6 +362,231 @@ def _dispatch_handler(command, args, cell, parser, handler,
     raise Exception('The %s command requires additional data' % command)
 
   return handler(args, cell)
+
+
+def _pipeline_environment():
+  """ Get the environment dictionary for bqmodule magics, creating it if needed. """
+  if _pipeline_module not in _sys.modules:
+    # Create the pipeline module.
+    module = _types.ModuleType(_pipeline_module)
+    module.__file__ = _pipeline_module
+    module.__name__ = _pipeline_module
+    _sys.modules[_pipeline_module] = module
+    # Automatically import the newly created module by assigning it to a variable
+    # named the same name as the module name.
+    _bind_name_in_notebook_environment(_pipeline_module, module)
+    # Initialize the bqmodule sources and arg parser
+    exec "import argparse as _argparse\nsources={}\narg_parser = _argparse.ArgumentParser('bqpipeline')\n" \
+        in module.__dict__
+  else:
+    module = _sys.modules[_pipeline_module]
+  return module.__dict__
+
+
+def _exec_in_pipeline_module(code):
+  exec code in _pipeline_environment()
+
+
+def _bind_name_in_pipeline_environment(name, value):
+  _pipeline_environment()[name] = value
+
+
+def _bind_name_in_notebook_environment(name, value):
+  ipy = _ipython.get_ipython()
+  ipy.push({name: value})
+
+
+def _get_pipeline_item(name):
+  """ Get an item from the pipeline environment. """
+  return _pipeline_environment().get(name, None)
+
+
+def _get_item(name, deployable):
+  """ Get an item from the IPython environment.
+
+  If it is not defined in the environment, check the pipeline environment too.
+  If deployable is True and name is not defined in the pipeline environment, raise
+  an exception (even if it is defined in the IPython user environment).
+  """
+  pipeline_val = _get_pipeline_item(name)
+  if deployable and pipeline_val is None:
+    raise Exception('Name %s is not defined in the pipeline')
+  ipy = _ipython.get_ipython()
+  user_val = ipy.user_ns.get(name, None)
+  return pipeline_val if user_val is None else user_val
+
+
+def _get_pipeline_args(cell=None):
+  if cell is None:
+    cell = ''
+  parser = _get_pipeline_item('arg_parser')
+  command_line = ' '.join(cell.split('\n'))
+  args = vars(parser.parse_args(_shlex.split(command_line)))
+  # Don't return any args that are None as we don't want to expand to 'None'
+  return {arg: value for arg, value in args.iteritems() if value is not None}
+
+
+def _args_cell(_, cell):
+  """Implements the bqmodule arguments cell magic for ipython notebooks.
+
+  Args:
+    cell: the contents of the cell interpreted as the SQL.
+  """
+  try:
+    _exec_in_pipeline_module(
+"""
+import datetime as _datetime
+import re as _re
+import time as _time
+
+class Table:
+  def _repr_sql_(self):
+    return '[%s]' % self._val
+
+  def __repr__(self):
+    return self._val
+
+  def __init__(self, val):
+    self._val = val
+
+
+def date(val, offset=None):
+  if val is None:
+    return val
+  if val == '' or val == 'now':
+    when = _datetime.datetime.utcnow()
+  elif val == 'today':
+    dt = _datetime.datetime.utcnow()
+    when = _datetime.datetime(dt.year, dt.month, dt.day)
+  elif val == 'yesterday':
+    dt = _datetime.datetime.utcnow() - _datetime.timedelta(1)
+    when = _datetime.datetime(dt.year, dt.month, dt.day)
+  else:
+    when = _datetime.datetime(val)
+  if offset is not None:
+    for part in offset.split(','):
+      unit = part[-1]
+      quant = int(part[:-1])
+      # We can use timedelta for days and under, but not for years and months
+      if unit == 'y':
+        when = _datetime.datetime(year=when.year + quant,
+            month=when.month, day=when.day, hour=when.hour, minute=when.minute)
+      elif unit == 'm':
+        newyear = when.year
+        newmonth = when.month + quant
+        if newmonth < 1:
+          newmonth = -newmonth
+          newyear += 1 + (newmonth // 12)
+          newmonth = 12 - newmonth % 12
+        elif newmonth > 12:
+          newyear += (newmonth - 1) // 12
+          newmonth = 1 + (newmonth - 1) % 12
+        when = _datetime.datetime(year=newyear, month=newmonth,
+            day=when.day, hour=when.hour, minute=when.minute)
+      elif unit == 'd':
+        when += _datetime.timedelta(days=quant)
+      elif unit == 'h':
+        d += _datetime.timedelta(hours=quant)
+      elif unit == 'm':
+        d += _datetime.timedelta(minutes=quant)
+
+  return when
+
+
+def string(val):
+  return val
+
+
+def table(val):
+  return Table(val)
+
+
+def make_formatter(f, offset=None):
+  format = f
+  delta = offset
+  return lambda v: _time.strftime(format, (date(v, delta)).timetuple())
+
+
+def make_date(offset):
+  delta = offset
+  return lambda v: date(v, delta)
+
+
+arg_parser = _argparse.ArgumentParser('bqpipeline')
+
+
+def add(name, default=None, offset=None, type=string, format=None, help=None):
+  if offset is not None:
+    if format is not None:
+      arg_parser.add_argument('--%s' % name, default=default, type=make_formatter(format, offset),
+          help=help)
+    else:
+      arg_parser.add_argument('--%s' % name, default=default, type=make_date(offset), help=help)
+  else:
+    if format is not None:
+      arg_parser.add_argument('--%s' % name, default=default, type=make_formatter(format),
+          help=help)
+    else:
+      arg_parser.add_argument('--%s' % name, default=default, type=type, help=help)
+
+""")
+    _exec_in_pipeline_module(cell)
+  except Exception as e:
+    print str(e)
+
+
+class _Source(object):
+  """ Simple wrapper class for bqmodule source to prevent quoting when expanding in queries. """
+  def __init__(self, val):
+    self._val = val
+
+  def _repr_sql_(self):
+    return self._val
+
+  def __str__(self):
+    return self._val
+
+
+def _source_cell(args, sql):
+  """ Define a BQ source. """
+  _pipeline_environment()['sources'][args['name']] = _Source(sql)
+
+
+def _get_pipeline_resolution_environment(env=None):
+  """ Get the key/val dictionary For resolving metavars in the pipeline environment.
+
+  An initial dictionary can be supplied in which case it will be augmented with new
+  names but existing names will not be replaced.
+  """
+  if env is None:
+    env = {}
+
+  # Add the default arguments from the pipeline environment if they aren't defined
+  env.update({key: value for key, value in _get_pipeline_args().iteritems()
+              if key not in env and value is not None})
+
+  # Add any sources from the pipeline environment, expanded with what we have so far
+  env.update({key: _bq.query(_bq.sql(str(value), **env))
+              for key, value in _pipeline_environment()['sources'].iteritems()
+              if key not in env and isinstance(value, _Source)})
+
+  # Add any queries from the pipeline environment, expanded with what we have so far
+  env.update({key: _bq.query(_bq.sql(str(value), **env))
+              for key, value in _pipeline_environment().iteritems()
+              if key not in env and isinstance(value, _bq._Query)})
+  return env
+
+
+def _get_notebook_resolution_environment():
+  """ Get the key/val dictionary For resolving metavars in the pipeline environment.
+
+  This is the IPython user environment augmented with the pipeline environment.
+  """
+  ipy = _ipython.get_ipython()
+  # Start with a copy of IPython environment
+  env = {}
+  env.update(ipy.user_ns)
+  return _get_pipeline_resolution_environment(env)
 
 
 def _sql_cell(args, sql):
@@ -275,21 +603,31 @@ def _sql_cell(args, sql):
     The results of executing the query converted to a dataframe if no variable
     was specified. None otherwise.
   """
-  ipy = _ipython.get_ipython()
+  deployable = args['deployable']
 
-  # Use the user_ns dictionary, which contains all current declarations in
-  # the kernel as the dictionary to use to retrieve values for placeholders
-  # within the specified sql statement.
-  sql = _bq.sql(sql, **ipy.user_ns)
+  try:
+    if deployable:
+      # Test for hermeticity
+      _bq.sql(sql, **_get_pipeline_resolution_environment())
+    else:
+      # Non-pipeline; must go through immediate variable expansion.
+      sql = _bq.sql(sql, **_get_notebook_resolution_environment())
+  except Exception as e:
+    return e
+
   query = _bq.query(sql)
-
   variable_name = args['name']
   if variable_name:
     # Update the global namespace with the new variable, or update the value of
     # the existing variable if it already exists.
-    ipy.push({variable_name: query})
-    if not args['sample']:
+    if deployable:
+      _bind_name_in_pipeline_environment(variable_name, query)
+    else:
+      _bind_name_in_notebook_environment(variable_name, query)
+    if 'sample' not in args or not args['sample']:
       return None
+  elif deployable:
+    raise Exception('--name argument is required')
 
   if args['samplemethod'] is None:
     return query.results()
@@ -324,7 +662,7 @@ def _udf_cell(args, js):
     The results of executing the UDF converted to a dataframe if no variable
     was specified. None otherwise.
   """
-  ipy = _ipython.get_ipython()
+  deployable = args['deployable']
 
   variable_name = args['name']
   if not variable_name:
@@ -360,30 +698,39 @@ def _udf_cell(args, js):
 
   # Finally build the UDF object
   udf = _bq.udf(inputs, outputs, js)
-  ipy.push({variable_name: udf})
+  if deployable:
+    _bind_name_in_pipeline_environment(variable_name, udf)
+  else:
+    _bind_name_in_notebook_environment(variable_name, udf)
 
   return None
 
 
 def _execute_cell(args, sql):
-  ipy = _ipython.get_ipython()
+  deployable = args['deployable']
 
-  # Use the user_ns dictionary, which contains all current declarations in
-  # the kernel as the dictionary to use to retrieve values for placeholders
-  # within the specified sql statement.
   if sql:
     if args['query']:
       return "Cannot have a query parameter and a query cell body"
-    sql = _bq.sql(sql, **ipy.user_ns)
-    query = _bq.query(sql)
+    try:
+      if deployable:
+        # Just test for hermeticity.
+        _bq.sql(sql, **_get_pipeline_resolution_environment())
+      else:
+        sql = _bq.sql(sql, **_get_notebook_resolution_environment())
+        query = _bq.query(sql)
+    except Exception as e:
+      return e
   else:
     if not args['query']:
       return "Need a query parameter or a query cell body"
-    query = _get_item(args['query'])
+    query = _get_item(args['query'], deployable)
     if not query:
       return "%s does not refer to a query" % args['query']
-  return query.execute(args['table'], args['append'], args['overwrite'], not args['nocache'],
-                       args['batch'], args['large']).results
+
+  if not deployable:
+    return query.execute(args['table'], args['append'], args['overwrite'], not args['nocache'],
+                         args['batch'], args['large']).results
 
 
 def _table_line(args):
@@ -431,11 +778,13 @@ def _tables_line(args):
 
   return _render_table(tables)
 
+
 def _extract_line(args):
+  deployable = args['deployable']
   name = args['source']
-  source = _get_item(name)
+  source = _get_item(name, deployable)
   if not source:
-    source = _get_table(name)
+    source = _get_table(name, deployable)
 
   if not source:
     print 'No such source: %s' % name
@@ -455,8 +804,9 @@ def _extract_line(args):
 
 
 def _load_cell(args, schema):
+  deployable = args['deployable']
   name = args['table']
-  table = _get_table(name)
+  table = _get_table(name, deployable)
   if not table:
     table = _bq.table(name)
 
@@ -487,21 +837,34 @@ def _load_cell(args, schema):
   elif job.errors:
     print 'Load completed with errors: %s' % str(job.errors)
 
+
+def _run_cell(args, cell):
+  orig_query = _get_item(args['query'], True)
+  if not orig_query:
+    return "%s does not refer to a query" % args['query']
+
+  args = _get_pipeline_args(cell)
+
+  # Perform expansion of the query to a new query
+  try:
+    sql = _bq.sql(orig_query.sql, **args)
+    query = _bq.query(sql)
+
+    # Run it and show results
+    return query.execute().results
+  except Exception as e:
+    print str(e)
+
+
 # An LRU cache for Tables. This is mostly useful so that when we cross page boundaries
 # when paging through a table we don't have to re-fetch the schema.
 _table_cache = _util.LRUCache(10)
 
 
-def _get_item(name):
-  """ Get an item from the IPython environment. """
-  ipy = _ipython.get_ipython()
-  return ipy.user_ns.get(name, None)
-
-
-def _get_table(name):
+def _get_table(name, deployable):
   """ Given a variable or table name, get a Table if it exists. """
   # If name is a variable referencing a table, use that.
-  item = _get_item(name)
+  item = _get_item(name, deployable)
   if isinstance(item, _bq._Table):
     return item
   # Else treat this as a BQ table name and return the (cached) table if it exists.
