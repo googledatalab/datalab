@@ -23,10 +23,13 @@
 /// <reference path="../../../../../../../../externs/ts/codemirror/codemirror.d.ts" />
 /// <amd-dependency path="codeMirror/mode/python/python" />
 /// <amd-dependency path="codeMirror/mode/markdown/markdown" />
+/// <amd-dependency path="codeMirror/mode/sql/sql" />
 /// <amd-dependency path="codeMirror/addon/edit/matchbrackets" />
+
 import codeMirror = require('codeMirror');
 import constants = require('app/common/Constants');
 import logging = require('app/common/Logging');
+import highlighting = require('app/components/codeeditor/CodeEditorMagicHighlighting')
 import _app = require('app/App');
 
 
@@ -45,7 +48,7 @@ var codeMirrorOptions: CodeMirror.EditorConfiguration = {
 
   // Language mode requires additional assets be requested via amd-dependency.
   mode: {
-    name: "python",
+    name: "python", //TODO (rnabel) find out whether still needed
   },
 
   // Options below require addons to be loaded via amd-dep as well.
@@ -105,17 +108,22 @@ interface CodeEditorScope extends ng.IScope {
  *
  * @param scope the directive's (isolate) scope
  * @param element the jqLite-selected directive element
+ * @param attrs
  */
+// creates event listener
 function codeEditorDirectiveLink(
     scope: CodeEditorScope,
     element: ng.IAugmentedJQuery,
-    attrs: any)
+    attrs: any )
     : void {
 
   var cmContainer = element[0];
 
+  // find correct highlighting mode, and set it
+  codeMirrorOptions.mode.name = highlighting.magicDetector(scope.source);
+
+  // find type
   codeMirrorOptions.lineWrapping = scope.linewrap;
-  codeMirrorOptions.mode.name = scope.mode;
 
   var cmInstance: CodeMirror.Editor = codeMirror(cmContainer, codeMirrorOptions);
   cmInstance.addKeyMap(scope.getKeymap());
@@ -126,7 +134,7 @@ function codeEditorDirectiveLink(
 
   // Watch the scope for new source content values and publish them into the CodeMirror instance.
   scope.$watch('source', (newValue: any, oldValue: any) => {
-    // Guard agains cyclical updates when editing cells.
+    // Guard against cyclical updates when editing cells.
     // i.e., cm.changed -> scope.changed -> cm.changed loops, due to watching the scope.
     if (cmInstance.getValue() != newValue) {
       // Overwrite the previous editor contents with the updated version.
@@ -154,6 +162,12 @@ function codeEditorDirectiveLink(
     scope.$apply(() => {
       scope.source = cm.getValue();
     });
+
+
+    var cellMode : string = highlighting.magicDetector(cmInstance.getValue());
+    cmInstance.setOption("mode", cellMode);
+    // If limiting code editor magic detection, change object's change property is not easy to use, as it
+    //  does not capture the keystroke, but the text change, which results in non-trivial detection of line breaks etc.
   });
 
   // Register handlers for each DOM event we're interested in exposing.
@@ -165,6 +179,7 @@ function codeEditorDirectiveLink(
       // Mark the editor as being in "active" state if a user focuses it (e.g., by clicking within
       // the editor region).
       scope.active = true;
+
     });
   }
 
@@ -175,7 +190,7 @@ function codeEditorDirectiveLink(
       cmInstance.focus();
     }
   });
-};
+}
 
 /**
  * Creates a code editor directive.
