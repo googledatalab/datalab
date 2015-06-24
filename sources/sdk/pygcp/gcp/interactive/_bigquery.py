@@ -14,6 +14,7 @@
 
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 
+import datetime as _datetime
 import json as _json
 import re as _re
 import shlex as _shlex
@@ -29,7 +30,10 @@ from ._html import HtmlBuilder as _HtmlBuilder
 from ._utils import _get_data, _get_field_list, _handle_magic_line
 
 
+# Some string literals used for binding names in the environment.
 _pipeline_module = '_bqpipeline'
+_pipeline_sources = '_sources'
+_pipeline_arg_parser = '_arg_parser'
 
 
 def _create_sql_subparser(parser, allow_sampling=True):
@@ -256,27 +260,6 @@ def _create_bqmodule_parser():
                                               _udf_cell, cell_required=True,
                                               deployable=True))
 
-  # %%bqmodule execute
-  execute_parser = _create_execute_subparser(parser)
-  execute_parser.set_defaults(
-    func=lambda args, cell: _dispatch_handler('run', args, cell,
-                                              execute_parser, _execute_cell,
-                                              deployable=True))
-
-  # %bqmodule extract
-  extract_parser = _create_extract_subparser(parser)
-  extract_parser.set_defaults(
-    func=lambda args, cell: _dispatch_handler('extract', args, cell, extract_parser,
-                                              _extract_line, cell_prohibited=True,
-                                              deployable=True))
-
-  # %bqmodule load
-  # TODO(gram): need some additional help, esp. around the option of specifying schema in
-  # cell body and how schema infer may fail.
-  load_parser = _create_load_subparser(parser)
-  load_parser.set_defaults(
-    func=lambda args, cell: _dispatch_handler('load', args, cell, load_parser, _load_cell,
-                                              deployable=True))
   # %bqmodule run
   run_parser = _create_run_subparser(parser)
   run_parser.set_defaults(
@@ -375,23 +358,26 @@ def _pipeline_environment():
     # Automatically import the newly created module by assigning it to a variable
     # named the same name as the module name.
     _bind_name_in_notebook_environment(_pipeline_module, module)
-    # Initialize the bqmodule sources and arg parser
-    exec "import argparse as _argparse\nsources={}\narg_parser = _argparse.ArgumentParser('bqpipeline')\n" \
-        in module.__dict__
+    # Initialize the bqmodule arg parser and sources
+    _bind_name_in_pipeline_environment(_pipeline_arg_parser, _CommandParser.create('bqmodule run'))
+    _bind_name_in_pipeline_environment(_pipeline_sources, {})
   else:
     module = _sys.modules[_pipeline_module]
   return module.__dict__
 
 
 def _exec_in_pipeline_module(code):
+  """ Execute code contained in a string within the pipeline module. """
   exec code in _pipeline_environment()
 
 
 def _bind_name_in_pipeline_environment(name, value):
+  """ Bind a name to a value in the pipeline module. """
   _pipeline_environment()[name] = value
 
 
 def _bind_name_in_notebook_environment(name, value):
+  """ Bind a name to a value in the IPython notebook environment. """
   ipy = _ipython.get_ipython()
   ipy.push({name: value})
 
@@ -401,7 +387,7 @@ def _get_pipeline_item(name):
   return _pipeline_environment().get(name, None)
 
 
-def _get_item(name, deployable):
+def _get_item(name, deployable=False):
   """ Get an item from the IPython environment.
 
   If it is not defined in the environment, check the pipeline environment too.
@@ -417,42 +403,40 @@ def _get_item(name, deployable):
 
 
 def _get_pipeline_args(cell=None):
+  """ Parse a set of pipeline arguments or get the default value of the arguments.
+
+  Args:
+    cell: the cell containing the argument flags. If omitted the empty string is used so
+        we can get the default values for the arguments.
+  """
   if cell is None:
     cell = ''
-  parser = _get_pipeline_item('arg_parser')
+  parser = _get_pipeline_item(_pipeline_arg_parser)
   command_line = ' '.join(cell.split('\n'))
   args = vars(parser.parse_args(_shlex.split(command_line)))
   # Don't return any args that are None as we don't want to expand to 'None'
   return {arg: value for arg, value in args.iteritems() if value is not None}
 
 
-def _args_cell(_, cell):
-  """Implements the bqmodule arguments cell magic for ipython notebooks.
+def _date(val, offset=None):
+  """ A special pseudo-type for pipeline arguments.
+
+  This allows us to parse dates as Python datetimes, including special values like 'now'
+  and 'today', as well as apply offsets to the datetime.
 
   Args:
-    cell: the contents of the cell interpreted as Python code. This should be calls to arg()
-        only; anything else will not have any effect in a deployed pipeline.
+    val: a string containing the value for the datetime. This can be 'now', 'today' (midnight at
+        start of day), 'yesterday' (midnight at start of yesterday), or a formatted date that
+        will be passed to the datetime constructor. Note that 'now' etc are assumed to
+        be in UTC.
+    offset: for date arguments a string containing a comma-separated list of
+      relative offsets to apply of the form <n><u> where <n> is an integer and
+      <u> is a single character unit (d=day, m=month, y=year, h=hour, m=minute).
 
+  Returns:
+    A Python datetime resulting from starting at <val> and applying the sequence of deltas
+    specified in <offset>.
   """
-  try:
-    _exec_in_pipeline_module(
-"""
-import datetime as _datetime
-import re as _re
-import time as _time
-
-class _Table:
-  def _repr_sql_(self):
-    return '[%s]' % self._val
-
-  def __repr__(self):
-    return self._val
-
-  def __init__(self, val):
-    self._val = val
-
-
-def date(val, offset=None):
   if val is None:
     return val
   if val == '' or val == 'now':
@@ -471,8 +455,8 @@ def date(val, offset=None):
       quant = int(part[:-1])
       # We can use timedelta for days and under, but not for years and months
       if unit == 'y':
-        when = _datetime.datetime(year=when.year + quant,
-            month=when.month, day=when.day, hour=when.hour, minute=when.minute)
+        when = _datetime.datetime(year=when.year + quant, month=when.month, day=when.day,
+                                  hour=when.hour, minute=when.minute)
       elif unit == 'm':
         newyear = when.year
         newmonth = when.month + quant
@@ -483,79 +467,122 @@ def date(val, offset=None):
         elif newmonth > 12:
           newyear += (newmonth - 1) // 12
           newmonth = 1 + (newmonth - 1) % 12
-        when = _datetime.datetime(year=newyear, month=newmonth,
-            day=when.day, hour=when.hour, minute=when.minute)
+        when = _datetime.datetime(year=newyear, month=newmonth, day=when.day,
+                                  hour=when.hour, minute=when.minute)
       elif unit == 'd':
         when += _datetime.timedelta(days=quant)
       elif unit == 'h':
-        d += _datetime.timedelta(hours=quant)
+        when += _datetime.timedelta(hours=quant)
       elif unit == 'm':
-        d += _datetime.timedelta(minutes=quant)
+        when += _datetime.timedelta(minutes=quant)
 
   return when
 
 
-def string(val):
+def _string(val):
+  """ A simple pseudo-type for string arguments.
+
+   It is more intuitive to say type=string than type=basestring, so we define this allowing
+   us to support both.
+  """
   return val
 
 
-def table(val):
-  return _Table(val)
+def _table(val):
+  """ A speduo-type for bqmodule arguments allowing us to specify table names.
+
+   Needed as we need a special form of expansion in queries for table names.
+  """
+  return _bq.table(val)
 
 
-def make_formatter(f, offset=None):
+def _make_formatter(f, offset=None):
+  """ A closure-izer for arguments that include a format and possibly an offset. """
   format = f
   delta = offset
-  return lambda v: _time.strftime(format, (date(v, delta)).timetuple())
+  return lambda v: _time.strftime(format, (_date(v, delta)).timetuple())
 
 
-def make_date(offset):
+def _make_date(offset):
+  """ A closure-izer for date arguments that include an offset. """
   delta = offset
-  return lambda v: date(v, delta)
+  return lambda v: _date(v, delta)
 
 
-arg_parser = _argparse.ArgumentParser('bqpipeline')
+def _arg(name, default=None, offset=None, type=_string, format=None, help=None):
+  """ Add an argument to the pipeline arg parser.
 
-
-def arg(name, default=None, offset=None, type=string, format=None, help=None):
+  Args:
+    name: the argument name; this will add a --name option to the arg parser.
+    default: default value for the argument. For dates this can be 'now', 'today',
+        'yesterday' or a string that should be suitable for passing to datetime.__init__.
+    offset: for date arguments a string containing a comma-separated list of
+      relative offsets to apply of the form <n><u> where <n> is an integer and
+      <u> is a single character unit (d=day, m=month, y=year, h=hour, m=minute).
+    type: the argument type. Can be a standard Python scalar or string, date or table.
+        Not needed if either format or offset is specified (in this case the final argument
+        will be a string (if format is specified) or datetime (if offset is specified but format
+        is not) produced from processing the raw argument appropriately).
+    format: for date arguments, a format string to convert this to a string using time.strftime.
+      If format is supplied the type argument is not needed.
+    help: optional help string for this argument.
+  """
+  arg_parser = _get_pipeline_item(_pipeline_arg_parser)
   if offset is not None:
     if format is not None:
-      arg_parser.add_argument('--%s' % name, default=default, type=make_formatter(format, offset),
-          help=help)
+      arg_parser.add_argument('--%s' % name, default=default, type=_make_formatter(format, offset),
+                              help=help)
     else:
-      arg_parser.add_argument('--%s' % name, default=default, type=make_date(offset), help=help)
+      arg_parser.add_argument('--%s' % name, default=default, type=_make_date(offset), help=help)
   else:
     if format is not None:
-      arg_parser.add_argument('--%s' % name, default=default, type=make_formatter(format),
-          help=help)
+      arg_parser.add_argument('--%s' % name, default=default, type=_make_formatter(format),
+                              help=help)
     else:
       arg_parser.add_argument('--%s' % name, default=default, type=type, help=help)
 
-""")
+
+def _args_cell(_, cell):
+  """Implements the bqmodule arguments cell magic for ipython notebooks.
+
+  Args:
+    cell: the contents of the cell interpreted as Python code. This should be calls to arg()
+        only; anything else will not have any effect in a deployed pipeline.
+
+  """
+  try:
+    # Define our special argument 'types'.
+    _bind_name_in_pipeline_environment('date', _date)
+    _bind_name_in_pipeline_environment('table', _table)
+
+    # Define the arg helper function.
+    _bind_name_in_pipeline_environment('arg', _arg)
+
+    # Reset the argument parser.
+    _bind_name_in_pipeline_environment(_pipeline_arg_parser, _CommandParser.create('bqmodule run'))
+
+    # Execute the cell which should be one or more calls to arg().
     _exec_in_pipeline_module(cell)
   except Exception as e:
     print str(e)
 
 
-class _Source(object):
-  """ Simple wrapper class for bqmodule source to prevent quoting when expanding in queries. """
-  def __init__(self, val):
-    self._val = val
-
-  def _repr_sql_(self):
-    return self._val
-
-  def __str__(self):
-    return self._val
-
-
 def _source_cell(args, sql):
-  """ Define a BQ source. """
-  _pipeline_environment()['sources'][args['name']] = _Source(sql)
+  """ Define a BQ pipeline source.
+
+  This is just a convenience for defining a fragment of SQL that can be referenced in
+  other queries.
+
+  Args:
+    args: the magic command arguments (just <name>).
+    sql: the magic cell body containing the SQL fragment.
+
+  """
+  _pipeline_environment()[_pipeline_sources][args['name']] = _bq.query(sql)
 
 
 def _get_pipeline_resolution_environment(env=None):
-  """ Get the key/val dictionary For resolving metavars in the pipeline environment.
+  """ Get the key/val dictionary for resolving metavars in the pipeline environment.
 
   An initial dictionary can be supplied in which case it will be augmented with new
   names but existing names will not be replaced.
@@ -569,8 +596,8 @@ def _get_pipeline_resolution_environment(env=None):
 
   # Add any sources from the pipeline environment, expanded with what we have so far
   env.update({key: _bq.query(_bq.sql(str(value), **env))
-              for key, value in _pipeline_environment()['sources'].iteritems()
-              if key not in env and isinstance(value, _Source)})
+              for key, value in _pipeline_environment()[_pipeline_sources].iteritems()
+              if key not in env and isinstance(value, _bq._Query)})
 
   # Add any queries from the pipeline environment, expanded with what we have so far
   env.update({key: _bq.query(_bq.sql(str(value), **env))
@@ -709,30 +736,23 @@ def _udf_cell(args, js):
 
 
 def _execute_cell(args, sql):
-  deployable = args['deployable']
-
   if sql:
     if args['query']:
       return "Cannot have a query parameter and a query cell body"
     try:
-      if deployable:
-        # Just test for hermeticity.
-        _bq.sql(sql, **_get_pipeline_resolution_environment())
-      else:
-        sql = _bq.sql(sql, **_get_notebook_resolution_environment())
-        query = _bq.query(sql)
+      sql = _bq.sql(sql, **_get_notebook_resolution_environment())
+      query = _bq.query(sql)
     except Exception as e:
       return e
   else:
     if not args['query']:
       return "Need a query parameter or a query cell body"
-    query = _get_item(args['query'], deployable)
+    query = _get_item(args['query'])
     if not query:
       return "%s does not refer to a query" % args['query']
 
-  if not deployable:
-    return query.execute(args['table'], args['append'], args['overwrite'], not args['nocache'],
-                         args['batch'], args['large']).results
+  return query.execute(args['table'], args['append'], args['overwrite'], not args['nocache'],
+                       args['batch'], args['large']).results
 
 
 def _table_line(args):
@@ -782,11 +802,10 @@ def _tables_line(args):
 
 
 def _extract_line(args):
-  deployable = args['deployable']
   name = args['source']
-  source = _get_item(name, deployable)
+  source = _get_item(name)
   if not source:
-    source = _get_table(name, deployable)
+    source = _get_table(name)
 
   if not source:
     print 'No such source: %s' % name
@@ -806,9 +825,8 @@ def _extract_line(args):
 
 
 def _load_cell(args, schema):
-  deployable = args['deployable']
   name = args['table']
-  table = _get_table(name, deployable)
+  table = _get_table(name)
   if not table:
     table = _bq.table(name)
 
@@ -845,11 +863,12 @@ def _run_cell(args, cell):
   if not orig_query:
     return "%s does not refer to a query" % args['query']
 
-  args = _get_pipeline_args(cell)
+  env = _get_pipeline_resolution_environment()
+  env.update(_get_pipeline_args(cell))
 
   # Perform expansion of the query to a new query
   try:
-    sql = _bq.sql(orig_query.sql, **args)
+    sql = _bq.sql(orig_query.sql, **env)
     query = _bq.query(sql)
 
     # Run it and show results
@@ -863,8 +882,15 @@ def _run_cell(args, cell):
 _table_cache = _util.LRUCache(10)
 
 
-def _get_table(name, deployable):
-  """ Given a variable or table name, get a Table if it exists. """
+def _get_table(name, deployable=False):
+  """ Given a variable or table name, get a Table if it exists.
+
+  Args:
+    name: the name of the Table or a variable referencing the Table.
+    deployable: True if this should be in the pipeline namespace only.
+  Returns:
+    The Table, if found.
+  """
   # If name is a variable referencing a table, use that.
   item = _get_item(name, deployable)
   if isinstance(item, _bq._Table):
