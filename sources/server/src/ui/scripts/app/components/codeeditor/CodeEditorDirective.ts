@@ -23,10 +23,14 @@
 /// <reference path="../../../../../../../../externs/ts/codemirror/codemirror.d.ts" />
 /// <amd-dependency path="codeMirror/mode/python/python" />
 /// <amd-dependency path="codeMirror/mode/markdown/markdown" />
+/// <amd-dependency path="codeMirror/mode/sql/sql" />
+/// <amd-dependency path="codeMirror/mode/javascript/javascript" />
 /// <amd-dependency path="codeMirror/addon/edit/matchbrackets" />
+
 import codeMirror = require('codeMirror');
 import constants = require('app/common/Constants');
 import logging = require('app/common/Logging');
+import highlighting = require('app/components/codeeditor/CodeEditorMagicHighlighting')
 import _app = require('app/App');
 
 
@@ -108,14 +112,15 @@ interface CodeEditorScope extends ng.IScope {
  */
 function codeEditorDirectiveLink(
     scope: CodeEditorScope,
-    element: ng.IAugmentedJQuery,
-    attrs: any)
+    element: ng.IAugmentedJQuery)
     : void {
 
   var cmContainer = element[0];
 
+  // Find correct highlighting mode, and set it.
+  codeMirrorOptions.mode.name = highlighting.magicDetector(scope.source, scope.mode);
+
   codeMirrorOptions.lineWrapping = scope.linewrap;
-  codeMirrorOptions.mode.name = scope.mode;
 
   var cmInstance: CodeMirror.Editor = codeMirror(cmContainer, codeMirrorOptions);
   cmInstance.addKeyMap(scope.getKeymap());
@@ -126,7 +131,7 @@ function codeEditorDirectiveLink(
 
   // Watch the scope for new source content values and publish them into the CodeMirror instance.
   scope.$watch('source', (newValue: any, oldValue: any) => {
-    // Guard agains cyclical updates when editing cells.
+    // Guard against cyclical updates when editing cells.
     // i.e., cm.changed -> scope.changed -> cm.changed loops, due to watching the scope.
     if (cmInstance.getValue() != newValue) {
       // Overwrite the previous editor contents with the updated version.
@@ -146,14 +151,18 @@ function codeEditorDirectiveLink(
   cmInstance.on('change', (cm: CodeMirror.Editor, change: CodeMirror.EditorChange) => {
 
     if (cm.getValue() == scope.source) {
-      // No need to publish an updated value to the scope (already in-sync)
+      // No need to publish an updated value to the scope (already in-sync).
       return;
     }
 
-    // Wraps scope modifications in an $apply to "publish" them to the parent scope/ctrl
+    // Wraps scope modifications in an $apply to "publish" them to the parent scope/ctrl.
     scope.$apply(() => {
       scope.source = cm.getValue();
     });
+
+
+    var cellMode: string = highlighting.magicDetector(cmInstance.getValue(), scope.mode);
+    cmInstance.setOption("mode", cellMode);
   });
 
   // Register handlers for each DOM event we're interested in exposing.
@@ -165,6 +174,7 @@ function codeEditorDirectiveLink(
       // Mark the editor as being in "active" state if a user focuses it (e.g., by clicking within
       // the editor region).
       scope.active = true;
+
     });
   }
 
@@ -175,7 +185,7 @@ function codeEditorDirectiveLink(
       cmInstance.focus();
     }
   });
-};
+}
 
 /**
  * Creates a code editor directive.
