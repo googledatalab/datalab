@@ -29,8 +29,6 @@ var magicMap : magicTypeMap = {
  * @returns {string}, name of the mode, if no match found "python" is returned
  */
 export var magicDetector = function (content : string, fallback? : string) : string {
-    var returnVal : string;
-
     // check for each key in magicMap whether it matches the content string
     var mmapKey : string;
     for (mmapKey in magicMap) {
@@ -40,8 +38,7 @@ export var magicDetector = function (content : string, fallback? : string) : str
             var matches : RegExpMatchArray = content.match(magicMap[mmapKey][index]);
 
             if (matches) {
-                returnVal = mmapKey;
-                return returnVal; // TODO (rnabel) make one line, 2 lines for testing purposes
+                return mmapKey; // TODO (rnabel) make one line, 2 lines for testing purposes
             }
         }
     }

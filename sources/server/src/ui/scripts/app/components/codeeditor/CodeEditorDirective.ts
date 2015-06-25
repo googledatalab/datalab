@@ -49,7 +49,7 @@ var codeMirrorOptions: CodeMirror.EditorConfiguration = {
 
   // Language mode requires additional assets be requested via amd-dependency.
   mode: {
-    name: "python", //TODO (rnabel) find out whether still needed
+    name: "python",
   },
 
   // Options below require addons to be loaded via amd-dep as well.
