@@ -31,7 +31,7 @@ from ._utils import _get_data, _get_field_list, _handle_magic_line
 
 
 # Some string literals used for binding names in the environment.
-_pipeline_module = '_bqpipeline'
+_pipeline_module = '_bqmodule'
 _pipeline_sources = '_sources'
 _pipeline_arg_parser = '_arg_parser'
 
@@ -149,6 +149,8 @@ def _create_load_subparser(parser):
 
 def _create_run_subparser(parser):
   run_parser = parser.subcommand('run', 'Execute a pipeline query in the notebook')
+  run_parser.add_argument('-d', '--dry', help='just show the query, don\'t run it',
+                          action='store_true')
   run_parser.add_argument('query', help='the query to run')
   return run_parser
 
@@ -226,6 +228,11 @@ def _create_bigquery_parser():
   load_parser = _create_load_subparser(parser)
   load_parser.set_defaults(
       func=lambda args, cell: _dispatch_handler('load', args, cell, load_parser, _load_cell))
+
+  # %bigquery run
+  run_parser = _create_run_subparser(parser)
+  run_parser.set_defaults(
+    func=lambda args, cell: _dispatch_handler('run', args, cell, run_parser, _run_cell))
   return parser
 
 
@@ -263,7 +270,8 @@ def _create_bqmodule_parser():
   # %bqmodule run
   run_parser = _create_run_subparser(parser)
   run_parser.set_defaults(
-    func=lambda args, cell: _dispatch_handler('run', args, cell, run_parser, _run_cell))
+    func=lambda args, cell: _dispatch_handler('run', args, cell, run_parser, _run_cell,
+                                              deployable=True))
   return parser
 
 
@@ -387,19 +395,27 @@ def _get_pipeline_item(name):
   return _pipeline_environment().get(name, None)
 
 
-def _get_item(name, deployable=False):
-  """ Get an item from the IPython environment.
-
-  If it is not defined in the environment, check the pipeline environment too.
-  If deployable is True and name is not defined in the pipeline environment, raise
-  an exception (even if it is defined in the IPython user environment).
-  """
-  pipeline_val = _get_pipeline_item(name)
-  if deployable and pipeline_val is None:
-    raise Exception('Name %s is not defined in the pipeline')
+def _get_notebook_item(name):
+  """ Get an item from the IPython environment. """
   ipy = _ipython.get_ipython()
   user_val = ipy.user_ns.get(name, None)
-  return pipeline_val if user_val is None else user_val
+  return user_val
+
+
+def _get_query(name):
+  """ Get a query bound to variable name.
+
+  This will look in IPython environment first. If name is not defined there it will
+  look in pipeline environment and return a resolved query if possible.
+  """
+  q = _get_notebook_item(name)
+  if q is None:
+    q = _get_pipeline_item(name)
+    if isinstance(q, _bq._Query):
+      env = _get_notebook_resolution_environment()
+      sql = _bq.sql(q.sql, **env)
+      q = _bq.query(sql)
+  return q
 
 
 def _get_pipeline_args(cell=None):
@@ -496,11 +512,14 @@ def _table(val):
   return _bq.table(val)
 
 
-def _make_formatter(f, offset=None):
+def _make_formatter(f, type, offset=None):
   """ A closure-izer for arguments that include a format and possibly an offset. """
   format = f
   delta = offset
-  return lambda v: _time.strftime(format, (_date(v, delta)).timetuple())
+  if type == _table:
+    return lambda v: _bq.table(_time.strftime(format, (_date(v, delta)).timetuple()))
+  else:
+    return lambda v: _time.strftime(format, (_date(v, delta)).timetuple())
 
 
 def _make_date(offset):
@@ -528,18 +547,18 @@ def _arg(name, default=None, offset=None, type=_string, format=None, help=None):
     help: optional help string for this argument.
   """
   arg_parser = _get_pipeline_item(_pipeline_arg_parser)
-  if offset is not None:
-    if format is not None:
-      arg_parser.add_argument('--%s' % name, default=default, type=_make_formatter(format, offset),
-                              help=help)
+  if format is None:
+    if offset is None:
+      arg_parser.add_argument('--%s' % name, default=default, type=type, help=help)
     else:
       arg_parser.add_argument('--%s' % name, default=default, type=_make_date(offset), help=help)
   else:
-    if format is not None:
-      arg_parser.add_argument('--%s' % name, default=default, type=_make_formatter(format),
+    if offset is None:
+      arg_parser.add_argument('--%s' % name, default=default, type=_make_formatter(format, type),
                               help=help)
     else:
-      arg_parser.add_argument('--%s' % name, default=default, type=type, help=help)
+      arg_parser.add_argument('--%s' % name, default=default,
+                              type=_make_formatter(format, type, offset), help=help)
 
 
 def _args_cell(_, cell):
@@ -747,8 +766,8 @@ def _execute_cell(args, sql):
   else:
     if not args['query']:
       return "Need a query parameter or a query cell body"
-    query = _get_item(args['query'])
-    if not query:
+    query = _get_query(args['query'])
+    if not isinstance(query, _bq._Query):
       return "%s does not refer to a query" % args['query']
 
   return query.execute(args['table'], args['append'], args['overwrite'], not args['nocache'],
@@ -803,7 +822,7 @@ def _tables_line(args):
 
 def _extract_line(args):
   name = args['source']
-  source = _get_item(name)
+  source = _get_notebook_item(name)
   if not source:
     source = _get_table(name)
 
@@ -859,20 +878,30 @@ def _load_cell(args, schema):
 
 
 def _run_cell(args, cell):
-  orig_query = _get_item(args['query'], True)
+  orig_query = _get_pipeline_item(args['query'])
   if not orig_query:
     return "%s does not refer to a query" % args['query']
 
-  env = _get_pipeline_resolution_environment()
-  env.update(_get_pipeline_args(cell))
+  if args['deployable']:
+    env = _get_pipeline_resolution_environment()
+    env.update(_get_pipeline_args(cell))
+  else:
+    # IPython environment takes precedence even over cell args, as cell args
+    # could resolve to default values.
+    # TODO(gram): fix this by creating a copy of the arg parser with all defaults set to None
+    env = _get_notebook_resolution_environment()
+    env.update({key: value for key, value in _get_pipeline_args(cell).iteritems()
+                if value is not None and key not in env})
 
   # Perform expansion of the query to a new query
   try:
     sql = _bq.sql(orig_query.sql, **env)
-    query = _bq.query(sql)
-
-    # Run it and show results
-    return query.execute().results
+    if args['dry']:
+      return sql
+    else:
+      query = _bq.query(sql)
+      # Run it and show results
+      return query.execute().results
   except Exception as e:
     print str(e)
 
@@ -882,7 +911,7 @@ def _run_cell(args, cell):
 _table_cache = _util.LRUCache(10)
 
 
-def _get_table(name, deployable=False):
+def _get_table(name):
   """ Given a variable or table name, get a Table if it exists.
 
   Args:
@@ -892,7 +921,10 @@ def _get_table(name, deployable=False):
     The Table, if found.
   """
   # If name is a variable referencing a table, use that.
-  item = _get_item(name, deployable)
+  item = _get_notebook_item(name)
+  if item is None:
+    item = _get_pipeline_item(name)
+
   if isinstance(item, _bq._Table):
     return item
   # Else treat this as a BQ table name and return the (cached) table if it exists.
@@ -908,7 +940,7 @@ def _get_table(name, deployable=False):
 
 def _get_schema(name):
   """ Given a variable or table name, get the Schema if it exists. """
-  item = _get_item(name)
+  item = _get_notebook_item(name)
   if not item:
     item = _get_table(name)
 
