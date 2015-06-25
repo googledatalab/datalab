@@ -13,33 +13,38 @@
  */
 
 interface magicTypeMap {
-    [index : string] : RegExp;
+    [index : string] : RegExp[];
 }
 
 // map between regex and CodeMirror mode name
 var magicMap : magicTypeMap = {
-    "text/x-sql" : /^\%\%bqsql\s/
+    "text/x-sql" : [/^\%\%bigquery sql\s/],
+    "text/javascript" : [/^%%javascript/, /^%%bigquery udf/]
 };
 
 /**
  *
  * @param content, string of text, which is used to determine the correct mode
+ * @param fallback, TODO (rnabel) add description
  * @returns {string}, name of the mode, if no match found "python" is returned
  */
-export var magicDetector = function (content : string) : string {
+export var magicDetector = function (content : string, fallback? : string) : string {
     var returnVal : string;
 
     // check for each key in magicMap whether it matches the content string
     var mmapKey : string;
     for (mmapKey in magicMap) {
-        var matches : RegExpMatchArray = content.match(magicMap[mmapKey]);
+        var index : number;
+        for (index = 0; index < magicMap[mmapKey].length; index++) {
 
-        if (matches) {
-            returnVal = mmapKey;
-            return returnVal; // TODO (rnabel) make one line, 2 lines for testing purposes
+            var matches : RegExpMatchArray = content.match(magicMap[mmapKey][index]);
+
+            if (matches) {
+                returnVal = mmapKey;
+                return returnVal; // TODO (rnabel) make one line, 2 lines for testing purposes
+            }
         }
     }
 
-    returnVal = "python";
-    return returnVal;
+    return fallback;
 };

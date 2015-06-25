@@ -24,6 +24,7 @@
 /// <amd-dependency path="codeMirror/mode/python/python" />
 /// <amd-dependency path="codeMirror/mode/markdown/markdown" />
 /// <amd-dependency path="codeMirror/mode/sql/sql" />
+/// <amd-dependency path="codeMirror/mode/javascript/javascript" />
 /// <amd-dependency path="codeMirror/addon/edit/matchbrackets" />
 
 import codeMirror = require('codeMirror');
@@ -120,7 +121,7 @@ function codeEditorDirectiveLink(
   var cmContainer = element[0];
 
   // find correct highlighting mode, and set it
-  codeMirrorOptions.mode.name = highlighting.magicDetector(scope.source);
+  codeMirrorOptions.mode.name = highlighting.magicDetector(scope.source, scope.mode);
 
   // find type
   codeMirrorOptions.lineWrapping = scope.linewrap;
@@ -164,7 +165,7 @@ function codeEditorDirectiveLink(
     });
 
 
-    var cellMode : string = highlighting.magicDetector(cmInstance.getValue());
+    var cellMode : string = highlighting.magicDetector(cmInstance.getValue(), scope.mode);
     cmInstance.setOption("mode", cellMode);
     // If limiting code editor magic detection, change object's change property is not easy to use, as it
     //  does not capture the keystroke, but the text change, which results in non-trivial detection of line breaks etc.
