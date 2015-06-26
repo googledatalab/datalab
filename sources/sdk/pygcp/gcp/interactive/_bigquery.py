@@ -32,7 +32,8 @@ from ._utils import _get_data, _get_field_list, _handle_magic_line
 
 # Some string literals used for binding names in the environment.
 _pipeline_module = '_bqmodule'
-_pipeline_sources = '_sources'
+_pipeline_sql = '_sql'
+_pipeline_udfs = '_sources'
 _pipeline_arg_parser = '_arg_parser'
 
 
@@ -355,6 +356,11 @@ def _dispatch_handler(command, args, cell, parser, handler,
   return handler(args, cell)
 
 
+def _notebook_environment():
+  ipy = _ipython.get_ipython()
+  return ipy.user_ns
+
+
 def _pipeline_environment():
   """ Get the environment dictionary for bqmodule magics, creating it if needed. """
   if _pipeline_module not in _sys.modules:
@@ -365,10 +371,11 @@ def _pipeline_environment():
     _sys.modules[_pipeline_module] = module
     # Automatically import the newly created module by assigning it to a variable
     # named the same name as the module name.
-    _bind_name_in_notebook_environment(_pipeline_module, module)
-    # Initialize the bqmodule arg parser and sources
-    _bind_name_in_pipeline_environment(_pipeline_arg_parser, _CommandParser.create('bqmodule run'))
-    _bind_name_in_pipeline_environment(_pipeline_sources, {})
+    _notebook_environment()[_pipeline_module] = module
+    # Initialize the bqmodule arg parser and source, udf and query dictionaries
+    _pipeline_environment()[_pipeline_arg_parser] = _CommandParser.create('bqmodule run')
+    _pipeline_environment()[_pipeline_sql] = {}
+    _pipeline_environment()[_pipeline_udfs] = {}
   else:
     module = _sys.modules[_pipeline_module]
   return module.__dict__
@@ -377,11 +384,6 @@ def _pipeline_environment():
 def _exec_in_pipeline_module(code):
   """ Execute code contained in a string within the pipeline module. """
   exec code in _pipeline_environment()
-
-
-def _bind_name_in_pipeline_environment(name, value):
-  """ Bind a name to a value in the pipeline module. """
-  _pipeline_environment()[name] = value
 
 
 def _bind_name_in_notebook_environment(name, value):
@@ -397,9 +399,7 @@ def _get_pipeline_item(name):
 
 def _get_notebook_item(name):
   """ Get an item from the IPython environment. """
-  ipy = _ipython.get_ipython()
-  user_val = ipy.user_ns.get(name, None)
-  return user_val
+  return _notebook_environment().get(name, None)
 
 
 def _get_query(name):
@@ -410,28 +410,39 @@ def _get_query(name):
   """
   q = _get_notebook_item(name)
   if q is None:
-    q = _get_pipeline_item(name)
+    q = _pipeline_environment()[_pipeline_queries].get(name, None)
     if isinstance(q, _bq._Query):
-      env = _get_notebook_resolution_environment()
-      sql = _bq.sql(q.sql, **env)
-      q = _bq.query(sql)
+      complete, partial = _get_notebook_resolution_environment()
+      q = _resolve(q.sql, complete, partial)
   return q
 
 
-def _get_pipeline_args(cell=None):
+def _get_pipeline_args(cell=None, explicit_only=False):
   """ Parse a set of pipeline arguments or get the default value of the arguments.
 
   Args:
     cell: the cell containing the argument flags. If omitted the empty string is used so
         we can get the default values for the arguments.
+    default_to_none: if True, we ignore the defaults and only return args that were
+        explicitly specified.
   """
   if cell is None:
     cell = ''
   parser = _get_pipeline_item(_pipeline_arg_parser)
   command_line = ' '.join(cell.split('\n'))
-  args = vars(parser.parse_args(_shlex.split(command_line)))
-  # Don't return any args that are None as we don't want to expand to 'None'
-  return {arg: value for arg, value in args.iteritems() if value is not None}
+  tokens = _shlex.split(command_line)
+  args = vars(parser.parse_args(tokens))
+
+  if explicit_only:
+    allowed = []
+    for token in tokens:
+      if token[:2] == '--':
+        allowed.append(token[2:])
+    # Don't return any args that are None as we don't want to expand to 'None'
+    return {arg: value for arg, value in args.iteritems() if value is not None and arg in allowed}
+  else:
+    # Don't return any args that are None as we don't want to expand to 'None'
+    return {arg: value for arg, value in args.iteritems() if value is not None}
 
 
 def _date(val, offset=None):
@@ -571,14 +582,14 @@ def _args_cell(_, cell):
   """
   try:
     # Define our special argument 'types'.
-    _bind_name_in_pipeline_environment('date', _date)
-    _bind_name_in_pipeline_environment('table', _table)
+    _pipeline_environment()['date'] = _date
+    _pipeline_environment()['table'] = _table
 
     # Define the arg helper function.
-    _bind_name_in_pipeline_environment('arg', _arg)
+    _pipeline_environment()['arg'] = _arg
 
     # Reset the argument parser.
-    _bind_name_in_pipeline_environment(_pipeline_arg_parser, _CommandParser.create('bqmodule run'))
+    _pipeline_environment()[_pipeline_arg_parser] = _CommandParser.create('bqmodule run')
 
     # Execute the cell which should be one or more calls to arg().
     _exec_in_pipeline_module(cell)
@@ -597,32 +608,44 @@ def _source_cell(args, sql):
     sql: the magic cell body containing the SQL fragment.
 
   """
-  _pipeline_environment()[_pipeline_sources][args['name']] = _bq.query(sql)
+  _pipeline_environment()[_pipeline_sql][args['name']] = _bq.query(sql)
 
 
 def _get_pipeline_resolution_environment(env=None):
   """ Get the key/val dictionary for resolving metavars in the pipeline environment.
 
   An initial dictionary can be supplied in which case it will be augmented with new
-  names but existing names will not be replaced.
+  names but existing names will not be replaced. Any objects in the initial dictionary
+  must already be fully resolved wrt variable references.
   """
-  if env is None:
-    env = {}
+  partial = {}
+  complete = {}
+  if env is not None:
+    complete.update(env)
+
+  # TODO(gram): we should really report/handle any name collisions between bqmodule UDFs, args
+  # and SQL queries/sources. These currently logically exist in three separate
+  # namespaces so ambiguity is possible. A simple solution for UDFs vs SQL is to always
+  # try do a remove of a name from one when defining the name in the other. For args it
+  # should just be an error if we try define a UDF/query/source object with the same name
+  # as an arg.
 
   # Add the default arguments from the pipeline environment if they aren't defined
-  env.update({key: value for key, value in _get_pipeline_args().iteritems()
-              if key not in env and value is not None})
+  complete.update({key: value for key, value in _get_pipeline_args().iteritems()
+                   if key not in complete and value is not None})
 
-  # Add any sources from the pipeline environment, expanded with what we have so far
-  env.update({key: _bq.query(_bq.sql(str(value), **env))
-              for key, value in _pipeline_environment()[_pipeline_sources].iteritems()
-              if key not in env and isinstance(value, _bq._Query)})
+  # Add any UDFs from the pipeline environment
+  complete.update({key: value
+                   for key, value in _pipeline_environment()[_pipeline_udfs].iteritems()
+                   if key not in complete})
 
-  # Add any queries from the pipeline environment, expanded with what we have so far
-  env.update({key: _bq.query(_bq.sql(str(value), **env))
-              for key, value in _pipeline_environment().iteritems()
-              if key not in env and isinstance(value, _bq._Query)})
-  return env
+  # Add any sources and queries from the pipeline environment. These need to go through
+  # variable resolution so are put in the partial dictionary.
+  partial.update({key: value
+                  for key, value in _pipeline_environment()[_pipeline_sql].iteritems()
+                  if key not in complete})
+
+  return complete, partial
 
 
 def _get_notebook_resolution_environment():
@@ -631,10 +654,64 @@ def _get_notebook_resolution_environment():
   This is the IPython user environment augmented with the pipeline environment.
   """
   ipy = _ipython.get_ipython()
-  # Start with a copy of IPython environment
-  env = {}
-  env.update(ipy.user_ns)
-  return _get_pipeline_resolution_environment(env)
+  return _get_pipeline_resolution_environment(ipy.user_ns)
+
+
+def _resolve(sql, complete, partial):
+  """ Resolve variable references in a query within an environment.
+
+  This computes and resolves the transitive dependencies in the query and raises an
+  exception if that fails due to either undefined or circular references.
+
+  Args:
+    sql: the text of the query to resolve
+    complete: definitions of objects that can be expanded but which have no
+      dependencies themselves (and so must NOT go through expansion to avoid corrupting
+      their content)
+    partial: definitions of bqmodule sql queries which may need to be expanded themselves.
+
+  Returns:
+    A resolved Query object.
+
+  Raises:
+    Exception on failure.
+  """
+  dependencies = _util.Sql.get_dependencies(sql)
+  while len(dependencies) > 0:
+    changed = False
+    for i, dependency in enumerate(dependencies):
+      if dependency in complete:
+        # Has no further dependencies; remove it from dependencies.
+        dependencies[i] = None
+        changed = True
+      elif dependency in partial:
+        # Get the transitive dependencies.
+        sql = partial[dependency].sql
+        deps = _util.Sql.get_dependencies(sql)
+        # If there are none or they are all in turn complete, then this is completable.
+        if len(deps) == 0 or all([d in complete for d in deps]):
+          # Expand and move to complete, and remove from partial and dependencies.
+          complete[dependency] = _bq.query(_bq.sql(sql, **complete))
+          partial.pop(dependency)
+          dependencies[i] = None
+          changed = True
+        else:
+          # Add all non-complete references to dependencies for next iteration.
+          newdeps = [dep for dep in deps if dep not in complete and dep not in dependencies]
+          if len(newdeps):
+            changed = True
+            dependencies.extend(newdeps)
+      else:
+        raise Exception("Unsatisfied dependency %s" % dependency)
+
+    dependencies = [dependency for dependency in dependencies if dependency is not None]
+    if not changed:
+      # We just have dependencies left that are in partial but that can't be satisfied so
+      # they must be circular.
+      raise Exception('Circular dependencies in set %s' % str(dependencies))
+
+  query = _bq.query(_bq.sql(sql, **complete))
+  return query
 
 
 def _sql_cell(args, sql):
@@ -655,23 +732,26 @@ def _sql_cell(args, sql):
 
   try:
     if deployable:
-      # Test for hermeticity
-      _bq.sql(sql, **_get_pipeline_resolution_environment())
+      complete, partial = _get_pipeline_resolution_environment()
+      # Test for hermeticity...
+      _resolve(sql, complete, partial)
+      # ... but record the unexpanded query
+      query = _bq.query(sql)
     else:
       # Non-pipeline; must go through immediate variable expansion.
-      sql = _bq.sql(sql, **_get_notebook_resolution_environment())
+      complete, partial = _get_notebook_resolution_environment()
+      query = _resolve(sql, complete, partial)
   except Exception as e:
     return e
 
-  query = _bq.query(sql)
   variable_name = args['name']
   if variable_name:
     # Update the global namespace with the new variable, or update the value of
     # the existing variable if it already exists.
     if deployable:
-      _bind_name_in_pipeline_environment(variable_name, query)
+      _pipeline_environment()[_pipeline_sql][variable_name] = query
     else:
-      _bind_name_in_notebook_environment(variable_name, query)
+      _notebook_environment()[variable_name] = query
     if 'sample' not in args or not args['sample']:
       return None
   elif deployable:
@@ -747,9 +827,9 @@ def _udf_cell(args, js):
   # Finally build the UDF object
   udf = _bq.udf(inputs, outputs, js)
   if deployable:
-    _bind_name_in_pipeline_environment(variable_name, udf)
+    _pipeline_environment()[_pipeline_udfs][variable_name] = udf
   else:
-    _bind_name_in_notebook_environment(variable_name, udf)
+    _notebook_environment()[variable_name] = udf
 
   return None
 
@@ -759,8 +839,8 @@ def _execute_cell(args, sql):
     if args['query']:
       return "Cannot have a query parameter and a query cell body"
     try:
-      sql = _bq.sql(sql, **_get_notebook_resolution_environment())
-      query = _bq.query(sql)
+      complete, partial = _get_notebook_resolution_environment()
+      query = _resolve(sql, complete, partial)
     except Exception as e:
       return e
   else:
@@ -878,28 +958,37 @@ def _load_cell(args, schema):
 
 
 def _run_cell(args, cell):
-  orig_query = _get_pipeline_item(args['query'])
-  if not orig_query:
-    return "%s does not refer to a query" % args['query']
 
   if args['deployable']:
-    env = _get_pipeline_resolution_environment()
-    env.update(_get_pipeline_args(cell))
+    complete, partial = _get_pipeline_resolution_environment()
+    complete.update(_get_pipeline_args(cell))
   else:
     # IPython environment takes precedence even over cell args, as cell args
     # could resolve to default values.
     # TODO(gram): fix this by creating a copy of the arg parser with all defaults set to None
-    env = _get_notebook_resolution_environment()
-    env.update({key: value for key, value in _get_pipeline_args(cell).iteritems()
-                if value is not None and key not in env})
+    complete, partial = _get_notebook_resolution_environment()
+
+    # Update the environment with the args explicitly set in the cell.
+    cell_args = _get_pipeline_args(cell, explicit_only=True)
+    complete.update({key: value for key, value in cell_args.iteritems()})
+
+    # Update the environment with any default arg values if they are not yet defined.
+    default_args = _get_pipeline_args()
+    complete.update({key: value for key, value in default_args.iteritems()
+                     if key not in complete and key not in partial})
 
   # Perform expansion of the query to a new query
   try:
-    sql = _bq.sql(orig_query.sql, **env)
+    query = complete.get(args['query'], None)
+    if not query:
+      query = partial.get(args['query'], None)
+      if not query:
+        return "%s does not refer to a query" % args['query']
+
+      query = _resolve(query.sql, complete, partial)
     if args['dry']:
-      return sql
+      return query.sql
     else:
-      query = _bq.query(sql)
       # Run it and show results
       return query.execute().results
   except Exception as e:

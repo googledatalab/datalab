@@ -25,6 +25,23 @@ class Sql(object):
     pass
 
   @staticmethod
+  def _get_tokens(sql):
+    # Find escaped '$' characters ($$), or "$<name>" variable references, or
+    # literal sequences of character without any '$' in them (in that order).
+    return re.findall(r'(\$\$)|(\$[a-zA-Z0-9_]+)|([^\$]*)', sql)
+
+  @staticmethod
+  def get_dependencies(sql):
+    """ Return the list of tokens referenced in this SQL. """
+    dependencies = []
+    for (_, placeholder, _) in Sql._get_tokens(sql):
+      if placeholder:
+        variable = placeholder[1:]
+        if variable not in dependencies:
+          dependencies.append(variable)
+    return dependencies
+
+  @staticmethod
   def format(sql, args):
     """Formats SQL statements by replacing named tokens with actual values.
 
@@ -41,15 +58,11 @@ class Sql(object):
       have a corresponding argument value.
     """
 
-    # Find escaped '$' characters ($$), or "$<name>" variable references, or
-    # literal sequences of character without any '$' in them (in that order).
-    tokens = re.findall(r'(\$\$)|(\$[a-zA-Z0-9_]+)|([^\$]*)', sql)
-
     # Rebuild the SQL string, substituting just '$' for escaped $ occurrences,
     # variable references subsituted with their values, or literal text copied
     # over as-is.
     parts = []
-    for (escape, placeholder, literal) in tokens:
+    for (escape, placeholder, literal) in Sql._get_tokens(sql):
       if escape:
         parts.append('$')
       elif placeholder:
