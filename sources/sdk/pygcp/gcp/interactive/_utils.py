@@ -151,9 +151,9 @@ def _get_data(source, fields, first_row, count):
       raise Exception("To get tabular data from a list it must contain dictionaries or lists.")
   elif isinstance(source, pd.DataFrame):
     return _get_data_from_dataframe(source, fields, first_row, count)
-  elif _bq._is_query(source):
+  elif isinstance(source, _bq._Query):
     return _get_data_from_table(source.results(), fields, first_row, count)
-  elif _bq._is_table(source):
+  elif isinstance(source, _bq._Table):
     return _get_data_from_table(source, fields, first_row, count)
   else:
     raise Exception("Cannot chart %s; unsupported object type" % source)
