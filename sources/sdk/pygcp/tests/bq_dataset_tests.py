@@ -42,7 +42,7 @@ class TestCases(unittest.TestCase):
     self._check_name_parts(dataset)
 
   def test_parse_named_tuple_name(self):
-    dataset = self._create_dataset(gcp.bigquery.datasetname('test', 'requestlogs'))
+    dataset = self._create_dataset(gcp.bigquery._utils.DataSetName('test', 'requestlogs'))
     self._check_name_parts(dataset)
 
   def test_parse_tuple_full_name(self):
