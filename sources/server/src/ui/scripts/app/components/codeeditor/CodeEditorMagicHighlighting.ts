@@ -25,26 +25,24 @@ var magicMap:magicTypeMap = {
 };
 
 /**
- *
+ * Map text content to a CodeMirror mode.
  * @param content, string of text, which is used to determine the correct mode.
  * @param fallback, The string name of the mode to be used of no regex matches the passed string,
  *        pass undefined if no highlighting required.
- * @returns {string}, name of the mode, if no match found "python" is returned.
+ * @returns {string}, name of the mode, or the fallback value if there is no match.
  */
-export var magicDetector = function (content:string, fallback?:string):string {
+export var magicDetector = function(content:string, fallback?:string):string {
+  // TODO: Util function to loop through the keys of an object and apply a
+  //       function to the iteration.
 
   // Loop through MIME types.
   for (var mmapKey in magicMap) {
     if (magicMap.hasOwnProperty(mmapKey)) {
-
       // Loop through Regexes associated to those types.
       for (var index = 0; index < magicMap[mmapKey].length; index++) {
-        if (magicMap[mmapKey].hasOwnProperty(index.toString())) {
-
-          var matches:RegExpMatchArray = content.match(magicMap[mmapKey][index]);
-
-          if (matches)
-            return mmapKey;
+        var matches = content.match(magicMap[mmapKey][index]);
+        if (matches) {
+          return mmapKey;
         }
       }
     }
@@ -53,3 +51,4 @@ export var magicDetector = function (content:string, fallback?:string):string {
   // Return fallback if no pattern matched.
   return fallback;
 };
+
