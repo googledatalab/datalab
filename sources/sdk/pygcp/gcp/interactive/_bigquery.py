@@ -51,6 +51,14 @@ def _create_udf_subparser(parser):
   return udf_parser
 
 
+def _create_dryrun_subparser(parser):
+  dryrun_parser = parser.subcommand('dryrun',
+      'Send a query to BQ in dry run mode to receive approximate usage statistics')
+  dryrun_parser.add_argument('-n', '--name',
+      help='the name of the query to be dry run', required=True)
+  return dryrun_parser
+
+
 def _create_execute_subparser(parser):
   execute_parser = parser.subcommand('execute',
       'execute a BigQuery SQL statement sending results to a named table')
@@ -154,6 +162,12 @@ def _create_bigquery_parser():
   sql_parser.set_defaults(
       func=lambda args, cell: _dispatch_handler('sql', args, cell, sql_parser,
                                                 _sql_cell, cell_required=True))
+
+  # %%bigquery dryrun
+  dryrun_parser = _create_dryrun_subparser(parser)
+  dryrun_parser.set_defaults(
+      func=lambda args, cell: _dispatch_handler('dryrun', args, cell, dryrun_parser,
+                                                _dryrun_line, cell_prohibited=True))
 
   # %%bigquery udf
   udf_parser = _create_udf_subparser(parser)
@@ -309,6 +323,27 @@ def _sql_cell(args, sql):
   return query.sample(sampling=sampling)
 
 
+def _dryrun_line(args):
+  """Implements the BigQuery cell magic used to dry run BQ queries.
+
+  The supported syntax is:
+  %bigquery dryrun -n|--name <query identifier>
+
+  Args:
+    args: the argument following '%bigquery dryrun'.
+  Returns:
+    The response wrapped in a DryRunStats object
+  """
+
+  query = _get_item(args['name'])
+
+  if not isinstance(query, _bq._Query):
+    return "Error: %s is not a query!" % args['name']
+
+  result = query.execute_dry_run()
+  return DryRunStats(total_bytes=result['totalBytesProcessed'], is_cached=result['cacheHit'])
+
+
 def _udf_cell(args, js):
   """Implements the bigquery_udf cell magic for ipython notebooks.
 
@@ -430,6 +465,7 @@ def _tables_line(args):
     tables.extend([{'Name': table.full_name} for table in dataset])
 
   return _render_table(tables)
+
 
 def _extract_line(args):
   name = args['source']
@@ -647,5 +683,33 @@ def _register_html_formatters():
   html_formatter.for_type_by_name('gcp.bigquery._udf', 'FunctionEvaluation',
                                   _repr_html_function_evaluation)
 
-
 _register_html_formatters()
+
+
+class DryRunStats:
+  """Used to wrap statistics returned by a dry run query.
+  """
+
+  def __init__(self, total_bytes, is_cached):
+    self.total_bytes = float(total_bytes)
+    self.is_cached = is_cached
+
+  def _repr_html_(self):
+    self.total_bytes = self._size_formatter(self.total_bytes)
+    return """
+    <table>
+      <tr>
+        <td>Approximate size of data scanned by query: %s
+        </td>
+        <td>Is the result cached? %s
+        </td>
+      </tr>
+    </table>
+    """ % (self.total_bytes, "Yes" if self.is_cached else "No")
+
+  def _size_formatter(self, byte_num, suf='B'):
+    for mag in ['', 'K', 'M', 'G', 'T']:
+        if byte_num < 1000.0:
+            return "%3.1f%s%s" % (byte_num, mag, suf)
+        byte_num /= 1000.0
+    return "%.1f%s%s".format(byte_num, 'P', suf)
