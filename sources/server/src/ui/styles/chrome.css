@@ -24,45 +24,59 @@
  *
  */
 
-/* Shell CSS values. Note - variables are not used
-.root {
---HeaderBackgroundColor: #37474f;
---HeaderHeight: 48px;
-
---ActionBarBackgroundColor: #445963;
---ActionBarHeight: 56px;
---ActionButtonHeight: 56px;
---ActionButtonHoverColor: rgba(255,255,255,.05); // overlay on dark background
-
---LeftNavBackground: #f2f2f2;
---LeftNavButtonHeight: 56px;
---LeftNavButtonSelectedColor:rgba(0,0,0,0.1);
---LeftNavButtonHoverColor: rgba(0,0,0,0.05); // overlay on light background
-
---BreadcrumbHeight: 56px;
-
---TabGroupHeight: 56px;
---TabSelectedColor: rgba(0,0,0,0.1);
---TabHoverColor: rgba(255,255,255,.05);
-
---TBodyRowBackground: #f9f9f9;
-
-}
-
-
-
+/**
+ * CSS values/constants used throughout for consistency.
+ *
+ * - HeaderBackgroundColor: #37474f;
+ * - HeaderHeight: 48px;
+ *
+ * - ActionBarBackgroundColor: #445963;
+ * - ActionBarHeight: 56px;
+ * - ActionButtonHeight: 56px;
+ * - ActionButtonHoverColor: rgba(255,255,255,.05); // overlay on dark background
+ *
+ * - LeftNavBackground: #f2f2f2;
+ * - LeftNavButtonHeight: 56px;
+ * - LeftNavButtonSelectedColor:rgba(0,0,0,0.1);
+ * - LeftNavButtonHoverColor: rgba(0,0,0,0.05); // overlay on light background
+ *
+ * - BreadcrumbHeight: 56px;
+ *
+ * - TabGroupHeight: 56px;
+ * - TabSelectedColor: rgba(0,0,0,0.1);
+ * - TabHoverColor: rgba(255,255,255,.05);
+ *
+ * - TBodyRowBackground: #f9f9f9;
  */
 
 html, body {height: 100%; width: 100%; margin: 0; padding: 0;}
 
 body {
-  font-family: 'Roboto', RobotoDraft, "Open Sans","Helvetica Neue",Helvetica,Verdana,Arial,sans-serif;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start; /* align items in Main Axis */
-  align-items: stretch; /* align items in Cross Axis */
-  align-content: stretch; /* Extra space in Cross Axis */
+  font-family: Roboto,RobotoDraft,Verdana,Arial,sans-serif;
   overflow: hidden;
+
+  display: flex;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+
+  flex-direction: column;
+  -ms-flex-direction: column;
+  -webkit-flex-direction: column;
+
+  /* Align items in Main Axis. */
+  justify-content: flex-start;
+  -ms-flex-pack: start;
+  -webkit-justify-content: flex-start;
+
+  /* Align items in Cross Axis. */
+  align-items: stretch;
+  -ms-flex-align: stretch;
+  -webkit-align-items: stretch;
+
+  /* Extra space in Cross Axis. */
+  align-content: stretch;
+  -ms-flex-line-pack: stretch;
+  -webkit-align-content: stretch;
 }
 
 header {
@@ -72,40 +86,65 @@ header {
 }
 
 .navbar {
-  display: -webkit-flex;
-  display: flex;
-  -webkit-flex-basis: 48px;
-  flex-basis: 48px;
-  -webkit-flex-grow: 0;
-  flex-grow: 0;
-  -webkit-flex-shrink: 0;
-  flex-shrink: 0;
-  -webkit-flex-direction: column;
-  flex-direction: column;
   height: 48px;
   padding: 0;
   margin: 0;
   min-height: 48px;
   border: none;
+
+  display: flex;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+
+  flex-basis: 48px;
+  -webkit-flex-basis: 48px;
+  -ms-flex-preferred-size: 48px;
+
+  flex-grow: 0;
+  -webkit-flex-grow: 0;
+  -ms-flex-positive: 0;
+
+  flex-shrink: 0;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+
+  flex-direction: column;
+  -ms-flex-direction: column;
+  -webkit-flex-direction: column;
 }
 .navbar > .navbar-header {
-  -webkit-flex-grow: 0;
-  flex-grow: 0;
-  align-items: center;
   padding: 0;
   margin: 0;
   width: 100%;
+  height:48px;
+  background: #37474f;
+
+  flex-grow: 0;
+  -ms-flex-positive: 0;
+  -webkit-flex-grow: 0;
+
+  align-items: center;
+  -ms-flex-align: center;
+  -webkit-align-items: center;
 }
 .navbar > .navbar-header > *  {
   margin: 0;
-  display: -webkit-flex;
+
   display: flex;
-  -webkit-flex-grow: 0;
+  display: -ms-flex;
+  display: -webkit-flex;
+
   flex-grow: 0;
-  -webkit-flex-shrink: 0;
+  -ms-flex-positive: 0;
+  -webkit-flex-grow: 0;
+
   flex-shrink: 0;
-  -webkit-order: 0;
+  -ms-flex-negative: 0;
+  -webkit-flex-shrink: 0;
+
   order: 0;
+  -ms-flex-order: 0;
+  -webkit-order: 0;
 }
 .navbar > .navbar-header> .navbar-brand {
   display: table-cell;
@@ -127,9 +166,12 @@ header {
 }
 
 .datalab-route-content {
-  flex: 1;
   padding: 0;
   margin: 0;
   width: 100%;
   height: 100%;
+
+  flex: 1;
+  -ms-flex: 1;
+  -webkit-flex: 1;
 }

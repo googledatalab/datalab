@@ -12,7 +12,9 @@
  * the License.
  */
 
-/*File-browsing tree
+
+/* Content/navigation page structure.
+
  datalab-route-content
  |
  |- sidebar-layout
@@ -21,94 +23,111 @@
             |- datalab-top-actionsbar
             |- datalab-sidebar-tab (img, span)
     |- datalab-layout-sidenav-main
-
- */
+*/
 
 
 .datalab-route-content > sidebar-layout {
+  height: 100%;
+  width: 100%;
+
   display: flex;
   display: -ms-flexbox;
   display: -webkit-flex;
   flex-direction: row;
-  -webkit-flex-direction: row;
   -ms-flex-direction: row;
-  height: 100%;
-  width: 100%;
+  -webkit-flex-direction: row;
 }
 
 /* Overall wrapper */
 
 .datalab-leftnav{
-  display: flex;
-  display: -ms-flexbox;
-  display: -webkit-flex;
-  flex-direction: column;
-  -webkit-flex-direction: column;
-  -ms-flex-direction: column;
-  flex: 0 0 240px;
-  -webkit-flex: 0 0 240px;
-  -ms-flex: 0 0 240px;
   margin: 0;
   padding: 0;
   width: 240px;
   height: 100%;
   background: #f2f2f2;
-  box-shadow: inset -1px 0 0 0 rgba(0, 0, 0, 0.22);
-}
 
-.datalab-layout-sidenav-main {
   display: flex;
   display: -ms-flexbox;
   display: -webkit-flex;
+
   flex-direction: column;
-  -webkit-flex-direction: column;
   -ms-flex-direction: column;
-  flex:1;
-  -webkit-flex:1;
-  -ms-flex:1;
+  -webkit-flex-direction: column;
+
+  flex: 0 0 240px;
+  -ms-flex: 0 0 240px;
+  -webkit-flex: 0 0 240px;
+
+  box-shadow: inset -1px 0 0 0 rgba(0, 0, 0, 0.22);
+  -moz-box-shadow: inset -1px 0 0 0 rgba(0, 0, 0, 0.22);
+  -webkit-box-shadow: inset -1px 0 0 0 rgba(0, 0, 0, 0.22);
+}
+
+.datalab-layout-sidenav-main {
   min-width: 400px;
   min-height: 400px;
   width: 100%;
   height:100%;
-}
 
-/**
- * Layout sidenav rules
- */
-
-.datalab-top-actionsbar {
-  flex-basis: 56px;
-  -webkit-flex-basis: 56px;
-  align-items: center;
-  -webkit-align-items: center;
   display: flex;
   display: -ms-flexbox;
   display: -webkit-flex;
-  -webkit-flex-direction: row;
-  -ms-flex-direction: row;
-  background-color: #445963;
+
+  flex-direction: column;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+
+  flex:1;
+  -webkit-flex:1;
+  -ms-flex:1;
+}
+
+/* Layout sidenav rules */
+
+.datalab-top-actionsbar {
   height: 56px;
   margin: 0;
   padding: 0;
+  background-color: #445963;
+
+  /* Define actionbar region as a row list. */
+  display: flex;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+
+  flex-basis: 56px;
+  -webkit-flex-basis: 56px;
+
+  align-items: center;
+  -ms-flex-align: center;
+  -webkit-align-items: center;
+
+  flex-direction: row;
+  -ms-flex-direction: row;
+  -webkit-flex-direction: row;
+
   box-shadow: inset -1px 0 0 0 rgba(0, 0, 0, 0.22);
-  /*define actionbar region as a row list*/
+  -moz-box-shadow: inset -1px 0 0 0 rgba(0, 0, 0, 0.22);
+  -webkit-box-shadow: inset -1px 0 0 0 rgba(0, 0, 0, 0.22);
 }
 
 .datalab-top-actionsbar-actions {
-  display: flex;
-  display: -webkit-flex;
-  -webkit-flex-direction: row;
-  -ms-flex-direction: row;
-  flex-direction: row;
-  float:left;
-  /*position: relative;*/
   margin: 0 16px 0 0;
   padding: 0;
   height: 56px;
+  float:left;
+
+  display: flex;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+
+  flex-direction: row;
+  -ms-flex-direction: row;
+  -webkit-flex-direction: row;
 }
 
 .datalab-headertext {
-  font-family: 'Robot', RobotDraft, "Open Sans", "Helvetica Neue", Helvetica, Verdana, Arial, sans-serif;
   font-size: 18px;
   font-weight: 200;
   line-height: 56px;
@@ -118,15 +137,21 @@
 }
 
 .datalab-sidebar-tab {
-  -webkit-flex-basis: 56px;
-  flex-basis: 56px;
-  -webkit-align-items: center;
-  align-items: center;
-  /*background-color: #616161;*/
-  box-shadow: inset -1px 0 0 0 rgba(0, 0, 0, 0.22);
-  height: 56px;
   display: block;
+  height: 56px;
   padding: 0 24px;
+
+  flex-basis: 56px;
+  -ms-flex-preferred-size: 56px;
+  -webkit-flex-basis: 56px;
+
+  align-items: center;
+  -ms-flex-align: center
+  -webkit-align-items: center;
+
+  box-shadow: inset -1px 0 0 0 rgba(0, 0, 0, 0.22);
+  -moz-box-shadow: inset -1px 0 0 0 rgba(0, 0, 0, 0.22);
+  -webkit-box-shadow: inset -1px 0 0 0 rgba(0, 0, 0, 0.22);
 }
 .datalab-sidebar-tab > span, i {
   font-weight: 400;
@@ -149,25 +174,28 @@
 }
 
 
-
 /* Left nav */
 
-
-
 .datalab-layout-sidenav-sidebar {
-  flex: 1;
-  -webkit-flex: 1;
-  -ms-flex: 1;
   background-color: #f5f5f5;
-  box-shadow: inset -1px 0 0 0 rgba(0, 0, 0, 0.22);
+  height: 100%;
+  min-height: 400px;
+
   display: flex;
   display: -webkit-flex;
   display: -ms-flex;
+
+  flex: 1;
+  -webkit-flex: 1;
+  -ms-flex: 1;
+
   flex-direction: column;
   -webkit-flex-direction: column;
   -ms-flex-direction: column;
-  height: 100%;
-  min-height: 400px;
+
+  box-shadow: inset -1px 0 0 0 rgba(0, 0, 0, 0.22);
+  -moz-box-shadow: inset -1px 0 0 0 rgba(0, 0, 0, 0.22);
+  -webkit-box-shadow: inset -1px 0 0 0 rgba(0, 0, 0, 0.22);
 }
 .datalab-layout-sidenav-sidebar .active .fa {
   color: #2196f3;
@@ -182,10 +210,7 @@
 }
 
 
-
 /* File table region */
-
-
 
 .datalab-file-navigator {
   height: 100%;
@@ -220,7 +245,6 @@
   display: block;
   position: relative;
   height: calc(100% - 56px);
-  /*padding-bottom: 60px;*/
   overflow-y: auto;
 }
 
@@ -235,10 +259,6 @@
 {
   background: rgba(0,0,0,0.005);
 }
-.datalab-navigator-table tr>td:hover
-{
-  /*background: rgba(0,0,0,0.05);*/
-}
 .datalab-navigator-table tr:hover
 {
   background: rgba(0,0,0,0.05);
@@ -249,8 +269,6 @@
 }
 
 /* Flat button style */
-
-
 
 .datalab-flat-button {
   display: inline-block;
@@ -294,15 +312,10 @@
 }
 
 
-
-/* Path breadcrumbs */
-
-
-
+/* Path breadcrumbs. */
 .datalab-filenav-breadcrumbs {
   display:block;
   width: inherit;
-  /*float:left;*/
   font-size: 14px;
   color:#424242;
   height: 56px;
@@ -329,10 +342,7 @@
 }
 
 
-
-/* Toolbar icon at top right plus its dropdown menu */
-
-
+/* Toolbar icon at top right plus its dropdown menu. */
 
 .datalab-toolbar {
   display: inline;
@@ -389,12 +399,7 @@
 }
 
 
-
-
-
 /* Session and file/directory paths in the lists. */
-
-
 
 .datalab-path-link,
 .datalab-path-link:hover {
@@ -426,10 +431,6 @@
   right: 0;
   bottom: 0;
   left: 0;
-  /*filter:alpha(opacity=85);*/
-  /*-moz-opacity:0.85;*/
-  /*-khtml-opacity: 0.75;*/
-  /*opacity: 0.85;*/
   background:rgba(255,255,255,0.85);
 }
 .datalab-modal > .modal-dialog {
@@ -444,13 +445,16 @@
   height: auto;
   padding: 24px 24px;
   border: 1px solid #d3d3d3;
-  -webkit-border-radius: 2;
-  -moz-border-radius: 2;
+
   border-radius: 2px;
+  -moz-border-radius: 2;
+  -webkit-border-radius: 2;
+
   -webkit-background-clip: no-clip;
   -moz-background-clip: no-clip;
-  /*background-clip: no-clip;*/
+
   box-shadow: 0 1px 3px rgba(0,0,0,.12);
+  -moz-box-shadow: 0 1px 3px rgba(0,0,0,.12);
   -webkit-box-shadow: 0 1px 3px rgba(0,0,0,.12);
 }
 .modal-dialog > .modal-content > .modal-header {
@@ -521,7 +525,3 @@
   background-color: #445963;
   border-color: #37474f;
 }
-
-
-/* Modal dialog button style: override bootstrap */
-

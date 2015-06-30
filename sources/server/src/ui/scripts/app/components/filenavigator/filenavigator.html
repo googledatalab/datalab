@@ -1,9 +1,9 @@
 <div class="datalab-file-navigator">
 
-  <!-- Action bar on the very top of the main file table region -->
+  <!-- Action bar on the very top of the main file table region. -->
   <div class="datalab-top-actionsbar">
     <div class="datalab-headertext">Notebooks</div>
-    <!-- CREATE A NOTEBOOK ACTION-->
+    <!-- Create a notebook action. -->
     <div class="datalab-top-actionsbar-actions">
       <div class="datalab-flat-button" ng-click="dropDownVisible = !dropDownVisible">
         <div class="datalab-flat-button-inner">
@@ -13,18 +13,24 @@
         <div class="datalab-dropdown dropdown clearfix">
           <ul ng-class="{'active': dropDownVisible, 'inactive': !dropDownVisible}"
               class="dropdown-menu" role="menu">
+
+            <!-- Create a file. -->
             <li class="datalab-dropdown-item">
               <a ng-click="ctrl.showModal($event, 'datalab-new-notebook-dialog')">
                 <i class="fa fa-file-text"></i>
                 Notebook
               </a>
             </li>
+
+            <!-- Create a folder. -->
+            <!-- Folder creation disabled until supported by backend.
             <li class="datalab-dropdown-item">
               <a ng-click="ctrl.showModal($event, 'datalab-new-folder-dialog')">
                 <i class="fa fa-folder"></i>
                 Folder
               </a>
             </li>
+            -->
           </ul>
         </div>
       </div>
@@ -62,23 +68,23 @@
           <!-- Cell headers. These can be clicked to sort the table. -->
           <th ng-click="ctrl.reSort('relativePath')">
             <div class="datalab-navigator-header">
-          <span ng-class="ctrl.sortIconClass('relativePath')">
-            Path
-          </span>
+              <span ng-class="ctrl.sortIconClass('relativePath')">
+                Path
+              </span>
             </div>
           </th>
           <th ng-click="ctrl.reSort('description')">
             <div class="datalab-navigator-header">
-          <span ng-class="ctrl.sortIconClass('description')" >
-            Type
-          </span>
+              <span ng-class="ctrl.sortIconClass('description')" >
+                Type
+              </span>
             </div>
           </th>
           <th ng-click="ctrl.reSort('lastModified')">
             <div class="datalab-navigator-header">
-          <span ng-class="ctrl.sortIconClass('lastModified')" >
-            Accessed
-          </span>
+              <span ng-class="ctrl.sortIconClass('lastModified')" >
+                Accessed
+              </span>
             </div>
           </th>
           <th>
