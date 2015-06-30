@@ -18,15 +18,19 @@ import collections
 from concurrent.futures import ALL_COMPLETED as _ALL_COMPLETED
 from concurrent.futures import FIRST_COMPLETED as _FIRST_COMPLETED
 from concurrent.futures import TimeoutError as _FuturesTimeoutError
-from concurrent.futures import wait as _wait
+from concurrent.futures import wait as _fwait
 from time import sleep as _sleep
 from traceback import format_exc as _format_exc
 from uuid import uuid4 as _gen_uuid
 
 _JobError = collections.namedtuple('JobError', ['location', 'message', 'reason'])
 
+
 class JobError(_JobError):
   """ A helper class to capture multiple components of Job errors.  """
+
+  def __str__(self):
+    return self.message
 
 
 class Job(object):
@@ -41,18 +45,19 @@ class Job(object):
 
   _POLL_INTERVAL_SECONDS = 5
 
-  def __init__(self, job_id=None, future=None):
+  def __init__(self, job_id=None, future=None, error=None):
     """Initializes an instance of a Job.
 
     Args:
       job_id: a unique ID for the job. If None, a UUID will be generated.
       future: the Future associated with the Job, if any.
+      error: an error to use to initialize a representation of a failed job.
     """
     self._job_id = _gen_uuid() if job_id is None else job_id
     self._future = future
-    self._is_complete = False
+    self._is_complete = error != None
     self._errors = None
-    self._fatal_error = None
+    self._fatal_error = error
     self._result = None
 
   @property
@@ -124,19 +129,18 @@ class Job(object):
     """ Get the state of a job. Must be overridden by derived Job classes
         for Jobs that don't use a Future.
     """
-    if not self._future:
-      raise Exception('Please implement this in the derived class')
-
     if self._is_complete:
       return
+
+    if not self._future:
+      raise Exception('Please implement this in the derived class')
 
     if self._future.done():
       self._is_complete = True
       try:
         self._result = self._future.result()
       except Exception as e:
-        error = JobError(location=_format_exc(), message=e.message, reason=str(type(e)))
-        self._fatal_error = Exception(error)
+        self._fatal_error = JobError(location=_format_exc(), message=e.message, reason=str(type(e)))
 
   def _timeout(self):
     """ Helper for rasing timeout errors. """
@@ -173,12 +177,12 @@ class Job(object):
     state = 'in progress'
     if self.is_complete:
       if self.failed:
-        state = 'failed with error: %s' % self._fatal_error
+        state = 'failed with error: %s' % str(self._fatal_error)
       elif self._errors:
         state = 'completed with some non-fatal errors'
       else:
         state = 'completed'
-    return 'Job %s (%s)' % (self._job_id, state)
+    return 'Job %s %s' % (self._job_id, state)
 
   @staticmethod
   def _wait(jobs, timeout, return_when):
@@ -212,7 +216,7 @@ class Job(object):
       if len(futures) == 0:
         _sleep(Job._POLL_INTERVAL_SECONDS)
       else:
-        _wait(futures, timeout=Job._POLL_INTERVAL_SECONDS, return_when=return_when)
+        _fwait(futures, timeout=Job._POLL_INTERVAL_SECONDS, return_when=return_when)
 
   @staticmethod
   def wait_any(jobs, timeout=None):
@@ -222,9 +226,7 @@ class Job(object):
       jobs: a Job or list of Jobs to wait on.
       timeout: a timeout in seconds to wait for. None (the default) means no timeout.
     Returns:
-      A Job that has now completed or None if there were no jobs.
-    Raises:
-      TimeoutError on timeout.
+      A list of the jobs that have now completed or None if there were no jobs.
 
     """
     return Job._wait(jobs, timeout, _FIRST_COMPLETED)
@@ -236,8 +238,8 @@ class Job(object):
     Args:
       jobs: a Job or list of Jobs to wait on.
       timeout: a timeout in seconds to wait for. None (the default) means no timeout.
-    Raises:
-      TimeoutError on timeout.
+    Returns:
+      A list of the jobs that have now completed or None if there were no jobs.
     """
     return Job._wait(jobs, timeout, _ALL_COMPLETED)
 

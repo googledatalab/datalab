@@ -102,8 +102,23 @@ class Http(object):
           return content
         return json.loads(content)
       else:
-        raise Exception(('HTTP request failed.', response.status, content))
+        raise RequestException(response.status, content)
     except ValueError:
       raise Exception('Failed to process HTTP response.')
     except httplib2.HttpLib2Error:
       raise Exception('Failed to send HTTP request.')
+
+
+class RequestException(Exception):
+
+  def __init__(self, status, content):
+    self.status = status
+    self.content = content
+    try:
+      self.message = json.loads(content)['error']['errors'][0]['message']
+    except Exception:
+      self.message = 'HTTP request failed'
+
+  def __str__(self):
+    return self.message
+

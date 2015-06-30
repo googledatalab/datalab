@@ -52,14 +52,14 @@ class Job(_Job):
           location = error_result.get('location', None)
           message = error_result.get('message', None)
           reason = error_result.get('reason', None)
-          self._fatal_error = Exception(_JobError(location, message, reason))
+          self._fatal_error = _JobError(location, message, reason, None)
         if 'errors' in status:
           self._errors = []
           for error in status['errors']:
             location = error.get('location', None)
             message = error.get('message', None)
             reason = error.get('reason', None)
-            self._errors.append(_JobError(location, message, reason))
+            self._errors.append(_JobError(location, message, reason, None))
 
 
 

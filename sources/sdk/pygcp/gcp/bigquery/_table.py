@@ -20,11 +20,14 @@ from datetime import datetime
 import math
 import pandas as pd
 import time
+from traceback import format_exc as _format_exc
 import uuid
 
 from gcp._util import Iterator as _Iterator
+from gcp._util import Job as _Job
+from gcp._util import JobError as _JobError
 from gcp._util import async_method
-from ._job import Job as _Job
+from ._job import Job as _BQJob
 from ._parser import Parser as _Parser
 from ._utils import parse_table_name as _parse_table_name
 
@@ -524,14 +527,14 @@ class Table(object):
     return self
 
   def _init_job_from_response(self, response):
-    """ Helper function to create a Job instance. """
+    """ Helper function to create a Job instance from a response. """
     job = None
     if response and 'jobReference' in response:
-      job = _Job(self._api, response['jobReference']['jobId'])
+      job = _BQJob(self._api, job_id=response['jobReference']['jobId'])
     return job
 
-  def extract(self, destination, format='CSV', compress=False, field_delimiter=',',
-              print_header=True):
+  def extract_async(self, destination, format='CSV', compress=False, field_delimiter=',',
+                    print_header=True):
     """Runs a job to export the table to GCS.
 
     Args:
@@ -545,16 +548,16 @@ class Table(object):
     Returns:
       A Job object for the export Job if it was started successfully; else None.
     """
-    response = self._api.table_extract(self._name_parts, destination, format, compress,
-                                       field_delimiter, print_header)
-    job = self._init_job_from_response(response)
-    if job is not None:
-      job.wait()
-    return job
+    try:
+      response = self._api.table_extract(self._name_parts, destination, format, compress,
+                                         field_delimiter, print_header)
+      return self._init_job_from_response(response)
+    except Exception as e:
+      error = _JobError(location=_format_exc(), message=e.message, reason=str(type(e)))
+      return _Job(error=error)
 
-  @async_method
-  def extract_async(self, destination, format='CSV', compress=False, field_delimiter=',',
-                    print_header=True):
+  def extract(self, destination, format='CSV', compress=False, field_delimiter=',',
+              print_header=True):
     """Exports the table to GCS; blocks until complete.
 
     Args:
@@ -568,8 +571,11 @@ class Table(object):
     Returns:
       A Job object for the export Job if it was started successfully; else None.
     """
-    return self.extract_async(destination, format=format, compress=compress,
-                              field_delimiter=field_delimiter, print_header=print_header)
+    job = self.extract(destination, format=format, compress=compress,
+                       field_delimiter=field_delimiter, print_header=print_header)
+    if job is not None:
+      job.wait()
+    return job
 
   def load_async(self, source, append=False, overwrite=False, source_format='CSV',
                  field_delimiter=',', allow_jagged_rows=False, allow_quoted_newlines=False,
