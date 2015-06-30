@@ -5,13 +5,9 @@
     <div class="datalab-editor-notebook col-sm-9 col-md-9 col-lg-9">
       <div class="datalab-top-actionsbar">
         <!-- Notebook title/renaming widget -->
-        <!--<div class="col-sm-6 col-md-4 col-lg-3">-->
         <datalab-notebook-title></datalab-notebook-title>
-        <!--</div>-->
         <!-- Notebook-level controls widget -->
-        <!--<div class="col-sm-6 col-md-8 col-lg-9">-->
         <datalab-notebook-toolbar></datalab-notebook-toolbar>
-        <!--</div>-->
       </div>
       <datalab-worksheet-editor
         worksheet="pageCtrl.notebook.activeWorksheet">
@@ -38,14 +34,20 @@
           </ul>
         </div>
       </div>
+
+      <!-- Outline tab content -->
       <div class="datalab-editor-tab-content" ng-show="pageCtrl.tab=='outline'">
-        <p>TODO: outline content</p>
+        <p>Outline</p>
       </div>
+
+      <!-- Test tab content -->
       <div class="datalab-editor-tab-content" ng-show="pageCtrl.tab=='test'">
-        <p>TODO: test content</p>
+        <p>Test</p>
       </div>
+
+      <!-- Deploy tab content -->
       <div class="datalab-editor-tab-content" ng-show="pageCtrl.tab=='deploy'">
-        <p>TODO: deploy content</p>
+        <p>Deploy</p>
       </div>
 
     </div>
