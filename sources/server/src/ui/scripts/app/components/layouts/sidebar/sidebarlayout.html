@@ -1,30 +1,23 @@
-<div class="container-fluid">
-  <div class="row">
-    <div class="col-xs-4 col-sm-3 col-md-2 col-lg-1 datalab-layout-sidenav-sidebar">
-      <a href="/#/notebooks"
-          class="datalab-sidebar-tab" 
-          ng-class="{ 'active': activeTab == '/notebooks', 'inactive': activeTab != '/notebooks'}"
-          ng-click="activeTab = '/notebooks'">
-        <i class="fa fa-3x fa-file-text">
-        </i>
-        <span>
-          Notebooks
-        </span>
-      </a>
-      
-      <a ng-href="/#/sessions"
-          class="datalab-sidebar-tab" 
-          ng-class="{ 'active': activeTab == '/sessions', 'inactive': activeTab != '/sessions'}"
-          ng-click="activeTab = '/sessions'">
-        <i class="fa fa-3x fa-exchange">
-        </i>
-        <span>
-          Sessions
-        </span>
-      </a>
+<div class="datalab-leftnav">
+  <div class="datalab-layout-sidenav-sidebar">
+    <div class="datalab-top-actionsbar">
+      <div class="datalab-headertext">Datalab</div>
     </div>
-    <div class="col-xs-8 col-xs-offset-4 col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 col-lg-11 col-lg-offset-1 datalab-layout-sidenav-main" ng-transclude>
-      <!-- Main content is transcluded here -->
-    </div>
+    <a href="/#/notebooks" class="datalab-sidebar-tab"
+       ng-class="{ 'active': activeTab == '/notebooks', 'inactive': activeTab != '/notebooks'}"
+       ng-click="activeTab = '/notebooks'">
+      <img src="assets/iconFiles.svg" alt="Notebooks"/>
+      <span>Notebooks</span>
+    </a>
+    <a ng-href="/#/sessions" class="datalab-sidebar-tab"
+       ng-class="{ 'active': activeTab == '/sessions', 'inactive': activeTab != '/sessions'}"
+       ng-click="activeTab = '/sessions'">
+      <img src="assets/iconSessions.svg" alt="Sessions"/>
+      <span>Sessions</span>
+    </a>
   </div>
+</div>
+
+<div class="datalab-layout-sidenav-main" ng-transclude>
+  <!-- Main content is transcluded here -->
 </div>

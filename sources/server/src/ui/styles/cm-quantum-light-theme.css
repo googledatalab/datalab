@@ -1,7 +1,7 @@
 /**
  * Quantum-based palette for CodeMirror syntax highlighting.
  */
-.cm-s-quantum-light.CodeMirror { color: #999; background-color: #F5F5F5; }
+.cm-s-quantum-light.CodeMirror { color: #999; background-color: #F9F9F9; }
 .cm-s-quantum-light .CodeMirror-selected { background: #cfc !important; }
 
 .cm-s-quantum-light .CodeMirror-gutters { background: #f8f8f8; border-left: 6px solid rgba(0,83,159,0.65); color: #333; }
