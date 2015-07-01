@@ -147,7 +147,7 @@
 
   align-items: center;
   -ms-flex-align: center
-  -webkit-align-items: center;
+-webkit-align-items: center;
 
   box-shadow: inset -1px 0 0 0 rgba(0, 0, 0, 0.22);
   -moz-box-shadow: inset -1px 0 0 0 rgba(0, 0, 0, 0.22);
@@ -219,7 +219,7 @@
 .datalab-file-navigator-header {
   display: block;
   padding: 0;
-  font-size: 13px;
+  font-size: 14px;
   height: calc(100% - 104px);
   border-bottom: thin solid #f2f2f2;
 }
@@ -244,8 +244,12 @@
 .datalab-table-scroller {
   display: block;
   position: relative;
+  padding-top: 20px;
   height: calc(100% - 56px);
   overflow-y: auto;
+}
+.datalab-file-navigator-header > .datalab-table-scroller {
+  padding-top: 0px;
 }
 
 .datalab-table-tbody > tr > td:nth-child(1) {
@@ -257,9 +261,10 @@
 }
 .table-striped>tbody>tr:nth-child(odd)>td
 {
-  background: rgba(0,0,0,0.005);
+  background: rgba(0,0,0,0.015);
 }
-.datalab-navigator-table tr:hover
+.datalab-navigator-table tr:hover,
+.datalab-navigator-table tr>td:hover
 {
   background: rgba(0,0,0,0.05);
 }
@@ -405,14 +410,13 @@
 .datalab-path-link:hover {
   color: #333;
   display: inline;
-  font-family: 'open sans', arial, sans-serif;
 }
 .datalab-path-link:hover {
   text-decoration: underline;
 }
 .datalab-path-link .fa {
   color: #445963;
-  margin-right: 6px;
+  margin-right: 12px;
 }
 
 .datalab-modal {
