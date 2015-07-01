@@ -175,3 +175,13 @@ header {
   -ms-flex: 1;
   -webkit-flex: 1;
 }
+
+button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: default;
+}
+button:focus {
+  outline: none;
+}

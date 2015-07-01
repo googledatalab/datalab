@@ -71,11 +71,15 @@
 
 .datalab-worksheet-editor {
   display: block;
+  font-family: 'Open Sans',sans-serif,Roboto,RobotoDraft,Verdana,Arial,'Helvetica Neue',Helvetica;
   width: 100%;
   height: inherit;
   overflow-y: auto;
   padding: 24px;
   margin: 0;
+}
+.datalab-worksheet-editor h1 h2 h3 h4 h5 h6 {
+  font-weight: 200;
 }
 
 

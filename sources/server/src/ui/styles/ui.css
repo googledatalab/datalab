@@ -281,9 +281,12 @@
   position: relative;
   color: white;
   cursor: pointer;
+  font-size: 13px;
   vertical-align: middle;
   padding: 2px 8px 0 8px;
   margin: 0px 4px 0 0;
+  text-transform: uppercase;
+  text-decoration: none;
 }
 .datalab-flat-button:hover {
   background: rgba(255,255,255,.05);
@@ -308,12 +311,8 @@
 }
 .datalab-flat-button-text {
   display: inline;
-  font-size: 13px;
-  color:#FFFFFF;
-  text-decoration: none;
   margin-left: 2px;
   vertical-align: middle;
-  text-transform: uppercase;
 }
 
 
