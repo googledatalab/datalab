@@ -5,35 +5,17 @@
     <div class="datalab-headertext">Notebooks</div>
     <!-- Create a notebook action. -->
     <div class="datalab-top-actionsbar-actions">
-      <div class="datalab-flat-button" ng-click="dropDownVisible = !dropDownVisible">
-        <div class="datalab-flat-button-inner">
-          <img src="assets/iconAdd.svg" width="16px" height="16px" alt="Create a notebook"/>
-          <div class="datalab-flat-button-text">Create</div>
-        </div>
-        <div class="datalab-dropdown dropdown clearfix">
-          <ul ng-class="{'active': dropDownVisible, 'inactive': !dropDownVisible}"
-              class="dropdown-menu" role="menu">
+      <button class="datalab-flat-button"
+              ng-click="ctrl.showModal($event, 'datalab-new-notebook-dialog')">
+        <img src="assets/iconAdd.svg" alt="Create a notebook" width="16px" height="16px"/>
+        <div class="datalab-flat-button-text">Create a notebook</div>
+      </button>
 
-            <!-- Create a file. -->
-            <li class="datalab-dropdown-item">
-              <a ng-click="ctrl.showModal($event, 'datalab-new-notebook-dialog')">
-                <i class="fa fa-file-text"></i>
-                Notebook
-              </a>
-            </li>
-
-            <!-- Create a folder. -->
-            <!-- Folder creation disabled until supported by backend.
-            <li class="datalab-dropdown-item">
-              <a ng-click="ctrl.showModal($event, 'datalab-new-folder-dialog')">
-                <i class="fa fa-folder"></i>
-                Folder
-              </a>
-            </li>
-            -->
-          </ul>
-        </div>
-      </div>
+      <button class="datalab-flat-button"
+              ng-click="ng-click="ctrl.showModal($event, 'datalab-new-folder-dialog')">
+      <img src="assets/iconAdd.svg" alt="Create a notebook" width="16px" height="16px"/>
+      <div class="datalab-flat-button-text">Create a folder</div>
+      </button>
     </div>
   </div>
 

@@ -1,45 +1,45 @@
 <div class="datalab-notebook-toolbar">
     <!-- New code cell -->
-    <div class="datalab-flat-button"
-         ng-click="notebook.addCell('code', notebook.activeWorksheet.id, notebook.activeCell.id)">
+    <button class="datalab-flat-button"
+            ng-click="notebook.addCell('code', notebook.activeWorksheet.id, notebook.activeCell.id)">
         <img src="assets/iconAdd.svg" alt="Add a cell" width="16px" height="16px"/>
         <div class="datalab-flat-button-text">Cell</div>
-    </div>
+    </button>
 
     <!-- New markdown cell -->
-    <div class="datalab-flat-button"
-         ng-click="notebook.addCell('markdown', notebook.activeWorksheet.id, notebook.activeCell.id)">
+    <button class="datalab-flat-button"
+            ng-click="notebook.addCell('markdown', notebook.activeWorksheet.id, notebook.activeCell.id)">
         <img src="assets/iconAdd.svg" alt="Add a markdown" width="16px" height="16px"/>
         <div class="datalab-flat-button-text">Markdown</div>
-    </div>
+    </button>
 
     <!-- New heading cell -->
-    <div class="datalab-flat-button"
-         ng-click="notebook.addCell('heading', notebook.activeWorksheet.id, notebook.activeCell.id)">
+    <button class="datalab-flat-button"
+            ng-click="notebook.addCell('heading', notebook.activeWorksheet.id, notebook.activeCell.id)">
         <img src="assets/iconAdd.svg" alt="Add a heading" width="16px" height="16px"/>
         <div class="datalab-flat-button-text">Heading</div>
-    </div>
+    </button>
 
     <span class="datalab-toolbar-divider">&nbsp;</span>
 
     <!-- Execute all cells -->
-    <div class="datalab-flat-button"
-         ng-click="notebook.executeCells()">
+    <button class="datalab-flat-button"
+            ng-click="notebook.executeCells()">
         <img src="assets/iconRun.svg" alt="Run all" width="16px" height="16px"/>
         <div class="datalab-flat-button-text">Run</div>
-    </div>
+    </button>
 
     <!-- Clear all cell outputs -->
-    <div class="datalab-flat-button"
-         ng-click="notebook.clearOutputs()">
+    <button class="datalab-flat-button"
+            ng-click="notebook.clearOutputs()">
         <img src="assets/iconClearOutput.svg" alt="Clear output" width="16px" height="16px"/>
         <div class="datalab-flat-button-text">CLEAR</div>
-    </div>
+    </button>
 
     <!-- Reset the session (kernel) state -->
-    <div class="datalab-flat-button"
-         ng-click="session.reset(notebook.notebookPath)">
+    <button class="datalab-flat-button"
+            ng-click="session.reset(notebook.notebookPath)">
         <img src="assets/iconRestart.svg" alt="Reset kernel" width="16px" height="16px"/>
         <div class="datalab-flat-button-text">RESET</div>
-    </div>
+    </button>
 </div>
