@@ -47,7 +47,7 @@
 }
 
 .datalab-editor-body {
-  background-color: #f0f0f0;
+  background-color: #e7e7e7;
   margin: 0px;
   padding: 0px;
 }
@@ -61,9 +61,9 @@
   /* Make the notebook editor sit on top of the side panel */
   z-index: 1;
 
-  -webkit-box-shadow: 3px 3px 10px 0px rgba(0,0,0,0.12);
-  -moz-box-shadow: 3px 3px 10px 0px rgba(0,0,0,0.12);
-  box-shadow: 3px 3px 10px 0px rgba(0,0,0,0.12);
+  -webkit-box-shadow: inset -1px 0 0 0 rgba(0, 0, 0, 0.22), 2px 0px 8px 0px rgba(0,0,0,0.3);
+  -moz-box-shadow: inset -1px 0 0 0 rgba(0, 0, 0, 0.22), 2px 0px 8px 0px rgba(0,0,0,0.3);
+  box-shadow:  inset -1px 0 0 0 rgba(0, 0, 0, 0.22), 2px 0px 8px 0px rgba(0,0,0,0.3);
 }
 
 
@@ -90,12 +90,15 @@
   width: 160px;
 
   /* Move to the right edge of the edit region, minus the toolbar width. */
-  left: -moz-calc(100% - 115px);
-  left: -webkit-calc(100% - 115px);
-  left: -o-calc(100% - 115px);
-  left: calc(100% - 115px);
+  /*left: -moz-calc(100% - 115px);*/
+  /*left: -webkit-calc(100% - 115px);*/
+  /*left: -o-calc(100% - 115px);*/
+  /*left: calc(100% - 115px);*/
 
-  top: -30px;
+  /*top: -30px;*/
+
+  top: -26px;
+  right: 0px;
 
   cursor:pointer;
 }
@@ -105,7 +108,7 @@
 
 .datalab-editor-cell {
   padding: 0;
-  margin: 16px 0;
+  margin: 24px 0;
   width: 100%;
 }
 
@@ -215,14 +218,14 @@
 
 .datalab-editor-cell-outputs {
   /* Add horizontal padding to output region so that it aligns with edit region */
-  padding: 0 30px;
+  padding: 16px 30px;
 }
 
 /* Displays a drop shadow around the active cell. */
 .datalab-editor-cell-active {
-  -webkit-box-shadow: 3px 3px 10px 0px rgba(153,153,153,1);
-  -moz-box-shadow: 3px 3px 10px 0px rgba(153,153,153,1);
-  box-shadow: 3px 3px 10px 0px rgba(153,153,153,1);
+  -webkit-box-shadow:  0px 0px 6px 0px rgba(0,0,0,0.25);
+  -moz-box-shadow:  0px 0px 6px 0px rgba(0,0,0,0.25);
+  box-shadow:  0px 0px 6px 0px rgba(0,0,0,0.25);
 }
 
 .datalab-editor-cell-controls:hover {
