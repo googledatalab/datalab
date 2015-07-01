@@ -47,19 +47,18 @@ class Job(object):
 
   _POLL_INTERVAL_SECONDS = 5
 
-  def __init__(self, job_id=None, future=None, error=None):
+  def __init__(self, job_id=None, future=None):
     """Initializes an instance of a Job.
 
     Args:
       job_id: a unique ID for the job. If None, a UUID will be generated.
       future: the Future associated with the Job, if any.
-      error: an error to use to initialize a representation of a failed job.
     """
     self._job_id = _gen_uuid() if job_id is None else job_id
     self._future = future
-    self._is_complete = error != None
+    self._is_complete = False
     self._errors = None
-    self._fatal_error = error
+    self._fatal_error = None
     self._result = None
 
   @property
