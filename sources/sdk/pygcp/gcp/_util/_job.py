@@ -14,7 +14,6 @@
 
 """Implements Job functionality for async tasks."""
 
-import collections
 from concurrent.futures import ALL_COMPLETED as _ALL_COMPLETED
 from concurrent.futures import FIRST_COMPLETED as _FIRST_COMPLETED
 from concurrent.futures import TimeoutError as _FuturesTimeoutError
@@ -23,11 +22,14 @@ from time import sleep as _sleep
 from traceback import format_exc as _format_exc
 from uuid import uuid4 as _gen_uuid
 
-_JobError = collections.namedtuple('JobError', ['location', 'message', 'reason'])
 
-
-class JobError(_JobError):
+class JobError(Exception):
   """ A helper class to capture multiple components of Job errors.  """
+
+  def __init__(self, location, message, reason):
+    self.location = location
+    self.message = message
+    self.reason = reason
 
   def __str__(self):
     return self.message

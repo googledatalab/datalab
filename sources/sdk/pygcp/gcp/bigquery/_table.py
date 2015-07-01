@@ -553,8 +553,7 @@ class Table(object):
                                          field_delimiter, print_header)
       return self._init_job_from_response(response)
     except Exception as e:
-      error = _JobError(location=_format_exc(), message=e.message, reason=str(type(e)))
-      return _Job(error=error)
+      raise _JobError(location=_format_exc(), message=e.message, reason=str(type(e)))
 
   def extract(self, destination, format='CSV', compress=False, field_delimiter=',',
               print_header=True):
@@ -571,8 +570,8 @@ class Table(object):
     Returns:
       A Job object for the export Job if it was started successfully; else None.
     """
-    job = self.extract(destination, format=format, compress=compress,
-                       field_delimiter=field_delimiter, print_header=print_header)
+    job = self.extract_async(destination, format=format, compress=compress,
+                             field_delimiter=field_delimiter, print_header=print_header)
     if job is not None:
       job.wait()
     return job
