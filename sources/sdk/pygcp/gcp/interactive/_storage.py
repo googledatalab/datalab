@@ -104,6 +104,9 @@ def _expand_list(names):
     Currently we support wildchars in the key name only.
   """
 
+  if isinstance(names, basestring):
+    names = [names]
+
   results = []  # The expanded list.
   items = {}  # Cached contents of buckets; used for matching.
   for name in names:
@@ -114,7 +117,7 @@ def _expand_list(names):
         # Just a bucket; add it.
         results.append('gs://%s' % bucket)
       elif _storage.item(bucket, key).exists():
-        results.append('gs://%s/%s', bucket, key)
+        results.append('gs://%s/%s' % (bucket, key))
       else:
         # Expand possible key values.
         if bucket not in items and key[:1] == '*':
