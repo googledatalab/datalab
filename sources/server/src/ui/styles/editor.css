@@ -92,19 +92,10 @@
   position: absolute;
   visibility: hidden;
   width: 160px;
-
-  /* Move to the right edge of the edit region, minus the toolbar width. */
-  /*left: -moz-calc(100% - 115px);*/
-  /*left: -webkit-calc(100% - 115px);*/
-  /*left: -o-calc(100% - 115px);*/
-  /*left: calc(100% - 115px);*/
-
-  /*top: -30px;*/
-
-  top: -26px;
+  top: 0px;
   right: 0px;
-
   cursor:pointer;
+  z-index: 9999;
 }
 
 
@@ -336,12 +327,21 @@
 }
 
 .datalab-notebook-toolbar {
-  right: 0;
-  display: inline-block;
   position: absolute;
-  line-height: 56px;
-  vertical-align: middle;
-  margin: 0 16px;
+  right: 16px;
+  height: 56px;
+
+  display: flex;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+
+  align-items: center;
+  -ms-flex-align: center;
+  -webkit-align-items: center;
+
+  flex-direction: row;
+  -ms-flex-direction: row;
+  -webkit-flex-direction: row;
 }
 
 .datalab-toolbar-button {
