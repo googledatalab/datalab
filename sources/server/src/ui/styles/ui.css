@@ -113,14 +113,21 @@
 }
 
 .datalab-top-actionsbar-actions {
-  margin: 0 16px 0 0;
+  margin: 0;
   padding: 0;
   height: 56px;
-  float:left;
+
+  flex: 1;
+  -ms-flex: 1;
+  -webkit-flex: 1;
 
   display: flex;
   display: -ms-flexbox;
   display: -webkit-flex;
+
+  align-items: center;
+  -ms-flex-align: center;
+  -webkit-align-items: center;
 
   flex-direction: row;
   -ms-flex-direction: row;
@@ -272,19 +279,19 @@
 .table>thead > tr >th:nth-child(1){
   padding-left:24px;
 }
+.table>tbody>tr>td {
+  padding: 0;
+  height: 44px;
+  vertical-align: middle;
+}
+
 
 /* Flat button style */
 
 .datalab-flat-button {
-  display: inline-block;
-  float: left;
-  position: relative;
   color: white;
-  cursor: pointer;
   font-size: 13px;
-  vertical-align: middle;
-  padding: 2px 8px 0 8px;
-  margin: 0px 4px 0 0;
+  height: 28px;
   text-transform: uppercase;
   text-decoration: none;
 }
@@ -315,6 +322,25 @@
   vertical-align: middle;
 }
 
+.datalab-table-inline-button{
+  border-radius: 2px;
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  padding: 2px;
+  margin: 0 4px;
+  vertical-align: middle;
+  cursor: pointer;
+}
+.datalab-table-inline-button > img {
+  line-height: 24px;
+  vertical-align: middle;
+  width: 20px;
+  height: 20px;
+}
+.datalab-table-inline-button:hover {
+  background-color: rgba(0,0,0,0.05);
+}
 
 /* Path breadcrumbs. */
 .datalab-filenav-breadcrumbs {
@@ -403,19 +429,23 @@
 }
 
 
-/* Session and file/directory paths in the lists. */
+/* Table first column style */
 
-.datalab-path-link,
-.datalab-path-link:hover {
+.datalab-path-link {
   color: #333;
-  display: inline;
+  cursor: pointer;
+  display: inline-block;
 }
 .datalab-path-link:hover {
   text-decoration: underline;
+  color: #000000;
 }
-.datalab-path-link .fa {
-  color: #445963;
+.datalab-path-link > img {
+  width: 20px;
+  height: 20px;
   margin-right: 12px;
+  line-height: 24px;
+  vertical-align: middle;
 }
 
 .datalab-modal {

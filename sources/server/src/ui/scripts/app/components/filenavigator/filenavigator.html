@@ -7,13 +7,13 @@
     <div class="datalab-top-actionsbar-actions">
       <button class="datalab-flat-button"
               ng-click="ctrl.showModal($event, 'datalab-new-notebook-dialog')">
-        <img src="assets/iconAdd.svg" alt="Create a notebook" width="16px" height="16px"/>
+        <img src="assets/iconAdd.svg" alt="Create a notebook"/>
         <div class="datalab-flat-button-text">Create a notebook</div>
       </button>
 
       <button class="datalab-flat-button"
               ng-click="ng-click="ctrl.showModal($event, 'datalab-new-folder-dialog')">
-      <img src="assets/iconAdd.svg" alt="Create a notebook" width="16px" height="16px"/>
+      <img src="assets/iconAdd.svg" alt="Create a notebook"/>
       <div class="datalab-flat-button-text">Create a folder</div>
       </button>
     </div>
@@ -70,8 +70,7 @@
             </div>
           </th>
           <th>
-            <i class="datalab-navigator-trash fa fa-trash">
-            </i>
+            &nbsp;
           </th>
         </tr>
         </thead>
@@ -87,13 +86,13 @@
             <a class="datalab-path-link" ng-if="!resource.isDirectory"
                ng-href="'/#/notebooks' + resource.path"
                ng-click="ctrl.handleClick($event, resource)">
-              <i class="fa fa-file-text"></i>
-              {{resource.relativePath}}
+              <img src="assets/iconFileInline.svg" alt="File">
+              <span>{{resource.relativePath}}</span>
             </a>
             <div class="datalab-path-link" ng-if="resource.isDirectory"
                  ng-click="ctrl.handleClick($event, resource)">
-              <i class="fa fa-folder"></i>
-              {{resource.relativePath}}
+              <img src="assets/iconFolder.svg" alt="Folder">
+              <span>{{resource.relativePath}}</span>
             </div>
           </td>
 
@@ -105,9 +104,9 @@
             {{ctrl.ageMessage(resource.lastModified)}}
           </td>
           <td>
-            <i class="datalab-navigator-trash fa fa-trash"
-               ng-click="ctrl.deleteResource(resource)">
-            </i>
+            <button class="datalab-table-inline-button"  ng-click="ctrl.deleteResource(resource)">
+              <img src="assets/iconDelete.svg">
+            </button>
         </tr>
         </tbody>
       </table>
