@@ -175,3 +175,20 @@ header {
   -ms-flex: 1;
   -webkit-flex: 1;
 }
+
+button {
+  background: none;
+  border: none;
+  border-radius: 2px;
+  cursor: default;
+  padding: 6px;
+  margin: 0 4px;
+}
+button > img {
+  width: 16px;
+  height: 16px;
+}
+button:focus {
+  outline: none;
+}
+
