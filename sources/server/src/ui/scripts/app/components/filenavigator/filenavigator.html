@@ -3,14 +3,16 @@
   <!-- Action bar on the very top of the main file table region. -->
   <div class="datalab-top-actionsbar">
     <div class="datalab-headertext">Notebooks</div>
-    <!-- Create a notebook action. -->
+
     <div class="datalab-top-actionsbar-actions align-left">
+      <!-- Create a notebook action. -->
       <button class="datalab-flat-button"
               ng-click="ctrl.showModal($event, 'datalab-new-notebook-dialog')">
         <img src="assets/iconAdd.svg" alt="Create a notebook"/>
         <div class="datalab-flat-button-text">Notebook</div>
       </button>
 
+      <!-- Create a folder. -->
       <!-- <button class="datalab-flat-button"
               ng-click="ctrl.showModal($event, 'datalab-new-folder-dialog')">
       <img src="assets/iconAdd.svg" alt="Create a notebook"/>
@@ -82,13 +84,11 @@
             ng-dblclick="ctrl.handleClick(null, resource)">
 
           <td>
-            <!--  This doesn't work for directories as the router doesn't currently handle nested
-              paths, but if that changes we can use <a> elements for them too  -->
             <a class="datalab-path-link" ng-if="!resource.isDirectory"
                ng-href="'/#/notebooks' + resource.path"
                ng-click="ctrl.handleClick($event, resource)">
               <img src="assets/iconFileInline.svg" alt="File">
-              <span>{{resource.relativePath}}</span>
+              <span>{{resource.relativePath | basename}}</span>
             </a>
             <div class="datalab-path-link" ng-if="resource.isDirectory"
                  ng-click="ctrl.handleClick($event, resource)">

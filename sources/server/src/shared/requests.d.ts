@@ -30,6 +30,16 @@ declare module app {
     }
 
     /**
+     * Response object for resource creation.
+     */
+    interface CreateContentResponse {
+      /**
+       * The path of the resource that was created.
+       */
+      createdPath: string;
+    }
+
+    /**
      * Request body specification for content move requests.
      */
     interface MoveContentRequestBody {

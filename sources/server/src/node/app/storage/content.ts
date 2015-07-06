@@ -270,3 +270,43 @@ export function endsWith(s: string, suffix: string): boolean {
 export function startsWith(s: string, prefix: string): boolean {
   return prefix == s.slice(0, prefix.length);
 }
+
+/**
+ * Gets the extension from the path.
+ *
+ * For the purposes of this function, an extension includes the final period along with one or
+ * more characters that follow it.
+ *
+ * "foo.txt" => ".txt"
+ * "foo" => null
+ * "foo." => null
+ *
+ * @param path The path from which to extract the extension.
+ * @return Extension including period (delimiter) prefix or null if no extension exists.
+ */
+export function getExtension(path: string): string {
+  var extensionDelimiter = '.';
+
+  // Falsey values don't have an extension.
+  if (!path) {
+    return null;
+  }
+
+  var parts = path.split(extensionDelimiter);
+
+  // If there is no delimiter, then there is no extension.
+  if (1 == parts.length) {
+    return null;
+  }
+
+  // Get the final token after the extension delimiter.
+  var extension = parts.slice(-1)[0];
+
+  // Empty string extension (i.e., path ends with a '.').
+  if (!extension) {
+    return null;
+  }
+
+  // There is an extension, so fetch the last token after the final period.
+  return extensionDelimiter + extension;
+}

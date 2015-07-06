@@ -30,15 +30,8 @@ var logger = logging.getLogger();
  */
 export class ContentApi {
 
-
-  static contentBaseUrl = '/content';
-  // Note: the regex passed to the "path" variable capture matches all characters up to a colon,
-  // because a colon, if one exists within the path, delimits the "action" name for the given path.
-  static contentUrl = ContentApi.contentBaseUrl + '/:path([^:]*)';
-  static contentActionUrl = ContentApi.contentUrl + '::';
-
-  _storage: app.IStorage;
   _notebookStorage: app.INotebookStorage;
+  _storage: app.IStorage;
 
   /**
    * Constructor.
@@ -46,9 +39,9 @@ export class ContentApi {
    * @param storage The storage backend to use for accessing and manipulating content.
    */
   constructor (storage: app.IStorage) {
-    this._storage = storage;
     // Create a notebook storage wrapper for handling notebook-specific storage operations.
     this._notebookStorage = new nbstorage.NotebookStorage(storage);
+    this._storage = storage;
   }
 
   /**
@@ -69,29 +62,36 @@ export class ContentApi {
     // Get the request body, which defines what content should be created at the specified path.
     var body: app.requests.CreateContentRequestBody = request.body;
 
-    var callback = (error: Error) => {
+    var callback = (createdPath: string, error: Error) => {
       if (error) {
         apiutil.sendInternalError(response, "Content create operation failed.", error);
-        return;
+      } else {
+        response.send({createdPath: createdPath});
       }
-
-      apiutil.sendSuccessWithoutResponseContent(response);
     };
 
     // Select the appropriate content creation scheme depending on the request body content.
-    var notebookData: app.notebooks.Notebook;
-    if (!body.content) {
-      // The only file extension with a declared default template
-      if (!content.endsWith(path, '.ipynb')) {
-        apiutil.sendBadRequest(response,
-          'Content creation for non-ipynb files requires content specification');
-        return;
-      }
-      // If no body was sent, then select an appropriate template based upon the file extension.
-      this._notebookStorage.create(path, callback);
-    } else {
+    if (body.content) {
       // Then we'll be creating a new file from this specified content.
-      this._storage.write(path, body.content, callback);
+      this._storage.write(path, body.content, callback.bind(null, path));
+    } else {
+      // The only file extension with a declared default template is ".ipynb".
+      var notebookExtension = '.ipynb';
+      if (!content.endsWith(path, notebookExtension)) {
+        // If the path is extension-less, then append ".ipynb" and proceed.
+        if (content.getExtension(path) == null) {
+          path = path + notebookExtension;
+        } else {
+          // Any other extension is currently disallowed, so fail the request.
+          apiutil.sendBadRequest(response,
+            'Content creation for non-ipynb files requires content specification');
+          return;
+        }
+      }
+
+      logger.debug('Creating notebook with path "%s"', path);
+      // If no body was sent, then select an appropriate template based upon the file extension.
+      this._notebookStorage.create(path, callback.bind(null, path));
     }
   }
 
@@ -128,7 +128,7 @@ export class ContentApi {
    */
   list(request: express.Request, response: express.Response): void {
     // Normalize the requested storage directory path to list.
-    var storageDirectoryPath = content.normalizeDirectoryPath(request.params.path);
+    var storageDirectoryPath = content.normalizeDirectoryPath(request.param('0', undefined));
 
     // Get the recursive flag from the request if it was provided and convert it to a boolean.
     // Any truthy string value will be converted to true, so all of the following would
@@ -183,7 +183,6 @@ export class ContentApi {
         apiutil.sendInternalError(response, "Content move operation failed.", error);
         return;
       }
-
       apiutil.sendSuccessWithoutResponseContent(response);
     });
   }
@@ -226,17 +225,16 @@ export class ContentApi {
    *
    * @param route The express router that will manage request routing for this API.
    */
-  register (router: express.Router): void {
-    router.post(ContentApi.contentActionUrl + 'move', this.move.bind(this));
-
+  register(router: express.Router): void {
     // Allow GET on the /content route (i.e., list operation on storage root).
-    router.get(ContentApi.contentBaseUrl, this.list.bind(this));
+    router.get(/^\/content\/?$/, this.list.bind(this));
     // Allow GET on the /content/<path> route.
-    router.get(ContentApi.contentUrl, this.list.bind(this));
+    router.get(/^\/content\/([^:]+)$/, this.list.bind(this));
 
-    router.put(ContentApi.contentUrl, this.update.bind(this));
-    router.post(ContentApi.contentUrl, this.create.bind(this));
-    router.delete(ContentApi.contentUrl, this.delete.bind(this));
+    router.post(/^\/content\/([^:]+):move$/, this.move.bind(this));
+    router.put(/^\/content\/([^:]+)$/, this.update.bind(this));
+    router.post(/^\/content\/([^:]+)$/, this.create.bind(this));
+    router.delete(/^\/content\/([^:]+)$/, this.delete.bind(this));
   }
 
   /**
@@ -249,9 +247,9 @@ export class ContentApi {
    * @param response HTTP response object.
    */
   _getPathOrFail(request: express.Request, response: express.Response): string {
-    var path: string = request.params.path;
+    var path: string = request.param('0', null);
     if (!path) {
-      apiutil.sendBadRequest(response, "Content 'path' missing from request URL.")
+      apiutil.sendBadRequest(response, "Content 'path' missing from request URL.");
     }
     return content.ensureLeadingSlash(path);
   }

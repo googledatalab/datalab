@@ -322,4 +322,24 @@ describe('Content path/resource utilities', () => {
     expect(content.normalizeDirectoryPath('foo/')).toBe('/foo/');
     expect(content.normalizeDirectoryPath('foo/bar/')).toBe('/foo/bar/');
   });
+
+  // Get extension
+
+  it('gets the extension of a path without an extension', () => {
+    expect(content.getExtension('foo/bar/baz')).toBe(null);
+    expect(content.getExtension('foo')).toBe(null);
+    expect(content.getExtension('')).toBe(null);
+    expect(content.getExtension(null)).toBe(null);
+    expect(content.getExtension(undefined)).toBe(null);
+  });
+
+  it('gets the extension of a path with an extension', () => {
+    expect(content.getExtension('foo.txt')).toBe('.txt');
+    expect(content.getExtension('foo/bar/baz.txt')).toBe('.txt');
+  });
+
+  it('gets the extension of a path with only a period suffix', () => {
+    expect(content.getExtension('foo.')).toBe(null);
+    expect(content.getExtension('foo/bar/baz.')).toBe(null);
+  });
 });

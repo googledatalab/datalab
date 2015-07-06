@@ -62,12 +62,10 @@ app.config(configureRegistrar);
  */
 function addRoutes (routeProvider: ng.route.IRouteProvider): void {
   routeProvider
+    .when('/', notebooksRoute.route)
     .when('/notebooks', notebooksRoute.route)
-    .when('/notebooks/:notebookPath', notebooksEditRoute.route)
-    .when('/sessions', sessionsRoute.route)
-    .otherwise({
-      redirectTo: '/notebooks'
-    });
+    .when('/notebooks/:notebookPath*', notebooksEditRoute.route)
+    .when('/sessions', sessionsRoute.route);
 };
 addRoutes.$inject = ['$routeProvider'];
 app.config(addRoutes);

@@ -86,11 +86,11 @@ class ContentService implements app.IContentService {
    * @data: The data to use to create the item.
    * @return A promise; on success this will be resolved with the item path.
    */
-  create(item: string, data:string) : ng.IPromise<string> {
+  create(item: string, data:string) : ng.IPromise<any> {
     var deferred = this._q.defer();
     this._http.post(this.url(item), data).then((response) =>
         response.status >= 200 && response.status < 300
-            ? deferred.resolve(item)
+            ? deferred.resolve(response.data)
             : deferred.reject(response.statusText));
     return deferred.promise;
   }
