@@ -301,9 +301,7 @@ def _sample_cell(args, sql):
   """
 
   if args['sql']:
-    query = _get_query(args['sql'])
-  else:
-    query = _bq.query(sql)
+    sql = _get_query(args['sql']).sql
 
   count = args['count']
   method = args['method']
@@ -322,7 +320,7 @@ def _sample_cell(args, sql):
   # would resolve themselves....
   try:
     complete, partial = _get_notebook_resolution_environment()
-    query = _resolve(query.sql, complete, partial)
+    query = _resolve(sql, complete, partial)
   except Exception as e:
     return e
 

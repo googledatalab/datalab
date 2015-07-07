@@ -14,14 +14,11 @@
 
 """Google Cloud Platform library - %%arguments IPython Cell Magic Functionality."""
 
-import datetime as _datetime
-import time as _time
-import IPython as _ipython
 import IPython.core.magic as _magic
 import gcp.bigquery as _bq
 from ._commands import CommandParser as _CommandParser
 from ._environments import _get_pipeline_resolution_environment, _resolve, _pipeline_sql
-from ._environments import _notebook_environment, _pipeline_environment
+from ._environments import _pipeline_environment
 from ._utils import _handle_magic_line
 
 

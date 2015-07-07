@@ -183,6 +183,7 @@ def _resolve(sql, complete, partial):
   Raises:
     Exception on failure.
   """
+  orig_sql = sql
   dependencies = _util.Sql.get_dependencies(sql)
   while len(dependencies) > 0:
     changed = False
@@ -217,7 +218,7 @@ def _resolve(sql, complete, partial):
       # they must be circular.
       raise Exception('Circular dependencies in set %s' % str(dependencies))
 
-  query = _bq.query(_bq.sql(sql, **complete))
+  query = _bq.query(_bq.sql(orig_sql, **complete))
   return query
 
 # An LRU cache for Tables. This is mostly useful so that when we cross page boundaries
