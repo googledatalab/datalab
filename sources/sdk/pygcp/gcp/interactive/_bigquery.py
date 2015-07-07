@@ -14,47 +14,37 @@
 
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 
-import datetime as _datetime
 import json as _json
 import re as _re
-import shlex as _shlex
-import sys as _sys
 import time as _time
-import types as _types
 import IPython as _ipython
 import IPython.core.magic as _magic
 import gcp.bigquery as _bq
 import gcp._util as _util
 from ._commands import CommandParser as _CommandParser
+from ._environments import _get_query, _get_table, _notebook_environment, _pipeline_environment
+from ._environments import _get_schema, _get_pipeline_args
+from ._environments import _get_notebook_resolution_environment, _get_pipeline_resolution_environment
+from ._environments import _get_notebook_item, _resolve
 from ._html import HtmlBuilder as _HtmlBuilder
 from ._utils import _get_data, _get_field_list, _handle_magic_line
 
 
-# Some string literals used for binding names in the environment.
-_pipeline_module = '_bqmodule'
-_pipeline_sql = '_sql'
-_pipeline_udfs = '_sources'
-_pipeline_arg_parser = '_arg_parser'
-
-
-def _create_sql_subparser(parser, allow_sampling=True):
-  sql_parser = parser.subcommand('sql',
+def _create_sample_subparser(parser):
+  sample_parser = parser.subcommand('sample',
       'execute a BigQuery SQL statement and display results or create a named query object')
-  sql_parser.add_argument('-n', '--name', help='the name for this query object')
-  if allow_sampling:
-    sql_parser.add_argument('-s', '--sample', action='store_true',
-                            help='execute the query and get a sample of results')
-    sql_parser.add_argument('-sc', '--samplecount', type=int, default=10,
-                            help='number of rows to limit to if sampling')
-    sql_parser.add_argument('-sm', '--samplemethod', help='the type of sampling to use',
-                            choices=['limit', 'random', 'hashed', 'sorted'], default='limit')
-    sql_parser.add_argument('-sp', '--samplepercent', type=int, default=1,
-                            help='For random or hashed sampling, what percentage to sample from')
-    sql_parser.add_argument('-sf', '--samplefield',
-                            help='field to use for sorted or hashed sampling')
-    sql_parser.add_argument('-so', '--sampleorder', choices=['ascending', 'descending'],
-                            default='ascending', help='sort order to use for sorted sampling')
-  return sql_parser
+  sample_parser.add_argument('-q', '--sql', help='the name for this query object')
+  sample_parser.add_argument('-c', '--count', type=int, default=10,
+                             help='number of rows to limit to if sampling')
+  sample_parser.add_argument('-m', '--method', help='the type of sampling to use',
+                             choices=['limit', 'random', 'hashed', 'sorted'], default='limit')
+  sample_parser.add_argument('-p', '--percent', type=int, default=1,
+                             help='For random or hashed sampling, what percentage to sample from')
+  sample_parser.add_argument('-f', '--field',
+                             help='field to use for sorted or hashed sampling')
+  sample_parser.add_argument('-o', '--order', choices=['ascending', 'descending'],
+                             default='ascending', help='sort order to use for sorted sampling')
+  return sample_parser
 
 
 def _create_udf_subparser(parser):
@@ -63,8 +53,9 @@ def _create_udf_subparser(parser):
   return udf_parser
 
 
-def _create_execute_subparser(parser):
-  execute_parser = parser.subcommand('execute',
+# TODO(gram): make help a parameter too
+def _create_execute_subparser(parser, command):
+  execute_parser = parser.subcommand(command,
       'execute a BigQuery SQL statement sending results to a named table')
   execute_parser.add_argument('-b', '--batch', help='run as lower-priority batch job',
                               action='store_true')
@@ -76,9 +67,10 @@ def _create_execute_subparser(parser):
                               action='store_true')
   execute_parser.add_argument('-l', '--large', help='allow large results',
                               action='store_true')
-  execute_parser.add_argument('-q', '--query', help='name of query to run, if not in cell body',
+  execute_parser.add_argument('-q', '--sql', help='name of query to run, if not in cell body',
                               nargs='?')
-  execute_parser.add_argument('table', help='target table name')
+  execute_parser.add_argument('-d', '--destination', help='target table name',
+                              nargs='?')
   return execute_parser
 
 
@@ -156,12 +148,6 @@ def _create_run_subparser(parser):
   return run_parser
 
 
-def _create_source_subparser(parser):
-  source_parser = parser.subcommand('source', 'Specify a query source in SQL')
-  source_parser.add_argument('name', help='the name of the source')
-  return source_parser
-
-
 def _create_bigquery_parser():
   """ Create the parser for the %bigquery magics.
 
@@ -175,11 +161,10 @@ def _create_bigquery_parser():
   # This is a bit kludgy because we want to handle some line magics and some cell magics
   # with the bigquery command.
 
-  # %%bigquery sql
-  sql_parser = _create_sql_subparser(parser)
-  sql_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler('sql', args, cell, sql_parser,
-                                                _sql_cell, cell_required=True))
+  # %%bigquery sample
+  sample_parser = _create_sample_subparser(parser)
+  sample_parser.set_defaults(
+      func=lambda args, cell: _dispatch_handler('sample', args, cell, sample_parser, _sample_cell))
 
   # %%bigquery udf
   udf_parser = _create_udf_subparser(parser)
@@ -188,10 +173,17 @@ def _create_bigquery_parser():
                                                 _udf_cell, cell_required=True))
 
   # %%bigquery execute
-  execute_parser = _create_execute_subparser(parser)
+  execute_parser = _create_execute_subparser(parser, 'execute')
   execute_parser.set_defaults(
       func=lambda args, cell: _dispatch_handler('execute', args, cell,
                                                 execute_parser, _execute_cell))
+
+  # %%bigquery pipeline
+  pipeline_parser = _create_execute_subparser(parser, 'pipeline')
+  pipeline_parser.set_defaults(
+    func=lambda args, cell: _dispatch_handler('pipeline', args, cell,
+                                              pipeline_parser, _pipeline_line,
+                                              cell_prohibited=True))
 
   # %bigquery table
   table_parser = _create_table_subparser(parser)
@@ -237,47 +229,7 @@ def _create_bigquery_parser():
   return parser
 
 
-def _create_bqmodule_parser():
-  """ Create the parser for the %bqmodule magics. """
-  parser = _CommandParser.create('bqmodule')
-  # %%bqmodule arguments
-  args_parser = parser.subcommand('arguments', 'specify the deployment argumemts for a BQ pipeline')
-  args_parser.set_defaults(
-    func=lambda args, cell: _dispatch_handler('arguments', args, cell, args_parser,
-                                              _args_cell, cell_required=True,
-                                              deployable=True))
-
-  # %%bqmodule source
-  source_parser = _create_source_subparser(parser)
-  source_parser.set_defaults(
-    func=lambda args, cell: _dispatch_handler('source', args, cell, source_parser,
-                                              _source_cell, cell_required=True,
-                                              deployable=True))
-
-  # %%bqmodule sql
-  sql_parser = _create_sql_subparser(parser, allow_sampling=False)
-  sql_parser.set_defaults(
-    func=lambda args, cell: _dispatch_handler('sql', args, cell, sql_parser,
-                                              _sql_cell, cell_required=True,
-                                              deployable=True))
-
-  # %%bqmodule udf
-  udf_parser = _create_udf_subparser(parser)
-  udf_parser.set_defaults(
-    func=lambda args, cell: _dispatch_handler('udf', args, cell, udf_parser,
-                                              _udf_cell, cell_required=True,
-                                              deployable=True))
-
-  # %bqmodule run
-  run_parser = _create_run_subparser(parser)
-  run_parser.set_defaults(
-    func=lambda args, cell: _dispatch_handler('run', args, cell, run_parser, _run_cell,
-                                              deployable=True))
-  return parser
-
-
 _bigquery_parser = _create_bigquery_parser()
-_bqmodule_parser = _create_bqmodule_parser()
 
 
 @_magic.register_line_cell_magic
@@ -299,33 +251,16 @@ def bigquery(line, cell=None):
   Returns:
     The results of executing the cell.
   """
-  return _handle_magic_line(line, cell, _bigquery_parser)
+  complete, partial = _get_notebook_resolution_environment()
+  # TODO(gram): Fix this hack!
+  if line.split(' ')[1] == 'pipeline':
+    complete, partial = _get_notebook_resolution_environment()
 
-
-@_magic.register_line_cell_magic
-def bqmodule(line, cell=None):
-  """Implements the bqmodule cell magic for ipython notebooks.
-
-  The supported syntax is:
-
-    %%bqmodule <line>
-    <cell>
-
-  or:
-
-    %bqmodule <line>
-
-  Args:
-    line: the contents of the bqmodule line.
-    cell: the contents of the cell.
-  Returns:
-    The results of executing the cell.
-  """
-  return _handle_magic_line(line, cell, _bqmodule_parser)
+  return _handle_magic_line(line, cell, _bigquery_parser, namespace=complete)
 
 
 def _dispatch_handler(command, args, cell, parser, handler,
-                      cell_required=False, cell_prohibited=False, deployable=False):
+                      cell_required=False, cell_prohibited=False):
   """ Makes sure cell magics include cell and line magics don't, before dispatching to handler.
 
   Args:
@@ -336,13 +271,11 @@ def _dispatch_handler(command, args, cell, parser, handler,
     handler: the handler to call if the cell present/absent check passes.
     cell_required: True for cell magics, False for line magics that can't be cell magics.
     cell_prohibited: True for line magics, False for cell magics that can't be line magics.
-    deployable: if True, this is a bqmodule command.
   Returns:
     The result of calling the handler.
   Raises:
     Exception if the invocation is not valid.
   """
-  args['deployable'] = deployable
   if cell_prohibited:
     if cell and len(cell.strip()):
       parser.print_help()
@@ -356,422 +289,43 @@ def _dispatch_handler(command, args, cell, parser, handler,
   return handler(args, cell)
 
 
-def _notebook_environment():
-  ipy = _ipython.get_ipython()
-  return ipy.user_ns
-
-
-def _pipeline_environment():
-  """ Get the environment dictionary for bqmodule magics, creating it if needed. """
-  if _pipeline_module not in _sys.modules:
-    # Create the pipeline module.
-    module = _types.ModuleType(_pipeline_module)
-    module.__file__ = _pipeline_module
-    module.__name__ = _pipeline_module
-    _sys.modules[_pipeline_module] = module
-    # Automatically import the newly created module by assigning it to a variable
-    # named the same name as the module name.
-    _notebook_environment()[_pipeline_module] = module
-    # Initialize the bqmodule arg parser and source, udf and query dictionaries
-    _pipeline_environment()[_pipeline_arg_parser] = _CommandParser.create('bqmodule run')
-    _pipeline_environment()[_pipeline_sql] = {}
-    _pipeline_environment()[_pipeline_udfs] = {}
-  else:
-    module = _sys.modules[_pipeline_module]
-  return module.__dict__
-
-
-def _exec_in_pipeline_module(code):
-  """ Execute code contained in a string within the pipeline module. """
-  exec code in _pipeline_environment()
-
-
-def _bind_name_in_notebook_environment(name, value):
-  """ Bind a name to a value in the IPython notebook environment. """
-  ipy = _ipython.get_ipython()
-  ipy.push({name: value})
-
-
-def _get_pipeline_item(name):
-  """ Get an item from the pipeline environment. """
-  return _pipeline_environment().get(name, None)
-
-
-def _get_notebook_item(name):
-  """ Get an item from the IPython environment. """
-  return _notebook_environment().get(name, None)
-
-
-def _get_query(name):
-  """ Get a query bound to variable name.
-
-  This will look in IPython environment first. If name is not defined there it will
-  look in pipeline environment and return a resolved query if possible.
-  """
-  q = _get_notebook_item(name)
-  if q is None:
-    q = _pipeline_environment()[_pipeline_queries].get(name, None)
-    if isinstance(q, _bq._Query):
-      complete, partial = _get_notebook_resolution_environment()
-      q = _resolve(q.sql, complete, partial)
-  return q
-
-
-def _get_pipeline_args(cell=None, explicit_only=False):
-  """ Parse a set of pipeline arguments or get the default value of the arguments.
+def _sample_cell(args, sql):
+  """Implements the bigquery sample cell magic for ipython notebooks.
 
   Args:
-    cell: the cell containing the argument flags. If omitted the empty string is used so
-        we can get the default values for the arguments.
-    default_to_none: if True, we ignore the defaults and only return args that were
-        explicitly specified.
-  """
-  if cell is None:
-    cell = ''
-  parser = _get_pipeline_item(_pipeline_arg_parser)
-  command_line = ' '.join(cell.split('\n'))
-  tokens = _shlex.split(command_line)
-  args = vars(parser.parse_args(tokens))
-
-  if explicit_only:
-    allowed = []
-    for token in tokens:
-      if token[:2] == '--':
-        allowed.append(token[2:])
-    # Don't return any args that are None as we don't want to expand to 'None'
-    return {arg: value for arg, value in args.iteritems() if value is not None and arg in allowed}
-  else:
-    # Don't return any args that are None as we don't want to expand to 'None'
-    return {arg: value for arg, value in args.iteritems() if value is not None}
-
-
-def _date(val, offset=None):
-  """ A special pseudo-type for pipeline arguments.
-
-  This allows us to parse dates as Python datetimes, including special values like 'now'
-  and 'today', as well as apply offsets to the datetime.
-
-  Args:
-    val: a string containing the value for the datetime. This can be 'now', 'today' (midnight at
-        start of day), 'yesterday' (midnight at start of yesterday), or a formatted date that
-        will be passed to the datetime constructor. Note that 'now' etc are assumed to
-        be in UTC.
-    offset: for date arguments a string containing a comma-separated list of
-      relative offsets to apply of the form <n><u> where <n> is an integer and
-      <u> is a single character unit (d=day, m=month, y=year, h=hour, m=minute).
-
-  Returns:
-    A Python datetime resulting from starting at <val> and applying the sequence of deltas
-    specified in <offset>.
-  """
-  if val is None:
-    return val
-  if val == '' or val == 'now':
-    when = _datetime.datetime.utcnow()
-  elif val == 'today':
-    dt = _datetime.datetime.utcnow()
-    when = _datetime.datetime(dt.year, dt.month, dt.day)
-  elif val == 'yesterday':
-    dt = _datetime.datetime.utcnow() - _datetime.timedelta(1)
-    when = _datetime.datetime(dt.year, dt.month, dt.day)
-  else:
-    when = _datetime.datetime(val)
-  if offset is not None:
-    for part in offset.split(','):
-      unit = part[-1]
-      quant = int(part[:-1])
-      # We can use timedelta for days and under, but not for years and months
-      if unit == 'y':
-        when = _datetime.datetime(year=when.year + quant, month=when.month, day=when.day,
-                                  hour=when.hour, minute=when.minute)
-      elif unit == 'm':
-        newyear = when.year
-        newmonth = when.month + quant
-        if newmonth < 1:
-          newmonth = -newmonth
-          newyear += 1 + (newmonth // 12)
-          newmonth = 12 - newmonth % 12
-        elif newmonth > 12:
-          newyear += (newmonth - 1) // 12
-          newmonth = 1 + (newmonth - 1) % 12
-        when = _datetime.datetime(year=newyear, month=newmonth, day=when.day,
-                                  hour=when.hour, minute=when.minute)
-      elif unit == 'd':
-        when += _datetime.timedelta(days=quant)
-      elif unit == 'h':
-        when += _datetime.timedelta(hours=quant)
-      elif unit == 'm':
-        when += _datetime.timedelta(minutes=quant)
-
-  return when
-
-
-def _string(val):
-  """ A simple pseudo-type for string arguments.
-
-   It is more intuitive to say type=string than type=basestring, so we define this allowing
-   us to support both.
-  """
-  return val
-
-
-def _table(val):
-  """ A speduo-type for bqmodule arguments allowing us to specify table names.
-
-   Needed as we need a special form of expansion in queries for table names.
-  """
-  return _bq.table(val)
-
-
-def _make_formatter(f, type, offset=None):
-  """ A closure-izer for arguments that include a format and possibly an offset. """
-  format = f
-  delta = offset
-  if type == _table:
-    return lambda v: _bq.table(_time.strftime(format, (_date(v, delta)).timetuple()))
-  else:
-    return lambda v: _time.strftime(format, (_date(v, delta)).timetuple())
-
-
-def _make_date(offset):
-  """ A closure-izer for date arguments that include an offset. """
-  delta = offset
-  return lambda v: _date(v, delta)
-
-
-def _arg(name, default=None, offset=None, type=_string, format=None, help=None):
-  """ Add an argument to the pipeline arg parser.
-
-  Args:
-    name: the argument name; this will add a --name option to the arg parser.
-    default: default value for the argument. For dates this can be 'now', 'today',
-        'yesterday' or a string that should be suitable for passing to datetime.__init__.
-    offset: for date arguments a string containing a comma-separated list of
-      relative offsets to apply of the form <n><u> where <n> is an integer and
-      <u> is a single character unit (d=day, m=month, y=year, h=hour, m=minute).
-    type: the argument type. Can be a standard Python scalar or string, date or table.
-        Not needed if either format or offset is specified (in this case the final argument
-        will be a string (if format is specified) or datetime (if offset is specified but format
-        is not) produced from processing the raw argument appropriately).
-    format: for date arguments, a format string to convert this to a string using time.strftime.
-      If format is supplied the type argument is not needed.
-    help: optional help string for this argument.
-  """
-  arg_parser = _get_pipeline_item(_pipeline_arg_parser)
-  if format is None:
-    if offset is None:
-      arg_parser.add_argument('--%s' % name, default=default, type=type, help=help)
-    else:
-      arg_parser.add_argument('--%s' % name, default=default, type=_make_date(offset), help=help)
-  else:
-    if offset is None:
-      arg_parser.add_argument('--%s' % name, default=default, type=_make_formatter(format, type),
-                              help=help)
-    else:
-      arg_parser.add_argument('--%s' % name, default=default,
-                              type=_make_formatter(format, type, offset), help=help)
-
-
-def _args_cell(_, cell):
-  """Implements the bqmodule arguments cell magic for ipython notebooks.
-
-  Args:
-    cell: the contents of the cell interpreted as Python code. This should be calls to arg()
-        only; anything else will not have any effect in a deployed pipeline.
-
-  """
-  try:
-    # Define our special argument 'types'.
-    _pipeline_environment()['date'] = _date
-    _pipeline_environment()['table'] = _table
-
-    # Define the arg helper function.
-    _pipeline_environment()['arg'] = _arg
-
-    # Reset the argument parser.
-    _pipeline_environment()[_pipeline_arg_parser] = _CommandParser.create('bqmodule run')
-
-    # Execute the cell which should be one or more calls to arg().
-    _exec_in_pipeline_module(cell)
-  except Exception as e:
-    print str(e)
-
-
-def _source_cell(args, sql):
-  """ Define a BQ pipeline source.
-
-  This is just a convenience for defining a fragment of SQL that can be referenced in
-  other queries.
-
-  Args:
-    args: the magic command arguments (just <name>).
-    sql: the magic cell body containing the SQL fragment.
-
-  """
-  _pipeline_environment()[_pipeline_sql][args['name']] = _bq.query(sql)
-
-
-def _get_pipeline_resolution_environment(env=None):
-  """ Get the key/val dictionary for resolving metavars in the pipeline environment.
-
-  An initial dictionary can be supplied in which case it will be augmented with new
-  names but existing names will not be replaced. Any objects in the initial dictionary
-  must already be fully resolved wrt variable references.
-  """
-  partial = {}
-  complete = {}
-  if env is not None:
-    complete.update(env)
-
-  # TODO(gram): we should really report/handle any name collisions between bqmodule UDFs, args
-  # and SQL queries/sources. These currently logically exist in three separate
-  # namespaces so ambiguity is possible. A simple solution for UDFs vs SQL is to always
-  # try do a remove of a name from one when defining the name in the other. For args it
-  # should just be an error if we try define a UDF/query/source object with the same name
-  # as an arg.
-
-  # Add the default arguments from the pipeline environment if they aren't defined
-  complete.update({key: value for key, value in _get_pipeline_args().iteritems()
-                   if key not in complete and value is not None})
-
-  # Add any UDFs from the pipeline environment
-  complete.update({key: value
-                   for key, value in _pipeline_environment()[_pipeline_udfs].iteritems()
-                   if key not in complete})
-
-  # Add any sources and queries from the pipeline environment. These need to go through
-  # variable resolution so are put in the partial dictionary.
-  partial.update({key: value
-                  for key, value in _pipeline_environment()[_pipeline_sql].iteritems()
-                  if key not in complete})
-
-  return complete, partial
-
-
-def _get_notebook_resolution_environment():
-  """ Get the key/val dictionary For resolving metavars in the pipeline environment.
-
-  This is the IPython user environment augmented with the pipeline environment.
-  """
-  ipy = _ipython.get_ipython()
-  return _get_pipeline_resolution_environment(ipy.user_ns)
-
-
-def _resolve(sql, complete, partial):
-  """ Resolve variable references in a query within an environment.
-
-  This computes and resolves the transitive dependencies in the query and raises an
-  exception if that fails due to either undefined or circular references.
-
-  Args:
-    sql: the text of the query to resolve
-    complete: definitions of objects that can be expanded but which have no
-      dependencies themselves (and so must NOT go through expansion to avoid corrupting
-      their content)
-    partial: definitions of bqmodule sql queries which may need to be expanded themselves.
-
-  Returns:
-    A resolved Query object.
-
-  Raises:
-    Exception on failure.
-  """
-  dependencies = _util.Sql.get_dependencies(sql)
-  while len(dependencies) > 0:
-    changed = False
-    for i, dependency in enumerate(dependencies):
-      if dependency in complete:
-        # Has no further dependencies; remove it from dependencies.
-        dependencies[i] = None
-        changed = True
-      elif dependency in partial:
-        # Get the transitive dependencies.
-        sql = partial[dependency].sql
-        deps = _util.Sql.get_dependencies(sql)
-        # If there are none or they are all in turn complete, then this is completable.
-        if len(deps) == 0 or all([d in complete for d in deps]):
-          # Expand and move to complete, and remove from partial and dependencies.
-          complete[dependency] = _bq.query(_bq.sql(sql, **complete))
-          partial.pop(dependency)
-          dependencies[i] = None
-          changed = True
-        else:
-          # Add all non-complete references to dependencies for next iteration.
-          newdeps = [dep for dep in deps if dep not in complete and dep not in dependencies]
-          if len(newdeps):
-            changed = True
-            dependencies.extend(newdeps)
-      else:
-        raise Exception("Unsatisfied dependency %s" % dependency)
-
-    dependencies = [dependency for dependency in dependencies if dependency is not None]
-    if not changed:
-      # We just have dependencies left that are in partial but that can't be satisfied so
-      # they must be circular.
-      raise Exception('Circular dependencies in set %s' % str(dependencies))
-
-  query = _bq.query(_bq.sql(sql, **complete))
-  return query
-
-
-def _sql_cell(args, sql):
-  """Implements the SQL bigquery cell magic for ipython notebooks.
-
-  The supported syntax is:
-  %%bigquery sql [--name <var>]
-  <sql>
-
-  Args:
-    args: the optional arguments following '%%bigquery sql'.
-    sql: the contents of the cell interpreted as the SQL.
+    args: the optional arguments following '%%bigquery sample'.
+    sql: optional contents of the cell interpreted as SQL.
   Returns:
     The results of executing the query converted to a dataframe if no variable
     was specified. None otherwise.
   """
-  deployable = args['deployable']
 
+  if args['sql']:
+    query = _get_query(args['sql'])
+  else:
+    query = _bq.query(sql)
+
+  count = args['count']
+  method = args['method']
+  if method == 'random':
+    sampling = _bq.Sampling.random(percent=args['percent'], count=count)
+  elif method == 'hashed':
+    sampling = _bq.Sampling.hashed(field_name=args['field'], percent=args['percent'],
+                                   count=count)
+  elif method == 'sorted':
+    ascending = args['order'] == 'ascending'
+    sampling = _bq.Sampling.sorted(args['field'], ascending=ascending, count=count)
+  elif method == 'limit':
+    sampling = _bq.Sampling.default(count=count)
+
+  # TODO(gram): how do we handle this in Python code? Ideally Query objects
+  # would resolve themselves....
   try:
-    if deployable:
-      complete, partial = _get_pipeline_resolution_environment()
-      # Test for hermeticity...
-      _resolve(sql, complete, partial)
-      # ... but record the unexpanded query
-      query = _bq.query(sql)
-    else:
-      # Non-pipeline; must go through immediate variable expansion.
-      complete, partial = _get_notebook_resolution_environment()
-      query = _resolve(sql, complete, partial)
+    complete, partial = _get_notebook_resolution_environment()
+    query = _resolve(query.sql, complete, partial)
   except Exception as e:
     return e
 
-  variable_name = args['name']
-  if variable_name:
-    # Update the global namespace with the new variable, or update the value of
-    # the existing variable if it already exists.
-    if deployable:
-      _pipeline_environment()[_pipeline_sql][variable_name] = query
-    else:
-      _notebook_environment()[variable_name] = query
-    if 'sample' not in args or not args['sample']:
-      return None
-  elif deployable:
-    raise Exception('--name argument is required')
-
-  if args['samplemethod'] is None:
-    return query.results()
-
-  count = args['samplecount']
-  method = args['samplemethod']
-  if method == 'random':
-    sampling = _bq.Sampling.random(percent=args['samplepercent'], count=count)
-  elif method == 'hashed':
-    sampling = _bq.Sampling.hashed(field_name=args['samplefield'], percent=args['samplepercent'],
-                                   count=count)
-  elif method == 'sorted':
-    ascending = args['sampleorder'] == 'ascending'
-    sampling = _bq.Sampling.sorted(args['samplefield'], ascending=ascending, count=count)
-  elif method == 'limit':
-    sampling = _bq.Sampling.default(count=count)
   return query.sample(sampling=sampling)
 
 
@@ -790,8 +344,6 @@ def _udf_cell(args, js):
     The results of executing the UDF converted to a dataframe if no variable
     was specified. None otherwise.
   """
-  deployable = args['deployable']
-
   variable_name = args['name']
   if not variable_name:
     raise Exception("Declaration must be of the form %%bigquery udf <variable name>")
@@ -826,31 +378,53 @@ def _udf_cell(args, js):
 
   # Finally build the UDF object
   udf = _bq.udf(inputs, outputs, js)
-  if deployable:
-    _pipeline_environment()[_pipeline_udfs][variable_name] = udf
-  else:
-    _notebook_environment()[variable_name] = udf
+  _pipeline_environment()[variable_name] = udf
+  _notebook_environment()[variable_name] = udf
 
   return None
 
 
 def _execute_cell(args, sql):
   if sql:
-    if args['query']:
-      return "Cannot have a query parameter and a query cell body"
-    try:
-      complete, partial = _get_notebook_resolution_environment()
-      query = _resolve(sql, complete, partial)
-    except Exception as e:
-      return e
+    if args['sql']:
+      return "Cannot have a sql parameter and a sql cell body"
   else:
-    if not args['query']:
-      return "Need a query parameter or a query cell body"
-    query = _get_query(args['query'])
+    if not args['sql']:
+      return "Need a sql parameter or a sql cell body"
+    query = _get_query(args['sql'])
     if not isinstance(query, _bq._Query):
-      return "%s does not refer to a query" % args['query']
+      return "%s does not refer to a sql" % args['sql']
+    sql = query.sql
 
-  return query.execute(args['table'], args['append'], args['overwrite'], not args['nocache'],
+  # TODO(gram): how do we handle this in Python code? Ideally Query objects
+  # would resolve themselves....
+  try:
+    complete, partial = _get_notebook_resolution_environment()
+    query = _resolve(sql, complete, partial)
+  except Exception as e:
+    return e
+
+  return query.execute(args['destination'], args['append'], args['overwrite'], not args['nocache'],
+                       args['batch'], args['large']).results
+
+
+def _pipeline_line(args):
+  if not args['sql']:
+    return "Need a sql parameter"
+  query = _get_query(args['sql'])
+  if not isinstance(query, _bq._Query):
+    return "%s does not refer to a sql" % args['sql']
+  sql = query.sql
+
+  # TODO(gram): how do we handle this in Python code? Ideally Query objects
+  # would resolve themselves....
+  try:
+    complete, partial = _get_pipeline_resolution_environment()
+    query = _resolve(sql, complete, partial)
+  except Exception as e:
+    return e
+
+  return query.execute(args['destination'], args['append'], args['overwrite'], not args['nocache'],
                        args['batch'], args['large']).results
 
 
@@ -993,53 +567,6 @@ def _run_cell(args, cell):
       return query.execute().results
   except Exception as e:
     print str(e)
-
-
-# An LRU cache for Tables. This is mostly useful so that when we cross page boundaries
-# when paging through a table we don't have to re-fetch the schema.
-_table_cache = _util.LRUCache(10)
-
-
-def _get_table(name):
-  """ Given a variable or table name, get a Table if it exists.
-
-  Args:
-    name: the name of the Table or a variable referencing the Table.
-    deployable: True if this should be in the pipeline namespace only.
-  Returns:
-    The Table, if found.
-  """
-  # If name is a variable referencing a table, use that.
-  item = _get_notebook_item(name)
-  if item is None:
-    item = _get_pipeline_item(name)
-
-  if isinstance(item, _bq._Table):
-    return item
-  # Else treat this as a BQ table name and return the (cached) table if it exists.
-  try:
-    return _table_cache[name]
-  except KeyError:
-    table = _bq.table(name)
-    if table.exists():
-      _table_cache[name] = table
-      return table
-  return None
-
-
-def _get_schema(name):
-  """ Given a variable or table name, get the Schema if it exists. """
-  item = _get_notebook_item(name)
-  if not item:
-    item = _get_table(name)
-
-  if isinstance(item, _bq._Schema):
-    return item
-  try:
-    if isinstance(item.schema, _bq._Schema):
-      return item.schema
-  except AttributeError:
-    return None
 
 
 def _table_viewer(table, rows_per_page=25, job_id='', fields=None):

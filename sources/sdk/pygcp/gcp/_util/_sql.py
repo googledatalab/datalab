@@ -59,7 +59,7 @@ class Sql(object):
     """
 
     # Rebuild the SQL string, substituting just '$' for escaped $ occurrences,
-    # variable references subsituted with their values, or literal text copied
+    # variable references substituted with their values, or literal text copied
     # over as-is.
     parts = []
     for (escape, placeholder, literal) in Sql._get_tokens(sql):

@@ -57,7 +57,7 @@ class CommandParser(_argparse.ArgumentParser):
         if var_name in namespace:
           args.append((namespace[var_name]))
         else:
-          raise Exception('Undefined variable referenced in command line: %s' % arg)
+          raise Exception('Undefined variable referenced in command line: %s\nnamespace %s' % (arg, str(namespace)))
       else:
         args.append(arg)
     return args
