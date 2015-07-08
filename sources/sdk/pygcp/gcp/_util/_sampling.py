@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Implements BigQuery related data sampling strategies."""
+"""Implements SQL data sampling strategies."""
 
 
 class Sampling(object):
@@ -66,9 +66,9 @@ class Sampling(object):
     def _hashed_sampling(sql):
       projection = Sampling._create_projection(fields)
       sql = 'SELECT %s FROM (%s) WHERE ABS(HASH(%s)) %% 100 < %d' % \
-          (projection, sql, field_name, percent)
+            (projection, sql, field_name, percent)
       if count != 0:
-        sql = sql + (' LIMIT %d' % count)
+        sql = '%s LIMIT %d' % (sql, count)
       return sql
     return _hashed_sampling
 
@@ -107,7 +107,25 @@ class Sampling(object):
       projection = Sampling._create_projection(fields)
       sql = 'SELECT %s FROM (%s) WHERE rand() < %f' % (projection, sql, percent / 100.0)
       if count != 0:
-        sql = sql + (' LIMIT %d' % count)
+        sql = '%s LIMIT %d' % (sql, count)
       return sql
     return _random_sampling
+
+  @staticmethod
+  def sampling_query(sql, fields=None, count=5, sampling=None):
+    """Returns a sampling query for the SQL object.
+
+    Args:
+      api: the BigQuery API object to use to issue requests.
+      sql: the SQL object to sample
+      fields: an optional list of field names to retrieve.
+      count: an optional count of rows to retrieve which is used if a specific
+          sampling is not specified.
+      sampling: an optional sampling strategy to apply to the table.
+    Returns:
+      A SQL query string for sampling the input sql.
+    """
+    if sampling is None:
+      sampling = Sampling.default(count=count, fields=fields)
+    return sampling(sql)
 

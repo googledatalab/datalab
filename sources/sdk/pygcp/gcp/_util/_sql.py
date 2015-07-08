@@ -15,6 +15,7 @@
 """Implements SQL statement helper functionality."""
 
 import re
+import sys
 
 
 class Sql(object):
@@ -23,6 +24,72 @@ class Sql(object):
 
   def __init__(self, sql):
     self._sql = sql
+
+  def _repr_sql_(self, env=None):
+    """Creates a SQL representation of this object.
+
+    Args:
+      env: an optional dictionary to use when expanding the variables in the SQL.
+    Returns:
+      The SQL representation to use when embedding this object into SQL.
+    """
+    return '(%s)' % self.expand(env)
+
+  def __str__(self):
+    """Creates a string representation of this object.
+
+    Returns:
+      The string representation of this object.
+    """
+    return self._sql
+
+  @property
+  def sql(self):
+    return self._sql
+
+  def _expand(self, sql, ns, complete, in_progress):
+    """ Recursive helper method for expanding variables including transitive dependencies. """
+
+    dependencies = Sql.get_dependencies(sql)
+    for dependency in dependencies:
+      if dependency in complete:
+        continue
+      if dependency not in ns:
+        raise Exception("Unsatisfied dependency $%s" % dependency)
+      dep = ns[dependency]
+      if isinstance(dep, Sql):
+        if dependency in in_progress:
+          # Circular dependency
+          raise Exception("Circular dependency in $%s" % dependency)
+        in_progress.append(dependency)
+        expanded = self._expand(dep._sql, ns, complete, in_progress)
+        in_progress.pop()
+        complete[dependency] = Sql(expanded)
+      else:
+        complete[dependency] = dep
+    return Sql.format(sql, complete)
+
+  def expand(self, env=None):
+    """ Resolve variable references in a query within an environment.
+
+    This computes and resolves the transitive dependencies in the query and raises an
+    exception if that fails due to either undefined or circular references.
+
+    Args:
+      env: a dictionary of optional value overrides to use in variable expansion.
+
+    Returns:
+      The resolved SQL text.
+
+    Raises:
+      Exception on failure.
+    """
+    ns = {}
+    if env:
+      ns.update(env)
+    else:
+      ns.update(sys.modules['__main__'].__dict__)
+    return self._expand(self._sql, ns, complete={}, in_progress=[])
 
   @staticmethod
   def _get_tokens(sql):

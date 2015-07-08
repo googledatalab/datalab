@@ -14,13 +14,11 @@
 
 """Implements Query BigQuery API."""
 
-import sys as _sys
 import gcp._util as _util
-from ._sampling import Sampling as _Sampling
 from ._utils import parse_table_name as _parse_table_name
 
 
-class Query(object):
+class Query(_util.Sql):
   """Represents a Query object that encapsulates a BigQuery SQL query.
 
   This object can be used to execute SQL queries and retrieve results.
@@ -40,13 +38,7 @@ class Query(object):
     Returns:
       A Query object for sampling the table.
     """
-    # This was the cause of circular dependencies between Query and Table hence it was
-    # moved here.
-    if sampling is None:
-      sampling = _Sampling.default(count=count, fields=fields)
-    sampling_sql = sampling(sql)
-
-    return Query(api, sampling_sql)
+    return Query(api, _util.Sampling.sampling_query(sql, fields, count, sampling))
 
   def __init__(self, api, sql):
     """Initializes an instance of a Query object.
@@ -55,58 +47,10 @@ class Query(object):
       api: the BigQuery API object to use to issue requests.
       sql: the BigQuery SQL string to execute.
     """
+    super(Query, self).__init__(sql)
     self._api = api
-    self._raw_sql = sql
     self._expanded_sql = None
     self._results = None
-
-  @property
-  def sql(self):
-    return self._raw_sql
-
-  def _expand(self, sql, ns, complete, in_progress):
-    """ Recursive helper method for expanding variables including transitive dependencies. """
-
-    dependencies = _util.Sql.get_dependencies(sql)
-    for dependency in dependencies:
-      if dependency in complete:
-        continue
-      if dependency not in ns:
-        raise Exception("Unsatisfied dependency $%s" % dependency)
-      dep = ns[dependency]
-      if isinstance(dep, Query):
-        if dependency in in_progress:
-          # Circular dependency
-          raise Exception("Circular dependency in $%s" % dependency)
-        in_progress.append(dependency)
-        expanded = self._expand(dep._raw_sql, ns, complete, in_progress)
-        in_progress.pop()
-        complete[dependency] = Query(self._api, expanded)
-      else:
-        complete[dependency] = dep
-    return _util.Sql.format(sql, complete)
-
-  def expand_sql(self, env=None):
-    """ Resolve variable references in a query within an environment.
-
-    This computes and resolves the transitive dependencies in the query and raises an
-    exception if that fails due to either undefined or circular references.
-
-    Args:
-      env: a dictionary of optional value overrides to use in variable expansion.
-
-    Returns:
-      The resolved SQL text.
-
-    Raises:
-      Exception on failure.
-    """
-    ns = {}
-    if env:
-      ns.update(env)
-    else:
-      ns.update(_sys.modules['__main__'].__dict__)
-    return self._expand(self._raw_sql, ns, complete={}, in_progress=[])
 
   def results(self, use_cache=True, env=None):
     """Retrieves last results for the query.
@@ -122,7 +66,7 @@ class Query(object):
     """
     # If we could be returning locally cached results make sure SQL hasn't changed.
     if use_cache and self._results:
-      if self.expand_sql(env) != self._expanded_sql:
+      if self.expand(env) != self._expanded_sql:
         self._results = None  # discard cached results
 
     if not use_cache or (self._results is None):
@@ -200,7 +144,7 @@ class Query(object):
     Raises:
       Exception if the query could not be executed or query response was malformed.
     """
-    return Query.sampling_query(self._api, self.expand_sql(env), count=count, fields=fields,
+    return Query.sampling_query(self._api, self.expand(env), count=count, fields=fields,
                                 sampling=sampling).\
         results(use_cache=use_cache)
 
@@ -231,7 +175,7 @@ class Query(object):
     if table_name is not None:
       table_name = _parse_table_name(table_name, self._api.project_id)
 
-    self._expanded_sql = self.expand_sql(env)
+    self._expanded_sql = self.expand(env)
 
     query_result = self._api.jobs_insert_query(self._expanded_sql,
                                                table_name=table_name,
@@ -297,25 +241,7 @@ class Query(object):
     Returns:
       A View for the Query.
     """
-    return _View(self._api, view_name).create(self.expand_sql(env))
-
-  def _repr_sql_(self, env=None):
-    """Creates a SQL representation of this object.
-
-    Args:
-      env: an optional dictionary to use when expanding the variables in the SQL.
-    Returns:
-      The SQL representation to use when embedding this object into SQL.
-    """
-    return '(' + self.expand_sql(env) + ')'
-
-  def __str__(self):
-    """Creates a string representation of this object.
-
-    Returns:
-      The string representation of this object.
-    """
-    return self._raw_sql
+    return _View(self._api, view_name).create(self.expand(env))
 
 from ._query_job import QueryJob as _QueryJob
 from ._view import View as _View

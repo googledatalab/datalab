@@ -22,13 +22,15 @@ from ._dataset import DataSetLister as _DataSetLister
 from ._job import Job as _Job
 from ._query_job import QueryJob as _QueryJob
 from ._query import Query as _Query
-from ._sampling import Sampling
 from ._table import Schema as _Schema
 from ._table import Table as _Table
 from ._udf import Function as _Function
 from ._utils import DataSetName as _DataSetName
 from ._utils import TableName as _TableName
 from ._view import View as _View
+
+
+Sampling = _util.Sampling
 
 
 def _create_api(context):
@@ -42,6 +44,17 @@ def _create_api(context):
   if context is None:
     context = _gcp.Context.default()
   return _Api(context.credentials, context.project_id)
+
+
+def sql(sql_statement):
+  """Creates a SQL object.
+
+  Args:
+    sql_statement: the SQL query.
+  Returns:
+    A Sql object.
+  """
+  return _util.Sql(sql_statement)
 
 
 def query(sql_statement, context=None):
