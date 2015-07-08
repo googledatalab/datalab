@@ -167,6 +167,27 @@ def arguments(_, cell):
     # Execute the cell which should be one or more calls to arg().
     _exec_in_pipeline_module(cell)
 
+    # Iterate through the module dictionary and for any defined objects that are
+    # not the arg parser, add additional args to the parser.
+
+    for key in _pipeline_environment():
+      if key == 'date' or key == 'table' or key == 'arg' or key == _pipeline_arg_parser:
+        continue
+      if key[0] == '_':
+        continue
+
+      val = _pipeline_environment()[key]
+      if isinstance(val, bool):
+        if val:
+          _arg(key, default=val, action='store_true')
+        else:
+          _arg(key, default=val, action='store_false')
+      elif isinstance(val, basestring) or isinstance(val, int) or isinstance(val, float)\
+          or isinstance(val, long):
+        _arg(key, default=val)
+      else:
+        raise Exception('Cannot generate argument for %s of type %s' % (key, type(val)))
+
     # Get the default values for the args and bind them in the notebook environment.
     _notebook_environment().update(_get_pipeline_args())
   except Exception as e:
