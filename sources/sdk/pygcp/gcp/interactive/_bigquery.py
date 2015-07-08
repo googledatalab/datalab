@@ -22,10 +22,9 @@ import IPython.core.magic as _magic
 import gcp.bigquery as _bq
 import gcp._util as _util
 from ._commands import CommandParser as _CommandParser
-from ._environments import _get_query, _get_table, _notebook_environment, _pipeline_environment
+from ._environments import _get_query, _get_table, _notebook_environment
 from ._environments import _get_schema, _get_pipeline_args
-from ._environments import _get_notebook_resolution_environment, _get_pipeline_resolution_environment
-from ._environments import _get_notebook_item, _resolve
+from ._environments import _get_notebook_item
 from ._html import HtmlBuilder as _HtmlBuilder
 from ._utils import _get_data, _get_field_list, _handle_magic_line
 
@@ -140,14 +139,6 @@ def _create_load_subparser(parser):
   return load_parser
 
 
-def _create_run_subparser(parser):
-  run_parser = parser.subcommand('run', 'Execute a pipeline query in the notebook')
-  run_parser.add_argument('-d', '--dry', help='just show the query, don\'t run it',
-                          action='store_true')
-  run_parser.add_argument('query', help='the query to run')
-  return run_parser
-
-
 def _create_bigquery_parser():
   """ Create the parser for the %bigquery magics.
 
@@ -222,10 +213,6 @@ def _create_bigquery_parser():
   load_parser.set_defaults(
       func=lambda args, cell: _dispatch_handler('load', args, cell, load_parser, _load_cell))
 
-  # %bigquery run
-  run_parser = _create_run_subparser(parser)
-  run_parser.set_defaults(
-    func=lambda args, cell: _dispatch_handler('run', args, cell, run_parser, _run_cell))
   return parser
 
 
@@ -251,12 +238,12 @@ def bigquery(line, cell=None):
   Returns:
     The results of executing the cell.
   """
-  complete, partial = _get_notebook_resolution_environment()
   # TODO(gram): Fix this hack!
+  namespace = _notebook_environment()
   if line.split(' ')[1] == 'pipeline':
-    complete, partial = _get_notebook_resolution_environment()
+    namespace.update(_get_pipeline_args())
 
-  return _handle_magic_line(line, cell, _bigquery_parser, namespace=complete)
+  return _handle_magic_line(line, cell, _bigquery_parser, namespace=namespace)
 
 
 def _dispatch_handler(command, args, cell, parser, handler,
@@ -289,6 +276,20 @@ def _dispatch_handler(command, args, cell, parser, handler,
   return handler(args, cell)
 
 
+def _get_query_argument(args, sql):
+  if sql:
+    if args['sql']:
+      raise Exception('Cannot have a sql parameter and a sql cell body')
+    return _bq.Query(sql)
+  else:
+    if not args['sql']:
+      raise Exception('Need a sql parameter or a sql cell body')
+    query = _get_query(args['sql'])
+    if not isinstance(query, _bq._Query):
+      raise Exception('%s does not refer to a %%sql or Query' % args['sql'])
+    return query
+
+
 def _sample_cell(args, sql):
   """Implements the bigquery sample cell magic for ipython notebooks.
 
@@ -300,9 +301,7 @@ def _sample_cell(args, sql):
     was specified. None otherwise.
   """
 
-  if args['sql']:
-    sql = _get_query(args['sql']).sql
-
+  query = _get_query_argument(args, sql)
   count = args['count']
   method = args['method']
   if method == 'random':
@@ -316,15 +315,7 @@ def _sample_cell(args, sql):
   elif method == 'limit':
     sampling = _bq.Sampling.default(count=count)
 
-  # TODO(gram): how do we handle this in Python code? Ideally Query objects
-  # would resolve themselves....
-  try:
-    complete, partial = _get_notebook_resolution_environment()
-    query = _resolve(sql, complete, partial)
-  except Exception as e:
-    return e
-
-  return query.sample(sampling=sampling)
+  return query.sample(sampling=sampling, env=_notebook_environment())
 
 
 def _udf_cell(args, js):
@@ -376,54 +367,27 @@ def _udf_cell(args, js):
 
   # Finally build the UDF object
   udf = _bq.udf(inputs, outputs, js)
-  _pipeline_environment()[variable_name] = udf
   _notebook_environment()[variable_name] = udf
 
   return None
 
 
 def _execute_cell(args, sql):
-  if sql:
-    if args['sql']:
-      return "Cannot have a sql parameter and a sql cell body"
-  else:
-    if not args['sql']:
-      return "Need a sql parameter or a sql cell body"
-    query = _get_query(args['sql'])
-    if not isinstance(query, _bq._Query):
-      return "%s does not refer to a sql" % args['sql']
-    sql = query.sql
-
-  # TODO(gram): how do we handle this in Python code? Ideally Query objects
-  # would resolve themselves....
-  try:
-    complete, partial = _get_notebook_resolution_environment()
-    query = _resolve(sql, complete, partial)
-  except Exception as e:
-    return e
-
+  query = _get_query_argument(args, sql)
   return query.execute(args['destination'], args['append'], args['overwrite'], not args['nocache'],
-                       args['batch'], args['large']).results
+                       args['batch'], args['large'], env=_notebook_environment()).results
 
 
 def _pipeline_line(args):
-  if not args['sql']:
-    return "Need a sql parameter"
-  query = _get_query(args['sql'])
-  if not isinstance(query, _bq._Query):
-    return "%s does not refer to a sql" % args['sql']
-  sql = query.sql
-
-  # TODO(gram): how do we handle this in Python code? Ideally Query objects
-  # would resolve themselves....
-  try:
-    complete, partial = _get_pipeline_resolution_environment()
-    query = _resolve(sql, complete, partial)
-  except Exception as e:
-    return e
-
+  query = _get_query_argument(args, None)
+  env = {}
+  # Strictly speaking we should be updating using *just* SQLs declared in magics
+  # TODO(gram): enforce this.
+  env.update(_notebook_environment())
+  env.update(_get_pipeline_args())
+  # TODO(gram): Change this to do a dry run
   return query.execute(args['destination'], args['append'], args['overwrite'], not args['nocache'],
-                       args['batch'], args['large']).results
+                       args['batch'], args['large'], env=env).results
 
 
 def _table_line(args):
@@ -529,44 +493,6 @@ def _load_cell(args, schema):
     print 'Load completed with errors: %s' % str(job.errors)
 
 
-def _run_cell(args, cell):
-
-  if args['deployable']:
-    complete, partial = _get_pipeline_resolution_environment()
-    complete.update(_get_pipeline_args(cell))
-  else:
-    # IPython environment takes precedence even over cell args, as cell args
-    # could resolve to default values.
-    # TODO(gram): fix this by creating a copy of the arg parser with all defaults set to None
-    complete, partial = _get_notebook_resolution_environment()
-
-    # Update the environment with the args explicitly set in the cell.
-    cell_args = _get_pipeline_args(cell, explicit_only=True)
-    complete.update({key: value for key, value in cell_args.iteritems()})
-
-    # Update the environment with any default arg values if they are not yet defined.
-    default_args = _get_pipeline_args()
-    complete.update({key: value for key, value in default_args.iteritems()
-                     if key not in complete and key not in partial})
-
-  # Perform expansion of the query to a new query
-  try:
-    query = complete.get(args['query'], None)
-    if not query:
-      query = partial.get(args['query'], None)
-      if not query:
-        return "%s does not refer to a query" % args['query']
-
-      query = _resolve(query.sql, complete, partial)
-    if args['dry']:
-      return query.sql
-    else:
-      # Run it and show results
-      return query.execute().results
-  except Exception as e:
-    print str(e)
-
-
 def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
   """  Return a table viewer.
 
@@ -625,7 +551,7 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
 def _repr_html_query(query):
   # TODO(nikhilko): Pretty print the SQL
   builder = _HtmlBuilder()
-  builder.render_text(query.sql, preformatted=True)
+  builder.render_text(query.raw_sql, preformatted=True)
   return builder.to_html()
 
 

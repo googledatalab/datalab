@@ -47,7 +47,7 @@ def _pipeline_environment():
     # named the same name as the module name.
     _notebook_environment()[_pipeline_module] = module
     # Initialize the bqmodule arg parser and source, udf and query dictionaries
-    module.__dict__[_pipeline_arg_parser] = _CommandParser.create('bigquery run')
+    module.__dict__[_pipeline_arg_parser] = _CommandParser.create('query')
     module.__dict__[_pipeline_udfs] = {}
     module.__dict__[_pipeline_sql] = {}
   else:
@@ -79,14 +79,11 @@ def _get_query(name):
   """ Get a query bound to variable name.
 
   This will look in IPython environment first. If name is not defined there it will
-  look in pipeline environment and return a resolved query if possible.
+  look in pipeline environment.
   """
   q = _get_notebook_item(name)
   if q is None:
     q = _pipeline_environment()[_pipeline_sql].get(name, None)
-    #if isinstance(q, _bq._Query):
-    #  complete, partial = _get_notebook_resolution_environment()
-    #  q = _resolve(q.sql, complete, partial)
   return q
 
 
@@ -117,109 +114,6 @@ def _get_pipeline_args(cell=None, explicit_only=False):
     # Don't return any args that are None as we don't want to expand to 'None'
     return {arg: value for arg, value in args.iteritems() if value is not None}
 
-
-def _get_pipeline_resolution_environment(env=None):
-  """ Get the key/val dictionary for resolving metavars in the pipeline environment.
-
-  An initial dictionary can be supplied in which case it will be augmented with new
-  names but existing names will not be replaced. Any objects in the initial dictionary
-  must already be fully resolved wrt variable references.
-  """
-  partial = {}
-  complete = {}
-  if env is not None:
-    complete.update(env)
-
-  # TODO(gram): we should really report/handle any name collisions between bqmodule UDFs, args
-  # and SQL queries/sources. These currently logically exist in three separate
-  # namespaces so ambiguity is possible. A simple solution for UDFs vs SQL is to always
-  # try do a remove of a name from one when defining the name in the other. For args it
-  # should just be an error if we try define a UDF/query/source object with the same name
-  # as an arg.
-
-  # Add the default arguments from the pipeline environment if they aren't defined
-  complete.update({key: value for key, value in _get_pipeline_args().iteritems()
-                   if key not in complete and value is not None})
-
-  # Add any UDFs from the pipeline environment
-  complete.update({key: value
-                   for key, value in _pipeline_environment()[_pipeline_udfs].iteritems()
-                   if key not in complete})
-
-  # Add any sources and queries from the pipeline environment. These need to go through
-  # variable resolution so are put in the partial dictionary.
-  partial.update({key: value
-                  for key, value in _pipeline_environment()[_pipeline_sql].iteritems()
-                  if key not in complete})
-
-  return complete, partial
-
-
-def _get_notebook_resolution_environment():
-  """ Get the key/val dictionary For resolving metavars in the pipeline environment.
-
-  This is the IPython user environment augmented with the pipeline environment.
-  """
-  ipy = _ipython.get_ipython()
-  return _get_pipeline_resolution_environment(ipy.user_ns)
-
-
-def _resolve(sql, complete, partial):
-  """ Resolve variable references in a query within an environment.
-
-  This computes and resolves the transitive dependencies in the query and raises an
-  exception if that fails due to either undefined or circular references.
-
-  Args:
-    sql: the text of the query to resolve
-    complete: definitions of objects that can be expanded but which have no
-      dependencies themselves (and so must NOT go through expansion to avoid corrupting
-      their content)
-    partial: definitions of bqmodule sql queries which may need to be expanded themselves.
-
-  Returns:
-    A resolved Query object.
-
-  Raises:
-    Exception on failure.
-  """
-  orig_sql = sql
-  dependencies = _util.Sql.get_dependencies(sql)
-  while len(dependencies) > 0:
-    changed = False
-    for i, dependency in enumerate(dependencies):
-      if dependency in complete:
-        # Has no further dependencies; remove it from dependencies.
-        dependencies[i] = None
-        changed = True
-      elif dependency in partial:
-        # Get the transitive dependencies.
-        sql = partial[dependency].sql
-        deps = _util.Sql.get_dependencies(sql)
-        # If there are none or they are all in turn complete, then this is completable.
-        if len(deps) == 0 or all([d in complete for d in deps]):
-          # Expand and move to complete, and remove from partial and dependencies.
-          complete[dependency] = _bq.query(_bq.sql(sql, **complete))
-          partial.pop(dependency)
-          dependencies[i] = None
-          changed = True
-        else:
-          # Add all non-complete references to dependencies for next iteration.
-          newdeps = [dep for dep in deps if dep not in complete and dep not in dependencies]
-          if len(newdeps):
-            changed = True
-            dependencies.extend(newdeps)
-      else:
-        raise Exception("Unsatisfied dependency %s" % dependency)
-
-    dependencies = [dependency for dependency in dependencies if dependency is not None]
-    if not changed:
-      # We just have dependencies left that are in partial but that can't be satisfied so
-      # they must be circular.
-      raise Exception('Circular dependencies in set %s' % str(dependencies))
-
-  query = _bq.query(_bq.sql(orig_sql, **complete))
-  return query
 
 # An LRU cache for Tables. This is mostly useful so that when we cross page boundaries
 # when paging through a table we don't have to re-fetch the schema.

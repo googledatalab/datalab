@@ -57,14 +57,16 @@ class CommandParser(_argparse.ArgumentParser):
         if var_name in namespace:
           args.append((namespace[var_name]))
         else:
-          raise Exception('Undefined variable referenced in command line: %s\nnamespace %s' % (arg, str(namespace)))
+          raise Exception('Undefined variable referenced in command line: %s' % arg)
       else:
         args.append(arg)
     return args
 
-  def parse(self, line, namespace={}):
+  def parse(self, line, namespace=None):
     """Parses a line into a dictionary of arguments, expanding metavariables from a namespace. """
     try:
+      if namespace is None:
+        namespace = _notebook_environment()
       args = CommandParser.create_args(line, namespace)
       return self.parse_args(args)
     except Exception as e:
@@ -79,3 +81,4 @@ class CommandParser(_argparse.ArgumentParser):
       self._subcommands = self.add_subparsers(help='commands', dest='command')
     return self._subcommands.add_parser(name, help=help)
 
+from ._environments import _notebook_environment

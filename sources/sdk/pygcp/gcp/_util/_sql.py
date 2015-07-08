@@ -18,11 +18,11 @@ import re
 
 
 class Sql(object):
-  """A helper class for formatting SQL statements.
+  """A helper class for wrapping and manipulating SQL statements.
   """
 
-  def __init__(self):
-    pass
+  def __init__(self, sql):
+    self._sql = sql
 
   @staticmethod
   def _get_tokens(sql):
@@ -75,7 +75,7 @@ class Sql(object):
 
         if '_repr_sql_' in dir(value):
           # pylint: disable=protected-access
-          value = value._repr_sql_()
+          value = value._repr_sql_(args)
         elif (type(value) == str) or (type(value) == unicode):
           value = '"' + value.replace('"', '\\"') + '"'
         else:
@@ -85,3 +85,21 @@ class Sql(object):
         parts.append(literal)
 
     return ''.join(parts)
+
+  @staticmethod
+  def sampling_query(sql, fields=None, count=5, sampling=None):
+    """Returns a sampling Query for the SQL object.
+
+    Args:
+      api: the BigQuery API object to use to issue requests.
+      sql: the SQL object to sample
+      fields: an optional list of field names to retrieve.
+      count: an optional count of rows to retrieve which is used if a specific
+          sampling is not specified.
+      sampling: an optional sampling strategy to apply to the table.
+    Returns:
+      A Query object for sampling the table.
+    """
+    if sampling is None:
+      sampling = _util._Sampling.default(count=count, fields=fields)
+    return sampling(sql)

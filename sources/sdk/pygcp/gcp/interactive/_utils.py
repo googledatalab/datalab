@@ -161,9 +161,6 @@ def _get_data(source, fields, first_row, count):
 
 def _handle_magic_line(line, cell, parser, namespace=None):
   """ Helper function for handling magic command lines given a parser with handlers set. """
-  if namespace is None:
-    ipy = _ipython.get_ipython()
-    namespace = parser.parse(line, namespace)
   args = parser.parse(line, namespace)
   if args:
     try:

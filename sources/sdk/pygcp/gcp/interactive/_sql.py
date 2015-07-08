@@ -17,14 +17,13 @@
 import IPython.core.magic as _magic
 import gcp.bigquery as _bq
 from ._commands import CommandParser as _CommandParser
-from ._environments import _get_pipeline_resolution_environment, _resolve, _pipeline_sql
-from ._environments import _pipeline_environment
+from ._environments import _notebook_environment
 from ._utils import _handle_magic_line
 
 
 def _create_sql_parser():
   sql_parser = _CommandParser('create a named SQL')
-  sql_parser.add_argument('-n', '--name', help='the name for this SQL', required=True)
+  sql_parser.add_argument('-n', '--name', help='the name for this SQL')
   sql_parser.set_defaults(func=lambda args, cell: sql_cell(args, cell))
   return sql_parser
 
@@ -50,18 +49,10 @@ def sql_cell(args, sql):
   Returns:
     The results of executing the query if no variable was specified. None otherwise.
   """
-  try:
-    complete, partial = _get_pipeline_resolution_environment()
-    # Test for hermeticity...
-    _resolve(sql, complete, partial)
-    # ... but record the unexpanded query
-    query = _bq.query(sql)
-  except Exception as e:
-    return e
 
+  query = _bq.query(sql)
   variable_name = args['name']
   if variable_name:
-    _pipeline_environment()[_pipeline_sql][variable_name] = query
+    _notebook_environment()[variable_name] = query
   else:
-    # TODO(gram): need expansion first??
     return query.results()

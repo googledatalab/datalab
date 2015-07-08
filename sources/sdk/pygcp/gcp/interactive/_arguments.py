@@ -16,12 +16,11 @@
 
 import datetime as _datetime
 import time as _time
-import IPython as _ipython
 import IPython.core.magic as _magic
 import gcp.bigquery as _bq
 from ._commands import CommandParser as _CommandParser
 from ._environments import _pipeline_environment, _exec_in_pipeline_module, _pipeline_arg_parser
-from ._environments import _get_pipeline_item
+from ._environments import _get_pipeline_item, _get_pipeline_args, _notebook_environment
 
 
 def _date(val, offset=None):
@@ -167,6 +166,9 @@ def arguments(_, cell):
 
     # Execute the cell which should be one or more calls to arg().
     _exec_in_pipeline_module(cell)
+
+    # Get the default values for the args and bind them in the notebook environment.
+    _notebook_environment().update(_get_pipeline_args())
   except Exception as e:
     print str(e)
 
