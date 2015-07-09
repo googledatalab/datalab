@@ -15,14 +15,98 @@
 """Implements SQL statement helper functionality."""
 
 import re
+import sys
 
 
 class Sql(object):
-  """A helper class for formatting SQL statements.
+  """A helper class for wrapping and manipulating SQL statements.
   """
 
-  def __init__(self):
-    pass
+  def __init__(self, sql):
+    self._sql = sql
+
+  def _repr_sql_(self, env=None):
+    """Creates a SQL representation of this object.
+
+    Args:
+      env: an optional dictionary to use when expanding the variables in the SQL.
+    Returns:
+      The SQL representation to use when embedding this object into SQL.
+    """
+    return '(%s)' % self.expand(env)
+
+  def __str__(self):
+    """Creates a string representation of this object.
+
+    Returns:
+      The string representation of this object.
+    """
+    return self._sql
+
+  @property
+  def sql(self):
+    return self._sql
+
+  def _expand(self, sql, ns, complete, in_progress):
+    """ Recursive helper method for expanding variables including transitive dependencies. """
+
+    dependencies = Sql.get_dependencies(sql)
+    for dependency in dependencies:
+      if dependency in complete:
+        continue
+      if dependency not in ns:
+        raise Exception("Unsatisfied dependency $%s" % dependency)
+      dep = ns[dependency]
+      if isinstance(dep, Sql):
+        if dependency in in_progress:
+          # Circular dependency
+          raise Exception("Circular dependency in $%s" % dependency)
+        in_progress.append(dependency)
+        expanded = self._expand(dep._sql, ns, complete, in_progress)
+        in_progress.pop()
+        complete[dependency] = Sql(expanded)
+      else:
+        complete[dependency] = dep
+    return Sql.format(sql, complete)
+
+  def expand(self, env=None):
+    """ Resolve variable references in a query within an environment.
+
+    This computes and resolves the transitive dependencies in the query and raises an
+    exception if that fails due to either undefined or circular references.
+
+    Args:
+      env: a dictionary of optional value overrides to use in variable expansion.
+
+    Returns:
+      The resolved SQL text.
+
+    Raises:
+      Exception on failure.
+    """
+    ns = {}
+    if env:
+      ns.update(env)
+    else:
+      ns.update(sys.modules['__main__'].__dict__)
+    return self._expand(self._sql, ns, complete={}, in_progress=[])
+
+  @staticmethod
+  def _get_tokens(sql):
+    # Find escaped '$' characters ($$), or "$<name>" variable references, or
+    # literal sequences of character without any '$' in them (in that order).
+    return re.findall(r'(\$\$)|(\$[a-zA-Z0-9_]+)|([^\$]*)', sql)
+
+  @staticmethod
+  def get_dependencies(sql):
+    """ Return the list of tokens referenced in this SQL. """
+    dependencies = []
+    for (_, placeholder, _) in Sql._get_tokens(sql):
+      if placeholder:
+        variable = placeholder[1:]
+        if variable not in dependencies:
+          dependencies.append(variable)
+    return dependencies
 
   @staticmethod
   def format(sql, args):
@@ -41,15 +125,11 @@ class Sql(object):
       have a corresponding argument value.
     """
 
-    # Find escaped '$' characters ($$), or "$<name>" variable references, or
-    # literal sequences of character without any '$' in them (in that order).
-    tokens = re.findall(r'(\$\$)|(\$[a-zA-Z0-9_]+)|([^\$]*)', sql)
-
     # Rebuild the SQL string, substituting just '$' for escaped $ occurrences,
-    # variable references subsituted with their values, or literal text copied
+    # variable references substituted with their values, or literal text copied
     # over as-is.
     parts = []
-    for (escape, placeholder, literal) in tokens:
+    for (escape, placeholder, literal) in Sql._get_tokens(sql):
       if escape:
         parts.append('$')
       elif placeholder:
@@ -62,7 +142,7 @@ class Sql(object):
 
         if '_repr_sql_' in dir(value):
           # pylint: disable=protected-access
-          value = value._repr_sql_()
+          value = value._repr_sql_(args)
         elif (type(value) == str) or (type(value) == unicode):
           value = '"' + value.replace('"', '\\"') + '"'
         else:
@@ -72,3 +152,21 @@ class Sql(object):
         parts.append(literal)
 
     return ''.join(parts)
+
+  @staticmethod
+  def sampling_query(sql, fields=None, count=5, sampling=None):
+    """Returns a sampling Query for the SQL object.
+
+    Args:
+      api: the BigQuery API object to use to issue requests.
+      sql: the SQL object to sample
+      fields: an optional list of field names to retrieve.
+      count: an optional count of rows to retrieve which is used if a specific
+          sampling is not specified.
+      sampling: an optional sampling strategy to apply to the table.
+    Returns:
+      A Query object for sampling the table.
+    """
+    if sampling is None:
+      sampling = _util._Sampling.default(count=count, fields=fields)
+    return sampling(sql)

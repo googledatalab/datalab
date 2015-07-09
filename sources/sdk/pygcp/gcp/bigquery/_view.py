@@ -202,7 +202,7 @@ class View(object):
         .execute(table_name=table_name, append=append, overwrite=overwrite,
                  use_cache=use_cache, batch=batch)
 
-  def _repr_sql_(self):
+  def _repr_sql_(self, env=None):
     """Returns a representation of the view for embedding into a SQL statement.
 
     Returns:
@@ -215,7 +215,7 @@ class View(object):
     """
     return '%s: %s' % (self._table, self.query)
 
-  def _repr_sql_(self):
+  def _repr_sql_(self, env=None):
     """Returns a representation of the view for embedding into a SQL statement.
 
     Returns:
