@@ -1,18 +1,18 @@
 <div class="datalab-cell-toolbar">
   <button class="datalab-table-inline-button"
-          ng-click="notebook.evaluateCell(cell, worksheetId)">
-    <img src="assets/iconRunDark.svg" alt="Run"/>
+          ng-click="notebook.moveCellDown(cell.id, worksheetId)">
+    <img src="assets/iconMoveDown.svg" alt="Move down"/>
   </button>
+  <button class="datalab-table-inline-button"
+          ng-click="notebook.moveCellUp(cell.id, worksheetId)">
+    <img src="assets/iconMoveUp.svg" alt="Move up"/>
+  </button>  
   <button class="datalab-table-inline-button"
           ng-click="notebook.deleteCell(cell.id, worksheetId)">
     <img src="assets/iconDelete.svg" alt="Delete"/>
   </button>
   <button class="datalab-table-inline-button"
-          ng-click="notebook.moveCellUp(cell.id, worksheetId)">
-    <img src="assets/iconMoveUp.svg" alt="Move up"/>
-  </button>
-  <button class="datalab-table-inline-button"
-          ng-click="notebook.moveCellDown(cell.id, worksheetId)">
-    <img src="assets/iconMoveDown.svg" alt="Move down"/>
+          ng-click="notebook.evaluateCell(cell, worksheetId)">
+    <img src="assets/iconRunDark.svg" alt="Run"/>
   </button>
 </div>
