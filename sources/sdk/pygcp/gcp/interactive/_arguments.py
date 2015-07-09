@@ -185,6 +185,8 @@ def arguments(_, cell):
       elif isinstance(val, basestring) or isinstance(val, int) or isinstance(val, float)\
           or isinstance(val, long):
         _arg(key, default=val)
+      elif isinstance(val, _bq._Table):
+        _arg(key, default=val.full_name, type=_table)
       else:
         raise Exception('Cannot generate argument for %s of type %s' % (key, type(val)))
 
