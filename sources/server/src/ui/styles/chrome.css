@@ -24,32 +24,7 @@
  *
  */
 
-/**
- * CSS values/constants used throughout for consistency.
- *
- * - HeaderBackgroundColor: #37474f;
- * - HeaderHeight: 48px;
- *
- * - ActionBarBackgroundColor: #445963;
- * - ActionBarHeight: 56px;
- * - ActionButtonHeight: 56px;
- * - ActionButtonHoverColor: rgba(255,255,255,.05); // overlay on dark background
- *
- * - LeftNavBackground: #f2f2f2;
- * - LeftNavButtonHeight: 56px;
- * - LeftNavButtonSelectedColor:rgba(0,0,0,0.1);
- * - LeftNavButtonHoverColor: rgba(0,0,0,0.05); // overlay on light background
- *
- * - BreadcrumbHeight: 56px;
- *
- * - TabGroupHeight: 56px;
- * - TabSelectedColor: rgba(0,0,0,0.1);
- * - TabHoverColor: rgba(255,255,255,.05);
- *
- * - TBodyRowBackground: #f9f9f9;
- */
-
-html, body {height: 100%; width: 100%; margin: 0; padding: 0;}
+html, body {height: 100%; width: 100%; margin: 0; padding: 0; min-width: 800px; min-height: 600px;}
 
 body {
   font-family: Roboto,RobotoDraft,Verdana,Arial,sans-serif;
@@ -82,7 +57,7 @@ body {
 header {
   height: 48px;
   display: block;
-  background-color: #37474f;
+  background-color: #0E387E;
 }
 
 .navbar {
@@ -114,10 +89,10 @@ header {
 }
 .navbar > .navbar-header {
   padding: 0;
-  margin: 0;
+  margin-left: 24px;
   width: 100%;
   height:48px;
-  background: #37474f;
+  background: #0E387E;
 
   flex-grow: 0;
   -ms-flex-positive: 0;
@@ -180,15 +155,31 @@ button {
   background: none;
   border: none;
   border-radius: 2px;
-  cursor: default;
-  padding: 6px;
+
+  cursor: pointer;
   margin: 0 4px;
+  min-width: 30px;
+
+  display: inline-flex;
+  display: -ms-inline-flexbox;
+  display: -webkit-inline-flex;
+
+  flex-direction: row;
+  -ms-flex-direction: row;
+  -webkit-flex-direction: row;
+
+  align-items: center;
+  -ms-flex-align: center;
+  -webkit-align-items: center;  
 }
 button > img {
-  width: 16px;
-  height: 16px;
+  min-width: 22px;
+  width: 22px;
+  min-height: 22px;
+  height: 22px;
+  padding: 2px;
+  margin-right: 4px;
 }
 button:focus {
   outline: none;
 }
-
