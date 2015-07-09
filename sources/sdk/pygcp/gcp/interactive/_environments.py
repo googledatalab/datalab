@@ -26,8 +26,6 @@ from ._commands import CommandParser as _CommandParser
 # Some string literals used for binding names in the environment.
 _pipeline_module = '_gcp_pipeline'
 _pipeline_arg_parser = '_arg_parser'
-_pipeline_sql = '_sql'
-_pipeline_udfs = '_udfs'
 
 
 def _notebook_environment():
@@ -46,10 +44,8 @@ def _pipeline_environment():
     # Automatically import the newly created module by assigning it to a variable
     # named the same name as the module name.
     _notebook_environment()[_pipeline_module] = module
-    # Initialize the bqmodule arg parser and source, udf and query dictionaries
+    # Initialize the bqmodule arg parser.
     module.__dict__[_pipeline_arg_parser] = _CommandParser.create('query')
-    module.__dict__[_pipeline_udfs] = {}
-    module.__dict__[_pipeline_sql] = {}
   else:
     module = _sys.modules[_pipeline_module]
   return module.__dict__
@@ -60,47 +56,29 @@ def _exec_in_pipeline_module(code):
   exec code in _pipeline_environment()
 
 
-def _bind_name_in_notebook_environment(name, value):
-  """ Bind a name to a value in the IPython notebook environment. """
-  ipy = _ipython.get_ipython()
-  ipy.push({name: value})
-
-
-def _get_pipeline_item(name):
-  """ Get an item from the pipeline environment. """
-  return _pipeline_environment().get(name, None)
-
-
 def _get_notebook_item(name):
   """ Get an item from the IPython environment. """
   return _notebook_environment().get(name, None)
 
-def _get_query(name):
-  """ Get a query bound to variable name.
 
-  This will look in IPython environment first. If name is not defined there it will
-  look in pipeline environment.
-  """
-  q = _get_notebook_item(name)
-  if q is None:
-    q = _pipeline_environment()[_pipeline_sql].get(name, None)
-  return q
-
-
-def _get_pipeline_args(cell=None, explicit_only=False):
+def _get_pipeline_args(args=None, explicit_only=False):
   """ Parse a set of pipeline arguments or get the default value of the arguments.
 
   Args:
-    cell: the cell containing the argument flags. If omitted the empty string is used so
+    args: the argument flags. May be a string or a list. If omitted the empty string is used so
         we can get the default values for the arguments.
     default_to_none: if True, we ignore the defaults and only return args that were
         explicitly specified.
   """
-  if cell is None:
-    cell = ''
-  parser = _get_pipeline_item(_pipeline_arg_parser)
-  command_line = ' '.join(cell.split('\n'))
-  tokens = _shlex.split(command_line)
+  if args is None:
+    tokens = []
+  elif isinstance(args, basestring):
+    command_line = ' '.join(args.split('\n'))
+    tokens = _shlex.split(command_line)
+  else:
+    tokens = args
+
+  parser = _pipeline_environment()[_pipeline_arg_parser]
   args = vars(parser.parse_args(tokens))
 
   if explicit_only:
@@ -130,9 +108,6 @@ def _get_table(name):
   """
   # If name is a variable referencing a table, use that.
   item = _get_notebook_item(name)
-  if item is None:
-    item = _get_pipeline_item(name)
-
   if isinstance(item, _bq._Table):
     return item
   # Else treat this as a BQ table name and return the (cached) table if it exists.
@@ -159,3 +134,39 @@ def _get_schema(name):
       return item.schema
   except AttributeError:
     return None
+
+
+def _get_resolution_environment(args, is_pipeline):
+  env = {}
+  # TODO(gram): For is_pipeline case, we may want to restrict the update below to be only
+  # things defined in magics.
+  # It depends on how we will be generating the JSON pipeline representation for DataMatic.
+  env.update(_notebook_environment())
+  # Update using arguments including default values
+  # The args must be of the form of a list of strings each being of the form 'name=value' or
+  # 'name', 'value'.
+  # argparse.REMAINDER is broken when using subcommands if the extra arguments are
+  # optional; they must be positional. So we enforce that form and then add '--' back.
+  if args:
+    new_args = []
+    next_is_value = False
+    for arg in args:
+      if next_is_value:
+        new_args.append(arg)
+        next_is_value = False
+      else:
+        new_args.append('--%s' % arg)
+        if arg.find('=') > 0:
+          next_is_value = True
+    args = new_args
+
+  env.update(_get_pipeline_args(args, explicit_only=not is_pipeline))
+  return env
+
+def _get_notebook_resolution_environment(args=None):
+  return _get_resolution_environment(args, is_pipeline=False)
+
+
+def _get_pipeline_resolution_environment(args=None):
+  return _get_resolution_environment(args, is_pipeline=True)
+

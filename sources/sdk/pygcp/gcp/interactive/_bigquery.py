@@ -14,17 +14,20 @@
 
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 
+import argparse as _argparse
 import json as _json
 import re as _re
+import shlex as _shlex
 import time as _time
 import IPython as _ipython
 import IPython.core.magic as _magic
 import gcp.bigquery as _bq
 import gcp._util as _util
 from ._commands import CommandParser as _CommandParser
-from ._environments import _get_query, _get_table, _notebook_environment
-from ._environments import _get_schema, _get_pipeline_args
-from ._environments import _get_notebook_item
+from ._environments import _get_notebook_item, _get_schema, _get_table
+from ._environments import _notebook_environment
+from ._environments import _get_notebook_resolution_environment
+from ._environments import _get_pipeline_resolution_environment
 from ._html import HtmlBuilder as _HtmlBuilder
 from ._utils import _get_data, _get_field_list, _handle_magic_line
 
@@ -43,6 +46,7 @@ def _create_sample_subparser(parser):
                              help='field to use for sorted or hashed sampling')
   sample_parser.add_argument('-o', '--order', choices=['ascending', 'descending'],
                              default='ascending', help='sort order to use for sorted sampling')
+  sample_parser.add_argument('args', nargs=_argparse.REMAINDER)
   return sample_parser
 
 
@@ -52,7 +56,6 @@ def _create_udf_subparser(parser):
   return udf_parser
 
 
-# TODO(gram): make help a parameter too
 def _create_execute_subparser(parser, command):
   execute_parser = parser.subcommand(command,
       'execute a BigQuery SQL statement sending results to a named table')
@@ -70,6 +73,7 @@ def _create_execute_subparser(parser, command):
                               nargs='?')
   execute_parser.add_argument('-d', '--destination', help='target table name',
                               nargs='?')
+  execute_parser.add_argument('args', nargs=_argparse.REMAINDER)
   return execute_parser
 
 
@@ -238,10 +242,14 @@ def bigquery(line, cell=None):
   Returns:
     The results of executing the cell.
   """
-  # TODO(gram): Fix this hack!
-  namespace = _notebook_environment()
-  if line.split(' ')[1] == 'pipeline':
-    namespace.update(_get_pipeline_args())
+  namespace = {}
+  if line.find('$') >= 0:
+    # We likely have variables to expand; get the appropriate context.
+    fields = _shlex.split(line)
+    if len(fields) > 2 and fields[1] == 'pipeline':
+      namespace = _get_pipeline_resolution_environment()
+    else:
+      namespace = _get_notebook_resolution_environment()
 
   return _handle_magic_line(line, cell, _bigquery_parser, namespace=namespace)
 
@@ -284,7 +292,7 @@ def _get_query_argument(args, sql):
   else:
     if not args['sql']:
       raise Exception('Need a sql parameter or a sql cell body')
-    query = _get_query(args['sql'])
+    query = _get_notebook_item(args['sql'])
     if not isinstance(query, _bq._Query):
       raise Exception('%s does not refer to a %%sql or Query' % args['sql'])
     return query
@@ -315,7 +323,7 @@ def _sample_cell(args, sql):
   elif method == 'limit':
     sampling = _bq.Sampling.default(count=count)
 
-  return query.sample(sampling=sampling, env=_notebook_environment())
+  return query.sample(sampling=sampling, env=_get_notebook_resolution_environment(args['args']))
 
 
 def _udf_cell(args, js):
@@ -375,19 +383,17 @@ def _udf_cell(args, js):
 def _execute_cell(args, sql):
   query = _get_query_argument(args, sql)
   return query.execute(args['destination'], args['append'], args['overwrite'], not args['nocache'],
-                       args['batch'], args['large'], env=_notebook_environment()).results
+                       args['batch'], args['large'],
+                       env=_get_notebook_resolution_environment(args['args'])).results
 
 
 def _pipeline_line(args):
   query = _get_query_argument(args, None)
-  env = {}
-  # Strictly speaking we should be updating using *just* SQLs declared in magics
+  # Strictly speaking the environment should contain *just* SQLs declared in magics
   # TODO(gram): enforce this.
-  env.update(_notebook_environment())
-  env.update(_get_pipeline_args())
-  # TODO(gram): Change this to do a dry run
-  return query.execute(args['destination'], args['append'], args['overwrite'], not args['nocache'],
-                       args['batch'], args['large'], env=env).results
+  # TODO(gram): Change this to do a dry run; deferring until merge with Robin's dry run code.
+  env = _get_pipeline_resolution_environment(args['args'])
+  print query.expand(env)
 
 
 def _table_line(args):

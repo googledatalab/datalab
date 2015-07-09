@@ -20,7 +20,7 @@ import IPython.core.magic as _magic
 import gcp.bigquery as _bq
 from ._commands import CommandParser as _CommandParser
 from ._environments import _pipeline_environment, _exec_in_pipeline_module, _pipeline_arg_parser
-from ._environments import _get_pipeline_item, _get_pipeline_args, _notebook_environment
+from ._environments import _get_pipeline_args, _notebook_environment
 
 
 def _date(val, offset=None):
