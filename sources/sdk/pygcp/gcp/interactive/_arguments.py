@@ -84,65 +84,26 @@ def _date(val, offset=None):
   return when
 
 
-def _table(val):
-  """ A pseudo-type for bqmodule arguments allowing us to specify table names.
-
-   Needed as we need a special form of expansion in queries for table names.
-  """
-  return _bq.table(val)
-
-
-def _make_formatter(f, type, offset=None):
-  """ A closure-izer for arguments that include a format and possibly an offset. """
+def _make_string_formatter(f, offset=None):
+  """ A closure-izer for string arguments that include a format and possibly an offset. """
   format = f
   delta = offset
-  if type == _table:
-    return lambda v: _bq.table(_time.strftime(format, (_date(v, delta)).timetuple()))
-  else:
-    return lambda v: _time.strftime(format, (_date(v, delta)).timetuple())
+  return lambda v: _time.strftime(format, (_date(v, delta)).timetuple())
 
-
-def _make_date(offset):
-  """ A closure-izer for date arguments that include an offset. """
+def _make_table_formatter(f, offset=None):
+  """ A closure-izer for table arguments that include a format and possibly an offset. """
+  format = f
   delta = offset
-  return lambda v: _date(v, delta)
+  return lambda v: _bq.table(_time.strftime(format, (_date(v, delta)).timetuple()))
 
+def _make_table(v):
+  return _bq.table(v)
 
-def _arg(name, default=None, offset=None, type=None, format=None, help=None):
-  """ Add an argument to the pipeline arg parser.
+def _datestring(format, offset=''):
+  return {'type': 'datestring', 'format': format, 'offset': offset}
 
-  Args:
-    name: the argument name; this will add a --name option to the arg parser.
-    default: default value for the argument. For dates this can be 'now', 'today',
-        'yesterday' or a string that should be suitable for passing to datetime.__init__.
-    offset: for date arguments a string containing a comma-separated list of
-      relative offsets to apply of the form <n><u> where <n> is an integer and
-      <u> is a single character unit (d=day, m=month, y=year, h=hour, m=minute).
-    type: the argument type. Can be a standard Python scalar or date or table.
-        Not needed if either format or offset is specified (in this case the final argument
-        will be a string (if format is specified) or datetime (if offset is specified but format
-        is not) produced from processing the raw argument appropriately).
-    format: for date arguments, a format string to convert this to a string using time.strftime.
-      If format is supplied the type argument is not needed.
-    help: optional help string for this argument.
-  """
-  arg_parser = _get_pipeline_item(_pipeline_arg_parser)
-  if format is None:
-    if offset is None:
-      if type is None:
-        arg_parser.add_argument('--%s' % name, default=default, help=help)
-      else:
-        arg_parser.add_argument('--%s' % name, default=default, type=type, help=help)
-    else:
-      arg_parser.add_argument('--%s' % name, default=default, type=_make_date(offset), help=help)
-  else:
-    if offset is None:
-      arg_parser.add_argument('--%s' % name, default=default, type=_make_formatter(format, type),
-                              help=help)
-    else:
-      arg_parser.add_argument('--%s' % name, default=default,
-                              type=_make_formatter(format, type, offset), help=help)
-
+def _table(name=None, format=None, offset=''):
+  return {'type': 'table', 'name': name, 'format': format, 'offset': offset}
 
 @_magic.register_cell_magic
 def arguments(_, cell):
@@ -155,38 +116,47 @@ def arguments(_, cell):
   """
   try:
     # Define our special argument 'types'.
-    _pipeline_environment()['date'] = _date
     _pipeline_environment()['table'] = _table
-
-    # Define the arg helper function.
-    _pipeline_environment()['arg'] = _arg
-
-    # Reset the argument parser.
-    _pipeline_environment()[_pipeline_arg_parser] = _CommandParser.create('')
+    _pipeline_environment()['datestring'] = _datestring
 
     # Execute the cell which should be one or more calls to arg().
     _exec_in_pipeline_module(cell)
 
-    # Iterate through the module dictionary and for any defined objects that are
-    # not the arg parser, add additional args to the parser.
+    # Reset the argument parser.
+    arg_parser = _CommandParser.create('')
+    _pipeline_environment()[_pipeline_arg_parser] = arg_parser
 
+    # Iterate through the module dictionary and for any newly defined objects
+    # add args to the parser.
     for key in _pipeline_environment():
-      if key == 'date' or key == 'table' or key == 'arg' or key == _pipeline_arg_parser:
-        continue
-      if key[0] == '_':
+
+      # Skip internal stuff.
+      if key == 'datestring' or key == 'table' or key == _pipeline_arg_parser or key[0] == '_':
         continue
 
       val = _pipeline_environment()[key]
+      key = '--%s' % key
+
       if isinstance(val, bool):
         if val:
-          _arg(key, default=val, action='store_true')
+          arg_parser.add_argument(key, default=val, action='store_true')
         else:
-          _arg(key, default=val, action='store_false')
+          arg_parser.add_argument(key, default=val, action='store_false')
       elif isinstance(val, basestring) or isinstance(val, int) or isinstance(val, float)\
           or isinstance(val, long):
-        _arg(key, default=val)
-      elif isinstance(val, _bq._Table):
-        _arg(key, default=val.full_name, type=_table)
+        arg_parser.add_argument(key, default=val)
+      elif isinstance(val, dict) and 'type' in val:
+        if val['type'] == 'datestring':
+          arg_parser.add_argument(key, default='',
+                                  type=_make_string_formatter(val['format'], offset=val['offset']))
+        elif val['type'] == 'table':
+          if val['format'] is not None:
+            arg_parser.add_argument(key, default='',
+                                    type=_make_table_formatter(val['format'], offset=val['offset']))
+          else:
+            arg_parser.add_argument(key, default=val['name'], type=_make_table)
+        else:
+          raise Exception('Cannot generate argument for %s of type %s' % (key, type(val)))
       else:
         raise Exception('Cannot generate argument for %s of type %s' % (key, type(val)))
 

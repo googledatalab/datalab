@@ -37,7 +37,7 @@ class CommandParser(_argparse.ArgumentParser):
   def exit(self, status=0, message=None):
     """Overriden exit method to stop parsing without calling sys.exit().
     """
-    raise Exception()
+    raise Exception(message)
 
   def format_usage(self):
     """Overriden usage generator to use the full help message.
