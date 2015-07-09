@@ -4,18 +4,18 @@
   <div class="datalab-top-actionsbar">
     <div class="datalab-headertext">Notebooks</div>
     <!-- Create a notebook action. -->
-    <div class="datalab-top-actionsbar-actions">
+    <div class="datalab-top-actionsbar-actions align-left">
       <button class="datalab-flat-button"
               ng-click="ctrl.showModal($event, 'datalab-new-notebook-dialog')">
         <img src="assets/iconAdd.svg" alt="Create a notebook"/>
-        <div class="datalab-flat-button-text">Create a notebook</div>
+        <div class="datalab-flat-button-text">Notebook</div>
       </button>
 
-      <button class="datalab-flat-button"
-              ng-click="ng-click="ctrl.showModal($event, 'datalab-new-folder-dialog')">
+      <!-- <button class="datalab-flat-button"
+              ng-click="ctrl.showModal($event, 'datalab-new-folder-dialog')">
       <img src="assets/iconAdd.svg" alt="Create a notebook"/>
-      <div class="datalab-flat-button-text">Create a folder</div>
-      </button>
+      <div class="datalab-flat-button-text">Folder</div>
+      </button> -->
     </div>
   </div>
 
@@ -24,10 +24,11 @@
     <!-- The breadcrumb navigation elements -->
     <div class="datalab-filenav-breadcrumbs">
       <!-- The clickable root '/' -->
-      <a class="datalab-breadcrumb-link" ng-click="ctrl.updatePath(0)"> Root / </a>
+      <a class="datalab-breadcrumb-link" ng-click="ctrl.updatePath(0)">Root</a>
+      <div class="datalab-breadcrumb-separator">/</div>
       <div ng-repeat="component in breadcrumbs track by $index">
         <!-- Use ' / ' in between each segment of the path after the root -->
-        <div class="datalab-breadcrumb-separator" ng-if="$index > 1"> / </div>
+        <div class="datalab-breadcrumb-separator" ng-if="$index > 1">/</div>
         <!--  Use <a> elements for the leading segments of path to show they are click-able -->
         <a class="datalab-breadcrumb-link"
            ng-if="$index > 0 && $index < breadcrumbs.length - 1"
