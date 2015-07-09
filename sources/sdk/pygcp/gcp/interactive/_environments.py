@@ -82,10 +82,13 @@ def _get_pipeline_args(args=None, explicit_only=False):
   args = vars(parser.parse_args(tokens))
 
   if explicit_only:
+    # Figure out which args were explicitly specified.
     allowed = []
     for token in tokens:
       if token[:2] == '--':
-        allowed.append(token[2:])
+        # Get the name without leading '--' and optional trailing '=<value>'
+        arg_name = token[2:].split('=')[0]
+        allowed.append(arg_name)
     # Don't return any args that are None as we don't want to expand to 'None'
     return {arg: value for arg, value in args.iteritems() if value is not None and arg in allowed}
   else:
@@ -160,7 +163,8 @@ def _get_resolution_environment(args, is_pipeline):
           next_is_value = True
     args = new_args
 
-  env.update(_get_pipeline_args(args, explicit_only=not is_pipeline))
+  pargs = _get_pipeline_args(args, explicit_only=not is_pipeline)
+  env.update(pargs)
   return env
 
 def _get_notebook_resolution_environment(args=None):

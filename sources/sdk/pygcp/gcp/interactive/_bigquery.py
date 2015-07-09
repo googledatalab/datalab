@@ -323,7 +323,8 @@ def _sample_cell(args, sql):
   elif method == 'limit':
     sampling = _bq.Sampling.default(count=count)
 
-  return query.sample(sampling=sampling, env=_get_notebook_resolution_environment(args['args']))
+  env=_get_notebook_resolution_environment(args['args'])
+  return query.sample(sampling=sampling, env=env)
 
 
 def _udf_cell(args, js):
