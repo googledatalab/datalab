@@ -14,10 +14,35 @@
 
 """Implements Bucket-related Cloud Storage APIs."""
 
+import re
+
 import dateutil.parser as _dateparser
 from gcp._util import Iterator as _Iterator
 from ._item import Item as _Item
 from ._item import ItemList as _ItemList
+
+
+# REs to match bucket names and optionally object names
+_BUCKET_NAME = '[a-z\d][a-z\d_\.\-]+[a-z\d]'
+_OBJECT_NAME = '[^\n\r]+'
+_STORAGE_NAME = 'gs://(' + _BUCKET_NAME + ')(/' + _OBJECT_NAME + ')?'
+
+
+def parse_name(name):
+  bucket = None
+  object = None
+  m = re.match(_STORAGE_NAME, name)
+  if m:
+    # We want to return the last two groups as first group is the optional 'gs://'
+    bucket = m.group(1)
+    object = m.group(2)
+    if object is not None:
+      object = object[1:]  # Strip '/'
+  else:
+    m = re.match('(' + _OBJECT_NAME + ')', name)
+    if m:
+      object = m.group(1)
+  return bucket, object
 
 
 class BucketMetadata(object):
@@ -101,17 +126,52 @@ class Bucket(object):
     """
     return _ItemList(self._api, self._name, prefix, delimiter)
 
+  def exists(self):
+    """ Checks if the bucket exists. """
+    try:
+      return self.metadata() is not None
+    except Exception:
+      return False
+
+  def create(self, project_id=None):
+    """Creates the bucket.
+
+    Args:
+      The project in which to create the bucket.
+    Returns:
+      The bucket.
+    Raises:
+      Exception if there was an error creating the bucket.
+    """
+    if project_id is None:
+      project_id = self._api.project_id
+    self._info = self._api.buckets_insert(self._name, project_id=project_id)
+    return self
+
+  def delete(self):
+    """Deletes the bucket.
+
+    Returns:
+      Nothing.
+    Raises:
+      Exception if there was an error deleting the bucket.
+    """
+    self._api.buckets_delete(self._name)
+
 
 class BucketList(object):
-  """Represents a list of Cloud Storage buckets."""
+  """Represents a list of Cloud Storage buckets for a project."""
 
-  def __init__(self, api):
+  def __init__(self, api, project_id=None):
     """Initializes an instance of a BucketList.
 
     Args:
       api: the Storage API object to use to issue requests.
+      project_id: an optional project whose buckets we want to manipulate. If None this
+          is obtained from the api object.
     """
     self._api = api
+    self._project_id = project_id if project_id else api.project_id
 
   def contains(self, name):
     """Checks if the specified bucket exists.
@@ -141,11 +201,10 @@ class BucketList(object):
     Raises:
       Exception if there was an error creating the bucket.
     """
-    bucket_info = self._api.buckets_insert(name)
-    return _Bucket(self._api, name, bucket_info)
+    return Bucket(self._api, name).create(self._project_id)
 
-  def _retrieve_buckets(self, page_token, count):
-    list_info = self._api.buckets_list(page_token=page_token)
+  def _retrieve_buckets(self, page_token, _):
+    list_info = self._api.buckets_list(page_token=page_token, project_id=self._project_id)
 
     buckets = list_info.get('items', [])
     if len(buckets):

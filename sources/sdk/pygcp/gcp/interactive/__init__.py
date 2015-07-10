@@ -26,6 +26,7 @@ except ImportError:
 import gcp.interactive._bigquery
 import gcp.interactive._chart
 import gcp.interactive._modules
+import gcp.interactive._storage
 
 
 # Inject our user agent on all requests by monkey-patching a wrapper around httplib2.Http.request.

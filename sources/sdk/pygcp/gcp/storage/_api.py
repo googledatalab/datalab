@@ -46,22 +46,35 @@ class Api(object):
     """The project_id associated with this API client."""
     return self._project_id
 
-  def buckets_insert(self, bucket, projection='noAcl'):
+  def buckets_insert(self, bucket, project_id=None):
     """Issues a request to create a new bucket.
 
     Args:
       bucket: the name of the bucket.
       projection: the projection of the bucket information to retrieve.
+      project: the project to use when inserting the bucket.
     Returns:
       A parsed bucket information dictionary.
     Raises:
       Exception if there is an error performing the operation.
     """
-    args = {'project': self._project_id}
+    args = {'project': project_id if project_id else self._project_id}
     data = {'name': bucket}
 
     url = Api._ENDPOINT + (Api._BUCKET_PATH % '')
     return _util.Http.request(url, args=args, data=data, credentials=self._credentials)
+
+  def buckets_delete(self, bucket):
+    """Issues a request to delete a bucket.
+
+    Args:
+      bucket: the name of the bucket.
+      projection: the projection of the bucket information to retrieve.
+    Raises:
+      Exception if there is an error performing the operation.
+    """
+    url = Api._ENDPOINT + (Api._BUCKET_PATH % bucket)
+    _util.Http.request(url, method='DELETE', credentials=self._credentials, raw_response=True)
 
   def buckets_get(self, bucket, projection='noAcl'):
     """Issues a request to retrieve information about a bucket.
@@ -74,16 +87,18 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
+    args = {'projection': projection}
     url = Api._ENDPOINT + (Api._BUCKET_PATH % bucket)
-    return _util.Http.request(url, credentials=self._credentials)
+    return _util.Http.request(url, credentials=self._credentials, args=args)
 
-  def buckets_list(self, projection='noAcl', max_results=0, page_token=None):
+  def buckets_list(self, projection='noAcl', max_results=0, page_token=None, project_id=None):
     """Issues a request to retrieve the list of buckets.
 
     Args:
       projection: the projection of the bucket information to retrieve.
       max_results: an optional maximum number of objects to retrieve.
       page_token: an optional token to continue the retrieval.
+      project_id: the project whose buckets should be listed.
     Returns:
       A parsed list of bucket information dictionaries.
     Raises:
@@ -92,7 +107,7 @@ class Api(object):
     if max_results == 0:
       max_results = Api._MAX_RESULTS
 
-    args = {'project': self._project_id, 'maxResults': max_results}
+    args = {'project': project_id if project_id else self._project_id, 'maxResults': max_results}
     if projection is not None:
       args['projection'] = projection
     if page_token is not None:
@@ -122,8 +137,8 @@ class Api(object):
 
     Args:
       bucket: the name of the bucket containing the object.
-      key: the key of the object to be read.
-      content: the text content to be writtent.
+      key: the key of the object to be written.
+      content: the text content to be written.
       content_type: the type of text content.
     Raises:
       Exception if the object could not be written to.
@@ -162,7 +177,7 @@ class Api(object):
       Exception if there is an error performing the operation.
     """
     url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, Api._escape_key(key)))
-    return _util.Http.request(url, method='DELETE', credentials=self._credentials)
+    _util.Http.request(url, method='DELETE', credentials=self._credentials, raw_response=True)
 
   def objects_get(self, bucket, key, projection='noAcl'):
     """Issues a request to retrieve information about an object.
@@ -217,6 +232,21 @@ class Api(object):
 
     url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, ''))
     return _util.Http.request(url, args=args, credentials=self._credentials)
+
+  def objects_patch(self, bucket, key, info):
+    """Updates the metadata associated with an object.
+
+    Args:
+      bucket: the name of the bucket containing the object.
+      key: the key of the object being updated.
+      info: the metadata to update.
+    Returns:
+      A parsed object information dictionary.
+    Raises:
+      Exception if there is an error performing the operation.
+    """
+    url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, Api._escape_key(key)))
+    return _util.Http.request(url, method='PATCH', data=info, credentials=self._credentials)
 
   @staticmethod
   def _escape_key(key):
