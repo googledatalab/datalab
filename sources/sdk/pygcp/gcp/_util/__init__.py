@@ -14,9 +14,11 @@
 
 """Google Cloud Platform library - Internal Helpers."""
 
+from ._async import async, async_function, async_method
 from ._credentials import MetadataCredentials
 from ._http import Http
 from ._iterator import Iterator
+from ._job import Job, JobError
 from ._json_encoder import JSONEncoder
 from ._lru_cache import LRUCache
 from ._metadata import MetadataService

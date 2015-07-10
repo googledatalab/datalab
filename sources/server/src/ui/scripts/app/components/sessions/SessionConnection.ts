@@ -44,7 +44,9 @@ function sessionConnectionFactory(
     ): app.ISessionConnection {
 
   var socket: Socket = socketio(location.host(), {
-    query: 'notebookPath=' + notebook.notebookPath
+    query: 'notebookPath=' + notebook.notebookPath,
+    // Do not attempt to upgrade the connection to a WebSocket. Forces HTTP long polling.
+    upgrade: false
   });
 
   return {

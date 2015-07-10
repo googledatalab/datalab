@@ -1,11 +1,11 @@
 <div class="datalab-session-navigator">
-
-  <div class="datalab-session-navigator-header">
-    Sessions
+  <div class="datalab-top-actionsbar">
+    <div class="datalab-headertext">Sessions</div>
   </div>
 
-  <table class='datalab-navigator-table table table-striped table-hover'>
-    <thead>
+  <div class="datalab-table-scroller" >
+    <table class='datalab-navigator-table table table-striped table-hover'>
+      <thead>
       <tr>
         <!-- Cell headers. These can be clicked to sort the table. They have an inline
              <i> element which is used to show the active sort column and order. -->
@@ -15,7 +15,7 @@
               Name
             </span>
           </div>
-        </th>       
+        </th>
         <th ng-click="ctrl.reSort('createdAt')">
           <div class="datalab-navigator-header">
             <span ng-class="ctrl.sortIconClass('createdAt')">
@@ -29,28 +29,29 @@
               Status
             </span>
           </div>
-        </th> 
+        </th>
         <!--  Empty column for trash -->
         <th></th>
       </tr>
-    </thead>
+      </thead>
 
-    <!--  Cell rows, in the currently selected sort order -->
-    <tr ng-repeat="resource in resources | orderBy: sortOrder + sortColumn">
-      <td>
-        {{resource.path}}
-      </td>
-      <td>
-        {{resource.createdAt}}
-      </td>
-      <td>
-        {{resource.numClient == 0 ? 'Idle' : 'In use'}}
-      </td>
-      <td>
-        <i class="datalab-navigator-trash fa fa-trash"
-            ng-click="ctrl.shutdownSession(resource.path)">
-        </i>
-      </td>
-    </tr>
-  </table>
+      <!--  Cell rows, in the currently selected sort order -->
+      <tr ng-repeat="resource in resources | orderBy: sortOrder + sortColumn">
+        <td>
+          {{resource.path}}
+        </td>
+        <td>
+          {{resource.createdAt}}
+        </td>
+        <td>
+          {{resource.numClient == 0 ? 'Idle' : 'In use'}}
+        </td>
+        <td>
+          <i class="datalab-navigator-trash fa fa-trash"
+             ng-click="ctrl.shutdownSession(resource.path)">
+          </i>
+        </td>
+      </tr>
+    </table>
+  </div>
 </div>

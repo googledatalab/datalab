@@ -20,8 +20,10 @@
 import apiutil = require('../common/api');
 import content = require('./content');
 import express = require('express');
+import logging = require('../common/logging');
 import nbstorage = require('../notebooks/storage');
 
+var logger = logging.getLogger();
 
 /**
  * Content management HTTP API.

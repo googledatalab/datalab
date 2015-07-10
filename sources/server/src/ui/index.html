@@ -15,14 +15,13 @@
 <head>
   <meta charset="utf-8">
   <title>DataLab</title>
-  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
-  <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
 
   <!-- TODO(bryantd): add support for on-demand loading of codemirror css assets -->
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/codemirror/4.5.0/codemirror.min.css">
   <link rel="stylesheet" href="styles/cm-quantum-light-theme.css">
 
   <!-- DataLab UI -->
+  <link rel="stylesheet" href="styles/base.css">
   <link rel="stylesheet" href="styles/chrome.css">
   <link rel="stylesheet" href="styles/editor.css">
   <link rel="stylesheet" href="styles/ui.css">
@@ -31,22 +30,20 @@
   <link rel="stylesheet" href="static/custom/gchart-table.css">
 </head>
 <body>
-  <header>
-    <nav class="navbar navbar-default navbar-fixed-top">
-      <div class="container-fluid">
-        <div class="navbar-header">
-          <a class="navbar-brand" href="#">
-            <img class="datalab-branding" src="assets/google-white.png">
-            <span>Cloud DataLab</span>
-          </a>
-        </div>
-      </div>
-    </nav>
-  </header>
+<header>
+  <nav class="navbar">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#">
+        <img class="datalab-logo" src="assets/googleCloudDatalabLogo.svg" alt="Google Cloud Datalab"/>
+      </a>
+    </div>
+  </nav>
+</header>
 
-  <div ng-view class="datalab-route-content"></div>
+<div ng-view class="datalab-route-content"></div>
 
-  <script data-main="scripts/main.js" type="text/javascript"
-    src="//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js"></script>
+<script data-main="scripts/main.js" type="text/javascript"
+        src="//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js"></script>
+
 </body>
 </html>

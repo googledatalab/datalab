@@ -1,22 +1,16 @@
 <div class="container-fluid">
 
-  <div class="datalab-editor-header row">
-    <!-- Notebook title/renaming widget -->
-    <div class="col-sm-6 col-md-4 col-lg-3">
-      <datalab-notebook-title></datalab-notebook-title>
-    </div>
-    <!-- Notebook-level controls widget -->
-    <div class="col-sm-6 col-md-8 col-lg-9">
-      <datalab-notebook-toolbar></datalab-notebook-toolbar>
-    </div>
-  </div>
-
-
   <div class="datalab-editor-body row">
     <!-- Notebook editor region -->
     <div class="datalab-editor-notebook col-sm-9 col-md-9 col-lg-9">
+      <div class="datalab-top-actionsbar">
+        <!-- Notebook title/renaming widget -->
+        <datalab-notebook-title></datalab-notebook-title>
+        <!-- Notebook-level controls widget -->
+        <datalab-notebook-toolbar></datalab-notebook-toolbar>
+      </div>
       <datalab-worksheet-editor
-          worksheet="pageCtrl.notebook.activeWorksheet">
+        worksheet="pageCtrl.notebook.activeWorksheet">
       </datalab-worksheet-editor>
     </div>
 
@@ -39,19 +33,22 @@
             </li>
           </ul>
         </div>
-    </div>
+      </div>
 
-    <div ng-show="pageCtrl.tab=='outline'">
-      <p>TODO: outline content</p>
-    </div>
+      <!-- Outline tab content -->
+      <div class="datalab-editor-tab-content" ng-show="pageCtrl.tab=='outline'">
+        <p>Outline</p>
+      </div>
 
-    <div ng-show="pageCtrl.tab=='test'">
-      <p>TODO: test content</p>
-    </div>
+      <!-- Test tab content -->
+      <div class="datalab-editor-tab-content" ng-show="pageCtrl.tab=='test'">
+        <p>Test</p>
+      </div>
 
-    <div ng-show="pageCtrl.tab=='deploy'">
-      <p>TODO: deploy content</p>
-    </div>
+      <!-- Deploy tab content -->
+      <div class="datalab-editor-tab-content" ng-show="pageCtrl.tab=='deploy'">
+        <p>Deploy</p>
+      </div>
 
+    </div>
   </div>
-</div>

@@ -23,14 +23,8 @@
 
 declare module app {
 
-
-  interface NotebookUpdate extends notebooks.Notebook {
-    // Note: eventually this message will contain a set of changes rather than the full notebook
-  }
-
   interface ExecuteReply extends KernelMessage {
     success: boolean;
-    requestContext: RequestContext;
     // When execute has not been aborted, we get back an execution count
     executionCounter?: string;
     // When an error has occurred, the following are populated
@@ -41,18 +35,13 @@ declare module app {
 
   interface ExecuteRequest extends KernelMessage {
     code: string;
-    /**
-     * Metadata properties for a given request will be returned within all corresponding reply
-     * messages produced by the execution (e.g., ExecuteResult, OutputData, etc.).
-     */
-    requestContext: RequestContext;
   }
 
   /**
    * Common fields for kernel messages.
    */
   interface KernelMessage {
-    requestId: string;
+    requestContext: RequestContext;
   }
 
   interface KernelStatus extends KernelMessage {
@@ -62,10 +51,10 @@ declare module app {
   interface OutputData extends KernelMessage {
     type: string; // 'stdout' | 'stderr' | 'result' | 'error'
     mimetypeBundle: any;
-    requestContext: RequestContext;
   }
 
   interface RequestContext {
+    requestId: string;
     cellId?: string;
     worksheetId?: string;
     connectionId?: string;

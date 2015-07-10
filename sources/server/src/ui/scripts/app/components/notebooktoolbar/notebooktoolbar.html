@@ -1,34 +1,41 @@
-<div class="datalab-notebook-toolbar">
-
-  <span class="datalab-toolbar-divider">&nbsp;</span>
-
-  <!-- Add code cell -->
-  <i class="datalab-toolbar-button fa-terminal fa"
-      ng-click="notebook.addCell('code', notebook.activeWorksheet.id, notebook.activeCell.id)"></i>
-
-  <!-- Add markdown cell -->
-  <i class="datalab-toolbar-button fa-edit fa"
-      ng-click="notebook.addCell('markdown', notebook.activeWorksheet.id, notebook.activeCell.id)"></i>
-
-  <!-- Add heading cell -->
-  <i class="datalab-toolbar-button fa-paragraph fa"
-      ng-click="notebook.addCell('heading', notebook.activeWorksheet.id, notebook.activeCell.id)"></i>
-
-  <span class="datalab-toolbar-divider">&nbsp;</span>
-
-  <!-- Execute all cells -->
-  <i class="datalab-toolbar-button fa-play fa"
-      ng-click="notebook.executeCells()">
-  </i>
-
-  <!-- Clear all cell outputs -->
-  <i class="datalab-toolbar-button fa-eraser fa"
-      ng-click="notebook.clearOutputs()">
-  </i>
-
-  <!-- Reset the session (kernel) state -->
-  <i class="datalab-toolbar-button fa-power-off fa"
-      ng-click="session.reset(notebook.notebookPath)">
-  </i>
-
+<div class="datalab-top-actionsbar-actions">
+    <div class="datalab-notebook-toolbar">
+        <!-- New code cell -->
+        <button class="datalab-flat-button"
+                ng-click="notebook.addCell('code', notebook.activeWorksheet.id, notebook.activeCell.id)">
+            <img src="assets/iconAdd.svg" alt="Add a cell"/>
+            <div class="datalab-flat-button-text">Cell</div>
+        </button>
+        <!-- New markdown cell -->
+        <button class="datalab-flat-button"
+                ng-click="notebook.addCell('markdown', notebook.activeWorksheet.id, notebook.activeCell.id)">
+            <img src="assets/iconAdd.svg" alt="Add a markdown"/>
+            <div class="datalab-flat-button-text">Markdown</div>
+        </button>
+        <!-- New heading cell -->
+        <button class="datalab-flat-button"
+                ng-click="notebook.addCell('heading', notebook.activeWorksheet.id, notebook.activeCell.id)">
+            <img src="assets/iconAdd.svg" alt="Add a heading"/>
+            <div class="datalab-flat-button-text">Heading</div>
+        </button>
+        <span class="datalab-toolbar-divider">&nbsp;</span>
+        <!-- Execute all cells -->
+        <button class="datalab-flat-button"
+                ng-click="notebook.executeCells()">
+            <img src="assets/iconRun.svg" alt="Run all"/>
+            <div class="datalab-flat-button-text">Run</div>
+        </button>
+        <!-- Clear all cell outputs -->
+        <button class="datalab-flat-button"
+                ng-click="notebook.clearOutputs()">
+            <img src="assets/iconClearOutput.svg" alt="Clear output"/>
+            <div class="datalab-flat-button-text">CLEAR</div>
+        </button>
+        <!-- Reset the session (kernel) state -->
+        <button class="datalab-flat-button"
+                ng-click="session.reset(notebook.notebookPath)">
+            <img src="assets/iconRestart.svg" alt="Reset kernel"/>
+            <div class="datalab-flat-button-text">RESET</div>
+        </button>
+    </div>
 </div>

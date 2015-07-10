@@ -15,6 +15,7 @@
 # Utility functions that don't need class wrappers and don't merit their own files.
 """Utility functions."""
 
+import json
 import pandas as pd
 import gcp.bigquery as _bq
 
@@ -151,13 +152,12 @@ def _get_data(source, fields, first_row, count):
       raise Exception("To get tabular data from a list it must contain dictionaries or lists.")
   elif isinstance(source, pd.DataFrame):
     return _get_data_from_dataframe(source, fields, first_row, count)
-  elif _bq._is_query(source):
+  elif isinstance(source, _bq._Query):
     return _get_data_from_table(source.results(), fields, first_row, count)
-  elif _bq._is_table(source):
+  elif isinstance(source, _bq._Table):
     return _get_data_from_table(source, fields, first_row, count)
   else:
     raise Exception("Cannot chart %s; unsupported object type" % source)
-
 
 def _handle_magic_line(line, cell, parser):
   """ Helper function for handling magic command lines given a parser with handlers set. """
@@ -169,3 +169,24 @@ def _handle_magic_line(line, cell, parser):
     except Exception as e:
       return e.message
   return None
+
+
+def _extract_storage_api_response_error(message):
+  """ A helper function to extract user-friendly error messages from service exceptions.
+
+  Args:
+    message: An error message from an exception. If this is from our HTTP client code, it
+        will actually be a tuple.
+
+  Returns:
+    A modified version of the message that is less cryptic.
+  """
+  try:
+    if len(message) == 3:
+      # Try treat the last part as JSON
+      data = json.loads(message[2])
+      return data['error']['errors'][0]['message']
+  except Exception:
+    pass
+  return message
+

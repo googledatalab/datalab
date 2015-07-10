@@ -99,8 +99,8 @@ class TestCases(unittest.TestCase):
       Http.request('http://www.example.org')
 
     e = error.exception
-    self.assertEqual(e[0][1], 404)
-    self.assertEqual(e[0][2], 'Not Found')
+    self.assertEqual(e.status, 404)
+    self.assertEqual(e.content, 'Not Found')
 
   def _setup_mocks(self, mock_request, mock_response, content, status=200):
     response = mock_response()

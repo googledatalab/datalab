@@ -15,10 +15,10 @@
 """Google Cloud Platform library - Cloud Storage Functionality."""
 
 import gcp as _gcp
-import gcp._util as _util
 from ._api import Api as _Api
 from ._bucket import Bucket as _Bucket
 from ._bucket import BucketList as _BucketList
+from ._item import Item as _Item
 
 
 def _create_api(context):
@@ -47,13 +47,28 @@ def bucket(name, context=None):
   return _Bucket(api, name)
 
 
-def buckets(context=None):
+def buckets(context=None, project_id=None):
   """Retrieves a list of Storage buckets.
 
   Args:
     context: an optional Context object providing project_id and credentials.
+    project_id: the project whose buckets we want to list if different to context.
   Returns:
     An iteratable list of buckets.
   """
   api = _create_api(context)
-  return _BucketList(api)
+  return _BucketList(api, project_id=project_id)
+
+
+def item(bucket, key, context=None):
+  """ Creates a Storage item object.
+
+  Args:
+    bucket: the name of the bucket the object is in.
+    key: the name of the object.
+    context: an optional Context object providing project_id and credentials.
+  Returns:
+    An item object that can be used to work with the associated storage item.
+  """
+  api = _create_api(context)
+  return _Item(api, bucket, key)

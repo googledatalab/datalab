@@ -124,3 +124,20 @@ export class Registrar implements app.IRegistrar {
   }
 
 }
+
+/**
+ * No-op registrar instance that simply provides the expected interfaces.
+ *
+ * Useful in cases where registration side-effects can/should be avoided, or when
+ * registration will need to occur before the Angular app has been bootstrapped.
+ */
+export var noopRegistrar: app.IRegistrar = {
+  controller(name: string, constructor: Function) {},
+  directive(name: string, directiveFactory: Function) {},
+  service(name: string, constructor: Function) {},
+  factory(name: string, serviceFactory: Function) {},
+  constant(name: string, value: any) {},
+  value(name: string, value: any) {},
+  decorator(name: string, decorator: Function) {},
+  filter(name: string, filterFactory: Function) {}
+}

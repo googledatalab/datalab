@@ -81,4 +81,6 @@ EXPOSE 8080
 VOLUME [ "/var/log/datalab" ]
 ENTRYPOINT [ "node", "/datalab/server/server.js", \
     "--cloud-project", \
-    "--ipy-config=/datalab/server/profile/kernel_config.py" ]
+    "--ipy-config=/datalab/server/profile/kernel_config.py", \
+    "--log-level=debug", \
+    "--log-dirpath=/var/log/app_engine/custom_logs" ]
