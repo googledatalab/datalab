@@ -192,6 +192,15 @@ class Query(object):
                                 sampling=sampling).\
         results(use_cache=use_cache)
 
+  def execute_dry_run(self):
+    """Dry run a query, to check the validity of the query and return statistics.
+
+    Returns:
+        dict, with cacheHit and totalBytesProcessed fields.
+    """
+    query_result = self._api.jobs_insert_query(self._sql, dry_run=True)
+    return query_result['statistics']['query']
+
   def execute_async(self, table_name=None, append=False, overwrite=False, use_cache=True,
                     batch=True, allow_large_results=False):
     """ Initiate the query and return the Job.
@@ -222,12 +231,12 @@ class Query(object):
                                                table_name=table_name,
                                                append=append,
                                                overwrite=overwrite,
-                                               dry_run=False,
                                                use_cache=use_cache,
                                                batch=batch,
                                                allow_large_results=allow_large_results)
     if 'jobReference' not in query_result:
       raise Exception('Unexpected query response.')
+
     job_id = query_result['jobReference']['jobId']
     if not table_name:
       try:
