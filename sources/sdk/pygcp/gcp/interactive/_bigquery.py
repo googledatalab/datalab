@@ -697,7 +697,6 @@ class DryRunStats:
     self.total_bytes = self._size_formatter(self.total_bytes)
     return """
     <p>Query information: %s processed, results %s</p>
-
     """ % (self.total_bytes, "cached" if self.is_cached else "not cached")
 
   def _size_formatter(self, byte_num, suf='B'):
