@@ -31,7 +31,6 @@ export class NotebooksPageController {
    */
   static $inject: string[] = [];
   constructor () {
-    // TODO(bryantd): Add controller logic
     log.debug('Constructed notebooks page controller');
   }
 }

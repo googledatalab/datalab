@@ -39,9 +39,16 @@ else
   echo "Please install NodeJS and then re-run this script to install the TypeScript compiler."
 fi
 
-# Jasmine test runner (DataLab server)
+# Jasmine test runner for DataLab server-side tests
 if which npm >/dev/null; then
   npm install -g jasmine-node
 else
   echo "Please install NodeJS and then re-run this script to install the Jasmine NodeJS test runner."
+fi
+
+# Karma test runner for DataLab client-side tests
+if which npm >/dev/null; then
+  npm install -g karma
+else
+  echo "Please install NodeJS and then re-run this script to install the Karma test runner."
 fi
