@@ -181,3 +181,29 @@ def schema(data=None, definition=None):
   """
   return _Schema(data=data, definition=definition)
 
+def wait_any(jobs, timeout=None):
+  """ Return when at least one of the specified jobs has completed or timeout expires.
+
+  Args:
+    jobs: a list of Jobs to wait on.
+    timeout: a timeout in seconds to wait for. None (the default) means no timeout.
+  Returns:
+    Once at least one job completes, a list of all completed jobs.
+    If the call times out then an empty list will be returned.
+
+  """
+  return _util.Job.wait_any(jobs, timeout)
+
+
+def wait_all(jobs, timeout=None):
+  """ Return when at all of the specified jobs have completed or timeout expires.
+
+  Args:
+    jobs: a single Job or list of Jobs to wait on.
+    timeout: a timeout in seconds to wait for. None (the default) means no timeout.
+  Returns:
+    A list of completed Jobs. If the call timed out this will be shorter than the
+    list of jobs supplied as a parameter.
+  """
+  return _util.Job.wait_all(jobs, timeout)
+

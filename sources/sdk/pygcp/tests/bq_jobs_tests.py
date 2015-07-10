@@ -52,9 +52,9 @@ class TestCases(unittest.TestCase):
     self.assertTrue(j.failed)
     e = j.fatal_error
     self.assertIsNotNone(e)
-    self.assertEqual('A', e.location)
-    self.assertEqual('B', e.message)
-    self.assertEqual('C', e.reason)
+    self.assertEqual('A', e.message.location)
+    self.assertEqual('B', e.message.message)
+    self.assertEqual('C', e.message.reason)
 
   @mock.patch('gcp.bigquery._Api.jobs_get')
   def test_job_errors(self, mock_api_jobs_get):
@@ -86,7 +86,8 @@ class TestCases(unittest.TestCase):
     self.assertEqual('E', j.errors[1].message)
     self.assertEqual('F', j.errors[1].reason)
 
-  def _create_context(self):
+  def _create_api(self):
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return gcp.Context(project_id, creds)
+    context = gcp.Context(project_id, creds)
+    return gcp.bigquery._Api(context.credentials, context.project_id)

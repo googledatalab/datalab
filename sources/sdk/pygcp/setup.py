@@ -33,10 +33,12 @@ setup(
               'gcp._util',
               'gcp.bigquery',
               'gcp.storage',
-              'gcp.interactive'
+              'gcp.interactive',
+              'gcp.utils'
              ],
     description='Google Cloud APIs for data analysis scenarios.',
-    requires=['httplib2',
+    requires=['futures',
+              'httplib2',
               'IPython',
               'oauth2client',
               'pandas',

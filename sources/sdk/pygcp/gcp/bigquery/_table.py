@@ -20,10 +20,14 @@ from datetime import datetime, timedelta
 import math
 import pandas as pd
 import time
+from traceback import format_exc as _format_exc
 import uuid
 
 from gcp._util import Iterator as _Iterator
-from ._job import Job as _Job
+from gcp._util import Job as _Job
+from gcp._util import JobError as _JobError
+from gcp._util import async_method
+from ._job import Job as _BQJob
 from ._parser import Parser as _Parser
 from ._utils import parse_table_name as _parse_table_name
 
@@ -517,15 +521,15 @@ class Table(object):
     return self
 
   def _init_job_from_response(self, response):
-    """ Helper function to create a Job instance. """
+    """ Helper function to create a Job instance from a response. """
     job = None
     if response and 'jobReference' in response:
-      job = _Job(self._api, response['jobReference']['jobId'])
+      job = _BQJob(self._api, job_id=response['jobReference']['jobId'])
     return job
 
   def extract_async(self, destination, format='CSV', compress=False, field_delimiter=',',
                     print_header=True):
-    """Start a job to export the table to GCS and return immediately.
+    """Runs a job to export the table to GCS.
 
     Args:
       destination: the destination URI(s). Can be a single URI or a list.
@@ -538,9 +542,12 @@ class Table(object):
     Returns:
       A Job object for the export Job if it was started successfully; else None.
     """
-    response = self._api.table_extract(self._name_parts, destination, format, compress,
-                                       field_delimiter, print_header)
-    return self._init_job_from_response(response)
+    try:
+      response = self._api.table_extract(self._name_parts, destination, format, compress,
+                                         field_delimiter, print_header)
+      return self._init_job_from_response(response)
+    except Exception as e:
+      raise _JobError(location=_format_exc(), message=e.message, reason=str(type(e)))
 
   def extract(self, destination, format='CSV', compress=False, field_delimiter=',',
               print_header=True):
@@ -557,11 +564,8 @@ class Table(object):
     Returns:
       A Job object for the export Job if it was started successfully; else None.
     """
-    job = self.extract_async(destination=destination,
-                             format=format,
-                             compress=compress,
-                             field_delimiter=field_delimiter,
-                             print_header=print_header)
+    job = self.extract_async(destination, format=format, compress=compress,
+                             field_delimiter=field_delimiter, print_header=print_header)
     if job is not None:
       job.wait()
     return job
@@ -570,7 +574,7 @@ class Table(object):
                  field_delimiter=',', allow_jagged_rows=False, allow_quoted_newlines=False,
                  encoding='UTF-8', ignore_unknown_values=False, max_bad_records=0, quote='"',
                  skip_leading_rows=0):
-    """ Load the table from GCS.
+    """ Start loading the table from GCS and return a Future.
 
     Args:
       source: the URL of the source bucket(s). Can include wildcards.
@@ -597,7 +601,8 @@ class Table(object):
       skip_leading_rows: A number of rows at the top of a CSV file to skip (default 0).
 
     Returns:
-      A Job object for the load Job if it was started successfully; else None.
+      A Future that returns a Job object for the load Job if it was started successfully or
+      None if not.
     """
     response = self._api.jobs_insert_load(source, self._name_parts,
                                           append=append,
@@ -782,6 +787,25 @@ class Table(object):
     for row in self.range(start_row, max_rows):
       writer.writerow(row)
     f.close()
+
+  @async_method
+  def to_file_async(self, path, start_row=0, max_rows=None, write_header=True, dialect=csv.excel):
+    """Start saving the results to a local file in CSV format and return a Job for completion.
+
+    Args:
+      path: path on the local filesystem for the saved results.
+      start_row: the row of the table at which to start the export (default 0)
+      max_rows: an upper limit on the number of rows to export (default None)
+      write_header: if true (the default), write column name header row at start of file
+      dialect: the format to use for the output. By default, csv.excel. See
+          https://docs.python.org/2/library/csv.html#csv-fmt-params for how to customize this.
+    Returns:
+      A Job for the async save operation.
+    Raises:
+      An Exception if the operation failed.
+    """
+    self.to_file(path, start_row=start_row, max_rows=max_rows, write_header=write_header,
+                 dialect=dialect)
 
   @property
   def schema(self):
