@@ -152,49 +152,49 @@ def _create_bigquery_parser():
   # %%bigquery sql
   sql_parser = _create_sql_subparser(parser)
   sql_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler('sql', args, cell, sql_parser,
+      func=lambda args, cell: _dispatch_handler(args, cell, sql_parser,
                                                 _sql_cell, cell_required=True))
 
   # %%bigquery udf
   udf_parser = _create_udf_subparser(parser)
   udf_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler('udf', args, cell, udf_parser,
+      func=lambda args, cell: _dispatch_handler(args, cell, udf_parser,
                                                 _udf_cell, cell_required=True))
 
   # %%bigquery execute
   execute_parser = _create_execute_subparser(parser)
   execute_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler('execute', args, cell,
+      func=lambda args, cell: _dispatch_handler(args, cell,
                                                 execute_parser, _execute_cell))
 
   # %bigquery table
   table_parser = _create_table_subparser(parser)
   table_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler('table', args, cell, table_parser,
+      func=lambda args, cell: _dispatch_handler(args, cell, table_parser,
                                                 _table_line, cell_prohibited=True))
 
   # %bigquery schema
   schema_parser = _create_schema_subparser(parser)
   schema_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler('schema', args, cell,
+      func=lambda args, cell: _dispatch_handler(args, cell,
                                                 schema_parser, _schema_line, cell_prohibited=True))
 
   # %bigquery datasets
   datasets_parser = _create_datasets_subparser(parser)
   datasets_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler('datasets', args, cell, datasets_parser,
+      func=lambda args, cell: _dispatch_handler(args, cell, datasets_parser,
                                                 _datasets_line, cell_prohibited=True))
 
   # %bigquery tables
   tables_parser = _create_tables_subparser(parser)
   tables_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler('tables', args, cell, tables_parser,
+      func=lambda args, cell: _dispatch_handler(args, cell, tables_parser,
                                                 _tables_line, cell_prohibited=True))
 
   # % bigquery extract
   extract_parser = _create_extract_subparser(parser)
   extract_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler('extract', args, cell, extract_parser,
+      func=lambda args, cell: _dispatch_handler(args, cell, extract_parser,
                                                 _extract_line, cell_prohibited=True))
 
   # %bigquery load
@@ -202,7 +202,7 @@ def _create_bigquery_parser():
   # cell body and how schema infer may fail.
   load_parser = _create_load_subparser(parser)
   load_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler('load', args, cell, load_parser, _load_cell))
+      func=lambda args, cell: _dispatch_handler(args, cell, load_parser, _load_cell))
   return parser
 
 
@@ -231,12 +231,11 @@ def bigquery(line, cell=None):
   return _handle_magic_line(line, cell, _bigquery_parser)
 
 
-def _dispatch_handler(command, args, cell, parser, handler,
+def _dispatch_handler(args, cell, parser, handler,
                       cell_required=False, cell_prohibited=False):
   """ Makes sure cell magics include cell and line magics don't, before dispatching to handler.
 
   Args:
-    command: the name of the command.
     args: the parsed arguments from the magic line.
     cell: the contents of the cell, if any.
     parser: the argument parser for <cmd>; used for error message.
@@ -251,12 +250,12 @@ def _dispatch_handler(command, args, cell, parser, handler,
   if cell_prohibited:
     if cell and len(cell.strip()):
       parser.print_help()
-      raise Exception('Additional data is not supported with the %s command.' % command)
+      raise Exception('Additional data is not supported with the %s command.' % parser.prog)
     return handler(args)
 
   if cell_required and not cell:
     parser.print_help()
-    raise Exception('The %s command requires additional data' % command)
+    raise Exception('The %s command requires additional data' % parser.prog)
 
   return handler(args, cell)
 
