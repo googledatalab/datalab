@@ -96,32 +96,6 @@ def sql(sql_template, **kwargs):
   return _util.Sql.format(sql_template, kwargs)
 
 
-def datasetname(project_id, dataset_id):
-  """ Construct a DataSetName named tuple.
-
-  Args:
-    project_id: the project ID.
-    dataset_id: the dataset ID.
-  Returns:
-    A DataSetName named-tuple.
-  """
-  return _DataSetName(project_id, dataset_id)
-
-
-def tablename(project_id, dataset_id, table_id, decorator=''):
-  """ Construct a TableName named tuple.
-
-  Args:
-    project_id: the project ID.
-    dataset_id: the dataset ID.
-    table_id: tha Table ID.
-    decorator: the decorator part.
-  Returns:
-    A TableName named-tuple.
-  """
-  return _TableName(project_id, dataset_id, table_id, decorator)
-
-
 def table(name, context=None):
   """Creates a BigQuery table object.
 
@@ -165,6 +139,14 @@ def view(name, context=None):
 
 
 def datasets(project_id=None, context=None):
+  """ Returns an object that can be used to iterate through the datasets in a project.
+
+  Args:
+    project_id: the ID of the project whose datasets should be enumerated.
+    context: an optional Context object providing project_id and credentials.
+  Returns:
+    An iterable for enumerating the datasets.
+  """
   api = _create_api(context)
   if not project_id:
     project_id = api.project_id
@@ -199,49 +181,3 @@ def schema(data=None, definition=None):
   """
   return _Schema(data=data, definition=definition)
 
-
-def job(job_id, context=None):
-  """ Create a job reference for a specific job ID.
-
-  Args:
-    job_id: the job ID.
-  Returns:
-    A Job object.
-  """
-  api = _create_api(context)
-  return _Job(api, job_id)
-
-
-def query_job(job_id, table, context=None):
-  """ Create a job reference for a specific query job ID.
-
-  Args:
-    job_id: the job ID.
-    table: the Table that will be used for the query results.
-  Returns:
-    A QueryJob object.
-  """
-  api = _create_api(context)
-  return _QueryJob(api, job_id, table)
-
-
-# Type tests. Needed as we don't export the classes (although maybe we should).
-
-def _is_dataset(o):
-  """ Tests if an object is a DataSet. """
-  return isinstance(o, _DataSet)
-
-
-def _is_table(o):
-  """ Tests if an object is a Table. """
-  return isinstance(o, _Table)
-
-
-def _is_query(o):
-  """ Tests if an object is a Query. """
-  return isinstance(o, _Query)
-
-
-def _is_schema(o):
-  """ Tests if an object is a Schema. """
-  return isinstance(o, _TableSchema)
