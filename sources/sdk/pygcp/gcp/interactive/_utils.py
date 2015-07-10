@@ -159,7 +159,6 @@ def _get_data(source, fields, first_row, count):
   else:
     raise Exception("Cannot chart %s; unsupported object type" % source)
 
-
 def _handle_magic_line(line, cell, parser):
   """ Helper function for handling magic command lines given a parser with handlers set. """
   ipy = _ipython.get_ipython()
