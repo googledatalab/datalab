@@ -13,8 +13,10 @@
  */
 
 
+/// <reference path="../../../../../../externs/ts/express/express.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/node.d.ts" />
 /// <reference path="../../../../../../externs/ts/node/winston.d.ts" />
+import express = require('express');
 import path = require('path')
 import util = require('util');
 import winston = require('winston');
@@ -37,6 +39,7 @@ export function configure(logLevel: string, logDir: string, logFile: string) {
   if (logLevel == 'debug') {
     consoleConfig.debugStdout = true;
   }
+
   // Note: not possible to configure the default logger directly. Must remove/add it.
   winston.remove(winston.transports.Console);
   winston.add(winston.transports.Console, consoleConfig);
@@ -45,7 +48,7 @@ export function configure(logLevel: string, logDir: string, logFile: string) {
   var filepath = logDir ? path.join(logDir, logFile) : logFile;
   var fileConfig: winston.DailyRotateFileConfig = {
     filename: filepath,
-    datePattern: '.yyyy-MM-dd.log.json',
+    datePattern: '.yyyy-MM-dd.log',
     maxFiles: 7,
 
     timestamp: true,
@@ -55,33 +58,57 @@ export function configure(logLevel: string, logDir: string, logFile: string) {
 
     handleExceptions: true,
     exitOnError: false,
+    json: false
   };
   winston.add(winston.transports.DailyRotateFile, fileConfig);
-
   winston.info('Writing logs to %s', filepath);
 }
 
 var defaultLogger: app.ILogger = {
   error: function(message: string, ...params: any[]) {
-    this._log('error', message, params);
+    this.log('error', message, params);
   },
 
   warn: function(message: string, ...params: any[]) {
-    this._log('warn', message, params);
+    this.log('warn', message, params);
   },
 
   info: function(message: string, ...params: any[]) {
-    this._log('info', message, params);
+    this.log('info', message, params);
   },
 
   debug: function(message: string, ...params: any[]) {
-    this._log('debug', message, params);
+    this.log('debug', message, params);
   },
 
-  _log: function(level: string, message: string, params: any[]) {
+  log: function(level: string, message: string, params: any[]) {
     params.unshift(message);
     winston.log(level, util.format.apply(null, params));
   }
+}
+
+export function requestLogger(
+    request: express.Request,
+    response: express.Response,
+    next: Function) {
+
+  // Record the start time of the request for computing duration later.
+  var startTime = Date.now();
+  // Preserve the real response.end() method.
+  var end = response.end;
+
+  response.end = (...endArgs: any[]) => {
+    // Invoke the real response.end() to complete the request.
+    end.apply(response, endArgs);
+
+    // Log the request/response details.
+    var durationMillis = Date.now() - startTime;
+    defaultLogger.info('%s %s %s %sms',
+        request.method, request.url, response.statusCode, durationMillis);
+  }
+
+  // Delegate to the next middleware function in the chain.
+  next();
 }
 
 /**

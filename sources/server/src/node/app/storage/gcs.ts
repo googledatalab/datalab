@@ -169,8 +169,14 @@ export class GoogleCloudStorage implements app.IStorage {
    * @param callback Callback to invoke upon completion of the write operation.
    */
   write(path: string, data: string, callback: app.Callback<void>) {
+    logger.debug("Writing data to GCS path '%s'. Data: %s chars", path, data.length);
     var file = this._bucket.file(this._toGcsPath(path));
-    file.createWriteStream().end(data, 'utf8', callback);
+    try {
+      file.createWriteStream().end(data, 'utf8', callback);
+    } catch(error) {
+      logger.error("Caught error from attempting to perform GCS write");
+    }
+
   }
 
   /**

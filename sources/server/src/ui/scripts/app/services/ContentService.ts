@@ -37,8 +37,16 @@ class ContentService implements app.IContentService {
     log.debug("Server " + this._server);
   }
 
+  /**
+   * Gets the URL for a given item path.
+   *
+   * Note: content paths are required to have a leading slash; all paths are absolute.
+   *
+   * @param itemPath The absolute content path to the item.
+   * @return The full URL for the item.
+   */
   url(itemPath: string): string {
-    return this._server + '/api/content/' + itemPath;
+    return this._server + '/api/content' + itemPath;
   }
 
   /**
