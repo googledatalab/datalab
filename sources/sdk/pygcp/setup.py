@@ -33,8 +33,7 @@ setup(
               'gcp._util',
               'gcp.bigquery',
               'gcp.storage',
-              'gcp.interactive',
-              'gcp.utils'
+              'gcp.interactive'
              ],
     description='Google Cloud APIs for data analysis scenarios.',
     requires=['futures',

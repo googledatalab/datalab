@@ -20,8 +20,9 @@ from ._api import Api as _Api
 from ._dataset import DataSet as _DataSet
 from ._dataset import DataSetLister as _DataSetLister
 from ._job import Job as _Job
-from ._query_job import QueryJob as _QueryJob
 from ._query import Query as _Query
+from ._query_job import QueryJob as _QueryJob
+from ._query_stats import QueryStats as _QueryStats
 from ._sampling import Sampling
 from ._table import Schema as _Schema
 from ._table import Table as _Table

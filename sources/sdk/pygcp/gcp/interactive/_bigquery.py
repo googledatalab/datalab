@@ -166,7 +166,7 @@ def _create_bigquery_parser():
   # %%bigquery dryrun
   dryrun_parser = _create_dryrun_subparser(parser)
   dryrun_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler('dryrun', args, cell, dryrun_parser,
+      func=lambda args, cell: _dispatch_handler(args, cell, dryrun_parser,
                                                 _dryrun_line, cell_prohibited=True))
 
   # %%bigquery udf
@@ -340,7 +340,7 @@ def _dryrun_line(args):
     return "Error: %s is not a query!" % args['name']
 
   result = query.execute_dry_run()
-  return DryRunStats(total_bytes=result['totalBytesProcessed'], is_cached=result['cacheHit'])
+  return _bq._QueryStats(total_bytes=result['totalBytesProcessed'], is_cached=result['cacheHit'])
 
 
 def _udf_cell(args, js):
@@ -685,23 +685,4 @@ def _register_html_formatters():
 _register_html_formatters()
 
 
-class DryRunStats:
-  """Used to wrap statistics returned by a dry run query.
-  """
 
-  def __init__(self, total_bytes, is_cached):
-    self.total_bytes = float(total_bytes)
-    self.is_cached = is_cached
-
-  def _repr_html_(self):
-    self.total_bytes = self._size_formatter(self.total_bytes)
-    return """
-    <p>Query information: %s processed, results %s</p>
-    """ % (self.total_bytes, "cached" if self.is_cached else "not cached")
-
-  def _size_formatter(self, byte_num, suf='B'):
-    for mag in ['', 'K', 'M', 'G', 'T']:
-        if byte_num < 1000.0:
-            return "%3.1f%s%s" % (byte_num, mag, suf)
-        byte_num /= 1000.0
-    return "%.1f%s%s".format(byte_num, 'P', suf)
