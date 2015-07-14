@@ -23,7 +23,6 @@
 /// <reference path="../../../../../../../../externs/ts/codemirror/codemirror.d.ts" />
 /// <amd-dependency path="codeMirror/mode/python/python" />
 /// <amd-dependency path="codeMirror/mode/markdown/markdown" />
-/// <amd-dependency path="codeMirror/mode/sql/sql" />
 /// <amd-dependency path="codeMirror/mode/javascript/javascript" />
 /// <amd-dependency path="codeMirror/addon/edit/matchbrackets" />
 
