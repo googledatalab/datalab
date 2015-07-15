@@ -117,7 +117,7 @@ function codeEditorDirectiveLink(
   var cmContainer = element[0];
 
   // Find correct highlighting mode, and set it.
-  codeMirrorOptions.mode.name = highlighting.magicDetector(scope.source, scope.mode);
+  codeMirrorOptions.mode = {name: "magic_overlay", backdrop: highlighting.magicDetector(scope.source, scope.mode)};
 
   codeMirrorOptions.lineWrapping = scope.linewrap;
 
@@ -126,13 +126,13 @@ function codeEditorDirectiveLink(
 
   // Sets the inital code editor content equal to the linked template attribute value.
   // The 'code' element attribute will point to a value in the parent scope/controller.
-  cmInstance.setValue(scope.source);
+  cmInstance.getDoc().setValue(scope.source);
 
   // Watch the scope for new source content values and publish them into the CodeMirror instance.
   scope.$watch('source', (newValue: any, oldValue: any) => {
     // Guard against cyclical updates when editing cells.
     // i.e., cm.changed -> scope.changed -> cm.changed loops, due to watching the scope.
-    if (cmInstance.getValue() != newValue) {
+    if (cmInstance.getDoc().getValue() != newValue) {
       // Overwrite the previous editor contents with the updated version.
       //
       // Note: this will kill any "dirty" changes that haven't been persisted,
@@ -142,26 +142,26 @@ function codeEditorDirectiveLink(
       // user focuses the cell, disallowing any competing edits from other users. Will need UX treatment
       // to illustrate who owns a given cell (e.g., a cell level user "cursor", maybe based upon the cell
       // border color or something).
-      cmInstance.setValue(newValue);
+      cmInstance.getDoc().setValue(newValue);
     }
   });
 
   // Registers a callback to update the scope's 'code' value when the CodeMirror content changes.
   cmInstance.on('change', (cm: CodeMirror.Editor, change: CodeMirror.EditorChange) => {
 
-    if (cm.getValue() == scope.source) {
+    if (cm.getDoc().getValue() == scope.source) {
       // No need to publish an updated value to the scope (already in-sync).
       return;
     }
 
     // Wraps scope modifications in an $apply to "publish" them to the parent scope/ctrl.
     scope.$apply(() => {
-      scope.source = cm.getValue();
+      scope.source = cm.getDoc().getValue();
     });
 
 
-    var cellMode: string = highlighting.magicDetector(cmInstance.getValue(), scope.mode);
-    cmInstance.setOption("mode", cellMode);
+    var cellMode: string = highlighting.magicDetector(cmInstance.getDoc().getValue(), scope.mode);
+    cmInstance.setOption("mode", {name: "magic_overlay", backdrop: cellMode});
   });
 
   // Register handlers for each DOM event we're interested in exposing.

@@ -15,7 +15,9 @@
 //  if none matched fallback string is returned.
 
 /// <amd-dependency path="modes/bqsql.js" />
+/// <amd-dependency path="modes/overlay.js" />
 
+import CodeMirror = require('codeMirror');
 
 interface magicTypeMap {
   [index : string] : RegExp[];
@@ -54,4 +56,33 @@ export var magicDetector = function(content:string, fallback?:string):string {
   // Return fallback if no pattern matched.
   return fallback;
 };
+
+
+// Define overlay mode.
+CodeMirror.defineMode("magic_overlay", function(config: any, parserConfig: any) {
+  var magicOverlay = {
+    startState: function() {return {firstMatched : false}},
+    token: function(stream: any, state: any) {
+      if(!state.firstMatched) {
+        var ch : any;
+        stream.eatSpace(); // consume all spaces, can span over several lines
+
+        if (!stream.eol()) {
+          state.firstMatched = true;
+          if (stream.match("%%")) {
+            stream.skipToEnd();
+            return "comment"
+          }
+        }
+      } else {
+        // ignore line, as this line is not part of the magic line anymore.
+        stream.skipToEnd();
+      }
+
+      return null;
+    }
+  };
+  return CodeMirror.overlayMode(CodeMirror.getMode(config, parserConfig.backdrop || "python"), magicOverlay);
+});
+
 
