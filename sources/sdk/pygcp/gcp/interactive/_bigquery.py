@@ -558,7 +558,7 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
 def _repr_html_query(query):
   # TODO(nikhilko): Pretty print the SQL
   builder = _HtmlBuilder()
-  builder.render_text(query.raw_sql, preformatted=True)
+  builder.render_text(query.sql, preformatted=True)
   return builder.to_html()
 
 
