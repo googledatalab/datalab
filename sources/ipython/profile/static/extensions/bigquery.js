@@ -80,10 +80,10 @@ define(['extensions/charting'], function(charting) {
       var field = schema[i];
       var tr = document.createElement('tr');
       for (var j = 0; j < columns.length; j++) {
-        var th = document.createElement('th');
+        var td = document.createElement('td');
         var v = field[columns[j]];
-        th.textContent = v == undefined ? '' : v;
-        tr.appendChild(th);
+        td.textContent = v == undefined ? '' : v;
+        tr.appendChild(td);
       }
       tbody.appendChild(tr);
     }
