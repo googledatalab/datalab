@@ -527,45 +527,47 @@ class Table(object):
       job = _BQJob(self._api, job_id=response['jobReference']['jobId'])
     return job
 
-  def extract_async(self, destination, format='CSV', compress=False, field_delimiter=',',
-                    print_header=True):
+  def extract_async(self, destination, format='csv', csv_delimiter=',', csv_header=True,
+                    compress=False):
     """Runs a job to export the table to GCS.
 
     Args:
       destination: the destination URI(s). Can be a single URI or a list.
-      format: the format to use for the exported data; one of CSV, NEWLINE_DELIMITED_JSON or AVRO.
-          Defaults to CSV.
+      format: the format to use for the exported data; one of 'csv', 'json', or 'avro'
+          (default 'csv').
+      csv_delimiter: for CSV exports, the field delimiter to use. Defaults to ','
+      csv_header: for CSV exports, whether to include an initial header line. Default true.
       compress whether to compress the data on export. Compression is not supported for
           AVRO format. Defaults to False.
-      field_delimiter: for CSV exports, the field delimiter to use. Defaults to ','
-      print_header: for CSV exports, whether to include an initial header line. Default true.
     Returns:
       A Job object for the export Job if it was started successfully; else None.
     """
     try:
       response = self._api.table_extract(self._name_parts, destination, format, compress,
-                                         field_delimiter, print_header)
+                                         csv_delimiter, csv_header)
       return self._init_job_from_response(response)
     except Exception as e:
       raise _JobError(location=_format_exc(), message=e.message, reason=str(type(e)))
 
-  def extract(self, destination, format='CSV', compress=False, field_delimiter=',',
-              print_header=True):
+  def extract(self, destination, format='csv', csv_delimiter=',', csv_header=True, compress=False):
     """Exports the table to GCS; blocks until complete.
 
     Args:
       destination: the destination URI(s). Can be a single URI or a list.
-      format: the format to use for the exported data; one of CSV, NEWLINE_DELIMITED_JSON or AVRO.
-          Defaults to CSV.
+      format: the format to use for the exported data; one of 'csv', 'json', or 'avro'
+          (default 'csv').
+      csv_delimiter: for CSV exports, the field delimiter to use. Defaults to ','
+      csv_header: for CSV exports, whether to include an initial header line. Default true.
       compress whether to compress the data on export. Compression is not supported for
           AVRO format. Defaults to False.
-      field_delimiter: for CSV exports, the field delimiter to use. Defaults to ','
-      print_header: for CSV exports, whether to include an initial header line. Default true.
     Returns:
       A Job object for the export Job if it was started successfully; else None.
     """
-    job = self.extract_async(destination, format=format, compress=compress,
-                             field_delimiter=field_delimiter, print_header=print_header)
+    format = format.upper()
+    if format == 'JSON':
+      format = 'NEWLINE_DELIMITED_JSON'
+    job = self.extract_async(destination, format=format, csv_delimiter=csv_delimiter,
+                             csv_header=csv_header, compress=compress)
     if job is not None:
       job.wait()
     return job

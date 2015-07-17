@@ -77,53 +77,53 @@ class Query(object):
       self.execute(use_cache=use_cache, batch=False)
     return self._results
 
-  def extract(self, destination, format='CSV', compress=False, field_delimiter=',',
-              print_header=True, use_cache=True):
+  def extract(self, storage_uris, format='csv', csv_delimiter=',', csv_header=True,
+              use_cache=True, compress=False):
     """Exports the query results to GCS.
 
     Args:
-      destination: the destination URI(s). Can be a single URI or a list.
-      format: the format to use for the exported data; one of CSV, NEWLINE_DELIMITED_JSON or AVRO
-          (default 'CSV').
+      storage_uris: the destination URI(s). Can be a single URI or a list.
+      format: the format to use for the exported data; one of 'csv', 'json', or 'avro'
+          (default 'csv').
+      csv_delimiter: for csv exports, the field delimiter to use (default ',').
+      csv_header: for csv exports, whether to include an initial header line (default True).
+      use_cache: whether to use cached results or not (default True).
       compress whether to compress the data on export. Compression is not supported for
           AVRO format (default False).
-      field_delimiter: for CSV exports, the field delimiter to use (default ',').
-      print_header: for CSV exports, whether to include an initial header line (default True).
-      use_cache: whether to use cached results or not (default True).
     Returns:
       A Job object for the export Job if it was completed successfully; else None.
     Raises:
       An Exception if the query or extract failed.
     """
     results = self.results(use_cache=use_cache)
-    job = results.extract(destination, format=format, compress=compress,
-                          field_delimiter=field_delimiter, print_header=print_header)
+    job = results.extract(storage_uris, format=format, csv_delimiter=csv_delimiter,
+                          csv_header=csv_header, compress=compress)
     if job is not None:
       job.wait()
     return job
 
   @async_method
-  def extract_async(self, destination, format='CSV', compress=False, field_delimiter=',',
-                    print_header=True, use_cache=True):
+  def extract_async(self, storage_uris, format='csv', csv_delimiter=',',
+                    csv_header=True, use_cache=True, compress=False):
     """Exports the query results to GCS. Returns a Future immediately.
 
     Args:
-      destination: the destination URI(s). Can be a single URI or a list.
-      format: the format to use for the exported data; one of CSV, NEWLINE_DELIMITED_JSON or AVRO
-          (default 'CSV').
+      storage_uris: the destination URI(s). Can be a single URI or a list.
+      format: the format to use for the exported data; one of 'csv', 'json', or 'avro'
+          (default 'csv').
+      csv_delimiter: for CSV exports, the field delimiter to use (default ',').
+      csv_header: for CSV exports, whether to include an initial header line (default True).
+      use_cache: whether to use cached results or not (default True).
       compress whether to compress the data on export. Compression is not supported for
           AVRO format (default False).
-      field_delimiter: for CSV exports, the field delimiter to use (default ',').
-      print_header: for CSV exports, whether to include an initial header line (default True).
-      use_cache: whether to use cached results or not (default True).
     Returns:
       A Future that returns a Job object for the export if it was started successfully; else None.
     Raises:
       An Exception if the query failed.
     """
-    return self.extract(destination, format=format, compress=compress,
-                        field_delimiter=field_delimiter, print_header=print_header,
-                        use_cache=use_cache)
+    return self.extract(storage_uris, format=format,
+                        csv_delimiter=csv_delimiter, csv_header=csv_header,
+                        use_cache=use_cache, compress=compress)
 
   def to_dataframe(self, start_row=0, max_rows=None, use_cache=True):
     """ Exports the query results to a Pandas dataframe.
@@ -275,7 +275,7 @@ class Query(object):
     self._results = job.results
     return self._results
 
-  def save_as_view(self, view_name):
+  def to_view(self, view_name):
     """ Create a View from this Query.
 
     Args:
