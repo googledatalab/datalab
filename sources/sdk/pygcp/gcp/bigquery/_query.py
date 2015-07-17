@@ -275,7 +275,7 @@ class Query(object):
     self._results = job.results
     return self._results
 
-  def save_as_view(self, view_name):
+  def to_view(self, view_name):
     """ Create a View from this Query.
 
     Args:
