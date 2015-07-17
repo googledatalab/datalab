@@ -1,6 +1,6 @@
 <div class="datalab-modal container-fluid" id="{{mid}}">
   <div class="modal-background"></div>
-  <div class="modal-dialog">
+  <form class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" ng-click="ctrl.dismiss()">
@@ -11,7 +11,7 @@
       <div class="modal-body" ng-transclude>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" ng-click="action(args);ctrl.dismiss()">
+        <button type="submit" class="btn btn-primary" ng-click="action(args);ctrl.dismiss()">
           {{okText}}
         </button>
         <button type="button" class="btn btn-default" ng-click="ctrl.dismiss()">
@@ -19,5 +19,5 @@
         </button>
       </div>
     </div>
-  </div>
+  </form>
 </div>
