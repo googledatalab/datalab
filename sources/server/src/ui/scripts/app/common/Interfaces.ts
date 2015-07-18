@@ -188,7 +188,7 @@ declare module app {
     delete(item: string) : ng.IPromise<string>;
     update(item: string, data: string) : ng.IPromise<string>;
     move(item: string, newPath: string) : ng.IPromise<string>;
-    create(item: string, data: string) : ng.IPromise<string>;
+    create(item: string, data: string) : ng.IPromise<any>;
   }
 
   interface IRegistrar {

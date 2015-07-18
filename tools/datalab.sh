@@ -35,7 +35,7 @@ node "$build_path/server.js" \
 server_pid=$!;
 
 # Wait a moment for server to start before opening a connection.
-sleep 1;
+sleep 2;
 export SERVER_HTTP_PORT=9000;
 notebook_url="http://localhost:$SERVER_HTTP_PORT";
 
