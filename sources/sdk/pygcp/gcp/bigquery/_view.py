@@ -155,52 +155,45 @@ class View(object):
     """
     return self._materialization.results(use_cache=use_cache)
 
-  def execute_async(self, table_name=None, append=False, overwrite=False, use_cache=True,
-                    batch=True):
+  def execute_async(self, table_name=None, table_mode='create', use_cache=True, priority='high'):
     """Materialize the View asynchronously.
 
     Args:
       dataset_id: the datasetId for the result table.
-      table: the result table name; if None, then a temporary table will be used.
-      append: if True, append to the table if it is non-empty; else the request will fail if table
-          is non-empty unless overwrite is True.
-      overwrite: if the table already exists, truncate it instead of appending or raising an
-          Exception.
-      use_cache: whether to use past results or ignore cache. Has no effect if destination is
-          specified.
-      batch: whether to run this as a batch job (lower priority) or as an interactive job (high
-        priority, more expensive).
+      table_name: the result table name; if None, then a temporary table will be used.
+      table_mode: one of 'create', 'overwrite' or 'append'. If 'create' (the default), the request
+          will fail if the table exists.
+      use_cache: whether to use past query results or ignore cache. Has no effect if destination is
+          specified (default True).
+      priority:one of 'low' or 'high' (default). Note that 'high' is more expensive, but is
+          better suited to exploratory analysis.
     Returns:
       A Job for the materialization
     Raises:
       Exception (KeyError) if View could not be materialized.
     """
-    return self.materialization \
-        .execute_async(table_name=table_name, append=append, overwrite=overwrite,
-                       use_cache=use_cache, batch=batch)
+    return self.materialization.execute_async(table_name=table_name, table_mode=table_mode,
+                                              use_cache=use_cache, priority=priority)
 
-  def execute(self, table_name=None, append=False, overwrite=False, use_cache=True, batch=True):
+  def execute(self, table_name=None, table_mode='create', use_cache=True, priority='high'):
     """Materialize the View synchronously.
 
     Args:
       dataset_id: the datasetId for the result table.
-      table: the result table name; if None, then a temporary table will be used.
-      append: if True, append to the table if it is non-empty; else the request will fail if table
-          is non-empty unless overwrite is True.
-      overwrite: if the table already exists, truncate it instead of appending or raising an
-          Exception.
-      use_cache: whether to use past results or ignore cache. Has no effect if destination is
-          specified.
-      batch: whether to run this as a batch job (lower priority) or as an interactive job (high
-        priority, more expensive).
+      table_name: the result table name; if None, then a temporary table will be used.
+      table_mode: one of 'create', 'overwrite' or 'append'. If 'create' (the default), the request
+          will fail if the table exists.
+      use_cache: whether to use past query results or ignore cache. Has no effect if destination is
+          specified (default True).
+      priority:one of 'low' or 'high' (default). Note that 'high' is more expensive, but is
+          better suited to exploratory analysis.
     Returns:
       A Job for the materialization
     Raises:
       Exception (KeyError) if View could not be materialized.
     """
-    return self.materialization\
-        .execute(table_name=table_name, append=append, overwrite=overwrite,
-                 use_cache=use_cache, batch=batch)
+    return self.materialization.execute(table_name=table_name, table_mode=table_mode,
+                                        use_cache=use_cache, priority=priority)
 
   def _repr_sql_(self):
     """Returns a representation of the view for embedding into a SQL statement.
