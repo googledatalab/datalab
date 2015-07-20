@@ -9,7 +9,6 @@ fi
 
 TEST_PATHS=(
   "sdk/pygcp"
-  "server"
 )
 
 for p in "${TEST_PATHS[@]}"
@@ -24,4 +23,3 @@ do
   popd >> /dev/null
   echo
 done
-

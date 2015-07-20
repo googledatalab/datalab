@@ -1,3 +1,0 @@
-- Build is using private docker registry ('docker-registry:5000'). Build file
-  is provided for reference only; deploy using published docker image.
-

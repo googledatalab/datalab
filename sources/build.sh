@@ -10,7 +10,6 @@ fi
 SRC_PATHS=(
   "ipython"
   "sdk/pygcp"
-  "server"
   "tools"
 )
 
@@ -42,4 +41,3 @@ do
 done
 
 echo "Build completed." | tee -a $LOG_FILE
-
