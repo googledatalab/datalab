@@ -1,9 +1,9 @@
 {
-  "consoleLogging": true,
-  "logFilePath": "/tmp/datalab/app.log",
-  "logFilePeriod": "300000ms",
-  "logFileCount": 10,
-  "analyticsId": "UA-54894152-2",
+  "consoleLogging": false,
+  "logFilePath": "/var/log/app_engine/custom_logs/app.log",
+  "logFilePeriod": "daily",
+  "logFileCount": 7,
+  "analyticsId": "UA-54894152-1",
   "ipythonArgs": [
     "notebook",
     "--no-browser",
@@ -12,7 +12,7 @@
     "--ip=\"127.0.0.1\""
   ],
   "ipythonPort": 8081,
-  "serverPort": 8082,
+  "serverPort": 8080,
   "pollHangingInterval": 60000,
   "maxSocketMessageLength": 1000000
 }

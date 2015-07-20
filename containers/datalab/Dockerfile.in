@@ -1,0 +1,100 @@
+# Copyright 2015 Google Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+FROM debian:jessie
+MAINTAINER Google Cloud DataLab
+
+# Setup OS and core packages
+RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sources.list && \
+    apt-get update -y && \
+    apt-get install --no-install-recommends -y -q \
+        curl wget unzip build-essential ca-certificates pkg-config \
+        libatlas-base-dev liblapack-dev gfortran \
+        libpng-dev libfreetype6-dev libxft-dev \
+        libxml2-dev \
+        python2.7 python-dev python-pip python-setuptools python-zmq && \
+    mkdir -p /tools && \
+    mkdir -p /srcs && \
+    cd /srcs && apt-get source -d python-zmq && cd /
+
+# Setup Node.js
+RUN mkdir -p /tools/node && \
+    wget -nv https://nodejs.org/dist/v0.12.7/node-v0.12.7-linux-x64.tar.gz -O node.tar.gz && \
+    tar xzf node.tar.gz -C /tools/node --strip-components=1 && \
+    rm node.tar.gz
+
+# Setup Google Cloud SDK
+RUN wget -nv https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.zip && \
+    unzip -qq google-cloud-sdk.zip -d tools && \
+    rm google-cloud-sdk.zip && \
+    tools/google-cloud-sdk/install.sh --usage-reporting=false \
+        --path-update=false --bash-completion=false \
+        --disable-installation-options && \
+    tools/google-cloud-sdk/bin/gcloud config set --scope=installation \
+        component_manager/fixed_sdk_version 0.9.57 && \
+    tools/google-cloud-sdk/bin/gcloud -q components update \
+        gcloud core bq gsutil compute preview alpha beta && \
+    rm -rf /root/.config/gcloud
+
+# Setup Python packages
+RUN pip install -U \
+        tornado==4.2.1 pyzmq==14.4.0 jinja2==2.7.3 \
+        jsonschema==2.5.1 py-dateutil==2.2 pytz==2015.4 pandocfilters==1.2.4 pygments==2.0.2 \
+        argparse==1.2.1 mock==1.2.0 requests==2.4.3 oauth2client==1.4.12 httplib2==0.9.1 \
+        futures==3.0.3 && \
+    pip install -U numpy==1.9.2 && \
+    pip install -U pandas==0.16.2 && \
+    pip install -U scikit-learn==0.16.1 && \
+    pip install -U scipy==0.15.1 && \
+    pip install -U sympy==0.7.6 && \
+    pip install -U statsmodels==0.6.1 && \
+    pip install -U matplotlib==1.4.3 && \
+    pip install -U ggplot==0.6.5 && \
+    pip install -U seaborn==0.6.0 && \
+    pip install -U ipython==2.4.1 && \
+    easy_install pip && \
+    find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf
+
+# Path configuration
+ENV PATH $PATH:/tools/node/bin:/tools/google-cloud-sdk/bin
+ENV PYTHONPATH /env/python
+
+# Add some unchanging bits - specifically node modules (that need to be kept in sync
+# with packages.json manually, but help save build time, by preincluding them in an
+# earlier layer).
+RUN mkdir -p /app/proxy && \
+    cd /app/proxy && \
+    /tools/node/bin/npm install \
+        ws@0.4.32 http-proxy@1.11.1 mkdirp@0.5.1 node-uuid@1.4.3 bunyan@1.4.0
+
+# Setup configuration
+EXPOSE 8080
+VOLUME [ "/var/log/app_engine", "/nb", "/root/.config/gcloud" ]
+
+# Add build artifacts
+ADD build/python/PyGCP-0.1.0.tar.gz /sdk/
+ADD build/python/IPythonGCP-0.1.0.tar.gz /sdk/
+ADD build/ipython /app
+ADD build/metadata /tools/metadata
+ADD docs/ /docs
+ADD content/ /
+
+# Install build artifacts
+RUN cd /sdk/PyGCP-0.1.0 && python setup.py install && \
+    cd /sdk/IPythonGCP-0.1.0 && python setup.py install && \
+    cd /app/proxy && /tools/node/bin/npm install && cd /
+
+# Startup
+ENV DATALAB_VERSION _version_
+ENTRYPOINT [ "/run-cloud.sh" ]

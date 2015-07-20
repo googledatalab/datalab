@@ -35,7 +35,3 @@ tsc --module commonjs --removeComments --noImplicitAny \
 rsync -avp ./proxy/config/ $PROXY_DIR/config
 rsync -avp ./proxy/static/ $PROXY_DIR/static
 rsync -avp ./proxy/package.json $PROXY_DIR/package.json
-
-# Package all of the IPython stuff into a tarball
-cd $BUILD_DIR
-tar -cvz -f ipython.tar.gz ipython

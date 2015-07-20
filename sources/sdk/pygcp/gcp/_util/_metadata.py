@@ -16,6 +16,7 @@
 
 import httplib2
 import json
+import os
 
 
 class MetadataService(object):
@@ -82,7 +83,7 @@ class MetadataService(object):
       RuntimeError: An error occurred in the metadata service request.
     """
 
-    host = MetadataService._DEFAULT_HOST
+    host = os.environ.get('METADATA_HOST', MetadataService._DEFAULT_HOST)
     port = MetadataService._DEFAULT_PORT
 
     url = MetadataService._SERVICE_URL % (host, port, path)
