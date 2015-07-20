@@ -134,7 +134,7 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('gcp.bigquery._Api.tables_list')
   @mock.patch('gcp.bigquery._Api.datasets_get')
-  def test_table_list(self, mock_api_datasets_get, mock_api_tables_list):
+  def test_dataset_list(self, mock_api_datasets_get, mock_api_tables_list):
     mock_api_datasets_get.return_value = None
     mock_api_tables_list.return_value = self._create_table_list_result()
 
@@ -146,6 +146,35 @@ class TestCases(unittest.TestCase):
     self.assertEqual(2, len(tables))
     self.assertEqual('test:testds.testTable1', tables[0].full_name)
     self.assertEqual('test:testds.testTable2', tables[1].full_name)
+
+  @mock.patch('gcp.bigquery._Api.tables_list')
+  @mock.patch('gcp.bigquery._Api.datasets_get')
+  def test_table_list(self, mock_api_datasets_get, mock_api_tables_list):
+    mock_api_datasets_get.return_value = None
+    mock_api_tables_list.return_value = self._create_table_list_result()
+
+    ds = gcp.bigquery.dataset('testds', context=self._create_context())
+
+    tables = []
+    for table in ds.tables():
+      tables.append(table)
+    self.assertEqual(2, len(tables))
+    self.assertEqual('test:testds.testTable1', tables[0].full_name)
+    self.assertEqual('test:testds.testTable2', tables[1].full_name)
+
+  @mock.patch('gcp.bigquery._Api.tables_list')
+  @mock.patch('gcp.bigquery._Api.datasets_get')
+  def test_view_list(self, mock_api_datasets_get, mock_api_tables_list):
+    mock_api_datasets_get.return_value = None
+    mock_api_tables_list.return_value = self._create_table_list_result()
+
+    ds = gcp.bigquery.dataset('testds', context=self._create_context())
+
+    views = []
+    for view in ds.views():
+      views.append(view)
+    self.assertEqual(1, len(views))
+    self.assertEqual('test:testds.testView1', views[0].full_name)
 
   @mock.patch('gcp.bigquery._Api.tables_list')
   @mock.patch('gcp.bigquery._Api.datasets_get')
@@ -640,8 +669,18 @@ class TestCases(unittest.TestCase):
   def _create_table_list_result(self):
     return {
       'tables': [
-        {'tableReference': {'projectId': 'test', 'datasetId': 'testds', 'tableId': 'testTable1'}},
-        {'tableReference': {'projectId': 'test', 'datasetId': 'testds', 'tableId': 'testTable2'}}
+        {
+          'type': 'TABLE',
+          'tableReference':{'projectId': 'test', 'datasetId': 'testds', 'tableId': 'testTable1'}
+        },
+        {
+          'type': 'VIEW',
+          'tableReference': {'projectId': 'test', 'datasetId': 'testds', 'tableId': 'testView1'}
+        },
+        {
+          'type': 'TABLE',
+          'tableReference': {'projectId': 'test', 'datasetId': 'testds', 'tableId': 'testTable2'}
+        }
        ]
     }
 

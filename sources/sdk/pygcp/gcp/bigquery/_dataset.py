@@ -16,6 +16,7 @@
 
 from gcp._util import Iterator as _Iterator
 from ._table import Table as _Table
+from ._view import View as _View
 from ._utils import parse_dataset_name as _parse_dataset_name
 
 
@@ -95,35 +96,56 @@ class DataSet(object):
         raise Exception("Could not create dataset %s.%s" % self.full_name)
     return self
 
-  def _retrieve_tables(self, page_token, _):
+  def _retrieve_items(self, page_token, item_type):
     list_info = self._api.tables_list(self._name_parts, page_token=page_token)
 
     tables = list_info.get('tables', [])
+    contents = []
     if len(tables):
       try:
-        tables = [_Table(self._api, (info['tableReference']['projectId'],
+        for info in tables:
+          if info['type'] != item_type:
+            continue
+          if info['type'] == 'TABLE':
+            item = _Table(self._api, (info['tableReference']['projectId'],
+                                      info['tableReference']['datasetId'],
+                                      info['tableReference']['tableId']))
+          else:
+            item = _View(self._api, (info['tableReference']['projectId'],
                                      info['tableReference']['datasetId'],
-                                     info['tableReference']['tableId'])) for info in tables]
-      except KeyError:
-        raise Exception('Unexpected item list response.')
+                                     info['tableReference']['tableId']))
+          contents.append(item)
+      except KeyError as e:
+        raise Exception('Unexpected item list response')
 
     page_token = list_info.get('nextPageToken', None)
-    return tables, page_token
+    return contents, page_token
 
-  def __iter__(self):
-    """ Supports iterating through the Tables in the dataset.
-    """
+  def _retrieve_tables(self, page_token, _):
+    return self._retrieve_items(page_token=page_token, item_type='TABLE')
+
+  def _retrieve_views(self, page_token, _):
+    return self._retrieve_items(page_token=page_token, item_type='VIEW')
+
+  def tables(self):
+    """ Supports iterating through the Tables in the dataset. """
     return iter(_Iterator(self._retrieve_tables))
 
+  def views(self):
+    """ Supports iterating through the Views in the dataset. """
+    return iter(_Iterator(self._retrieve_views))
+
+  def __iter__(self):
+    """ Supports iterating through the Tables in the dataset. """
+    return self.tables()
+
   def __repr__(self):
-    """Returns an empty representation for the dataset for showing in the notebook.
-    """
+    """Returns an empty representation for the dataset for showing in the notebook. """
     return ''
 
 
 class DataSetLister(object):
-  """ Helper class for enumerating the datasets in a project.
-  """
+  """ Helper class for enumerating the datasets in a project. """
 
   def __init__(self, api, project_id=None):
     self._api = api
