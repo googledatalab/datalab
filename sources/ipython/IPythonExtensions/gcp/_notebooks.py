@@ -455,7 +455,7 @@ class StorageNotebookManager(SimpleNotebookManager):
     # - Project ids maybe domain-qualified, eg. foo.com:bar
     project_id = _gcp.Context.default().project_id
     project_id = project_id.replace('google.com', 'gcom').replace(':', '-').replace('.', '-')
-    bucket_name = project_id + '-ipython'
+    bucket_name = project_id + '-datalab'
 
     buckets = _storage.buckets()
     if not buckets.contains(bucket_name):

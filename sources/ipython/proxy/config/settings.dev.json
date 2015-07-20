@@ -1,6 +1,6 @@
 {
   "consoleLogging": true,
-  "logFilePath": "/tmp/ipython/logs.log",
+  "logFilePath": "/tmp/datalab/app.log",
   "logFilePeriod": "300000ms",
   "logFileCount": 10,
   "analyticsId": "UA-54894152-2",
@@ -12,7 +12,7 @@
     "--ip=\"127.0.0.1\""
   ],
   "ipythonPort": 8081,
-  "serverPort": 8080,
+  "serverPort": 8082,
   "pollHangingInterval": 60000,
   "maxSocketMessageLength": 1000000
 }

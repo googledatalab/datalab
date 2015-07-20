@@ -1,6 +1,6 @@
 {
-  "consoleLogging": false,
-  "logFilePath": "/var/log/ipython/app.log",
+  "consoleLogging": true,
+  "logFilePath": "/var/log/app_engine/custom_logs/app.log",
   "logFilePeriod": "daily",
   "logFileCount": 7,
   "analyticsId": "UA-54894152-1",

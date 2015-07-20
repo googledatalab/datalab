@@ -71,6 +71,19 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     return;
   }
 
+  // /ping is completely handled in this server, and not forwarded to IPython.
+  // This call is issued to check for the existence of the application during
+  // the deployment process.
+  if (path.indexOf('/ping') == 0) {
+    response.writeHead(200, {
+      'Content-Type': 'text/plain',
+      'Access-Control-Allow-Origin': '*'
+    });
+    response.end("OK");
+
+    return;
+  }
+
   // /socket/* paths are completed handled in this server, and not forwarded on to
   // IPython as HTTP calls.
   if (path.indexOf('/socket') == 0) {
@@ -129,7 +142,7 @@ export function run(settings: common.Settings): void {
 
   logging.getLogger().info('Starting IPython proxy server at http://localhost:%d',
                            settings.serverPort);
-  server.listen(settings.serverPort, '0.0.0.0');
+  server.listen(settings.serverPort);
 }
 
 /**

@@ -57,14 +57,15 @@ export function loadSettings(): common.Settings {
     }
 
     var settings = <common.Settings>JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-    settings.ipythonWebServer = 'http://localhost:' + settings.ipythonPort;
-    settings.ipythonSocketServer = 'ws://localhost:' + settings.ipythonPort;
+    settings.ipythonWebServer = 'http://127.0.0.1:' + settings.ipythonPort;
+    settings.ipythonSocketServer = 'ws://127.0.0.1:' + settings.ipythonPort;
 
     settings.projectId = process.env['CLOUD_PROJECT'] || process.env['GAE_LONG_APP_ID'] ||
                          'test-project';
     settings.versionId = process.env['IPYTHON_VERSION'] || 'test-version';
     settings.instanceId = metadata.instanceId;
 
+    console.dir(settings);
     return settings;
   }
   catch (e) {

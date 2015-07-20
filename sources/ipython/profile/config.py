@@ -46,6 +46,10 @@ elif env == 'memory':
   c.NotebookApp.notebook_manager_class = 'IPythonExtensions.gcp.MemoryNotebookManager'
 
 
+# Allow any origin to connect to sockets
+c.NotebookApp.allow_origin = '*'
+
+
 # Development mode support
 if os.environ.get('IPYTHON_DEBUG', '') != '':
   c.NotebookApp.log_level = 'DEBUG'
@@ -54,5 +58,3 @@ if os.environ.get('IPYTHON_DEBUG', '') != '':
 # TODO(gram): Remove before GA (see issue 314)
 import IPython.nbformat.sign as _sign
 _sign.NotebookNotary.check_signature = lambda self, nb: True
-
-
