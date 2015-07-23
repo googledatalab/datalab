@@ -17,7 +17,6 @@
 import argparse as _argparse
 import json as _json
 import re as _re
-import shlex as _shlex
 import time as _time
 import IPython as _ipython
 import IPython.core.magic as _magic
@@ -26,9 +25,9 @@ import gcp._util as _util
 from ._commands import CommandParser as _CommandParser
 from ._environments import _get_notebook_item, _get_schema, _get_table
 from ._environments import _notebook_environment
-from ._environments import _get_notebook_resolution_environment
-from ._environments import _get_pipeline_resolution_environment
+from ._environments import _get_resolution_environment
 from ._html import HtmlBuilder as _HtmlBuilder
+from ._sql import SqlUnit as _SqlUnit
 from ._utils import _get_data, _get_field_list, _handle_magic_line
 
 
@@ -245,11 +244,7 @@ def bigquery(line, cell=None):
   namespace = {}
   if line.find('$') >= 0:
     # We likely have variables to expand; get the appropriate context.
-    fields = _shlex.split(line)
-    if len(fields) > 2 and fields[1] == 'pipeline':
-      namespace = _get_pipeline_resolution_environment()
-    else:
-      namespace = _get_notebook_resolution_environment()
+    namespace = _notebook_environment()
 
   return _handle_magic_line(line, cell, _bigquery_parser, namespace=namespace)
 
@@ -284,18 +279,26 @@ def _dispatch_handler(command, args, cell, parser, handler,
   return handler(args, cell)
 
 
-def _get_query_argument(args, sql):
+def _get_query_argument(args, sql=None):
+  sql_arg = args['sql']
   if sql:
-    if args['sql']:
+    if sql_arg:
       raise Exception('Cannot have a sql parameter and a sql cell body')
     return _bq.Query(sql)
   else:
-    if not args['sql']:
+    if not sql_arg:
       raise Exception('Need a sql parameter or a sql cell body')
-    query = _get_notebook_item(args['sql'])
+    query = _get_notebook_item(sql_arg)
     if not isinstance(query, _bq._Query):
-      raise Exception('%s does not refer to a %%sql or Query' % args['sql'])
-    return query
+      split = sql_arg.find('.')
+      if split > 0:
+        unit = _get_notebook_item(sql_arg[:split])
+        if isinstance(unit, _SqlUnit):
+          name = sql_arg[split+1:]
+          if name in unit.definitions:
+            return unit, _bq.query(unit.definitions[name].sql)
+      raise Exception('%s does not refer to a %%sql or Query' % sql_arg)
+    return None, query
 
 
 def _sample_cell(args, sql):
@@ -309,7 +312,7 @@ def _sample_cell(args, sql):
     was specified. None otherwise.
   """
 
-  query = _get_query_argument(args, sql)
+  unit, query = _get_query_argument(args, sql)
   count = args['count']
   method = args['method']
   if method == 'random':
@@ -323,8 +326,8 @@ def _sample_cell(args, sql):
   elif method == 'limit':
     sampling = _bq.Sampling.default(count=count)
 
-  env=_get_notebook_resolution_environment(args['args'])
-  return query.sample(sampling=sampling, env=env)
+  args = _get_resolution_environment(unit, query, args['args'])
+  return query.sample(sampling=sampling, args=args)
 
 
 def _udf_cell(args, js):
@@ -382,19 +385,17 @@ def _udf_cell(args, js):
 
 
 def _execute_cell(args, sql):
-  query = _get_query_argument(args, sql)
+  unit, query = _get_query_argument(args, sql)
   return query.execute(args['destination'], args['append'], args['overwrite'], not args['nocache'],
                        args['batch'], args['large'],
-                       env=_get_notebook_resolution_environment(args['args'])).results
+                       args=_get_resolution_environment(unit, query, args['args'])).results
 
 
 def _pipeline_line(args):
-  query = _get_query_argument(args, None)
-  # Strictly speaking the environment should contain *just* SQLs declared in magics
-  # TODO(gram): enforce this.
+  unit, query = _get_query_argument(args, None)
   # TODO(gram): Change this to do a dry run; deferring until merge with Robin's dry run code.
-  env = _get_pipeline_resolution_environment(args['args'])
-  print query.expand(env)
+  args = _get_resolution_environment(unit, query, args['args'])
+  print query.expand(args)
 
 
 def _table_line(args):

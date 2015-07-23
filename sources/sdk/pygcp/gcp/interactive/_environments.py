@@ -15,13 +15,13 @@
 """Google Cloud Platform library - multi-environment handling. """
 
 
+import json as _json
 import shlex as _shlex
 import sys as _sys
 import types as _types
 import IPython as _ipython
 import gcp.bigquery as _bq
 import gcp._util as _util
-from ._commands import CommandParser as _CommandParser
 
 # Some string literals used for binding names in the environment.
 _pipeline_module = '_gcp_pipeline'
@@ -33,27 +33,20 @@ def _notebook_environment():
   return ipy.user_ns
 
 
-def _pipeline_environment():
-  """ Get the environment dictionary for bqmodule magics, creating it if needed. """
-  if _pipeline_module not in _sys.modules:
+def _get_module(name):
+  """ Create or retrieve a named module and return its environment. """
+  if name not in _sys.modules:
     # Create the pipeline module.
-    module = _types.ModuleType(_pipeline_module)
-    module.__file__ = _pipeline_module
-    module.__name__ = _pipeline_module
-    _sys.modules[_pipeline_module] = module
+    module = _types.ModuleType(name)
+    module.__file__ = name
+    module.__name__ = name
+    _sys.modules[name] = module
     # Automatically import the newly created module by assigning it to a variable
     # named the same name as the module name.
-    _notebook_environment()[_pipeline_module] = module
-    # Initialize the bqmodule arg parser.
-    module.__dict__[_pipeline_arg_parser] = _CommandParser.create('query')
+    _notebook_environment()[name] = module
   else:
-    module = _sys.modules[_pipeline_module]
+    module = _sys.modules[name]
   return module.__dict__
-
-
-def _exec_in_pipeline_module(code):
-  """ Execute code contained in a string within the pipeline module. """
-  exec code in _pipeline_environment()
 
 
 def _get_notebook_item(name):
@@ -61,14 +54,13 @@ def _get_notebook_item(name):
   return _notebook_environment().get(name, None)
 
 
-def _get_pipeline_args(args=None, explicit_only=False):
-  """ Parse a set of pipeline arguments or get the default value of the arguments.
+def _get_sql_args(parser, args=None):
+  """ Parse a set of %%sql arguments or get the default value of the arguments.
 
   Args:
+    parser: the argument parser to use.
     args: the argument flags. May be a string or a list. If omitted the empty string is used so
         we can get the default values for the arguments.
-    default_to_none: if True, we ignore the defaults and only return args that were
-        explicitly specified.
   """
   if args is None:
     tokens = []
@@ -78,22 +70,10 @@ def _get_pipeline_args(args=None, explicit_only=False):
   else:
     tokens = args
 
-  parser = _pipeline_environment()[_pipeline_arg_parser]
   args = vars(parser.parse_args(tokens))
 
-  if explicit_only:
-    # Figure out which args were explicitly specified.
-    allowed = []
-    for token in tokens:
-      if token[:2] == '--':
-        # Get the name without leading '--' and optional trailing '=<value>'
-        arg_name = token[2:].split('=')[0]
-        allowed.append(arg_name)
-    # Don't return any args that are None as we don't want to expand to 'None'
-    return {arg: value for arg, value in args.iteritems() if value is not None and arg in allowed}
-  else:
-    # Don't return any args that are None as we don't want to expand to 'None'
-    return {arg: value for arg, value in args.iteritems() if value is not None}
+  # Don't return any args that are None as we don't want to expand to 'None'
+  return {arg: value for arg, value in args.iteritems() if value is not None}
 
 
 # An LRU cache for Tables. This is mostly useful so that when we cross page boundaries
@@ -139,38 +119,59 @@ def _get_schema(name):
     return None
 
 
-def _get_resolution_environment(args, is_pipeline):
-  env = {}
-  # TODO(gram): For is_pipeline case, we may want to restrict the update below to be only
-  # things defined in magics.
-  # It depends on how we will be generating the JSON pipeline representation for DataMatic.
-  env.update(_notebook_environment())
+def _resolve(arg):
+  # Given an argument value, resolve it. This basically means check if it is a value
+  # (and then just return it) or a reference to a variable (in which case look up the
+  # value and return it).
+  if len(arg) == 0:
+    return ''
+  # If quoted, its a string
+  if arg[0] == "'" or arg[0] == '"':
+    return arg
+  # If it starts with underscore or a letter, treat it as a variable
+  if arg[0] == '_' or arg[0].isalpha():
+    if arg in _notebook_environment():
+      val = _notebook_environment()[arg]
+      if isinstance(val, basestring):
+        return _json.dumps(val)
+      elif isinstance(val, _bq._Table):
+        return val.full_name
+      else:
+        return val
+  # else treat it as a literal (should be a number)
+  return arg
+
+
+def _get_resolution_environment(unit, query, args=None):
   # Update using arguments including default values
   # The args must be of the form of a list of strings each being of the form 'name=value' or
   # 'name', 'value'.
   # argparse.REMAINDER is broken when using subcommands if the extra arguments are
   # optional; they must be positional. So we enforce that form and then add '--' back.
+
+  # Only named queries have argument parsers etc.
+  env = {}
+  if unit is None:
+    return env
+
   if args:
     new_args = []
     next_is_value = False
     for arg in args:
       if next_is_value:
-        new_args.append(arg)
+        new_args.append(_resolve(arg))
         next_is_value = False
       else:
-        new_args.append('--%s' % arg)
-        if arg.find('=') > 0:
+        split = arg.find('=')
+        if split < 0:
           next_is_value = True
+          new_args.append('--%s' % arg)
+        else:
+          new_args.append('--%s' % arg[:split])
+          new_args.append(_resolve(arg[split + 1:]))
     args = new_args
 
-  pargs = _get_pipeline_args(args, explicit_only=not is_pipeline)
-  env.update(pargs)
+  env.update(unit.definitions)
+  env.update(_get_sql_args(unit.arg_parser, args))
   return env
-
-def _get_notebook_resolution_environment(args=None):
-  return _get_resolution_environment(args, is_pipeline=False)
-
-
-def _get_pipeline_resolution_environment(args=None):
-  return _get_resolution_environment(args, is_pipeline=True)
 

@@ -15,31 +15,40 @@
 """Implements SQL statement helper functionality."""
 
 import re
-import sys
+
+from ._sampling import Sampling as _Sampling
 
 
-class Sql(object):
+class SqlStatement(object):
   """A helper class for wrapping and manipulating SQL statements.
   """
 
   def __init__(self, sql):
     self._sql = sql
 
-  def _repr_sql_(self, env=None):
+  def _repr_sql_(self, args=None):
     """Creates a SQL representation of this object.
 
     Args:
-      env: an optional dictionary to use when expanding the variables in the SQL.
+      args: an optional dictionary to use when expanding the variables in the SQL.
     Returns:
       The SQL representation to use when embedding this object into SQL.
     """
-    return '(%s)' % self.expand(env)
+    return '(%s)' % self.expand(args)
 
   def __str__(self):
     """Creates a string representation of this object.
 
     Returns:
       The string representation of this object.
+    """
+    return self._sql
+
+  def __repr__(self):
+    """Creates a friendly representation of this object.
+
+    Returns:
+      The friendly representation of this object.
     """
     return self._sql
 
@@ -50,33 +59,33 @@ class Sql(object):
   def _expand(self, sql, ns, complete, in_progress):
     """ Recursive helper method for expanding variables including transitive dependencies. """
 
-    dependencies = Sql.get_dependencies(sql)
+    dependencies = SqlStatement.get_dependencies(sql)
     for dependency in dependencies:
       if dependency in complete:
         continue
       if dependency not in ns:
         raise Exception("Unsatisfied dependency $%s" % dependency)
       dep = ns[dependency]
-      if isinstance(dep, Sql):
+      if isinstance(dep, SqlStatement):
         if dependency in in_progress:
           # Circular dependency
           raise Exception("Circular dependency in $%s" % dependency)
         in_progress.append(dependency)
         expanded = self._expand(dep._sql, ns, complete, in_progress)
         in_progress.pop()
-        complete[dependency] = Sql(expanded)
+        complete[dependency] = SqlStatement(expanded)
       else:
         complete[dependency] = dep
-    return Sql.format(sql, complete)
+    return SqlStatement.format(sql, complete)
 
-  def expand(self, env=None):
+  def expand(self, args=None):
     """ Resolve variable references in a query within an environment.
 
     This computes and resolves the transitive dependencies in the query and raises an
     exception if that fails due to either undefined or circular references.
 
     Args:
-      env: a dictionary of optional value overrides to use in variable expansion.
+      args: a dictionary of values to use in variable expansion.
 
     Returns:
       The resolved SQL text.
@@ -85,10 +94,8 @@ class Sql(object):
       Exception on failure.
     """
     ns = {}
-    if env:
-      ns.update(env)
-    else:
-      ns.update(sys.modules['__main__'].__dict__)
+    if args:
+      ns.update(args)
     return self._expand(self._sql, ns, complete={}, in_progress=[])
 
   @staticmethod
@@ -101,7 +108,7 @@ class Sql(object):
   def get_dependencies(sql):
     """ Return the list of tokens referenced in this SQL. """
     dependencies = []
-    for (_, placeholder, _) in Sql._get_tokens(sql):
+    for (_, placeholder, _) in SqlStatement._get_tokens(sql):
       if placeholder:
         variable = placeholder[1:]
         if variable not in dependencies:
@@ -129,7 +136,7 @@ class Sql(object):
     # variable references substituted with their values, or literal text copied
     # over as-is.
     parts = []
-    for (escape, placeholder, literal) in Sql._get_tokens(sql):
+    for (escape, placeholder, literal) in SqlStatement._get_tokens(sql):
       if escape:
         parts.append('$')
       elif placeholder:
@@ -168,5 +175,5 @@ class Sql(object):
       A Query object for sampling the table.
     """
     if sampling is None:
-      sampling = _util._Sampling.default(count=count, fields=fields)
+      sampling = _Sampling.default(count=count, fields=fields)
     return sampling(sql)

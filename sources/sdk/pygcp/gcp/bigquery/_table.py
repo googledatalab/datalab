@@ -46,7 +46,7 @@ class Schema(list):
       self.mode = mode
       self.description = description
 
-    def _repr_sql_(self, env=None):
+    def _repr_sql_(self, args=None):
       """Returns a representation of the field for embedding into a SQL statement.
 
       Returns:
@@ -828,7 +828,7 @@ class Table(object):
       # The cached metadata is out of sync now; abandon it.
       self._info = None
 
-  def _repr_sql_(self, env=None):
+  def _repr_sql_(self, args=None):
     """Returns a representation of the table for embedding into a SQL statement.
 
     Returns:

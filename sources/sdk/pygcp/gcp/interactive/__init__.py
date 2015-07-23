@@ -23,7 +23,6 @@ try:
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
-import gcp.interactive._arguments
 import gcp.interactive._bigquery
 import gcp.interactive._chart
 import gcp.interactive._modules

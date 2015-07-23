@@ -55,7 +55,7 @@ class FunctionCall(object):
 
     return q.results(use_cache=use_cache)
 
-  def _repr_sql_(self, env=None):
+  def _repr_sql_(self, args=None):
     """Returns a SQL representation of the UDF object.
 
     Returns:
