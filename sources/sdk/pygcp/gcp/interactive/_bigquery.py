@@ -62,14 +62,10 @@ def _create_dryrun_subparser(parser):
 def _create_execute_subparser(parser):
   execute_parser = parser.subcommand('execute',
       'execute a BigQuery SQL statement sending results to a named table')
-  execute_parser.add_argument('-b', '--batch', help='run as lower-priority batch job',
-                              action='store_true')
   execute_parser.add_argument('-nc', '--nocache', help='don\'t used previously cached results',
                               action='store_true')
-  execute_parser.add_argument('-a', '--append', help='append results to table',
-                              action='store_true')
-  execute_parser.add_argument('-o', '--overwrite', help='overwrite existing content in table',
-                              action='store_true')
+  execute_parser.add_argument('-m', '--mode', help='table creation mode', default='create',
+                              choices=['create', 'append', 'overwrite'])
   execute_parser.add_argument('-l', '--large', help='allow large results',
                               action='store_true')
   execute_parser.add_argument('-q', '--query', help='name of query to run, if not in cell body',
@@ -416,8 +412,8 @@ def _execute_cell(args, sql):
     query = _get_item(args['query'])
     if not query:
       return "%s does not refer to a query" % args['query']
-  return query.execute(args['table'], args['append'], args['overwrite'], not args['nocache'],
-                       args['batch'], args['large']).results
+  return query.execute(args['table'], table_mode=args['mode'], use_cache=not args['nocache'],
+                       allow_large_results=args['large']).results
 
 
 def _table_line(args):

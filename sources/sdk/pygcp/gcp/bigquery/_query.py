@@ -74,7 +74,7 @@ class Query(object):
       malformed.
     """
     if not use_cache or (self._results is None):
-      self.execute(use_cache=use_cache, batch=False)
+      self.execute(use_cache=use_cache)
     return self._results
 
   def extract(self, storage_uris, format='csv', csv_delimiter=',', csv_header=True,
@@ -188,9 +188,8 @@ class Query(object):
     Raises:
       Exception if the query could not be executed or query response was malformed.
     """
-    return Query.sampling_query(self._api, self._sql, count=count, fields=fields,
-                                sampling=sampling).\
-        results(use_cache=use_cache)
+    return Query.sampling_query(self._api, self._sql, count=count,
+                                fields=fields, sampling=sampling).results(use_cache=use_cache)
 
   def execute_dry_run(self):
     """Dry run a query, to check the validity of the query and return statistics.
@@ -201,22 +200,21 @@ class Query(object):
     query_result = self._api.jobs_insert_query(self._sql, dry_run=True)
     return query_result['statistics']['query']
 
-  def execute_async(self, table_name=None, append=False, overwrite=False, use_cache=True,
-                    batch=True, allow_large_results=False):
+  def execute_async(self, table_name=None, table_mode='create', use_cache=True,
+                    priority='interactive', allow_large_results=False):
     """ Initiate the query and return the Job.
 
     Args:
       dataset_id: the datasetId for the result table.
       table_name: the result table name as a string or TableName; if None (the default), then a
           temporary table will be used.
-      append: if True, append to the table if it is non-empty; else the request will fail if table
-          is non-empty unless overwrite is True (default False).
-      overwrite: if the table already exists, truncate it instead of appending or raising an
-          Exception (default False).
+      table_mode: one of 'create', 'overwrite' or 'append'. If 'create' (the default), the request
+          will fail if the table exists.
       use_cache: whether to use past query results or ignore cache. Has no effect if destination is
           specified (default True).
-      batch: whether to run this as a batch job (lower priority) or as an interactive job (high
-        priority, more expensive) (default True).
+      priority:one of 'batch' or 'interactive' (default). 'interactive' jobs should be scheduled
+          to run quickly but are subject to rate limits; 'batch' jobs could be delayed by as much
+          as three hours but are not rate-limited.
       allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
           slower and requires a table_name to be specified) (default False).
     Returns:
@@ -224,6 +222,9 @@ class Query(object):
     Raises:
       Exception if query could not be executed.
     """
+    batch = priority == 'low'
+    append = table_mode == 'append'
+    overwrite = table_mode == 'overwrite'
     if table_name is not None:
       table_name = _parse_table_name(table_name, self._api.project_id)
 
@@ -247,21 +248,20 @@ class Query(object):
         raise Exception('Query failed: %s' % str(query_result['status']['errors']))
     return _QueryJob(self._api, job_id, table_name, self._sql)
 
-  def execute(self, table_name=None, append=False, overwrite=False, use_cache=True,
-               batch=True, allow_large_results=False):
+  def execute(self, table_name=None, table_mode='create', use_cache=True, priority='interactive',
+              allow_large_results=False):
     """ Initiate the query, block until complete and return the results.
 
     Args:
       table_name: the result table name as a string or TableName; if None (the default), then a
           temporary table will be used.
-      append: if True, append to the table if it is non-empty; else the request will fail if table
-          is non-empty unless overwrite is True (default False).
-      overwrite: if the table already exists, truncate it instead of appending or raising an
-          Exception (default False).
+      table_mode: one of 'create', 'overwrite' or 'append'. If 'create' (the default), the request
+          will fail if the table exists.
       use_cache: whether to use past query results or ignore cache. Has no effect if destination is
           specified (default True).
-      batch: whether to run this as a batch job (lower priority) or as an interactive job (high
-        priority, more expensive) (default True).
+      priority:one of 'batch' or 'interactive' (default). 'interactive' jobs should be scheduled
+          to run quickly but are subject to rate limits; 'batch' jobs could be delayed by as much
+          as three hours but are not rate-limited.
       allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
           slower and requires a table_name to be specified) (default False).
     Returns:
@@ -269,9 +269,8 @@ class Query(object):
     Raises:
       Exception if query could not be executed.
     """
-    job = self.execute_async(table_name=table_name, append=append, overwrite=overwrite,
-                             use_cache=use_cache, batch=batch,
-                             allow_large_results=allow_large_results)
+    job = self.execute_async(table_name=table_name, table_mode=table_mode, use_cache=use_cache,
+                             priority=priority, allow_large_results=allow_large_results)
     self._results = job.results
     return self._results
 
