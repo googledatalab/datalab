@@ -3,10 +3,6 @@
 # This script initializes an dev prompt with the required environment variables
 # and any other environment customizations.
 
-# This indicates local dev environment. When running inside docker, this
-# variable will be set to docker.
-export DATALAB_ENV=dev
-
 # Export a variable corresponding to the root of the repository
 SCRIPT=$0
 if [ "$SCRIPT" == "-bash" ]; then
@@ -23,3 +19,8 @@ export PATH=$PATH:$REPO_DIR/tools
 
 # Add aliases
 alias pylint='pylint --rcfile=$REPO_DIR/tools/pylint.rc'
+
+# Add variables related to boot2docker
+export DOCKER_HOST=tcp://192.168.59.103:2376
+export DOCKER_CERT_PATH=/Users/$USER/.boot2docker/certs/boot2docker-vm
+export DOCKER_TLS_VERIFY=1

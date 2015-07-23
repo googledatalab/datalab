@@ -34,13 +34,12 @@ interface Metadata {
  * @returns the settings object for the application to use.
  */
 export function loadSettings(): common.Settings {
-  var env = process.env.DATALAB_ENV;
+  var env = process.env.DATALAB_ENV || 'cloud';
   var settingsPath = path.join(__dirname, 'config', util.format(SETTINGS_FILE, env));
   var metadataPath = path.join(__dirname, 'config', METADATA_FILE);
 
   if (!fs.existsSync(settingsPath)) {
-    console.log('Settings file %s not found. Is DATALAB_ENV set in the current environment?',
-                settingsPath);
+    console.log('Settings file %s not found.', settingsPath);
     return null;
   }
 
@@ -61,11 +60,10 @@ export function loadSettings(): common.Settings {
     settings.ipythonSocketServer = 'ws://127.0.0.1:' + settings.ipythonPort;
 
     settings.projectId = process.env['CLOUD_PROJECT'] || process.env['GAE_LONG_APP_ID'] ||
-                         'test-project';
-    settings.versionId = process.env['IPYTHON_VERSION'] || 'test-version';
+                         'dev-project';
+    settings.versionId = process.env['DATALAB_VERSION'] || 'dev-version';
     settings.instanceId = metadata.instanceId;
 
-    console.dir(settings);
     return settings;
   }
   catch (e) {

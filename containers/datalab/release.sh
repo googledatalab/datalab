@@ -1,3 +1,4 @@
+#!/bin/sh
 # Copyright 2014 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,6 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Google Cloud Platform extensions to customize IPython."""
+# Publishes the built docker image to the registry
 
-from ._notebooks import DataLabNotebookManager
+# Grant read permissions to all users on all objects added in the GCS bucket
+# that holds docker image files by ACLing the bucket and setting the default
+# for any new items added
+gsutil acl ch -g all:R gs://artifacts.cloud-datalab.appspot.com
+gsutil defacl ch -u all:R gs://artifacts.cloud-datalab.appspot.com
+
+LOCAL_IMAGE=datalab
+CLOUD_IMAGE=gcr.io/cloud_datalab/datalab:latest
+
+echo "Publishing $LOCAL_IMAGE to $CLOUD_IMAGE ..."
+docker tag -f $LOCAL_IMAGE $CLOUD_IMAGE
+gcloud preview docker push $CLOUD_IMAGE

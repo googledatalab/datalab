@@ -13,5 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-docker run -i --entrypoint="/bin/bash" -t gcp-ipython
+# This script serves as the entrypoint for locally running the DataLab
+# docker container in a VM on the cloud.
+
+export DATALAB_ENV=cloud
+
+# TODO: Implement support for sample notebooks.
+# Copy tutorial content from cloud storage bucket to local file system.
+# Secondly implement a new notebook manager that can merge local and
+# cloud content.
+
+# Start the DataLab server
+node /app/proxy/app.js
 

@@ -93,7 +93,9 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
 
   // Specific resources that are handled in the proxy
   if (path == '/') {
-    sendFile('about.html', 'text/html', response);
+    response.statusCode = 302;
+    response.setHeader('Location', '/tree');
+    response.end();
     return;
   }
   else if (path == '/static/base/images/favicon.ico') {

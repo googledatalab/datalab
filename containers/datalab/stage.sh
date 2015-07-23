@@ -15,9 +15,10 @@
 
 # Publishes the built docker image to the registry
 
-if [ "$#" != "1" ]; then
-  echo "Usage: $0 <tag>"
-  exit 1
+if [ "$1" == "" ]; then
+  TAG=$USER
+else
+  TAG=${USER}_$1
 fi
 
 # Grant read permissions to all users on all objects added in the GCS bucket
@@ -26,10 +27,9 @@ fi
 gsutil acl ch -g all:R gs://artifacts.cloud-datalab.appspot.com
 gsutil defacl ch -u all:R gs://artifacts.cloud-datalab.appspot.com
 
-LOCAL_IMAGE=gcp-ipython
-REG_IMAGE=gcr.io/cloud_datalab/gcp-ipython:$1
+LOCAL_IMAGE=datalab
+CLOUD_IMAGE=gcr.io/cloud_datalab/datalab:$TAG
 
-echo "Publishing $LOCAL_IMAGE to $REG_IMAGE ..."
-docker tag -f $LOCAL_IMAGE $REG_IMAGE
-gcloud preview docker push $REG_IMAGE
-
+echo "Publishing $LOCAL_IMAGE to $CLOUD_IMAGE ..."
+docker tag -f $LOCAL_IMAGE $CLOUD_IMAGE
+gcloud preview docker push $CLOUD_IMAGE

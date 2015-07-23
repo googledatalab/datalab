@@ -21,6 +21,8 @@ import gcp as _gcp
 import gcp.storage as _storage
 from IPython.html.services.notebooks.nbmanager import NotebookManager as _NotebookManager
 from IPython.nbformat import current as _NotebookFormat
+import os
+from os import path
 
 
 class Notebook(object):
@@ -57,13 +59,249 @@ class NotebookList(object):
     raise NotImplementedError('Must be implemented in a derived class.')
 
 
-class SimpleNotebookManager(_NotebookManager):
+class MemoryNotebookList(NotebookList):
+  """Implements a simple in-memory notebook list."""
+
+  def __init__(self):
+    """Initializes an instance of a MemoryNotebookList.
+    """
+    super(MemoryNotebookList, self).__init__()
+    self._notebooks = {}
+
+  def list_files(self):
+    return self._notebooks.keys()
+
+  def file_exists(self, name):
+    return name in self._notebooks
+
+  def read_file(self, name, read_content):
+    return self._notebooks.get(name, None)
+
+  def write_file(self, notebook):
+    self._notebooks[notebook.name] = notebook
+    return True
+
+  def rename_file(self, name, new_name):
+    notebook = self._notebooks.get(name, None)
+    if notebook is None:
+      return None
+
+    if new_name in self._notebooks:
+      return None
+
+    notebook.name = new_name
+    self._notebooks[new_name] = notebook
+    del self._notebooks[name]
+
+    return notebook
+
+  def delete_file(self, name):
+    if name in self._notebooks:
+      del self._notebooks[name]
+      return True
+    return False
+
+
+class LocalNotebookList(NotebookList):
+  """Implements a local file system baked notebook list.
+  """
+
+  def __init__(self, directory):
+    """Initializes an instance of a LocalNotebookList.
+    """
+    super(LocalNotebookList, self).__init__()
+    self._directory = directory
+
+  def _get_path(self, name):
+    return path.join(self._directory, name)
+
+  def list_files(self):
+    entries = os.listdir(self._directory)
+    return filter(lambda e: path.splitext(e)[1] == '.ipynb' and
+                    path.isfile(path.join(self._directory, e)), entries)
+
+  def file_exists(self, name):
+    return path.exists(self._get_path(name))
+
+  def read_file(self, name, read_content):
+    abs_name = self._get_path(name)
+    if path.exists(abs_name) and path.isfile(abs_name):
+      try:
+        data = None
+        if read_content:
+          with open(abs_name, 'r') as f:
+            data = unicode(f.read())
+
+        timestamp = _dt.datetime.utcfromtimestamp(os.stat(abs_name).st_mtime)
+        return Notebook(name, timestamp, data)
+      except Exception:
+        return None
+    else:
+      return None
+
+  def write_file(self, notebook):
+    abs_name = self._get_path(notebook.name)
+    try:
+      with open(abs_name, 'w') as f:
+        f.write(notebook.data)
+        f.close()
+      return True
+    except:
+      return False
+
+  def rename_file(self, name, new_name):
+    abs_name = self._get_path(name)
+    abs_new_name = self._get_path(new_name)
+    if path.exists(abs_name) and path.isfile(abs_name):
+      os.rename(abs_name, abs_new_name)
+
+      timestamp = _dt.datetime.utcfromtimestamp(os.stat(abs_new_name).st_mtime)
+      return Notebook(new_name, timestamp, '')
+    return None
+
+  def delete_file(self, name):
+    abs_name = self._get_path(name)
+    if path.exits(abs_name) and path.isfile(abs_name):
+      os.remove(abs_name)
+      return True
+    return False
+
+
+class StorageNotebookList(NotebookList):
+  """Implements a cloud storage backed notebook list.
+
+  This works against a specific item prefix path within a single bucket.
+
+  This class manages the list of notebook as a cached set of items. The cache is updated
+  each time notebooks are listed (which happens each time the list page becomes active).
+
+  Operations such as checking for existence work against this cache (which is used
+  as part of finding an unused number when creating a new notebook for example). The
+  cache helps avoid creating a barrage of API calls to GCS.
+
+  Operations such as save, rename, delete directly operate against GCS APIs, but update
+  this cache as well. This is because the local list will only be updated when the list
+  page is re-activated by the user. In the interim the list would be out-of-date.
+  """
+
+  def __init__(self, bucket, prefix=''):
+    """Initializes an instance of a StorageNotebookList.
+    """
+    super(StorageNotebookList, self).__init__()
+    self._bucket = bucket
+    self._prefix = prefix
+    self._items = None
+
+  def _ensure_items(self, update=False):
+    if (self._items is None) or update:
+      self._items = {}
+
+      items = self._bucket.items(delimiter='/', prefix=self._prefix)
+      for item in items:
+        if item.key.endswith('.ipynb'):
+          key = item.key[len(self._prefix):]
+          self._items[key] = item
+
+  def _find_item(self, name):
+    self._ensure_items()
+    return self._items.get(name, None)
+
+  def list_files(self):
+    self._ensure_items(update=True)
+    return self._items.keys()
+
+  def file_exists(self, name):
+    return self._find_item(name) is not None
+
+  def read_file(self, name, read_content):
+    item = self._find_item(name)
+    if item is not None:
+      try:
+        metadata = item.metadata()
+        data = None
+        if read_content:
+          data = unicode(item.read_from())
+
+        return Notebook(name, metadata.updated_on, data)
+      except Exception:
+        return None
+    else:
+      # Its possible that the item has been added to the bucket behind the scenes.
+      # Avoid checking GCS, as it defeats the purpose of a cache. A new notebook
+      # operation attempts to read every file in sequence. Looking up GCS here would
+      # significantly slow down the process.
+      # Instead, the list will be updated when the list page loses and regains focus.
+      return None
+
+  def write_file(self, notebook):
+    creating_new_item = False
+
+    item = self._find_item(notebook.name)
+    if item is None:
+      creating_new_item = True
+      item = self._bucket.item(self._prefix + notebook.name)
+
+    try:
+      item.write_to(notebook.data, 'application/json')
+    except Exception:
+      return False
+
+    if creating_new_item:
+      # Update the local cache, as the item must exist in the cache for it to be successfully
+      # retrieved in the subsequent read. This is because the list itself will be updated only
+      # when the user returns to the list page, and the list is refreshed.
+      self._items[notebook.name] = item
+    else:
+      item.timestamp = _dt.datetime.utcnow()
+    return True
+
+  def rename_file(self, name, new_name):
+    item = self._find_item(name)
+    if item is None:
+      return None
+
+    new_key = self._prefix + new_name
+    if self._bucket.items().contains(new_key):
+      return None
+
+    try:
+      new_item = item.copy_to(new_key)
+    except Exception:
+      return None
+
+    try:
+      item.delete()
+    except Exception:
+      # Swallow failures to delete, since the new notebook with the new name was
+      # successfully created.
+      pass
+
+    # Update the local cache, so it is in-sync.
+    del self._items[name]
+    self._items[new_name] = new_item
+
+    return Notebook(new_name, new_item.metadata().updated_on, '')
+
+  def delete_file(self, name):
+    item = self._find_item(name)
+    if item is not None:
+      try:
+        item.delete()
+      except Exception:
+        return False
+
+      del self._items[name]
+      return True
+    return False
+
+
+class CompositeNotebookManager(_NotebookManager):
   """Base class for notebook managers."""
 
   def __init__(self, name, **kwargs):
-    """Initializes an instance of a SimpleNotebookManager.
+    """Initializes an instance of a CompositeNotebookManager.
     """
-    super(SimpleNotebookManager, self).__init__(**kwargs)
+    super(CompositeNotebookManager, self).__init__(**kwargs)
     self._name = name
     self._notebook_lists = {}
     self._dirs = []
@@ -245,207 +483,26 @@ class SimpleNotebookManager(_NotebookManager):
 
     return self._notebook_lists.get(path, None)
 
-class MemoryNotebookList(NotebookList):
-  """Implements a simple in-memory notebook list."""
 
-  def __init__(self):
-    """Initializes an instance of a MemoryNotebookList.
-    """
-    super(MemoryNotebookList, self).__init__()
-    self._notebooks = {}
+class DataLabNotebookManager(CompositeNotebookManager):
+  """Implements the notebook manager used in DataLab.
 
-  def list_files(self):
-    return self._notebooks.keys()
-
-  def file_exists(self, name):
-    return name in self._notebooks
-
-  def read_file(self, name, read_content):
-    return self._notebooks.get(name, None)
-
-  def write_file(self, notebook):
-    self._notebooks[notebook.name] = notebook
-    return True
-
-  def rename_file(self, name, new_name):
-    notebook = self._notebooks.get(name, None)
-    if notebook is None:
-      return None
-
-    if new_name in self._notebooks:
-      return None
-
-    notebook.name = new_name
-    self._notebooks[new_name] = notebook
-    del self._notebooks[name]
-
-    return notebook
-
-  def delete_file(self, name):
-    if name in self._notebooks:
-      del self._notebooks[name]
-      return True
-    return False
-
-
-class MemoryNotebookManager(SimpleNotebookManager):
-  """Implements a simple in-memory notebook manager."""
-
-  def __init__(self, **kwargs):
-    """Initializes an instance of a MemoryNotebookManager.
-    """
-    super(MemoryNotebookManager, self).__init__('in-memory', **kwargs)
-    self.add_notebook_list(MemoryNotebookList(), '')
-
-
-class StorageNotebookList(NotebookList):
-  """Implements a cloud storage backed notebook list.
-
-  This works against a specific item prefix path within a single bucket.
-
-  This class manages the list of notebook as a cached set of items. The cache is updated
-  each time notebooks are listed (which happens each time the list page becomes active).
-
-  Operations such as checking for existence work against this cache (which is used
-  as part of finding an unused number when creating a new notebook for example). The
-  cache helps avoid creating a barrage of API calls to GCS.
-
-  Operations such as save, rename, delete directly operate against GCS APIs, but update
-  this cache as well. This is because the local list will only be updated when the list
-  page is re-activated by the user. In the interim the list would be out-of-date.
-  """
-
-  def __init__(self, bucket, prefix=''):
-    """Initializes an instance of a StorageNotebookList.
-    """
-    super(StorageNotebookList, self).__init__()
-    self._bucket = bucket
-    self._prefix = prefix
-    self._items = None
-
-  def _ensure_items(self, update=False):
-    if (self._items is None) or update:
-      self._items = {}
-
-      items = self._bucket.items(delimiter='/', prefix=self._prefix)
-      for item in items:
-        if item.key.endswith('.ipynb'):
-          key = item.key[len(self._prefix):]
-          self._items[key] = item
-
-  def _find_item(self, name):
-    self._ensure_items()
-    return self._items.get(name, None)
-
-  def list_files(self):
-    self._ensure_items(update=True)
-    return self._items.keys()
-
-  def file_exists(self, name):
-    return self._find_item(name) is not None
-
-  def read_file(self, name, read_content):
-    item = self._find_item(name)
-    if item is not None:
-      try:
-        metadata = item.metadata()
-        data = None
-        if read_content:
-          data = unicode(item.read_from())
-
-        return Notebook(name, metadata.updated_on, data)
-      except Exception:
-        return None
-    else:
-      # Its possible that the item has been added to the bucket behind the scenes.
-      # Avoid checking GCS, as it defeats the purpose of a cache. A new notebook
-      # operation attempts to read every file in sequence. Looking up GCS here would
-      # significantly slow down the process.
-      # Instead, the list will be updated when the list page loses and regains focus.
-      return None
-
-  def write_file(self, notebook):
-    creating_new_item = False
-
-    item = self._find_item(notebook.name)
-    if item is None:
-      creating_new_item = True
-      item = self._bucket.item(self._prefix + notebook.name)
-
-    try:
-      item.write_to(notebook.data, 'application/json')
-    except Exception:
-      return False
-
-    if creating_new_item:
-      # Update the local cache, as the item must exist in the cache for it to be successfully
-      # retrieved in the subsequent read. This is because the list itself will be updated only
-      # when the user returns to the list page, and the list is refreshed.
-      self._items[notebook.name] = item
-    else:
-      item.timestamp = _dt.datetime.utcnow()
-    return True
-
-  def rename_file(self, name, new_name):
-    item = self._find_item(name)
-    if item is None:
-      return None
-
-    new_key = self._prefix + new_name
-    if self._bucket.items().contains(new_key):
-      return None
-
-    try:
-      new_item = item.copy_to(new_key)
-    except Exception:
-      return None
-
-    try:
-      item.delete()
-    except Exception:
-      # Swallow failures to delete, since the new notebook with the new name was
-      # successfully created.
-      pass
-
-    # Update the local cache, so it is in-sync.
-    del self._items[name]
-    self._items[new_name] = new_item
-
-    return Notebook(new_name, new_item.metadata().updated_on, '')
-
-  def delete_file(self, name):
-    item = self._find_item(name)
-    if item is not None:
-      try:
-        item.delete()
-      except Exception:
-        return False
-
-      del self._items[name]
-      return True
-    return False
-
-
-class StorageNotebookManager(SimpleNotebookManager):
-  """Implements a simple cloud storage backed notebook manager.
-
-  This works against a fixed bucket named <project_id>-notebooks, since we don't really
-  have the opportunity to ask the user for a specific bucket. This pattern of using
-  project id-based names seems like an established pattern. Given the bucket names need
-  to be globally unique this builds on assumption that one cloud project is unlikely to
-  to have names such as <some other project id>-notebooks. Ideally buckets would have
-  been project scoped.
+  This works against three notebook locations.
+  - A GCS location of the form gs://project_id-datalab/notebooks
+  - A container /docs directory
+  - A mounted /nb directory when the running the container locally
   """
 
   def __init__(self, **kwargs):
-    """Initializes an instance of a StorageNotebookManager.
+    """Initializes an instance of a DataLabNotebookManager.
     """
-    super(StorageNotebookManager, self).__init__('cloud storage', **kwargs)
+    super(DataLabNotebookManager, self).__init__('DataLab', **kwargs)
 
-    bucket = StorageNotebookManager._create_bucket()
-    self.add_notebook_list(StorageNotebookList(bucket))
-    self.add_notebook_list(StorageNotebookList(bucket, prefix='intro/'), 'intro')
-    self.add_notebook_list(StorageNotebookList(bucket, prefix='notebooks/'), 'notebooks')
+    bucket = DataLabNotebookManager._create_bucket()
+    self.add_notebook_list(StorageNotebookList(bucket, prefix='notebooks/'), '')
+    self.add_notebook_list(LocalNotebookList('/docs'), 'docs')
+    if os.environ.get('DATALAB_ENV', '') == 'local':
+      self.add_notebook_list(LocalNotebookList('/nb'), 'local')
 
   @staticmethod
   def _create_bucket():
@@ -462,3 +519,4 @@ class StorageNotebookManager(SimpleNotebookManager):
       return buckets.create(bucket_name)
     else:
       return _storage.bucket(bucket_name)
+

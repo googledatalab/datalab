@@ -13,23 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Builds the IPython docker image
+# This script serves as the entrypoint for locally running the DataLab
+# docker container, i.e. outside a VM on the cloud.
 
-# Create a versioned Dockerfile based on current date and git commit hash
-VERSION=`date +%Y%m%d`
-VERSION+=_
-VERSION+=`git log --pretty=format:'%H' -n 1`
+export DATALAB_ENV=local
+export METADATA_HOST=localhost
 
-SUBSTITUTION="s/_version_/v$VERSION/"
-cat Dockerfile.in | sed $SUBSTITUTION > Dockerfile
+# Simulate the metadata service
+node /tools/metadata/server.js &
 
-# Copy build outputs as a dependency of the Dockerfile
-rsync -avp ../../../build/ build
-
-# Build the docker image
-docker build -t gcp-ipython .
-
-# Finally cleanup
-rm -rf build
-rm Dockerfile
+# Start the DataLab server
+node /app/proxy/app.js
 

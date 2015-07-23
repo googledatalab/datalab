@@ -1,9 +1,9 @@
 {
   "consoleLogging": true,
   "logFilePath": "/var/log/app_engine/custom_logs/app.log",
-  "logFilePeriod": "daily",
-  "logFileCount": 7,
-  "analyticsId": "UA-54894152-1",
+  "logFilePeriod": "300000ms",
+  "logFileCount": 10,
+  "analyticsId": "UA-54894152-2",
   "ipythonArgs": [
     "notebook",
     "--no-browser",
