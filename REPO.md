@@ -1,4 +1,4 @@
-# Google DataLab Repository
+# Google Cloud DataLab Repository
 
 This is a quick description of the repository structure to help understand and
 discover the relevant pieces.
@@ -15,10 +15,8 @@ within `/sources`. The following is a list of the individual components:
 
 * `/sources/ipython` - custom IPython profile containing code that replaces existing
   functionality (eg. custom NotebookManager), or customizations via client-side scripts.
-
-* `/sources/kernels` - new kernels that we've authored to plug into IPython and into
-  DataLab.
-  - ijava: Java kernel
+  This also includes a reverse proxy web server written in node.js that is used to
+  handle the HTTP traffic and route it to IPython internally.
 
 * `/sources/docker` - packaging into docker containers. We have the following containers:
   - ipython: packaging of ipython to run on GCP
@@ -27,27 +25,22 @@ within `/sources`. The following is a list of the individual components:
 
 * `/sources/tools` - miscellaneous other supporting tools.
 
-Sources build into `/build` which are consumed when building the docker images.
+Source code builds into the /build directory, and the generated build outputs are
+consumed when building the DataLab docker container.
 
+## Docker Containers
 
-## External Dependencies
+All functionality is packaged into a docker container. In addition to the build outputs,
+the docker container contains, python, various python libraries, and the Google Cloud
+SDK.
 
-This consists of libraries (jars) and sources (typescript declaration files) that are
-a snapshot of external code, and referenced by the above sources. These exist in
-`/externs'.
+This docker container can be run locally, as well as in the cloud, as an AppEngine
+module.
 
+The docker file definition is in `/containers/datalab`.
 
-## Deployment
+## Documentation and Sample Notebooks
 
-Once the docker containers have been built and images have been published to the docker
-register, the deployment scripts allow deploying to the cloud. Specifically:
+Notebooks are used for the purposes of documentation. These are located in the `/content`
+directory, and are copied into the docker container when the container is built.
 
-* `app.sh`: deploys to managed VMs.
-* `vm.sh`: deploys to GCE VMs. This is what is currently in active use.
-
-These exist in `/deploy`.
-
-
-## Development Environment
-
-Various scripts and related files used to setup the development environment in `/tools`.
