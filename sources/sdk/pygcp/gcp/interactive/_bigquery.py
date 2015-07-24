@@ -284,21 +284,28 @@ def _get_query_argument(args, sql=None):
   if sql:
     if sql_arg:
       raise Exception('Cannot have a sql parameter and a sql cell body')
-    return _bq.Query(sql)
+    return None, _bq.Query(sql)
   else:
     if not sql_arg:
       raise Exception('Need a sql parameter or a sql cell body')
     query = _get_notebook_item(sql_arg)
-    if not isinstance(query, _bq._Query):
-      split = sql_arg.find('.')
-      if split > 0:
-        unit = _get_notebook_item(sql_arg[:split])
-        if isinstance(unit, _SqlUnit):
-          name = sql_arg[split+1:]
-          if name in unit.definitions:
-            return unit, _bq.query(unit.definitions[name].sql)
-      raise Exception('%s does not refer to a %%sql or Query' % sql_arg)
-    return None, query
+    if isinstance(query, _bq._Query):
+      return None, query
+
+    # If this is just a unit with no query, return last query in unit
+    if isinstance(query, _SqlUnit):
+      return query, _bq.query(query.last_sql.sql)
+
+    # Try parse as a unit.query
+    split = sql_arg.find('.')
+    if split > 0:
+      unit = _get_notebook_item(sql_arg[:split])
+      if isinstance(unit, _SqlUnit):
+        name = sql_arg[split+1:]
+        if name in unit.definitions:
+          return unit, _bq.query(unit.definitions[name].sql)
+
+    raise Exception('%s does not refer to a %%sql or Query' % sql_arg)
 
 
 def _sample_cell(args, sql):
