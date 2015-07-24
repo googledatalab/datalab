@@ -25,6 +25,7 @@ except ImportError:
 
 import gcp.interactive._bigquery
 import gcp.interactive._chart
+import gcp.interactive._datamatic
 import gcp.interactive._modules
 import gcp.interactive._sql
 

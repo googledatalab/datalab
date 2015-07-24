@@ -36,6 +36,7 @@ class SqlUnit(object):
     for query_definition in definitions:
       name = query_definition.name
       sql = _util.SqlStatement(query_definition.sql)
+      self.last_name = name
       self.last_sql = self.__dict__[name] = self.definitions[name] = sql
 
   @staticmethod
@@ -219,19 +220,30 @@ def _split_cell(cell):
   definitions = []
   last_def = -1
   name = None
-  re = _re.compile('^[Dd][Ee][Ff][Ii][Nn][Ee]\s+[Qq][Uu][Ee][Rr][Yy]\s+([A-Za-z]\w*)\s*?(.*)$')
+  define_re = _re.compile('^[Dd][Ee][Ff][Ii][Nn][Ee]\s+[Qq][Uu][Ee][Rr][Yy]\s+([A-Za-z]\w*)\s*?(.*)$')
+  select_re = _re.compile('^[Ss][Ee][Ll][Ee][Cc][Tt]\s+[^=(].*$')
   for i, line in enumerate(lines):
-    match = re.match(line)
-    if match:
+    define_match = define_re.match(line)
+    select_match = select_re.match(line)
+    if define_match or select_match:
       if code is None:
         code = '\n'.join(lines[:i - 1])
       if last_def >= 0:
-        definitions.append(QueryDefinition(name, '\n'.join(lines[last_def:i - 1])))
+        query = '\n'.join(lines[last_def:i - 1]).strip()
+        if select_match and name != '_' and len(query) == 0:
+          # Avoid the fake that happens with DEFINE QUERY name\nSELECT ...
+          continue
+        definitions.append(QueryDefinition(name, query))
       last_def = i
-      name = match.group(1)
-      lines[i] = match.group(2)
+      if define_match:
+        name = define_match.group(1)
+        lines[i] = define_match.group(2)
+      else:
+        name = '_'
+
   if last_def >= 0:
-    definitions.append(QueryDefinition(name, '\n'.join(lines[last_def:])))
+    query = '\n'.join(lines[last_def:]).strip()
+    definitions.append(QueryDefinition(name, query))
   return code, definitions
 
 
@@ -249,10 +261,10 @@ def sql_cell(args, cell):
 
   python, definitions = _split_cell(cell)
   unit = SqlUnit(python_code=python, definitions=definitions)
-  if args['name'] is None:
-    query = _bq.query(unit.last_sql.sql)
-    args = _get_resolution_environment(unit, query)
-    return query.execute(args=args).results
-  else:
+  if args['name'] is not None:
     _notebook_environment()[args['name']] = unit
+  if unit.last_name == '_':
+    query = _bq.query(unit.last_sql.sql)
+    args = _get_resolution_environment(unit)
+    return query.execute(args=args).results
 

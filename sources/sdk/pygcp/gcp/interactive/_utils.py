@@ -166,5 +166,5 @@ def _handle_magic_line(line, cell, parser, namespace=None):
     try:
       return args.func(vars(args), cell)
     except Exception as e:
-      return e.message
+      print(e.message)
   return None

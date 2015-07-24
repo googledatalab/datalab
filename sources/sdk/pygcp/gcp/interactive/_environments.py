@@ -15,7 +15,6 @@
 """Google Cloud Platform library - multi-environment handling. """
 
 
-import json as _json
 import shlex as _shlex
 import sys as _sys
 import types as _types
@@ -119,59 +118,15 @@ def _get_schema(name):
     return None
 
 
-def _resolve(arg):
-  # Given an argument value, resolve it. This basically means check if it is a value
-  # (and then just return it) or a reference to a variable (in which case look up the
-  # value and return it).
-  if len(arg) == 0:
-    return ''
-  # If quoted, its a string
-  if arg[0] == "'" or arg[0] == '"':
-    return arg
-  # If it starts with underscore or a letter, treat it as a variable
-  if arg[0] == '_' or arg[0].isalpha():
-    if arg in _notebook_environment():
-      val = _notebook_environment()[arg]
-      if isinstance(val, basestring):
-        return _json.dumps(val)
-      elif isinstance(val, _bq._Table):
-        return val.full_name
-      else:
-        return val
-  # else treat it as a literal (should be a number)
-  return arg
-
-
-def _get_resolution_environment(unit, query, args=None):
-  # Update using arguments including default values
-  # The args must be of the form of a list of strings each being of the form 'name=value' or
-  # 'name', 'value'.
-  # argparse.REMAINDER is broken when using subcommands if the extra arguments are
-  # optional; they must be positional. So we enforce that form and then add '--' back.
-
+def _get_resolution_environment(unit, code=None):
+  # Update using arguments including default values, overridden by code.
   # Only named queries have argument parsers etc.
   env = {}
-  if unit is None:
-    return env
-
-  if args:
-    new_args = []
-    next_is_value = False
-    for arg in args:
-      if next_is_value:
-        new_args.append(_resolve(arg))
-        next_is_value = False
-      else:
-        split = arg.find('=')
-        if split < 0:
-          next_is_value = True
-          new_args.append('--%s' % arg)
-        else:
-          new_args.append('--%s' % arg[:split])
-          new_args.append(_resolve(arg[split + 1:]))
-    args = new_args
-
-  env.update(unit.definitions)
-  env.update(_get_sql_args(unit.arg_parser, args))
+  if unit:
+    env.update(unit.definitions)
+    env.update(_get_sql_args(unit.arg_parser))
+  if code:
+    env.update(_notebook_environment())
+    exec code in env
   return env
 

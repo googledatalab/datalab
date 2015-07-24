@@ -14,7 +14,6 @@
 
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 
-import argparse as _argparse
 import json as _json
 import re as _re
 import time as _time
@@ -45,7 +44,6 @@ def _create_sample_subparser(parser):
                              help='field to use for sorted or hashed sampling')
   sample_parser.add_argument('-o', '--order', choices=['ascending', 'descending'],
                              default='ascending', help='sort order to use for sorted sampling')
-  sample_parser.add_argument('args', nargs=_argparse.REMAINDER)
   return sample_parser
 
 
@@ -72,7 +70,6 @@ def _create_execute_subparser(parser, command):
                               nargs='?')
   execute_parser.add_argument('-d', '--destination', help='target table name',
                               nargs='?')
-  execute_parser.add_argument('args', nargs=_argparse.REMAINDER)
   return execute_parser
 
 
@@ -174,6 +171,7 @@ def _create_bigquery_parser():
 
   # %%bigquery pipeline
   pipeline_parser = _create_execute_subparser(parser, 'pipeline')
+  pipeline_parser.add_argument('-n', '--name', help='pipeline name')
   pipeline_parser.set_defaults(
     func=lambda args, cell: _dispatch_handler('pipeline', args, cell,
                                               pipeline_parser, _pipeline_line,
@@ -279,47 +277,40 @@ def _dispatch_handler(command, args, cell, parser, handler,
   return handler(args, cell)
 
 
-def _get_query_argument(args, sql=None):
+def _get_query_argument(args):
   sql_arg = args['sql']
-  if sql:
-    if sql_arg:
-      raise Exception('Cannot have a sql parameter and a sql cell body')
-    return None, _bq.Query(sql)
-  else:
-    if not sql_arg:
-      raise Exception('Need a sql parameter or a sql cell body')
-    query = _get_notebook_item(sql_arg)
-    if isinstance(query, _bq._Query):
-      return None, query
+  query = _get_notebook_item(sql_arg)
+  if isinstance(query, _bq._Query):
+    return None, query
 
-    # If this is just a unit with no query, return last query in unit
-    if isinstance(query, _SqlUnit):
-      return query, _bq.query(query.last_sql.sql)
+  # If this is just a unit with no query, return last query in unit
+  if isinstance(query, _SqlUnit):
+    return query, _bq.query(query.last_sql.sql)
 
-    # Try parse as a unit.query
-    split = sql_arg.find('.')
-    if split > 0:
-      unit = _get_notebook_item(sql_arg[:split])
-      if isinstance(unit, _SqlUnit):
-        name = sql_arg[split+1:]
-        if name in unit.definitions:
-          return unit, _bq.query(unit.definitions[name].sql)
+  # Try parse as a unit.query
+  split = sql_arg.find('.')
+  if split > 0:
+    unit = _get_notebook_item(sql_arg[:split])
+    if isinstance(unit, _SqlUnit):
+      name = sql_arg[split+1:]
+      if name in unit.definitions:
+        return unit, _bq.query(unit.definitions[name].sql)
 
-    raise Exception('%s does not refer to a %%sql or Query' % sql_arg)
+  raise Exception('%s does not refer to a %%sql or Query' % sql_arg)
 
 
-def _sample_cell(args, sql):
+def _sample_cell(args, code):
   """Implements the bigquery sample cell magic for ipython notebooks.
 
   Args:
     args: the optional arguments following '%%bigquery sample'.
-    sql: optional contents of the cell interpreted as SQL.
+    code: optional contents of the cell interpreted as Python.
   Returns:
     The results of executing the query converted to a dataframe if no variable
     was specified. None otherwise.
   """
 
-  unit, query = _get_query_argument(args, sql)
+  unit, query = _get_query_argument(args)
   count = args['count']
   method = args['method']
   if method == 'random':
@@ -333,7 +324,7 @@ def _sample_cell(args, sql):
   elif method == 'limit':
     sampling = _bq.Sampling.default(count=count)
 
-  args = _get_resolution_environment(unit, query, args['args'])
+  args = _get_resolution_environment(unit, code)
   return query.sample(sampling=sampling, args=args)
 
 
@@ -391,17 +382,17 @@ def _udf_cell(args, js):
   return None
 
 
-def _execute_cell(args, sql):
-  unit, query = _get_query_argument(args, sql)
+def _execute_cell(args, code):
+  unit, query = _get_query_argument(args)
   return query.execute(args['destination'], args['append'], args['overwrite'], not args['nocache'],
                        args['batch'], args['large'],
-                       args=_get_resolution_environment(unit, query, args['args'])).results
+                       args=_get_resolution_environment(unit, code)).results
 
 
 def _pipeline_line(args):
-  unit, query = _get_query_argument(args, None)
+  unit, query = _get_query_argument(args)
   # TODO(gram): Change this to do a dry run; deferring until merge with Robin's dry run code.
-  args = _get_resolution_environment(unit, query, args['args'])
+  args = _get_resolution_environment(unit)
   print query.expand(args)
 
 
