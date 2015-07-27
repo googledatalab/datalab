@@ -14,4 +14,4 @@
 
 """Google Cloud Platform extensions to customize IPython."""
 
-from ._notebooks import DataLabNotebookManager
+from ._notebooks import DataLabContentsManager

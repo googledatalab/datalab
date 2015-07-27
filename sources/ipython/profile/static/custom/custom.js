@@ -68,7 +68,7 @@ var debug = {
 
 
 // Add TOC functionality
-function setupOutline() {
+function setupOutline(IPython) {
   var markup = '<select id="tocDropDown" style="float: right"><option>Outline</option></select>';
   IPython.toolbar.element.append(markup);
 
@@ -131,93 +131,6 @@ function setupOutline() {
     updateOutline();
   });
 }
-setTimeout(setupOutline, 1000);
-
-// Kernel related functionality
-$(function () {
-  IPython.Kernel.prototype.get_data = function (code, callback) {
-    function shellHandler(reply) {
-      if (!callback) {
-        return;
-      }
-
-      var content = reply.content;
-      if (!content || (content.status != 'ok')) {
-        callback(new Error('Unable to retrieve values.'), null);
-        callback = null;
-      }
-    }
-
-    function iopubHandler(output) {
-
-      if (output.msg_type == 'stream') {
-        // This is to allow the embedding of print statements for diagnostics.
-        debug.log(output.content.data.toString());
-        return;
-      }
-
-      if (!callback) {
-        return;
-      }
-      var values = null;
-      var error = null;
-      try {
-        if (output.msg_type == 'display_data' || output.msg_type == 'pyout') {
-          var data = output.content.data;
-          if (data) {
-            values = JSON.parse(data['application/json']);
-          }
-        }
-      }
-      catch (e) {
-        error = e;
-      }
-
-      if (values) {
-        callback(null, values);
-      }
-      else {
-        callback(error || new Error('Unexpected value data retrieved.'), null);
-      }
-      callback = null;
-    }
-
-    try {
-      var callbacks = {
-        shell: {reply: shellHandler},
-        iopub: {output: iopubHandler}
-      };
-      this.execute(code, callbacks, {silent: false, store_history: false});
-    }
-    catch (e) {
-      callback(e, null);
-    }
-  };
-
-  // Create a shim object to emulate the datalab global's interface.
-  window.datalab = {
-    kernel: {
-      // Provide a shimmed getData() method that delegates to the IPython global.
-      getData: function(code, callback) {
-        IPython.notebook.kernel.get_data(code, callback);
-      }
-    }
-  }
-});
-
-// Configure code mirror
-// - Add %%bigquery udf to the list of javascript cells to the existing configuration.
-// - Load sql mode and associate %%bigquery sql cells with SQL.
-IPython.config.cell_magic_highlight.magic_javascript.reg = [ /^%%javascript/, /^%%bigquery udf/ ];
-
-require(['/static/components/codemirror/mode/sql/sql.js'], function() {
-  IPython.config.cell_magic_highlight['magic_text/x-sql'] = {
-    reg: [
-      /^%%bigquery sql/
-    ]
-  };
-});
-
 
 // Configure RequireJS
 // - Enable loading static content easily from static directory
@@ -407,36 +320,133 @@ if ((document.domain != 'localhost') && (document.domain != '127.0.0.1')) {
   overrideWebSocket();
 }
 
+// The rest requires the notebook to be ready:
 
-// Notebook List page specific functionality
-if (IPython.NotebookList) {
-  // IPython seems to assume local persistence of notebooks - it issues an HTTP
-  // request to create a notebook, and on completion opens a window.
-  // This is fine and dandy when the round-trip time is small, but sometimes long
-  // enough when notebooks are remote (as they are with GCS) to trigger the popup
-  // blocker in browsers.
-  // Patch the new_notebook method to first open the window, and then navigate it
-  // rather than open upon completion of the operation.
+require([
+  'base/js/namespace',
+  'base/js/events'
+], function(IPython, events) {
 
-  IPython.NotebookList.prototype.new_notebook = function() {
-    var path = this.notebook_path;
-    var base_url = this.base_url;
-    var notebook_window = window.open('', '_blank');
+  events.on('app_initialized.NotebookApp', function() {
+    // Kernel related functionality
+    $(function () {
+      IPython.Kernel.prototype.get_data = function (code, callback) {
+        function shellHandler(reply) {
+          if (!callback) {
+            return;
+          }
 
-    var settings = {
-      processData : false,
-      cache : false,
-      type : 'POST',
-      dataType : 'json',
-      async : false,
-      success : function(data, status, xhr) {
-        var notebook_name = data.name;
-        url = IPython.utils.url_join_encode(base_url, 'notebooks', path, notebook_name);
-        notebook_window.location.href = url;
-      },
-      error : $.proxy(this.new_notebook_failed, this),
-    };
-    var url = IPython.utils.url_join_encode(base_url, 'api/notebooks', path);
-    $.ajax(url, settings);
-  }
-}
+          var content = reply.content;
+          if (!content || (content.status != 'ok')) {
+            callback(new Error('Unable to retrieve values.'), null);
+            callback = null;
+          }
+        }
+
+        function iopubHandler(output) {
+
+          if (output.msg_type == 'stream') {
+            // This is to allow the embedding of print statements for diagnostics.
+            debug.log(output.content.data.toString());
+            return;
+          }
+
+          if (!callback) {
+            return;
+          }
+          var values = null;
+          var error = null;
+          try {
+            if (output.msg_type == 'display_data' || output.msg_type == 'pyout') {
+              var data = output.content.data;
+              if (data) {
+                values = JSON.parse(data['application/json']);
+              }
+            }
+          }
+          catch (e) {
+            error = e;
+          }
+
+          if (values) {
+            callback(null, values);
+          }
+          else {
+            callback(error || new Error('Unexpected value data retrieved.'), null);
+          }
+          callback = null;
+        }
+
+        try {
+          var callbacks = {
+            shell: {reply: shellHandler},
+            iopub: {output: iopubHandler}
+          };
+          this.execute(code, callbacks, {silent: false, store_history: false});
+        }
+        catch (e) {
+          callback(e, null);
+        }
+      };
+
+      // Create a shim object to emulate the datalab global's interface.
+      window.datalab = {
+        kernel: {
+          // Provide a shimmed getData() method that delegates to the IPython global.
+          getData: function(code, callback) {
+            IPython.notebook.kernel.get_data(code, callback);
+          }
+        }
+      }
+    });
+
+    // Configure code mirror
+    // - Add %%bigquery udf to the list of javascript cells to the existing configuration.
+    // - Load sql mode and associate %%bigquery sql cells with SQL.
+/**
+    IPython.config.cell_magic_highlight.magic_javascript.reg = [ /^%%javascript/, /^%%bigquery udf/ ];
+
+    require(['/static/components/codemirror/mode/sql/sql.js'], function() {
+      IPython.config.cell_magic_highlight['magic_text/x-sql'] = {
+        reg: [
+          /^%%bigquery sql/
+        ]
+      };
+    });
+**/ 
+    // Notebook List page specific functionality
+    if (IPython.NotebookList) {
+      // IPython seems to assume local persistence of notebooks - it issues an HTTP
+      // request to create a notebook, and on completion opens a window.
+      // This is fine and dandy when the round-trip time is small, but sometimes long
+      // enough when notebooks are remote (as they are with GCS) to trigger the popup
+      // blocker in browsers.
+      // Patch the new_notebook method to first open the window, and then navigate it
+      // rather than open upon completion of the operation.
+
+      IPython.NotebookList.prototype.new_notebook = function() {
+        var path = this.notebook_path;
+        var base_url = this.base_url;
+        var notebook_window = window.open('', '_blank');
+
+        var settings = {
+          processData : false,
+          cache : false,
+          type : 'POST',
+          dataType : 'json',
+          async : false,
+          success : function(data, status, xhr) {
+            var notebook_name = data.name;
+            url = IPython.utils.url_join_encode(base_url, 'notebooks', path, notebook_name);
+            notebook_window.location.href = url;
+          },
+          error : $.proxy(this.new_notebook_failed, this),
+        };
+        var url = IPython.utils.url_join_encode(base_url, 'api/notebooks', path);
+        $.ajax(url, settings);
+      }
+    }
+
+    setupOutline(IPython)
+  });
+});
