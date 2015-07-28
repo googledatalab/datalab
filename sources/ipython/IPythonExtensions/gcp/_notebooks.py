@@ -12,18 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""NotebookManager Implementations."""
+"""ContentsManager Implementations."""
 
 import datetime as _dt
 import io as _io
 import json as _json
-import gcp as _gcp
-import gcp.storage as _storage
-from IPython.html.services.notebooks.nbmanager import NotebookManager as _NotebookManager
-from IPython.nbformat import current as _NotebookFormat
 import os
 from os import path
+from tornado import web
 
+import gcp as _gcp
+import gcp.storage as _storage
+from IPython import nbformat
+from IPython.html.services.contents.checkpoints import Checkpoints as _Checkpoints
+from IPython.html.services.contents.manager import ContentsManager as _ContentsManager
+from IPython.nbformat import current as _NotebookFormat
+from IPython.utils import tz
+
+def log(msg):
+  with open('/Users/gram/datalab/debug.log', 'a') as f:
+    f.write('%s\n' % msg)
 
 class Notebook(object):
   """Information about a notebook."""
@@ -69,9 +77,11 @@ class MemoryNotebookList(NotebookList):
     self._notebooks = {}
 
   def list_files(self):
+    log("list files returns %s" % str(self._notebooks.keys()))
     return self._notebooks.keys()
 
   def file_exists(self, name):
+    log("file_exists(%s) => %s" % (name, str(name in self._notebooks)))
     return name in self._notebooks
 
   def read_file(self, name, read_content):
@@ -79,7 +89,8 @@ class MemoryNotebookList(NotebookList):
 
   def write_file(self, notebook):
     self._notebooks[notebook.name] = notebook
-    return True
+    notebook.data =  nbformat.reads(notebook.data, as_version=4)
+    log("saving %s in list" % notebook.name)
 
   def rename_file(self, name, new_name):
     notebook = self._notebooks.get(name, None)
@@ -113,6 +124,8 @@ class LocalNotebookList(NotebookList):
     self._directory = directory
 
   def _get_path(self, name):
+    if name.find(self._directory[1:] + '/') == 0:
+      return '/' + name
     return path.join(self._directory, name)
 
   def list_files(self):
@@ -130,7 +143,7 @@ class LocalNotebookList(NotebookList):
         data = None
         if read_content:
           with open(abs_name, 'r') as f:
-            data = unicode(f.read())
+            data = nbformat.reads(f.read(), as_version=4)
 
         timestamp = _dt.datetime.utcfromtimestamp(os.stat(abs_name).st_mtime)
         return Notebook(name, timestamp, data)
@@ -152,6 +165,7 @@ class LocalNotebookList(NotebookList):
   def rename_file(self, name, new_name):
     abs_name = self._get_path(name)
     abs_new_name = self._get_path(new_name)
+    log("Rename(%s => %s) => %s => %s" % (name, new_name, abs_name, abs_new_name))
     if path.exists(abs_name) and path.isfile(abs_name):
       os.rename(abs_name, abs_new_name)
 
@@ -161,7 +175,7 @@ class LocalNotebookList(NotebookList):
 
   def delete_file(self, name):
     abs_name = self._get_path(name)
-    if path.exits(abs_name) and path.isfile(abs_name):
+    if path.exists(abs_name) and path.isfile(abs_name):
       os.remove(abs_name)
       return True
     return False
@@ -220,7 +234,7 @@ class StorageNotebookList(NotebookList):
         metadata = item.metadata()
         data = None
         if read_content:
-          data = unicode(item.read_from())
+          data = nbformat.reads(item.read_from(), as_version=4)
 
         return Notebook(name, metadata.updated_on, data)
       except Exception:
@@ -295,34 +309,80 @@ class StorageNotebookList(NotebookList):
     return False
 
 
-class CompositeNotebookManager(_NotebookManager):
+class SimpleContentsCheckpoints(_Checkpoints):
+  """Simple implementation of checkpoints. Essentially no-ops/exceptions for DataLab. """
+
+  def create_checkpoint(self, contents_mgr, path):
+    """Creates a save checkpoint."""
+    # This is really meant to be a no-op implementation, but returning a valid checkpoint
+    # avoids the seemingly benign error that shows up in verbose debug logs if one isn't
+    # created/returned. The returned checkpoint is ID'd with an arbitrary but fixed name,
+    # so it can also be returned when listing checkpoints.
+    return dict(id = u'checkpoint', last_modified=_dt.datetime.utcnow())
+
+  def restore_checkpoint(self, contents_mgr, checkpoint_id, path):
+    """Restore a checkpoint."""
+    raise NotImplementedError("DataLab beta does not yet support checkpoints")
+
+  def rename_checkpoint(self, checkpoint_id, old_path, new_path):
+    """Rename a single checkpoint from old_path to new_path."""
+    raise NotImplementedError("DataLab beta does not yet support checkpoints")
+
+  def delete_checkpoint(self, checkpoint_id, path):
+    """delete a checkpoint for a file"""
+    raise NotImplementedError("DataLab beta does not yet support checkpoints")
+
+  def list_checkpoints(self, path):
+    """Return a list of checkpoints for a given file"""
+    return []
+
+
+class CompositeContentsManager(_ContentsManager):
   """Base class for notebook managers."""
 
   def __init__(self, name, **kwargs):
-    """Initializes an instance of a CompositeNotebookManager.
+    """Initializes an instance of a CompositeContentsManager.
     """
-    super(CompositeNotebookManager, self).__init__(**kwargs)
+    super(CompositeContentsManager, self).__init__(**kwargs)
     self._name = name
+    log("create empty list")
     self._notebook_lists = {}
     self._dirs = []
+    self._dir_timestamp = _dt.datetime.utcnow()
+
+  def _checkpoints_class_default(self):
+    return SimpleContentsCheckpoints
 
   def add_notebook_list(self, notebook_list, name=''):
+    log("Add notebook list %s => %s" % (name, notebook_list))
     self._notebook_lists[name] = notebook_list
-    if len(name) != 0:
+    if len(name):
       self._dirs.append(name)
 
-  @property
-  def notebook_dir(value):
-    pass
+  def _get_notebook_list(self, path):
+    return self._notebook_lists.get(path.strip('/'), None)
+
+  def _get_notebook_list_and_file_name(self, name):
+    log("_get_notebook_list_and_file_name(%s)" % name)
+    i = name.rfind('/')
+    if i == -1:
+      path = ''
+    else:
+      path = name[:i]
+      name = name[i+1:]
+    notebook_list = self._get_notebook_list(path)
+    log ("Notebook lists are %s" % str(self._notebook_lists))
+    log("Returns %s,%s for '%s',%s" % (notebook_list, name, path, name))
+    return notebook_list, name
 
   def info_string(self):
     return 'Serving notebooks via the %s notebook manager.' % self._name
 
-  def path_exists(self, path):
+  def dir_exists(self, path):
     """Checks if the specified path exists.
     """
-    notebook_list = self._get_notebook_list(path)
-    return notebook_list is not None
+    log('dir_exists(%s) returns %s' % (path, str(len(path) == 0 or self._get_notebook_list(path) is not None)))
+    return len(path) == 0 or self._get_notebook_list(path) is not None
 
   def is_hidden(self, path):
     """Checks if the path corresponds to a hidden directory.
@@ -330,162 +390,170 @@ class CompositeNotebookManager(_NotebookManager):
     # No hidden directories semantics.
     return False
 
-  def notebook_exists(self, name, path=''):
+  def file_exists(self, name):
     """Checks if the specified notebook exists.
     """
-    notebook_list = self._get_notebook_list(path)
-    if notebook_list is None:
-      return False
-    return notebook_list.file_exists(name)
+    notebook_list, notebook_name = self._get_notebook_list_and_file_name(name)
+    log('file_exists(%s) returns %s' % (name, str(False if notebook_list is None else notebook_list.file_exists(notebook_name))))
+    return False if notebook_list is None else notebook_list.file_exists(notebook_name)
 
-  def list_dirs(self, path=''):
-    """Retrieves the list of sub-directories.
-    """
-    # No nested sub-directories
-    if path != '':
-      return []
-
-    return map(lambda dir: self.get_dir_model(dir), sorted(self._dirs))
-
-  def get_dir_model(self, path=''):
-    """Retrieves information about the specified directory path.
-    """
-    notebook_list = self._get_notebook_list(path)
-    if notebook_list is None:
-      return None
-
-    return {'type': 'directory', 'name': path, 'path': path}
-
-  def list_notebooks(self, path=''):
-    """Retrieves the list of notebooks contained in the specified path.
-    """
-    notebook_list = self._get_notebook_list(path)
-    if notebook_list is None:
-      return []
-
-    names = sorted(notebook_list.list_files())
-    return map(lambda name: self.get_notebook(name, path, content=False), names)
-
-  def get_notebook(self, name, path='', content=True):
-    """Retrieves information about the specified notebook.
-    """
-    notebook_list = self._get_notebook_list(path)
-    if notebook_list is None:
-      return None
-
-    notebook = notebook_list.read_file(name, content)
-    if notebook is None:
-      raise Exception('The notebook could not be read. It may no longer exist.')
-
-    data_content = None
-    if content:
-      with _io.StringIO(notebook.data) as stream:
-        data_content = _NotebookFormat.read(stream, u'json')
-        self.mark_trusted_cells(data_content, path, name)
-
-    return self._create_notebook_model(name, path, notebook.timestamp, data_content)
-
-  def save_notebook(self, model, name, path=''):
-    """Saves the notebook represented by the specified model object.
-    """
-    notebook_list = self._get_notebook_list(path)
-    if notebook_list is None:
-      return None
-
-    new_name = model.get('name', name)
-    if new_name != name:
-      # Name has changed, so delete the old entry. The new entry will be created as part of
-      # updating the map with the new notebook.
-      del self._notebooks[name]
-
-    data = ''
-    with _io.StringIO() as stream:
-      content = _NotebookFormat.to_notebook_json(model['content'])
-      self.check_and_sign(content, new_name, path)
-      _NotebookFormat.write(content, stream, u'json')
-
-      data = stream.getvalue()
-
-    timestamp = model.get('last_modified', _dt.datetime.utcnow())
-    notebook = Notebook(new_name, timestamp, data)
-
-    saved = notebook_list.write_file(notebook)
-    if not saved:
-      raise Exception('There was an error saving the notebook.')
-
-    return self._create_notebook_model(new_name, path, timestamp, data)
-
-  def update_notebook(self, model, name, path=''):
-    """Updates the notebook represented by the specified model object.
-    """
-    notebook_list = self._get_notebook_list(path)
-    if notebook_list is None:
-      return None
-
-    new_name = model['name']
-    notebook = notebook_list.rename_file(name, new_name)
-
-    if notebook is None:
-      raise Exception('The notebook could not be renamed. The name might already be in use.')
-    else:
-      return self._create_notebook_model(new_name, path, notebook.timestamp)
-
-  def delete_notebook(self, name, path=''):
-    """Deletes the specified notebook.
-    """
-    notebook_list = self._get_notebook_list(path)
-    if notebook_list is None:
-      return
-
-    deleted = notebook_list.delete_file(name)
-    if not deleted:
-      raise Exception('The specified notebook could not be deleted. It may no longer exist.')
-
-  def create_checkpoint(self, name, path=''):
-    """Creates a save checkpoint."""
-    # This is really meant to be a no-op implementation, but returning a valid checkpoint
-    # avoids the seemingly benign error that shows up in verbose debug logs if one isn't
-    # created/returned. The returned checkpoint is ID'd with an arbitrary but fixed name,
-    # so it can also be returned when listing checkpoints.
-    return {'id': 'current'}
-
-  def list_checkpoints(self, name, path=''):
-    """Retrieves the list of previously saved checkpoints."""
-    # This is really meant to be be a no-op implementation, but returns the
-    # checkpoint that create_checkpoint pretended to have created.
-    return [{'id': 'current'}]
-
-  def restore_checkpoint(self, checkpoint_id, name, path=''):
-    """Restores a previously saved checkpoint."""
-    # No-op as this implementation does not support checkpoints.
-    pass
-
-  def delete_checkpoint(self, checkpoint_id, name, path=''):
-    """Deletes a previously saved checkpoint."""
-    # No-op as this implementation does not support checkpoints.
-    pass
-
-  def _create_notebook_model(self, name, path, timestamp, content=None):
-    model = {'type': 'notebook',
-             'path': path,
-             'name': name,
-             'created': timestamp,
-             'last_modified': timestamp
-            }
-    if content is not None:
-      model['content'] = content
+  def _base_model(self, path, type):
+    """Build the common base of a contents model"""
+    model = {}
+    model['name'] = path.rsplit('/', 1)[-1]
+    model['path'] = path
+    model['content'] = None
+    model['format'] = None
+    model['mimetype'] = None
+    model['writable'] = True
+    model['type'] = type
     return model
 
-  def _get_notebook_list(self, path):
-    # Strip out the leading / that IPython adds
-    if (len(path) != 0) and (path[0] == '/'):
-      path = path[1:]
+  def _subdirs(self, path):
+    """Return subdirs for this path.
 
-    return self._notebook_lists.get(path, None)
+    This is just a kludge for DataLab, where subdirectories are virtual.
+    """
+    return [] if len(path) else self._dirs
+
+  def _dir_model(self, path, content=True):
+    """Build a model for a directory
+
+    if content is requested, will include a listing of the directory
+    """
+    notebook_list = self._get_notebook_list(path)
+    model = self._base_model(path, 'directory')
+    model['last_modified'] = self._dir_timestamp
+    model['created'] = self._dir_timestamp
+    if content:
+      model['content'] = contents = []
+      if notebook_list:
+        for file in notebook_list.list_files():
+          contents.append(self.get(path='%s/%s' % (path, file), content=False))
+      for file in self._subdirs(path):
+        contents.append(self.get(path='%s/%s' % (path, file), content=False))
+      model['format'] = 'json'
+    return model
+
+  def _notebook_model(self, path, content=True):
+    """Build a notebook model
+
+    if content is requested, the notebook content will be populated
+    as a JSON structure (not double-serialized)
+    """
+    notebook_list, name = self._get_notebook_list_and_file_name(path)
+    if notebook_list is None:
+      raise web.HTTPError(404, u'notebook does not exist: %r' % path)
+    nb = notebook_list.read_file(name, read_content=content)
+    model = self._base_model(path, 'notebook')
+    model['last_modified'] = nb.timestamp
+    model['created'] = nb.timestamp
+    if content:
+      self.mark_trusted_cells(nb.data, path)
+      model['content'] = nb.data
+      model['format'] = 'json'
+      self.validate_notebook_model(model)
+    return model
+
+  def get(self, path, content=True, type=None, format=None):
+    """ Takes a path for an entity and returns its model
+
+    Args:
+      path: the API path that describes the relative path for the target
+      content: Whether to include the contents in the reply
+      type: The requested type - 'file', 'notebook', or 'directory'.
+            Will raise HTTPError 400 if the content doesn't match.
+      format: The requested format for file contents. 'text' or 'base64'.
+            Ignored if this returns a notebook or directory model.
+
+    Returns
+      The contents model. If content=True, returns the contents
+      of the file or directory as well.
+    """
+    if self.dir_exists(path):
+      self.log.info('dir_exists %s' % path)
+      if type is not None and type != 'directory':
+        raise web.HTTPError(400, u'%s is a directory, not a %s' % (path, type), reason='bad type')
+      model = self._dir_model(path, content=content)
+
+    elif self.file_exists(path):
+      # Note: we only support notebooks so can ignore the possibility of this being some
+      # other type of file
+      if type is not None and type != 'notebook':
+        raise web.HTTPError(400, u'%s is a notebook, not a %s' % (path, type), reason='bad type')
+      model = self._notebook_model(path, content=content)
+
+    else:
+      raise web.HTTPError(404, u'No such file or directory: %s' % path)
+
+    log("get(%s) returns %s" % (path, str(model)))
+    return model
+
+  def save(self, model, path):
+    """Save the file or directory and return the model with no content.
+
+    Save implementations should call self.run_pre_save_hook(model=model, path=path)
+    prior to writing any data.
+    """
+
+    if 'type' not in model:
+      raise web.HTTPError(400, u'No file type provided')
+    if 'content' not in model and model['type'] != 'directory':
+      raise web.HTTPError(400, u'No file content provided')
+
+    self.run_pre_save_hook(model=model, path=path)
+
+    notebook_list, name = self._get_notebook_list_and_file_name(path)
+    if notebook_list is None:
+      raise web.HTTPError(400, u'Parent container does not exist: %s' % path)
+
+    validation_message = None
+    try:
+      if model['type'] == 'notebook':
+        nb = nbformat.from_dict(model['content'])
+        self.check_and_sign(nb, path)
+        s = nbformat.writes(nb)
+        if isinstance(s, bytes):
+          s = s.decode('utf8')
+        notebook_list.write_file(Notebook(name, _dt.datetime.utcnow(), s))
+        self.validate_notebook_model(model)
+        validation_message = model.get('message', None)
+      elif model['type'] == 'directory':
+        if self.file_exists(path):
+          raise web.HTTPError(400, u'Not a directory: %s' % (path))
+        elif self.dir_exists(path):
+          self.log.debug("Directory %r already exists", path)
+        else:
+          # In DataLab we are not supporting creating new 'directories'
+          raise web.HTTPError(400, u'Directory creation is not supported: %s' % (path))
+      else:
+        raise web.HTTPError(400, "Unhandled contents type: %s" % model['type'])
+    except web.HTTPError:
+      raise
+    except Exception as e:
+      raise web.HTTPError(500, u'Unexpected error while saving file: %s %s' % (path, e))
+
+    model = self.get(path, content=False)
+    if validation_message:
+      model['message'] = validation_message
+
+    return model
+
+  def delete_file(self, path):
+    """Delete file or directory by path."""
+    notebook_list, name = self._get_notebook_list_and_file_name(path)
+    if notebook_list is not None:
+      notebook_list.delete_file(name)
+
+  def rename_file(self, old_path, new_name):
+    """Rename a file."""
+    notebook_list, name = self._get_notebook_list_and_file_name(old_path)
+    if notebook_list is not None:
+      notebook_list.rename_file(name, new_name)
 
 
-class DataLabNotebookManager(CompositeNotebookManager):
-  """Implements the notebook manager used in DataLab.
+class DataLabContentsManager(CompositeContentsManager):
+  """Implements the contents manager used in DataLab.
 
   This works against three notebook locations.
   - A GCS location of the form gs://project_id-datalab/notebooks
@@ -494,15 +562,24 @@ class DataLabNotebookManager(CompositeNotebookManager):
   """
 
   def __init__(self, **kwargs):
-    """Initializes an instance of a DataLabNotebookManager.
+    """Initializes an instance of a DataLabContentsManager.
     """
-    super(DataLabNotebookManager, self).__init__('DataLab', **kwargs)
+    super(DataLabContentsManager, self).__init__('DataLab', **kwargs)
+    log('Creating DataLab contents manager')
 
-    bucket = DataLabNotebookManager._create_bucket()
-    self.add_notebook_list(StorageNotebookList(bucket, prefix='notebooks/'), '')
-    self.add_notebook_list(LocalNotebookList('/docs'), 'docs')
-    if os.environ.get('DATALAB_ENV', '') == 'local':
-      self.add_notebook_list(LocalNotebookList('/nb'), 'local')
+    try:
+      # In-memory notebooks; useful for testing
+      #self.add_notebook_list(MemoryNotebookList())
+      #self._dir_timestamp = _dt.datetime().utcnow()
+
+      self.add_notebook_list(LocalNotebookList('/docs'), 'docs')
+      if os.environ.get('DATALAB_ENV', '') == 'local':
+        self.add_notebook_list(LocalNotebookList('/nb'), 'local')
+      bucket = DataLabContentsManager._create_bucket()
+      self._dir_timestamp = bucket.metadata().created_on
+      self.add_notebook_list(StorageNotebookList(bucket, prefix='notebooks/'), '')
+    except Exception as e:
+      log(str(e))
 
   @staticmethod
   def _create_bucket():

@@ -16,6 +16,7 @@
 
 import dateutil.parser as _dateparser
 from gcp._util import Iterator as _Iterator
+from gcp._util import RequestException as _RequestException
 
 # TODO(nikhilko): Read/write operations don't account for larger files, or non-textual content.
 #                 Use streaming reads into a buffer or StringIO or into a file handle.
@@ -114,8 +115,8 @@ class Item(object):
     """
     try:
       self._api.objects_delete(self._bucket, self._key)
-    except Exception as e:
-      if (len(e.args[0]) > 1) and (e.args[0][1] == 204):
+    except _RequestException as e:
+      if e.status == 204:
         return True
       raise e
     return False
@@ -183,8 +184,8 @@ class ItemList(object):
     """
     try:
       _ = self._api.objects_get(self._bucket, key)
-    except Exception as e:
-      if (len(e.args[0]) > 1) and (e.args[0][1] == 404):
+    except _RequestException as e:
+      if e.status == 404:
         return False
       raise e
     return True
