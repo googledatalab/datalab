@@ -30,7 +30,7 @@ from IPython.nbformat import current as _NotebookFormat
 from IPython.utils import tz
 
 def log(msg):
-  with open('/Users/gram/datalab/debug.log', 'a') as f:
+  with open('/tmp/ebug.log', 'a') as f:
     f.write('%s\n' % msg)
 
 class Notebook(object):

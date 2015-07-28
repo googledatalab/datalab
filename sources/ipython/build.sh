@@ -24,7 +24,7 @@ python setup.py sdist --dist-dir=$PYLIB_DIR
 mv MANIFEST $PYLIB_DIR/IPython.manifest
 
 # Copy the IPython customized profile over
-rsync -avp ./profile/config.py $IPY_DIR/config.py
+rsync -avp ./profile/ipython_config.py $IPY_DIR/ipython_config.py
 rsync -avp ./profile/static $IPY_DIR
 
 # Compile the nodejs proxy server

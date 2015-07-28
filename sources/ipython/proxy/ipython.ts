@@ -88,7 +88,7 @@ export function createProxyServer(settings: common.Settings): httpProxy.ProxySer
   // The python script is passed in all the IPython command-line arguments.
   var ipythonArgs = appSettings.ipythonArgs;
   ipythonArgs.push('--port=' + appSettings.ipythonPort);
-  ipythonArgs.push('--config=' + path.join(__dirname, '..', 'config.py'));
+  ipythonArgs.push('--config=' + path.join(__dirname, '..', 'ipython_config.py'));
 
   var pythonScript = path.join(__dirname, "config", "ipynb.py");
   var pythonArgs = [ pythonScript ].concat(ipythonArgs);
