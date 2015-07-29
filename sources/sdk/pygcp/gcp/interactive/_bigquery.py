@@ -61,8 +61,8 @@ def _create_dryrun_subparser(parser):
   return dryrun_parser
 
 
-def _create_execute_subparser(parser):
-  execute_parser = parser.subcommand('execute',
+def _create_execute_subparser(parser, command):
+  execute_parser = parser.subcommand(command,
       'execute a BigQuery SQL statement sending results to a named table')
   execute_parser.add_argument('-nc', '--nocache', help='don\'t used previously cached results',
                               action='store_true')
@@ -70,7 +70,7 @@ def _create_execute_subparser(parser):
                               choices=['create', 'append', 'overwrite'])
   execute_parser.add_argument('-l', '--large', help='allow large results',
                               action='store_true')
-  execute_parser.add_argument('-q', '--query', help='name of query to run, if not in cell body',
+  execute_parser.add_argument('-q', '--sql', help='name of query to run, if not in cell body',
                               nargs='?')
   execute_parser.add_argument('-d', '--destination', help='target table name',
                               nargs='?')
@@ -174,13 +174,13 @@ def _create_bigquery_parser():
                                                 _udf_cell, cell_required=True))
 
   # %%bigquery execute
-  execute_parser = _create_execute_subparser(parser)
+  execute_parser = _create_execute_subparser(parser, 'execute')
   execute_parser.set_defaults(
       func=lambda args, cell: _dispatch_handler(args, cell,
                                                 execute_parser, _execute_cell))
 
   # %%bigquery pipeline
-  pipeline_parser = _create_execute_subparser(parser)
+  pipeline_parser = _create_execute_subparser(parser, 'pipeline')
   pipeline_parser.add_argument('-n', '--name', help='pipeline name')
   pipeline_parser.set_defaults(
     func=lambda args, cell: _dispatch_handler(args, cell,
@@ -393,8 +393,8 @@ def _udf_cell(args, js):
 
 def _execute_cell(args, code):
   unit, query = _get_query_argument(args)
-  return query.execute(args['destination'], args['append'], args['overwrite'], not args['nocache'],
-                       args['batch'], args['large'],
+  return query.execute(args['destination'], table_mode=args['mode'], use_cache=not args['nocache'],
+                       allow_large_results=args['large'],
                        args=_get_resolution_environment(unit, code)).results
 
 

@@ -158,7 +158,8 @@ class Query(_util.SqlStatement):
     return path
 
   @async_method
-  def to_file_async(self, path, start_row=0, max_rows=None, use_cache=True, write_header=True, args=None):
+  def to_file_async(self, path, start_row=0, max_rows=None, use_cache=True, write_header=True,
+                    args=None):
     """Save the results to a local file in Excel CSV format. Returns a Job immediately.
 
     Args:
@@ -176,7 +177,7 @@ class Query(_util.SqlStatement):
     return self.to_file(path, start_row=start_row, max_rows=max_rows, use_cache=use_cache,
                         write_header=write_header, args=args)
 
-  def sample(self, count=5, fields=None, sampling=None, use_cache=True):
+  def sample(self, count=5, fields=None, sampling=None, use_cache=True, args=None):
     """Retrieves a sampling of rows for the query.
 
     Args:
