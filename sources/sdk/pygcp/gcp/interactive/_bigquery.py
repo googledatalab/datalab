@@ -22,27 +22,29 @@ import IPython.core.magic as _magic
 import gcp.bigquery as _bq
 import gcp._util as _util
 from ._commands import CommandParser as _CommandParser
+from ._environments import _get_notebook_item, _get_schema, _get_table
+from ._environments import _notebook_environment
+from ._environments import _get_resolution_environment
 from ._html import HtmlBuilder as _HtmlBuilder
+from ._sql import SqlUnit as _SqlUnit
 from ._utils import _get_data, _get_field_list, _handle_magic_line
 
 
-def _create_sql_subparser(parser):
-  sql_parser = parser.subcommand('sql',
+def _create_sample_subparser(parser):
+  sample_parser = parser.subcommand('sample',
       'execute a BigQuery SQL statement and display results or create a named query object')
-  sql_parser.add_argument('-n', '--name', help='the name for this query object')
-  sql_parser.add_argument('-s', '--sample', action='store_true',
-                          help='execute the query and get a sample of results')
-  sql_parser.add_argument('-sc', '--samplecount', type=int, default=10,
+  sample_parser.add_argument('-q', '--sql', help='the name for this query object')
+  sample_parser.add_argument('-c', '--count', type=int, default=10,
                           help='number of rows to limit to if sampling')
-  sql_parser.add_argument('-sm', '--samplemethod', help='the type of sampling to use',
+  sample_parser.add_argument('-m', '--method', help='the type of sampling to use',
                           choices=['limit', 'random', 'hashed', 'sorted'], default='limit')
-  sql_parser.add_argument('-sp', '--samplepercent', type=int, default=1,
+  sample_parser.add_argument('-p', '--percent', type=int, default=1,
                           help='For random or hashed sampling, what percentage to sample from')
-  sql_parser.add_argument('-sf', '--samplefield',
+  sample_parser.add_argument('-f', '--field',
                           help='field to use for sorted or hashed sampling')
-  sql_parser.add_argument('-so', '--sampleorder', choices=['ascending', 'descending'],
+  sample_parser.add_argument('-o', '--order', choices=['ascending', 'descending'],
                           default='ascending', help='sort order to use for sorted sampling')
-  return sql_parser
+  return sample_parser
 
 
 def _create_udf_subparser(parser):
@@ -70,7 +72,8 @@ def _create_execute_subparser(parser):
                               action='store_true')
   execute_parser.add_argument('-q', '--query', help='name of query to run, if not in cell body',
                               nargs='?')
-  execute_parser.add_argument('table', help='target table name')
+  execute_parser.add_argument('-d', '--destination', help='target table name',
+                              nargs='?')
   return execute_parser
 
 
@@ -153,11 +156,17 @@ def _create_bigquery_parser():
   # This is a bit kludgy because we want to handle some line magics and some cell magics
   # with the bigquery command.
 
+  # %%bigquery sample
+  sample_parser = _create_sample_subparser(parser)
+  sample_parser.set_defaults(
+      func=lambda args, cell: _dispatch_handler(args, cell, sample_parser, _sample_cell))
+
   # %%bigquery sql
   sql_parser = _create_sql_subparser(parser)
   sql_parser.set_defaults(
       func=lambda args, cell: _dispatch_handler(args, cell, sql_parser,
                                                 _sql_cell, cell_required=True))
+
 
   # %%bigquery dryrun
   dryrun_parser = _create_dryrun_subparser(parser)
@@ -176,6 +185,14 @@ def _create_bigquery_parser():
   execute_parser.set_defaults(
       func=lambda args, cell: _dispatch_handler(args, cell,
                                                 execute_parser, _execute_cell))
+
+  # %%bigquery pipeline
+  pipeline_parser = _create_execute_subparser(parser)
+  pipeline_parser.add_argument('-n', '--name', help='pipeline name')
+  pipeline_parser.set_defaults(
+    func=lambda args, cell: _dispatch_handler(args, cell,
+                                              pipeline_parser, _pipeline_line,
+                                              cell_prohibited=True))
 
   # %bigquery table
   table_parser = _create_table_subparser(parser)
@@ -212,7 +229,8 @@ def _create_bigquery_parser():
   # cell body and how schema infer may fail.
   load_parser = _create_load_subparser(parser)
   load_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler(args, cell, load_parser, _load_cell))
+      func=lambda args, cell: _dispatch_handler('load', args, cell, load_parser, _load_cell))
+
   return parser
 
 
@@ -238,7 +256,12 @@ def bigquery(line, cell=None):
   Returns:
     The results of executing the cell.
   """
-  return _handle_magic_line(line, cell, _bigquery_parser)
+  namespace = {}
+  if line.find('$') >= 0:
+    # We likely have variables to expand; get the appropriate context.
+    namespace = _notebook_environment()
+
+  return _handle_magic_line(line, cell, _bigquery_parser, namespace=namespace)
 
 
 def _dispatch_handler(args, cell, parser, handler,
@@ -270,73 +293,55 @@ def _dispatch_handler(args, cell, parser, handler,
   return handler(args, cell)
 
 
-def _sql_cell(args, sql):
-  """Implements the SQL bigquery cell magic for ipython notebooks.
+def _get_query_argument(args):
+  sql_arg = args['sql']
+  query = _get_notebook_item(sql_arg)
+  if isinstance(query, _bq._Query):
+    return None, query
 
-  The supported syntax is:
-  %%bigquery sql [--name <var>]
-  <sql>
+  # If this is just a unit with no query, return last query in unit
+  if isinstance(query, _SqlUnit):
+    return query, _bq.query(query.last_sql.sql)
+
+  # Try parse as a unit.query
+  split = sql_arg.find('.')
+  if split > 0:
+    unit = _get_notebook_item(sql_arg[:split])
+    if isinstance(unit, _SqlUnit):
+      name = sql_arg[split+1:]
+      if name in unit.definitions:
+        return unit, _bq.query(unit.definitions[name].sql)
+
+  raise Exception('%s does not refer to a %%sql or Query' % sql_arg)
+
+
+def _sample_cell(args, code):
+  """Implements the bigquery sample cell magic for ipython notebooks.
 
   Args:
-    args: the optional arguments following '%%bigquery sql'.
-    sql: the contents of the cell interpreted as the SQL.
+    args: the optional arguments following '%%bigquery sample'.
+    code: optional contents of the cell interpreted as Python.
   Returns:
     The results of executing the query converted to a dataframe if no variable
     was specified. None otherwise.
   """
-  ipy = _ipython.get_ipython()
 
-  # Use the user_ns dictionary, which contains all current declarations in
-  # the kernel as the dictionary to use to retrieve values for placeholders
-  # within the specified sql statement.
-  sql = _bq.sql(sql, **ipy.user_ns)
-  query = _bq.query(sql)
-
-  variable_name = args['name']
-  if variable_name:
-    # Update the global namespace with the new variable, or update the value of
-    # the existing variable if it already exists.
-    ipy.push({variable_name: query})
-    if not args['sample']:
-      return None
-
-  if args['samplemethod'] is None:
-    return query.results()
-
-  count = args['samplecount']
-  method = args['samplemethod']
+  unit, query = _get_query_argument(args)
+  count = args['count']
+  method = args['method']
   if method == 'random':
-    sampling = _bq.Sampling.random(percent=args['samplepercent'], count=count)
+    sampling = _bq.Sampling.random(percent=args['percent'], count=count)
   elif method == 'hashed':
-    sampling = _bq.Sampling.hashed(field_name=args['samplefield'], percent=args['samplepercent'],
+    sampling = _bq.Sampling.hashed(field_name=args['field'], percent=args['percent'],
                                    count=count)
   elif method == 'sorted':
-    ascending = args['sampleorder'] == 'ascending'
-    sampling = _bq.Sampling.sorted(args['samplefield'], ascending=ascending, count=count)
+    ascending = args['order'] == 'ascending'
+    sampling = _bq.Sampling.sorted(args['field'], ascending=ascending, count=count)
   elif method == 'limit':
     sampling = _bq.Sampling.default(count=count)
-  return query.sample(sampling=sampling)
 
-
-def _dryrun_line(args):
-  """Implements the BigQuery cell magic used to dry run BQ queries.
-
-  The supported syntax is:
-  %bigquery dryrun -n|--name <query identifier>
-
-  Args:
-    args: the argument following '%bigquery dryrun'.
-  Returns:
-    The response wrapped in a DryRunStats object
-  """
-
-  query = _get_item(args['name'])
-
-  if not isinstance(query, _bq._Query):
-    return "Error: %s is not a query!" % args['name']
-
-  result = query.execute_dry_run()
-  return _bq._QueryStats(total_bytes=result['totalBytesProcessed'], is_cached=result['cacheHit'])
+  args = _get_resolution_environment(unit, code)
+  return query.sample(sampling=sampling, args=args)
 
 
 def _udf_cell(args, js):
@@ -354,8 +359,6 @@ def _udf_cell(args, js):
     The results of executing the UDF converted to a dataframe if no variable
     was specified. None otherwise.
   """
-  ipy = _ipython.get_ipython()
-
   variable_name = args['name']
   if not variable_name:
     raise Exception("Declaration must be of the form %%bigquery udf <variable name>")
@@ -390,30 +393,23 @@ def _udf_cell(args, js):
 
   # Finally build the UDF object
   udf = _bq.udf(inputs, outputs, js)
-  ipy.push({variable_name: udf})
+  _notebook_environment()[variable_name] = udf
 
   return None
 
 
-def _execute_cell(args, sql):
-  ipy = _ipython.get_ipython()
+def _execute_cell(args, code):
+  unit, query = _get_query_argument(args)
+  return query.execute(args['destination'], args['append'], args['overwrite'], not args['nocache'],
+                       args['batch'], args['large'],
+                       args=_get_resolution_environment(unit, code)).results
 
-  # Use the user_ns dictionary, which contains all current declarations in
-  # the kernel as the dictionary to use to retrieve values for placeholders
-  # within the specified sql statement.
-  if sql:
-    if args['query']:
-      return "Cannot have a query parameter and a query cell body"
-    sql = _bq.sql(sql, **ipy.user_ns)
-    query = _bq.query(sql)
-  else:
-    if not args['query']:
-      return "Need a query parameter or a query cell body"
-    query = _get_item(args['query'])
-    if not query:
-      return "%s does not refer to a query" % args['query']
-  return query.execute(args['table'], table_mode=args['mode'], use_cache=not args['nocache'],
-                       allow_large_results=args['large']).results
+
+def _pipeline_line(args):
+  unit, query = _get_query_argument(args)
+  # TODO(gram): Change this to do a dry run; deferring until merge with Robin's dry run code.
+  args = _get_resolution_environment(unit)
+  print query.expand(args)
 
 
 def _table_line(args):
@@ -464,7 +460,7 @@ def _tables_line(args):
 
 def _extract_line(args):
   name = args['source']
-  source = _get_item(name)
+  source = _get_notebook_item(name)
   if not source:
     source = _get_table(name)
 
@@ -517,48 +513,6 @@ def _load_cell(args, schema):
     print 'Load failed: %s' % str(job.fatal_error)
   elif job.errors:
     print 'Load completed with errors: %s' % str(job.errors)
-
-# An LRU cache for Tables. This is mostly useful so that when we cross page boundaries
-# when paging through a table we don't have to re-fetch the schema.
-_table_cache = _util.LRUCache(10)
-
-
-def _get_item(name):
-  """ Get an item from the IPython environment. """
-  ipy = _ipython.get_ipython()
-  return ipy.user_ns.get(name, None)
-
-
-def _get_table(name):
-  """ Given a variable or table name, get a Table if it exists. """
-  # If name is a variable referencing a table, use that.
-  item = _get_item(name)
-  if isinstance(item, _bq._Table):
-    return item
-  # Else treat this as a BQ table name and return the (cached) table if it exists.
-  try:
-    return _table_cache[name]
-  except KeyError:
-    table = _bq.table(name)
-    if table.exists():
-      _table_cache[name] = table
-      return table
-  return None
-
-
-def _get_schema(name):
-  """ Given a variable or table name, get the Schema if it exists. """
-  item = _get_item(name)
-  if not item:
-    item = _get_table(name)
-
-  if isinstance(item, _bq._Schema):
-    return item
-  try:
-    if isinstance(item.schema, _bq._Schema):
-      return item.schema
-  except AttributeError:
-    return None
 
 
 def _table_viewer(table, rows_per_page=25, job_id='', fields=None):

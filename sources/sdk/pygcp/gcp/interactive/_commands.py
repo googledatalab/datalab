@@ -37,7 +37,7 @@ class CommandParser(_argparse.ArgumentParser):
   def exit(self, status=0, message=None):
     """Overriden exit method to stop parsing without calling sys.exit().
     """
-    raise Exception()
+    raise Exception(message)
 
   def format_usage(self):
     """Overriden usage generator to use the full help message.
@@ -62,9 +62,11 @@ class CommandParser(_argparse.ArgumentParser):
         args.append(arg)
     return args
 
-  def parse(self, line, namespace={}):
+  def parse(self, line, namespace=None):
     """Parses a line into a dictionary of arguments, expanding metavariables from a namespace. """
     try:
+      if namespace is None:
+        namespace = _notebook_environment()
       args = CommandParser.create_args(line, namespace)
       return self.parse_args(args)
     except Exception as e:
@@ -76,6 +78,7 @@ class CommandParser(_argparse.ArgumentParser):
     """Creates a parser for a sub-command.
     """
     if self._subcommands is None:
-      self._subcommands = self.add_subparsers(help='commands')
+      self._subcommands = self.add_subparsers(help='commands', dest='command')
     return self._subcommands.add_parser(name, help=help)
 
+from ._environments import _notebook_environment
