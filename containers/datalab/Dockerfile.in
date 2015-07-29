@@ -95,6 +95,10 @@ RUN cd /sdk/PyGCP-0.1.0 && python setup.py install && \
     cd /sdk/IPythonGCP-0.1.0 && python setup.py install && \
     cd /app/proxy && /tools/node/bin/npm install && cd /
 
+# Install kernel custom config
+RUN mkdir -p /root/.ipython/profile_default && \
+    mv /app/ipython_config.py /root/.ipython/profile_default
+
 # Startup
 ENV DATALAB_VERSION _version_
 ENTRYPOINT [ "/run-cloud.sh" ]

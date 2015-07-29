@@ -22,15 +22,6 @@ c = get_config()
 # Debug mode support
 c.NotebookApp.log_level = 'DEBUG'
 
-# Use inline matplotlib
-c.IPKernelApp.matplotlib = 'inline'
-
-# Implicitly imported packages.
-c.InteractiveShellApp.extensions = [ 'gcp.interactive' ]
-
-# Startup code.
-c.IPKernelApp.exec_lines = []
-
 # Static files to override the default custom script and stylesheet, as well as include a
 # special location created in the docker container to enable the user to add static files.
 c.NotebookApp.extra_static_paths = [ os.path.join(os.path.dirname(__file__), 'static') ]
