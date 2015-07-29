@@ -12,31 +12,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Customized IPython configuration for DataLab."""
+"""IPython configuration customization."""
 
 import os
 
 # Get a reference to the configuration object.
 c = get_config()
 
+# Debug mode support
+c.NotebookApp.log_level = 'DEBUG'
+
+# Use inline matplotlib
+c.IPKernelApp.matplotlib = 'inline'
+
 # Implicitly imported packages.
 c.InteractiveShellApp.extensions = [ 'gcp.interactive' ]
 
 # Startup code.
-c.InteractiveShellApp.exec_lines = []
+c.IPKernelApp.exec_lines = []
 
-# Static files to override the default custom script and stylesheet.
+# Static files to override the default custom script and stylesheet, as well as include a
+# special location created in the docker container to enable the user to add static files.
 c.NotebookApp.extra_static_paths = [ os.path.join(os.path.dirname(__file__), 'static') ]
+
+# Custom notebook manager
+c.NotebookApp.contents_manager_class = 'IPythonExtensions.gcp.DataLabContentsManager'
 
 # Allow any origin to connect to sockets
 c.NotebookApp.allow_origin = '*'
 
-# Debug mode support
-c.NotebookApp.log_level = 'DEBUG'
-
-# Custom notebook manager
-c.NotebookApp.notebook_manager_class = 'IPythonExtensions.gcp.DataLabNotebookManager'
-
-# Trust all notebooks, i.e. do not bind them to one host.
+# Trust all our notebooks for now.
+# TODO(gram): Remove before GA (see issue 314)
 import IPython.nbformat.sign as _sign
 _sign.NotebookNotary.check_signature = lambda self, nb: True
