@@ -41,7 +41,6 @@ c.NotebookApp.contents_manager_class = 'IPythonExtensions.gcp.DataLabContentsMan
 # Allow any origin to connect to sockets
 c.NotebookApp.allow_origin = '*'
 
-# Trust all our notebooks for now.
-# TODO(gram): Remove before GA (see issue 314)
+# Trust all our notebooks.
 import IPython.nbformat.sign as _sign
 _sign.NotebookNotary.check_signature = lambda self, nb: True
