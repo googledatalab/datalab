@@ -14,6 +14,7 @@
 
 """Implements Query BigQuery API."""
 
+import gcp._util as _util
 from gcp._util import async_method
 from ._utils import parse_table_name as _parse_table_name
 
@@ -70,7 +71,7 @@ class Query(_util.SqlStatement):
         self._results = None  # discard cached results
 
     if not use_cache or (self._results is None):
-      self.execute(use_cache=use_cache, batch=False, args=args)
+      self.execute(use_cache=use_cache, args=args)
     return self._results.results
 
   def extract(self, storage_uris, format='csv', csv_delimiter=',', csv_header=True,
@@ -101,7 +102,7 @@ class Query(_util.SqlStatement):
 
   @async_method
   def extract_async(self, storage_uris, format='csv', csv_delimiter=',',
-                    csv_header=True, use_cache=True, compress=False, args=args):
+                    csv_header=True, use_cache=True, compress=False, args=None):
     """Exports the query results to GCS. Returns a Future immediately.
 
     Args:

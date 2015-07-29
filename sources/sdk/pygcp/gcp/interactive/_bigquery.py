@@ -161,13 +161,6 @@ def _create_bigquery_parser():
   sample_parser.set_defaults(
       func=lambda args, cell: _dispatch_handler(args, cell, sample_parser, _sample_cell))
 
-  # %%bigquery sql
-  sql_parser = _create_sql_subparser(parser)
-  sql_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler(args, cell, sql_parser,
-                                                _sql_cell, cell_required=True))
-
-
   # %%bigquery dryrun
   dryrun_parser = _create_dryrun_subparser(parser)
   dryrun_parser.set_defaults(
