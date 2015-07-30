@@ -31,8 +31,10 @@ from ._environments import _pipeline_arg_parser
 class SqlUnit(object):
 
   def __init__(self, python_code, definitions):
-    self.arg_parser = SqlUnit.arguments(python_code)
+    self.arg_parser = SqlUnit.arguments(python_code if python_code else '')
     self.definitions = {}
+    if not definitions:
+      definitions = []
     for query_definition in definitions:
       name = query_definition.name
       sql = _util.SqlStatement(query_definition.sql)
@@ -143,6 +145,7 @@ class SqlUnit(object):
       code: the Python code to execute that defines the arguments.
 
     """
+    arg_parser = _CommandParser.create('')
     try:
       # Define our special argument 'types'.
       env = {}
@@ -151,8 +154,6 @@ class SqlUnit(object):
 
       # Execute the cell which should be one or more calls to arg().
       exec code in env
-
-      arg_parser = _CommandParser.create('')
 
       # Iterate through the module dictionary and for any newly defined objects
       # add args to the parser.
@@ -191,7 +192,7 @@ class SqlUnit(object):
           raise Exception('Cannot generate argument for %s of type %s' % (key, type(val)))
 
     except Exception as e:
-      print str(e)
+      print "%%sql arguments: %s from code '%s'" % (str(e), str(code))
     return arg_parser
 
 
@@ -220,30 +221,50 @@ def _split_cell(cell):
   definitions = []
   last_def = -1
   name = None
-  define_re = _re.compile('^[Dd][Ee][Ff][Ii][Nn][Ee]\s+[Qq][Uu][Ee][Rr][Yy]\s+([A-Za-z]\w*)\s*?(.*)$')
-  select_re = _re.compile('^[Ss][Ee][Ll][Ee][Cc][Tt]\s+[^=(].*$')
+  define_re =\
+      _re.compile('^[Dd][Ee][Ff][Ii][Nn][Ee]\s+[Qq][Uu][Ee][Rr][Yy]\s+([A-Za-z]\w*)\s*?(.*)$')
+  select_re = _re.compile('^[Ss][Ee][Ll][Ee][Cc][Tt]\s*[^=]*$')
   for i, line in enumerate(lines):
+    # Strip comment lines; doing this here means we can allow comments in SQL QUERY sections too.
+    if len(line) and line[0] == '#':
+      line[0] = ''
     define_match = define_re.match(line)
     select_match = select_re.match(line)
     if define_match or select_match:
+      # If this is the first query, get the preceding Python code.
       if code is None:
-        code = '\n'.join(lines[:i - 1])
-      if last_def >= 0:
-        query = '\n'.join(lines[last_def:i - 1]).strip()
+        code = ('\n'.join(lines[:i])).strip()
+        if len(code):
+          code += '\n'
+      elif last_def >= 0:
+
+        # This is not the first query, so gather the previous query text.
+        query = '\n'.join(lines[last_def:i]).strip()
         if select_match and name != '_' and len(query) == 0:
-          # Avoid the fake that happens with DEFINE QUERY name\nSELECT ...
+          # Avoid DEFINE query name\nSELECT ... being seen as an empty DEFINE followed by SELECT
           continue
+
+        # Save the query
         definitions.append(QueryDefinition(name, query))
-      last_def = i
+
+      # Get the query name and strip off our syntactic sugar if appropriate.
       if define_match:
         name = define_match.group(1)
         lines[i] = define_match.group(2)
       else:
         name = '_'
 
+      # Save the starting line index of the new query
+      last_def = i
+
   if last_def >= 0:
+    # We were in a query so save this tail query.
     query = '\n'.join(lines[last_def:]).strip()
     definitions.append(QueryDefinition(name, query))
+
+  if code is None:
+    code = ''
+
   return code, definitions
 
 
@@ -260,11 +281,23 @@ def sql_cell(args, cell):
   """
 
   python, definitions = _split_cell(cell)
+
   unit = SqlUnit(python_code=python, definitions=definitions)
-  if args['name'] is not None:
+
+  # For backwards compat, if we have a single query with no defines and no
+  # code, we expand that in the notebook environment.
+  if len(python) == 0 and len(unit.definitions) == 1 and unit.last_name == '_':
+    expanded =_util.SqlStatement.format(unit.definitions['_'].sql, _notebook_environment())
+    query = _bq.query(expanded)
+    if args['name']:
+      _notebook_environment()[args['name']] = query
+    return query.execute().results
+
+  if args['name']:
     _notebook_environment()[args['name']] = unit
+
   if unit.last_name == '_':
-    query = _bq.query(unit.last_sql.sql)
+    query = _bq.query(unit.last_sql)
     args = _get_resolution_environment(unit)
     return query.execute(args=args).results
 

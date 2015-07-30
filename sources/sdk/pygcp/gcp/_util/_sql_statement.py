@@ -24,6 +24,8 @@ class SqlStatement(object):
   """
 
   def __init__(self, sql):
+    if isinstance(sql, SqlStatement):
+      sql = sql._sql
     self._sql = sql
 
   def _repr_sql_(self, args=None):
