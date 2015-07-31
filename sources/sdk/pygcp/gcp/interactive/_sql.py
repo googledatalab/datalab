@@ -286,6 +286,10 @@ def sql_cell(args, cell):
 
   # For backwards compat, if we have a single query with no defines and no
   # code, we expand that in the notebook environment.
+  # TODO(gram): it's good to support the easy exploratory analysis we had before, but
+  # the semantics here are not intuitive to users. We need to come up with a better way
+  # to distinguish between %%sqls that are meant for deployment and use params and ones
+  # that are meant for exploration and use notebook environment.
   if len(python) == 0 and len(unit.definitions) == 1 and unit.last_name == '_':
     expanded =_util.SqlStatement.format(unit.definitions['_'].sql, _notebook_environment())
     query = _bq.query(expanded)
