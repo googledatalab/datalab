@@ -227,7 +227,7 @@ def _split_cell(cell):
   for i, line in enumerate(lines):
     # Strip comment lines; doing this here means we can allow comments in SQL QUERY sections too.
     if len(line) and line[0] == '#':
-      line[0] = ''
+      continue
     define_match = define_re.match(line)
     select_match = select_re.match(line)
     if define_match or select_match:
