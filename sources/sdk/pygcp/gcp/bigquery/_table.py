@@ -764,7 +764,9 @@ class Table(object):
       if not page_token:
         break
 
-    return df
+    # Need to reorder the dataframe to preserve column ordering
+    ordered_fields = [field.name for field in self.schema]
+    return df[ordered_fields]
 
   def to_file(self, path, start_row=0, max_rows=None, write_header=True, dialect=csv.excel):
     """Save the results to a local file in CSV format.
