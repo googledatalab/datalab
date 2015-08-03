@@ -15,6 +15,7 @@
 """IPython kernel configuration customization."""
 
 import os
+from IPython.html.services.config import ConfigManager
 
 # Get a reference to the configuration object.
 c = get_config()
@@ -24,4 +25,11 @@ c.IPKernelApp.matplotlib = 'inline'
 
 # Implicitly imported packages.
 c.IPKernelApp.extensions = [ 'gcp.interactive' ]
+
+# Set the CodeMirror modes
+cm = ConfigManager()
+cm.update('notebook', {'CodeCell': {'highlight_modes': { \
+    'magic_javascript': {'reg': '^%%bigquery udf'}, \
+    'magic_text/x-sql': {'reg': '^%%bigquery sql'}, \
+}}})
 

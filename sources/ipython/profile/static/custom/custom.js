@@ -323,9 +323,10 @@ if ((document.domain != 'localhost') && (document.domain != '127.0.0.1')) {
 // The rest requires the notebook to be ready:
 
 require([
+  '/static/components/codemirror/mode/sql/sql.js',
   'base/js/namespace',
   'base/js/events'
-], function(IPython, events) {
+], function(_, IPython, events) {
 
   events.on('app_initialized.NotebookApp', function() {
     // Kernel related functionality
@@ -400,20 +401,6 @@ require([
       }
     });
 
-    // Configure code mirror
-    // - Add %%bigquery udf to the list of javascript cells to the existing configuration.
-    // - Load sql mode and associate %%bigquery sql cells with SQL.
-/**
-    IPython.config.cell_magic_highlight.magic_javascript.reg = [ /^%%javascript/, /^%%bigquery udf/ ];
-
-    require(['/static/components/codemirror/mode/sql/sql.js'], function() {
-      IPython.config.cell_magic_highlight['magic_text/x-sql'] = {
-        reg: [
-          /^%%bigquery sql/
-        ]
-      };
-    });
-**/ 
     // Notebook List page specific functionality
     if (IPython.NotebookList) {
       // IPython seems to assume local persistence of notebooks - it issues an HTTP
