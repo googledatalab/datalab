@@ -17,6 +17,7 @@
 from ._async import async, async_function, async_method
 from ._credentials import MetadataCredentials
 from ._http import Http
+from ._http import RequestException
 from ._iterator import Iterator
 from ._job import Job, JobError
 from ._json_encoder import JSONEncoder
