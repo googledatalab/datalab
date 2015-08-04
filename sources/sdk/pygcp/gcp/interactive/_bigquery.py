@@ -56,7 +56,7 @@ def _create_udf_subparser(parser):
 def _create_dryrun_subparser(parser):
   dryrun_parser = parser.subcommand('dryrun',
       'Send a query to BQ in dry run mode to receive approximate usage statistics')
-  dryrun_parser.add_argument('-n', '--name',
+  dryrun_parser.add_argument('-q', '--sql',
       help='the name of the query to be dry run', required=True)
   return dryrun_parser
 
@@ -184,8 +184,7 @@ def _create_bigquery_parser():
   pipeline_parser.add_argument('-n', '--name', help='pipeline name')
   pipeline_parser.set_defaults(
     func=lambda args, cell: _dispatch_handler(args, cell,
-                                              pipeline_parser, _pipeline_line,
-                                              cell_prohibited=True))
+                                              pipeline_parser, _pipeline_cell))
 
   # %bigquery table
   table_parser = _create_table_subparser(parser)
@@ -337,6 +336,23 @@ def _sample_cell(args, code):
   return query.sample(sampling=sampling, args=args)
 
 
+def _dryrun_line(args):
+  """Implements the BigQuery cell magic used to dry run BQ queries.
+
+   The supported syntax is:
+   %bigquery dryrun -q|--sql <query identifier>
+
+  Args:
+    args: the argument following '%bigquery dryrun'.
+  Returns:
+    The response wrapped in a DryRunStats object
+  """
+  unit, query = _get_query_argument(args)
+
+  result = query.execute_dry_run()
+  return _bq._QueryStats(total_bytes=result['totalBytesProcessed'], is_cached=result['cacheHit'])
+
+
 def _udf_cell(args, js):
   """Implements the bigquery_udf cell magic for ipython notebooks.
 
@@ -398,11 +414,14 @@ def _execute_cell(args, code):
                        args=_get_resolution_environment(unit, code)).results
 
 
-def _pipeline_line(args):
+def _pipeline_cell(args, code):
   unit, query = _get_query_argument(args)
   # TODO(gram): Change this to do a dry run; deferring until merge with Robin's dry run code.
-  args = _get_resolution_environment(unit)
-  print query.expand(args)
+  args = _get_resolution_environment(unit, code)
+  expanded = query.expand(args)
+  print(expanded)
+  result = _bq.query(expanded).execute_dry_run()
+  return _bq._QueryStats(total_bytes=result['totalBytesProcessed'], is_cached=result['cacheHit'])
 
 
 def _table_line(args):

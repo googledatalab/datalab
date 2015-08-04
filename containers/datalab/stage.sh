@@ -32,4 +32,4 @@ CLOUD_IMAGE=gcr.io/cloud_datalab/datalab:$TAG
 
 echo "Publishing $LOCAL_IMAGE to $CLOUD_IMAGE ..."
 docker tag -f $LOCAL_IMAGE $CLOUD_IMAGE
-gcloud preview docker push $CLOUD_IMAGE
+gcloud docker push $CLOUD_IMAGE

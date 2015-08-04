@@ -239,7 +239,8 @@ def _split_cell(cell):
       elif last_def >= 0:
 
         # This is not the first query, so gather the previous query text.
-        query = '\n'.join(lines[last_def:i]).strip()
+        query = '\n'.join([line for line in lines[last_def:i] if len(line) and line[0] != '#'])\
+            .strip()
         if select_match and name != '_' and len(query) == 0:
           # Avoid DEFINE query name\nSELECT ... being seen as an empty DEFINE followed by SELECT
           continue
@@ -259,7 +260,7 @@ def _split_cell(cell):
 
   if last_def >= 0:
     # We were in a query so save this tail query.
-    query = '\n'.join(lines[last_def:]).strip()
+    query = '\n'.join([line for line in lines[last_def:] if len(line) and line[0] != '#']).strip()
     definitions.append(QueryDefinition(name, query))
 
   if code is None:
