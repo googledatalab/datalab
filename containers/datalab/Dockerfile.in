@@ -62,7 +62,7 @@ RUN pip install -U \
     pip install -U matplotlib==1.4.3 && \
     pip install -U ggplot==0.6.5 && \
     pip install -U seaborn==0.6.0 && \
-    pip install -U ipython==2.4.1 && \
+    pip install -U ipython==3.2.1 && \
     easy_install pip && \
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf
 
@@ -94,6 +94,10 @@ ADD content/ /
 RUN cd /sdk/PyGCP-0.1.0 && python setup.py install && \
     cd /sdk/IPythonGCP-0.1.0 && python setup.py install && \
     cd /app/proxy && /tools/node/bin/npm install && cd /
+
+# Install kernel custom config
+RUN mkdir -p /root/.ipython/profile_default && \
+    mv /app/ipython_config.py /root/.ipython/profile_default
 
 # Startup
 ENV DATALAB_VERSION _version_

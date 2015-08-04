@@ -12,8 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Google Cloud Platform extensions to customize IPython."""
+"""IPython kernel configuration customization."""
 
-from ._notebooks import DataLabContentsManager
+import os
+from IPython.html.services.config import ConfigManager
 
+# Get a reference to the configuration object.
+c = get_config()
+
+# Use inline matplotlib
+c.IPKernelApp.matplotlib = 'inline'
+
+# Implicitly imported packages.
+c.IPKernelApp.extensions = [ 'gcp.interactive' ]
+
+# Set the CodeMirror modes
+cm = ConfigManager()
+cm.update('notebook', {'CodeCell': {'highlight_modes': { \
+    'magic_javascript': {'reg': '^%%bigquery udf'}, \
+    'magic_text/x-sql': {'reg': '^%%bigquery sql'}, \
+}}})
 
