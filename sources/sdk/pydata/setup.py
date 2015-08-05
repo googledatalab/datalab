@@ -27,13 +27,12 @@ from distutils.core import setup
 # - pandas
 
 setup(
-    name='PyGCP',
+    name='PyGCPData',
     version='0.1.0',
     packages=['gcp',
               'gcp._util',
               'gcp.bigquery',
               'gcp.storage',
-              'gcp.interactive'
              ],
     description='Google Cloud APIs for data analysis scenarios.',
     requires=['futures',

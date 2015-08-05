@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds the PyGCP python sdk library.
+# Builds the PyGCPData python sdk library.
 #
 
 # Fail the build on the first error, instead of carrying on by default
@@ -17,4 +17,4 @@ PYLIB_DIR=$BUILD_DIR/python
 mkdir -p $PYLIB_DIR
 
 python setup.py sdist --dist-dir=$PYLIB_DIR
-mv MANIFEST $PYLIB_DIR/PyGCP.manifest
+mv MANIFEST $PYLIB_DIR/PyGCPData.manifest
