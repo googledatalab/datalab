@@ -18,28 +18,14 @@ from distutils.core import setup
 # Fill in various other bits that can/should be specified once we have them.
 # These include url, license, long_description (readme), author & author_email.
 
-# TODO(nikhilko):
-# Also, figure out publishing, so this works with pip install, and specifying
-# dependencies, so they can be accounted for during installation.
-# Known depdenencies:
-# - httplib2
-# - oauth2client
-# - pandas
-
 setup(
-    name='PyGCPData',
+    name='GCPDataLab',
     version='0.1.0',
     packages=['gcp',
-              'gcp._util',
-              'gcp.bigquery',
-              'gcp.storage',
+              'gcp.datalab'
              ],
-    description='Google Cloud APIs for data analysis scenarios.',
-    requires=['futures',
-              'httplib2',
-              'IPython',
-              'oauth2client',
-              'pandas',
-              'requests'
+    description='Google Cloud IPython Cell Magics for data analysis scenarios.',
+    requires=['IPython',
+              'GCPData'
              ]
 )

@@ -9,7 +9,8 @@ fi
 
 SRC_PATHS=(
   "ipython"
-  "sdk/pygcp"
+  "sdk/gcpdata"
+  "sdk/gcpdatalab"
   "tools"
 )
 

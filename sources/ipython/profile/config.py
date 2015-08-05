@@ -20,7 +20,7 @@ import os
 c = get_config()
 
 # Implicitly imported packages.
-c.InteractiveShellApp.extensions = [ 'gcp.interactive' ]
+c.InteractiveShellApp.extensions = [ 'gcp.datalab' ]
 
 # Startup code.
 c.InteractiveShellApp.exec_lines = []

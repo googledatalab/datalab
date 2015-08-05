@@ -8,7 +8,8 @@ if [ -z "$REPO_DIR" ];
 fi
 
 TEST_PATHS=(
-  "sdk/pygcp"
+  "sdk/gcpdata",
+  "sdk/gcpdatalab"
 )
 
 for p in "${TEST_PATHS[@]}"
