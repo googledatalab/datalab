@@ -15,6 +15,7 @@
 """Implements SQL statement helper functionality."""
 
 import re
+import sys
 
 from ._sampling import Sampling as _Sampling
 
@@ -95,9 +96,9 @@ class SqlStatement(object):
     Raises:
       Exception on failure.
     """
-    ns = {}
-    if args:
-      ns.update(args)
+    # If we weren't given an explicit set of args (including empty dict), then resolve
+    # against the current execution environment.
+    ns = args if args else sys.modules['__main__'].__dict__
     return self._expand(self._sql, ns, complete={}, in_progress=[])
 
   @staticmethod

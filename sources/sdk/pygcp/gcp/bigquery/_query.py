@@ -235,8 +235,6 @@ class Query(_util.SqlStatement):
     if table_name is not None:
       table_name = _parse_table_name(table_name, self._api.project_id)
 
-    # TODO(gram): Can we do away with this late binding now? We would need to check all places
-    # where we instantiate bq.Query and make sure those use expanded SQL.
     self._expanded_sql = self.expand(args)
 
     query_result = self._api.jobs_insert_query(self._expanded_sql,
