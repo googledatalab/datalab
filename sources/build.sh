@@ -9,8 +9,8 @@ fi
 
 SRC_PATHS=(
   "ipython"
-  "sdk/gcpdata"
-  "sdk/gcpdatalab"
+  "lib/api"
+  "lib/datalab"
   "tools"
 )
 

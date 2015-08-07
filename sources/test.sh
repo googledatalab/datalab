@@ -8,8 +8,7 @@ if [ -z "$REPO_DIR" ];
 fi
 
 TEST_PATHS=(
-  "sdk/gcpdata",
-  "sdk/gcpdatalab"
+  "lib/api"
 )
 
 for p in "${TEST_PATHS[@]}"
