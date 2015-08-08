@@ -153,6 +153,9 @@ function pollMessages(id: string, response: http.ServerResponse): void {
       // events occur in the interim, they will complete the response (and
       // cancel this timeout), and if there aren't any, an empty resppnse
       // will be sent, once this timeout completes.
+      if (session.pendingResponse) {
+        session.pendingResponse.end();
+      }
       session.pendingResponse = response;
       session.pendingCookie = setTimeout(function() {
         // Clear out the cookie, so it isn't attempted to be cleared again,
@@ -193,11 +196,13 @@ function sendEvents(session: Session, response?: http.ServerResponse): void {
     session.pendingCookie = 0;
   }
 
-  var events = session.events;
-  session.events = <SocketEvent[]>[];
+  if (response) {
+    var events = session.events;
+    session.events = <SocketEvent[]>[];
 
-  response.write(JSON.stringify({ events: events }));
-  response.end();
+    response.write(JSON.stringify({ events: events }));
+    response.end();
+  }
 }
 
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {

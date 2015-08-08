@@ -58,20 +58,21 @@ def sql(sql_statement):
   return _util.Sql(sql_statement)
 
 
-def query(sql_statement, context=None):
+def query(sql_statement, args=None, context=None):
   """Creates a BigQuery query object.
 
   If a specific project id or credentials are unspecified, the default ones
   configured at the global level are used.
 
   Args:
-    sql_statement: the SQL query to execute.
+    sql_statement: the SQL query or %%sql SqlStatement to execute.
+    args: an optional dictionary to use when expanding the variables if passed a SqlStatement.
     context: an optional Context object providing project_id and credentials.
   Returns:
     A query object that can be executed to retrieve data from BigQuery.
   """
   api = _create_api(context)
-  return _Query(api, sql_statement)
+  return _Query(api, sql_statement, args)
 
 
 def udf(inputs, outputs, implementation, context=None):

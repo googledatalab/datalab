@@ -25,5 +25,6 @@ from ._lru_cache import LRUCache
 from ._metadata import MetadataService
 from ._sampling import Sampling
 from ._sql_statement import SqlStatement
+from ._sql_unit import QueryDefinition, SqlUnit
 from ._utils import print_exception_with_last_stack
 

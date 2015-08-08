@@ -15,16 +15,11 @@
 """Google Cloud Platform library - multi-environment handling. """
 
 
-import shlex as _shlex
 import sys as _sys
 import types as _types
 import IPython as _ipython
 import gcp.bigquery as _bq
 import gcp._util as _util
-
-# Some string literals used for binding names in the environment.
-_pipeline_module = '_gcp_pipeline'
-_pipeline_arg_parser = '_arg_parser'
 
 
 def _notebook_environment():
@@ -53,26 +48,6 @@ def _get_notebook_item(name):
   return _notebook_environment().get(name, None)
 
 
-def _get_sql_args(parser, args=None):
-  """ Parse a set of %%sql arguments or get the default value of the arguments.
-
-  Args:
-    parser: the argument parser to use.
-    args: the argument flags. May be a string or a list. If omitted the empty string is used so
-        we can get the default values for the arguments.
-  """
-  if args is None:
-    tokens = []
-  elif isinstance(args, basestring):
-    command_line = ' '.join(args.split('\n'))
-    tokens = _shlex.split(command_line)
-  else:
-    tokens = args
-
-  args = vars(parser.parse_args(tokens))
-
-  # Don't return any args that are None as we don't want to expand to 'None'
-  return {arg: value for arg, value in args.iteritems() if value is not None}
 
 
 # An LRU cache for Tables. This is mostly useful so that when we cross page boundaries
@@ -118,15 +93,4 @@ def _get_schema(name):
     return None
 
 
-def _get_resolution_environment(unit, code=None):
-  # Update using arguments including default values, overridden by code.
-  # Only named queries have argument parsers etc.
-  env = {}
-  if unit:
-    env.update(unit.definitions)
-    env.update(_get_sql_args(unit.arg_parser))
-  if code:
-    env.update(_notebook_environment())
-    exec code in env
-  return env
 

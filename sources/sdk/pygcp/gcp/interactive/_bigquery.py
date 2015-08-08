@@ -24,9 +24,7 @@ import gcp._util as _util
 from ._commands import CommandParser as _CommandParser
 from ._environments import _get_notebook_item, _get_schema, _get_table
 from ._environments import _notebook_environment
-from ._environments import _get_resolution_environment
 from ._html import HtmlBuilder as _HtmlBuilder
-from ._sql import SqlUnit as _SqlUnit
 from ._utils import _get_data, _get_field_list, _handle_magic_line
 
 
@@ -285,24 +283,41 @@ def _dispatch_handler(args, cell, parser, handler,
   return handler(args, cell)
 
 
-def _get_query_argument(args):
+def _get_query_argument(args, code=None):
   sql_arg = args['sql']
   query = _get_notebook_item(sql_arg)
   if isinstance(query, _bq._Query):
-    return None, query
+    return query
 
   # If this is just a unit with no query, return last query in unit
-  if isinstance(query, _SqlUnit):
-    return query, _bq.query(query.last_sql.sql)
+  sql = None
+  if isinstance(query, _util.SqlUnit):
+    unit = query
+    sql = query.last_sql.sql
+  else:
+    # Try parse as a unit.query
+    split = sql_arg.find('.')
+    if split > 0:
+      unit = _get_notebook_item(sql_arg[:split])
+      if isinstance(unit, _util.SqlUnit):
+        name = sql_arg[split+1:]
+        if name in unit.definitions:
+          sql = unit.definitions[name].sql
 
-  # Try parse as a unit.query
-  split = sql_arg.find('.')
-  if split > 0:
-    unit = _get_notebook_item(sql_arg[:split])
-    if isinstance(unit, _SqlUnit):
-      name = sql_arg[split+1:]
-      if name in unit.definitions:
-        return unit, _bq.query(unit.definitions[name].sql)
+  if sql:
+    args = unit._get_resolution_environment()
+    if code:
+      env = {}
+      nenv = _notebook_environment()
+      env.update(nenv)
+      exec code in env
+      # Now look at all the things in env that are different to _notebook_environment
+      # and update args with the changed values.
+      for key, value in env.iteritems():
+        if key not in nenv or value != nenv[key]:
+          args[key] = value
+
+    return _bq.query(sql, args=args)
 
   raise Exception('%s does not refer to a %%sql or Query' % sql_arg)
 
@@ -318,7 +333,7 @@ def _sample_cell(args, code):
     was specified. None otherwise.
   """
 
-  unit, query = _get_query_argument(args)
+  query = _get_query_argument(args, code)
   count = args['count']
   method = args['method']
   if method == 'random':
@@ -332,8 +347,7 @@ def _sample_cell(args, code):
   elif method == 'limit':
     sampling = _bq.Sampling.default(count=count)
 
-  args = _get_resolution_environment(unit, code)
-  return query.sample(sampling=sampling, args=args)
+  return query.sample(sampling=sampling)
 
 
 def _dryrun_line(args):
@@ -347,7 +361,7 @@ def _dryrun_line(args):
   Returns:
     The response wrapped in a DryRunStats object
   """
-  unit, query = _get_query_argument(args)
+  query = _get_query_argument(args)
 
   result = query.execute_dry_run()
   return _bq._QueryStats(total_bytes=result['totalBytesProcessed'], is_cached=result['cacheHit'])
@@ -408,19 +422,15 @@ def _udf_cell(args, js):
 
 
 def _execute_cell(args, code):
-  unit, query = _get_query_argument(args)
+  query = _get_query_argument(args, code)
   return query.execute(args['destination'], table_mode=args['mode'], use_cache=not args['nocache'],
-                       allow_large_results=args['large'],
-                       args=_get_resolution_environment(unit, code)).results
+                       allow_large_results=args['large']).results
 
 
 def _pipeline_cell(args, code):
-  unit, query = _get_query_argument(args)
-  # TODO(gram): Change this to do a dry run; deferring until merge with Robin's dry run code.
-  args = _get_resolution_environment(unit, code)
-  expanded = query.expand(args)
-  print(expanded)
-  result = _bq.query(expanded).execute_dry_run()
+  query = _get_query_argument(args, code)
+  print(query.sql)
+  result = query.execute_dry_run()
   return _bq._QueryStats(total_bytes=result['totalBytesProcessed'], is_cached=result['cacheHit'])
 
 

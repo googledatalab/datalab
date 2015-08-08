@@ -15,7 +15,6 @@
 """Implements SQL statement helper functionality."""
 
 import re
-import sys
 
 from ._sampling import Sampling as _Sampling
 
@@ -24,10 +23,16 @@ class SqlStatement(object):
   """A helper class for wrapping and manipulating SQL statements.
   """
 
-  def __init__(self, sql):
+  def __init__(self, sql, unit=None):
     if isinstance(sql, SqlStatement):
-      sql = sql._sql
-    self._sql = sql
+      self._sql = sql._sql
+      self._unit = sql._unit
+    elif isinstance(sql, _SqlUnit):
+      self._unit = sql
+      self._sql = sql.last_sql
+    else:
+      self._sql = sql
+      self._unit = unit
 
   def _repr_sql_(self, args=None):
     """Creates a SQL representation of this object.
@@ -96,10 +101,7 @@ class SqlStatement(object):
     Raises:
       Exception on failure.
     """
-    # If we weren't given an explicit set of args (including empty dict), then resolve
-    # against the current execution environment.
-    ns = args if args else sys.modules['__main__'].__dict__
-    return self._expand(self._sql, ns, complete={}, in_progress=[])
+    return self._expand(self._sql, args, complete={}, in_progress=[])
 
   @staticmethod
   def _get_tokens(sql):
@@ -163,6 +165,7 @@ class SqlStatement(object):
 
     return ''.join(parts)
 
+  # TODO(gram): I think this should be removed.
   @staticmethod
   def sampling_query(sql, fields=None, count=5, sampling=None):
     """Returns a sampling Query for the SQL object.
@@ -180,3 +183,6 @@ class SqlStatement(object):
     if sampling is None:
       sampling = _Sampling.default(count=count, fields=fields)
     return sampling(sql)
+
+
+from ._sql_unit import SqlUnit as _SqlUnit

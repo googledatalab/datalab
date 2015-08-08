@@ -19,11 +19,41 @@ from gcp._util import async_method
 from ._utils import parse_table_name as _parse_table_name
 
 
-class Query(_util.SqlStatement):
+class Query(object):
   """Represents a Query object that encapsulates a BigQuery SQL query.
 
   This object can be used to execute SQL queries and retrieve results.
   """
+
+  def _repr_sql_(self, args=None):
+    """Creates a SQL representation of this object.
+
+    Args:
+      args: an optional dictionary to use when expanding the variables in the SQL.
+    Returns:
+      The SQL representation to use when embedding this object into SQL.
+    """
+    return '(%s)' % self._sql
+
+  def __str__(self):
+    """Creates a string representation of this object.
+
+    Returns:
+      The string representation of this object.
+    """
+    return self._sql
+
+  def __repr__(self):
+    """Creates a friendly representation of this object.
+
+    Returns:
+      The friendly representation of this object.
+    """
+    return self._sql
+
+  @property
+  def sql(self):
+    return self._sql
 
   @staticmethod
   def sampling_query(api, sql, fields=None, count=5, sampling=None):
@@ -41,41 +71,45 @@ class Query(_util.SqlStatement):
     """
     return Query(api, _util.Sampling.sampling_query(sql, fields, count, sampling))
 
-  def __init__(self, api, sql):
+  def __init__(self, api, sql, args=None):
     """Initializes an instance of a Query object.
 
     Args:
       api: the BigQuery API object to use to issue requests.
-      sql: the BigQuery SQL string to execute.
+      sql: the BigQuery SQL string or SqlStatement to execute.
+      args: an optional dictionary to use when expanding the variables if passed a SqlStatement.
     """
-    super(Query, self).__init__(sql)
     self._api = api
-    self._expanded_sql = None
+    if isinstance(sql, _util.SqlStatement):
+      if sql._unit:
+        self._sql = sql.expand(sql._unit._get_resolution_environment(args=args))
+      else:
+        self._sql = sql._sql
+    elif isinstance(sql, _util.SqlUnit):
+      self._sql = sql.last_sql.expand(sql._get_resolution_environment(args=args))
+    elif args:
+      self._sql = _util.SqlStatement(sql).expand(args)
+    else:
+      self._sql = sql
     self._results = None
 
-  def results(self, use_cache=True, args=None):
+  def results(self, use_cache=True):
     """Retrieves last results for the query.
 
     Args:
       use_cache: whether to use cached results or not. Ignored if append is specified.
-      args: an optional dictionary to use when expanding the variables in the SQL.
     Returns:
       A QueryResultsTable containing the result set.
     Raises:
       Exception if the query could not be executed or query response was
       malformed.
     """
-    # If we could be returning locally cached results make sure SQL hasn't changed.
-    if use_cache and self._results:
-      if self.expand(args) != self._expanded_sql:
-        self._results = None  # discard cached results
-
     if not use_cache or (self._results is None):
-      self.execute(use_cache=use_cache, args=args)
+      self.execute(use_cache=use_cache)
     return self._results.results
 
   def extract(self, storage_uris, format='csv', csv_delimiter=',', csv_header=True,
-              use_cache=True, compress=False, args=None):
+              use_cache=True, compress=False):
     """Exports the query results to GCS.
 
     Args:
@@ -87,13 +121,12 @@ class Query(_util.SqlStatement):
       use_cache: whether to use cached results or not (default True).
       compress whether to compress the data on export. Compression is not supported for
           AVRO format (default False).
-      args: an optional dictionary to use when expanding the variables in the SQL.
     Returns:
       A Job object for the export Job if it was completed successfully; else None.
     Raises:
       An Exception if the query or extract failed.
     """
-    results = self.results(use_cache=use_cache, args=args)
+    results = self.results(use_cache=use_cache)
     job = results.extract(storage_uris, format=format, csv_delimiter=csv_delimiter,
                           csv_header=csv_header, compress=compress)
     if job is not None:
@@ -102,7 +135,7 @@ class Query(_util.SqlStatement):
 
   @async_method
   def extract_async(self, storage_uris, format='csv', csv_delimiter=',',
-                    csv_header=True, use_cache=True, compress=False, args=None):
+                    csv_header=True, use_cache=True, compress=False):
     """Exports the query results to GCS. Returns a Future immediately.
 
     Args:
@@ -114,7 +147,6 @@ class Query(_util.SqlStatement):
       use_cache: whether to use cached results or not (default True).
       compress whether to compress the data on export. Compression is not supported for
           AVRO format (default False).
-      args: an optional dictionary to use when expanding the variables in the SQL.
     Returns:
       A Future that returns a Job object for the export if it was started successfully; else None.
     Raises:
@@ -122,23 +154,22 @@ class Query(_util.SqlStatement):
     """
     return self.extract(storage_uris, format=format,
                         csv_delimiter=csv_delimiter, csv_header=csv_header,
-                        use_cache=use_cache, compress=compress, args=args)
+                        use_cache=use_cache, compress=compress)
 
-  def to_dataframe(self, start_row=0, max_rows=None, use_cache=True, args=None):
+  def to_dataframe(self, start_row=0, max_rows=None, use_cache=True):
     """ Exports the query results to a Pandas dataframe.
 
     Args:
       start_row: the row of the table at which to start the export (default 0).
       max_rows: an upper limit on the number of rows to export (default None).
       use_cache: whether to use cached results or not (default True).
-      args: an optional dictionary to use when expanding the variables in the SQL.
     Returns:
       A dataframe containing the table data.
     """
-    return self.results(use_cache=use_cache, args=args) \
+    return self.results(use_cache=use_cache) \
         .to_dataframe(start_row=start_row, max_rows=max_rows)
 
-  def to_file(self, path, start_row=0, max_rows=None, use_cache=True, write_header=True, args=None):
+  def to_file(self, path, start_row=0, max_rows=None, use_cache=True, write_header=True):
     """Save the results to a local file in Excel CSV format.
 
     Args:
@@ -147,19 +178,17 @@ class Query(_util.SqlStatement):
       max_rows: an upper limit on the number of rows to export (default None).
       use_cache: whether to use cached results or not.
       write_header: if true (the default), write column name header row at start of file.
-      args: an optional dictionary to use when expanding the variables in the SQL.
     Returns:
       The path to the local file.
     Raises:
       An Exception if the operation failed.
     """
-    self.results(use_cache=use_cache, args=args) \
+    self.results(use_cache=use_cache) \
         .to_file(path, start_row=start_row, max_rows=max_rows, write_header=write_header)
     return path
 
   @async_method
-  def to_file_async(self, path, start_row=0, max_rows=None, use_cache=True, write_header=True,
-                    args=None):
+  def to_file_async(self, path, start_row=0, max_rows=None, use_cache=True, write_header=True):
     """Save the results to a local file in Excel CSV format. Returns a Job immediately.
 
     Args:
@@ -168,16 +197,15 @@ class Query(_util.SqlStatement):
       max_rows: an upper limit on the number of rows to export (default None).
       use_cache: whether to use cached results or not.
       write_header: if true (the default), write column name header row at start of file.
-      args: an optional dictionary to use when expanding the variables in the SQL.
     Returns:
       A Job returning the path to the local file.
     Raises:
       An Exception if the operation failed.
     """
     return self.to_file(path, start_row=start_row, max_rows=max_rows, use_cache=use_cache,
-                        write_header=write_header, args=args)
+                        write_header=write_header)
 
-  def sample(self, count=5, fields=None, sampling=None, use_cache=True, args=None):
+  def sample(self, count=5, fields=None, sampling=None, use_cache=True):
     """Retrieves a sampling of rows for the query.
 
     Args:
@@ -186,28 +214,25 @@ class Query(_util.SqlStatement):
       fields: the list of fields to sample (default None implies all).
       sampling: an optional sampling strategy to apply to the table.
       use_cache: whether to use cached results or not (default True).
-      args: an optional dictionary to use when expanding the variables in the SQL.
     Returns:
       A QueryResultsTable containing a sampling of the result set.
     Raises:
       Exception if the query could not be executed or query response was malformed.
     """
-    return Query.sampling_query(self._api, self.expand(args), count=count,
+    return Query.sampling_query(self._api, self._sql, count=count,
                                 fields=fields, sampling=sampling).results(use_cache=use_cache)
 
-  def execute_dry_run(self, args=None):
+  def execute_dry_run(self):
     """Dry run a query, to check the validity of the query and return statistics.
 
-    Args:
-      args: an optional dictionary to use when expanding the variables in the SQL.
     Returns:
         dict, with cacheHit and totalBytesProcessed fields.
     """
-    query_result = self._api.jobs_insert_query(self.expand(args), dry_run=True)
+    query_result = self._api.jobs_insert_query(self._sql, dry_run=True)
     return query_result['statistics']['query']
 
   def execute_async(self, table_name=None, table_mode='create', use_cache=True,
-                    priority='interactive', allow_large_results=False, args=None):
+                    priority='interactive', allow_large_results=False):
     """ Initiate the query and return the Job.
 
     Args:
@@ -223,7 +248,6 @@ class Query(_util.SqlStatement):
           as three hours but are not rate-limited.
       allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
           slower and requires a table_name to be specified) (default False).
-      args: an optional dictionary to use when expanding the variables in the SQL.
     Returns:
       The QueryJob.
     Raises:
@@ -235,9 +259,7 @@ class Query(_util.SqlStatement):
     if table_name is not None:
       table_name = _parse_table_name(table_name, self._api.project_id)
 
-    self._expanded_sql = self.expand(args)
-
-    query_result = self._api.jobs_insert_query(self._expanded_sql,
+    query_result = self._api.jobs_insert_query(self._sql,
                                                table_name=table_name,
                                                append=append,
                                                overwrite=overwrite,
@@ -255,10 +277,10 @@ class Query(_util.SqlStatement):
       except KeyError:
         # The query was in error
         raise Exception('Query failed: %s' % str(query_result['status']['errors']))
-    return _QueryJob(self._api, job_id, table_name, self._expanded_sql)
+    return _QueryJob(self._api, job_id, table_name, self._sql)
 
   def execute(self, table_name=None, table_mode='create', use_cache=True, priority='interactive',
-              allow_large_results=False, args=None):
+              allow_large_results=False):
     """ Initiate the query, block until complete and return the results.
 
     Args:
@@ -273,14 +295,13 @@ class Query(_util.SqlStatement):
           as three hours but are not rate-limited.
       allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
           slower and requires a table_name to be specified) (default False).
-      args: an optional dictionary to use when expanding the variables in the SQL.
     Returns:
       The Query results Table.
     Raises:
       Exception if query could not be executed.
     """
     job = self.execute_async(table_name=table_name, table_mode=table_mode, use_cache=use_cache,
-                             priority=priority, allow_large_results=allow_large_results, args=args)
+                             priority=priority, allow_large_results=allow_large_results)
     self._results = job.wait()
     return self._results
 
@@ -290,12 +311,11 @@ class Query(_util.SqlStatement):
     Args:
       view_name: the name of the View either as a string or a 3-part tuple
           (projectid, datasetid, name).
-      args: an optional dictionary to use when expanding the variables in the SQL.
 
     Returns:
       A View for the Query.
     """
-    return _View(self._api, view_name).create(self.expand(args))
+    return _View(self._api, view_name).create(self._sql)
 
 from ._query_job import QueryJob as _QueryJob
 from ._view import View as _View
