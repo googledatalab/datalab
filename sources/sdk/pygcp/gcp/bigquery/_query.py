@@ -14,8 +14,8 @@
 
 """Implements Query BigQuery API."""
 
+import gcp._util as _util
 from gcp._util import async_method
-from ._sampling import Sampling as _Sampling
 from ._utils import parse_table_name as _parse_table_name
 
 
@@ -24,6 +24,36 @@ class Query(object):
 
   This object can be used to execute SQL queries and retrieve results.
   """
+
+  def _repr_sql_(self, args=None):
+    """Creates a SQL representation of this object.
+
+    Args:
+      args: an optional dictionary to use when expanding the variables in the SQL.
+    Returns:
+      The SQL representation to use when embedding this object into SQL.
+    """
+    return '(%s)' % self._sql
+
+  def __str__(self):
+    """Creates a string representation of this object.
+
+    Returns:
+      The string representation of this object.
+    """
+    return self._sql
+
+  def __repr__(self):
+    """Creates a friendly representation of this object.
+
+    Returns:
+      The friendly representation of this object.
+    """
+    return self._sql
+
+  @property
+  def sql(self):
+    return self._sql
 
   @staticmethod
   def sampling_query(api, sql, fields=None, count=5, sampling=None):
@@ -39,31 +69,32 @@ class Query(object):
     Returns:
       A Query object for sampling the table.
     """
-    # This was the cause of circular dependencies between Query and Table hence it was
-    # moved here.
-    if sampling is None:
-      sampling = _Sampling.default(count=count, fields=fields)
-    sampling_sql = sampling(sql)
+    return Query(api, _util.Sampling.sampling_query(sql, fields, count, sampling))
 
-    return Query(api, sampling_sql)
-
-  def __init__(self, api, sql):
+  def __init__(self, api, sql, args=None):
     """Initializes an instance of a Query object.
 
     Args:
       api: the BigQuery API object to use to issue requests.
-      sql: the BigQuery SQL string to execute.
+      sql: the BigQuery SQL string or SqlStatement to execute.
+      args: an optional dictionary to use when expanding the variables if passed a SqlStatement.
     """
     self._api = api
-    self._sql = sql
+    if isinstance(sql, _util.SqlStatement):
+      if sql._unit:
+        self._sql = sql.expand(sql._unit._get_resolution_environment(args=args))
+      else:
+        self._sql = sql._sql
+    elif isinstance(sql, _util.SqlUnit):
+      self._sql = sql.last_sql.expand(sql._get_resolution_environment(args=args))
+    elif args:
+      self._sql = _util.SqlStatement(sql).expand(args)
+    else:
+      self._sql = sql
     self._results = None
 
-  @property
-  def sql(self):
-    return self._sql
-
   def results(self, use_cache=True):
-    """Retrieves results for the query.
+    """Retrieves last results for the query.
 
     Args:
       use_cache: whether to use cached results or not. Ignored if append is specified.
@@ -75,7 +106,7 @@ class Query(object):
     """
     if not use_cache or (self._results is None):
       self.execute(use_cache=use_cache)
-    return self._results
+    return self._results.results
 
   def extract(self, storage_uris, format='csv', csv_delimiter=',', csv_header=True,
               use_cache=True, compress=False):
@@ -83,10 +114,10 @@ class Query(object):
 
     Args:
       storage_uris: the destination URI(s). Can be a single URI or a list.
-      format: the format to use for the exported data; one of 'csv', 'json', or 'avro'
-          (default 'csv').
-      csv_delimiter: for csv exports, the field delimiter to use (default ',').
-      csv_header: for csv exports, whether to include an initial header line (default True).
+      format: the format to use for the exported data; one of CSV, NEWLINE_DELIMITED_JSON or AVRO
+          (default 'CSV').
+      csv_delimiter: for CSV exports, the field delimiter to use (default ',').
+      csv_header: for CSV exports, whether to include an initial header line (default True).
       use_cache: whether to use cached results or not (default True).
       compress whether to compress the data on export. Compression is not supported for
           AVRO format (default False).
@@ -271,7 +302,7 @@ class Query(object):
     """
     job = self.execute_async(table_name=table_name, table_mode=table_mode, use_cache=use_cache,
                              priority=priority, allow_large_results=allow_large_results)
-    self._results = job.results
+    self._results = job.wait()
     return self._results
 
   def to_view(self, view_name):
@@ -284,23 +315,7 @@ class Query(object):
     Returns:
       A View for the Query.
     """
-    return _View(self._api, view_name).create(self.sql)
-
-  def _repr_sql_(self):
-    """Creates a SQL representation of this object.
-
-    Returns:
-      The SQL representation to use when embedding this object into SQL.
-    """
-    return '(' + self._sql + ')'
-
-  def __str__(self):
-    """Creates a string representation of this object.
-
-    Returns:
-      The string representation of this object.
-    """
-    return self._sql
+    return _View(self._api, view_name).create(self._sql)
 
 from ._query_job import QueryJob as _QueryJob
 from ._view import View as _View

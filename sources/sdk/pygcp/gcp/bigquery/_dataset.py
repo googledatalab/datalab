@@ -14,6 +14,8 @@
 
 """Implements DataSet, and related DataSet BigQuery APIs."""
 
+import collections
+import re
 from gcp._util import Iterator as _Iterator
 from ._table import Table as _Table
 from ._view import View as _View

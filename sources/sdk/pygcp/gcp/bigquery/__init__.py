@@ -23,13 +23,15 @@ from ._job import Job as _Job
 from ._query import Query as _Query
 from ._query_job import QueryJob as _QueryJob
 from ._query_stats import QueryStats as _QueryStats
-from ._sampling import Sampling
 from ._table import Schema as _Schema
 from ._table import Table as _Table
 from ._udf import Function as _Function
 from ._utils import DataSetName as _DataSetName
 from ._utils import TableName as _TableName
 from ._view import View as _View
+
+
+Sampling = _util.Sampling
 
 
 def _create_api(context):
@@ -45,20 +47,32 @@ def _create_api(context):
   return _Api(context.credentials, context.project_id)
 
 
-def query(sql_statement, context=None):
+def sql(sql_statement):
+  """Creates a SQL object.
+
+  Args:
+    sql_statement: the SQL query.
+  Returns:
+    A Sql object.
+  """
+  return _util.Sql(sql_statement)
+
+
+def query(sql_statement, args=None, context=None):
   """Creates a BigQuery query object.
 
   If a specific project id or credentials are unspecified, the default ones
   configured at the global level are used.
 
   Args:
-    sql_statement: the SQL query to execute.
+    sql_statement: the SQL query or %%sql SqlStatement to execute.
+    args: an optional dictionary to use when expanding the variables if passed a SqlStatement.
     context: an optional Context object providing project_id and credentials.
   Returns:
     A query object that can be executed to retrieve data from BigQuery.
   """
   api = _create_api(context)
-  return _Query(api, sql_statement)
+  return _Query(api, sql_statement, args)
 
 
 def udf(inputs, outputs, implementation, context=None):
