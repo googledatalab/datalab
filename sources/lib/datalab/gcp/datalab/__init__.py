@@ -23,10 +23,10 @@ try:
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
-import gcp.interactive._bigquery
-import gcp.interactive._chart
-import gcp.interactive._modules
-import gcp.interactive._storage
+import gcp.datalab._bigquery
+import gcp.datalab._chart
+import gcp.datalab._modules
+import gcp.datalab._storage
 
 
 # Inject our user agent on all requests by monkey-patching a wrapper around httplib2.Http.request.
