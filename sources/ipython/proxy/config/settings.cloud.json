@@ -6,6 +6,7 @@
   "analyticsId": "UA-54894152-1",
   "ipythonArgs": [
     "notebook",
+    "--profile=datalab",
     "--no-browser",
     "--no-mathjax",
     "--matplotlib=inline",
