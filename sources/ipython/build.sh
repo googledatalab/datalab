@@ -11,7 +11,7 @@ if [ -z "$REPO_DIR" ];
 fi
 
 BUILD_DIR="$REPO_DIR/build"
-PYLIB_DIR=$BUILD_DIR/python
+PYLIB_DIR=$BUILD_DIR/lib
 IPY_DIR=$BUILD_DIR/ipython
 PROXY_DIR=$BUILD_DIR/ipython/proxy
 

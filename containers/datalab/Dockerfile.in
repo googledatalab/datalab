@@ -83,18 +83,18 @@ EXPOSE 8080
 VOLUME [ "/var/log/app_engine", "/nb", "/root/.config/gcloud" ]
 
 # Add build artifacts
-ADD build/python/GCPData-0.1.0.tar.gz /sdk/
-ADD build/python/GCPDataLab-0.1.0.tar.gz /sdk/
-ADD build/python/IPythonGCP-0.1.0.tar.gz /sdk/
+ADD build/lib/GCPData-0.1.0.tar.gz /datalab/
+ADD build/lib/GCPDataLab-0.1.0.tar.gz /datalab/
+ADD build/lib/IPythonGCP-0.1.0.tar.gz /datalab/
 ADD build/ipython /app
 ADD build/metadata /tools/metadata
 ADD docs/ /docs
 ADD content/ /
 
 # Install build artifacts
-RUN cd /sdk/GCPData-0.1.0 && python setup.py install && \
-    cd /sdk/GCPDataLab-0.1.0 && python setup.py install && \
-    cd /sdk/IPythonGCP-0.1.0 && python setup.py install && \
+RUN cd /datalab/GCPData-0.1.0 && python setup.py install && \
+    cd /datalab/GCPDataLab-0.1.0 && python setup.py install && \
+    cd /datalab/IPythonGCP-0.1.0 && python setup.py install && \
     cd /app/proxy && /tools/node/bin/npm install && cd /
 
 # Startup

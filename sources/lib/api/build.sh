@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds the GCPData python sdk library.
+# Builds the GCPData python library.
 #
 
 # Fail the build on the first error, instead of carrying on by default
@@ -10,11 +10,9 @@ if [ -z "$REPO_DIR" ];
   exit 1;
 fi
 
-BUILD_DIR="$REPO_DIR/build"
-PYLIB_DIR=$BUILD_DIR/python
+BUILD_DIR="$REPO_DIR/build/lib"
+mkdir -p $BUILD_DIR
 
 # Build a source distribution package
-mkdir -p $PYLIB_DIR
-
-python setup.py sdist --dist-dir=$PYLIB_DIR
-mv MANIFEST $PYLIB_DIR/GCPData.manifest
+python setup.py sdist --dist-dir=$BUILD_DIR
+mv MANIFEST $BUILD_DIR/GCPData.manifest
