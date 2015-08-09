@@ -18,6 +18,7 @@ import re
 
 import dateutil.parser as _dateparser
 from gcp._util import Iterator as _Iterator
+from gcp._util import RequestException as _RequestException
 from ._item import Item as _Item
 from ._item import ItemList as _ItemList
 
@@ -185,8 +186,8 @@ class BucketList(object):
     """
     try:
       _ = self._api.buckets_get(name)
-    except Exception as e:
-      if (len(e.args[0]) > 1) and (e.args[0][1] == 404):
+    except _RequestException as e:
+      if e.status == 404:
         return False
       raise e
     return True

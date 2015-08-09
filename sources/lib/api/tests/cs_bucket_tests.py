@@ -28,7 +28,7 @@ class TestCases(unittest.TestCase):
     buckets = gcp.storage.buckets(context=self._create_context())
     self.assertTrue(buckets.contains('test_bucket'))
 
-    mock_api_buckets.side_effect = Exception(('failed', 404))
+    mock_api_buckets.side_effect = gcp._util.RequestException(404, 'failed')
     self.assertFalse(buckets.contains('test_bucket_2'))
 
   @mock.patch('gcp.storage._Api.buckets_get')
