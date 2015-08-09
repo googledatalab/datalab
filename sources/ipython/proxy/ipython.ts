@@ -36,7 +36,13 @@ var ipythonProcess: childProcess.ChildProcess;
 function pipeOutput(stream: NodeJS.ReadableStream, error: boolean) {
   stream.setEncoding('utf8');
   stream.on('data', (data: string) => {
-    logging.logIPythonOutput(data, error);
+    // IPython generates a polling kernel message once every 3 seconds
+    // per kernel! This adds too much noise into the log, so avoid
+    // logging it.
+
+    if (data.indexOf('Polling kernel') < 0) {
+      logging.logIPythonOutput(data, error);
+    }
   })
 }
 

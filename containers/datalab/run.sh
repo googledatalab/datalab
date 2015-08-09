@@ -26,12 +26,17 @@ if [ "$1" == "shell" ]; then
   ENTRYPOINT="/bin/bash"
 fi
 
-mkdir -p /tmp/datalab/log
-mkdir -p $HOME/notebooks
+# Home directories are mapped from host to boot2docker vm automatically,
+# so use them for both logs and notebooks.
+mkdir -p $HOME/datalab/log/custom_logs
+mkdir -p $HOME/datalab/notebooks
+
+# Delete any existing logs to start fresh on each run.
+rm -rf $HOME/datalab/log/custom_logs
 
 docker run -i --entrypoint=$ENTRYPOINT \
   -p 8081:8080 \
-  -v /tmp/datalab/log:/var/log/app_engine \
-  -v $HOME/notebooks:/nb \
+  -v $HOME/datalab/log:/var/log/app_engine \
+  -v $HOME/datalab/notebooks:/nb \
   -v $HOME/.config/gcloud:/root/.config/gcloud \
   -t datalab
