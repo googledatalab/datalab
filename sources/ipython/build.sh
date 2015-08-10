@@ -28,7 +28,7 @@ rsync -avp ./profile/config.py $IPY_DIR/config.py
 rsync -avp ./profile/static $IPY_DIR
 
 # Compile the nodejs proxy server
-tsc --module commonjs --removeComments --noImplicitAny \
+tsc --module commonjs --noImplicitAny \
     --outDir $PROXY_DIR \
     ./proxy/*.ts
 
