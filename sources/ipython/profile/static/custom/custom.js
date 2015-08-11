@@ -230,182 +230,122 @@ require.config({
     'd3': '//cdnjs.cloudflare.com/ajax/libs/d3/3.4.13/d3',
     'element': '/static/require/element',
     'style': '/static/require/style',
-    'visualization': '/static/require/visualization'
-  },
+    'visualization': '/static/require/visualization',
+    'sockets': '/static/require/sockets'
+  }
 });
 
-// WebSocket shim to send socket messages over vanilla HTTP requests.
-// This is only used when websocket support is not available. Specifically, it is not
-// used when accessing IPython over http://localhost or http://127.0.0.1.
+require(['sockets!session'], function(socket) {
+  // Shim layer that overrides WebSocket functionality in the browser and
+  // replaces it with a custom implementation that uses socketio.sockets
+  // (forced into fallback mode).
+  // This is because managed VMs do not support WebSockets.
+  // Instead what we use is a socket.io session on the server that behaves
+  // like the client, i.e. opens WebSocket connections to IPython from within
+  // server code.
 
-function overrideWebSocket() {
-  // This replaces the native WebSocket functionality with one that is
-  // similar in API surface area, but uses XMLHttpRequest and long-polling
-  // instead... to account for server scenario that aren't WebSocket friendly.
+  // The socket dependency represents a connected socket.io socket to the
+  // 'session' socket namespace.
 
-  var READYSTATE_OPENING = 0;
-  var READYSTATE_OPENED = 1;
-  var READYSTATE_CLOSING = 2;
-  var READYSTATE_CLOSED = 3;
+  var webSockets = {};
+  var kernel = '';
 
-  var XHR_LOADED = 4;
-
-  function placeHolder() {
+  function startSession() {
+    socket.emit('start', { kernel: kernel });
   }
 
-  function xhr(action, data, callback) {
-    callback = callback || placeHolder;
-
-    var request = new XMLHttpRequest();
-    request.open('POST', '/socket/' + action, true);
-    request.onload = function() {
-      if (request.readyState == XHR_LOADED) {
-        request.onload = placeHolder;
-
-        if (request.status == 200) {
-          callback(null, JSON.parse(request.responseText));
-        }
-        else {
-          callback(new Error(request.status));
-        }
-      }
-    }
-
-    if (data) {
-      request.setRequestHeader('Content-Type', 'application/json');
-      data = JSON.stringify(data);
-    }
-    request.send(data);
+  function stopSession() {
+    socket.emit('stop', { kernel: kernel });
   }
 
-  function createXHRTransport(socket) {
-    var id = null;
-    var polling = false;
+  socket.on('kernel', function(msg) {
+    // Message sent from the server to indicate WebSockets to the kernel
+    // have been opened on the server. Use this to mark the shim WebSocket
+    // instances as ready.
 
-    function send(msg) {
-      xhr('send?id=' + id, { msg: msg });
-    }
-
-    function close() {
-      polling = false;
-      xhr('close', { socket: id });
-
-      socket.readyState = READYSTATE_CLOSED;
-      try {
-        socket.onclose({ target: socket });
-      }
-      catch(e) {
+    for (var channel in webSockets) {
+      var ws = webSockets[channel];
+      if ((kernel == msg.kernel) && (ws.readyState == 0)) {
+        ws.readyState = 1;
+        if (ws.onopen) {
+          ws.onopen({ target: ws });
+        }
       }
     }
+  });
+  socket.on('data', function(msg) {
+    // Message sent from the server for messages recieved on one of the
+    // IPython WebSocket connections. Raise the message event on the appropriate
+    // WebSocket shim.
 
-    function pollTick() {
-      // Issue a poll request to the server to fetch any pending events.
-      // This request will not complete until either there is data, or a
-      // timeout occurs.
-      xhr('poll?id=' + id, null, function(e, data) {
-        if (socket.readyState >= READYSTATE_CLOSING) {
-          return;
-        }
-
-        if (!e) {
-          var events = data.events || [];
-          events.forEach(function(event) {
-            switch (event.type) {
-              case 'close':
-                close({ target: socket });
-                break;
-              case 'message':
-                try {
-                  socket.onmessage({ target: socket, data: event.msg });
-                }
-                catch (e) {
-                }
-                break;
-            }
-          });
-        }
-        else {
-          socket.onerror(new Error('Error listening to socket.'));
-        }
-
-        // Immediately queue another poll request. The net result is there
-        // is always one out-going poll request per socket to the server,
-        // which is completed as soon as there are events pending on the server,
-        // or some timeout.
-        poll();
-      });
+    var ws = webSockets[msg.channel];
+    if (ws && ws.onmessage) {
+      ws.onmessage({ target: ws, data: msg.data });
     }
-
-    function poll() {
-      if (polling) {
-        // Complete current event processing and queue next poll.
-        setTimeout(pollTick, 0)
+  });
+  socket.on('connect', function() {
+    // This handles reconnection scenarios.
+    startSession();
+  });
+  socket.on('disconnect', function() {
+    for (var channel in webSockets) {
+      var ws = webSockets[channel];
+      if (ws.readyState == 1) {
+        ws.readyState = 0;
+        if (ws.onclose) {
+          ws.onclose({ target: ws });
+        }
       }
     }
+  });
 
-    xhr('open?url=' + encodeURIComponent(socket._url), null, function(e, data) {
-      if (!e && data.id) {
-        id = data.id;
-        polling = true;
+  function WebSocketShim(url) {
+    this.readyState = 0;
 
-        socket.readyState = READYSTATE_OPENED;
-        try {
-          socket.onopen({ target: socket });
-        }
-        catch(e) {
-        }
+    // The socket URL is of the form ws://domain/api/kernels/kernelid/channel.
+    var urlParts = url.split('/');
+    kernel = urlParts[urlParts.length - 2];
 
-        poll();
-      }
-      else {
-        socket.onerror(new Error('Unable to open socket.'));
-      }
-    });
+    this._channel = urlParts[urlParts.length - 1];
+    webSockets[this._channel] = this;
 
-    return {
-      send: send,
-      close: close
-    }
+    startSession();
   }
+  WebSocketShim.prototype = {
+    onopen: null,
+    onclose: null,
+    onmessage: null,
+    onerror: null,
 
-  function Socket(url) {
-    this._url = url;
-
-    this.readyState = READYSTATE_OPENING;
-    this._transport = createXHRTransport(this);
-  }
-  Socket.prototype = {
-    onopen: placeHolder,
-    onclose: placeHolder,
-    onmessage: placeHolder,
-    onerror: placeHolder,
-
-    send: function(msg) {
-      if (this.readyState != READYSTATE_OPENED) {
-        throw new Error('Socket is not in opened state.');
+    send: function(data) {
+      // Data sent to the WebSocket is converted into a message sent to
+      // the session socket for propagation to the corresponding WebSocket
+      // connection on the server.
+      if (this.readyState != 1) {
+        throw new Error('WebSocket is not yet opened');
       }
-
-      this._transport.send(msg);
+      socket.emit('senddata', { channel: this._channel, data: data });
     },
 
     close: function() {
-      if (this.readyState >= READYSTATE_CLOSING) {
-        return;
-      }
+      // Explicitly closed WebSockets generate messages sent to the session
+      // socket for closing its WebSocket connections on the server.
+      stopSession();
 
-      this.readyState = READYSTATE_CLOSING;
-      this._transport.close();
-      this._transport = null;
+      delete webSockets[this._channel];
+      this.readyState = 0;
+
+      var self = this;
+      setTimeout(function() {
+        if (self.onclose) {
+          self.onclose({ target: self });
+        }
+      }, 0);
     }
   }
 
-  window.WebSocket = Socket;
-}
-
-// This is not needed while running on GCE, where websockets work fine.
-if ((document.domain != 'localhost') && (document.domain != '127.0.0.1')) {
-  overrideWebSocket();
-}
+  window.WebSocket = WebSocketShim;
+});
 
 
 // Notebook List page specific functionality

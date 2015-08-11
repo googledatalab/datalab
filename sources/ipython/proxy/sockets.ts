@@ -13,267 +13,169 @@
  */
 
 /// <reference path="../../../externs/ts/node/node.d.ts" />
+/// <reference path="../../../externs/ts/node/socket.io.d.ts" />
 /// <reference path="../../../externs/ts/node/node-ws.d.ts" />
 /// <reference path="common.d.ts" />
 
 import http = require('http');
-import url = require('url');
+import logging = require('./logging');
+import socketio = require('socket.io');
+import util = require('util');
 import WebSocket = require('ws');
 
-interface SocketEvent {
-  type: string;
-  msg?: string;
-}
-
 interface Session {
-  socket: WebSocket;
-  events: SocketEvent[];
-  pendingResponse?: http.ServerResponse;
-  pendingCookie?: any;
+  id: number;
+  kernel: string;
+  socket: SocketIO.Socket,
+  webSockets: common.Map<WebSocket>;
+  channels: string[];
 }
 
-/**
- * The application settings instance.
- */
+interface SessionMessage {
+  kernel: string;
+}
+
+interface DataMessage {
+  channel: string;
+  data: string;
+}
+
+var webSocketChannels = [ 'shell', 'iopub', 'stdin' ];
+
 var appSettings: common.Settings;
+var sessionCounter = 0;
 
 /**
- * The set of active socket sessions being managed on the server. Each session represents
- * an instance of a WebSocket client.
+ * Creates a WebSocket instance to connect to the IPython server for the specified session's
+ * kernel, and the specified IPython channel.
  */
-var socketSessions: common.Map<Session> = {};
+function createWebSocket(session: Session, channel: string): WebSocket {
+  var socketUrl = util.format('%s/api/kernels/%s/%s',
+                              appSettings.ipythonSocketServer, session.kernel, channel);
 
-/**
- * Creates a new socket session. This responds to the client with the id of the WebSocket
- * opened on behalf of the client, once that WebSocket has reached OPENED state.
- * @param sessionUrl the url the session being created sent by the client.
- * @param response the out-going response for the current HTTP request.
- */
-function createSession(sessionUrl: string, response: http.ServerResponse): void {
-  var parsedUrl = url.parse(sessionUrl);
-  if ((parsedUrl.protocol == 'ws:') || (parsedUrl.protocol == 'wss:')) {
-    // Build up the id of the socket to be the kernel id + socket name.
-    var pathParts = parsedUrl.pathname.split('/');
-    var id = pathParts.slice(-2).join('-');
+  var ws = new WebSocket(socketUrl);
+  ws.on('open', function() {
+      // Stash the resulting WebSocket, now that it is in open state
+      session.webSockets[channel] = ws;
+      session.channels.push(channel);
 
-    var socketUrl = appSettings.ipythonSocketServer + parsedUrl.path;
-    var socket = new WebSocket(socketUrl);
-    var session: Session = {
-      socket: socket,
-      events: <SocketEvent[]>[]
-    };
-
-    socket.id = id;
-    socketSessions[socket.id] = session;
-
-    socket.onopen = function(e) {
-      successHandler(response, { id: socket.id });
-    };
-    socket.onclose = function(e) {
-      session.socket = null;
-      session.events.push({ type: 'close' });
-    };
-    socket.onmessage = function(e) {
-      if (!session.socket) {
-        // We're not tracking this socket anymore... so just go ahead and close it.
-        e.target.close();
+      if (session.channels.length == webSocketChannels.length) {
+        // If all of the channels are now open, send the client a notification.
+        session.socket.emit('kernel', { kernel: session.kernel });
       }
-      else {
-        session.events.push({ type: 'message', msg: e.data });
+    })
+    .on('close', function() {
+      // Remove the WebSocket from the session, once it is in closed state
+      logging.getLogger().debug('WebSocket [%d-%s] closed', session.id, channel);
+      delete session.webSockets[channel];
+    })
+    .on('message', function(data: any) {
+      // Propagate messages arriving on the WebSocket to the client.
+      logging.getLogger().debug('WebSocket [%d-%s] message\n%s', session.id, channel,
+                                JSON.stringify(data));
+      session.socket.emit('data', { channel: channel, data: data });
+    });
 
-        if (session.pendingResponse) {
-          // If there is a pending response, complete it by sending the event that
-          // was just bufffered. This ensures the client is notified as soon as possible.
-          sendEvents(session);
-        }
-      }
-    };
-  }
-  else {
-    errorHandler(response, 400);
-  }
+  return ws;
 }
 
 /**
- * Closes an existing session.
- * @param id the id of the socket session to be closed.
- * @param response the out-going response for the current HTTP request.
+ * Closes all WebSocket instances associated with the session.
  */
-function closeSession(id: string, response: http.ServerResponse): void {
-  var session = socketSessions[id];
-  if (session && session.socket) {
-    var socket = session.socket;
-
-    session.socket = null;
-    socket.close();
-
-    delete socketSessions[id];
-    successHandler(response);
+function closeWebSockets(session: Session) {
+  for (var n in session.webSockets) {
+    session.webSockets[n].close();
   }
-  else {
-    errorHandler(response, 404);
-  }
+  session.webSockets = {};
+  session.channels = [];
 }
 
 /**
- * Sends a message to the socket within an existing session.
- * @param id the id of the socket session containing the receipient socket.
- * @param message the message data to be sent.
- * @param response the out-going response for the current HTTP request.
+ * Handles communication over the specified socket.
  */
-function sendMessage(id: string, message: string, response: http.ServerResponse): void {
-  var session = socketSessions[id];
-  if (session && session.socket) {
-    session.socket.send(message);
-    successHandler(response);
-  }
-  else {
-    errorHandler(response, 404);
-  }
-}
+function socketHandler(socket: SocketIO.Socket) {
+  sessionCounter++;
 
-/**
- * Handles poll requests for messages collected within a socket session.
- * @param id the id of the socket session whose messages are to be sent.
- * @param response the out-going response for the current HTTP request.
- */
-function pollMessages(id: string, response: http.ServerResponse): void {
-  var session = socketSessions[id];
-  if (session && session.socket) {
-    // Write out the response header early, even if the response won't be
-    // immediately written out.
-    response.writeHead(200, { 'Content-Type': 'application/json' });
+  // Each socket is associated with a session that tracks the kernel id, and
+  // associated WebSocket instances to the IPython server (one per channel).
+  var session: Session = {
+    id: sessionCounter,
+    kernel: '',
+    socket: socket,
+    webSockets: {},
+    channels: []
+  };
 
-    if (session.events.length) {
-      // Complete the response immediately if there are accumulated events.
-      sendEvents(session, response);
-    }
-    else {
-      // If there aren't, hold on to the response for a short duration. If
-      // events occur in the interim, they will complete the response (and
-      // cancel this timeout), and if there aren't any, an empty resppnse
-      // will be sent, once this timeout completes.
-      session.pendingResponse = response;
-      session.pendingCookie = setTimeout(function() {
-        // Clear out the cookie, so it isn't attempted to be cleared again,
-        // and then complete the response.
-        session.pendingCookie = 0;
-        sendEvents(session);
-      }, appSettings.pollHangingInterval);
-    }
-  }
-  else {
-    errorHandler(response, 404);
-  }
-}
+  logging.getLogger().debug('Socket connected for session %d', session.id);
 
-function sendEvents(session: Session, response?: http.ServerResponse): void {
-  if (!response) {
-    // This is the case when events are being sent if they arrived during
-    // the hanging interval, or upon completion of that interval with no events
-    // to send.
-    response = session.pendingResponse;
-    session.pendingResponse = null;
-  }
-  else {
-    // This really shouldn't happen - a new poll request even though a pending
-    // response is in place, since the client is supposed to wait. In case it
-    // doesn't... kill off the old response first.
-    if (session.pendingResponse) {
-      session.pendingResponse.end();
-      session.pendingResponse = null;
-    }
-  }
+  socket.on('disconnect', function() {
+    logging.getLogger().debug('Socket disconnected for session %d', session.id);
 
-  // If the events are being sent in response to events that arrived in the
-  // hanging interval interim, then clear out the cookie, so that the timeout
-  // is canceled.
-  if (session.pendingCookie) {
-    clearTimeout(session.pendingCookie);
-    session.pendingCookie = 0;
-  }
+    // Handle client disconnects to close WebSockets, so as to free up resources
+    closeWebSockets(session);
+  });
 
-  var events = session.events;
-  session.events = <SocketEvent[]>[];
+  socket.on('start', function(message: SessionMessage) {
+    // The client sends this message per channel within a session. However all initializtion of
+    // underlying WebSockets is done on the first message. So ignore every subsequent message
+    // for the same kernel.
+    // The kernel will be different within the same session, when sockets are being re-opened
+    // after the kernel restart (using a new kernel id).
 
-  response.write(JSON.stringify({ events: events }));
-  response.end();
-}
-
-function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
-  console.log(request.url);
-
-  if (request.method != 'POST') {
-    errorHandler(response, 405);
-    return;
-  }
-
-  // TODO: More error handling on the inputs...
-
-  var requestUrl = url.parse(request.url, /* parseQueryString */ true);
-  var path = requestUrl.pathname;
-
-  if (path == '/socket/open') {
-    var urlParameter: string = requestUrl.query.url;
-    if (urlParameter) {
-      createSession(urlParameter, response);
-    }
-    else {
-      errorHandler(response, 400);
-    }
-  }
-  else {
-    var id: string = requestUrl.query.id;
-    if (!id) {
-      errorHandler(response, 400);
+    logging.getLogger().debug('Start in session %d with kernel %s', session.id, message.kernel);
+    if (session.kernel == message.kernel) {
+      logging.getLogger().debug('Session is already associated with same kernel');
       return;
     }
 
-    if (path == '/socket/close') {
-      closeSession(id, response);
+    // Close previous WebSockets for another kernel, in case this is a restart scenario, and
+    // somehow a closekernel message wasn't sent.
+    closeWebSockets(session);
+
+    session.kernel = message.kernel;
+    webSocketChannels.forEach(function(channel) {
+      createWebSocket(session, channel);
+    })
+  });
+
+  socket.on('stop', function(message: SessionMessage) {
+    // The client sends this message once per channel within the session when channels are being
+    // closed. All WebSockets are closed on the first message. So ignore every subsequent message
+    // by blanking out the kernel associated with this session.
+
+    logging.getLogger().debug('Stop in session %d with kernel %s', session.id, message.kernel);
+    if (session.kernel != message.kernel) {
+      logging.getLogger().debug('Session is no longer associated with same kernel');
+      return;
     }
-    else if (path == '/socket/send') {
-      var content = '';
-      request.on('data', function(data: string) {
-        content += data;
-        if (content.length > appSettings.maxSocketMessageLength) {
-          // If the request is too large, kill it.
-          request.connection.destroy();
+
+    closeWebSockets(session);
+    session.kernel = '';
+  });
+
+  socket.on('senddata', function(message: DataMessage) {
+    // The client sends this message per data message to a particular channel. Propagate the
+    // message over to the WebSocket associated with the specified channel.
+
+    logging.getLogger().debug('Send data in session %d on %s channel\n%s',
+                              session.id, message.channel, message.data);
+    var ws = session.webSockets[message.channel];
+    if (ws) {
+      ws.send(message.data, function(e) {
+        if (e) {
+          logging.getLogger().error(e, 'Failed to send message to websocket');
         }
       });
-      request.on('end', function() {
-        var data: common.Map<string> = JSON.parse(content);
-        sendMessage(id, data['msg'], response);
-      });
-    }
-    else if (path == '/socket/poll') {
-      pollMessages(id, response);
     }
     else {
-      errorHandler(response, 404);
+      logging.getLogger().error('Unable to send message; WebSocket is not open');
     }
-  }
+  });
 }
 
-function errorHandler(response: http.ServerResponse, statusCode: number): void {
-  response.writeHead(statusCode);
-  response.end();
-}
-
-function successHandler(response: http.ServerResponse, result?: any): void {
-  result = result || {};
-
-  response.writeHead(200, { 'Content-Type': 'application/json' });
-  response.write(JSON.stringify(result));
-  response.end();
-}
-
-/**
- * Creates the socket handler that will relay HTTP requests to the IPython websocket.
- * @param settings configuration settings for the application.
- * @returns the socket relay that can be used to handle socket requests.
- */
-export function createHandler(settings: common.Settings): http.RequestHandler {
+export function wrapServer(server: http.Server, settings: common.Settings): void {
   appSettings = settings;
-  return requestHandler;
+  socketio.listen(server)
+          .of('/session')
+          .on('connection', socketHandler);
 }
