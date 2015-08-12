@@ -17,6 +17,7 @@
 import collections
 import re
 from gcp._util import Iterator as _Iterator
+from gcp._util import RequestException as _RequestException
 from ._table import Table as _Table
 from ._utils import parse_dataset_name as _parse_dataset_name
 
@@ -56,8 +57,8 @@ class DataSet(object):
     """
     try:
       _ = self._api.datasets_get(self._name_parts)
-    except Exception as e:
-      if (len(e.args[0]) > 1) and (e.args[0][1] == 404):
+    except _RequestException as e:
+      if e.status == 404:
         return False
       raise e
     return True
@@ -151,4 +152,3 @@ class DataSetLister(object):
     """ Supports iterating through the DataSets in the project.
     """
     return iter(_Iterator(self._retrieve_datasets))
-
