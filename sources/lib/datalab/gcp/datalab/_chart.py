@@ -50,7 +50,7 @@ def _chart_cell(args, cell):
     <div class="bqgc" id="bqgc_%s">
     </div>
     <script>
-          require(['extensions/charting', 'element!bqgc_%s'],
+          require(['extensions/charting', 'element!bqgc_%s', 'style!/static/extensions/charting.css'],
               function(charts, dom) {
                   charts.render(dom, {chartStyle:'%s', dataName:'%s', fields:'%s'}, %s, %s);
               }

@@ -45,30 +45,21 @@ function stringifyMap(map: {[index: string]: string}): string {
  * @param response the outgoing health response.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
-  var requestUrl = url.parse(request.url);
-  var path = requestUrl.pathname;
+  response.writeHead(200, { 'Content-Type': 'text/plain' });
 
-  if (path == '/_info/setup') {
-    response.writeHead(200, { 'Content-Type': 'text/plain' });
+  response.write('Environment Variables:\n');
+  response.write(stringifyMap(process.env));
+  response.write('\n\n');
 
-    response.write('Environment Variables:\n');
-    response.write(stringifyMap(process.env));
-    response.write('\n\n');
+  response.write('Application Settings:\n');
+  response.write(JSON.stringify(appSettings, null, 2));
+  response.write('\n\n');
 
-    response.write('Application Settings:\n');
-    response.write(JSON.stringify(appSettings, null, 2));
-    response.write('\n\n');
+  response.write('Request Headers:\n');
+  response.write(stringifyMap(request.headers));
+  response.write('\n\n');
 
-    response.write('Request Headers:\n');
-    response.write(stringifyMap(request.headers));
-    response.write('\n\n');
-
-    response.end();
-  }
-  else {
-    response.writeHead(404, 'Not Found', { 'Content-Type': 'text/plain' });
-    response.end();
-  }
+  response.end();
 }
 
 /**

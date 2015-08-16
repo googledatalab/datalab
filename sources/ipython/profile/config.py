@@ -25,9 +25,6 @@ c.InteractiveShellApp.extensions = [ 'gcp.datalab' ]
 # Startup code.
 c.InteractiveShellApp.exec_lines = []
 
-# Static files to override the default custom script and stylesheet.
-c.NotebookApp.extra_static_paths = [ os.path.join(os.path.dirname(__file__), 'static') ]
-
 # Allow any origin to connect to sockets
 c.NotebookApp.allow_origin = '*'
 

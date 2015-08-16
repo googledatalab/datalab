@@ -69,6 +69,10 @@ var debug = {
 
 // Add TOC functionality
 function setupOutline() {
+  if (!IPython.toolbar || !IPython.notebook) {
+    return;
+  }
+
   var markup = '<select id="tocDropDown" style="float: right"><option>Outline</option></select>';
   IPython.toolbar.element.append(markup);
 

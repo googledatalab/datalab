@@ -21,6 +21,7 @@ import http = require('http');
 import httpProxy = require('http-proxy');
 import logging = require('./logging');
 import path = require('path');
+import url = require('url');
 
 /**
  * The application settings instance.
@@ -62,16 +63,23 @@ function responseHandler(proxyResponse: http.ClientResponse,
     delete proxyResponse.headers['access-control-allow-origin'];
   }
 
+  if (proxyResponse.statusCode != 200) {
+    return;
+  }
+
   // Set a cookie to provide information about the project and authenticated user to the client.
-  // Create a cookie that stays valid for 5 minutes, and is marked as HTTP-only.
-  var cookieData = [
-    appSettings.analyticsId,
-    appSettings.projectId,
-    appSettings.versionId,
-    appSettings.instanceId,
-    request.headers['x-appengine-user-email'] || '---'
-  ];
-  proxyResponse.headers['set-cookie'] = 'gcp=' + cookieData.join(':');
+  // Ensure this happens only for page requests, rather than for API requests.
+  var path = url.parse(request.url).pathname;
+  if ((path.indexOf('/tree') == 0) || (path.indexOf('/notebooks') == 0)) {
+    var cookieData = [
+      appSettings.analyticsId,
+      appSettings.projectId,
+      appSettings.versionId,
+      appSettings.instanceId,
+      request.headers['x-appengine-user-email'] || '---'
+    ];
+    proxyResponse.headers['set-cookie'] = 'gcp=' + cookieData.join(':');
+  }
 }
 
 function errorHandler(error: Error, request: http.ServerRequest, response: http.ServerResponse) {

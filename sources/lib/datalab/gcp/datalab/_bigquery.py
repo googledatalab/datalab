@@ -580,7 +580,7 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
     <div class="bqtv" id="bqtv_%s"></div>
     <div><br />%s<br />%s</div>
     <script>
-      require(['extensions/charting', 'element!bqtv_%s'],
+      require(['extensions/charting', 'element!bqtv_%s', 'style!/static/extensions/charting.css'],
         function(charts, dom) {
           charts.render(dom,
             {
@@ -639,8 +639,8 @@ def _repr_html_table_schema(schema):
   _HTML_TEMPLATE = """
     <div class="bqsv" id="%s"></div>
     <script>
-      require(['style!/static/extensions/bigquery.css', 'extensions/bigquery', 'element!%s'],
-          function(_, bq, dom) {
+      require(['extensions/bigquery', 'element!%s', 'style!/static/extensions/bigquery.css'],
+          function(bq, dom) {
               bq.renderSchema(dom, %s);
           }
       );

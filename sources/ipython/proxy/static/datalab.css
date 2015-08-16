@@ -16,7 +16,6 @@
 
 /* Fonts */
 @import url(https://fonts.googleapis.com/css?family=Source+Code+Pro|Open+Sans|Lato:400,700&subset=latin,latin-ext);
-@import url(gchart-table.css);
 
 body {
   font-family: 'Open Sans', Calibri, helvetica, sans-serif;

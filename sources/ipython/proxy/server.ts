@@ -26,87 +26,77 @@ import logging = require('./logging');
 import net = require('net');
 import path = require('path');
 import sockets = require('./sockets');
+import static = require('./static');
 import url = require('url');
 
 var server: http.Server;
 var ipythonServer: httpProxy.ProxyServer;
 var healthHandler: http.RequestHandler;
 var infoHandler: http.RequestHandler;
+var staticHandler: http.RequestHandler;
 
 /**
- * Sends a static file as the response.
- * @param fileName the name of the static file to send.
- * @param contentType the associated mime type of the file.
- * @param response the out-going response associated with the current HTTP request.
- */
-function sendFile(fileName: string, contentType: string, response: http.ServerResponse) {
-  var filePath = path.join(__dirname, 'static', fileName);
-  fs.readFile(filePath, function(error, content) {
-    if (error) {
-      response.writeHead(500);
-    }
-    else {
-      response.writeHead(200, { 'Content-Type': contentType });
-      response.end(content);
-    }
-  });
-}
-
-/**
- * Handles all requests sent to the proxy web server. Most requests are proxied to
- * the IPython web server, but some are filtered out, and handled completely here.
+ * Handles all requests sent to the proxy web server. Some requests are handled within
+ * the server, while some are proxied to the IPython notebook server.
  * @param request the incoming HTTP request.
  * @param response the out-going HTTP response.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse) {
-  logging.logRequest(request, response);
-
   var path = url.parse(request.url).pathname;
 
-  // /_ah/* paths are completed handled in this server, and not forwarded on to
-  // IPython as HTTP calls.
+  // /_ah/* paths implement the AppEngine health check.
   if (path.indexOf('/_ah') == 0) {
     healthHandler(request, response);
     return;
   }
 
-  // /ping is completely handled in this server, and not forwarded to IPython.
-  // This call is issued to check for the existence of the application during
-  // the deployment process.
+  // /static paths for returning static content
+  if (path.indexOf('/static') == 0) {
+    staticHandler(request, response);
+    return;
+  }
+
+  // /ping allows the deployer to validate existence.
   if (path.indexOf('/ping') == 0) {
+    // TODO: Remove support for CORS once the existence checks move to the deployment server.
     response.writeHead(200, {
       'Content-Type': 'text/plain',
       'Access-Control-Allow-Origin': '*'
     });
     response.end("OK");
-
     return;
   }
 
-  // Specific resources that are handled in the proxy
+  // All requests below are logged, while the ones above aren't, to avoid generating noise
+  // into the log.
+  logging.logRequest(request, response);
+
+  // Landing page redirects to /tree to be able to use the IPython file list as
+  // the initial page.
   if (path == '/') {
     response.statusCode = 302;
     response.setHeader('Location', '/tree');
     response.end();
     return;
   }
-  else if (path == '/static/base/images/favicon.ico') {
-    sendFile('favicon.ico', 'image/x-icon', response);
-    return;
-  }
-  else if (path == '/static/base/images/ipynblogo.png') {
-    sendFile('brand.png', 'image/png', response);
+
+  // Requests proxied to IPython
+  if ((path.indexOf('/api') == 0) ||
+      (path.indexOf('/tree') == 0) ||
+      (path.indexOf('/notebooks') == 0)) {
+    ipythonServer.web(request, response);
     return;
   }
 
+  // /_info displays information about the server for diagnostics.
   if (path.indexOf('/_info') == 0) {
     infoHandler(request, response);
     return;
   }
 
-  // Proxy the rest of the requests to IPython, and let it generate the response,
-  // that is sent unmodified.
-  ipythonServer.web(request, response);
+  // Not Found
+  response.statusCode = 404;
+  response.end();
 }
 
 
@@ -119,11 +109,12 @@ export function run(settings: common.Settings): void {
 
   healthHandler = health.createHandler(settings);
   infoHandler = info.createHandler(settings);
+  staticHandler = static.createHandler(settings);
 
   server = http.createServer(requestHandler);
   sockets.wrapServer(server, settings);
 
-  logging.getLogger().info('Starting IPython proxy server at http://localhost:%d',
+  logging.getLogger().info('Starting DataLab server at http://localhost:%d',
                            settings.serverPort);
   server.listen(settings.serverPort);
 }

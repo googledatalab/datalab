@@ -54,12 +54,9 @@ export function logRequest(request: http.ServerRequest, response: http.ServerRes
  * @param error whether the text is error text or not.
  */
 export function logIPythonOutput(text: string, error: boolean): void {
-  if (error) {
-    ipythonLogger.error(text);
-  }
-  else {
-    ipythonLogger.info(text);
-  }
+  // All IPython output seems to be generated on stderr, so ignore the
+  // error parameter, and log as info...
+  ipythonLogger.info(text);
 }
 
 /**
