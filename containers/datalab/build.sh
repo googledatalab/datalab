@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Builds the IPython docker image
+# Builds the Google Cloud DataLab docker image
 
 # Create a versioned Dockerfile based on current date and git commit hash
 VERSION=`date +%Y%m%d`
@@ -36,3 +36,4 @@ docker build -t datalab .
 rm -rf build
 rm -rf docs
 rm Dockerfile
+
