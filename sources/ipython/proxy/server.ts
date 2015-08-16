@@ -30,7 +30,6 @@ import url = require('url');
 
 var server: http.Server;
 var ipythonServer: httpProxy.ProxyServer;
-var socketHandler: http.RequestHandler;
 var healthHandler: http.RequestHandler;
 var infoHandler: http.RequestHandler;
 
@@ -84,13 +83,6 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     return;
   }
 
-  // /socket/* paths are completed handled in this server, and not forwarded on to
-  // IPython as HTTP calls.
-  if (path.indexOf('/socket') == 0) {
-    socketHandler(request, response);
-    return;
-  }
-
   // Specific resources that are handled in the proxy
   if (path == '/') {
     response.statusCode = 302;
@@ -117,16 +109,6 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   ipythonServer.web(request, response);
 }
 
-/**
- * Handles Upgrade requests to initiate web sockets. This will only be called on
- * servers and environments where websockets are supported.
- * @param request the incoming HTTP request.
- * @param socket the socket associated with the request.
- * @param head the initial data on the request.
- */
-function upgradeHandler(request: http.ServerRequest, socket: net.Socket, head: Buffer) {
-  ipythonServer.ws(request, socket, head);
-}
 
 /**
  * Runs the proxy web server.
@@ -135,12 +117,11 @@ function upgradeHandler(request: http.ServerRequest, socket: net.Socket, head: B
 export function run(settings: common.Settings): void {
   ipythonServer = ipython.createProxyServer(settings);
 
-  socketHandler = sockets.createHandler(settings);
   healthHandler = health.createHandler(settings);
   infoHandler = info.createHandler(settings);
 
   server = http.createServer(requestHandler);
-  server.on('upgrade', upgradeHandler);
+  sockets.wrapServer(server, settings);
 
   logging.getLogger().info('Starting IPython proxy server at http://localhost:%d',
                            settings.serverPort);
