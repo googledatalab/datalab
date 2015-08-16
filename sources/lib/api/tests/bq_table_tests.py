@@ -245,7 +245,7 @@ class TestCases(unittest.TestCase):
     mock_time_sleep.return_value = None
     mock_api_tables_list.return_value = []
     mock_api_tables_insert.return_value = {'selfLink': 'http://foo'}
-    mock_api_tables_get.side_effect = Exception([None, 404])
+    mock_api_tables_get.side_effect = gcp._util.RequestException(404, 'failed')
     mock_api_tabledata_insertAll.return_value = {}
     mock_api_datasets_get.return_value = None
 
