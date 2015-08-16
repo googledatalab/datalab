@@ -196,7 +196,7 @@ class TestCases(unittest.TestCase):
     tbl = gcp.bigquery.table('testds.testTable0', context=self._create_context())
     self.assertTrue(tbl.exists())
 
-    mock_api_tables_get.side_effect = Exception([None, 404])
+    mock_api_tables_get.side_effect = gcp._util.RequestException(404, 'failed')
     self.assertFalse(tbl.exists())
 
   @mock.patch('gcp.bigquery._Api.tables_insert')

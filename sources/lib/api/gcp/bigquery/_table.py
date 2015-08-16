@@ -26,6 +26,7 @@ import uuid
 from gcp._util import Iterator as _Iterator
 from gcp._util import Job as _Job
 from gcp._util import JobError as _JobError
+from gcp._util import RequestException as _RequestException
 from gcp._util import async_method
 from ._job import Job as _BQJob
 from ._parser import Parser as _Parser
@@ -342,8 +343,8 @@ class Table(object):
     """
     try:
       _ = self._api.tables_get(self._name_parts)
-    except Exception as e:
-      if (len(e.args[0]) > 1) and (e.args[0][1] == 404):
+    except _RequestException as e:
+      if e.status == 404:
         return False
       raise e
     return True
