@@ -500,7 +500,7 @@ class DataLabNotebookManager(CompositeNotebookManager):
 
     bucket = DataLabNotebookManager._create_bucket()
     self.add_notebook_list(StorageNotebookList(bucket, prefix='notebooks/'), '')
-    self.add_notebook_list(LocalNotebookList('/docs'), 'docs')
+    self.add_notebook_list(LocalNotebookList('/datalab/docs'), 'docs')
     if os.environ.get('DATALAB_ENV', '') == 'local':
       self.add_notebook_list(LocalNotebookList('/nb'), 'local')
 

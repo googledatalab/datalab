@@ -32,7 +32,7 @@ mkdir -p $HOME/datalab/log/custom_logs
 mkdir -p $HOME/datalab/notebooks
 
 # Delete any existing logs to start fresh on each run.
-rm -rf $HOME/datalab/log/custom_logs
+rm -f $HOME/datalab/log/custom_logs/*.log
 
 docker run -i --entrypoint=$ENTRYPOINT \
   -p 8081:8080 \

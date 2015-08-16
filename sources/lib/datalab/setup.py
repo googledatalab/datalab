@@ -21,8 +21,8 @@ from distutils.core import setup
 setup(
     name='GCPDataLab',
     version='0.1.0',
-    packages=['gcp.datalab'],
-    description='Google Cloud IPython Cell Magics for data analysis scenarios.',
+    packages=['gcp.datalab', 'gcp.ipython'],
+    description='Google Cloud DataLab',
     requires=['IPython',
               'GCPData'
              ]

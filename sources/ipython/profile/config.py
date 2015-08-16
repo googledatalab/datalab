@@ -32,7 +32,7 @@ c.NotebookApp.allow_origin = '*'
 c.NotebookApp.log_level = 'DEBUG'
 
 # Custom notebook manager
-c.NotebookApp.notebook_manager_class = 'IPythonExtensions.gcp.DataLabNotebookManager'
+c.NotebookApp.notebook_manager_class = 'gcp.ipython.DataLabNotebookManager'
 
 # Trust all notebooks, i.e. do not bind them to one host.
 import IPython.nbformat.sign as _sign

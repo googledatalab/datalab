@@ -20,8 +20,8 @@ export DATALAB_ENV=local
 export METADATA_HOST=localhost
 
 # Simulate the metadata service
-node /tools/metadata/server.js &
+node /datalab/metadata/server.js &
 
 # Start the DataLab server
-node /app/proxy/app.js
+node /datalab/web/app.js
 

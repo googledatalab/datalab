@@ -24,5 +24,5 @@ export DATALAB_ENV=cloud
 # cloud content.
 
 # Start the DataLab server
-node /app/proxy/app.js
+node /datalab/web/app.js
 
