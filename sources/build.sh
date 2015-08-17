@@ -8,10 +8,10 @@ if [ -z "$REPO_DIR" ];
 fi
 
 SRC_PATHS=(
-  "ipython"
   "lib/api"
   "lib/datalab"
   "tools"
+  "web"
 )
 
 BUILD_DIR=$REPO_DIR/build

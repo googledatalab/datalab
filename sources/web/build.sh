@@ -11,20 +11,15 @@ if [ -z "$REPO_DIR" ];
 fi
 
 BUILD_DIR="$REPO_DIR/build"
-IPY_DIR=$BUILD_DIR/ipython
-PROXY_DIR=$BUILD_DIR/ipython/proxy
+WEB_DIR=$BUILD_DIR/web
 
-mkdir -p $IPY_DIR
-mkdir -p $PROXY_DIR
-
-# Copy the IPython customized profile over
-rsync -avp ./profile/config.py $IPY_DIR/config.py
+mkdir -p $WEB_DIR
 
 # Compile the nodejs proxy server
 tsc --module commonjs --noImplicitAny \
-    --outDir $PROXY_DIR \
-    ./proxy/*.ts
+    --outDir $WEB_DIR \
+    ./datalab/*.ts
 
-rsync -avp ./proxy/config/ $PROXY_DIR/config
-rsync -avp ./proxy/static/ $PROXY_DIR/static
-rsync -avp ./proxy/package.json $PROXY_DIR/package.json
+rsync -avp ./datalab/config/ $WEB_DIR/config
+rsync -avp ./datalab/static/ $WEB_DIR/static
+rsync -avp ./datalab/package.json $WEB_DIR/package.json
