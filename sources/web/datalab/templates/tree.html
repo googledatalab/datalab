@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Google Cloud DataLab</title>
+  <link rel="shortcut icon" type="image/x-icon" href="/static/favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="/static/components/codemirror/lib/codemirror.css" />
+  <link rel="stylesheet" href="/static/style/style.min.css" type="text/css" />
+  <link rel="stylesheet" href="/static/style/custom.css" type="text/css" />
+</head>
+<body class="notebook_list"
+  data-base-url="<%baseUrl%>"
+  data-notebook-path="<%notebookPath%>"
+  data-terminals-available="False"
+  data-analytics-id="<%analyticsId%>"
+  data-project-num="<%projectNumber%>"
+  data-project-id="<%projectId%>"
+  data-version-id="<%versionId%>"
+  data-instance-id="<%instanceId%>"
+  data-user-hash="<%userHash%>"
+  data-user-id="<%userId%>">
+
+  <div id="app">
+    <div id="appBar">
+      <span id="logo" class="nav navbar-brand pull-left">
+        <a href="/tree"><img src="/static/logo.png" alt="Google Cloud DataLab" /></a>
+      </span>
+      <div class="btn-toolbar pull-right">
+        <div class="btn-group">
+          <button class="btn" data-toggle="dropdown">
+            <span class="fa fa-user"></span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-right">
+            <li><a href="#" id="userId">User ID</a></li>
+            <li class="divider"></li>
+            <li><a href="#" id="consoleLink" target="_blank">Developer Console</a></li>
+            <li><a href="#" id="instancesLink" target="_blank">Developer Console: Datalab Instances</a></li>
+            <li><a href="#" id="repoLink" target="_blank">Developer Console: Git Repository</a></li>
+          </ul>
+          &nbsp;&nbsp;
+        </div>
+        <div class="btn-group">
+          <button id="aboutButton">
+            <span class="fa fa-info-circle"></span>
+          </button>
+          &nbsp;&nbsp;
+        </div>
+      </div>
+    </div>
+    <div id="appContent">
+      <div id="mainArea">
+        <div id="mainToolbar">
+          <div class="btn-toolbar pull-left">
+            <div class="btn-group">
+              <button id="contentButton" type="button" class="btn">
+                <span class="fa fa-book"></span> Notebooks
+              </button>
+              <button id="sessionsButton" type="button" class="btn">
+                <span class="fa fa-tasks"></span> Sessions
+              </button>
+            </div>
+          </div>
+        </div>
+        <div id="mainContent" class="container">
+          <div id="ipython-main-app">
+            <div id="tab_content" class="tabbable">
+              <div class="tab-content">
+                <div id="notebooks" class="tab-pane active">
+                  <div id="notebook_toolbar" class="row">
+                    <form id='alternate_upload'  class='alternate_upload'>
+                      <div class="btn-toolbar pull-left">
+                        <div class="btn-group">
+                          <button id="addNotebookButton" type="button" class="btn">
+                            <span class="fa fa-plus-square"></span> Notebook
+                          </button>
+                          <button id="addFolderButton" type="button" class="btn">
+                            <span class="fa fa-plus-square"></span> Folder
+                          </button>
+                          <span id="uploadButton" type="button" class="btn">
+                            <span class="fa fa-upload"></span>
+                            <input type="file" name="datafile" class="fileinput" multiple='multiple' value="Upload" />
+                            Upload
+                          </span>
+                          <button id="duplicateButton" type="button" class="btn duplicate-button">
+                            <span class="fa fa-files-o"></span> Copy
+                          </button>
+                          <button id="renameButton" type="button" class="btn rename-button">
+                            <span class="fa fa-edit"></span> Rename
+                          </button>
+                          <button id="deleteButton" type="button" class="btn delete-button">
+                            <span class="fa fa-trash-o"></span> Delete
+                          </button>
+                        </div>
+                      </div>
+                      <div class="btn-toolbar pull-right">
+                        <div class="btn-group">
+                          <a id="repoLink2" target="_blank" class="btn"><span class="fa fa-git"></span> Repository</a>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                  <div id="notebook_list">
+                    <div id="notebook_list_header" class="row list_header">
+                      <div class="btn-group dropdown" id="tree-selector">
+                        <button title="Select All / None" type="button" class="btn btn-default btn-xs" id="button-select-all">
+                          <input type="checkbox" class="pull-left tree-selector" id="select-all"></input>
+                        </button>
+                      </div>
+                      <div id="project_name">
+                        <ul class="breadcrumb">
+                          <li><a href="/tree"><i class="fa fa-home"></i></a></li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div id="running" class="tab-pane">
+                  <div id="running_list">
+                    <div id="running_list_header" class="row list_header">
+                      <div>
+                        Active Notebooks
+                      </div>
+                    </div>
+                    <div id="running_list_placeholder" class="row list_placeholder">
+                      <div> There are no running sessions. </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="/static/components/es6-promise/promise.min.js"></script>
+  <script src="/static/components/requirejs/require.js"></script>
+  <script>
+    require.config({
+      baseUrl: '/static/',
+      paths: {
+        'auth/js/main': 'auth/js/main.min',
+        custom : '/custom',
+        nbextensions : '/nbextensions',
+        widgets : '/deprecatedwidgets',
+        kernelspecs : '/kernelspecs',
+        underscore : 'components/underscore/underscore-min',
+        backbone : 'components/backbone/backbone-min',
+        jquery: 'components/jquery/jquery.min',
+        bootstrap: 'components/bootstrap/js/bootstrap.min',
+        bootstraptour: 'components/bootstrap-tour/build/js/bootstrap-tour.min',
+        jqueryui: 'components/jquery-ui/ui/minified/jquery-ui.min',
+        moment: 'components/moment/moment',
+        codemirror: 'components/codemirror',
+        termjs: 'components/term.js/src/term',
+      },
+      shim: {
+        underscore: {
+          exports: '_'
+        },
+        backbone: {
+          deps: ["underscore", "jquery"],
+          exports: "Backbone"
+        },
+        bootstrap: {
+          deps: ["jquery"],
+          exports: "bootstrap"
+        },
+        bootstraptour: {
+          deps: ["bootstrap"],
+          exports: "Tour"
+        },
+        jqueryui: {
+          deps: ["jquery"],
+          exports: "$"
+        }
+      }
+    });
+    require.config({
+       map: {
+         '*': {
+           'contents': 'services/contents',
+         }
+       }
+     });
+  </script>
+  <script src="/static/tree/js/main.min.js"></script>
+</body>
+</html>

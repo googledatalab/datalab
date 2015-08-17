@@ -21,7 +21,7 @@ import health = require('./health');
 import http = require('http');
 import httpProxy = require('http-proxy');
 import info = require('./info');
-import ipython = require('./ipython');
+import jupyter = require('./jupyter');
 import logging = require('./logging');
 import net = require('net');
 import path = require('path');
@@ -30,14 +30,14 @@ import static = require('./static');
 import url = require('url');
 
 var server: http.Server;
-var ipythonServer: httpProxy.ProxyServer;
+var proxyServer: httpProxy.ProxyServer;
 var healthHandler: http.RequestHandler;
 var infoHandler: http.RequestHandler;
 var staticHandler: http.RequestHandler;
 
 /**
  * Handles all requests sent to the proxy web server. Some requests are handled within
- * the server, while some are proxied to the IPython notebook server.
+ * the server, while some are proxied to the Jupyter notebook server.
  * @param request the incoming HTTP request.
  * @param response the out-going HTTP response.
  */
@@ -50,8 +50,10 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     return;
   }
 
-  // /static paths for returning static content
-  if (path.indexOf('/static') == 0) {
+  // TODO(jupyter): Additional custom path - should go away eventually with replaced
+  // pages.
+  // /static and /custom paths for returning static content
+  if ((path.indexOf('/static') == 0) || (path.indexOf('/custom') == 0)) {
     staticHandler(request, response);
     return;
   }
@@ -71,7 +73,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   // into the log.
   logging.logRequest(request, response);
 
-  // Landing page redirects to /tree to be able to use the IPython file list as
+  // Landing page redirects to /tree to be able to use the Jupyter file list as
   // the initial page.
   if (path == '/') {
     response.statusCode = 302;
@@ -80,11 +82,13 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     return;
   }
 
-  // Requests proxied to IPython
+  // Requests proxied to Jupyter
   if ((path.indexOf('/api') == 0) ||
       (path.indexOf('/tree') == 0) ||
-      (path.indexOf('/notebooks') == 0)) {
-    ipythonServer.web(request, response);
+      (path.indexOf('/notebooks') == 0) ||
+      (path.indexOf('/nbconvert') == 0) ||
+      (path.indexOf('/files') == 0)) {
+    proxyServer.web(request, response);
     return;
   }
 
@@ -99,19 +103,34 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   response.end();
 }
 
+/**
+ * Handles Upgrade requests to initiate web sockets. This will only be called on
+ * servers and environments where websockets are supported.
+ * @param request the incoming HTTP request.
+ * @param socket the socket associated with the request.
+ * @param head the initial data on the request.
+ */
+function upgradeHandler(request: http.ServerRequest, socket: net.Socket, head: Buffer) {
+  proxyServer.ws(request, socket, head);
+}
 
 /**
  * Runs the proxy web server.
  * @param settings the configuration settings to use.
  */
 export function run(settings: common.Settings): void {
-  ipythonServer = ipython.createProxyServer(settings);
+  proxyServer = jupyter.createProxyServer(settings);
 
   healthHandler = health.createHandler(settings);
   infoHandler = info.createHandler(settings);
   staticHandler = static.createHandler(settings);
 
   server = http.createServer(requestHandler);
+
+  // NOTE: Uncomment to enable native web sockets.
+  // server.on('upgrade', upgradeHandler);
+
+  // NOTE: This adds support for socket.io instead.
   sockets.wrapServer(server, settings);
 
   logging.getLogger().info('Starting DataLab server at http://localhost:%d',
@@ -120,8 +139,8 @@ export function run(settings: common.Settings): void {
 }
 
 /**
- * Stops the server and associated IPython server.
+ * Stops the server and associated Jupyter server.
  */
 export function stop(): void {
-  ipython.stop();
+  jupyter.stop();
 }

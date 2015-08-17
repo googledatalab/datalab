@@ -19,7 +19,7 @@ MAINTAINER Google Cloud DataLab
 RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sources.list && \
     apt-get update -y && \
     apt-get install --no-install-recommends -y -q \
-        curl wget unzip build-essential ca-certificates pkg-config \
+        curl wget unzip git vim build-essential ca-certificates pkg-config \
         libatlas-base-dev liblapack-dev gfortran \
         libpng-dev libfreetype6-dev libxft-dev \
         libxml2-dev \
@@ -62,7 +62,7 @@ RUN pip install -U \
     pip install -U matplotlib==1.4.3 && \
     pip install -U ggplot==0.6.5 && \
     pip install -U seaborn==0.6.0 && \
-    pip install -U ipython==2.4.1 && \
+    pip install -U notebook==4.0.2 && \
     easy_install pip && \
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf
 
@@ -75,7 +75,8 @@ ENV PATH $PATH:/tools/node/bin:/tools/google-cloud-sdk/bin
 ENV PYTHONPATH /env/python
 
 # IPython configuration
-RUN ipython profile create datalab
+RUN ipython profile create default
+RUN jupyter notebook --generate-config
 
 # Add some unchanging bits - specifically node modules (that need to be kept in sync
 # with packages.json manually, but help save build time, by preincluding them in an
@@ -90,8 +91,9 @@ ADD build/lib/GCPData-0.1.0.tar.gz /datalab/lib/
 ADD build/lib/GCPDataLab-0.1.0.tar.gz /datalab/lib/
 ADD build/metadata /datalab/metadata
 ADD build/web /datalab/web
-ADD docs/ /datalab/docs
 ADD content/ /datalab
+ADD docs/ /content/datalab
+ADD config/ipython.py /root/.ipython/profile_default/ipython_config.py
 
 # Install build artifacts
 RUN cd /datalab/lib/GCPData-0.1.0 && python setup.py install && \
@@ -101,4 +103,5 @@ RUN cd /datalab/lib/GCPData-0.1.0 && python setup.py install && \
 
 # Startup
 ENV DATALAB_VERSION _version_
+ENV DATALAB_COMMIT _commit_
 ENTRYPOINT [ "/datalab/run-cloud.sh" ]
