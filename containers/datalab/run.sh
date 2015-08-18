@@ -21,7 +21,7 @@
 # In local mode the container picks up local notebooks, so it can be used
 # to work on files saved on the file system.
 
-ENTRYPOINT="/run-local.sh"
+ENTRYPOINT="/datalab/run-local.sh"
 if [ "$1" == "shell" ]; then
   ENTRYPOINT="/bin/bash"
 fi
