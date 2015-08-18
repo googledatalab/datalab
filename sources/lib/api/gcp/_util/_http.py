@@ -19,7 +19,23 @@ import urllib
 import httplib2
 
 # TODO(nikhilko): Start using the requests library instead.
-# TODO(nikhilko): Create a specific exception type
+
+class RequestException(Exception):
+
+  def __init__(self, status, content):
+    self.status = status
+    self.content = content
+    self.message = 'HTTP request failed'
+    # Try extract a message from the body; swallow possible resulting ValueErrors and KeyErrors.
+    try:
+      self.message = json.loads(content)['error']['errors'][0]['message']
+    except ValueError:
+      pass
+    except KeyError:
+      pass
+
+  def __str__(self):
+    return self.message
 
 
 class Http(object):
@@ -106,18 +122,4 @@ class Http(object):
       raise Exception('Failed to process HTTP response.')
     except httplib2.HttpLib2Error:
       raise Exception('Failed to send HTTP request.')
-
-
-class RequestException(Exception):
-
-  def __init__(self, status, content):
-    self.status = status
-    self.content = content
-    try:
-      self.message = json.loads(content)['error']['errors'][0]['message']
-    except Exception:
-      self.message = 'HTTP request failed'
-
-  def __str__(self):
-    return self.message
 

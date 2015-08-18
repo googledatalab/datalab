@@ -16,7 +16,10 @@
 """Utility functions."""
 
 import json
-import pandas as pd
+import pandas
+import types
+import gcp._util as _util
+import gcp.sql as _sql
 import gcp.bigquery as _bq
 
 
@@ -97,7 +100,7 @@ def _get_data_from_dataframe(source, fields, first_row, count):
     row = data_frame_row.to_dict()
     for key in row.keys():
       val = row[key]
-      if isinstance(val, pd.Timestamp):
+      if isinstance(val, pandas.Timestamp):
         row[key] = val.to_pydatetime()
 
     rows.append({'c': [{'v': row[c]} for c in fields]})
@@ -137,9 +140,12 @@ def _get_data(source, fields, first_row, count):
 
   if isinstance(source, basestring):
     ipy = _ipython.get_ipython()
-    source = ipy.user_ns.get(source, source)
+    source = _util.get_item(ipy.user_ns, source, source)
     if isinstance(source, basestring):
       source = _bq.table(source)
+
+  if isinstance(source, types.ModuleType) or isinstance(source, _sql.SqlStatement):
+    source = _bq.query(_sql.SqlModule.expand(source))
 
   if isinstance(source, list):
     if len(source) == 0:
@@ -150,7 +156,7 @@ def _get_data(source, fields, first_row, count):
       return _get_data_from_list_of_lists(source, fields, first_row, count)
     else:
       raise Exception("To get tabular data from a list it must contain dictionaries or lists.")
-  elif isinstance(source, pd.DataFrame):
+  elif isinstance(source, pandas.DataFrame):
     return _get_data_from_dataframe(source, fields, first_row, count)
   elif isinstance(source, _bq._Query):
     return _get_data_from_table(source.results(), fields, first_row, count)
@@ -159,10 +165,10 @@ def _get_data(source, fields, first_row, count):
   else:
     raise Exception("Cannot chart %s; unsupported object type" % source)
 
-def _handle_magic_line(line, cell, parser):
+
+def _handle_magic_line(line, cell, parser, namespace=None):
   """ Helper function for handling magic command lines given a parser with handlers set. """
-  ipy = _ipython.get_ipython()
-  args = parser.parse(line, ipy.user_ns)
+  args = parser.parse(line, namespace)
   if args:
     try:
       return args.func(vars(args), cell)

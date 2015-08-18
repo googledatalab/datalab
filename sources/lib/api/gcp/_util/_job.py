@@ -145,7 +145,7 @@ class Job(object):
 
   def _timeout(self):
     """ Helper for rasing timeout errors. """
-    raise _TimeoutError('Timed out waiting for Job %s to complete' % self._job_id)
+    raise _FuturesTimeoutError('Timed out waiting for Job %s to complete' % self._job_id)
 
   def wait(self, timeout=None):
     """ Wait for the job to complete, or a timeout to happen.

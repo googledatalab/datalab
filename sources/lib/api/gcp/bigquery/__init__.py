@@ -16,6 +16,7 @@
 
 import gcp as _gcp
 import gcp._util as _util
+import gcp.sql as _sql
 from ._api import Api as _Api
 from ._dataset import DataSet as _DataSet
 from ._dataset import DataSetLister as _DataSetLister
@@ -45,19 +46,22 @@ def _create_api(context):
   return _Api(context.credentials, context.project_id)
 
 
-def query(sql_statement, context=None):
+def query(sql_statement, args=None, context=None):
   """Creates a BigQuery query object.
 
   If a specific project id or credentials are unspecified, the default ones
   configured at the global level are used.
 
   Args:
-    sql_statement: the SQL query to execute.
+    sql_statement: the SQL query or %%sql SqlStatement to execute.
+    args: an optional dictionary to use when expanding the variables if passed a SqlStatement.
     context: an optional Context object providing project_id and credentials.
   Returns:
     A query object that can be executed to retrieve data from BigQuery.
   """
   api = _create_api(context)
+  if args or not isinstance(sql_statement, basestring):
+    sql_statement = _sql.SqlModule.expand(sql_statement, args)
   return _Query(api, sql_statement)
 
 

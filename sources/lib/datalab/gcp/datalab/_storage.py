@@ -14,13 +14,12 @@
 
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 
-import argparse
 import fnmatch
 import re
 
 import gcp.storage as _storage
-from ._commands import CommandParser as _CommandParser
-from ._html import HtmlBuilder as _HtmlBuilder
+from ._commands import CommandParser
+from ._html import HtmlBuilder
 from ._utils import _extract_storage_api_response_error, _handle_magic_line
 
 try:
@@ -39,7 +38,7 @@ def storage(line):
   Returns:
     The results of executing the cell.
   """
-  parser = _CommandParser.create('storage')
+  parser = CommandParser.create('storage')
 
   # TODO(gram): consider adding a move command too. I did try this already using the
   # objects.patch API to change the object name but that fails with an error:
@@ -212,7 +211,7 @@ def _render_dictionary(data, headers=None):
     data: the dictionary list
     headers: the keys in the dictionary to use as table columns, in order.
   """
-  builder = _HtmlBuilder()
+  builder = HtmlBuilder()
   builder.render_objects(data, headers, dictionary=True)
   html = builder.to_html()
   return _ipython.core.display.HTML(html)

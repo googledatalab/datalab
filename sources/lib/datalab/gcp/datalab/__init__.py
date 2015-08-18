@@ -26,6 +26,7 @@ except ImportError:
 import gcp.datalab._bigquery
 import gcp.datalab._chart
 import gcp.datalab._modules
+import gcp.datalab._sql
 import gcp.datalab._storage
 
 

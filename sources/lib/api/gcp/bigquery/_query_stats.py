@@ -26,7 +26,7 @@ class QueryStats:
   def _repr_html_(self):
     self.total_bytes = self._size_formatter(self.total_bytes)
     return """
-    <p>Query information: %s processed, results %s</p>
+    <p>Dry run information: %s to process, results %s</p>
     """ % (self.total_bytes, "cached" if self.is_cached else "not cached")
 
   def _size_formatter(self, byte_num, suf='B'):

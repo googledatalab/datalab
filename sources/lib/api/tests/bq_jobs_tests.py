@@ -21,9 +21,7 @@ from oauth2client.client import AccessTokenCredentials
 class TestCases(unittest.TestCase):
 
   def _make_job(self, id):
-    context = self._create_context()
-    api = gcp.bigquery._Api(context.credentials, context.project_id)
-    return gcp.bigquery._Job(api, id)
+    return gcp.bigquery._Job(self._create_api(), id)
 
   @mock.patch('gcp.bigquery._Api.jobs_get')
   def test_job_complete(self, mock_api_jobs_get):
@@ -52,9 +50,9 @@ class TestCases(unittest.TestCase):
     self.assertTrue(j.failed)
     e = j.fatal_error
     self.assertIsNotNone(e)
-    self.assertEqual('A', e.message.location)
-    self.assertEqual('B', e.message.message)
-    self.assertEqual('C', e.message.reason)
+    self.assertEqual('A', e.location)
+    self.assertEqual('B', e.message)
+    self.assertEqual('C', e.reason)
 
   @mock.patch('gcp.bigquery._Api.jobs_get')
   def test_job_errors(self, mock_api_jobs_get):

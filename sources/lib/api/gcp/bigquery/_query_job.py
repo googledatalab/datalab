@@ -25,6 +25,24 @@ class QueryJob(_Job):
     super(QueryJob, self).__init__(api, job_id)
     self._sql = sql
     self._table = _QueryResultsTable(api, table_name, self, is_temporary=True)
+    self._bytes_processed = None
+    self._cache_hit = None
+    self._total_rows = None
+
+  @property
+  def bytes_processed(self):
+    """ Return the number of bytes processed, or None if the job is not complete. """
+    return self._bytes_processed
+
+  @property
+  def total_rows(self):
+    """ Return the total number of rows in the result, or None if not complete. """
+    return self._total_rows
+
+  @property
+  def cache_hit(self):
+    """ Return whether the result was obtained from the cache, or None if not complete. """
+    return self._cache_hit
 
   def wait(self, timeout=None):
     """ Wait for the job to complete, or a timeout to happen.
@@ -46,6 +64,9 @@ class QueryJob(_Job):
                                                   page_size=0,
                                                   timeout=poll * 1000)
       if query_result['jobComplete']:
+        self._bytes_processed = query_result.get('totalBytesProcessed', None)
+        self._cache_hit = query_result.get('cacheHit', None)
+        self._total_rows = query_result.get('totalRows', None)
         break
 
       if timeout is not None:

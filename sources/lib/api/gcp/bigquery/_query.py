@@ -15,7 +15,7 @@
 """Implements Query BigQuery API."""
 
 from gcp._util import async_method
-from ._sampling import Sampling as _Sampling
+from ._sampling import Sampling
 from ._utils import parse_table_name as _parse_table_name
 
 
@@ -24,6 +24,36 @@ class Query(object):
 
   This object can be used to execute SQL queries and retrieve results.
   """
+
+  def _repr_sql_(self, args=None):
+    """Creates a SQL representation of this object.
+
+    Args:
+      args: an optional dictionary to use when expanding the variables in the SQL.
+    Returns:
+      The SQL representation to use when embedding this object into SQL.
+    """
+    return '(%s)' % self._sql
+
+  def __str__(self):
+    """Creates a string representation of this object.
+
+    Returns:
+      The string representation of this object.
+    """
+    return self._sql
+
+  def __repr__(self):
+    """Creates a friendly representation of this object.
+
+    Returns:
+      The friendly representation of this object.
+    """
+    return self._sql
+
+  @property
+  def sql(self):
+    return self._sql
 
   @staticmethod
   def sampling_query(api, sql, fields=None, count=5, sampling=None):
@@ -39,13 +69,7 @@ class Query(object):
     Returns:
       A Query object for sampling the table.
     """
-    # This was the cause of circular dependencies between Query and Table hence it was
-    # moved here.
-    if sampling is None:
-      sampling = _Sampling.default(count=count, fields=fields)
-    sampling_sql = sampling(sql)
-
-    return Query(api, sampling_sql)
+    return Query(api, Sampling.sampling_query(sql, fields, count, sampling))
 
   def __init__(self, api, sql):
     """Initializes an instance of a Query object.
@@ -75,7 +99,7 @@ class Query(object):
     """
     if not use_cache or (self._results is None):
       self.execute(use_cache=use_cache)
-    return self._results
+    return self._results.results
 
   def extract(self, storage_uris, format='csv', csv_delimiter=',', csv_header=True,
               use_cache=True, compress=False):
@@ -271,7 +295,7 @@ class Query(object):
     """
     job = self.execute_async(table_name=table_name, table_mode=table_mode, use_cache=use_cache,
                              priority=priority, allow_large_results=allow_large_results)
-    self._results = job.results
+    self._results = job.wait()
     return self._results
 
   def to_view(self, view_name):
@@ -284,23 +308,7 @@ class Query(object):
     Returns:
       A View for the Query.
     """
-    return _View(self._api, view_name).create(self.sql)
-
-  def _repr_sql_(self):
-    """Creates a SQL representation of this object.
-
-    Returns:
-      The SQL representation to use when embedding this object into SQL.
-    """
-    return '(' + self._sql + ')'
-
-  def __str__(self):
-    """Creates a string representation of this object.
-
-    Returns:
-      The string representation of this object.
-    """
-    return self._sql
+    return _View(self._api, view_name).create(self._sql)
 
 from ._query_job import QueryJob as _QueryJob
 from ._view import View as _View

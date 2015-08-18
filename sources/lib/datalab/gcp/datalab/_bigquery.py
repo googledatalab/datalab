@@ -14,35 +14,34 @@
 
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 
-import json as _json
-import re as _re
-import time as _time
+import json
+import re
 import IPython as _ipython
 import IPython.core.magic as _magic
 import gcp.bigquery as _bq
 import gcp._util as _util
-from ._commands import CommandParser as _CommandParser
-from ._html import HtmlBuilder as _HtmlBuilder
+import gcp.sql as _sql
+from ._commands import CommandParser
+from ._html import Html
+from ._html import HtmlBuilder
 from ._utils import _get_data, _get_field_list, _handle_magic_line
 
 
-def _create_sql_subparser(parser):
-  sql_parser = parser.subcommand('sql',
+def _create_sample_subparser(parser):
+  sample_parser = parser.subcommand('sample',
       'execute a BigQuery SQL statement and display results or create a named query object')
-  sql_parser.add_argument('-n', '--name', help='the name for this query object')
-  sql_parser.add_argument('-s', '--sample', action='store_true',
-                          help='execute the query and get a sample of results')
-  sql_parser.add_argument('-sc', '--samplecount', type=int, default=10,
+  sample_parser.add_argument('-q', '--sql', help='the name for this query object')
+  sample_parser.add_argument('-c', '--count', type=int, default=10,
                           help='number of rows to limit to if sampling')
-  sql_parser.add_argument('-sm', '--samplemethod', help='the type of sampling to use',
+  sample_parser.add_argument('-m', '--method', help='the type of sampling to use',
                           choices=['limit', 'random', 'hashed', 'sorted'], default='limit')
-  sql_parser.add_argument('-sp', '--samplepercent', type=int, default=1,
+  sample_parser.add_argument('-p', '--percent', type=int, default=1,
                           help='For random or hashed sampling, what percentage to sample from')
-  sql_parser.add_argument('-sf', '--samplefield',
+  sample_parser.add_argument('-f', '--field',
                           help='field to use for sorted or hashed sampling')
-  sql_parser.add_argument('-so', '--sampleorder', choices=['ascending', 'descending'],
+  sample_parser.add_argument('-o', '--order', choices=['ascending', 'descending'],
                           default='ascending', help='sort order to use for sorted sampling')
-  return sql_parser
+  return sample_parser
 
 
 def _create_udf_subparser(parser):
@@ -54,13 +53,13 @@ def _create_udf_subparser(parser):
 def _create_dryrun_subparser(parser):
   dryrun_parser = parser.subcommand('dryrun',
       'Send a query to BQ in dry run mode to receive approximate usage statistics')
-  dryrun_parser.add_argument('-n', '--name',
+  dryrun_parser.add_argument('-q', '--sql',
       help='the name of the query to be dry run', required=True)
   return dryrun_parser
 
 
-def _create_execute_subparser(parser):
-  execute_parser = parser.subcommand('execute',
+def _create_execute_subparser(parser, command):
+  execute_parser = parser.subcommand(command,
       'execute a BigQuery SQL statement sending results to a named table')
   execute_parser.add_argument('-nc', '--nocache', help='don\'t used previously cached results',
                               action='store_true')
@@ -68,9 +67,10 @@ def _create_execute_subparser(parser):
                               choices=['create', 'append', 'overwrite'])
   execute_parser.add_argument('-l', '--large', help='allow large results',
                               action='store_true')
-  execute_parser.add_argument('-q', '--query', help='name of query to run, if not in cell body',
+  execute_parser.add_argument('-q', '--sql', help='name of query to run, if not in cell body',
                               nargs='?')
-  execute_parser.add_argument('table', help='target table name')
+  execute_parser.add_argument('-d', '--destination', help='target table name',
+                              nargs='?')
   return execute_parser
 
 
@@ -148,16 +148,15 @@ def _create_bigquery_parser():
   for the handlers that bind the cell contents and thus must recreate this parser for each
   cell upon execution.
   """
-  parser = _CommandParser.create('bigquery')
+  parser = CommandParser.create('bigquery')
 
   # This is a bit kludgy because we want to handle some line magics and some cell magics
   # with the bigquery command.
 
-  # %%bigquery sql
-  sql_parser = _create_sql_subparser(parser)
-  sql_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler(args, cell, sql_parser,
-                                                _sql_cell, cell_required=True))
+  # %%bigquery sample
+  sample_parser = _create_sample_subparser(parser)
+  sample_parser.set_defaults(
+      func=lambda args, cell: _dispatch_handler(args, cell, sample_parser, _sample_cell))
 
   # %%bigquery dryrun
   dryrun_parser = _create_dryrun_subparser(parser)
@@ -172,10 +171,17 @@ def _create_bigquery_parser():
                                                 _udf_cell, cell_required=True))
 
   # %%bigquery execute
-  execute_parser = _create_execute_subparser(parser)
+  execute_parser = _create_execute_subparser(parser, 'execute')
   execute_parser.set_defaults(
       func=lambda args, cell: _dispatch_handler(args, cell,
                                                 execute_parser, _execute_cell))
+
+  # %%bigquery pipeline
+  pipeline_parser = _create_execute_subparser(parser, 'pipeline')
+  pipeline_parser.add_argument('-n', '--name', help='pipeline name')
+  pipeline_parser.set_defaults(
+    func=lambda args, cell: _dispatch_handler(args, cell,
+                                              pipeline_parser, _pipeline_cell))
 
   # %bigquery table
   table_parser = _create_table_subparser(parser)
@@ -225,20 +231,22 @@ def bigquery(line, cell=None):
 
   The supported syntax is:
 
-    %%bigquery <line>
+    %%bigquery <command> [<args>]
     <cell>
 
   or:
 
-    %bigquery <line>
+    %bigquery <command> [<args>]
 
-  Args:
-    line: the contents of the bigquery line.
-    cell: the contents of the cell.
-  Returns:
-    The results of executing the cell.
+  Use %bigquery --help for a list of commands, or %bigquery <command> --help for help
+  on a specific command.
   """
-  return _handle_magic_line(line, cell, _bigquery_parser)
+  namespace = {}
+  if line.find('$') >= 0:
+    # We likely have variables to expand; get the appropriate context.
+    namespace = _notebook_environment()
+
+  return _handle_magic_line(line, cell, _bigquery_parser, namespace=namespace)
 
 
 def _dispatch_handler(args, cell, parser, handler,
@@ -270,70 +278,62 @@ def _dispatch_handler(args, cell, parser, handler,
   return handler(args, cell)
 
 
-def _sql_cell(args, sql):
-  """Implements the SQL bigquery cell magic for ipython notebooks.
+def _get_query_argument(args, code=None, env=None):
+  sql_arg = args['sql']
+  item = _get_notebook_item(sql_arg)
+  if isinstance(item, _bq._Query):
+    return item
 
-  The supported syntax is:
-  %%bigquery sql [--name <var>]
-  <sql>
+  # For most magics we want to use the notebook environment; the only exception is the
+  # %bigquery pipeline where we want to avoid it to test hermeticity.
+  if env is None:
+    env = _notebook_environment()
+  item, env = _sql.SqlModule.get_sql_statement_with_environment(item, env)
+  if code:
+    exec code in env
+  return _bq.query(item, args=env)
+
+
+def _sample_cell(args, code):
+  """Implements the bigquery sample cell magic for ipython notebooks.
 
   Args:
-    args: the optional arguments following '%%bigquery sql'.
-    sql: the contents of the cell interpreted as the SQL.
+    args: the optional arguments following '%%bigquery sample'.
+    code: optional contents of the cell interpreted as Python.
   Returns:
     The results of executing the query converted to a dataframe if no variable
     was specified. None otherwise.
   """
-  ipy = _ipython.get_ipython()
 
-  # Use the user_ns dictionary, which contains all current declarations in
-  # the kernel as the dictionary to use to retrieve values for placeholders
-  # within the specified sql statement.
-  sql = _bq.sql(sql, **ipy.user_ns)
-  query = _bq.query(sql)
-
-  variable_name = args['name']
-  if variable_name:
-    # Update the global namespace with the new variable, or update the value of
-    # the existing variable if it already exists.
-    ipy.push({variable_name: query})
-    if not args['sample']:
-      return None
-
-  if args['samplemethod'] is None:
-    return query.results()
-
-  count = args['samplecount']
-  method = args['samplemethod']
+  query = _get_query_argument(args, code)
+  count = args['count']
+  method = args['method']
   if method == 'random':
-    sampling = _bq.Sampling.random(percent=args['samplepercent'], count=count)
+    sampling = _bq.Sampling.random(percent=args['percent'], count=count)
   elif method == 'hashed':
-    sampling = _bq.Sampling.hashed(field_name=args['samplefield'], percent=args['samplepercent'],
+    sampling = _bq.Sampling.hashed(field_name=args['field'], percent=args['percent'],
                                    count=count)
   elif method == 'sorted':
-    ascending = args['sampleorder'] == 'ascending'
-    sampling = _bq.Sampling.sorted(args['samplefield'], ascending=ascending, count=count)
+    ascending = args['order'] == 'ascending'
+    sampling = _bq.Sampling.sorted(args['field'], ascending=ascending, count=count)
   elif method == 'limit':
     sampling = _bq.Sampling.default(count=count)
+
   return query.sample(sampling=sampling)
 
 
 def _dryrun_line(args):
   """Implements the BigQuery cell magic used to dry run BQ queries.
 
-  The supported syntax is:
-  %bigquery dryrun -n|--name <query identifier>
+   The supported syntax is:
+   %bigquery dryrun -q|--sql <query identifier>
 
   Args:
     args: the argument following '%bigquery dryrun'.
   Returns:
     The response wrapped in a DryRunStats object
   """
-
-  query = _get_item(args['name'])
-
-  if not isinstance(query, _bq._Query):
-    return "Error: %s is not a query!" % args['name']
+  query = _get_query_argument(args)
 
   result = query.execute_dry_run()
   return _bq._QueryStats(total_bytes=result['totalBytesProcessed'], is_cached=result['cacheHit'])
@@ -354,8 +354,6 @@ def _udf_cell(args, js):
     The results of executing the UDF converted to a dataframe if no variable
     was specified. None otherwise.
   """
-  ipy = _ipython.get_ipython()
-
   variable_name = args['name']
   if not variable_name:
     raise Exception("Declaration must be of the form %%bigquery udf <variable name>")
@@ -364,7 +362,7 @@ def _udf_cell(args, js):
   spec_pattern = r'\{\{([^}]+)\}\}'
   spec_part_pattern = r'[a-z_][a-z0-9_]*'
 
-  specs = _re.findall(spec_pattern, js)
+  specs = re.findall(spec_pattern, js)
   if len(specs) < 2:
     raise Exception('The JavaScript must declare the input row and output emitter parameters '
                     'using valid jsdoc format comments.\n'
@@ -373,7 +371,7 @@ def _udf_cell(args, js):
                     'function({{field:type, field2:type}}.')
 
   inputs = []
-  input_spec_parts = _re.findall(spec_part_pattern, specs[0], flags=_re.IGNORECASE)
+  input_spec_parts = re.findall(spec_part_pattern, specs[0], flags=re.IGNORECASE)
   if len(input_spec_parts) % 2 != 0:
     raise Exception('Invalid input row param declaration. The jsdoc type expression must '
                     'define an object with field and type pairs.')
@@ -381,7 +379,7 @@ def _udf_cell(args, js):
     inputs.append((n, t))
 
   outputs = []
-  output_spec_parts = _re.findall(spec_part_pattern, specs[1], flags=_re.IGNORECASE)
+  output_spec_parts = re.findall(spec_part_pattern, specs[1], flags=re.IGNORECASE)
   if len(output_spec_parts) % 2 != 0:
     raise Exception('Invalid output emitter param declaration. The jsdoc type expression must '
                     'define a function accepting an an object with field and type pairs.')
@@ -390,30 +388,22 @@ def _udf_cell(args, js):
 
   # Finally build the UDF object
   udf = _bq.udf(inputs, outputs, js)
-  ipy.push({variable_name: udf})
+  _notebook_environment()[variable_name] = udf
 
   return None
 
 
-def _execute_cell(args, sql):
-  ipy = _ipython.get_ipython()
-
-  # Use the user_ns dictionary, which contains all current declarations in
-  # the kernel as the dictionary to use to retrieve values for placeholders
-  # within the specified sql statement.
-  if sql:
-    if args['query']:
-      return "Cannot have a query parameter and a query cell body"
-    sql = _bq.sql(sql, **ipy.user_ns)
-    query = _bq.query(sql)
-  else:
-    if not args['query']:
-      return "Need a query parameter or a query cell body"
-    query = _get_item(args['query'])
-    if not query:
-      return "%s does not refer to a query" % args['query']
-  return query.execute(args['table'], table_mode=args['mode'], use_cache=not args['nocache'],
+def _execute_cell(args, code):
+  query = _get_query_argument(args, code)
+  return query.execute(args['destination'], table_mode=args['mode'], use_cache=not args['nocache'],
                        allow_large_results=args['large']).results
+
+
+def _pipeline_cell(args, code):
+  query = _get_query_argument(args, code, {})
+  print(query.sql)
+  result = query.execute_dry_run()
+  return _bq._QueryStats(total_bytes=result['totalBytesProcessed'], is_cached=result['cacheHit'])
 
 
 def _table_line(args):
@@ -425,6 +415,57 @@ def _table_line(args):
     return _ipython.core.display.HTML(html)
   else:
     print "%s does not exist" % name
+
+def _notebook_environment():
+  ipy = _ipython.get_ipython()
+  return ipy.user_ns
+
+
+def _get_notebook_item(name):
+  """ Get an item from the IPython environment. """
+  env = _notebook_environment()
+  return _util.get_item(env, name)
+
+
+def _get_schema(name):
+  """ Given a variable or table name, get the Schema if it exists. """
+  item = _get_notebook_item(name)
+  if not item:
+    item = _get_table(name)
+
+  if isinstance(item, _bq._Schema):
+    return item
+  if hasattr(item, 'schema') and isinstance(item.schema, _bq._Schema):
+    return item.schema
+  return None
+
+
+# An LRU cache for Tables. This is mostly useful so that when we cross page boundaries
+# when paging through a table we don't have to re-fetch the schema.
+_table_cache = _util.LRUCache(10)
+
+
+def _get_table(name):
+  """ Given a variable or table name, get a Table if it exists.
+
+  Args:
+    name: the name of the Table or a variable referencing the Table.
+  Returns:
+    The Table, if found.
+  """
+  # If name is a variable referencing a table, use that.
+  item = _get_notebook_item(name)
+  if isinstance(item, _bq._Table):
+    return item
+  # Else treat this as a BQ table name and return the (cached) table if it exists.
+  try:
+    return _table_cache[name]
+  except KeyError:
+    table = _bq.table(name)
+    if table.exists():
+      _table_cache[name] = table
+      return table
+  return None
 
 
 def _schema_line(args):
@@ -439,7 +480,7 @@ def _schema_line(args):
 
 def _render_table(data, fields=None):
   """ Helper to render a list of dictionaries as an HTML display object. """
-  builder = _HtmlBuilder()
+  builder = HtmlBuilder()
   builder.render_objects(data, fields, dictionary=True)
   html = builder.to_html()
   return _ipython.core.display.HTML(html)
@@ -464,7 +505,7 @@ def _tables_line(args):
 
 def _extract_line(args):
   name = args['source']
-  source = _get_item(name)
+  source = _get_notebook_item(name)
   if not source:
     source = _get_table(name)
 
@@ -495,7 +536,7 @@ def _load_cell(args, schema):
     if not (args['append'] or args['overwrite']):
       print "%s already exists; use --append or --overwrite" % name
   elif schema:
-    table.create(_json.loads(schema))
+    table.create(json.loads(schema))
   elif not args['infer']:
     print 'Table does not exist, no schema specified in cell and no --infer flag; cannot load'
     return
@@ -518,48 +559,6 @@ def _load_cell(args, schema):
   elif job.errors:
     print 'Load completed with errors: %s' % str(job.errors)
 
-# An LRU cache for Tables. This is mostly useful so that when we cross page boundaries
-# when paging through a table we don't have to re-fetch the schema.
-_table_cache = _util.LRUCache(10)
-
-
-def _get_item(name):
-  """ Get an item from the IPython environment. """
-  ipy = _ipython.get_ipython()
-  return ipy.user_ns.get(name, None)
-
-
-def _get_table(name):
-  """ Given a variable or table name, get a Table if it exists. """
-  # If name is a variable referencing a table, use that.
-  item = _get_item(name)
-  if isinstance(item, _bq._Table):
-    return item
-  # Else treat this as a BQ table name and return the (cached) table if it exists.
-  try:
-    return _table_cache[name]
-  except KeyError:
-    table = _bq.table(name)
-    if table.exists():
-      _table_cache[name] = table
-      return table
-  return None
-
-
-def _get_schema(name):
-  """ Given a variable or table name, get the Schema if it exists. """
-  item = _get_item(name)
-  if not item:
-    item = _get_table(name)
-
-  if isinstance(item, _bq._Schema):
-    return item
-  try:
-    if isinstance(item.schema, _bq._Schema):
-      return item.schema
-  except AttributeError:
-    return None
-
 
 def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
   """  Return a table viewer.
@@ -577,10 +576,10 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
     return
 
   _HTML_TEMPLATE = """
-    <div class="bqtv" id="bqtv_%s"></div>
+    <div class="bqtv" id="%s"></div>
     <div><br />%s<br />%s</div>
     <script>
-      require(['extensions/charting', 'element!bqtv_%s', 'style!/static/extensions/charting.css'],
+      require(['extensions/charting', 'element!%s'%s],
         function(charts, dom) {
           charts.render(dom,
             {
@@ -597,8 +596,8 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
 
   if fields is None:
     fields = _get_field_list(fields, table.schema)
-  div_id = str(int(round(_time.time())))
-  meta_count = "rows: %d" % table.length if table.length >= 0 else ''
+  div_id = 'bqtv_%d' % Html.next_id()
+  meta_count = ("rows: %d" % table.length) if table.length >= 0 else ''
   meta_name = job_id if job_id else table.full_name
   data, total_count = _get_data(table, fields, 0, rows_per_page)
 
@@ -612,13 +611,14 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
   chart = 'table' if 0 <= total_count <= rows_per_page else 'paged_table'
 
   return _HTML_TEMPLATE %\
-      (div_id, meta_name, meta_count, div_id, chart, table.full_name, ','.join(fields),
-       total_count, rows_per_page, _json.dumps(data, cls=_util.JSONEncoder))
+      (div_id, meta_name, meta_count, div_id, Html.get_style_arg('charting.css'), chart,
+       table.full_name, ','.join(fields), total_count, rows_per_page,
+       json.dumps(data, cls=_util.JSONEncoder))
 
 
 def _repr_html_query(query):
   # TODO(nikhilko): Pretty print the SQL
-  builder = _HtmlBuilder()
+  builder = HtmlBuilder()
   builder.render_text(query.sql, preformatted=True)
   return builder.to_html()
 
@@ -639,15 +639,16 @@ def _repr_html_table_schema(schema):
   _HTML_TEMPLATE = """
     <div class="bqsv" id="%s"></div>
     <script>
-      require(['extensions/bigquery', 'element!%s', 'style!/static/extensions/bigquery.css'],
+      require(['extensions/bigquery', 'element!%s'%s],
           function(bq, dom) {
               bq.renderSchema(dom, %s);
           }
       );
     </script>
     """
-  id = 'bqsv%d' % int(round(_time.time() * 100))
-  return _HTML_TEMPLATE % (id, id, _json.dumps(schema._bq_schema))
+  id = 'bqsv_%d' % Html.next_id()
+  return _HTML_TEMPLATE % (id, id, Html.get_style_arg('bigquery.css'),
+                           json.dumps(schema._bq_schema))
 
 
 def _repr_html_function_evaluation(evaluation):
@@ -661,8 +662,8 @@ def _repr_html_function_evaluation(evaluation):
       );
     </script>
     """
-  id = 'udf%d' % int(round(_time.time() * 100))
-  return _HTML_TEMPLATE % (id, id, evaluation.implementation, _json.dumps(evaluation.data))
+  id = 'udf_%d' % Html.next_id()
+  return _HTML_TEMPLATE % (id, id, evaluation.implementation, json.dumps(evaluation.data))
 
 
 def _register_html_formatters():
