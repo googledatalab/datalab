@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from distutils.core import setup
+from setuptools import setup
 
 # TODO(nikhilko):
 # Fill in various other bits that can/should be specified once we have them.
@@ -35,7 +35,7 @@ setup(
               'gcp.storage',
              ],
     description='Google Cloud APIs for data analysis scenarios.',
-    requires=['futures',
+    install_requires=['futures',
               'httplib2',
               'IPython',
               'oauth2client',
