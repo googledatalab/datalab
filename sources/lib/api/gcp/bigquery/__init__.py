@@ -14,7 +14,6 @@
 
 """Google Cloud Platform library - BigQuery Functionality."""
 
-import gcp as _gcp
 import gcp._util as _util
 from ._api import Api as _Api
 from ._dataset import DataSet as _DataSet
@@ -41,7 +40,7 @@ def _create_api(context):
     An Api object to make BigQuery HTTP API requests.
   """
   if context is None:
-    context = _gcp.Context.default()
+    context = _util.Context.default()
   return _Api(context.credentials, context.project_id)
 
 

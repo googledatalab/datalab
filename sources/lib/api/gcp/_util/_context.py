@@ -14,8 +14,8 @@
 
 """Implements Context functionality."""
 
-from ._util import MetadataCredentials
-from ._util import MetadataService
+from ._credentials import MetadataCredentials
+from ._metadata import MetadataService
 
 
 class Context(object):

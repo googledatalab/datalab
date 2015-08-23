@@ -30,7 +30,7 @@ def _create_api(context):
     An Api object to make Storage HTTP API requests.
   """
   if context is None:
-    context = _gcp.Context.default()
+    context = _gcp._util.Context.default()
   return _Api(context.credentials, context.project_id)
 
 

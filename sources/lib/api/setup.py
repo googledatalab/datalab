@@ -22,24 +22,24 @@ from setuptools import setup
 # Also, figure out publishing, so this works with pip install, and specifying
 # dependencies, so they can be accounted for during installation.
 # Known depdenencies:
+# - futures
 # - httplib2
 # - oauth2client
 # - pandas
+# - py-dateutil
 
 setup(
     name='GCPData',
     version='0.1.0',
-    packages=['gcp',
-              'gcp._util',
+    namespace_packages=['gcp'],
+    packages=['gcp._util',
               'gcp.bigquery',
               'gcp.storage',
              ],
     description='Google Cloud APIs for data analysis scenarios.',
-    install_requires=['futures',
-              'httplib2',
-              'IPython',
-              'oauth2client',
-              'pandas',
-              'requests'
-             ]
+    install_requires=['futures==3.0.3',
+                      'httplib2==0.9.1',
+                      'oauth2client==1.4.12',
+                      'pandas==0.16.2',
+                      'py-dateutil==2.2']
 )
