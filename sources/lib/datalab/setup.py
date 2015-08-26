@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from distutils.core import setup
+from setuptools import setup
 
 # TODO(nikhilko):
 # Fill in various other bits that can/should be specified once we have them.
@@ -21,9 +21,13 @@ from distutils.core import setup
 setup(
     name='GCPDataLab',
     version='0.1.0',
+    namespace_packages=['gcp'],
     packages=['gcp.datalab', 'gcp.ipython'],
     description='Google Cloud DataLab',
-    requires=['IPython',
-              'GCPData'
-             ]
+    install_requires=['httplib2==0.9.1',
+                      'pandas==0.16.2',
+                      'requests==2.4.3',
+                      'ipython==2.4.1',
+                      'GCPData'
+                     ]
 )

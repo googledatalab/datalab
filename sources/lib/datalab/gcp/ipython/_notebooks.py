@@ -510,7 +510,7 @@ class DataLabNotebookManager(CompositeNotebookManager):
     # as we can make it). Some caveats:
     # - The name cannot contain 'google'
     # - Project ids maybe domain-qualified, eg. foo.com:bar
-    project_id = _gcp.Context.default().project_id
+    project_id = _gcp._util.Context.default().project_id
     project_id = project_id.replace('google.com', 'gcom').replace(':', '-').replace('.', '-')
     bucket_name = project_id + '-datalab'
 

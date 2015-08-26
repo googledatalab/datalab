@@ -94,8 +94,8 @@ ADD docs/ /datalab/docs
 ADD content/ /datalab
 
 # Install build artifacts
-RUN cd /datalab/lib/GCPData-0.1.0 && python setup.py install && \
-    cd /datalab/lib/GCPDataLab-0.1.0 && python setup.py install && \
+RUN cd /datalab/lib/GCPData-0.1.0 && pip install . && \
+    cd /datalab/lib/GCPDataLab-0.1.0 && pip install . && \
     cd /datalab/web && /tools/node/bin/npm install && \
     cd /
 
