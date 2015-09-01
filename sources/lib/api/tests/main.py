@@ -18,26 +18,39 @@ import unittest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
+import bq_dataset_tests
+import bq_jobs_tests
+import bq_parser_tests
 import bq_query_tests
 import bq_sampling_tests
 import bq_table_tests
 import bq_udf_tests
+import bq_view_tests
 import cs_bucket_tests
 import cs_item_tests
 import http_tests
+import lru_cache_tests
 import metadataservice_tests
 import sql_tests
+import util_tests
 
-_TEST_MODULES = [metadataservice_tests,
-                 http_tests,
-                 sql_tests,
-                 bq_query_tests,
-                 bq_table_tests,
-                 bq_udf_tests,
-                 bq_sampling_tests,
-                 cs_bucket_tests,
-                 cs_item_tests
-                ]
+_TEST_MODULES = [
+  bq_dataset_tests,
+  bq_jobs_tests,
+  bq_parser_tests,
+  bq_query_tests,
+  bq_table_tests,
+  bq_udf_tests,
+  bq_view_tests,
+  bq_sampling_tests,
+  cs_bucket_tests,
+  cs_item_tests,
+  http_tests,
+  lru_cache_tests,
+  metadataservice_tests,
+  sql_tests,
+  util_tests
+]
 
 if __name__ == '__main__':
   suite = unittest.TestSuite()

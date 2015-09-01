@@ -16,9 +16,21 @@
 """Miscellaneous simple utility functions."""
 
 import traceback as _tb
+import types
 
 
 def print_exception_with_last_stack(e):
   _tb.print_exc()
   print str(e)
 
+def get_item(env, name, default=None):
+  """ Get an item from a dictionary, handling nested lookups with dotted notation. """
+  # TODO: handle attributes
+  for key in name.split('.'):
+    if isinstance(env, dict) and key in env:
+      env = env[key]
+    elif isinstance(env, types.ModuleType) and key in env.__dict__:
+      env = env.__dict__[key]
+    else:
+      return default
+  return env

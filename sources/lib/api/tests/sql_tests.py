@@ -14,7 +14,7 @@
 
 import unittest
 
-from gcp._util._sql import Sql
+from gcp.sql import SqlStatement as Sql
 
 
 class TestCases(unittest.TestCase):
@@ -24,14 +24,14 @@ class TestCases(unittest.TestCase):
                ' SELECT time FROM [logs.today] ']
 
     for query in queries:
-      formatted_query = Sql.format(query, None)
+      formatted_query = Sql._format(query, None)
       self.assertEqual(query, formatted_query)
 
   def test_single_placeholder(self):
     query = 'SELECT time FROM [logs.today] WHERE status == $param'
     args = {'param': 200}
 
-    formatted_query = Sql.format(query, args)
+    formatted_query = Sql._format(query, args)
     self.assertEqual(formatted_query,
                      'SELECT time FROM [logs.today] WHERE status == 200')
 
@@ -40,7 +40,7 @@ class TestCases(unittest.TestCase):
              'WHERE status == $status AND path == $path')
     args = {'status': 200, 'path': '/home'}
 
-    formatted_query = Sql.format(query, args)
+    formatted_query = Sql._format(query, args)
     self.assertEqual(formatted_query,
                      ('SELECT time FROM [logs.today] '
                       'WHERE status == 200 AND path == "/home"'))
@@ -49,7 +49,7 @@ class TestCases(unittest.TestCase):
     query = 'SELECT time FROM [logs.today] WHERE path == "/foo$$bar"'
     args = {'status': 200}
 
-    formatted_query = Sql.format(query, args)
+    formatted_query = Sql._format(query, args)
     self.assertEqual(formatted_query,
                      'SELECT time FROM [logs.today] WHERE path == "/foo$bar"')
 
@@ -57,7 +57,7 @@ class TestCases(unittest.TestCase):
     query = 'SELECT time FROM [logs.today] WHERE path == $path'
     args = {'path': 'xyz"xyz'}
 
-    formatted_query = Sql.format(query, args)
+    formatted_query = Sql._format(query, args)
     self.assertEqual(formatted_query,
                      'SELECT time FROM [logs.today] WHERE path == "xyz\\"xyz"')
 
@@ -77,7 +77,7 @@ class TestCases(unittest.TestCase):
                       'WHERE success == False AND server == "$master" '
                       'LIMIT 10')
 
-    formatted_query = Sql.format(query, args)
+    formatted_query = Sql._format(query, args)
 
     self.assertEqual(formatted_query, expected_query)
 
@@ -86,7 +86,7 @@ class TestCases(unittest.TestCase):
     args = {'s': 200}
 
     with self.assertRaises(Exception) as error:
-      _ = Sql.format(query, args)
+      _ = Sql._format(query, args)
 
     e = error.exception
-    self.assertEqual(e.args[1], 'status')
+    self.assertEqual(e.message, 'Unsatisfied dependency $status')

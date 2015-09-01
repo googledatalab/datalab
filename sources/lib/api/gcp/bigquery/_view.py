@@ -195,7 +195,7 @@ class View(object):
     return self.materialization.execute(table_name=table_name, table_mode=table_mode,
                                         use_cache=use_cache, priority=priority)
 
-  def _repr_sql_(self):
+  def _repr_sql_(self, args=None):
     """Returns a representation of the view for embedding into a SQL statement.
 
     Returns:
@@ -207,14 +207,6 @@ class View(object):
     """Returns a representation for the view for showing in the notebook.
     """
     return '%s: %s' % (self._table, self.query)
-
-  def _repr_sql_(self):
-    """Returns a representation of the view for embedding into a SQL statement.
-
-    Returns:
-      A formatted name for use within SQL statements.
-    """
-    return '[' + self._table.full_name + ']'
 
 
 from ._query import Query as _Query

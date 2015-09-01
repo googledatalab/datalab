@@ -14,11 +14,12 @@
 
 """Implementation of command parsing and handling within magics."""
 
-import argparse as _argparse
-import shlex as _shlex
+import argparse
+import shlex
+import IPython as _ipython
 
 
-class CommandParser(_argparse.ArgumentParser):
+class CommandParser(argparse.ArgumentParser):
   """An argument parser to parse commands in line/cell magic declarations.
   """
 
@@ -37,7 +38,7 @@ class CommandParser(_argparse.ArgumentParser):
   def exit(self, status=0, message=None):
     """Overriden exit method to stop parsing without calling sys.exit().
     """
-    raise Exception()
+    raise Exception(message)
 
   def format_usage(self):
     """Overriden usage generator to use the full help message.
@@ -49,7 +50,7 @@ class CommandParser(_argparse.ArgumentParser):
     """ Expand any metavariable references in the argument list. """
     args = []
     # Using shlex.split handles quotes args and escape characters.
-    for arg in _shlex.split(line):
+    for arg in shlex.split(line):
       if not arg:
          continue
       if arg[0] == '$':
@@ -62,9 +63,12 @@ class CommandParser(_argparse.ArgumentParser):
         args.append(arg)
     return args
 
-  def parse(self, line, namespace={}):
+  def parse(self, line, namespace=None):
     """Parses a line into a dictionary of arguments, expanding metavariables from a namespace. """
     try:
+      if namespace is None:
+        ipy = _ipython.get_ipython()
+        namespace = ipy.user_ns
       args = CommandParser.create_args(line, namespace)
       return self.parse_args(args)
     except Exception as e:

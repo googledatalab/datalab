@@ -14,8 +14,7 @@
 
 """Google Cloud Platform library - IPython HTML display Functionality."""
 
-import time as _time
-
+import time
 
 class Html(object):
   """A helper to enable generating an HTML representation as display data in a notebook.
@@ -23,13 +22,30 @@ class Html(object):
   This object supports the combination of HTML markup and/or associated JavaScript.
   """
 
+  _div_id_counter = int(round(time.time() * 100))
+  _styles = []
+
+  @staticmethod
+  def next_id():
+    Html._div_id_counter += 1
+    return Html._div_id_counter
+
+  @staticmethod
+  def get_style_arg(stylesheet):
+    """ Record that we have added a stylesheet and return require.js dependency argument. """
+    if stylesheet not in Html._styles:
+      Html._styles.append(stylesheet)
+      return ', \'style!/static/extensions/%s\'' % stylesheet
+    return ''
+
   def __init__(self, markup=None):
     """Initializes an instance of Html.
     """
-    self._id = '_%d' % int(round(_time.time()))
+    self._id = Html.next_id()
+    Html._div_id_counter += 1
     self._class_name = ''
     self._markup = markup
-    self._dependencies = [('element!' + self._id, 'dom')]
+    self._dependencies = [('element!hh_%d' % self._id, 'dom')]
     self._script = ''
 
   def add_class(self, class_name):
@@ -51,7 +67,7 @@ class Html(object):
     """Generates the HTML representation.
     """
     parts = []
-    parts.append('<div id="%s" class="%s">%s</div>' % (self._id, self._class, self._markup))
+    parts.append('<div id="hh_%s" class="%s">%s</div>' % (self._id, self._class, self._markup))
 
     if len(self._script) != 0:
       parts.append('<script>')

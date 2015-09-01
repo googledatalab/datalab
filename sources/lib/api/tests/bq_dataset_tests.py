@@ -15,6 +15,7 @@
 import unittest
 import gcp
 import gcp.bigquery
+import gcp._util
 import mock
 from oauth2client.client import AccessTokenCredentials
 
@@ -70,13 +71,13 @@ class TestCases(unittest.TestCase):
     mock_api_datasets_get.return_value = None
     dataset = self._create_dataset('test:requestlogs')
     self.assertTrue(dataset.exists())
-    mock_api_datasets_get.side_effect = Exception([None, 404])
+    mock_api_datasets_get.side_effect = gcp._util.RequestException(404, '')
     self.assertFalse(dataset.exists())
 
   @mock.patch('gcp.bigquery._Api.datasets_insert')
   @mock.patch('gcp.bigquery._Api.datasets_get')
   def test_datasets_create_fails(self, mock_api_datasets_get, mock_api_datasets_insert):
-    mock_api_datasets_get.side_effect = Exception([None, 404])
+    mock_api_datasets_get.side_effect = gcp._util.RequestException(404, '')
     mock_api_datasets_insert.return_value = {}
 
     ds = self._create_dataset('requestlogs')
@@ -86,7 +87,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._Api.datasets_insert')
   @mock.patch('gcp.bigquery._Api.datasets_get')
   def test_datasets_create_succeeds(self, mock_api_datasets_get, mock_api_datasets_insert):
-    mock_api_datasets_get.side_effect = Exception([None, 404])
+    mock_api_datasets_get.side_effect = gcp._util.RequestException(404, '')
     mock_api_datasets_insert.return_value = {'selfLink': None}
     ds = self._create_dataset('requestlogs')
     self.assertEqual(ds, ds.create())
@@ -111,7 +112,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._Api.datasets_delete')
   def test_datasets_delete_fails(self, mock_api_datasets_delete, mock_api_datasets_get):
     mock_api_datasets_delete.return_value = None
-    mock_api_datasets_get.side_effect = Exception([None, 404])
+    mock_api_datasets_get.side_effect = gcp._util.RequestException(404, '')
     ds = self._create_dataset('requestlogs')
     with self.assertRaises(Exception):
       _ = ds.delete()
@@ -120,8 +121,14 @@ class TestCases(unittest.TestCase):
   def test_tables_list(self, mock_api_tables_list):
     mock_api_tables_list.return_value = {
       'tables': [
-          {'tableReference': {'projectId': 'p', 'datasetId': 'd', 'tableId': 't1'}},
-          {'tableReference': {'projectId': 'p', 'datasetId': 'd', 'tableId': 't2'}},
+          {
+            'type': 'TABLE',
+            'tableReference': {'projectId': 'p', 'datasetId': 'd', 'tableId': 't1'}
+          },
+          {
+            'type': 'TABLE',
+            'tableReference': {'projectId': 'p', 'datasetId': 'd', 'tableId': 't2'}
+          },
       ]
     }
     ds = self._create_dataset('requestlogs')

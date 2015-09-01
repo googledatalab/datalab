@@ -32,6 +32,7 @@ setup(
     packages=['gcp',
               'gcp._util',
               'gcp.bigquery',
+              'gcp.sql',
               'gcp.storage',
              ],
     description='Google Cloud APIs for data analysis scenarios.',

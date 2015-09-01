@@ -1,4 +1,4 @@
-# Copyright 2014 Google Inc. All rights reserved.
+# Copyright 2015 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Implements BigQuery related data sampling strategies."""
+"""Sampling for BigQuery."""
 
 
 class Sampling(object):
@@ -52,27 +52,6 @@ class Sampling(object):
     return lambda sql: 'SELECT %s FROM (%s) LIMIT %d' % (projection, sql, count)
 
   @staticmethod
-  def hashed(field_name, percent, fields=None, count=0):
-    """Provides a sampling strategy based on hashing and selecting a percentage of data.
-
-    Args:
-      field_name: the name of the field to hash.
-      percent: the percentage of the resulting hashes to select.
-      fields: an optional list of field names to retrieve.
-      count: optional maximum count of rows to pick.
-    Returns:
-      A sampling function that can be applied to get a hash-based sampling.
-    """
-    def _hashed_sampling(sql):
-      projection = Sampling._create_projection(fields)
-      sql = 'SELECT %s FROM (%s) WHERE ABS(HASH(%s)) %% 100 < %d' % \
-          (projection, sql, field_name, percent)
-      if count != 0:
-        sql = sql + (' LIMIT %d' % count)
-      return sql
-    return _hashed_sampling
-
-  @staticmethod
   def sorted(field_name, ascending=True, fields=None, count=5):
     """Provides a sampling strategy that picks from an ordered set of rows.
 
@@ -88,6 +67,45 @@ class Sampling(object):
     projection = Sampling._create_projection(fields)
     return lambda sql: 'SELECT %s FROM (%s) ORDER BY %s%s LIMIT %d' % (projection, sql, field_name,
                                                                        direction, count)
+
+  @staticmethod
+  def sampling_query(sql, fields=None, count=5, sampling=None):
+    """Returns a sampling query for the SQL object.
+
+    Args:
+      api: the BigQuery API object to use to issue requests.
+      sql: the SQL object to sample
+      fields: an optional list of field names to retrieve.
+      count: an optional count of rows to retrieve which is used if a specific
+          sampling is not specified.
+      sampling: an optional sampling strategy to apply to the table.
+    Returns:
+      A SQL query string for sampling the input sql.
+    """
+    if sampling is None:
+      sampling = Sampling.default(count=count, fields=fields)
+    return sampling(sql)
+
+  @staticmethod
+  def hashed(field_name, percent, fields=None, count=0):
+    """Provides a sampling strategy based on hashing and selecting a percentage of data.
+
+    Args:
+      field_name: the name of the field to hash.
+      percent: the percentage of the resulting hashes to select.
+      fields: an optional list of field names to retrieve.
+      count: optional maximum count of rows to pick.
+    Returns:
+      A sampling function that can be applied to get a hash-based sampling.
+    """
+    def _hashed_sampling(sql):
+      projection = Sampling._create_projection(fields)
+      sql = 'SELECT %s FROM (%s) WHERE ABS(HASH(%s)) %% 100 < %d' % \
+            (projection, sql, field_name, percent)
+      if count != 0:
+        sql = '%s LIMIT %d' % (sql, count)
+      return sql
+    return _hashed_sampling
 
   @staticmethod
   def random(percent, fields=None, count=0):
@@ -107,7 +125,6 @@ class Sampling(object):
       projection = Sampling._create_projection(fields)
       sql = 'SELECT %s FROM (%s) WHERE rand() < %f' % (projection, sql, percent / 100.0)
       if count != 0:
-        sql = sql + (' LIMIT %d' % count)
+        sql = '%s LIMIT %d' % (sql, count)
       return sql
     return _random_sampling
-
