@@ -26,14 +26,14 @@ class TestCases(unittest.TestCase):
                ' SELECT time FROM [logs.today] ']
 
     for query in queries:
-      formatted_query = Sql.format(query, None)
+      formatted_query = Sql.format(query, None)[0]
       self.assertEqual(query, formatted_query)
 
   def test_single_placeholder(self):
     query = 'SELECT time FROM [logs.today] WHERE status == $param'
     args = {'param': 200}
 
-    formatted_query = Sql.format(query, args)
+    formatted_query = Sql.format(query, args)[0]
     self.assertEqual(formatted_query,
                      'SELECT time FROM [logs.today] WHERE status == 200')
 
@@ -42,7 +42,7 @@ class TestCases(unittest.TestCase):
              'WHERE status == $status AND path == $path')
     args = {'status': 200, 'path': '/home'}
 
-    formatted_query = Sql.format(query, args)
+    formatted_query = Sql.format(query, args)[0]
     self.assertEqual(formatted_query,
                      ('SELECT time FROM [logs.today] '
                       'WHERE status == 200 AND path == "/home"'))
@@ -51,7 +51,7 @@ class TestCases(unittest.TestCase):
     query = 'SELECT time FROM [logs.today] WHERE path == "/foo$$bar"'
     args = {'status': 200}
 
-    formatted_query = Sql.format(query, args)
+    formatted_query = Sql.format(query, args)[0]
     self.assertEqual(formatted_query,
                      'SELECT time FROM [logs.today] WHERE path == "/foo$bar"')
 
@@ -59,7 +59,7 @@ class TestCases(unittest.TestCase):
     query = 'SELECT time FROM [logs.today] WHERE path == $path'
     args = {'path': 'xyz"xyz'}
 
-    formatted_query = Sql.format(query, args)
+    formatted_query = Sql.format(query, args)[0]
     self.assertEqual(formatted_query,
                      'SELECT time FROM [logs.today] WHERE path == "xyz\\"xyz"')
 
@@ -79,7 +79,7 @@ class TestCases(unittest.TestCase):
                       'WHERE success == False AND server == "$master" '
                       'LIMIT 10')
 
-    formatted_query = Sql.format(query, args)
+    formatted_query = Sql.format(query, args)[0]
 
     self.assertEqual(formatted_query, expected_query)
 
@@ -88,7 +88,7 @@ class TestCases(unittest.TestCase):
     args = {'s': 200}
 
     with self.assertRaises(Exception) as error:
-      _ = Sql.format(query, args)
+      _ = Sql.format(query, args)[0]
 
     e = error.exception
     self.assertEqual(e.message, 'Unsatisfied dependency $status')
@@ -113,17 +113,17 @@ class TestCases(unittest.TestCase):
     self.assertEquals('Unsatisfied dependency $query1', e.exception.message)
 
     with self.assertRaises(Exception) as e:
-      _ = Sql.format(query3, {'query1': query1, 'query2': query2})
+      _ = Sql.format(query3, {'query1': query1, 'query2': query2})[0]
     self.assertEquals('Unsatisfied dependency $count', e.exception.message)
 
-    formatted_query = Sql.format(query3, {'query1': query1, 'query2': query2, 'count': 5})
+    formatted_query = Sql.format(query3, {'query1': query1, 'query2': query2, 'count': 5})[0]
     self.assertEqual('SELECT * FROM (SELECT x FROM (SELECT 3 as x)) WHERE x == 5', formatted_query)
 
   def test_shared_nested_queries(self):
     query1 = Sql('SELECT 3 as x')
     query2 = Sql('SELECT x FROM $query1')
     query3 = 'SELECT x AS y FROM $query1, x FROM $query2'
-    formatted_query = Sql.format(query3, {'query1': query1, 'query2': query2})
+    formatted_query = Sql.format(query3, {'query1': query1, 'query2': query2})[0]
     self.assertEqual('SELECT x AS y FROM (SELECT 3 as x), x FROM (SELECT x FROM (SELECT 3 as x))',
                      formatted_query)
 
@@ -154,10 +154,10 @@ class TestCases(unittest.TestCase):
       _ = Sql.format('SELECT * FROM $s', {'s': m})[0]
     self.assertEquals('Unsatisfied dependency $q1', e.exception.message)
 
-    formatted_query = Sql.format('SELECT * FROM $s', {'s': m, 'q1': m.q1})
+    formatted_query = Sql.format('SELECT * FROM $s', {'s': m, 'q1': m.q1})[0]
     self.assertEqual('SELECT * FROM (SELECT * FROM (SELECT 3 AS x) LIMIT 10)', formatted_query)
 
-    formatted_query = Sql.format('SELECT * FROM $s', {'s': m.q1})
+    formatted_query = Sql.format('SELECT * FROM $s', {'s': m.q1})[0]
     self.assertEqual('SELECT * FROM (SELECT 3 AS x)', formatted_query)
 
   def test_split_cell(self):

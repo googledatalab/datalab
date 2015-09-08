@@ -24,20 +24,22 @@ class TestCases(unittest.TestCase):
     context = self._create_context()
     table = gcp.bigquery.table('test:requestlogs.today', context=context)
 
+    udf = self._create_udf(context)
+    udf = udf(table)
+
+    expected_js = 'foo=function(r,emit) { emit({output1: r.field2, output2: r.field1 }); };\n' +\
+                  'bigquery.defineFunction(\'foo\', ["field1", "field2"], ' +\
+                  '[{"name": "output1", "type": "integer"}, ' +\
+                  '{"name": "output2", "type": "string"}], foo);'
+    self.assertEqual(udf._repr_sql_(), '(SELECT field1, field2 FROM foo([test:requestlogs.today]))')
+    self.assertEqual(udf._repr_code_(), expected_js)
+
+  def _create_udf(self, context):
     inputs = [('field1', 'string'), ('field2', 'integer')]
     outputs = [('output1', 'integer'), ('output2', 'string')]
     impl = 'function(r,emit) { emit({output1: r.field2, output2: r.field1 }); }'
-
-    udf = gcp.bigquery.udf(inputs, outputs, impl, context=context)
-    udf = udf(table)
-
-    expected_sql = ('js([test:requestlogs.today],\n'
-
-                    'field1,field2,\n'
-                    '\'[{"name": "output1", "type": "integer"}, '
-                    '{"name": "output2", "type": "string"}]\',\n'
-                    '"function(r,emit) { emit({output1: r.field2, output2: r.field1 }); }")')
-    self.assertEqual(udf._repr_sql_(), expected_sql)
+    udf = gcp.bigquery.udf(inputs, outputs, 'foo', impl, context=context)
+    return udf
 
   def _create_context(self):
     project_id = 'test'

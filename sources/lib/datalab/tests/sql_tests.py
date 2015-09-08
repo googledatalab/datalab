@@ -29,5 +29,6 @@ import gcp.datalab
 
 class TestCases(unittest.TestCase):
 
-  def __init__(self):
+  def test_stub(self):
+    # TODO(gram): add some real tests
     pass

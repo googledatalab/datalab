@@ -65,21 +65,28 @@ class Query(object):
     """
     return Query(api, _sampling.Sampling.sampling_query(sql, fields, count, sampling))
 
-  def __init__(self, api, sql):
+  def __init__(self, api, sql, scripts=None):
     """Initializes an instance of a Query object.
 
     Args:
       api: the BigQuery API object to use to issue requests.
       sql: the BigQuery SQL string to execute.
+      scripts: array of UDFs referenced in the SQL.
     """
     self._api = api
     self._sql = sql
+    self._scripts = scripts
     self._results = None
 
   @property
   def sql(self):
     """ Get the SQL for the query. """
     return self._sql
+
+  @property
+  def scripts(self):
+    """ Get the code for any Javascript UDFs used in the query. """
+    return self._scripts
 
   def results(self, use_cache=True):
     """Retrieves results for the query.
@@ -216,7 +223,7 @@ class Query(object):
     Returns:
         dict, with cacheHit and totalBytesProcessed fields.
     """
-    query_result = self._api.jobs_insert_query(self._sql, dry_run=True)
+    query_result = self._api.jobs_insert_query(self._sql, self._scripts, dry_run=True)
     return query_result['statistics']['query']
 
   def execute_async(self, table_name=None, table_mode='create', use_cache=True,
@@ -247,7 +254,7 @@ class Query(object):
     if table_name is not None:
       table_name = _utils.parse_table_name(table_name, self._api.project_id)
 
-    query_result = self._api.jobs_insert_query(self._sql,
+    query_result = self._api.jobs_insert_query(self._sql, self._scripts,
                                                table_name=table_name,
                                                append=append,
                                                overwrite=overwrite,

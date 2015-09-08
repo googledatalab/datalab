@@ -19,10 +19,24 @@ import unittest
 # Set up the path so that we can import our gcp.* packages.
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../api')))
 
+import bigquery_tests
+import chart_tests
+import commands_tests
+import html_tests
+import module_tests
+import sql_tests
+import storage_tests
 import utils_tests
 
 _TEST_MODULES = [
-                 utils_tests
+    bigquery_tests,
+    chart_tests,
+    commands_tests,
+    html_tests,
+    module_tests,
+    sql_tests,
+    storage_tests,
+    utils_tests
 ]
 
 if __name__ == '__main__':

@@ -150,7 +150,8 @@ def get_data(source, fields='*', first_row=0, count=-1):
       source = gcp.bigquery.table(source)
 
   if isinstance(source, types.ModuleType) or isinstance(source, gcp.sql.SqlStatement):
-    source = gcp.bigquery.query(gcp.sql.SqlModule.expand(source))
+    sql, code = gcp.sql.SqlModule.expand(source)
+    source = gcp.bigquery.query(sql, code)
 
   if isinstance(source, list):
     if len(source) == 0:

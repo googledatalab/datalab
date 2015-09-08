@@ -126,7 +126,7 @@ class TestCases(unittest.TestCase):
     }
     self.validate(mock_http_request, 'https://www.googleapis.com/bigquery/v2/projects/test/jobs/',
                   expected_data=expected_data)
-    api.jobs_insert_query('SQL2', gcp.bigquery._utils.TableName('p', 'd', 't', ''),
+    api.jobs_insert_query('SQL2', ['CODE'], gcp.bigquery._utils.TableName('p', 'd', 't', ''),
                           append=True, dry_run=True, use_cache=False, batch=False,
                           allow_large_results=True)
     expected_data = {
@@ -141,12 +141,18 @@ class TestCases(unittest.TestCase):
             'datasetId': 'd',
             'tableId': 't'
           },
-          'writeDisposition': 'WRITE_APPEND'
+          'writeDisposition': 'WRITE_APPEND',
+          'userDefinedFunctionResources': [
+            {
+              'inlineCode': 'CODE'
+            }
+          ]
         },
         'dryRun': True,
         'priority': 'INTERACTIVE',
       },
     }
+    self.maxDiff = None
     self.validate(mock_http_request, 'https://www.googleapis.com/bigquery/v2/projects/p/jobs/',
                   expected_data=expected_data)
 
