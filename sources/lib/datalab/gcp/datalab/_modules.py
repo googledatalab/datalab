@@ -31,8 +31,7 @@ def pymodule(line, cell=None):
   args = parser.parse(line)
   if args is not None:
     if cell is None:
-      print 'The code for the module must be included'
-      return
+      return 'The code for the module must be included'
 
     name = str(args.name)
     module = _create_python_module(name, cell)
@@ -53,4 +52,3 @@ def _create_python_module(name, code):
   # Hold on to the module if the code executed successfully
   _sys.modules[name] = module
   return module
-

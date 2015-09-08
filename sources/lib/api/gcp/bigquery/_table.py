@@ -14,6 +14,7 @@
 
 """Implements Table, and related Table BigQuery APIs."""
 
+import calendar
 import codecs
 import csv
 from datetime import datetime, timedelta
@@ -121,6 +122,24 @@ class Schema(list):
     return fields
 
   @staticmethod
+  def from_dataframe(dataframe, default_type='STRING'):
+    """
+      Infer a BigQuery table schema from a Pandas dataframe. Note that if you don't explicitly set
+      the types of the columns in the dataframe, they may be of a type that forces coercion to
+      STRING, so even though the fields in the dataframe themselves may be numeric, the type in the
+      derived schema may not be. Hence it is prudent to make sure the Pandas dataframe is typed
+      correctly.
+
+    Args:
+      dataframe: The DataFrame.
+      default_type : The default big query type in case the type of the column does not exist in
+          the schema.
+    Returns:
+      A Schema.
+    """
+    return Schema(Schema._from_dataframe(dataframe, default_type=default_type))
+
+  @staticmethod
   def _from_list(data):
     """
     Infer a BigQuery table schema from a list. The list must be non-empty and be a list
@@ -139,12 +158,12 @@ class Schema(list):
     def _get_type(value):
       if isinstance(value, datetime):
         return 'TIMESTAMP'
-      elif isinstance(value, int):
-        return 'INTEGER'
-      elif isinstance(value, float):
-        return 'FLOAT'
       elif isinstance(value, bool):
         return 'BOOLEAN'
+      elif isinstance(value, float):
+        return 'FLOAT'
+      elif isinstance(value, int):
+        return 'INTEGER'
       else:
         return 'STRING'
 
@@ -155,11 +174,38 @@ class Schema(list):
       return [{'name': 'Column%d' % (i + 1), 'type': _get_type(datum[i])}
               for i in range(0, len(datum))]
 
-  def __init__(self, data=None, definition=None):
+  @staticmethod
+  def from_list(data):
+    """
+    Infer a BigQuery table schema from a list. The list must be non-empty and be a list
+    of dictionaries (in which case the first item is used), or a list of lists. In the latter
+    case the type of the elements is used and the field names are simply 'Column1', 'Column2', etc.
+
+    Args:
+      data: The list.
+    Returns:
+      A Schema.
+    """
+    return Schema(Schema._from_list(data))
+
+  @staticmethod
+  def from_data(source):
+    if isinstance(source, pd.DataFrame):
+      return Schema.from_dataframe(source)
+    elif isinstance(source, list):
+      # Inspect the list - if each entry is a dictionary with name and type entries,
+      # then use it directly; else infer from it.
+      if all([isinstance(d, dict) and 'name' in d and 'type' in d for d in source]):
+        return Schema(source)
+      else:
+        return Schema.from_list(source)
+    else:
+      raise Exception('Cannot create a schema from %s' % str(source))
+
+  def __init__(self, definition=None):
     """Initializes a Schema from its raw JSON representation, a Pandas Dataframe, or a list.
 
     Args:
-      data: A Pandas DataFrame or a list of dictionaries or lists from which to infer a schema.
       definition: a definition of the schema as a list of dictionaries with 'name' and 'type'
           entries and possibly 'mode' and 'description' entries. Only used if no data argument was
           provided. 'mode' can be 'NULLABLE', 'REQUIRED' or 'REPEATED'. For the allowed types, see:
@@ -167,16 +213,8 @@ class Schema(list):
     """
     list.__init__(self)
     self._map = {}
-    if isinstance(data, pd.DataFrame):
-      data = Schema._from_dataframe(data)
-    elif isinstance(data, list):
-      data = Schema._from_list(data)
-    elif definition:
-      data = definition
-    else:
-      raise Exception("Schema requires either data or json argument.")
-    self._bq_schema = data
-    self._populate_fields(data)
+    self._bq_schema = definition
+    self._populate_fields(definition)
 
   def __getitem__(self, key):
     """Provides ability to lookup a schema field by position or by name.
@@ -189,6 +227,12 @@ class Schema(list):
     field = Schema._Field(name, data_type, mode, description)
     self.append(field)
     self._map[name] = field
+
+  def find(self, name):
+    for i in range(0, len(self)):
+      if self[i].name == name:
+        return i
+    return -1
 
   def _populate_fields(self, data, prefix=''):
     for field_data in data:
@@ -254,11 +298,6 @@ class TableMetadata(object):
     return self._info.get('friendlyName', '')
 
   @property
-  def full_name(self):
-    """The full name of the table."""
-    return self._table.full_name
-
-  @property
   def modified_on(self):
     """The timestamp for when the table was last modified."""
     timestamp = self._info.get('lastModifiedTime')
@@ -300,11 +339,6 @@ class Table(object):
     self._info = None
     self._cached_page = None
     self._cached_page_index = 0
-
-  @property
-  def full_name(self):
-    """The full name for the table."""
-    return self._full_name
 
   @property
   def name(self):
@@ -357,7 +391,7 @@ class Table(object):
     """
     try:
       self._api.table_delete(self._name_parts)
-    except Exception as e:
+    except Exception:
       # TODO(gram): May want to check the error reasons here and if it is not
       # because the file didn't exist, return an error.
       pass
@@ -383,7 +417,7 @@ class Table(object):
     response = self._api.tables_insert(self._name_parts, schema=schema)
     if 'selfLink' in response:
       return self
-    raise Exception("Table %s could not be created as it already exists" % self.full_name)
+    raise Exception("Table %s could not be created as it already exists" % self._full_name)
 
   def sample(self, fields=None, count=5, sampling=None, use_cache=True):
     """Retrieves a sampling of data from the table.
@@ -432,7 +466,7 @@ class Table(object):
         del record[k]
     return record
 
-  def insertAll(self, data, include_index=False, index_name=None):
+  def insert_data(self, data, include_index=False, index_name=None):
     """ Insert the contents of a Pandas DataFrame or a list of dictionaries into the table.
 
     Args:
@@ -463,7 +497,7 @@ class Table(object):
     if not self.exists():
       raise Exception('Table %s does not exist.' % self._full_name)
 
-    data_schema = Schema(data=data)
+    data_schema = Schema.from_data(data)
     if isinstance(data, list):
       if include_index:
         if not index_name:
@@ -573,101 +607,110 @@ class Table(object):
       job.wait()
     return job
 
-  def load_async(self, source, append=False, overwrite=False, create=False, source_format='CSV',
-                 field_delimiter=',', allow_jagged_rows=False, allow_quoted_newlines=False,
-                 encoding='UTF-8', ignore_unknown_values=False, max_bad_records=0, quote='"',
-                 skip_leading_rows=0):
+  def load_async(self, source, mode='create', source_format='csv',
+                 csv_delimiter=',', csv_skip_header_rows=0, encoding='utf-8',
+                 quote='"', allow_quoted_newlines=False,
+                 allow_jagged_rows=False, ignore_unknown_values=False, max_bad_records=0):
     """ Start loading the table from GCS and return a Future.
 
     Args:
       source: the URL of the source bucket(s). Can include wildcards.
-      append: if True append onto existing table contents.
-      overwrite: if True overwrite existing table contents.
-      create: if True attempt to create the Table if needed, inferring the schema.
-      source_format: the format of the data; default 'CSV'. Other options are DATASTORE_BACKUP
-          or NEWLINE_DELIMITED_JSON.
-      field_delimiter: The separator for fields in a CSV file. BigQuery converts the string to
+      mode: one of 'create', 'append', or 'overwrite'. 'append' or 'overwrite' will fail if the
+          table does not already exist, while 'create' will fail if it does. The default is
+          'create'. If 'create' the schema will be inferred if necessary.
+      source_format: the format of the data, 'csv' or 'json'; default 'csv'.
+      csv_delimiter: The separator for fields in a CSV file. BigQuery converts the string to
           ISO-8859-1 encoding, and then uses the first byte of the encoded string to split the data
           as raw binary (default ',').
-      allow_jagged_rows: If True, accept rows in CSV files that are missing trailing optional
-          columns; the missing values are treated as nulls (default False).
+      csv_skip_header_rows: A number of rows at the top of a CSV file to skip (default 0).
+      encoding: The character encoding of the data, either 'utf-8' (the default) or 'iso-8859-1'.
+      quote: The value used to quote data sections in a CSV file; default '"'. If your data does
+          not contain quoted sections, set the property value to an empty string. If your data
+          contains quoted newline characters, you must also enable allow_quoted_newlines.
       allow_quoted_newlines: If True, allow quoted data sections in CSV files that contain newline
           characters (default False).
-      encoding: The character encoding of the data, either 'UTF-8' (the default) or 'ISO-8859-1'.
+      allow_jagged_rows: If True, accept rows in CSV files that are missing trailing optional
+          columns; the missing values are treated as nulls (default False).
       ignore_unknown_values: If True, accept rows that contain values that do not match the schema;
           the unknown values are ignored (default False).
       max_bad_records The maximum number of bad records that are allowed (and ignored) before
           returning an 'invalid' error in the Job result (default 0).
-      quote: The value used to quote data sections in a CSV file; default '"'. If your data does
-          not contain quoted sections, set the property value to an empty string. If your data
-          contains quoted newline characters, you must also enable allow_quoted_newlines.
-      skip_leading_rows: A number of rows at the top of a CSV file to skip (default 0).
 
     Returns:
       A Future that returns a Job object for the load Job if it was started successfully or
       None if not.
     """
+    if source_format == 'csv':
+      source_format = 'CSV'
+    elif source_format == 'json':
+      source_format = 'NEWLINE_DELIMITED_JSON'
+    else:
+      raise Exception("Invalid source format %s" % source_format)
+
+    if not(mode == 'create' or mode == 'append' or mode == 'overwrite'):
+      raise Exception("Invalid mode %s" % mode)
+
+    encoding_upper = encoding.upper()
+    if encoding_upper != 'UTF-8' and encoding_upper != 'ISO-8859-1':
+      raise Exception("Invalid source encoding %s" % encoding)
+
     response = self._api.jobs_insert_load(source, self._name_parts,
-                                          append=append,
-                                          overwrite=overwrite,
-                                          create=create,
+                                          append=(mode == 'append'),
+                                          overwrite=(mode =='overwrite'),
+                                          create=(mode == 'create'),
                                           source_format=source_format,
-                                          field_delimiter=field_delimiter,
+                                          field_delimiter=csv_delimiter,
                                           allow_jagged_rows=allow_jagged_rows,
                                           allow_quoted_newlines=allow_quoted_newlines,
-                                          encoding=encoding,
+                                          encoding=encoding_upper,
                                           ignore_unknown_values=ignore_unknown_values,
                                           max_bad_records=max_bad_records,
                                           quote=quote,
-                                          skip_leading_rows=skip_leading_rows)
+                                          skip_leading_rows=csv_skip_header_rows)
     return self._init_job_from_response(response)
 
-  def load(self, source, append=False, overwrite=False, create=False,
-           source_format='CSV', field_delimiter=',',
-           allow_jagged_rows=False, allow_quoted_newlines=False, encoding='UTF-8',
-           ignore_unknown_values=False, max_bad_records=0, quote='"', skip_leading_rows=0):
+  def load(self, source, mode='create', source_format='csv',
+           csv_delimiter=',', csv_skip_header_rows=0, encoding='utf-8',
+           quote='"', allow_quoted_newlines=False,
+           allow_jagged_rows=False, ignore_unknown_values=False, max_bad_records=0):
     """ Load the table from GCS.
 
     Args:
       source: the URL of the source bucket(s). Can include wildcards.
-      append: if True append onto existing table contents.
-      overwrite: if True overwrite existing table contents.
-      create: if True attempt to create the Table if needed, inferring the schema.
-      source_format: the format of the data; default 'CSV'. Other options are DATASTORE_BACKUP
-          or NEWLINE_DELIMITED_JSON.
-      field_delimiter: The separator for fields in a CSV file. BigQuery converts the string to
+      mode: one of 'create', 'append', or 'overwrite'. 'append' or 'overwrite' will fail if the
+          table does not already exist, while 'create' will fail if it does. The default is
+          'create'. If 'create' the schema will be inferred if necessary.
+      source_format: the format of the data, 'csv' or 'json'; default 'csv'.
+      csv_delimiter: The separator for fields in a CSV file. BigQuery converts the string to
           ISO-8859-1 encoding, and then uses the first byte of the encoded string to split the data
           as raw binary (default ',').
-      allow_jagged_rows: If True, accept rows in CSV files that are missing trailing optional
-          columns; the missing values are treated as nulls (default False).
+      csv_skip_header_rows: A number of rows at the top of a CSV file to skip (default 0).
+      encoding: The character encoding of the data, either 'utf-8' (the default) or 'iso-8859-1'.
+      quote: The value used to quote data sections in a CSV file; default '"'. If your data does
+          not contain quoted sections, set the property value to an empty string. If your data
+          contains quoted newline characters, you must also enable allow_quoted_newlines.
       allow_quoted_newlines: If True, allow quoted data sections in CSV files that contain newline
           characters (default False).
-      encoding: The character encoding of the data, either 'UTF-8' (the default) or 'ISO-8859-1'.
+      allow_jagged_rows: If True, accept rows in CSV files that are missing trailing optional
+          columns; the missing values are treated as nulls (default False).
       ignore_unknown_values: If True, accept rows that contain values that do not match the schema;
           the unknown values are ignored (default False).
       max_bad_records The maximum number of bad records that are allowed (and ignored) before
           returning an 'invalid' error in the Job result (default 0).
-      quote: The value used to quote data sections in a CSV file; default '"'. If your data does
-          not contain quoted sections, set the property value to an empty string. If your data
-          contains quoted newline characters, you must also enable allow_quoted_newlines.
-      skip_leading_rows: A number of rows at the top of a CSV file to skip (default 0).
 
     Returns:
       A Job object for the load Job if it was started successfully; else None.
     """
     job = self.load_async(source,
-                          append=append,
-                          overwrite=overwrite,
-                          create=create,
+                          mode=mode,
                           source_format=source_format,
-                          field_delimiter=field_delimiter,
-                          allow_jagged_rows=allow_jagged_rows,
+                          csv_delimiter=csv_delimiter,
+                          csv_skip_header_rows=csv_skip_header_rows,
+                          encoding=encoding, quote=quote,
                           allow_quoted_newlines=allow_quoted_newlines,
-                          encoding=encoding,
+                          allow_jagged_rows=allow_jagged_rows,
                           ignore_unknown_values=ignore_unknown_values,
-                          max_bad_records=max_bad_records,
-                          quote=quote,
-                          skip_leading_rows=skip_leading_rows)
+                          max_bad_records=max_bad_records)
     if job is not None:
       job.wait()
     return job
@@ -769,48 +812,43 @@ class Table(object):
     ordered_fields = [field.name for field in self.schema]
     return df[ordered_fields]
 
-  def to_file(self, path, start_row=0, max_rows=None, write_header=True, dialect=csv.excel):
+  def to_file(self, destination, format='csv', csv_delimiter=',', csv_header=True):
     """Save the results to a local file in CSV format.
 
     Args:
-      path: path on the local filesystem for the saved results.
-      start_row: the row of the table at which to start the export (default 0)
-      max_rows: an upper limit on the number of rows to export (default None)
-      write_header: if true (the default), write column name header row at start of file
-      dialect: the format to use for the output. By default, csv.excel. See
-          https://docs.python.org/2/library/csv.html#csv-fmt-params for how to customize this.
+      destination: path on the local filesystem for the saved results.
+      format: the format to use for the exported data; currently only 'csv' is supported.
+      csv_delimiter: for CSV exports, the field delimiter to use. Defaults to ','
+      csv_header: for CSV exports, whether to include an initial header line. Default true.
     Raises:
       An Exception if the operation failed.
     """
-    f = codecs.open(path, 'w', 'utf-8')
+    f = codecs.open(destination, 'w', 'utf-8')
     fieldnames = []
     for column in self.schema:
       fieldnames.append(column.name)
-    writer = csv.DictWriter(f, fieldnames=fieldnames, dialect=dialect)
-    if write_header:
+    writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter=csv_delimiter)
+    if csv_header:
       writer.writeheader()
-    for row in self.range(start_row, max_rows):
+    for row in self:
       writer.writerow(row)
     f.close()
 
   @async_method
-  def to_file_async(self, path, start_row=0, max_rows=None, write_header=True, dialect=csv.excel):
+  def to_file_async(self, destination, format='csv', csv_delimiter=',', csv_header=True):
     """Start saving the results to a local file in CSV format and return a Job for completion.
 
     Args:
-      path: path on the local filesystem for the saved results.
-      start_row: the row of the table at which to start the export (default 0)
-      max_rows: an upper limit on the number of rows to export (default None)
-      write_header: if true (the default), write column name header row at start of file
-      dialect: the format to use for the output. By default, csv.excel. See
-          https://docs.python.org/2/library/csv.html#csv-fmt-params for how to customize this.
+      destination: path on the local filesystem for the saved results.
+      format: the format to use for the exported data; currently only 'csv' is supported.
+      csv_delimiter: for CSV exports, the field delimiter to use. Defaults to ','
+      csv_header: for CSV exports, whether to include an initial header line. Default true.
     Returns:
       A Job for the async save operation.
     Raises:
       An Exception if the operation failed.
     """
-    self.to_file(path, start_row=start_row, max_rows=max_rows, write_header=write_header,
-                 dialect=dialect)
+    self.to_file(destination, format=format, csv_delimiter=csv_delimiter, csv_header=csv_header)
 
   @property
   def schema(self):
@@ -840,13 +878,13 @@ class Table(object):
     """
     self._load_info()
     if friendly_name is not None:
-      self._info['friendly_name'] = friendly_name
+      self._info['friendlyName'] = friendly_name
     if description is not None:
       self._info['description'] = description
     if expiry is not None:
       if isinstance(expiry, datetime):
-        expiry = time.mktime(expiry.timetuple()) * 1000
-      self._info['expiry'] = expiry
+        expiry = calendar.timegm(expiry.utctimetuple()) * 1000
+      self._info['expirationTime'] = expiry
     if schema is not None:
       if isinstance(schema, Schema):
         schema = schema._bq_schema
@@ -876,7 +914,7 @@ class Table(object):
     Returns:
       The string representation of this object.
     """
-    return self.full_name
+    return self._full_name
 
   @property
   def length(self):
@@ -980,7 +1018,7 @@ class Table(object):
       raise Exception("Cannot use snapshot() on an already decorated table")
 
     value = Table._convert_decorator_time(at)
-    return Table(self._api, "%s@%s" % (self.full_name, str(value)))
+    return Table(self._api, "%s@%s" % (self._full_name, str(value)))
 
   def window(self, begin, end=None):
     """ Return a new Table limited to the rows added to this Table during the specified time range.
@@ -1024,6 +1062,6 @@ class Table(object):
       raise Exception("window: Between arguments: begin must be before end: %s, %s" %
                       (str(begin), str(end)))
 
-    return Table(self._api, "%s@%s-%s" % (self.full_name, str(start), str(stop)))
+    return Table(self._api, "%s@%s-%s" % (self._full_name, str(start), str(stop)))
 
 from ._query import Query as _Query

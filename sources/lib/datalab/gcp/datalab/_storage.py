@@ -20,7 +20,7 @@ import re
 import gcp.storage as _storage
 from ._commands import CommandParser
 from ._html import HtmlBuilder
-from ._utils import _extract_storage_api_response_error, _handle_magic_line
+from ._utils import extract_storage_api_response_error, handle_magic_line
 
 try:
   import IPython as _ipython
@@ -86,7 +86,7 @@ def storage(line):
   write_parser.add_argument('item', help='the name of the object to write')
   write_parser.set_defaults(func=_storage_write)
 
-  return _handle_magic_line(line, None, parser)
+  return handle_magic_line(line, None, parser)
 
 
 def _parser_exit(status=0, message=None):
@@ -161,6 +161,7 @@ def _storage_copy(args, _):
     if target_bucket is None or target_key is not None:
       raise Exception('Invalid target object %s' % target)
 
+  errs = []
   for source in sources:
     source_bucket, source_key = _storage._bucket.parse_name(source)
     if source_bucket is None or source_key is None:
@@ -170,13 +171,17 @@ def _storage_copy(args, _):
     try:
       _storage.item(source_bucket, source_key).copy_to(destination_key, bucket=destination_bucket)
     except Exception as e:
-      print "Couldn't copy %s to %s: %s" %\
-            (source, target, _extract_storage_api_response_error(e.message))
+      errs.append("Couldn't copy %s to %s: %s" %
+                  (source, target, extract_storage_api_response_error(e.message)))
+  if errs:
+    return '\n'.join(errs)
+
 
 
 def _storage_create(args, _):
   """ Create one or more buckets. """
   buckets = _storage.buckets(project_id=args['project'])
+  errs = []
   for name in args['bucket']:
     try:
       bucket, key = _storage._bucket.parse_name(name)
@@ -185,12 +190,16 @@ def _storage_create(args, _):
       else:
         raise Exception("Invalid name %s" % name)
     except Exception as e:
-      print "Couldn't create %s: %s" % (bucket, _extract_storage_api_response_error(e.message))
+      errs.append("Couldn't create %s: %s" %
+                  (name, extract_storage_api_response_error(e.message)))
+  if errs:
+    return '\n'.join(errs)
 
 
 def _storage_delete(args, _):
   """ Delete one or more buckets or objects. """
   items = _expand_list(args['item'])
+  errs = []
   for item in items:
     try:
       bucket, key = _storage._bucket.parse_name(item)
@@ -201,7 +210,10 @@ def _storage_delete(args, _):
       else:
         raise Exception('Invalid name %s' % item)
     except Exception as e:
-      print "Couldn't delete %s: %s" % (item, _extract_storage_api_response_error(e.message))
+      errs.append("Couldn't delete %s: %s" %
+                  (item, extract_storage_api_response_error(e.message)))
+  if errs:
+    return '\n'.join(errs)
 
 
 def _render_dictionary(data, headers=None):
@@ -211,10 +223,7 @@ def _render_dictionary(data, headers=None):
     data: the dictionary list
     headers: the keys in the dictionary to use as table columns, in order.
   """
-  builder = HtmlBuilder()
-  builder.render_objects(data, headers, dictionary=True)
-  html = builder.to_html()
-  return _ipython.core.display.HTML(html)
+  return _ipython.core.display.HTML(HtmlBuilder.render_table(data, headers))
 
 
 def _storage_list_buckets(project, pattern):
@@ -326,4 +335,3 @@ def _storage_write(args, _):
   contents = ipy.user_ns[args['variable']]
   # TODO(gram): would we want to to do any special handling here; e.g. for DataFrames?
   target.write_to(str(contents), 'text/plain')
-

@@ -64,7 +64,7 @@ class TestCases(unittest.TestCase):
     self._setup_mocks(mock_request, mock_response, '{}')
 
     data = {'abc': 123}
-    data = Http.request('http://www.example.org', data=data)
+    _ = Http.request('http://www.example.org', data=data)
 
     self.assertEqual(mock_request.call_args[1]['body'], '{"abc": 123}')
     self.assertEqual(mock_request.call_args[1]['headers']['Content-Type'],
@@ -77,7 +77,7 @@ class TestCases(unittest.TestCase):
 
     headers = {'Content-Type': 'text/plain'}
     data = 'custom text'
-    data = Http.request('http://www.example.org', data=data, headers=headers)
+    _ = Http.request('http://www.example.org', data=data, headers=headers)
 
     self.assertEqual(mock_request.call_args[1]['body'], 'custom text')
     self.assertEqual(mock_request.call_args[1]['headers']['Content-Type'], 'text/plain')

@@ -35,7 +35,7 @@ class SqlStatement(object):
     Returns:
       The SQL representation to use when embedding this object into SQL.
     """
-    return '(%s)' % SqlStatement._format(self._sql, args)
+    return '(%s)' % SqlStatement.format(self._sql, args)
 
   def __str__(self):
     """Creates a string representation of this object.
@@ -80,15 +80,25 @@ class SqlStatement(object):
       have a corresponding argument value.
     """
 
+    # Get the set of $var references in this SQL.
     dependencies = SqlStatement.get_dependencies(sql)
     for dependency in dependencies:
+      # Now we check each dependency. If it is in complete - i.e., we have an expansion
+      # for it already - we just continue.
       if dependency in complete:
         continue
+      # Look it up in our resolution namespace dictionary.
       dep = get_item(ns, dependency)
+      # If it is a SQL module, get the main/last query from the module, so users can refer
+      # to $module. Useful especially if final query in module has no DEFINE QUERY <name> part.
       if isinstance(dep, types.ModuleType):
         dep = SqlModule.get_query_from_module(dep)
+      # If we can't resolve the $name, give up.
       if dep is None:
         raise Exception("Unsatisfied dependency $%s" % dependency)
+      # If it is a SqlStatement, it may have its own $ references in turn; check to make
+      # sure we don't have circular references, and if not, recursively expand it and add
+      # it to the set of complete dependencies.
       if isinstance(dep, SqlStatement):
         if dependency in in_progress:
           # Circular dependency
@@ -132,7 +142,7 @@ class SqlStatement(object):
     return ''.join(parts)
 
   @staticmethod
-  def _format(sql, args=None):
+  def format(sql, args=None):
     """ Resolve variable references in a query within an environment.
 
     This computes and resolves the transitive dependencies in the query and raises an

@@ -44,7 +44,8 @@ class TestCases(unittest.TestCase):
     view = gcp.bigquery.view(name, self._create_context())
     result = view.create(sql)
     self.assertTrue(view.exists())
-    self.assertEqual(name, view.full_name)
+    self.assertEqual(name, str(view))
+    self.assertEqual('[%s]' % name, view._repr_sql_())
     self.assertIsNotNone(result, 'Expected a view')
 
   @mock.patch('gcp.bigquery._Api.tables_insert')
@@ -73,6 +74,34 @@ class TestCases(unittest.TestCase):
     first_result = results[0]
     self.assertEqual('value1', first_result['field1'])
 
+  @mock.patch('gcp.bigquery._api.Api.tables_insert')
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
+  @mock.patch('gcp.bigquery._api.Api.table_update')
+  def test_view_update(self, mock_api_table_update, mock_api_tables_get, mock_api_tables_insert):
+    mock_api_tables_insert.return_value = self._create_tables_insert_success_result()
+    friendly_name = 'casper'
+    description = 'ghostly logs'
+    sql = 'select * from test:testds.testTable0'
+    info = {'friendlyName': friendly_name,
+            'description': description,
+            'view': {'query': sql}}
+    mock_api_tables_get.return_value = info
+    name = 'test:testds.testView0'
+    view = gcp.bigquery.view(name, self._create_context())
+    view.create(sql)
+    self.assertEqual(friendly_name, view.friendly_name)
+    self.assertEqual(description, view.description)
+    self.assertEqual(sql, view.query.sql)
+
+    new_friendly_name = 'aziraphale'
+    new_description = 'demon duties'
+    new_query = 'SELECT 3 AS x'
+    view.update(new_friendly_name, new_description, new_query)
+
+    self.assertEqual(new_friendly_name, view.friendly_name)
+    self.assertEqual(new_description, view.description)
+    self.assertEqual(new_query, view.query.sql)
+
   def _create_tables_insert_success_result(self):
     return {'selfLink': 'http://foo'}
 
@@ -94,9 +123,11 @@ class TestCases(unittest.TestCase):
       'jobComplete': True,
     }
 
-  def _create_tables_get_result(self, numRows=1, schema=[{'name': 'field1', 'type': 'string'}]):
+  def _create_tables_get_result(self, num_rows=1, schema=None):
+    if not schema:
+      schema = [{'name': 'field1', 'type': 'string'}]
     return {
-      'numRows': numRows,
+      'numRows': num_rows,
       'schema': {
         'fields': schema
       },

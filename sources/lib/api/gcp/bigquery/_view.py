@@ -37,10 +37,9 @@ class View(object):
     self._table = _Table(api, name)
     self._materialization = _Query(api, 'SELECT * FROM %s' % self._repr_sql_())
 
-  @property
-  def full_name(self):
+  def __str__(self):
     """The full name for the view as a string."""
-    return self._table.full_name
+    return str(self._table)
 
   @property
   def name(self):
@@ -56,11 +55,6 @@ class View(object):
   def friendly_name(self):
     """The friendly name of the view if it exists."""
     return self._table.metadata.friendly_name
-
-  @property
-  def full_name(self):
-    """The full name of the table."""
-    return self._table.full_name
 
   @property
   def query(self):
@@ -95,7 +89,7 @@ class View(object):
     response = self._table._api.tables_insert(self._table._name_parts, query=query)
     if 'selfLink' in response:
       return self
-    raise Exception("View %s could not be created as it already exists" % self.full_name)
+    raise Exception("View %s could not be created as it already exists" % str(self))
 
   def sample(self, fields=None, count=5, sampling=None, use_cache=True):
     """Retrieves a sampling of data from the view.
@@ -201,7 +195,7 @@ class View(object):
     Returns:
       A formatted table name for use within SQL statements.
     """
-    return '[' + self.full_name + ']'
+    return '[' + str(self) + ']'
 
   def __repr__(self):
     """Returns a representation for the view for showing in the notebook.

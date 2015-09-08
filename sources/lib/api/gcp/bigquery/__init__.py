@@ -171,20 +171,21 @@ def dataset(name, context=None):
   return _DataSet(api, name)
 
 
-def schema(data=None, definition=None):
+def schema(source):
   """Creates a table/view schema from its JSON representation, a list of data, or a Pandas
      dataframe.
 
   Args:
-    data: the Pandas Dataframe or list of data from which to infer the schema.
-    definition: a definition of the schema as a list of dictionaries with 'name' and 'type' entries
+    source: the Pandas Dataframe or list of data from which to infer the schema, or
+        a definition of the schema as a list of dictionaries with 'name' and 'type' entries
         and possibly 'mode' and 'description' entries. Only used if no data argument was provided.
         'mode' can be 'NULLABLE', 'REQUIRED' or 'REPEATED'. For the allowed types, see:
         https://cloud.google.com/bigquery/preparing-data-for-bigquery#datatypes
   Returns:
     A Schema object.
   """
-  return _Schema(data=data, definition=definition)
+  return _Schema.from_data(source)
+
 
 def wait_any(jobs, timeout=None):
   """ Return when at least one of the specified jobs has completed or timeout expires.

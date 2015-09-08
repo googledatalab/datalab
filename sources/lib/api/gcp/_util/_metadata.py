@@ -49,8 +49,8 @@ class MetadataService(object):
     """
 
     if self._auth_token is None:
-      self._auth_token = self._lookup(MetadataService._AUTHTOKEN_PATH,
-                                      field='access_token')
+      self._auth_token = MetadataService._lookup(MetadataService._AUTHTOKEN_PATH,
+                                                 field='access_token')
     return self._auth_token
 
   @property
@@ -62,7 +62,7 @@ class MetadataService(object):
     """
 
     if self._project_id is None:
-      self._project_id = self._lookup(MetadataService._PROJECTID_PATH)
+      self._project_id = MetadataService._lookup(MetadataService._PROJECTID_PATH)
     return self._project_id
 
   def refresh(self):
@@ -71,7 +71,8 @@ class MetadataService(object):
 
     self._auth_token = None
 
-  def _lookup(self, path, field=None):
+  @staticmethod
+  def _lookup(path, field=None):
     """Issues requests to the metadata service to lookup metadata.
 
     Args:

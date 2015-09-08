@@ -23,7 +23,7 @@ import IPython.core.magic as _magic
 import gcp.bigquery as _bq
 import gcp.sql as _sql
 from ._commands import CommandParser
-from ._utils import _handle_magic_line
+from ._utils import handle_magic_line
 
 
 def _create_sql_parser():
@@ -38,7 +38,7 @@ _sql_parser = _create_sql_parser()
 
 @_magic.register_cell_magic
 def sql(line, cell):
-  return _handle_magic_line(line, cell, _sql_parser)
+  return handle_magic_line(line, cell, _sql_parser)
 
 # TODO(gram): Perhaps this should go in SqlModule?
 
@@ -72,35 +72,36 @@ def _date(val, offset=None):
     dt = datetime.datetime.utcnow() - datetime.timedelta(1)
     when = datetime.datetime(dt.year, dt.month, dt.day)
   else:
-    when = datetime.datetime(val)
+    when = datetime.datetime.strptime(val, "%Y%m%d")
   if offset is not None:
     for part in offset.split(','):
       unit = part[-1]
-      quant = int(part[:-1])
+      quantity = int(part[:-1])
       # We can use timedelta for days and under, but not for years and months
       if unit == 'y':
-        when = datetime.datetime(year=when.year + quant, month=when.month, day=when.day,
-                                  hour=when.hour, minute=when.minute)
+        when = datetime.datetime(year=when.year + quantity, month=when.month, day=when.day,
+                                 hour=when.hour, minute=when.minute)
       elif unit == 'm':
-        newyear = when.year
-        newmonth = when.month + quant
-        if newmonth < 1:
-          newmonth = -newmonth
-          newyear += 1 + (newmonth // 12)
-          newmonth = 12 - newmonth % 12
-        elif newmonth > 12:
-          newyear += (newmonth - 1) // 12
-          newmonth = 1 + (newmonth - 1) % 12
-        when = datetime.datetime(year=newyear, month=newmonth, day=when.day,
-                                  hour=when.hour, minute=when.minute)
+        new_year = when.year
+        new_month = when.month + quantity
+        if new_month < 1:
+          new_month = -new_month
+          new_year += 1 + (new_month // 12)
+          new_month = 12 - new_month % 12
+        elif new_month > 12:
+          new_year += (new_month - 1) // 12
+          new_month = 1 + (new_month - 1) % 12
+        when = datetime.datetime(year=new_year, month=new_month, day=when.day,
+                                 hour=when.hour, minute=when.minute)
       elif unit == 'd':
-        when += datetime.timedelta(days=quant)
+        when += datetime.timedelta(days=quantity)
       elif unit == 'h':
-        when += datetime.timedelta(hours=quant)
+        when += datetime.timedelta(hours=quantity)
       elif unit == 'm':
-        when += datetime.timedelta(minutes=quant)
+        when += datetime.timedelta(minutes=quantity)
 
   return when
+
 
 def _resolve_table(v, format, delta):
   try:
@@ -110,11 +111,13 @@ def _resolve_table(v, format, delta):
     pass
   return _bq.table(v)
 
+
 def _make_string_formatter(f, offset=None):
   """ A closure-izer for string arguments that include a format and possibly an offset. """
   format = f
   delta = offset
   return lambda v: time.strftime(format, (_date(v, delta)).timetuple())
+
 
 def _make_table_formatter(f, offset=None):
   """ A closure-izer for table arguments that include a format and possibly an offset. """
@@ -122,14 +125,18 @@ def _make_table_formatter(f, offset=None):
   delta = offset
   return lambda v: _resolve_table(v, format, delta)
 
+
 def _make_table(v):
   return _bq.table(v)
+
 
 def _datestring(format, offset=''):
   return {'type': 'datestring', 'format': format, 'offset': offset}
 
+
 def _table(name=None, format=None, offset=''):
   return {'type': 'table', 'name': name, 'format': format, 'offset': offset}
+
 
 def _arguments(code, module):
   """Define pipeline arguments.
@@ -141,9 +148,7 @@ def _arguments(code, module):
   arg_parser = CommandParser.create('')
   try:
     # Define our special argument 'types'.
-    env = {}
-    env['table'] = _table
-    env['datestring'] = _datestring
+    env = {'table': _table, 'datestring': _datestring}
 
     # Execute the cell which should be one or more calls to arg().
     exec code in env
@@ -157,9 +162,9 @@ def _arguments(code, module):
         continue
       # If we want to support importing query modules into other query modules, uncomment next 4
       # Skip imports but add them to the module
-      #if isinstance(env[key], types.ModuleType):
-      #  module.__dict__[key] = env[key]
-      #  continue
+      # if isinstance(env[key], types.ModuleType):
+      #   module.__dict__[key] = env[key]
+      #   continue
 
       val = env[key]
       key = '--%s' % key
@@ -195,7 +200,16 @@ def _arguments(code, module):
 
 
 def _split_cell(cell, module):
-  """ Split a hybrid cell into the Python code and the queries. """
+  """ Split a hybrid cell into the Python code and the queries.
+
+  Args:
+    cell: the contents of the %%sql cell.
+    module: the module that the contents will populate.
+
+  Returns:
+    The default (last) query for the module.
+
+  """
   code = _sql.SqlModule.split_cell(cell, module)
   _sql.SqlModule.set_arg_parser(module, _arguments(code, module))
   return _sql.SqlModule.get_query_from_module(module)
@@ -205,12 +219,21 @@ def sql_cell(args, cell):
   """Implements the SQL cell magic for ipython notebooks.
 
   The supported syntax is:
-  %%sql
-  <cell>
+
+      %%sql [--name <modulename>]
+      [<optional Python code for default argument values>]
+      [<optional named queries>]
+      [<optional unnamed query>]
+
+  At least one query should be present. Named queries should start with:
+
+      DEFINE QUERY <name>
+
+  on a line by itself.
 
   Args:
     args: the optional arguments following '%%sql'.
-    cell: the contents of the cell interpreted as Python arguments followed by SQL queries.
+    cell: the contents of the cell; Python code for arguments followed by SQL queries.
   """
   name = args['name'] if args['name'] else '_sql_cell'
   module = imp.new_module(name)
@@ -224,4 +247,3 @@ def sql_cell(args, cell):
     # Add it as a module
     sys.modules[name] = module
     exec 'import %s' % name in ipy.user_ns
-

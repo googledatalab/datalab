@@ -16,6 +16,7 @@
 
 import time
 
+
 class Html(object):
   """A helper to enable generating an HTML representation as display data in a notebook.
 
@@ -47,6 +48,7 @@ class Html(object):
     self._markup = markup
     self._dependencies = [('element!hh_%d' % self._id, 'dom')]
     self._script = ''
+    self._class = None
 
   def add_class(self, class_name):
     """Adds a CSS class to be generated on the output HTML.
@@ -67,7 +69,10 @@ class Html(object):
     """Generates the HTML representation.
     """
     parts = []
-    parts.append('<div id="hh_%s" class="%s">%s</div>' % (self._id, self._class, self._markup))
+    if self._class:
+      parts.append('<div id="hh_%s" class="%s">%s</div>' % (self._id, self._class, self._markup))
+    else:
+      parts.append('<div id="hh_%s">%s</div>' % (self._id, self._markup))
 
     if len(self._script) != 0:
       parts.append('<script>')
@@ -92,7 +97,7 @@ class HtmlBuilder(object):
     """
     self._segments = []
 
-  def render_objects(self, items, attributes=None, dictionary=False):
+  def _render_objects(self, items, attributes=None, dictionary=False):
     """Renders an HTML table with the specified list of objects.
 
     Args:
@@ -104,9 +109,9 @@ class HtmlBuilder(object):
       return
 
     if dictionary:
-      getter = lambda obj, attr: obj.get(attr, None)
+      getter = lambda obj, attribute: obj.get(attribute, None)
     else:
-      getter = lambda obj, attr: obj.__getattribute__(attr)
+      getter = lambda obj, attribute: obj.__getattribute__(attribute)
 
     num_segments = len(self._segments)
     self._segments.append('<table>')
@@ -126,10 +131,10 @@ class HtmlBuilder(object):
 
       self._segments.append('<tr>')
       if attributes is None:
-        self._segments.append('<td>%s</td>' % self._format(o))
+        self._segments.append('<td>%s</td>' % HtmlBuilder._format(o))
       else:
         for attr in attributes:
-          self._segments.append('<td>%s</td>' % self._format(getter(o, attr), nbsp=True))
+          self._segments.append('<td>%s</td>' % HtmlBuilder._format(getter(o, attr), nbsp=True))
       self._segments.append('</tr>')
 
     self._segments.append('</table>')
@@ -137,7 +142,7 @@ class HtmlBuilder(object):
       # The table was empty; drop it from the segments.
       self._segments = self._segments[:num_segments]
 
-  def render_text(self, text, preformatted=False):
+  def _render_text(self, text, preformatted=False):
     """Renders an HTML formatted text block with the specified text.
 
     Args:
@@ -145,9 +150,9 @@ class HtmlBuilder(object):
       preformatted: whether the text should be rendered as preformatted
     """
     tag = 'pre' if preformatted else 'div'
-    self._segments.append('<%s>%s</%s>' % (tag, self._format(text), tag))
+    self._segments.append('<%s>%s</%s>' % (tag, HtmlBuilder._format(text), tag))
 
-  def to_html(self):
+  def _to_html(self):
     """Returns the HTML that has been rendered.
 
     Returns:
@@ -155,7 +160,8 @@ class HtmlBuilder(object):
     """
     return ''.join(self._segments)
 
-  def _format(self, value, nbsp=False):
+  @staticmethod
+  def _format(value, nbsp=False):
     if value is None:
       return '&nbsp;' if nbsp else ''
     elif isinstance(value, basestring):
@@ -163,3 +169,28 @@ class HtmlBuilder(object):
     else:
       return str(value)
 
+  @staticmethod
+  def render_text(text, preformatted=False):
+    """Renders an HTML formatted text block with the specified text.
+
+    Args:
+      text: the text to render
+      preformatted: whether the text should be rendered as preformatted
+    Returns:
+      The formatted HTML.
+    """
+    builder = HtmlBuilder()
+    builder._render_text(text, preformatted=preformatted)
+    return builder._to_html()
+
+  @staticmethod
+  def render_table(data, headers=None):
+    """ Return a dictionary list formatted as a HTML table.
+
+    Args:
+      data: a list of dictionaries, one per row.
+      headers: the keys in the dictionary to use as table columns, in order.
+    """
+    builder = HtmlBuilder()
+    builder._render_objects(data, headers, dictionary=True)
+    return builder._to_html()
