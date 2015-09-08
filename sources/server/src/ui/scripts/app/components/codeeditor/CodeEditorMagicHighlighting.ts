@@ -14,14 +14,17 @@
 // Provides function, which, given a string, will return the highlighting mode required,
 //  if none matched fallback string is returned.
 
+/// <amd-dependency path="modes/bqsql.js" />
+
+
 interface magicTypeMap {
   [index : string] : RegExp[];
 }
 
 // Map between CodeMirror mode name and list of regular expressions.
 var magicMap:magicTypeMap = {
-  "text/x-sql": [/^\%\%bigquery sql\s/],
-  "text/javascript": [/^%%javascript/, /^%%bigquery udf/]
+  "text/x-bqsql": [/^\%\%bigquery sql\s/, /^\%\%bigquery dryrun\s/],
+  "text/javascript": [/^%%javascript\s/, /^%%bigquery udf\s/]
 };
 
 /**
