@@ -14,8 +14,7 @@
 
 """Implements Context functionality."""
 
-from ._util import MetadataCredentials
-from ._util import MetadataService
+import _util
 
 
 class Context(object):
@@ -65,9 +64,9 @@ class Context(object):
     """
 
     if Context._global_context is None:
-      ms = MetadataService()
+      ms = _util.MetadataService()
       project_id = ms.project_id
-      credentials = MetadataCredentials(ms)
+      credentials = _util.MetadataCredentials(ms)
 
       Context._global_context = Context(project_id, credentials)
 

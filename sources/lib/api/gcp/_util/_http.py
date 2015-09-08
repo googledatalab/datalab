@@ -125,4 +125,3 @@ class Http(object):
       raise Exception('Failed to process HTTP response.')
     except httplib2.HttpLib2Error:
       raise Exception('Failed to send HTTP request.')
-

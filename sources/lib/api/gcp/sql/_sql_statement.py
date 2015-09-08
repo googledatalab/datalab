@@ -16,7 +16,7 @@
 
 import re
 import types
-from gcp._util import get_item
+import gcp._util
 
 
 class SqlStatement(object):
@@ -88,11 +88,11 @@ class SqlStatement(object):
       if dependency in complete:
         continue
       # Look it up in our resolution namespace dictionary.
-      dep = get_item(ns, dependency)
+      dep = gcp._util.get_item(ns, dependency)
       # If it is a SQL module, get the main/last query from the module, so users can refer
       # to $module. Useful especially if final query in module has no DEFINE QUERY <name> part.
       if isinstance(dep, types.ModuleType):
-        dep = SqlModule.get_query_from_module(dep)
+        dep = _sql_module.SqlModule.get_query_from_module(dep)
       # If we can't resolve the $name, give up.
       if dep is None:
         raise Exception("Unsatisfied dependency $%s" % dependency)
@@ -126,7 +126,7 @@ class SqlStatement(object):
                           e.args[0])
 
         if isinstance(value, types.ModuleType):
-          value = SqlModule.get_query_from_module(value)
+          value = _sql_module.SqlModule.get_query_from_module(value)
 
         if '_repr_sql_' in dir(value):
           # pylint: disable=protected-access
@@ -177,6 +177,4 @@ class SqlStatement(object):
           dependencies.append(variable)
     return dependencies
 
-from ._sql_module import SqlModule
-
-
+import _sql_module

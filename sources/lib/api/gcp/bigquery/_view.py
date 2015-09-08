@@ -14,7 +14,8 @@
 
 """Implements BigQuery Views."""
 
-from ._table import Table as _Table
+import _query
+import _table
 
 # Query import is at end to avoid issues with circular dependencies.
 
@@ -32,10 +33,11 @@ class View(object):
 
       Args:
         api: the BigQuery API object to use to issue requests.
-        name: the name of the view either as a string or a 3-part tuple (projectid, datasetid, name).
+        name: the name of the view either as a string or a 3-part tuple
+            (projectid, datasetid, name).
       """
-    self._table = _Table(api, name)
-    self._materialization = _Query(api, 'SELECT * FROM %s' % self._repr_sql_())
+    self._table = _table.Table(api, name)
+    self._materialization = _query.Query(api, 'SELECT * FROM %s' % self._repr_sql_())
 
   def __str__(self):
     """The full name for the view as a string."""
@@ -63,7 +65,7 @@ class View(object):
       return None
     self._table._load_info()
     if 'view' in self._table._info and 'query' in self._table._info['view']:
-      return _Query(self._table._api, self._table._info['view']['query'])
+      return _query.Query(self._table._api, self._table._info['view']['query'])
     return None
 
   def exists(self):
@@ -84,7 +86,7 @@ class View(object):
     Raises:
       Exception if the view couldn't be created or already exists and overwrite was False.
     """
-    if isinstance(query, _Query):
+    if isinstance(query, _query.Query):
       query = query.sql
     response = self._table._api.tables_insert(self._table._name_parts, query=query)
     if 'selfLink' in response:
@@ -131,7 +133,7 @@ class View(object):
     """
     self._table._load_info()
     if query is not None:
-      if isinstance(query, _Query):
+      if isinstance(query, _query.Query):
         query = query.sql
       self._table._info['view'] = {'query': query}
     self._table.update(friendly_name=friendly_name, description=description)
@@ -203,4 +205,4 @@ class View(object):
     return '%s: %s' % (self._table, self.query)
 
 
-from ._query import Query as _Query
+import _query

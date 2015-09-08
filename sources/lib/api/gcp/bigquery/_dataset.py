@@ -14,11 +14,10 @@
 
 """Implements DataSet, and related DataSet BigQuery APIs."""
 
-from gcp._util import Iterator as _Iterator
-from gcp._util import RequestException as _RequestException
-from ._table import Table as _Table
-from ._view import View as _View
-from ._utils import parse_dataset_name as _parse_dataset_name
+import gcp._util
+import _table
+import _utils
+import _view
 
 
 class DataSet(object):
@@ -33,7 +32,7 @@ class DataSet(object):
       name: the name of the dataset, as a string or (project_id, dataset_id) tuple.
     """
     self._api = api
-    self._name_parts = _parse_dataset_name(name, api.project_id)
+    self._name_parts = _utils.parse_dataset_name(name, api.project_id)
     self._full_name = '%s:%s' % self._name_parts
     self._info = None
     try:
@@ -63,7 +62,7 @@ class DataSet(object):
       if self._info is None:
         self._info = self._api.datasets_get(self._name_parts)
       return self._info
-    except _RequestException as e:
+    except gcp._util.RequestException as e:
       if e.status == 404:
         return None
       raise e
@@ -147,15 +146,15 @@ class DataSet(object):
           if info['type'] != item_type:
             continue
           if info['type'] == 'TABLE':
-            item = _Table(self._api, (info['tableReference']['projectId'],
-                                      info['tableReference']['datasetId'],
-                                      info['tableReference']['tableId']))
+            item = _table.Table(self._api, (info['tableReference']['projectId'],
+                                            info['tableReference']['datasetId'],
+                                            info['tableReference']['tableId']))
           else:
-            item = _View(self._api, (info['tableReference']['projectId'],
-                                     info['tableReference']['datasetId'],
-                                     info['tableReference']['tableId']))
+            item = _view.View(self._api, (info['tableReference']['projectId'],
+                                          info['tableReference']['datasetId'],
+                                          info['tableReference']['tableId']))
           contents.append(item)
-      except KeyError as e:
+      except KeyError:
         raise Exception('Unexpected item list response')
 
     page_token = list_info.get('nextPageToken', None)
@@ -169,11 +168,11 @@ class DataSet(object):
 
   def tables(self):
     """ Supports iterating through the Tables in the dataset. """
-    return iter(_Iterator(self._retrieve_tables))
+    return iter(gcp._util.Iterator(self._retrieve_tables))
 
   def views(self):
     """ Supports iterating through the Views in the dataset. """
-    return iter(_Iterator(self._retrieve_views))
+    return iter(gcp._util.Iterator(self._retrieve_views))
 
   def __iter__(self):
     """ Supports iterating through the Tables in the dataset. """
@@ -218,5 +217,4 @@ class DataSetLister(object):
   def __iter__(self):
     """ Supports iterating through the DataSets in the project.
     """
-    return iter(_Iterator(self._retrieve_datasets))
-
+    return iter(gcp._util.Iterator(self._retrieve_datasets))

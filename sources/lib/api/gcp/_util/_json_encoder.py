@@ -14,15 +14,15 @@
 
 """ JSON encoder that can handle Python datetime objects. """
 
-import datetime as _dt
-import json as _json
+import datetime
+import json
 
 
-class JSONEncoder(_json.JSONEncoder):
+class JSONEncoder(json.JSONEncoder):
   def default(self, obj):
-    if isinstance(obj, _dt.date) or isinstance(obj, _dt.datetime):
+    if isinstance(obj, datetime.date) or isinstance(obj, datetime.datetime):
       return obj.isoformat()
-    elif isinstance(obj, _dt.timedelta):
-      return (_dt.datetime.min + obj).time().isoformat()
+    elif isinstance(obj, datetime.timedelta):
+      return (datetime.datetime.min + obj).time().isoformat()
     else:
       return super(JSONEncoder, self).default(obj)

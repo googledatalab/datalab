@@ -17,19 +17,19 @@
 import fnmatch
 import re
 
-import gcp.storage as _storage
-from ._commands import CommandParser
-from ._html import HtmlBuilder
-from ._utils import extract_storage_api_response_error, handle_magic_line
+import gcp.storage
+import _commands
+import _html
+import _utils
 
 try:
-  import IPython as _ipython
-  import IPython.core.magic as _magic
+  import IPython
+  import IPython.core.magic
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
 
-@_magic.register_line_magic
+@IPython.core.magic.register_line_magic
 def storage(line):
   """Implements the storage line magic for ipython notebooks.
 
@@ -38,7 +38,7 @@ def storage(line):
   Returns:
     The results of executing the cell.
   """
-  parser = CommandParser.create('storage')
+  parser = _commands.CommandParser.create('storage')
 
   # TODO(gram): consider adding a move command too. I did try this already using the
   # objects.patch API to change the object name but that fails with an error:
@@ -86,7 +86,7 @@ def storage(line):
   write_parser.add_argument('item', help='the name of the object to write')
   write_parser.set_defaults(func=_storage_write)
 
-  return handle_magic_line(line, None, parser)
+  return _utils.handle_magic_line(line, None, parser)
 
 
 def _parser_exit(status=0, message=None):
@@ -109,19 +109,19 @@ def _expand_list(names):
   results = []  # The expanded list.
   items = {}  # Cached contents of buckets; used for matching.
   for name in names:
-    bucket, key = _storage._bucket.parse_name(name)
+    bucket, key = gcp.storage._bucket.parse_name(name)
     results_len = len(results)  # If we fail to add any we add name and let caller deal with it.
     if bucket:
       if not key:
         # Just a bucket; add it.
         results.append('gs://%s' % bucket)
-      elif _storage.item(bucket, key).exists():
+      elif gcp.storage.item(bucket, key).exists():
         results.append('gs://%s/%s' % (bucket, key))
       else:
         # Expand possible key values.
         if bucket not in items and key[:1] == '*':
           # We need the full list; cache a copy for efficiency.
-          items[bucket] = [item.metadata().name for item in _storage.bucket(bucket).items()]
+          items[bucket] = [item.metadata().name for item in gcp.storage.bucket(bucket).items()]
         # If we have a cached copy use it
         if bucket in items:
           candidates = items[bucket]
@@ -135,7 +135,7 @@ def _expand_list(names):
             prefix = key[0:match.start()]
 
           candidates = [item.metadata().name
-                        for item in _storage.bucket(bucket).items(prefix=prefix)]
+                        for item in gcp.storage.bucket(bucket).items(prefix=prefix)]
 
         for item in candidates:
           if fnmatch.fnmatch(item, key):
@@ -150,7 +150,7 @@ def _expand_list(names):
 
 def _storage_copy(args, _):
   target = args['destination']
-  target_bucket, target_key = _storage._bucket.parse_name(target)
+  target_bucket, target_key = gcp.storage._bucket.parse_name(target)
   if target_bucket is None and target_key is None:
     raise Exception('Invalid target object %s' % target)
 
@@ -163,16 +163,17 @@ def _storage_copy(args, _):
 
   errs = []
   for source in sources:
-    source_bucket, source_key = _storage._bucket.parse_name(source)
+    source_bucket, source_key = gcp.storage._bucket.parse_name(source)
     if source_bucket is None or source_key is None:
       raise Exception('Invalid source object %s' % source)
     destination_bucket = target_bucket if target_bucket else source_bucket
     destination_key = target_key if target_key else source_key
     try:
-      _storage.item(source_bucket, source_key).copy_to(destination_key, bucket=destination_bucket)
+      gcp.storage.item(source_bucket, source_key).copy_to(destination_key,
+                                                          bucket=destination_bucket)
     except Exception as e:
       errs.append("Couldn't copy %s to %s: %s" %
-                  (source, target, extract_storage_api_response_error(e.message)))
+                  (source, target, _utils.extract_storage_api_response_error(e.message)))
   if errs:
     return '\n'.join(errs)
 
@@ -180,18 +181,18 @@ def _storage_copy(args, _):
 
 def _storage_create(args, _):
   """ Create one or more buckets. """
-  buckets = _storage.buckets(project_id=args['project'])
+  buckets = gcp.storage.buckets(project_id=args['project'])
   errs = []
   for name in args['bucket']:
     try:
-      bucket, key = _storage._bucket.parse_name(name)
+      bucket, key = gcp.storage._bucket.parse_name(name)
       if bucket and not key:
         buckets.create(bucket)
       else:
         raise Exception("Invalid name %s" % name)
     except Exception as e:
       errs.append("Couldn't create %s: %s" %
-                  (name, extract_storage_api_response_error(e.message)))
+                  (name, _utils.extract_storage_api_response_error(e.message)))
   if errs:
     return '\n'.join(errs)
 
@@ -202,16 +203,16 @@ def _storage_delete(args, _):
   errs = []
   for item in items:
     try:
-      bucket, key = _storage._bucket.parse_name(item)
+      bucket, key = gcp.storage._bucket.parse_name(item)
       if bucket and key:
-        _storage.item(bucket, key).delete()
+        gcp.storage.item(bucket, key).delete()
       elif bucket:
-        _storage.bucket(bucket).delete()
+        gcp.storage.bucket(bucket).delete()
       else:
         raise Exception('Invalid name %s' % item)
     except Exception as e:
       errs.append("Couldn't delete %s: %s" %
-                  (item, extract_storage_api_response_error(e.message)))
+                  (item, _utils.extract_storage_api_response_error(e.message)))
   if errs:
     return '\n'.join(errs)
 
@@ -223,13 +224,13 @@ def _render_dictionary(data, headers=None):
     data: the dictionary list
     headers: the keys in the dictionary to use as table columns, in order.
   """
-  return _ipython.core.display.HTML(HtmlBuilder.render_table(data, headers))
+  return IPython.core.display.HTML(_html.HtmlBuilder.render_table(data, headers))
 
 
 def _storage_list_buckets(project, pattern):
   """ List all storage buckets that match a pattern. """
   data = [{'Bucket': 'gs://' + bucket.name, 'Created': bucket.metadata().created_on}
-          for bucket in _storage.buckets(project_id=project)
+          for bucket in gcp.storage.buckets(project_id=project)
           if fnmatch.fnmatch(bucket.name, pattern)]
   return _render_dictionary(data, ['Bucket', 'Created'])
 
@@ -265,7 +266,7 @@ def _storage_list(args, _):
   if target is None:
     return _storage_list_buckets(project, '*')  # List all buckets.
 
-  bucket_name, key = _storage._bucket.parse_name(target)
+  bucket_name, key = gcp.storage._bucket.parse_name(target)
   if bucket_name is None:
     raise Exception('Invalid name: %s' % target)
 
@@ -275,13 +276,13 @@ def _storage_list(args, _):
       key = '*'
     if project:
       # Only list if the bucket is in the project
-      for bucket in _storage.buckets(project_id=project):
+      for bucket in gcp.storage.buckets(project_id=project):
         if bucket.name == bucket_name:
           break
       else:
         raise Exception('%s does not exist in project %s' % (target, project))
     else:
-      bucket = _storage.bucket(bucket_name)
+      bucket = gcp.storage.bucket(bucket_name)
 
     if bucket.exists():
       return _storage_list_keys(bucket, key)
@@ -295,10 +296,10 @@ def _storage_list(args, _):
 
 
 def _get_item_contents(source_name):
-  source_bucket, source_key = _storage._bucket.parse_name(source_name)
+  source_bucket, source_key = gcp.storage._bucket.parse_name(source_name)
   if source_bucket is None or source_key is None:
     raise Exception('Invalid source object %s' % source_name)
-  source = _storage.item(source_bucket, source_key)
+  source = gcp.storage.item(source_bucket, source_key)
   if not source.exists():
     raise Exception('Source %s does not exist' % source_name)
   return source.read_from()
@@ -306,7 +307,7 @@ def _get_item_contents(source_name):
 
 def _storage_read(args, _):
   contents = _get_item_contents(args['item'])
-  ipy = _ipython.get_ipython()
+  ipy = IPython.get_ipython()
   ipy.push({args['variable']: contents})
 
 
@@ -327,11 +328,11 @@ def _storage_view(args, _):
 
 def _storage_write(args, _):
   target_name = args['item']
-  target_bucket, target_key = _storage._bucket.parse_name(target_name)
+  target_bucket, target_key = gcp.storage._bucket.parse_name(target_name)
   if target_bucket is None or target_key is None:
     raise Exception('Invalid target object %s' % target_name)
-  target = _storage.item(target_bucket, target_key)
-  ipy = _ipython.get_ipython()
+  target = gcp.storage.item(target_bucket, target_key)
+  ipy = IPython.get_ipython()
   contents = ipy.user_ns[args['variable']]
   # TODO(gram): would we want to to do any special handling here; e.g. for DataFrames?
   target.write_to(str(contents), 'text/plain')

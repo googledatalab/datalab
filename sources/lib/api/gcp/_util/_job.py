@@ -14,13 +14,10 @@
 
 """Implements Job functionality for async tasks."""
 
-from concurrent.futures import ALL_COMPLETED as _ALL_COMPLETED
-from concurrent.futures import FIRST_COMPLETED as _FIRST_COMPLETED
-from concurrent.futures import TimeoutError as _FuturesTimeoutError
-from concurrent.futures import wait as _fwait
-from time import sleep as _sleep
-from traceback import format_exc as _format_exc
-from uuid import uuid4 as _gen_uuid
+import concurrent.futures
+import time
+import traceback
+import uuid
 
 
 class JobError(Exception):
@@ -54,7 +51,7 @@ class Job(object):
       job_id: a unique ID for the job. If None, a UUID will be generated.
       future: the Future associated with the Job, if any.
     """
-    self._job_id = _gen_uuid() if job_id is None else job_id
+    self._job_id = uuid.uuid4() if job_id is None else job_id
     self._future = future
     self._is_complete = False
     self._errors = None
@@ -141,11 +138,12 @@ class Job(object):
       try:
         self._result = self._future.result()
       except Exception as e:
-        self._fatal_error = JobError(location=_format_exc(), message=e.message, reason=str(type(e)))
+        self._fatal_error = JobError(location=traceback.format_exc(), message=e.message,
+                                     reason=str(type(e)))
 
   def _timeout(self):
     """ Helper for rasing timeout errors. """
-    raise _FuturesTimeoutError('Timed out waiting for Job %s to complete' % self._job_id)
+    raise concurrent.futures.TimeoutError('Timed out waiting for Job %s to complete' % self._job_id)
 
   def wait(self, timeout=None):
     """ Wait for the job to complete, or a timeout to happen.
@@ -160,7 +158,7 @@ class Job(object):
       try:
         # Future.exception() will return rather than raise any exception so we use it.
         self._future.exception(timeout)
-      except _FuturesTimeoutError:
+      except concurrent.futures.TimeoutError:
         self._timeout()
     else:
       # fall back to polling
@@ -169,7 +167,7 @@ class Job(object):
           if timeout <= 0:
             self._timeout()
           timeout -= Job._POLL_INTERVAL_SECONDS
-        _sleep(Job._POLL_INTERVAL_SECONDS)
+        time.sleep(Job._POLL_INTERVAL_SECONDS)
     return self
 
   def __repr__(self):
@@ -193,7 +191,7 @@ class Job(object):
     elif len(jobs) == 0:
       return jobs
 
-    wait_on_one = return_when == _FIRST_COMPLETED
+    wait_on_one = return_when == concurrent.futures.FIRST_COMPLETED
     completed = []
     while True:
       if timeout is not None:
@@ -215,9 +213,10 @@ class Job(object):
       # as it can return early if a (thread) job is ready; else fall back to time.sleep.
       futures = [job._future for job in jobs if job._future]
       if len(futures) == 0:
-        _sleep(Job._POLL_INTERVAL_SECONDS)
+        time.sleep(Job._POLL_INTERVAL_SECONDS)
       else:
-        _fwait(futures, timeout=Job._POLL_INTERVAL_SECONDS, return_when=return_when)
+        concurrent.futures.wait(futures, timeout=Job._POLL_INTERVAL_SECONDS,
+                                return_when=return_when)
 
   @staticmethod
   def wait_any(jobs, timeout=None):
@@ -230,7 +229,7 @@ class Job(object):
       A list of the jobs that have now completed or None if there were no jobs.
 
     """
-    return Job._wait(jobs, timeout, _FIRST_COMPLETED)
+    return Job._wait(jobs, timeout, concurrent.futures.FIRST_COMPLETED)
 
   @staticmethod
   def wait_all(jobs, timeout=None):
@@ -242,5 +241,4 @@ class Job(object):
     Returns:
       A list of the jobs that have now completed or None if there were no jobs.
     """
-    return Job._wait(jobs, timeout, _ALL_COMPLETED)
-
+    return Job._wait(jobs, timeout, concurrent.futures.ALL_COMPLETED)

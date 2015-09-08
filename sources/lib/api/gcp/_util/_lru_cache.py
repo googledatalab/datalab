@@ -14,7 +14,7 @@
 
 """A simple LRU cache."""
 
-from datetime import datetime
+import datetime
 
 
 class LRUCache(object):
@@ -29,7 +29,7 @@ class LRUCache(object):
 
     if key in self._cache:
       entry = self._cache[key]
-      entry['last_used'] = datetime.now()
+      entry['last_used'] = datetime.datetime.now()
       return entry['value']
     else:
       raise KeyError(key)
@@ -51,5 +51,4 @@ class LRUCache(object):
 
     entry['value'] = value
     entry['key'] = key
-    entry['last_used'] = datetime.now()
-
+    entry['last_used'] = datetime.datetime.now()

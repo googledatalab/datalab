@@ -18,16 +18,16 @@ import datetime
 import imp
 import sys
 import time
-import IPython as _ipython
-import IPython.core.magic as _magic
-import gcp.bigquery as _bq
-import gcp.sql as _sql
-from ._commands import CommandParser
-from ._utils import handle_magic_line
+import IPython
+import IPython.core.magic
+import gcp.bigquery
+import gcp.sql
+import _commands
+import _utils
 
 
 def _create_sql_parser():
-  sql_parser = CommandParser('create a named SQL')
+  sql_parser = _commands.CommandParser('create a named SQL')
   sql_parser.add_argument('-n', '--name', help='the name for this SQL')
   sql_parser.set_defaults(func=lambda args, cell: sql_cell(args, cell))
   return sql_parser
@@ -36,11 +36,12 @@ def _create_sql_parser():
 _sql_parser = _create_sql_parser()
 
 
-@_magic.register_cell_magic
+@IPython.core.magic.register_cell_magic
 def sql(line, cell):
-  return handle_magic_line(line, cell, _sql_parser)
+  return _utils.handle_magic_line(line, cell, _sql_parser)
 
 # TODO(gram): Perhaps this should go in SqlModule?
+
 
 def _date(val, offset=None):
   """ A special pseudo-type for pipeline arguments.
@@ -109,7 +110,7 @@ def _resolve_table(v, format, delta):
     v = time.strftime(format, when.timetuple())
   except Exception:
     pass
-  return _bq.table(v)
+  return gcp.bigquery.table(v)
 
 
 def _make_string_formatter(f, offset=None):
@@ -127,7 +128,7 @@ def _make_table_formatter(f, offset=None):
 
 
 def _make_table(v):
-  return _bq.table(v)
+  return gcp.bigquery.table(v)
 
 
 def _datestring(format, offset=''):
@@ -145,7 +146,7 @@ def _arguments(code, module):
     code: the Python code to execute that defines the arguments.
 
   """
-  arg_parser = CommandParser.create('')
+  arg_parser = _commands.CommandParser.create('')
   try:
     # Define our special argument 'types'.
     env = {'table': _table, 'datestring': _datestring}
@@ -210,9 +211,9 @@ def _split_cell(cell, module):
     The default (last) query for the module.
 
   """
-  code = _sql.SqlModule.split_cell(cell, module)
-  _sql.SqlModule.set_arg_parser(module, _arguments(code, module))
-  return _sql.SqlModule.get_query_from_module(module)
+  code = gcp.sql.SqlModule.split_cell(cell, module)
+  gcp.sql.SqlModule.set_arg_parser(module, _arguments(code, module))
+  return gcp.sql.SqlModule.get_query_from_module(module)
 
 
 def sql_cell(args, cell):
@@ -238,11 +239,11 @@ def sql_cell(args, cell):
   name = args['name'] if args['name'] else '_sql_cell'
   module = imp.new_module(name)
   query = _split_cell(cell, module)
-  ipy = _ipython.get_ipython()
+  ipy = IPython.get_ipython()
   if not args['name']:
       # Execute now
       if query:
-        return _bq.query(query, ipy.user_ns).execute().results
+        return gcp.bigquery.query(query, ipy.user_ns).execute().results
   else:
     # Add it as a module
     sys.modules[name] = module

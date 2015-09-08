@@ -15,10 +15,10 @@
 """Implements BigQuery Job functionality."""
 
 import datetime
-from gcp._util import Job as _Job, JobError as _JobError
+import gcp._util
 
 
-class Job(_Job):
+class BQJob(gcp._util.Job):
   """Represents a BigQuery Job.
   """
 
@@ -30,7 +30,7 @@ class Job(_Job):
           this.
       job_id: the BigQuery job ID corresponding to this job.
     """
-    super(Job, self).__init__(job_id)
+    super(BQJob, self).__init__(job_id)
     self._api = api
     self._start_time = None
     self._end_time = None
@@ -78,11 +78,11 @@ class Job(_Job):
       location = error_result.get('location', None)
       message = error_result.get('message', None)
       reason = error_result.get('reason', None)
-      self._fatal_error = _JobError(location, message, reason)
+      self._fatal_error = gcp._util.JobError(location, message, reason)
     if 'errors' in status:
       self._errors = []
       for error in status['errors']:
         location = error.get('location', None)
         message = error.get('message', None)
         reason = error.get('reason', None)
-        self._errors.append(_JobError(location, message, reason))
+        self._errors.append(gcp._util.JobError(location, message, reason))

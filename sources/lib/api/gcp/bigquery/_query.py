@@ -14,9 +14,9 @@
 
 """Implements Query BigQuery API."""
 
-from gcp._util import async_method
-from ._sampling import Sampling
-from ._utils import parse_table_name as _parse_table_name
+import gcp._util
+import _sampling
+import _utils
 
 
 class Query(object):
@@ -63,7 +63,7 @@ class Query(object):
     Returns:
       A Query object for sampling the table.
     """
-    return Query(api, Sampling.sampling_query(sql, fields, count, sampling))
+    return Query(api, _sampling.Sampling.sampling_query(sql, fields, count, sampling))
 
   def __init__(self, api, sql):
     """Initializes an instance of a Query object.
@@ -121,7 +121,7 @@ class Query(object):
       job.wait()
     return job
 
-  @async_method
+  @gcp._util.async_method
   def extract_async(self, storage_uris, format='csv', csv_delimiter=',',
                     csv_header=True, compress=False, use_cache=True):
     """Exports the query results to GCS. Returns a Future immediately.
@@ -175,7 +175,7 @@ class Query(object):
         .to_file(path, format=format, csv_delimiter=csv_delimiter, csv_header=csv_header)
     return path
 
-  @async_method
+  @gcp._util.async_method
   def to_file_async(self, path,  format='csv', csv_delimiter=',', csv_header=True, use_cache=True):
     """Save the results to a local file in Excel CSV format. Returns a Job immediately.
 
@@ -245,7 +245,7 @@ class Query(object):
     append = table_mode == 'append'
     overwrite = table_mode == 'overwrite'
     if table_name is not None:
-      table_name = _parse_table_name(table_name, self._api.project_id)
+      table_name = _utils.parse_table_name(table_name, self._api.project_id)
 
     query_result = self._api.jobs_insert_query(self._sql,
                                                table_name=table_name,
@@ -265,7 +265,7 @@ class Query(object):
       except KeyError:
         # The query was in error
         raise Exception('Query failed: %s' % str(query_result['status']['errors']))
-    return _QueryJob(self._api, job_id, table_name, self._sql)
+    return _query_job.QueryJob(self._api, job_id, table_name, self._sql)
 
   def execute(self, table_name=None, table_mode='create', use_cache=True, priority='interactive',
               allow_large_results=False):
@@ -303,7 +303,7 @@ class Query(object):
     Returns:
       A View for the Query.
     """
-    return _View(self._api, view_name).create(self._sql)
+    return _view.View(self._api, view_name).create(self._sql)
 
-from ._query_job import QueryJob as _QueryJob
-from ._view import View as _View
+import _query_job
+import _view

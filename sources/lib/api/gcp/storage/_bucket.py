@@ -15,12 +15,10 @@
 """Implements Bucket-related Cloud Storage APIs."""
 
 import re
+import dateutil
 
-import dateutil.parser as _dateparser
-from gcp._util import Iterator as _Iterator
-from gcp._util import RequestException as _RequestException
-from ._item import Item as _Item
-from ._item import ItemList as _ItemList
+import gcp._util
+import _item
 
 
 # REs to match bucket names and optionally object names
@@ -61,7 +59,7 @@ class BucketMetadata(object):
   def created_on(self):
     """Gets the created timestamp of the bucket."""
     s = self._info['timeCreated']
-    return _dateparser.parse(s)
+    return dateutil.parser.parse(s)
 
   @property
   def etag(self):
@@ -114,7 +112,7 @@ class Bucket(object):
     Returns:
       An Item instance representing the specified key.
     """
-    return _Item(self._api, self._name, key)
+    return _item.Item(self._api, self._name, key)
 
   def items(self, prefix=None, delimiter=None):
     """Retrieve the list of items within this bucket.
@@ -125,7 +123,7 @@ class Bucket(object):
     Returns:
       An iterable list of items within this bucket.
     """
-    return _ItemList(self._api, self._name, prefix, delimiter)
+    return _item.ItemList(self._api, self._name, prefix, delimiter)
 
   def exists(self):
     """ Checks if the bucket exists. """
@@ -186,7 +184,7 @@ class BucketList(object):
     """
     try:
       _ = self._api.buckets_get(name)
-    except _RequestException as e:
+    except gcp._util.RequestException as e:
       if e.status == 404:
         return False
       raise e
@@ -218,4 +216,4 @@ class BucketList(object):
     return buckets, page_token
 
   def __iter__(self):
-    return iter(_Iterator(self._retrieve_buckets))
+    return iter(gcp._util.Iterator(self._retrieve_buckets))

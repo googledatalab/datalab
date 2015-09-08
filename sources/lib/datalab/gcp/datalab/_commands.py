@@ -16,7 +16,7 @@
 
 import argparse
 import shlex
-import IPython as _ipython
+import IPython
 
 
 class CommandParser(argparse.ArgumentParser):
@@ -67,7 +67,7 @@ class CommandParser(argparse.ArgumentParser):
     """Parses a line into a dictionary of arguments, expanding meta-variables from a namespace. """
     try:
       if namespace is None:
-        ipy = _ipython.get_ipython()
+        ipy = IPython.get_ipython()
         namespace = ipy.user_ns
       args = CommandParser.create_args(line, namespace)
       return self.parse_args(args)

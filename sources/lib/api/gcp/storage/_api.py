@@ -15,7 +15,7 @@
 """Implements Storage HTTP API wrapper."""
 
 import urllib
-import gcp._util as _util
+import gcp._util
 
 
 class Api(object):
@@ -62,7 +62,7 @@ class Api(object):
     data = {'name': bucket}
 
     url = Api._ENDPOINT + (Api._BUCKET_PATH % '')
-    return _util.Http.request(url, args=args, data=data, credentials=self._credentials)
+    return gcp._util.Http.request(url, args=args, data=data, credentials=self._credentials)
 
   def buckets_delete(self, bucket):
     """Issues a request to delete a bucket.
@@ -74,7 +74,7 @@ class Api(object):
       Exception if there is an error performing the operation.
     """
     url = Api._ENDPOINT + (Api._BUCKET_PATH % bucket)
-    _util.Http.request(url, method='DELETE', credentials=self._credentials, raw_response=True)
+    gcp._util.Http.request(url, method='DELETE', credentials=self._credentials, raw_response=True)
 
   def buckets_get(self, bucket, projection='noAcl'):
     """Issues a request to retrieve information about a bucket.
@@ -89,7 +89,7 @@ class Api(object):
     """
     args = {'projection': projection}
     url = Api._ENDPOINT + (Api._BUCKET_PATH % bucket)
-    return _util.Http.request(url, credentials=self._credentials, args=args)
+    return gcp._util.Http.request(url, credentials=self._credentials, args=args)
 
   def buckets_list(self, projection='noAcl', max_results=0, page_token=None, project_id=None):
     """Issues a request to retrieve the list of buckets.
@@ -114,7 +114,7 @@ class Api(object):
       args['pageToken'] = page_token
 
     url = Api._ENDPOINT + (Api._BUCKET_PATH % '')
-    return _util.Http.request(url, args=args, credentials=self._credentials)
+    return gcp._util.Http.request(url, args=args, credentials=self._credentials)
 
   def object_download(self, bucket, key):
     """Reads the contents of an object as text.
@@ -130,7 +130,7 @@ class Api(object):
     args = {'alt': 'media'}
 
     url = Api._DOWNLOAD_ENDPOINT + (Api._OBJECT_PATH % (bucket, Api._escape_key(key)))
-    return _util.Http.request(url, args=args, credentials=self._credentials, raw_response=True)
+    return gcp._util.Http.request(url, args=args, credentials=self._credentials, raw_response=True)
 
   def object_upload(self, bucket, key, content, content_type):
     """Writes text content to the object.
@@ -147,8 +147,8 @@ class Api(object):
     headers = {'Content-Type': content_type}
 
     url = Api._UPLOAD_ENDPOINT + (Api._OBJECT_PATH % (bucket, ''))
-    return _util.Http.request(url, args=args, data=content, headers=headers,
-                              credentials=self._credentials, raw_response=True)
+    return gcp._util.Http.request(url, args=args, data=content, headers=headers,
+                                  credentials=self._credentials, raw_response=True)
 
   def objects_copy(self, source_bucket, source_key, target_bucket, target_key):
     """Updates the metadata associated with an object.
@@ -165,7 +165,7 @@ class Api(object):
     """
     url = Api._ENDPOINT + (Api._OBJECT_COPY_PATH % (source_bucket, Api._escape_key(source_key),
                                                     target_bucket, Api._escape_key(target_key)))
-    return _util.Http.request(url, method='POST', credentials=self._credentials)
+    return gcp._util.Http.request(url, method='POST', credentials=self._credentials)
 
   def objects_delete(self, bucket, key):
     """Deletes the specified object.
@@ -177,7 +177,7 @@ class Api(object):
       Exception if there is an error performing the operation.
     """
     url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, Api._escape_key(key)))
-    _util.Http.request(url, method='DELETE', credentials=self._credentials, raw_response=True)
+    gcp._util.Http.request(url, method='DELETE', credentials=self._credentials, raw_response=True)
 
   def objects_get(self, bucket, key, projection='noAcl'):
     """Issues a request to retrieve information about an object.
@@ -196,7 +196,7 @@ class Api(object):
       args['projection'] = projection
 
     url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, Api._escape_key(key)))
-    return _util.Http.request(url, args=args, credentials=self._credentials)
+    return gcp._util.Http.request(url, args=args, credentials=self._credentials)
 
   def objects_list(self, bucket, prefix=None, delimiter=None, projection='noAcl', versions=False,
                    max_results=0, page_token=None):
@@ -231,7 +231,7 @@ class Api(object):
       args['pageToken'] = page_token
 
     url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, ''))
-    return _util.Http.request(url, args=args, credentials=self._credentials)
+    return gcp._util.Http.request(url, args=args, credentials=self._credentials)
 
   def objects_patch(self, bucket, key, info):
     """Updates the metadata associated with an object.
@@ -246,7 +246,7 @@ class Api(object):
       Exception if there is an error performing the operation.
     """
     url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, Api._escape_key(key)))
-    return _util.Http.request(url, method='PATCH', data=info, credentials=self._credentials)
+    return gcp._util.Http.request(url, method='PATCH', data=info, credentials=self._credentials)
 
   @staticmethod
   def _escape_key(key):

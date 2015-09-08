@@ -15,13 +15,14 @@
 # Utility functions that don't need class wrappers and don't merit their own files.
 """Miscellaneous simple utility functions."""
 
-import traceback as _tb
+import traceback
 import types
 
 
 def print_exception_with_last_stack(e):
-  _tb.print_exc()
+  traceback.print_exc()
   print str(e)
+
 
 def get_item(env, name, default=None):
   """ Get an item from a dictionary, handling nested lookups with dotted notation. """

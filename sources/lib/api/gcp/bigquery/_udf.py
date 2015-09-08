@@ -14,8 +14,8 @@
 
 """Google Cloud Platform library - BigQuery UDF Functionality."""
 
-import json as _json
-from ._query import Query as _Query
+import json
+import _query
 
 
 class FunctionCall(object):
@@ -51,7 +51,7 @@ class FunctionCall(object):
       Exception if the query could not be executed or query response was malformed.
     """
     query_sql = 'SELECT * FROM %s' % self._sql
-    q = _Query(self._api, query_sql)
+    q = _query.Query(self._api, query_sql)
 
     return q.results(use_cache=use_cache)
 
@@ -81,7 +81,7 @@ class FunctionCall(object):
     # Construct a json representation of the output schema
     # For example, [{'name':'field1','type':'string'},...]
     output_fields = [{'name': f[0], 'type': f[1]} for f in outputs]
-    output_fields = _json.dumps(output_fields, sort_keys=True)
+    output_fields = json.dumps(output_fields, sort_keys=True)
 
     # Build the SQL from the individual bits with proper escaping of the implementation
     return 'js(%s,\n%s,\n\'%s\',\n"%s")' % (data._repr_sql_(),

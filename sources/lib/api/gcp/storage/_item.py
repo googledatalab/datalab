@@ -14,9 +14,8 @@
 
 """Implements Object-related Cloud Storage APIs."""
 
-import dateutil.parser as _dateparser
-from gcp._util import Iterator as _Iterator
-from gcp._util import RequestException as _RequestException
+import dateutil.parser
+import gcp._util
 
 # TODO(nikhilko): Read/write operations don't account for larger files, or non-textual content.
 #                 Use streaming reads into a buffer or StringIO or into a file handle.
@@ -57,7 +56,7 @@ class ItemMetadata(object):
   def updated_on(self):
     """Gets the updated timestamp of the item."""
     s = self._info['updated']
-    return _dateparser.parse(s)
+    return dateutil.parser.parse(s)
 
 
 class Item(object):
@@ -115,7 +114,7 @@ class Item(object):
     """
     try:
       self._api.objects_delete(self._bucket, self._key)
-    except _RequestException as e:
+    except gcp._util.RequestException as e:
       if e.status == 204:
         return True
       raise e
@@ -184,7 +183,7 @@ class ItemList(object):
     """
     try:
       _ = self._api.objects_get(self._bucket, key)
-    except _RequestException as e:
+    except gcp._util.RequestException as e:
       if e.status == 404:
         return False
       raise e
@@ -203,7 +202,7 @@ class ItemList(object):
         raise Exception('Unexpected item list response.')
 
     page_token = list_info.get('nextPageToken', None)
-    return (items, page_token)
+    return items, page_token
 
   def __iter__(self):
-    return iter(_Iterator(self._retrieve_items))
+    return iter(gcp._util.Iterator(self._retrieve_items))

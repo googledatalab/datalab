@@ -14,17 +14,18 @@
 
 """Implementation of various module magics"""
 
-import sys as _sys
-import types as _types
-import IPython as _ipython
-import IPython.core.magic as _magic
-from ._commands import CommandParser as _CommandParser
+import sys
+import types
+import IPython
+import IPython.core.magic
+import _commands
 
-@_magic.register_line_cell_magic
+
+@IPython.core.magic.register_line_cell_magic
 def pymodule(line, cell=None):
   """Creates and subsequently auto-imports a python module.
   """
-  parser = _CommandParser.create('pymodule')
+  parser = _commands.CommandParser.create('pymodule')
   parser.add_argument('-n', '--name',
                       help='the name of the python module to create and import')
 
@@ -38,17 +39,18 @@ def pymodule(line, cell=None):
 
     # Automatically import the newly created module by assigning it to a variable
     # named the same name as the module name.
-    ipy = _ipython.get_ipython()
+    ipy = IPython.get_ipython()
     ipy.push({name: module})
+
 
 def _create_python_module(name, code):
   # By convention the module is associated with a file name matching the module name
-  module = _types.ModuleType(name)
+  module = types.ModuleType(name)
   module.__file__ = name
   module.__name__ = name
 
   exec code in module.__dict__
 
   # Hold on to the module if the code executed successfully
-  _sys.modules[name] = module
+  sys.modules[name] = module
   return module

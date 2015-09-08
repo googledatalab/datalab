@@ -21,7 +21,7 @@ from oauth2client.client import AccessTokenCredentials
 
 class TestCases(unittest.TestCase):
 
-  @mock.patch('gcp.storage._Api.buckets_get')
+  @mock.patch('gcp.storage._api.Api.buckets_get')
   def test_bucket_existence(self, mock_api_buckets):
     mock_api_buckets.return_value = self._create_buckets_get_result()
 
@@ -31,7 +31,7 @@ class TestCases(unittest.TestCase):
     mock_api_buckets.side_effect = gcp._util.RequestException(404, 'failed')
     self.assertFalse(buckets.contains('test_bucket_2'))
 
-  @mock.patch('gcp.storage._Api.buckets_get')
+  @mock.patch('gcp.storage._api.Api.buckets_get')
   def test_bucket_metadata(self, mock_api_buckets):
     mock_api_buckets.return_value = self._create_buckets_get_result()
 

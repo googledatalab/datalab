@@ -14,10 +14,10 @@
 
 """Implements BigQuery query job results table functionality."""
 
-from ._table import Table as _Table
+import _table
 
 
-class QueryResultsTable(_Table):
+class QueryResultsTable(_table.Table):
 
   def __init__(self, api, name, job, is_temporary=False):
     """Initializes an instance of a Table object.
@@ -43,4 +43,3 @@ class QueryResultsTable(_Table):
   def is_temporary(self):
     """ Whether this is a short-lived table or not. """
     return self._is_temporary
-
