@@ -16,7 +16,6 @@
 
 import datetime as _dt
 import io as _io
-import json as _json
 import gcp as _gcp
 import gcp.storage as _storage
 from IPython.html.services.notebooks.nbmanager import NotebookManager as _NotebookManager
@@ -118,7 +117,7 @@ class LocalNotebookList(NotebookList):
   def list_files(self):
     entries = os.listdir(self._directory)
     return filter(lambda e: path.splitext(e)[1] == '.ipynb' and
-                    path.isfile(path.join(self._directory, e)), entries)
+                  path.isfile(path.join(self._directory, e)), entries)
 
   def file_exists(self, name):
     return path.exists(self._get_path(name))
@@ -161,7 +160,7 @@ class LocalNotebookList(NotebookList):
 
   def delete_file(self, name):
     abs_name = self._get_path(name)
-    if path.exits(abs_name) and path.isfile(abs_name):
+    if path.exists(abs_name) and path.isfile(abs_name):
       os.remove(abs_name)
       return True
     return False
@@ -312,8 +311,8 @@ class CompositeNotebookManager(_NotebookManager):
       self._dirs.append(name)
 
   @property
-  def notebook_dir(value):
-    pass
+  def notebook_dir(self):
+    return None
 
   def info_string(self):
     return 'Serving notebooks via the %s notebook manager.' % self._name
@@ -347,14 +346,14 @@ class CompositeNotebookManager(_NotebookManager):
 
     return map(lambda dir: self.get_dir_model(dir), sorted(self._dirs))
 
-  def get_dir_model(self, path=''):
+  def get_dir_model(self, name, path=''):
     """Retrieves information about the specified directory path.
     """
     notebook_list = self._get_notebook_list(path)
     if notebook_list is None:
       return None
 
-    return {'type': 'directory', 'name': path, 'path': path}
+    return {'type': 'directory', 'name': name, 'path': path}
 
   def list_notebooks(self, path=''):
     """Retrieves the list of notebooks contained in the specified path.
@@ -396,9 +395,8 @@ class CompositeNotebookManager(_NotebookManager):
     if new_name != name:
       # Name has changed, so delete the old entry. The new entry will be created as part of
       # updating the map with the new notebook.
-      del self._notebooks[name]
+      del self._notebook_lists[name]
 
-    data = ''
     with _io.StringIO() as stream:
       content = _NotebookFormat.to_notebook_json(model['content'])
       self.check_and_sign(content, new_name, path)
@@ -471,7 +469,7 @@ class CompositeNotebookManager(_NotebookManager):
              'name': name,
              'created': timestamp,
              'last_modified': timestamp
-            }
+    }
     if content is not None:
       model['content'] = content
     return model
@@ -519,4 +517,3 @@ class DataLabNotebookManager(CompositeNotebookManager):
       return buckets.create(bucket_name)
     else:
       return _storage.bucket(bucket_name)
-

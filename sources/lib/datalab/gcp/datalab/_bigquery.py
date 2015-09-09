@@ -24,7 +24,7 @@ import gcp.sql as _sql
 from ._commands import CommandParser
 from ._html import Html
 from ._html import HtmlBuilder
-from ._utils import _get_data, _get_field_list, _handle_magic_line
+from ._utils import get_data, get_field_list, handle_magic_line
 
 
 def _create_sample_subparser(parser):
@@ -32,15 +32,15 @@ def _create_sample_subparser(parser):
       'execute a BigQuery SQL statement and display results or create a named query object')
   sample_parser.add_argument('-q', '--sql', help='the name for this query object')
   sample_parser.add_argument('-c', '--count', type=int, default=10,
-                          help='number of rows to limit to if sampling')
+                             help='number of rows to limit to if sampling')
   sample_parser.add_argument('-m', '--method', help='the type of sampling to use',
-                          choices=['limit', 'random', 'hashed', 'sorted'], default='limit')
+                             choices=['limit', 'random', 'hashed', 'sorted'], default='limit')
   sample_parser.add_argument('-p', '--percent', type=int, default=1,
-                          help='For random or hashed sampling, what percentage to sample from')
+                             help='For random or hashed sampling, what percentage to sample from')
   sample_parser.add_argument('-f', '--field',
-                          help='field to use for sorted or hashed sampling')
+                             help='field to use for sorted or hashed sampling')
   sample_parser.add_argument('-o', '--order', choices=['ascending', 'descending'],
-                          default='ascending', help='sort order to use for sorted sampling')
+                             default='ascending', help='sort order to use for sorted sampling')
   return sample_parser
 
 
@@ -50,12 +50,12 @@ def _create_udf_subparser(parser):
   return udf_parser
 
 
-def _create_dryrun_subparser(parser):
-  dryrun_parser = parser.subcommand('dryrun',
+def _create_dry_run_subparser(parser):
+  dry_run_parser = parser.subcommand('dryrun',
       'Send a query to BQ in dry run mode to receive approximate usage statistics')
-  dryrun_parser.add_argument('-q', '--sql',
-      help='the name of the query to be dry run', required=True)
-  return dryrun_parser
+  dry_run_parser.add_argument('-q', '--sql',
+                             help='the name of the query to be dry run', required=True)
+  return dry_run_parser
 
 
 def _create_execute_subparser(parser, command):
@@ -159,7 +159,7 @@ def _create_bigquery_parser():
       func=lambda args, cell: _dispatch_handler(args, cell, sample_parser, _sample_cell))
 
   # %%bigquery dryrun
-  dryrun_parser = _create_dryrun_subparser(parser)
+  dryrun_parser = _create_dry_run_subparser(parser)
   dryrun_parser.set_defaults(
       func=lambda args, cell: _dispatch_handler(args, cell, dryrun_parser,
                                                 _dryrun_line, cell_prohibited=True))
@@ -246,7 +246,7 @@ def bigquery(line, cell=None):
     # We likely have variables to expand; get the appropriate context.
     namespace = _notebook_environment()
 
-  return _handle_magic_line(line, cell, _bigquery_parser, namespace=namespace)
+  return handle_magic_line(line, cell, _bigquery_parser, namespace=namespace)
 
 
 def _dispatch_handler(args, cell, parser, handler,
@@ -414,7 +414,7 @@ def _table_line(args):
     html = _table_viewer(table, rows_per_page=args['rows'], fields=fields)
     return _ipython.core.display.HTML(html)
   else:
-    print "%s does not exist" % name
+    return "%s does not exist" % name
 
 def _notebook_environment():
   ipy = _ipython.get_ipython()
@@ -475,7 +475,7 @@ def _schema_line(args):
     html = _repr_html_table_schema(schema)
     return _ipython.core.display.HTML(html)
   else:
-    print "%s does not exist" % name
+    return "%s does not exist" % name
 
 
 def _render_table(data, fields=None):
@@ -487,7 +487,8 @@ def _render_table(data, fields=None):
 
 
 def _datasets_line(args):
-  return _render_table([{'Name': dataset.full_name} for dataset in _bq.datasets(args['project'])])
+  return _render_table([{'Name': str(dataset)}
+                        for dataset in _bq.datasets(args['project'])])
 
 
 def _tables_line(args):
@@ -498,7 +499,7 @@ def _tables_line(args):
 
   tables = []
   for dataset in datasets:
-    tables.extend([{'Name': table.full_name} for table in dataset])
+    tables.extend([{'Name': str(table)} for table in dataset])
 
   return _render_table(tables)
 
@@ -510,9 +511,9 @@ def _extract_line(args):
     source = _get_table(name)
 
   if not source:
-    print 'No such source: %s' % name
+    return 'No such source: %s' % name
   elif isinstance(source, _bq._Table) and not source.exists():
-    print 'Source %s does not exist' % name
+    return 'Source %s does not exist' % name
   else:
 
     job = source.extract(args['destination'],
@@ -521,9 +522,9 @@ def _extract_line(args):
                          field_delimiter=args['delimiter'],
                          print_header=args['header'])
     if job.failed:
-      print 'Extract failed: %s' % str(job.fatal_error)
+      return 'Extract failed: %s' % str(job.fatal_error)
     elif job.errors:
-      print 'Extract completed with errors: %s' % str(job.errors)
+      return 'Extract completed with errors: %s' % str(job.errors)
 
 
 def _load_cell(args, schema):
@@ -534,12 +535,11 @@ def _load_cell(args, schema):
 
   if table.exists():
     if not (args['append'] or args['overwrite']):
-      print "%s already exists; use --append or --overwrite" % name
+      return "%s already exists; use --append or --overwrite" % name
   elif schema:
     table.create(json.loads(schema))
   elif not args['infer']:
-    print 'Table does not exist, no schema specified in cell and no --infer flag; cannot load'
-    return
+    return 'Table does not exist, no schema specified in cell and no --infer flag; cannot load'
 
   # TODO(gram): we should probably try do the schema infer ourselves as BQ doesn't really seem
   # to be able to do it. Alternatively we can drop the --infer argument and force the user
@@ -555,9 +555,9 @@ def _load_cell(args, schema):
                    field_delimiter=args['delimiter'],
                    quote=args['quote'])
   if job.failed:
-    print 'Load failed: %s' % str(job.fatal_error)
+    return 'Load failed: %s' % str(job.fatal_error)
   elif job.errors:
-    print 'Load completed with errors: %s' % str(job.errors)
+    return 'Load completed with errors: %s' % str(job.errors)
 
 
 def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
@@ -572,8 +572,7 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
     A string containing the HTML for the table viewer.
   """
   if not table.exists():
-    print "%s does not exist" % table.full_name
-    return
+    return "%s does not exist" % str(table)
 
   _HTML_TEMPLATE = """
     <div class="bqtv" id="%s"></div>
@@ -595,11 +594,11 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
   """
 
   if fields is None:
-    fields = _get_field_list(fields, table.schema)
+    fields = get_field_list(fields, table.schema)
   div_id = 'bqtv_%d' % Html.next_id()
   meta_count = ("rows: %d" % table.length) if table.length >= 0 else ''
-  meta_name = job_id if job_id else table.full_name
-  data, total_count = _get_data(table, fields, 0, rows_per_page)
+  meta_name = job_id if job_id else str(table)
+  data, total_count = get_data(table, fields, 0, rows_per_page)
 
   if total_count < 0:
     # The table doesn't have a length metadata property but may still be small if we fetched less
@@ -612,15 +611,13 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
 
   return _HTML_TEMPLATE %\
       (div_id, meta_name, meta_count, div_id, Html.get_style_arg('charting.css'), chart,
-       table.full_name, ','.join(fields), total_count, rows_per_page,
+       str(table), ','.join(fields), total_count, rows_per_page,
        json.dumps(data, cls=_util.JSONEncoder))
 
 
 def _repr_html_query(query):
   # TODO(nikhilko): Pretty print the SQL
-  builder = HtmlBuilder()
-  builder.render_text(query.sql, preformatted=True)
-  return builder.to_html()
+  return HtmlBuilder.render_text(query.sql, preformatted=True)
 
 
 def _repr_html_query_results_table(results):
@@ -667,19 +664,20 @@ def _repr_html_function_evaluation(evaluation):
 
 
 def _register_html_formatters():
-  ipy = _ipython.get_ipython()
-  html_formatter = ipy.display_formatter.formatters['text/html']
+  try:
+    ipy = _ipython.get_ipython()
+    html_formatter = ipy.display_formatter.formatters['text/html']
 
-  html_formatter.for_type_by_name('gcp.bigquery._query', 'Query', _repr_html_query)
-  html_formatter.for_type_by_name('gcp.bigquery._query_results_table', 'QueryResultsTable',
-                                  _repr_html_query_results_table)
-  html_formatter.for_type_by_name('gcp.bigquery._table', 'Table', _repr_html_table)
-  html_formatter.for_type_by_name('gcp.bigquery._table', 'TableList', _repr_html_table_list)
-  html_formatter.for_type_by_name('gcp.bigquery._table', 'Schema', _repr_html_table_schema)
-  html_formatter.for_type_by_name('gcp.bigquery._udf', 'FunctionEvaluation',
-                                  _repr_html_function_evaluation)
+    html_formatter.for_type_by_name('gcp.bigquery._query', 'Query', _repr_html_query)
+    html_formatter.for_type_by_name('gcp.bigquery._query_results_table', 'QueryResultsTable',
+                                    _repr_html_query_results_table)
+    html_formatter.for_type_by_name('gcp.bigquery._table', 'Table', _repr_html_table)
+    html_formatter.for_type_by_name('gcp.bigquery._table', 'TableList', _repr_html_table_list)
+    html_formatter.for_type_by_name('gcp.bigquery._table', 'Schema', _repr_html_table_schema)
+    html_formatter.for_type_by_name('gcp.bigquery._udf', 'FunctionEvaluation',
+                                    _repr_html_function_evaluation)
+  except TypeError:
+    # For when running unit tests
+    pass
 
 _register_html_formatters()
-
-
-

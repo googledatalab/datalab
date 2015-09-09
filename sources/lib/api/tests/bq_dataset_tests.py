@@ -25,6 +25,8 @@ class TestCases(unittest.TestCase):
     parsed_name = dataset._name_parts
     self.assertEqual('test', parsed_name[0])
     self.assertEqual('requestlogs', parsed_name[1])
+    self.assertEqual('test:requestlogs', dataset._full_name)
+    self.assertEqual('test:requestlogs', str(dataset))
 
   def test_parse_full_name(self):
     dataset = self._create_dataset('test:requestlogs')
@@ -68,16 +70,17 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('gcp.bigquery._Api.datasets_get')
   def test_dataset_exists(self, mock_api_datasets_get):
-    mock_api_datasets_get.return_value = None
+    mock_api_datasets_get.return_value = ''
     dataset = self._create_dataset('test:requestlogs')
     self.assertTrue(dataset.exists())
-    mock_api_datasets_get.side_effect = gcp._util.RequestException(404, '')
+    mock_api_datasets_get.side_effect = gcp._util.RequestException(404, None)
+    dataset._info = None
     self.assertFalse(dataset.exists())
 
   @mock.patch('gcp.bigquery._Api.datasets_insert')
   @mock.patch('gcp.bigquery._Api.datasets_get')
   def test_datasets_create_fails(self, mock_api_datasets_get, mock_api_datasets_insert):
-    mock_api_datasets_get.side_effect = gcp._util.RequestException(404, '')
+    mock_api_datasets_get.side_effect = gcp._util.RequestException(None, 404)
     mock_api_datasets_insert.return_value = {}
 
     ds = self._create_dataset('requestlogs')
@@ -87,7 +90,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._Api.datasets_insert')
   @mock.patch('gcp.bigquery._Api.datasets_get')
   def test_datasets_create_succeeds(self, mock_api_datasets_get, mock_api_datasets_insert):
-    mock_api_datasets_get.side_effect = gcp._util.RequestException(404, '')
+    mock_api_datasets_get.side_effect = gcp._util.RequestException(404, None)
     mock_api_datasets_insert.return_value = {'selfLink': None}
     ds = self._create_dataset('requestlogs')
     self.assertEqual(ds, ds.create())
@@ -103,7 +106,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._Api.datasets_get')
   @mock.patch('gcp.bigquery._Api.datasets_delete')
   def test_datasets_delete_succeeds(self, mock_api_datasets_delete, mock_api_datasets_get):
-    mock_api_datasets_get.return_value = None
+    mock_api_datasets_get.return_value = ''
     mock_api_datasets_delete.return_value = None
     ds = self._create_dataset('requestlogs')
     self.assertIsNone(ds.delete())
@@ -112,7 +115,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._Api.datasets_delete')
   def test_datasets_delete_fails(self, mock_api_datasets_delete, mock_api_datasets_get):
     mock_api_datasets_delete.return_value = None
-    mock_api_datasets_get.side_effect = gcp._util.RequestException(404, '')
+    mock_api_datasets_get.side_effect = gcp._util.RequestException(404, None)
     ds = self._create_dataset('requestlogs')
     with self.assertRaises(Exception):
       _ = ds.delete()
@@ -134,8 +137,8 @@ class TestCases(unittest.TestCase):
     ds = self._create_dataset('requestlogs')
     tables = [table for table in ds]
     self.assertEqual(2, len(tables))
-    self.assertEqual('p:d.t1', tables[0].full_name)
-    self.assertEqual('p:d.t2', tables[1].full_name)
+    self.assertEqual('p:d.t1', str(tables[0]))
+    self.assertEqual('p:d.t2', str(tables[1]))
 
   @mock.patch('gcp.bigquery._Api.datasets_list')
   def test_datasets_list(self, mock_api_datasets_list):
@@ -147,8 +150,33 @@ class TestCases(unittest.TestCase):
     }
     datasets = [dataset for dataset in gcp.bigquery.datasets('test', self._create_context())]
     self.assertEqual(2, len(datasets))
-    self.assertEqual('p:d1', datasets[0].full_name)
-    self.assertEqual('p:d2', datasets[1].full_name)
+    self.assertEqual('p:d1', str(datasets[0]))
+    self.assertEqual('p:d2', str(datasets[1]))
+
+  @mock.patch('gcp.bigquery._api.Api.tables_list')
+  @mock.patch('gcp.bigquery._api.Api.datasets_get')
+  @mock.patch('gcp.bigquery._api.Api.datasets_update')
+  def test_datasets_update(self, mock_api_datasets_update, mock_api_datasets_get,
+                           mock_api_tables_list):
+    mock_api_tables_list.return_value = {
+      'tables': [
+        {'type': 'TABLE', 'tableReference': {'projectId': 'p', 'datasetId': 'd', 'tableId': 't1'}},
+        {'type': 'TABLE', 'tableReference': {'projectId': 'p', 'datasetId': 'd', 'tableId': 't2'}},
+      ]
+    }
+    info = {'friendlyName': 'casper', 'description': 'ghostly logs'}
+    mock_api_datasets_get.return_value = info
+    ds = self._create_dataset('requestlogs')
+
+    new_friendly_name = 'aziraphale'
+    new_description = 'demon duties'
+    ds.update(new_friendly_name, new_description)
+
+    name, info = mock_api_datasets_update.call_args[0]
+    self.assertEqual(ds.name, name)
+
+    self.assertEqual(new_friendly_name, ds.friendly_name)
+    self.assertEqual(new_description, ds.description)
 
   def _create_context(self):
     project_id = 'test'

@@ -35,16 +35,38 @@ class DataSet(object):
     self._api = api
     self._name_parts = _parse_dataset_name(name, api.project_id)
     self._full_name = '%s:%s' % self._name_parts
-
-  @property
-  def full_name(self):
-    """The full name for the dataset."""
-    return self._full_name
+    self._info = None
+    try:
+      self._info = self._get_info()
+    except Exception:
+      pass
 
   @property
   def name(self):
     """The DataSetName for the dataset."""
     return self._name_parts
+
+  @property
+  def description(self):
+    """The description of the dataset."""
+    self._get_info()
+    return self._info['description'] if self._info else None
+
+  @property
+  def friendly_name(self):
+    """The friendly name of the dataset."""
+    self._get_info()
+    return self._info['friendlyName'] if self._info else None
+
+  def _get_info(self):
+    try:
+      if self._info is None:
+        self._info = self._api.datasets_get(self._name_parts)
+      return self._info
+    except _RequestException as e:
+      if e.status == 404:
+        return None
+      raise e
 
   def exists(self):
     """ Checks if the dataset exists.
@@ -54,28 +76,24 @@ class DataSet(object):
     Returns:
       True if the dataset exists; False otherwise.
     """
-    try:
-      _ = self._api.datasets_get(self._name_parts)
-    except _RequestException as e:
-      if e.status == 404:
-        return False
-      raise e
-    return True
+    self._get_info()
+    return self._info is not None
 
   def delete(self, delete_contents=False):
     """Issues a request to delete the dataset.
 
     Args:
-      delete_contents: if True, any tables in the dataset will be deleted. If False and the
-          dataset is non-empty an exception will be raised.
+      delete_contents: if True, any tables and views in the dataset will be deleted. If False
+          and the dataset is non-empty an exception will be raised.
     Returns:
       None on success.
     Raises:
       Exception if the delete fails (including if table was nonexistent).
     """
     if not self.exists():
-      raise Exception('Cannot delete non-existent table %s' % self._full_name)
+      raise Exception('Cannot delete non-existent dataset %s' % self._full_name)
     self._api.datasets_delete(self._name_parts, delete_contents=delete_contents)
+    self._info = None
     return None
 
   def create(self, friendly_name=None, description=None):
@@ -94,8 +112,29 @@ class DataSet(object):
                                            friendly_name=friendly_name,
                                            description=description)
       if 'selfLink' not in response:
-        raise Exception("Could not create dataset %s.%s" % self.full_name)
+        raise Exception("Could not create dataset %s.%s" % self._full_name)
     return self
+
+  def update(self, friendly_name=None, description=None):
+    """ Selectively updates DataSet information.
+
+    Args:
+      friendly_name: if not None, the new friendly name.
+      description: if not None, the new description.
+
+    Returns:
+    """
+    self._get_info()
+
+    if self._info:
+      if friendly_name:
+        self._info['friendlyName'] = friendly_name
+      if description:
+        self._info['description'] = description
+      try:
+        self._api.datasets_update(self._name_parts, self._info)
+      finally:
+        self._info = None  # need a refresh
 
   def _retrieve_items(self, page_token, item_type):
     list_info = self._api.tables_list(self._name_parts, page_token=page_token)
@@ -139,6 +178,14 @@ class DataSet(object):
   def __iter__(self):
     """ Supports iterating through the Tables in the dataset. """
     return self.tables()
+
+  def __str__(self):
+    """Returns a string representation of the dataset using its specified name.
+
+    Returns:
+      The string representation of this object.
+    """
+    return self._full_name
 
   def __repr__(self):
     """Returns an empty representation for the dataset for showing in the notebook. """

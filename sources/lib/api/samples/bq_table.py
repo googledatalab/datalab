@@ -36,7 +36,7 @@ def main():
   table2 = bq.table(name2)
   table2_md = table2.metadata
   print name2
-  print 'full name: ' + table2_md.full_name
+  print 'full name: ' + str(table2_md)
   print 'friendly name: ' + table2_md.friendly_name
   print 'description: ' + table2_md.description
   print 'rows: ' + str(table2_md.rows)

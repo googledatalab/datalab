@@ -21,7 +21,7 @@ from gcp._util import JSONEncoder
 from gcp._util import print_exception_with_last_stack
 from ._commands import CommandParser
 from ._html import Html
-from ._utils import _get_data, _handle_magic_line
+from ._utils import get_data, handle_magic_line
 
 
 @_magic.register_line_cell_magic
@@ -39,7 +39,7 @@ def chart(line, cell=None):
     subparser.set_defaults(chart=chart_type)
 
   parser.set_defaults(func=_chart_cell)
-  return _handle_magic_line(line, cell, parser)
+  return handle_magic_line(line, cell, parser)
 
 
 def _chart_cell(args, cell):
@@ -61,7 +61,7 @@ def _chart_cell(args, cell):
   source = args['data']
   chart_type = args['chart']
   count = 25 if chart_type == 'paged_table' else -1
-  data, _ = _get_data(source, fields, 0, count)
+  data, _ = get_data(source, fields, 0, count)
   return _ipython.core.display.HTML(
     _HTML_TEMPLATE % (div_id, div_id, Html.get_style_arg('charting.css'), chart_type, source,
                       fields, chart_options, _json.dumps(data, cls=JSONEncoder)))
@@ -75,10 +75,9 @@ def _get_chart_data(line):
     fields = args[1]
     first_row = int(args[2]) if len(args) > 2 else 0
     count = int(args[3]) if len(args) > 3 else -1
-    data, _ = _get_data(source, fields, first_row, count)
+    data, _ = get_data(source, fields, first_row, count)
   except Exception, e:
     print_exception_with_last_stack(e)
     data = {}
 
   return _ipython.core.display.JSON(_json.dumps({'data': data}, cls=JSONEncoder))
-

@@ -241,7 +241,7 @@ class Api(object):
       data['description'] = description
     return _util.Http.request(url, data=data, credentials=self._credentials)
 
-  def datasets_delete(self, dataset_name, delete_contents=False):
+  def datasets_delete(self, dataset_name, delete_contents):
     """Issues a request to delete a dataset.
 
     Args:
@@ -257,7 +257,18 @@ class Api(object):
     args = {}
     if delete_contents:
       args['deleteContents'] = True
-    return _util.Http.request(url, method='DELETE', credentials=self._credentials)
+    return _util.Http.request(url, method='DELETE', args=args, credentials=self._credentials)
+
+  def datasets_update(self, dataset_name, dataset_info):
+    """Updates the DataSet info.
+
+    Args:
+      dataset_name: the name of the dataset to update as a tuple of components.
+      dataset_info: the DataSet resource with updated fields.
+    """
+    url = Api._ENDPOINT + (Api._DATASETS_PATH % dataset_name)
+    return _util.Http.request(url, method='PUT', data=dataset_info,
+                                  credentials=self._credentials)
 
   def datasets_get(self, dataset_name):
     """Issues a request to retrieve information about a dataset.
@@ -477,5 +488,3 @@ class Api(object):
     """
     url = Api._ENDPOINT + (Api._TABLES_PATH % table_name)
     return _util.Http.request(url, method='PUT', data=table_info, credentials=self._credentials)
-
-

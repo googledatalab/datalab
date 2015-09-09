@@ -1,4 +1,4 @@
-# Copyright 2014 Google Inc. All rights reserved.
+# Copyright 2015 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,19 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from distutils.core import setup
+import datetime as dt
+import collections
+import mock
+import pandas
+import unittest
 
-# TODO(nikhilko):
-# Fill in various other bits that can/should be specified once we have them.
-# These include url, license, long_description (readme), author & author_email.
+# import Python so we can mock the parts we need to here.
+import IPython
+IPython.core.magic.register_line_cell_magic = mock.Mock()
+IPython.core.magic.register_line_magic = mock.Mock()
+IPython.core.magic.register_cell_magic = mock.Mock()
+IPython.get_ipython = mock.Mock()
 
-setup(
-  name='GCPDataLab',
-  version='0.1.0',
-  packages=['gcp.datalab', 'gcp.ipython'],
-  description='Google Cloud DataLab',
-  requires=[
-    'IPython',
-    'GCPData'
-  ]
-)
+import gcp.datalab
+
+class TestCases(unittest.TestCase):
+
+  def __init__(self):
+    pass

@@ -25,11 +25,9 @@ class Query(object):
   This object can be used to execute SQL queries and retrieve results.
   """
 
-  def _repr_sql_(self, args=None):
+  def _repr_sql_(self):
     """Creates a SQL representation of this object.
 
-    Args:
-      args: an optional dictionary to use when expanding the variables in the SQL.
     Returns:
       The SQL representation to use when embedding this object into SQL.
     """
@@ -49,10 +47,6 @@ class Query(object):
     Returns:
       The friendly representation of this object.
     """
-    return self._sql
-
-  @property
-  def sql(self):
     return self._sql
 
   @staticmethod
@@ -84,6 +78,7 @@ class Query(object):
 
   @property
   def sql(self):
+    """ Get the SQL for the query. """
     return self._sql
 
   def results(self, use_cache=True):
@@ -102,7 +97,7 @@ class Query(object):
     return self._results.results
 
   def extract(self, storage_uris, format='csv', csv_delimiter=',', csv_header=True,
-              use_cache=True, compress=False):
+              compress=False, use_cache=True):
     """Exports the query results to GCS.
 
     Args:
@@ -111,9 +106,9 @@ class Query(object):
           (default 'csv').
       csv_delimiter: for csv exports, the field delimiter to use (default ',').
       csv_header: for csv exports, whether to include an initial header line (default True).
-      use_cache: whether to use cached results or not (default True).
       compress whether to compress the data on export. Compression is not supported for
           AVRO format (default False).
+      use_cache: whether to use cached results or not (default True).
     Returns:
       A Job object for the export Job if it was completed successfully; else None.
     Raises:
@@ -128,7 +123,7 @@ class Query(object):
 
   @async_method
   def extract_async(self, storage_uris, format='csv', csv_delimiter=',',
-                    csv_header=True, use_cache=True, compress=False):
+                    csv_header=True, compress=False, use_cache=True):
     """Exports the query results to GCS. Returns a Future immediately.
 
     Args:
@@ -137,9 +132,9 @@ class Query(object):
           (default 'csv').
       csv_delimiter: for CSV exports, the field delimiter to use (default ',').
       csv_header: for CSV exports, whether to include an initial header line (default True).
-      use_cache: whether to use cached results or not (default True).
       compress whether to compress the data on export. Compression is not supported for
           AVRO format (default False).
+      use_cache: whether to use cached results or not (default True).
     Returns:
       A Future that returns a Job object for the export if it was started successfully; else None.
     Raises:
@@ -162,41 +157,41 @@ class Query(object):
     return self.results(use_cache=use_cache) \
         .to_dataframe(start_row=start_row, max_rows=max_rows)
 
-  def to_file(self, path, start_row=0, max_rows=None, use_cache=True, write_header=True):
+  def to_file(self, path, format='csv', csv_delimiter=',', csv_header=True, use_cache=True):
     """Save the results to a local file in Excel CSV format.
 
     Args:
       path: path on the local filesystem for the saved results.
-      start_row: the row of the table at which to start the export (default 0).
-      max_rows: an upper limit on the number of rows to export (default None).
+      format: the format to use for the exported data; currently only 'csv' is supported.
+      csv_delimiter: for CSV exports, the field delimiter to use. Defaults to ','
+      csv_header: for CSV exports, whether to include an initial header line. Default true.
       use_cache: whether to use cached results or not.
-      write_header: if true (the default), write column name header row at start of file.
     Returns:
       The path to the local file.
     Raises:
       An Exception if the operation failed.
     """
     self.results(use_cache=use_cache) \
-        .to_file(path, start_row=start_row, max_rows=max_rows, write_header=write_header)
+        .to_file(path, format=format, csv_delimiter=csv_delimiter, csv_header=csv_header)
     return path
 
   @async_method
-  def to_file_async(self, path, start_row=0, max_rows=None, use_cache=True, write_header=True):
+  def to_file_async(self, path,  format='csv', csv_delimiter=',', csv_header=True, use_cache=True):
     """Save the results to a local file in Excel CSV format. Returns a Job immediately.
 
     Args:
       path: path on the local filesystem for the saved results.
-      start_row: the row of the table at which to start the export (default 0).
-      max_rows: an upper limit on the number of rows to export (default None).
+      format: the format to use for the exported data; currently only 'csv' is supported.
+      csv_delimiter: for CSV exports, the field delimiter to use. Defaults to ','
+      csv_header: for CSV exports, whether to include an initial header line. Default true.
       use_cache: whether to use cached results or not.
-      write_header: if true (the default), write column name header row at start of file.
     Returns:
       A Job returning the path to the local file.
     Raises:
       An Exception if the operation failed.
     """
-    return self.to_file(path, start_row=start_row, max_rows=max_rows, use_cache=use_cache,
-                        write_header=write_header)
+    return self.to_file(path, format=format, csv_delimiter=csv_delimiter, csv_header=csv_header,
+                        use_cache=use_cache)
 
   def sample(self, count=5, fields=None, sampling=None, use_cache=True):
     """Retrieves a sampling of rows for the query.

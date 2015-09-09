@@ -36,18 +36,18 @@ class CommandParser(argparse.ArgumentParser):
     return CommandParser(prog=name)
 
   def exit(self, status=0, message=None):
-    """Overriden exit method to stop parsing without calling sys.exit().
+    """Overridden exit method to stop parsing without calling sys.exit().
     """
     raise Exception(message)
 
   def format_usage(self):
-    """Overriden usage generator to use the full help message.
+    """Overridden usage generator to use the full help message.
     """
     return self.format_help()
 
   @staticmethod
   def create_args(line, namespace):
-    """ Expand any metavariable references in the argument list. """
+    """ Expand any meta-variable references in the argument list. """
     args = []
     # Using shlex.split handles quotes args and escape characters.
     for arg in shlex.split(line):
@@ -64,7 +64,7 @@ class CommandParser(argparse.ArgumentParser):
     return args
 
   def parse(self, line, namespace=None):
-    """Parses a line into a dictionary of arguments, expanding metavariables from a namespace. """
+    """Parses a line into a dictionary of arguments, expanding meta-variables from a namespace. """
     try:
       if namespace is None:
         ipy = _ipython.get_ipython()
@@ -82,4 +82,3 @@ class CommandParser(argparse.ArgumentParser):
     if self._subcommands is None:
       self._subcommands = self.add_subparsers(help='commands')
     return self._subcommands.add_parser(name, help=help)
-

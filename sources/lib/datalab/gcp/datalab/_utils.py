@@ -29,7 +29,7 @@ except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
 
-def _get_field_list(fields, schema):
+def get_field_list(fields, schema):
   """ Convert a field list spec into a real list of field names.
 
       For tables, we return only the top-level non-RECORD fields as Google charts
@@ -66,35 +66,38 @@ def _get_cols(fields, schema):
   return cols
 
 
-def _get_data_from_empty_list(source, fields, first_row, count):
+def _get_data_from_empty_list(source, fields='*', first_row=0, count=-1):
   """ Helper function for _get_data that handles empty lists. """
-  fields = _get_field_list(fields, None)
+  fields = get_field_list(fields, None)
   return {'cols': _get_cols(fields, None), 'rows': []}, 0
 
 
-def _get_data_from_list_of_dicts(source, fields, first_row, count):
+def _get_data_from_list_of_dicts(source, fields='*', first_row=0, count=-1):
   """ Helper function for _get_data that handles lists of dicts. """
   schema = _bq.schema(source)
-  fields = _get_field_list(fields, schema)
+  fields = get_field_list(fields, schema)
   gen = source[first_row:first_row + count] if count >= 0 else source
   rows = [{'c': [{'v': row[c]} for c in fields]} for row in gen]
   return {'cols': _get_cols(fields, schema), 'rows': rows}, len(source)
 
 
-def _get_data_from_list_of_lists(source, fields, first_row, count):
+def _get_data_from_list_of_lists(source, fields='*', first_row=0, count=-1):
   """ Helper function for _get_data that handles lists of lists. """
   schema = _bq.schema(source)
-  fields = _get_field_list(fields, schema)
+  fields = get_field_list(fields, schema)
   gen = source[first_row:first_row + count] if count >= 0 else source
-  rows = [{'c': [{'v': row[i]} for i in range(0, len(fields))]} for row in gen]
+  cols = [schema.find(name) for name in fields]
+  rows = [{'c': [{'v': row[i]} for i in cols]} for row in gen]
   return {'cols': _get_cols(fields, schema), 'rows': rows}, len(source)
 
 
-def _get_data_from_dataframe(source, fields, first_row, count):
+def _get_data_from_dataframe(source, fields='*', first_row=0, count=-1):
   """ Helper function for _get_data that handles Pandas DataFrames. """
   schema = _bq.schema(source)
-  fields = _get_field_list(fields, schema)
+  fields = get_field_list(fields, schema)
   rows = []
+  if count < 0:
+    count = len(source.index)
   df_slice = source.reset_index(drop=True)[first_row:first_row + count]
   for index, data_frame_row in df_slice.iterrows():
     row = data_frame_row.to_dict()
@@ -108,18 +111,18 @@ def _get_data_from_dataframe(source, fields, first_row, count):
   return {'cols': cols, 'rows': rows}, len(source)
 
 
-def _get_data_from_table(source, fields, first_row, count):
+def _get_data_from_table(source, fields='*', first_row=0, count=-1):
   """ Helper function for _get_data that handles BQ Tables. """
   if not source.exists():
     return _get_data_from_empty_list(source, fields, first_row, count)
   schema = source.schema
-  fields = _get_field_list(fields, schema)
+  fields = get_field_list(fields, schema)
   gen = source.range(first_row, count) if count >= 0 else source
   rows = [{'c': [{'v': row[c]} for c in fields]} for row in gen]
   return {'cols': _get_cols(fields, schema), 'rows': rows}, source.length
 
 
-def _get_data(source, fields, first_row, count):
+def get_data(source, fields='*', first_row=0, count=-1):
   """ A utility function to get a subset of data from a Table, Query, Pandas dataframe or List.
 
   Args:
@@ -127,12 +130,14 @@ def _get_data(source, fields, first_row, count):
         lists, or a string, in which case it is expected to be the name of a table in BQ.
     fields: a list of fields that we want to return as a list of strings, comma-separated string,
         or '*' for all.
-    first_row: the index of the first row to return.
-    count: the number or rows to return.
+    first_row: the index of the first row to return; default 0. Onl;y used if count is non-negative.
+    count: the number or rows to return. If negative (the default), return all rows.
 
   Returns:
-    A dictionary with two entries: 'cols' which is a list of column metadata entries for
-    Google Charts, and 'rows' which is a list of lists of values.
+    A tuple consisting of a dictionary and a count; the dictionary has two entries: 'cols'
+    which is a list of column metadata entries for Google Charts, and 'rows' which is a list of
+    lists of values. The count is the total number of rows in the source (independent of the
+    first_row/count parameters).
 
   Raises:
     Exception if the request could not be fulfilled.
@@ -166,7 +171,7 @@ def _get_data(source, fields, first_row, count):
     raise Exception("Cannot chart %s; unsupported object type" % source)
 
 
-def _handle_magic_line(line, cell, parser, namespace=None):
+def handle_magic_line(line, cell, parser, namespace=None):
   """ Helper function for handling magic command lines given a parser with handlers set. """
   args = parser.parse(line, namespace)
   if args:
@@ -177,7 +182,7 @@ def _handle_magic_line(line, cell, parser, namespace=None):
   return None
 
 
-def _extract_storage_api_response_error(message):
+def extract_storage_api_response_error(message):
   """ A helper function to extract user-friendly error messages from service exceptions.
 
   Args:
@@ -195,4 +200,3 @@ def _extract_storage_api_response_error(message):
   except Exception:
     pass
   return message
-

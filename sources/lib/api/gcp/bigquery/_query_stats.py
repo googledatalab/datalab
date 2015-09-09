@@ -24,12 +24,13 @@ class QueryStats:
     self.is_cached = is_cached
 
   def _repr_html_(self):
-    self.total_bytes = self._size_formatter(self.total_bytes)
+    self.total_bytes = QueryStats._size_formatter(self.total_bytes)
     return """
     <p>Dry run information: %s to process, results %s</p>
     """ % (self.total_bytes, "cached" if self.is_cached else "not cached")
 
-  def _size_formatter(self, byte_num, suf='B'):
+  @staticmethod
+  def _size_formatter(byte_num, suf='B'):
     for mag in ['', 'K', 'M', 'G', 'T']:
       if byte_num < 1000.0:
         return "%3.1f%s%s" % (byte_num, mag, suf)

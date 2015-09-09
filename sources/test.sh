@@ -9,6 +9,7 @@ fi
 
 TEST_PATHS=(
   "lib/api"
+  "lib/datalab"
 )
 
 for p in "${TEST_PATHS[@]}"

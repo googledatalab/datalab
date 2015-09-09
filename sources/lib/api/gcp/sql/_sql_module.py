@@ -63,6 +63,16 @@ class SqlModule(object):
 
   @staticmethod
   def get_query_from_module(module):
+    """ Given a %%sql module return the default query for the module.
+
+    Args:
+      module: the %%sql module.
+
+    Returns:
+      The default query associated with this module.
+    """
+    # TODO(gram): Given the main module is also the last module, we should just be able
+    # to return the last module here.
     if isinstance(module, types.ModuleType):
       if SqlModule._SQL_MODULE_MAIN in module.__dict__:
         return module.__dict__[SqlModule._SQL_MODULE_MAIN]
@@ -76,8 +86,8 @@ class SqlModule(object):
      return a SqlStatement and final dictionary for variable resolution.
 
     Args:
-      item: a SqlStatement, %%sql module, or string containing a query
-      args: a string of command line arguments or a dictionary of values
+      item: a SqlStatement, %%sql module, or string containing a query.
+      args: a string of command line arguments or a dictionary of values.
 
     Returns:
       A SqlStatement for the query or module, plus a dictionary of variable values to use.
@@ -103,13 +113,20 @@ class SqlModule(object):
   @staticmethod
   def expand(sql, args=None):
     sql, args = SqlModule.get_sql_statement_with_environment(sql, args)
-    return SqlStatement._format(sql._sql, args)
+    return SqlStatement.format(sql._sql, args)
 
   @staticmethod
   def split_cell(cell, module):
     """ Split a %%sql cell into the Python code and the queries.
 
-    Populate the module with the queries and return the Python code.
+    Populates a module with the queries and return the Python code for the arguments.
+
+    Args:
+      cell: the contents of the %%sql cell.
+      module: the module that is being populated from the cell.
+
+    Return:
+
     """
     lines = cell.split('\n')
     code = None

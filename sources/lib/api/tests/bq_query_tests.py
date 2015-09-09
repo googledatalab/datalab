@@ -160,11 +160,12 @@ class TestCases(unittest.TestCase):
       'pageToken': page_token
     }
 
-  def _create_tables_get_result(self, numRows=1, schema=[{'name': 'field1', 'type': 'string'}]):
+  def _create_tables_get_result(self, num_rows=1, schema=None):
+    if schema is None:
+      schema = [{'name': 'field1', 'type': 'string'}]
     return {
-      'numRows': numRows,
+      'numRows': num_rows,
       'schema': {
         'fields': schema
       },
     }
-

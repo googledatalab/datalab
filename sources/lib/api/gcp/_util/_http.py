@@ -20,6 +20,7 @@ import httplib2
 
 # TODO(nikhilko): Start using the requests library instead.
 
+
 class RequestException(Exception):
 
   def __init__(self, status, content):
@@ -32,6 +33,8 @@ class RequestException(Exception):
     except ValueError:
       pass
     except KeyError:
+      pass
+    except TypeError:
       pass
 
   def __str__(self):
@@ -82,7 +85,7 @@ class Http(object):
       if data != '':
         # If there is a content type specified, use it (and the data) as-is.
         # Otherwise, assume JSON, and serialize the data object.
-        if not headers.has_key('Content-Type'):
+        if 'Content-Type' not in headers:
           data = json.dumps(data)
           headers['Content-Type'] = 'application/json'
       headers['Content-Length'] = str(len(data))

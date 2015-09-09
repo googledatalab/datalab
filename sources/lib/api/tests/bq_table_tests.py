@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import calendar
 import datetime as dt
 import unittest
 import gcp
@@ -29,6 +30,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual('today', parsed_name[2])
     self.assertEqual('', parsed_name[3])
     self.assertEqual('[test:requestlogs.today]', table._repr_sql_())
+    self.assertEqual('test:requestlogs.today', str(table))
 
   def test_api_paths(self):
     name = gcp.bigquery._utils.TableName('a', 'b', 'c', 'd')
@@ -89,7 +91,6 @@ class TestCases(unittest.TestCase):
 
     metadata = t.metadata
 
-    self.assertEqual(name, metadata.full_name)
     self.assertEqual('Logs', metadata.friendly_name)
     self.assertEqual(2, metadata.rows)
     self.assertEqual(2, metadata.rows)
@@ -144,8 +145,8 @@ class TestCases(unittest.TestCase):
     for table in ds:
       tables.append(table)
     self.assertEqual(2, len(tables))
-    self.assertEqual('test:testds.testTable1', tables[0].full_name)
-    self.assertEqual('test:testds.testTable2', tables[1].full_name)
+    self.assertEqual('test:testds.testTable1', str(tables[0]))
+    self.assertEqual('test:testds.testTable2', str(tables[1]))
 
   @mock.patch('gcp.bigquery._Api.tables_list')
   @mock.patch('gcp.bigquery._Api.datasets_get')
@@ -159,8 +160,8 @@ class TestCases(unittest.TestCase):
     for table in ds.tables():
       tables.append(table)
     self.assertEqual(2, len(tables))
-    self.assertEqual('test:testds.testTable1', tables[0].full_name)
-    self.assertEqual('test:testds.testTable2', tables[1].full_name)
+    self.assertEqual('test:testds.testTable1', str(tables[0]))
+    self.assertEqual('test:testds.testTable2', str(tables[1]))
 
   @mock.patch('gcp.bigquery._Api.tables_list')
   @mock.patch('gcp.bigquery._Api.datasets_get')
@@ -174,7 +175,7 @@ class TestCases(unittest.TestCase):
     for view in ds.views():
       views.append(view)
     self.assertEqual(1, len(views))
-    self.assertEqual('test:testds.testView1', views[0].full_name)
+    self.assertEqual('test:testds.testView1', str(views[0]))
 
   @mock.patch('gcp.bigquery._Api.tables_list')
   @mock.patch('gcp.bigquery._Api.datasets_get')
@@ -223,8 +224,8 @@ class TestCases(unittest.TestCase):
   def test_tables_schema_from_dataframe(self, mock_api_tables_list):
     mock_api_tables_list.return_value = []
     df = self._create_data_frame()
-    result = gcp.bigquery.schema(data=df)
-    self.assertEqual(gcp.bigquery.schema(definition=self._create_inferred_schema()), result)
+    result = gcp.bigquery.schema(df)
+    self.assertEqual(gcp.bigquery.schema(self._create_inferred_schema()), result)
 
   @mock.patch('uuid.uuid4')
   @mock.patch('time.sleep')
@@ -235,7 +236,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._Api.datasets_get')
   def test_insertAll_no_table(self,
                               mock_api_datasets_get,
-                              mock_api_tabledata_insertAll,
+                              mock_api_tabledata_insert_all,
                               mock_api_tables_get,
                               mock_api_tables_insert,
                               mock_api_tables_list,
@@ -246,16 +247,15 @@ class TestCases(unittest.TestCase):
     mock_api_tables_list.return_value = []
     mock_api_tables_insert.return_value = {'selfLink': 'http://foo'}
     mock_api_tables_get.side_effect = gcp._util.RequestException(404, 'failed')
-    mock_api_tabledata_insertAll.return_value = {}
+    mock_api_tabledata_insert_all.return_value = {}
     mock_api_datasets_get.return_value = None
-
 
     table = self._create_table_with_schema(self._create_inferred_schema())
     df = self._create_data_frame()
 
     with self.assertRaises(Exception) as error:
-      table.insertAll(df)
-    self.assertEqual('Table %s does not exist.' % table.full_name, error.exception[0])
+      table.insert_data(df)
+    self.assertEqual('Table %s does not exist.' % str(table), error.exception[0])
 
   @mock.patch('uuid.uuid4')
   @mock.patch('time.sleep')
@@ -265,7 +265,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._Api.tables_get')
   @mock.patch('gcp.bigquery._Api.tabledata_insertAll')
   def test_insertAll_missing_field(self,
-                                   mock_api_tabledata_insertAll,
+                                   mock_api_tabledata_insert_all,
                                    mock_api_tables_get,
                                    mock_api_tables_insert,
                                    mock_api_tables_list,
@@ -281,13 +281,13 @@ class TestCases(unittest.TestCase):
     mock_api_tables_insert.return_value = {'selfLink': 'http://foo'}
     mock_api_tables_list.return_value = []
     mock_api_tables_get.return_value = {'schema': {'fields': schema}}
-    mock_api_tabledata_insertAll.return_value = {}
+    mock_api_tabledata_insert_all.return_value = {}
 
     table = self._create_table_with_schema(schema)
     df = self._create_data_frame()
 
     with self.assertRaises(Exception) as error:
-      table.insertAll(df)
+      table.insert_data(df)
     self.assertEqual('Table does not contain field headers', error.exception[0])
 
   @mock.patch('uuid.uuid4')
@@ -299,7 +299,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._Api.datasets_get')
   def test_insertAll_mismatched_schema(self,
                                        mock_api_datasets_get,
-                                       mock_api_tabledata_insertAll,
+                                       mock_api_tabledata_insert_all,
                                        mock_api_tables_get,
                                        mock_api_tables_insert,
                                        mock_api_tables_list,
@@ -314,14 +314,14 @@ class TestCases(unittest.TestCase):
     mock_api_tables_list.return_value = []
     mock_api_tables_insert.return_value = {'selfLink': 'http://foo'}
     mock_api_tables_get.return_value = {'schema': {'fields': schema}}
-    mock_api_tabledata_insertAll.return_value = {}
+    mock_api_tabledata_insert_all.return_value = {}
     mock_api_datasets_get.return_value = None
 
     table = self._create_table_with_schema(schema)
     df = self._create_data_frame()
 
     with self.assertRaises(Exception) as error:
-      table.insertAll(df)
+      table.insert_data(df)
     self.assertEqual('Field headers in data has type FLOAT but in table has type STRING',
                      error.exception[0])
 
@@ -333,7 +333,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._Api.tables_get')
   @mock.patch('gcp.bigquery._Api.tabledata_insertAll')
   def test_insertAll_dataframe(self,
-                               mock_api_tabledata_insertAll,
+                               mock_api_tabledata_insert_all,
                                mock_api_tables_get,
                                mock_api_tables_insert,
                                mock_api_tables_list,
@@ -347,14 +347,14 @@ class TestCases(unittest.TestCase):
     mock_api_tables_list.return_value = []
     mock_api_tables_insert.return_value = {'selfLink': 'http://foo'}
     mock_api_tables_get.return_value = {'schema': {'fields': schema}}
-    mock_api_tabledata_insertAll.return_value = {}
+    mock_api_tabledata_insert_all.return_value = {}
 
     table = self._create_table_with_schema(schema)
     df = self._create_data_frame()
 
-    result = table.insertAll(df)
+    result = table.insert_data(df)
     self.assertIsNotNone(result, "insertAll should return the table object")
-    mock_api_tabledata_insertAll.assert_called_with(('test', 'testds', 'testTable0', ''), [
+    mock_api_tabledata_insert_all.assert_called_with(('test', 'testds', 'testTable0', ''), [
       {'insertId': '#0', 'json': {u'column': 'r0', u'headers': 10.0, u'some': 0}},
       {'insertId': '#1', 'json': {u'column': 'r1', u'headers': 10.0, u'some': 1}},
       {'insertId': '#2', 'json': {u'column': 'r2', u'headers': 10.0, u'some': 2}},
@@ -369,7 +369,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._Api.tables_get')
   @mock.patch('gcp.bigquery._Api.tabledata_insertAll')
   def test_insertAll_dictlist(self,
-                              mock_api_tabledata_insertAll,
+                              mock_api_tabledata_insert_all,
                               mock_api_tables_get,
                               mock_api_tables_insert,
                               mock_api_tables_list,
@@ -383,18 +383,18 @@ class TestCases(unittest.TestCase):
     mock_api_tables_list.return_value = []
     mock_api_tables_insert.return_value = {'selfLink': 'http://foo'}
     mock_api_tables_get.return_value = {'schema': {'fields': schema}}
-    mock_api_tabledata_insertAll.return_value = {}
+    mock_api_tabledata_insert_all.return_value = {}
 
     table = self._create_table_with_schema(schema)
 
-    result = table.insertAll([
+    result = table.insert_data([
       {u'column': 'r0', u'headers': 10.0, u'some': 0},
       {u'column': 'r1', u'headers': 10.0, u'some': 1},
       {u'column': 'r2', u'headers': 10.0, u'some': 2},
       {u'column': 'r3', u'headers': 10.0, u'some': 3}
     ])
     self.assertIsNotNone(result, "insertAll should return the table object")
-    mock_api_tabledata_insertAll.assert_called_with(('test', 'testds', 'testTable0', ''), [
+    mock_api_tabledata_insert_all.assert_called_with(('test', 'testds', 'testTable0', ''), [
       {'insertId': '#0', 'json': {u'column': 'r0', u'headers': 10.0, u'some': 0}},
       {'insertId': '#1', 'json': {u'column': 'r1', u'headers': 10.0, u'some': 1}},
       {'insertId': '#2', 'json': {u'column': 'r2', u'headers': 10.0, u'some': 2}},
@@ -409,7 +409,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._Api.tables_get')
   @mock.patch('gcp.bigquery._Api.tabledata_insertAll')
   def test_insertAll_dictlist_index(self,
-                                    mock_api_tabledata_insertAll,
+                                    mock_api_tabledata_insert_all,
                                     mock_api_tables_get,
                                     mock_api_tables_insert,
                                     mock_api_tables_list,
@@ -423,18 +423,18 @@ class TestCases(unittest.TestCase):
     mock_api_tables_list.return_value = []
     mock_api_tables_insert.return_value = {'selfLink': 'http://foo'}
     mock_api_tables_get.return_value = {'schema': {'fields': schema}}
-    mock_api_tabledata_insertAll.return_value = {}
+    mock_api_tabledata_insert_all.return_value = {}
 
     table = self._create_table_with_schema(schema)
 
-    result = table.insertAll([
+    result = table.insert_data([
       {u'column': 'r0', u'headers': 10.0, u'some': 0},
       {u'column': 'r1', u'headers': 10.0, u'some': 1},
       {u'column': 'r2', u'headers': 10.0, u'some': 2},
       {u'column': 'r3', u'headers': 10.0, u'some': 3}
     ], include_index=True)
     self.assertIsNotNone(result, "insertAll should return the table object")
-    mock_api_tabledata_insertAll.assert_called_with(('test', 'testds', 'testTable0', ''), [
+    mock_api_tabledata_insert_all.assert_called_with(('test', 'testds', 'testTable0', ''), [
       {'insertId': '#0', 'json': {u'column': 'r0', u'headers': 10.0, u'some': 0, 'Index': 0}},
       {'insertId': '#1', 'json': {u'column': 'r1', u'headers': 10.0, u'some': 1, 'Index': 1}},
       {'insertId': '#2', 'json': {u'column': 'r2', u'headers': 10.0, u'some': 2, 'Index': 2}},
@@ -449,7 +449,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._Api.tables_get')
   @mock.patch('gcp.bigquery._Api.tabledata_insertAll')
   def test_insertAll_dictlist_named_index(self,
-                                          mock_api_tabledata_insertAll,
+                                          mock_api_tabledata_insert_all,
                                           mock_api_tables_get,
                                           mock_api_tables_insert,
                                           mock_api_tables_list,
@@ -463,18 +463,18 @@ class TestCases(unittest.TestCase):
     mock_api_tables_list.return_value = []
     mock_api_tables_insert.return_value = {'selfLink': 'http://foo'}
     mock_api_tables_get.return_value = {'schema': {'fields': schema}}
-    mock_api_tabledata_insertAll.return_value = {}
+    mock_api_tabledata_insert_all.return_value = {}
 
     table = self._create_table_with_schema(schema)
 
-    result = table.insertAll([
-                               {u'column': 'r0', u'headers': 10.0, u'some': 0},
-                               {u'column': 'r1', u'headers': 10.0, u'some': 1},
-                               {u'column': 'r2', u'headers': 10.0, u'some': 2},
-                               {u'column': 'r3', u'headers': 10.0, u'some': 3}
-                             ], include_index=True, index_name='Row')
+    result = table.insert_data([
+        {u'column': 'r0', u'headers': 10.0, u'some': 0},
+        {u'column': 'r1', u'headers': 10.0, u'some': 1},
+        {u'column': 'r2', u'headers': 10.0, u'some': 2},
+        {u'column': 'r3', u'headers': 10.0, u'some': 3}
+    ], include_index=True, index_name='Row')
     self.assertIsNotNone(result, "insertAll should return the table object")
-    mock_api_tabledata_insertAll.assert_called_with(('test', 'testds', 'testTable0', ''), [
+    mock_api_tabledata_insert_all.assert_called_with(('test', 'testds', 'testTable0', ''), [
       {'insertId': '#0', 'json': {u'column': 'r0', u'headers': 10.0, u'some': 0, 'Row': 0}},
       {'insertId': '#1', 'json': {u'column': 'r1', u'headers': 10.0, u'some': 1, 'Row': 1}},
       {'insertId': '#2', 'json': {u'column': 'r2', u'headers': 10.0, u'some': 2, 'Row': 2}},
@@ -528,13 +528,13 @@ class TestCases(unittest.TestCase):
 
   def test_encode_dict_as_row(self):
     when = dt.datetime(2001, 2, 3, 4, 5, 6, 7)
-    row = gcp.bigquery._Table._encode_dict_as_row({'fo@o': 'b@r', 'b+ar': when}, {})
+    row = gcp.bigquery._table.Table._encode_dict_as_row({'fo@o': 'b@r', 'b+ar': when}, {})
     self.assertEqual({'foo': 'b@r', 'bar': '2001-02-03T04:05:06.000007'}, row)
 
   def test_decorators(self):
     tbl = gcp.bigquery.table('testds.testTable0', context=self._create_context())
     tbl2 = tbl.snapshot(dt.timedelta(hours=-1))
-    self.assertEquals('test:testds.testTable0@-3600000', tbl2.full_name)
+    self.assertEquals('test:testds.testTable0@-3600000', str(tbl2))
 
     with self.assertRaises(Exception) as error:
       tbl2 = tbl2.snapshot(dt.timedelta(hours=-2))
@@ -557,7 +557,7 @@ class TestCases(unittest.TestCase):
                      error.exception[0])
 
     tbl2 = tbl.snapshot(dt.timedelta(days=-1))
-    self.assertEquals('test:testds.testTable0@-86400000', tbl2.full_name)
+    self.assertEquals('test:testds.testTable0@-86400000', str(tbl2))
 
     with self.assertRaises(Exception) as error:
       tbl2 = tbl.snapshot(dt.timedelta(days=1))
@@ -569,8 +569,8 @@ class TestCases(unittest.TestCase):
     self.assertEqual('Invalid snapshot when argument type: 1000',
                      error.exception[0])
 
-    when = dt.datetime.utcnow() - dt.timedelta(1)
-    self.assertEquals('test:testds.testTable0@-86400000', tbl2.full_name)
+    _ = dt.datetime.utcnow() - dt.timedelta(1)
+    self.assertEquals('test:testds.testTable0@-86400000', str(tbl2))
 
     when = dt.datetime.utcnow() + dt.timedelta(1)
     with self.assertRaises(Exception) as error:
@@ -591,7 +591,7 @@ class TestCases(unittest.TestCase):
     tbl = gcp.bigquery.table('testds.testTable0', context=self._create_context())
 
     tbl2 = tbl.window(dt.timedelta(hours=-1))
-    self.assertEquals('test:testds.testTable0@-3600000-0', tbl2.full_name)
+    self.assertEquals('test:testds.testTable0@-3600000-0', str(tbl2))
 
     with self.assertRaises(Exception) as error:
       tbl2 = tbl2.window(-400000, 0)
@@ -607,6 +607,28 @@ class TestCases(unittest.TestCase):
       tbl2 = tbl.window(dt.timedelta(0), dt.timedelta(hours=-1))
     self.assertEqual('window: Between arguments: begin must be before end: 0:00:00, -1 day, 23:00:00',
                      error.exception[0])
+
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
+  @mock.patch('gcp.bigquery._api.Api.table_update')
+  def test_table_update(self, mock_api_table_update, mock_api_tables_get):
+    schema = self._create_inferred_schema()
+    info = {'schema': {'fields': schema}, 'friendlyName': 'casper',
+            'description': 'ghostly logs',
+            'expirationTime': calendar.timegm(dt.datetime(2020, 1, 1).utctimetuple()) * 1000}
+    mock_api_tables_get.return_value = info
+    tbl = gcp.bigquery.table('testds.testTable0', context=self._create_context())
+    new_name = 'aziraphale'
+    new_description = 'demon duties'
+    new_schema = [{'name': 'injected', 'type': 'FLOAT'}]
+    new_schema.extend(schema)
+    new_expiry = dt.datetime(2030, 1, 1)
+    tbl.update(new_name, new_description, new_expiry, new_schema)
+    name, info = mock_api_table_update.call_args[0]
+    self.assertEqual(tbl.name, name)
+    self.assertEqual(new_name, tbl.metadata.friendly_name)
+    self.assertEqual(new_description, tbl.metadata.description)
+    self.assertEqual(new_expiry, tbl.metadata.expires_on)
+    self.assertEqual(len(new_schema), len(tbl.schema))
 
   def _create_context(self):
     project_id = 'test'
@@ -656,7 +678,7 @@ class TestCases(unittest.TestCase):
           {'name': 'val', 'type': 'INTEGER', 'mode': 'NULLABLE'},
           {'name': 'more', 'type': 'RECORD', 'mode': 'REPEATED',
            'fields': [
-              {'name': 'xyz', 'type': 'INTEGER','mode': 'NULLABLE'}
+              {'name': 'xyz', 'type': 'INTEGER', 'mode': 'NULLABLE'}
             ]
            }
         ]
@@ -671,7 +693,7 @@ class TestCases(unittest.TestCase):
       'tables': [
         {
           'type': 'TABLE',
-          'tableReference':{'projectId': 'test', 'datasetId': 'testds', 'tableId': 'testTable1'}
+          'tableReference': {'projectId': 'test', 'datasetId': 'testds', 'tableId': 'testTable1'}
         },
         {
           'type': 'VIEW',
@@ -704,7 +726,7 @@ class TestCases(unittest.TestCase):
     return pandas.DataFrame(data)
 
   def _create_inferred_schema(self, extra_field=None):
-    schema= [
+    schema = [
       {'name': 'some', 'type': 'INTEGER'},
       {'name': 'column', 'type': 'STRING'},
       {'name': 'headers', 'type': 'FLOAT'},
