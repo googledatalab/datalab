@@ -211,7 +211,6 @@ class TestCases(unittest.TestCase):
 
     self.assertEqual(parsed, bq._parser.Parser.parse_row(natality_schema, data))
 
-
   def test_parse_nested_data(self):
 
     self.maxDiff = None  # Show full diff on failure

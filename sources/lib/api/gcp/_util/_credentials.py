@@ -14,10 +14,10 @@
 
 """Implements Metadata-based Credentials functionality."""
 
-from oauth2client.client import OAuth2Credentials
+import oauth2client.client
 
 
-class MetadataCredentials(OAuth2Credentials):
+class MetadataCredentials(oauth2client.client.OAuth2Credentials):
   """OAuth credentials using auth tokens retrieved from the metadata service.
   """
 
@@ -36,7 +36,7 @@ class MetadataCredentials(OAuth2Credentials):
         token_expiry=None,
         token_uri=None,
         user_agent=None
-        )
+    )
     self._metadata_service = metadata_service
 
   def apply(self, headers):

@@ -14,7 +14,7 @@
 
 """Implements BigQuery related data parsing helpers."""
 
-import datetime as dt
+import datetime
 
 
 class Parser(object):
@@ -43,7 +43,7 @@ class Parser(object):
         elif data_type == 'FLOAT':
           value = float(value)
         elif data_type == 'TIMESTAMP':
-          value = dt.datetime.utcfromtimestamp(float(value))
+          value = datetime.datetime.utcfromtimestamp(float(value))
         elif data_type == 'BOOLEAN':
           value = value == 'true'
         elif (type(value) != str) and (type(value) != unicode):
@@ -83,4 +83,4 @@ class Parser(object):
     Args:
       value: the number of milliseconds since epoch.
     """
-    return dt.datetime.utcfromtimestamp(float(value) / 1000.0)
+    return datetime.datetime.utcfromtimestamp(float(value) / 1000.0)

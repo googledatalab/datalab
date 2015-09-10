@@ -16,15 +16,15 @@
 
 import json
 import re
-import IPython as _ipython
-import IPython.core.magic as _magic
-import gcp.bigquery as _bq
-import gcp._util as _util
-import gcp.sql as _sql
-from ._commands import CommandParser
-from ._html import Html
-from ._html import HtmlBuilder
-from ._utils import get_data, get_field_list, handle_magic_line
+import IPython
+import IPython.core.display
+import IPython.core.magic
+import gcp.bigquery
+import gcp.sql
+import gcp._util
+import _commands
+import _html
+import _utils
 
 
 def _create_sample_subparser(parser):
@@ -148,7 +148,7 @@ def _create_bigquery_parser():
   for the handlers that bind the cell contents and thus must recreate this parser for each
   cell upon execution.
   """
-  parser = CommandParser.create('bigquery')
+  parser = _commands.CommandParser.create('bigquery')
 
   # This is a bit kludgy because we want to handle some line magics and some cell magics
   # with the bigquery command.
@@ -225,7 +225,7 @@ def _create_bigquery_parser():
 _bigquery_parser = _create_bigquery_parser()
 
 
-@_magic.register_line_cell_magic
+@IPython.core.magic.register_line_cell_magic
 def bigquery(line, cell=None):
   """Implements the bigquery cell magic for ipython notebooks.
 
@@ -246,7 +246,7 @@ def bigquery(line, cell=None):
     # We likely have variables to expand; get the appropriate context.
     namespace = _notebook_environment()
 
-  return handle_magic_line(line, cell, _bigquery_parser, namespace=namespace)
+  return _utils.handle_magic_line(line, cell, _bigquery_parser, namespace=namespace)
 
 
 def _dispatch_handler(args, cell, parser, handler,
@@ -281,17 +281,17 @@ def _dispatch_handler(args, cell, parser, handler,
 def _get_query_argument(args, code=None, env=None):
   sql_arg = args['sql']
   item = _get_notebook_item(sql_arg)
-  if isinstance(item, _bq._Query):
+  if isinstance(item, gcp.bigquery._query.Query):
     return item
 
   # For most magics we want to use the notebook environment; the only exception is the
   # %bigquery pipeline where we want to avoid it to test hermeticity.
   if env is None:
     env = _notebook_environment()
-  item, env = _sql.SqlModule.get_sql_statement_with_environment(item, env)
+  item, env = gcp.sql.SqlModule.get_sql_statement_with_environment(item, env)
   if code:
     exec code in env
-  return _bq.query(item, args=env)
+  return gcp.bigquery.query(item, args=env)
 
 
 def _sample_cell(args, code):
@@ -309,15 +309,20 @@ def _sample_cell(args, code):
   count = args['count']
   method = args['method']
   if method == 'random':
-    sampling = _bq.Sampling.random(percent=args['percent'], count=count)
+    sampling = gcp.bigquery._sampling.Sampling.random(percent=args['percent'], count=count)
   elif method == 'hashed':
-    sampling = _bq.Sampling.hashed(field_name=args['field'], percent=args['percent'],
-                                   count=count)
+    sampling = gcp.bigquery._sampling.Sampling.hashed(field_name=args['field'],
+                                                      percent=args['percent'],
+                                                      count=count)
   elif method == 'sorted':
     ascending = args['order'] == 'ascending'
-    sampling = _bq.Sampling.sorted(args['field'], ascending=ascending, count=count)
+    sampling = gcp.bigquery._sampling.Sampling.sorted(args['field'],
+                                                      ascending=ascending,
+                                                      count=count)
   elif method == 'limit':
-    sampling = _bq.Sampling.default(count=count)
+    sampling = gcp.bigquery._sampling.Sampling.default(count=count)
+  else:
+    sampling = gcp.bigquery._sampling.Sampling.default(count=count)
 
   return query.sample(sampling=sampling)
 
@@ -336,7 +341,8 @@ def _dryrun_line(args):
   query = _get_query_argument(args)
 
   result = query.execute_dry_run()
-  return _bq._QueryStats(total_bytes=result['totalBytesProcessed'], is_cached=result['cacheHit'])
+  return gcp.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
+                                              is_cached=result['cacheHit'])
 
 
 def _udf_cell(args, js):
@@ -387,7 +393,7 @@ def _udf_cell(args, js):
     outputs.append((n, t))
 
   # Finally build the UDF object
-  udf = _bq.udf(inputs, outputs, js)
+  udf = gcp.bigquery.udf(inputs, outputs, js)
   _notebook_environment()[variable_name] = udf
 
   return None
@@ -403,7 +409,8 @@ def _pipeline_cell(args, code):
   query = _get_query_argument(args, code, {})
   print(query.sql)
   result = query.execute_dry_run()
-  return _bq._QueryStats(total_bytes=result['totalBytesProcessed'], is_cached=result['cacheHit'])
+  return gcp.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
+                                              is_cached=result['cacheHit'])
 
 
 def _table_line(args):
@@ -412,19 +419,20 @@ def _table_line(args):
   if table and table.exists():
     fields = args['cols'].split(',') if args['cols'] else None
     html = _table_viewer(table, rows_per_page=args['rows'], fields=fields)
-    return _ipython.core.display.HTML(html)
+    return IPython.core.display.HTML(html)
   else:
     return "%s does not exist" % name
 
+
 def _notebook_environment():
-  ipy = _ipython.get_ipython()
+  ipy = IPython.get_ipython()
   return ipy.user_ns
 
 
 def _get_notebook_item(name):
   """ Get an item from the IPython environment. """
   env = _notebook_environment()
-  return _util.get_item(env, name)
+  return gcp._util.get_item(env, name)
 
 
 def _get_schema(name):
@@ -433,16 +441,16 @@ def _get_schema(name):
   if not item:
     item = _get_table(name)
 
-  if isinstance(item, _bq._Schema):
+  if isinstance(item, gcp.bigquery._schema.Schema):
     return item
-  if hasattr(item, 'schema') and isinstance(item.schema, _bq._Schema):
+  if hasattr(item, 'schema') and isinstance(item.schema, gcp.bigquery._schema.Schema):
     return item.schema
   return None
 
 
 # An LRU cache for Tables. This is mostly useful so that when we cross page boundaries
 # when paging through a table we don't have to re-fetch the schema.
-_table_cache = _util.LRUCache(10)
+_table_cache = gcp._util.LRUCache(10)
 
 
 def _get_table(name):
@@ -455,13 +463,13 @@ def _get_table(name):
   """
   # If name is a variable referencing a table, use that.
   item = _get_notebook_item(name)
-  if isinstance(item, _bq._Table):
+  if isinstance(item, gcp.bigquery._table.Table):
     return item
   # Else treat this as a BQ table name and return the (cached) table if it exists.
   try:
     return _table_cache[name]
   except KeyError:
-    table = _bq.table(name)
+    table = gcp.bigquery.table(name)
     if table.exists():
       _table_cache[name] = table
       return table
@@ -473,29 +481,26 @@ def _schema_line(args):
   schema = _get_schema(name)
   if schema:
     html = _repr_html_table_schema(schema)
-    return _ipython.core.display.HTML(html)
+    return IPython.core.display.HTML(html)
   else:
     return "%s does not exist" % name
 
 
 def _render_table(data, fields=None):
   """ Helper to render a list of dictionaries as an HTML display object. """
-  builder = HtmlBuilder()
-  builder.render_objects(data, fields, dictionary=True)
-  html = builder.to_html()
-  return _ipython.core.display.HTML(html)
+  return IPython.core.display.HTML(_html.HtmlBuilder.render_table(data, fields))
 
 
 def _datasets_line(args):
   return _render_table([{'Name': str(dataset)}
-                        for dataset in _bq.datasets(args['project'])])
+                        for dataset in gcp.bigquery.datasets(args['project'])])
 
 
 def _tables_line(args):
   if args['dataset']:
-    datasets = [_bq.dataset((args['project'], args['dataset']))]
+    datasets = [gcp.bigquery.dataset((args['project'], args['dataset']))]
   else:
-    datasets = _bq.datasets(args['project'])
+    datasets = gcp.bigquery.datasets(args['project'])
 
   tables = []
   for dataset in datasets:
@@ -512,7 +517,7 @@ def _extract_line(args):
 
   if not source:
     return 'No such source: %s' % name
-  elif isinstance(source, _bq._Table) and not source.exists():
+  elif isinstance(source, gcp.bigquery._table.Table) and not source.exists():
     return 'Source %s does not exist' % name
   else:
 
@@ -531,7 +536,7 @@ def _load_cell(args, schema):
   name = args['table']
   table = _get_table(name)
   if not table:
-    table = _bq.table(name)
+    table = gcp.bigquery.table(name)
 
   if table.exists():
     if not (args['append'] or args['overwrite']):
@@ -594,11 +599,11 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
   """
 
   if fields is None:
-    fields = get_field_list(fields, table.schema)
-  div_id = 'bqtv_%d' % Html.next_id()
+    fields = _utils.get_field_list(fields, table.schema)
+  div_id = 'bqtv_%d' % _html.Html.next_id()
   meta_count = ("rows: %d" % table.length) if table.length >= 0 else ''
   meta_name = job_id if job_id else str(table)
-  data, total_count = get_data(table, fields, 0, rows_per_page)
+  data, total_count = _utils.get_data(table, fields, 0, rows_per_page)
 
   if total_count < 0:
     # The table doesn't have a length metadata property but may still be small if we fetched less
@@ -610,14 +615,14 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
   chart = 'table' if 0 <= total_count <= rows_per_page else 'paged_table'
 
   return _HTML_TEMPLATE %\
-      (div_id, meta_name, meta_count, div_id, Html.get_style_arg('charting.css'), chart,
+      (div_id, meta_name, meta_count, div_id, _html.Html.get_style_arg('charting.css'), chart,
        str(table), ','.join(fields), total_count, rows_per_page,
-       json.dumps(data, cls=_util.JSONEncoder))
+       json.dumps(data, cls=gcp._util.JSONEncoder))
 
 
 def _repr_html_query(query):
   # TODO(nikhilko): Pretty print the SQL
-  return HtmlBuilder.render_text(query.sql, preformatted=True)
+  return _html.HtmlBuilder.render_text(query.sql, preformatted=True)
 
 
 def _repr_html_query_results_table(results):
@@ -643,8 +648,8 @@ def _repr_html_table_schema(schema):
       );
     </script>
     """
-  id = 'bqsv_%d' % Html.next_id()
-  return _HTML_TEMPLATE % (id, id, Html.get_style_arg('bigquery.css'),
+  id = 'bqsv_%d' % _html.Html.next_id()
+  return _HTML_TEMPLATE % (id, id, _html.Html.get_style_arg('bigquery.css'),
                            json.dumps(schema._bq_schema))
 
 
@@ -659,13 +664,13 @@ def _repr_html_function_evaluation(evaluation):
       );
     </script>
     """
-  id = 'udf_%d' % Html.next_id()
+  id = 'udf_%d' % _html.Html.next_id()
   return _HTML_TEMPLATE % (id, id, evaluation.implementation, json.dumps(evaluation.data))
 
 
 def _register_html_formatters():
   try:
-    ipy = _ipython.get_ipython()
+    ipy = IPython.get_ipython()
     html_formatter = ipy.display_formatter.formatters['text/html']
 
     html_formatter.for_type_by_name('gcp.bigquery._query', 'Query', _repr_html_query)

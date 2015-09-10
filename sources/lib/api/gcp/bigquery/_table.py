@@ -17,247 +17,21 @@
 import calendar
 import codecs
 import csv
-from datetime import datetime, timedelta
+import datetime
 import math
-import pandas as pd
+import pandas
 import time
-from traceback import format_exc as _format_exc
+import traceback
 import uuid
 
-from gcp._util import Iterator as _Iterator
-from gcp._util import Job as _Job
-from gcp._util import JobError as _JobError
-from gcp._util import RequestException as _RequestException
-from gcp._util import async_method
-from ._job import Job as _BQJob
-from ._parser import Parser as _Parser
-from ._utils import parse_table_name as _parse_table_name
+import gcp._util
+import _bqjob
+import _parser
+import _schema
+import _utils
 
 # import of Query is at end of module as we have a circular dependency of
 # Query.execute().results -> Table and Table.sample() -> Query
-
-
-class Schema(list):
-  """Represents the schema of a BigQuery table.
-  """
-
-  class _Field(object):
-
-    # TODO(gram): consider renaming data_type member to type. Yes, it shadows top-level
-    # name but that is what we are using in __str__ and __getitem__ and is what is used in BQ.
-    # The shadowing is unlikely to cause problems.
-    def __init__(self, name, data_type, mode='NULLABLE', description=''):
-      self.name = name
-      self.data_type = data_type
-      self.mode = mode
-      self.description = description
-
-    def _repr_sql_(self, args=None):
-      """Returns a representation of the field for embedding into a SQL statement.
-
-      Returns:
-        A formatted field name for use within SQL statements.
-      """
-      return self.name
-
-    def __eq__(self, other):
-      return self.name == other.name and self.data_type == other.data_type \
-             and self.mode == other.mode
-
-    def __str__(self):
-      # Stringize in the form of a dictionary
-      return "{ 'name': '%s', 'type': '%s', 'mode':'%s', 'description': '%s' }" % \
-             (self.name, self.data_type, self.mode, self.description)
-
-    def __repr__(self):
-      return str(self)
-
-    def __getitem__(self, item):
-      # TODO(gram): Currently we need this for a Schema object to work with the Parser object.
-      # Eventually if we change Parser to only work with Schema (and not also with the
-      # schema dictionaries in query results) we can remove this.
-
-      if item == 'name':
-        return self.name
-      if item == 'type':
-        return self.data_type
-      if item == 'mode':
-        return self.mode
-      if item == 'description':
-        return self.description
-
-  @staticmethod
-  def _from_dataframe(dataframe, default_type='STRING'):
-    """
-      Infer a BigQuery table schema from a Pandas dataframe. Note that if you don't explicitly set
-      the types of the columns in the dataframe, they may be of a type that forces coercion to
-      STRING, so even though the fields in the dataframe themselves may be numeric, the type in the
-      derived schema may not be. Hence it is prudent to make sure the Pandas dataframe is typed
-      correctly.
-
-    Args:
-      dataframe: The DataFrame.
-      default_type : The default big query type in case the type of the column does not exist in
-          the schema.
-    Returns:
-      A list of dictionaries containing field 'name' and 'type' entries, suitable for use in a
-          BigQuery Tables resource schema.
-    """
-
-    type_mapping = {
-      'i': 'INTEGER',
-      'b': 'BOOLEAN',
-      'f': 'FLOAT',
-      'O': 'STRING',
-      'S': 'STRING',
-      'U': 'STRING',
-      'M': 'TIMESTAMP'
-    }
-
-    fields = []
-    for column_name, dtype in dataframe.dtypes.iteritems():
-      fields.append({'name': column_name,
-                     'type': type_mapping.get(dtype.kind, default_type)})
-
-    return fields
-
-  @staticmethod
-  def from_dataframe(dataframe, default_type='STRING'):
-    """
-      Infer a BigQuery table schema from a Pandas dataframe. Note that if you don't explicitly set
-      the types of the columns in the dataframe, they may be of a type that forces coercion to
-      STRING, so even though the fields in the dataframe themselves may be numeric, the type in the
-      derived schema may not be. Hence it is prudent to make sure the Pandas dataframe is typed
-      correctly.
-
-    Args:
-      dataframe: The DataFrame.
-      default_type : The default big query type in case the type of the column does not exist in
-          the schema.
-    Returns:
-      A Schema.
-    """
-    return Schema(Schema._from_dataframe(dataframe, default_type=default_type))
-
-  @staticmethod
-  def _from_list(data):
-    """
-    Infer a BigQuery table schema from a list. The list must be non-empty and be a list
-    of dictionaries (in which case the first item is used), or a list of lists. In the latter
-    case the type of the elements is used and the field names are simply 'Column1', 'Column2', etc.
-
-    Args:
-      data: The list.
-    Returns:
-      A list of dictionaries containing field 'name' and 'type' entries, suitable for use in a
-          BigQuery Tables resource schema.
-    """
-    if not data:
-      return []
-
-    def _get_type(value):
-      if isinstance(value, datetime):
-        return 'TIMESTAMP'
-      elif isinstance(value, bool):
-        return 'BOOLEAN'
-      elif isinstance(value, float):
-        return 'FLOAT'
-      elif isinstance(value, int):
-        return 'INTEGER'
-      else:
-        return 'STRING'
-
-    datum = data[0]
-    if isinstance(datum, dict):
-      return [{'name': key, 'type': _get_type(datum[key])} for key in datum.keys()]
-    else:
-      return [{'name': 'Column%d' % (i + 1), 'type': _get_type(datum[i])}
-              for i in range(0, len(datum))]
-
-  @staticmethod
-  def from_list(data):
-    """
-    Infer a BigQuery table schema from a list. The list must be non-empty and be a list
-    of dictionaries (in which case the first item is used), or a list of lists. In the latter
-    case the type of the elements is used and the field names are simply 'Column1', 'Column2', etc.
-
-    Args:
-      data: The list.
-    Returns:
-      A Schema.
-    """
-    return Schema(Schema._from_list(data))
-
-  @staticmethod
-  def from_data(source):
-    if isinstance(source, pd.DataFrame):
-      return Schema.from_dataframe(source)
-    elif isinstance(source, list):
-      # Inspect the list - if each entry is a dictionary with name and type entries,
-      # then use it directly; else infer from it.
-      if all([isinstance(d, dict) and 'name' in d and 'type' in d for d in source]):
-        return Schema(source)
-      else:
-        return Schema.from_list(source)
-    else:
-      raise Exception('Cannot create a schema from %s' % str(source))
-
-  def __init__(self, definition=None):
-    """Initializes a Schema from its raw JSON representation, a Pandas Dataframe, or a list.
-
-    Args:
-      definition: a definition of the schema as a list of dictionaries with 'name' and 'type'
-          entries and possibly 'mode' and 'description' entries. Only used if no data argument was
-          provided. 'mode' can be 'NULLABLE', 'REQUIRED' or 'REPEATED'. For the allowed types, see:
-          https://cloud.google.com/bigquery/preparing-data-for-bigquery#datatypes
-    """
-    list.__init__(self)
-    self._map = {}
-    self._bq_schema = definition
-    self._populate_fields(definition)
-
-  def __getitem__(self, key):
-    """Provides ability to lookup a schema field by position or by name.
-    """
-    if isinstance(key, basestring):
-      return self._map.get(key, None)
-    return list.__getitem__(self, key)
-
-  def _add_field(self, name, data_type, mode='NULLABLE', description=''):
-    field = Schema._Field(name, data_type, mode, description)
-    self.append(field)
-    self._map[name] = field
-
-  def find(self, name):
-    for i in range(0, len(self)):
-      if self[i].name == name:
-        return i
-    return -1
-
-  def _populate_fields(self, data, prefix=''):
-    for field_data in data:
-      name = prefix + field_data['name']
-      data_type = field_data['type']
-      self._add_field(name, data_type, field_data.get('mode', None),
-                      field_data.get('description', None))
-
-      if data_type == 'RECORD':
-        # Recurse into the nested fields, using this field's name as a prefix.
-        self._populate_fields(field_data.get('fields'), name + '.')
-
-  def __str__(self):
-    return str(self._bq_schema)
-
-  def __eq__(self, other):
-    other_map = other._map
-    if len(self._map) != len(other_map):
-      return False
-    for name in self._map.iterkeys():
-      if name not in other_map:
-        return False
-      if not self._map[name] == other_map[name]:
-        return False
-    return True
 
 
 class TableMetadata(object):
@@ -277,7 +51,7 @@ class TableMetadata(object):
   def created_on(self):
     """The creation timestamp."""
     timestamp = self._info.get('creationTime')
-    return _Parser.parse_timestamp(timestamp)
+    return _parser.Parser.parse_timestamp(timestamp)
 
   @property
   def description(self):
@@ -290,7 +64,7 @@ class TableMetadata(object):
     timestamp = self._info.get('expirationTime', None)
     if timestamp is None:
       return None
-    return _Parser.parse_timestamp(timestamp)
+    return _parser.Parser.parse_timestamp(timestamp)
 
   @property
   def friendly_name(self):
@@ -301,7 +75,7 @@ class TableMetadata(object):
   def modified_on(self):
     """The timestamp for when the table was last modified."""
     timestamp = self._info.get('lastModifiedTime')
-    return _Parser.parse_timestamp(timestamp)
+    return _parser.Parser.parse_timestamp(timestamp)
 
   @property
   def rows(self):
@@ -334,7 +108,7 @@ class Table(object):
       name: the name of the table either as a string or a 3-part tuple (projectid, datasetid, name).
     """
     self._api = api
-    self._name_parts = _parse_table_name(name, api.project_id)
+    self._name_parts = _utils.parse_table_name(name, api.project_id)
     self._full_name = '%s:%s.%s%s' % self._name_parts
     self._info = None
     self._cached_page = None
@@ -377,7 +151,7 @@ class Table(object):
     """
     try:
       _ = self._api.tables_get(self._name_parts)
-    except _RequestException as e:
+    except gcp._util.RequestException as e:
       if e.status == 404:
         return False
       raise e
@@ -412,7 +186,7 @@ class Table(object):
     """
     if overwrite and self.exists():
       self.delete()
-    if isinstance(schema, Schema):
+    if isinstance(schema, _schema.Schema):
       schema = schema._bq_schema
     response = self._api.tables_insert(self._name_parts, schema=schema)
     if 'selfLink' in response:
@@ -434,7 +208,8 @@ class Table(object):
       Exception if the sample query could not be executed or query response was malformed.
     """
     sql = self._repr_sql_()
-    return _Query.sampling_query(self._api, sql, count=count, fields=fields, sampling=sampling)\
+    return _query.Query.sampling_query(self._api, sql, count=count, fields=fields,
+                                       sampling=sampling)\
         .results(use_cache=use_cache)
 
   @staticmethod
@@ -454,7 +229,7 @@ class Table(object):
     for k in record.keys():
       v = record[k]
       # If the column is a date, convert to ISO string.
-      if isinstance(v, pd.Timestamp) or isinstance(v, datetime):
+      if isinstance(v, pandas.Timestamp) or isinstance(v, datetime.datetime):
         v = record[k] = record[k].isoformat()
 
       # If k has invalid characters clean it up
@@ -497,7 +272,7 @@ class Table(object):
     if not self.exists():
       raise Exception('Table %s does not exist.' % self._full_name)
 
-    data_schema = Schema.from_data(data)
+    data_schema = _schema.Schema.from_data(data)
     if isinstance(data, list):
       if include_index:
         if not index_name:
@@ -525,7 +300,7 @@ class Table(object):
     rows = []
     column_name_map = {}
 
-    is_dataframe = isinstance(data, pd.DataFrame)
+    is_dataframe = isinstance(data, pandas.DataFrame)
     if is_dataframe:
       # reset_index creates a new dataframe so we don't affect the original. reset_index(drop=True)
       # drops the original index and uses an integer range.
@@ -559,7 +334,7 @@ class Table(object):
     """ Helper function to create a Job instance from a response. """
     job = None
     if response and 'jobReference' in response:
-      job = _BQJob(self._api, job_id=response['jobReference']['jobId'])
+      job = _bqjob.BQJob(self._api, job_id=response['jobReference']['jobId'])
     return job
 
   def extract_async(self, destination, format='csv', csv_delimiter=',', csv_header=True,
@@ -582,7 +357,7 @@ class Table(object):
                                          csv_delimiter, csv_header)
       return self._init_job_from_response(response)
     except Exception as e:
-      raise _JobError(location=_format_exc(), message=e.message, reason=str(type(e)))
+      raise _bqjob.JobError(location=traceback.format_exc(), message=e.message, reason=str(type(e)))
 
   def extract(self, destination, format='csv', csv_delimiter=',', csv_header=True, compress=False):
     """Exports the table to GCS; blocks until complete.
@@ -765,7 +540,7 @@ class Table(object):
 
       rows = []
       for row_dict in page_rows:
-        rows.append(_Parser.parse_row(schema, row_dict))
+        rows.append(_parser.Parser.parse_row(schema, row_dict))
 
       return rows, page_token
 
@@ -782,7 +557,7 @@ class Table(object):
       A row iterator.
     """
     fetcher = self._get_row_fetcher(start_row=start_row, max_rows=max_rows)
-    return iter(_Iterator(fetcher))
+    return iter(gcp._util.Iterator(fetcher))
 
   def to_dataframe(self, start_row=0, max_rows=None):
     """ Exports the table to a Pandas dataframe.
@@ -802,7 +577,7 @@ class Table(object):
       if len(page_rows):
         count += len(page_rows)
         if df is None:
-          df = pd.DataFrame.from_dict(page_rows)
+          df = pandas.DataFrame.from_dict(page_rows)
         else:
           df = df.append(page_rows, ignore_index=True)
       if not page_token:
@@ -834,7 +609,7 @@ class Table(object):
       writer.writerow(row)
     f.close()
 
-  @async_method
+  @gcp._util.async_method
   def to_file_async(self, destination, format='csv', csv_delimiter=',', csv_header=True):
     """Start saving the results to a local file in CSV format and return a Job for completion.
 
@@ -861,7 +636,7 @@ class Table(object):
     """
     try:
       self._load_info()
-      return Schema(definition=self._info['schema']['fields'])
+      return _schema.Schema(self._info['schema']['fields'])
     except KeyError:
       raise Exception('Unexpected table response: missing schema')
 
@@ -882,11 +657,11 @@ class Table(object):
     if description is not None:
       self._info['description'] = description
     if expiry is not None:
-      if isinstance(expiry, datetime):
+      if isinstance(expiry, datetime.datetime):
         expiry = calendar.timegm(expiry.utctimetuple()) * 1000
       self._info['expirationTime'] = expiry
     if schema is not None:
-      if isinstance(schema, Schema):
+      if isinstance(schema, _schema.Schema):
         schema = schema._bq_schema
       self._info['schema'] = {'fields': schema}
     try:
@@ -973,9 +748,9 @@ class Table(object):
 
   @staticmethod
   def _convert_decorator_time(when):
-    if isinstance(when, datetime):
-      value = 1000 * (when - datetime.utcfromtimestamp(0)).total_seconds()
-    elif isinstance(when, timedelta):
+    if isinstance(when, datetime.datetime):
+      value = 1000 * (when - datetime.datetime.utcfromtimestamp(0)).total_seconds()
+    elif isinstance(when, datetime.timedelta):
       value = when.total_seconds() * 1000
       if value > 0:
         raise Exception("Invalid snapshot relative when argument: %s" % str(when))
@@ -987,7 +762,7 @@ class Table(object):
                       % str(when))
 
     if value > 0:
-      now = 1000 * (datetime.utcnow() - datetime.utcfromtimestamp(0)).total_seconds()
+      now = 1000 * (datetime.datetime.utcnow() - datetime.datetime.utcfromtimestamp(0)).total_seconds()
       # Check that an abs value is not more than 7 days in the past and is
       # not in the future
       if not ((now - Table._MSEC_PER_WEEK) < value < now):
@@ -1046,8 +821,8 @@ class Table(object):
 
     start = Table._convert_decorator_time(begin)
     if end is None:
-      if isinstance(begin, timedelta):
-        end = timedelta(0)
+      if isinstance(begin, datetime.timedelta):
+        end = datetime.timedelta(0)
       else:
         end = datetime.utcnow()
     stop = Table._convert_decorator_time(end)
@@ -1064,4 +839,4 @@ class Table(object):
 
     return Table(self._api, "%s@%s-%s" % (self._full_name, str(start), str(stop)))
 
-from ._query import Query as _Query
+import _query

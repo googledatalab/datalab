@@ -18,7 +18,7 @@ import abc
 import concurrent.futures
 import functools
 
-from ._job import Job as _Job
+import _job
 
 
 class async(object):
@@ -52,7 +52,7 @@ class async(object):
 
   def __call__(self, *args, **kwargs):
     # Queue the call up in the thread pool.
-    return _Job(future=self.executor.submit(self._call, *args, **kwargs))
+    return _job.Job(future=self.executor.submit(self._call, *args, **kwargs))
 
 
 class async_function(async):
@@ -83,4 +83,3 @@ class async_method(async):
     self.cls = owner
     self.obj = instance
     return self
-

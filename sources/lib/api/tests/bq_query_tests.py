@@ -20,11 +20,11 @@ from oauth2client.client import AccessTokenCredentials
 
 class TestCases(unittest.TestCase):
 
-  @mock.patch('gcp.bigquery._Api.tabledata_list')
-  @mock.patch('gcp.bigquery._Api.jobs_insert_query')
-  @mock.patch('gcp.bigquery._Api.jobs_query_results')
-  @mock.patch('gcp.bigquery._Api.jobs_get')
-  @mock.patch('gcp.bigquery._Api.tables_get')
+  @mock.patch('gcp.bigquery._api.Api.tabledata_list')
+  @mock.patch('gcp.bigquery._api.Api.jobs_insert_query')
+  @mock.patch('gcp.bigquery._api.Api.jobs_query_results')
+  @mock.patch('gcp.bigquery._api.Api.jobs_get')
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
   def test_single_result_query(self, mock_api_tables_get, mock_api_jobs_get,
                                mock_api_jobs_query_results, mock_api_insert_query,
                                mock_api_tabledata_list):
@@ -39,14 +39,16 @@ class TestCases(unittest.TestCase):
     results = q.results()
 
     self.assertEqual(sql, results.sql)
+    self.assertEqual('(%s)' % sql, q._repr_sql_())
+    self.assertEqual(sql, str(q))
     self.assertEqual(1, results.length)
     first_result = results[0]
     self.assertEqual('value1', first_result['field1'])
 
-  @mock.patch('gcp.bigquery._Api.jobs_insert_query')
-  @mock.patch('gcp.bigquery._Api.jobs_query_results')
-  @mock.patch('gcp.bigquery._Api.jobs_get')
-  @mock.patch('gcp.bigquery._Api.tables_get')
+  @mock.patch('gcp.bigquery._api.Api.jobs_insert_query')
+  @mock.patch('gcp.bigquery._api.Api.jobs_query_results')
+  @mock.patch('gcp.bigquery._api.Api.jobs_get')
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
   def test_empty_result_query(self, mock_api_tables_get, mock_api_jobs_get,
                               mock_api_jobs_query_results, mock_api_insert_query):
     mock_api_tables_get.return_value = self._create_tables_get_result(0)
@@ -59,10 +61,10 @@ class TestCases(unittest.TestCase):
 
     self.assertEqual(0, results.length)
 
-  @mock.patch('gcp.bigquery._Api.jobs_insert_query')
-  @mock.patch('gcp.bigquery._Api.jobs_query_results')
-  @mock.patch('gcp.bigquery._Api.jobs_get')
-  @mock.patch('gcp.bigquery._Api.tables_get')
+  @mock.patch('gcp.bigquery._api.Api.jobs_insert_query')
+  @mock.patch('gcp.bigquery._api.Api.jobs_query_results')
+  @mock.patch('gcp.bigquery._api.Api.jobs_get')
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
   def test_incomplete_result_query(self,
                                    mock_api_tables_get,
                                    mock_api_jobs_get,
@@ -79,7 +81,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(1, results.length)
     self.assertEqual('test_job', results.job_id)
 
-  @mock.patch('gcp.bigquery._Api.jobs_insert_query')
+  @mock.patch('gcp.bigquery._api.Api.jobs_insert_query')
   def test_malformed_response_raises_exception(self, mock_api_insert_query):
     mock_api_insert_query.return_value = {}
 

@@ -19,6 +19,7 @@ import gcp._util
 import mock
 from oauth2client.client import AccessTokenCredentials
 
+
 class TestCases(unittest.TestCase):
 
   def _check_name_parts(self, dataset):
@@ -68,7 +69,7 @@ class TestCases(unittest.TestCase):
     with self.assertRaises(Exception):
       _ = self._create_dataset('today@')
 
-  @mock.patch('gcp.bigquery._Api.datasets_get')
+  @mock.patch('gcp.bigquery._api.Api.datasets_get')
   def test_dataset_exists(self, mock_api_datasets_get):
     mock_api_datasets_get.return_value = ''
     dataset = self._create_dataset('test:requestlogs')
@@ -77,8 +78,8 @@ class TestCases(unittest.TestCase):
     dataset._info = None
     self.assertFalse(dataset.exists())
 
-  @mock.patch('gcp.bigquery._Api.datasets_insert')
-  @mock.patch('gcp.bigquery._Api.datasets_get')
+  @mock.patch('gcp.bigquery._api.Api.datasets_insert')
+  @mock.patch('gcp.bigquery._api.Api.datasets_get')
   def test_datasets_create_fails(self, mock_api_datasets_get, mock_api_datasets_insert):
     mock_api_datasets_get.side_effect = gcp._util.RequestException(None, 404)
     mock_api_datasets_insert.return_value = {}
@@ -87,32 +88,32 @@ class TestCases(unittest.TestCase):
     with self.assertRaises(Exception):
       _ = ds.create()
 
-  @mock.patch('gcp.bigquery._Api.datasets_insert')
-  @mock.patch('gcp.bigquery._Api.datasets_get')
+  @mock.patch('gcp.bigquery._api.Api.datasets_insert')
+  @mock.patch('gcp.bigquery._api.Api.datasets_get')
   def test_datasets_create_succeeds(self, mock_api_datasets_get, mock_api_datasets_insert):
     mock_api_datasets_get.side_effect = gcp._util.RequestException(404, None)
     mock_api_datasets_insert.return_value = {'selfLink': None}
     ds = self._create_dataset('requestlogs')
     self.assertEqual(ds, ds.create())
 
-  @mock.patch('gcp.bigquery._Api.datasets_insert')
-  @mock.patch('gcp.bigquery._Api.datasets_get')
+  @mock.patch('gcp.bigquery._api.Api.datasets_insert')
+  @mock.patch('gcp.bigquery._api.Api.datasets_get')
   def test_datasets_create_redundant(self, mock_api_datasets_get, mock_api_datasets_insert):
     ds = self._create_dataset('requestlogs')
     mock_api_datasets_get.return_value = None
     mock_api_datasets_insert.return_value = {}
     self.assertEqual(ds, ds.create())
 
-  @mock.patch('gcp.bigquery._Api.datasets_get')
-  @mock.patch('gcp.bigquery._Api.datasets_delete')
+  @mock.patch('gcp.bigquery._api.Api.datasets_get')
+  @mock.patch('gcp.bigquery._api.Api.datasets_delete')
   def test_datasets_delete_succeeds(self, mock_api_datasets_delete, mock_api_datasets_get):
     mock_api_datasets_get.return_value = ''
     mock_api_datasets_delete.return_value = None
     ds = self._create_dataset('requestlogs')
     self.assertIsNone(ds.delete())
 
-  @mock.patch('gcp.bigquery._Api.datasets_get')
-  @mock.patch('gcp.bigquery._Api.datasets_delete')
+  @mock.patch('gcp.bigquery._api.Api.datasets_get')
+  @mock.patch('gcp.bigquery._api.Api.datasets_delete')
   def test_datasets_delete_fails(self, mock_api_datasets_delete, mock_api_datasets_get):
     mock_api_datasets_delete.return_value = None
     mock_api_datasets_get.side_effect = gcp._util.RequestException(404, None)
@@ -120,7 +121,7 @@ class TestCases(unittest.TestCase):
     with self.assertRaises(Exception):
       _ = ds.delete()
 
-  @mock.patch('gcp.bigquery._Api.tables_list')
+  @mock.patch('gcp.bigquery._api.Api.tables_list')
   def test_tables_list(self, mock_api_tables_list):
     mock_api_tables_list.return_value = {
       'tables': [
@@ -140,7 +141,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual('p:d.t1', str(tables[0]))
     self.assertEqual('p:d.t2', str(tables[1]))
 
-  @mock.patch('gcp.bigquery._Api.datasets_list')
+  @mock.patch('gcp.bigquery._api.Api.datasets_list')
   def test_datasets_list(self, mock_api_datasets_list):
     mock_api_datasets_list.return_value = {
       'datasets': [
@@ -185,4 +186,3 @@ class TestCases(unittest.TestCase):
 
   def _create_dataset(self, name):
     return gcp.bigquery.dataset(name, self._create_context())
-

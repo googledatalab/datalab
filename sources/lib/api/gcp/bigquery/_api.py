@@ -14,7 +14,7 @@
 
 """Implements BigQuery HTTP API wrapper."""
 
-import gcp._util as _util
+import gcp._util
 
 
 class Api(object):
@@ -115,7 +115,7 @@ class Api(object):
         }
       }
     }
-    return _util.Http.request(url, data=data, credentials=self._credentials)
+    return gcp._util.Http.request(url, data=data, credentials=self._credentials)
 
   def jobs_insert_query(self, sql, table_name=None, append=False, overwrite=False,
                         dry_run=False, use_cache=True, batch=True, allow_large_results=False):
@@ -169,7 +169,7 @@ class Api(object):
       elif overwrite:
         query_config['writeDisposition'] = "WRITE_TRUNCATE"
 
-    return _util.Http.request(url, data=data, credentials=self._credentials)
+    return gcp._util.Http.request(url, data=data, credentials=self._credentials)
 
   def jobs_query_results(self, job_id, project_id, page_size, timeout, start_index=0):
     """Issues a request to the jobs/getQueryResults method.
@@ -197,7 +197,7 @@ class Api(object):
         'startIndex': start_index
       }
     url = Api._ENDPOINT + (Api._QUERIES_PATH % (project_id, job_id))
-    return _util.Http.request(url, args=args, credentials=self._credentials)
+    return gcp._util.Http.request(url, args=args, credentials=self._credentials)
 
   def jobs_get(self, job_id, project_id=None):
     """Issues a request to retrieve information about a job.
@@ -213,7 +213,7 @@ class Api(object):
     if project_id is None:
       project_id = self._project_id
     url = Api._ENDPOINT + (Api._JOBS_PATH % (project_id, job_id))
-    return _util.Http.request(url, credentials=self._credentials)
+    return gcp._util.Http.request(url, credentials=self._credentials)
 
   def datasets_insert(self, dataset_name, friendly_name=None, description=None):
     """Issues a request to create a dataset.
@@ -239,7 +239,7 @@ class Api(object):
       data['friendlyName'] = friendly_name
     if description:
       data['description'] = description
-    return _util.Http.request(url, data=data, credentials=self._credentials)
+    return gcp._util.Http.request(url, data=data, credentials=self._credentials)
 
   def datasets_delete(self, dataset_name, delete_contents):
     """Issues a request to delete a dataset.
@@ -257,7 +257,7 @@ class Api(object):
     args = {}
     if delete_contents:
       args['deleteContents'] = True
-    return _util.Http.request(url, method='DELETE', args=args, credentials=self._credentials)
+    return gcp._util.Http.request(url, method='DELETE', args=args, credentials=self._credentials)
 
   def datasets_update(self, dataset_name, dataset_info):
     """Updates the DataSet info.
@@ -267,7 +267,7 @@ class Api(object):
       dataset_info: the DataSet resource with updated fields.
     """
     url = Api._ENDPOINT + (Api._DATASETS_PATH % dataset_name)
-    return _util.Http.request(url, method='PUT', data=dataset_info,
+    return gcp._util.Http.request(url, method='PUT', data=dataset_info,
                                   credentials=self._credentials)
 
   def datasets_get(self, dataset_name):
@@ -281,7 +281,7 @@ class Api(object):
       Exception if there is an error performing the operation.
     """
     url = Api._ENDPOINT + (Api._DATASETS_PATH % dataset_name)
-    return _util.Http.request(url, credentials=self._credentials)
+    return gcp._util.Http.request(url, credentials=self._credentials)
 
   def datasets_list(self, project_id=None, max_results=0, page_token=None):
     """Issues a request to list the datasets in the project.
@@ -305,7 +305,7 @@ class Api(object):
     if page_token is not None:
       args['pageToken'] = page_token
 
-    return _util.Http.request(url, args=args, credentials=self._credentials)
+    return gcp._util.Http.request(url, args=args, credentials=self._credentials)
 
   def tables_get(self, table_name):
     """Issues a request to retrieve information about a table.
@@ -318,7 +318,7 @@ class Api(object):
       Exception if there is an error performing the operation.
     """
     url = Api._ENDPOINT + (Api._TABLES_PATH % table_name)
-    return _util.Http.request(url, credentials=self._credentials)
+    return gcp._util.Http.request(url, credentials=self._credentials)
 
   def tables_list(self, dataset_name, max_results=0, page_token=None):
     """Issues a request to retrieve a list of tables.
@@ -341,7 +341,7 @@ class Api(object):
     if page_token is not None:
       args['pageToken'] = page_token
 
-    return _util.Http.request(url, args=args, credentials=self._credentials)
+    return gcp._util.Http.request(url, args=args, credentials=self._credentials)
 
   def tables_insert(self, table_name, schema=None, query=None, friendly_name=None,
                     description=None):
@@ -379,7 +379,7 @@ class Api(object):
     if description:
       data['description'] = description
 
-    return _util.Http.request(url, data=data, credentials=self._credentials)
+    return gcp._util.Http.request(url, data=data, credentials=self._credentials)
 
   def tabledata_insertAll(self, table_name, rows):
     """Issues a request to insert data into a table.
@@ -399,7 +399,7 @@ class Api(object):
       'rows': rows
     }
 
-    return _util.Http.request(url, data=data, credentials=self._credentials)
+    return gcp._util.Http.request(url, data=data, credentials=self._credentials)
 
   def tabledata_list(self, table_name, start_index=None, max_results=None, page_token=None):
     """ Retrieves the contents of a table.
@@ -422,7 +422,7 @@ class Api(object):
       args['maxResults'] = max_results
     if page_token is not None:
       args['pageToken'] = page_token
-    return _util.Http.request(url, args=args, credentials=self._credentials)
+    return gcp._util.Http.request(url, args=args, credentials=self._credentials)
 
   def table_delete(self, table_name):
     """Issues a request to delete a table.
@@ -435,7 +435,7 @@ class Api(object):
       Exception if there is an error performing the operation.
     """
     url = Api._ENDPOINT + (Api._TABLES_PATH % table_name)
-    return _util.Http.request(url, method='DELETE', credentials=self._credentials)
+    return gcp._util.Http.request(url, method='DELETE', credentials=self._credentials)
 
   def table_extract(self, table_name, destination, format='CSV', compressed=True,
                     field_delimiter=',', print_header=True):
@@ -477,7 +477,7 @@ class Api(object):
         }
       }
     }
-    return _util.Http.request(url, data=data, credentials=self._credentials)
+    return gcp._util.Http.request(url, data=data, credentials=self._credentials)
 
   def table_update(self, table_name, table_info):
     """Updates the Table info.
@@ -487,4 +487,4 @@ class Api(object):
       table_info: the Table resource with updated fields.
     """
     url = Api._ENDPOINT + (Api._TABLES_PATH % table_name)
-    return _util.Http.request(url, method='PUT', data=table_info, credentials=self._credentials)
+    return gcp._util.Http.request(url, method='PUT', data=table_info, credentials=self._credentials)

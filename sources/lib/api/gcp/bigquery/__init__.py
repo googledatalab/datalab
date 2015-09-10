@@ -17,20 +17,19 @@
 import gcp as _gcp
 import gcp._util as _util
 import gcp.sql as _sql
-from ._api import Api as _Api
-from ._dataset import DataSet as _DataSet
-from ._dataset import DataSetLister as _DataSetLister
-from ._job import Job as _Job
-from ._query import Query as _Query
-from ._query_job import QueryJob as _QueryJob
-from ._query_stats import QueryStats as _QueryStats
-from ._sampling import Sampling
-from ._table import Schema as _Schema
-from ._table import Table as _Table
-from ._udf import Function as _Function
-from ._utils import DataSetName as _DataSetName
-from ._utils import TableName as _TableName
-from ._view import View as _View
+
+import _api
+import _bqjob
+import _dataset
+import _query
+import _query_job
+import _query_stats
+import _sampling
+import _schema
+import _table
+import _udf
+import _utils
+import _view
 
 
 def _create_api(context):
@@ -43,7 +42,7 @@ def _create_api(context):
   """
   if context is None:
     context = _gcp.Context.default()
-  return _Api(context.credentials, context.project_id)
+  return _api.Api(context.credentials, context.project_id)
 
 
 def query(sql_statement, args=None, context=None):
@@ -62,7 +61,7 @@ def query(sql_statement, args=None, context=None):
   api = _create_api(context)
   if args or not isinstance(sql_statement, basestring):
     sql_statement = _sql.SqlModule.expand(sql_statement, args)
-  return _Query(api, sql_statement)
+  return _query.Query(api, sql_statement)
 
 
 def udf(inputs, outputs, implementation, context=None):
@@ -80,25 +79,7 @@ def udf(inputs, outputs, implementation, context=None):
     context: an optional Context object providing project_id and credentials.
   """
   api = _create_api(context)
-  return _Function(api, inputs, outputs, implementation)
-
-
-def sql(sql_template, **kwargs):
-  """Formats SQL templates by replacing placeholders with actual values.
-
-  Placeholders in SQL are represented as $<name>. If '$' must appear within the
-  SQL statement literally, then it can be escaped as '$$'.
-
-  Args:
-    sql_template: the template of the SQL statement with named placeholders.
-    **kwargs: the dictionary of name/value pairs to use for placeholder values.
-  Returns:
-    The formatted SQL statement with placeholders replaced with their values.
-  Raises:
-    Exception if a placeholder was found in the SQL statement, but did not have
-    a corresponding argument value.
-  """
-  return _util.Sql.format(sql_template, kwargs)
+  return _udf.Function(api, inputs, outputs, implementation)
 
 
 def table(name, context=None):
@@ -119,7 +100,7 @@ def table(name, context=None):
     Exception if the name is invalid.
   """
   api = _create_api(context)
-  return _Table(api, name)
+  return _table.Table(api, name)
 
 
 def view(name, context=None):
@@ -140,7 +121,7 @@ def view(name, context=None):
     Exception if the name is invalid.
   """
   api = _create_api(context)
-  return _View(api, name)
+  return _view.View(api, name)
 
 
 def datasets(project_id=None, context=None):
@@ -155,7 +136,7 @@ def datasets(project_id=None, context=None):
   api = _create_api(context)
   if not project_id:
     project_id = api.project_id
-  return _DataSetLister(api, project_id)
+  return _dataset.DataSetLister(api, project_id)
 
 
 def dataset(name, context=None):
@@ -168,7 +149,7 @@ def dataset(name, context=None):
     A DataSet object.
   """
   api = _create_api(context)
-  return _DataSet(api, name)
+  return _dataset.DataSet(api, name)
 
 
 def schema(source):
@@ -184,7 +165,7 @@ def schema(source):
   Returns:
     A Schema object.
   """
-  return _Schema.from_data(source)
+  return _schema.Schema.from_data(source)
 
 
 def wait_any(jobs, timeout=None):
@@ -212,4 +193,3 @@ def wait_all(jobs, timeout=None):
     list of jobs supplied as a parameter.
   """
   return _util.Job.wait_all(jobs, timeout)
-

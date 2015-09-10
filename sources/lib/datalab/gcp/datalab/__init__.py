@@ -18,16 +18,17 @@ import httplib2 as _httplib2
 import requests as _requests
 
 try:
-  import IPython as _ipython
+  import IPython as _IPython
   import IPython.core.magic as _magic
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
-import gcp.datalab._bigquery
-import gcp.datalab._chart
-import gcp.datalab._modules
-import gcp.datalab._sql
-import gcp.datalab._storage
+# Import the modules that do cell magics
+import _bigquery
+import _chart
+import _modules
+import _sql
+import _storage
 
 
 # Inject our user agent on all requests by monkey-patching a wrapper around httplib2.Http.request.

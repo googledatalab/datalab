@@ -15,8 +15,8 @@
 import imp
 import unittest
 
-from gcp.sql import SqlStatement as Sql
 from gcp.sql import SqlModule
+from gcp.sql import SqlStatement as Sql
 
 
 class TestCases(unittest.TestCase):

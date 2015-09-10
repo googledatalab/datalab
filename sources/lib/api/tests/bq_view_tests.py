@@ -25,10 +25,10 @@ class TestCases(unittest.TestCase):
     view = gcp.bigquery.view(name, self._create_context())
     self.assertEqual('[%s]' % name, view._repr_sql_())
 
-  @mock.patch('gcp.bigquery._Api.tables_insert')
-  @mock.patch('gcp.bigquery._Api.tables_get')
-  @mock.patch('gcp.bigquery._Api.tables_list')
-  @mock.patch('gcp.bigquery._Api.datasets_get')
+  @mock.patch('gcp.bigquery._api.Api.tables_insert')
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
+  @mock.patch('gcp.bigquery._api.Api.tables_list')
+  @mock.patch('gcp.bigquery._api.Api.datasets_get')
   def test_view_create(self,
                        mock_api_datasets_get,
                        mock_api_tables_list,
@@ -48,12 +48,12 @@ class TestCases(unittest.TestCase):
     self.assertEqual('[%s]' % name, view._repr_sql_())
     self.assertIsNotNone(result, 'Expected a view')
 
-  @mock.patch('gcp.bigquery._Api.tables_insert')
-  @mock.patch('gcp.bigquery._Api.tabledata_list')
-  @mock.patch('gcp.bigquery._Api.jobs_insert_query')
-  @mock.patch('gcp.bigquery._Api.jobs_query_results')
-  @mock.patch('gcp.bigquery._Api.jobs_get')
-  @mock.patch('gcp.bigquery._Api.tables_get')
+  @mock.patch('gcp.bigquery._api.Api.tables_insert')
+  @mock.patch('gcp.bigquery._api.Api.tabledata_list')
+  @mock.patch('gcp.bigquery._api.Api.jobs_insert_query')
+  @mock.patch('gcp.bigquery._api.Api.jobs_query_results')
+  @mock.patch('gcp.bigquery._api.Api.jobs_get')
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
   def test_view_result(self, mock_api_tables_get, mock_api_jobs_get, mock_api_jobs_query_results,
                        mock_api_insert_query, mock_api_tabledata_list, mock_api_tables_insert):
 
@@ -146,4 +146,3 @@ class TestCases(unittest.TestCase):
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
     return gcp.Context(project_id, creds)
-

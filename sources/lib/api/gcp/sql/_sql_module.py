@@ -93,8 +93,8 @@ class SqlModule(object):
       A SqlStatement for the query or module, plus a dictionary of variable values to use.
     """
     if isinstance(item, basestring):
-      item = SqlStatement(item)
-    elif not isinstance(item, SqlStatement):
+      item = _sql_statement.SqlStatement(item)
+    elif not isinstance(item, _sql_statement.SqlStatement):
       item = SqlModule.get_query_from_module(item)
       if not item:
         raise Exception('Expected a SQL statement or module')
@@ -113,7 +113,7 @@ class SqlModule(object):
   @staticmethod
   def expand(sql, args=None):
     sql, args = SqlModule.get_sql_statement_with_environment(sql, args)
-    return SqlStatement.format(sql._sql, args)
+    return _sql_statement.SqlStatement.format(sql._sql, args)
 
   @staticmethod
   def split_cell(cell, module):
@@ -157,7 +157,7 @@ class SqlModule(object):
             continue
 
           # Save the query
-          statement = SqlStatement(query, module)
+          statement = _sql_statement.SqlStatement(query, module)
           module.__dict__[name] = statement
           # And set the 'last' query to be this too
           module.__dict__[SqlModule._SQL_MODULE_LAST] = statement
@@ -175,7 +175,7 @@ class SqlModule(object):
     if last_def >= 0:
       # We were in a query so save this tail query.
       query = '\n'.join([line for line in lines[last_def:] if len(line) and line[0] != '#']).strip()
-      statement = SqlStatement(query, module)
+      statement = _sql_statement.SqlStatement(query, module)
       module.__dict__[name] = statement
       module.__dict__[SqlModule._SQL_MODULE_LAST] = statement
 
@@ -187,4 +187,4 @@ class SqlModule(object):
   def set_arg_parser(module, parser):
     module.__dict__[SqlModule._SQL_MODULE_ARGPARSE] = parser
 
-from ._sql_statement import SqlStatement
+import _sql_statement

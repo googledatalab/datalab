@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import unittest
-import gcp.bigquery as bq
+from gcp.bigquery._sampling import Sampling
 
 
 class TestCases(unittest.TestCase):
@@ -22,44 +22,44 @@ class TestCases(unittest.TestCase):
 
   def test_default(self):
     expected_sql = 'SELECT * FROM (%s) LIMIT 5' % TestCases.BASE_SQL
-    self._apply_sampling(bq.Sampling.default(), expected_sql)
+    self._apply_sampling(Sampling.default(), expected_sql)
 
   def test_default_custom_count(self):
     expected_sql = 'SELECT * FROM (%s) LIMIT 20' % TestCases.BASE_SQL
-    self._apply_sampling(bq.Sampling.default(count=20), expected_sql)
+    self._apply_sampling(Sampling.default(count=20), expected_sql)
 
   def test_default_custom_fields(self):
     expected_sql = 'SELECT f1,f2 FROM (%s) LIMIT 5' % TestCases.BASE_SQL
-    self._apply_sampling(bq.Sampling.default(fields=['f1', 'f2']), expected_sql)
+    self._apply_sampling(Sampling.default(fields=['f1', 'f2']), expected_sql)
 
   def test_default_all_fields(self):
     expected_sql = 'SELECT * FROM (%s) LIMIT 5' % TestCases.BASE_SQL
-    self._apply_sampling(bq.Sampling.default(fields=[]), expected_sql)
+    self._apply_sampling(Sampling.default(fields=[]), expected_sql)
 
   def test_hashed(self):
     expected_sql = 'SELECT * FROM (%s) WHERE ABS(HASH(f1)) %% 100 < 5' % TestCases.BASE_SQL
-    self._apply_sampling(bq.Sampling.hashed('f1', 5), expected_sql)
+    self._apply_sampling(Sampling.hashed('f1', 5), expected_sql)
 
   def test_hashed_and_limited(self):
     expected_sql = 'SELECT * FROM (%s) WHERE ABS(HASH(f1)) %% 100 < 5 LIMIT 100' \
                    % TestCases.BASE_SQL
-    self._apply_sampling(bq.Sampling.hashed('f1', 5, count=100), expected_sql)
+    self._apply_sampling(Sampling.hashed('f1', 5, count=100), expected_sql)
 
   def test_hashed_with_fields(self):
     expected_sql = 'SELECT f1 FROM (%s) WHERE ABS(HASH(f1)) %% 100 < 5' % TestCases.BASE_SQL
-    self._apply_sampling(bq.Sampling.hashed('f1', 5, fields=['f1']), expected_sql)
+    self._apply_sampling(Sampling.hashed('f1', 5, fields=['f1']), expected_sql)
 
   def test_sorted_ascending(self):
     expected_sql = 'SELECT * FROM (%s) ORDER BY f1 LIMIT 5' % TestCases.BASE_SQL
-    self._apply_sampling(bq.Sampling.sorted('f1'), expected_sql)
+    self._apply_sampling(Sampling.sorted('f1'), expected_sql)
 
   def test_sorted_descending(self):
     expected_sql = 'SELECT * FROM (%s) ORDER BY f1 DESC LIMIT 5' % TestCases.BASE_SQL
-    self._apply_sampling(bq.Sampling.sorted('f1', ascending=False), expected_sql)
+    self._apply_sampling(Sampling.sorted('f1', ascending=False), expected_sql)
 
   def test_sorted_with_fields(self):
     expected_sql = 'SELECT f1,f2 FROM (%s) ORDER BY f1 LIMIT 5' % TestCases.BASE_SQL
-    self._apply_sampling(bq.Sampling.sorted('f1', fields=['f1', 'f2']), expected_sql)
+    self._apply_sampling(Sampling.sorted('f1', fields=['f1', 'f2']), expected_sql)
 
   def _apply_sampling(self, sampling, expected_query):
     sampled_query = sampling(TestCases.BASE_SQL)

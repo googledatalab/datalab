@@ -21,6 +21,7 @@ import mock
 from oauth2client.client import AccessTokenCredentials
 import pandas
 
+
 class TestCases(unittest.TestCase):
 
   def _check_name_parts(self, table):
@@ -81,7 +82,7 @@ class TestCases(unittest.TestCase):
     with self.assertRaises(Exception):
       _ = self._create_table('today@')
 
-  @mock.patch('gcp.bigquery._Api.tables_get')
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
   def test_table_metadata(self, mock_api_tables_get):
     name = 'test:requestlogs.today'
     ts = dt.datetime.utcnow()
@@ -97,7 +98,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(ts, metadata.created_on)
     self.assertEqual(None, metadata.expires_on)
 
-  @mock.patch('gcp.bigquery._Api.tables_get')
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
   def test_table_schema(self, mock_api_tables):
     mock_api_tables.return_value = self._create_table_info_result()
 
@@ -107,7 +108,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(2, len(schema))
     self.assertEqual('name', schema[0].name)
 
-  @mock.patch('gcp.bigquery._Api.tables_get')
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
   def test_table_schema_nested(self, mock_api_tables):
     mock_api_tables.return_value = self._create_table_info_nested_schema_result()
 
@@ -123,7 +124,7 @@ class TestCases(unittest.TestCase):
     self.assertIsNone(schema['value'])
     self.assertIsNotNone(schema['val'])
 
-  @mock.patch('gcp.bigquery._Api.tables_get')
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
   def test_malformed_response_raises_exception(self, mock_api_tables_get):
     mock_api_tables_get.return_value = {}
 
@@ -133,8 +134,8 @@ class TestCases(unittest.TestCase):
       _ = t.schema
     self.assertEqual(error.exception[0], 'Unexpected table response: missing schema')
 
-  @mock.patch('gcp.bigquery._Api.tables_list')
-  @mock.patch('gcp.bigquery._Api.datasets_get')
+  @mock.patch('gcp.bigquery._api.Api.tables_list')
+  @mock.patch('gcp.bigquery._api.Api.datasets_get')
   def test_dataset_list(self, mock_api_datasets_get, mock_api_tables_list):
     mock_api_datasets_get.return_value = None
     mock_api_tables_list.return_value = self._create_table_list_result()
@@ -148,8 +149,8 @@ class TestCases(unittest.TestCase):
     self.assertEqual('test:testds.testTable1', str(tables[0]))
     self.assertEqual('test:testds.testTable2', str(tables[1]))
 
-  @mock.patch('gcp.bigquery._Api.tables_list')
-  @mock.patch('gcp.bigquery._Api.datasets_get')
+  @mock.patch('gcp.bigquery._api.Api.tables_list')
+  @mock.patch('gcp.bigquery._api.Api.datasets_get')
   def test_table_list(self, mock_api_datasets_get, mock_api_tables_list):
     mock_api_datasets_get.return_value = None
     mock_api_tables_list.return_value = self._create_table_list_result()
@@ -163,8 +164,8 @@ class TestCases(unittest.TestCase):
     self.assertEqual('test:testds.testTable1', str(tables[0]))
     self.assertEqual('test:testds.testTable2', str(tables[1]))
 
-  @mock.patch('gcp.bigquery._Api.tables_list')
-  @mock.patch('gcp.bigquery._Api.datasets_get')
+  @mock.patch('gcp.bigquery._api.Api.tables_list')
+  @mock.patch('gcp.bigquery._api.Api.datasets_get')
   def test_view_list(self, mock_api_datasets_get, mock_api_tables_list):
     mock_api_datasets_get.return_value = None
     mock_api_tables_list.return_value = self._create_table_list_result()
@@ -177,8 +178,8 @@ class TestCases(unittest.TestCase):
     self.assertEqual(1, len(views))
     self.assertEqual('test:testds.testView1', str(views[0]))
 
-  @mock.patch('gcp.bigquery._Api.tables_list')
-  @mock.patch('gcp.bigquery._Api.datasets_get')
+  @mock.patch('gcp.bigquery._api.Api.tables_list')
+  @mock.patch('gcp.bigquery._api.Api.datasets_get')
   def test_table_list_empty(self, mock_api_datasets_get, mock_api_tables_list):
     mock_api_datasets_get.return_value = None
     mock_api_tables_list.return_value = self._create_table_list_empty_result()
@@ -191,7 +192,7 @@ class TestCases(unittest.TestCase):
 
     self.assertEqual(0, len(tables))
 
-  @mock.patch('gcp.bigquery._Api.tables_get')
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
   def test_table_exists(self, mock_api_tables_get):
     mock_api_tables_get.return_value = None
     tbl = gcp.bigquery.table('testds.testTable0', context=self._create_context())
@@ -200,9 +201,9 @@ class TestCases(unittest.TestCase):
     mock_api_tables_get.side_effect = gcp._util.RequestException(404, 'failed')
     self.assertFalse(tbl.exists())
 
-  @mock.patch('gcp.bigquery._Api.tables_insert')
-  @mock.patch('gcp.bigquery._Api.tables_list')
-  @mock.patch('gcp.bigquery._Api.datasets_get')
+  @mock.patch('gcp.bigquery._api.Api.tables_insert')
+  @mock.patch('gcp.bigquery._api.Api.tables_list')
+  @mock.patch('gcp.bigquery._api.Api.datasets_get')
   def test_tables_create(self,
                          mock_api_datasets_get,
                          mock_api_tables_list,
@@ -220,7 +221,7 @@ class TestCases(unittest.TestCase):
     mock_api_tables_insert.return_value = {'selfLink': 'http://foo'}
     self.assertIsNotNone(self._create_table_with_schema(schema), 'Expected a table')
 
-  @mock.patch('gcp.bigquery._Api.tables_list')
+  @mock.patch('gcp.bigquery._api.Api.tables_list')
   def test_tables_schema_from_dataframe(self, mock_api_tables_list):
     mock_api_tables_list.return_value = []
     df = self._create_data_frame()
@@ -229,19 +230,19 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('uuid.uuid4')
   @mock.patch('time.sleep')
-  @mock.patch('gcp.bigquery._Api.tables_list')
-  @mock.patch('gcp.bigquery._Api.tables_insert')
-  @mock.patch('gcp.bigquery._Api.tables_get')
-  @mock.patch('gcp.bigquery._Api.tabledata_insertAll')
-  @mock.patch('gcp.bigquery._Api.datasets_get')
-  def test_insertAll_no_table(self,
-                              mock_api_datasets_get,
-                              mock_api_tabledata_insert_all,
-                              mock_api_tables_get,
-                              mock_api_tables_insert,
-                              mock_api_tables_list,
-                              mock_time_sleep,
-                              mock_uuid):
+  @mock.patch('gcp.bigquery._api.Api.tables_list')
+  @mock.patch('gcp.bigquery._api.Api.tables_insert')
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
+  @mock.patch('gcp.bigquery._api.Api.tabledata_insertAll')
+  @mock.patch('gcp.bigquery._api.Api.datasets_get')
+  def test_insert_data_no_table(self,
+                                mock_api_datasets_get,
+                                mock_api_tabledata_insert_all,
+                                mock_api_tables_get,
+                                mock_api_tables_insert,
+                                mock_api_tables_list,
+                                mock_time_sleep,
+                                mock_uuid):
     mock_uuid.return_value = self._create_uuid()
     mock_time_sleep.return_value = None
     mock_api_tables_list.return_value = []
@@ -259,19 +260,19 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('uuid.uuid4')
   @mock.patch('time.sleep')
-  @mock.patch('gcp.bigquery._Api.datasets_get')
-  @mock.patch('gcp.bigquery._Api.tables_list')
-  @mock.patch('gcp.bigquery._Api.tables_insert')
-  @mock.patch('gcp.bigquery._Api.tables_get')
-  @mock.patch('gcp.bigquery._Api.tabledata_insertAll')
-  def test_insertAll_missing_field(self,
-                                   mock_api_tabledata_insert_all,
-                                   mock_api_tables_get,
-                                   mock_api_tables_insert,
-                                   mock_api_tables_list,
-                                   mock_api_datasets_get,
-                                   mock_time_sleep,
-                                   mock_uuid,):
+  @mock.patch('gcp.bigquery._api.Api.datasets_get')
+  @mock.patch('gcp.bigquery._api.Api.tables_list')
+  @mock.patch('gcp.bigquery._api.Api.tables_insert')
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
+  @mock.patch('gcp.bigquery._api.Api.tabledata_insertAll')
+  def test_insert_data_missing_field(self,
+                                     mock_api_tabledata_insert_all,
+                                     mock_api_tables_get,
+                                     mock_api_tables_insert,
+                                     mock_api_tables_list,
+                                     mock_api_datasets_get,
+                                     mock_time_sleep,
+                                     mock_uuid,):
     # Truncate the schema used when creating the table so we have an unmatched column in insert.
     schema = self._create_inferred_schema()[:2]
 
@@ -292,19 +293,19 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('uuid.uuid4')
   @mock.patch('time.sleep')
-  @mock.patch('gcp.bigquery._Api.tables_list')
-  @mock.patch('gcp.bigquery._Api.tables_insert')
-  @mock.patch('gcp.bigquery._Api.tables_get')
-  @mock.patch('gcp.bigquery._Api.tabledata_insertAll')
-  @mock.patch('gcp.bigquery._Api.datasets_get')
-  def test_insertAll_mismatched_schema(self,
-                                       mock_api_datasets_get,
-                                       mock_api_tabledata_insert_all,
-                                       mock_api_tables_get,
-                                       mock_api_tables_insert,
-                                       mock_api_tables_list,
-                                       mock_time_sleep,
-                                       mock_uuid):
+  @mock.patch('gcp.bigquery._api.Api.tables_list')
+  @mock.patch('gcp.bigquery._api.Api.tables_insert')
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
+  @mock.patch('gcp.bigquery._api.Api.tabledata_insertAll')
+  @mock.patch('gcp.bigquery._api.Api.datasets_get')
+  def test_insert_data_mismatched_schema(self,
+                                         mock_api_datasets_get,
+                                         mock_api_tabledata_insert_all,
+                                         mock_api_tables_get,
+                                         mock_api_tables_insert,
+                                         mock_api_tables_list,
+                                         mock_time_sleep,
+                                         mock_uuid):
     # Change the schema used when creating the table so we get a mismatch when inserting.
     schema = self._create_inferred_schema()
     schema[2]['type'] = 'STRING'
@@ -327,18 +328,18 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('uuid.uuid4')
   @mock.patch('time.sleep')
-  @mock.patch('gcp.bigquery._Api.datasets_get')
-  @mock.patch('gcp.bigquery._Api.tables_list')
-  @mock.patch('gcp.bigquery._Api.tables_insert')
-  @mock.patch('gcp.bigquery._Api.tables_get')
-  @mock.patch('gcp.bigquery._Api.tabledata_insertAll')
-  def test_insertAll_dataframe(self,
-                               mock_api_tabledata_insert_all,
-                               mock_api_tables_get,
-                               mock_api_tables_insert,
-                               mock_api_tables_list,
-                               mock_api_datasets_get,
-                               mock_time_sleep, mock_uuid):
+  @mock.patch('gcp.bigquery._api.Api.datasets_get')
+  @mock.patch('gcp.bigquery._api.Api.tables_list')
+  @mock.patch('gcp.bigquery._api.Api.tables_insert')
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
+  @mock.patch('gcp.bigquery._api.Api.tabledata_insertAll')
+  def test_insert_data_dataframe(self,
+                                 mock_api_tabledata_insert_all,
+                                 mock_api_tables_get,
+                                 mock_api_tables_insert,
+                                 mock_api_tables_list,
+                                 mock_api_datasets_get,
+                                 mock_time_sleep, mock_uuid):
     schema = self._create_inferred_schema()
 
     mock_uuid.return_value = self._create_uuid()
@@ -363,18 +364,18 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('uuid.uuid4')
   @mock.patch('time.sleep')
-  @mock.patch('gcp.bigquery._Api.datasets_get')
-  @mock.patch('gcp.bigquery._Api.tables_list')
-  @mock.patch('gcp.bigquery._Api.tables_insert')
-  @mock.patch('gcp.bigquery._Api.tables_get')
-  @mock.patch('gcp.bigquery._Api.tabledata_insertAll')
-  def test_insertAll_dictlist(self,
-                              mock_api_tabledata_insert_all,
-                              mock_api_tables_get,
-                              mock_api_tables_insert,
-                              mock_api_tables_list,
-                              mock_api_datasets_get,
-                              mock_time_sleep, mock_uuid):
+  @mock.patch('gcp.bigquery._api.Api.datasets_get')
+  @mock.patch('gcp.bigquery._api.Api.tables_list')
+  @mock.patch('gcp.bigquery._api.Api.tables_insert')
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
+  @mock.patch('gcp.bigquery._api.Api.tabledata_insertAll')
+  def test_insert_data_dictlist(self,
+                                mock_api_tabledata_insert_all,
+                                mock_api_tables_get,
+                                mock_api_tables_insert,
+                                mock_api_tables_list,
+                                mock_api_datasets_get,
+                                mock_time_sleep, mock_uuid):
     schema = self._create_inferred_schema()
 
     mock_uuid.return_value = self._create_uuid()
@@ -403,18 +404,18 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('uuid.uuid4')
   @mock.patch('time.sleep')
-  @mock.patch('gcp.bigquery._Api.datasets_get')
-  @mock.patch('gcp.bigquery._Api.tables_list')
-  @mock.patch('gcp.bigquery._Api.tables_insert')
-  @mock.patch('gcp.bigquery._Api.tables_get')
-  @mock.patch('gcp.bigquery._Api.tabledata_insertAll')
-  def test_insertAll_dictlist_index(self,
-                                    mock_api_tabledata_insert_all,
-                                    mock_api_tables_get,
-                                    mock_api_tables_insert,
-                                    mock_api_tables_list,
-                                    mock_api_datasets_get,
-                                    mock_time_sleep, mock_uuid):
+  @mock.patch('gcp.bigquery._api.Api.datasets_get')
+  @mock.patch('gcp.bigquery._api.Api.tables_list')
+  @mock.patch('gcp.bigquery._api.Api.tables_insert')
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
+  @mock.patch('gcp.bigquery._api.Api.tabledata_insertAll')
+  def test_insert_data_dictlist_index(self,
+                                      mock_api_tabledata_insert_all,
+                                      mock_api_tables_get,
+                                      mock_api_tables_insert,
+                                      mock_api_tables_list,
+                                      mock_api_datasets_get,
+                                      mock_time_sleep, mock_uuid):
     schema = self._create_inferred_schema('Index')
 
     mock_uuid.return_value = self._create_uuid()
@@ -443,18 +444,18 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('uuid.uuid4')
   @mock.patch('time.sleep')
-  @mock.patch('gcp.bigquery._Api.datasets_get')
-  @mock.patch('gcp.bigquery._Api.tables_list')
-  @mock.patch('gcp.bigquery._Api.tables_insert')
-  @mock.patch('gcp.bigquery._Api.tables_get')
-  @mock.patch('gcp.bigquery._Api.tabledata_insertAll')
-  def test_insertAll_dictlist_named_index(self,
-                                          mock_api_tabledata_insert_all,
-                                          mock_api_tables_get,
-                                          mock_api_tables_insert,
-                                          mock_api_tables_list,
-                                          mock_api_datasets_get,
-                                          mock_time_sleep, mock_uuid):
+  @mock.patch('gcp.bigquery._api.Api.datasets_get')
+  @mock.patch('gcp.bigquery._api.Api.tables_list')
+  @mock.patch('gcp.bigquery._api.Api.tables_insert')
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
+  @mock.patch('gcp.bigquery._api.Api.tabledata_insertAll')
+  def test_insert_data_dictlist_named_index(self,
+                                            mock_api_tabledata_insert_all,
+                                            mock_api_tables_get,
+                                            mock_api_tables_insert,
+                                            mock_api_tables_list,
+                                            mock_api_datasets_get,
+                                            mock_time_sleep, mock_uuid):
     schema = self._create_inferred_schema('Row')
 
     mock_uuid.return_value = self._create_uuid()
@@ -481,8 +482,8 @@ class TestCases(unittest.TestCase):
       {'insertId': '#3', 'json': {u'column': 'r3', u'headers': 10.0, u'some': 3, 'Row': 3}}
     ])
 
-  @mock.patch('gcp.bigquery._Api.jobs_insert_load')
-  @mock.patch('gcp.bigquery._Api.jobs_get')
+  @mock.patch('gcp.bigquery._api.Api.jobs_insert_load')
+  @mock.patch('gcp.bigquery._api.Api.jobs_get')
   def test_table_load(self, mock_api_jobs_get, mock_api_jobs_insert_load):
     mock_api_jobs_get.return_value = {'status': {'state': 'DONE'}}
     mock_api_jobs_insert_load.return_value = None
@@ -493,8 +494,8 @@ class TestCases(unittest.TestCase):
     job = tbl.load('gs://foo')
     self.assertEquals('bar', job.id)
 
-  @mock.patch('gcp.bigquery._Api.table_extract')
-  @mock.patch('gcp.bigquery._Api.jobs_get')
+  @mock.patch('gcp.bigquery._api.Api.table_extract')
+  @mock.patch('gcp.bigquery._api.Api.jobs_get')
   def test_table_extract(self, mock_api_jobs_get, mock_api_table_extract):
     mock_api_jobs_get.return_value = {'status': {'state': 'DONE'}}
     mock_api_table_extract.return_value = None
@@ -505,8 +506,8 @@ class TestCases(unittest.TestCase):
     job = tbl.extract('gs://foo')
     self.assertEquals('bar', job.id)
 
-  @mock.patch('gcp.bigquery._Api.tabledata_list')
-  @mock.patch('gcp.bigquery._Api.tables_get')
+  @mock.patch('gcp.bigquery._api.Api.tabledata_list')
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
   def test_table_to_dataframe(self, mock_api_tables_get, mock_api_tabledata_list):
     schema = self._create_inferred_schema()
     mock_api_tables_get.return_value = {'schema': {'fields': schema}}
@@ -542,25 +543,27 @@ class TestCases(unittest.TestCase):
                      error.exception[0])
 
     with self.assertRaises(Exception) as error:
-      tbl2 = tbl2.window(dt.timedelta(hours=-2), 0)
+      _ = tbl2.window(dt.timedelta(hours=-2), 0)
     self.assertEqual('Cannot use window() on an already decorated table',
                      error.exception[0])
 
     with self.assertRaises(Exception) as error:
-      tbl2 = tbl.snapshot(dt.timedelta(days=-8))
-    self.assertEqual('Invalid snapshot relative when argument: must be within 7 days: -8 days, 0:00:00',
-                     error.exception[0])
+      _ = tbl.snapshot(dt.timedelta(days=-8))
+    self.assertEqual(
+        'Invalid snapshot relative when argument: must be within 7 days: -8 days, 0:00:00',
+        error.exception[0])
 
     with self.assertRaises(Exception) as error:
-      tbl2 = tbl.snapshot(dt.timedelta(days=-8))
-    self.assertEqual('Invalid snapshot relative when argument: must be within 7 days: -8 days, 0:00:00',
-                     error.exception[0])
+      _ = tbl.snapshot(dt.timedelta(days=-8))
+    self.assertEqual(
+        'Invalid snapshot relative when argument: must be within 7 days: -8 days, 0:00:00',
+        error.exception[0])
 
     tbl2 = tbl.snapshot(dt.timedelta(days=-1))
     self.assertEquals('test:testds.testTable0@-86400000', str(tbl2))
 
     with self.assertRaises(Exception) as error:
-      tbl2 = tbl.snapshot(dt.timedelta(days=1))
+      _ = tbl.snapshot(dt.timedelta(days=1))
     self.assertEqual('Invalid snapshot relative when argument: 1 day, 0:00:00',
                      error.exception[0])
 
@@ -574,13 +577,13 @@ class TestCases(unittest.TestCase):
 
     when = dt.datetime.utcnow() + dt.timedelta(1)
     with self.assertRaises(Exception) as error:
-      tbl2 = tbl.snapshot(when)
+      _ = tbl.snapshot(when)
     self.assertEqual('Invalid snapshot absolute when argument: %s' % when,
                      error.exception[0])
 
     when = dt.datetime.utcnow() - dt.timedelta(8)
     with self.assertRaises(Exception) as error:
-      tbl2 = tbl.snapshot(when)
+      _ = tbl.snapshot(when)
     self.assertEqual('Invalid snapshot absolute when argument: %s' % when,
                      error.exception[0])
 
@@ -599,14 +602,15 @@ class TestCases(unittest.TestCase):
                      error.exception[0])
 
     with self.assertRaises(Exception) as error:
-      tbl2 = tbl2.snapshot(-400000)
+      _ = tbl2.snapshot(-400000)
     self.assertEqual('Cannot use snapshot() on an already decorated table',
                      error.exception[0])
 
     with self.assertRaises(Exception) as error:
-      tbl2 = tbl.window(dt.timedelta(0), dt.timedelta(hours=-1))
-    self.assertEqual('window: Between arguments: begin must be before end: 0:00:00, -1 day, 23:00:00',
-                     error.exception[0])
+      _ = tbl.window(dt.timedelta(0), dt.timedelta(hours=-1))
+    self.assertEqual(
+        'window: Between arguments: begin must be before end: 0:00:00, -1 day, 23:00:00',
+        error.exception[0])
 
   @mock.patch('gcp.bigquery._api.Api.tables_get')
   @mock.patch('gcp.bigquery._api.Api.table_update')
