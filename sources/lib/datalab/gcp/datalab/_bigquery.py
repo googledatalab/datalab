@@ -393,10 +393,8 @@ def _udf_cell(args, js):
     outputs.append((n, t))
 
   # Finally build the UDF object
-  udf = gcp.bigquery.udf(inputs, outputs, js)
+  udf = gcp.bigquery.udf(inputs, outputs, variable_name, js)
   _notebook_environment()[variable_name] = udf
-
-  return None
 
 
 def _execute_cell(args, code):

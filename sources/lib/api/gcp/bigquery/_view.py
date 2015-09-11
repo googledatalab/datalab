@@ -191,7 +191,7 @@ class View(object):
     return self.materialization.execute(table_name=table_name, table_mode=table_mode,
                                         use_cache=use_cache, priority=priority)
 
-  def _repr_sql_(self, args=None):
+  def _repr_sql_(self):
     """Returns a representation of the view for embedding into a SQL statement.
 
     Returns:

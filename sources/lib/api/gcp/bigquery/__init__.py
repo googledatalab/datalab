@@ -59,12 +59,13 @@ def query(sql_statement, args=None, context=None):
     A query object that can be executed to retrieve data from BigQuery.
   """
   api = _create_api(context)
+  code = None
   if args or not isinstance(sql_statement, basestring):
-    sql_statement = _sql.SqlModule.expand(sql_statement, args)
-  return _query.Query(api, sql_statement)
+    sql_statement, code = _sql.SqlModule.expand(sql_statement, args)
+  return _query.Query(api, sql_statement, code)
 
 
-def udf(inputs, outputs, implementation, context=None):
+def udf(inputs, outputs, name, implementation, context=None):
   """Creates a BigQuery SQL UDF query object.
 
   The implementation is a javascript function of the form:
@@ -79,7 +80,7 @@ def udf(inputs, outputs, implementation, context=None):
     context: an optional Context object providing project_id and credentials.
   """
   api = _create_api(context)
-  return _udf.Function(api, inputs, outputs, implementation)
+  return _udf.Function(api, inputs, outputs, name, implementation)
 
 
 def table(name, context=None):

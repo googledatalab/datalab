@@ -670,7 +670,7 @@ class Table(object):
       # The cached metadata is out of sync now; abandon it.
       self._info = None
 
-  def _repr_sql_(self, args=None):
+  def _repr_sql_(self):
     """Returns a representation of the table for embedding into a SQL statement.
 
     Returns:

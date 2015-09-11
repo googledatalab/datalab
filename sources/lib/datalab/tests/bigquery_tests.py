@@ -12,10 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime as dt
-import collections
 import mock
-import pandas
+from oauth2client.client import AccessTokenCredentials
 import unittest
 
 # import Python so we can mock the parts we need to here.
@@ -25,9 +23,45 @@ IPython.core.magic.register_line_magic = mock.Mock()
 IPython.core.magic.register_cell_magic = mock.Mock()
 IPython.get_ipython = mock.Mock()
 
+import gcp.bigquery
 import gcp.datalab
 
 class TestCases(unittest.TestCase):
 
-  def __init__(self):
-    pass
+  @mock.patch('gcp.datalab._bigquery._notebook_environment')
+  @mock.patch('gcp.bigquery._create_api')
+  def test_udf_cell(self, mock_create_api, mock_notebook_environment):
+    env = {}
+    cell_body = \
+"""
+/**
+ * @param {{word: string, corpus: string, word_count: integer}} r
+ * @param function({{word: string, corpus: string, count: integer}}) emitFn
+ */
+function(r, emitFn) {
+  if (r.word.match(/[shakespeare]/) !== null) {
+    var result = { word: r.word, corpus: r.corpus, count: r.word_count };
+    emitFn(result);
+  }
+}
+"""
+    mock_create_api.return_value = self._create_api()
+    mock_notebook_environment.return_value = env
+    gcp.datalab._bigquery._udf_cell({'name': 'word_filter'}, cell_body)
+    udf = env['word_filter']
+    self.assertIsNotNone(udf)
+    self.assertEquals('word_filter', udf._name)
+    self.assertEquals([('word', 'string'), ('corpus', 'string'), ('word_count', 'integer')],
+                      udf._inputs)
+    self.assertEquals([('word', 'string'), ('corpus', 'string'), ('count', 'integer')],
+                      udf._outputs)
+    self.assertEquals(cell_body, udf._implementation)
+
+  def _create_api(self):
+    context = self._create_context()
+    return gcp.bigquery._api.Api(context.credentials, context.project_id)
+
+  def _create_context(self):
+    project_id = 'test'
+    creds = AccessTokenCredentials('test_token', 'test_ua')
+    return gcp.Context(project_id, creds)

@@ -27,16 +27,6 @@ class SqlStatement(object):
     self._sql = sql
     self._module = module
 
-  def _repr_sql_(self, args=None):
-    """Creates a SQL representation of this object.
-
-    Args:
-      args: an optional dictionary to use when expanding the variables in the SQL.
-    Returns:
-      The SQL representation to use when embedding this object into SQL.
-    """
-    return '(%s)' % SqlStatement.format(self._sql, args)
-
   def __str__(self):
     """Creates a string representation of this object.
 
@@ -62,7 +52,7 @@ class SqlStatement(object):
     return self._module
 
   @staticmethod
-  def _expand(sql, ns, complete, in_progress):
+  def _expand(sql, ns, complete, in_progress, code):
     """ Recursive helper method for expanding variables including transitive dependencies.
 
     Placeholders in SQL are represented as $<name>. If '$' must appear within
@@ -70,9 +60,10 @@ class SqlStatement(object):
 
     Args:
       sql: the raw SQL statement with named placeholders.
-      ns: the dictionary of name/value pairs to use for placeholder values.
+      ns: the user-supplied dictionary of name/value pairs to use for placeholder values.
       complete: a ref parameter for the references expanded so far
       in_progress: a ref parameter for the references that still need expansion.
+      code: an array of referenced UDFs found during expansion.
     Returns:
       The formatted SQL statement with placeholders replaced with their values.
     Raises:
@@ -104,7 +95,7 @@ class SqlStatement(object):
           # Circular dependency
           raise Exception("Circular dependency in $%s" % dependency)
         in_progress.append(dependency)
-        expanded = SqlStatement._expand(dep._sql, ns, complete, in_progress)
+        expanded = SqlStatement._expand(dep._sql, ns, complete, in_progress, code)
         in_progress.pop()
         complete[dependency] = SqlStatement(expanded)
       else:
@@ -128,9 +119,16 @@ class SqlStatement(object):
         if isinstance(value, types.ModuleType):
           value = _sql_module.SqlModule.get_query_from_module(value)
 
-        if '_repr_sql_' in dir(value):
+        if '_repr_code_' in dir(value):
+          code.append(value._repr_code_())
+
+        if isinstance(value, SqlStatement):
+          sql, udfs = value.format(value._sql, complete)
+          code.extend(udfs)
+          value = '(%s)' % sql
+        elif '_repr_sql_' in dir(value):
           # pylint: disable=protected-access
-          value = value._repr_sql_(complete)
+          value = value._repr_sql_()
         elif (type(value) == str) or (type(value) == unicode):
           value = '"' + value.replace('"', '\\"') + '"'
         else:
@@ -153,12 +151,14 @@ class SqlStatement(object):
       args: a dictionary of values to use in variable expansion.
 
     Returns:
-      The resolved SQL text.
+      The resolved SQL text, and an array of any referenced UDFs.
 
     Raises:
       Exception on failure.
     """
-    return SqlStatement._expand(sql, args, complete={}, in_progress=[])
+    code=[]
+    expanded =SqlStatement._expand(sql, args, complete={}, in_progress=[], code=code)
+    return expanded, code
 
   @staticmethod
   def _get_tokens(sql):

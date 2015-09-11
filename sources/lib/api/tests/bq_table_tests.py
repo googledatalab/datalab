@@ -634,6 +634,28 @@ class TestCases(unittest.TestCase):
     self.assertEqual(new_expiry, tbl.metadata.expires_on)
     self.assertEqual(len(new_schema), len(tbl.schema))
 
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
+  @mock.patch('gcp.bigquery._api.Api.table_update')
+  def test_table_update(self, mock_api_table_update, mock_api_tables_get):
+    schema = self._create_inferred_schema()
+    info = {'schema': {'fields': schema}, 'friendlyName': 'casper',
+            'description': 'ghostly logs',
+            'expirationTime': calendar.timegm(dt.datetime(2020, 1, 1).utctimetuple()) * 1000}
+    mock_api_tables_get.return_value = info
+    tbl = gcp.bigquery.table('testds.testTable0', context=self._create_context())
+    new_name = 'aziraphale'
+    new_description = 'demon duties'
+    new_schema = [{'name': 'injected', 'type': 'FLOAT'}]
+    new_schema.extend(schema)
+    new_expiry = dt.datetime(2030, 1, 1)
+    tbl.update(new_name, new_description, new_expiry, new_schema)
+    name, info = mock_api_table_update.call_args[0]
+    self.assertEqual(tbl.name, name)
+    self.assertEqual(new_name, tbl.metadata.friendly_name)
+    self.assertEqual(new_description, tbl.metadata.description)
+    self.assertEqual(new_expiry, tbl.metadata.expires_on)
+    self.assertEqual(len(new_schema), len(tbl.schema))
+
   def _create_context(self):
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')

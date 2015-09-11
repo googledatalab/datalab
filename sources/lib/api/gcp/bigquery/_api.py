@@ -117,12 +117,13 @@ class Api(object):
     }
     return gcp._util.Http.request(url, data=data, credentials=self._credentials)
 
-  def jobs_insert_query(self, sql, table_name=None, append=False, overwrite=False,
+  def jobs_insert_query(self, sql, scripts=None, table_name=None, append=False, overwrite=False,
                         dry_run=False, use_cache=True, batch=True, allow_large_results=False):
     """Issues a request to insert a query job.
 
     Args:
       sql: the SQL string representing the query to execute.
+      scripts: code for Javascript UDFs, if any.
       table_name: None for an anonymous table, or a name parts tuple for a long-lived table.
       append: if True, append to the table if it is non-empty; else the request will fail if table
           is non-empty unless overwrite is True.
@@ -157,8 +158,12 @@ class Api(object):
       },
     }
 
+    query_config = data['configuration']['query']
+
+    if scripts:
+      query_config['userDefinedFunctionResources'] = [{'inlineCode': script} for script in scripts]
+
     if table_name:
-      query_config = data['configuration']['query']
       query_config['destinationTable'] = {
         'projectId': table_name.project_id,
         'datasetId': table_name.dataset_id,
