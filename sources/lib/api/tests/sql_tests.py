@@ -15,8 +15,7 @@
 import imp
 import unittest
 
-from gcp.sql import SqlModule
-from gcp.sql import SqlStatement as Sql
+from gcp.data import SqlModule, SqlStatement
 
 
 class TestCases(unittest.TestCase):
@@ -26,14 +25,14 @@ class TestCases(unittest.TestCase):
                ' SELECT time FROM [logs.today] ']
 
     for query in queries:
-      formatted_query = Sql.format(query, None)[0]
+      formatted_query = SqlStatement.format(query, None)[0]
       self.assertEqual(query, formatted_query)
 
   def test_single_placeholder(self):
     query = 'SELECT time FROM [logs.today] WHERE status == $param'
     args = {'param': 200}
 
-    formatted_query = Sql.format(query, args)[0]
+    formatted_query = SqlStatement.format(query, args)[0]
     self.assertEqual(formatted_query,
                      'SELECT time FROM [logs.today] WHERE status == 200')
 
@@ -42,7 +41,7 @@ class TestCases(unittest.TestCase):
              'WHERE status == $status AND path == $path')
     args = {'status': 200, 'path': '/home'}
 
-    formatted_query = Sql.format(query, args)[0]
+    formatted_query = SqlStatement.format(query, args)[0]
     self.assertEqual(formatted_query,
                      ('SELECT time FROM [logs.today] '
                       'WHERE status == 200 AND path == "/home"'))
@@ -51,7 +50,7 @@ class TestCases(unittest.TestCase):
     query = 'SELECT time FROM [logs.today] WHERE path == "/foo$$bar"'
     args = {'status': 200}
 
-    formatted_query = Sql.format(query, args)[0]
+    formatted_query = SqlStatement.format(query, args)[0]
     self.assertEqual(formatted_query,
                      'SELECT time FROM [logs.today] WHERE path == "/foo$bar"')
 
@@ -59,7 +58,7 @@ class TestCases(unittest.TestCase):
     query = 'SELECT time FROM [logs.today] WHERE path == $path'
     args = {'path': 'xyz"xyz'}
 
-    formatted_query = Sql.format(query, args)[0]
+    formatted_query = SqlStatement.format(query, args)[0]
     self.assertEqual(formatted_query,
                      'SELECT time FROM [logs.today] WHERE path == "xyz\\"xyz"')
 
@@ -79,7 +78,7 @@ class TestCases(unittest.TestCase):
                       'WHERE success == False AND server == "$master" '
                       'LIMIT 10')
 
-    formatted_query = Sql.format(query, args)[0]
+    formatted_query = SqlStatement.format(query, args)[0]
 
     self.assertEqual(formatted_query, expected_query)
 
@@ -88,122 +87,78 @@ class TestCases(unittest.TestCase):
     args = {'s': 200}
 
     with self.assertRaises(Exception) as error:
-      _ = Sql.format(query, args)[0]
+      _ = SqlStatement.format(query, args)[0]
 
     e = error.exception
     self.assertEqual(e.message, 'Unsatisfied dependency $status')
 
   def test_nested_queries(self):
-    query1 = Sql('SELECT 3 as x')
-    query2 = Sql('SELECT x FROM $query1')
+    query1 = SqlStatement('SELECT 3 as x')
+    query2 = SqlStatement('SELECT x FROM $query1')
     query3 = 'SELECT * FROM $query2 WHERE x == $count'
 
     self.assertEquals('SELECT 3 as x', query1.sql)
 
     with self.assertRaises(Exception) as e:
-      _ = Sql.format(query3)[0]
+      _ = SqlStatement.format(query3)[0]
     self.assertEquals('Unsatisfied dependency $query2', e.exception.message)
 
     with self.assertRaises(Exception) as e:
-      _ = Sql.format(query3, {'query1': query1})[0]
+      _ = SqlStatement.format(query3, {'query1': query1})[0]
     self.assertEquals('Unsatisfied dependency $query2', e.exception.message)
 
     with self.assertRaises(Exception) as e:
-      _ = Sql.format(query3, {'query2': query2})[0]
+      _ = SqlStatement.format(query3, {'query2': query2})[0]
     self.assertEquals('Unsatisfied dependency $query1', e.exception.message)
 
     with self.assertRaises(Exception) as e:
-      _ = Sql.format(query3, {'query1': query1, 'query2': query2})[0]
+      _ = SqlStatement.format(query3, {'query1': query1, 'query2': query2})[0]
     self.assertEquals('Unsatisfied dependency $count', e.exception.message)
 
-    formatted_query = Sql.format(query3, {'query1': query1, 'query2': query2, 'count': 5})[0]
+    formatted_query =\
+        SqlStatement.format(query3, {'query1': query1, 'query2': query2, 'count': 5})[0]
     self.assertEqual('SELECT * FROM (SELECT x FROM (SELECT 3 as x)) WHERE x == 5', formatted_query)
 
   def test_shared_nested_queries(self):
-    query1 = Sql('SELECT 3 as x')
-    query2 = Sql('SELECT x FROM $query1')
+    query1 = SqlStatement('SELECT 3 as x')
+    query2 = SqlStatement('SELECT x FROM $query1')
     query3 = 'SELECT x AS y FROM $query1, x FROM $query2'
-    formatted_query = Sql.format(query3, {'query1': query1, 'query2': query2})[0]
+    formatted_query = SqlStatement.format(query3, {'query1': query1, 'query2': query2})[0]
     self.assertEqual('SELECT x AS y FROM (SELECT 3 as x), x FROM (SELECT x FROM (SELECT 3 as x))',
                      formatted_query)
 
   def test_circular_references(self):
-    query1 = Sql('SELECT * FROM $query3')
-    query2 = Sql('SELECT x FROM $query1')
-    query3 = Sql('SELECT * FROM $query2 WHERE x == $count')
+    query1 = SqlStatement('SELECT * FROM $query3')
+    query2 = SqlStatement('SELECT x FROM $query1')
+    query3 = SqlStatement('SELECT * FROM $query2 WHERE x == $count')
     args = {'query1': query1, 'query2': query2, 'query3': query3}
 
     with self.assertRaises(Exception) as e:
-      _ = Sql.format('SELECT * FROM $query1', args)[0]
+      _ = SqlStatement.format('SELECT * FROM $query1', args)[0]
     self.assertEquals('Circular dependency in $query1', e.exception.message)
 
     with self.assertRaises(Exception) as e:
-      _ = Sql.format('SELECT * FROM $query2', args)[0]
+      _ = SqlStatement.format('SELECT * FROM $query2', args)[0]
     self.assertEquals('Circular dependency in $query2', e.exception.message)
 
     with self.assertRaises(Exception) as e:
-      _ = Sql.format('SELECT * FROM $query3', args)[0]
+      _ = SqlStatement.format('SELECT * FROM $query3', args)[0]
     self.assertEquals('Circular dependency in $query3', e.exception.message)
 
   def test_module_reference(self):
     m = imp.new_module('m')
-    m.__dict__['q1'] = Sql('SELECT 3 AS x')
+    m.__dict__['q1'] = SqlStatement('SELECT 3 AS x')
     m.__dict__[SqlModule._SQL_MODULE_LAST] =\
-        m.__dict__[SqlModule._SQL_MODULE_LAST] = Sql('SELECT * FROM $q1 LIMIT 10')
+        m.__dict__[SqlModule._SQL_MODULE_LAST] = SqlStatement('SELECT * FROM $q1 LIMIT 10')
     with self.assertRaises(Exception) as e:
-      _ = Sql.format('SELECT * FROM $s', {'s': m})[0]
+      _ = SqlStatement.format('SELECT * FROM $s', {'s': m})[0]
     self.assertEquals('Unsatisfied dependency $q1', e.exception.message)
 
-    formatted_query = Sql.format('SELECT * FROM $s', {'s': m, 'q1': m.q1})[0]
+    formatted_query = SqlStatement.format('SELECT * FROM $s', {'s': m, 'q1': m.q1})[0]
     self.assertEqual('SELECT * FROM (SELECT * FROM (SELECT 3 AS x) LIMIT 10)', formatted_query)
 
-    formatted_query = Sql.format('SELECT * FROM $s', {'s': m.q1})[0]
+    formatted_query = SqlStatement.format('SELECT * FROM $s', {'s': m.q1})[0]
     self.assertEqual('SELECT * FROM (SELECT 3 AS x)', formatted_query)
-
-  def test_split_cell(self):
-    m = imp.new_module('m')
-    code = SqlModule.split_cell('', m)
-    self.assertNotIn(SqlModule._SQL_MODULE_LAST, m.__dict__)
-    self.assertNotIn(SqlModule._SQL_MODULE_MAIN, m.__dict__)
-    self.assertEquals('', code)
-
-    m = imp.new_module('m')
-    code = SqlModule.split_cell('\n\n', m)
-    self.assertNotIn(SqlModule._SQL_MODULE_LAST, m.__dict__)
-    self.assertNotIn(SqlModule._SQL_MODULE_MAIN, m.__dict__)
-    self.assertEquals('', code)
-
-    m = imp.new_module('m')
-    code = SqlModule.split_cell('SELECT 3 AS x', m)
-    self.assertEquals('SELECT 3 AS x', m.__dict__[SqlModule._SQL_MODULE_MAIN].sql)
-    self.assertEquals('SELECT 3 AS x', m.__dict__[SqlModule._SQL_MODULE_LAST].sql)
-    self.assertEquals('', code)
-
-    m = imp.new_module('m')
-    code = SqlModule.split_cell('# This is a comment\n\nSELECT 3 AS x', m)
-    self.assertEquals('SELECT 3 AS x', m.__dict__[SqlModule._SQL_MODULE_MAIN].sql)
-    self.assertEquals('SELECT 3 AS x', m.__dict__[SqlModule._SQL_MODULE_LAST].sql)
-    self.assertEquals('# This is a comment\n', code)
-
-    m = imp.new_module('m')
-    code = SqlModule.split_cell('# This is a comment\n\nfoo="bar"\nSELECT 3 AS x', m)
-    self.assertEquals('SELECT 3 AS x', m.__dict__[SqlModule._SQL_MODULE_MAIN].sql)
-    self.assertEquals('SELECT 3 AS x', m.__dict__[SqlModule._SQL_MODULE_LAST].sql)
-    self.assertEquals('# This is a comment\n\nfoo="bar"\n', code)
-
-    m = imp.new_module('m')
-    code = SqlModule.split_cell('DEFINE QUERY q1\nSELECT 3 AS x', m)
-    self.assertEquals('SELECT 3 AS x', m.q1.sql)
-    self.assertNotIn(SqlModule._SQL_MODULE_MAIN, m.__dict__)
-    self.assertEquals('SELECT 3 AS x', m.__dict__[SqlModule._SQL_MODULE_LAST].sql)
-    self.assertEquals('', code)
-
-    m = imp.new_module('m')
-    code = SqlModule.split_cell('DEFINE QUERY q1\nSELECT 3 AS x\nSELECT * FROM $q1', m)
-    self.assertEquals('SELECT 3 AS x', m.q1.sql)
-    self.assertEquals('SELECT * FROM $q1', m.__dict__[SqlModule._SQL_MODULE_MAIN].sql)
-    self.assertEquals('SELECT * FROM $q1', m.__dict__[SqlModule._SQL_MODULE_LAST].sql)
-    self.assertEquals('', code)
 
   def test_get_sql_statement_with_environment(self):
     # TODO(gram).

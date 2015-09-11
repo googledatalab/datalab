@@ -20,7 +20,7 @@ import IPython
 import IPython.core.display
 import IPython.core.magic
 import gcp.bigquery
-import gcp.sql
+import gcp.data
 import gcp._util
 import _commands
 import _html
@@ -288,7 +288,7 @@ def _get_query_argument(args, code=None, env=None):
   # %bigquery pipeline where we want to avoid it to test hermeticity.
   if env is None:
     env = _notebook_environment()
-  item, env = gcp.sql.SqlModule.get_sql_statement_with_environment(item, env)
+  item, env = gcp.data.SqlModule.get_sql_statement_with_environment(item, env)
   if code:
     exec code in env
   return gcp.bigquery.query(item, args=env)

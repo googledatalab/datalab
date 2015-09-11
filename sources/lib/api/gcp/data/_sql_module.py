@@ -14,7 +14,6 @@
 
 """Helper functions for %%sql modules."""
 
-import re
 import shlex
 import types
 
@@ -62,8 +61,8 @@ class SqlModule(object):
     return {arg: value for arg, value in args.iteritems() if value is not None}
 
   @staticmethod
-  def get_query_from_module(module):
-    """ Given a %%sql module return the default query for the module.
+  def get_default_query_from_module(module):
+    """ Given a %%sql module return the default (last) query for the module.
 
     Args:
       module: the %%sql module.
@@ -71,13 +70,8 @@ class SqlModule(object):
     Returns:
       The default query associated with this module.
     """
-    # TODO(gram): Given the main module is also the last module, we should just be able
-    # to return the last module here.
     if isinstance(module, types.ModuleType):
-      if SqlModule._SQL_MODULE_MAIN in module.__dict__:
-        return module.__dict__[SqlModule._SQL_MODULE_MAIN]
-      else:
-        return module.__dict__.get(SqlModule._SQL_MODULE_LAST, None)
+      return module.__dict__.get(SqlModule._SQL_MODULE_LAST, None)
     return None
 
   @staticmethod
@@ -95,7 +89,7 @@ class SqlModule(object):
     if isinstance(item, basestring):
       item = _sql_statement.SqlStatement(item)
     elif not isinstance(item, _sql_statement.SqlStatement):
-      item = SqlModule.get_query_from_module(item)
+      item = SqlModule.get_default_query_from_module(item)
       if not item:
         raise Exception('Expected a SQL statement or module')
 
@@ -115,76 +109,5 @@ class SqlModule(object):
     sql, args = SqlModule.get_sql_statement_with_environment(sql, args)
     return _sql_statement.SqlStatement.format(sql._sql, args)
 
-  @staticmethod
-  def split_cell(cell, module):
-    """ Split a %%sql cell into the Python code and the queries.
-
-    Populates a module with the queries and return the Python code for the arguments.
-
-    Args:
-      cell: the contents of the %%sql cell.
-      module: the module that is being populated from the cell.
-
-    Return:
-
-    """
-    lines = cell.split('\n')
-    code = None
-    last_def = -1
-    name = None
-    define_re = \
-      re.compile('^DEFINE\s+QUERY\s+([A-Z]\w*)\s*?(.*)$', re.IGNORECASE)
-    select_re = re.compile('^SELECT\s*.*$', re.IGNORECASE)
-    for i, line in enumerate(lines):
-      # Strip comment lines; doing this here means we can allow comments in SQL QUERY sections too.
-      if len(line) and line[0] == '#':
-        continue
-      define_match = define_re.match(line)
-      select_match = select_re.match(line)
-      if define_match or select_match:
-        # If this is the first query, get the preceding Python code.
-        if code is None:
-          code = ('\n'.join(lines[:i])).strip()
-          if len(code):
-            code += '\n'
-        elif last_def >= 0:
-
-          # This is not the first query, so gather the previous query text.
-          query = '\n'.join([line for line in lines[last_def:i] if len(line) and line[0] != '#']) \
-            .strip()
-          if select_match and name != SqlModule._SQL_MODULE_MAIN and len(query) == 0:
-            # Avoid DEFINE query name\nSELECT ... being seen as an empty DEFINE followed by SELECT
-            continue
-
-          # Save the query
-          statement = _sql_statement.SqlStatement(query, module)
-          module.__dict__[name] = statement
-          # And set the 'last' query to be this too
-          module.__dict__[SqlModule._SQL_MODULE_LAST] = statement
-
-        # Get the query name and strip off our syntactic sugar if appropriate.
-        if define_match:
-          name = define_match.group(1)
-          lines[i] = define_match.group(2)
-        else:
-          name = SqlModule._SQL_MODULE_MAIN
-
-        # Save the starting line index of the new query
-        last_def = i
-
-    if last_def >= 0:
-      # We were in a query so save this tail query.
-      query = '\n'.join([line for line in lines[last_def:] if len(line) and line[0] != '#']).strip()
-      statement = _sql_statement.SqlStatement(query, module)
-      module.__dict__[name] = statement
-      module.__dict__[SqlModule._SQL_MODULE_LAST] = statement
-
-    if code is None:
-      code = ''
-    return code
-
-  @staticmethod
-  def set_arg_parser(module, parser):
-    module.__dict__[SqlModule._SQL_MODULE_ARGPARSE] = parser
 
 import _sql_statement

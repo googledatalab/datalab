@@ -19,7 +19,7 @@ import json
 import pandas
 import types
 import gcp._util
-import gcp.sql
+import gcp.data
 import gcp.bigquery
 
 
@@ -149,9 +149,8 @@ def get_data(source, fields='*', first_row=0, count=-1):
     if isinstance(source, basestring):
       source = gcp.bigquery.table(source)
 
-  if isinstance(source, types.ModuleType) or isinstance(source, gcp.sql.SqlStatement):
-    sql, code = gcp.sql.SqlModule.expand(source)
-    source = gcp.bigquery.query(sql, code)
+  if isinstance(source, types.ModuleType) or isinstance(source, gcp.data.SqlStatement):
+    source = gcp.bigquery.query(source)
 
   if isinstance(source, list):
     if len(source) == 0:
