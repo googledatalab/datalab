@@ -29,14 +29,20 @@ fi
 # Home directories are mapped from host to boot2docker vm automatically,
 # so use them for both logs and notebooks.
 mkdir -p $HOME/datalab/log/custom_logs
-mkdir -p $HOME/datalab/notebooks
 
 # Delete any existing logs to start fresh on each run.
 rm -f $HOME/datalab/log/custom_logs/*.log
 
+ACCOUNT=`gcloud -q config list --format yaml | grep account | awk -F" " '{print $2}'`
+PROJECT_ID=`gcloud -q config list --format yaml | grep project | awk -F" " '{print $2}'`
+PROJECT_NUM=`gcloud -q alpha projects describe $PROJECT_ID | grep projectNumber | awk '{print substr($2,2,length($2)-2)}'`
+
 docker run -i --entrypoint=$ENTRYPOINT \
   -p 8081:8080 \
   -v $HOME/datalab/log:/var/log/app_engine \
-  -v $HOME/datalab/notebooks:/nb \
   -v $HOME/.config/gcloud:/root/.config/gcloud \
+  -v $REPO_DIR/content/ipython/notebooks:/content \
+  -e "DATALAB_USER=$ACCOUNT" \
+  -e "DATALAB_PROJECT_ID=$PROJECT_ID" \
+  -e "DATALAB_PROJECT_NUM=$PROJECT_NUM" \
   -t datalab

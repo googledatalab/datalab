@@ -20,19 +20,19 @@
 import http = require('http');
 import logging = require('./logging');
 import socketio = require('socket.io');
+import url = require('url');
 import util = require('util');
 import WebSocket = require('ws');
 
 interface Session {
   id: number;
-  kernel: string;
-  socket: SocketIO.Socket,
-  webSockets: common.Map<WebSocket>;
-  channels: string[];
+  url: string;
+  socket: SocketIO.Socket;
+  webSocket: WebSocket;
 }
 
 interface SessionMessage {
-  kernel: string;
+  url: string;
 }
 
 interface DataMessage {
@@ -46,48 +46,44 @@ var appSettings: common.Settings;
 var sessionCounter = 0;
 
 /**
- * Creates a WebSocket instance to connect to the IPython server for the specified session's
- * kernel, and the specified IPython channel.
+ * Creates a WebSocket connected to the Jupyter server for the URL in the specified session.
  */
-function createWebSocket(session: Session, channel: string): WebSocket {
-  var socketUrl = util.format('%s/api/kernels/%s/%s',
-                              appSettings.ipythonSocketServer, session.kernel, channel);
+function createWebSocket(session: Session): WebSocket {
+  var socketUrl = appSettings.jupyterSocketServer + url.parse(session.url).path;
+  logging.getLogger().debug('Creating WebSocket to %s for session %d', socketUrl, session.id);
 
   var ws = new WebSocket(socketUrl);
   ws.on('open', function() {
       // Stash the resulting WebSocket, now that it is in open state
-      session.webSockets[channel] = ws;
-      session.channels.push(channel);
-
-      if (session.channels.length == webSocketChannels.length) {
-        // If all of the channels are now open, send the client a notification.
-        session.socket.emit('kernel', { kernel: session.kernel });
-      }
+      session.webSocket = ws;
+      session.socket.emit('open', { url: session.url });
     })
     .on('close', function() {
       // Remove the WebSocket from the session, once it is in closed state
-      logging.getLogger().debug('WebSocket [%d-%s] closed', session.id, channel);
-      delete session.webSockets[channel];
+      logging.getLogger().debug('WebSocket [%d] closed', session.id);
+      session.webSocket = null;
+      session.socket.emit('close', { url: session.url });
     })
     .on('message', function(data: any) {
       // Propagate messages arriving on the WebSocket to the client.
-      logging.getLogger().debug('WebSocket [%d-%s] message\n%s', session.id, channel,
-                                JSON.stringify(data));
-      session.socket.emit('data', { channel: channel, data: data });
+      logging.getLogger().debug('WebSocket [%d] message\n%j', session.id, data);
+      session.socket.emit('data', { data: data });
+    })
+    .on('error', function(e: any) {
+      logging.getLogger().error('WebSocket [%d] error\n%j', session.id, e);
     });
 
   return ws;
 }
 
 /**
- * Closes all WebSocket instances associated with the session.
+ * Closes the WebSocket instance associated with the session.
  */
-function closeWebSockets(session: Session) {
-  for (var n in session.webSockets) {
-    session.webSockets[n].close();
+function closeWebSocket(session: Session): void {
+  if (session.webSocket) {
+    session.webSocket.close();
+    session.webSocket = null;
   }
-  session.webSockets = {};
-  session.channels = [];
 }
 
 /**
@@ -96,14 +92,22 @@ function closeWebSockets(session: Session) {
 function socketHandler(socket: SocketIO.Socket) {
   sessionCounter++;
 
-  // Each socket is associated with a session that tracks the kernel id, and
-  // associated WebSocket instances to the IPython server (one per channel).
+  // Each socket is associated with a session that tracks the following:
+  // - id: a counter for use in log output
+  // - url: the url used to connect to the Jupyter server
+  // - socket: the socket.io socket reference, which generates message
+  //           events for anything sent by the browser client, and allows
+  //           emitting messages to send to the browser
+  // - webSocket: the corresponding WebSocket connection to the Jupyter
+  //              server.
+  // Within a session, messages recieved over the socket.io socket (from the browser)
+  // are relayed to the WebSocket, and messages recieved over the WebSocket socket are
+  // relayed back to the socket.io socket (to the browser).
   var session: Session = {
     id: sessionCounter,
-    kernel: '',
+    url: '',
     socket: socket,
-    webSockets: {},
-    channels: []
+    webSocket: null
   };
 
   logging.getLogger().debug('Socket connected for session %d', session.id);
@@ -112,56 +116,30 @@ function socketHandler(socket: SocketIO.Socket) {
     logging.getLogger().debug('Socket disconnected for session %d', session.id);
 
     // Handle client disconnects to close WebSockets, so as to free up resources
-    closeWebSockets(session);
+    closeWebSocket(session);
   });
 
   socket.on('start', function(message: SessionMessage) {
-    // The client sends this message per channel within a session. However all initializtion of
-    // underlying WebSockets is done on the first message. So ignore every subsequent message
-    // for the same kernel.
-    // The kernel will be different within the same session, when sockets are being re-opened
-    // after the kernel restart (using a new kernel id).
+    logging.getLogger().debug('Start in session %d with url %s', session.id, message.url);
 
-    logging.getLogger().debug('Start in session %d with kernel %s', session.id, message.kernel);
-    if (session.kernel == message.kernel) {
-      logging.getLogger().debug('Session is already associated with same kernel');
-      return;
-    }
-
-    // Close previous WebSockets for another kernel, in case this is a restart scenario, and
-    // somehow a closekernel message wasn't sent.
-    closeWebSockets(session);
-
-    session.kernel = message.kernel;
-    webSocketChannels.forEach(function(channel) {
-      createWebSocket(session, channel);
-    })
+    session.url = message.url;
+    session.webSocket = createWebSocket(session);
   });
 
   socket.on('stop', function(message: SessionMessage) {
-    // The client sends this message once per channel within the session when channels are being
-    // closed. All WebSockets are closed on the first message. So ignore every subsequent message
-    // by blanking out the kernel associated with this session.
+    logging.getLogger().debug('Stop in session %d with url %s', session.id, message.url);
 
-    logging.getLogger().debug('Stop in session %d with kernel %s', session.id, message.kernel);
-    if (session.kernel != message.kernel) {
-      logging.getLogger().debug('Session is no longer associated with same kernel');
-      return;
-    }
-
-    closeWebSockets(session);
-    session.kernel = '';
+    closeWebSocket(session);
   });
 
-  socket.on('senddata', function(message: DataMessage) {
+  socket.on('data', function(message: DataMessage) {
     // The client sends this message per data message to a particular channel. Propagate the
     // message over to the WebSocket associated with the specified channel.
 
-    logging.getLogger().debug('Send data in session %d on %s channel\n%s',
-                              session.id, message.channel, message.data);
-    var ws = session.webSockets[message.channel];
-    if (ws) {
-      ws.send(message.data, function(e) {
+    logging.getLogger().debug('Send data in session %d\n%s',
+                              session.id, message.data);
+    if (session.webSocket) {
+      session.webSocket.send(message.data, function(e) {
         if (e) {
           logging.getLogger().error(e, 'Failed to send message to websocket');
         }

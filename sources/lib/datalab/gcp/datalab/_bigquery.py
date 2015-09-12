@@ -631,10 +631,6 @@ def _repr_html_table(results):
   return _table_viewer(results)
 
 
-def _repr_html_table_list(table_list):
-  return _render_table(table_list, ['name'])
-
-
 def _repr_html_table_schema(schema):
   _HTML_TEMPLATE = """
     <div class="bqsv" id="%s"></div>
@@ -675,8 +671,7 @@ def _register_html_formatters():
     html_formatter.for_type_by_name('gcp.bigquery._query_results_table', 'QueryResultsTable',
                                     _repr_html_query_results_table)
     html_formatter.for_type_by_name('gcp.bigquery._table', 'Table', _repr_html_table)
-    html_formatter.for_type_by_name('gcp.bigquery._table', 'TableList', _repr_html_table_list)
-    html_formatter.for_type_by_name('gcp.bigquery._table', 'Schema', _repr_html_table_schema)
+    html_formatter.for_type_by_name('gcp.bigquery._schema', 'Schema', _repr_html_table_schema)
     html_formatter.for_type_by_name('gcp.bigquery._udf', 'FunctionEvaluation',
                                     _repr_html_function_evaluation)
   except TypeError:

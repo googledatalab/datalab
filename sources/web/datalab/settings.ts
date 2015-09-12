@@ -16,6 +16,7 @@
 /// <reference path="../../../externs/ts/node/node-uuid.d.ts" />
 /// <reference path="common.d.ts" />
 
+import childProcess = require('child_process');
 import fs = require('fs');
 import uuid = require('node-uuid');
 import path = require('path');
@@ -56,13 +57,23 @@ export function loadSettings(): common.Settings {
     }
 
     var settings = <common.Settings>JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-    settings.ipythonWebServer = 'http://127.0.0.1:' + settings.ipythonPort;
-    settings.ipythonSocketServer = 'ws://127.0.0.1:' + settings.ipythonPort;
+    settings.jupyterWebServer = 'http://127.0.0.1:' + settings.jupyterPort;
+    settings.jupyterSocketServer = 'ws://127.0.0.1:' + settings.jupyterPort;
 
-    settings.projectId = process.env['CLOUD_PROJECT'] || process.env['GAE_LONG_APP_ID'] ||
-                         'dev-project';
-    settings.versionId = process.env['DATALAB_VERSION'] || 'dev-version';
+    settings.instanceUser = process.env['DATALAB_USER'] || '';
     settings.instanceId = metadata.instanceId;
+    settings.versionId = process.env['DATALAB_VERSION'] || '';
+    settings.projectId = process.env['GAE_LONG_APP_ID'] || process.env['DATALAB_PROJECT_ID'] || '';
+
+    if (env == 'cloud') {
+      var metadataCommand =
+        'curl -H "Metadata-Flavor=Google" ' +
+        'http://metadata.google.internal/computeMetadata/v1beta1/project/numeric-project-id';
+      settings.projectNumber = childProcess.execSync(metadataCommand, { encoding: 'utf8' });
+    }
+    else {
+      settings.projectNumber = process.env['DATALAB_PROJECT_NUM'];
+    }
 
     return settings;
   }

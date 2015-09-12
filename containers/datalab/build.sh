@@ -17,11 +17,12 @@
 
 # Create a versioned Dockerfile based on current date and git commit hash
 VERSION=`date +%Y%m%d`
-VERSION+=_
-VERSION+=`git log --pretty=format:'%H' -n 1`
-VERSION_SUBSTITUTION="s/_version_/v$VERSION/"
+VERSION_SUBSTITUTION="s/_version_/1.0.$VERSION/"
 
-cat Dockerfile.in | sed $VERSION_SUBSTITUTION > Dockerfile
+COMMIT=`git log --pretty=format:'%H' -n 1`
+COMMIT_SUBSTITUTION="s/_commit_/$COMMIT/"
+
+cat Dockerfile.in | sed $VERSION_SUBSTITUTION | sed $COMMIT_SUBSTITUTION > Dockerfile
 
 # Copy build outputs as a dependency of the Dockerfile
 rsync -avp ../../build/ build
@@ -36,4 +37,3 @@ docker build -t datalab .
 rm -rf build
 rm -rf docs
 rm Dockerfile
-

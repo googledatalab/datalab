@@ -1,5 +1,5 @@
 #!/bin/bash
-# Build IPython extensions, customized profile, and proxy server
+# Build DataLab web server
 #
 
 # Fail the build on the first error, instead of carrying on by default
@@ -15,11 +15,12 @@ WEB_DIR=$BUILD_DIR/web
 
 mkdir -p $WEB_DIR
 
-# Compile the nodejs proxy server
+# Compile the nodejs server
 tsc --module commonjs --noImplicitAny \
     --outDir $WEB_DIR \
     ./datalab/*.ts
 
 rsync -avp ./datalab/config/ $WEB_DIR/config
 rsync -avp ./datalab/static/ $WEB_DIR/static
+rsync -avp ./datalab/templates/ $WEB_DIR/templates
 rsync -avp ./datalab/package.json $WEB_DIR/package.json

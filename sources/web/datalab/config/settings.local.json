@@ -4,16 +4,26 @@
   "logFilePeriod": "300000ms",
   "logFileCount": 10,
   "analyticsId": "UA-54894152-2",
-  "ipythonArgs": [
+  "serverPort": 8080,
+  "jupyterArgs": [
     "notebook",
-    "--profile=datalab",
+    "-y",
+    "--notebook-dir=/content",
     "--no-browser",
     "--no-mathjax",
-    "--matplotlib=inline",
+    "--log-level=DEBUG",
+    "--debug",
+    "--NotebookApp.allow_origin=\"*\"",
+    "--NotebookApp.log_format=\"%(message)s\"",
+    "--Session.key=\"\"",
+    "--Session.keyfile=\"\"",
+    "--ContentsManager.untitled_directory=\"Untitled Folder\"",
+    "--ContentsManager.untitled_file=\"Untitled File\"",
+    "--ContentsManager.untitled_notebook=\"Untitled Notebook\"",
+    "--NotebookNotary.algorithm=\"sha1\"",
+    "--KernelManager.autorestart=True",
+    "--KernelSpecManager.whitelist=[\"python2\"]",
     "--ip=\"127.0.0.1\""
   ],
-  "ipythonPort": 8081,
-  "serverPort": 8080,
-  "pollHangingInterval": 60000,
-  "maxSocketMessageLength": 1000000
+  "jupyterPort": 8081
 }
