@@ -635,6 +635,7 @@ declare module "child_process" {
         killSignal?: string;
     }, callback: (error: Error, stdout: Buffer, stderr: Buffer) =>void ): ChildProcess;
     export function exec(command: string, callback: (error: Error, stdout: Buffer, stderr: Buffer) =>void ): ChildProcess;
+    export function execSync(command: string, options: any): any;
     export function execFile(file: string, args: string[], options: {
         cwd?: string;
         stdio?: any;

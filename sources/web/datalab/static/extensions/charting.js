@@ -167,7 +167,7 @@ define(function () {
       var fetchCount = last - first + 1;
       var code = model.fetchCode + ' ' + first + ' ' + fetchCount;
 
-      datalab.kernel.getData(code, function (error, newData) {
+      datalab.session.execute(code, function (error, newData) {
         if (error) {
           onError(model.visualization, model.dom, error);
         } else {

@@ -20,6 +20,9 @@ declare module common {
     logFilePeriod: string;
     logFileCount: number;
 
+    instanceUser: string;
+
+    projectNumber: string;
     projectId: string;
     versionId: string;
     instanceId: string;
@@ -27,13 +30,10 @@ declare module common {
 
     serverPort: number;
 
-    ipythonArgs: string[];
-    ipythonPort: number;
-    ipythonWebServer: string;
-    ipythonSocketServer: string;
-
-    pollHangingInterval: number;
-    maxSocketMessageLength: number;
+    jupyterArgs: string[];
+    jupyterPort: number;
+    jupyterWebServer: string;
+    jupyterSocketServer: string;
   }
 
   interface Map<T> {

@@ -22,13 +22,13 @@ import logging = require('./logging');
 import path = require('path');
 import url = require('url');
 
-var IPYTHON_DIR = '/usr/local/lib/python2.7/dist-packages/IPython/html';
+var JUPYTER_DIR = '/usr/local/lib/python2.7/dist-packages/notebook';
 var CONTENT_TYPES: common.Map<string> = {
-  '.txt': 'text/plain',
   '.js': 'text/javascript',
   '.css': 'text/css',
   '.png': 'image/png',
-  '.ico': 'image/x-icon'
+  '.ico': 'image/x-icon',
+  '.txt': 'text/plain'
 };
 
 var contentCache: common.Map<Buffer> = {};
@@ -86,12 +86,12 @@ function sendDataLabFile(filePath: string, response: http.ServerResponse) {
 }
 
 /**
- * Sends a static file located within the IPython install.
- * @param filePath the relative file path of the static file within the IPython directory to send.
+ * Sends a static file located within the Jupyter install.
+ * @param filePath the relative file path of the static file within the Jupyter directory to send.
  * @param response the out-going response associated with the current HTTP request.
  */
-function sendIPythonFile(relativePath: string, response: http.ServerResponse) {
-  var filePath = path.join(IPYTHON_DIR, relativePath);
+function sendJupyterFile(relativePath: string, response: http.ServerResponse) {
+  var filePath = path.join(JUPYTER_DIR, relativePath);
   fs.stat(filePath, function(e, stats) {
     if (e || !stats.isFile()) {
       response.writeHead(404);
@@ -113,15 +113,25 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   if (path.lastIndexOf('/favicon.ico') > 0) {
     sendDataLabFile('datalab.ico', response);
   }
-  else if ((path.lastIndexOf('/logo.png') > 0) ||
-           (path.lastIndexOf('/ipynblogo.png') > 0)) {
-    // TODO: Remove the check for the IPython version once we've switched to Jupyter
+  else if (path.lastIndexOf('/logo.png') > 0) {
     sendDataLabFile('datalab.png', response);
   }
   else if (path.lastIndexOf('/custom.js') > 0) {
+    // NOTE: Uncomment to use external content mapped into the container.
+    //       This is only useful when actively developing the content itself.
+    // var text = fs.readFileSync('/nb/sources/datalab.js', { encoding: 'utf8' });
+    // response.writeHead(200, { 'Content-Type': 'text/javascript' });
+    // response.end(text);
+
     sendDataLabFile('datalab.js', response);
   }
   else if (path.lastIndexOf('/custom.css') > 0) {
+    // NOTE: Uncomment to use external content mapped into the container.
+    //       This is only useful when actively developing the content itself.
+    // var text = fs.readFileSync('/nb/sources/datalab.css', { encoding: 'utf8' });
+    // response.writeHead(200, { 'Content-Type': 'text/css' });
+    // response.end(text);
+
     sendDataLabFile('datalab.css', response);
   }
   else if ((path.indexOf('/static/extensions/') == 0) ||
@@ -132,7 +142,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   }
   else {
     // Strip off the leading slash to turn path into a relative file path
-    sendIPythonFile(path.substr(1), response);
+    sendJupyterFile(path.substr(1), response);
   }
 }
 

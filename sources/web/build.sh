@@ -22,4 +22,5 @@ tsc --module commonjs --noImplicitAny \
 
 rsync -avp ./datalab/config/ $WEB_DIR/config
 rsync -avp ./datalab/static/ $WEB_DIR/static
+rsync -avp ./datalab/templates/ $WEB_DIR/templates
 rsync -avp ./datalab/package.json $WEB_DIR/package.json
