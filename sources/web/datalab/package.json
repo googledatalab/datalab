@@ -1,6 +1,6 @@
 {
   "name": "ipy-rev-proxy",
-  "description": "Reverse proxy for IPython",
+  "description": "Datalab Server",
   "dependencies": {
     "bunyan": "^1.2.0",
     "http-proxy": "^1.4.3",

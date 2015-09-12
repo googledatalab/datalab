@@ -27,7 +27,7 @@ import uuid = require('node-uuid');
 
 var logger: bunyan.ILogger = null;
 var requestLogger: bunyan.ILogger = null;
-var ipythonLogger: bunyan.ILogger = null;
+var jupyterLogger: bunyan.ILogger = null;
 
 /**
  * Gets the logger for generating debug logs.
@@ -49,14 +49,14 @@ export function logRequest(request: http.ServerRequest, response: http.ServerRes
 }
 
 /**
- * Logs the output from IPython.
+ * Logs the output from Jupyter.
  * @param text the output text to log.
  * @param error whether the text is error text or not.
  */
-export function logIPythonOutput(text: string, error: boolean): void {
-  // All IPython output seems to be generated on stderr, so ignore the
+export function logJupyterOutput(text: string, error: boolean): void {
+  // All Jupyter output seems to be generated on stderr, so ignore the
   // error parameter, and log as info...
-  ipythonLogger.info(text);
+  jupyterLogger.info(text);
 }
 
 /**
@@ -76,6 +76,5 @@ export function initializeLoggers(settings: common.Settings): void {
 
   logger = bunyan.createLogger({ name: 'app', streams: streams });
   requestLogger = logger.child({ type: 'request' });
-  ipythonLogger = logger.child({ type: 'ipython' });
+  jupyterLogger = logger.child({ type: 'jupyter' });
 }
-

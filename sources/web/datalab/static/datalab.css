@@ -14,166 +14,391 @@
  * limitations under the License.
  */
 
-/* Fonts */
-@import url(https://fonts.googleapis.com/css?family=Source+Code+Pro|Open+Sans|Lato:400,700&subset=latin,latin-ext);
+/* Font Imports */
+@import url(https://fonts.googleapis.com/css?family=Source+Code+Pro:400,700|Open+Sans:400,700|Lato:400,700&subset=latin,latin-ext);
 
+* {
+  padding: 0px;
+  margin: 0px;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
 body {
-  font-family: 'Open Sans', Calibri, helvetica, sans-serif;
-}
-.CodeMirror pre, div.prompt, pre, code {
-  font-family: 'Source Code Pro', 'Lucida Console', Consolas, monospace;
-}
-
-
-/* General Cleanup of backgrounds and borders */
-
-/* Header area */
-#header div.navbar-inner {
-  border: 0px;
-  box-shadow: none;
-}
-#menubar-container div.navbar-inner {
-  border: 0px;
-  background: #eee;
-  box-shadow: none;
-}
-#notebook_panel {
-  border-top: none;
-  -webkit-box-shadow: none;
-  box-shadow: none !important;
-  background-color: white;
-}
-#menubar .navbar-inner {
+  font-family: 'Open Sans', Helvetica, sans-serif;
+  font-size: 14px;
   background: #fff;
-  -webkit-box-shadow: none;
-  box-shadow: none;
-  border-radius: 0;
+}
+
+/* Layout */
+#app {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  right: 0px;
+  bottom: 0px;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-flow: column nowrap;
+  flex-flow: column nowrap;
+  -webkit-justify-content: flex-start;
+  justify-content: flex-start;
+  -webkit-align-items: stretch;
+  align-items: stretch;
+  -webkit-align-content: space-between;
+  align-content: space-between;
+}
+#appBar {
+  -webkit-order: 1;
+  order: 1;
+  -webkit-flex: 0 1 auto;
+  flex: 0 1 auto;
+  -webkit-align-self: auto;
+  align-self: auto;
+  height: 40px;
+  min-height: 40px;
+  color: white;
+  background-color: #333;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+#appContent {
+  -webkit-order: 2;
+  order: 2;
+  -webkit-flex: 1 1 auto;
+  flex: 1 1 auto;
+  -webkit-align-self: stretch;
+  align-self: stretch;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-flow: row nowrap;
+  flex-flow: row nowrap;
+  -webkit-justify-content: flex-start;
+  justify-content: flex-start;
+  -webkit-align-items: stretch;
+  align-items: stretch;
+  -webkit-align-content: space-between;
+  align-content: space-between;
+}
+#mainArea {
+  -webkit-order: 1;
+  order: 1;
+  -webkit-flex: 1 1 auto;
+  flex: 1 1 auto;
+  -webkit-align-self: auto;
+  align-self: auto;
+  min-width: 200px;
+  position: relative;
+  -webkit-box-shadow: 1px 2px 8px 0px rgba(0, 0, 0, 0.25);
+  box-shadow: 1px 2px 8px 0px rgba(0, 0, 0, 0.25);
+  z-index: 1;
+}
+#sidebarArea {
+  -webkit-order: 1;
+  order: 1;
+  -webkit-flex-grow: .5;
+  flex-grow: .5;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+  -webkit-flex-basis: auto;
+  flex-basis: auto;
+  -webkit-align-self: auto;
+  align-self: auto;
+  min-width: 100px;
+  background-color: #f3f3f3;
+  position: relative;
+}
+#sidebarArea.larger {
+  -webkit-flex-grow: 3;
+  flex-grow: 3;
+}
+#mainToolbar, #sidebarToolbar {
+  line-height: 35px;
+  vertical-align: middle;
+  height: 35px;
+  color: #444;
+  background-color: #f3f3f3;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-top: 2px;
+  border-bottom: solid 1px #e6e6e6;
+}
+#mainContent, #sidebarContent {
+  overflow: auto;
+  position: absolute;
+  top: 35px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+}
+#sidebarContent {
+  color: #000;
+  padding: 10px 20px;
+}
+#bottomToolbar {
+  line-height: 35px;
+  vertical-align: middle;
+  height: 35px;
+  color: #444;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-top: 2px;
+  margin-bottom: 50px;
+}
+.container {
+  min-width: 200px;
+  width: 100%;
+}
+
+/* Header and Toolbar */
+div.btn-group a {
+  cursor: default;
+}
+#appBar button {
+  background-color: transparent;
+  border: none;
+  height: 35px;
+  font-size: 16px;
+  padding: 4px;
+  color: #ccc;
+}
+#appBar button:hover {
+  color: #fff;
+}
+div.btn-toolbar {
+  margin: 0px;
+}
+div.btn-toolbar .btn {
+  background-color: transparent;
+  border: none;
+  color: #666;
+  font-weight: normal;
+  font-size: 14px;
+  outline: solid 1px transparent !important;
+  margin-left: 0px;
+  padding: 6px 8px;
+  cursor: pointer;
+  vertical-align: middle;
+}
+div.btn-toolbar .btn:hover, div.btn-toolbar .btn:focus {
+  background-color: #ddd;
+  color: #000;
   border: none;
 }
-div.navbar-inner {
-  min-height: 30px;
+div.btn-toolbar button:focus {
+  outline: solid 1px transparent !important;
 }
-div.navbar-fixed-top div.navbar-inner, div.navbar-static-top div.navbar-inner {
-  box-shadow: none;
-  -webkit-box-shadow: none;
+div.btn-toolbar .btn.dropdown-toggle {
+  padding-left: 2px;
+  padding-right: 2px;
+  margin-left: -2px;
+}
+div.btn-toolbar .btn.active {
+  font-weight: bold;
+  color: #000;
+  background-color: #ddd;
   border: none;
+  box-shadow: none;
 }
-#menubar .navbar .navbar-inner, .toolbar-inner {
-  padding-left: 0;
-  padding-right: 0;
+
+#logo, #logo img {
+  width: 200px;
+  height: 28px;
+  line-height: 40px;
+  vertical-align: middle;
+}
+#logo {
+  /* TODO: Fix the logo image itself */
+  margin-top: -4px;
+}
+
+/* List page */
+#button-select-all {
+  border-color: transparent;
+  background-color: transparent;
+  min-width: 20px;
+}
+.list_placeholder {
+  font-weight: normal;
+}
+
+/* Notebook page */
+#notebook {
+  font-family: Lato, 'Open Sans', Helvetica, sans-serif;
+  font-size: 16px;
+  padding: 0px;
+}
+.notebook_app {
+  background: #fff;
+}
+#ipython-main-app {
+  position: relative;
+  padding: 10px 40px;
+}
+div.end_space {
+  min-height: 20px;
+}
+#notebook-container {
+  box-shadow: none;
 }
 #notebook_name {
-  font-weight: 300;
+  font-weight: bold;
+  font-size: 16px;
+  line-height: inherit;
+  padding: 0px;
 }
-#checkpoint_status, #autosave_status {
-  color: rgba(0,0,0,0.5);
+#notebook_name:hover {
+  background-color: transparent;
 }
-
-/* Hide some commands - cell toolbar, and interrupt kernel buttons */
-#maintoolbar span.navbar-text, #ctb_select, #interrupt_b {
-  display: none;
+span.save_widget span.filename {
+  margin-left: 0px;
+  border: none;
+  padding: 0px;
+  margin: 0px;
 }
-
-/* Indicator for command mode to complement the existing indicator for edit mode. */
-.command_mode_icon:before {
-  content: "\f069";
-}
-
-/* Specific to notebook pages */
-body.notebook_app #header div.navbar-inner {
-  background-color: #eee;
-}
-body.notebook_app #site {
-  background-color: #eee;
-}
-body.notebook_app .btn {
-  background: #fafafa;
-  -webkit-box-shadow: none;
-  box-shadow: none;
-  border: solid 1px #d0d0d0;
-}
-body.notebook_app #notebook {
-  border-top: 1px solid rgba(0,0,0,0.15);
+span.autosave_status {
+  color: #aaa;
+  font-size: 13px;
+  line-height: 35px;
+  vertical-align: middle;
+  display: inline-block;
 }
 
 
-/* Notebook area - Input and output areas */
+/* Cell Customizations */
+div.cell {
+  border: solid 1px transparent;
+  border-radius: 0px;
+  padding: 0px;
+  margin-bottom: 10px;
+}
+div.cell.selected {
+  border: solid 1px #ddd;
+}
+.edit_mode div.cell.selected, div.code_cell {
+  border: solid 1px #ddd;
+}
+.edit_mode div.cell.text_cell.selected, div.code_cell.selected {
+  box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.25);
+}
 
+div.code_cell div.input {
+  background-color: #f7f7f7;
+  border-top: none;
+}
 div.input_area {
-  border-color: rgba(0,0,0,0.05);
-  background: rbga(0,0,0,0.5);
+  border: none;
 }
-div.prompt.input_prompt {
-  color: rgba(0,0,0,0.75);
+div.tooltiptext {
+  height: auto;
+  overflow: visible;
 }
-div.cell.command_mode.selected {
-  border-color: rgba(0,0,0,0.1);
-}
-div.cell.edit_mode.selected {
-  border-color: rgba(0,0,0,0.15);
-  box-shadow: 0px 0px 5px #d0d0d0;
-  -webkit-box-shadow: 0px 0px 5px #d0d0d0;
-}
-div.output_scroll {
-  box-sizing: border-box;
-  -webkit-box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
-  box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
-  border-radius: 2px;
-}
-div.out_prompt_overlay:hover {
-  border: solid 1px rgba(0,0,0,0.1);
-  box-shadow: none;
-}
+
 div.text_cell div.prompt {
-  width: 0px;
   min-width: 0px;
-  padding-right: 0px;
-}
-
-div.code_cell + div.text_cell {
-  margin-top:  10px;
-}
-
-/* Notebook area - Markdown cells */
-div.text_cell_render {
-  font-size: 11pt;
-  line-height: 125%;
-}
-div.text_cell_render h1,
-div.text_cell_render h2,
-div.text_cell_render h3 {
-  font-weight: 300;
-}
-div.text_cell_render h4,
-div.text_cell_render h5,
-div.text_cell_render h6 {
-  font-weight: 700;
-  font-size:  12pt;
-}
-div.text_cell_render h1 {
-  font-size: 24pt;
-}
-div.text_cell_render h2 {
-  font-size: 20pt;
-}
-div.text_cell_render h3 {
-  font-size: 16pt;
-}
-div.text_cell_render code {
-  font-size: 11pt;
-}
-
-/* Notebook area - rendered output */
-.rendered_html pre, .rendered_html code {
-  font-size: medium;
-}
-.rendered_html ol {
-  list-style:decimal;
-  margin: 1em 2em;
-}
-
-/* Home page specific */
-
-#ipython-main-app #tabs li:nth-child(3) {
   display: none;
+  padding: 0px;
+  border: none;
+}
+div.prompt {
+  font-family: 'Lucida Console', 'Source Code Pro', monospace !important;
+  font-size: 15px !important;
+}
+div.output_wrapper div.prompt, div.output_prompt, div.out_prompt_overlay {
+  visibility: hidden;
+  min-width: 84px;
+  width: 84px;
+}
+div.input_prompt {
+  font-size: 11px;
+  text-align: left;
+  line-height: 1.4;
+  color: #888;
+  padding-top: 2px;
+  min-width: 50px;
+}
+div.output_area {
+  margin-top: 4px;
+}
+div.rendered_html h1, div.rendered_html h2, div.rendered_html h3,
+div.rendered_html h4, div.rendered_html h5, div.rendered_html h6 {
+  font-family: 'Open Sans', Lato, Helvetica, sans-serif;
+  letter-spacing: -1px;
+  margin-top: 0px !important;
+}
+a.anchor-link {
+  display: none;
+}
+
+/* CodeMirror Customization */
+pre, code, .CodeMirror, .CodeMirror pre, .CodeMirror-linenumber {
+  font-family: 'Lucida Console', 'Source Code Pro', monospace !important;
+  font-size: 15px !important;
+}
+.CodeMirror pre, .CodeMirror-linenumber {
+  line-height: 1.4 !important;
+}
+.CodeMirror-selected {
+  background-color: #addfff !important;
+}
+.CodeMirror-cursor {
+  border-left: 2px solid #222 !important;
+}
+.CodeMirror-matchingbracket {
+  color: #800000 !important;
+  text-decoration: none !important;
+  font-weight: bold !important;
+}
+.cm-keyword {
+  color: #00f !important;
+  font-weight: normal !important;
+}
+.cm-number, .cm-string, .cm-string2 {
+  color: #000080 !important;
+}
+.cm-comment {
+  color: #008000 !important;
+  font-style: normal !important;
+}
+.cm-def, .cm-variable, .cm-variable-2, .cm-variable-3, .cm-property,
+.cm-qualifier, .cm-operator, .cm-meta, .cm-builtin,
+.cm-tag, .cm-attribute, .cm-header, .cm-hr, .cm-atom {
+  color: #000 !important;
+}
+.cm-error {
+  color: red !important;
+}
+.cm-link, .cm-url {
+  color: #337ab7 !important;
+}
+.cm-header-1, .cm-header-2, .cm-header-3, .cm-header-4, .cm-header-5, .cm-header-6 {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  font-weight: bold !important;
+}
+
+div.modal-dialog pre, div.modal-dialog code, #help code, #help pre {
+  font-size: 13px !important;
+}
+#help pre {
+  border: none;
+}
+
+code {
+  background-color: #eee;
+}
+
+@media print {
+  #appBar, #sidebarArea, #mainToolbar {
+    display: none;
+  }
+  #app, #appContent {
+    display: inherit;
+  }
+  #mainContent {
+    position: inherit;
+  }
+  div.cell.selected {
+    border: none !important;
+    box-shadow: none !important;
+  }
 }

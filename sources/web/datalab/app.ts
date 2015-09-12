@@ -31,7 +31,7 @@ if (appSettings != null) {
 
 /**
  * Handle shutdown of this process, to also stop the server, which will in turn stop the
- * associated IPython notebook server process.
+ * associated Jupyter server process.
  */
 function exit() {
   server.stop();
