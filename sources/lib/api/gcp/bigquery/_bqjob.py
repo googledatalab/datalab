@@ -45,6 +45,13 @@ class BQJob(gcp._util.Job):
     """ Returns the UTC end time of the job (or None if incomplete) as a Python datetime. """
     return self._end_time
 
+  @property
+  def total_time(self):
+    """ Return the total time in fractional seconds that the job took, or None if not complete. """
+    if self._end_time is None:
+      return None
+    return (self._end_time - self._start_time).total_seconds()
+
   def _refresh_state(self):
     """ Get the state of a job. If the job is complete this does nothing
         otherwise it gets a refreshed copy of the job resource.

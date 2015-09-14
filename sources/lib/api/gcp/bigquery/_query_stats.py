@@ -33,6 +33,8 @@ class QueryStats:
   def _size_formatter(byte_num, suf='B'):
     for mag in ['', 'K', 'M', 'G', 'T']:
       if byte_num < 1000.0:
+        if suf == 'B':  # Don't do fractional bytes
+          return "%5d%s%s" % (int(byte_num), mag, suf)
         return "%3.1f%s%s" % (byte_num, mag, suf)
       byte_num /= 1000.0
     return "%.1f%s%s".format(byte_num, 'P', suf)

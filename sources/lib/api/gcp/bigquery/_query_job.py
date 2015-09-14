@@ -64,9 +64,11 @@ class QueryJob(_bqjob.BQJob):
                                                   page_size=0,
                                                   timeout=poll * 1000)
       if query_result['jobComplete']:
-        self._bytes_processed = query_result.get('totalBytesProcessed', None)
+        if 'totalBytesProcessed' in query_result:
+          self._bytes_processed = int(query_result['totalBytesProcessed'])
         self._cache_hit = query_result.get('cacheHit', None)
-        self._total_rows = query_result.get('totalRows', None)
+        if 'totalRows' in query_result:
+          self._total_rows = int(query_result['totalRows'])
         break
 
       if timeout is not None:

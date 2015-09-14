@@ -563,13 +563,12 @@ def _load_cell(args, schema):
     return 'Load completed with errors: %s' % str(job.errors)
 
 
-def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
+def _table_viewer(table, rows_per_page=25, fields=None):
   """  Return a table viewer.
 
   Args:
     table: the table to view.
     rows_per_page: how many rows to display at one time.
-    job_id: the ID of the job that created this table, if known.
     fields: an array of field names to display; default is None which uses the full schema.
   Returns:
     A string containing the HTML for the table viewer.
@@ -579,7 +578,7 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
 
   _HTML_TEMPLATE = """
     <div class="bqtv" id="%s"></div>
-    <div><br />%s<br />%s</div>
+    <div><br />%s %s<br />%s</div>
     <script>
       require(['extensions/charting', 'element!%s'%s],
         function(charts, dom) {
@@ -598,9 +597,17 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
 
   if fields is None:
     fields = _utils.get_field_list(fields, table.schema)
-  div_id = 'bqtv_%d' % _html.Html.next_id()
+  div_id = _html.Html.next_id()
   meta_count = ("rows: %d" % table.length) if table.length >= 0 else ''
-  meta_name = job_id if job_id else str(table)
+  meta_name = str(table) if table.job is None else table.job.id
+  meta_data = ''
+  if table.job:
+    if table.job.cache_hit:
+      data_cost = 'cached'
+    else:
+      bytes = gcp.bigquery._query_stats.QueryStats._size_formatter(table.job.bytes_processed)
+      data_cost = '%s processed' % bytes
+    meta_data = '(%.1fs, %s)' % (table.job.total_time, data_cost)
   data, total_count = _utils.get_data(table, fields, 0, rows_per_page)
 
   if total_count < 0:
@@ -613,8 +620,8 @@ def _table_viewer(table, rows_per_page=25, job_id='', fields=None):
   chart = 'table' if 0 <= total_count <= rows_per_page else 'paged_table'
 
   return _HTML_TEMPLATE %\
-      (div_id, meta_name, meta_count, div_id, _html.Html.get_style_arg('charting.css'), chart,
-       str(table), ','.join(fields), total_count, rows_per_page,
+      (div_id, meta_name, meta_data, meta_count, div_id, _html.Html.get_style_arg('charting.css'),
+       chart, str(table), ','.join(fields), total_count, rows_per_page,
        json.dumps(data, cls=gcp._util.JSONEncoder))
 
 
@@ -624,7 +631,7 @@ def _repr_html_query(query):
 
 
 def _repr_html_query_results_table(results):
-  return _table_viewer(results, job_id=results.job_id)
+  return _table_viewer(results)
 
 
 def _repr_html_table(results):
@@ -642,7 +649,7 @@ def _repr_html_table_schema(schema):
       );
     </script>
     """
-  id = 'bqsv_%d' % _html.Html.next_id()
+  id = _html.Html.next_id()
   return _HTML_TEMPLATE % (id, id, _html.Html.get_style_arg('bigquery.css'),
                            json.dumps(schema._bq_schema))
 
@@ -658,7 +665,7 @@ def _repr_html_function_evaluation(evaluation):
       );
     </script>
     """
-  id = 'udf_%d' % _html.Html.next_id()
+  id = _html.Html.next_id()
   return _HTML_TEMPLATE % (id, id, evaluation.implementation, json.dumps(evaluation.data))
 
 

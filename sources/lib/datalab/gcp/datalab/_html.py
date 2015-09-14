@@ -23,13 +23,14 @@ class Html(object):
   This object supports the combination of HTML markup and/or associated JavaScript.
   """
 
-  _div_id_counter = int(round(time.time() * 100))
+  _div_id_counter = 0
   _styles = []
 
   @staticmethod
   def next_id():
+    """ Return an ID containing a reproducible part (counter) and unique part (timestamp). """
     Html._div_id_counter += 1
-    return Html._div_id_counter
+    return '%d_%d' % (Html._div_id_counter, int(round(time.time() * 100)))
 
   @staticmethod
   def get_style_arg(stylesheet):

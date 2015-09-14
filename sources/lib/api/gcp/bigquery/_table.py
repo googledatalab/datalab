@@ -120,6 +120,14 @@ class Table(object):
     return self._name_parts
 
   @property
+  def job(self):
+    """ For tables resulting from executing query jobs, the job that created the table.
+
+    Default is None for a Table object; this is overridden by QueryResultsTable.
+    """
+    return None
+
+  @property
   def is_temporary(self):
     """ Whether this is a short-lived table or not. """
     return False
