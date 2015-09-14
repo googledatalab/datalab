@@ -18,11 +18,6 @@
 
 export DATALAB_ENV=cloud
 
-# TODO: Implement support for sample notebooks.
-# Copy tutorial content from cloud storage bucket to local file system.
-# Secondly implement a new notebook manager that can merge local and
-# cloud content.
-
 # Start the DataLab server
-node /datalab/web/app.js
+forever /datalab/web/app.js
 

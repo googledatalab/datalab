@@ -37,5 +37,16 @@ function exit() {
   server.stop();
 }
 
+/**
+ * Handle uncaught exceptions to log them.
+ */
+function errorHandler(e: any): void {
+  console.error(e.stack);
+
+  logging.getLogger().error(e, 'Unhandled exception');
+  process.exit(1);
+}
+
+process.on('uncaughtException', errorHandler);
 process.on('exit', exit);
 process.on('SIGINT', exit);

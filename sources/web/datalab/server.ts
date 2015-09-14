@@ -98,6 +98,17 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     return;
   }
 
+  // /_restart forcibly ends this process.
+  // TODO: This is oh so hacky. If this becomes interesting longer term, turn
+  //       this into a real feature, that involves a confirmation prompt, as
+  //       well validation to require a POST request.
+  if (path.indexOf('/_restart') == 0) {
+    setTimeout(function() { process.exit(0); }, 0);
+    response.statusCode = 200;
+    response.end();
+    return;
+  }
+
   // Not Found
   response.statusCode = 404;
   response.end();

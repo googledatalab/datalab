@@ -84,7 +84,9 @@ RUN jupyter notebook --generate-config
 RUN mkdir -p /datalab/web && \
     cd /datalab/web && \
     /tools/node/bin/npm install \
-        ws@0.4.32 http-proxy@1.11.1 mkdirp@0.5.1 node-uuid@1.4.3 bunyan@1.4.0 socket.io@1.3.6
+        ws@0.4.32 http-proxy@1.11.1 mkdirp@0.5.1 node-uuid@1.4.3 bunyan@1.4.0 socket.io@1.3.6 && \
+    cd / && \
+    /tools/node/bin/npm install -g forever
 
 # Add build artifacts
 ADD build/lib/GCPData-0.1.0.tar.gz /datalab/lib/
