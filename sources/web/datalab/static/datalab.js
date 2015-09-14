@@ -192,7 +192,7 @@ function initializePage(dialog) {
   // TODO(Jupyter): Validate GA works...
   var analyticsId = document.body.getAttribute('data-analytics-id');
   if (analyticsId) {
-    var domain = 'datalab.developers.google.com';
+    var domain = 'datalab.cloud.google.com';
     var projectNumber = document.body.getAttribute('data-project-num');
     var version = document.body.getAttribute('data-version-id');
     var instance = document.body.getAttribute('data-instance-id');

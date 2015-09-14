@@ -87,8 +87,8 @@ function createJupyterServer(userId: string): JupyterServer {
   };
 
   function exitHandler(code: number, signal: string): void {
-    logging.getLogger().error('Jupyter process %d exited due to signal: %s',
-                              server.childProcess.pid, signal);
+    logging.getLogger().error('Jupyter process %d for user %s exited due to signal: %s',
+                              server.childProcess.pid, userId, signal);
     delete jupyterServers[server.userId];
   }
 
@@ -109,8 +109,8 @@ function createJupyterServer(userId: string): JupyterServer {
 
   server.childProcess = childProcess.spawn('jupyter', processArgs, processOptions);
   server.childProcess.on('exit', exitHandler);
-  logging.getLogger().info('Jupyter process started with pid %d and args %j',
-                           server.childProcess.pid, processArgs);
+  logging.getLogger().info('Jupyter process for user %s started with pid %d and args %j',
+                           userId, server.childProcess.pid, processArgs);
 
   // Capture the output, so it can be piped for logging.
   pipeOutput(server.childProcess.stdout, server.port, /* error */ false);
