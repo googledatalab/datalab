@@ -57,7 +57,7 @@ def _chart_cell(args, cell):
           );
     </script>
   """
-  div_id = 'bqgc_%d' % _html.Html.next_id()
+  div_id = _html.Html.next_id()
   source = args['data']
   chart_type = args['chart']
   count = 25 if chart_type == 'paged_table' else -1

@@ -25,11 +25,16 @@ class QueryResultsTable(_table.Table):
     Args:
       api: the BigQuery API object to use to issue requests.
       name: the name of the table either as a string or a 3-part tuple (projectid, datasetid, name).
+      job: the QueryJob associated with these results.
       is_temporary: if True, this is a short-lived table for intermediate results (default False).
     """
     super(QueryResultsTable, self).__init__(api, name)
     self._job = job
     self._is_temporary = is_temporary
+
+  @property
+  def job(self):
+    return self._job
 
   @property
   def job_id(self):
