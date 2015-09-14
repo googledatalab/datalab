@@ -1,0 +1,77 @@
+# Google Cloud Datalab
+==============================================================================
+Copyright Google Inc.
+
+Use of this software is governed by the Google Cloud Platform Terms of Service
+found at https://cloud.google.com/terms/
+
+License
+http://www.apache.org/licenses/LICENSE-2.0.html
+
+
+# Instructions for Browsing the Docker container's Content
+==============================================================================
+You can pull and run the docker container locally, and open a shell within the
+container using the following commands:
+
+docker pull gcr.io/cloud_datalab/datalab:latest
+docker run -i -t gcr.io/cloud_datalab/datalab:latest --entrypoint="/bin/bash"
+
+
+# Software Listing
+==============================================================================
+
+## Third-party Software
+- Jupyter 4.0 [http://jupyter.org/]
+- Python 2.7.x (packages: python2.7, python-dev, python-pip, python-setuptools)
+- Node 0.12.x [http://nodejs.org]
+
+## Python Libraries
+- argparse [https://pypi.python.org/pypi/argparse]
+- futures [https://pypi.python.org/pypi/futures]
+- ggplot [https://pypi.python.org/pypi/ggplot]
+- httplib2 [https://pypi.python.org/pypi/httplib2]
+- jinja2 [https://pypi.python.org/pypi/Jinja2]
+- jsonschema [https://pypi.python.org/pypi/jsonschema]
+- matplotlib [https://pypi.python.org/pypi/matplotlib/1.3.1]
+- mock [https://pypi.python.org/pypi/mock]
+- numpy [https://pypi.python.org/pypi/numpy]
+- oauth2client [https://pypi.python.org/pypi/oauth2client]
+- pandas [https://pypi.python.org/pypi/pandas/0.15.1/]
+- pandocfilters [https://pypi.python.org/pypi/pandocfilters]
+- py-dateutil [https://pypi.python.org/pypi/python-dateutil/2.4.2]
+- pygments [https://pypi.python.org/pypi/Pygments]
+- pytz [https://pypi.python.org/pypi/pytz/]
+- pyzmq [https://pypi.python.org/pypi/pyzmq]
+- requests [http://docs.python-requests.org/en/latest/user/intro/]
+- scikit-learn [http://scikit-learn.org/stable/install.html]
+- scipy [https://pypi.python.org/pypi/scipy]
+- seaborn [https://pypi.python.org/pypi/seaborn/]
+- statsmodels [https://pypi.python.org/pypi/statsmodels]
+- sympy [https://pypi.python.org/pypi/sympy]
+- tornado [http://www.tornadoweb.org/en/stable/]
+
+## Node.js Modules
+- bunyan [https://www.npmjs.com/package/bunyan]
+- forever [https://www.npmjs.com/package/forever]
+- http-proxy [https://www.npmjs.com/package/httpp-proxy]
+- mkdirp [https://www.npmjs.com/package/mkdirp]
+- node-uuid [https://www.npmjs.com/package/node-uuid]
+- socket.io [https://www.npmjs.com/package/socket.io]
+- tcp-port-used [https://www.npmjs.com/package/tcp-port-used]
+- ws [https://www.npmjs.com/package/ws]
+
+## Other Packages:
+- curl
+- wget
+- unzip
+- git
+- vim
+- build-essential
+- ca-certificates
+- pkg-config
+- libpng-dev
+- libfreetype6-dev
+- libxft-dev
+- libxml2-dev
+- python-zmq

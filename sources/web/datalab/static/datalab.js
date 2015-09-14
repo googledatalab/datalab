@@ -147,7 +147,8 @@ function initializePage(dialog) {
       '<pre>Version: ' + version  + '\nBased on Jupyter (formerly IPython) 4</pre>' +
       '<h5><b>More Information</b></h5>' +
       '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://cloud.google.com" target="_blank">Product information</a><br />' +
-      '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://github.com/GoogleCloudPlatform/datalab" target="_blank">Project on GitHub</a>';
+      '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://github.com/GoogleCloudPlatform/datalab" target="_blank">Project on GitHub</a><br />' +
+      '<span class="fa fa-external-link-square">&nbsp;</span><a href="/static/about.txt" target="_blank">License and software information</a>';
 
     var dialogOptions = {
       title: 'About Google Cloud Datalab',
@@ -157,7 +158,25 @@ function initializePage(dialog) {
     dialog.modal(dialogOptions);
   }
 
+  function captureFeedback() {
+    var feedbackId = document.body.getAttribute('data-feedback-id');
+    if (window.userfeedback) {
+      var feedbackOptions = {
+        productId: feedbackId,
+        productVersion: document.body.getAttribute('data-version-id'),
+        bucket: 'beta',
+        authuser: document.body.getAttribute('data-user-id')
+      };
+      var productInfo = {
+        projectNumber: document.body.getAttribute('data-project-num'),
+        instanceId: document.body.getAttribute('data-instance-id')
+      };
+      window.userfeedback.api.startFeedback(feedbackOptions, productInfo);
+    }
+  }
+
   $('#aboutButton').click(showAbout);
+  $('#feedbackButton').click(captureFeedback);
 
   // TODO(Jupyter): Validate these links
   var projectId = document.body.getAttribute('data-project-id');
@@ -173,7 +192,7 @@ function initializePage(dialog) {
   // TODO(Jupyter): Validate GA works...
   var analyticsId = document.body.getAttribute('data-analytics-id');
   if (analyticsId) {
-    var domain = 'datalab.developers.google.com';
+    var domain = 'datalab.cloud.google.com';
     var projectNumber = document.body.getAttribute('data-project-num');
     var version = document.body.getAttribute('data-version-id');
     var instance = document.body.getAttribute('data-instance-id');
@@ -575,7 +594,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     });
 
     if (!headers) {
-      content.push('<br /><div><i>Create headings in markdown cells.</i></div>');
+      content.push('<br /><div><i>Create headings in markdown cells to easily navigate to different parts of your notebook.</i></div>');
     }
 
     var markup = content.join('');

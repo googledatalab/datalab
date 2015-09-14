@@ -3,12 +3,12 @@
   "logFilePath": "/var/log/app_engine/custom_logs/app.log",
   "logFilePeriod": "daily",
   "logFileCount": 7,
-  "analyticsId": "UA-54894152-1",
+  "analyticsId": "UA-54894152-3",
+  "feedbackId": "717112",
   "serverPort": 8080,
   "jupyterArgs": [
     "notebook",
     "-y",
-    "--notebook-dir=/content",
     "--no-browser",
     "--no-mathjax",
     "--log-level=DEBUG",
@@ -24,6 +24,5 @@
     "--KernelManager.autorestart=True",
     "--KernelSpecManager.whitelist=[\"python2\"]",
     "--ip=\"127.0.0.1\""
-  ],
-  "jupyterPort": 8081
+  ]
 }

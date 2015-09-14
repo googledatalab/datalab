@@ -116,6 +116,9 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   else if (path.lastIndexOf('/logo.png') > 0) {
     sendDataLabFile('datalab.png', response);
   }
+  else if (path.lastIndexOf('/about.txt') > 0) {
+    sendDataLabFile('datalab.txt', response);
+  }
   else if (path.lastIndexOf('/custom.js') > 0) {
     // NOTE: Uncomment to use external content mapped into the container.
     //       This is only useful when actively developing the content itself.

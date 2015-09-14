@@ -16,6 +16,7 @@
 /// <reference path="common.d.ts" />
 
 import http = require('http');
+import jupyter = require('./jupyter');
 import url = require('url');
 
 /**
@@ -59,6 +60,9 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   response.write(stringifyMap(request.headers));
   response.write('\n\n');
 
+  response.write('Jupyter Servers:\n');
+  response.write(JSON.stringify(jupyter.getServers(), null, 2));
+  response.write('\n\n');
   response.end();
 }
 

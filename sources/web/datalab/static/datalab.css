@@ -319,6 +319,11 @@ div.input_prompt {
 div.output_area {
   margin-top: 4px;
 }
+div.output_scroll {
+  border-radius: 0;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+}
 div.rendered_html h1, div.rendered_html h2, div.rendered_html h3,
 div.rendered_html h4, div.rendered_html h5, div.rendered_html h6 {
   font-family: 'Open Sans', Lato, Helvetica, sans-serif;

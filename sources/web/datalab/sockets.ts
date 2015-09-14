@@ -18,6 +18,7 @@
 /// <reference path="common.d.ts" />
 
 import http = require('http');
+import jupyter = require('./jupyter');
 import logging = require('./logging');
 import socketio = require('socket.io');
 import url = require('url');
@@ -40,16 +41,13 @@ interface DataMessage {
   data: string;
 }
 
-var webSocketChannels = [ 'shell', 'iopub', 'stdin' ];
-
-var appSettings: common.Settings;
 var sessionCounter = 0;
 
 /**
  * Creates a WebSocket connected to the Jupyter server for the URL in the specified session.
  */
-function createWebSocket(session: Session): WebSocket {
-  var socketUrl = appSettings.jupyterSocketServer + url.parse(session.url).path;
+function createWebSocket(port: number, session: Session): WebSocket {
+  var socketUrl = 'ws://127.0.0.1:' + port + url.parse(session.url).path;
   logging.getLogger().debug('Creating WebSocket to %s for session %d', socketUrl, session.id);
 
   var ws = new WebSocket(socketUrl);
@@ -122,8 +120,15 @@ function socketHandler(socket: SocketIO.Socket) {
   socket.on('start', function(message: SessionMessage) {
     logging.getLogger().debug('Start in session %d with url %s', session.id, message.url);
 
-    session.url = message.url;
-    session.webSocket = createWebSocket(session);
+    try {
+      var port = jupyter.getPort(socket.request)
+      session.url = message.url;
+      session.webSocket = createWebSocket(port, session);
+    }
+    catch (e) {
+      logging.getLogger().error(e, 'Unable to create WebSocket connection to %s', message.url);
+      session.socket.disconnect(/* close */ true);
+    }
   });
 
   socket.on('stop', function(message: SessionMessage) {
@@ -151,8 +156,7 @@ function socketHandler(socket: SocketIO.Socket) {
   });
 }
 
-export function wrapServer(server: http.Server, settings: common.Settings): void {
-  appSettings = settings;
+export function wrapServer(server: http.Server): void {
   socketio.listen(server)
           .of('/session')
           .on('connection', socketHandler);

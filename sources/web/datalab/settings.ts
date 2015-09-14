@@ -57,8 +57,6 @@ export function loadSettings(): common.Settings {
     }
 
     var settings = <common.Settings>JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-    settings.jupyterWebServer = 'http://127.0.0.1:' + settings.jupyterPort;
-    settings.jupyterSocketServer = 'ws://127.0.0.1:' + settings.jupyterPort;
 
     settings.instanceUser = process.env['DATALAB_USER'] || '';
     settings.instanceId = metadata.instanceId;
