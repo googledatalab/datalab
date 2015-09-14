@@ -58,6 +58,7 @@ docker run -i -t gcr.io/cloud_datalab/datalab:latest --entrypoint="/bin/bash"
 - mkdirp [https://www.npmjs.com/package/mkdirp]
 - node-uuid [https://www.npmjs.com/package/node-uuid]
 - socket.io [https://www.npmjs.com/package/socket.io]
+- tcp-port-used [https://www.npmjs.com/package/tcp-port-used]
 - ws [https://www.npmjs.com/package/ws]
 
 ## Other Packages:

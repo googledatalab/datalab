@@ -13,13 +13,11 @@
  */
 
 /// <reference path="../../../externs/ts/node/node.d.ts" />
-/// <reference path="../../../externs/ts/node/node-http-proxy.d.ts" />
 /// <reference path="common.d.ts" />
 
 import fs = require('fs');
 import health = require('./health');
 import http = require('http');
-import httpProxy = require('http-proxy');
 import info = require('./info');
 import jupyter = require('./jupyter');
 import logging = require('./logging');
@@ -30,7 +28,6 @@ import static = require('./static');
 import url = require('url');
 
 var server: http.Server;
-var proxyServer: httpProxy.ProxyServer;
 var healthHandler: http.RequestHandler;
 var infoHandler: http.RequestHandler;
 var staticHandler: http.RequestHandler;
@@ -88,7 +85,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       (path.indexOf('/notebooks') == 0) ||
       (path.indexOf('/nbconvert') == 0) ||
       (path.indexOf('/files') == 0)) {
-    proxyServer.web(request, response);
+    jupyter.handleRequest(request, response);
     return;
   }
 
@@ -115,34 +112,18 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
 }
 
 /**
- * Handles Upgrade requests to initiate web sockets. This will only be called on
- * servers and environments where websockets are supported.
- * @param request the incoming HTTP request.
- * @param socket the socket associated with the request.
- * @param head the initial data on the request.
- */
-function upgradeHandler(request: http.ServerRequest, socket: net.Socket, head: Buffer) {
-  proxyServer.ws(request, socket, head);
-}
-
-/**
  * Runs the proxy web server.
  * @param settings the configuration settings to use.
  */
 export function run(settings: common.Settings): void {
-  proxyServer = jupyter.createProxyServer(settings);
+  jupyter.start(settings);
 
   healthHandler = health.createHandler(settings);
   infoHandler = info.createHandler(settings);
   staticHandler = static.createHandler(settings);
 
   server = http.createServer(requestHandler);
-
-  // NOTE: Uncomment to enable native web sockets.
-  // server.on('upgrade', upgradeHandler);
-
-  // NOTE: This adds support for socket.io instead.
-  sockets.wrapServer(server, settings);
+  sockets.wrapServer(server);
 
   logging.getLogger().info('Starting DataLab server at http://localhost:%d',
                            settings.serverPort);

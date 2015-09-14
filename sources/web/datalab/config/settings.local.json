@@ -9,7 +9,6 @@
   "jupyterArgs": [
     "notebook",
     "-y",
-    "--notebook-dir=/content",
     "--no-browser",
     "--no-mathjax",
     "--log-level=DEBUG",
@@ -25,6 +24,5 @@
     "--KernelManager.autorestart=True",
     "--KernelSpecManager.whitelist=[\"python2\"]",
     "--ip=\"127.0.0.1\""
-  ],
-  "jupyterPort": 8081
+  ]
 }
