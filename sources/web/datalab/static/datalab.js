@@ -147,7 +147,8 @@ function initializePage(dialog) {
       '<pre>Version: ' + version  + '\nBased on Jupyter (formerly IPython) 4</pre>' +
       '<h5><b>More Information</b></h5>' +
       '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://cloud.google.com" target="_blank">Product information</a><br />' +
-      '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://github.com/GoogleCloudPlatform/datalab" target="_blank">Project on GitHub</a>';
+      '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://github.com/GoogleCloudPlatform/datalab" target="_blank">Project on GitHub</a><br />' +
+      '<span class="fa fa-external-link-square">&nbsp;</span><a href="/static/about.txt" target="_blank">License and software information</a>';
 
     var dialogOptions = {
       title: 'About Google Cloud Datalab',
@@ -575,7 +576,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     });
 
     if (!headers) {
-      content.push('<br /><div><i>Create headings in markdown cells.</i></div>');
+      content.push('<br /><div><i>Create headings in markdown cells to easily navigate to different parts of your notebook.</i></div>');
     }
 
     var markup = content.join('');
