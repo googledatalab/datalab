@@ -122,8 +122,14 @@ function socketHandler(socket: SocketIO.Socket) {
   socket.on('start', function(message: SessionMessage) {
     logging.getLogger().debug('Start in session %d with url %s', session.id, message.url);
 
-    session.url = message.url;
-    session.webSocket = createWebSocket(session);
+    try {
+      session.url = message.url;
+      session.webSocket = createWebSocket(session);
+    }
+    catch (e) {
+      logging.getLogger().error(e, 'Unable to create WebSocket connection to %s', message.url);
+      session.socket.disconnect(/* close */ true);
+    }
   });
 
   socket.on('stop', function(message: SessionMessage) {
