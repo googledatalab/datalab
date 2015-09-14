@@ -41,8 +41,6 @@ _sql_parser = _create_sql_parser()
 def sql(line, cell):
   return _utils.handle_magic_line(line, cell, _sql_parser)
 
-# TODO(gram): Perhaps this should go in SqlModule?
-
 
 def _date(val, offset=None):
   """ A special pseudo-type for pipeline arguments.
@@ -179,7 +177,8 @@ def _arguments(code, module):
       elif isinstance(val, basestring) or isinstance(val, int) or isinstance(val, float) \
           or isinstance(val, long):
         arg_parser.add_argument(key, default=val)
-      elif isinstance(val, dict) and 'type' in val:  # one of our pseudo-types?
+      # Is this one of our pseudo-types for dates/tables?
+      elif isinstance(val, dict) and 'type' in val:
         if val['type'] == 'datestring':
           arg_parser.add_argument(key, default='',
                                   type=_make_string_formatter(val['format'],

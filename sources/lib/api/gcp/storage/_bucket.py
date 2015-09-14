@@ -102,7 +102,7 @@ class Bucket(object):
     """
     if self._info is None:
       self._info = self._api.buckets_get(self._name)
-    return BucketMetadata(self._info)
+    return BucketMetadata(self._info) if self._info else None
 
   def item(self, key):
     """Retrieves an object within this bucket.

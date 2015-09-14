@@ -12,23 +12,56 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime as dt
-import collections
 import mock
-import pandas
 import unittest
 
 # import Python so we can mock the parts we need to here.
 import IPython
-IPython.core.magic.register_line_cell_magic = mock.Mock()
-IPython.core.magic.register_line_magic = mock.Mock()
-IPython.core.magic.register_cell_magic = mock.Mock()
-IPython.get_ipython = mock.Mock()
+
+def noopDecorator(func):
+  return func
+
+IPython.core.magic.register_line_cell_magic = noopDecorator
+IPython.core.magic.register_line_magic = noopDecorator
+IPython.core.magic.register_cell_magic = noopDecorator
+IPython.core.display.HTML = lambda x: x
+IPython.core.display.JSON = lambda x: x
 
 import gcp.datalab
 
 class TestCases(unittest.TestCase):
 
-  def test_stub(self):
-    # TODO(gram): add some real tests
+  def test_chart_cell(self):
+    t = [{'country': 'US', 'quantity': 100}, {'country': 'ZA', 'quantity': 50}]
+    chart = gcp.datalab._chart._chart_cell({'chart': 'geo', 'data': t, 'field': None}, '')
+    self.assertTrue(chart.find('charts.render(dom, {chartStyle:\'geo\'') > 0)
+    self.assertTrue(chart.find('fields:\'*\'') > 0)
+    self.assertTrue(chart.find('{"c": [{"v": "US"}, {"v": 100}]}') > 0)
+    self.assertTrue(chart.find('{"c": [{"v": "ZA"}, {"v": 50}]}') > 0)
+    self.assertTrue(chart.find('"cols": [{"type": "string", "id": "country", "label": "country"},' +
+                               ' {"type": "number", "id": "quantity", "label": "quantity"}]})') > 0)
+
+  @mock.patch('gcp._util.get_item')
+  def test_get_chart_data(self, mock_get_item):
+    t = [
+      {'country': 'US', 'quantity': 100},
+      {'country': 'ZA', 'quantity': 50},
+      {'country': 'UK', 'quantity': 75},
+      {'country': 'AU', 'quantity': 25}
+    ]
+    mock_get_item.return_value = t
+    data = gcp.datalab._chart._get_chart_data('t country 1 1')
+    self.assertEquals('{"data": {"rows": [{"c": [{"v": "ZA"}]}], ' +
+                      '"cols": [{"type": "string", "id": "country", "label": "country"}]}}', data)
+
+    data = gcp.datalab._chart._get_chart_data('t country 6 1')
+    self.assertEquals('{"data": {"rows": [], ' +
+                      '"cols": [{"type": "string", "id": "country", "label": "country"}]}}', data)
+
+    data = gcp.datalab._chart._get_chart_data('t country 2 0')
+    self.assertEquals('{"data": {"rows": [], ' +
+                      '"cols": [{"type": "string", "id": "country", "label": "country"}]}}', data)
+
+  def test_chart_magic(self):
+    # TODO(gram): complete this test
     pass

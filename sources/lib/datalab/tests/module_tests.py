@@ -12,23 +12,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime as dt
-import collections
 import mock
-import pandas
+import sys
 import unittest
 
 # import Python so we can mock the parts we need to here.
 import IPython
-IPython.core.magic.register_line_cell_magic = mock.Mock()
-IPython.core.magic.register_line_magic = mock.Mock()
-IPython.core.magic.register_cell_magic = mock.Mock()
+
+def noopDecorator(func):
+  return func
+
+IPython.core.magic.register_line_cell_magic = noopDecorator
+IPython.core.magic.register_line_magic = noopDecorator
+IPython.core.magic.register_cell_magic = noopDecorator
 IPython.get_ipython = mock.Mock()
 
 import gcp.datalab
 
 class TestCases(unittest.TestCase):
 
-  def test_stub(self):
-    # TODO(gram): add some real tests
-    pass
+  def test_create_python_module(self):
+    gcp.datalab._modules._create_python_module('bar', 'y=1')
+    self.assertIsNotNone(sys.modules['bar'])
+    self.assertEqual(1, sys.modules['bar'].y)
+
+  def test_pymodule(self):
+    gcp.datalab._modules.pymodule('--name foo', 'x=1')
+    self.assertIsNotNone(sys.modules['foo'])
+    self.assertEqual(1, sys.modules['foo'].x)

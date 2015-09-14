@@ -15,7 +15,9 @@
 import datetime as dt
 import collections
 import mock
+from oauth2client.client import AccessTokenCredentials
 import pandas
+import time
 import unittest
 
 # import Python so we can mock the parts we need to here.
@@ -39,6 +41,38 @@ class TestCases(unittest.TestCase):
       {'type': 'datetime', 'id': 'Column6', 'label': 'Column6'}
     ]
     return cols
+
+  def _timestamp(self, d):
+    return (d - dt.datetime(1970, 1, 1)).total_seconds()
+
+  def _get_raw_rows(self):
+    rows = [
+      {'f': [
+        {'v': 1}, {'v': 2}, {'v': '3'}, {'v': 'true'}, {'v': 0.0},
+        {'v': self._timestamp(dt.datetime(2000, 1, 1))}
+      ]},
+      {'f': [
+        {'v': 11}, {'v': 12}, {'v': '13'}, {'v': 'false'}, {'v': 0.2},
+        {'v': self._timestamp(dt.datetime(2000, 1, 2))}
+      ]},
+      {'f': [
+        {'v': 21}, {'v': 22}, {'v': '23'}, {'v': 'true'}, {'v': 0.3},
+        {'v': self._timestamp(dt.datetime(2000, 1, 3))}
+      ]},
+      {'f': [
+        {'v': 31}, {'v': 32}, {'v': '33'}, {'v': 'false'}, {'v': 0.4},
+        {'v': self._timestamp(dt.datetime(2000, 1, 4))}
+      ]},
+      {'f': [
+        {'v': 41}, {'v': 42}, {'v': '43'}, {'v': 'true'}, {'v': 0.5},
+        {'v': self._timestamp(dt.datetime(2000, 1, 5))}
+      ]},
+      {'f': [
+        {'v': 51}, {'v': 52}, {'v': '53'}, {'v': 'true'}, {'v': 0.6},
+        {'v': self._timestamp(dt.datetime(2000, 1, 6))}
+      ]}
+    ]
+    return rows
 
   def _get_expected_rows(self):
     rows = [
@@ -86,10 +120,10 @@ class TestCases(unittest.TestCase):
 
   def test_get_data_from_list_of_dicts(self):
     self._test_get_data(self._get_test_data_as_list_of_dicts(),
-         self._get_expected_cols(), self._get_expected_rows(),
+         self._get_expected_cols(), self._get_expected_rows(), 6,
          gcp.datalab._utils._get_data_from_list_of_dicts)
     self._test_get_data(self._get_test_data_as_list_of_dicts(),
-         self._get_expected_cols(), self._get_expected_rows(),
+         self._get_expected_cols(), self._get_expected_rows(), 6,
          gcp.datalab._utils.get_data)
 
   def test_get_data_from_list_of_lists(self):
@@ -102,67 +136,119 @@ class TestCases(unittest.TestCase):
       [51, 52, '53', True, 0.6, dt.datetime(2000, 1, 6)],
     ]
 
-    self._test_get_data(test_data, self._get_expected_cols(), self._get_expected_rows(),
+    self._test_get_data(test_data, self._get_expected_cols(), self._get_expected_rows(), 6,
          gcp.datalab._utils._get_data_from_list_of_lists)
-    self._test_get_data(test_data, self._get_expected_cols(), self._get_expected_rows(),
+    self._test_get_data(test_data, self._get_expected_cols(), self._get_expected_rows(), 6,
          gcp.datalab._utils.get_data)
 
   def test_get_data_from_dataframe(self):
     df = pandas.DataFrame(self._get_test_data_as_list_of_dicts())
-    self._test_get_data(df, self._get_expected_cols(), self._get_expected_rows(),
+    self._test_get_data(df, self._get_expected_cols(), self._get_expected_rows(), 6,
          gcp.datalab._utils._get_data_from_dataframe)
-    self._test_get_data(df, self._get_expected_cols(), self._get_expected_rows(),
+    self._test_get_data(df, self._get_expected_cols(), self._get_expected_rows(), 6,
          gcp.datalab._utils.get_data)
 
-  def test_get_data_from_table(self):
-    # TODO(gram): Figure out a reasonable way to test _get_data_from_table.
-    pass
+  @mock.patch('gcp.bigquery._api.Api.tabledata_list')
+  @mock.patch('gcp.bigquery._table.Table.exists')
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
+  @mock.patch('gcp.bigquery._create_api')
+  def test_get_data_from_table(self, mock_create_api, mock_api_tables_get,
+                               mock_table_exists, mock_api_tabledata_list):
+    data = self._get_expected_rows()
+    mock_create_api.return_value = self._create_api()
+    mock_api_tables_get.return_value = {
+      'numRows': len(data),
+      'schema': {
+        'fields': [
+          {'name': 'Column1', 'type': 'INTEGER'},
+          {'name': 'Column2', 'type': 'INTEGER'},
+          {'name': 'Column3', 'type': 'STRING'},
+          {'name': 'Column4', 'type': 'BOOLEAN'},
+          {'name': 'Column5', 'type': 'FLOAT'},
+          {'name': 'Column6', 'type': 'TIMESTAMP'}
+        ]
+      }
+    }
+    mock_table_exists.return_value = True
+    raw_data = self._get_raw_rows()
 
-  def _test_get_data(self, test_data, cols, rows, fn):
+    def tabledata_list(*args, **kwargs):
+      start_index = kwargs['start_index']
+      max_results = kwargs['max_results']
+      if max_results < 0:
+        max_results = len(data)
+      return {'rows': raw_data[start_index:start_index + max_results]}
+
+    mock_api_tabledata_list.side_effect = tabledata_list
+    t = gcp.bigquery.table('foo.bar')
+    self._test_get_data(t, self._get_expected_cols(), self._get_expected_rows(), 6,
+                        gcp.datalab._utils._get_data_from_table)
+    self._test_get_data(t, self._get_expected_cols(), self._get_expected_rows(), 6,
+                        gcp.datalab._utils.get_data)
+
+  def test_get_data_from_empty_list(self):
+    self._test_get_data([], [], [], 0, gcp.datalab._utils.get_data)
+
+  def test_get_data_from_malformed_list(self):
+    with self.assertRaises(Exception) as error:
+      self._test_get_data(['foo', 'bar'], [], [], 0, gcp.datalab._utils.get_data)
+    self.assertEquals('To get tabular data from a list it must contain dictionaries or lists.',
+                      error.exception.message)
+
+  def _test_get_data(self, test_data, cols, rows, expected_count, fn):
     self.maxDiff = None
     data, count = fn(test_data)
-    self.assertEquals(6, count)
+    self.assertEquals(expected_count, count)
     self.assertEquals({'cols': cols, 'rows': rows}, data)
 
     # Test first_row. Note that count must be set in this case so we use a value greater than the
     # data set size.
     for first in range(0, 6):
       data, count = fn(test_data, first_row=first, count=10)
-      self.assertEquals(6, count)
+      self.assertEquals(expected_count, count)
       self.assertEquals({'cols': cols, 'rows': rows[first:]}, data)
 
     # Test first_row + count
     for first in range(0, 6):
       data, count = fn(test_data, first_row=first, count=2)
-      self.assertEquals(6, count)
+      self.assertEquals(expected_count, count)
       self.assertEquals({'cols': cols, 'rows': rows[first:first+2]}, data)
 
     # Test subsets of columns
 
     # No columns
     data, count = fn(test_data, fields=[])
-    self.assertEquals({'cols': [],
-                       'rows': [{'c': []}, {'c': []}, {'c': []}, {'c': []}, {'c': []}, {'c': []}]},
-                      data)
+    self.assertEquals({'cols': [], 'rows': [{'c': []}] * expected_count}, data)
 
     # Single column
     data, count = fn(test_data, fields=['Column3'])
+
+    if expected_count == 0:
+      return
+
     self.assertEquals({'cols': [cols[2]],
-      'rows': [{'c': [row['c'][2] ]} for row in rows]}, data)
+      'rows': [{'c': [row['c'][2]]} for row in rows]}, data)
 
     # Multi-columns
     data, count = fn(test_data, fields=['Column1', 'Column3', 'Column6'])
     self.assertEquals({'cols': [cols[0], cols[2], cols[5]],
-      'rows': [{'c': [row['c'][0], row['c'][2], row['c'][5] ]} for row in rows]}, data)
+      'rows': [{'c': [row['c'][0], row['c'][2], row['c'][5]]} for row in rows]}, data)
 
     # Switch order
     data, count = fn(test_data, fields=['Column3', 'Column1'])
     self.assertEquals({'cols': [cols[2], cols[0]],
-      'rows': [{'c': [row['c'][2], row['c'][0] ]} for row in rows]}, data)
+      'rows': [{'c': [row['c'][2], row['c'][0]]} for row in rows]}, data)
 
     # Select all
     data, count = fn(test_data,
                      fields=['Column1', 'Column2', 'Column3', 'Column4', 'Column5', 'Column6'])
     self.assertEquals({'cols': cols, 'rows': rows}, data)
 
+  def _create_api(self):
+    context = self._create_context()
+    return gcp.bigquery._api.Api(context.credentials, context.project_id)
 
+  def _create_context(self):
+    project_id = 'test'
+    creds = AccessTokenCredentials('test_token', 'test_ua')
+    return gcp.Context(project_id, creds)
