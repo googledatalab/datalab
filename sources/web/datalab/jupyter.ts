@@ -105,6 +105,7 @@ function responseHandler(proxyResponse: http.ClientResponse,
   var path = url.parse(request.url).pathname;
   if ((path.indexOf('/tree') == 0) || (path.indexOf('/notebooks') == 0)) {
     var templateData: common.Map<string> = {
+      feedbackId: appSettings.feedbackId,
       analyticsId: appSettings.analyticsId,
       projectNumber: appSettings.projectNumber,
       projectId: appSettings.projectId,

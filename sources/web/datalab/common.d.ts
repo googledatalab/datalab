@@ -27,6 +27,7 @@ declare module common {
     versionId: string;
     instanceId: string;
     analyticsId: string;
+    feedbackId: string;
 
     serverPort: number;
 

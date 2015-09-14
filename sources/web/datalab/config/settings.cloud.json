@@ -4,6 +4,7 @@
   "logFilePeriod": "daily",
   "logFileCount": 7,
   "analyticsId": "UA-54894152-1",
+  "feedbackId": "717112",
   "serverPort": 8080,
   "jupyterArgs": [
     "notebook",

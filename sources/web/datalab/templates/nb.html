@@ -16,6 +16,7 @@
   data-ws-url=""
   data-notebook-name="<%notebookName%>"
   data-notebook-path="<%notebookPath%>"
+  data-feedback-id="<%feedbackId%>"
   data-analytics-id="<%analyticsId%>"
   data-project-num="<%projectNumber%>"
   data-project-id="<%projectId%>"
@@ -62,6 +63,12 @@
             <li><a href="#" id="instancesLink" target="_blank">Developer Console: Datalab Instances</a></li>
             <li><a href="#" id="repoLink" target="_blank">Developer Console: Git Repository</a></li>
           </ul>
+          &nbsp;&nbsp;
+        </div>
+        <div class="btn-group">
+          <button id="feedbackButton">
+            <span class="fa fa-comment"></span>
+          </button>
           &nbsp;&nbsp;
         </div>
         <div class="btn-group">
@@ -224,6 +231,7 @@
      });
   </script>
   <script src="/static/notebook/js/main.min.js"></script>
+  <script src="//www.gstatic.com/feedback/api.js" async="true" defer="true"></script>
   <script type="text/fragment" id="shortcutsHelp">
     <p>The notebook has two keyboard modes: Edit mode allows you to type code/text into a cell indicated by a raised cell with a shadow. Command mode allows notebook level actions.</p>
     <br>
