@@ -52,7 +52,7 @@ class SqlStatement(object):
     return self._module
 
   @staticmethod
-  def _expand(sql, ns, complete, in_progress, code):
+  def _find_recursive_dependencies(sql, values, code, resolved_vars, resolving_vars=None):
     """ Recursive helper method for expanding variables including transitive dependencies.
 
     Placeholders in SQL are represented as $<name>. If '$' must appear within
@@ -60,10 +60,11 @@ class SqlStatement(object):
 
     Args:
       sql: the raw SQL statement with named placeholders.
-      ns: the user-supplied dictionary of name/value pairs to use for placeholder values.
-      complete: a ref parameter for the references expanded so far
-      in_progress: a ref parameter for the references that still need expansion.
+      values: the user-supplied dictionary of name/value pairs to use for placeholder values.
       code: an array of referenced UDFs found during expansion.
+      resolved_vars: a ref parameter for the variable references completely resolved so far.
+      resolving_vars: a ref parameter for the variable(s) we are currently resolving; if we see
+          a dependency again that is in this set we know we have a circular reference.
     Returns:
       The formatted SQL statement with placeholders replaced with their values.
     Raises:
@@ -76,14 +77,14 @@ class SqlStatement(object):
     for dependency in dependencies:
       # Now we check each dependency. If it is in complete - i.e., we have an expansion
       # for it already - we just continue.
-      if dependency in complete:
+      if dependency in resolved_vars:
         continue
       # Look it up in our resolution namespace dictionary.
-      dep = gcp._util.get_item(ns, dependency)
+      dep = gcp._util.get_item(values, dependency)
       # If it is a SQL module, get the main/last query from the module, so users can refer
       # to $module. Useful especially if final query in module has no DEFINE QUERY <name> part.
       if isinstance(dep, types.ModuleType):
-        dep = _sql_module.SqlModule.get_query_from_module(dep)
+        dep = _sql_module.SqlModule.get_default_query_from_module(dep)
       # If we can't resolve the $name, give up.
       if dep is None:
         raise Exception("Unsatisfied dependency $%s" % dependency)
@@ -91,53 +92,18 @@ class SqlStatement(object):
       # sure we don't have circular references, and if not, recursively expand it and add
       # it to the set of complete dependencies.
       if isinstance(dep, SqlStatement):
-        if dependency in in_progress:
+        if resolving_vars is None:
+          resolving_vars = []
+        elif dependency in resolving_vars:
           # Circular dependency
           raise Exception("Circular dependency in $%s" % dependency)
-        in_progress.append(dependency)
-        expanded = SqlStatement._expand(dep._sql, ns, complete, in_progress, code)
-        in_progress.pop()
-        complete[dependency] = SqlStatement(expanded)
+        resolving_vars.append(dependency)
+        SqlStatement._find_recursive_dependencies(dep._sql, values, code, resolved_vars,
+                                                  resolving_vars)
+        resolving_vars.pop()
+        resolved_vars[dependency] = SqlStatement(dep._sql)
       else:
-        complete[dependency] = dep
-
-    # Rebuild the SQL string, substituting just '$' for escaped $ occurrences,
-    # variable references substituted with their values, or literal text copied
-    # over as-is.
-    parts = []
-    for (escape, placeholder, literal) in SqlStatement._get_tokens(sql):
-      if escape:
-        parts.append('$')
-      elif placeholder:
-        variable = placeholder[1:]
-        try:
-          value = complete[variable]
-        except KeyError as e:
-          raise Exception('Invalid sql. Unable to substitute $%s.' % e.args[0],
-                          e.args[0])
-
-        if isinstance(value, types.ModuleType):
-          value = _sql_module.SqlModule.get_query_from_module(value)
-
-        if '_repr_code_' in dir(value):
-          code.append(value._repr_code_())
-
-        if isinstance(value, SqlStatement):
-          sql, udfs = value.format(value._sql, complete)
-          code.extend(udfs)
-          value = '(%s)' % sql
-        elif '_repr_sql_' in dir(value):
-          # pylint: disable=protected-access
-          value = value._repr_sql_()
-        elif (type(value) == str) or (type(value) == unicode):
-          value = '"' + value.replace('"', '\\"') + '"'
-        else:
-          value = str(value)
-        parts.append(value)
-      elif literal:
-        parts.append(literal)
-
-    return ''.join(parts)
+        resolved_vars[dependency] = dep
 
   @staticmethod
   def format(sql, args=None):
@@ -156,9 +122,48 @@ class SqlStatement(object):
     Raises:
       Exception on failure.
     """
-    code=[]
-    expanded =SqlStatement._expand(sql, args, complete={}, in_progress=[], code=code)
-    return expanded, code
+    resolved_vars = {}
+    code = []
+    SqlStatement._find_recursive_dependencies(sql, args, code=code,
+                                              resolved_vars=resolved_vars)
+
+    # Rebuild the SQL string, substituting just '$' for escaped $ occurrences,
+    # variable references substituted with their values, or literal text copied
+    # over as-is.
+    parts = []
+    for (escape, placeholder, literal) in SqlStatement._get_tokens(sql):
+      if escape:
+        parts.append('$')
+      elif placeholder:
+        variable = placeholder[1:]
+        try:
+          value = resolved_vars[variable]
+        except KeyError as e:
+          raise Exception('Invalid sql. Unable to substitute $%s.' % e.args[0],
+                          e.args[0])
+
+        if isinstance(value, types.ModuleType):
+          value = _sql_module.SqlModule.get_default_query_from_module(value)
+
+        if '_repr_code_' in dir(value):
+          code.append(value._repr_code_())
+
+        if isinstance(value, SqlStatement):
+          sql, udfs = value.format(value._sql, resolved_vars)
+          code.extend(udfs)
+          value = '(%s)' % sql
+        elif '_repr_sql_' in dir(value):
+          # pylint: disable=protected-access
+          value = value._repr_sql_()
+        elif (type(value) == str) or (type(value) == unicode):
+          value = '"' + value.replace('"', '\\"') + '"'
+        else:
+          value = str(value)
+        parts.append(value)
+      elif literal:
+        parts.append(literal)
+
+    return ''.join(parts), code
 
   @staticmethod
   def _get_tokens(sql):

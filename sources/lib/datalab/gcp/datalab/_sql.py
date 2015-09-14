@@ -16,19 +16,20 @@
 
 import datetime
 import imp
+import re
 import sys
 import time
 import IPython
 import IPython.core.magic
 import gcp.bigquery
-import gcp.sql
+import gcp.data
 import _commands
 import _utils
 
 
 def _create_sql_parser():
-  sql_parser = _commands.CommandParser('create a named SQL')
-  sql_parser.add_argument('-n', '--name', help='the name for this SQL')
+  sql_parser = _commands.CommandParser('create a named SQL module')
+  sql_parser.add_argument('-m', '--module', help='the name for this SQL module')
   sql_parser.set_defaults(func=lambda args, cell: sql_cell(args, cell))
   return sql_parser
 
@@ -154,7 +155,7 @@ def _arguments(code, module):
     # Execute the cell which should be one or more calls to arg().
     exec code in env
 
-    # Iterate through the module dictionary and for any newly defined objects
+    # Iterate through the module dictionary. For any newly defined objects,
     # add args to the parser.
     for key in env:
 
@@ -178,7 +179,7 @@ def _arguments(code, module):
       elif isinstance(val, basestring) or isinstance(val, int) or isinstance(val, float) \
           or isinstance(val, long):
         arg_parser.add_argument(key, default=val)
-      elif isinstance(val, dict) and 'type' in val:
+      elif isinstance(val, dict) and 'type' in val:  # one of our pseudo-types?
         if val['type'] == 'datestring':
           arg_parser.add_argument(key, default='',
                                   type=_make_string_formatter(val['format'],
@@ -201,7 +202,9 @@ def _arguments(code, module):
 
 
 def _split_cell(cell, module):
-  """ Split a hybrid cell into the Python code and the queries.
+  """ Split a hybrid %%sql cell into the Python code and the queries.
+
+    Populates a module with the queries.
 
   Args:
     cell: the contents of the %%sql cell.
@@ -211,9 +214,60 @@ def _split_cell(cell, module):
     The default (last) query for the module.
 
   """
-  code = gcp.sql.SqlModule.split_cell(cell, module)
-  gcp.sql.SqlModule.set_arg_parser(module, _arguments(code, module))
-  return gcp.sql.SqlModule.get_query_from_module(module)
+  lines = cell.split('\n')
+  code = None
+  last_def = -1
+  name = None
+  define_re = re.compile('^DEFINE\s+QUERY\s+([A-Z]\w*)\s*?(.*)$', re.IGNORECASE)
+  select_re = re.compile('^SELECT\s*.*$', re.IGNORECASE)
+  for i, line in enumerate(lines):
+    # Strip comment lines; doing this here means we can allow comments in SQL QUERY sections too.
+    if len(line) and line[0] == '#':
+      continue
+    define_match = define_re.match(line)
+    select_match = select_re.match(line)
+    if define_match or select_match:
+      # If this is the first query, get the preceding Python code.
+      if code is None:
+        code = ('\n'.join(lines[:i])).strip()
+        if len(code):
+          code += '\n'
+      elif last_def >= 0:
+
+        # This is not the first query, so gather the previous query text.
+        query = '\n'.join([line for line in lines[last_def:i] if len(line) and line[0] != '#']) \
+          .strip()
+        if select_match and name != gcp.data.SqlModule._SQL_MODULE_MAIN and len(query) == 0:
+          # Avoid DEFINE query name\nSELECT ... being seen as an empty DEFINE followed by SELECT
+          continue
+
+        # Save the query
+        statement = gcp.data.SqlStatement(query, module)
+        module.__dict__[name] = statement
+        # And set the 'last' query to be this too
+        module.__dict__[gcp.data.SqlModule._SQL_MODULE_LAST] = statement
+
+      # Get the query name and strip off our syntactic sugar if appropriate.
+      if define_match:
+        name = define_match.group(1)
+        lines[i] = define_match.group(2)
+      else:
+        name = gcp.data.SqlModule._SQL_MODULE_MAIN
+
+      # Save the starting line index of the new query
+      last_def = i
+
+  if last_def >= 0:
+    # We were in a query so save this tail query.
+    query = '\n'.join([line for line in lines[last_def:] if len(line) and line[0] != '#']).strip()
+    statement = gcp.data.SqlStatement(query, module)
+    module.__dict__[name] = statement
+    module.__dict__[gcp.data.SqlModule._SQL_MODULE_LAST] = statement
+
+  if code is None:
+    code = ''
+  module.__dict__[gcp.data.SqlModule._SQL_MODULE_ARGPARSE] = _arguments(code, module)
+  return module.__dict__.get(gcp.data.SqlModule._SQL_MODULE_LAST, None)
 
 
 def sql_cell(args, cell):
@@ -221,7 +275,7 @@ def sql_cell(args, cell):
 
   The supported syntax is:
 
-      %%sql [--name <modulename>]
+      %%sql [--module <modulename>]
       [<optional Python code for default argument values>]
       [<optional named queries>]
       [<optional unnamed query>]
@@ -236,14 +290,14 @@ def sql_cell(args, cell):
     args: the optional arguments following '%%sql'.
     cell: the contents of the cell; Python code for arguments followed by SQL queries.
   """
-  name = args['name'] if args['name'] else '_sql_cell'
+  name = args['module'] if args['module'] else '_sql_cell'
   module = imp.new_module(name)
   query = _split_cell(cell, module)
   ipy = IPython.get_ipython()
-  if not args['name']:
+  if not args['module']:
       # Execute now
       if query:
-        return gcp.bigquery.query(query, ipy.user_ns).execute().results
+        return gcp.bigquery.query(query, **ipy.user_ns).execute().results
   else:
     # Add it as a module
     sys.modules[name] = module

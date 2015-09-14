@@ -12,10 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime as dt
-import collections
+import imp
 import mock
-import pandas
 import unittest
 
 # import Python so we can mock the parts we need to here.
@@ -25,6 +23,7 @@ IPython.core.magic.register_line_magic = mock.Mock()
 IPython.core.magic.register_cell_magic = mock.Mock()
 IPython.get_ipython = mock.Mock()
 
+import gcp.data
 import gcp.datalab
 
 class TestCases(unittest.TestCase):
@@ -32,3 +31,54 @@ class TestCases(unittest.TestCase):
   def test_stub(self):
     # TODO(gram): add some real tests
     pass
+
+  def test_split_cell(self):
+    # TODO(gram): add tests for argument parser.
+    m = imp.new_module('m')
+    query = gcp.datalab._sql._split_cell('', m)
+    self.assertIsNone(query)
+    self.assertNotIn(gcp.data.SqlModule._SQL_MODULE_LAST, m.__dict__)
+    self.assertNotIn(gcp.data.SqlModule._SQL_MODULE_MAIN, m.__dict__)
+
+    m = imp.new_module('m')
+    query = gcp.datalab._sql._split_cell('\n\n', m)
+    self.assertIsNone(query)
+    self.assertNotIn(gcp.data.SqlModule._SQL_MODULE_LAST, m.__dict__)
+    self.assertNotIn(gcp.data.SqlModule._SQL_MODULE_MAIN, m.__dict__)
+
+    m = imp.new_module('m')
+    query = gcp.datalab._sql._split_cell('SELECT 3 AS x', m)
+    self.assertEquals(query, m.__dict__[gcp.data.SqlModule._SQL_MODULE_MAIN])
+    self.assertEquals(query, m.__dict__[gcp.data.SqlModule._SQL_MODULE_LAST])
+    self.assertEquals('SELECT 3 AS x', m.__dict__[gcp.data.SqlModule._SQL_MODULE_MAIN].sql)
+    self.assertEquals('SELECT 3 AS x', m.__dict__[gcp.data.SqlModule._SQL_MODULE_LAST].sql)
+
+    m = imp.new_module('m')
+    query = gcp.datalab._sql._split_cell('# This is a comment\n\nSELECT 3 AS x', m)
+    self.assertEquals(query, m.__dict__[gcp.data.SqlModule._SQL_MODULE_MAIN])
+    self.assertEquals(query, m.__dict__[gcp.data.SqlModule._SQL_MODULE_LAST])
+    self.assertEquals('SELECT 3 AS x', m.__dict__[gcp.data.SqlModule._SQL_MODULE_MAIN].sql)
+    self.assertEquals('SELECT 3 AS x', m.__dict__[gcp.data.SqlModule._SQL_MODULE_LAST].sql)
+
+    m = imp.new_module('m')
+    query = gcp.datalab._sql._split_cell('# This is a comment\n\nfoo="bar"\nSELECT 3 AS x', m)
+    self.assertEquals(query, m.__dict__[gcp.data.SqlModule._SQL_MODULE_MAIN])
+    self.assertEquals(query, m.__dict__[gcp.data.SqlModule._SQL_MODULE_LAST])
+    self.assertEquals('SELECT 3 AS x', m.__dict__[gcp.data.SqlModule._SQL_MODULE_MAIN].sql)
+    self.assertEquals('SELECT 3 AS x', m.__dict__[gcp.data.SqlModule._SQL_MODULE_LAST].sql)
+
+    m = imp.new_module('m')
+    query = gcp.datalab._sql._split_cell('DEFINE QUERY q1\nSELECT 3 AS x', m)
+    self.assertEquals(query, m.__dict__[gcp.data.SqlModule._SQL_MODULE_LAST])
+    self.assertEquals(query, m.__dict__[gcp.data.SqlModule._SQL_MODULE_LAST])
+    self.assertEquals('SELECT 3 AS x', m.q1.sql)
+    self.assertNotIn(gcp.data.SqlModule._SQL_MODULE_MAIN, m.__dict__)
+    self.assertEquals('SELECT 3 AS x', m.__dict__[gcp.data.SqlModule._SQL_MODULE_LAST].sql)
+
+    m = imp.new_module('m')
+    query = gcp.datalab._sql._split_cell('DEFINE QUERY q1\nSELECT 3 AS x\nSELECT * FROM $q1', m)
+    self.assertEquals(query, m.__dict__[gcp.data.SqlModule._SQL_MODULE_MAIN])
+    self.assertEquals(query, m.__dict__[gcp.data.SqlModule._SQL_MODULE_LAST])
+    self.assertEquals('SELECT 3 AS x', m.q1.sql)
+    self.assertEquals('SELECT * FROM $q1', m.__dict__[gcp.data.SqlModule._SQL_MODULE_MAIN].sql)
+    self.assertEquals('SELECT * FROM $q1', m.__dict__[gcp.data.SqlModule._SQL_MODULE_LAST].sql)

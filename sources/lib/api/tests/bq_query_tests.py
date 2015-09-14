@@ -99,7 +99,7 @@ class TestCases(unittest.TestCase):
     creds = AccessTokenCredentials('test_token', 'test_ua')
     context = gcp.Context(project_id, creds)
 
-    return gcp.bigquery.query(sql, None, context)
+    return gcp.bigquery.query(sql, context)
 
   def _create_insert_done_result(self):
     # pylint: disable=g-continuation-in-parens-misaligned
