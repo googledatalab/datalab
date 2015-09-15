@@ -178,7 +178,6 @@ def _storage_copy(args, _):
     return '\n'.join(errs)
 
 
-
 def _storage_create(args, _):
   """ Create one or more buckets. """
   buckets = gcp.storage.buckets(project_id=args['project'])
@@ -189,7 +188,7 @@ def _storage_create(args, _):
       if bucket and not key:
         buckets.create(bucket)
       else:
-        raise Exception("Invalid name %s" % name)
+        raise Exception("Invalid bucket name %s" % name)
     except Exception as e:
       errs.append("Couldn't create %s: %s" %
                   (name, _utils.extract_storage_api_response_error(e.message)))
@@ -205,9 +204,17 @@ def _storage_delete(args, _):
     try:
       bucket, key = gcp.storage._bucket.parse_name(item)
       if bucket and key:
-        gcp.storage.item(bucket, key).delete()
+        gcs_item = gcp.storage.item(bucket, key)
+        if gcs_item.exists():
+          gcp.storage.item(bucket, key).delete()
+        else:
+          errs.append("%s does not exist" % item)
       elif bucket:
-        gcp.storage.bucket(bucket).delete()
+        gcs_bucket = gcp.storage.bucket(bucket)
+        if gcs_bucket.exists():
+          gcs_bucket.delete()
+        else:
+          errs.append("%s does not exist" % item)
       else:
         raise Exception('Invalid name %s' % item)
     except Exception as e:

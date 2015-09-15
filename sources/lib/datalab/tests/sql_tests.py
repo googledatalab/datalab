@@ -18,19 +18,19 @@ import unittest
 
 # import Python so we can mock the parts we need to here.
 import IPython
-IPython.core.magic.register_line_cell_magic = mock.Mock()
-IPython.core.magic.register_line_magic = mock.Mock()
-IPython.core.magic.register_cell_magic = mock.Mock()
+
+def noopDecorator(func):
+  return func
+
+IPython.core.magic.register_line_cell_magic = noopDecorator
+IPython.core.magic.register_line_magic = noopDecorator
+IPython.core.magic.register_cell_magic = noopDecorator
 IPython.get_ipython = mock.Mock()
 
 import gcp.data
 import gcp.datalab
 
 class TestCases(unittest.TestCase):
-
-  def test_stub(self):
-    # TODO(gram): add some real tests
-    pass
 
   def test_split_cell(self):
     # TODO(gram): add tests for argument parser.
@@ -82,3 +82,15 @@ class TestCases(unittest.TestCase):
     self.assertEquals('SELECT 3 AS x', m.q1.sql)
     self.assertEquals('SELECT * FROM $q1', m.__dict__[gcp.data.SqlModule._SQL_MODULE_MAIN].sql)
     self.assertEquals('SELECT * FROM $q1', m.__dict__[gcp.data.SqlModule._SQL_MODULE_LAST].sql)
+
+  def test_arguments(self):
+    # TODO(gram): complete this test
+    pass
+
+  def test_date(self):
+    # TODO(gram): complete this test
+    pass
+
+  def test_sql_cell(self):
+    # TODO(gram): complete this test
+    pass

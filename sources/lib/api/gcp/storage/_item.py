@@ -55,8 +55,8 @@ class ItemMetadata(object):
   @property
   def updated_on(self):
     """Gets the updated timestamp of the item."""
-    s = self._info['updated']
-    return dateutil.parser.parse(s)
+    s = self._info.get('updated', None)
+    return dateutil.parser.parse(s) if s else None
 
 
 class Item(object):
@@ -130,7 +130,7 @@ class Item(object):
     """
     if self._info is None:
      self._info = self._api.objects_get(self._bucket, self._key)
-    return ItemMetadata(self._info)
+    return ItemMetadata(self._info) if self._info else None
 
   def read_from(self):
     """Reads the content of this item as text.

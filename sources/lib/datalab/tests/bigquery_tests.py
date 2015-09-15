@@ -18,9 +18,13 @@ import unittest
 
 # import Python so we can mock the parts we need to here.
 import IPython
-IPython.core.magic.register_line_cell_magic = mock.Mock()
-IPython.core.magic.register_line_magic = mock.Mock()
-IPython.core.magic.register_cell_magic = mock.Mock()
+
+def noopDecorator(func):
+  return func
+
+IPython.core.magic.register_line_cell_magic = noopDecorator
+IPython.core.magic.register_line_magic = noopDecorator
+IPython.core.magic.register_cell_magic = noopDecorator
 IPython.get_ipython = mock.Mock()
 
 import gcp.bigquery
@@ -65,3 +69,23 @@ function(r, emitFn) {
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
     return gcp.Context(project_id, creds)
+
+  def test_sample_cell(self):
+    # TODO(gram): complete this test
+    pass
+
+  def test_udf_cell(self):
+    # TODO(gram): complete this test
+    pass
+
+  def test_get_schema(self):
+    # TODO(gram): complete this test
+    pass
+
+  def test_get_table(self):
+    # TODO(gram): complete this test
+    pass
+
+  def test_table_viewer(self):
+    # TODO(gram): complete this test
+    pass
