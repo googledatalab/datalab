@@ -25,10 +25,11 @@ import logging = require('./logging');
 import path = require('path');
 
 var syncRequests: common.Map<number> = {};
-var MIN_SYNC_INTERVAL: number = 10 * 1000;
+var MIN_SYNC_INTERVAL: number = 60 * 1000;
 var MAX_SYNC_RETRY: number = 30;
 
-function runWsyncSync(userDir: string, repoUrl: string, cb: common.Callback<number>) {
+function runWsyncSync(userDir: string, repoUrl: string,
+                      cb: common.Callback<number>) {
   var wsyncSyncArgs = [
     '-credential_helper',
     'git-credential-gcloud.sh',
@@ -39,20 +40,25 @@ function runWsyncSync(userDir: string, repoUrl: string, cb: common.Callback<numb
     userDir,
     repoUrl
   ];
-  var wsyncSyncProcess = childProcess.spawn('/wsync/wsync', wsyncSyncArgs, {env: process.env});
+  var wsyncSyncProcess =
+      childProcess.spawn('/wsync/wsync', wsyncSyncArgs, {env: process.env});
   wsyncSyncProcess.on('error', function(err: Error) {
     logging.getLogger().error(err, 'wsync sync failed.');
     cb && cb(err, -1);
   });
   wsyncSyncProcess.on('exit', function(code: number, signal: string) {
     if (code != 0) {
-      logging.getLogger().error('wsync sync failed. code: %d. signal: %s. stderr: %s', code, signal, wsyncSyncProcess.stderr);
+      logging.getLogger().error(
+          'wsync sync failed. code: %d. signal: %s. stderr: %s', code, signal,
+          wsyncSyncProcess.stderr);
     }
     cb && cb(null, code);
   });
 }
 
-function runWsyncCheckoutAndSync(userDir: string, repoUrl: string, workspaceName: string, cb: common.Callback<number>) {
+function runWsyncCheckoutAndSync(userDir: string, repoUrl: string,
+                                 workspaceName: string,
+                                 cb: common.Callback<number>) {
   var wsyncCheckoutArgs = [
     '-credential_helper',
     'git-credential-gcloud.sh',
@@ -62,14 +68,17 @@ function runWsyncCheckoutAndSync(userDir: string, repoUrl: string, workspaceName
     repoUrl,
     workspaceName
   ];
-  var wsyncCheckoutProcess = childProcess.spawn('/wsync/wsync', wsyncCheckoutArgs, {env: process.env});
+  var wsyncCheckoutProcess =
+      childProcess.spawn('/wsync/wsync', wsyncCheckoutArgs, {env: process.env});
   wsyncCheckoutProcess.on('error', function(err: Error) {
     logging.getLogger().error(err, 'wsync checkout failed.');
     cb && cb(err, -1);
   });
   wsyncCheckoutProcess.on('exit', function(code: number, signal: string) {
     if (code != 0) {
-      logging.getLogger().error('wsync checkout failed. code: %d. signal: %s. stderr: %s', code, signal, wsyncCheckoutProcess.stderr);
+      logging.getLogger().error(
+          'wsync checkout failed. code: %d. signal: %s. stderr: %s', code,
+          signal, wsyncCheckoutProcess.stderr);
       cb && cb(null, code);
       return;
     }
@@ -77,7 +86,9 @@ function runWsyncCheckoutAndSync(userDir: string, repoUrl: string, workspaceName
   });
 }
 
-function runEnsureDirAndSync(userDir: string, repoUrl: string, workspaceName: string, branch: string, cb: common.Callback<number>) {
+function runEnsureDirAndSync(userDir: string, repoUrl: string,
+                             workspaceName: string, branch: string,
+                             cb: common.Callback<number>) {
   var gitCloneArgs = ['clone', '-b', branch, repoUrl, userDir];
   var gitProcess = childProcess.spawn('git', gitCloneArgs, {env: process.env});
   gitProcess.on('error', function(err: Error) {
@@ -86,7 +97,9 @@ function runEnsureDirAndSync(userDir: string, repoUrl: string, workspaceName: st
   });
   gitProcess.on('exit', function(code: number, signal: string) {
     if (code != 0) {
-      logging.getLogger().error('git clone failed. code: %d. signal: %s. stderr: %s', code, signal, gitProcess.stderr);
+      logging.getLogger().error(
+          'git clone failed. code: %d. signal: %s. stderr: %s', code, signal,
+          gitProcess.stderr);
       cb && cb(null, code);
       return;
     }
@@ -94,7 +107,9 @@ function runEnsureDirAndSync(userDir: string, repoUrl: string, workspaceName: st
   });
 }
 
-export function syncNow(email: string, contentRootDir: string, projectId: string, moduleVersion: string, cb: common.Callback<number>) {
+export function syncNow(email: string, contentRootDir: string,
+                        projectId: string, moduleVersion: string,
+                        cb: common.Callback<number>) {
   var repoUrl = 'https://source.developers.google.com/p/' + projectId;
   var userDir = path.join(contentRootDir, email);
   var branch = 'datalab_' + moduleVersion;
@@ -106,27 +121,29 @@ export function syncNow(email: string, contentRootDir: string, projectId: string
   }
 }
 
-export function scheduleSync(email: string, contentRootDir: string, projectId: string, moduleVersion: string) {
+export function scheduleSync(email: string, contentRootDir: string,
+                             projectId: string, moduleVersion: string) {
   if (!syncRequests[email]) {
     syncRequests[email] = 1;
   }
   setTimeout(function() {
     if (syncRequests[email] != null) {
-      syncNow(email, contentRootDir, projectId, moduleVersion, 
-        function(e, code) {
-          if (code == 0) {
-            delete syncRequests[email];
-          } else {
-            syncRequests[email] = syncRequests[email] + 1;
-            if (syncRequests[email] < MAX_SYNC_RETRY) {
-              logging.getLogger().info('Reschedule sync.');
-              scheduleSync(email, contentRootDir, projectId, moduleVersion);
-            } else {
-              logging.getLogger().error('Sync has failed %d times. Give up.', MAX_SYNC_RETRY);
+      syncNow(
+          email, contentRootDir, projectId, moduleVersion, function(e, code) {
+            if (code == 0) {
               delete syncRequests[email];
+            } else {
+              syncRequests[email] = syncRequests[email] + 1;
+              if (syncRequests[email] < MAX_SYNC_RETRY) {
+                logging.getLogger().info('Reschedule sync.');
+                scheduleSync(email, contentRootDir, projectId, moduleVersion);
+              } else {
+                logging.getLogger().error('Sync has failed %d times. Give up.',
+                                          MAX_SYNC_RETRY);
+                delete syncRequests[email];
+              }
             }
-          }
-      });
+          });
     }
   }, MIN_SYNC_INTERVAL);
 }

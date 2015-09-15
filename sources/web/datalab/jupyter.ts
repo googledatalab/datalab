@@ -1,14 +1,18 @@
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except
  * in compliance with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express
+ * or implied. See the License for the specific language governing permissions
+ * and limitations under
  * the License.
  */
 
@@ -37,17 +41,20 @@ interface JupyterServer {
 }
 
 /**
- * Jupyter servers key'd by user id (each server is associated with a single user)
+ * Jupyter servers key'd by user id (each server is associated with a single
+ * user)
  */
 var jupyterServers: common.Map<JupyterServer> = {};
 var nextJupyterPort = 9000;
-
+var CONTENT_DIR = '/content';
 /**
  * Templates
  */
 var templates: common.Map<string> = {
-  'tree': fs.readFileSync(path.join(__dirname, 'templates', 'tree.html'), { encoding: 'utf8' }),
-  'nb': fs.readFileSync(path.join(__dirname, 'templates', 'nb.html'), { encoding: 'utf8' })
+  'tree': fs.readFileSync(path.join(__dirname, 'templates', 'tree.html'),
+                          {encoding: 'utf8'}),
+  'nb': fs.readFileSync(path.join(__dirname, 'templates', 'nb.html'),
+                        {encoding: 'utf8'})
 };
 
 /**
@@ -55,7 +62,8 @@ var templates: common.Map<string> = {
  */
 var appSettings: common.Settings;
 
-function pipeOutput(stream: NodeJS.ReadableStream, port: number, error: boolean) {
+function pipeOutput(stream: NodeJS.ReadableStream, port: number,
+                    error: boolean) {
   stream.setEncoding('utf8');
   stream.on('data', (data: string) => {
     // Jupyter generates a polling kernel message once every 3 seconds
@@ -75,15 +83,17 @@ function getUserId(request: http.ServerRequest): string {
       return userFromQuery;
     } else if (request.headers.cookie != null) {
       var cookies = request.headers.cookie.split(';');
-      for(var i = 0; i < cookies.length; ++i) {
+      for (var i = 0; i < cookies.length; ++i) {
         var parts = cookies[i].split('=');
-        if (parts.length == 2 && parts[0] == 'datalab_user' && parts[1].length > 0) {
+        if (parts.length == 2 && parts[0] == 'datalab_user' &&
+            parts[1].length > 0) {
           return parts[1];
         }
       }
     }
   }
-  return request.headers['x-appengine-user-email'] || appSettings.instanceUser || 'anonymous';
+  return request.headers['x-appengine-user-email'] ||
+         appSettings.instanceUser || 'anonymous';
 }
 
 /**
@@ -94,38 +104,32 @@ function createJupyterServer(userId: string): JupyterServer {
   var port = nextJupyterPort;
   nextJupyterPort++;
 
-  var userDir = path.join('/content', userId.replace('/', '_fsfs_'));
-  var server: JupyterServer = {
-    userId: userId,
-    port: port,
-    notebooks: userDir
-  };
+  var userDir = path.join(CONTENT_DIR, userId.replace('/', '_fsfs_'));
+  var server: JupyterServer = {userId: userId, port: port, notebooks: userDir};
 
   function exitHandler(code: number, signal: string): void {
-    logging.getLogger().error('Jupyter process %d for user %s exited due to signal: %s',
-                              server.childProcess.pid, userId, signal);
+    logging.getLogger().error(
+        'Jupyter process %d for user %s exited due to signal: %s',
+        server.childProcess.pid, userId, signal);
     delete jupyterServers[server.userId];
   }
 
-  var processArgs = [
-    '--port=' + server.port,
-    '--notebook-dir="' + server.notebooks + '"'
-  ];
+  var processArgs =
+      ['--port=' + server.port, '--notebook-dir="' + server.notebooks + '"'];
 
   processArgs = appSettings.jupyterArgs.slice().concat(processArgs);
 
   // TODO: Additional args that seem interesting to consider.
   // --KernelManager.autorestart=True
 
-  var processOptions = {
-    detached: false,
-    env: process.env
-  };
+  var processOptions = {detached: false, env: process.env};
 
-  server.childProcess = childProcess.spawn('jupyter', processArgs, processOptions);
+  server.childProcess =
+      childProcess.spawn('jupyter', processArgs, processOptions);
   server.childProcess.on('exit', exitHandler);
-  logging.getLogger().info('Jupyter process for user %s started with pid %d and args %j',
-                           userId, server.childProcess.pid, processArgs);
+  logging.getLogger().info(
+      'Jupyter process for user %s started with pid %d and args %j', userId,
+      server.childProcess.pid, processArgs);
 
   // Capture the output, so it can be piped for logging.
   pipeOutput(server.childProcess.stdout, server.port, /* error */ false);
@@ -143,39 +147,36 @@ function createJupyterServer(userId: string): JupyterServer {
   return server;
 }
 
-function getServer(request: http.ServerRequest, cb: common.Callback<JupyterServer>): void {
+function getServer(request: http.ServerRequest,
+                   cb: common.Callback<JupyterServer>): void {
   var userId = getUserId(request);
   var server = jupyterServers[userId];
 
   if (!server) {
-    wsync.syncNow(getUserId(request), '/content/', appSettings.projectId, appSettings.moduleVersion,
-      function(e, number) {
-        if (number != 0) {
-          wsync.scheduleSync(getUserId(request), '/content/', appSettings.projectId, appSettings.moduleVersion);
-        }
-        try {
-          server = createJupyterServer(userId);
-          if (server) {
-          tcp.waitUntilUsed(server.port).then(
-            function() {
-              jupyterServers[userId] = server;
-              cb(null, server);
-            },
-            function(e) {
-              cb(e, null);
-            });
-          }
-        }
-        catch (e) {
-          cb(e, null);
-        }
-      }
-    );
-  }
-  else {
-    process.nextTick(function() {
-      cb(null, server);
-    });
+    wsync.syncNow(getUserId(request), CONTENT_DIR, appSettings.projectId,
+                  appSettings.moduleVersion, function(e, number) {
+                    if (number != 0) {
+                      wsync.scheduleSync(getUserId(request), CONTENT_DIR,
+                                         appSettings.projectId,
+                                         appSettings.moduleVersion);
+                    }
+                    try {
+                      server = createJupyterServer(userId);
+                      if (server) {
+                        tcp.waitUntilUsed(server.port)
+                            .then(
+                                function() {
+                                  jupyterServers[userId] = server;
+                                  cb(null, server);
+                                },
+                                function(e) { cb(e, null); });
+                      }
+                    } catch (e) {
+                      cb(e, null);
+                    }
+                  });
+  } else {
+    process.nextTick(function() { cb(null, server); });
   }
 }
 
@@ -220,15 +221,15 @@ export function stop(): void {
 
     try {
       jupyterProcess.kill('SIGHUP');
-    }
-    catch (e) {
+    } catch (e) {
     }
   }
 
   jupyterServers = {};
 }
 
-export function handleRequest(request: http.ServerRequest, response: http.ServerResponse) {
+export function handleRequest(request: http.ServerRequest,
+                              response: http.ServerResponse) {
   if (appSettings.allowUserFromQuery) {
     var userFromQuery = url.parse(request.url, true).query['datalab_user'];
     if (userFromQuery != null) {
@@ -242,37 +243,41 @@ export function handleRequest(request: http.ServerRequest, response: http.Server
 
       response.statusCode = 500;
       response.end();
-    }
-    else {
+    } else {
       server.proxy.web(request, response);
     }
   });
 }
 
 
-function sendTemplate(key: string, data: common.Map<string>, response: http.ServerResponse) {
+function sendTemplate(key: string, data: common.Map<string>,
+                      response: http.ServerResponse) {
   var template = templates[key];
 
   // NOTE: Uncomment to use external templates mapped into the container.
-  //       This is only useful when actively developing the templates themselves.
-  // var template = fs.readFileSync('/nb/sources/' + key + '.html', { encoding: 'utf8' });
+  //       This is only useful when actively developing the templates
+  //       themselves.
+  // var template = fs.readFileSync('/nb/sources/' + key + '.html', { encoding:
+  // 'utf8' });
 
   // Replace <%name%> placeholders with actual values.
   // TODO: Error handling if template placeholders are out-of-sync with
   //       keys in passed in data object.
-  var htmlContent = template.replace(/\<\%(\w+)\%\>/g, function(match, name) {
-    return data[name];
-  });
+  var htmlContent = template.replace(
+      /\<\%(\w+)\%\>/g, function(match, name) { return data[name]; });
 
-  response.writeHead(200, { 'Content-Type': 'text/html' });
+  response.writeHead(200, {'Content-Type': 'text/html'});
   response.end(htmlContent);
 }
 
 function responseHandler(proxyResponse: http.ClientResponse,
-                         request: http.ServerRequest, response: http.ServerResponse) {
+                         request: http.ServerRequest,
+                         response: http.ServerResponse) {
   if (proxyResponse.headers['access-control-allow-origin'] !== undefined) {
-    // Delete the allow-origin = * header that is sent (likely as a result of a workaround
-    // notebook configuration to allow server-side websocket connections that are
+    // Delete the allow-origin = * header that is sent (likely as a result of a
+    // workaround
+    // notebook configuration to allow server-side websocket connections that
+    // are
     // interpreted by Jupyter as cross-domain).
     delete proxyResponse.headers['access-control-allow-origin'];
   }
@@ -280,7 +285,8 @@ function responseHandler(proxyResponse: http.ClientResponse,
   if (proxyResponse.statusCode != 200) {
     return;
   }
-  // Set a cookie to provide information about the project and authenticated user to the client.
+  // Set a cookie to provide information about the project and authenticated
+  // user to the client.
   // Ensure this happens only for page requests, rather than for API requests.
   var path = url.parse(request.url).pathname;
   if ((path.indexOf('/tree') == 0) || (path.indexOf('/notebooks') == 0)) {
@@ -301,8 +307,7 @@ function responseHandler(proxyResponse: http.ClientResponse,
       templateData['notebookPath'] = path.substr(6);
 
       sendTemplate('tree', templateData, response);
-    }
-    else {
+    } else {
       // stripping off the /notebooks/ from the path
       templateData['notebookPath'] = path.substr(11);
       templateData['notebookName'] = path.substr(path.lastIndexOf('/') + 1);
@@ -311,7 +316,8 @@ function responseHandler(proxyResponse: http.ClientResponse,
     }
 
     // Suppress further writing to the response to prevent sending response
-    // from the notebook server. There is no way to communicate that, so hack around the
+    // from the notebook server. There is no way to communicate that, so hack
+    // around the
     // limitation, by stubbing out all the relevant methods on the response with
     // no-op methods.
     response.setHeader = placeHolder;
@@ -321,15 +327,19 @@ function responseHandler(proxyResponse: http.ClientResponse,
   }
 
   if (path.indexOf('/api/contents') == 0) {
-    wsync.scheduleSync(getUserId(request), '/content/', appSettings.projectId, appSettings.moduleVersion);
+    wsync.scheduleSync(getUserId(request), CONTENT_DIR, appSettings.projectId,
+                       appSettings.moduleVersion);
   }
 }
 
-function errorHandler(error: Error, request: http.ServerRequest, response: http.ServerResponse) {
+function errorHandler(error: Error, request: http.ServerRequest,
+                      response: http.ServerResponse) {
   logging.getLogger().error(error, 'Jupyter server returned error.')
 
-  response.writeHead(500, 'Internal Server Error');
+      response.writeHead(500, 'Internal Server Error');
   response.end();
 }
 
-function placeHolder(): boolean { return false; }
+function placeHolder(): boolean {
+  return false;
+}
