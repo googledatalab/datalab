@@ -143,9 +143,17 @@ class SqlStatement(object):
                           e.args[0])
 
         if isinstance(value, types.ModuleType):
-          value = _sql_module.SqlModule.get_default_query_from_module(value)
+          # Try treat it as a SQL module.
+          last_item = _sql_module.SqlModule.get_default_query_from_module(value)
+          if last_item:
+            value = last_item
+          else:
+            raise Exception('Invalid module reference %s' % variable)
 
         if '_repr_code_' in dir(value):
+          # This will expand UDFs. We can't just test the type as gcp.data should have
+          # no dependency on gcp.bigquery. We still need to fall through and inline-expand
+          # the _repr_sql_() output below.
           code.append(value._repr_code_())
 
         if isinstance(value, SqlStatement):
@@ -157,7 +165,7 @@ class SqlStatement(object):
           value = value._repr_sql_()
         elif (type(value) == str) or (type(value) == unicode):
           value = '"' + value.replace('"', '\\"') + '"'
-        else:
+        elif not isinstance(value, basestring):
           value = str(value)
         parts.append(value)
       elif literal:

@@ -43,7 +43,7 @@ class FunctionCall(object):
     return self._sql
 
   @property
-  def js(self):
+  def code(self):
     """Gets the underlying JS representation of this UDF object."""
     return self._code
 
@@ -56,11 +56,7 @@ class FunctionCall(object):
     return self._sql
 
   def _repr_code_(self):
-    """Returns a JS representation of the UDF object.
-
-    Returns:
-      A JS string that can be submitted with a BQ Query.
-    """
+    """Gets the underlying JS representation of this UDF object."""
     return self._code
 
   @staticmethod
