@@ -42,6 +42,18 @@ class TestCases(unittest.TestCase):
  * @param {{word: string, corpus: string, word_count: integer}} r
  * @param function({{word: string, corpus: string, count: integer}}) emitFn
  */
+word_filter(r, emitFn) {
+  if (r.word.match(/[shakespeare]/) !== null) {
+    var result = { word: r.word, corpus: r.corpus, count: r.word_count };
+    emitFn(result);
+  }
+}
+"""
+    processed_body = \
+"""/**
+ * @param {{word: string, corpus: string, word_count: integer}} r
+ * @param function({{word: string, corpus: string, count: integer}}) emitFn
+ */
 function(r, emitFn) {
   if (r.word.match(/[shakespeare]/) !== null) {
     var result = { word: r.word, corpus: r.corpus, count: r.word_count };
@@ -51,15 +63,15 @@ function(r, emitFn) {
 """
     mock_create_api.return_value = self._create_api()
     mock_notebook_environment.return_value = env
-    gcp.datalab._bigquery._udf_cell({'name': 'word_filter'}, cell_body)
-    udf = env['word_filter']
+    gcp.datalab._bigquery._udf_cell({'module': 'udfs'}, cell_body)
+    udf = env['udfs'].__dict__['word_filter']
     self.assertIsNotNone(udf)
     self.assertEquals('word_filter', udf._name)
     self.assertEquals([('word', 'string'), ('corpus', 'string'), ('word_count', 'integer')],
                       udf._inputs)
     self.assertEquals([('word', 'string'), ('corpus', 'string'), ('count', 'integer')],
                       udf._outputs)
-    self.assertEquals(cell_body, udf._implementation)
+    self.assertEquals(processed_body, udf._implementation)
 
   def _create_api(self):
     context = self._create_context()
@@ -71,10 +83,6 @@ function(r, emitFn) {
     return gcp.Context(project_id, creds)
 
   def test_sample_cell(self):
-    # TODO(gram): complete this test
-    pass
-
-  def test_udf_cell(self):
     # TODO(gram): complete this test
     pass
 

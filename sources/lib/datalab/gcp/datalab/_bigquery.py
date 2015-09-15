@@ -15,7 +15,9 @@
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 
 import json
+import imp
 import re
+import sys
 import IPython
 import IPython.core.display
 import IPython.core.magic
@@ -45,8 +47,8 @@ def _create_sample_subparser(parser):
 
 
 def _create_udf_subparser(parser):
-  udf_parser = parser.subcommand('udf', 'create a named Javascript UDF')
-  udf_parser.add_argument('-n', '--name', help='the name for this UDF', required=True)
+  udf_parser = parser.subcommand('udf', 'create a named Javascript UDF module')
+  udf_parser.add_argument('-m', '--module', help='the name for this UDF module', required=True)
   return udf_parser
 
 
@@ -349,7 +351,7 @@ def _udf_cell(args, js):
   """Implements the bigquery_udf cell magic for ipython notebooks.
 
   The supported syntax is:
-  %%bigquery udf --name <var>
+  %%bigquery udf --module <name>
   <js function>
 
   Args:
@@ -360,41 +362,61 @@ def _udf_cell(args, js):
     The results of executing the UDF converted to a dataframe if no variable
     was specified. None otherwise.
   """
-  variable_name = args['name']
-  if not variable_name:
-    raise Exception("Declaration must be of the form %%bigquery udf <variable name>")
+  module_name = args['module']
+  if not module_name:
+    raise Exception("Declaration must be of the form %%bigquery udf --module <name>")
 
-  # Parse out the input and output specification
   spec_pattern = r'\{\{([^}]+)\}\}'
   spec_part_pattern = r'[a-z_][a-z0-9_]*'
+  fn_name_pattern = r'\n([A-Za-z_]\w*)\s*\('
+  module = imp.new_module(module_name)
 
-  specs = re.findall(spec_pattern, js)
-  if len(specs) < 2:
-    raise Exception('The JavaScript must declare the input row and output emitter parameters '
-                    'using valid jsdoc format comments.\n'
-                    'The input row param declaration must be typed as {{field:type, field2:type}} '
-                    'and the output emitter param declaration must be typed as '
-                    'function({{field:type, field2:type}}.')
+  # Split the cell into chunks that start with '/**' in the first column position.
+  # parse the input and output specification, and extract the function name and
+  # replace it with 'function'. For now we only allow UDF functions, not support
+  # functions, so if there is no input/output specification we raise an exception.
+  chunks = ['/**%s' % f for f in ('\n%s' % js).split('\n/**') if len(f.strip())]
+  for chunk in chunks:
+    m = re.search(fn_name_pattern, chunk)
+    if m:
+      fn_name = m.group(1)
+      if fn_name == 'function':
+        raise Exception('UDF functions must be named and cannot be anonymous')
+    else:
+      raise Exception('Couldn\'t find function')  # TODO(gram): make more actionable
 
-  inputs = []
-  input_spec_parts = re.findall(spec_part_pattern, specs[0], flags=re.IGNORECASE)
-  if len(input_spec_parts) % 2 != 0:
-    raise Exception('Invalid input row param declaration. The jsdoc type expression must '
-                    'define an object with field and type pairs.')
-  for n, t in zip(input_spec_parts[0::2], input_spec_parts[1::2]):
-    inputs.append((n, t))
+    chunk = chunk.replace('\n%s' % fn_name, '\nfunction')
 
-  outputs = []
-  output_spec_parts = re.findall(spec_part_pattern, specs[1], flags=re.IGNORECASE)
-  if len(output_spec_parts) % 2 != 0:
-    raise Exception('Invalid output emitter param declaration. The jsdoc type expression must '
-                    'define a function accepting an an object with field and type pairs.')
-  for n, t in zip(output_spec_parts[0::2], output_spec_parts[1::2]):
-    outputs.append((n, t))
+    header = chunk.split('*/')[0]
+    specs = re.findall(spec_pattern, header)
+    if len(specs) < 2:
+      raise Exception('Each UDF must declare the input row and output emitter parameters '
+                      'using valid jsdoc format comments.\n'
+                      'The input row param declaration must be typed as {{field:type, field2:type}} '
+                      'and the output emitter param declaration must be typed as '
+                      'function({{field:type, field2:type}}.')
 
-  # Finally build the UDF object
-  udf = gcp.bigquery.udf(inputs, outputs, variable_name, js)
-  _notebook_environment()[variable_name] = udf
+    inputs = []
+    input_spec_parts = re.findall(spec_part_pattern, specs[0], flags=re.IGNORECASE)
+    if len(input_spec_parts) % 2 != 0:
+      raise Exception('Invalid input row param declaration. The jsdoc type expression must '
+                      'define an object with field and type pairs.')
+    for n, t in zip(input_spec_parts[0::2], input_spec_parts[1::2]):
+      inputs.append((n, t))
+
+    outputs = []
+    output_spec_parts = re.findall(spec_part_pattern, specs[1], flags=re.IGNORECASE)
+    if len(output_spec_parts) % 2 != 0:
+      raise Exception('Invalid output emitter param declaration. The jsdoc type expression must '
+                      'define a function accepting an an object with field and type pairs.')
+    for n, t in zip(output_spec_parts[0::2], output_spec_parts[1::2]):
+      outputs.append((n, t))
+
+    # Finally build the UDF object
+    module.__dict__[fn_name] = gcp.bigquery.udf(inputs, outputs, fn_name, chunk)
+
+  sys.modules[module_name] = module
+  exec 'import %s' % module_name in _notebook_environment()
 
 
 def _execute_cell(args, code):

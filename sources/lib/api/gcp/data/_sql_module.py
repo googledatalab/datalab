@@ -62,7 +62,7 @@ class SqlModule(object):
 
   @staticmethod
   def get_default_query_from_module(module):
-    """ Given a %%sql module return the default (last) query for the module.
+    """ Given a %%sql module return the default/last query for the module.
 
     Args:
       module: the %%sql module.
