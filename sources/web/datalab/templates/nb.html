@@ -30,12 +30,12 @@
         <a href="/tree"><img src="/static/logo.png" alt="Google Cloud DataLab" /></a>
       </span>
       <span id="save_widget" class="pull-left save_widget">
-        <button class="btn"><span id="notebook_name" class="filename"></span></button>
+        <button class="btn" title="Rename notebook"><span id="notebook_name" class="filename"></span></button>
         <span class="autosave_status"></span>
       </span>
       <div class="btn-toolbar pull-right">
         <div class="btn-group">
-          <button class="btn" data-toggle="dropdown">
+          <button class="btn" data-toggle="dropdown" title="Help Links">
             <span class="fa fa-question-circle"></span>
           </button>
           <ul class="dropdown-menu dropdown-menu-right">
@@ -53,7 +53,7 @@
           &nbsp;&nbsp;
         </div>
         <div class="btn-group">
-          <button class="btn" data-toggle="dropdown">
+          <button class="btn" data-toggle="dropdown" title="User and Project Information">
             <span class="fa fa-user"></span>
           </button>
           <ul class="dropdown-menu dropdown-menu-right">
@@ -66,13 +66,13 @@
           &nbsp;&nbsp;
         </div>
         <div class="btn-group">
-          <button id="feedbackButton">
+          <button id="feedbackButton" title="Provide feedback">
             <span class="fa fa-comment"></span>
           </button>
           &nbsp;&nbsp;
         </div>
         <div class="btn-group">
-          <button id="aboutButton">
+          <button id="aboutButton" title="About Google Cloud Datalab">
             <span class="fa fa-info-circle"></span>
           </button>
           &nbsp;&nbsp;
@@ -84,7 +84,7 @@
         <div id="mainToolbar">
           <div class="btn-toolbar pull-left">
             <div class="btn-group">
-              <button type="button" class="btn" data-toggle="dropdown">
+              <button type="button" class="btn" data-toggle="dropdown" title="Notebook commands">
                 <span class="fa fa-book"></span> Notebook <span class="caret"></span>
               </button>
               <ul class="dropdown-menu">
@@ -101,24 +101,24 @@
           </div>
           <div class="btn-toolbar pull-right">
             <div class="btn-group">
-              <button id="addCodeCellButton" type="button" class="btn">
+              <button id="addCodeCellButton" type="button" class="btn" title="Append a new code cell">
                 <span class="fa fa-plus-square"></span> Add Code
               </button>
-              <button id="addMarkdownCellButton" type="button" class="btn">
+              <button id="addMarkdownCellButton" type="button" class="btn" title="Append a new markdown cell">
                 <span class="fa fa-plus-square"></span> Add Markdown
               </button>
-              <button id="deleteCellButton" type="button" class="btn">
+              <button id="deleteCellButton" type="button" class="btn" title="Delete the selected cell">
                 <span class="fa fa-minus-square"></span> Delete
               </button>
-              <button id="moveCellUpButton" type="button" class="btn">
+              <button id="moveCellUpButton" type="button" class="btn" title="Move the selected cell up">
                 <span class="fa fa-chevron-up"></span> Move Up
               </button>
-              <button id="moveCellDownButton" type="button" class="btn">
+              <button id="moveCellDownButton" type="button" class="btn" title="Move the selected cell down">
                 <span class="fa fa-chevron-down"></span> Move Down
               </button>
             </div>
             <div class="btn-group">
-              <button id="runButton" type="button" class="btn">
+              <button id="runButton" type="button" class="btn" title="Run the selected cell">
                 <span class="fa fa-play"></span> Run
               </button>
               <button type="button" class="btn dropdown-toggle" data-toggle="dropdown">
@@ -131,7 +131,7 @@
               </ul>
             </div>
             <div class="btn-group">
-              <button id="clearButton" type="button" class="btn">
+              <button id="clearButton" type="button" class="btn" title="Clear outputs of the selected cell">
                 <span class="fa fa-minus-square-o"></span> Clear
               </button>
               <button type="button" class="btn dropdown-toggle" data-toggle="dropdown">
@@ -142,7 +142,7 @@
               </ul>
             </div>
             <div class="btn-group">
-              <button id="resetSessionButton" type="button" class="btn">
+              <button id="resetSessionButton" type="button" class="btn" title="Restart the current notebook session">
                 <i id="kernel_indicator_icon"></i> Reset Session
               </button>
             </div>
@@ -161,7 +161,9 @@
         <div id="sidebarToolbar">
           <div class="btn-toolbar pull-left">
             <div class="btn-group">
-              <button id="toggleSidebarButton" type="button" class="btn"><span class="fa fa-chevron-right fa-flip-horizontal"></span></button>
+              <button id="toggleSidebarButton" type="button" class="btn" title="Toggle the size of the sidebar">
+                <span class="fa fa-chevron-right fa-flip-horizontal"></span>
+              </button>
             </div>
             <div class="btn-group">
               <button id="navigationButton" type="button" class="btn active">Navigation</button>

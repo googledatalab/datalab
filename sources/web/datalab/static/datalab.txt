@@ -12,10 +12,12 @@ http://www.apache.org/licenses/LICENSE-2.0.html
 # Instructions for Browsing the Docker container's Content
 ==============================================================================
 You can pull and run the docker container locally, and open a shell within the
-container using the following commands:
+container using the following commands. For example, to view licenses, use the
+following commands:
 
 docker pull gcr.io/cloud_datalab/datalab:latest
 docker run -i -t gcr.io/cloud_datalab/datalab:latest --entrypoint="/bin/bash"
+cat /datalab/license.txt
 
 
 # Software Listing
