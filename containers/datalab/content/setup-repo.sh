@@ -1,0 +1,60 @@
+#!/bin/sh
+# Copyright 2014 Google Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This script sets up cloud repository, including creating master branch,
+# datalab branch, and named instance branch if they do not exist.
+
+git config --global user.email "$GAE_LONG_APP_ID@appspot.gserviceaccount.com"
+git config --global credential.helper gcloud.sh
+
+create_branch ( ) {
+  git ls-remote --heads "https://source.developers.google.com/p/$GAE_LONG_APP_ID/" 2>&1 | grep "refs/heads/$1" > /dev/null
+  if [ $? != "0" ]; then
+    BRANCHDIR="$1_branch"
+    echo "creating $1 branch"
+    if [ -d $BRANCHDIR ]; then
+      rm -r -f $BRANCHDIR
+    fi
+    git init $BRANCHDIR
+    cd $BRANCHDIR
+    if [ $1 = "datalab" ]; then
+      gsutil cp gs://sample_notebooks/* .
+      git add .
+      git commit -m "sample notebooks"
+      git push https://source.developers.google.com/p/$GAE_LONG_APP_ID/ master:$1
+    elif [ $1 = "master" ]; then
+      git commit  --allow-empty -m "$1 creation"
+      git push https://source.developers.google.com/p/$GAE_LONG_APP_ID/ master:$1
+    else
+      case $1 in
+        datalab_*) 
+          git fetch https://source.developers.google.com/p/$GAE_LONG_APP_ID/ datalab:$1
+          git push https://source.developers.google.com/p/$GAE_LONG_APP_ID/ $1:$1
+          ;;
+      esac
+    fi
+    cd ..
+    rm -r -f $BRANCHDIR
+    git ls-remote --heads "https://source.developers.google.com/p/$GAE_LONG_APP_ID/" 2>&1 | grep "refs/heads/$1" > /dev/null
+    if [ $? != "0" ]; then
+      echo "failed creating $1 branch"
+      exit 1
+    fi
+  fi
+}
+
+create_branch "master"
+create_branch "datalab"
+create_branch "datalab_$GAE_MODULE_VERSION"

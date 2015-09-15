@@ -26,6 +26,7 @@ import net = require('net');
 import path = require('path');
 import tcp = require('tcp-port-used');
 import url = require('url');
+import wsync = require('./wsync');
 
 interface JupyterServer {
   userId: string;
@@ -68,6 +69,20 @@ function pipeOutput(stream: NodeJS.ReadableStream, port: number, error: boolean)
 }
 
 function getUserId(request: http.ServerRequest): string {
+  if (appSettings.allowUserFromQuery) {
+    var userFromQuery = url.parse(request.url, true).query['datalab_user'];
+    if (userFromQuery != null && userFromQuery.length > 0) {
+      return userFromQuery;
+    } else if (request.headers.cookie != null) {
+      var cookies = request.headers.cookie.split(';');
+      for(var i = 0; i < cookies.length; ++i) {
+        var parts = cookies[i].split('=');
+        if (parts.length == 2 && parts[0] == 'datalab_user' && parts[1].length > 0) {
+          return parts[1];
+        }
+      }
+    }
+  }
   return request.headers['x-appengine-user-email'] || appSettings.instanceUser || 'anonymous';
 }
 
@@ -79,11 +94,11 @@ function createJupyterServer(userId: string): JupyterServer {
   var port = nextJupyterPort;
   nextJupyterPort++;
 
-  // TODO: Implement per-user notebook directories
+  var userDir = path.join('/content', userId.replace('/', '_fsfs_'));
   var server: JupyterServer = {
     userId: userId,
     port: port,
-    notebooks: '/content'
+    notebooks: userDir
   };
 
   function exitHandler(code: number, signal: string): void {
@@ -133,22 +148,29 @@ function getServer(request: http.ServerRequest, cb: common.Callback<JupyterServe
   var server = jupyterServers[userId];
 
   if (!server) {
-    try {
-      server = createJupyterServer(userId);
-      if (server) {
-        tcp.waitUntilUsed(server.port).then(
-           function() {
-             jupyterServers[userId] = server;
-             cb(null, server);
-           },
-           function(e) {
-             cb(e, null);
-           });
+    wsync.syncNow(getUserId(request), '/content/', appSettings.projectId, appSettings.moduleVersion,
+      function(e, number) {
+        if (number != 0) {
+          wsync.scheduleSync(getUserId(request), '/content/', appSettings.projectId, appSettings.moduleVersion);
+        }
+        try {
+          server = createJupyterServer(userId);
+          if (server) {
+          tcp.waitUntilUsed(server.port).then(
+            function() {
+              jupyterServers[userId] = server;
+              cb(null, server);
+            },
+            function(e) {
+              cb(e, null);
+            });
+          }
+        }
+        catch (e) {
+          cb(e, null);
+        }
       }
-    }
-    catch (e) {
-      cb(e, null);
-    }
+    );
   }
   else {
     process.nextTick(function() {
@@ -207,6 +229,13 @@ export function stop(): void {
 }
 
 export function handleRequest(request: http.ServerRequest, response: http.ServerResponse) {
+  if (appSettings.allowUserFromQuery) {
+    var userFromQuery = url.parse(request.url, true).query['datalab_user'];
+    if (userFromQuery != null) {
+      response.setHeader('set-cookie', 'datalab_user=' + userFromQuery);
+    }
+  }
+
   getServer(request, function(e, server) {
     if (e) {
       logging.getLogger().error(e, 'Unable to get or start Jupyter server.');
@@ -251,7 +280,6 @@ function responseHandler(proxyResponse: http.ClientResponse,
   if (proxyResponse.statusCode != 200) {
     return;
   }
-
   // Set a cookie to provide information about the project and authenticated user to the client.
   // Ensure this happens only for page requests, rather than for API requests.
   var path = url.parse(request.url).pathname;
@@ -290,6 +318,10 @@ function responseHandler(proxyResponse: http.ClientResponse,
     response.writeHead = placeHolder;
     response.write = placeHolder;
     response.end = placeHolder;
+  }
+
+  if (path.indexOf('/api/contents') == 0) {
+    wsync.scheduleSync(getUserId(request), '/content/', appSettings.projectId, appSettings.moduleVersion);
   }
 }
 

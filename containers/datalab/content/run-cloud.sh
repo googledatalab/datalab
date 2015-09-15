@@ -18,6 +18,12 @@
 
 export DATALAB_ENV=cloud
 
+# Setup cloud repository.
+/datalab/setup-repo.sh
+if [ $? != "0" ]; then
+  exit 1
+fi
+
 # Start the DataLab server
 forever /datalab/web/app.js
 

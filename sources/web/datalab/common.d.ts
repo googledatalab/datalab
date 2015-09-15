@@ -23,7 +23,19 @@ declare module common {
     instanceUser: string;
 
     projectNumber: string;
+
+    /**
+     * Id of the cloud project that the datalab instance runs in.
+     */
     projectId: string;
+
+    /**
+     * Module version of this datalab instance in the cloud project.
+     * It is also used as part of the name of the cloud source repository
+     * branch that stores all notebooks created from this datalab instance.
+     */
+    moduleVersion: string;
+
     versionId: string;
     instanceId: string;
     analyticsId: string;
@@ -32,6 +44,11 @@ declare module common {
     serverPort: number;
 
     jupyterArgs: string[];
+
+    /**
+     * If set, will try get userId from query string such as "user=user1@domain.com"
+     */
+    allowUserFromQuery: boolean;
   }
 
   interface Map<T> {

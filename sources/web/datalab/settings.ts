@@ -62,6 +62,8 @@ export function loadSettings(): common.Settings {
     settings.instanceId = metadata.instanceId;
     settings.versionId = process.env['DATALAB_VERSION'] || '';
     settings.projectId = process.env['GAE_LONG_APP_ID'] || process.env['DATALAB_PROJECT_ID'] || '';
+    settings.moduleVersion = process.env['GAE_MODULE_VERSION'] || '';
+    settings.allowUserFromQuery = (env == 'local');
 
     if (env == 'cloud') {
       var metadataCommand =
