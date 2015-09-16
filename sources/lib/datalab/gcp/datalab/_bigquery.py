@@ -27,6 +27,9 @@ import _html
 import _utils
 
 
+_pipelines = {}
+
+
 def _create_sample_subparser(parser):
   sample_parser = parser.subcommand('sample',
       'execute a BigQuery SQL statement and display results or create a named query object')
@@ -72,6 +75,15 @@ def _create_execute_subparser(parser, command):
   execute_parser.add_argument('-d', '--destination', help='target table name',
                               nargs='?')
   return execute_parser
+
+
+def _create_pipeline_subparser(parser, command):
+  pipeline_parser = parser.subcommand(command,
+      'define a BigQuery SQL pipeline that can be deployed\n' +
+      'The current default expanded SQL and dry run results will be shown for validation.')
+  pipeline_parser.add_argument('-q', '--sql', help='name of query to run', required=True)
+  pipeline_parser.add_argument('-n', '--name', help='pipeline name', required=True)
+  return pipeline_parser
 
 
 def _create_table_subparser(parser):
@@ -140,6 +152,22 @@ def _create_load_subparser(parser):
   return load_parser
 
 
+def _create_deploy_subparser(parser):
+  deploy_parser = parser.subcommand('deploy', 'deploy a BigQuery pipeline\n' +
+                                    'For now this just runs the job in the notebook.')
+  deploy_parser.add_argument('-p', '--pipeline', help='the pipeline to deploy',
+                             required=True)
+  # TODO(gram): Once we use real deployment target should be a required parameter.
+  deploy_parser.add_argument('-t', '--target', help='the table to use for the results')
+  deploy_parser.add_argument('-m', '--mode', help='table creation mode', default='create',
+                             choices=['create', 'append', 'overwrite'])
+  deploy_parser.add_argument('-l', '--large', help='allow large results',
+                             action='store_true')
+  deploy_parser.add_argument('-nc', '--nocache', help='don\'t used previously cached results',
+                             action='store_true')
+  return deploy_parser
+
+
 def _create_bigquery_parser():
   """ Create the parser for the %bigquery magics.
 
@@ -177,8 +205,7 @@ def _create_bigquery_parser():
                                                 execute_parser, _execute_cell))
 
   # %%bigquery pipeline
-  pipeline_parser = _create_execute_subparser(parser, 'pipeline')
-  pipeline_parser.add_argument('-n', '--name', help='pipeline name')
+  pipeline_parser = _create_pipeline_subparser(parser, 'pipeline')
   pipeline_parser.set_defaults(
     func=lambda args, cell: _dispatch_handler(args, cell,
                                               pipeline_parser, _pipeline_cell))
@@ -219,6 +246,12 @@ def _create_bigquery_parser():
   load_parser = _create_load_subparser(parser)
   load_parser.set_defaults(
       func=lambda args, cell: _dispatch_handler(args, cell, load_parser, _load_cell))
+
+  # %bigquery deploy
+  deploy_parser = _create_deploy_subparser(parser)
+  deploy_parser.set_defaults(
+      func=lambda args, cell: _dispatch_handler(args, cell, deploy_parser, _deploy_cell))
+
   return parser
 
 
@@ -410,9 +443,22 @@ def _pipeline_cell(args, code):
       env[key] = value
   query = _get_query_argument(args, code, env)
   print(query.sql)
+  if args['name']:
+    _pipelines[args['name']] = query
   result = query.execute_dry_run()
   return gcp.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
                                               is_cached=result['cacheHit'])
+
+
+def _deploy_cell(args, crontab_spec):
+  if crontab_spec:
+    return 'Crontab schedules are not yet supported'
+  pipeline = args['pipeline']
+  if pipeline not in _pipelines:
+    return 'Undefined pipeline %s' % pipeline
+  query = _pipelines[pipeline]
+  return query.execute(args['target'], table_mode=args['mode'], use_cache=not args['nocache'],
+                       allow_large_results=args['large']).results
 
 
 def _table_line(args):
