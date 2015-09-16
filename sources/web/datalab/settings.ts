@@ -65,7 +65,7 @@ export function loadSettings(): common.Settings {
 
     if (env == 'cloud') {
       var metadataCommand =
-        'curl -H "Metadata-Flavor=Google" ' +
+        'curl --silent -H "Metadata-Flavor=Google" ' +
         'http://metadata.google.internal/computeMetadata/v1beta1/project/numeric-project-id';
       settings.projectNumber = childProcess.execSync(metadataCommand, { encoding: 'utf8' });
     }

@@ -54,6 +54,11 @@ function placeHolder() {}
       multiplex: false
     };
 
+    function errorHandler() {
+      if (self.onerror) {
+        self.onerror({ target: self });
+      }
+    }
     var socket = io.connect(socketUri, socketOptions);
     socket.on('connect', function() {
       socket.emit('start', { url: url });
@@ -84,6 +89,9 @@ function placeHolder() {}
         self.onmessage({ target: self, data: msg.data });
       }
     });
+    socket.on('error', errorHandler);
+    socket.on('connect_error', errorHandler);
+    socket.on('reconnect_error', errorHandler);
   }
   WebSocketShim.prototype = {
     onopen: null,
