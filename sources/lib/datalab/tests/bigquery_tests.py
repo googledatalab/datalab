@@ -51,7 +51,7 @@ function(r, emitFn) {
 """
     mock_create_api.return_value = self._create_api()
     mock_notebook_environment.return_value = env
-    gcp.datalab._bigquery._udf_cell({'name': 'word_filter'}, cell_body)
+    gcp.datalab._bigquery._udf_cell({'module': 'word_filter'}, cell_body)
     udf = env['word_filter']
     self.assertIsNotNone(udf)
     self.assertEquals('word_filter', udf._name)
