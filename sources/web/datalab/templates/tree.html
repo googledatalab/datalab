@@ -20,7 +20,6 @@
   data-project-id="<%projectId%>"
   data-version-id="<%versionId%>"
   data-instance-id="<%instanceId%>"
-  data-user-hash="<%userHash%>"
   data-user-id="<%userId%>">
 
   <div id="app">
@@ -30,7 +29,7 @@
       </span>
       <div class="btn-toolbar pull-right">
         <div class="btn-group">
-          <button class="btn" data-toggle="dropdown">
+          <button class="btn" data-toggle="dropdown" title="User and Project Information">
             <span class="fa fa-user"></span>
           </button>
           <ul class="dropdown-menu dropdown-menu-right">
@@ -43,13 +42,13 @@
           &nbsp;&nbsp;
         </div>
         <div class="btn-group">
-          <button id="feedbackButton">
+          <button id="feedbackButton" title="Provide feedback">
             <span class="fa fa-comment"></span>
           </button>
           &nbsp;&nbsp;
         </div>
         <div class="btn-group">
-          <button id="aboutButton">
+          <button id="aboutButton" title="About Google Cloud Datalab">
             <span class="fa fa-info-circle"></span>
           </button>
           &nbsp;&nbsp;
@@ -61,10 +60,10 @@
         <div id="mainToolbar">
           <div class="btn-toolbar pull-left">
             <div class="btn-group">
-              <button id="contentButton" type="button" class="btn">
+              <button id="contentButton" type="button" class="btn" title="View Notebooks">
                 <span class="fa fa-book"></span> Notebooks
               </button>
-              <button id="sessionsButton" type="button" class="btn">
+              <button id="sessionsButton" type="button" class="btn" title="View Active Notebook Sessions">
                 <span class="fa fa-tasks"></span> Sessions
               </button>
             </div>
@@ -79,31 +78,31 @@
                     <form id='alternate_upload'  class='alternate_upload'>
                       <div class="btn-toolbar pull-left">
                         <div class="btn-group">
-                          <button id="addNotebookButton" type="button" class="btn">
+                          <button id="addNotebookButton" type="button" class="btn" title="Add a new notebook">
                             <span class="fa fa-plus-square"></span> Notebook
                           </button>
-                          <button id="addFolderButton" type="button" class="btn">
+                          <button id="addFolderButton" type="button" class="btn" title="Add a new folder">
                             <span class="fa fa-plus-square"></span> Folder
                           </button>
-                          <span id="uploadButton" type="button" class="btn">
+                          <span id="uploadButton" type="button" class="btn" title="Upload notebook(s)">
                             <span class="fa fa-upload"></span>
                             <input type="file" name="datafile" class="fileinput" multiple='multiple' value="Upload" />
                             Upload
                           </span>
-                          <button id="duplicateButton" type="button" class="btn duplicate-button">
+                          <button id="duplicateButton" type="button" class="btn duplicate-button" title="Create a copy of the selected item(s)">
                             <span class="fa fa-files-o"></span> Copy
                           </button>
-                          <button id="renameButton" type="button" class="btn rename-button">
+                          <button id="renameButton" type="button" class="btn rename-button" title="Rename selected item(s)">
                             <span class="fa fa-edit"></span> Rename
                           </button>
-                          <button id="deleteButton" type="button" class="btn delete-button">
+                          <button id="deleteButton" type="button" class="btn delete-button" title="Deleted selected item(s)">
                             <span class="fa fa-trash-o"></span> Delete
                           </button>
                         </div>
                       </div>
                       <div class="btn-toolbar pull-right">
                         <div class="btn-group">
-                          <a id="repoLink2" target="_blank" class="btn"><span class="fa fa-git"></span> Repository</a>
+                          <a id="repoLink2" target="_blank" class="btn" title="Browse associated Git repository"><span class="fa fa-git"></span> Repository</a>
                         </div>
                       </div>
                     </form>
