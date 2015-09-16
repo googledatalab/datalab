@@ -52,6 +52,7 @@ cat /datalab/license.txt
 - statsmodels [https://pypi.python.org/pypi/statsmodels]
 - sympy [https://pypi.python.org/pypi/sympy]
 - tornado [http://www.tornadoweb.org/en/stable/]
+- PyYAML [https://pypi.python.org/pypi/PyYAML]
 
 ## Node.js Modules
 - bunyan [https://www.npmjs.com/package/bunyan]

@@ -16,6 +16,8 @@
 
 import json
 import re
+import string
+import yaml
 import IPython
 import IPython.core.display
 import IPython.core.magic
@@ -65,13 +67,31 @@ def _create_execute_subparser(parser, command):
                               action='store_true')
   execute_parser.add_argument('-m', '--mode', help='table creation mode', default='create',
                               choices=['create', 'append', 'overwrite'])
-  execute_parser.add_argument('-l', '--large', help='allow large results',
-                              action='store_true')
+  execute_parser.add_argument('-l', '--large', help='allow large results', action='store_true')
   execute_parser.add_argument('-q', '--sql', help='name of query to run, if not in cell body',
                               nargs='?')
-  execute_parser.add_argument('-d', '--destination', help='target table name',
-                              nargs='?')
+  execute_parser.add_argument('-t', '--target', help='target table name', nargs='?')
   return execute_parser
+
+
+def _create_pipeline_subparser(parser, command):
+  pipeline_parser = parser.subcommand(command,
+                                      'define a deployable pipeline based on a BigQuery SQL query')
+  pipeline_parser.add_argument('-n', '--name', help='pipeline name')
+  pipeline_parser.add_argument('-nc', '--nocache', help='don\'t used previously cached results',
+                               action='store_true')
+  pipeline_parser.add_argument('-m', '--mode', help='table creation mode', default='create',
+                               choices=['create', 'append', 'overwrite'])
+  pipeline_parser.add_argument('-l', '--large', help='allow large results', action='store_true')
+  pipeline_parser.add_argument('-q', '--sql', help='name of query to run', required=True)
+  pipeline_parser.add_argument('-t', '--target', help='target table name', nargs='?')
+  pipeline_parser.add_argument('action', nargs='?', choices=('deploy', 'run', 'dryrun'),
+                               default='validate',
+                               help='whether to deploy the pipeline, execute it immediately in ' +
+                                    'the notebook, or validate it with a dry run')
+  # TODO(gram): we may want to move some command line arguments to the cell body config spec
+  # eventually.
+  return pipeline_parser
 
 
 def _create_table_subparser(parser):
@@ -177,8 +197,8 @@ def _create_bigquery_parser():
                                                 execute_parser, _execute_cell))
 
   # %%bigquery pipeline
-  pipeline_parser = _create_execute_subparser(parser, 'pipeline')
-  pipeline_parser.add_argument('-n', '--name', help='pipeline name')
+  pipeline_parser = _create_pipeline_subparser(parser, 'pipeline')
+
   pipeline_parser.set_defaults(
     func=lambda args, cell: _dispatch_handler(args, cell,
                                               pipeline_parser, _pipeline_cell))
@@ -278,34 +298,86 @@ def _dispatch_handler(args, cell, parser, handler,
   return handler(args, cell)
 
 
-def _get_query_argument(args, code=None, env=None):
+def _parse_config(config, env):
+  """ Parse a config from a magic cell body. This could be JSON or YAML. We turn it into
+      a Python dictionary then recursively replace any variable references.
+  """
+  def expand_var(v, env):
+    if v.startswith('$'):
+      v = v[1:]
+      if not v.startwith('$'):
+        if v in env:
+          v = env[v]
+        else:
+          raise Exception('Cannot expand variable $%s' % v)
+    return v
+
+  def replace_vars(config, env):
+    if isinstance(config, dict):
+      for k, v in config.items():
+        if isinstance(v, dict) or isinstance(v, list) or isinstance(v, tuple):
+          replace_vars(v, env)
+        elif isinstance(v, basestring):
+          config[k] = expand_var(v, env)
+    elif isinstance(config, list) or isinstance(config, tuple):
+      for i, v in enumerate(config):
+        if isinstance(v, dict) or isinstance(v, list) or isinstance(v, tuple):
+          replace_vars(v, env)
+        elif isinstance(v, basestring):
+          config[i] = expand_var(v, env)
+
+  if config is None:
+    return None
+  stripped = config.strip()
+  if len(stripped) == 0:
+    config = {}
+  elif stripped[0] == '{':
+    config = json.loads(config)
+  else:
+    config = yaml.load(config)
+
+  # Now we need to walk the config dictionary recursively replacing any '$name' vars.
+
+  replace_vars(config, env)
+  return config
+
+
+def _get_query_argument(args, config, env):
+  """ Get a query argument to a cell magic.
+
+  The query is specified with args['sql']. We look that up and if it is a BQ query
+  just return it. If it is instead a SqlModule or SqlStatement it may have variable
+  references. We resolve those using the arg parser for the SqlModule, then override
+  the resulting defaults with either the Python code in code, or the dictionary in
+  overrides. The latter is for if the overrides are specified with YAML or JSON and
+  eventually we should eliminate code in favor of this.
+  """
   sql_arg = args['sql']
   item = _get_notebook_item(sql_arg)
   if isinstance(item, gcp.bigquery._query.Query):
     return item
 
-  # For most magics we want to use the notebook environment; the only exception is the
-  # %bigquery pipeline where we want to avoid it to test hermeticity.
-  if env is None:
-    env = _notebook_environment()
   item, env = gcp.data.SqlModule.get_sql_statement_with_environment(item, env)
-  if code:
-    exec code in env
+  if config:
+    env.update(config)
   return gcp.bigquery.query(item, **env)
 
 
-def _sample_cell(args, code):
+def _sample_cell(args, config):
   """Implements the bigquery sample cell magic for ipython notebooks.
 
   Args:
     args: the optional arguments following '%%bigquery sample'.
-    code: optional contents of the cell interpreted as Python.
+    config: optional contents of the cell interpreted as YAML or JSON.
   Returns:
     The results of executing the query converted to a dataframe if no variable
     was specified. None otherwise.
   """
 
-  query = _get_query_argument(args, code)
+  env = _notebook_environment()
+  config = _parse_config(config, env)
+  query = _get_query_argument(args, config, env)
+
   count = args['count']
   method = args['method']
   if method == 'random':
@@ -327,18 +399,22 @@ def _sample_cell(args, code):
   return query.sample(sampling=sampling)
 
 
-def _dryrun_line(args):
+def _dryrun_cell(args, config):
   """Implements the BigQuery cell magic used to dry run BQ queries.
 
    The supported syntax is:
-   %bigquery dryrun -q|--sql <query identifier>
+   %%bigquery dryrun -q|--sql <query identifier>
+   <config>
 
   Args:
     args: the argument following '%bigquery dryrun'.
+    config: optional contents of the cell interpreted as YAML or JSON.
   Returns:
     The response wrapped in a DryRunStats object
   """
-  query = _get_query_argument(args)
+  env = _notebook_environment()
+  config = _parse_config(config, env)
+  query = _get_query_argument(args, config, env)
 
   result = query.execute_dry_run()
   return gcp.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
@@ -397,22 +473,57 @@ def _udf_cell(args, js):
   _notebook_environment()[variable_name] = udf
 
 
-def _execute_cell(args, code):
-  query = _get_query_argument(args, code)
-  return query.execute(args['destination'], table_mode=args['mode'], use_cache=not args['nocache'],
+def _execute_cell(args, config):
+  """Implements the BigQuery cell magic used to execute BQ queries.
+
+   The supported syntax is:
+   %%bigquery execute -q|--sql <query identifier> <other args>
+   <config>
+
+  Args:
+    args: the arguments following '%bigquery execute'.
+    config: optional contents of the cell interpreted as YAML or JSON.
+  Returns:
+    The QueryResultsTable
+  """
+  env = _notebook_environment()
+  config = _parse_config(config, env)
+  query = _get_query_argument(args, config, env)
+  return query.execute(args['target'], table_mode=args['mode'], use_cache=not args['nocache'],
                        allow_large_results=args['large']).results
 
 
-def _pipeline_cell(args, code):
+def _pipeline_cell(args, config):
+  """Implements the BigQuery cell magic used to validate, execute or deploy BQ pipelines.
+
+   The supported syntax is:
+   %%bigquery pipeline -q|--sql <query identifier> <other args> <action>
+   <config>
+
+  Args:
+    args: the arguments following '%bigquery pipeline'.
+    config: optional contents of the cell interpreted as YAML or JSON.
+  Returns:
+    The QueryResultsTable
+  """
+  if args['action'] == 'deploy':
+    return 'Deploying a pipeline is not yet supported'
+
   env = {}
   for key, value in _notebook_environment().iteritems():
     if isinstance(value, gcp.bigquery._udf.FunctionCall):
       env[key] = value
-  query = _get_query_argument(args, code, env)
-  print(query.sql)
-  result = query.execute_dry_run()
-  return gcp.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
-                                              is_cached=result['cacheHit'])
+
+  config = _parse_config(config, env)
+  query = _get_query_argument(args, config, env)
+  if args['action'] == 'dryrun':
+    print(query.sql)
+    result = query.execute_dry_run()
+    return gcp.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
+                                                is_cached=result['cacheHit'])
+  if args['action'] == 'run':
+    return query.execute(args['target'], table_mode=args['mode'], use_cache=not args['nocache'],
+                         allow_large_results=args['large']).results
 
 
 def _table_line(args):
