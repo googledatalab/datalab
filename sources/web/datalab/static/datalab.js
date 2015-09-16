@@ -203,16 +203,12 @@ function initializePage(dialog) {
   var analyticsId = document.body.getAttribute('data-analytics-id');
   if (analyticsId) {
     var domain = 'datalab.cloud.google.com';
-    var projectNumber = document.body.getAttribute('data-project-num');
     var version = document.body.getAttribute('data-version-id');
     var instance = document.body.getAttribute('data-instance-id');
-    var userId = document.body.getAttribute('data-user-hash');
 
     var dimensions = {
-      dimension1: projectNumber,
       dimension2: version,
-      dimension3: instance,
-      dimension4: userId
+      dimension3: instance
     };
 
     ga('create', analyticsId, {

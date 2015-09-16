@@ -263,7 +263,6 @@ function responseHandler(proxyResponse: http.ClientResponse,
       projectId: appSettings.projectId,
       versionId: appSettings.versionId,
       instanceId: appSettings.instanceId,
-      userHash: request.headers['x-appengine-user-id'] || '0',
       userId: getUserId(request),
       baseUrl: '/'
     };
