@@ -63,6 +63,7 @@ RUN pip install -U \
     pip install -U ggplot==0.6.5 && \
     pip install -U seaborn==0.6.0 && \
     pip install -U notebook==4.0.2 && \
+    pip install -U PyYAML==3.11 && \
     easy_install pip && \
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf
 
