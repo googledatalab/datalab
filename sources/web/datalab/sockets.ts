@@ -69,6 +69,13 @@ function createWebSocket(port: number, session: Session): WebSocket {
     })
     .on('error', function(e: any) {
       logging.getLogger().error('WebSocket [%d] error\n%j', session.id, e);
+      if (e.code == 'ECONNREFUSED') {
+        // This happens in the following situation -- old kernel that has gone away
+        // likely due to a restart/shutdown... and an old notebook client attempts to
+        // reconnect to the old kernel. That connection will be refused.
+        // In this case, there is no point in keeping this socket.io connection open.
+        session.socket.disconnect(/* close */ true);
+      }
     });
 
   return ws;
@@ -157,7 +164,11 @@ function socketHandler(socket: SocketIO.Socket) {
 }
 
 export function wrapServer(server: http.Server): void {
-  socketio.listen(server)
-          .of('/session')
-          .on('connection', socketHandler);
+  var io = socketio.listen(server, {
+    transports: [ 'polling' ],
+    allowUpgrades: false
+  });
+
+  io.of('/session')
+    .on('connection', socketHandler);
 }

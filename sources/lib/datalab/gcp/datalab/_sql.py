@@ -147,8 +147,10 @@ def _arguments(code, module):
   """
   arg_parser = _commands.CommandParser.create('')
   try:
-    # Define our special argument 'types'.
-    env = {'table': _table, 'datestring': _datestring}
+    # Define our special argument 'types' and add them to the environment.
+    builtins = {'source': _table, 'datestring': _datestring}
+    env = {}
+    env.update(builtins)
 
     # Execute the cell which should be one or more calls to arg().
     exec code in env
@@ -157,8 +159,8 @@ def _arguments(code, module):
     # add args to the parser.
     for key in env:
 
-      # Skip internal stuff.
-      if key == 'datestring' or key == 'table' or key[0] == '_':
+      # Skip internal/private stuff.
+      if key in builtins or key[0] == '_':
         continue
       # If we want to support importing query modules into other query modules, uncomment next 4
       # Skip imports but add them to the module

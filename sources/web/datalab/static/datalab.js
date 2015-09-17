@@ -54,6 +54,11 @@ function placeHolder() {}
       multiplex: false
     };
 
+    function errorHandler() {
+      if (self.onerror) {
+        self.onerror({ target: self });
+      }
+    }
     var socket = io.connect(socketUri, socketOptions);
     socket.on('connect', function() {
       socket.emit('start', { url: url });
@@ -84,6 +89,9 @@ function placeHolder() {}
         self.onmessage({ target: self, data: msg.data });
       }
     });
+    socket.on('error', errorHandler);
+    socket.on('connect_error', errorHandler);
+    socket.on('reconnect_error', errorHandler);
   }
   WebSocketShim.prototype = {
     onopen: null,
@@ -126,7 +134,7 @@ function initializePage(dialog) {
       return '/' + path.substr(1).split('/').map(anonymizeString).join('/')
     }
     catch (e) {
-      return '/error';
+      return 'path-error';
     }
   }
 
@@ -135,7 +143,7 @@ function initializePage(dialog) {
       return anonymizeString(document.title || 'untitled');
     }
     catch (e) {
-      return '';
+      return 'title-error';
     }
   }
 
@@ -148,7 +156,9 @@ function initializePage(dialog) {
       '<h5><b>More Information</b></h5>' +
       '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://cloud.google.com" target="_blank">Product information</a><br />' +
       '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://github.com/GoogleCloudPlatform/datalab" target="_blank">Project on GitHub</a><br />' +
-      '<span class="fa fa-external-link-square">&nbsp;</span><a href="/static/about.txt" target="_blank">License and software information</a>';
+      '<span class="fa fa-external-link-square">&nbsp;</span><a href="/static/about.txt" target="_blank">License and software information</a><br />' +
+      '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://cloud.google.com/terms/" target="_blank">Terms of Service</a><br />' +
+      '<span class="fa fa-external-link-square">&nbsp;</span><a href="http://www.google.com/intl/en/policies/" target="_blank">Privacy Policy</a><br />';
 
     var dialogOptions = {
       title: 'About Google Cloud Datalab',
@@ -193,16 +203,12 @@ function initializePage(dialog) {
   var analyticsId = document.body.getAttribute('data-analytics-id');
   if (analyticsId) {
     var domain = 'datalab.cloud.google.com';
-    var projectNumber = document.body.getAttribute('data-project-num');
     var version = document.body.getAttribute('data-version-id');
     var instance = document.body.getAttribute('data-instance-id');
-    var userId = document.body.getAttribute('data-user-hash');
 
     var dimensions = {
-      dimension1: projectNumber,
       dimension2: version,
-      dimension3: instance,
-      dimension4: userId
+      dimension3: instance
     };
 
     ga('create', analyticsId, {

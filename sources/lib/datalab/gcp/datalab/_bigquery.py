@@ -46,7 +46,7 @@ def _create_sample_subparser(parser):
 
 def _create_udf_subparser(parser):
   udf_parser = parser.subcommand('udf', 'create a named Javascript UDF')
-  udf_parser.add_argument('-n', '--name', help='the name for this UDF', required=True)
+  udf_parser.add_argument('-m', '--module', help='the name for this UDF', required=True)
   return udf_parser
 
 
@@ -291,7 +291,7 @@ def _get_query_argument(args, code=None, env=None):
   item, env = gcp.data.SqlModule.get_sql_statement_with_environment(item, env)
   if code:
     exec code in env
-  return gcp.bigquery.query(item, args=env)
+  return gcp.bigquery.query(item, **env)
 
 
 def _sample_cell(args, code):
@@ -349,7 +349,7 @@ def _udf_cell(args, js):
   """Implements the bigquery_udf cell magic for ipython notebooks.
 
   The supported syntax is:
-  %%bigquery udf --name <var>
+  %%bigquery udf --module <var>
   <js function>
 
   Args:
@@ -360,9 +360,9 @@ def _udf_cell(args, js):
     The results of executing the UDF converted to a dataframe if no variable
     was specified. None otherwise.
   """
-  variable_name = args['name']
+  variable_name = args['module']
   if not variable_name:
-    raise Exception("Declaration must be of the form %%bigquery udf <variable name>")
+    raise Exception("Declaration must be of the form %%bigquery udf --module <variable name>")
 
   # Parse out the input and output specification
   spec_pattern = r'\{\{([^}]+)\}\}'
@@ -404,7 +404,11 @@ def _execute_cell(args, code):
 
 
 def _pipeline_cell(args, code):
-  query = _get_query_argument(args, code, {})
+  env = {}
+  for key, value in _notebook_environment().iteritems():
+    if isinstance(value, gcp.bigquery._udf.FunctionCall):
+      env[key] = value
+  query = _get_query_argument(args, code, env)
   print(query.sql)
   result = query.execute_dry_run()
   return gcp.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
