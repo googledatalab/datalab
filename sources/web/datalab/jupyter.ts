@@ -47,8 +47,8 @@ var nextJupyterPort = 9000;
  * Templates
  */
 var templates: common.Map<string> = {
-  'tree': fs.readFileSync(path.join(__dirname, 'templates', 'tree.html'), {encoding: 'utf8'}),
-  'nb': fs.readFileSync(path.join(__dirname, 'templates', 'nb.html'), {encoding: 'utf8'})
+  'tree': fs.readFileSync(path.join(__dirname, 'templates', 'tree.html'), { encoding: 'utf8' }),
+  'nb': fs.readFileSync(path.join(__dirname, 'templates', 'nb.html'), { encoding: 'utf8' })
 };
 
 /**
@@ -95,7 +95,7 @@ function createJupyterServer(userId: string): JupyterServer {
   }
 
   var processArgs = [
-    '--port=' + server.port, 
+    '--port=' + server.port,
     '--notebook-dir="' + server.notebooks + '"'
   ];
 
@@ -105,7 +105,7 @@ function createJupyterServer(userId: string): JupyterServer {
   // --KernelManager.autorestart=True
 
   var processOptions = {
-    detached: false, 
+    detached: false,
     env: process.env
   };
 
@@ -171,7 +171,7 @@ export function stop(): void {
 
     try {
       jupyterProcess.kill('SIGHUP');
-    } 
+    }
     catch (e) {
     }
   }
@@ -218,8 +218,7 @@ export function handleRequest(request: http.ServerRequest,
   server.proxy.web(request, response);
 }
 
-function sendTemplate(key: string, data: common.Map<string>,
-                      response: http.ServerResponse) {
+function sendTemplate(key: string, data: common.Map<string>, response: http.ServerResponse) {
   var template = templates[key];
 
   // NOTE: Uncomment to use external templates mapped into the container.
@@ -230,7 +229,7 @@ function sendTemplate(key: string, data: common.Map<string>,
   // TODO: Error handling if template placeholders are out-of-sync with
   //       keys in passed in data object.
   var htmlContent = template.replace(/\<\%(\w+)\%\>/g, function(match, name) {
-    return data[name]; 
+    return data[name];
   });
 
   response.writeHead(200, { 'Content-Type': 'text/html' });
@@ -269,7 +268,7 @@ function responseHandler(proxyResponse: http.ClientResponse,
       templateData['notebookPath'] = path.substr(6);
 
       sendTemplate('tree', templateData, response);
-    } 
+    }
     else {
       // stripping off the /notebooks/ from the path
       templateData['notebookPath'] = path.substr(11);
@@ -279,8 +278,7 @@ function responseHandler(proxyResponse: http.ClientResponse,
     }
 
     // Suppress further writing to the response to prevent sending response
-    // from the notebook server. There is no way to communicate that, so hack
-    // around the
+    // from the notebook server. There is no way to communicate that, so hack around the
     // limitation, by stubbing out all the relevant methods on the response with
     // no-op methods.
     response.setHeader = placeHolder;
