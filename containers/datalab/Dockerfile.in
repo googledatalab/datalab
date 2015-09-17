@@ -66,10 +66,10 @@ RUN pip install -U \
     easy_install pip && \
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf
 
-# Setup Workspace-sync
+# Setup Workspace-Sync
 RUN mkdir -p /wsync && \
-cd /wsync && \
-wget -nv https://storage.googleapis.com/wsync/wsync && chmod 777 /wsync/* && cd /
+    cd /wsync && \
+    wget -nv https://storage.googleapis.com/cloud-datalab/deploy/wsync/20150814/wsync && chmod u+r,g+x /wsync/* && cd /
 
 # Container configuration
 EXPOSE 8080

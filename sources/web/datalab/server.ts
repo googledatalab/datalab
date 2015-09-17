@@ -26,11 +26,44 @@ import path = require('path');
 import sockets = require('./sockets');
 import static = require('./static');
 import url = require('url');
+import user = require('./user');
+import wsync = require('./wsync');
 
 var server: http.Server;
 var healthHandler: http.RequestHandler;
 var infoHandler: http.RequestHandler;
 var staticHandler: http.RequestHandler;
+
+function handleJupyterRequest(request: http.ServerRequest, 
+                              response: http.ServerResponse, path: string, userId: string) {
+  var isApiRequest = (path.indexOf('/api/contents') == 0);
+  if (jupyter.getPort(request) == 0) {
+    jupyter.StartForUser(userId, function(e, code) {
+      if (e != null) {
+        response.statusCode = 500;
+        response.end();
+      }
+      handleJupyterRequest(request, response, path, userId);
+    });
+    return;
+  }
+
+  if (!wsync.workspaceInitialized(userId) && isApiRequest) {
+    wsync.syncNow(userId, function(e, code) {
+      if (e != null) {
+        response.statusCode = 500;
+        response.end();
+      } else {
+        handleJupyterRequest(request, response, path, userId);
+      }
+    });
+    return;
+  }
+  jupyter.handleRequest(request, response);
+  if (isApiRequest) {
+    wsync.scheduleSync(userId);
+  }
+}
 
 /**
  * Handles all requests sent to the proxy web server. Some requests are handled within
@@ -73,6 +106,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   // Landing page redirects to /tree to be able to use the Jupyter file list as
   // the initial page.
   if (path == '/') {
+    user.maybeSetUserIdCookie(request, response);
     response.statusCode = 302;
     response.setHeader('Location', '/tree');
     response.end();
@@ -85,7 +119,8 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       (path.indexOf('/notebooks') == 0) ||
       (path.indexOf('/nbconvert') == 0) ||
       (path.indexOf('/files') == 0)) {
-    jupyter.handleRequest(request, response);
+    var userId = user.getUserId(request);
+    handleJupyterRequest(request, response, path, userId);
     return;
   }
 
@@ -116,6 +151,8 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
  * @param settings the configuration settings to use.
  */
 export function run(settings: common.Settings): void {
+  user.init(settings);
+  wsync.init(settings);
   jupyter.start(settings);
 
   healthHandler = health.createHandler(settings);

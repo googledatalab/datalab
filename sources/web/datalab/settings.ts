@@ -61,9 +61,10 @@ export function loadSettings(): common.Settings {
     settings.instanceUser = process.env['DATALAB_USER'] || '';
     settings.instanceId = metadata.instanceId;
     settings.versionId = process.env['DATALAB_VERSION'] || '';
-    settings.projectId = process.env['GAE_LONG_APP_ID'] || process.env['DATALAB_PROJECT_ID'] || '';
-    settings.moduleVersion = process.env['GAE_MODULE_VERSION'] || '';
-    settings.allowUserFromQuery = (env == 'local');
+    settings.projectId = process.env['DATALAB_PROJECT_ID'] || '';
+    settings.instanceName = process.env['DATALAB_INSTANCE_NAME'] || '';
+    settings.environment = process.env['DATALAB_ENV'] || '';
+    settings.contentDir = process.env['DATALAB_CONTENT_DIR'] || '/content';
 
     if (env == 'cloud') {
       var metadataCommand =

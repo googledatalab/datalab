@@ -16,11 +16,13 @@
 # This script sets up cloud repository, including creating master branch,
 # datalab branch, and named instance branch if they do not exist.
 
-git config --global user.email "$GAE_LONG_APP_ID@appspot.gserviceaccount.com"
+git config --global user.email "$DATALAB_PROJECT_ID@appspot.gserviceaccount.com"
 git config --global credential.helper gcloud.sh
+git config --global push.default matching
 
 create_branch ( ) {
-  git ls-remote --heads "https://source.developers.google.com/p/$GAE_LONG_APP_ID/" 2>&1 | grep "refs/heads/$1" > /dev/null
+  REPOURL="https://source.developers.google.com/p/$DATALAB_PROJECT_ID/"
+  git ls-remote --heads $REPOURL 2>&1 | grep "refs/heads/$1" > /dev/null
   if [ $? != "0" ]; then
     BRANCHDIR="$1_branch"
     echo "creating $1 branch"
@@ -30,24 +32,25 @@ create_branch ( ) {
     git init $BRANCHDIR
     cd $BRANCHDIR
     if [ $1 = "datalab" ]; then
-      gsutil cp gs://sample_notebooks/* .
+      gsutil -m cp -r gs://cloud-datalab/content/* .
+      echo '*.ipynb_checkpoints' > .gitignore
       git add .
       git commit -m "sample notebooks"
-      git push https://source.developers.google.com/p/$GAE_LONG_APP_ID/ master:$1
+      git push $REPOURL master:$1
     elif [ $1 = "master" ]; then
       git commit  --allow-empty -m "$1 creation"
-      git push https://source.developers.google.com/p/$GAE_LONG_APP_ID/ master:$1
+      git push $REPOURL master:$1
     else
       case $1 in
         datalab_*) 
-          git fetch https://source.developers.google.com/p/$GAE_LONG_APP_ID/ datalab:$1
-          git push https://source.developers.google.com/p/$GAE_LONG_APP_ID/ $1:$1
+          git fetch $REPOURL datalab:$1
+          git push $REPOURL $1:$1
           ;;
       esac
     fi
     cd ..
     rm -r -f $BRANCHDIR
-    git ls-remote --heads "https://source.developers.google.com/p/$GAE_LONG_APP_ID/" 2>&1 | grep "refs/heads/$1" > /dev/null
+    git ls-remote --heads $REPOURL 2>&1 | grep "refs/heads/$1" > /dev/null
     if [ $? != "0" ]; then
       echo "failed creating $1 branch"
       exit 1
@@ -57,4 +60,4 @@ create_branch ( ) {
 
 create_branch "master"
 create_branch "datalab"
-create_branch "datalab_$GAE_MODULE_VERSION"
+create_branch "datalab_$DATALAB_INSTANCE_NAME"

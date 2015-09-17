@@ -295,7 +295,8 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     notebook.prototype.create_checkpoint = placeHolder;
 
     var originalFromJSON = notebook.prototype.fromJSON;
-    notebook.prototype.fromJSON = function(data) {
+    notebook.prototype.fromJSON =
+        function(data) {
       // This is a hack to turn notebooks as trusted... this is necessary to allow editing
       // of notebooks in multiple contexts (multiple developers, multiple development VMs, etc.)
       // The assumption is the developer explicitly trusts anything they add to their
@@ -307,6 +308,11 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
       });
 
       originalFromJSON.apply(this, [ data ]);
+    }
+
+    var originalSave = notebook.prototype.save_notebook;
+    notebook.prototype.save_notebook = function() {
+      originalSave.apply(this, /* check_lastmodified */[false]);
     }
   });
 

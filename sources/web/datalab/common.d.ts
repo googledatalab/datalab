@@ -30,11 +30,11 @@ declare module common {
     projectId: string;
 
     /**
-     * Module version of this datalab instance in the cloud project.
+     * Name of this datalab instance in the cloud project.
      * It is also used as part of the name of the cloud source repository
      * branch that stores all notebooks created from this datalab instance.
      */
-    moduleVersion: string;
+    instanceName: string;
 
     versionId: string;
     instanceId: string;
@@ -46,9 +46,14 @@ declare module common {
     jupyterArgs: string[];
 
     /**
-     * If set, will try get userId from query string such as "user=user1@domain.com"
+     * Where this instance is running. Can only be "cloud" or "local".
      */
-    allowUserFromQuery: boolean;
+    environment: string;
+    
+    /**
+     * Local directory which stores notebooks in the container
+     */
+    contentDir: string;
   }
 
   interface Map<T> {
