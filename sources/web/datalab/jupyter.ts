@@ -38,8 +38,7 @@ interface JupyterServer {
 }
 
 /**
- * Jupyter servers key'd by user id (each server is associated with a single
- * user)
+ * Jupyter servers key'd by user id (each server is associated with a single user)
  */
 var jupyterServers: common.Map<JupyterServer> = {};
 var nextJupyterPort = 9000;
@@ -48,10 +47,8 @@ var nextJupyterPort = 9000;
  * Templates
  */
 var templates: common.Map<string> = {
-  'tree': fs.readFileSync(path.join(__dirname, 'templates', 'tree.html'),
-                          {encoding: 'utf8'}),
-  'nb': fs.readFileSync(path.join(__dirname, 'templates', 'nb.html'),
-                        {encoding: 'utf8'})
+  'tree': fs.readFileSync(path.join(__dirname, 'templates', 'tree.html'), {encoding: 'utf8'}),
+  'nb': fs.readFileSync(path.join(__dirname, 'templates', 'nb.html'), {encoding: 'utf8'})
 };
 
 /**
@@ -59,8 +56,7 @@ var templates: common.Map<string> = {
  */
 var appSettings: common.Settings;
 
-function pipeOutput(stream: NodeJS.ReadableStream, port: number,
-                    error: boolean) {
+function pipeOutput(stream: NodeJS.ReadableStream, port: number, error: boolean) {
   stream.setEncoding('utf8');
   stream.on('data', (data: string) => {
     // Jupyter generates a polling kernel message once every 3 seconds
@@ -98,22 +94,25 @@ function createJupyterServer(userId: string): JupyterServer {
     delete jupyterServers[server.userId];
   }
 
-  var processArgs =
-      ['--port=' + server.port, '--notebook-dir="' + server.notebooks + '"'];
+  var processArgs = [
+    '--port=' + server.port, 
+    '--notebook-dir="' + server.notebooks + '"'
+  ];
 
   processArgs = appSettings.jupyterArgs.slice().concat(processArgs);
 
   // TODO: Additional args that seem interesting to consider.
   // --KernelManager.autorestart=True
 
-  var processOptions = {detached: false, env: process.env};
+  var processOptions = {
+    detached: false, 
+    env: process.env
+  };
 
-  server.childProcess =
-      childProcess.spawn('jupyter', processArgs, processOptions);
+  server.childProcess = childProcess.spawn('jupyter', processArgs, processOptions);
   server.childProcess.on('exit', exitHandler);
-  logging.getLogger().info(
-      'Jupyter process for user %s started with pid %d and args %j', userId,
-      server.childProcess.pid, processArgs);
+  logging.getLogger().info('Jupyter process for user %s started with pid %d and args %j',
+                           userId, server.childProcess.pid, processArgs);
 
   // Capture the output, so it can be piped for logging.
   pipeOutput(server.childProcess.stdout, server.port, /* error */ false);
@@ -172,7 +171,8 @@ export function stop(): void {
 
     try {
       jupyterProcess.kill('SIGHUP');
-    } catch (e) {
+    } 
+    catch (e) {
     }
   }
 
@@ -210,7 +210,7 @@ export function handleRequest(request: http.ServerRequest,
   var userId = user.getUserId(request);
   var server = jupyterServers[userId];
   if (!server) {
-    // logging
+    logging.getLogger().error('Jupyter server was not created yet for user %s.', userId);
     response.statusCode = 500;
     response.end();
     return;
@@ -223,29 +223,25 @@ function sendTemplate(key: string, data: common.Map<string>,
   var template = templates[key];
 
   // NOTE: Uncomment to use external templates mapped into the container.
-  //       This is only useful when actively developing the templates
-  //       themselves.
-  // var template = fs.readFileSync('/nb/sources/' + key + '.html', { encoding:
-  // 'utf8' });
+  //       This is only useful when actively developing the templates themselves.
+  // var template = fs.readFileSync('/nb/sources/' + key + '.html', { encoding: 'utf8' });
 
   // Replace <%name%> placeholders with actual values.
   // TODO: Error handling if template placeholders are out-of-sync with
   //       keys in passed in data object.
-  var htmlContent = template.replace(
-      /\<\%(\w+)\%\>/g, function(match, name) { return data[name]; });
+  var htmlContent = template.replace(/\<\%(\w+)\%\>/g, function(match, name) {
+    return data[name]; 
+  });
 
-  response.writeHead(200, {'Content-Type': 'text/html'});
+  response.writeHead(200, { 'Content-Type': 'text/html' });
   response.end(htmlContent);
 }
 
 function responseHandler(proxyResponse: http.ClientResponse,
-                         request: http.ServerRequest,
-                         response: http.ServerResponse) {
+                         request: http.ServerRequest, response: http.ServerResponse) {
   if (proxyResponse.headers['access-control-allow-origin'] !== undefined) {
-    // Delete the allow-origin = * header that is sent (likely as a result of a
-    // workaround
-    // notebook configuration to allow server-side websocket connections that
-    // are
+    // Delete the allow-origin = * header that is sent (likely as a result of a workaround
+    // notebook configuration to allow server-side websocket connections that are
     // interpreted by Jupyter as cross-domain).
     delete proxyResponse.headers['access-control-allow-origin'];
   }
@@ -253,9 +249,7 @@ function responseHandler(proxyResponse: http.ClientResponse,
   if (proxyResponse.statusCode != 200) {
     return;
   }
-  // Set a cookie to provide information about the project and authenticated
-  // user to the client.
-  // Ensure this happens only for page requests, rather than for API requests.
+
   var path = url.parse(request.url).pathname;
   if ((path.indexOf('/tree') == 0) || (path.indexOf('/notebooks') == 0)) {
     var userId = user.getUserId(request);
@@ -266,7 +260,6 @@ function responseHandler(proxyResponse: http.ClientResponse,
       projectId: appSettings.projectId,
       versionId: appSettings.versionId,
       instanceId: appSettings.instanceId,
-      userHash: request.headers['x-appengine-user-id'] || '0',
       userId: userId,
       baseUrl: '/'
     };
@@ -276,7 +269,8 @@ function responseHandler(proxyResponse: http.ClientResponse,
       templateData['notebookPath'] = path.substr(6);
 
       sendTemplate('tree', templateData, response);
-    } else {
+    } 
+    else {
       // stripping off the /notebooks/ from the path
       templateData['notebookPath'] = path.substr(11);
       templateData['notebookName'] = path.substr(path.lastIndexOf('/') + 1);
@@ -296,13 +290,10 @@ function responseHandler(proxyResponse: http.ClientResponse,
   }
 }
 
-function errorHandler(error: Error, request: http.ServerRequest,
-                      response: http.ServerResponse) {
+function errorHandler(error: Error, request: http.ServerRequest, response: http.ServerResponse) {
   logging.getLogger().error(error, 'Jupyter server returned error.')
   response.writeHead(500, 'Internal Server Error');
   response.end();
 }
 
-function placeHolder(): boolean {
-  return false;
-}
+function placeHolder(): boolean { return false; }

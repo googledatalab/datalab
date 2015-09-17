@@ -151,11 +151,11 @@ export function scheduleSync(userId: string) {
       } else {
         syncRequests[userId] = syncRequests[userId] + 1;
         if (syncRequests[userId] < MAX_SYNC_RETRY) {
-          logging.getLogger().info('Reschedule sync.');
+          logging.getLogger().info('Reschedule sync for user: %s for %d times.', 
+                                   userId, syncRequests[userId]);
           scheduleSync(userId);
         } else {
-          logging.getLogger().error('Sync has failed %d times. Give up.',
-                                    MAX_SYNC_RETRY);
+          logging.getLogger().error('Sync has failed %d times. Give up.', MAX_SYNC_RETRY);
           delete syncRequests[userId];
         }
       }
