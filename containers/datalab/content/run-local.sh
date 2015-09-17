@@ -19,6 +19,9 @@
 export DATALAB_ENV=local
 export METADATA_HOST=localhost
 
+export GAE_MODULE_VERSION=local
+export GAE_LONG_APP_ID=`gcloud -q config list --format yaml | grep project | awk -F" " '{print $2}'`
+
 # Setup cloud repository.
 /datalab/setup-repo.sh
 if [ $? != "0" ]; then

@@ -16,12 +16,13 @@
 # This script sets up cloud repository, including creating master branch,
 # datalab branch, and named instance branch if they do not exist.
 
-git config --global user.email "$DATALAB_PROJECT_ID@appspot.gserviceaccount.com"
+
+git config --global user.email "$GAE_LONG_APP_ID@appspot.gserviceaccount.com"
 git config --global credential.helper gcloud.sh
 git config --global push.default matching
 
 create_branch ( ) {
-  REPOURL="https://source.developers.google.com/p/$DATALAB_PROJECT_ID/"
+  REPOURL="https://source.developers.google.com/p/$GAE_LONG_APP_ID/"
   git ls-remote --heads $REPOURL 2>&1 | grep "refs/heads/$1" > /dev/null
   if [ $? != "0" ]; then
     BRANCHDIR="$1_branch"
@@ -60,4 +61,4 @@ create_branch ( ) {
 
 create_branch "master"
 create_branch "datalab"
-create_branch "datalab_$DATALAB_INSTANCE_NAME"
+create_branch "datalab_$GAE_MODULE_VERSION"

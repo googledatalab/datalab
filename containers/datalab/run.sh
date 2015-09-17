@@ -36,7 +36,6 @@ rm -f $HOME/datalab/log/custom_logs/*.log
 ACCOUNT=`gcloud -q config list --format yaml | grep account | awk -F" " '{print $2}'`
 PROJECT_ID=`gcloud -q config list --format yaml | grep project | awk -F" " '{print $2}'`
 PROJECT_NUM=`gcloud -q alpha projects describe $PROJECT_ID | grep projectNumber | awk '{print substr($2,2,length($2)-2)}'`
-INSTANCE_NAME="${GAE_MODULE_VERSION:=local}"
 
 docker run -i --entrypoint=$ENTRYPOINT \
   -p 8081:8080 \
@@ -46,6 +45,4 @@ docker run -i --entrypoint=$ENTRYPOINT \
   -e "DATALAB_USER=$ACCOUNT" \
   -e "DATALAB_PROJECT_ID=$PROJECT_ID" \
   -e "DATALAB_PROJECT_NUM=$PROJECT_NUM" \
-  -e "DATALAB_INSTANCE_NAME=$INSTANCE_NAME" \
-  -e "DATALAB_CONTENT_DIR=/content" \
   -t datalab

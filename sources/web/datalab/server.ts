@@ -38,6 +38,7 @@ function handleJupyterRequest(request: http.ServerRequest,
                               response: http.ServerResponse, path: string, userId: string) {
   var isApiRequest = (path.indexOf('/api/contents') == 0);
   if (jupyter.getPort(request) == 0) {
+    // Jupyter server is not created yet. Creating it for user and call self again.
     jupyter.StartForUser(userId, function(e, code) {
       if (e != null) {
         response.statusCode = 500;
@@ -49,6 +50,9 @@ function handleJupyterRequest(request: http.ServerRequest,
   }
 
   if (!wsync.workspaceInitialized(userId) && isApiRequest) {
+    // Workspace is not initialized was not created yet. Initializing it call self again.
+    // This is only done for Api request so we'll skip it on user's first /tree or /notebook
+    // request so that user can see the page earlier.
     wsync.syncNow(userId, function(e, code) {
       if (e != null) {
         response.statusCode = 500;

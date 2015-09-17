@@ -92,6 +92,8 @@ function runEnsureDirAndSync(userDir: string, repoUrl: string,
                              workspaceName: string, branch: string,
                              cb: common.Callback<number>) {
   var gitCloneArgs = ['clone', '-b', branch, repoUrl, userDir];
+  logging.getLogger().error(
+          'gitCloneArgs = %s', gitCloneArgs.toString());
   var gitProcess = childProcess.spawn('git', gitCloneArgs, {env: process.env});
   gitProcess.on('error', function(err: Error) {
     logging.getLogger().error(err, 'git clone failed.');
@@ -125,7 +127,6 @@ export function syncNow(userId: string, cb: common.Callback<number>) {
   if (!callbacks.checkAndRegisterCallback(userId, 'wsync', cb)) {
     return;
   }
-  var userDir = user.getUserDir(userId);
   if (fs.existsSync(userDir) && fs.readdirSync(userDir).length > 0) {
     runWsyncSync(userDir, repoUrl, function(e, code) {
       callbacks.invokeAllCallbacks(userId, 'wsync', e, code);

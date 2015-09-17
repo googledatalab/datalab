@@ -187,6 +187,8 @@ export function StartForUser(userId: string, cb: common.Callback<number>) {
   }
 
   if (!callbacks.checkAndRegisterCallback(userId, 'jupyter', cb)) {
+    // There is already a start request ongoing. Return now to avoid multiple Jupyter
+    // processes for the same user.
     return;
   }
   try {
@@ -197,9 +199,15 @@ export function StartForUser(userId: string, cb: common.Callback<number>) {
         jupyterServers[userId] = server;
         callbacks.invokeAllCallbacks(userId, 'jupyter', null, 0);
       },
-      function(e) { callbacks.invokeAllCallbacks(userId, 'jupyter', e, -1); });
+      function(e) {
+        logging.getLogger().error(e, 'Failed to start Jupyter server for user %s.', userId);
+        callbacks.invokeAllCallbacks(userId, 'jupyter', e, -1); }
+      );
+    } else {
+      logging.getLogger().error('Failed to start Jupyter server for user %s.', userId);
     }
   } catch (e) {
+    logging.getLogger().error(e, 'Failed to start Jupyter server for user %s.', userId);
     callbacks.invokeAllCallbacks(userId, 'jupyter', e, -1);
   }
 

@@ -17,12 +17,18 @@
 
 import logging = require('./logging');
 
+// TODO: this should be instanced classes where we can separate callback paths.
 var allUserCallbacks: common.Map<common.Callback<number>[]> = {};
 
 function getUserKey(userId: string, path: string): string {
   return path + ':' + userId;
 }
 
+/**
+ * Register a callback and will be invoked when invokeAllCallbacks will be called. 
+ * Returns whether this is a new request. If so, the caller should continue. 
+ * Otherwise, caller should return since another same request is already ongoing.
+ */
 export function checkAndRegisterCallback(userId: string, path: string, 
                                          cb: common.Callback<number>): boolean {
   if (!cb) {
@@ -37,12 +43,14 @@ export function checkAndRegisterCallback(userId: string, path: string,
   return (callbacks.length == 1);
 }
 
+/**
+ * All registered callback for the user and path will be invoked and cleaned up.
+ */
 export function invokeAllCallbacks(userId: string, path: string, err: Error, code: number) {
   var callbacks: common.Callback<number>[] = allUserCallbacks[getUserKey(userId, path)];
   if (!callbacks) {
     return;
   }
-
   for(var key in callbacks) {
     callbacks[key](err, code);
   }
