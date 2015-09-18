@@ -17,6 +17,7 @@
 /// <reference path="../../../externs/ts/node/tcp-port-used.d.ts" />
 /// <reference path="common.d.ts" />
 
+import callbacks = require('./callbacks');
 import childProcess = require('child_process');
 import fs = require('fs');
 import http = require('http');
@@ -26,6 +27,7 @@ import net = require('net');
 import path = require('path');
 import tcp = require('tcp-port-used');
 import url = require('url');
+import userManager = require('./userManager');
 
 interface JupyterServer {
   userId: string;
@@ -40,6 +42,12 @@ interface JupyterServer {
  */
 var jupyterServers: common.Map<JupyterServer> = {};
 var nextJupyterPort = 9000;
+
+/**
+ * Used to make sure no multiple initialization runs happen for the same user
+ * at same time.
+ */
+var callbackManager: callbacks.CallbackManager = new callbacks.CallbackManager();
 
 /**
  * Templates
@@ -67,10 +75,6 @@ function pipeOutput(stream: NodeJS.ReadableStream, port: number, error: boolean)
   })
 }
 
-function getUserId(request: http.ServerRequest): string {
-  return request.headers['x-appengine-user-email'] || appSettings.instanceUser || 'anonymous';
-}
-
 /**
  * Starts the Jupyter server, and then creates a proxy object enabling
  * routing HTTP and WebSocket requests to Jupyter.
@@ -79,11 +83,14 @@ function createJupyterServer(userId: string): JupyterServer {
   var port = nextJupyterPort;
   nextJupyterPort++;
 
-  // TODO: Implement per-user notebook directories
+  var userDir = userManager.getUserDir(userId);
+  if (!fs.existsSync(userDir)) {
+    fs.mkdirSync(userDir, 0755);
+  }
   var server: JupyterServer = {
     userId: userId,
     port: port,
-    notebooks: '/content'
+    notebooks: userDir
   };
 
   function exitHandler(code: number, signal: string): void {
@@ -128,37 +135,8 @@ function createJupyterServer(userId: string): JupyterServer {
   return server;
 }
 
-function getServer(request: http.ServerRequest, cb: common.Callback<JupyterServer>): void {
-  var userId = getUserId(request);
-  var server = jupyterServers[userId];
-
-  if (!server) {
-    try {
-      server = createJupyterServer(userId);
-      if (server) {
-        tcp.waitUntilUsed(server.port).then(
-           function() {
-             jupyterServers[userId] = server;
-             cb(null, server);
-           },
-           function(e) {
-             cb(e, null);
-           });
-      }
-    }
-    catch (e) {
-      cb(e, null);
-    }
-  }
-  else {
-    process.nextTick(function() {
-      cb(null, server);
-    });
-  }
-}
-
 export function getPort(request: http.ServerRequest): number {
-  var userId = getUserId(request);
+  var userId = userManager.getUserId(request);
   var server = jupyterServers[userId];
 
   return server ? server.port : 0;
@@ -179,6 +157,46 @@ export function getServers(): Array<common.Map<any>> {
   }
 
   return servers;
+}
+
+/**
+ * Starts a jupyter server instance for given user.
+ */
+export function startForUser(userId: string, cb: common.Callback0) {
+  var server = jupyterServers[userId];
+  if (server) {
+    process.nextTick(function() { cb(null); });
+    return;
+  }
+
+  if (!callbackManager.checkOngoingAndRegisterCallback(userId, cb)) {
+    // There is already a start request ongoing. Return now to avoid multiple Jupyter
+    // processes for the same user.
+    return;
+  }
+  try {
+    logging.getLogger().info('Starting jupyter server for %s.', userId);
+    server = createJupyterServer(userId);
+    if (server) {
+      tcp.waitUntilUsed(server.port).then(
+      function() {
+        jupyterServers[userId] = server;
+        logging.getLogger().info('Jupyter server started for %s.', userId);
+        callbackManager.invokeAllCallbacks(userId, null);
+      },
+      function(e) {
+        logging.getLogger().error(e, 'Failed to start Jupyter server for user %s.', userId);
+        callbackManager.invokeAllCallbacks(userId, e); 
+      });
+    } else {
+      // Should never be here.
+      logging.getLogger().error('Failed to start Jupyter server for user %s.', userId);
+      callbackManager.invokeAllCallbacks(userId, new Error('failed to start jupyter server.'));
+    }
+  } catch (e) {
+    logging.getLogger().error(e, 'Failed to start Jupyter server for user %s.', userId);
+    callbackManager.invokeAllCallbacks(userId, e);
+  }
 }
 
 /**
@@ -207,17 +225,16 @@ export function stop(): void {
 }
 
 export function handleRequest(request: http.ServerRequest, response: http.ServerResponse) {
-  getServer(request, function(e, server) {
-    if (e) {
-      logging.getLogger().error(e, 'Unable to get or start Jupyter server.');
-
-      response.statusCode = 500;
-      response.end();
-    }
-    else {
-      server.proxy.web(request, response);
-    }
-  });
+  var userId = userManager.getUserId(request);
+  var server = jupyterServers[userId];
+  if (!server) {
+    // should never be here.
+    logging.getLogger().error('Jupyter server was not created yet for user %s.', userId);
+    response.statusCode = 500;
+    response.end();
+    return;
+  }
+  server.proxy.web(request, response);
 }
 
 
@@ -263,7 +280,7 @@ function responseHandler(proxyResponse: http.ClientResponse,
       projectId: appSettings.projectId,
       versionId: appSettings.versionId,
       instanceId: appSettings.instanceId,
-      userId: getUserId(request),
+      userId: userManager.getUserId(request),
       baseUrl: '/'
     };
 

@@ -26,11 +26,73 @@ import path = require('path');
 import sockets = require('./sockets');
 import static = require('./static');
 import url = require('url');
+import userManager = require('./userManager');
+import workspaceManager = require('./workspaceManager');
 
 var server: http.Server;
 var healthHandler: http.RequestHandler;
 var infoHandler: http.RequestHandler;
 var staticHandler: http.RequestHandler;
+
+/**
+ * If it is the user's first request since the web server restarts,
+ * need to initialize workspace, and start jupyter server for that user.
+ * We don't track results here. Later requests will go through initializaion
+ * checks again, and if it is still initializing, those requests will be parked
+ * and wait for initialization to complete or fail.
+ */
+function startInitializationForUser(request: http.ServerRequest): void {
+  var userId = userManager.getUserId(request);
+  if (!workspaceManager.isWorkspaceInitialized(userId)) {
+    // Do a sync as early as possible if workspace is not initialized.
+    // Giving null callback so this is fire-and-forget.
+    workspaceManager.updateWorkspaceNow(userId, null);
+  }
+  if (jupyter.getPort(request) == 0) {
+    // Do a sync as early as possible if workspace is not initialized.
+    // Giving null callback so this is fire-and-forget.
+    jupyter.startForUser(userId, null);
+  }
+}
+
+/**
+ * Check if workspace and jupyter server is initialized for the user.
+ * If not, wait for initialization to be done and then proceed to pass
+ * the request to jupyter server.
+ */
+function handleUserRequest(request: http.ServerRequest, response: http.ServerResponse): void {
+  var userId = userManager.getUserId(request);
+  if (!workspaceManager.isWorkspaceInitialized(userId)) {
+    // Workspace is not initialized was not created yet. Initializing it and call self again.
+    // Note that another 'syncNow' may already be ongoing so this 'syncNow' will probably
+    // be parked until the ongoing one is done.
+    workspaceManager.updateWorkspaceNow(userId, function(e) {
+      if (e) {
+        response.statusCode = 500;
+        response.end();
+      } else {
+        handleUserRequest(request, response);
+      }
+    });
+    return;
+  }
+  if (jupyter.getPort(request) == 0) {
+    // Jupyter server is not created yet. Creating it for user and call self again.
+    // Another 'startForUser' may already be ongoing so this 'syncNow' will probably
+    // be parked until the ongoing one is done.
+    jupyter.startForUser(userId, function(e) {
+      if (e) {
+        response.statusCode = 500;
+        response.end();
+      } else {
+        handleUserRequest(request, response);
+      }
+    });
+    return;
+  }
+  jupyter.handleRequest(request, response);
+  workspaceManager.scheduleWorkspaceUpdate(userId);
+}
 
 /**
  * Handles all requests sent to the proxy web server. Some requests are handled within
@@ -70,9 +132,13 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   // into the log.
   logging.logRequest(request, response);
 
+  // If workspace or jupyter is not initialized, do it as early as possible.
+  startInitializationForUser(request);
+
   // Landing page redirects to /tree to be able to use the Jupyter file list as
   // the initial page.
   if (path == '/') {
+    userManager.maybeSetUserIdCookie(request, response);
     response.statusCode = 302;
     response.setHeader('Location', '/tree');
     response.end();
@@ -85,7 +151,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       (path.indexOf('/notebooks') == 0) ||
       (path.indexOf('/nbconvert') == 0) ||
       (path.indexOf('/files') == 0)) {
-    jupyter.handleRequest(request, response);
+    handleUserRequest(request, response);
     return;
   }
 
@@ -116,6 +182,8 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
  * @param settings the configuration settings to use.
  */
 export function run(settings: common.Settings): void {
+  userManager.init(settings);
+  workspaceManager.init(settings);
   jupyter.start(settings);
 
   healthHandler = health.createHandler(settings);

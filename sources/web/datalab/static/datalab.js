@@ -314,6 +314,12 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 
       originalFromJSON.apply(this, [ data ]);
     }
+
+    // This is a hack to disable timestamp check due to a Workspace-sync bug.
+    var originalSave = notebook.prototype.save_notebook;
+    notebook.prototype.save_notebook = function() {
+      originalSave.apply(this, /* check_lastmodified */ [ false ]);
+    }
   });
 
   require(['notebook/js/menubar'], function(ipy) {
