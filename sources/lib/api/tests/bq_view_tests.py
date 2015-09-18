@@ -22,7 +22,7 @@ class TestCases(unittest.TestCase):
 
   def test_view_repr_sql(self):
     name = 'test:testds.testView0'
-    view = gcp.bigquery.view(name, self._create_context())
+    view = gcp.bigquery.View(name, self._create_context())
     self.assertEqual('[%s]' % name, view._repr_sql_())
 
   @mock.patch('gcp.bigquery._api.Api.tables_insert')
@@ -41,7 +41,7 @@ class TestCases(unittest.TestCase):
 
     name = 'test:testds.testView0'
     sql = 'select * from test:testds.testTable0'
-    view = gcp.bigquery.view(name, self._create_context())
+    view = gcp.bigquery.View(name, self._create_context())
     result = view.create(sql)
     self.assertTrue(view.exists())
     self.assertEqual(name, str(view))
@@ -66,7 +66,7 @@ class TestCases(unittest.TestCase):
 
     name = 'test:testds.testView0'
     sql = 'select * from test:testds.testTable0'
-    view = gcp.bigquery.view(name, self._create_context())
+    view = gcp.bigquery.View(name, self._create_context())
     view.create(sql)
     results = view.results()
 
@@ -76,9 +76,10 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('gcp.bigquery._api.Api.tables_insert')
   @mock.patch('gcp.bigquery._api.Api.tables_get')
-  @mock.patch('gcp.bigquery._api.Api.table_update')
-  def test_view_update(self, mock_api_table_update, mock_api_tables_get, mock_api_tables_insert):
+  @mock.patch('gcp._context.Context.default')
+  def test_view_update(self, mock_context_default, mock_api_tables_get, mock_api_tables_insert):
     mock_api_tables_insert.return_value = self._create_tables_insert_success_result()
+    mock_context_default.return_value = self._create_context()
     friendly_name = 'casper'
     description = 'ghostly logs'
     sql = 'select * from test:testds.testTable0'
@@ -87,7 +88,7 @@ class TestCases(unittest.TestCase):
             'view': {'query': sql}}
     mock_api_tables_get.return_value = info
     name = 'test:testds.testView0'
-    view = gcp.bigquery.view(name, self._create_context())
+    view = gcp.bigquery.View(name, self._create_context())
     view.create(sql)
     self.assertEqual(friendly_name, view.friendly_name)
     self.assertEqual(description, view.description)

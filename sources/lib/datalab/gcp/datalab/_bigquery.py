@@ -16,7 +16,6 @@
 
 import json
 import re
-import string
 import yaml
 import IPython
 import IPython.core.display
@@ -86,7 +85,7 @@ def _create_pipeline_subparser(parser, command):
   pipeline_parser.add_argument('-q', '--sql', help='name of query to run', required=True)
   pipeline_parser.add_argument('-t', '--target', help='target table name', nargs='?')
   pipeline_parser.add_argument('action', nargs='?', choices=('deploy', 'run', 'dryrun'),
-                               default='validate',
+                               default='dryrun',
                                help='whether to deploy the pipeline, execute it immediately in ' +
                                     'the notebook, or validate it with a dry run')
   # TODO(gram): we may want to move some command line arguments to the cell body config spec
@@ -139,10 +138,8 @@ def _create_extract_subparser(parser):
 
 def _create_load_subparser(parser):
   load_parser = parser.subcommand('load', 'load data into a BigQuery table')
-  load_parser.add_argument('-a', '--append', help='append to existing file',
-                           action='store_true')
-  load_parser.add_argument('-o', '--overwrite', help='overwrite existing file',
-                           action='store_true')
+  load_parser.add_argument('-m', '--mode', help='one of create (default), append or overwrite',
+                           choices=['create', 'append', 'overwrite'], default='create')
   load_parser.add_argument('-f', '--format', help='source format', choices=['json', 'csv'],
                            default='csv')
   load_parser.add_argument('-n', '--skip', help='number of initial lines to skip',
@@ -182,7 +179,7 @@ def _create_bigquery_parser():
   dryrun_parser = _create_dry_run_subparser(parser)
   dryrun_parser.set_defaults(
       func=lambda args, cell: _dispatch_handler(args, cell, dryrun_parser,
-                                                _dryrun_line, cell_prohibited=True))
+                                                _dryrun_cell, cell_prohibited=True))
 
   # %%bigquery udf
   udf_parser = _create_udf_subparser(parser)
@@ -354,13 +351,13 @@ def _get_query_argument(args, config, env):
   """
   sql_arg = args['sql']
   item = _get_notebook_item(sql_arg)
-  if isinstance(item, gcp.bigquery._query.Query):
+  if isinstance(item, gcp.bigquery.Query):
     return item
 
   item, env = gcp.data.SqlModule.get_sql_statement_with_environment(item, env)
   if config:
     env.update(config)
-  return gcp.bigquery.query(item, **env)
+  return gcp.bigquery.Query(item, **env)
 
 
 def _sample_cell(args, config):
@@ -381,20 +378,20 @@ def _sample_cell(args, config):
   count = args['count']
   method = args['method']
   if method == 'random':
-    sampling = gcp.bigquery._sampling.Sampling.random(percent=args['percent'], count=count)
+    sampling = gcp.bigquery.Sampling.random(percent=args['percent'], count=count)
   elif method == 'hashed':
-    sampling = gcp.bigquery._sampling.Sampling.hashed(field_name=args['field'],
-                                                      percent=args['percent'],
-                                                      count=count)
+    sampling = gcp.bigquery.Sampling.hashed(field_name=args['field'],
+                                            percent=args['percent'],
+                                            count=count)
   elif method == 'sorted':
     ascending = args['order'] == 'ascending'
-    sampling = gcp.bigquery._sampling.Sampling.sorted(args['field'],
-                                                      ascending=ascending,
-                                                      count=count)
+    sampling = gcp.bigquery.Sampling.sorted(args['field'],
+                                            ascending=ascending,
+                                            count=count)
   elif method == 'limit':
-    sampling = gcp.bigquery._sampling.Sampling.default(count=count)
+    sampling = gcp.bigquery.Sampling.default(count=count)
   else:
-    sampling = gcp.bigquery._sampling.Sampling.default(count=count)
+    sampling = gcp.bigquery.Sampling.default(count=count)
 
   return query.sample(sampling=sampling)
 
@@ -469,7 +466,7 @@ def _udf_cell(args, js):
     outputs.append((n, t))
 
   # Finally build the UDF object
-  udf = gcp.bigquery.udf(inputs, outputs, variable_name, js)
+  udf = gcp.bigquery.UDF(inputs, outputs, variable_name, js)
   _notebook_environment()[variable_name] = udf
 
 
@@ -554,7 +551,7 @@ def _get_schema(name):
   if not item:
     item = _get_table(name)
 
-  if isinstance(item, gcp.bigquery._schema.Schema):
+  if isinstance(item, gcp.bigquery.Schema):
     return item
   if hasattr(item, 'schema') and isinstance(item.schema, gcp.bigquery._schema.Schema):
     return item.schema
@@ -576,13 +573,13 @@ def _get_table(name):
   """
   # If name is a variable referencing a table, use that.
   item = _get_notebook_item(name)
-  if isinstance(item, gcp.bigquery._table.Table):
+  if isinstance(item, gcp.bigquery.Table):
     return item
   # Else treat this as a BQ table name and return the (cached) table if it exists.
   try:
     return _table_cache[name]
   except KeyError:
-    table = gcp.bigquery.table(name)
+    table = gcp.bigquery.Table(name)
     if table.exists():
       _table_cache[name] = table
       return table
@@ -606,14 +603,14 @@ def _render_table(data, fields=None):
 
 def _datasets_line(args):
   return _render_table([{'Name': str(dataset)}
-                        for dataset in gcp.bigquery.datasets(args['project'])])
+                        for dataset in gcp.bigquery.DataSets(args['project'])])
 
 
 def _tables_line(args):
   if args['dataset']:
-    datasets = [gcp.bigquery.dataset((args['project'], args['dataset']))]
+    datasets = [gcp.bigquery.DataSet((args['project'], args['dataset']))]
   else:
-    datasets = gcp.bigquery.datasets(args['project'])
+    datasets = gcp.bigquery.DataSets(args['project'])
 
   tables = []
   for dataset in datasets:
@@ -630,15 +627,15 @@ def _extract_line(args):
 
   if not source:
     return 'No such source: %s' % name
-  elif isinstance(source, gcp.bigquery._table.Table) and not source.exists():
+  elif isinstance(source, gcp.bigquery.Table) and not source.exists():
     return 'Source %s does not exist' % name
   else:
 
     job = source.extract(args['destination'],
                          format='CSV' if args['format'] == 'csv' else 'NEWLINE_DELIMITED_JSON',
                          compress=args['compress'],
-                         field_delimiter=args['delimiter'],
-                         print_header=args['header'])
+                         csv_delimiter=args['delimiter'],
+                         csv_header=args['header'])
     if job.failed:
       return 'Extract failed: %s' % str(job.fatal_error)
     elif job.errors:
@@ -649,10 +646,10 @@ def _load_cell(args, schema):
   name = args['table']
   table = _get_table(name)
   if not table:
-    table = gcp.bigquery.table(name)
+    table = gcp.bigquery.Table(name)
 
   if table.exists():
-    if not (args['append'] or args['overwrite']):
+    if args['mode'] == 'create':
       return "%s already exists; use --append or --overwrite" % name
   elif schema:
     table.create(json.loads(schema))
@@ -663,14 +660,12 @@ def _load_cell(args, schema):
   # to be able to do it. Alternatively we can drop the --infer argument and force the user
   # to use a pre-existing table or supply a JSON schema.
   job = table.load(args['source'],
-                   append=args['append'],
-                   overwrite=args['overwrite'],
-                   create=not table.exists(),
+                   mode=args['mode'],
                    source_format=('CSV' if args['format'] == 'csv' else 'NEWLINE_DELIMITED_JSON'),
-                   skip_leading_rows=args['skip'],
+                   csv_delimiter=args['delimiter'],
+                   csv_skip_header_rows=args['skip'],
                    allow_jagged_rows=not args['strict'],
                    ignore_unknown_values=not args['strict'],
-                   field_delimiter=args['delimiter'],
                    quote=args['quote'])
   if job.failed:
     return 'Load failed: %s' % str(job.fatal_error)

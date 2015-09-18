@@ -74,7 +74,7 @@ def _get_data_from_empty_list(source, fields='*', first_row=0, count=-1):
 
 def _get_data_from_list_of_dicts(source, fields='*', first_row=0, count=-1):
   """ Helper function for _get_data that handles lists of dicts. """
-  schema = gcp.bigquery.schema(source)
+  schema = gcp.bigquery.Schema.from_data(source)
   fields = get_field_list(fields, schema)
   gen = source[first_row:first_row + count] if count >= 0 else source
   rows = [{'c': [{'v': row[c]} for c in fields]} for row in gen]
@@ -83,7 +83,7 @@ def _get_data_from_list_of_dicts(source, fields='*', first_row=0, count=-1):
 
 def _get_data_from_list_of_lists(source, fields='*', first_row=0, count=-1):
   """ Helper function for _get_data that handles lists of lists. """
-  schema = gcp.bigquery.schema(source)
+  schema = gcp.bigquery.Schema.from_data(source)
   fields = get_field_list(fields, schema)
   gen = source[first_row:first_row + count] if count >= 0 else source
   cols = [schema.find(name) for name in fields]
@@ -93,7 +93,7 @@ def _get_data_from_list_of_lists(source, fields='*', first_row=0, count=-1):
 
 def _get_data_from_dataframe(source, fields='*', first_row=0, count=-1):
   """ Helper function for _get_data that handles Pandas DataFrames. """
-  schema = gcp.bigquery.schema(source)
+  schema = gcp.bigquery.Schema.from_data(source)
   fields = get_field_list(fields, schema)
   rows = []
   if count < 0:
@@ -147,10 +147,10 @@ def get_data(source, fields='*', first_row=0, count=-1):
     ipy = IPython.get_ipython()
     source = gcp._util.get_item(ipy.user_ns, source, source)
     if isinstance(source, basestring):
-      source = gcp.bigquery.table(source)
+      source = gcp.bigquery.Table(source)
 
   if isinstance(source, types.ModuleType) or isinstance(source, gcp.data.SqlStatement):
-    source = gcp.bigquery.query(source)
+    source = gcp.bigquery.Query(source)
 
   if isinstance(source, list):
     if len(source) == 0:
@@ -163,9 +163,9 @@ def get_data(source, fields='*', first_row=0, count=-1):
       raise Exception("To get tabular data from a list it must contain dictionaries or lists.")
   elif isinstance(source, pandas.DataFrame):
     return _get_data_from_dataframe(source, fields, first_row, count)
-  elif isinstance(source, gcp.bigquery._query.Query):
+  elif isinstance(source, gcp.bigquery.Query):
     return _get_data_from_table(source.results(), fields, first_row, count)
-  elif isinstance(source, gcp.bigquery._table.Table):
+  elif isinstance(source, gcp.bigquery.Table):
     return _get_data_from_table(source, fields, first_row, count)
   else:
     raise Exception("Cannot chart %s; unsupported object type" % source)

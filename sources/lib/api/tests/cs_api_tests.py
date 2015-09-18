@@ -20,6 +20,7 @@ from oauth2client.client import AccessTokenCredentials
 import gcp
 from gcp.storage._api import Api
 
+
 class TestCases(unittest.TestCase):
 
   def validate(self, mock_http_request, expected_url, expected_args=None, expected_data=None,
@@ -75,7 +76,7 @@ class TestCases(unittest.TestCase):
     api.buckets_list(projection='foo', max_results=99, page_token='xyz', project_id='bar')
     self.validate(mock_http_request, 'https://www.googleapis.com/storage/v1/b/',
                   expected_args={'project': 'bar', 'maxResults': 99,
-                  'projection': 'foo', 'pageToken': 'xyz'})
+                                 'projection': 'foo', 'pageToken': 'xyz'})
 
   @mock.patch('gcp._util.Http.request')
   def test_object_download(self, mock_http_request):
@@ -128,13 +129,11 @@ class TestCases(unittest.TestCase):
     api.objects_list('b', 'p', 'd', 'pr', True, 99, 'foo')
     self.validate(mock_http_request, 'https://www.googleapis.com/storage/v1/b/b/o/',
                   expected_args={'projection': 'pr', 'maxResults': 99,
-                                                        'prefix': 'p',
-                                                        'delimiter': 'd',
-                                                        'versions': 'true',
-                                                        'pageToken': 'foo'})
+                                 'prefix': 'p', 'delimiter': 'd', 'versions': 'true',
+                                 'pageToken': 'foo'})
 
   @mock.patch('gcp._util.Http.request')
-  def test_objects_patch(self, mock_http_request): #bucket, key, info):
+  def test_objects_patch(self, mock_http_request):
     api = self._create_api()
     api.objects_patch('b', 'k', 'i')
     self.validate(mock_http_request, 'https://www.googleapis.com/storage/v1/b/b/o/k',
@@ -142,7 +141,7 @@ class TestCases(unittest.TestCase):
 
   def _create_api(self):
     context = self._create_context()
-    return Api(context.credentials, context.project_id)
+    return Api(context)
 
   def _create_context(self):
     project_id = 'test'

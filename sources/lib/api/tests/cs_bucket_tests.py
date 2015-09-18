@@ -25,7 +25,7 @@ class TestCases(unittest.TestCase):
   def test_bucket_existence(self, mock_api_buckets):
     mock_api_buckets.return_value = self._create_buckets_get_result()
 
-    buckets = gcp.storage.buckets(context=self._create_context())
+    buckets = gcp.storage.Buckets(context=self._create_context())
     self.assertTrue(buckets.contains('test_bucket'))
 
     mock_api_buckets.side_effect = gcp._util.RequestException(404, 'failed')
@@ -41,7 +41,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(m.name, 'test_bucket')
 
   def _create_bucket(self, name='test_bucket'):
-    return gcp.storage.bucket(name, context=self._create_context())
+    return gcp.storage.Bucket(name, context=self._create_context())
 
   def _create_context(self):
     project_id = 'test'

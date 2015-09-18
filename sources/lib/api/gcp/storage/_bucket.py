@@ -17,7 +17,9 @@
 import re
 import dateutil
 
+import gcp
 import gcp._util
+import _api
 import _item
 
 
@@ -75,15 +77,20 @@ class BucketMetadata(object):
 class Bucket(object):
   """Represents a Cloud Storage bucket."""
 
-  def __init__(self, api, name, info=None):
+  def __init__(self, name, info=None, context=None):
     """Initializes an instance of a Bucket object.
 
     Args:
-      api: the Storage API object to use to issue requests.
       name: the name of the bucket.
       info: the information about the bucket if available.
+      context: an optional Context object providing project_id and credentials. If a specific
+          project id or credentials are unspecified, the default ones configured at the global
+          level are used.
     """
-    self._api = api
+    if context is None:
+      context = gcp.Context.default()
+    self._context = context
+    self._api = _api.Api(context)
     self._name = name
     self._info = info
 
@@ -112,7 +119,7 @@ class Bucket(object):
     Returns:
       An Item instance representing the specified key.
     """
-    return _item.Item(self._api, self._name, key)
+    return _item.Item(self._name, key, context=self._context)
 
   def items(self, prefix=None, delimiter=None):
     """Retrieve the list of items within this bucket.
@@ -123,7 +130,7 @@ class Bucket(object):
     Returns:
       An iterable list of items within this bucket.
     """
-    return _item.ItemList(self._api, self._name, prefix, delimiter)
+    return _item.Items(self._name, prefix, delimiter, context=self._context)
 
   def exists(self):
     """ Checks if the bucket exists. """
@@ -158,19 +165,24 @@ class Bucket(object):
     self._api.buckets_delete(self._name)
 
 
-class BucketList(object):
+class Buckets(object):
   """Represents a list of Cloud Storage buckets for a project."""
 
-  def __init__(self, api, project_id=None):
+  def __init__(self, project_id=None, context=None):
     """Initializes an instance of a BucketList.
 
     Args:
-      api: the Storage API object to use to issue requests.
       project_id: an optional project whose buckets we want to manipulate. If None this
           is obtained from the api object.
+      context: an optional Context object providing project_id and credentials. If a specific
+          project id or credentials are unspecified, the default ones configured at the global
+          level are used.
     """
-    self._api = api
-    self._project_id = project_id if project_id else api.project_id
+    if context is None:
+      context = gcp.Context.default()
+    self._context = context
+    self._api = _api.Api(context)
+    self._project_id = project_id if project_id else self._api.project_id
 
   def contains(self, name):
     """Checks if the specified bucket exists.
@@ -200,7 +212,7 @@ class BucketList(object):
     Raises:
       Exception if there was an error creating the bucket.
     """
-    return Bucket(self._api, name).create(self._project_id)
+    return Bucket(name, context=self._context).create(self._project_id)
 
   def _retrieve_buckets(self, page_token, _):
     list_info = self._api.buckets_list(page_token=page_token, project_id=self._project_id)
@@ -208,7 +220,7 @@ class BucketList(object):
     buckets = list_info.get('items', [])
     if len(buckets):
       try:
-        buckets = [Bucket(self._api, info['name'], info) for info in buckets]
+        buckets = [Bucket(info['name'], info, context=self._context) for info in buckets]
       except KeyError:
         raise Exception('Unexpected item list response.')
 

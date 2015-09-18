@@ -31,15 +31,14 @@ class Api(object):
 
   _MAX_RESULTS = 100
 
-  def __init__(self, credentials, project_id):
+  def __init__(self, context):
     """Initializes the Storage helper with context information.
 
     Args:
-      credentials: the credentials to use to authorize requests.
-      project_id: the project id to associate with requests.
+      context: a Context object providing project_id and credentials.
     """
-    self._credentials = credentials
-    self._project_id = project_id
+    self._credentials = context.credentials
+    self._project_id = context.project_id
 
   @property
   def project_id(self):

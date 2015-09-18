@@ -18,23 +18,27 @@ import unittest
 
 # import Python so we can mock the parts we need to here.
 import IPython
+import IPython.core
 
-def noopDecorator(func):
+
+def noop_decorator(func):
   return func
 
-IPython.core.magic.register_line_cell_magic = noopDecorator
-IPython.core.magic.register_line_magic = noopDecorator
-IPython.core.magic.register_cell_magic = noopDecorator
+IPython.core.magic.register_line_cell_magic = noop_decorator
+IPython.core.magic.register_line_magic = noop_decorator
+IPython.core.magic.register_cell_magic = noop_decorator
 IPython.get_ipython = mock.Mock()
 
+import gcp
 import gcp.bigquery
 import gcp.datalab
+
 
 class TestCases(unittest.TestCase):
 
   @mock.patch('gcp.datalab._bigquery._notebook_environment')
-  @mock.patch('gcp.bigquery._create_api')
-  def test_udf_cell(self, mock_create_api, mock_notebook_environment):
+  @mock.patch('gcp._context.Context.default')
+  def test_udf_cell(self, mock_default_context, mock_notebook_environment):
     env = {}
     cell_body = \
 """
@@ -49,7 +53,7 @@ function(r, emitFn) {
   }
 }
 """
-    mock_create_api.return_value = self._create_api()
+    mock_default_context.return_value = self._create_context()
     mock_notebook_environment.return_value = env
     gcp.datalab._bigquery._udf_cell({'module': 'word_filter'}, cell_body)
     udf = env['word_filter']
@@ -61,20 +65,12 @@ function(r, emitFn) {
                       udf._outputs)
     self.assertEquals(cell_body, udf._implementation)
 
-  def _create_api(self):
-    context = self._create_context()
-    return gcp.bigquery._api.Api(context.credentials, context.project_id)
-
   def _create_context(self):
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
     return gcp.Context(project_id, creds)
 
   def test_sample_cell(self):
-    # TODO(gram): complete this test
-    pass
-
-  def test_udf_cell(self):
     # TODO(gram): complete this test
     pass
 

@@ -17,17 +17,21 @@ import collections
 import mock
 from oauth2client.client import AccessTokenCredentials
 import pandas
-import time
 import unittest
 
 # import Python so we can mock the parts we need to here.
 import IPython
+import IPython.core
+
+
 IPython.core.magic.register_line_cell_magic = mock.Mock()
 IPython.core.magic.register_line_magic = mock.Mock()
 IPython.core.magic.register_cell_magic = mock.Mock()
 IPython.get_ipython = mock.Mock()
 
+import gcp.bigquery
 import gcp.datalab
+
 
 class TestCases(unittest.TestCase):
 
@@ -151,11 +155,11 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._api.Api.tabledata_list')
   @mock.patch('gcp.bigquery._table.Table.exists')
   @mock.patch('gcp.bigquery._api.Api.tables_get')
-  @mock.patch('gcp.bigquery._create_api')
-  def test_get_data_from_table(self, mock_create_api, mock_api_tables_get,
+  @mock.patch('gcp._context.Context.default')
+  def test_get_data_from_table(self, mock_context_default, mock_api_tables_get,
                                mock_table_exists, mock_api_tabledata_list):
     data = self._get_expected_rows()
-    mock_create_api.return_value = self._create_api()
+    mock_context_default.return_value = self._create_context()
     mock_api_tables_get.return_value = {
       'numRows': len(data),
       'schema': {
@@ -180,7 +184,7 @@ class TestCases(unittest.TestCase):
       return {'rows': raw_data[start_index:start_index + max_results]}
 
     mock_api_tabledata_list.side_effect = tabledata_list
-    t = gcp.bigquery.table('foo.bar')
+    t = gcp.bigquery.Table('foo.bar')
     self._test_get_data(t, self._get_expected_cols(), self._get_expected_rows(), 6,
                         gcp.datalab._utils._get_data_from_table)
     self._test_get_data(t, self._get_expected_cols(), self._get_expected_rows(), 6,
@@ -212,7 +216,7 @@ class TestCases(unittest.TestCase):
     for first in range(0, 6):
       data, count = fn(test_data, first_row=first, count=2)
       self.assertEquals(expected_count, count)
-      self.assertEquals({'cols': cols, 'rows': rows[first:first+2]}, data)
+      self.assertEquals({'cols': cols, 'rows': rows[first:first + 2]}, data)
 
     # Test subsets of columns
 

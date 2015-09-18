@@ -36,4 +36,3 @@ def sql(sql_template, **kwargs):
     a corresponding argument value.
   """
   return _util.Sql.format(sql_template, kwargs)
-

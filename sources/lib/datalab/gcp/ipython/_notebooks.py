@@ -512,8 +512,8 @@ class DataLabNotebookManager(CompositeNotebookManager):
     project_id = project_id.replace('google.com', 'gcom').replace(':', '-').replace('.', '-')
     bucket_name = project_id + '-datalab'
 
-    buckets = _storage.buckets()
+    buckets = _storage.Buckets()
     if not buckets.contains(bucket_name):
       return buckets.create(bucket_name)
     else:
-      return _storage.bucket(bucket_name)
+      return _storage.Bucket(bucket_name)

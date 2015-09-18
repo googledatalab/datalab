@@ -19,16 +19,18 @@ import _table
 
 class QueryResultsTable(_table.Table):
 
-  def __init__(self, api, name, job, is_temporary=False):
+  def __init__(self, name, context, job, is_temporary=False):
     """Initializes an instance of a Table object.
 
     Args:
-      api: the BigQuery API object to use to issue requests.
       name: the name of the table either as a string or a 3-part tuple (projectid, datasetid, name).
+      context: an optional Context object providing project_id and credentials. If a specific
+        project id or credentials are unspecified, the default ones configured at the global
+        level are used.
       job: the QueryJob associated with these results.
       is_temporary: if True, this is a short-lived table for intermediate results (default False).
     """
-    super(QueryResultsTable, self).__init__(api, name)
+    super(QueryResultsTable, self).__init__(name, context)
     self._job = job
     self._is_temporary = is_temporary
 

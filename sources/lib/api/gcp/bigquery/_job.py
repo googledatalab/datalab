@@ -16,22 +16,23 @@
 
 import datetime
 import gcp._util
+import _api
 
 
-class BQJob(gcp._util.Job):
+class Job(gcp._util.Job):
   """Represents a BigQuery Job.
   """
 
-  def __init__(self, api, job_id):
+  def __init__(self, job_id, context):
     """Initializes an instance of a Job.
 
     Args:
-      api: the BigQuery API object to use to issue requests. The project ID will be inferred from
-          this.
       job_id: the BigQuery job ID corresponding to this job.
+      context: a Context object providing project_id and credentials.
     """
-    super(BQJob, self).__init__(job_id)
-    self._api = api
+    super(Job, self).__init__(job_id)
+    self._context = context
+    self._api = _api.Api(context)
     self._start_time = None
     self._end_time = None
 

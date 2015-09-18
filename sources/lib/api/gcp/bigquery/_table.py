@@ -25,7 +25,8 @@ import traceback
 import uuid
 
 import gcp._util
-import _bqjob
+import _api
+import _job
 import _parser
 import _schema
 import _utils
@@ -100,15 +101,23 @@ class Table(object):
   # Milliseconds per week
   _MSEC_PER_WEEK = 7 * 24 * 3600 * 1000
 
-  def __init__(self, api, name):
+  def __init__(self, name, context=None):
     """Initializes an instance of a Table object.
 
     Args:
-      api: the BigQuery API object to use to issue requests.
       name: the name of the table either as a string or a 3-part tuple (projectid, datasetid, name).
+        If a string, it must have the form '<project>:<dataset>.<table>' or '<dataset>.<table>'.
+      context: an optional Context object providing project_id and credentials. If a specific
+        project id or credentials are unspecified, the default ones configured at the global
+        level are used.
+    Raises:
+      Exception if the name is invalid.
     """
-    self._api = api
-    self._name_parts = _utils.parse_table_name(name, api.project_id)
+    if context is None:
+      context = gcp.Context.default()
+    self._context = context
+    self._api = _api.Api(context)
+    self._name_parts = _utils.parse_table_name(name, self._api.project_id)
     self._full_name = '%s:%s.%s%s' % self._name_parts
     self._info = None
     self._cached_page = None
@@ -216,9 +225,8 @@ class Table(object):
       Exception if the sample query could not be executed or query response was malformed.
     """
     sql = self._repr_sql_()
-    return _query.Query.sampling_query(self._api, sql, count=count, fields=fields,
-                                       sampling=sampling)\
-        .results(use_cache=use_cache)
+    return _query.Query.sampling_query(sql, context=self._context, count=count, fields=fields,
+                                       sampling=sampling).results(use_cache=use_cache)
 
   @staticmethod
   def _encode_dict_as_row(record, column_name_map):
@@ -342,7 +350,7 @@ class Table(object):
     """ Helper function to create a Job instance from a response. """
     job = None
     if response and 'jobReference' in response:
-      job = _bqjob.BQJob(self._api, job_id=response['jobReference']['jobId'])
+      job = _job.Job(job_id=response['jobReference']['jobId'], context=self._context)
     return job
 
   def extract_async(self, destination, format='csv', csv_delimiter=',', csv_header=True,
@@ -365,7 +373,7 @@ class Table(object):
                                          csv_delimiter, csv_header)
       return self._init_job_from_response(response)
     except Exception as e:
-      raise _bqjob.JobError(location=traceback.format_exc(), message=e.message, reason=str(type(e)))
+      raise _job.JobError(location=traceback.format_exc(), message=e.message, reason=str(type(e)))
 
   def extract(self, destination, format='csv', csv_delimiter=',', csv_header=True, compress=False):
     """Exports the table to GCS; blocks until complete.
@@ -439,7 +447,7 @@ class Table(object):
 
     response = self._api.jobs_insert_load(source, self._name_parts,
                                           append=(mode == 'append'),
-                                          overwrite=(mode =='overwrite'),
+                                          overwrite=(mode == 'overwrite'),
                                           create=(mode == 'create'),
                                           source_format=source_format,
                                           field_delimiter=csv_delimiter,
@@ -770,7 +778,8 @@ class Table(object):
                       % str(when))
 
     if value > 0:
-      now = 1000 * (datetime.datetime.utcnow() - datetime.datetime.utcfromtimestamp(0)).total_seconds()
+      now = 1000 * (datetime.datetime.utcnow() -
+                    datetime.datetime.utcfromtimestamp(0)).total_seconds()
       # Check that an abs value is not more than 7 days in the past and is
       # not in the future
       if not ((now - Table._MSEC_PER_WEEK) < value < now):
@@ -801,7 +810,7 @@ class Table(object):
       raise Exception("Cannot use snapshot() on an already decorated table")
 
     value = Table._convert_decorator_time(at)
-    return Table(self._api, "%s@%s" % (self._full_name, str(value)))
+    return Table("%s@%s" % (self._full_name, str(value)), context=self._context)
 
   def window(self, begin, end=None):
     """ Return a new Table limited to the rows added to this Table during the specified time range.
@@ -832,7 +841,7 @@ class Table(object):
       if isinstance(begin, datetime.timedelta):
         end = datetime.timedelta(0)
       else:
-        end = datetime.utcnow()
+        end = datetime.datetime.utcnow()
     stop = Table._convert_decorator_time(end)
 
     # Both values must have the same sign
@@ -845,6 +854,6 @@ class Table(object):
       raise Exception("window: Between arguments: begin must be before end: %s, %s" %
                       (str(begin), str(end)))
 
-    return Table(self._api, "%s@%s-%s" % (self._full_name, str(start), str(stop)))
+    return Table("%s@%s-%s" % (self._full_name, str(start), str(stop)), context=self._context)
 
 import _query

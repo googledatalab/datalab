@@ -15,7 +15,9 @@
 """Implements Object-related Cloud Storage APIs."""
 
 import dateutil.parser
+import gcp
 import gcp._util
+import _api
 
 # TODO(nikhilko): Read/write operations don't account for larger files, or non-textual content.
 #                 Use streaming reads into a buffer or StringIO or into a file handle.
@@ -62,16 +64,21 @@ class ItemMetadata(object):
 class Item(object):
   """Represents a Cloud Storage object within a bucket."""
 
-  def __init__(self, api, bucket, key, info=None):
+  def __init__(self, bucket, key, info=None, context=None):
     """Initializes an instance of an Item.
 
     Args:
-      api: the Storage API object to use to issue requests.
       bucket: the name of the bucket containing the item.
       key: the key of the item.
       info: the information about the item if available.
+      context: an optional Context object providing project_id and credentials. If a specific
+          project id or credentials are unspecified, the default ones configured at the global
+          level are used.
     """
-    self._api = api
+    if context is None:
+      context = gcp.Context.default()
+    self._context = context
+    self._api = _api.Api(context)
     self._bucket = bucket
     self._key = key
     self._info = info
@@ -95,7 +102,7 @@ class Item(object):
     if bucket is None:
       bucket = self._bucket
     new_info = self._api.objects_copy(self._bucket, self._key, bucket, new_key)
-    return Item(self._api, bucket, new_key, new_info)
+    return Item(bucket, new_key, new_info, context=self._context)
 
   def exists(self):
     """ Checks if the item exists. """
@@ -154,19 +161,24 @@ class Item(object):
     self._api.object_upload(self._bucket, self._key, content, content_type)
 
 
-class ItemList(object):
+class Items(object):
   """Represents a list of Cloud Storage objects within a bucket."""
 
-  def __init__(self, api, bucket, prefix, delimiter):
+  def __init__(self, bucket, prefix, delimiter, context=None):
     """Initializes an instance of an ItemList.
 
     Args:
-      api: the Storage API object to use to issue requests.
       bucket: the name of the bucket containing the items.
       prefix: an optional prefix to match items.
       delimiter: an optional string to simulate directory-like semantics.
+      context: an optional Context object providing project_id and credentials. If a specific
+          project id or credentials are unspecified, the default ones configured at the global
+          level are used.
     """
-    self._api = api
+    if context is None:
+      context = gcp.Context.default()
+    self._context = context
+    self._api = _api.Api(context)
     self._bucket = bucket
     self._prefix = prefix
     self._delimiter = delimiter
@@ -197,7 +209,7 @@ class ItemList(object):
     items = list_info.get('items', [])
     if len(items):
       try:
-        items = [Item(self._api, self._bucket, info['name'], info) for info in items]
+        items = [Item(self._bucket, info['name'], info, context=self._context) for info in items]
       except KeyError:
         raise Exception('Unexpected item list response.')
 

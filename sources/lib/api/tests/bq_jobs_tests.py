@@ -22,7 +22,7 @@ from oauth2client.client import AccessTokenCredentials
 class TestCases(unittest.TestCase):
 
   def _make_job(self, id):
-    return gcp.bigquery._bqjob.BQJob(self._create_api(), id)
+    return gcp.bigquery.Job(id, self._create_context())
 
   @mock.patch('gcp.bigquery._api.Api.jobs_get')
   def test_job_complete(self, mock_api_jobs_get):
@@ -85,8 +85,10 @@ class TestCases(unittest.TestCase):
     self.assertEqual('E', j.errors[1].message)
     self.assertEqual('F', j.errors[1].reason)
 
-  def _create_api(self):
+  def _create_context(self):
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    context = gcp.Context(project_id, creds)
-    return gcp.bigquery._api.Api(context.credentials, context.project_id)
+    return gcp.Context(project_id, creds)
+
+  def _create_api(self):
+    return gcp.bigquery._api.Api(self._create_context())

@@ -15,6 +15,8 @@
 """Implements Query BigQuery API."""
 
 import gcp._util
+import gcp.data
+import _api
 import _sampling
 import _utils
 
@@ -24,6 +26,51 @@ class Query(object):
 
   This object can be used to execute SQL queries and retrieve results.
   """
+
+  @staticmethod
+  def sampling_query(sql, context, fields=None, count=5, sampling=None):
+    """Returns a sampling Query for the SQL object.
+
+    Args:
+      sql: the SQL object to sample
+      context: an Context object providing project_id and credentials.
+      fields: an optional list of field names to retrieve.
+      count: an optional count of rows to retrieve which is used if a specific
+          sampling is not specified.
+      sampling: an optional sampling strategy to apply to the table.
+    Returns:
+      A Query object for sampling the table.
+    """
+    return Query(_sampling.Sampling.sampling_query(sql, fields, count, sampling), context=context)
+
+  def __init__(self, sql, scripts=None, context=None, **kwargs):
+    """Initializes an instance of a Query object.
+
+    Args:
+      sql: the BigQuery SQL string to execute.
+      scripts: array of UDFs referenced in the SQL.
+      context: an optional Context object providing project_id and credentials. If a specific
+          project id or credentials are unspecified, the default ones configured at the global
+          level are used.
+      kwargs: additional arguments to use when expanding the variables if passed a SqlStatement.
+    Raises:
+      Exception if the name is invalid.
+      """
+    if kwargs or not isinstance(sql, basestring):
+      sql, code = gcp.data.SqlModule.expand(sql, kwargs)
+      if code:
+        if scripts is None:
+          scripts = code
+        else:
+          scripts.extend(code)
+
+    if context is None:
+      context = gcp.Context.default()
+    self._context = context
+    self._api = _api.Api(context)
+    self._sql = sql
+    self._scripts = scripts
+    self._results = None
 
   def _repr_sql_(self):
     """Creates a SQL representation of this object.
@@ -48,35 +95,6 @@ class Query(object):
       The friendly representation of this object.
     """
     return self._sql
-
-  @staticmethod
-  def sampling_query(api, sql, fields=None, count=5, sampling=None):
-    """Returns a sampling Query for the SQL object.
-
-    Args:
-      api: the BigQuery API object to use to issue requests.
-      sql: the SQL object to sample
-      fields: an optional list of field names to retrieve.
-      count: an optional count of rows to retrieve which is used if a specific
-          sampling is not specified.
-      sampling: an optional sampling strategy to apply to the table.
-    Returns:
-      A Query object for sampling the table.
-    """
-    return Query(api, _sampling.Sampling.sampling_query(sql, fields, count, sampling))
-
-  def __init__(self, api, sql, scripts=None):
-    """Initializes an instance of a Query object.
-
-    Args:
-      api: the BigQuery API object to use to issue requests.
-      sql: the BigQuery SQL string to execute.
-      scripts: array of UDFs referenced in the SQL.
-    """
-    self._api = api
-    self._sql = sql
-    self._scripts = scripts
-    self._results = None
 
   @property
   def sql(self):
@@ -183,7 +201,7 @@ class Query(object):
     return path
 
   @gcp._util.async_method
-  def to_file_async(self, path,  format='csv', csv_delimiter=',', csv_header=True, use_cache=True):
+  def to_file_async(self, path, format='csv', csv_delimiter=',', csv_header=True, use_cache=True):
     """Save the results to a local file in Excel CSV format. Returns a Job immediately.
 
     Args:
@@ -214,8 +232,8 @@ class Query(object):
     Raises:
       Exception if the query could not be executed or query response was malformed.
     """
-    return Query.sampling_query(self._api, self._sql, count=count,
-                                fields=fields, sampling=sampling).results(use_cache=use_cache)
+    return Query.sampling_query(self._sql, self._context, count=count, fields=fields,
+                                sampling=sampling).results(use_cache=use_cache)
 
   def execute_dry_run(self):
     """Dry run a query, to check the validity of the query and return statistics.
@@ -272,7 +290,7 @@ class Query(object):
       except KeyError:
         # The query was in error
         raise Exception('Query failed: %s' % str(query_result['status']['errors']))
-    return _query_job.QueryJob(self._api, job_id, table_name, self._sql)
+    return _query_job.QueryJob(job_id, table_name, self._sql, context=self._context)
 
   def execute(self, table_name=None, table_mode='create', use_cache=True, priority='interactive',
               allow_large_results=False):

@@ -14,6 +14,8 @@
 
 """Implements BigQuery Views."""
 
+import gcp
+import _api
 import _query
 import _table
 
@@ -28,16 +30,24 @@ class View(object):
   # not the same as the view query), and exposes a number of the same APIs as Table and Query
   # through wrapper functions around these.
 
-  def __init__(self, api, name):
+  def __init__(self, name, context=None):
     """Initializes an instance of a View object.
 
-      Args:
-        api: the BigQuery API object to use to issue requests.
-        name: the name of the view either as a string or a 3-part tuple
-            (projectid, datasetid, name).
+    Args:
+      name: the name of the view either as a string or a 3-part tuple
+          (projectid, datasetid, name). If a string, it must have the form
+          '<project>:<dataset>.<view>' or '<dataset>.<view>'.
+      context: an optional Context object providing project_id and credentials. If a specific
+          project id or credentials are unspecified, the default ones configured at the global
+          level are used.
+    Raises:
+      Exception if the name is invalid.
       """
-    self._table = _table.Table(api, name)
-    self._materialization = _query.Query(api, 'SELECT * FROM %s' % self._repr_sql_())
+    if context is None:
+      context = gcp.Context.default()
+    self._context = context
+    self._table = _table.Table(name, context=context)
+    self._materialization = _query.Query('SELECT * FROM %s' % self._repr_sql_(), context=context)
 
   def __str__(self):
     """The full name for the view as a string."""
@@ -46,7 +56,7 @@ class View(object):
   @property
   def name(self):
     """The name for the view as a named tuple."""
-    return self._table.name_parts
+    return self._table._name_parts
 
   @property
   def description(self):
@@ -65,7 +75,7 @@ class View(object):
       return None
     self._table._load_info()
     if 'view' in self._table._info and 'query' in self._table._info['view']:
-      return _query.Query(self._table._api, self._table._info['view']['query'])
+      return _query.Query(self._table._info['view']['query'], self._context)
     return None
 
   def exists(self):
@@ -151,7 +161,8 @@ class View(object):
     """
     return self._materialization.results(use_cache=use_cache)
 
-  def execute_async(self, table_name=None, table_mode='create', use_cache=True, priority='high'):
+  def execute_async(self, table_name=None, table_mode='create', use_cache=True, priority='high',
+                    allow_large_results=False):
     """Materialize the View asynchronously.
 
     Args:
@@ -163,15 +174,19 @@ class View(object):
           specified (default True).
       priority:one of 'low' or 'high' (default). Note that 'high' is more expensive, but is
           better suited to exploratory analysis.
+      allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
+          slower and requires a table_name to be specified) (default False).
     Returns:
       A Job for the materialization
     Raises:
       Exception (KeyError) if View could not be materialized.
     """
-    return self.materialization.execute_async(table_name=table_name, table_mode=table_mode,
-                                              use_cache=use_cache, priority=priority)
+    return self._materialization.execute_async(table_name=table_name, table_mode=table_mode,
+                                               use_cache=use_cache, priority=priority,
+                                               allow_large_results=allow_large_results)
 
-  def execute(self, table_name=None, table_mode='create', use_cache=True, priority='high'):
+  def execute(self, table_name=None, table_mode='create', use_cache=True, priority='high',
+              allow_large_results=False):
     """Materialize the View synchronously.
 
     Args:
@@ -183,13 +198,16 @@ class View(object):
           specified (default True).
       priority:one of 'low' or 'high' (default). Note that 'high' is more expensive, but is
           better suited to exploratory analysis.
+      allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
+          slower and requires a table_name to be specified) (default False).
     Returns:
       A Job for the materialization
     Raises:
       Exception (KeyError) if View could not be materialized.
     """
-    return self.materialization.execute(table_name=table_name, table_mode=table_mode,
-                                        use_cache=use_cache, priority=priority)
+    return self._materialization.execute(table_name=table_name, table_mode=table_mode,
+                                         use_cache=use_cache, priority=priority,
+                                         allow_large_results=allow_large_results)
 
   def _repr_sql_(self):
     """Returns a representation of the view for embedding into a SQL statement.
@@ -203,6 +221,3 @@ class View(object):
     """Returns a representation for the view for showing in the notebook.
     """
     return '%s: %s' % (self._table, self.query)
-
-
-import _query
