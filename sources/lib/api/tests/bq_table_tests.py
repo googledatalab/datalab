@@ -17,6 +17,7 @@ import datetime as dt
 import unittest
 import gcp
 import gcp.bigquery
+import gcp._util
 import mock
 from oauth2client.client import AccessTokenCredentials
 import pandas
@@ -140,7 +141,7 @@ class TestCases(unittest.TestCase):
     mock_api_datasets_get.return_value = None
     mock_api_tables_list.return_value = self._create_table_list_result()
 
-    ds = gcp.bigquery.dataset('testds', context=self._create_context())
+    ds = gcp.bigquery.DataSet('testds', context=self._create_context())
 
     tables = []
     for table in ds:
@@ -155,7 +156,7 @@ class TestCases(unittest.TestCase):
     mock_api_datasets_get.return_value = None
     mock_api_tables_list.return_value = self._create_table_list_result()
 
-    ds = gcp.bigquery.dataset('testds', context=self._create_context())
+    ds = gcp.bigquery.DataSet('testds', context=self._create_context())
 
     tables = []
     for table in ds.tables():
@@ -170,7 +171,7 @@ class TestCases(unittest.TestCase):
     mock_api_datasets_get.return_value = None
     mock_api_tables_list.return_value = self._create_table_list_result()
 
-    ds = gcp.bigquery.dataset('testds', context=self._create_context())
+    ds = gcp.bigquery.DataSet('testds', context=self._create_context())
 
     views = []
     for view in ds.views():
@@ -184,7 +185,7 @@ class TestCases(unittest.TestCase):
     mock_api_datasets_get.return_value = None
     mock_api_tables_list.return_value = self._create_table_list_empty_result()
 
-    ds = gcp.bigquery.dataset('testds', context=self._create_context())
+    ds = gcp.bigquery.DataSet('testds', context=self._create_context())
 
     tables = []
     for table in ds:
@@ -195,7 +196,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._api.Api.tables_get')
   def test_table_exists(self, mock_api_tables_get):
     mock_api_tables_get.return_value = None
-    tbl = gcp.bigquery.table('testds.testTable0', context=self._create_context())
+    tbl = gcp.bigquery.Table('testds.testTable0', context=self._create_context())
     self.assertTrue(tbl.exists())
 
     mock_api_tables_get.side_effect = gcp._util.RequestException(404, 'failed')
@@ -225,8 +226,8 @@ class TestCases(unittest.TestCase):
   def test_tables_schema_from_dataframe(self, mock_api_tables_list):
     mock_api_tables_list.return_value = []
     df = self._create_data_frame()
-    result = gcp.bigquery.schema(df)
-    self.assertEqual(gcp.bigquery.schema(self._create_inferred_schema()), result)
+    result = gcp.bigquery.Schema.from_data(df)
+    self.assertEqual(gcp.bigquery.Schema.from_data(self._create_inferred_schema()), result)
 
   @mock.patch('uuid.uuid4')
   @mock.patch('time.sleep')
@@ -487,7 +488,7 @@ class TestCases(unittest.TestCase):
   def test_table_load(self, mock_api_jobs_get, mock_api_jobs_insert_load):
     mock_api_jobs_get.return_value = {'status': {'state': 'DONE'}}
     mock_api_jobs_insert_load.return_value = None
-    tbl = gcp.bigquery.table('testds.testTable0', context=self._create_context())
+    tbl = gcp.bigquery.Table('testds.testTable0', context=self._create_context())
     job = tbl.load('gs://foo')
     self.assertIsNone(job)
     mock_api_jobs_insert_load.return_value = {'jobReference': {'jobId': 'bar'}}
@@ -499,7 +500,7 @@ class TestCases(unittest.TestCase):
   def test_table_extract(self, mock_api_jobs_get, mock_api_table_extract):
     mock_api_jobs_get.return_value = {'status': {'state': 'DONE'}}
     mock_api_table_extract.return_value = None
-    tbl = gcp.bigquery.table('testds.testTable0', context=self._create_context())
+    tbl = gcp.bigquery.Table('testds.testTable0', context=self._create_context())
     job = tbl.extract('gs://foo')
     self.assertIsNone(job)
     mock_api_table_extract.return_value = {'jobReference': {'jobId': 'bar'}}
@@ -517,7 +518,7 @@ class TestCases(unittest.TestCase):
           {'f': [{'v': 2}, {'v': 'bar'}, {'v': 0.5}]},
       ]
     }
-    tbl = gcp.bigquery.table('testds.testTable0', context=self._create_context())
+    tbl = gcp.bigquery.Table('testds.testTable0', context=self._create_context())
     df = tbl.to_dataframe()
     self.assertEquals(2, len(df))
     self.assertEquals(1, df['some'][0])
@@ -529,11 +530,11 @@ class TestCases(unittest.TestCase):
 
   def test_encode_dict_as_row(self):
     when = dt.datetime(2001, 2, 3, 4, 5, 6, 7)
-    row = gcp.bigquery._table.Table._encode_dict_as_row({'fo@o': 'b@r', 'b+ar': when}, {})
+    row = gcp.bigquery.Table._encode_dict_as_row({'fo@o': 'b@r', 'b+ar': when}, {})
     self.assertEqual({'foo': 'b@r', 'bar': '2001-02-03T04:05:06.000007'}, row)
 
   def test_decorators(self):
-    tbl = gcp.bigquery.table('testds.testTable0', context=self._create_context())
+    tbl = gcp.bigquery.Table('testds.testTable0', context=self._create_context())
     tbl2 = tbl.snapshot(dt.timedelta(hours=-1))
     self.assertEquals('test:testds.testTable0@-3600000', str(tbl2))
 
@@ -591,7 +592,7 @@ class TestCases(unittest.TestCase):
     # The at test above already tests many of the conversion cases. The extra things we
     # have to test are that we can use two values, we get a meaningful default for the second
     # if we pass None, and that the first time comes before the second.
-    tbl = gcp.bigquery.table('testds.testTable0', context=self._create_context())
+    tbl = gcp.bigquery.Table('testds.testTable0', context=self._create_context())
 
     tbl2 = tbl.window(dt.timedelta(hours=-1))
     self.assertEquals('test:testds.testTable0@-3600000-0', str(tbl2))
@@ -620,7 +621,7 @@ class TestCases(unittest.TestCase):
             'description': 'ghostly logs',
             'expirationTime': calendar.timegm(dt.datetime(2020, 1, 1).utctimetuple()) * 1000}
     mock_api_tables_get.return_value = info
-    tbl = gcp.bigquery.table('testds.testTable0', context=self._create_context())
+    tbl = gcp.bigquery.Table('testds.testTable0', context=self._create_context())
     new_name = 'aziraphale'
     new_description = 'demon duties'
     new_schema = [{'name': 'injected', 'type': 'FLOAT'}]
@@ -642,7 +643,7 @@ class TestCases(unittest.TestCase):
             'description': 'ghostly logs',
             'expirationTime': calendar.timegm(dt.datetime(2020, 1, 1).utctimetuple()) * 1000}
     mock_api_tables_get.return_value = info
-    tbl = gcp.bigquery.table('testds.testTable0', context=self._create_context())
+    tbl = gcp.bigquery.Table('testds.testTable0', context=self._create_context())
     new_name = 'aziraphale'
     new_description = 'demon duties'
     new_schema = [{'name': 'injected', 'type': 'FLOAT'}]
@@ -662,7 +663,7 @@ class TestCases(unittest.TestCase):
     return gcp.Context(project_id, creds)
 
   def _create_table(self, name):
-    return gcp.bigquery.table(name, self._create_context())
+    return gcp.bigquery.Table(name, self._create_context())
 
   def _create_table_info_result(self, ts=None):
     if ts is None:
@@ -712,7 +713,7 @@ class TestCases(unittest.TestCase):
     }
 
   def _create_dataset(self, dataset_id):
-    return gcp.bigquery.dataset(dataset_id, self._create_context())
+    return gcp.bigquery.DataSet(dataset_id, self._create_context())
 
   def _create_table_list_result(self):
     return {
@@ -762,7 +763,7 @@ class TestCases(unittest.TestCase):
     return schema
 
   def _create_table_with_schema(self, schema, name='test:testds.testTable0'):
-    return gcp.bigquery.table(name, self._create_context()).create(schema)
+    return gcp.bigquery.Table(name, self._create_context()).create(schema)
 
   class _uuid(object):
     @property

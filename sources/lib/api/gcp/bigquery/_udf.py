@@ -15,25 +15,22 @@
 """Google Cloud Platform library - BigQuery UDF Functionality."""
 
 import json
-import _query
 
 
 class FunctionCall(object):
   """Represents a BigQuery UDF invocation.
   """
 
-  def __init__(self, api, data, inputs, outputs, name, implementation):
+  def __init__(self, data, inputs, outputs, name, implementation):
     """Initializes a UDF object from its pieces.
 
     Args:
-      api: the BigQuery API object to use to issue requests.
       data: the query or table over which the UDF operates.
       inputs: a list of string field names representing the schema of input.
       outputs: a list of name/type tuples representing the schema of the output.
       name: the name of the UDF function
       implementation: a javascript function implementing the logic.
     """
-    self._api = api
     self._sql = FunctionCall._build_sql(name, inputs, data)
     self._code = FunctionCall._build_js(inputs, outputs, name, implementation)
 
@@ -113,21 +110,21 @@ class FunctionEvaluation(object):
     return self._implementation
 
 
-class Function(object):
+class UDF(object):
   """Represents a BigQuery UDF declaration.
   """
 
-  def __init__(self, api, inputs, outputs, name, implementation):
+  def __init__(self, inputs, outputs, name, implementation):
     """Initializes a Function object from its pieces.
 
     Args:
-      api: the BigQuery API object to use to issue requests.
       inputs: a list of string field names representing the schema of input.
       outputs: a list of name/type tuples representing the schema of the output.
       name: the name of the javascript function
       implementation: a javascript function implementing the logic.
-    """
-    self._api = api
+    Raises:
+      Exception if the name is invalid.
+      """
     self._inputs = inputs
     self._outputs = outputs
     self._name = name
@@ -137,8 +134,7 @@ class Function(object):
     if issubclass(type(data), list):
       return FunctionEvaluation(self._implementation, data)
     else:
-      return FunctionCall(self._api, data, self._inputs, self._outputs, self._name,
-                          self._implementation)
+      return FunctionCall(data, self._inputs, self._outputs, self._name, self._implementation)
 
   def __repr_js__(self):
     return self._implementation

@@ -48,4 +48,3 @@ if __name__ == '__main__':
   result = runner.run(suite)
 
   sys.exit(result.errors)
-

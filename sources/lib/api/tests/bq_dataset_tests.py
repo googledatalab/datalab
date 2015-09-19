@@ -149,7 +149,7 @@ class TestCases(unittest.TestCase):
         {'datasetReference': {'projectId': 'p', 'datasetId': 'd2'}},
       ]
     }
-    datasets = [dataset for dataset in gcp.bigquery.datasets('test', self._create_context())]
+    datasets = [dataset for dataset in gcp.bigquery.DataSets('test', self._create_context())]
     self.assertEqual(2, len(datasets))
     self.assertEqual('p:d1', str(datasets[0]))
     self.assertEqual('p:d2', str(datasets[1]))
@@ -185,4 +185,4 @@ class TestCases(unittest.TestCase):
     return gcp.Context(project_id, creds)
 
   def _create_dataset(self, name):
-    return gcp.bigquery.dataset(name, self._create_context())
+    return gcp.bigquery.DataSet(name, self._create_context())

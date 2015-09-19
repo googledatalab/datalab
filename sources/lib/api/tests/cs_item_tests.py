@@ -76,7 +76,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(items[1].key, 'test_item2')
 
   def _create_bucket(self, name='test_bucket'):
-    return gcp.storage.bucket(name, context=self._create_context())
+    return gcp.storage.Bucket(name, context=self._create_context())
 
   def _create_context(self):
     project_id = 'test'

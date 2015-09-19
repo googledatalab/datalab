@@ -14,6 +14,7 @@
 
 """Implements BigQuery HTTP API wrapper."""
 
+import gcp
 import gcp._util
 
 
@@ -32,15 +33,14 @@ class Api(object):
   _DEFAULT_PAGE_SIZE = 1024
   _DEFAULT_TIMEOUT = 60000
 
-  def __init__(self, credentials, project_id):
+  def __init__(self, context):
     """Initializes the BigQuery helper with context information.
 
     Args:
-      credentials: the credentials to use to authorize requests.
-      project_id: the project id to associate with requests.
+      context: a Context object providing project_id and credentials.
     """
-    self._credentials = credentials
-    self._project_id = project_id
+    self._credentials = context.credentials
+    self._project_id = context.project_id
 
   @property
   def project_id(self):
@@ -464,7 +464,7 @@ class Api(object):
     if isinstance(destination, basestring):
       destination = [destination]
     data = {
-      #'projectId': table_name.project_id, # Code sample shows this but it is not in job
+      # 'projectId': table_name.project_id, # Code sample shows this but it is not in job
       # reference spec. Filed as b/19235843
       'kind': 'bigquery#job',
       'configuration': {

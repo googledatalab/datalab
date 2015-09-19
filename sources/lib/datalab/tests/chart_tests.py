@@ -17,17 +17,20 @@ import unittest
 
 # import Python so we can mock the parts we need to here.
 import IPython
+import IPython.core
 
-def noopDecorator(func):
+
+def noop_decorator(func):
   return func
 
-IPython.core.magic.register_line_cell_magic = noopDecorator
-IPython.core.magic.register_line_magic = noopDecorator
-IPython.core.magic.register_cell_magic = noopDecorator
+IPython.core.magic.register_line_cell_magic = noop_decorator
+IPython.core.magic.register_line_magic = noop_decorator
+IPython.core.magic.register_cell_magic = noop_decorator
 IPython.core.display.HTML = lambda x: x
 IPython.core.display.JSON = lambda x: x
 
 import gcp.datalab
+
 
 class TestCases(unittest.TestCase):
 

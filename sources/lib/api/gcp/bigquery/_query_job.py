@@ -14,17 +14,18 @@
 
 """Implements BigQuery query job functionality."""
 
-import _bqjob
+import _job
 
 
-class QueryJob(_bqjob.BQJob):
+class QueryJob(_job.Job):
   """ Represents a BigQuery Query Job.
   """
 
-  def __init__(self, api, job_id, table_name, sql):
-    super(QueryJob, self).__init__(api, job_id)
+  def __init__(self, job_id, table_name, sql, context):
+    super(QueryJob, self).__init__(job_id, context)
     self._sql = sql
-    self._table = _query_results_table.QueryResultsTable(api, table_name, self, is_temporary=True)
+    self._table = _query_results_table.QueryResultsTable(table_name, context, self,
+                                                         is_temporary=True)
     self._bytes_processed = None
     self._cache_hit = None
     self._total_rows = None

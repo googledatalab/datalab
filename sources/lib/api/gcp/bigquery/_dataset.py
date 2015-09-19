@@ -14,7 +14,9 @@
 
 """Implements DataSet, and related DataSet BigQuery APIs."""
 
+import gcp
 import gcp._util
+import _api
 import _table
 import _utils
 import _view
@@ -23,16 +25,22 @@ import _view
 class DataSet(object):
   """Represents a list of BigQuery tables in a dataset."""
 
-  def __init__(self, api, name):
+  def __init__(self, name, context=None):
     """Initializes an instance of a DataSet.
 
     Args:
-      api: the BigQuery API object to use to issue requests. The project ID will be inferred from
-          this.
       name: the name of the dataset, as a string or (project_id, dataset_id) tuple.
-    """
-    self._api = api
-    self._name_parts = _utils.parse_dataset_name(name, api.project_id)
+      context: an optional Context object providing project_id and credentials. If a specific
+          project id or credentials are unspecified, the default ones configured at the global
+          level are used.
+    Raises:
+      Exception if the name is invalid.
+      """
+    if context is None:
+      context = gcp.Context.default()
+    self._context = context
+    self._api = _api.Api(context)
+    self._name_parts = _utils.parse_dataset_name(name, self._api.project_id)
     self._full_name = '%s:%s' % self._name_parts
     self._info = None
     try:
@@ -111,7 +119,7 @@ class DataSet(object):
                                            friendly_name=friendly_name,
                                            description=description)
       if 'selfLink' not in response:
-        raise Exception("Could not create dataset %s.%s" % self._full_name)
+        raise Exception("Could not create dataset %s" % self._full_name)
     return self
 
   def update(self, friendly_name=None, description=None):
@@ -146,13 +154,13 @@ class DataSet(object):
           if info['type'] != item_type:
             continue
           if info['type'] == 'TABLE':
-            item = _table.Table(self._api, (info['tableReference']['projectId'],
-                                            info['tableReference']['datasetId'],
-                                            info['tableReference']['tableId']))
+            item = _table.Table((info['tableReference']['projectId'],
+                                 info['tableReference']['datasetId'],
+                                 info['tableReference']['tableId']), self._context)
           else:
-            item = _view.View(self._api, (info['tableReference']['projectId'],
-                                          info['tableReference']['datasetId'],
-                                          info['tableReference']['tableId']))
+            item = _view.View((info['tableReference']['projectId'],
+                               info['tableReference']['datasetId'],
+                               info['tableReference']['tableId']), self._context)
           contents.append(item)
       except KeyError:
         raise Exception('Unexpected item list response')
@@ -191,12 +199,24 @@ class DataSet(object):
     return ''
 
 
-class DataSetLister(object):
+class DataSets(object):
   """ Helper class for enumerating the datasets in a project. """
 
-  def __init__(self, api, project_id=None):
-    self._api = api
-    self._project_id = project_id if project_id else api.project_id
+  def __init__(self, project_id=None, context=None):
+    """ Initialize the DataSetLister.
+
+    Args:
+      project_id: the ID of the project whose datasets you want to list. If None defaults
+          to the project in the context.
+      context: an optional Context object providing project_id and credentials. If a specific
+          project id or credentials are unspecified, the default ones configured at the global
+          level are used.
+    """
+    if context is None:
+      context = gcp.Context.default()
+    self._context = context
+    self._api = _api.Api(context)
+    self._project_id = project_id if project_id else self._api.project_id
 
   def _retrieve_datasets(self, page_token, count):
     list_info = self._api.datasets_list(self._project_id, page_token=page_token)
@@ -204,9 +224,8 @@ class DataSetLister(object):
     datasets = list_info.get('datasets', [])
     if len(datasets):
       try:
-        datasets = [DataSet(self._api,
-                            (info['datasetReference']['projectId'],
-                             info['datasetReference']['datasetId']))
+        datasets = [DataSet((info['datasetReference']['projectId'],
+                             info['datasetReference']['datasetId']), self._context)
                     for info in datasets]
       except KeyError:
         raise Exception('Unexpected item list response.')

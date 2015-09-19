@@ -22,9 +22,9 @@ class TestCases(unittest.TestCase):
 
   def test_sql_building(self):
     context = self._create_context()
-    table = gcp.bigquery.table('test:requestlogs.today', context=context)
+    table = gcp.bigquery.Table('test:requestlogs.today', context=context)
 
-    udf = self._create_udf(context)
+    udf = self._create_udf()
     udf = udf(table)
 
     expected_js = 'foo=function(r,emit) { emit({output1: r.field2, output2: r.field1 }); };\n' +\
@@ -34,11 +34,11 @@ class TestCases(unittest.TestCase):
     self.assertEqual(udf._repr_sql_(), '(SELECT field1, field2 FROM foo([test:requestlogs.today]))')
     self.assertEqual(udf._repr_code_(), expected_js)
 
-  def _create_udf(self, context):
+  def _create_udf(self):
     inputs = [('field1', 'string'), ('field2', 'integer')]
     outputs = [('output1', 'integer'), ('output2', 'string')]
     impl = 'function(r,emit) { emit({output1: r.field2, output2: r.field1 }); }'
-    udf = gcp.bigquery.udf(inputs, outputs, 'foo', impl, context=context)
+    udf = gcp.bigquery.UDF(inputs, outputs, 'foo', impl)
     return udf
 
   def _create_context(self):

@@ -73,7 +73,6 @@ class Sampling(object):
     """Returns a sampling query for the SQL object.
 
     Args:
-      api: the BigQuery API object to use to issue requests.
       sql: the SQL object to sample
       fields: an optional list of field names to retrieve.
       count: an optional count of rows to retrieve which is used if a specific

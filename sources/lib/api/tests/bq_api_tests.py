@@ -20,6 +20,7 @@ from oauth2client.client import AccessTokenCredentials
 import gcp
 from gcp.bigquery._api import Api
 
+
 class TestCases(unittest.TestCase):
 
   def validate(self, mock_http_request, expected_url, expected_args=None, expected_data=None,
@@ -386,10 +387,9 @@ class TestCases(unittest.TestCase):
 
   def _create_api(self):
     context = self._create_context()
-    return Api(context.credentials, context.project_id)
+    return Api(context)
 
   def _create_context(self):
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
     return gcp.Context(project_id, creds)
-

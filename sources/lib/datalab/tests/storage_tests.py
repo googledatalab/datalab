@@ -18,28 +18,31 @@ import unittest
 
 # import Python so we can mock the parts we need to here.
 import IPython
+import IPython.core
 
-def noopDecorator(func):
+
+def noop_decorator(func):
   return func
 
-IPython.core.magic.register_line_cell_magic = noopDecorator
-IPython.core.magic.register_line_magic = noopDecorator
-IPython.core.magic.register_cell_magic = noopDecorator
+IPython.core.magic.register_line_cell_magic = noop_decorator
+IPython.core.magic.register_line_magic = noop_decorator
+IPython.core.magic.register_cell_magic = noop_decorator
 IPython.get_ipython = mock.Mock()
 
 import gcp.datalab
 import gcp.storage
 
+
 class TestCases(unittest.TestCase):
 
   @mock.patch('gcp.storage._item.Item.exists', autospec=True)
   @mock.patch('gcp.storage._bucket.Bucket.items', autospec=True)
-  @mock.patch('gcp.storage._create_api')
   @mock.patch('gcp.storage._api.Api.objects_get', autospec=True)
-  def test_expand_list(self, mock_api_objects_get, mock_create_api, mock_bucket_items,
+  @mock.patch('gcp._context.Context.default')
+  def test_expand_list(self, mock_context_default, mock_api_objects_get, mock_bucket_items,
                        mock_item_exists):
-    api = self._create_api()
-    mock_create_api.return_value = api
+    context = self._create_context()
+    mock_context_default.return_value = context
 
     # Mock API for testing for item existence. Fail if called with name that includes wild char.
     def item_exists_side_effect(*args, **kwargs):
@@ -48,7 +51,7 @@ class TestCases(unittest.TestCase):
     mock_item_exists.side_effect = item_exists_side_effect
 
     # Mock API for getting items in a bucket.
-    mock_bucket_items.side_effect = self._mock_bucket_items_return(api)
+    mock_bucket_items.side_effect = self._mock_bucket_items_return(context)
 
     # Mock API for getting item metadata.
     mock_api_objects_get.side_effect = self._mock_api_objects_get()
@@ -77,14 +80,14 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('gcp.storage._item.Item.copy_to', autospec=True)
   @mock.patch('gcp.storage._bucket.Bucket.items', autospec=True)
-  @mock.patch('gcp.storage._create_api')
   @mock.patch('gcp.storage._api.Api.objects_get', autospec=True)
-  def test_storage_copy(self, mock_api_objects_get, mock_create_api, mock_bucket_items,
+  @mock.patch('gcp._context.Context.default')
+  def test_storage_copy(self, mock_context_default, mock_api_objects_get, mock_bucket_items,
                         mock_storage_item_copy_to):
-    api = self._create_api()
-    mock_create_api.return_value = api
+    context = self._create_context()
+    mock_context_default.return_value = context
     # Mock API for getting items in a bucket.
-    mock_bucket_items.side_effect = self._mock_bucket_items_return(api)
+    mock_bucket_items.side_effect = self._mock_bucket_items_return(context)
     # Mock API for getting item metadata.
     mock_api_objects_get.side_effect = self._mock_api_objects_get()
 
@@ -105,10 +108,10 @@ class TestCases(unittest.TestCase):
     self.assertEqual('Invalid target object gs://foo/bar1', error.exception.message)
 
   @mock.patch('gcp.storage._api.Api.buckets_insert', autospec=True)
-  @mock.patch('gcp.storage._create_api')
-  def test_storage_create(self, mock_create_api, mock_api_buckets_insert):
-    api = self._create_api()
-    mock_create_api.return_value = api
+  @mock.patch('gcp._context.Context.default')
+  def test_storage_create(self, mock_context_default, mock_api_buckets_insert):
+    context = self._create_context()
+    mock_context_default.return_value = context
 
     errs = gcp.datalab._storage._storage_create({
       'project': 'test',
@@ -132,13 +135,14 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.storage._bucket.Bucket.items', autospec=True)
   @mock.patch('gcp.storage._api.Api.objects_delete', autospec=True)
   @mock.patch('gcp.storage._api.Api.buckets_delete', autospec=True)
-  @mock.patch('gcp.storage._create_api')
-  def test_storage_delete(self, mock_create_api, mock_api_bucket_delete, mock_api_objects_delete,
-                          mock_bucket_items, mock_api_objects_get, mock_api_buckets_get):
-    api = self._create_api()
-    mock_create_api.return_value = api
+  @mock.patch('gcp._context.Context.default')
+  def test_storage_delete(self, mock_context_default, mock_api_bucket_delete,
+                          mock_api_objects_delete, mock_bucket_items, mock_api_objects_get,
+                          mock_api_buckets_get):
+    context = self._create_context()
+    mock_context_default.return_value = context
     # Mock API for getting items in a bucket.
-    mock_bucket_items.side_effect = self._mock_bucket_items_return(api)
+    mock_bucket_items.side_effect = self._mock_bucket_items_return(context)
     # Mock API for getting item metadata.
     mock_api_objects_get.side_effect = self._mock_api_objects_get()
     mock_api_buckets_get.side_effect = self._mock_api_buckets_get()
@@ -155,41 +159,37 @@ class TestCases(unittest.TestCase):
     mock_api_bucket_delete.assert_called_with(mock.ANY, 'bar')
     mock_api_objects_delete.assert_called_with(mock.ANY, 'foo', 'item1')
 
-  @mock.patch('gcp.storage._create_api')
-  def test_storage_view(self, mock_create_api):
-    api = self._create_api()
-    mock_create_api.return_value = api
-    # TODO(gram): complete this test
-
-  @mock.patch('gcp.storage._create_api')
-  def test_storage_write(self, mock_create_api):
-    api = self._create_api()
-    mock_create_api.return_value = api
-    # TODO(gram): complete this test
-
-  def _create_api(self):
+  @mock.patch('gcp._context.Context.default')
+  def test_storage_view(self, mock_context_default):
     context = self._create_context()
-    return gcp.storage._api.Api(context.credentials, context.project_id)
+    mock_context_default.return_value = context
+    # TODO(gram): complete this test
+
+  @mock.patch('gcp._context.Context.default')
+  def test_storage_write(self, mock_context_default):
+    context = self._create_context()
+    mock_context_default.return_value = context
+    # TODO(gram): complete this test
 
   def _create_context(self):
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
     return gcp.Context(project_id, creds)
 
-  def _mock_bucket_items_return(self, api):
+  def _mock_bucket_items_return(self, context):
     # Mock API for getting items in a bucket.
     def bucket_items_side_effect(*args, **kwargs):
       bucket = args[0].name  # self
       if bucket == 'foo':
         return [
-          gcp.storage._item.Item(api, bucket, 'item1'),
-          gcp.storage._item.Item(api, bucket, 'item2'),
-          gcp.storage._item.Item(api, bucket, 'item3'),
+          gcp.storage._item.Item(bucket, 'item1', context=context),
+          gcp.storage._item.Item(bucket, 'item2', context=context),
+          gcp.storage._item.Item(bucket, 'item3', context=context),
         ]
       elif bucket == 'bar':
         return [
-          gcp.storage._item.Item(api, bucket, 'object1'),
-          gcp.storage._item.Item(api, bucket, 'object3'),
+          gcp.storage._item.Item(bucket, 'object1', context=context),
+          gcp.storage._item.Item(bucket, 'object3', context=context),
         ]
       else:
         return []

@@ -42,8 +42,8 @@ class Schema(list):
       return self.name
 
     def __eq__(self, other):
-      return self.name == other.name and self.data_type == other.data_type \
-             and self.mode == other.mode
+      return self.name == other.name and self.data_type == other.data_type\
+          and self.mode == other.mode
 
     def __str__(self):
       # Stringize in the form of a dictionary
@@ -171,6 +171,18 @@ class Schema(list):
 
   @staticmethod
   def from_data(source):
+    """Creates a table/view schema from its JSON representation, a list of data, or a Pandas
+       dataframe.
+
+    Args:
+      source: the Pandas Dataframe or list of data from which to infer the schema, or
+          a definition of the schema as a list of dictionaries with 'name' and 'type' entries
+          and possibly 'mode' and 'description' entries. Only used if no data argument was provided.
+          'mode' can be 'NULLABLE', 'REQUIRED' or 'REPEATED'. For the allowed types, see:
+          https://cloud.google.com/bigquery/preparing-data-for-bigquery#datatypes
+    Returns:
+      A Schema object.
+    """
     if isinstance(source, pandas.DataFrame):
       return Schema.from_dataframe(source)
     elif isinstance(source, list):
@@ -192,7 +204,7 @@ class Schema(list):
           provided. 'mode' can be 'NULLABLE', 'REQUIRED' or 'REPEATED'. For the allowed types, see:
           https://cloud.google.com/bigquery/preparing-data-for-bigquery#datatypes
     """
-    list.__init__(self)
+    super(Schema, self).__init__()
     self._map = {}
     self._bq_schema = definition
     self._populate_fields(definition)
@@ -239,4 +251,3 @@ class Schema(list):
       if not self._map[name] == other_map[name]:
         return False
     return True
-

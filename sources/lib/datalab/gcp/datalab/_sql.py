@@ -109,7 +109,7 @@ def _resolve_table(v, format, delta):
     v = time.strftime(format, when.timetuple())
   except Exception:
     pass
-  return gcp.bigquery.table(v)
+  return gcp.bigquery.Table(v)
 
 
 def _make_string_formatter(f, offset=None):
@@ -127,7 +127,7 @@ def _make_table_formatter(f, offset=None):
 
 
 def _make_table(v):
-  return gcp.bigquery.table(v)
+  return gcp.bigquery.Table(v)
 
 
 def _datestring(format, offset=''):
@@ -298,7 +298,7 @@ def sql_cell(args, cell):
   if not args['module']:
       # Execute now
       if query:
-        return gcp.bigquery.query(query, **ipy.user_ns).execute().results
+        return gcp.bigquery.Query(query, **ipy.user_ns).execute().results
   else:
     # Add it as a module
     sys.modules[name] = module
