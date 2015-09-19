@@ -33,6 +33,9 @@ mkdir -p $HOME/datalab/log/custom_logs
 # Delete any existing logs to start fresh on each run.
 rm -f $HOME/datalab/log/custom_logs/*.log
 
+# Create a temporary content directory that will be mapped into the container
+mkdir -p /tmp/datalab
+
 # For local runs we can get project number only from outside container.
 # So get it and then pass to container as DATALAB_PROJECT_NUM env var.
 PROJECT_ID=`gcloud -q config list --format yaml | grep project | awk -F" " '{print $2}'`
@@ -42,6 +45,6 @@ docker run -i --entrypoint=$ENTRYPOINT \
   -p 8081:8080 \
   -v $HOME/datalab/log:/var/log/app_engine \
   -v $HOME/.config/gcloud:/root/.config/gcloud \
-  -v $REPO_DIR/content/ipython/notebooks:/content \
+  -v /tmp/datalab:/content \
   -e "DATALAB_PROJECT_NUM=$PROJECT_NUM" \
   -t datalab
