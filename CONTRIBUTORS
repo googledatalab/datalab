@@ -1,13 +1,13 @@
 # People who have agreed to one of the CLAs and can contribute patches.
-# The AUTHORS file lists the copyright holders; this file
-# lists people.
+# The AUTHORS file lists the copyright holders; this file lists individuals.
 #
 # https://developers.google.com/open-source/cla/individual
 # https://developers.google.com/open-source/cla/corporate
 #
 
-Dinesh Kulkarni   <dck@google.com>
-Drew Bryant       <bryantd@google.com>
-Graham Wheeler    <gram@google.com>
-Nikhil Kothari    <nikhilko@google.com>
-
+Google Cloud DataLab Team
+- Nikhil Kothari    <nikhilko@google.com>
+- Drew Bryant       <bryantd@google.com>
+- Dinesh Kulkarni   <dck@google.com>
+- Graham Wheeler    <gram@google.com>
+- Bradley Jiang     <qimingj@google.com>

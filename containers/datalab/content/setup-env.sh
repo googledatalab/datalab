@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright 2014 Google Inc. All rights reserved.
+# Copyright 2015 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Sets up various environment variables within the docker container.
 
 export DATALAB_USER=`gcloud -q config list --format yaml | grep account | awk -F" " '{print $2}'`
 export DATALAB_PROJECT_ID=`gcloud -q config list --format yaml | grep project | awk -F" " '{print $2}'`
@@ -22,3 +23,4 @@ fi
 if [ -z $DATALAB_INSTANCE_NAME ]; then
   export DATALAB_INSTANCE_NAME=$GAE_MODULE_VERSION
 fi
+

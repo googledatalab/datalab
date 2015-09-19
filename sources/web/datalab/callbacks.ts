@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Google Inc. All rights reserved.
+ * Copyright 2015 Google Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -22,8 +22,8 @@ export class CallbackManager {
   _allCallbacks: common.Map<common.Callback0[]> = {};
 
   /**
-   * Register a callback which will be invoked when invokeAllCallbacks is called. 
-   * Returns whether there is an ongoing request already. 
+   * Register a callback which will be invoked when invokeAllCallbacks is called.
+   * Returns whether there is an ongoing request already.
    * If so, the caller should continue with its execution. Otherwise, since the caller
    * already parked the callback, it should return and when the ongoing request is done,
    * the caller's callback will be invoked.
@@ -37,7 +37,7 @@ export class CallbackManager {
     callbacks.push(cb);
     return (callbacks.length == 1);
   }
-  
+
   /**
    * All registered callback for the given user will be invoked and cleaned up.
    */

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright 2014 Google Inc. All rights reserved.
+# Copyright 2015 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,8 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This script serves as the entrypoint for locally running the DataLab
-# docker container, i.e. outside a VM on the cloud.
+# Runs the docker container locally.
 
 export DATALAB_ENV=local
 export METADATA_HOST=localhost

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright 2014 Google Inc. All rights reserved.
+# Copyright 2015 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This script sets up cloud repository, including creating master branch,
-# datalab branch, and named instance branch if they do not exist.
+# Sets up the git repository and workspace used within the container. This
+# also creates the branches (master, datalab, and datalab_instance) as needed.
 
 git config --global user.email $DATALAB_USER
 git config --global credential.helper gcloud.sh
@@ -61,3 +61,4 @@ create_branch ( ) {
 create_branch "master"
 create_branch "datalab"
 create_branch "datalab_$DATALAB_INSTANCE_NAME"
+
