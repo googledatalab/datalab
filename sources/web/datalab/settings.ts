@@ -61,17 +61,11 @@ export function loadSettings(): common.Settings {
     settings.instanceUser = process.env['DATALAB_USER'] || '';
     settings.instanceId = metadata.instanceId;
     settings.versionId = process.env['DATALAB_VERSION'] || '';
-    settings.projectId = process.env['GAE_LONG_APP_ID'] || process.env['DATALAB_PROJECT_ID'] || '';
-
-    if (env == 'cloud') {
-      var metadataCommand =
-        'curl --silent -H "Metadata-Flavor=Google" ' +
-        'http://metadata.google.internal/computeMetadata/v1beta1/project/numeric-project-id';
-      settings.projectNumber = childProcess.execSync(metadataCommand, { encoding: 'utf8' });
-    }
-    else {
-      settings.projectNumber = process.env['DATALAB_PROJECT_NUM'];
-    }
+    settings.projectId = process.env['DATALAB_PROJECT_ID'] || '';
+    settings.instanceName = process.env['DATALAB_INSTANCE_NAME'] || '';
+    settings.environment = process.env['DATALAB_ENV'] || '';
+    settings.projectNumber = process.env['DATALAB_PROJECT_NUM'] || '';
+    settings.contentDir = '/content';
 
     return settings;
   }

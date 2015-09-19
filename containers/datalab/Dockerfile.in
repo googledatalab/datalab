@@ -67,6 +67,12 @@ RUN pip install -U \
     easy_install pip && \
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf
 
+# Setup Workspace-Sync
+RUN mkdir -p /wsync && \
+    cd /wsync && \
+    wget -nv https://storage.googleapis.com/cloud-datalab/deploy/wsync/20150814/wsync && \
+    chmod u+r,g+x /wsync/* && cd /
+
 # Container configuration
 EXPOSE 8080
 VOLUME [ "/var/log/app_engine", "/nb", "/root/.config/gcloud" ]

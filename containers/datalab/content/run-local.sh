@@ -18,6 +18,16 @@
 
 export DATALAB_ENV=local
 export METADATA_HOST=localhost
+export DATALAB_INSTANCE_NAME=local
+
+# Setup environment variables.
+. /datalab/setup-env.sh
+
+# Setup cloud repository.
+. /datalab/setup-repo.sh
+if [ $? != "0" ]; then
+  exit 1
+fi
 
 # Simulate the metadata service
 forever start /datalab/metadata/server.js &

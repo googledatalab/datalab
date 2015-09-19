@@ -23,7 +23,19 @@ declare module common {
     instanceUser: string;
 
     projectNumber: string;
+
+    /**
+     * Id of the cloud project that the datalab instance runs in.
+     */
     projectId: string;
+
+    /**
+     * Name of this datalab instance.
+     * It is also used as part of the name of the cloud source repository
+     * branch that stores all notebooks created from this datalab instance.
+     */
+    instanceName: string;
+
     versionId: string;
     instanceId: string;
     analyticsId: string;
@@ -32,6 +44,15 @@ declare module common {
     serverPort: number;
 
     jupyterArgs: string[];
+    /**
+     * Where this instance is running. Can be "cloud" or "local".
+     */
+    environment: string;
+    
+    /**
+     * Local directory which stores notebooks in the container
+     */
+    contentDir: string;
   }
 
   interface Map<T> {
@@ -40,5 +61,9 @@ declare module common {
 
   interface Callback<T> {
     (e: Error, result: T): void;
+  }
+
+  interface Callback0 {
+    (e: Error): void;
   }
 }

@@ -13,20 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This script serves as the entrypoint for locally running the DataLab
-# docker container in a VM on the cloud.
 
-export DATALAB_ENV=cloud
-
-# Setup environment variables.
-. /datalab/setup-env.sh
-
-# Setup cloud repository.
-. /datalab/setup-repo.sh
-if [ $? != "0" ]; then
-  exit 1
+export DATALAB_USER=`gcloud -q config list --format yaml | grep account | awk -F" " '{print $2}'`
+export DATALAB_PROJECT_ID=`gcloud -q config list --format yaml | grep project | awk -F" " '{print $2}'`
+if [ -z $DATALAB_PROJECT_NUM ]; then
+  export DATALAB_PROJECT_NUM=`curl --silent -H "Metadata-Flavor=Google" http://metadata.google.internal/computeMetadata/v1beta1/project/numeric-project-id`
 fi
-
-# Start the DataLab server
-forever /datalab/web/app.js
-
+if [ -z $DATALAB_INSTANCE_NAME ]; then
+  export DATALAB_INSTANCE_NAME=$GAE_MODULE_VERSION
+fi
