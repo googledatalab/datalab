@@ -87,6 +87,7 @@ function createJupyterServer(userId: string): JupyterServer {
   if (!fs.existsSync(userDir)) {
     fs.mkdirSync(userDir, 0755);
   }
+
   var server: JupyterServer = {
     userId: userId,
     port: port,
@@ -99,15 +100,10 @@ function createJupyterServer(userId: string): JupyterServer {
     delete jupyterServers[server.userId];
   }
 
-  var processArgs = [
+  var processArgs = appSettings.jupyterArgs.slice().concat([
     '--port=' + server.port,
     '--notebook-dir="' + server.notebooks + '"'
-  ];
-
-  processArgs = appSettings.jupyterArgs.slice().concat(processArgs);
-
-  // TODO: Additional args that seem interesting to consider.
-  // --KernelManager.autorestart=True
+  ]);
 
   var processOptions = {
     detached: false,
@@ -142,21 +138,21 @@ export function getPort(request: http.ServerRequest): number {
   return server ? server.port : 0;
 }
 
-export function getServers(): Array<common.Map<any>> {
-  var servers: Array<common.Map<any>> = [];
+export function getInfo(): Array<common.Map<any>> {
+  var info: Array<common.Map<any>> = [];
   for (var n in jupyterServers) {
     var jupyterServer = jupyterServers[n];
 
-    var server: common.Map<any> = {
+    var serverInfo: common.Map<any> = {
       userId: jupyterServer.userId,
       port: jupyterServer.port,
       notebooks: jupyterServer.notebooks,
       pid: jupyterServer.childProcess.pid
     };
-    servers.push(server);
+    info.push(serverInfo);
   }
 
-  return servers;
+  return info;
 }
 
 /**
@@ -174,42 +170,45 @@ export function startForUser(userId: string, cb: common.Callback0) {
     // processes for the same user.
     return;
   }
+
   try {
     logging.getLogger().info('Starting jupyter server for %s.', userId);
     server = createJupyterServer(userId);
     if (server) {
       tcp.waitUntilUsed(server.port).then(
-      function() {
-        jupyterServers[userId] = server;
-        logging.getLogger().info('Jupyter server started for %s.', userId);
-        callbackManager.invokeAllCallbacks(userId, null);
-      },
-      function(e) {
-        logging.getLogger().error(e, 'Failed to start Jupyter server for user %s.', userId);
-        callbackManager.invokeAllCallbacks(userId, e);
-      });
-    } else {
+        function() {
+          jupyterServers[userId] = server;
+          logging.getLogger().info('Jupyter server started for %s.', userId);
+          callbackManager.invokeAllCallbacks(userId, null);
+        },
+        function(e) {
+          logging.getLogger().error(e, 'Failed to start Jupyter server for user %s.', userId);
+          callbackManager.invokeAllCallbacks(userId, e);
+        });
+    }
+    else {
       // Should never be here.
       logging.getLogger().error('Failed to start Jupyter server for user %s.', userId);
       callbackManager.invokeAllCallbacks(userId, new Error('failed to start jupyter server.'));
     }
-  } catch (e) {
+  }
+  catch (e) {
     logging.getLogger().error(e, 'Failed to start Jupyter server for user %s.', userId);
     callbackManager.invokeAllCallbacks(userId, e);
   }
 }
 
 /**
- * Starts the Jupyter server manager.
+ * Initializes the Jupyter server manager.
  */
-export function start(settings: common.Settings): void {
+export function init(settings: common.Settings): void {
   appSettings = settings;
 }
 
 /**
- * Stops the Jupyter server manager.
+ * Closes the Jupyter server manager.
  */
-export function stop(): void {
+export function close(): void {
   for (var n in jupyterServers) {
     var jupyterServer = jupyterServers[n];
     var jupyterProcess = jupyterServer.childProcess;

@@ -25,9 +25,12 @@ import userManager = require('./userManager');
 var MIN_SYNC_INTERVAL: number = 60 * 1000;
 var MAX_SYNC_RETRY: number = 30;
 
+/**
+ * The application settings instance.
+ */
+var appSettings: common.Settings = null;
 var branchName: string = null;
 var repoUrl: string = null;
-var contentRootDir: string = null;
 
 /**
  * Pending sync requests for all users. key is user Id, and value is the number of
@@ -52,8 +55,15 @@ var callbackManager: callbacks.CallbackManager = new callbacks.CallbackManager()
  * Calls 'wsync sync' to do an on-demand sync
  */
 function updateWorkspace(userDir: string, repoUrl: string, cb: common.Callback0) {
+  if (!appSettings.useWorkspace) {
+    process.nextTick(function() {
+      cb(null);
+    });
+    return;
+  }
+
   var wsyncSyncCommand = '/wsync/wsync -credential_helper git-credential-gcloud.sh sync' +
-                      ' -file-strategy ours -repo ' + userDir + ' ' + repoUrl;
+                         ' -file-strategy ours -repo ' + userDir + ' ' + repoUrl;
   childProcess.exec(wsyncSyncCommand, {env: process.env}, function(err, stdout, stderr) {
     if (err) {
       logging.getLogger().error(err, 'wsync sync failed for dir %s. stderr: %s', userDir, stderr);
@@ -74,6 +84,7 @@ function initializeWorkspace(userDir: string, repoUrl: string, workspaceName: st
       cb && cb(err);
       return;
     }
+
     // Proceed with 'wsync checkout' command.
     var wsyncCheckoutCommand = '/wsync/wsync -credential_helper git-credential-gcloud.sh checkout' +
                                ' -repo ' + userDir + ' ' + repoUrl + ' ' + workspaceName;
@@ -84,6 +95,7 @@ function initializeWorkspace(userDir: string, repoUrl: string, workspaceName: st
         cb && cb(err);
         return;
       }
+
       // Proceed with 'wsync sync' command.
       updateWorkspace(userDir, repoUrl, cb);
     });
@@ -94,15 +106,22 @@ function initializeWorkspace(userDir: string, repoUrl: string, workspaceName: st
  * Global initialization.
  */
 export function init(settings: common.Settings): void {
+  appSettings = settings;
+
   branchName = 'datalab_' + settings.instanceName;
   repoUrl = 'https://source.developers.google.com/p/' + settings.projectId;
-  contentRootDir = settings.contentDir;
 }
 
 /**
  * Whether the workspace has been initialized for the given user.
  */
 export function isWorkspaceInitialized(userId: string): boolean {
+  if (!appSettings.useWorkspace) {
+    // Since the workspace feature is not supposed to be used, pretend it
+    // is already initialized, and skip any real checks.
+    return true;
+  }
+
   var userDir = userManager.getUserDir(userId);
   return (userWorkspaceInitialized[userDir] == true);
 }
@@ -112,10 +131,20 @@ export function isWorkspaceInitialized(userId: string): boolean {
  * Otherwise, start the initialization and then sync.
  */
 export function updateWorkspaceNow(userId: string, cb: common.Callback0) {
+  if (!appSettings.useWorkspace) {
+    // Since the workspace feature is not supposed to be used, skip any
+    // actual updating logic.
+    process.nextTick(function() {
+      cb(null);
+    });
+    return;
+  }
+
   var userDir = userManager.getUserDir(userId);
   if (!callbackManager.checkOngoingAndRegisterCallback(userId, cb)) {
     return;
   }
+
   if (fs.existsSync(userDir) && fs.readdirSync(userDir).length > 0) {
     userWorkspaceInitialized[userDir] = true;
     updateWorkspace(userDir, repoUrl, function(e) {
@@ -123,6 +152,7 @@ export function updateWorkspaceNow(userId: string, cb: common.Callback0) {
     });
     return;
   }
+
   logging.getLogger().info('Initializing workspace for %s.', userId);
   var workspaceName = 'acropolis__' + userId + '__' + branchName;
   initializeWorkspace(userDir, repoUrl, workspaceName, branchName, function(e) {
@@ -139,28 +169,40 @@ export function updateWorkspaceNow(userId: string, cb: common.Callback0) {
  * user, do nothing.
  */
 export function scheduleWorkspaceUpdate(userId: string) {
+  if (!appSettings.useWorkspace) {
+    // Since the workspace feature is not supposed to be used, skip any
+    // actual updating logic.
+    return;
+  }
+
   if (syncRequests[userId]) {
     // A sync is already scheduled and will run soon.
     return;
   }
   syncRequests[userId] = 1;
-  setTimeout(function() {
+
+  function deferredUpdate() {
     updateWorkspaceNow(userId, function(e) {
-      if (e == null) {
+      if (!e) {
         // sync succeeded. Clean up.
         delete syncRequests[userId];
-      } else {
+      }
+      else {
         syncRequests[userId] = syncRequests[userId] + 1;
         if (syncRequests[userId] < MAX_SYNC_RETRY) {
           logging.getLogger().info('Reschedule sync for user: %s for %d times.',
                                    userId, syncRequests[userId]);
           scheduleWorkspaceUpdate(userId);
-        } else {
+        }
+        else {
+          // TODO: Store a sync status for the user, so it can be reported
           logging.getLogger().error('Sync has failed %d times for user %s. Give up.',
                                     MAX_SYNC_RETRY, userId);
           delete syncRequests[userId];
         }
       }
     });
-  }, MIN_SYNC_INTERVAL);
+  }
+
+  setTimeout(deferredUpdate, MIN_SYNC_INTERVAL);
 }

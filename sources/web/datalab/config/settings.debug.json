@@ -7,8 +7,8 @@
   "feedbackId": "",
   "serverPort": 8080,
   "contentDir": "/content",
-  "useWorkspace": false,
-  "supportUserOverride": false,
+  "useWorkspace": true,
+  "supportUserOverride": true,
   "jupyterArgs": [
     "notebook",
     "-y",

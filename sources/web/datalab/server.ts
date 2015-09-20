@@ -43,11 +43,13 @@ var staticHandler: http.RequestHandler;
  */
 function startInitializationForUser(request: http.ServerRequest): void {
   var userId = userManager.getUserId(request);
+
   if (!workspaceManager.isWorkspaceInitialized(userId)) {
     // Do a sync as early as possible if workspace is not initialized.
     // Giving null callback so this is fire-and-forget.
     workspaceManager.updateWorkspaceNow(userId, null);
   }
+
   if (jupyter.getPort(request) == 0) {
     // Do a sync as early as possible if workspace is not initialized.
     // Giving null callback so this is fire-and-forget.
@@ -60,8 +62,9 @@ function startInitializationForUser(request: http.ServerRequest): void {
  * If not, wait for initialization to be done and then proceed to pass
  * the request to jupyter server.
  */
-function handleUserRequest(request: http.ServerRequest, response: http.ServerResponse): void {
+function handleJupyterRequest(request: http.ServerRequest, response: http.ServerResponse): void {
   var userId = userManager.getUserId(request);
+
   if (!workspaceManager.isWorkspaceInitialized(userId)) {
     // Workspace is not initialized was not created yet. Initializing it and call self again.
     // Note that another 'syncNow' may already be ongoing so this 'syncNow' will probably
@@ -70,12 +73,14 @@ function handleUserRequest(request: http.ServerRequest, response: http.ServerRes
       if (e) {
         response.statusCode = 500;
         response.end();
-      } else {
-        handleUserRequest(request, response);
+      }
+      else {
+        handleJupyterRequest(request, response);
       }
     });
     return;
   }
+
   if (jupyter.getPort(request) == 0) {
     // Jupyter server is not created yet. Creating it for user and call self again.
     // Another 'startForUser' may already be ongoing so this 'syncNow' will probably
@@ -84,8 +89,9 @@ function handleUserRequest(request: http.ServerRequest, response: http.ServerRes
       if (e) {
         response.statusCode = 500;
         response.end();
-      } else {
-        handleUserRequest(request, response);
+      }
+      else {
+        handleJupyterRequest(request, response);
       }
     });
     return;
@@ -139,6 +145,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   // the initial page.
   if (path == '/') {
     userManager.maybeSetUserIdCookie(request, response);
+
     response.statusCode = 302;
     response.setHeader('Location', '/tree');
     response.end();
@@ -151,7 +158,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       (path.indexOf('/notebooks') == 0) ||
       (path.indexOf('/nbconvert') == 0) ||
       (path.indexOf('/files') == 0)) {
-    handleUserRequest(request, response);
+    handleJupyterRequest(request, response);
     return;
   }
 
@@ -184,7 +191,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
 export function run(settings: common.Settings): void {
   userManager.init(settings);
   workspaceManager.init(settings);
-  jupyter.start(settings);
+  jupyter.init(settings);
 
   healthHandler = health.createHandler(settings);
   infoHandler = info.createHandler(settings);
@@ -202,5 +209,5 @@ export function run(settings: common.Settings): void {
  * Stops the server and associated Jupyter server.
  */
 export function stop(): void {
-  jupyter.stop();
+  jupyter.close();
 }

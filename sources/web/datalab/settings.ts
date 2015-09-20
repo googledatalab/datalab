@@ -57,15 +57,12 @@ export function loadSettings(): common.Settings {
     }
 
     var settings = <common.Settings>JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-
-    settings.instanceUser = process.env['DATALAB_USER'] || '';
     settings.instanceId = metadata.instanceId;
-    settings.versionId = process.env['DATALAB_VERSION'] || '';
-    settings.projectId = process.env['DATALAB_PROJECT_ID'] || '';
     settings.instanceName = process.env['DATALAB_INSTANCE_NAME'] || '';
-    settings.environment = process.env['DATALAB_ENV'] || '';
+    settings.instanceUser = process.env['DATALAB_USER'] || '';
+    settings.projectId = process.env['DATALAB_PROJECT_ID'] || '';
     settings.projectNumber = process.env['DATALAB_PROJECT_NUM'] || '';
-    settings.contentDir = '/content';
+    settings.versionId = process.env['DATALAB_VERSION'] || '';
 
     return settings;
   }

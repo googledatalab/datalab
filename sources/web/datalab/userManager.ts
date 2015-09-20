@@ -33,7 +33,7 @@ export function init(settings: common.Settings): void {
  * Get user id from request. User Id is typically an email address.
  */
 export function getUserId(request: http.ServerRequest): string {
-  if (appSettings.environment == 'local') {
+  if (appSettings.supportUserOverride) {
     // Try cookie first.
     if (request.headers.cookie) {
       var cookies = request.headers.cookie.split(';');
@@ -45,6 +45,7 @@ export function getUserId(request: http.ServerRequest): string {
       }
     }
   }
+
   return request.headers['x-appengine-user-email'] || appSettings.instanceUser || 'anonymous';
 }
 
@@ -53,6 +54,12 @@ export function getUserId(request: http.ServerRequest): string {
  * the directory is root_dir + emailaddress, such as '/content/user@domain.com'.
  */
 export function getUserDir(userId: string): string {
+  if (!appSettings.useWorkspace) {
+    // If the workspace feature is not enabled, then just use the content directory specified
+    // in configuration.
+    return appSettings.contentDir;
+  }
+
   // Forward slash '/' is allowed in email but not in file system so replace it.
   return path.join(appSettings.contentDir, userId.replace('/', '_fsfs_'));
 }
@@ -63,8 +70,8 @@ export function getUserDir(userId: string): string {
  */
 export function maybeSetUserIdCookie(request: http.ServerRequest,
                                      response: http.ServerResponse): void {
-  if (appSettings.environment == 'local') {
-    var userFromQuery = url.parse(request.url, true).query['datalab_user'];
+  if (appSettings.supportUserOverride) {
+    var userFromQuery = url.parse(request.url, /* parseQuery */ true).query['datalab_user'];
     if (userFromQuery) {
       response.setHeader('set-cookie', 'datalab_user=' + userFromQuery);
       logging.getLogger().info('set userId %s to cookie', userFromQuery);

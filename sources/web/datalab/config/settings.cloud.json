@@ -6,6 +6,9 @@
   "analyticsId": "UA-54894152-3",
   "feedbackId": "717112",
   "serverPort": 8080,
+  "contentDir": "/content",
+  "useWorkspace": true,
+  "supportUserOverride": false,
   "jupyterArgs": [
     "notebook",
     "-y",
