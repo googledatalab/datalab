@@ -18,11 +18,16 @@
 define(function () {
   'use strict';
 
-  // An object containing stylesheets to load, and associated callback to invoke.
+  // An object containing the set of loaded stylesheets, so as to avoid reloading.
+  var loadedStyleSheets = {};
+
+  // An object containing stylesheets to load, and associated callbacks to invoke.
   // This will be processed once the DOM is ready.
   var pendingStyleSheets = null;
 
   function addStyleSheet(url) {
+    loadedStyleSheets[url] = true;
+
     var stylesheet = document.createElement('link');
     stylesheet.type = 'text/css';
     stylesheet.rel = 'stylesheet';
@@ -32,12 +37,14 @@ define(function () {
   }
 
   function domReadyCallback() {
-    var stylesheets = pendingStyleSheets;
+    var styleSheets = pendingStyleSheets;
     pendingStyleSheets = null;
 
-    Object.keys(stylesheets).forEach(function(url) {
+    Object.keys(styleSheets).forEach(function(url) {
       addStyleSheet(url);
-      stylesheets[url](null);
+      styleSheets[url].foreach(function(cb) {
+        cb(null);
+      });
     });
   }
 
@@ -46,13 +53,23 @@ define(function () {
       loadCallback(null);
     }
     else {
+      if (loadedStyleSheets[url]) {
+        setTimeout(loadCallback, 0);
+        return;
+      }
+
       if (document.readyState != 'complete') {
         if (!pendingStyleSheets) {
           pendingStyleSheets = {};
           document.addEventListener('DOMContentLoaded', domReadyCallback, false);
         }
 
-        pendingStyleSheets[url] = loadCallback;
+        var callbacks = pendingStyleSheets[url];
+        if (!callbacks) {
+          pendingStyleSheets[url] = callbacks = [];
+        }
+
+        callbacks.push(loadCallback);
       }
       else {
         addStyleSheet(url);

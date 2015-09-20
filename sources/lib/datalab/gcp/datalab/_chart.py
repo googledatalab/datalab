@@ -48,11 +48,11 @@ def _chart_cell(args, cell):
     <div class="bqgc" id="%s">
     </div>
     <script>
-          require(['extensions/charting', 'element!%s'%s],
-              function(charts, dom) {
-                  charts.render(dom, {chartStyle:'%s', dataName:'%s', fields:'%s'}, %s, %s);
-              }
-          );
+      require(['extensions/charting', 'element!%s', 'style!/static/extensions/charting.css'],
+        function(charts, dom) {
+          charts.render(dom, {chartStyle:'%s', dataName:'%s', fields:'%s'}, %s, %s);
+        }
+      );
     </script>
   """
   div_id = _html.Html.next_id()
@@ -61,8 +61,8 @@ def _chart_cell(args, cell):
   count = 25 if chart_type == 'paged_table' else -1
   data, _ = _utils.get_data(source, fields, 0, count)
   return IPython.core.display.HTML(
-    _HTML_TEMPLATE % (div_id, div_id, _html.Html.get_style_arg('charting.css'), chart_type, source,
-                      fields, chart_options, json.dumps(data, cls=gcp._util.JSONEncoder)))
+    _HTML_TEMPLATE % (div_id, div_id, chart_type, source, fields, chart_options,
+                      json.dumps(data, cls=gcp._util.JSONEncoder)))
 
 
 @IPython.core.magic.register_line_magic
