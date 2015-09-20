@@ -107,7 +107,6 @@ ADD build/lib/GCPDataLab-0.1.0.tar.gz /datalab/lib/
 ADD build/metadata /datalab/metadata
 ADD build/web /datalab/web
 ADD content/ /datalab
-ADD docs/ /content/datalab
 ADD config/ipython.py /root/.ipython/profile_default/ipython_config.py
 
 # Install build artifacts
