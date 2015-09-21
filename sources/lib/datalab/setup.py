@@ -19,7 +19,7 @@ from distutils.core import setup
 setup(
   name='GCPDataLab',
   version='0.1.0',
-  packages=['gcp.datalab', 'gcp.ipython'],
+  packages=['gcp.datalab'],
   description='Google Cloud DataLab',
   requires=[
     'IPython',
