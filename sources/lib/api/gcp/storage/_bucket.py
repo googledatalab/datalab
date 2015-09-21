@@ -12,8 +12,8 @@
 
 """Implements Bucket-related Cloud Storage APIs."""
 
+import dateutil.parser
 import re
-import dateutil
 
 import gcp
 import gcp._util
@@ -29,19 +29,19 @@ _STORAGE_NAME = 'gs://(' + _BUCKET_NAME + ')(/' + _OBJECT_NAME + ')?'
 
 def parse_name(name):
   bucket = None
-  object = None
+  item = None
   m = re.match(_STORAGE_NAME, name)
   if m:
     # We want to return the last two groups as first group is the optional 'gs://'
     bucket = m.group(1)
-    object = m.group(2)
-    if object is not None:
-      object = object[1:]  # Strip '/'
+    item = m.group(2)
+    if item is not None:
+      item = item[1:]  # Strip '/'
   else:
     m = re.match('(' + _OBJECT_NAME + ')', name)
     if m:
-      object = m.group(1)
-  return bucket, object
+      item = m.group(1)
+  return bucket, item
 
 
 class BucketMetadata(object):
@@ -58,8 +58,8 @@ class BucketMetadata(object):
   @property
   def created_on(self):
     """Gets the created timestamp of the bucket."""
-    s = self._info['timeCreated']
-    return dateutil.parser.parse(s)
+    s = self._info.get('timeCreated', None)
+    return dateutil.parser.parse(s) if s else None
 
   @property
   def etag(self):
@@ -134,7 +134,7 @@ class Bucket(object):
     """ Checks if the bucket exists. """
     try:
       return self.metadata() is not None
-    except Exception:
+    except gcp._util.RequestException:
       return False
 
   def create(self, project_id=None):

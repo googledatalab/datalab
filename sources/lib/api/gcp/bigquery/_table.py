@@ -180,7 +180,7 @@ class Table(object):
     """
     try:
       self._api.table_delete(self._name_parts)
-    except Exception:
+    except gcp._util.RequestException:
       # TODO(gram): May want to check the error reasons here and if it is not
       # because the file didn't exist, return an error.
       pass
@@ -371,7 +371,8 @@ class Table(object):
                                          csv_delimiter, csv_header)
       return self._init_job_from_response(response)
     except Exception as e:
-      raise _job.JobError(location=traceback.format_exc(), message=e.message, reason=str(type(e)))
+      raise gcp._util.JobError(location=traceback.format_exc(), message=e.message,
+                               reason=str(type(e)))
 
   def extract(self, destination, format='csv', csv_delimiter=',', csv_header=True, compress=False):
     """Exports the table to GCS; blocks until complete.
@@ -680,7 +681,7 @@ class Table(object):
       self._info['schema'] = {'fields': schema}
     try:
       self._api.table_update(self._name_parts, self._info)
-    except Exception:
+    except gcp._util.RequestException:
       # The cached metadata is out of sync now; abandon it.
       self._info = None
 

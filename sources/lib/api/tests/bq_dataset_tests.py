@@ -97,7 +97,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._api.Api.datasets_insert')
   @mock.patch('gcp.bigquery._api.Api.datasets_get')
   def test_datasets_create_redundant(self, mock_api_datasets_get, mock_api_datasets_insert):
-    ds = self._create_dataset('requestlogs')
+    ds = self._create_dataset('requestlogs', {})
     mock_api_datasets_get.return_value = None
     mock_api_datasets_insert.return_value = {}
     self.assertEqual(ds, ds.create())
@@ -139,14 +139,16 @@ class TestCases(unittest.TestCase):
     self.assertEqual('p:d.t1', str(tables[0]))
     self.assertEqual('p:d.t2', str(tables[1]))
 
+  @mock.patch('gcp.bigquery.DataSet._get_info')
   @mock.patch('gcp.bigquery._api.Api.datasets_list')
-  def test_datasets_list(self, mock_api_datasets_list):
+  def test_datasets_list(self, mock_api_datasets_list, mock_dataset_get_info):
     mock_api_datasets_list.return_value = {
       'datasets': [
         {'datasetReference': {'projectId': 'p', 'datasetId': 'd1'}},
         {'datasetReference': {'projectId': 'p', 'datasetId': 'd2'}},
       ]
     }
+    mock_dataset_get_info.return_value = {}
     datasets = [dataset for dataset in gcp.bigquery.DataSets('test', self._create_context())]
     self.assertEqual(2, len(datasets))
     self.assertEqual('p:d1', str(datasets[0]))
@@ -182,5 +184,10 @@ class TestCases(unittest.TestCase):
     creds = AccessTokenCredentials('test_token', 'test_ua')
     return gcp.Context(project_id, creds)
 
-  def _create_dataset(self, name):
-    return gcp.bigquery.DataSet(name, self._create_context())
+  def _create_dataset(self, name, metadata=None):
+    # Patch get_info so we don't have to mock it everywhere else.
+    orig = gcp.bigquery.DataSet._get_info
+    gcp.bigquery.DataSet._get_info = mock.Mock(return_value=metadata)
+    ds =  gcp.bigquery.DataSet(name, self._create_context())
+    gcp.bigquery.DataSet._get_info = orig
+    return ds

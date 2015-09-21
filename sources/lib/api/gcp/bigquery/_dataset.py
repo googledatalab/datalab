@@ -43,7 +43,7 @@ class DataSet(object):
     self._info = None
     try:
       self._info = self._get_info()
-    except Exception:
+    except gcp._util.RequestException:
       pass
 
   @property
