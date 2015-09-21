@@ -13,7 +13,6 @@
 """Implements BigQuery Views."""
 
 import gcp
-import _api
 import _query
 import _table
 

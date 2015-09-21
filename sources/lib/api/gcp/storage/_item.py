@@ -106,7 +106,7 @@ class Item(object):
     """ Checks if the item exists. """
     try:
       return self.metadata() is not None
-    except Exception:
+    except gcp._util.RequestException:
       return False
 
   def delete(self):

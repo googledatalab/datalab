@@ -10,9 +10,11 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-import unittest
-import gcp
 import mock
+import unittest
+
+import gcp
+import gcp.bigquery
 from oauth2client.client import AccessTokenCredentials
 
 
@@ -74,10 +76,13 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('gcp.bigquery._api.Api.tables_insert')
   @mock.patch('gcp.bigquery._api.Api.tables_get')
+  @mock.patch('gcp.bigquery._api.Api.table_update')
   @mock.patch('gcp._context.Context.default')
-  def test_view_update(self, mock_context_default, mock_api_tables_get, mock_api_tables_insert):
+  def test_view_update(self, mock_context_default, mock_api_table_update,
+                       mock_api_tables_get, mock_api_tables_insert):
     mock_api_tables_insert.return_value = self._create_tables_insert_success_result()
     mock_context_default.return_value = self._create_context()
+    mock_api_table_update.return_value = None
     friendly_name = 'casper'
     description = 'ghostly logs'
     sql = 'select * from test:testds.testTable0'
