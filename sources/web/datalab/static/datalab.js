@@ -371,11 +371,9 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
       /^%%bigquery udf/
     ];
 
-    require(['codemirror/mode/sql/sql'], function() {
-      codeCell.config_defaults.highlight_modes['magic_text/x-sql'] = {
-        reg: [ /^%%sql/ ]
-      };
-    });
+    codeCell.config_defaults.highlight_modes['magic_text/sql'] = {
+      reg: [ /^%%sql/ ]
+    };
   });
 
   /**
