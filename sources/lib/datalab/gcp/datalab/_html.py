@@ -22,21 +22,12 @@ class Html(object):
   """
 
   _div_id_counter = 0
-  _styles = []
 
   @staticmethod
   def next_id():
     """ Return an ID containing a reproducible part (counter) and unique part (timestamp). """
     Html._div_id_counter += 1
     return '%d_%d' % (Html._div_id_counter, int(round(time.time() * 100)))
-
-  @staticmethod
-  def get_style_arg(stylesheet):
-    """ Record that we have added a stylesheet and return require.js dependency argument. """
-    if stylesheet not in Html._styles:
-      Html._styles.append(stylesheet)
-      return ', \'style!/static/extensions/%s\'' % stylesheet
-    return ''
 
   def __init__(self, markup=None):
     """Initializes an instance of Html.

@@ -21,7 +21,7 @@
 # In local mode the container picks up local notebooks, so it can be used
 # to work on files saved on the file system.
 
-ENTRYPOINT="/datalab/run-local.sh"
+ENTRYPOINT="/datalab/run-debug.sh"
 if [ "$1" == "shell" ]; then
   ENTRYPOINT="/bin/bash"
 fi
@@ -33,18 +33,18 @@ mkdir -p $HOME/datalab/log/custom_logs
 # Delete any existing logs to start fresh on each run.
 rm -f $HOME/datalab/log/custom_logs/*.log
 
+# Create a temporary content directory that will be mapped into the container
+mkdir -p /tmp/datalab
+
 # For local runs we can get project number only from outside container.
 # So get it and then pass to container as DATALAB_PROJECT_NUM env var.
 PROJECT_ID=`gcloud -q config list --format yaml | grep project | awk -F" " '{print $2}'`
 PROJECT_NUM=`gcloud -q alpha projects describe $PROJECT_ID | grep projectNumber | awk '{print substr($2,2,length($2)-2)}'`
 
-# Use this flag to map in web server content during development
-#  -v $REPO_DIR/sources/web:/sources \
-
 docker run -i --entrypoint=$ENTRYPOINT \
   -p 8081:8080 \
   -v $HOME/datalab/log:/var/log/app_engine \
   -v $HOME/.config/gcloud:/root/.config/gcloud \
-  -v $REPO_DIR/content:/content \
+  -v /tmp/datalab:/content \
   -e "DATALAB_PROJECT_NUM=$PROJECT_NUM" \
   -t datalab

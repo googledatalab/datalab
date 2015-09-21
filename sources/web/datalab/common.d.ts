@@ -15,19 +15,11 @@
 declare module common {
 
   interface Settings {
+
     consoleLogging: boolean;
     logFilePath: string;
     logFilePeriod: string;
     logFileCount: number;
-
-    instanceUser: string;
-
-    projectNumber: string;
-
-    /**
-     * Id of the cloud project that the datalab instance runs in.
-     */
-    projectId: string;
 
     /**
      * Name of this datalab instance.
@@ -36,23 +28,47 @@ declare module common {
      */
     instanceName: string;
 
+    /**
+     * User ID of the email when running locally.
+     */
+    instanceUser: string;
+
+    /**
+     * Id of the cloud project that the datalab instance runs in.
+     */
+    projectId: string;
+    projectNumber: string;
+
     versionId: string;
     instanceId: string;
     analyticsId: string;
     feedbackId: string;
 
+    /**
+     * The port that the server should listen to.
+     */
     serverPort: number;
 
-    jupyterArgs: string[];
     /**
-     * Where this instance is running. Can be "cloud" or "local".
+     * The list of static arguments to be used when launching jupyter.
      */
-    environment: string;
+    jupyterArgs: string[];
 
     /**
      * Local directory which stores notebooks in the container
      */
     contentDir: string;
+
+    /**
+     * Whether to use the git and workspace functionality.
+     */
+    useWorkspace: boolean;
+
+    /**
+     * Whether to support querystring based user overriding.
+     * Useful when debugging multi-user functionality locally.
+     */
+    supportUserOverride: boolean;
   }
 
   interface Map<T> {

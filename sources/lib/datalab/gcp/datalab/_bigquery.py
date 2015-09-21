@@ -688,7 +688,7 @@ def _table_viewer(table, rows_per_page=25, fields=None):
     <div class="bqtv" id="%s"></div>
     <div><br />%s %s<br />%s</div>
     <script>
-      require(['extensions/charting', 'element!%s'%s],
+      require(['extensions/charting', 'element!%s', 'style!/static/extensions/charting.css'],
         function(charts, dom) {
           charts.render(dom,
             {
@@ -728,7 +728,7 @@ def _table_viewer(table, rows_per_page=25, fields=None):
   chart = 'table' if 0 <= total_count <= rows_per_page else 'paged_table'
 
   return _HTML_TEMPLATE %\
-      (div_id, meta_name, meta_data, meta_count, div_id, _html.Html.get_style_arg('charting.css'),
+      (div_id, meta_name, meta_data, meta_count, div_id,
        chart, str(table), ','.join(fields), total_count, rows_per_page,
        json.dumps(data, cls=gcp._util.JSONEncoder))
 
@@ -750,16 +750,15 @@ def _repr_html_table_schema(schema):
   _HTML_TEMPLATE = """
     <div class="bqsv" id="%s"></div>
     <script>
-      require(['extensions/bigquery', 'element!%s'%s],
-          function(bq, dom) {
-              bq.renderSchema(dom, %s);
-          }
+      require(['extensions/bigquery', 'element!%s', 'style!/static/extensions/bigquery.css'],
+        function(bq, dom) {
+          bq.renderSchema(dom, %s);
+        }
       );
     </script>
     """
   id = _html.Html.next_id()
-  return _HTML_TEMPLATE % (id, id, _html.Html.get_style_arg('bigquery.css'),
-                           json.dumps(schema._bq_schema))
+  return _HTML_TEMPLATE % (id, id, json.dumps(schema._bq_schema))
 
 
 def _repr_html_function_evaluation(evaluation):

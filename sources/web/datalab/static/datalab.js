@@ -685,6 +685,50 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
   document.getElementById('addFolderButton').addEventListener('click', addFolder, false);
 
   document.getElementById('repoLink2').href = document.getElementById('repoLink').href;
+
+
+  (function buildBreadcrumbContent() {
+    var path = location.pathname;
+
+    // Strip off leading /tree and trailing / if present
+    if (path.indexOf('/tree') == 0) {
+      path = path.substr(5);
+    }
+    if (path.substr(-1) == '/') {
+      path = path.substr(0, path.length - 1);
+    }
+    if (!path) {
+      return;
+    }
+
+    var html = [];
+    html.push('<ul class="breadcrumb">');
+    html.push('<li><a href="/tree"><i class="fa fa-home"></i></a></li>');
+
+    var segments = [];
+
+    // Split the path into its segments, and convert into list items, ignoring the first
+    // empty segment. Intermediate segments are also generated as navigation links.
+    var pathParts = path.split('/');
+    for (var i = 1; i < pathParts.length; i++) {
+      var pathPart = pathParts[i];
+      segments.push(pathPart);
+
+      var element;
+      if (i == pathParts.length - 1) {
+        element = '<li>' + pathPart + '</li>';
+      }
+      else {
+        element = '<li><a href="/tree/' + segments.join('/') + '">' + pathPart + '</a></li>';
+      }
+
+      html.push(element);
+    }
+
+    html.push('</ul>');
+
+    document.getElementById('project_name').innerHTML = html.join('');
+  })();
 }
 
 

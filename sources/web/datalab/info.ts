@@ -61,7 +61,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   response.write('\n\n');
 
   response.write('Jupyter Servers:\n');
-  response.write(JSON.stringify(jupyter.getServers(), null, 2));
+  response.write(JSON.stringify(jupyter.getInfo(), null, 2));
   response.write('\n\n');
   response.end();
 }
