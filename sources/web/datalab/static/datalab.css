@@ -52,12 +52,15 @@ body {
   flex: 0 1 auto;
   -webkit-align-self: auto;
   align-self: auto;
-  height: 40px;
-  min-height: 40px;
+  height: 48px;
+  min-height: 48px;
   color: white;
   background-color: #333;
   padding-left: 10px;
   padding-right: 10px;
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 0 8px 0 #000;
 }
 #appContent {
   -webkit-order: 2;
@@ -110,9 +113,9 @@ body {
   flex-grow: 3;
 }
 #mainToolbar, #sidebarToolbar {
-  line-height: 35px;
+  line-height: 48px;
   vertical-align: middle;
-  height: 35px;
+  height: 48px;
   color: #444;
   background-color: #f3f3f3;
   padding-left: 10px;
@@ -123,7 +126,7 @@ body {
 #mainContent, #sidebarContent {
   overflow: auto;
   position: absolute;
-  top: 35px;
+  top: 48px;
   left: 0px;
   right: 0px;
   bottom: 0px;
@@ -131,16 +134,6 @@ body {
 #sidebarContent {
   color: #000;
   padding: 10px 20px;
-}
-#bottomToolbar {
-  line-height: 35px;
-  vertical-align: middle;
-  height: 35px;
-  color: #444;
-  padding-left: 10px;
-  padding-right: 10px;
-  padding-top: 2px;
-  margin-bottom: 50px;
 }
 .container {
   min-width: 200px;
@@ -154,13 +147,18 @@ div.btn-group a {
 #appBar button {
   background-color: transparent;
   border: none;
-  height: 35px;
+  height: 48px;
   font-size: 16px;
   padding: 4px;
   color: #ccc;
+  margin-right: 10px;
+  margin-left: 0px;
 }
 #appBar button:hover {
   color: #fff;
+}
+#appbar div.btn-group {
+  margin-left: 0px !important;
 }
 div.btn-toolbar {
   margin: 0px;
@@ -172,13 +170,13 @@ div.btn-toolbar .btn {
   font-weight: normal;
   font-size: 14px;
   outline: solid 1px transparent !important;
+  height: 46px;
   margin-left: 0px;
-  padding: 6px 8px;
+  padding: 0px 8px;
   cursor: pointer;
   vertical-align: middle;
 }
 div.btn-toolbar .btn:hover, div.btn-toolbar .btn:focus {
-  background-color: #ddd;
   color: #000;
   border: none;
 }
@@ -192,21 +190,20 @@ div.btn-toolbar .btn.dropdown-toggle {
 }
 div.btn-toolbar .btn.active {
   font-weight: bold;
-  color: #000;
-  background-color: #ddd;
+  color: #337ab7;
   border: none;
   box-shadow: none;
+  border-bottom: solid 2px #337ab7;
 }
 
-#logo, #logo img {
-  width: 200px;
-  height: 28px;
-  line-height: 40px;
-  vertical-align: middle;
-}
 #logo {
-  /* TODO: Fix the logo image itself */
-  margin-top: -4px;
+  margin-left: 12px;
+}
+#logo, #logo img {
+  height: 32px;
+  vertical-align: middle;
+  line-height: 48px;
+  padding: 0px;
 }
 
 /* List page */
@@ -217,6 +214,12 @@ div.btn-toolbar .btn.active {
 }
 .list_placeholder {
   font-weight: normal;
+}
+.alternate_upload input.fileinput {
+  height: 40px;
+}
+#uploadButton {
+  padding: 4px 8px;
 }
 
 /* Notebook page */
@@ -243,6 +246,7 @@ div.end_space {
   font-size: 16px;
   line-height: inherit;
   padding: 0px;
+  margin-left: 24px;
 }
 #notebook_name:hover {
   background-color: transparent;
@@ -254,7 +258,7 @@ span.save_widget span.filename {
   margin: 0px;
 }
 span.autosave_status {
-  color: #aaa;
+  color: #ddd;
   font-size: 13px;
   line-height: 35px;
   vertical-align: middle;
@@ -269,16 +273,26 @@ div.cell {
   padding: 0px;
   margin-bottom: 10px;
 }
-div.cell.selected {
+div.cell.selected, div.cell.text_cell.selected, div.cell.code_cell.selected {
   border: solid 1px #ddd;
 }
-.edit_mode div.cell.selected, div.code_cell {
+.edit_mode div.cell.text_cell.selected, .edit_mode div.code_cell.selected {
   border: solid 1px #ddd;
-}
-.edit_mode div.cell.text_cell.selected, div.code_cell.selected {
-  box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.25);
+  box-shadow: 0px 0px 6px 0px rgba(0, 0, 0, 0.2);
 }
 
+div.code_cell div.input {
+  border-left: solid 4px #ddd;
+}
+div.code_cell.session div.input {
+  border-left: solid 4px #ddd;
+}
+div.code_cell.running div.input {
+  border-left: solid 4px #ddd;
+}
+div.code_cell.session.completed div.input {
+  border-left: solid 4px #337ab7;
+}
 div.code_cell div.input {
   background-color: #f7f7f7;
   border-top: none;
@@ -290,32 +304,32 @@ div.tooltiptext {
   height: auto;
   overflow: visible;
 }
+div.status {
+  margin-top: 4px;
+  margin-left: 38px;
+  font-family: 'Open Sans', Helvetica, sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  color: #aaa;
+}
+div.status div.progress {
+  width: 150px;
+  height: 8px;
+  margin-bottom: 4px
+}
 
-div.text_cell div.prompt {
+div.prompt, div.output_prompt, div.out_prompt_overlay {
   min-width: 0px;
   display: none;
   padding: 0px;
   border: none;
 }
-div.prompt {
-  font-family: 'Lucida Console', 'Source Code Pro', monospace !important;
-  font-size: 15px !important;
-}
-div.output_wrapper div.prompt, div.output_prompt, div.out_prompt_overlay {
-  visibility: hidden;
-  min-width: 84px;
-  width: 84px;
-}
 div.input_prompt {
-  font-size: 11px;
-  text-align: left;
-  line-height: 1.4;
-  color: #888;
-  padding-top: 2px;
-  min-width: 50px;
+  min-width: 30px;
 }
 div.output_area {
   margin-top: 4px;
+  margin-left: 38px;
 }
 div.output_scroll {
   border-radius: 0;
@@ -345,6 +359,18 @@ pre, code, .CodeMirror, .CodeMirror pre, .CodeMirror-linenumber {
 }
 .CodeMirror-cursor {
   border-left: 2px solid #222 !important;
+}
+.CodeMirror-gutters {
+  border-right: 1px solid #eee;
+}
+.CodeMirror-linenumber {
+  visibility: hidden;
+}
+div.selected .CodeMirror-gutters {
+  border-right: 1px solid #ddd;
+}
+div.selected .CodeMirror-linenumber {
+  visibility: visible;
 }
 .CodeMirror-matchingbracket {
   color: #800000 !important;

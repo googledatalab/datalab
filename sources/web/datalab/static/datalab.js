@@ -333,36 +333,26 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     var codeCell = ipy.CodeCell;
     var codeCellProto = codeCell.prototype;
 
-    codeCell.input_prompt_function = function(prompt_value) {
-      if ((prompt_value === undefined) || (prompt_value === null)) {
-        prompt_value = '&nbsp;';
+    var statusContent = document.getElementById('cellStatus').text;
+    codeCellProto.set_input_prompt = function(number) {
+      this.input_prompt_number = number;
+
+      if (number !== undefined) {
+        if (number === null) {
+        }
+        else if (number == '*') {
+          this.element.addClass('session');
+          this.element.removeClass('completed');
+
+          var status = $(statusContent);
+          this.element.find('div.output').css('display', '').empty().append(status);
+          status.delay(2000).show(0);
+        }
+        else {
+          this.element.addClass('completed');
+          this.element.find('div.status').remove();
+        }
       }
-
-      return '[' + prompt_value + ']';
-    }
-
-    var originalSelectHandler = codeCellProto.select;
-    var originalUnselectHandler = codeCellProto.unselect;
-
-    // Override select and unselect handlers to toggle display of line numbers.
-    function hiddenLineFormatter(n) { return ''; }
-    function stringLineFormatter(n) { return n.toString(); }
-
-    codeCellProto.select = function() {
-      if (originalSelectHandler.apply(this)) {
-        this.code_mirror.setOption('lineNumberFormatter', stringLineFormatter);
-        this.celltoolbar.show();
-        return true;
-      }
-      return false;
-    }
-    codeCellProto.unselect = function(leave_selected) {
-      if (originalUnselectHandler.apply(this, [ leave_selected ])) {
-        this.code_mirror.setOption('lineNumberFormatter', hiddenLineFormatter);
-        this.celltoolbar.hide();
-        return true;
-      }
-      return false;
     }
 
     // Configure CodeMirror settings
@@ -374,7 +364,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     codeConfig.gutter = true;
     codeConfig.fixedGutter = true;
     codeConfig.lineNumbers = true;
-    codeConfig.lineNumberFormatter = hiddenLineFormatter;
+    codeConfig.lineNumberFormatter = function(n) { return n.toString(); };
 
     codeCell.config_defaults.highlight_modes.magic_javascript.reg = [
       /^%%javascript/,
@@ -635,8 +625,6 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     document.getElementById('help').innerHTML = help;
     showHelp();
   });
-
-  // TODO(Jupyter): Implement help menu dropdown shortcuts
 }
 
 
@@ -678,14 +666,18 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
     e.target.blur();
   }
 
+  function browseRepository(e) {
+    window.open(document.getElementById('repoLink').href, '_blank');
+    e.target.blur();
+  }
+
   document.getElementById('contentButton').addEventListener('click', showContent, false);
   document.getElementById('sessionsButton').addEventListener('click', showSessions, false);
 
   document.getElementById('addNotebookButton').addEventListener('click', addNotebook, false);
   document.getElementById('addFolderButton').addEventListener('click', addFolder, false);
 
-  document.getElementById('repoLink2').href = document.getElementById('repoLink').href;
-
+  document.getElementById('repoButton').addEventListener('click', browseRepository, false);
 
   (function buildBreadcrumbContent() {
     var path = location.pathname;
