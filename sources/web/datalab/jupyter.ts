@@ -242,7 +242,7 @@ function sendTemplate(key: string, data: common.Map<string>, response: http.Serv
 
   // NOTE: Uncomment to use external templates mapped into the container.
   //       This is only useful when actively developing the templates themselves.
-  // var template = fs.readFileSync('/nb/sources/' + key + '.html', { encoding: 'utf8' });
+  // template = fs.readFileSync('/sources/datalab/templates/' + key + '.html', { encoding: 'utf8' });
 
   // Replace <%name%> placeholders with actual values.
   // TODO: Error handling if template placeholders are out-of-sync with

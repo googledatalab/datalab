@@ -38,6 +38,9 @@ rm -f $HOME/datalab/log/custom_logs/*.log
 PROJECT_ID=`gcloud -q config list --format yaml | grep project | awk -F" " '{print $2}'`
 PROJECT_NUM=`gcloud -q alpha projects describe $PROJECT_ID | grep projectNumber | awk '{print substr($2,2,length($2)-2)}'`
 
+# Use this flag to map in web server content during development
+#  -v $REPO_DIR/sources/web:/sources \
+
 docker run -i --entrypoint=$ENTRYPOINT \
   -p 8081:8080 \
   -v $HOME/datalab/log:/var/log/app_engine \
