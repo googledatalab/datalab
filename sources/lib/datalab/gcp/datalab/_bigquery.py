@@ -14,7 +14,6 @@
 
 import json
 import re
-import yaml
 import IPython
 import IPython.core.display
 import IPython.core.magic
@@ -293,50 +292,6 @@ def _dispatch_handler(args, cell, parser, handler,
   return handler(args, cell)
 
 
-def _parse_config(config, env):
-  """ Parse a config from a magic cell body. This could be JSON or YAML. We turn it into
-      a Python dictionary then recursively replace any variable references.
-  """
-  def expand_var(v, env):
-    if v.startswith('$'):
-      v = v[1:]
-      if not v.startwith('$'):
-        if v in env:
-          v = env[v]
-        else:
-          raise Exception('Cannot expand variable $%s' % v)
-    return v
-
-  def replace_vars(config, env):
-    if isinstance(config, dict):
-      for k, v in config.items():
-        if isinstance(v, dict) or isinstance(v, list) or isinstance(v, tuple):
-          replace_vars(v, env)
-        elif isinstance(v, basestring):
-          config[k] = expand_var(v, env)
-    elif isinstance(config, list) or isinstance(config, tuple):
-      for i, v in enumerate(config):
-        if isinstance(v, dict) or isinstance(v, list) or isinstance(v, tuple):
-          replace_vars(v, env)
-        elif isinstance(v, basestring):
-          config[i] = expand_var(v, env)
-
-  if config is None:
-    return None
-  stripped = config.strip()
-  if len(stripped) == 0:
-    config = {}
-  elif stripped[0] == '{':
-    config = json.loads(config)
-  else:
-    config = yaml.load(config)
-
-  # Now we need to walk the config dictionary recursively replacing any '$name' vars.
-
-  replace_vars(config, env)
-  return config
-
-
 def _get_query_argument(args, config, env):
   """ Get a query argument to a cell magic.
 
@@ -370,7 +325,7 @@ def _sample_cell(args, config):
   """
 
   env = _notebook_environment()
-  config = _parse_config(config, env)
+  config = _utils.parse_config(config, env)
   query = _get_query_argument(args, config, env)
 
   count = args['count']
@@ -408,7 +363,7 @@ def _dryrun_cell(args, config):
     The response wrapped in a DryRunStats object
   """
   env = _notebook_environment()
-  config = _parse_config(config, env)
+  config = _utils.parse_config(config, env)
   query = _get_query_argument(args, config, env)
 
   result = query.execute_dry_run()
@@ -482,7 +437,7 @@ def _execute_cell(args, config):
     The QueryResultsTable
   """
   env = _notebook_environment()
-  config = _parse_config(config, env)
+  config = _utils.parse_config(config, env)
   query = _get_query_argument(args, config, env)
   return query.execute(args['target'], table_mode=args['mode'], use_cache=not args['nocache'],
                        allow_large_results=args['large']).results
@@ -509,7 +464,7 @@ def _pipeline_cell(args, config):
     if isinstance(value, gcp.bigquery._udf.FunctionCall):
       env[key] = value
 
-  config = _parse_config(config, env)
+  config = _utils.parse_config(config, env)
   query = _get_query_argument(args, config, env)
   if args['action'] == 'dryrun':
     print(query.sql)
