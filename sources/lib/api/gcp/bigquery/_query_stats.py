@@ -14,7 +14,8 @@
 
 
 class QueryStats:
-  """Used to wrap statistics returned by a dry run query.
+  """A wrapper for statistics returned by a dry run query. Useful so we can get an HTML
+  representation in a notebook.
   """
 
   def __init__(self, total_bytes, is_cached):

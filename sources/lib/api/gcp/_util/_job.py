@@ -169,8 +169,7 @@ class Job(object):
     return self
 
   def __repr__(self):
-    """ Get the notebook representation for the job.
-    """
+    """ Get the notebook representation for the job. """
     state = 'in progress'
     if self.is_complete:
       if self.failed:

@@ -16,10 +16,18 @@ import _job
 
 
 class QueryJob(_job.Job):
-  """ Represents a BigQuery Query Job.
-  """
+  """ Represents a BigQuery Query Job. """
 
   def __init__(self, job_id, table_name, sql, context):
+    """  Initializes a QueryJob object.
+
+    Args:
+      job_id: the ID of the query job.
+      table_name: the name of the table where the query results will be stored.
+      sql: the SQL statement that was executed for the query.
+      context: the Context object providing project_id and credentials that was used
+          when executing the query.
+    """
     super(QueryJob, self).__init__(job_id, context)
     self._sql = sql
     self._table = _query_results_table.QueryResultsTable(table_name, context, self,
@@ -30,18 +38,23 @@ class QueryJob(_job.Job):
 
   @property
   def bytes_processed(self):
-    """ Return the number of bytes processed, or None if the job is not complete. """
+    """ The number of bytes processed, or None if the job is not complete. """
     return self._bytes_processed
 
   @property
   def total_rows(self):
-    """ Return the total number of rows in the result, or None if not complete. """
+    """ The total number of rows in the result, or None if not complete. """
     return self._total_rows
 
   @property
   def cache_hit(self):
-    """ Return whether the result was obtained from the cache, or None if not complete. """
+    """ Whether the query results were obtained from the cache or not, or None if not complete. """
     return self._cache_hit
+
+  @property
+  def sql(self):
+    """ The SQL statement that was executed for the query. """
+    return self._sql
 
   def wait(self, timeout=None):
     """ Wait for the job to complete, or a timeout to happen.
@@ -54,7 +67,7 @@ class QueryJob(_job.Job):
       timeout: how long to wait (in seconds) before giving up; default None which means no timeout.
 
     Returns:
-      The Job
+      The QueryJob
     """
     poll = 30
     while not self._is_complete:
@@ -89,9 +102,5 @@ class QueryJob(_job.Job):
     if self.failed:
       raise Exception('Query failed: %s' % str(self.errors))
     return self._table
-
-  @property
-  def sql(self):
-    return self._sql
 
 import _query_results_table

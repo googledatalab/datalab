@@ -17,6 +17,8 @@ import json
 
 
 class JSONEncoder(json.JSONEncoder):
+  """ A JSON encoder that can handle Python datetime objects. """
+
   def default(self, obj):
     if isinstance(obj, datetime.date) or isinstance(obj, datetime.datetime):
       return obj.isoformat()

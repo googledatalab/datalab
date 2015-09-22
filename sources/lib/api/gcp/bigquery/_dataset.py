@@ -48,18 +48,26 @@ class DataSet(object):
 
   @property
   def name(self):
-    """The DataSetName for the dataset."""
+    """The DataSetName named tuple (project_id, dataset_id) for the dataset."""
     return self._name_parts
 
   @property
   def description(self):
-    """The description of the dataset."""
+    """The description of the dataset, if any.
+
+    Raises:
+      Exception if the dataset exists but the metadata for the dataset could not be retrieved.
+    """
     self._get_info()
     return self._info['description'] if self._info else None
 
   @property
   def friendly_name(self):
-    """The friendly name of the dataset."""
+    """The friendly name of the dataset, if any.
+
+    Raises:
+      Exception if the dataset exists but the metadata for the dataset could not be retrieved.
+    """
     self._get_info()
     return self._info['friendlyName'] if self._info else None
 
@@ -76,10 +84,10 @@ class DataSet(object):
   def exists(self):
     """ Checks if the dataset exists.
 
-    Args:
-      None
     Returns:
       True if the dataset exists; False otherwise.
+    Raises:
+      Exception if the dataset exists but the metadata for the dataset could not be retrieved.
     """
     self._get_info()
     return self._info is not None
@@ -173,15 +181,15 @@ class DataSet(object):
     return self._retrieve_items(page_token=page_token, item_type='VIEW')
 
   def tables(self):
-    """ Supports iterating through the Tables in the dataset. """
+    """ Returns an iterator for iterating through the Tables in the dataset. """
     return iter(gcp._util.Iterator(self._retrieve_tables))
 
   def views(self):
-    """ Supports iterating through the Views in the dataset. """
+    """ Returns an iterator for iterating through the Views in the dataset. """
     return iter(gcp._util.Iterator(self._retrieve_views))
 
   def __iter__(self):
-    """ Supports iterating through the Tables in the dataset. """
+    """ Returns an iterator for iterating through the Tables in the dataset. """
     return self.tables()
 
   def __str__(self):
@@ -232,6 +240,6 @@ class DataSets(object):
     return datasets, page_token
 
   def __iter__(self):
-    """ Supports iterating through the DataSets in the project.
+    """ Returns an iterator for iterating through the DataSets in the project.
     """
     return iter(gcp._util.Iterator(self._retrieve_datasets))

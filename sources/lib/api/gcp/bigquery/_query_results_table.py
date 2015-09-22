@@ -16,6 +16,10 @@ import _table
 
 
 class QueryResultsTable(_table.Table):
+  """ A subclass of Table specifically for Query results.
+
+  The primary differences are the additional properties job_id and sql.
+  """
 
   def __init__(self, name, context, job, is_temporary=False):
     """Initializes an instance of a Table object.
@@ -34,14 +38,17 @@ class QueryResultsTable(_table.Table):
 
   @property
   def job(self):
+    """ The QueryJob object that caused the table to be populated. """
     return self._job
 
   @property
   def job_id(self):
+    """ The ID of the query job that caused the table to be populated. """
     return self._job.id
 
   @property
   def sql(self):
+    """ The SQL statement for the query that populated the table. """
     return self._job.sql
 
   @property
