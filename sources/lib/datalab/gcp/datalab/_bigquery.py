@@ -27,44 +27,47 @@ import _utils
 
 def _create_sample_subparser(parser):
   sample_parser = parser.subcommand('sample',
-      'execute a BigQuery SQL statement and display results or create a named query object')
-  sample_parser.add_argument('-q', '--sql', help='the name for this query object')
+      'Display a sample of the results of a BigQuery SQL query.\n' +
+      'The cell can optionally contain arguments for expanding variables in the query.')
+  sample_parser.add_argument('-q', '--sql', help='the name of the query to sample')
   sample_parser.add_argument('-c', '--count', type=int, default=10,
-                             help='number of rows to limit to if sampling')
-  sample_parser.add_argument('-m', '--method', help='the type of sampling to use',
+                             help='The number of rows to limit to, if sampling')
+  sample_parser.add_argument('-m', '--method', help='The type of sampling to use',
                              choices=['limit', 'random', 'hashed', 'sorted'], default='limit')
   sample_parser.add_argument('-p', '--percent', type=int, default=1,
                              help='For random or hashed sampling, what percentage to sample from')
   sample_parser.add_argument('-f', '--field',
-                             help='field to use for sorted or hashed sampling')
+                             help='The field to use for sorted or hashed sampling')
   sample_parser.add_argument('-o', '--order', choices=['ascending', 'descending'],
-                             default='ascending', help='sort order to use for sorted sampling')
+                             default='ascending', help='The sort order to use for sorted sampling')
   return sample_parser
 
 
 def _create_udf_subparser(parser):
-  udf_parser = parser.subcommand('udf', 'create a named Javascript UDF')
-  udf_parser.add_argument('-m', '--module', help='the name for this UDF', required=True)
+  udf_parser = parser.subcommand('udf', 'Create a named Javascript BigQuery UDF')
+  udf_parser.add_argument('-m', '--module', help='The name for this UDF', required=True)
   return udf_parser
 
 
 def _create_dry_run_subparser(parser):
   dry_run_parser = parser.subcommand('dryrun',
-      'Send a query to BQ in dry run mode to receive approximate usage statistics')
+      'Execute a dry run of a BigQuery query and display approximate usage statistics')
   dry_run_parser.add_argument('-q', '--sql',
-                             help='the name of the query to be dry run', required=True)
+                             help='The name of the query to be dry run', required=True)
   return dry_run_parser
 
 
 def _create_execute_subparser(parser, command):
   execute_parser = parser.subcommand(command,
-      'execute a BigQuery SQL statement sending results to a named table')
-  execute_parser.add_argument('-nc', '--nocache', help='don\'t used previously cached results',
+      'Execute a BigQuery SQL query and optionally send the results to a named table.\n' +
+      'The cell can optionally contain arguments for expanding variables in the query.')
+  execute_parser.add_argument('-nc', '--nocache', help='Don\'t used previously cached results',
                               action='store_true')
-  execute_parser.add_argument('-m', '--mode', help='table creation mode', default='create',
+  execute_parser.add_argument('-m', '--mode', help='The table creation mode', default='create',
                               choices=['create', 'append', 'overwrite'])
-  execute_parser.add_argument('-l', '--large', help='allow large results', action='store_true')
-  execute_parser.add_argument('-q', '--sql', help='name of query to run, if not in cell body',
+  execute_parser.add_argument('-l', '--large', help='Whether to allow large results',
+                              action='store_true')
+  execute_parser.add_argument('-q', '--sql', help='The name of query to run',
                               nargs='?')
   execute_parser.add_argument('-t', '--target', help='target table name', nargs='?')
   return execute_parser
@@ -72,18 +75,19 @@ def _create_execute_subparser(parser, command):
 
 def _create_pipeline_subparser(parser, command):
   pipeline_parser = parser.subcommand(command,
-                                      'define a deployable pipeline based on a BigQuery SQL query')
-  pipeline_parser.add_argument('-n', '--name', help='pipeline name')
-  pipeline_parser.add_argument('-nc', '--nocache', help='don\'t used previously cached results',
+      'Define a deployable pipeline based on a BigQuery query.\n' +
+      'The cell can optionally contain arguments for expanding variables in the query.')
+  pipeline_parser.add_argument('-n', '--name', help='The pipeline name')
+  pipeline_parser.add_argument('-nc', '--nocache', help='Don\'t used previously cached results',
                                action='store_true')
-  pipeline_parser.add_argument('-m', '--mode', help='table creation mode', default='create',
+  pipeline_parser.add_argument('-m', '--mode', help='The table creation mode', default='create',
                                choices=['create', 'append', 'overwrite'])
-  pipeline_parser.add_argument('-l', '--large', help='allow large results', action='store_true')
-  pipeline_parser.add_argument('-q', '--sql', help='name of query to run', required=True)
-  pipeline_parser.add_argument('-t', '--target', help='target table name', nargs='?')
+  pipeline_parser.add_argument('-l', '--large', help='Allow large results', action='store_true')
+  pipeline_parser.add_argument('-q', '--sql', help='The name of query to run', required=True)
+  pipeline_parser.add_argument('-t', '--target', help='The target table name', nargs='?')
   pipeline_parser.add_argument('action', nargs='?', choices=('deploy', 'run', 'dryrun'),
                                default='dryrun',
-                               help='whether to deploy the pipeline, execute it immediately in ' +
+                               help='Whether to deploy the pipeline, execute it immediately in ' +
                                     'the notebook, or validate it with a dry run')
   # TODO(gram): we may want to move some command line arguments to the cell body config spec
   # eventually.
@@ -91,66 +95,72 @@ def _create_pipeline_subparser(parser, command):
 
 
 def _create_table_subparser(parser):
-  table_parser = parser.subcommand('table', 'view a BigQuery table')
+  table_parser = parser.subcommand('table', 'View a BigQuery table.')
   table_parser.add_argument('-r', '--rows', type=int, default=25,
-                            help='rows to display per page')
+                            help='Rows to display per page')
   table_parser.add_argument('-c', '--cols',
-                            help='comma-separated list of column names to restrict to')
+                            help='Comma-separated list of column names to restrict to')
   return table_parser
 
 
 def _create_schema_subparser(parser):
-  schema_parser = parser.subcommand('schema', 'view a BigQuery table or view schema')
-  schema_parser.add_argument('item', help='the name of, or a reference to, the table or view')
+  schema_parser = parser.subcommand('schema', 'View a BigQuery table or view schema.')
+  schema_parser.add_argument('item', help='The name of, or a reference to, the table or view')
   return schema_parser
 
 
 def _create_datasets_subparser(parser):
-  datasets_parser = parser.subcommand('datasets', 'list the datasets in a BigQuery project')
+  datasets_parser = parser.subcommand('datasets', 'List the datasets in a BigQuery project.')
   datasets_parser.add_argument('-p', '--project',
-                               help='the project whose datasets should be listed')
+                               help='The project whose datasets should be listed')
   return datasets_parser
 
 
 def _create_tables_subparser(parser):
-  tables_parser = parser.subcommand('tables', 'list the tables in a BigQuery project or dataset')
+  tables_parser = parser.subcommand('tables', 'List the tables in a BigQuery project or dataset.')
   tables_parser.add_argument('-p', '--project',
-                             help='the project whose tables should be listed')
+                             help='The project whose tables should be listed')
   tables_parser.add_argument('-d', '--dataset',
-                             help='the dataset to restrict to')
+                             help='The dataset to restrict to')
   return tables_parser
 
 
 def _create_extract_subparser(parser):
-  extract_parser = parser.subcommand('extract', 'Extract BigQuery query results or table to GCS')
-  extract_parser.add_argument('source', help='the query or table to extract')
+  extract_parser = parser.subcommand('extract', 'Extract BigQuery query results or table to GCS.')
+  extract_parser.add_argument('source', help='The name of the query or table to extract')
   extract_parser.add_argument('-f', '--format', choices=['csv', 'json'], default='csv',
-                              help='format to use for the export')
-  extract_parser.add_argument('-c', '--compress', action='store_true', help='compress the data')
-  extract_parser.add_argument('-H', '--header', action='store_true', help='include a header line')
-  extract_parser.add_argument('-d', '--delimiter', default=',', help='field delimiter')
-  extract_parser.add_argument('destination', help='the URL of the destination')
+                              help='The format to use for the export')
+  extract_parser.add_argument('-c', '--compress', action='store_true',
+                              help='Whether to compress the data')
+  extract_parser.add_argument('-H', '--header', action='store_true',
+                              help='Whether to include a header line (CSV only)')
+  extract_parser.add_argument('-d', '--delimiter', default=',',
+                              help='The field delimiter to use (CSV only)')
+  extract_parser.add_argument('destination', help='The URL of the destination')
   return extract_parser
 
 
 def _create_load_subparser(parser):
-  load_parser = parser.subcommand('load', 'load data into a BigQuery table')
-  load_parser.add_argument('-m', '--mode', help='one of create (default), append or overwrite',
+  load_parser = parser.subcommand('load', 'Load data from GCS into a BigQuery table.')
+  load_parser.add_argument('-m', '--mode', help='One of create (default), append or overwrite',
                            choices=['create', 'append', 'overwrite'], default='create')
-  load_parser.add_argument('-f', '--format', help='source format', choices=['json', 'csv'],
+  load_parser.add_argument('-f', '--format', help='The source format', choices=['json', 'csv'],
                            default='csv')
-  load_parser.add_argument('-n', '--skip', help='number of initial lines to skip',
+  load_parser.add_argument('-n', '--skip',
+                           help='The number of initial lines to skip; useful for CSV headers',
                            type=int, default=0)
-  load_parser.add_argument('-s', '--strict', help='reject bad values and jagged lines',
+  load_parser.add_argument('-s', '--strict', help='Whether to reject bad values and jagged lines',
                            action='store_true')
   load_parser.add_argument('-d', '--delimiter', default=',',
-                           help='the inter-field delimiter (default ,)')
+                           help='The inter-field delimiter for CVS (default ,)')
   load_parser.add_argument('-q', '--quote', default='"',
-                           help='the quoted field delimiter (default ")')
-  load_parser.add_argument('-i', '--infer', help='attempt to infer schema from source',
+                           help='The quoted field delimiter for CVS (default ")')
+  load_parser.add_argument('-i', '--infer',
+                           help='Whether to attempt to infer the schema from source; ' +
+                               'if false the table must already exist',
                            action='store_true')
-  load_parser.add_argument('source', help='URL of the GCS source(s)')
-  load_parser.add_argument('table', help='the destination table')
+  load_parser.add_argument('source', help='The URL of the GCS source(s)')
+  load_parser.add_argument('table', help='The destination table name')
   return load_parser
 
 
@@ -162,7 +172,10 @@ def _create_bigquery_parser():
   for the handlers that bind the cell contents and thus must recreate this parser for each
   cell upon execution.
   """
-  parser = _commands.CommandParser.create('bigquery')
+  parser = _commands.CommandParser(prog='bigquery', description="""
+Execute various BigQuery-related operations. Use "%bigquery <command> -h"
+for help on a specific command.
+  """)
 
   # This is a bit kludgy because we want to handle some line magics and some cell magics
   # with the bigquery command.
@@ -298,15 +311,23 @@ def _get_query_argument(args, config, env):
   The query is specified with args['sql']. We look that up and if it is a BQ query
   just return it. If it is instead a SqlModule or SqlStatement it may have variable
   references. We resolve those using the arg parser for the SqlModule, then override
-  the resulting defaults with either the Python code in code, or the dictionary in
+  the resulting defaults with either the Python code in config, or the dictionary in
   overrides. The latter is for if the overrides are specified with YAML or JSON and
   eventually we should eliminate code in favor of this.
+
+  Args:
+    args: the dictionary of magic arguments.
+    config: the cell contents which can be variable value overrides.
+    env: a dictionary that is used for looking up variable values.
+  Returns:
+    A Query object.
   """
   sql_arg = args['sql']
   item = _get_notebook_item(sql_arg)
-  if isinstance(item, gcp.bigquery.Query):
+  if isinstance(item, gcp.bigquery.Query):  # Queries are already expanded.
     return item
 
+  # Create an expanded BQ Query.
   item, env = gcp.data.SqlModule.get_sql_statement_with_environment(item, env)
   if config:
     env.update(config)
@@ -477,6 +498,18 @@ def _pipeline_cell(args, config):
 
 
 def _table_line(args):
+  """Implements the BigQuery table magic used to display tables.
+
+   The supported syntax is:
+   %bigquery table -t|--table <name> <other args>
+
+  Args:
+    args: the arguments following '%bigquery table'.
+  Returns:
+    The HTML rendering for the table.
+  """
+  # TODO(gram): It would be good to turn _table_viewer into a class that has a registered
+  # renderer. That would allow this to return a table viewer object which is easier to test.
   name = args['table']
   table = _get_table(name)
   if table and table.exists():
@@ -488,6 +521,7 @@ def _table_line(args):
 
 
 def _notebook_environment():
+  """ Get the IPython user namespace. """
   ipy = IPython.get_ipython()
   return ipy.user_ns
 
@@ -540,6 +574,18 @@ def _get_table(name):
 
 
 def _schema_line(args):
+  """Implements the BigQuery schema magic used to display table/view schemas.
+
+   The supported syntax is:
+
+       %bigquery schema -i|--item <table or view name>
+
+  Args:
+    args: the arguments following '%bigquery schema'.
+  Returns:
+    The HTML rendering for the schema.
+  """
+  # TODO(gram): surely we could just return the schema itself?
   name = args['item']
   schema = _get_schema(name)
   if schema:
@@ -555,11 +601,33 @@ def _render_table(data, fields=None):
 
 
 def _datasets_line(args):
+  """Implements the BigQuery datasets magic used to display datasets in a project.
+
+   The supported syntax is:
+
+       %bigquery datasets -p|--project <project_id>
+
+  Args:
+    args: the arguments following '%bigquery datasets'.
+  Returns:
+    The HTML rendering for the table of datasets.
+  """
   return _render_table([{'Name': str(dataset)}
                         for dataset in gcp.bigquery.DataSets(args['project'])])
 
 
 def _tables_line(args):
+  """Implements the BigQuery tables magic used to display tables in a dataset.
+
+   The supported syntax is:
+
+       %bigquery tables -p|--project <project_id>  -d|--dataset <dataset_id>
+
+  Args:
+    args: the arguments following '%bigquery tables'.
+  Returns:
+    The HTML rendering for the list of tables.
+  """
   if args['dataset']:
     datasets = [gcp.bigquery.DataSet((args['project'], args['dataset']))]
   else:
@@ -573,6 +641,17 @@ def _tables_line(args):
 
 
 def _extract_line(args):
+  """Implements the BigQuery extract magic used to display tables in a dataset.
+
+   The supported syntax is:
+
+       %bigquery extract -s|--source <table>  <other_args>
+
+  Args:
+    args: the arguments following '%bigquery extract'.
+  Returns:
+    A message about whether the extract succeeded or failed.
+  """
   name = args['source']
   source = _get_notebook_item(name)
   if not source:
@@ -596,6 +675,18 @@ def _extract_line(args):
 
 
 def _load_cell(args, schema):
+  """Implements the BigQuery load magic used to load data from GCS to a table.
+
+   The supported syntax is:
+
+       %bigquery load -s|--source <source> -t|--table <table>  <other_args>
+
+  Args:
+    args: the arguments following '%bigquery load'.
+    schema: a JSON schema for the destination table.
+  Returns:
+    A message about whether the load succeeded or failed.
+  """
   name = args['table']
   table = _get_table(name)
   if not table:

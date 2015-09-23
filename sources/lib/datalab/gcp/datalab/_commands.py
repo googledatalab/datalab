@@ -18,29 +18,24 @@ import IPython
 
 
 class CommandParser(argparse.ArgumentParser):
-  """An argument parser to parse commands in line/cell magic declarations.
-  """
+  """An argument parser to parse commands in line/cell magic declarations. """
 
   def __init__(self, *args, **kwargs):
-    """Initializes an instance of a CommandParser.
-    """
+    """Initializes an instance of a CommandParser. """
     super(CommandParser, self).__init__(*args, **kwargs)
     self._subcommands = None
 
   @staticmethod
   def create(name):
-    """Creates a CommandParser for a specific magic.
-    """
+    """Creates a CommandParser for a specific magic. """
     return CommandParser(prog=name)
 
   def exit(self, status=0, message=None):
-    """Overridden exit method to stop parsing without calling sys.exit().
-    """
+    """Overridden exit method to stop parsing without calling sys.exit(). """
     raise Exception(message)
 
   def format_usage(self):
-    """Overridden usage generator to use the full help message.
-    """
+    """Overridden usage generator to use the full help message. """
     return self.format_help()
 
   @staticmethod
@@ -75,8 +70,7 @@ class CommandParser(argparse.ArgumentParser):
       return None
 
   def subcommand(self, name, help):
-    """Creates a parser for a sub-command.
-    """
+    """Creates a parser for a sub-command. """
     if self._subcommands is None:
       self._subcommands = self.add_subparsers(help='commands')
     return self._subcommands.add_parser(name, help=help)

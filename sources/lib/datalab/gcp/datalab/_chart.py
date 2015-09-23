@@ -25,15 +25,20 @@ import _utils
 @IPython.core.magic.register_line_cell_magic
 def chart(line, cell=None):
   """ Generate charts with Google Charts. Use %chart --help for more details. """
-  parser = _commands.CommandParser.create('chart')
+  parser = _commands.CommandParser(prog='%%chart', description="""
+Generate an inline chart using Google Charts using the data in a Table, Query, dataframe, or list.
+Numerous types of charts are supported. Options for the charts can be specified in the cell body
+using YAML or JSON.
+""")
   for chart_type in ['annotation', 'area', 'bars', 'bubbles', 'calendar', 'candlestick', 'columns',
                      'combo', 'gauge', 'geo', 'histogram', 'line', 'map', 'org', 'paged_table',
                      'pie', 'sankey', 'scatter', 'stepped_area', 'table', 'timeline', 'treemap']:
-    subparser = parser.subcommand(chart_type, 'generate a %s chart' % chart_type)
+    subparser = parser.subcommand(chart_type,
+        'Generate a %s chart.' % chart_type)
     subparser.add_argument('-f', '--field',
-                           help='the field(s) to include in the chart')
+                           help='The field(s) to include in the chart')
     subparser.add_argument('data',
-                           help='the name of the variable referencing the Table or Query to chart')
+                           help='The name of the variable referencing the Table or Query to chart')
     subparser.set_defaults(chart=chart_type)
 
   parser.set_defaults(func=_chart_cell)
