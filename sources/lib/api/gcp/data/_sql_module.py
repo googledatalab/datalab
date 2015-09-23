@@ -20,6 +20,7 @@ import types
 # So this just wraps a bunch of static helpers.
 
 class SqlModule(object):
+  """ A container for SqlStatements defined together and able to reference each other. """
 
   # Names used for the arg parser, unnamed (main) query and last query in the module.
   # Note that every module has a last query, but not every module has a main query.
@@ -38,6 +39,8 @@ class SqlModule(object):
           we can get the default values for the arguments. These are all used to override the
           arg parser. Alternatively args may be a dictionary, in which case it overrides the
           default values from the arg parser.
+    Returns:
+      A dictionary of argument names and values.
     """
     overrides = None
     if args is None:
@@ -104,6 +107,16 @@ class SqlModule(object):
 
   @staticmethod
   def expand(sql, args=None):
+    """ Expand a SqlStatement, query string or SqlModule with a set of arguments.
+
+    Args:
+      sql: a SqlStatement, %%sql module, or string containing a query.
+      args: a string of command line arguments or a dictionary of values. If a string, it is
+          passed to the argument parser for the SqlModule associated with the SqlStatement or
+          SqlModule. If a dictionary, it is used to override any default arguments from the
+          argument parser. If the sql argument is a string then args must be None or a dictionary
+          as in this case there is no associated argument parser.
+    """
     sql, args = SqlModule.get_sql_statement_with_environment(sql, args)
     return _sql_statement.SqlStatement.format(sql._sql, args)
 

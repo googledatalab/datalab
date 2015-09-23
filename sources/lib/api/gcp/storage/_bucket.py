@@ -28,6 +28,14 @@ _STORAGE_NAME = 'gs://(' + _BUCKET_NAME + ')(/' + _OBJECT_NAME + ')?'
 
 
 def parse_name(name):
+  """ Parse a gs:// URL into the bucket and item names.
+
+  Args:
+    name: a GCS URL of the form gs://bucket or gs://bucket/item
+  Returns:
+    The bucket name (with no gs:// prefix), and the item name if present. If the name
+    could not be parsed returns None for both.
+  """
   bucket = None
   item = None
   m = re.match(_STORAGE_NAME, name)
@@ -57,18 +65,18 @@ class BucketMetadata(object):
 
   @property
   def created_on(self):
-    """Gets the created timestamp of the bucket."""
+    """The created timestamp of the bucket as a datetime.datetime."""
     s = self._info.get('timeCreated', None)
     return dateutil.parser.parse(s) if s else None
 
   @property
   def etag(self):
-    """Gets the ETag of the bucket."""
+    """The ETag of the bucket, if any."""
     return self._info.get('etag', None)
 
   @property
   def name(self):
-    """Gets the name of the bucket."""
+    """The name of the bucket."""
     return self._info['name']
 
 
@@ -94,7 +102,7 @@ class Bucket(object):
 
   @property
   def name(self):
-    """Returns the name of the bucket."""
+    """The name of the bucket."""
     return self._name
 
   def metadata(self):
@@ -110,7 +118,9 @@ class Bucket(object):
     return BucketMetadata(self._info) if self._info else None
 
   def item(self, key):
-    """Retrieves an object within this bucket.
+    """Retrieves an Item object for the specified key in this bucket.
+
+    The item need not exist.
 
     Args:
       key: the key of the item within the bucket.
@@ -120,11 +130,14 @@ class Bucket(object):
     return _item.Item(self._name, key, context=self._context)
 
   def items(self, prefix=None, delimiter=None):
-    """Retrieve the list of items within this bucket.
+    """Get an iterator for the items within this bucket.
 
     Args:
       prefix: an optional prefix to match items.
-      delimiter: an optional string to simulate directory-like semantics.
+      delimiter: an optional string to simulate directory-like semantics. The returned items
+           will be those whose names do not contain the delimiter after the prefix. For
+           the remaining items, the names will be returned truncated after the delimiter
+           with duplicates removed (i.e. as pseudo-directories).
     Returns:
       An iterable list of items within this bucket.
     """
@@ -155,8 +168,6 @@ class Bucket(object):
   def delete(self):
     """Deletes the bucket.
 
-    Returns:
-      Nothing.
     Raises:
       Exception if there was an error deleting the bucket.
     """

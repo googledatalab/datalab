@@ -22,6 +22,12 @@ class SqlStatement(object):
   """
 
   def __init__(self, sql, module=None):
+    """ Initializes the SqlStatement.
+
+    Args:
+      sql: a string containing a SQL query with optional variable references.
+      module: if defined in a %%sql cell, the parent SqlModule object for the SqlStatement.
+    """
     self._sql = sql
     self._module = module
 
@@ -43,10 +49,12 @@ class SqlStatement(object):
 
   @property
   def sql(self):
+    """ The (unexpanded) SQL for the SqlStatement. """
     return self._sql
 
   @property
   def module(self):
+    """ The parent SqlModule for the SqlStatrement, if any. """
     return self._module
 
   @staticmethod
@@ -171,7 +179,7 @@ class SqlStatement(object):
 
   @staticmethod
   def get_dependencies(sql):
-    """ Return the list of tokens referenced in this SQL. """
+    """ Return the list of variables referenced in this SQL. """
     dependencies = []
     for (_, placeholder, _) in SqlStatement._get_tokens(sql):
       if placeholder:

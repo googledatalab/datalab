@@ -30,8 +30,8 @@ class Query(object):
     """Returns a sampling Query for the SQL object.
 
     Args:
-      sql: the SQL object to sample
-      context: an Context object providing project_id and credentials.
+      sql: the SQL statement (string) or Query object to sample.
+      context: a Context object providing project_id and credentials.
       fields: an optional list of field names to retrieve.
       count: an optional count of rows to retrieve which is used if a specific
           sampling is not specified.
@@ -45,14 +45,22 @@ class Query(object):
     """Initializes an instance of a Query object.
 
     Args:
-      sql: the BigQuery SQL string to execute.
+      sql: the BigQuery SQL query string to execute, or a SqlStatement object. The latter will
+          have any variable references replaced before being associated with the Query (i.e.
+          once constructed the SQL associated with a Query is static).
+
+          It is possible to have variable references in a query string too provided the variables
+          are passed as keyword arguments to this constructor.
+
       scripts: array of UDFs referenced in the SQL.
       context: an optional Context object providing project_id and credentials. If a specific
           project id or credentials are unspecified, the default ones configured at the global
           level are used.
-      kwargs: additional arguments to use when expanding the variables if passed a SqlStatement.
+      kwargs: additional arguments to use when expanding the variables if passed a SqlStatement
+          or a string with variable references.
+
     Raises:
-      Exception if the name is invalid.
+      Exception if expansion of any variables failed.
       """
     if kwargs or not isinstance(sql, basestring):
       sql, code = gcp.data.SqlModule.expand(sql, kwargs)
@@ -74,7 +82,7 @@ class Query(object):
     """Creates a SQL representation of this object.
 
     Returns:
-      The SQL representation to use when embedding this object into SQL.
+      The SQL representation to use when embedding this object into other SQL.
     """
     return '(%s)' % self._sql
 
@@ -82,7 +90,7 @@ class Query(object):
     """Creates a string representation of this object.
 
     Returns:
-      The string representation of this object.
+      The string representation of this object (the unmodified SQL).
     """
     return self._sql
 
@@ -90,7 +98,7 @@ class Query(object):
     """Creates a friendly representation of this object.
 
     Returns:
-      The friendly representation of this object.
+      The friendly representation of this object (the unmodified SQL).
     """
     return self._sql
 
@@ -105,15 +113,14 @@ class Query(object):
     return self._scripts
 
   def results(self, use_cache=True):
-    """Retrieves results for the query.
+    """Retrieves table of results for the query. May block if the query must be executed first.
 
     Args:
       use_cache: whether to use cached results or not. Ignored if append is specified.
     Returns:
       A QueryResultsTable containing the result set.
     Raises:
-      Exception if the query could not be executed or query response was
-      malformed.
+      Exception if the query could not be executed or query response was malformed.
     """
     if not use_cache or (self._results is None):
       self.execute(use_cache=use_cache)
@@ -147,7 +154,15 @@ class Query(object):
   @gcp._util.async_method
   def extract_async(self, storage_uris, format='csv', csv_delimiter=',',
                     csv_header=True, compress=False, use_cache=True):
-    """Exports the query results to GCS. Returns a Future immediately.
+    """Exports the query results to GCS. Returns a Job immediately.
+
+    Note that there are two jobs that may need to be run sequentially, one to run the query,
+    and the second to extract the resulting table. These are wrapped by a single outer Job.
+
+    If the query has already been executed and you would prefer to get a Job just for the
+    extract, you can can call extract_async on the QueryResultsTable instead; i.e.:
+
+        query.results().extract_async(...)
 
     Args:
       storage_uris: the destination URI(s). Can be a single URI or a list.
@@ -159,7 +174,8 @@ class Query(object):
           AVRO format (default False).
       use_cache: whether to use cached results or not (default True).
     Returns:
-      A Future that returns a Job object for the export if it was started successfully; else None.
+      A Job for the combined (execute, extract) task that will in turn return the Job object for
+      the completed extract task when done; else None.
     Raises:
       An Exception if the query failed.
     """
@@ -175,13 +191,13 @@ class Query(object):
       max_rows: an upper limit on the number of rows to export (default None).
       use_cache: whether to use cached results or not (default True).
     Returns:
-      A dataframe containing the table data.
+      A Pandas dataframe containing the table data.
     """
     return self.results(use_cache=use_cache) \
         .to_dataframe(start_row=start_row, max_rows=max_rows)
 
   def to_file(self, path, format='csv', csv_delimiter=',', csv_header=True, use_cache=True):
-    """Save the results to a local file in Excel CSV format.
+    """Save the results to a local file in CSV format.
 
     Args:
       path: path on the local filesystem for the saved results.
@@ -200,7 +216,7 @@ class Query(object):
 
   @gcp._util.async_method
   def to_file_async(self, path, format='csv', csv_delimiter=',', csv_header=True, use_cache=True):
-    """Save the results to a local file in Excel CSV format. Returns a Job immediately.
+    """Save the results to a local file in CSV format. Returns a Job immediately.
 
     Args:
       path: path on the local filesystem for the saved results.
@@ -209,7 +225,7 @@ class Query(object):
       csv_header: for CSV exports, whether to include an initial header line. Default true.
       use_cache: whether to use cached results or not.
     Returns:
-      A Job returning the path to the local file.
+      A Job for the save that returns the path to the local file on completion.
     Raises:
       An Exception if the operation failed.
     """
@@ -234,17 +250,19 @@ class Query(object):
                                 sampling=sampling).results(use_cache=use_cache)
 
   def execute_dry_run(self):
-    """Dry run a query, to check the validity of the query and return statistics.
+    """Dry run a query, to check the validity of the query and return some useful statistics.
 
     Returns:
-        dict, with cacheHit and totalBytesProcessed fields.
+      A dict with 'cacheHit' and 'totalBytesProcessed' fields.
+    Raises:
+      An exception if the query was malformed.
     """
     query_result = self._api.jobs_insert_query(self._sql, self._scripts, dry_run=True)
     return query_result['statistics']['query']
 
   def execute_async(self, table_name=None, table_mode='create', use_cache=True,
                     priority='interactive', allow_large_results=False):
-    """ Initiate the query and return the Job.
+    """ Initiate the query and return a QueryJob.
 
     Args:
       dataset_id: the datasetId for the result table.
@@ -260,7 +278,7 @@ class Query(object):
       allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
           slower and requires a table_name to be specified) (default False).
     Returns:
-      The QueryJob.
+      A QueryJob.
     Raises:
       Exception if query could not be executed.
     """
@@ -292,7 +310,7 @@ class Query(object):
 
   def execute(self, table_name=None, table_mode='create', use_cache=True, priority='interactive',
               allow_large_results=False):
-    """ Initiate the query, block until complete and return the results.
+    """ Initiate the query, blocking until complete and then return the results.
 
     Args:
       table_name: the result table name as a string or TableName; if None (the default), then a
@@ -307,7 +325,7 @@ class Query(object):
       allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
           slower and requires a table_name to be specified) (default False).
     Returns:
-      The Query results Table.
+      The QueryResultsTable for the query.
     Raises:
       Exception if query could not be executed.
     """

@@ -67,7 +67,7 @@ class View(object):
 
   @property
   def query(self):
-    """The View Query."""
+    """The Query that defines the view."""
     if not self.exists():
       return None
     self._table._load_info()
@@ -76,18 +76,19 @@ class View(object):
     return None
 
   def exists(self):
-    """Whether the view has been created."""
+    """Whether the view's Query has been executed and the view is available or not."""
     return self._table.exists()
 
   def delete(self):
-    """Remove the View if it exists."""
+    """Removes the view if it exists."""
     self._table.delete()
 
   def create(self, query):
-    """ Create the view with the specified query.
+    """ Creates the view with the specified query.
 
     Args:
-      query: the query to use to for the View; either a string or a Query.
+      query: the query to use to for the View; either a string containing a SQL query or
+          a Query object.
     Returns:
       The View instance.
     Raises:
@@ -110,9 +111,9 @@ class View(object):
       sampling: an optional sampling strategy to apply to the view.
       use_cache: whether to use cached results or not.
     Returns:
-      A QueryResults object containing the resulting data.
+      A QueryResultsTable object containing the resulting data.
     Raises:
-      Exception if the sample query could not be executed or query response was malformed.
+      Exception if the sample query could not be executed or the query response was malformed.
     """
     return self._table.sample(fields=fields, count=count, sampling=sampling, use_cache=use_cache)
 
@@ -130,13 +131,13 @@ class View(object):
   def update(self, friendly_name=None, description=None, query=None):
     """ Selectively updates View information.
 
+    Any parameters that are None (the default) are not applied in the update.
+
     Args:
       friendly_name: if not None, the new friendly name.
       description: if not None, the new description.
       expiry: if not None, the new expiry time, either as a DateTime or milliseconds since epoch.
       query: if not None, a new query string for the View.
-
-    Returns:
     """
     self._table._load_info()
     if query is not None:
@@ -148,13 +149,14 @@ class View(object):
   def results(self, use_cache=True):
     """Materialize the view synchronously.
 
+    If you require more control over the execution, use execute() or execute_async().
+
     Args:
-      use_cache: whether to use cached results or not. Ignored if append is specified.
+      use_cache: whether to use cached results or not.
     Returns:
       A QueryResultsTable containing the result set.
     Raises:
-      Exception if the query could not be executed or query response was
-      malformed.
+      Exception if the query could not be executed or query response was malformed.
     """
     return self._materialization.results(use_cache=use_cache)
 
@@ -174,7 +176,7 @@ class View(object):
       allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
           slower and requires a table_name to be specified) (default False).
     Returns:
-      A Job for the materialization
+      A QueryJob for the materialization
     Raises:
       Exception (KeyError) if View could not be materialized.
     """
@@ -198,7 +200,7 @@ class View(object):
       allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
           slower and requires a table_name to be specified) (default False).
     Returns:
-      A Job for the materialization
+      A QueryJob for the materialization
     Raises:
       Exception (KeyError) if View could not be materialized.
     """

@@ -17,6 +17,7 @@ import types
 
 
 def print_exception_with_last_stack(e):
+  """ If called after an exception, this will print the call stack and exception. """
   traceback.print_exc()
   print str(e)
 

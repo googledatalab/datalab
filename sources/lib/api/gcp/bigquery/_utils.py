@@ -45,9 +45,10 @@ def parse_dataset_name(name, project_id=None):
         this will be used; if the name does contain a project ID and it does not match
         this, an exception will be thrown.
   Returns:
-    The DataSetName for the dataset.
+    A DataSetName named tuple for the dataset.
   Raises:
-    Exception: raised if the name doesn't match the expected formats.
+    Exception: raised if the name doesn't match the expected formats or a project_id was
+        specified that does not match that in the name.
   """
   _project_id = _dataset_id = None
   if isinstance(name, basestring):
@@ -94,9 +95,10 @@ def parse_table_name(name, project_id=None, dataset_id=None):
         this will be used; if the name does contain a dataset ID and it does not match
         this, an exception will be thrown.
   Returns:
-    A tuple consisting of the full name and individual name parts.
+    A TableName named tuple consisting of the full name and individual name parts.
   Raises:
-    Exception: raised if the name doesn't match the expected formats.
+    Exception: raised if the name doesn't match the expected formats, or a project_id and/or
+        dataset_id was provided that does not match that in the name.
   """
   _project_id = _dataset_id = _table_id = _decorator = None
   if isinstance(name, basestring):

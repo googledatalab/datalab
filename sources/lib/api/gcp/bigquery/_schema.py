@@ -17,10 +17,25 @@ import pandas
 
 
 class Schema(list):
-  """Represents the schema of a BigQuery table.
+  """Represents the schema of a BigQuery table as a flattened list of objects representing fields.
+
+   Each field object has name, data_type, mode and description properties. Nested fields
+   get flattened with their full-qualified names. So a Schema that has an object A with nested
+   field B will be represented as [(name: 'A', ...), (name: 'A.b', ...)].
   """
 
   class _Field(object):
+    """ Represents a single field in a Table schema.
+
+    This has the properties:
+
+    - name: the flattened, full-qualified name of the field.
+    - data_type: the type of the field as a string ('INTEGER', 'BOOLEAN', 'FLOAT', 'STRING'
+       or 'TIMESTAMP').
+    - mode: the mode of the field; 'NULLABLE' by default.
+    - description: a description of the field, if known; empty string by default.
+
+     """
 
     # TODO(gram): consider renaming data_type member to type. Yes, it shadows top-level
     # name but that is what we are using in __str__ and __getitem__ and is what is used in BQ.
@@ -40,15 +55,17 @@ class Schema(list):
       return self.name
 
     def __eq__(self, other):
+      """ Compare two schema field objects for equality (ignoring description). """
       return self.name == other.name and self.data_type == other.data_type\
           and self.mode == other.mode
 
     def __str__(self):
-      # Stringize in the form of a dictionary
+      """ Returns the schema field as a string form of a dictionary. """
       return "{ 'name': '%s', 'type': '%s', 'mode':'%s', 'description': '%s' }" % \
              (self.name, self.data_type, self.mode, self.description)
 
     def __repr__(self):
+      """ Returns the schema field as a string form of a dictionary. """
       return str(self)
 
     def __getitem__(self, item):
@@ -77,7 +94,7 @@ class Schema(list):
     Args:
       dataframe: The DataFrame.
       default_type : The default big query type in case the type of the column does not exist in
-          the schema.
+          the schema. Defaults to 'STRING'.
     Returns:
       A list of dictionaries containing field 'name' and 'type' entries, suitable for use in a
           BigQuery Tables resource schema.
@@ -112,7 +129,7 @@ class Schema(list):
     Args:
       dataframe: The DataFrame.
       default_type : The default big query type in case the type of the column does not exist in
-          the schema.
+          the schema. Defaults to 'STRING'.
     Returns:
       A Schema.
     """
@@ -126,7 +143,7 @@ class Schema(list):
     case the type of the elements is used and the field names are simply 'Column1', 'Column2', etc.
 
     Args:
-      data: The list.
+      data: The list of dictionaries or lists.
     Returns:
       A list of dictionaries containing field 'name' and 'type' entries, suitable for use in a
           BigQuery Tables resource schema.
@@ -161,9 +178,9 @@ class Schema(list):
     case the type of the elements is used and the field names are simply 'Column1', 'Column2', etc.
 
     Args:
-      data: The list.
+      data: The list of dictionaries or lists.
     Returns:
-      A Schema.
+      A Schema for the list.
     """
     return Schema(Schema._from_list(data))
 
@@ -179,7 +196,7 @@ class Schema(list):
           'mode' can be 'NULLABLE', 'REQUIRED' or 'REPEATED'. For the allowed types, see:
           https://cloud.google.com/bigquery/preparing-data-for-bigquery#datatypes
     Returns:
-      A Schema object.
+      A Schema for the data.
     """
     if isinstance(source, pandas.DataFrame):
       return Schema.from_dataframe(source)
@@ -220,6 +237,13 @@ class Schema(list):
     self._map[name] = field
 
   def find(self, name):
+    """ Get the index of a field in the flattened list given its (fully-qualified) name.
+
+    Args:
+      name: the fully-qualified name of the field.
+    Returns:
+      The index of the field, if found; else -1.
+    """
     for i in range(0, len(self)):
       if self[i].name == name:
         return i
@@ -237,9 +261,13 @@ class Schema(list):
         self._populate_fields(field_data.get('fields'), name + '.')
 
   def __str__(self):
+    """ Returns a string representation of the non-flattened form of the schema. """
+    # TODO(gram): We should probably return the flattened form. There was a reason why this is
+    # not but I don't remember what it was. Figure that out and fix this.
     return str(self._bq_schema)
 
   def __eq__(self, other):
+    """ Compares two schema for equality. """
     other_map = other._map
     if len(self._map) != len(other_map):
       return False

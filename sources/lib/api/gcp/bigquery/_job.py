@@ -36,23 +36,23 @@ class Job(gcp._util.Job):
 
   @property
   def start_time_utc(self):
-    """ Returns the UTC start time of the job as a Python datetime. """
+    """ The UTC start time of the job as a Python datetime. """
     return self._start_time
 
   @property
   def end_time_utc(self):
-    """ Returns the UTC end time of the job (or None if incomplete) as a Python datetime. """
+    """ The UTC end time of the job (or None if incomplete) as a Python datetime. """
     return self._end_time
 
   @property
   def total_time(self):
-    """ Return the total time in fractional seconds that the job took, or None if not complete. """
+    """ The total time in fractional seconds that the job took, or None if not complete. """
     if self._end_time is None:
       return None
     return (self._end_time - self._start_time).total_seconds()
 
   def _refresh_state(self):
-    """ Get the state of a job. If the job is complete this does nothing
+    """ Get the state of a job. If the job is complete this does nothing;
         otherwise it gets a refreshed copy of the job resource.
     """
     # TODO(gram): should we put a choke on refreshes? E.g. if the last call was less than

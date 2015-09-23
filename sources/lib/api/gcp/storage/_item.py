@@ -34,27 +34,27 @@ class ItemMetadata(object):
 
   @property
   def content_type(self):
-    """Gets the Content-Type associated with the item."""
+    """The Content-Type associated with the item, if any."""
     return self._info.get('contentType', None)
 
   @property
   def etag(self):
-    """Gets the ETag of the item."""
+    """The ETag of the item, if any."""
     return self._info.get('etag', None)
 
   @property
   def name(self):
-    """Gets the name of the item."""
+    """The name of the item."""
     return self._info['name']
 
   @property
   def size(self):
-    """Gets the size (in bytes) of the item."""
+    """The size (in bytes) of the item. 0 for items that don't exist."""
     return int(self._info.get('size', 0))
 
   @property
   def updated_on(self):
-    """Gets the updated timestamp of the item."""
+    """The updated timestamp of the item as a datetime.datetime."""
     s = self._info.get('updated', None)
     return dateutil.parser.parse(s) if s else None
 
@@ -168,7 +168,10 @@ class Items(object):
     Args:
       bucket: the name of the bucket containing the items.
       prefix: an optional prefix to match items.
-      delimiter: an optional string to simulate directory-like semantics.
+      delimiter: an optional string to simulate directory-like semantics. The returned items
+           will be those whose names do not contain the delimiter after the prefix. For
+           the remaining items, the names will be returned truncated after the delimiter
+           with duplicates removed (i.e. as pseudo-directories).
       context: an optional Context object providing project_id and credentials. If a specific
           project id or credentials are unspecified, the default ones configured at the global
           level are used.

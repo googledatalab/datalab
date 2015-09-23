@@ -37,11 +37,11 @@ class TableMetadata(object):
   """Represents metadata about a BigQuery table."""
 
   def __init__(self, table, info):
-    """Initializes an instance of a TableMetadata.
+    """Initializes a TableMetadata instance.
 
     Args:
-      table: the table this belongs to.
-      info: The BigQuery information about this table.
+      table: the Table object this belongs to.
+      info: The BigQuery information about this table as a Python dictionary.
     """
     self._table = table
     self._info = info
@@ -59,7 +59,7 @@ class TableMetadata(object):
 
   @property
   def expires_on(self):
-    """The timestamp for when the table will expire."""
+    """The timestamp for when the table will expire, or None if unknown."""
     timestamp = self._info.get('expirationTime', None)
     if timestamp is None:
       return None
@@ -78,12 +78,12 @@ class TableMetadata(object):
 
   @property
   def rows(self):
-    """The number of rows within the table."""
+    """The number of rows within the table, or -1 if unknown. """
     return int(self._info['numRows']) if 'numRows' in self._info else -1
 
   @property
   def size(self):
-    """The size of the table in bytes."""
+    """The size of the table in bytes, or -1 if unknown. """
     return int(self._info['numBytes']) if 'numBytes' in self._info else -1
 
 
@@ -100,7 +100,7 @@ class Table(object):
   _MSEC_PER_WEEK = 7 * 24 * 3600 * 1000
 
   def __init__(self, name, context=None):
-    """Initializes an instance of a Table object.
+    """Initializes an instance of a Table object. The Table need not exist yet.
 
     Args:
       name: the name of the table either as a string or a 3-part tuple (projectid, datasetid, name).
@@ -123,12 +123,12 @@ class Table(object):
 
   @property
   def name(self):
-    """The TableName for the table."""
+    """The TableName named tuple (project_id, dataset_id, table_id, decorator) for the table."""
     return self._name_parts
 
   @property
   def job(self):
-    """ For tables resulting from executing query jobs, the job that created the table.
+    """ For tables resulting from executing queries, the job that created the table.
 
     Default is None for a Table object; this is overridden by QueryResultsTable.
     """
@@ -136,7 +136,7 @@ class Table(object):
 
   @property
   def is_temporary(self):
-    """ Whether this is a short-lived table or not. """
+    """ Whether this is a short-lived table or not. Always False for non-QueryResultsTables. """
     return False
 
   def _load_info(self):
@@ -176,7 +176,7 @@ class Table(object):
     """ Delete the table.
 
     Returns:
-      Nothing
+      True if the Table no longer exists; False otherwise.
     """
     try:
       self._api.table_delete(self._name_parts)
@@ -184,6 +184,7 @@ class Table(object):
       # TODO(gram): May want to check the error reasons here and if it is not
       # because the file didn't exist, return an error.
       pass
+    return not self.exists()
 
   def create(self, schema, overwrite=False):
     """ Create the table with the specified schema.
@@ -192,7 +193,7 @@ class Table(object):
       schema: the schema to use to create the table. Should be a list of dictionaries, each
           containing at least a pair of entries, 'name' and 'type'.
           See https://cloud.google.com/bigquery/docs/reference/v2/tables#resource
-      overwrite: if True, delete the object first if it exists. If False and the object exists,
+      overwrite: if True, delete the table first if it exists. If False and the table exists,
           creation will fail and raise an Exception.
     Returns:
       The Table instance.
@@ -218,7 +219,7 @@ class Table(object):
       sampling: an optional sampling strategy to apply to the table.
       use_cache: whether to use cached results or not.
     Returns:
-      A QueryResults object containing the resulting data.
+      A QueryResultsTable object containing the resulting data.
     Raises:
       Exception if the sample query could not be executed or query response was malformed.
     """
@@ -229,8 +230,9 @@ class Table(object):
   @staticmethod
   def _encode_dict_as_row(record, column_name_map):
     """ Encode a dictionary representing a table row in a form suitable for streaming to BQ.
-        This means encoding timestamps as ISO-compatible strings and removing invalid
-        characters from column names.
+
+      This includes encoding timestamps as ISO-compatible strings and removing invalid
+      characters from column names.
 
     Args:
       record: a Python dictionary representing the table row.
@@ -258,6 +260,9 @@ class Table(object):
   def insert_data(self, data, include_index=False, index_name=None):
     """ Insert the contents of a Pandas DataFrame or a list of dictionaries into the table.
 
+    The insertion will be performed using at most 500 rows per POST, and at most 10 POSTs per
+    second, as BigQuery has some limits on streaming rates.
+
     Args:
       data: the DataFrame or list to insert.
       include_index: whether to include the DataFrame or list index as a column in the BQ table.
@@ -266,8 +271,8 @@ class Table(object):
     Returns:
       The table.
     Raises:
-      Exception if the table doesn't exist, the schema differs from the data's schema, or the insert
-          failed.
+      Exception if the table doesn't exist, the table's schema differs from the data's schema,
+      or the insert failed.
     """
     # There are BigQuery limits on the streaming API:
     #
@@ -353,7 +358,7 @@ class Table(object):
 
   def extract_async(self, destination, format='csv', csv_delimiter=',', csv_header=True,
                     compress=False):
-    """Runs a job to export the table to GCS.
+    """Starts a job to export the table to GCS.
 
     Args:
       destination: the destination URI(s). Can be a single URI or a list.
@@ -386,7 +391,7 @@ class Table(object):
       compress whether to compress the data on export. Compression is not supported for
           AVRO format. Defaults to False.
     Returns:
-      A Job object for the export Job if it was started successfully; else None.
+      A Job object for the completed export Job if it was started successfully; else None.
     """
     format = format.upper()
     if format == 'JSON':
@@ -401,10 +406,11 @@ class Table(object):
                  csv_delimiter=',', csv_skip_header_rows=0, encoding='utf-8',
                  quote='"', allow_quoted_newlines=False,
                  allow_jagged_rows=False, ignore_unknown_values=False, max_bad_records=0):
-    """ Start loading the table from GCS and return a Future.
+    """ Starts importing a table from GCS and return a Future.
 
     Args:
-      source: the URL of the source bucket(s). Can include wildcards.
+      source: the URL of the source objects(s). Can include a wildcard '*' at the end of the item
+         name. Can be a single source or a list.
       mode: one of 'create', 'append', or 'overwrite'. 'append' or 'overwrite' will fail if the
           table does not already exist, while 'create' will fail if it does. The default is
           'create'. If 'create' the schema will be inferred if necessary.
@@ -427,8 +433,7 @@ class Table(object):
           returning an 'invalid' error in the Job result (default 0).
 
     Returns:
-      A Future that returns a Job object for the load Job if it was started successfully or
-      None if not.
+      A Job object for the import if it was started successfully or None if not.
     """
     if source_format == 'csv':
       source_format = 'CSV'
@@ -466,7 +471,8 @@ class Table(object):
     """ Load the table from GCS.
 
     Args:
-      source: the URL of the source bucket(s). Can include wildcards.
+      source: the URL of the source objects(s). Can include a wildcard '*' at the end of the item
+         name. Can be a single source or a list.
       mode: one of 'create', 'append', or 'overwrite'. 'append' or 'overwrite' will fail if the
           table does not already exist, while 'create' will fail if it does. The default is
           'create'. If 'create' the schema will be inferred if necessary.
@@ -489,7 +495,7 @@ class Table(object):
           returning an 'invalid' error in the Job result (default 0).
 
     Returns:
-      A Job object for the load Job if it was started successfully; else None.
+      A Job object for the completed load Job if it was started successfully; else None.
     """
     job = self.load_async(source,
                           mode=mode,
@@ -581,7 +587,7 @@ class Table(object):
       start_row: the row of the table at which to start the export (default 0)
       max_rows: an upper limit on the number of rows to export (default None)
     Returns:
-      A dataframe containing the table data.
+      A Pandas dataframe containing the table data.
     """
     fetcher = self._get_row_fetcher(start_row=start_row, max_rows=max_rows)
     count = 0
@@ -658,13 +664,13 @@ class Table(object):
   def update(self, friendly_name=None, description=None, expiry=None, schema=None):
     """ Selectively updates Table information.
 
+    Any parameters that are omitted or None are not updated.
+
     Args:
       friendly_name: if not None, the new friendly name.
       description: if not None, the new description.
       expiry: if not None, the new expiry time, either as a DateTime or milliseconds since epoch.
       schema: if not None, the new schema: either a list of dictionaries or a Schema.
-
-    Returns:
     """
     self._load_info()
     if friendly_name is not None:
