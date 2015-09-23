@@ -37,7 +37,10 @@ def storage(line):
   Returns:
     The results of executing the cell.
   """
-  parser = _commands.CommandParser.create('storage')
+  parser = _commands.CommandParser(prog='storage', description="""
+Execute various storage-related operations. Use "%storage <command> -h"
+for help on a specific command.
+""")
 
   # TODO(gram): consider adding a move command too. I did try this already using the
   # objects.patch API to change the object name but that fails with an error:
@@ -47,42 +50,47 @@ def storage(line):
   #
   # This is despite 'name' being identified as writable in the storage API docs.
   # The alternative would be to use a copy/delete.
-  copy_parser = parser.subcommand('copy', 'copy a storage object')
-  copy_parser.add_argument('source', help='the name of the object(s) to copy', nargs='+')
-  copy_parser.add_argument('destination', help='the copy destination')
+  copy_parser = parser.subcommand('copy',
+                                  'Copy one or more GCS objects to a different location.')
+  copy_parser.add_argument('source', help='The name of the object(s) to copy', nargs='+')
+  copy_parser.add_argument('destination',
+      help='The copy destination. For multiple source items this must be a bucket.')
   copy_parser.set_defaults(func=_storage_copy)
 
-  create_parser = parser.subcommand('create', 'make one or more buckets')
-  create_parser.add_argument('-p', '--project', help='the project associated with the objects')
-  create_parser.add_argument('bucket', help='the name of the bucket(s) to create', nargs='+')
+  create_parser = parser.subcommand('create', 'Create one or more GCS buckets.')
+  create_parser.add_argument('-p', '--project', help='The project associated with the objects')
+  create_parser.add_argument('bucket', help='The name of the bucket(s) to create', nargs='+')
   create_parser.set_defaults(func=_storage_create)
 
-  delete_parser = parser.subcommand('delete', 'remove one or more buckets or objects')
+  delete_parser = parser.subcommand('delete', 'Delete one or more GCS buckets or objects.')
   delete_parser.add_argument('item', nargs='+',
-                             help='the name of the bucket(s) or object(s) to remove')
+                             help='The name of the bucket(s) or object(s) to remove')
   delete_parser.set_defaults(func=_storage_delete)
 
-  list_parser = parser.subcommand('list', 'list buckets or contents of a bucket')
-  list_parser.add_argument('-p', '--project', help='the project associated with the objects')
-  list_parser.add_argument('path', help='the name of the objects(s) to list', nargs='?')
+  list_parser = parser.subcommand('list', 'List buckets in a project, or contents of a bucket.')
+  list_parser.add_argument('-p', '--project', help='The project associated with the objects')
+  list_parser.add_argument('path', help='The name of the objects(s) to list; can include wildchars',
+                           nargs='?')
   list_parser.set_defaults(func=_storage_list)
 
-  read_parser = parser.subcommand('read', 'read contents of storage object into Python variable')
-  read_parser.add_argument('item', help='the name of the object to read')
-  read_parser.add_argument('variable', help='the name of variable to set')
+  read_parser = parser.subcommand('read',
+                                  'Read the contents of a storage object into a Python variable.')
+  read_parser.add_argument('item', help='The name of the object to read')
+  read_parser.add_argument('variable', help='The name of the Python variable to set')
   read_parser.set_defaults(func=_storage_read)
 
-  view_parser = parser.subcommand('view', 'view contents of storage object')
+  view_parser = parser.subcommand('view', 'View the contents of a storage object.')
   view_parser.add_argument('-n', '--head', type=int, default=20,
-                           help='the number of lines from start to view')
+                           help='The number of initial lines to view')
   view_parser.add_argument('-t', '--tail', type=int, default=20,
-                           help='the number of lines from end to view')
-  view_parser.add_argument('source', help='the name of the object to view')
+                           help='The number of lines from end to view')
+  view_parser.add_argument('source', help='The name of the object to view')
   view_parser.set_defaults(func=_storage_view)
 
-  write_parser = parser.subcommand('write', 'write value of Python variable to storage object')
-  write_parser.add_argument('variable', help='the name of the variable')
-  write_parser.add_argument('item', help='the name of the object to write')
+  write_parser = parser.subcommand('write',
+                                   'Write the value of a Python variable to a storage object.')
+  write_parser.add_argument('variable', help='The name of the source Python variable')
+  write_parser.add_argument('item', help='The name of the destination GCS object to write')
   write_parser.set_defaults(func=_storage_write)
 
   return _utils.handle_magic_line(line, None, parser)
