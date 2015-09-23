@@ -15,6 +15,7 @@
 import json
 import pandas
 import types
+import yaml
 import gcp._util
 import gcp.data
 import gcp.bigquery
@@ -197,3 +198,52 @@ def extract_storage_api_response_error(message):
   except Exception:
     pass
   return message
+
+
+def parse_config(config, env):
+  """ Parse a config from a magic cell body. This could be JSON or YAML. We turn it into
+      a Python dictionary then recursively replace any variable references using the supplied
+      env dictionary.
+  """
+  def expand_var(v, env):
+    if len(v) == 0:
+      return v
+    # Using len() and v[0] instead of startswith makes this Unicode-safe.
+    if v[0] == '$':
+      v = v[1:]
+      if len(v) == 0 or v[0] == '$':
+        if v in env:
+          v = env[v]
+        else:
+          raise Exception('Cannot expand variable $%s' % v)
+    return v
+
+  def replace_vars(config, env):
+    if isinstance(config, dict):
+      for k, v in config.items():
+        if isinstance(v, dict) or isinstance(v, list) or isinstance(v, tuple):
+          replace_vars(v, env)
+        elif isinstance(v, basestring):
+          config[k] = expand_var(v, env)
+    elif isinstance(config, list) or isinstance(config, tuple):
+      for i, v in enumerate(config):
+        if isinstance(v, dict) or isinstance(v, list) or isinstance(v, tuple):
+          replace_vars(v, env)
+        elif isinstance(v, basestring):
+          config[i] = expand_var(v, env)
+
+  if config is None:
+    return None
+  stripped = config.strip()
+  if len(stripped) == 0:
+    config = {}
+  elif stripped[0] == '{':
+    config = json.loads(config)
+  else:
+    config = yaml.load(config)
+
+  # Now we need to walk the config dictionary recursively replacing any '$name' vars.
+
+  replace_vars(config, env)
+  return config
+

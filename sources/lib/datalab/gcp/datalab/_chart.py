@@ -41,7 +41,10 @@ def chart(line, cell=None):
 
 
 def _chart_cell(args, cell):
-  chart_options = cell if cell and len(cell.strip()) else '{}'
+  ipy = IPython.get_ipython()
+  chart_options = _utils.parse_config(cell, ipy.user_ns)
+  if chart_options is None:
+    chart_options = {}
   fields = args['field'] if args['field'] else '*'
 
   _HTML_TEMPLATE = """
@@ -61,7 +64,8 @@ def _chart_cell(args, cell):
   count = 25 if chart_type == 'paged_table' else -1
   data, _ = _utils.get_data(source, fields, 0, count)
   return IPython.core.display.HTML(
-    _HTML_TEMPLATE % (div_id, div_id, chart_type, source, fields, chart_options,
+    _HTML_TEMPLATE % (div_id, div_id, chart_type, source, fields,
+                      json.dumps(chart_options, cls=gcp._util.JSONEncoder),
                       json.dumps(data, cls=gcp._util.JSONEncoder)))
 
 
