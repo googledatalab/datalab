@@ -21,8 +21,7 @@ define(function () {
   // An object containing the set of loaded stylesheets, so as to avoid reloading.
   var loadedStyleSheets = {};
 
-  // An object containing stylesheets to load, and associated callbacks to invoke.
-  // This will be processed once the DOM is ready.
+  // An object containing stylesheets to load, once the DOM is ready.
   var pendingStyleSheets = null;
 
   function addStyleSheet(url) {
@@ -37,15 +36,13 @@ define(function () {
   }
 
   function domReadyCallback() {
-    var styleSheets = pendingStyleSheets;
-    pendingStyleSheets = null;
+    if (pendingStyleSheets) {
+      // Clear out pendingStyleSheets, so any future adds are immediately processed.
+      var styleSheets = pendingStyleSheets;
+      pendingStyleSheets = null;
 
-    Object.keys(styleSheets).forEach(function(url) {
-      addStyleSheet(url);
-      styleSheets[url].foreach(function(cb) {
-        cb(null);
-      });
-    });
+      styleSheets.forEach(addStyleSheet);
+    }
   }
 
   function loadStyleSheet(url, req, loadCallback, config) {
@@ -53,27 +50,26 @@ define(function () {
       loadCallback(null);
     }
     else {
+      // Go ahead and immediately/optimistically resolve this, since the resolved value of a
+      // stylesheet is never interesting.
+      setTimeout(loadCallback, 0);
+
+      // Only load a specified stylesheet once for the lifetime of this page.
       if (loadedStyleSheets[url]) {
-        setTimeout(loadCallback, 0);
         return;
       }
+      loadedStyleSheets[url] = true;
 
-      if (document.readyState != 'complete') {
+      if (document.readyState == 'loading') {
         if (!pendingStyleSheets) {
-          pendingStyleSheets = {};
+          pendingStyleSheets = [];
           document.addEventListener('DOMContentLoaded', domReadyCallback, false);
         }
 
-        var callbacks = pendingStyleSheets[url];
-        if (!callbacks) {
-          pendingStyleSheets[url] = callbacks = [];
-        }
-
-        callbacks.push(loadCallback);
+        pendingStyleSheets.push(url);
       }
       else {
         addStyleSheet(url);
-        setTimeout(loadCallback, 0)
       }
     }
   }

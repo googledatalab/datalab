@@ -20,14 +20,17 @@ define(function () {
 
   var pendingCallbacks = null;
 
+  function resolve(cbInfo) {
+    cbInfo.cb(document.getElementById(cbInfo.name));
+  }
+  
   function domReadyCallback() {
-    var callbacks = pendingCallbacks;
-    pendingCallbacks = null;
+    if (pendingCallbacks) {
+      // Clear out pendingCallbacks, so any future requests are immediately resolved.
+      var callbacks = pendingCallbacks;
+      pendingCallbacks = null;
 
-    if (callbacks && callbacks.length) {
-      for (var i = 0; i < callbacks.length; i += 2) {
-        callbacks[i + 1](document.getElementById(callbacks[i]));
-      }
+      callbacks.forEach(resolve);
     }
   }
 
@@ -36,16 +39,18 @@ define(function () {
       loadCallback(null);
     }
     else {
-      if (document.readyState != 'complete') {
+      var cbInfo = { name: name, cb: loadCallback };
+
+      if (document.readyState == 'loading') {
         if (!pendingCallbacks) {
           pendingCallbacks = [];
           document.addEventListener('DOMContentLoaded', domReadyCallback, false);
         }
 
-        pendingCallbacks.push([name, loadCallback]);
+        pendingCallbacks.push(cbInfo);
       }
       else {
-        loadCallback(document.getElementById(name));
+        resolve(cbInfo);
       }
     }
   }
