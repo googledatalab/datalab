@@ -724,8 +724,15 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
 }
 
 
-require(['base/js/namespace', 'base/js/events', 'base/js/dialog', 'base/js/utils'], function(ipy, events, dialog, utils) {
+function initializeDataLab(ipy, events, dialog, utils, security) {
   initializePage(dialog);
+
+  // Override the sanitizer - all notebooks within the user's repository are implicity
+  // trusted, and there is no need to remove scripts from cell outputs of notebooks
+  // with previously saved results.
+  security.sanitize_html = function(html) {
+    return html;
+  }
 
   var pageClass = document.body.className;
   if (pageClass.indexOf('notebook_app') >= 0) {
@@ -734,4 +741,7 @@ require(['base/js/namespace', 'base/js/events', 'base/js/dialog', 'base/js/utils
   else if (pageClass.indexOf('notebook_list') >= 0) {
     initializeNotebookList(ipy, ipy.notebook_list, ipy.new_notebook_widget, events, dialog, utils);
   }
-});
+}
+
+require(['base/js/namespace', 'base/js/events', 'base/js/dialog', 'base/js/utils', 'base/js/security'],
+        initializeDataLab);
