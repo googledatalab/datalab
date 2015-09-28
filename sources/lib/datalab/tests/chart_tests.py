@@ -51,15 +51,16 @@ class TestCases(unittest.TestCase):
       {'country': 'AU', 'quantity': 25}
     ]
     mock_get_item.return_value = t
-    data = gcp.datalab._chart._get_chart_data('t country 1 1')
+    ds = gcp.datalab._utils.get_data_source_index('t')
+    data = gcp.datalab._chart._get_chart_data('%d country 1 1' % ds)
     self.assertEquals('{"data": {"rows": [{"c": [{"v": "ZA"}]}], ' +
                       '"cols": [{"type": "string", "id": "country", "label": "country"}]}}', data)
 
-    data = gcp.datalab._chart._get_chart_data('t country 6 1')
+    data = gcp.datalab._chart._get_chart_data('%d country 6 1' % ds)
     self.assertEquals('{"data": {"rows": [], ' +
                       '"cols": [{"type": "string", "id": "country", "label": "country"}]}}', data)
 
-    data = gcp.datalab._chart._get_chart_data('t country 2 0')
+    data = gcp.datalab._chart._get_chart_data('%d country 2 0' % ds)
     self.assertEquals('{"data": {"rows": [], ' +
                       '"cols": [{"type": "string", "id": "country", "label": "country"}]}}', data)
 

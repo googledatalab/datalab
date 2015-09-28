@@ -247,3 +247,15 @@ def parse_config(config, env):
   replace_vars(config, env)
   return config
 
+
+# For chart and table HTML viewers, we use a list of table names and reference
+# instead the indices in the HTML, so as not to include things like projectID, etc,
+# in the HTML.
+
+_data_sources = []
+
+def get_data_source_index(name):
+  if name not in _data_sources:
+    _data_sources.append(name)
+  return _data_sources.index(name)
+
