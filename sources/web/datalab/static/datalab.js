@@ -378,6 +378,114 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     });
   });
 
+  /**
+   * Patch the cell auto_highlight code to use a working mode for magic_ MIME types.
+   * The Jupyter code uses a broken multiplexor. This _auto_highlight function is 
+   * just the Jupyter code with the multiplexor stripped out and an overlay mode
+   * put in instead. First we have a function to return the mode that works,
+   * then we have the original Jupyter code with a call to our function replacing the
+   * code that was broken.
+   */
+
+  function createMagicOverlayMode(magic_mode, spec) {
+    CodeMirror.defineMode(magic_mode, function(config) {
+      var magicOverlay = {
+        startState: function() {
+          return {firstMatched : false, inMagicLine: false}
+        },
+        token: function(stream, state) {
+          if(!state.firstMatched) {
+            state.firstMatched = true;
+              if (stream.match("%%", false)) {
+              state.inMagicLine = true;
+            }
+          }
+          if (state.inMagicLine) {
+            stream.eat(function any(ch) { return true; });
+            if (stream.eol()) {
+              state.inMagicLine = false;
+            }
+            return "magic";
+          }
+          stream.skipToEnd();
+          return null;
+        }
+      };
+      return CodeMirror.overlayMode(CodeMirror.getMode(config, spec), magicOverlay);
+    });
+  }
+
+  require (["notebook/js/cell"], function(ipy) {
+  
+    var cell = ipy.Cell;
+
+    cell.prototype._auto_highlight = function (modes) {
+      /**
+       *Here we handle manually selected modes
+       */
+      var that = this;
+      var mode;
+      if (this.user_highlight !== undefined && this.user_highlight != 'auto') {
+        mode = this.user_highlight;
+        CodeMirror.autoLoadMode(this.code_mirror, mode);
+        this.code_mirror.setOption('mode', mode);
+        return;
+      }
+      var current_mode = this.code_mirror.getOption('mode', mode);
+      var first_line = this.code_mirror.getLine(0);
+      // loop on every pairs
+      for (mode in modes) {
+        var regs = modes[mode].reg;
+        // only one key every time but regexp can't be keys...
+        for (var i=0; i<regs.length; i++) {
+          // here we handle non magic_modes.
+          // TODO :
+          // On 3.0 and below, these things were regex.
+          // But now should be string for json-able config.
+          // We should get rid of assuming they might be already
+          // in a later version of Jupyter.
+          var re = regs[i];
+          if (typeof(re) === 'string') {
+            re = new RegExp(re)
+          }
+          if (first_line.match(re) !== null) {
+            if (current_mode == mode) {
+              return;
+            }
+            if (mode.search('magic_') !== 0) {
+              utils.requireCodeMirrorMode(mode, function (spec) {
+                that.code_mirror.setOption('mode', spec);
+              });
+              return;
+            }
+            var magic_mode = mode;
+            mode = magic_mode.substr(6);
+            if (current_mode == magic_mode) {
+              return;
+            }
+            utils.requireCodeMirrorMode(mode, function (spec) {
+              // Our change is here, replacing the original broken mode.
+              createMagicOverlayMode(magic_mode, spec);
+              that.code_mirror.setOption('mode', magic_mode);
+            });
+            return;
+          }
+        }
+      }
+      // fallback on default
+      var default_mode;
+      try {
+        default_mode = this._options.cm_config.mode;
+      } catch(e) {
+        default_mode = 'text/plain';
+      }
+      if (current_mode === default_mode) {
+        return;
+      }
+      this.code_mirror.setOption('mode', default_mode);
+    };
+  });
+  
   function navigateAlternate(alt, download) {
     var url = document.location.href.replace('/notebooks', alt);
     if (download) {
