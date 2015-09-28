@@ -629,7 +629,10 @@ def _tables_line(args):
     The HTML rendering for the list of tables.
   """
   if args['dataset']:
-    datasets = [gcp.bigquery.DataSet((args['project'], args['dataset']))]
+    if args['project'] is None:
+      datasets = [gcp.bigquery.DataSet(args['dataset'])]
+    else:
+      datasets = [gcp.bigquery.DataSet((args['project'], args['dataset']))]
   else:
     datasets = gcp.bigquery.DataSets(args['project'])
 
