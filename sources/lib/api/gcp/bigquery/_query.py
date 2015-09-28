@@ -41,7 +41,7 @@ class Query(object):
     """
     return Query(_sampling.Sampling.sampling_query(sql, fields, count, sampling), context=context)
 
-  def __init__(self, sql, scripts=None, context=None, **kwargs):
+  def __init__(self, sql, scripts=None, context=None, values=None, **kwargs):
     """Initializes an instance of a Query object.
 
     Args:
@@ -56,14 +56,20 @@ class Query(object):
       context: an optional Context object providing project_id and credentials. If a specific
           project id or credentials are unspecified, the default ones configured at the global
           level are used.
-      kwargs: additional arguments to use when expanding the variables if passed a SqlStatement
+      values: a dictionary used to expand variables if passed a SqlStatement or a string with
+          variable references.
+      kwargs: arguments to use when expanding the variables if passed a SqlStatement
           or a string with variable references.
+
+      Note that either values or kwargs may be used, but not both.
 
     Raises:
       Exception if expansion of any variables failed.
       """
-    if kwargs or not isinstance(sql, basestring):
-      sql, code = gcp.data.SqlModule.expand(sql, kwargs)
+    if kwargs or values or not isinstance(sql, basestring):
+      if values is None:
+        values = kwargs
+      sql, code = gcp.data.SqlModule.expand(sql, values)
       if code:
         if scripts is None:
           scripts = code

@@ -28,8 +28,11 @@ import _utils
 def _create_sample_subparser(parser):
   sample_parser = parser.subcommand('sample',
       'Display a sample of the results of a BigQuery SQL query.\n' +
-      'The cell can optionally contain arguments for expanding variables in the query.')
-  sample_parser.add_argument('-q', '--sql', help='the name of the query to sample')
+      'The cell can optionally contain arguments for expanding variables in the query,\n' +
+      'if -q/--query was used, or it can contain SQL for a query.')
+  group = sample_parser.add_mutually_exclusive_group()
+  group.add_argument('-q', '--query', help='the name of the query to sample')
+  group.add_argument('-t', '--table', help='the name of the table to sample')
   sample_parser.add_argument('-c', '--count', type=int, default=10,
                              help='The number of rows to limit to, if sampling')
   sample_parser.add_argument('-m', '--method', help='The type of sampling to use',
@@ -52,7 +55,7 @@ def _create_udf_subparser(parser):
 def _create_dry_run_subparser(parser):
   dry_run_parser = parser.subcommand('dryrun',
       'Execute a dry run of a BigQuery query and display approximate usage statistics')
-  dry_run_parser.add_argument('-q', '--sql',
+  dry_run_parser.add_argument('-q', '--query',
                              help='The name of the query to be dry run', required=True)
   return dry_run_parser
 
@@ -67,7 +70,7 @@ def _create_execute_subparser(parser, command):
                               choices=['create', 'append', 'overwrite'])
   execute_parser.add_argument('-l', '--large', help='Whether to allow large results',
                               action='store_true')
-  execute_parser.add_argument('-q', '--sql', help='The name of query to run',
+  execute_parser.add_argument('-q', '--query', help='The name of query to run',
                               nargs='?')
   execute_parser.add_argument('-t', '--target', help='target table name', nargs='?')
   return execute_parser
@@ -83,7 +86,7 @@ def _create_pipeline_subparser(parser, command):
   pipeline_parser.add_argument('-m', '--mode', help='The table creation mode', default='create',
                                choices=['create', 'append', 'overwrite'])
   pipeline_parser.add_argument('-l', '--large', help='Allow large results', action='store_true')
-  pipeline_parser.add_argument('-q', '--sql', help='The name of query to run', required=True)
+  pipeline_parser.add_argument('-q', '--query', help='The name of query to run', required=True)
   pipeline_parser.add_argument('-t', '--target', help='The target table name', nargs='?')
   pipeline_parser.add_argument('action', nargs='?', choices=('deploy', 'run', 'dryrun'),
                                default='dryrun',
@@ -309,7 +312,7 @@ def _dispatch_handler(args, cell, parser, handler,
 def _get_query_argument(args, config, env):
   """ Get a query argument to a cell magic.
 
-  The query is specified with args['sql']. We look that up and if it is a BQ query
+  The query is specified with args['query']. We look that up and if it is a BQ query
   just return it. If it is instead a SqlModule or SqlStatement it may have variable
   references. We resolve those using the arg parser for the SqlModule, then override
   the resulting defaults with either the Python code in config, or the dictionary in
@@ -323,7 +326,7 @@ def _get_query_argument(args, config, env):
   Returns:
     A Query object.
   """
-  sql_arg = args['sql']
+  sql_arg = args['query']
   item = _get_notebook_item(sql_arg)
   if isinstance(item, gcp.bigquery.Query):  # Queries are already expanded.
     return item
@@ -332,23 +335,29 @@ def _get_query_argument(args, config, env):
   item, env = gcp.data.SqlModule.get_sql_statement_with_environment(item, env)
   if config:
     env.update(config)
-  return gcp.bigquery.Query(item, **env)
+  return gcp.bigquery.Query(item, values=env)
 
 
-def _sample_cell(args, config):
+def _sample_cell(args, cell_body):
   """Implements the bigquery sample cell magic for ipython notebooks.
 
   Args:
     args: the optional arguments following '%%bigquery sample'.
-    config: optional contents of the cell interpreted as YAML or JSON.
+    cell_body: optional contents of the cell interpreted as SQL, YAML or JSON.
   Returns:
     The results of executing the query converted to a dataframe if no variable
     was specified. None otherwise.
   """
 
   env = _notebook_environment()
-  config = _utils.parse_config(config, env)
-  query = _get_query_argument(args, config, env)
+  if args['query']:
+    config = _utils.parse_config(cell_body, env)
+    query = _get_query_argument(args, config, env)
+  elif args['table']:
+    query = None
+    table = _get_table(args['table'])
+  else:
+    query = gcp.bigquery.Query(cell_body, values=env)
 
   count = args['count']
   method = args['method']
@@ -368,7 +377,10 @@ def _sample_cell(args, config):
   else:
     sampling = gcp.bigquery.Sampling.default(count=count)
 
-  return query.sample(sampling=sampling)
+  if query:
+    return query.sample(sampling=sampling)
+  else:
+    return table.sample(sampling=sampling)
 
 
 def _dryrun_cell(args, config):
