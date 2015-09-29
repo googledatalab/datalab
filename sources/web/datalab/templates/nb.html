@@ -18,10 +18,13 @@
   data-notebook-path="<%notebookPath%>"
   data-feedback-id="<%feedbackId%>"
   data-analytics-id="<%analyticsId%>"
+  data-analytics-path="<%analyticsPath%>"
+  data-analytics-title="notebook"
   data-project-num="<%projectNumber%>"
   data-project-id="<%projectId%>"
   data-version-id="<%versionId%>"
   data-instance-id="<%instanceId%>"
+  data-instance-name="<%instanceName%>"
   data-user-id="<%userId%>">
   <div id="app">
     <div id="appBar">
@@ -161,14 +164,14 @@
               </button>
             </div>
             <div class="btn-group">
-              <button id="navigationButton" type="button" class="btn active">Navigation</button>
-              <button id="helpButton" type="button" class="btn">Help</button>
+              <button id="navigationButton" type="button" class="btn">Navigation</button>
+              <button id="helpButton" type="button" class="btn active">Help</button>
             </div>
           </div>
         </div>
         <div id="sidebarContent">
-          <div id="navigation"></div>
-          <div id="help" style="display: none">
+          <div id="navigation" style="display: none"></div>
+          <div id="help">
             <p><b>Help for Python APIs</b></p>
             <p>
               You can enter <code>class?</code> or <code>member?</code> within a code cell in the
@@ -183,6 +186,12 @@
             <p>
               Additional help topics and links are also available from the menu off the Help
               icon on the top of the page.
+            </p>
+            <br />
+            <p><b>Docs and Samples</b></p>
+            <p>
+              The <a href="/notebooks/datalab/Readme.ipynb" target"_blank">Datalab Guide</a> featuring
+              documentation and sample notebooks is also a great way to check out how you can use Datalab.
             </p>
           </div>
         </div>

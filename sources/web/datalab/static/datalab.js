@@ -122,28 +122,6 @@ function placeHolder() {}
 
 
 function initializePage(dialog) {
-  function anonymizeString(s) {
-    return s.slice(0, 1) + (s.length - 2) + s.substr(-1);
-  }
-
-  function getAnonymizedPath() {
-    try {
-      var path = location.pathname;
-      return '/' + path.substr(1).split('/').map(anonymizeString).join('/')
-    }
-    catch (e) {
-      return 'path-error';
-    }
-  }
-
-  function getAnonymizedTitle() {
-    try {
-      return anonymizeString(document.title || 'untitled');
-    }
-    catch (e) {
-      return 'title-error';
-    }
-  }
 
   function showAbout() {
     var version = document.body.getAttribute('data-version-id');
@@ -186,38 +164,28 @@ function initializePage(dialog) {
   $('#aboutButton').click(showAbout);
   $('#feedbackButton').click(captureFeedback);
 
-  // TODO(Jupyter): Validate these links
   var projectId = document.body.getAttribute('data-project-id');
+  var instanceName = document.body.getAttribute('data-instance-name');
   var consoleLink = 'https://console.developers.google.com/project/' + projectId;
   var instancesLink = consoleLink + '/appengine/versions?moduleId=datalab';
-  var repoLink = consoleLink + '/clouddev/develop/browse';
+  var repoLink = consoleLink + '/clouddev/develop/browse/default/datalab_' + instanceName;
 
   document.getElementById('consoleLink').href = consoleLink;
   document.getElementById('instancesLink').href = instancesLink;
   document.getElementById('repoLink').href = repoLink;
   document.getElementById('userId').textContent = document.body.getAttribute('data-user-id');
 
-  // TODO(Jupyter): Validate GA works...
   var analyticsId = document.body.getAttribute('data-analytics-id');
   if (analyticsId) {
-    var domain = 'datalab.cloud.google.com';
-    var version = document.body.getAttribute('data-version-id');
-    var instance = document.body.getAttribute('data-instance-id');
-
-    var dimensions = {
-      dimension2: version,
-      dimension3: instance
-    };
-
-    ga('create', analyticsId, {
-      cookieDomain: domain
+    ga('create', analyticsId);
+    ga('set', {
+      dimension2: document.body.getAttribute('data-version-id'),
+      dimension3: document.body.getAttribute('data-instance-id')
     });
-    ga('set', dimensions);
-    ga('set', 'hostname', domain);
-    ga('send', 'pageview', {
-      page: getAnonymizedPath(),
-      title: getAnonymizedTitle()
-    });
+    ga('set', 'hostname', 'datalab.cloud.google.com');
+    ga('set', 'page', '/' + document.body.getAttribute('data-analytics-path'));
+    ga('set', 'title', document.body.getAttribute('data-analytics-title'));
+    ga('send', 'pageview');
   }
 }
 
@@ -378,7 +346,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 
   /**
    * Patch the cell auto_highlight code to use a working mode for magic_ MIME types.
-   * The Jupyter code uses a broken multiplexor. This _auto_highlight function is 
+   * The Jupyter code uses a broken multiplexor. This _auto_highlight function is
    * just the Jupyter code with the multiplexor stripped out and an overlay mode
    * put in instead. First we have a function to return the mode that works,
    * then we have the original Jupyter code with a call to our function replacing the
@@ -414,7 +382,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   }
 
   require (["notebook/js/cell"], function(ipy) {
-  
+
     var cell = ipy.Cell;
 
     cell.prototype._auto_highlight = function (modes) {
@@ -483,7 +451,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
       this.code_mirror.setOption('mode', default_mode);
     };
   });
-  
+
   function navigateAlternate(alt, download) {
     var url = document.location.href.replace('/notebooks', alt);
     if (download) {

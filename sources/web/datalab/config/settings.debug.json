@@ -1,10 +1,12 @@
 {
   "consoleLogging": true,
+  "release": "beta",
   "logFilePath": "/var/log/app_engine/custom_logs/app.log",
   "logFilePeriod": "300000ms",
   "logFileCount": 10,
   "analyticsId": "UA-54894152-2",
   "feedbackId": "",
+  "logEndpoint": "stage-dot-cloud-datalab-logs.appspot.com",
   "serverPort": 8080,
   "contentDir": "/content",
   "useWorkspace": true,

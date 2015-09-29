@@ -17,6 +17,7 @@
 /// <reference path="../../../externs/ts/node/tcp-port-used.d.ts" />
 /// <reference path="common.d.ts" />
 
+import analytics = require('./analytics');
 import callbacks = require('./callbacks');
 import childProcess = require('child_process');
 import fs = require('fs');
@@ -275,19 +276,23 @@ function responseHandler(proxyResponse: http.ClientResponse,
     var templateData: common.Map<string> = {
       feedbackId: appSettings.feedbackId,
       analyticsId: appSettings.analyticsId,
+      analyticsPath: analytics.hashPath(path, 'sha256'),
       projectNumber: appSettings.projectNumber,
       projectId: appSettings.projectId,
       versionId: appSettings.versionId,
       instanceId: appSettings.instanceId,
+      instanceName: appSettings.instanceName,
       userId: userManager.getUserId(request),
       baseUrl: '/'
     };
 
+    var page: string = null;
     if (path.indexOf('/tree') == 0) {
       // stripping off the /tree/ from the path
       templateData['notebookPath'] = path.substr(6);
 
       sendTemplate('tree', templateData, response);
+      page = 'tree';
     }
     else {
       // stripping off the /notebooks/ from the path
@@ -295,6 +300,7 @@ function responseHandler(proxyResponse: http.ClientResponse,
       templateData['notebookName'] = path.substr(path.lastIndexOf('/') + 1);
 
       sendTemplate('nb', templateData, response);
+      page = 'notebook';
     }
 
     // Suppress further writing to the response to prevent sending response
@@ -305,6 +311,8 @@ function responseHandler(proxyResponse: http.ClientResponse,
     response.writeHead = placeHolder;
     response.write = placeHolder;
     response.end = placeHolder;
+
+    analytics.logPage(page, path, request.headers['x-appengine-user-id']);
   }
 }
 
