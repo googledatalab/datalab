@@ -103,6 +103,14 @@ function sendJupyterFile(relativePath: string, response: http.ServerResponse) {
 }
 
 /**
+ * Checks whether a requested static file exists in DataLab.
+ * @param filePath the relative path of the file.
+ */
+function datalabFileExists(filePath: string) {
+    return fs.existsSync(path.join(__dirname, 'static', filePath));
+}
+
+/**
  * Implements static file handling.
  * @param request the incoming file request.
  * @param response the outgoing file response.
@@ -118,6 +126,15 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   }
   else if (path.lastIndexOf('/about.txt') > 0) {
     sendDataLabFile('datalab.txt', response);
+  }
+  else if (path.indexOf('/codemirror/mode/') > 0) {
+    var split = path.lastIndexOf('/');
+    var newPath = 'codemirror/mode/' + path.substring(split + 1);
+    if (datalabFileExists(newPath)) {
+      sendDataLabFile(newPath, response);
+    } else {
+      sendJupyterFile(path.substr(1), response);
+    }
   }
   else if (path.lastIndexOf('/custom.js') > 0) {
     // NOTE: Uncomment to use external content mapped into the container.
@@ -142,8 +159,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     // Strip off the leading '/static/' to turn path into a relative path within the
     // static directory.
     sendDataLabFile(path.substr(8), response);
-  }
-  else {
+  } else {
     // Strip off the leading slash to turn path into a relative file path
     sendJupyterFile(path.substr(1), response);
   }
