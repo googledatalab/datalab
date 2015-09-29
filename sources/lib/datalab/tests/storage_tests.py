@@ -120,13 +120,15 @@ class TestCases(unittest.TestCase):
     self.assertEqual(None, errs)
     mock_api_buckets_insert.assert_called_with(mock.ANY, 'baz', project_id='test')
 
-    errs = gcp.datalab._storage._storage_create({
+    with self.assertRaises(Exception) as error:
+      gcp.datalab._storage._storage_create({
         'project': 'test',
         'bucket': [
           'gs://foo/bar'
         ]
       }, None)
-    self.assertEqual("Couldn't create gs://foo/bar: Invalid bucket name gs://foo/bar", errs)
+    self.assertEqual("Couldn't create gs://foo/bar: Invalid bucket name gs://foo/bar",
+                     error.exception.message)
 
   @mock.patch('gcp.storage._api.Api.buckets_get', autospec=True)
   @mock.patch('gcp.storage._api.Api.objects_get', autospec=True)
@@ -145,15 +147,17 @@ class TestCases(unittest.TestCase):
     mock_api_objects_get.side_effect = self._mock_api_objects_get()
     mock_api_buckets_get.side_effect = self._mock_api_buckets_get()
 
-    errs = gcp.datalab._storage._storage_delete({
-      'item': [
-        'gs://bar',
-        'gs://foo/item1',
-        'gs://baz/item1',
-        'gs://baz'
-      ]
-    }, None)
-    self.assertEqual('gs://baz/item1 does not exist\ngs://baz does not exist', errs)
+    with self.assertRaises(Exception) as error:
+      gcp.datalab._storage._storage_delete({
+        'item': [
+          'gs://bar',
+          'gs://foo/item1',
+          'gs://baz/item1',
+          'gs://baz'
+        ]
+      }, None)
+    self.assertEqual('gs://baz/item1 does not exist\ngs://baz does not exist',
+                     error.exception.message)
     mock_api_bucket_delete.assert_called_with(mock.ANY, 'bar')
     mock_api_objects_delete.assert_called_with(mock.ANY, 'foo', 'item1')
 
