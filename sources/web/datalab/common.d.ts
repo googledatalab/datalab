@@ -39,10 +39,12 @@ declare module common {
     projectId: string;
     projectNumber: string;
 
+    release: string;
     versionId: string;
     instanceId: string;
     analyticsId: string;
     feedbackId: string;
+    logEndpoint: string;
 
     /**
      * The port that the server should listen to.

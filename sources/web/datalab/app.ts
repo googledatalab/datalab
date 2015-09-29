@@ -14,6 +14,7 @@
 
 /// <reference path="common.d.ts" />
 
+import analytics = require('./analytics');
 import logging = require('./logging');
 import settings = require('./settings');
 import server = require('./server');
@@ -25,7 +26,10 @@ import server = require('./server');
 var appSettings = settings.loadSettings();
 if (appSettings != null) {
   logging.initializeLoggers(appSettings);
+  analytics.initialize(appSettings);
+
   server.run(appSettings);
+  analytics.logStart();
 }
 
 
