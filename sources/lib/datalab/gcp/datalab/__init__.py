@@ -18,6 +18,7 @@ import requests as _requests
 try:
   import IPython as _IPython
   import IPython.core.magic as _magic
+  import IPython.core.interactiveshell as _shell
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
@@ -54,3 +55,33 @@ def _init_session(self):
 
 
 _requests.Session.__init__ = _init_session
+
+# Be more tolerant with magics. If the user specified a cell magic that doesn't
+# exist and an empty cell body but a line magic with that name exists, run that
+# instead. Conversely, if the user specified a line magic that doesn't exist but
+# a cell magic exists with that name, run the cell magic with an empty body.
+
+_orig_run_cell_magic = _shell.InteractiveShell.run_cell_magic
+_orig_run_line_magic = _shell.InteractiveShell.run_line_magic
+
+def _run_line_magic(self, magic_name, line):
+  fn = self.find_line_magic(magic_name)
+  if fn is None:
+    cm = self.find_cell_magic(magic_name)
+    if cm:
+      return _run_cell_magic(self, magic_name, line, None)
+  return _orig_run_line_magic(self, magic_name, line)
+
+
+def _run_cell_magic(self, magic_name, line, cell):
+  if cell == '':
+    fn = self.find_line_magic(magic_name)
+    if fn:
+      return _orig_run_line_magic(self, magic_name, line)
+    # IPython will complain if cell is empty string but not if it is None
+    cell = None
+  return _orig_run_cell_magic(self, magic_name, line, cell)
+
+_shell.InteractiveShell.run_cell_magic = _run_cell_magic
+_shell.InteractiveShell.run_line_magic = _run_line_magic
+
