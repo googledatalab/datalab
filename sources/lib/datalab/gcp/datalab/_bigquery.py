@@ -100,6 +100,7 @@ def _create_table_subparser(parser):
                             help='Rows to display per page')
   table_parser.add_argument('-c', '--cols',
                             help='Comma-separated list of column names to restrict to')
+  table_parser.add_argument('table', help='The name of, or a reference to, the table or view')
   return table_parser
 
 
@@ -735,7 +736,7 @@ def _table_viewer(table, rows_per_page=25, fields=None):
 
   _HTML_TEMPLATE = """
     <div class="bqtv" id="%s"></div>
-    <div><br />%s %s<br />%s</div>
+    <br />%s<br />
     <script>
       require(['extensions/charting', 'element!%s', 'style!/static/extensions/charting.css'],
         function(charts, dom) {
@@ -756,15 +757,18 @@ def _table_viewer(table, rows_per_page=25, fields=None):
     fields = _utils.get_field_list(fields, table.schema)
   div_id = _html.Html.next_id()
   meta_count = ("rows: %d" % table.length) if table.length >= 0 else ''
-  meta_name = str(table) if table.job is None else table.job.id
-  meta_data = ''
+  meta_name = str(table) if table.job is None else ('job: %s' % table.job.id)
   if table.job:
     if table.job.cache_hit:
-      data_cost = 'cached'
+      meta_cost = 'cached'
     else:
       bytes = gcp.bigquery._query_stats.QueryStats._size_formatter(table.job.bytes_processed)
-      data_cost = '%s processed' % bytes
-    meta_data = '(%.1fs, %s)' % (table.job.total_time, data_cost)
+      meta_cost = '%s processed' % bytes
+    meta_time = 'time: %.1fs' % table.job.total_time
+  else:
+    meta_cost = ''
+    meta_time = ''
+
   data, total_count = _utils.get_data(table, fields, 0, rows_per_page)
 
   if total_count < 0:
@@ -775,10 +779,12 @@ def _table_viewer(table, rows_per_page=25, fields=None):
       total_count = fetched_count
 
   chart = 'table' if 0 <= total_count <= rows_per_page else 'paged_table'
+  meta_entries = [meta_count, meta_time, meta_cost, meta_name]
+  meta_data = '(%s)' % (', '.join([entry for entry in meta_entries if len(entry)]))
 
   return _HTML_TEMPLATE %\
-      (div_id, meta_name, meta_data, meta_count, div_id,
-       chart, str(table), ','.join(fields), total_count, rows_per_page,
+      (div_id, meta_data, div_id, chart,
+       _utils.get_data_source_index(str(table)), ','.join(fields), total_count, rows_per_page,
        json.dumps(data, cls=gcp._util.JSONEncoder))
 
 
