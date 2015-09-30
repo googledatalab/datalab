@@ -359,7 +359,7 @@ def sql_cell(args, cell):
   if not args['module']:
       # Execute now
       if query:
-        return gcp.bigquery.Query(query, **ipy.user_ns).execute().results
+        return gcp.bigquery.Query(query, values=ipy.user_ns).execute().results
   else:
     # Add it as a module
     sys.modules[name] = module
