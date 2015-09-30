@@ -35,6 +35,11 @@ var infoHandler: http.RequestHandler;
 var staticHandler: http.RequestHandler;
 
 /**
+ * The application settings instance.
+ */
+var appSettings: common.Settings;
+
+/**
  * If it is the user's first request since the web server restarts,
  * need to initialize workspace, and start jupyter server for that user.
  * We don't track results here. Later requests will go through initializaion
@@ -130,7 +135,8 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       'Content-Type': 'text/plain',
       'Access-Control-Allow-Origin': '*'
     });
-    response.end("OK");
+    // Respond with a string to singal availability and identity.
+    response.end(appSettings.instanceName);
     return;
   }
 
@@ -189,6 +195,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
  * @param settings the configuration settings to use.
  */
 export function run(settings: common.Settings): void {
+  appSettings = settings;
   userManager.init(settings);
   workspaceManager.init(settings);
   jupyter.init(settings);
