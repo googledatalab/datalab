@@ -35,7 +35,7 @@ function emitLog(logEvent: string, data: common.Map<string>): void {
       method: 'POST',
       hostname: appSettings.logEndpoint,
       port: 443,
-      path: util.format('/%s?%s', logEvent, qs.stringify(data))
+      path: util.format('/log/%s?%s', logEvent, qs.stringify(data))
     };
   
     var request = https.request(options, function(response) {});
