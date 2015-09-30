@@ -344,9 +344,30 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     };
   });
 
+  require(["services/kernels/kernel"], function(ipy) {
+    var kernel = ipy.Kernel;
+
+    var originalExecute = kernel.prototype.execute;
+    kernel.prototype.execute = function (code, callbacks, options) {
+      // If this is a line magic but has a non-empty cell body change it to a cell magic.
+      if (code.length > 2 && code[0] == '%' && code[1] != '%') {
+        var lines = code.split('\n');
+        if (lines.length > 1) {
+          for (var i = 1; i < lines.length; i++) {
+            if (lines[i].trim().length > 0) {
+              code = '%' + code;
+              break;
+            }
+          }
+        }
+      }
+      originalExecute.apply(this, [ code, callbacks, options ]);
+    }
+  });
+
   /**
    * Patch the cell auto_highlight code to use a working mode for magic_ MIME types.
-   * The Jupyter code uses a broken multiplexor. This _auto_highlight function is
+   * The Jupyter code uses a broken multiplexor. This _auto_highlight function is 
    * just the Jupyter code with the multiplexor stripped out and an overlay mode
    * put in instead. First we have a function to return the mode that works,
    * then we have the original Jupyter code with a call to our function replacing the
