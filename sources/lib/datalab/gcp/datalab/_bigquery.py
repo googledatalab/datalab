@@ -479,7 +479,7 @@ def _pipeline_cell(args, config):
     The QueryResultsTable
   """
   if args['action'] == 'deploy':
-    return 'Deploying a pipeline is not yet supported'
+    raise Exception('Deploying a pipeline is not yet supported')
 
   env = {}
   for key, value in _notebook_environment().iteritems():
@@ -518,7 +518,7 @@ def _table_line(args):
     html = _table_viewer(table, rows_per_page=args['rows'], fields=fields)
     return IPython.core.display.HTML(html)
   else:
-    return "%s does not exist" % name
+    raise Exception("%s does not exist" % name)
 
 
 def _notebook_environment():
@@ -593,7 +593,7 @@ def _schema_line(args):
     html = _repr_html_table_schema(schema)
     return IPython.core.display.HTML(html)
   else:
-    return "%s does not exist" % name
+    raise("%s does not exist" % name)
 
 
 def _render_table(data, fields=None):
@@ -662,9 +662,9 @@ def _extract_line(args):
     source = _get_table(name)
 
   if not source:
-    return 'No such source: %s' % name
+    raise Exception('No such source: %s' % name)
   elif isinstance(source, gcp.bigquery.Table) and not source.exists():
-    return 'Source %s does not exist' % name
+    raise Exception('Source %s does not exist' % name)
   else:
 
     job = source.extract(args['destination'],
@@ -673,9 +673,9 @@ def _extract_line(args):
                          csv_delimiter=args['delimiter'],
                          csv_header=args['header'])
     if job.failed:
-      return 'Extract failed: %s' % str(job.fatal_error)
+      raise Exception('Extract failed: %s' % str(job.fatal_error))
     elif job.errors:
-      return 'Extract completed with errors: %s' % str(job.errors)
+      raise Exception('Extract completed with errors: %s' % str(job.errors))
 
 
 def _load_cell(args, schema):
@@ -698,11 +698,12 @@ def _load_cell(args, schema):
 
   if table.exists():
     if args['mode'] == 'create':
-      return "%s already exists; use --append or --overwrite" % name
+      raise Exception("%s already exists; use --append or --overwrite" % name)
   elif schema:
     table.create(json.loads(schema))
   elif not args['infer']:
-    return 'Table does not exist, no schema specified in cell and no --infer flag; cannot load'
+    raise Exception(
+        'Table does not exist, no schema specified in cell and no --infer flag; cannot load')
 
   # TODO(gram): we should probably try do the schema infer ourselves as BQ doesn't really seem
   # to be able to do it. Alternatively we can drop the --infer argument and force the user
@@ -716,9 +717,9 @@ def _load_cell(args, schema):
                    ignore_unknown_values=not args['strict'],
                    quote=args['quote'])
   if job.failed:
-    return 'Load failed: %s' % str(job.fatal_error)
+    raise Exception('Load failed: %s' % str(job.fatal_error))
   elif job.errors:
-    return 'Load completed with errors: %s' % str(job.errors)
+    raise Exception('Load completed with errors: %s' % str(job.errors))
 
 
 def _table_viewer(table, rows_per_page=25, fields=None):
@@ -732,7 +733,7 @@ def _table_viewer(table, rows_per_page=25, fields=None):
     A string containing the HTML for the table viewer.
   """
   if not table.exists():
-    return "%s does not exist" % str(table)
+    raise Exception("%s does not exist" % str(table))
 
   _HTML_TEMPLATE = """
     <div class="bqtv" id="%s"></div>

@@ -14,6 +14,7 @@
 
 import json
 import pandas
+import sys
 import types
 import yaml
 import gcp._util
@@ -176,7 +177,9 @@ def handle_magic_line(line, cell, parser, namespace=None):
     try:
       return args.func(vars(args), cell)
     except Exception as e:
-      return e.message
+      sys.stderr.write(e.message)
+      sys.stderr.write('\n')
+      sys.stderr.flush()
   return None
 
 

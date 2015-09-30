@@ -182,7 +182,7 @@ def _storage_copy(args, _):
       errs.append("Couldn't copy %s to %s: %s" %
                   (source, target, _utils.extract_storage_api_response_error(e.message)))
   if errs:
-    return '\n'.join(errs)
+    raise Exception('\n'.join(errs))
 
 
 def _storage_create(args, _):
@@ -200,7 +200,7 @@ def _storage_create(args, _):
       errs.append("Couldn't create %s: %s" %
                   (name, _utils.extract_storage_api_response_error(e.message)))
   if errs:
-    return '\n'.join(errs)
+    raise Exception('\n'.join(errs))
 
 
 def _storage_delete(args, _):
@@ -228,7 +228,7 @@ def _storage_delete(args, _):
       errs.append("Couldn't delete %s: %s" %
                   (item, _utils.extract_storage_api_response_error(e.message)))
   if errs:
-    return '\n'.join(errs)
+    raise Exception('\n'.join(errs))
 
 
 def _render_dictionary(data, headers=None):
