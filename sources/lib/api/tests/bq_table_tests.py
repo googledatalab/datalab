@@ -655,6 +655,15 @@ class TestCases(unittest.TestCase):
     self.assertEqual(new_expiry, tbl.metadata.expires_on)
     self.assertEqual(len(new_schema), len(tbl.schema))
 
+  def test_table_to_query(self):
+    tbl = gcp.bigquery.Table('testds.testTable0', context=self._create_context())
+    q = tbl.to_query()
+    self.assertEqual('SELECT * FROM [test:testds.testTable0]', q.sql)
+    q = tbl.to_query('foo, bar')
+    self.assertEqual('SELECT foo, bar FROM [test:testds.testTable0]', q.sql)
+    q = tbl.to_query(['bar', 'foo'])
+    self.assertEqual('SELECT bar,foo FROM [test:testds.testTable0]', q.sql)
+
   def _create_context(self):
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
