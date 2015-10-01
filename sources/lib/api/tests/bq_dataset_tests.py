@@ -188,6 +188,6 @@ class TestCases(unittest.TestCase):
     # Patch get_info so we don't have to mock it everywhere else.
     orig = gcp.bigquery.DataSet._get_info
     gcp.bigquery.DataSet._get_info = mock.Mock(return_value=metadata)
-    ds =  gcp.bigquery.DataSet(name, self._create_context())
+    ds =  gcp.bigquery.DataSet(name, context=self._create_context())
     gcp.bigquery.DataSet._get_info = orig
     return ds
