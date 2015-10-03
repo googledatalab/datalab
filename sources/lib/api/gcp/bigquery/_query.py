@@ -311,7 +311,7 @@ class Query(object):
         table_name = (destination['projectId'], destination['datasetId'], destination['tableId'])
       except KeyError:
         # The query was in error
-        raise Exception('Query failed: %s' % str(query_result['status']['errors']))
+        raise Exception(_utils.format_query_errors(query_result['status']['errors']))
     return _query_job.QueryJob(job_id, table_name, self._sql, context=self._context)
 
   def execute(self, table_name=None, table_mode='create', use_cache=True, priority='interactive',
