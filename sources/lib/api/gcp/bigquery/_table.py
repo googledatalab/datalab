@@ -861,4 +861,20 @@ class Table(object):
 
     return Table("%s@%s-%s" % (self._full_name, str(start), str(stop)), context=self._context)
 
+  def to_query(self, fields=None):
+    """ Return a Query for this Table.
+
+    Args:
+      fields: the fields to return. If None, all fields will be returned. This can be a string
+          which will be injected into the Query after SELECT, or a list of field names.
+
+    Returns:
+      A Query object that will return the specified fields from the records in the Table.
+    """
+    if fields is None:
+      fields = '*'
+    elif isinstance(fields, list):
+      fields = ','.join(fields)
+    return _query.Query('SELECT %s FROM %s' % (fields, self._repr_sql_()), context=self._context)
+
 import _query
