@@ -114,7 +114,11 @@ class Bucket(object):
       Exception if there was an error requesting the bucket's metadata.
     """
     if self._info is None:
-      self._info = self._api.buckets_get(self._name)
+      try:
+        self._info = self._api.buckets_get(self._name)
+      except Exception as e:
+        raise e
+
     return BucketMetadata(self._info) if self._info else None
 
   def item(self, key):
@@ -147,7 +151,7 @@ class Bucket(object):
     """ Checks if the bucket exists. """
     try:
       return self.metadata() is not None
-    except gcp._util.RequestException:
+    except Exception:
       return False
 
   def create(self, project_id=None):
@@ -162,7 +166,10 @@ class Bucket(object):
     """
     if project_id is None:
       project_id = self._api.project_id
-    self._info = self._api.buckets_insert(self._name, project_id=project_id)
+    try:
+      self._info = self._api.buckets_insert(self._name, project_id=project_id)
+    except Exception as e:
+      raise e
     return self
 
   def delete(self):
@@ -171,7 +178,10 @@ class Bucket(object):
     Raises:
       Exception if there was an error deleting the bucket.
     """
-    self._api.buckets_delete(self._name)
+    try:
+      self._api.buckets_delete(self._name)
+    except Exception as e:
+      raise e
 
 
 class Buckets(object):
@@ -209,6 +219,8 @@ class Buckets(object):
       if e.status == 404:
         return False
       raise e
+    except Exception as e:
+      raise e
     return True
 
   def create(self, name):
@@ -224,7 +236,10 @@ class Buckets(object):
     return Bucket(name, context=self._context).create(self._project_id)
 
   def _retrieve_buckets(self, page_token, _):
-    list_info = self._api.buckets_list(page_token=page_token, project_id=self._project_id)
+    try:
+      list_info = self._api.buckets_list(page_token=page_token, project_id=self._project_id)
+    except Exception as e:
+      raise e
 
     buckets = list_info.get('items', [])
     if len(buckets):

@@ -80,6 +80,8 @@ class DataSet(object):
       if e.status == 404:
         return None
       raise e
+    except Exception as e:
+      raise e
 
   def exists(self):
     """ Checks if the dataset exists.
@@ -105,7 +107,10 @@ class DataSet(object):
     """
     if not self.exists():
       raise Exception('Cannot delete non-existent dataset %s' % self._full_name)
-    self._api.datasets_delete(self._name_parts, delete_contents=delete_contents)
+    try:
+      self._api.datasets_delete(self._name_parts, delete_contents=delete_contents)
+    except Exception as e:
+      raise e
     self._info = None
     return None
 
@@ -121,9 +126,12 @@ class DataSet(object):
       Exception if the DataSet could not be created.
     """
     if not self.exists():
-      response = self._api.datasets_insert(self._name_parts,
-                                           friendly_name=friendly_name,
-                                           description=description)
+      try:
+        response = self._api.datasets_insert(self._name_parts,
+                                             friendly_name=friendly_name,
+                                             description=description)
+      except Exception as e:
+        raise e
       if 'selfLink' not in response:
         raise Exception("Could not create dataset %s" % self._full_name)
     return self
@@ -146,11 +154,16 @@ class DataSet(object):
         self._info['description'] = description
       try:
         self._api.datasets_update(self._name_parts, self._info)
+      except Exception as e:
+        raise e
       finally:
         self._info = None  # need a refresh
 
   def _retrieve_items(self, page_token, item_type):
-    list_info = self._api.tables_list(self._name_parts, page_token=page_token)
+    try:
+      list_info = self._api.tables_list(self._name_parts, page_token=page_token)
+    except Exception as e:
+      raise e
 
     tables = list_info.get('tables', [])
     contents = []
@@ -225,7 +238,10 @@ class DataSets(object):
     self._project_id = project_id if project_id else self._api.project_id
 
   def _retrieve_datasets(self, page_token, count):
-    list_info = self._api.datasets_list(self._project_id, page_token=page_token)
+    try:
+      list_info = self._api.datasets_list(self._project_id, page_token=page_token)
+    except Exception as e:
+      raise e
 
     datasets = list_info.get('datasets', [])
     if len(datasets):

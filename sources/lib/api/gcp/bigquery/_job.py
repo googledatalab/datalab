@@ -60,7 +60,10 @@ class Job(gcp._util.Job):
     if self._is_complete:
       return
 
-    response = self._api.jobs_get(self._job_id)
+    try:
+      response = self._api.jobs_get(self._job_id)
+    except Exception as e:
+      raise e
 
     if 'statistics' in response:
       statistics = response['statistics']
