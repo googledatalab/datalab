@@ -45,7 +45,9 @@ using YAML or JSON.
   return _utils.handle_magic_line(line, cell, parser)
 
 
-def _chart_cell(args, cell):
+def _chart_cell(args, cell, extras):
+  _utils.handle_extra_args(args, extras, 'data', is_required=True)
+  source = args['data']
   ipy = IPython.get_ipython()
   chart_options = _utils.parse_config(cell, ipy.user_ns)
   if chart_options is None:
@@ -64,7 +66,6 @@ def _chart_cell(args, cell):
     </script>
   """
   div_id = _html.Html.next_id()
-  source = args['data']
   chart_type = args['chart']
   count = 25 if chart_type == 'paged_table' else -1
   data, _ = _utils.get_data(source, fields, 0, count)

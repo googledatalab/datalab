@@ -17,6 +17,7 @@ import types
 import IPython
 import IPython.core.magic
 import _commands
+import _utils
 
 
 @IPython.core.magic.register_line_cell_magic
@@ -26,19 +27,22 @@ def pymodule(line, cell=None):
   parser = _commands.CommandParser.create('pymodule')
   parser.add_argument('-n', '--name',
                       help='the name of the python module to create and import')
+  parser.set_defaults(func=_pymodule_cell)
+  return _utils.handle_magic_line(line, cell, parser)
 
-  args = parser.parse(line)
-  if args is not None:
-    if cell is None:
-      return 'The code for the module must be included'
 
-    name = str(args.name)
-    module = _create_python_module(name, cell)
+def _pymodule_cell(args, cell, extras):
+  if cell is None:
+      raise Exception('The code for the module must be included')
 
-    # Automatically import the newly created module by assigning it to a variable
-    # named the same name as the module name.
-    ipy = IPython.get_ipython()
-    ipy.push({name: module})
+  _utils.handle_extra_args(args, extras, 'name', is_required=True)
+  name = args['name']
+  module = _create_python_module(name, cell)
+
+  # Automatically import the newly created module by assigning it to a variable
+  # named the same name as the module name.
+  ipy = IPython.get_ipython()
+  ipy.push({name: module})
 
 
 def _create_python_module(name, code):
