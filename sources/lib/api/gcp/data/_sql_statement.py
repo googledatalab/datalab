@@ -112,7 +112,7 @@ class SqlStatement(object):
         resolved_vars[dependency] = dep
 
   @staticmethod
-  def format(sql, args=None):
+  def format(sql, args=None, udfs=None):
     """ Resolve variable references in a query within an environment.
 
     This computes and resolves the transitive dependencies in the query and raises an
@@ -121,6 +121,7 @@ class SqlStatement(object):
     Args:
       sql: query to format.
       args: a dictionary of values to use in variable expansion.
+      udfs: a list of UDFs referenced in the query.
 
     Returns:
       The resolved SQL text, and an array of any referenced UDFs.
@@ -151,12 +152,8 @@ class SqlStatement(object):
         if isinstance(value, types.ModuleType):
           value = _sql_module.SqlModule.get_default_query_from_module(value)
 
-        if '_repr_code_' in dir(value):
-          code.append(value._repr_code_())
-
         if isinstance(value, SqlStatement):
-          sql, udfs = value.format(value._sql, resolved_vars)
-          code.extend(udfs)
+          sql = value.format(value._sql, resolved_vars)
           value = '(%s)' % sql
         elif '_repr_sql_' in dir(value):
           # pylint: disable=protected-access
@@ -169,7 +166,8 @@ class SqlStatement(object):
       elif literal:
         parts.append(literal)
 
-    return ''.join(parts), code
+    expanded = ''.join(parts)
+    return expanded
 
   @staticmethod
   def _get_tokens(sql):

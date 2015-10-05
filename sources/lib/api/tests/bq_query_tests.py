@@ -89,15 +89,26 @@ class TestCases(unittest.TestCase):
       _ = q.results()
     self.assertEqual('Unexpected query response.', error.exception[0])
 
+  def test_udf_expansion(self):
+    sql = 'SELECT * FROM udf(source)'
+    udf = gcp.bigquery.UDF('inputs', [('foo', 'string'), ('bar', 'integer')], 'udf', 'code')
+    context = self._create_context()
+    query = gcp.bigquery.Query(sql, udf=udf, context=context)
+    self.assertEquals('SELECT * FROM (SELECT foo, bar FROM udf(source))', query.sql)
+
+    # Alternate form
+    query = gcp.bigquery.Query(sql, udfs=[udf], context=context)
+    self.assertEquals('SELECT * FROM (SELECT foo, bar FROM udf(source))', query.sql)
+
   def _create_query(self, sql=None):
     if sql is None:
       sql = 'SELECT * ...'
+    return gcp.bigquery.Query(sql, context=self._create_context())
 
+  def _create_context(self):
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    context = gcp.Context(project_id, creds)
-
-    return gcp.bigquery.Query(sql, context=context)
+    return gcp.Context(project_id, creds)
 
   def _create_insert_done_result(self):
     # pylint: disable=g-continuation-in-parens-misaligned
