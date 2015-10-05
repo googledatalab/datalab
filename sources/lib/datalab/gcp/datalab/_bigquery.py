@@ -59,6 +59,9 @@ def _create_dry_run_subparser(parser):
       'Execute a dry run of a BigQuery query and display approximate usage statistics')
   dry_run_parser.add_argument('-q', '--query',
                              help='The name of the query to be dry run')
+  dry_run_parser.add_argument('-v', '--verbose',
+                              help='Show the expanded SQL that is being executed',
+                              action='store_true')
   return dry_run_parser, 'query'
 
 
@@ -75,6 +78,9 @@ def _create_execute_subparser(parser):
   execute_parser.add_argument('-q', '--query', help='The name of query to run',
                               nargs='?')
   execute_parser.add_argument('-t', '--target', help='target table name', nargs='?')
+  execute_parser.add_argument('-v', '--verbose',
+                              help='Show the expanded SQL that is being executed',
+                              action='store_true')
   return execute_parser, 'query'
 
 
@@ -90,6 +96,9 @@ def _create_pipeline_subparser(parser):
   pipeline_parser.add_argument('-l', '--large', help='Allow large results', action='store_true')
   pipeline_parser.add_argument('-q', '--query', help='The name of query to run', required=True)
   pipeline_parser.add_argument('-t', '--target', help='The target table name', nargs='?')
+  pipeline_parser.add_argument('-v', '--verbose',
+                               help='Show the expanded SQL that is being executed',
+                               action='store_true')
   pipeline_parser.add_argument('action', nargs='?', choices=('deploy', 'run', 'dryrun'),
                                default='dryrun',
                                help='Whether to deploy the pipeline, execute it immediately in ' +
@@ -292,6 +301,8 @@ def _dryrun_cell(args, config):
   config = _utils.parse_config(config, env)
   query = _get_query_argument(args, config, env)
 
+  if args['verbose']:
+    print query.sql
   result = query.execute_dry_run()
   return gcp.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
                                               is_cached=result['cacheHit'])
@@ -365,6 +376,8 @@ def _execute_cell(args, config):
   env = _notebook_environment()
   config = _utils.parse_config(config, env)
   query = _get_query_argument(args, config, env)
+  if args['verbose']:
+    print query.sql
   return query.execute(args['target'], table_mode=args['mode'], use_cache=not args['nocache'],
                        allow_large_results=args['large']).results
 
@@ -392,6 +405,8 @@ def _pipeline_cell(args, config):
 
   config = _utils.parse_config(config, env)
   query = _get_query_argument(args, config, env)
+  if args['verbose']:
+    print query.sql
   if args['action'] == 'dryrun':
     print(query.sql)
     result = query.execute_dry_run()

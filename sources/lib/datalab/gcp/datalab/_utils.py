@@ -214,7 +214,7 @@ def parse_config(config, env):
     # Using len() and v[0] instead of startswith makes this Unicode-safe.
     if v[0] == '$':
       v = v[1:]
-      if len(v) == 0 or v[0] == '$':
+      if len(v) and v[0] != '$':
         if v in env:
           v = env[v]
         else:
