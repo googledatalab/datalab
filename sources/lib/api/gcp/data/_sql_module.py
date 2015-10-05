@@ -109,7 +109,7 @@ class SqlModule(object):
     return item, env
 
   @staticmethod
-  def expand(sql, args=None):
+  def expand(sql, args=None, udfs=None):
     """ Expand a SqlStatement, query string or SqlModule with a set of arguments.
 
     Args:
@@ -119,9 +119,12 @@ class SqlModule(object):
           SqlModule. If a dictionary, it is used to override any default arguments from the
           argument parser. If the sql argument is a string then args must be None or a dictionary
           as in this case there is no associated argument parser.
+      udfs: a list of UDFs referenced in the query. This supplements args but does not replace
+          args, as we want to support passing in UDFs via cell config in magics (which happens
+          with args).
     """
     sql, args = SqlModule.get_sql_statement_with_environment(sql, args)
-    return _sql_statement.SqlStatement.format(sql._sql, args)
+    return _sql_statement.SqlStatement.format(sql._sql, args, udfs)
 
 
 import _sql_statement

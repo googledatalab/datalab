@@ -115,13 +115,15 @@ class Api(object):
     }
     return gcp._util.Http.request(url, data=data, credentials=self._credentials)
 
-  def jobs_insert_query(self, sql, scripts=None, table_name=None, append=False, overwrite=False,
-                        dry_run=False, use_cache=True, batch=True, allow_large_results=False):
+  def jobs_insert_query(self, sql, code=None, imports=None, table_name=None, append=False,
+                        overwrite=False, dry_run=False, use_cache=True, batch=True,
+                        allow_large_results=False):
     """Issues a request to insert a query job.
 
     Args:
       sql: the SQL string representing the query to execute.
-      scripts: code for Javascript UDFs, if any.
+      code: code for Javascript UDFs, if any.
+      imports: a list of GCS URLs containing additional Javascript UDF support code, if any.
       table_name: None for an anonymous table, or a name parts tuple for a long-lived table.
       append: if True, append to the table if it is non-empty; else the request will fail if table
           is non-empty unless overwrite is True.
@@ -155,8 +157,14 @@ class Api(object):
 
     query_config = data['configuration']['query']
 
-    if scripts:
-      query_config['userDefinedFunctionResources'] = [{'inlineCode': script} for script in scripts]
+    resources = []
+    if code:
+      resources.extend([{'inlineCode': fragment} for fragment in code])
+
+    if imports:
+      resources.extend([{'resourceUri': uri} for uri in imports])
+
+    query_config['userDefinedFunctionResources'] = resources
 
     if table_name:
       query_config['destinationTable'] = {

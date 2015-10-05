@@ -341,8 +341,24 @@ def _udf_cell(args, js):
   for n, t in zip(output_spec_parts[0::2], output_spec_parts[1::2]):
     outputs.append((n, t))
 
+  # Look for imports. We use a non-standard @import keyword; we could alternatively use @requires.
+  # Object names can contain any characters except \r and \n.
+  import_pattern = r'@import[\s]+(gs://[a-z\d][a-z\d_\.\-]*[a-z\d]/[^\n\r]+)'
+  imports = re.findall(import_pattern, js)
+
+  # Split the cell if necessary. We look for a 'function(' with no name and a header comment
+  # block with @param and assume this is the primary function, up to a closing '}' at the start
+  # of the line. The remaining cell content is used as support code.
+  split_pattern = r'(.*)(/\*.*?@param.*?@param.*?\*/\w*\n\w*function\w*\(.*?^}\n?)(.*)'
+  parts = re.match(split_pattern, js, re.MULTILINE|re.DOTALL)
+  support_code = ''
+  if parts:
+    support_code = (parts.group(1) + parts.group(3)).strip()
+    if len(support_code):
+      js = parts.group(2)
+
   # Finally build the UDF object
-  udf = gcp.bigquery.UDF(inputs, outputs, variable_name, js)
+  udf = gcp.bigquery.UDF(inputs, outputs, variable_name, js, support_code, imports)
   _notebook_environment()[variable_name] = udf
 
 
@@ -840,21 +856,6 @@ def _repr_html_table_schema(schema):
   return _HTML_TEMPLATE % (id, id, json.dumps(schema._bq_schema))
 
 
-def _repr_html_function_evaluation(evaluation):
-  _HTML_TEMPLATE = """
-    <div class="bqtv" id="%s"></div>
-    <script>
-      require(['extensions/bigquery', 'element!%s'],
-          function(bq, dom) {
-              bq.evaluateUDF(dom, %s, %s);
-          }
-      );
-    </script>
-    """
-  id = _html.Html.next_id()
-  return _HTML_TEMPLATE % (id, id, evaluation.implementation, json.dumps(evaluation.data))
-
-
 def _register_html_formatters():
   try:
     ipy = IPython.get_ipython()
@@ -865,8 +866,6 @@ def _register_html_formatters():
                                     _repr_html_query_results_table)
     html_formatter.for_type_by_name('gcp.bigquery._table', 'Table', _repr_html_table)
     html_formatter.for_type_by_name('gcp.bigquery._schema', 'Schema', _repr_html_table_schema)
-    html_formatter.for_type_by_name('gcp.bigquery._udf', 'FunctionEvaluation',
-                                    _repr_html_function_evaluation)
   except TypeError:
     # For when running unit tests
     pass
