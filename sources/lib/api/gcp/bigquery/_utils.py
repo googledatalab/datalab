@@ -145,3 +145,7 @@ def parse_table_name(name, project_id=None, dataset_id=None):
     _decorator = ''
 
   return TableName(_project_id, _dataset_id, _table_id, _decorator)
+
+
+def format_query_errors(errors):
+  return '\n'.join(['%s: %s' % (error['reason'], error['message']) for error in errors])
