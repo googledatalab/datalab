@@ -12,10 +12,12 @@
 
 """Implements Query BigQuery API."""
 
+import re
 import gcp._util
 import gcp.data
 import _api
 import _sampling
+import _udf
 import _utils
 
 
@@ -41,7 +43,7 @@ class Query(object):
     """
     return Query(_sampling.Sampling.sampling_query(sql, fields, count, sampling), context=context)
 
-  def __init__(self, sql, scripts=None, context=None, values=None, **kwargs):
+  def __init__(self, sql, context=None, values=None, udfs=None, **kwargs):
     """Initializes an instance of a Query object.
 
     Args:
@@ -52,7 +54,7 @@ class Query(object):
           It is possible to have variable references in a query string too provided the variables
           are passed as keyword arguments to this constructor.
 
-      scripts: array of UDFs referenced in the SQL.
+      udfs: array of UDFs referenced in the SQL.
       context: an optional Context object providing project_id and credentials. If a specific
           project id or credentials are unspecified, the default ones configured at the global
           level are used.
@@ -66,23 +68,70 @@ class Query(object):
     Raises:
       Exception if expansion of any variables failed.
       """
-    if kwargs or values or not isinstance(sql, basestring):
-      if values is None:
-        values = kwargs
-      sql, code = gcp.data.SqlModule.expand(sql, values)
-      if code:
-        if scripts is None:
-          scripts = code
-        else:
-          scripts.extend(code)
-
     if context is None:
       context = gcp.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._sql = sql
-    self._scripts = scripts
     self._results = None
+    self._code = None
+    self._imports = []
+    if values is None:
+      values = kwargs
+
+    self._sql = gcp.data.SqlModule.expand(sql, values, udfs)
+
+    # We need to take care not to include the same UDF code twice so we use sets.
+    udfs = set(udfs if udfs else [])
+    for value in values.values():
+      if isinstance(value, _udf.UDF):
+        udfs.add(value)
+    included_udfs = set([])
+
+    tokens = gcp.data.tokenize(self._sql)
+    udf_dict = {udf.name: udf for udf in udfs}
+
+    for i, token in enumerate(tokens):
+      prior = i - 1
+      while prior >= 0 and tokens[prior].isspace():
+        prior -= 1
+      if prior < 0 or not tokens[prior].upper() == 'FROM':
+        continue
+      next = i + 1
+      while next < len(tokens) and tokens[next].isspace():
+        next += 1
+      if next >= len(tokens) or not tokens[next] == '(':
+        continue
+
+      # We know now we have a 'FROM token (' sequence.
+
+      if token in udf_dict:
+        udf = udf_dict[token]
+        if token not in included_udfs:
+          included_udfs.add(token)
+          if self._code is None:
+            self._code = []
+          self._code.append(udf.code)
+          if udf.imports:
+            self._imports.extend(udf.imports)
+
+        fields = ', '.join([f[0] for f in udf._outputs])
+        tokens[i] = '(SELECT %s FROM %s' % (fields, token)
+
+        # Find the closing parenthesis and add the additional one now needed.
+        num_paren = 0
+        j = i + 1
+        while j < len(tokens):
+          if tokens[j] == '(':
+            num_paren += 1
+          elif tokens[j] == ')':
+            num_paren -= 1
+            if num_paren == 0:
+              tokens[j] = '))'
+              break
+          j += 1
+
+    self._sql = ''.join(tokens)
 
   def _repr_sql_(self):
     """Creates a SQL representation of this object.
@@ -116,7 +165,7 @@ class Query(object):
   @property
   def scripts(self):
     """ Get the code for any Javascript UDFs used in the query. """
-    return self._scripts
+    return self._code
 
   def results(self, use_cache=True):
     """Retrieves table of results for the query. May block if the query must be executed first.
@@ -261,7 +310,7 @@ class Query(object):
       An exception if the query was malformed.
     """
     try:
-      query_result = self._api.jobs_insert_query(self._sql, self._scripts, dry_run=True)
+      query_result = self._api.jobs_insert_query(self._sql, self._code, self._imports, dry_run=True)
     except Exception as e:
       raise e
     return query_result['statistics']['query']
@@ -295,7 +344,7 @@ class Query(object):
       table_name = _utils.parse_table_name(table_name, self._api.project_id)
 
     try:
-      query_result = self._api.jobs_insert_query(self._sql, self._scripts,
+      query_result = self._api.jobs_insert_query(self._sql, self._code, self._imports,
                                                  table_name=table_name,
                                                  append=append,
                                                  overwrite=overwrite,
