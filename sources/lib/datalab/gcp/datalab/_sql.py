@@ -280,6 +280,7 @@ def _split_cell(cell, module):
   code = None
   last_def = -1
   name = None
+  define_wild_re = re.compile('^DEFINE\s+.*$', re.IGNORECASE)
   define_re = re.compile('^DEFINE\s+QUERY\s+([A-Z]\w*)\s*?(.*)$', re.IGNORECASE)
   select_re = re.compile('^SELECT\s*.*$', re.IGNORECASE)
   for i, line in enumerate(lines):
@@ -318,6 +319,10 @@ def _split_cell(cell, module):
 
       # Save the starting line index of the new query
       last_def = i
+    else:
+      define_wild_match = define_wild_re.match(line)
+      if define_wild_match:
+        raise Exception('Expected "DEFINE QUERY <name>"')
 
   if last_def >= 0:
     # We were in a query so save this tail query.
