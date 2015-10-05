@@ -260,7 +260,8 @@ class Api(object):
     args = {}
     if delete_contents:
       args['deleteContents'] = True
-    return gcp._util.Http.request(url, method='DELETE', args=args, credentials=self._credentials)
+    return gcp._util.Http.request(url, method='DELETE', args=args, credentials=self._credentials,
+                                  raw_response=True)
 
   def datasets_update(self, dataset_name, dataset_info):
     """Updates the DataSet info.
@@ -438,7 +439,8 @@ class Api(object):
       Exception if there is an error performing the operation.
     """
     url = Api._ENDPOINT + (Api._TABLES_PATH % table_name)
-    return gcp._util.Http.request(url, method='DELETE', credentials=self._credentials)
+    return gcp._util.Http.request(url, method='DELETE', credentials=self._credentials,
+                                  raw_response=True)
 
   def table_extract(self, table_name, destination, format='CSV', compressed=True,
                     field_delimiter=',', print_header=True):

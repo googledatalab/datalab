@@ -99,7 +99,10 @@ class Item(object):
     """
     if bucket is None:
       bucket = self._bucket
-    new_info = self._api.objects_copy(self._bucket, self._key, bucket, new_key)
+    try:
+      new_info = self._api.objects_copy(self._bucket, self._key, bucket, new_key)
+    except Exception as e:
+      raise e
     return Item(bucket, new_key, new_info, context=self._context)
 
   def exists(self):
@@ -108,22 +111,19 @@ class Item(object):
       return self.metadata() is not None
     except gcp._util.RequestException:
       return False
+    except Exception as e:
+      raise e
 
   def delete(self):
     """Deletes this item from its bucket.
 
-    Returns
-      True if the deletion succeeded; False otherwise.
     Raises:
       Exception if there was an error deleting the item.
     """
     try:
       self._api.objects_delete(self._bucket, self._key)
-    except gcp._util.RequestException as e:
-      if e.status == 204:
-        return True
+    except Exception as e:
       raise e
-    return False
 
   def metadata(self):
     """Retrieves metadata about the bucket.
@@ -134,7 +134,10 @@ class Item(object):
       Exception if there was an error requesting the bucket's metadata.
     """
     if self._info is None:
-     self._info = self._api.objects_get(self._bucket, self._key)
+      try:
+        self._info = self._api.objects_get(self._bucket, self._key)
+      except Exception as e:
+        raise e
     return ItemMetadata(self._info) if self._info else None
 
   def read_from(self):
@@ -145,7 +148,10 @@ class Item(object):
     Raises:
       Exception if there was an error requesting the item's content.
     """
-    return self._api.object_download(self._bucket, self._key)
+    try:
+      return self._api.object_download(self._bucket, self._key)
+    except Exception as e:
+      raise e
 
   def write_to(self, content, content_type):
     """Writes text content to this item.
@@ -156,7 +162,10 @@ class Item(object):
     Raises:
       Exception if there was an error requesting the item's content.
     """
-    self._api.object_upload(self._bucket, self._key, content, content_type)
+    try:
+      self._api.object_upload(self._bucket, self._key, content, content_type)
+    except Exception as e:
+      raise e
 
 
 class Items(object):
@@ -200,12 +209,17 @@ class Items(object):
       if e.status == 404:
         return False
       raise e
+    except Exception as e:
+      raise e
     return True
 
   def _retrieve_items(self, page_token, _):
-    list_info = self._api.objects_list(self._bucket,
-                                       prefix=self._prefix, delimiter=self._delimiter,
-                                       page_token=page_token)
+    try:
+      list_info = self._api.objects_list(self._bucket,
+                                         prefix=self._prefix, delimiter=self._delimiter,
+                                         page_token=page_token)
+    except Exception as e:
+      raise e
 
     items = list_info.get('items', [])
     if len(items):

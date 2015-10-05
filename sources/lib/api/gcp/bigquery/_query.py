@@ -263,7 +263,10 @@ class Query(object):
     Raises:
       An exception if the query was malformed.
     """
-    query_result = self._api.jobs_insert_query(self._sql, self._scripts, dry_run=True)
+    try:
+      query_result = self._api.jobs_insert_query(self._sql, self._scripts, dry_run=True)
+    except Exception as e:
+      raise e
     return query_result['statistics']['query']
 
   def execute_async(self, table_name=None, table_mode='create', use_cache=True,
@@ -294,13 +297,16 @@ class Query(object):
     if table_name is not None:
       table_name = _utils.parse_table_name(table_name, self._api.project_id)
 
-    query_result = self._api.jobs_insert_query(self._sql, self._scripts,
-                                               table_name=table_name,
-                                               append=append,
-                                               overwrite=overwrite,
-                                               use_cache=use_cache,
-                                               batch=batch,
-                                               allow_large_results=allow_large_results)
+    try:
+      query_result = self._api.jobs_insert_query(self._sql, self._scripts,
+                                                 table_name=table_name,
+                                                 append=append,
+                                                 overwrite=overwrite,
+                                                 use_cache=use_cache,
+                                                 batch=batch,
+                                                 allow_large_results=allow_large_results)
+    except Exception as e:
+      raise e
     if 'jobReference' not in query_result:
       raise Exception('Unexpected query response.')
 

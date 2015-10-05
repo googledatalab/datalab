@@ -142,7 +142,10 @@ class Table(object):
   def _load_info(self):
     """Loads metadata about this table."""
     if self._info is None:
-      self._info = self._api.tables_get(self._name_parts)
+      try:
+        self._info = self._api.tables_get(self._name_parts)
+      except Exception as e:
+        raise e
 
   @property
   def metadata(self):
@@ -170,6 +173,8 @@ class Table(object):
       if e.status == 404:
         return False
       raise e
+    except Exception as e:
+      raise e
     return True
 
   def delete(self):
@@ -184,6 +189,8 @@ class Table(object):
       # TODO(gram): May want to check the error reasons here and if it is not
       # because the file didn't exist, return an error.
       pass
+    except Exception as e:
+      raise e
     return not self.exists()
 
   def create(self, schema, overwrite=False):
@@ -204,7 +211,10 @@ class Table(object):
       self.delete()
     if isinstance(schema, _schema.Schema):
       schema = schema._bq_schema
-    response = self._api.tables_insert(self._name_parts, schema=schema)
+    try:
+      response = self._api.tables_insert(self._name_parts, schema=schema)
+    except Exception as e:
+      raise e
     if 'selfLink' in response:
       return self
     raise Exception("Table %s could not be created as it already exists" % self._full_name)
@@ -341,7 +351,10 @@ class Table(object):
       total_pushed += 1
 
       if (total_pushed == total_rows) or (len(rows) == max_rows_per_post):
-        response = self._api.tabledata_insertAll(self._name_parts, rows)
+        try:
+          response = self._api.tabledata_insertAll(self._name_parts, rows)
+        except Exception as e:
+          raise e
         if 'insertErrors' in response:
           raise Exception('insertAll failed: %s' % response['insertErrors'])
 
@@ -434,6 +447,8 @@ class Table(object):
 
     Returns:
       A Job object for the import if it was started successfully or None if not.
+    Raises:
+      Exception if the load job failed to be started or invalid arguments were supplied.
     """
     if source_format == 'csv':
       source_format = 'CSV'
@@ -449,19 +464,22 @@ class Table(object):
     if encoding_upper != 'UTF-8' and encoding_upper != 'ISO-8859-1':
       raise Exception("Invalid source encoding %s" % encoding)
 
-    response = self._api.jobs_insert_load(source, self._name_parts,
-                                          append=(mode == 'append'),
-                                          overwrite=(mode == 'overwrite'),
-                                          create=(mode == 'create'),
-                                          source_format=source_format,
-                                          field_delimiter=csv_delimiter,
-                                          allow_jagged_rows=allow_jagged_rows,
-                                          allow_quoted_newlines=allow_quoted_newlines,
-                                          encoding=encoding_upper,
-                                          ignore_unknown_values=ignore_unknown_values,
-                                          max_bad_records=max_bad_records,
-                                          quote=quote,
-                                          skip_leading_rows=csv_skip_header_rows)
+    try:
+      response = self._api.jobs_insert_load(source, self._name_parts,
+                                            append=(mode == 'append'),
+                                            overwrite=(mode == 'overwrite'),
+                                            create=(mode == 'create'),
+                                            source_format=source_format,
+                                            field_delimiter=csv_delimiter,
+                                            allow_jagged_rows=allow_jagged_rows,
+                                            allow_quoted_newlines=allow_quoted_newlines,
+                                            encoding=encoding_upper,
+                                            ignore_unknown_values=ignore_unknown_values,
+                                            max_bad_records=max_bad_records,
+                                            quote=quote,
+                                            skip_leading_rows=csv_skip_header_rows)
+    except Exception as e:
+      raise e
     return self._init_job_from_response(response)
 
   def load(self, source, mode='create', source_format='csv',
@@ -549,12 +567,15 @@ class Table(object):
         else:
           max_results = page_size
 
-        if page_token:
-          response = self._api.tabledata_list(name_parts, page_token=page_token,
-                                              max_results=max_results)
-        else:
-          response = self._api.tabledata_list(name_parts, start_index=start_row,
-                                              max_results=max_results)
+        try:
+          if page_token:
+            response = self._api.tabledata_list(name_parts, page_token=page_token,
+                                                max_results=max_results)
+          else:
+            response = self._api.tabledata_list(name_parts, start_index=start_row,
+                                                max_results=max_results)
+        except Exception as e:
+          raise e
         page_token = response['pageToken'] if 'pageToken' in response else None
         if 'rows' in response:
           page_rows = response['rows']
@@ -690,6 +711,8 @@ class Table(object):
     except gcp._util.RequestException:
       # The cached metadata is out of sync now; abandon it.
       self._info = None
+    except Exception as e:
+      raise e
 
   def _repr_sql_(self):
     """Returns a representation of the table for embedding into a SQL statement.

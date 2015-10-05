@@ -96,7 +96,10 @@ class View(object):
     """
     if isinstance(query, _query.Query):
       query = query.sql
-    response = self._table._api.tables_insert(self._table._name_parts, query=query)
+    try:
+      response = self._table._api.tables_insert(self._table._name_parts, query=query)
+    except Exception as e:
+      raise e
     if 'selfLink' in response:
       return self
     raise Exception("View %s could not be created as it already exists" % str(self))
