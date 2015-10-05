@@ -67,7 +67,7 @@ arguments similar to datestring(), but unlike datestring() will resolve to a Tab
 with the specified name.
 """)
   sql_parser.add_argument('-m', '--module', help='The name for this SQL module')
-  sql_parser.set_defaults(func=lambda args, cell: sql_cell(args, cell))
+  sql_parser.set_defaults(func=lambda args, cell, extra: sql_cell(args, cell, extra))
   return sql_parser
 
 
@@ -77,7 +77,7 @@ _sql_parser = _create_sql_parser()
 # Register the line magic as well as the cell magic so we can at least give people help
 # without requiring them to enter cell content first.
 @IPython.core.magic.register_line_cell_magic
-def sql(line, cell=None):
+def sql(line, cell):
   """ Create a SQL module with one or more queries. Use %sql --help for more details.
 
   The supported syntax is:
@@ -332,7 +332,7 @@ def _split_cell(cell, module):
   return module.__dict__.get(gcp.data.SqlModule._SQL_MODULE_LAST, None)
 
 
-def sql_cell(args, cell):
+def sql_cell(args, cell, extras):
   """Implements the SQL cell magic for ipython notebooks.
 
   The supported syntax is:
@@ -352,6 +352,7 @@ def sql_cell(args, cell):
     args: the optional arguments following '%%sql'.
     cell: the contents of the cell; Python code for arguments followed by SQL queries.
   """
+  _utils.handle_extra_args(args, extras, 'module', is_required=False)
   name = args['module'] if args['module'] else '_sql_cell'
   module = imp.new_module(name)
   query = _split_cell(cell, module)

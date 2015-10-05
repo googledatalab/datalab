@@ -14,6 +14,7 @@
 
 import json
 import re
+import types
 import IPython
 import IPython.core.display
 import IPython.core.magic
@@ -33,6 +34,7 @@ def _create_sample_subparser(parser):
   group = sample_parser.add_mutually_exclusive_group()
   group.add_argument('-q', '--query', help='the name of the query to sample')
   group.add_argument('-t', '--table', help='the name of the table to sample')
+  group.add_argument('-v', '--view', help='the name of the view to sample')
   sample_parser.add_argument('-c', '--count', type=int, default=10,
                              help='The number of rows to limit to, if sampling')
   sample_parser.add_argument('-m', '--method', help='The type of sampling to use',
@@ -43,25 +45,25 @@ def _create_sample_subparser(parser):
                              help='The field to use for sorted or hashed sampling')
   sample_parser.add_argument('-o', '--order', choices=['ascending', 'descending'],
                              default='ascending', help='The sort order to use for sorted sampling')
-  return sample_parser
+  return sample_parser, 'item'
 
 
 def _create_udf_subparser(parser):
   udf_parser = parser.subcommand('udf', 'Create a named Javascript BigQuery UDF')
-  udf_parser.add_argument('-m', '--module', help='The name for this UDF', required=True)
-  return udf_parser
+  udf_parser.add_argument('-m', '--module', help='The name for this UDF')
+  return udf_parser, 'module'
 
 
 def _create_dry_run_subparser(parser):
   dry_run_parser = parser.subcommand('dryrun',
       'Execute a dry run of a BigQuery query and display approximate usage statistics')
   dry_run_parser.add_argument('-q', '--query',
-                             help='The name of the query to be dry run', required=True)
-  return dry_run_parser
+                             help='The name of the query to be dry run')
+  return dry_run_parser, 'query'
 
 
-def _create_execute_subparser(parser, command):
-  execute_parser = parser.subcommand(command,
+def _create_execute_subparser(parser):
+  execute_parser = parser.subcommand('execute',
       'Execute a BigQuery SQL query and optionally send the results to a named table.\n' +
       'The cell can optionally contain arguments for expanding variables in the query.')
   execute_parser.add_argument('-nc', '--nocache', help='Don\'t used previously cached results',
@@ -73,11 +75,11 @@ def _create_execute_subparser(parser, command):
   execute_parser.add_argument('-q', '--query', help='The name of query to run',
                               nargs='?')
   execute_parser.add_argument('-t', '--target', help='target table name', nargs='?')
-  return execute_parser
+  return execute_parser, 'query'
 
 
-def _create_pipeline_subparser(parser, command):
-  pipeline_parser = parser.subcommand(command,
+def _create_pipeline_subparser(parser):
+  pipeline_parser = parser.subcommand('pipeline',
       'Define a deployable pipeline based on a BigQuery query.\n' +
       'The cell can optionally contain arguments for expanding variables in the query.')
   pipeline_parser.add_argument('-n', '--name', help='The pipeline name')
@@ -94,7 +96,7 @@ def _create_pipeline_subparser(parser, command):
                                     'the notebook, or validate it with a dry run')
   # TODO(gram): we may want to move some command line arguments to the cell body config spec
   # eventually.
-  return pipeline_parser
+  return pipeline_parser, None
 
 
 def _create_table_subparser(parser):
@@ -104,20 +106,22 @@ def _create_table_subparser(parser):
   table_parser.add_argument('-c', '--cols',
                             help='Comma-separated list of column names to restrict to')
   table_parser.add_argument('table', help='The name of, or a reference to, the table or view')
-  return table_parser
+  return table_parser, 'table'
 
 
 def _create_schema_subparser(parser):
   schema_parser = parser.subcommand('schema', 'View a BigQuery table or view schema.')
-  schema_parser.add_argument('item', help='The name of, or a reference to, the table or view')
-  return schema_parser
+  group = schema_parser.add_mutually_exclusive_group()
+  group.add_argument('-v', '--view', help='the name of the view whose schema should be displayed')
+  group.add_argument('-t', '--table', help='the name of the table whose schema should be displayed')
+  return schema_parser, 'item'
 
 
 def _create_datasets_subparser(parser):
   datasets_parser = parser.subcommand('datasets', 'List the datasets in a BigQuery project.')
   datasets_parser.add_argument('-p', '--project',
                                help='The project whose datasets should be listed')
-  return datasets_parser
+  return datasets_parser, 'project'
 
 
 def _create_tables_subparser(parser):
@@ -126,7 +130,7 @@ def _create_tables_subparser(parser):
                              help='The project whose tables should be listed')
   tables_parser.add_argument('-d', '--dataset',
                              help='The dataset to restrict to')
-  return tables_parser
+  return tables_parser, 'dataset'
 
 
 def _create_extract_subparser(parser):
@@ -141,7 +145,7 @@ def _create_extract_subparser(parser):
   extract_parser.add_argument('-d', '--delimiter', default=',',
                               help='The field delimiter to use (CSV only)')
   extract_parser.add_argument('destination', help='The URL of the destination')
-  return extract_parser
+  return extract_parser, None
 
 
 def _create_load_subparser(parser):
@@ -165,148 +169,7 @@ def _create_load_subparser(parser):
                            action='store_true')
   load_parser.add_argument('source', help='The URL of the GCS source(s)')
   load_parser.add_argument('table', help='The destination table name')
-  return load_parser
-
-
-def _create_bigquery_parser():
-  """ Create the parser for the %bigquery magics.
-
-  Note that because we use the func default handler dispatch mechanism of argparse,
-  our handlers can take only one argument which is the parsed args. So we must create closures
-  for the handlers that bind the cell contents and thus must recreate this parser for each
-  cell upon execution.
-  """
-  parser = _commands.CommandParser(prog='bigquery', description="""
-Execute various BigQuery-related operations. Use "%bigquery <command> -h"
-for help on a specific command.
-  """)
-
-  # This is a bit kludgy because we want to handle some line magics and some cell magics
-  # with the bigquery command.
-
-  # %%bigquery sample
-  sample_parser = _create_sample_subparser(parser)
-  sample_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler(args, cell, sample_parser, _sample_cell))
-
-  # %%bigquery dryrun
-  dryrun_parser = _create_dry_run_subparser(parser)
-  dryrun_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler(args, cell, dryrun_parser,
-                                                _dryrun_cell, cell_prohibited=True))
-
-  # %%bigquery udf
-  udf_parser = _create_udf_subparser(parser)
-  udf_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler(args, cell, udf_parser,
-                                                _udf_cell, cell_required=True))
-
-  # %%bigquery execute
-  execute_parser = _create_execute_subparser(parser, 'execute')
-  execute_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler(args, cell,
-                                                execute_parser, _execute_cell))
-
-  # %%bigquery pipeline
-  pipeline_parser = _create_pipeline_subparser(parser, 'pipeline')
-
-  pipeline_parser.set_defaults(
-    func=lambda args, cell: _dispatch_handler(args, cell,
-                                              pipeline_parser, _pipeline_cell))
-
-  # %bigquery table
-  table_parser = _create_table_subparser(parser)
-  table_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler(args, cell, table_parser,
-                                                _table_line, cell_prohibited=True))
-
-  # %bigquery schema
-  schema_parser = _create_schema_subparser(parser)
-  schema_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler(args, cell,
-                                                schema_parser, _schema_line, cell_prohibited=True))
-
-  # %bigquery datasets
-  datasets_parser = _create_datasets_subparser(parser)
-  datasets_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler(args, cell, datasets_parser,
-                                                _datasets_line, cell_prohibited=True))
-
-  # %bigquery tables
-  tables_parser = _create_tables_subparser(parser)
-  tables_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler(args, cell, tables_parser,
-                                                _tables_line, cell_prohibited=True))
-
-  # % bigquery extract
-  extract_parser = _create_extract_subparser(parser)
-  extract_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler(args, cell, extract_parser,
-                                                _extract_line, cell_prohibited=True))
-
-  # %bigquery load
-  # TODO(gram): need some additional help, esp. around the option of specifying schema in
-  # cell body and how schema infer may fail.
-  load_parser = _create_load_subparser(parser)
-  load_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler(args, cell, load_parser, _load_cell))
-  return parser
-
-
-_bigquery_parser = _create_bigquery_parser()
-
-
-@IPython.core.magic.register_line_cell_magic
-def bigquery(line, cell=None):
-  """Implements the bigquery cell magic for ipython notebooks.
-
-  The supported syntax is:
-
-    %%bigquery <command> [<args>]
-    <cell>
-
-  or:
-
-    %bigquery <command> [<args>]
-
-  Use %bigquery --help for a list of commands, or %bigquery <command> --help for help
-  on a specific command.
-  """
-  namespace = {}
-  if line.find('$') >= 0:
-    # We likely have variables to expand; get the appropriate context.
-    namespace = _notebook_environment()
-
-  return _utils.handle_magic_line(line, cell, _bigquery_parser, namespace=namespace)
-
-
-def _dispatch_handler(args, cell, parser, handler,
-                      cell_required=False, cell_prohibited=False):
-  """ Makes sure cell magics include cell and line magics don't, before dispatching to handler.
-
-  Args:
-    args: the parsed arguments from the magic line.
-    cell: the contents of the cell, if any.
-    parser: the argument parser for <cmd>; used for error message.
-    handler: the handler to call if the cell present/absent check passes.
-    cell_required: True for cell magics, False for line magics that can't be cell magics.
-    cell_prohibited: True for line magics, False for cell magics that can't be line magics.
-  Returns:
-    The result of calling the handler.
-  Raises:
-    Exception if the invocation is not valid.
-  """
-  if cell_prohibited:
-    if cell and len(cell.strip()):
-      parser.print_help()
-      raise Exception('Additional data is not supported with the %s command.' % parser.prog)
-    return handler(args)
-
-  if cell_required and not cell:
-    parser.print_help()
-    raise Exception('The %s command requires additional data' % parser.prog)
-
-  return handler(args, cell)
+  return load_parser, None
 
 
 def _get_query_argument(args, config, env):
@@ -350,12 +213,39 @@ def _sample_cell(args, cell_body):
   """
 
   env = _notebook_environment()
+  item_name = args['item']
+  if item_name:
+    if args['query'] or args['table']:
+      raise Exception('Cannot specify both positional and optional arguments')
+    item = _get_notebook_item(item_name)
+    if isinstance(item, gcp.bigquery.View):
+      args['view'] = item_name
+    elif isinstance(item, gcp.bigquery.Table):
+      args['table'] = item_name
+    elif isinstance(item, gcp.bigquery.Query) or isinstance(item, gcp.data.SqlStatement) or \
+        isinstance(item, types.ModuleType):
+      args['query'] = item_name
+
+    if item is None:
+      item = _get_table(item_name)
+      if item.exists():
+        args['table'] = item
+      else:
+        raise Exception("%s cannot be sampled" % item_name)
+
+  query = None
+  table = None
+  view = None
+
   if args['query']:
     config = _utils.parse_config(cell_body, env)
     query = _get_query_argument(args, config, env)
   elif args['table']:
-    query = None
     table = _get_table(args['table'])
+  elif args['view']:
+    view = _get_notebook_item(args['view'])
+    if not isinstance(view, gcp.bigquery.View):
+      raise Exception('%s is not a view' % args['view'])
   else:
     query = gcp.bigquery.Query(cell_body, values=env)
 
@@ -379,6 +269,8 @@ def _sample_cell(args, cell_body):
 
   if query:
     return query.sample(sampling=sampling)
+  elif view:
+    return view.sample(sampling=sampling)
   else:
     return table.sample(sampling=sampling)
 
@@ -422,7 +314,7 @@ def _udf_cell(args, js):
   """
   variable_name = args['module']
   if not variable_name:
-    raise Exception("Declaration must be of the form %%bigquery udf --module <variable name>")
+    raise Exception('Declaration must be of the form %%bigquery udf --module <variable name>')
 
   # Parse out the input and output specification
   spec_pattern = r'\{\{([^}]+)\}\}'
@@ -530,7 +422,7 @@ def _table_line(args):
     html = _table_viewer(table, rows_per_page=args['rows'], fields=fields)
     return IPython.core.display.HTML(html)
   else:
-    raise Exception("%s does not exist" % name)
+    raise Exception('%s does not exist' % name)
 
 
 def _notebook_environment():
@@ -599,13 +491,21 @@ def _schema_line(args):
     The HTML rendering for the schema.
   """
   # TODO(gram): surely we could just return the schema itself?
+  if args['item']:
+    if args['table'] or args['view']:
+      raise Exception('Cannot specify both named and positional arguments')
+  else:
+    args['item'] = args['table'] if args['table'] else args['view']
+    if args['item'] is None:
+      raise Exception('No table or view specified')
+
   name = args['item']
   schema = _get_schema(name)
   if schema:
     html = _repr_html_table_schema(schema)
     return IPython.core.display.HTML(html)
   else:
-    raise("%s does not exist" % name)
+    raise('%s does not exist' % name)
 
 
 def _render_table(data, fields=None):
@@ -710,7 +610,7 @@ def _load_cell(args, schema):
 
   if table.exists():
     if args['mode'] == 'create':
-      raise Exception("%s already exists; use --append or --overwrite" % name)
+      raise Exception('%s already exists; use --append or --overwrite' % name)
   elif schema:
     table.create(json.loads(schema))
   elif not args['infer']:
@@ -734,6 +634,133 @@ def _load_cell(args, schema):
     raise Exception('Load completed with errors: %s' % str(job.errors))
 
 
+def _add_command(parser, subparser_fn, handler, cell_required=False, cell_prohibited=False):
+  """ Create and initialize a bigquery subcommand handler. """
+  sub_parser, extra_var = subparser_fn(parser)
+  sub_parser.set_defaults(func=lambda args, cell, extra:
+  _dispatch_handler(args, cell, extra, extra_var, sub_parser, handler,
+                    cell_required=cell_required, cell_prohibited=cell_prohibited))
+
+
+def _create_bigquery_parser():
+  """ Create the parser for the %bigquery magics.
+
+  Note that because we use the func default handler dispatch mechanism of argparse,
+  our handlers can take only one argument which is the parsed args. So we must create closures
+  for the handlers that bind the cell contents and thus must recreate this parser for each
+  cell upon execution.
+  """
+  parser = _commands.CommandParser(prog='bigquery', description="""
+Execute various BigQuery-related operations. Use "%bigquery <command> -h"
+for help on a specific command.
+  """)
+
+  # This is a bit kludgy because we want to handle some line magics and some cell magics
+  # with the bigquery command.
+
+  # %%bigquery sample
+  _add_command(parser, _create_sample_subparser, _sample_cell)
+
+  # %%bigquery dryrun
+  _add_command(parser, _create_dry_run_subparser, _dryrun_cell)
+
+  # %%bigquery udf
+  _add_command(parser, _create_udf_subparser, _udf_cell, cell_required=True)
+
+  # %%bigquery execute
+  _add_command(parser, _create_execute_subparser, _execute_cell)
+
+  # %%bigquery pipeline
+  _add_command(parser, _create_pipeline_subparser, _pipeline_cell)
+
+  # %bigquery table
+  _add_command(parser, _create_table_subparser, _table_line, cell_prohibited=True)
+
+  # %bigquery schema
+  _add_command(parser, _create_schema_subparser, _schema_line, cell_prohibited=True)
+
+  # %bigquery datasets
+  _add_command(parser, _create_datasets_subparser, _datasets_line, cell_prohibited=True)
+
+  # %bigquery tables
+  _add_command(parser, _create_tables_subparser, _tables_line, cell_prohibited=True)
+
+  # % bigquery extract
+  _add_command(parser, _create_extract_subparser, _extract_line, cell_prohibited=True)
+
+  # %bigquery load
+  # TODO(gram): need some additional help, esp. around the option of specifying schema in
+  # cell body and how schema infer may fail.
+  _add_command(parser, _create_load_subparser, _load_cell)
+  return parser
+
+
+_bigquery_parser = _create_bigquery_parser()
+
+
+@IPython.core.magic.register_line_cell_magic
+def bigquery(line, cell=None):
+  """Implements the bigquery cell magic for ipython notebooks.
+
+  The supported syntax is:
+
+    %%bigquery <command> [<args>]
+    <cell>
+
+  or:
+
+    %bigquery <command> [<args>]
+
+  Use %bigquery --help for a list of commands, or %bigquery <command> --help for help
+  on a specific command.
+  """
+  namespace = {}
+  if line.find('$') >= 0:
+    # We likely have variables to expand; get the appropriate context.
+    namespace = _notebook_environment()
+
+  return _utils.handle_magic_line(line, cell, _bigquery_parser, namespace=namespace)
+
+
+def _dispatch_handler(args, cell, extras, extra_var, parser, handler,
+                      cell_required=False, cell_prohibited=False):
+  """ Makes sure cell magics include cell and line magics don't, before dispatching to handler.
+
+  Args:
+    args: the parsed arguments from the magic line.
+    cell: the contents of the cell, if any.
+    extra: any additional unrecognized arguments at end of line
+    extra_var: if supported, the name of the argument that the 'extra' parameter can be used to
+        set. If None, then if extra is non-empty we will raise an error. If the name does not
+        match any of the positional/named arguments in args then it will get added to args
+        if defined in extra.
+        can be used in which case this will just be passed on to the magic handler as an extra
+        argument.
+    parser: the argument parser for <cmd>; used for error message.
+    handler: the handler to call if the cell present/absent check passes.
+    cell_required: True for cell magics, False for line magics that can't be cell magics.
+    cell_prohibited: True for line magics, False for cell magics that can't be line magics.
+  Returns:
+    The result of calling the handler.
+  Raises:
+    Exception if the invocation is not valid.
+  """
+  if extra_var:
+    _utils.handle_extra_args(args, extras, extra_var, is_required=False)
+
+  if cell_prohibited:
+    if cell and len(cell.strip()):
+      parser.print_help()
+      raise Exception('Additional data is not supported with the %s command.' % parser.prog)
+    return handler(args)
+
+  if cell_required and not cell:
+    parser.print_help()
+    raise Exception('The %s command requires additional data' % parser.prog)
+
+  return handler(args, cell)
+
+
 def _table_viewer(table, rows_per_page=25, fields=None):
   """  Return a table viewer.
 
@@ -745,7 +772,7 @@ def _table_viewer(table, rows_per_page=25, fields=None):
     A string containing the HTML for the table viewer.
   """
   if not table.exists():
-    raise Exception("%s does not exist" % str(table))
+    raise Exception('%s does not exist' % str(table))
 
   _HTML_TEMPLATE = """
     <div class="bqtv" id="%s"></div>
@@ -769,7 +796,7 @@ def _table_viewer(table, rows_per_page=25, fields=None):
   if fields is None:
     fields = _utils.get_field_list(fields, table.schema)
   div_id = _html.Html.next_id()
-  meta_count = ("rows: %d" % table.length) if table.length >= 0 else ''
+  meta_count = ('rows: %d' % table.length) if table.length >= 0 else ''
   meta_name = str(table) if table.job is None else ('job: %s' % table.job.id)
   if table.job:
     if table.job.cache_hit:
