@@ -222,4 +222,4 @@ class View(object):
   def __repr__(self):
     """Returns a representation for the view for showing in the notebook.
     """
-    return '%s: %s' % (self._table, self.query)
+    return 'View %s\n%s' % (self._table, self.query)

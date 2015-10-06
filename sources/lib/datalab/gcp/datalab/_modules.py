@@ -31,11 +31,10 @@ def pymodule(line, cell=None):
   return _utils.handle_magic_line(line, cell, parser)
 
 
-def _pymodule_cell(args, cell, extras):
+def _pymodule_cell(args, cell):
   if cell is None:
       raise Exception('The code for the module must be included')
 
-  _utils.handle_extra_args(args, extras, 'name', is_required=True)
   name = args['name']
   module = _create_python_module(name, cell)
 

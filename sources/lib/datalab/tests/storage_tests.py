@@ -105,6 +105,15 @@ class TestCases(unittest.TestCase):
       }, None)
     self.assertEqual('Invalid target object gs://foo/bar1', error.exception.message)
 
+  @mock.patch('gcp.datalab._storage._storage_copy', autospec=True)
+  def test_storage_copy_magic(self, mock_storage_copy):
+    gcp.datalab._storage.storage('copy --source gs://foo/item1 --destination gs://foo/bar1')
+    mock_storage_copy.assert_called_with({
+        'source': ['gs://foo/item1'],
+        'destination': 'gs://foo/bar1',
+        'func': gcp.datalab._storage._storage_copy
+      }, None)
+
   @mock.patch('gcp.storage._api.Api.buckets_insert', autospec=True)
   @mock.patch('gcp._context.Context.default')
   def test_storage_create(self, mock_context_default, mock_api_buckets_insert):
@@ -149,14 +158,16 @@ class TestCases(unittest.TestCase):
 
     with self.assertRaises(Exception) as error:
       gcp.datalab._storage._storage_delete({
-        'item': [
+        'bucket': [
           'gs://bar',
+          'gs://baz'
+        ],
+        'object': [
           'gs://foo/item1',
           'gs://baz/item1',
-          'gs://baz'
         ]
       }, None)
-    self.assertEqual('gs://baz/item1 does not exist\ngs://baz does not exist',
+    self.assertEqual('gs://baz does not exist\ngs://baz/item1 does not exist',
                      error.exception.message)
     mock_api_bucket_delete.assert_called_with(mock.ANY, 'bar')
     mock_api_objects_delete.assert_called_with(mock.ANY, 'foo', 'item1')

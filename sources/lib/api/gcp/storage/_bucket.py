@@ -105,6 +105,11 @@ class Bucket(object):
     """The name of the bucket."""
     return self._name
 
+  def __repr__(self):
+    """Returns a representation for the table for showing in the notebook.
+    """
+    return 'Bucket gs://%s' % self._name
+
   def metadata(self):
     """Retrieves metadata about the bucket.
 
@@ -164,12 +169,13 @@ class Bucket(object):
     Raises:
       Exception if there was an error creating the bucket.
     """
-    if project_id is None:
-      project_id = self._api.project_id
-    try:
-      self._info = self._api.buckets_insert(self._name, project_id=project_id)
-    except Exception as e:
-      raise e
+    if not self.exists():
+      if project_id is None:
+        project_id = self._api.project_id
+      try:
+        self._info = self._api.buckets_insert(self._name, project_id=project_id)
+      except Exception as e:
+        raise e
     return self
 
   def delete(self):
@@ -178,10 +184,11 @@ class Bucket(object):
     Raises:
       Exception if there was an error deleting the bucket.
     """
-    try:
-      self._api.buckets_delete(self._name)
-    except Exception as e:
-      raise e
+    if self.exists():
+      try:
+        self._api.buckets_delete(self._name)
+      except Exception as e:
+        raise e
 
 
 class Buckets(object):

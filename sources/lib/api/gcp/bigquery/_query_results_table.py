@@ -36,6 +36,14 @@ class QueryResultsTable(_table.Table):
     self._job = job
     self._is_temporary = is_temporary
 
+  def __repr__(self):
+    """Returns a representation for the dataset for showing in the notebook.
+    """
+    if self._is_temporary:
+      return 'QueryResultsTable %s' % self.job_id
+    else:
+      super.__repr__()
+
   @property
   def job(self):
     """ The QueryJob object that caused the table to be populated. """

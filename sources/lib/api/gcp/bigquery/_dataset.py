@@ -214,8 +214,9 @@ class DataSet(object):
     return self._full_name
 
   def __repr__(self):
-    """Returns an empty representation for the dataset for showing in the notebook. """
-    return ''
+    """Returns a representation for the dataset for showing in the notebook.
+    """
+    return 'DataSet %s' % self._full_name
 
 
 class DataSets(object):

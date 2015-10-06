@@ -86,6 +86,11 @@ class Item(object):
     """Returns the key of the item."""
     return self._key
 
+  def __repr__(self):
+    """Returns a representation for the table for showing in the notebook.
+    """
+    return 'Item gs://%s/%s' % (self._bucket, self._key)
+
   def copy_to(self, new_key, bucket=None):
     """Copies this item to the specified new key.
 
@@ -120,10 +125,11 @@ class Item(object):
     Raises:
       Exception if there was an error deleting the item.
     """
-    try:
-      self._api.objects_delete(self._bucket, self._key)
-    except Exception as e:
-      raise e
+    if self.exists():
+      try:
+        self._api.objects_delete(self._bucket, self._key)
+      except Exception as e:
+        raise e
 
   def metadata(self):
     """Retrieves metadata about the bucket.

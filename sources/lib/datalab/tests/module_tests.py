@@ -40,3 +40,11 @@ class TestCases(unittest.TestCase):
     gcp.datalab._modules.pymodule('--name foo', 'x=1')
     self.assertIsNotNone(sys.modules['foo'])
     self.assertEqual(1, sys.modules['foo'].x)
+
+  @mock.patch('gcp.datalab._modules._pymodule_cell', autospec=True)
+  def test_pymodule_magic(self, mock_pymodule_cell):
+    gcp.datalab._modules.pymodule('-n foo')
+    mock_pymodule_cell.assert_called_with({
+      'name': 'foo',
+      'func': gcp.datalab._modules._pymodule_cell
+    }, None)

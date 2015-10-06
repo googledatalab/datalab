@@ -67,7 +67,7 @@ arguments similar to datestring(), but unlike datestring() will resolve to a Tab
 with the specified name.
 """)
   sql_parser.add_argument('-m', '--module', help='The name for this SQL module')
-  sql_parser.set_defaults(func=lambda args, cell, extra: sql_cell(args, cell, extra))
+  sql_parser.set_defaults(func=lambda args, cell: sql_cell(args, cell))
   return sql_parser
 
 
@@ -337,7 +337,7 @@ def _split_cell(cell, module):
   return module.__dict__.get(gcp.data.SqlModule._SQL_MODULE_LAST, None)
 
 
-def sql_cell(args, cell, extras):
+def sql_cell(args, cell):
   """Implements the SQL cell magic for ipython notebooks.
 
   The supported syntax is:
@@ -357,7 +357,6 @@ def sql_cell(args, cell, extras):
     args: the optional arguments following '%%sql'.
     cell: the contents of the cell; Python code for arguments followed by SQL queries.
   """
-  _utils.handle_extra_args(args, extras, 'module', is_required=False)
   name = args['module'] if args['module'] else '_sql_cell'
   module = imp.new_module(name)
   query = _split_cell(cell, module)
