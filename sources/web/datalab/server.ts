@@ -132,11 +132,16 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   if (path.indexOf('/ping') == 0) {
     // TODO: Remove support for CORS once the existence checks move to the deployment server.
     response.writeHead(200, {
-      'Content-Type': 'text/plain',
+      'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*'
     });
-    // Respond with a string to singal availability and identity.
-    response.end(appSettings.instanceName);
+
+    // Respond with an object to singal availability and identity.
+    var pingResponse = {
+      name: appSettings.instanceName,
+      id: appSettings.instanceId
+    };
+    response.end(JSON.stringify(pingResponse));
     return;
   }
 
