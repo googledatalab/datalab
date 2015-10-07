@@ -528,6 +528,11 @@ def _render_table(data, fields=None):
   return IPython.core.display.HTML(_html.HtmlBuilder.render_table(data, fields))
 
 
+def _render_list(data):
+  """ Helper to render a list of objects as an HTML list object. """
+  return IPython.core.display.HTML(_html.HtmlBuilder.render_list(data))
+
+
 def _datasets_line(args):
   """Implements the BigQuery datasets magic used to display datasets in a project.
 
@@ -540,8 +545,7 @@ def _datasets_line(args):
   Returns:
     The HTML rendering for the table of datasets.
   """
-  return _render_table([{'Name': str(dataset)}
-                        for dataset in gcp.bigquery.DataSets(args['project'])])
+  return _render_list([str(dataset) for dataset in gcp.bigquery.DataSets(args['project'])])
 
 
 def _tables_line(args):
@@ -566,9 +570,9 @@ def _tables_line(args):
 
   tables = []
   for dataset in datasets:
-    tables.extend([{'Name': str(table)} for table in dataset])
+    tables.extend([str(table) for table in dataset])
 
-  return _render_table(tables)
+  return _render_list(tables)
 
 
 def _extract_line(args):

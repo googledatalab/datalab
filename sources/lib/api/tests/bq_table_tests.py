@@ -720,7 +720,7 @@ class TestCases(unittest.TestCase):
     }
 
   def _create_dataset(self, dataset_id):
-    return gcp.bigquery.DataSet(dataset_id, self._create_context())
+    return gcp.bigquery.DataSet(dataset_id, context=self._create_context())
 
   def _create_table_list_result(self):
     return {

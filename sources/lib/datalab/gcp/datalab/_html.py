@@ -91,7 +91,7 @@ class HtmlBuilder(object):
     """Renders an HTML table with the specified list of objects.
 
     Args:
-      items: the iterable collection objects to render.
+      items: the iterable collection of objects to render.
       attributes: the optional list of properties or keys to render.
       dictionary: whether the list contains generic object or specifically dict instances.
     """
@@ -142,6 +142,23 @@ class HtmlBuilder(object):
     tag = 'pre' if preformatted else 'div'
     self._segments.append('<%s>%s</%s>' % (tag, HtmlBuilder._format(text), tag))
 
+  def _render_list(self, items, empty='<pre>&lt;empty&gt;</pre>'):
+    """Renders an HTML list with the specified list of strings.
+
+    Args:
+      items: the iterable collection of objects to render.
+      empty: what to render if the list is None or empty.
+    """
+    if not items or len(items) == 0:
+      self._segments.append(empty)
+      return
+    self._segments.append('<ul>')
+    for o in items:
+      self._segments.append('<li>')
+      self._segments.append(str(o))
+      self._segments.append('</li>')
+    self._segments.append('</ul>')
+
   def _to_html(self):
     """Returns the HTML that has been rendered.
 
@@ -183,4 +200,15 @@ class HtmlBuilder(object):
     """
     builder = HtmlBuilder()
     builder._render_objects(data, headers, dictionary=True)
+    return builder._to_html()
+
+  @staticmethod
+  def render_list(data):
+    """ Return a list formatted as a HTML list.
+
+    Args:
+      data: a list of strings.
+    """
+    builder = HtmlBuilder()
+    builder._render_list(data)
     return builder._to_html()
