@@ -1,0 +1,46 @@
+#!/bin/sh
+# Copyright 2015 Google Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Runs the Google Cloud DataLab docker image with vcrpy and urllib
+# added.
+#
+
+ENTRYPOINT="/datalab/run-local.sh"
+if [ "$1" == "shell" ]; then
+  ENTRYPOINT="/bin/bash"
+fi
+
+# Home directories are mapped from host to boot2docker vm automatically,
+# so use them for both logs and notebooks.
+mkdir -p $HOME/datalab/log/custom_logs
+
+# Delete any existing logs to start fresh on each run.
+rm -f $HOME/datalab/log/custom_logs/*.log
+
+# For local runs we can get project number only from outside container.
+# So get it and then pass to container as DATALAB_PROJECT_NUM env var.
+PROJECT_ID=`gcloud -q config list --format yaml | grep project | awk -F" " '{print $2}'`
+PROJECT_NUM=`gcloud -q alpha projects describe $PROJECT_ID | grep projectNumber | awk '{print substr($2,2,length($2)-2)}'`
+
+# Use this flag to map in web server content during development
+#  -v $REPO_DIR/sources/web:/sources \
+
+docker run -i --entrypoint=$ENTRYPOINT \
+  -p 8081:8080 \
+  -v $HOME/datalab/log:/var/log/app_engine \
+  -v $HOME/.config/gcloud:/root/.config/gcloud \
+  -v $REPO_DIR/content:/content \
+  -e "DATALAB_PROJECT_NUM=$PROJECT_NUM" \
+  -t datalab-test
