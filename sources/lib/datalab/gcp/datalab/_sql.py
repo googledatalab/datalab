@@ -289,6 +289,12 @@ def _split_cell(cell, module):
       continue
     define_match = define_re.match(line)
     select_match = select_re.match(line)
+    if select_match and i:
+      # Avoid matching if previous token was '('
+      # TODO: handle the possibility of comments immediately preceding SELECT
+      prior_content = ''.join(lines[:i]).strip()
+      select_match = len(prior_content) == 0 or prior_content[-1] != '('
+
     if define_match or select_match:
       # If this is the first query, get the preceding Python code.
       if code is None:
