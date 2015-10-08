@@ -4,7 +4,7 @@
   "logFilePath": "/var/log/app_engine/custom_logs/app.log",
   "logFilePeriod": "300000ms",
   "logFileCount": 10,
-  "analyticsId": "UA-54894152-2",
+  "analyticsId": "",
   "feedbackId": "",
   "logEndpoint": "stage-dot-cloud-datalab-logs.appspot.com",
   "serverPort": 8080,

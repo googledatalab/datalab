@@ -4,7 +4,7 @@
   "logFilePath": "/var/log/app_engine/custom_logs/app.log",
   "logFilePeriod": "daily",
   "logFileCount": 7,
-  "analyticsId": "UA-54894152-3",
+  "analyticsId": "",
   "feedbackId": "717112",
   "logEndpoint": "cloud-datalab-logs.appspot.com",
   "serverPort": 8080,
