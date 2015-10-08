@@ -63,7 +63,7 @@ class CommandParser(argparse.ArgumentParser):
         ipy = IPython.get_ipython()
         namespace = ipy.user_ns
       args = CommandParser.create_args(line, namespace)
-      return self.parse_known_args(args)
+      return self.parse_args(args)
     except Exception as e:
       if e.message:
         print e.message

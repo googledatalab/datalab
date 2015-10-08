@@ -24,7 +24,7 @@ class Schema(list):
    field B will be represented as [(name: 'A', ...), (name: 'A.b', ...)].
   """
 
-  class _Field(object):
+  class Field(object):
     """ Represents a single field in a Table schema.
 
     This has the properties:
@@ -232,7 +232,7 @@ class Schema(list):
     return list.__getitem__(self, key)
 
   def _add_field(self, name, data_type, mode='NULLABLE', description=''):
-    field = Schema._Field(name, data_type, mode, description)
+    field = Schema.Field(name, data_type, mode, description)
     self.append(field)
     self._map[name] = field
 

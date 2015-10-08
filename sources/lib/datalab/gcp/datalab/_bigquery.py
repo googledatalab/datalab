@@ -45,13 +45,13 @@ def _create_sample_subparser(parser):
                              help='The field to use for sorted or hashed sampling')
   sample_parser.add_argument('-o', '--order', choices=['ascending', 'descending'],
                              default='ascending', help='The sort order to use for sorted sampling')
-  return sample_parser, 'item'
+  return sample_parser
 
 
 def _create_udf_subparser(parser):
   udf_parser = parser.subcommand('udf', 'Create a named Javascript BigQuery UDF')
   udf_parser.add_argument('-m', '--module', help='The name for this UDF')
-  return udf_parser, 'module'
+  return udf_parser
 
 
 def _create_dry_run_subparser(parser):
@@ -62,7 +62,7 @@ def _create_dry_run_subparser(parser):
   dry_run_parser.add_argument('-v', '--verbose',
                               help='Show the expanded SQL that is being executed',
                               action='store_true')
-  return dry_run_parser, 'query'
+  return dry_run_parser
 
 
 def _create_execute_subparser(parser):
@@ -81,7 +81,7 @@ def _create_execute_subparser(parser):
   execute_parser.add_argument('-v', '--verbose',
                               help='Show the expanded SQL that is being executed',
                               action='store_true')
-  return execute_parser, 'query'
+  return execute_parser
 
 
 def _create_pipeline_subparser(parser):
@@ -105,7 +105,7 @@ def _create_pipeline_subparser(parser):
                                     'the notebook, or validate it with a dry run')
   # TODO(gram): we may want to move some command line arguments to the cell body config spec
   # eventually.
-  return pipeline_parser, None
+  return pipeline_parser
 
 
 def _create_table_subparser(parser):
@@ -115,7 +115,7 @@ def _create_table_subparser(parser):
   table_parser.add_argument('-c', '--cols',
                             help='Comma-separated list of column names to restrict to')
   table_parser.add_argument('table', help='The name of, or a reference to, the table or view')
-  return table_parser, 'table'
+  return table_parser
 
 
 def _create_schema_subparser(parser):
@@ -123,14 +123,14 @@ def _create_schema_subparser(parser):
   group = schema_parser.add_mutually_exclusive_group()
   group.add_argument('-v', '--view', help='the name of the view whose schema should be displayed')
   group.add_argument('-t', '--table', help='the name of the table whose schema should be displayed')
-  return schema_parser, 'item'
+  return schema_parser
 
 
 def _create_datasets_subparser(parser):
   datasets_parser = parser.subcommand('datasets', 'List the datasets in a BigQuery project.')
   datasets_parser.add_argument('-p', '--project',
                                help='The project whose datasets should be listed')
-  return datasets_parser, 'project'
+  return datasets_parser
 
 
 def _create_tables_subparser(parser):
@@ -139,7 +139,7 @@ def _create_tables_subparser(parser):
                              help='The project whose tables should be listed')
   tables_parser.add_argument('-d', '--dataset',
                              help='The dataset to restrict to')
-  return tables_parser, 'dataset'
+  return tables_parser
 
 
 def _create_extract_subparser(parser):
@@ -154,7 +154,7 @@ def _create_extract_subparser(parser):
   extract_parser.add_argument('-d', '--delimiter', default=',',
                               help='The field delimiter to use (CSV only)')
   extract_parser.add_argument('destination', help='The URL of the destination')
-  return extract_parser, None
+  return extract_parser
 
 
 def _create_load_subparser(parser):
@@ -178,7 +178,7 @@ def _create_load_subparser(parser):
                            action='store_true')
   load_parser.add_argument('source', help='The URL of the GCS source(s)')
   load_parser.add_argument('table', help='The destination table name')
-  return load_parser, None
+  return load_parser
 
 
 def _get_query_argument(args, config, env):
@@ -222,26 +222,6 @@ def _sample_cell(args, cell_body):
   """
 
   env = _notebook_environment()
-  item_name = args['item']
-  if item_name:
-    if args['query'] or args['table']:
-      raise Exception('Cannot specify both positional and optional arguments')
-    item = _get_notebook_item(item_name)
-    if isinstance(item, gcp.bigquery.View):
-      args['view'] = item_name
-    elif isinstance(item, gcp.bigquery.Table):
-      args['table'] = item_name
-    elif isinstance(item, gcp.bigquery.Query) or isinstance(item, gcp.data.SqlStatement) or \
-        isinstance(item, types.ModuleType):
-      args['query'] = item_name
-
-    if item is None:
-      item = _get_table(item_name)
-      if item.exists():
-        args['table'] = item
-      else:
-        raise Exception("%s cannot be sampled" % item_name)
-
   query = None
   table = None
   view = None
@@ -496,25 +476,16 @@ def _get_table(name):
 def _schema_line(args):
   """Implements the BigQuery schema magic used to display table/view schemas.
 
-   The supported syntax is:
-
-       %bigquery schema -i|--item <table or view name>
-
   Args:
     args: the arguments following '%bigquery schema'.
   Returns:
     The HTML rendering for the schema.
   """
   # TODO(gram): surely we could just return the schema itself?
-  if args['item']:
-    if args['table'] or args['view']:
-      raise Exception('Cannot specify both named and positional arguments')
-  else:
-    args['item'] = args['table'] if args['table'] else args['view']
-    if args['item'] is None:
-      raise Exception('No table or view specified')
+  name = args['table'] if args['table'] else args['view']
+  if name is None:
+    raise Exception('No table or view specified')
 
-  name = args['item']
   schema = _get_schema(name)
   if schema:
     html = _repr_html_table_schema(schema)
@@ -655,10 +626,9 @@ def _load_cell(args, schema):
 
 def _add_command(parser, subparser_fn, handler, cell_required=False, cell_prohibited=False):
   """ Create and initialize a bigquery subcommand handler. """
-  sub_parser, extra_var = subparser_fn(parser)
-  sub_parser.set_defaults(func=lambda args, cell, extra:
-  _dispatch_handler(args, cell, extra, extra_var, sub_parser, handler,
-                    cell_required=cell_required, cell_prohibited=cell_prohibited))
+  sub_parser = subparser_fn(parser)
+  sub_parser.set_defaults(func=lambda args, cell: _dispatch_handler(args, cell, sub_parser, handler,
+                          cell_required=cell_required, cell_prohibited=cell_prohibited))
 
 
 def _create_bigquery_parser():
@@ -741,20 +711,12 @@ def bigquery(line, cell=None):
   return _utils.handle_magic_line(line, cell, _bigquery_parser, namespace=namespace)
 
 
-def _dispatch_handler(args, cell, extras, extra_var, parser, handler,
-                      cell_required=False, cell_prohibited=False):
+def _dispatch_handler(args, cell, parser, handler, cell_required=False, cell_prohibited=False):
   """ Makes sure cell magics include cell and line magics don't, before dispatching to handler.
 
   Args:
     args: the parsed arguments from the magic line.
     cell: the contents of the cell, if any.
-    extra: any additional unrecognized arguments at end of line
-    extra_var: if supported, the name of the argument that the 'extra' parameter can be used to
-        set. If None, then if extra is non-empty we will raise an error. If the name does not
-        match any of the positional/named arguments in args then it will get added to args
-        if defined in extra.
-        can be used in which case this will just be passed on to the magic handler as an extra
-        argument.
     parser: the argument parser for <cmd>; used for error message.
     handler: the handler to call if the cell present/absent check passes.
     cell_required: True for cell magics, False for line magics that can't be cell magics.
@@ -764,9 +726,6 @@ def _dispatch_handler(args, cell, extras, extra_var, parser, handler,
   Raises:
     Exception if the invocation is not valid.
   """
-  if extra_var:
-    _utils.handle_extra_args(args, extras, extra_var, is_required=False)
-
   if cell_prohibited:
     if cell and len(cell.strip()):
       parser.print_help()

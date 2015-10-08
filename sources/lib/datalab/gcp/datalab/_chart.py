@@ -35,24 +35,24 @@ using YAML or JSON.
                      'pie', 'sankey', 'scatter', 'stepped_area', 'table', 'timeline', 'treemap']:
     subparser = parser.subcommand(chart_type,
         'Generate a %s chart.' % chart_type)
-    subparser.add_argument('-f', '--field',
+    subparser.add_argument('-f', '--fields',
                            help='The field(s) to include in the chart')
-    subparser.add_argument('data',
-                           help='The name of the variable referencing the Table or Query to chart')
+    subparser.add_argument('-d', '--data',
+                           help='The name of the variable referencing the Table or Query to chart',
+                           required=True)
     subparser.set_defaults(chart=chart_type)
 
   parser.set_defaults(func=_chart_cell)
   return _utils.handle_magic_line(line, cell, parser)
 
 
-def _chart_cell(args, cell, extras):
-  _utils.handle_extra_args(args, extras, 'data', is_required=True)
+def _chart_cell(args, cell):
   source = args['data']
   ipy = IPython.get_ipython()
   chart_options = _utils.parse_config(cell, ipy.user_ns)
   if chart_options is None:
     chart_options = {}
-  fields = args['field'] if args['field'] else '*'
+  fields = args['fields'] if args['fields'] else '*'
 
   _HTML_TEMPLATE = """
     <div class="bqgc" id="%s">

@@ -172,10 +172,10 @@ def get_data(source, fields='*', first_row=0, count=-1):
 
 def handle_magic_line(line, cell, parser, namespace=None):
   """ Helper function for handling magic command lines given a parser with handlers set. """
-  args, extra = parser.parse(line, namespace)
+  args = parser.parse(line, namespace)
   if args:
     try:
-      return args.func(vars(args), cell, extra)
+      return args.func(vars(args), cell)
     except Exception as e:
       sys.stderr.write(e.message)
       sys.stderr.write('\n')
@@ -261,30 +261,3 @@ def get_data_source_index(name):
   if name not in _data_sources:
     _data_sources.append(name)
   return _data_sources.index(name)
-
-
-def handle_extra_args(args, extras, arg_name, is_required=True):
-  """ A number of our magics can take a positional argument in place of a primary
-  named argument. This function reconciles the two. It first makes sure that the
-  argument name is defined in args, as in some cases the positional argument has a unique
-  name and the argument is thus not set by the argparser. Then if the argument value
-  is None, we look in extras. If there is exactly one extra (positional) argument we use that
-  value. If there is more than one we have an error, and if less than one and the argument is
-  required that too is an error.
-
-  On the other hand, if the argument was already set by the argparser, we make sure it is
-  not also set by the extra positional; this too is an error.
-  """
-  if arg_name not in args:
-    args[arg_name] = None
-
-  if not args[arg_name]:
-    if extras and len(extras):
-      if len(extras) > 1:
-        raise Exception('Too many %s arguments' % arg_name)
-      args[arg_name] = extras[0]
-    elif is_required:
-      raise Exception('Missing argument %s' % arg_name)
-  elif extras and len(extras):
-    raise Exception('Too many %s arguments' % arg_name)
-

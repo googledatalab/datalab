@@ -34,6 +34,11 @@ class Job(gcp._util.Job):
     self._start_time = None
     self._end_time = None
 
+  def __repr__(self):
+    """Returns a representation for the job for showing in the notebook.
+    """
+    return 'Job %s' % self._job_id
+
   @property
   def start_time_utc(self):
     """ The UTC start time of the job as a Python datetime. """

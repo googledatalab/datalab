@@ -22,7 +22,7 @@ from _sampling import Sampling
 from _schema import Schema
 from _table import Table, TableMetadata
 from _udf import UDF
-import _utils
+from _utils import TableName, DataSetName
 from _view import View
 
 
