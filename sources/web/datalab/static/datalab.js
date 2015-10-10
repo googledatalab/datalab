@@ -144,25 +144,10 @@ function initializePage(dialog) {
     dialog.modal(dialogOptions);
   }
 
-  function captureFeedback() {
-    var feedbackId = document.body.getAttribute('data-feedback-id');
-    if (window.userfeedback) {
-      var feedbackOptions = {
-        productId: feedbackId,
-        productVersion: document.body.getAttribute('data-version-id'),
-        bucket: 'beta',
-        authuser: document.body.getAttribute('data-user-id')
-      };
-      var productInfo = {
-        projectNumber: document.body.getAttribute('data-project-num'),
-        instanceId: document.body.getAttribute('data-instance-id')
-      };
-      window.userfeedback.api.startFeedback(feedbackOptions, productInfo);
-    }
-  }
-
   $('#aboutButton').click(showAbout);
-  $('#feedbackButton').click(captureFeedback);
+  $('#feedbackButton').click(function() {
+    window.open('https://stackoverflow.com/questions/tagged/google-cloud-datalab');
+  });
 
   var projectId = document.body.getAttribute('data-project-id');
   var instanceName = document.body.getAttribute('data-instance-name');
