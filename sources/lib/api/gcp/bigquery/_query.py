@@ -356,7 +356,7 @@ class Query(object):
     Returns:
       A View for the Query.
     """
-    return _view.View(self._api, view_name).create(self._sql)
+    return _view.View(view_name, self._context).create(self._sql)
 
 import _query_job
 import _view
