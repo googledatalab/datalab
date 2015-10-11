@@ -491,7 +491,7 @@ def _schema_line(args):
     html = _repr_html_table_schema(schema)
     return IPython.core.display.HTML(html)
   else:
-    raise('%s does not exist' % name)
+    raise Exception('%s does not exist' % name)
 
 
 def _render_table(data, fields=None):
