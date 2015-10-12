@@ -146,7 +146,7 @@ function initializePage(dialog) {
 
   $('#aboutButton').click(showAbout);
   $('#feedbackButton').click(function() {
-    window.open('https://stackoverflow.com/questions/tagged/google-cloud-datalab');
+    window.open('mailto:google-cloud-datalab-feedback@googlegroups.com');
   });
 
   var projectId = document.body.getAttribute('data-project-id');
