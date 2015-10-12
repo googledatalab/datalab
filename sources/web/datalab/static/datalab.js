@@ -186,10 +186,6 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     }
   });
 
-  function DataLab() {
-    this.session = new DataLabSession();
-  }
-
   function DataLabSession() {
   }
   DataLabSession.prototype.execute = function(code, callback) {
@@ -243,7 +239,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     }
   }
 
-  window.datalab = new DataLab();
+  window.datalab.session = new DataLabSession();
 
 
   require(['notebook/js/notebook'], function(ipy) {
@@ -801,6 +797,32 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
 
     document.getElementById('project_name').innerHTML = html.join('');
   })();
+
+  function checkVersion(versionInfo) {
+    if (versionInfo == undefined) {
+      return;
+    }
+    var version = parseInt(document.body.getAttribute('data-version-id').split('.')[2]);
+    if (version >= versionInfo.latest) {
+      return;
+    }
+    var instance = document.body.getAttribute('data-instance-id');
+    var deployerLink = 'https://datalab.cloud.google.com?name=' + instance;
+    var optional = (version >= versionInfo.last);
+    var messageDiv = document.getElementById('updateMessageArea');
+    var message = 'You are using DataLab 0.5.' + version + '. ' + 
+        (optional ? 'An optional' : 'A recommended') + ' update (0.5.' + versionInfo.latest + 
+        ') is <a href="' + deployerLink + 
+        '"> available</a> (see <a href="https://github.com/GoogleCloudPlatform/datalab/wiki/Release-Info"' + 
+        '>what\'s new)</a>.'
+    messageDiv.innerHTML = message;
+    messageDiv.classList.add('alert');
+    messageDiv.classList.add(optional ? 'alert-warning' : 'alert-danger');
+    messageDiv.style.display = 'block';
+  }
+
+  checkVersion(window.datalab.versions);
+
 }
 
 

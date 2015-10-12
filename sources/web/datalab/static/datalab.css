@@ -123,6 +123,10 @@ body {
   padding-top: 2px;
   border-bottom: solid 1px #e6e6e6;
 }
+#updateMessageArea {
+  display: none;
+  margin-bottom: 0px;
+}
 #mainContent, #sidebarContent {
   overflow: auto;
   position: absolute;

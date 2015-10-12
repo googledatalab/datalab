@@ -17,7 +17,7 @@
 
 # Create a versioned Dockerfile based on current date and git commit hash
 VERSION=`date +%Y%m%d`
-VERSION_SUBSTITUTION="s/_version_/1.0.$VERSION/"
+VERSION_SUBSTITUTION="s/_version_/0.5.$VERSION/"
 
 COMMIT=`git log --pretty=format:'%H' -n 1`
 COMMIT_SUBSTITUTION="s/_commit_/$COMMIT/"
