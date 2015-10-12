@@ -146,7 +146,7 @@ function initializePage(dialog) {
 
   $('#aboutButton').click(showAbout);
   $('#feedbackButton').click(function() {
-    window.open('https://googlecloudplatform.uservoice.com/forums/299943--google-cloud-platform');
+    window.open('https://groups.google.com/forum/#!newtopic/google-cloud-datalab-feedback');
   });
 
   var projectId = document.body.getAttribute('data-project-id');
