@@ -144,7 +144,6 @@ def _create_tables_subparser(parser):
 
 def _create_extract_subparser(parser):
   extract_parser = parser.subcommand('extract', 'Extract BigQuery query results or table to GCS.')
-  extract_parser.add_argument('source', help='The name of the query or table to extract')
   extract_parser.add_argument('-f', '--format', choices=['csv', 'json'], default='csv',
                               help='The format to use for the export')
   extract_parser.add_argument('-c', '--compress', action='store_true',
@@ -153,7 +152,8 @@ def _create_extract_subparser(parser):
                               help='Whether to include a header line (CSV only)')
   extract_parser.add_argument('-d', '--delimiter', default=',',
                               help='The field delimiter to use (CSV only)')
-  extract_parser.add_argument('destination', help='The URL of the destination')
+  extract_parser.add_argument('-S', '--source', help='The name of the query or table to extract')
+  extract_parser.add_argument('-D', '--destination', help='The URL of the destination')
   return extract_parser
 
 
@@ -176,8 +176,8 @@ def _create_load_subparser(parser):
                            help='Whether to attempt to infer the schema from source; ' +
                                'if false the table must already exist',
                            action='store_true')
-  load_parser.add_argument('source', help='The URL of the GCS source(s)')
-  load_parser.add_argument('table', help='The destination table name')
+  load_parser.add_argument('-S', '--source', help='The URL of the GCS source(s)')
+  load_parser.add_argument('-D', '--destination', help='The destination table name')
   return load_parser
 
 
@@ -551,7 +551,7 @@ def _extract_line(args):
 
    The supported syntax is:
 
-       %bigquery extract -s|--source <table>  <other_args>
+       %bigquery extract -S|--source <table> -D|--destination <url> <other_args>
 
   Args:
     args: the arguments following '%bigquery extract'.
@@ -585,7 +585,7 @@ def _load_cell(args, schema):
 
    The supported syntax is:
 
-       %bigquery load -s|--source <source> -t|--table <table>  <other_args>
+       %bigquery load -S|--source <source> -D|--destination <table>  <other_args>
 
   Args:
     args: the arguments following '%bigquery load'.
@@ -593,7 +593,7 @@ def _load_cell(args, schema):
   Returns:
     A message about whether the load succeeded or failed.
   """
-  name = args['table']
+  name = args['destination']
   table = _get_table(name)
   if not table:
     table = gcp.bigquery.Table(name)
