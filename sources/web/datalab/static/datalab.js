@@ -17,6 +17,20 @@ var debug = {
   log: function() { console.log.apply(console, arguments); }
 };
 
+var requiredVersion = null;
+var recommendedVersion = null;
+
+$.ajax({
+  url: 'https://storage.googleapis.com/cloud-datalab/version.json',
+  type: 'GET',
+  jsonpCallback: 'jsonp',
+  dataType: 'jsonp',
+  success: function(data) {
+    requiredVersion = data.required;
+    recommendedVersion = data.recommended;
+  }
+});
+
 function placeHolder() {}
 
 // Install Google Analytics - this is the standard tracking code, reformatted.
@@ -123,12 +137,28 @@ function placeHolder() {}
 
 function initializePage(dialog) {
 
+  function parseVersion(v) {
+    var parts = v.split('.');
+    return {"major": parseInt(parts[0]), "minor": parseInt(parts[1])};
+  }
+
   function showAbout() {
     var version = document.body.getAttribute('data-version-id');
+    var versionMessage = '';
+    var current = parseVersion(version);
+    var required = parseVersion(requiredVersion.version);
+    var recommended = parseVersion(recommendedVersion.version);
+    if (current.major < required.major || (current.major == required.major && current.minor < required.minor)) {
+      versionMessage = requiredVersion.message;
+    } else if (current.major < recommended.major || (current.major == recommended.major && current.minor < recommended.minor)) {
+      versionMessage = recommendedVersion.message;
+    }
+
     var dialogContent =
       '<p>Interactive notebooks, with Python and SQL on Google Cloud Platform.</p>' +
       '<p>Explore, transform, visualize and process data using BigQuery and Google Cloud Storage.</p><br />' +
       '<pre>Version: ' + version  + '\nBased on Jupyter (formerly IPython) 4</pre>' +
+      versionMessage +
       '<h5><b>More Information</b></h5>' +
       '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://cloud.google.com" target="_blank">Product information</a><br />' +
       '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://github.com/GoogleCloudPlatform/datalab" target="_blank">Project on GitHub</a><br />' +
