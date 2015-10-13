@@ -2,32 +2,32 @@
 
 [Google Cloud DataLab](https://cloud.google.com/datalab) provides a productive, interactive, and
 integrated tool to explore, visualize, analyze and transform data, bringing together the power of
-python, SQL, and the [Google Cloud Platform](https://cloud.google.com) with services such as
-[BigQuery](https://cloud.google.com/bigquery) and [Storage](https://cloud.google.com/storage)
-to extract insights and harness the value of your data.
+Python, SQL, and the [Google Cloud Platform](https://cloud.google.com) with services such as
+[BigQuery](https://cloud.google.com/bigquery) and [Storage](https://cloud.google.com/storage).
 
 DataLab builds on the interactive notebooks, and the foundation of [Jupyter](http://jupyter.org)
 (formerly IPython) to enable developers, data scientists and data analysts to easily work with
-their data in exploratory scenarios and extends that metaphor to developing and deploying
-data processing pipelines.
+their data from exploration to developing and deploying data pipelines, all within notebooks.
 
-DataLab deeply integrates into Google Cloud Platform. It provides a secure environment for all the
-members of your cloud project to effortlessly access all data and resources available to the
-project, and manage and share notebooks within the project using the associated git repository.
+DataLab deeply integrates into Google Cloud Platform to allow users to extract insights and harness
+the full value of their data. It provides a secure environment for members of a cloud project
+to effortlessly access data and resources accessible from the project, and to share notebooks via
+git.
 
 You can see an example of the notebooks by browsing through the
-[samples and documentation](https://github.com/GoogleCloudPlatform/datalab/tree/master/content/datalab/notebooks),
+[samples and documentation](https://github.com/GoogleCloudPlatform/datalab/tree/master/content/datalab),
 which are themselves written in the form of notebooks.
+
+![Google Cloud Datalab Beta](docs/screenshot.png)
 
 
 ## Getting Started
 
-DataLab is packaged as a docker container, and contains the DataLab experience, along with
-Jupyter/IPython, and a variety of python libraries such as numpy, pandas, scikit-learn and
-matplotlib, in a ready-to-use form.
+DataLab is packaged as a docker container which contains Jupyter/IPython, and a variety of python
+libraries such as numpy, pandas, scikit-learn and matplotlib, in a ready-to-use form.
 
 The simplest way to start using DataLab is on Google Cloud Platform. Head over to the
-[Google Cloud DataLab](https://datalab.cloud.google.com) site to deploy your own instance.
+[Google Cloud DataLab deployer](https://datalab.cloud.google.com) and deploy your own instance.
 
 You can also run the docker container locally, as described in the
 [wiki](https://github.com/googlecloudplatform/datalab/wiki/Getting-Started).
@@ -35,15 +35,20 @@ You can also run the docker container locally, as described in the
 
 ## Contacting Us
 
-Please submit questions on using DataLab at
-[StackOverflow](http://stackoverflow.com/questions/tagged/google-cloud-datalab) using the tag
-`google-cloud-datalab`.
+For support or help using DataLab, please submit questions tagged with `google-cloud-datalab` on [StackOverflow](http://stackoverflow.com/questions/tagged/google-cloud-datalab).
 
-For any product issues, you can either submit issues here, or you can submit feedback using the
-feedback link within the product.
+For any product issues, you can either [submit issues](https://github.com/GoogleCloudPlatform/datalab/issues)
+here on this project page, or you can submit your feedback using the feedback link available
+within the product.
 
 
 ## Developing DataLab
+
+### Building and Running
+
+The [wiki](https://github.com/googlecloudplatform/datalab/wiki/Development-Environment) describes
+the process of setting up a local development environment, as well as the steps to build and run,
+and the developer workflow.
 
 ### Contributing
 
@@ -53,12 +58,6 @@ for more details.
 
 You can always contribute even without code submissions by submitting issues and suggestions to
 help improve DataLab and building and sharing samples and being a member of the community.
-
-### Building and Running
-
-The [wiki](https://github.com/googlecloudplatform/datalab/wiki/Development-Environment) describes
-the process of setting up a local development environment, as well as the steps to build and run,
-and the developer workflow.
 
 ### Navigating the Repository
 
