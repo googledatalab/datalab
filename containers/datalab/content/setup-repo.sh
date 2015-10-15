@@ -35,7 +35,7 @@ create_branch ( ) {
       gsutil -m cp -r gs://cloud-datalab/content/* .
       echo '*.ipynb_checkpoints' > .gitignore
       git add .
-      git commit -m "Initial Datalab content including samples and docs."
+      git commit -m "Initial Cloud Datalab content including samples and docs."
       git push $REPOURL master:$1
     elif [ $1 = "master" ]; then
       git commit  --allow-empty -m "$1 creation"
