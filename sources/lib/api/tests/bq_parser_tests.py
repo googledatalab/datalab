@@ -16,6 +16,14 @@ import gcp.bigquery as bq
 
 class TestCases(unittest.TestCase):
 
+  def test_repeating_data(self):
+    schema = [{'name': 'counts', 'type': 'INTEGER', 'mode': 'REPEATED'}]
+    data = {'f': [{'v': [{'v': 0}, {'v': 1}, {'v': 2}]}]}
+    parsed = {'counts': [0, 1, 2]}
+    result = bq._parser.Parser.parse_row(schema, data)
+    self.assertEqual(parsed, result)
+
+
   def test_non_nested_data(self):
 
     data = {u'f': [{u'v': u'1969'},
