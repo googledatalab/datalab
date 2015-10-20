@@ -267,6 +267,29 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     notebook.prototype.save_notebook = function() {
       return originalSave.apply(this, /* check_lastmodified */ [ false ]);
     }
+
+    // A replacement notebook copy function that makes copies in the root if
+    // the source is under datalab/.
+    notebook.prototype.copy_notebook = function() {
+      var that = this;
+      var base_url = this.base_url;
+      var w = window.open('', IPython._target);
+      var parent = utils.url_path_split(this.notebook_path)[0];
+      if (parent.startsWith('datalab/')) {
+        parent = '';
+      }
+      this.contents.copy(this.notebook_path, parent).then(
+        function (data) {
+          w.location = utils.url_join_encode(
+            base_url, 'notebooks', data.path
+          );
+        },
+        function(error) {
+          w.close();
+          that.events.trigger('notebook_copy_failed', error);
+        }
+      );
+    };
   });
 
   require(['notebook/js/menubar'], function(ipy) {
