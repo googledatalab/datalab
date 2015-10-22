@@ -115,9 +115,9 @@ class Api(object):
     }
     return gcp._util.Http.request(url, data=data, credentials=self._credentials)
 
-  def jobs_insert_query(self, sql, code=None, imports=None, table_name=None, append=False,
-                        overwrite=False, dry_run=False, use_cache=True, batch=True,
-                        allow_large_results=False):
+  def jobs_insert_query(self, sql, code=None, imports=None, table_name=None, append=False, overwrite=False,
+                        dry_run=False, use_cache=True, batch=True, allow_large_results=False,
+                        table_definitions=None):
     """Issues a request to insert a query job.
 
     Args:
@@ -136,6 +136,8 @@ class Api(object):
           priority, more expensive).
       allow_large_results: whether to allow large results (slower with some restrictions but
           can handle big jobs).
+      table_definitions: a list of JSON external table definitions for any external tables
+          referenced in the query.
     Returns:
       A parsed result object.
     Raises:
@@ -165,6 +167,9 @@ class Api(object):
       resources.extend([{'resourceUri': uri} for uri in imports])
 
     query_config['userDefinedFunctionResources'] = resources
+
+    if table_definitions:
+      query_config['tableDefinitions'] = table_definitions
 
     if table_name:
       query_config['destinationTable'] = {

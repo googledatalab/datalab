@@ -481,11 +481,14 @@ class TestCases(unittest.TestCase):
       {'insertId': '#3', 'json': {u'column': 'r3', u'headers': 10.0, u'some': 3, 'Row': 3}}
     ])
 
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
   @mock.patch('gcp.bigquery._api.Api.jobs_insert_load')
   @mock.patch('gcp.bigquery._api.Api.jobs_get')
-  def test_table_load(self, mock_api_jobs_get, mock_api_jobs_insert_load):
+  def test_table_load(self, mock_api_jobs_get, mock_api_jobs_insert_load, mock_api_tables_get):
+    schema = self._create_inferred_schema('Row')
     mock_api_jobs_get.return_value = {'status': {'state': 'DONE'}}
     mock_api_jobs_insert_load.return_value = None
+    mock_api_tables_get.return_value = {'schema': {'fields': schema}}
     tbl = gcp.bigquery.Table('testds.testTable0', context=self._create_context())
     job = tbl.load('gs://foo')
     self.assertIsNone(job)

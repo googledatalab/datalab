@@ -12,7 +12,9 @@
 
 """Google Cloud Platform library - BigQuery Functionality."""
 
+from _csv_options import CSVOptions
 from _dataset import DataSet, DataSets
+from _federated_table import FederatedTable
 from _job import Job
 from _query import Query
 from _query_job import QueryJob

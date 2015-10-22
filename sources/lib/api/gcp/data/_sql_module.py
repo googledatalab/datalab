@@ -122,6 +122,8 @@ class SqlModule(object):
       udfs: a list of UDFs referenced in the query. This supplements args but does not replace
           args, as we want to support passing in UDFs via cell config in magics (which happens
           with args).
+    Returns:
+      The expanded SQL, list of referenced scripts, and list of referenced external tables.
     """
     sql, args = SqlModule.get_sql_statement_with_environment(sql, args)
     return _sql_statement.SqlStatement.format(sql._sql, args, udfs)
