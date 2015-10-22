@@ -139,10 +139,7 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    if table_name:
-      url = Api._ENDPOINT + (Api._JOBS_PATH % (table_name.project_id, ''))
-    else:
-      url = Api._ENDPOINT + (Api._JOBS_PATH % (self._project_id, ''))
+    url = Api._ENDPOINT + (Api._JOBS_PATH % (self._project_id, ''))
     data = {
       'kind': 'bigquery#job',
       'configuration': {
