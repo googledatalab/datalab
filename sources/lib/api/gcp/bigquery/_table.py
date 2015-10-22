@@ -24,6 +24,8 @@ import uuid
 
 import gcp._util
 import _api
+import _csv_options
+import _federated_table
 import _job
 import _parser
 import _schema
@@ -120,6 +122,7 @@ class Table(object):
     self._info = None
     self._cached_page = None
     self._cached_page_index = 0
+    self._schema = None
 
   @property
   def name(self):
@@ -209,13 +212,15 @@ class Table(object):
     """
     if overwrite and self.exists():
       self.delete()
-    if isinstance(schema, _schema.Schema):
-      schema = schema._bq_schema
+    if not isinstance(schema, _schema.Schema):
+      # Convert to a Schema object
+      schema = _schema.Schema(schema)
     try:
-      response = self._api.tables_insert(self._name_parts, schema=schema)
+      response = self._api.tables_insert(self._name_parts, schema=schema._bq_schema)
     except Exception as e:
       raise e
     if 'selfLink' in response:
+      self._schema = schema
       return self
     raise Exception("Table %s could not be created as it already exists" % self._full_name)
 
@@ -284,6 +289,10 @@ class Table(object):
       Exception if the table doesn't exist, the table's schema differs from the data's schema,
       or the insert failed.
     """
+    # TODO(gram): we could create the Table here is it doesn't exist using a schema derived
+    # from the data. IIRC we decided not to but doing so seems less unwieldy that having to
+    # create it first and then validate the schema against it itself.
+
     # There are BigQuery limits on the streaming API:
     #
     # max_rows_per_post = 500
@@ -415,10 +424,8 @@ class Table(object):
       job.wait()
     return job
 
-  def load_async(self, source, mode='create', source_format='csv',
-                 csv_delimiter=',', csv_skip_header_rows=0, encoding='utf-8',
-                 quote='"', allow_quoted_newlines=False,
-                 allow_jagged_rows=False, ignore_unknown_values=False, max_bad_records=0):
+  def load_async(self, source, mode='create', source_format='csv', csv_options=None,
+                 ignore_unknown_values=False, max_bad_records=0):
     """ Starts importing a table from GCS and return a Future.
 
     Args:
@@ -428,18 +435,7 @@ class Table(object):
           table does not already exist, while 'create' will fail if it does. The default is
           'create'. If 'create' the schema will be inferred if necessary.
       source_format: the format of the data, 'csv' or 'json'; default 'csv'.
-      csv_delimiter: The separator for fields in a CSV file. BigQuery converts the string to
-          ISO-8859-1 encoding, and then uses the first byte of the encoded string to split the data
-          as raw binary (default ',').
-      csv_skip_header_rows: A number of rows at the top of a CSV file to skip (default 0).
-      encoding: The character encoding of the data, either 'utf-8' (the default) or 'iso-8859-1'.
-      quote: The value used to quote data sections in a CSV file; default '"'. If your data does
-          not contain quoted sections, set the property value to an empty string. If your data
-          contains quoted newline characters, you must also enable allow_quoted_newlines.
-      allow_quoted_newlines: If True, allow quoted data sections in CSV files that contain newline
-          characters (default False).
-      allow_jagged_rows: If True, accept rows in CSV files that are missing trailing optional
-          columns; the missing values are treated as nulls (default False).
+      csv_options: if source format is 'csv', additional options as a CSVOptions object.
       ignore_unknown_values: If True, accept rows that contain values that do not match the schema;
           the unknown values are ignored (default False).
       max_bad_records The maximum number of bad records that are allowed (and ignored) before
@@ -460,9 +456,8 @@ class Table(object):
     if not(mode == 'create' or mode == 'append' or mode == 'overwrite'):
       raise Exception("Invalid mode %s" % mode)
 
-    encoding_upper = encoding.upper()
-    if encoding_upper != 'UTF-8' and encoding_upper != 'ISO-8859-1':
-      raise Exception("Invalid source encoding %s" % encoding)
+    if csv_options is None:
+      csv_options = _csv_options.CSVOptions()
 
     try:
       response = self._api.jobs_insert_load(source, self._name_parts,
@@ -470,22 +465,20 @@ class Table(object):
                                             overwrite=(mode == 'overwrite'),
                                             create=(mode == 'create'),
                                             source_format=source_format,
-                                            field_delimiter=csv_delimiter,
-                                            allow_jagged_rows=allow_jagged_rows,
-                                            allow_quoted_newlines=allow_quoted_newlines,
-                                            encoding=encoding_upper,
+                                            field_delimiter=csv_options.delimiter,
+                                            allow_jagged_rows=csv_options.allow_jagged_rows,
+                                            allow_quoted_newlines=csv_options.allow_quoted_newlines,
+                                            encoding=csv_options.encoding.upper(),
                                             ignore_unknown_values=ignore_unknown_values,
                                             max_bad_records=max_bad_records,
-                                            quote=quote,
-                                            skip_leading_rows=csv_skip_header_rows)
+                                            quote=csv_options.quote,
+                                            skip_leading_rows=csv_options.skip_leading_rows)
     except Exception as e:
       raise e
     return self._init_job_from_response(response)
 
-  def load(self, source, mode='create', source_format='csv',
-           csv_delimiter=',', csv_skip_header_rows=0, encoding='utf-8',
-           quote='"', allow_quoted_newlines=False,
-           allow_jagged_rows=False, ignore_unknown_values=False, max_bad_records=0):
+  def load(self, source, mode='create', source_format='csv', csv_options=None,
+           ignore_unknown_values=False, max_bad_records=0):
     """ Load the table from GCS.
 
     Args:
@@ -495,18 +488,7 @@ class Table(object):
           table does not already exist, while 'create' will fail if it does. The default is
           'create'. If 'create' the schema will be inferred if necessary.
       source_format: the format of the data, 'csv' or 'json'; default 'csv'.
-      csv_delimiter: The separator for fields in a CSV file. BigQuery converts the string to
-          ISO-8859-1 encoding, and then uses the first byte of the encoded string to split the data
-          as raw binary (default ',').
-      csv_skip_header_rows: A number of rows at the top of a CSV file to skip (default 0).
-      encoding: The character encoding of the data, either 'utf-8' (the default) or 'iso-8859-1'.
-      quote: The value used to quote data sections in a CSV file; default '"'. If your data does
-          not contain quoted sections, set the property value to an empty string. If your data
-          contains quoted newline characters, you must also enable allow_quoted_newlines.
-      allow_quoted_newlines: If True, allow quoted data sections in CSV files that contain newline
-          characters (default False).
-      allow_jagged_rows: If True, accept rows in CSV files that are missing trailing optional
-          columns; the missing values are treated as nulls (default False).
+      csv_options: if source format is 'csv', additional options as a CSVOptions object.
       ignore_unknown_values: If True, accept rows that contain values that do not match the schema;
           the unknown values are ignored (default False).
       max_bad_records The maximum number of bad records that are allowed (and ignored) before
@@ -518,11 +500,7 @@ class Table(object):
     job = self.load_async(source,
                           mode=mode,
                           source_format=source_format,
-                          csv_delimiter=csv_delimiter,
-                          csv_skip_header_rows=csv_skip_header_rows,
-                          encoding=encoding, quote=quote,
-                          allow_quoted_newlines=allow_quoted_newlines,
-                          allow_jagged_rows=allow_jagged_rows,
+                          csv_options=csv_options,
                           ignore_unknown_values=ignore_unknown_values,
                           max_bad_records=max_bad_records)
     if job is not None:
@@ -627,7 +605,7 @@ class Table(object):
 
     # Need to reorder the dataframe to preserve column ordering
     ordered_fields = [field.name for field in self.schema]
-    return df[ordered_fields] if df else pandas.DataFrame()
+    return df[ordered_fields] if df is not None else pandas.DataFrame()
 
   def to_file(self, destination, format='csv', csv_delimiter=',', csv_header=True):
     """Save the results to a local file in CSV format.
@@ -676,11 +654,13 @@ class Table(object):
     Raises
       Exception if the request could not be executed or the response was malformed.
     """
-    try:
-      self._load_info()
-      return _schema.Schema(self._info['schema']['fields'])
-    except KeyError:
-      raise Exception('Unexpected table response: missing schema')
+    if not self._schema:
+      try:
+        self._load_info()
+        self._schema = _schema.Schema(self._info['schema']['fields'])
+      except KeyError:
+        raise Exception('Unexpected table response: missing schema')
+    return self._schema
 
   def update(self, friendly_name=None, description=None, expiry=None, schema=None):
     """ Selectively updates Table information.

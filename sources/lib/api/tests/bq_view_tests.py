@@ -85,7 +85,7 @@ class TestCases(unittest.TestCase):
     mock_api_table_update.return_value = None
     friendly_name = 'casper'
     description = 'ghostly logs'
-    sql = 'select * from test:testds.testTable0'
+    sql = 'select * from [test:testds.testTable0]'
     info = {'friendlyName': friendly_name,
             'description': description,
             'view': {'query': sql}}

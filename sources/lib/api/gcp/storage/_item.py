@@ -91,10 +91,16 @@ class Item(object):
     """Returns the key of the item."""
     return self._key
 
+  @property
+  def uri(self):
+    """Returns the gs:// URI for the item.
+    """
+    return 'gs://%s/%s' % (self._bucket, self._key)
+
   def __repr__(self):
     """Returns a representation for the table for showing in the notebook.
     """
-    return 'Item gs://%s/%s' % (self._bucket, self._key)
+    return 'Item %s' % self.uri
 
   def copy_to(self, new_key, bucket=None):
     """Copies this item to the specified new key.

@@ -18,6 +18,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 import bq_api_tests
 import bq_dataset_tests
+import bq_federated_table_tests
 import bq_jobs_tests
 import bq_parser_tests
 import bq_query_tests
@@ -37,6 +38,7 @@ import util_tests
 _TEST_MODULES = [
   bq_api_tests,
   bq_dataset_tests,
+  bq_federated_table_tests,
   bq_jobs_tests,
   bq_parser_tests,
   bq_query_tests,

@@ -16,6 +16,7 @@ import re
 import gcp._util
 import gcp.data
 import _api
+import _federated_table
 import _sampling
 import _udf
 import _utils
@@ -28,7 +29,8 @@ class Query(object):
   """
 
   @staticmethod
-  def sampling_query(sql, context, fields=None, count=5, sampling=None):
+  def sampling_query(sql, context, fields=None, count=5, sampling=None, scripts=None,
+                     external_tables=None):
     """Returns a sampling Query for the SQL object.
 
     Args:
@@ -38,12 +40,14 @@ class Query(object):
       count: an optional count of rows to retrieve which is used if a specific
           sampling is not specified.
       sampling: an optional sampling strategy to apply to the table.
+      scripts: array of UDFs referenced in the SQL.
     Returns:
       A Query object for sampling the table.
     """
-    return Query(_sampling.Sampling.sampling_query(sql, fields, count, sampling), context=context)
+    return Query(_sampling.Sampling.sampling_query(sql, fields, count, sampling), context=context,
+                 scripts=scripts, data_sources=external_tables)
 
-  def __init__(self, sql, context=None, values=None, udfs=None, **kwargs):
+  def __init__(self, sql, scripts=None, data_sources=None, context=None, values=None, udfs=None, **kwargs):
     """Initializes an instance of a Query object.
 
     Args:
@@ -54,12 +58,14 @@ class Query(object):
           It is possible to have variable references in a query string too provided the variables
           are passed as keyword arguments to this constructor.
 
-      udfs: array of UDFs referenced in the SQL.
+      scripts: list of UDFs referenced in the SQL.
+      data_sources: dictionary of federated (external) tables referenced in the SQL.
       context: an optional Context object providing project_id and credentials. If a specific
           project id or credentials are unspecified, the default ones configured at the global
           level are used.
       values: a dictionary used to expand variables if passed a SqlStatement or a string with
           variable references.
+      udfs: array of UDFs referenced in the SQL.
       kwargs: arguments to use when expanding the variables if passed a SqlStatement
           or a string with variable references.
 
@@ -72,7 +78,10 @@ class Query(object):
       context = gcp.Context.default()
     self._context = context
     self._api = _api.Api(context)
-    self._sql = sql
+
+    if data_sources is None:
+      data_sources = {}
+
     self._results = None
     self._code = None
     self._imports = []
@@ -92,18 +101,34 @@ class Query(object):
     udf_dict = {udf.name: udf for udf in udfs}
 
     for i, token in enumerate(tokens):
+      # Find the preceding and following non-whitespace tokens
       prior = i - 1
       while prior >= 0 and tokens[prior].isspace():
         prior -= 1
-      if prior < 0 or not tokens[prior].upper() == 'FROM':
+      if prior < 0:
         continue
       next = i + 1
       while next < len(tokens) and tokens[next].isspace():
         next += 1
-      if next >= len(tokens) or not tokens[next] == '(':
+      if next >= len(tokens):
         continue
 
-      # We know now we have a 'FROM token (' sequence.
+      uprior = tokens[prior].upper()
+      if uprior != 'FROM' and uprior != 'JOIN':
+        continue
+
+      # Check for external tables.
+      if tokens[next] not in "[('\"":
+        if token not in data_sources:
+          if values and token in values:
+            if isinstance(values[token], _federated_table.FederatedTable):
+              data_sources[token] = values[token]
+
+      # Now check for UDF calls.
+      if uprior != 'FROM' or tokens[next] != '(':
+        continue
+
+      # We have a 'FROM token (' sequence.
 
       if token in udf_dict:
         udf = udf_dict[token]
@@ -130,6 +155,14 @@ class Query(object):
               tokens[j] = '))'
               break
           j += 1
+
+    self._external_tables = None
+    if len(data_sources):
+      self._external_tables = {}
+      for name, table in data_sources.items():
+        if table.schema is None:
+          raise Exception('Referenced external table %s has no known schema' % name)
+        self._external_tables[name] = table._to_query_json()
 
     self._sql = ''.join(tokens)
 
@@ -299,7 +332,8 @@ class Query(object):
       Exception if the query could not be executed or query response was malformed.
     """
     return Query.sampling_query(self._sql, self._context, count=count, fields=fields,
-                                sampling=sampling).results(use_cache=use_cache)
+                                sampling=sampling, scripts=self._scripts,
+                                external_tables=self._external_tables).results(use_cache=use_cache)
 
   def execute_dry_run(self):
     """Dry run a query, to check the validity of the query and return some useful statistics.
@@ -310,7 +344,8 @@ class Query(object):
       An exception if the query was malformed.
     """
     try:
-      query_result = self._api.jobs_insert_query(self._sql, self._code, self._imports, dry_run=True)
+      query_result = self._api.jobs_insert_query(self._sql, self._code, self._imports, dry_run=True,
+                                                 table_definitions=self._external_tables)
     except Exception as e:
       raise e
     return query_result['statistics']['query']
@@ -350,7 +385,8 @@ class Query(object):
                                                  overwrite=overwrite,
                                                  use_cache=use_cache,
                                                  batch=batch,
-                                                 allow_large_results=allow_large_results)
+                                                 allow_large_results=allow_large_results,
+                                                 table_definitions=self._external_tables)
     except Exception as e:
       raise e
     if 'jobReference' not in query_result:
