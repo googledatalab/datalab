@@ -15,7 +15,7 @@
 // style.js
 // RequireJS plugin to load stylesheets.
 
-define(function () {
+define("style", function () {
   'use strict';
 
   // An object containing the set of loaded stylesheets, so as to avoid reloading.

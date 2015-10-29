@@ -12,20 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""IPython configuration for Google Cloud DataLab."""
+"""IPython nbconvert configuration for Google Cloud DataLab."""
 
 c = get_config()
-
-# Implicitly imported packages.
-c.InteractiveShellApp.extensions = [
-  'gcp.datalab',
-  'matplotlib',
-  'seaborn'
-]
-
-# Startup code.
-c.InteractiveShellApp.exec_lines = []
-
-# Enable matplotlib renderings to show up inline in the notebook.
-c.InteractiveShellApp.matplotlib = 'inline'
-
+c.TemplateExporter.template_path = ['/datalab/nbconvert']
+c.TemplateExporter.template_file = 'html'
