@@ -15,7 +15,7 @@
 // element.js
 // RequireJS plugin to resolve DOM elements.
 
-define(function () {
+define("element", function () {
   'use strict';
 
   var pendingCallbacks = null;

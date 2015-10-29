@@ -14,7 +14,7 @@
 
 // require.js plugin to allow Google Chart API to be loaded.
 
-define(function() {
+define("visualization", function() {
   'use strict';
 
   // Queued packages to load until the google api loader itself has not been loaded.
@@ -32,7 +32,7 @@ define(function() {
     var script = document.createElement('script');
     script.type = 'text/javascript';
     script.async = true;
-    script.src = '//www.google.com/jsapi?callback=' + callbackName;
+    script.src = 'https://www.google.com/jsapi?callback=' + callbackName;
     document.getElementsByTagName('head')[0].appendChild(script);
   }
 
