@@ -97,8 +97,11 @@ class SqlModule(object):
     env = {}
     if item.module:
       env.update(item.module.__dict__)
-      args = SqlModule._get_sql_args(
-        env.get(SqlModule._SQL_MODULE_ARGPARSE, None), args=args)
+      parser = env.get(SqlModule._SQL_MODULE_ARGPARSE, None)
+      if parser:
+        args = SqlModule._get_sql_args(parser, args=args)
+      else:
+        args = None
 
     if isinstance(args, dict):
       env.update(args)
