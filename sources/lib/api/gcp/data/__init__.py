@@ -33,4 +33,4 @@ def sql(sql_template, **kwargs):
     Exception if a placeholder was found in the SQL statement, but did not have
     a corresponding argument value.
   """
-  return _util.Sql.format(sql_template, kwargs)
+  return SqlStatement.format(sql_template, kwargs)
