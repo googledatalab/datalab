@@ -45,6 +45,9 @@ def _create_sample_subparser(parser):
                              help='The field to use for sorted or hashed sampling')
   sample_parser.add_argument('-o', '--order', choices=['ascending', 'descending'],
                              default='ascending', help='The sort order to use for sorted sampling')
+  sample_parser.add_argument('--verbose',
+                             help='Show the expanded SQL that is being executed',
+                             action='store_true')
   return sample_parser
 
 
@@ -257,11 +260,14 @@ def _sample_cell(args, cell_body):
     sampling = gcp.bigquery.Sampling.default(count=count)
 
   if query:
-    return query.sample(sampling=sampling)
+    results = query.sample(sampling=sampling)
   elif view:
-    return view.sample(sampling=sampling)
+    results = view.sample(sampling=sampling)
   else:
-    return table.sample(sampling=sampling)
+    results = table.sample(sampling=sampling)
+  if args['verbose']:
+    print results.sql
+  return results
 
 
 def _dryrun_cell(args, config):
