@@ -151,7 +151,7 @@ class TestCases(unittest.TestCase):
       },
     }
     self.maxDiff = None
-    self.validate(mock_http_request, 'https://www.googleapis.com/bigquery/v2/projects/p/jobs/',
+    self.validate(mock_http_request, 'https://www.googleapis.com/bigquery/v2/projects/test/jobs/',
                   expected_data=expected_data)
 
   @mock.patch('gcp._util.Http.request')
