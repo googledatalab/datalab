@@ -1,0 +1,9 @@
+To use, install the prerequisites:
+
+  pip install sphinx sphinx_rtd_theme sphinxcontrib-napoleon
+
+
+then in the docs directory, do 'make html' (or epub, or pdf, etc).
+
+Output will be in the docs/_build directory.
+

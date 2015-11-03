@@ -19,7 +19,7 @@ from _job import Job
 from _query import Query
 from _query_job import QueryJob
 from _query_results_table import QueryResultsTable
-import _query_stats
+from _query_stats import QueryStats
 from _sampling import Sampling
 from _schema import Schema
 from _table import Table, TableMetadata

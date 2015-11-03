@@ -388,7 +388,7 @@ class Table(object):
           (default 'csv').
       csv_delimiter: for CSV exports, the field delimiter to use. Defaults to ','
       csv_header: for CSV exports, whether to include an initial header line. Default true.
-      compress whether to compress the data on export. Compression is not supported for
+      compress: whether to compress the data on export. Compression is not supported for
           AVRO format. Defaults to False.
     Returns:
       A Job object for the export Job if it was started successfully; else None.
@@ -410,7 +410,7 @@ class Table(object):
           (default 'csv').
       csv_delimiter: for CSV exports, the field delimiter to use. Defaults to ','
       csv_header: for CSV exports, whether to include an initial header line. Default true.
-      compress whether to compress the data on export. Compression is not supported for
+      compress: whether to compress the data on export. Compression is not supported for
           AVRO format. Defaults to False.
     Returns:
       A Job object for the completed export Job if it was started successfully; else None.
