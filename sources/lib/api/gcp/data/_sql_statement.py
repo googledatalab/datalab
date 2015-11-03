@@ -112,6 +112,10 @@ class SqlStatement(object):
         resolved_vars[dependency] = dep
 
   @staticmethod
+  def _escape_string(s):
+    return '"' + s.replace('"', '\\"') + '"'
+
+  @staticmethod
   def format(sql, args=None, udfs=None):
     """ Resolve variable references in a query within an environment.
 
@@ -158,8 +162,21 @@ class SqlStatement(object):
         elif '_repr_sql_' in dir(value):
           # pylint: disable=protected-access
           value = value._repr_sql_()
-        elif (type(value) == str) or (type(value) == unicode):
-          value = '"' + value.replace('"', '\\"') + '"'
+        elif type(value) == str or type(value) == unicode:
+          value = SqlStatement._escape_string(value)
+        elif isinstance(value, list) or isinstance(value, tuple):
+          if isinstance(value, tuple):
+            value = list(value)
+          expansion = '('
+          for v in value:
+            if len(expansion) > 1:
+              expansion += ', '
+            if type(v) == str or type(v) == unicode:
+              expansion += SqlStatement._escape_string(v)
+            else:
+              expansion += str(v)
+          expansion += ')'
+          value = expansion
         else:
           value = str(value)
         parts.append(value)
