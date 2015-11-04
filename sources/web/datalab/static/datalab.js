@@ -781,6 +781,7 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
     for (var i = 1; i < pathParts.length; i++) {
       var pathPart = pathParts[i];
       segments.push(pathPart);
+      pathPart = decodeURIComponent(pathPart);
 
       var element;
       if (i == pathParts.length - 1) {
