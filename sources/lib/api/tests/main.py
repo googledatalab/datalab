@@ -23,6 +23,7 @@ import bq_jobs_tests
 import bq_parser_tests
 import bq_query_tests
 import bq_sampling_tests
+import bq_schema_tests
 import bq_table_tests
 import bq_udf_tests
 import bq_view_tests
@@ -43,6 +44,7 @@ _TEST_MODULES = [
   bq_parser_tests,
   bq_query_tests,
   bq_sampling_tests,
+  bq_schema_tests,
   bq_table_tests,
   bq_udf_tests,
   bq_view_tests,

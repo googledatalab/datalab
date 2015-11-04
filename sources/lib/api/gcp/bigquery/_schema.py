@@ -136,79 +136,141 @@ class Schema(list):
     return Schema(Schema._from_dataframe(dataframe, default_type=default_type))
 
   @staticmethod
-  def _from_list(data):
+  def _get_field_entry(name, value):
+    entry = {'name': name}
+    if isinstance(value, datetime.datetime):
+      _type = 'TIMESTAMP'
+    elif isinstance(value, bool):
+      _type = 'BOOLEAN'
+    elif isinstance(value, float):
+      _type = 'FLOAT'
+    elif isinstance(value, int):
+      _type = 'INTEGER'
+    elif isinstance(value, dict) or isinstance(value, list):
+      _type = 'RECORD'
+      entry['fields'] = Schema._from_record(value)
+    else:
+      _type = 'STRING'
+    entry['type'] = _type
+    return entry
+
+  @staticmethod
+  def _from_dict_record(data):
     """
-    Infer a BigQuery table schema from a list. The list must be non-empty and be a list
-    of dictionaries (in which case the first item is used), or a list of lists. In the latter
-    case the type of the elements is used and the field names are simply 'Column1', 'Column2', etc.
+    Infer a BigQuery table schema from a dictionary. If the dictionary has entries that
+    are in turn OrderedDicts these will be turned into RECORD types. Ideally this will
+    be an OrderedDict but it is not required.
 
     Args:
-      data: The list of dictionaries or lists.
+      data: The dict to infer a schema from.
     Returns:
       A list of dictionaries containing field 'name' and 'type' entries, suitable for use in a
           BigQuery Tables resource schema.
     """
-    if not data:
-      return []
-
-    def _get_type(value):
-      if isinstance(value, datetime.datetime):
-        return 'TIMESTAMP'
-      elif isinstance(value, bool):
-        return 'BOOLEAN'
-      elif isinstance(value, float):
-        return 'FLOAT'
-      elif isinstance(value, int):
-        return 'INTEGER'
-      else:
-        return 'STRING'
-
-    datum = data[0]
-    if isinstance(datum, dict):
-      return [{'name': key, 'type': _get_type(datum[key])} for key in datum.keys()]
-    else:
-      return [{'name': 'Column%d' % (i + 1), 'type': _get_type(datum[i])}
-              for i in range(0, len(datum))]
+    return [Schema._get_field_entry(name, value) for name, value in data.items()]
 
   @staticmethod
-  def from_list(data):
+  def _from_list_record(data):
     """
-    Infer a BigQuery table schema from a list. The list must be non-empty and be a list
-    of dictionaries (in which case the first item is used), or a list of lists. In the latter
-    case the type of the elements is used and the field names are simply 'Column1', 'Column2', etc.
+    Infer a BigQuery table schema from a list of values.
 
     Args:
-      data: The list of dictionaries or lists.
+      data: The list of values.
     Returns:
-      A Schema for the list.
+      A list of dictionaries containing field 'name' and 'type' entries, suitable for use in a
+          BigQuery Tables resource schema.
     """
-    return Schema(Schema._from_list(data))
+    return [Schema._get_field_entry('Column%d' % (i + 1), value) for i, value in enumerate(data)]
+
+  @staticmethod
+  def _from_record(data):
+    """
+    Infer a BigQuery table schema from a list of fields or a dictionary. The typeof the elements
+    is used. For a list, the field names are simply 'Column1', 'Column2', etc.
+
+    Args:
+      data: The list of fields or dictionary.
+    Returns:
+      A list of dictionaries containing field 'name' and 'type' entries, suitable for use in a
+          BigQuery Tables resource schema.
+    """
+    if isinstance(data, dict):
+      return Schema._from_dict_record(data)
+    elif isinstance(data, list):
+      return Schema._from_list_record(data)
+    else:
+      raise Exception('Cannot create a schema from record %s' % str(data))
+
+  @staticmethod
+  def from_record(source):
+    """
+    Infers a table/view schema from a single record that can contain a list of fields or a
+    dictionary of fields. The type of the elements is used for the types in the schema. For a
+    dict, key names are used for column names while for a list, the field names are simply named
+    'Column1', 'Column2', etc. Note that if using a dict you may want to use an OrderedDict
+    to ensure column ordering is deterministic.
+
+    Args:
+      source: The list of field values or dictionary of key/values.
+
+    Returns:
+      A Schema for the data.
+    """
+    # TODO(gram): may want to allow an optional second argument which is a list of field
+    # names; could be useful for the record-containing-list case.
+    return Schema(Schema._from_record(source))
 
   @staticmethod
   def from_data(source):
-    """Creates a table/view schema from its JSON representation, a list of data, or a Pandas
+    """Infers a table/view schema from its JSON representation, a list of records, or a Pandas
        dataframe.
 
     Args:
-      source: the Pandas Dataframe or list of data from which to infer the schema, or
+      source: the Pandas Dataframe, a dictionary representing a record, a list of heterogeneous
+          data (record) or homogeneous data (list of records) from which to infer the schema, or
           a definition of the schema as a list of dictionaries with 'name' and 'type' entries
           and possibly 'mode' and 'description' entries. Only used if no data argument was provided.
           'mode' can be 'NULLABLE', 'REQUIRED' or 'REPEATED'. For the allowed types, see:
           https://cloud.google.com/bigquery/preparing-data-for-bigquery#datatypes
+
+          Note that there is potential ambiguity when passing a list of lists or a list of
+          dicts between whether that should be treated as a list of records or a single record
+          that is a list. The heuristic used is to check the length of the entries in the
+          list; if they are equal then a list of records is assumed. To avoid this ambuity
+          you can instead use the Schema.from_record method which assumes a single record,
+          in either list of values or dictionary of key-values form.
+
     Returns:
       A Schema for the data.
     """
     if isinstance(source, pandas.DataFrame):
-      return Schema.from_dataframe(source)
+      bq_schema = Schema._from_dataframe(source)
     elif isinstance(source, list):
-      # Inspect the list - if each entry is a dictionary with name and type entries,
-      # then use it directly; else infer from it.
-      if all([isinstance(d, dict) and 'name' in d and 'type' in d for d in source]):
-        return Schema(source)
+      if len(source) == 0:
+        bq_schema = source
+      elif all(isinstance(d, dict) for d in source):
+        if all('name' in d and 'type' in d for d in source):
+          # It looks like a bq_schema; use it as-is.
+          bq_schema = source
+        elif all(len(d) == len(source[0]) for d in source):
+          bq_schema = Schema._from_dict_record(source[0])
+        else:
+          raise Exception(('Cannot create a schema from heterogeneous list %s; perhaps you meant ' +
+                          'to use Schema.from_record?') % str(source))
+      elif isinstance(source[0], list) and \
+          all([isinstance(l, list) and len(l) == len(source[0]) for l in source]):
+        # A list of lists all of the same length; treat first entry as a list record.
+        bq_schema = Schema._from_record(source[0])
       else:
-        return Schema.from_list(source)
+        # A heterogeneous list; treat as a record.
+        raise Exception(('Cannot create a schema from heterogeneous list %s; perhaps you meant ' +
+                        'to use Schema.from_record?') % str(source))
+    elif isinstance(source, dict):
+      raise Exception(('Cannot create a schema from dict %s; perhaps you meant to use ' +
+                      'Schema.from_record?') % str(source))
     else:
       raise Exception('Cannot create a schema from %s' % str(source))
+    return Schema(bq_schema)
 
   def __init__(self, definition=None):
     """Initializes a Schema from its raw JSON representation, a Pandas Dataframe, or a list.
