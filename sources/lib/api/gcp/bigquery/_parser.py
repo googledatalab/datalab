@@ -68,7 +68,7 @@ class Parser(object):
         else:
           row[name] = Parser.parse_row(sub_schema, val)
       elif repeated:
-        row[name] = [parse_value(data_type, v) for v in val]
+        row[name] = [parse_value(data_type, v['v']) for v in val]
       else:
         row[name] = parse_value(data_type, val)
 
