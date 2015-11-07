@@ -150,12 +150,9 @@ class Query(object):
     Raises:
       An Exception if the query or extract failed.
     """
-    results = self.results(use_cache=use_cache)
-    job = results.extract(storage_uris, format=format, csv_delimiter=csv_delimiter,
-                          csv_header=csv_header, compress=compress)
-    if job is not None:
-      job.wait()
-    return job
+    return self.results(use_cache=use_cache).extract(storage_uris, format=format,
+                                                     csv_delimiter=csv_delimiter,
+                                                     csv_header=csv_header, compress=compress)
 
   @gcp._util.async_method
   def extract_async(self, storage_uris, format='csv', csv_delimiter=',',
