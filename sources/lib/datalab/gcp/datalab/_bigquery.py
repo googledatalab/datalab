@@ -440,7 +440,7 @@ def _table_line(args):
     html = _table_viewer(table, rows_per_page=args['rows'], fields=fields)
     return IPython.core.display.HTML(html)
   else:
-    raise Exception('%s does not exist' % name)
+    raise Exception('Table %s does not exist; cannot display' % name)
 
 
 def _notebook_environment():
@@ -507,14 +507,14 @@ def _schema_line(args):
   # TODO(gram): surely we could just return the schema itself?
   name = args['table'] if args['table'] else args['view']
   if name is None:
-    raise Exception('No table or view specified')
+    raise Exception('No table or view specified; cannot show schema')
 
   schema = _get_schema(name)
   if schema:
     html = _repr_html_table_schema(schema)
     return IPython.core.display.HTML(html)
   else:
-    raise Exception('%s does not exist' % name)
+    raise Exception('%s is not a schema and does not appear to have a schema member' % name)
 
 
 def _render_table(data, fields=None):
@@ -570,7 +570,7 @@ def _tables_line(args):
 
 
 def _extract_line(args):
-  """Implements the BigQuery extract magic used to display tables in a dataset.
+  """Implements the BigQuery extract magic used to extract table data to GCS.
 
    The supported syntax is:
 
@@ -587,9 +587,9 @@ def _extract_line(args):
     source = _get_table(name)
 
   if not source:
-    raise Exception('No such source: %s' % name)
+    raise Exception('No source named %s found' % name)
   elif isinstance(source, gcp.bigquery.Table) and not source.exists():
-    raise Exception('Source %s does not exist' % name)
+    raise Exception('Table %s does not exist' % name)
   else:
 
     job = source.extract(args['destination'],
@@ -776,7 +776,7 @@ def _table_viewer(table, rows_per_page=25, fields=None):
     A string containing the HTML for the table viewer.
   """
   if not table.exists():
-    raise Exception('%s does not exist' % str(table))
+    raise Exception('Table %s does not exist' % str(table))
 
   _HTML_TEMPLATE = u"""
     <div class="bqtv" id="{div_id}">{static_table}</div>

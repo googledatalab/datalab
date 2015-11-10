@@ -87,7 +87,7 @@ class TestCases(unittest.TestCase):
 
     with self.assertRaises(Exception) as error:
       _ = q.results()
-    self.assertEqual('Unexpected query response.', error.exception[0])
+    self.assertEqual('Unexpected response from server', error.exception[0])
 
   def test_udf_expansion(self):
     sql = 'SELECT * FROM udf(source)'

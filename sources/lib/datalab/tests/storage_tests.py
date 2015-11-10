@@ -112,7 +112,8 @@ class TestCases(unittest.TestCase):
         'source': ['gs://foo/item*'],
         'destination': 'gs://foo/bar1'
       }, None)
-    self.assertEqual('Invalid target object gs://foo/bar1', error.exception.message)
+    self.assertEqual('More than one source but target gs://foo/bar1 is not a bucket',
+                     error.exception.message)
 
   @mock.patch('gcp.datalab._storage._storage_copy', autospec=True)
   def test_storage_copy_magic(self, mock_storage_copy):

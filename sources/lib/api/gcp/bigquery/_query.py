@@ -392,7 +392,7 @@ class Query(object):
     except Exception as e:
       raise e
     if 'jobReference' not in query_result:
-      raise Exception('Unexpected query response.')
+      raise Exception('Unexpected response from server')
 
     job_id = query_result['jobReference']['jobId']
     if not table_name:

@@ -174,20 +174,20 @@ def _storage_copy(args, _):
   target = args['destination']
   target_bucket, target_key = gcp.storage._bucket.parse_name(target)
   if target_bucket is None and target_key is None:
-    raise Exception('Invalid target object %s' % target)
+    raise Exception('Invalid copy target name %s' % target)
 
   sources = _expand_list(args['source'])
 
   if len(sources) > 1:
     # Multiple sources; target must be a bucket
     if target_bucket is None or target_key is not None:
-      raise Exception('Invalid target object %s' % target)
+      raise Exception('More than one source but target %s is not a bucket' % target)
 
   errs = []
   for source in sources:
     source_bucket, source_key = gcp.storage._bucket.parse_name(source)
     if source_bucket is None or source_key is None:
-      raise Exception('Invalid source object %s' % source)
+      raise Exception('Invalid source object name %s' % source)
     destination_bucket = target_bucket if target_bucket else source_bucket
     destination_key = target_key if target_key else source_key
     try:
@@ -239,7 +239,7 @@ def _storage_delete(args, _):
         else:
           errs.append("%s does not exist" % item)
       else:
-        raise Exception('Invalid name %s' % item)
+        raise Exception("Can't delete item with invalid name %s" % item)
     except Exception as e:
       errs.append("Couldn't delete %s: %s" %
                   (item, _utils.extract_storage_api_response_error(e.message)))
@@ -298,7 +298,7 @@ def _storage_list(args, _):
 
   bucket_name, key = gcp.storage._bucket.parse_name(target)
   if bucket_name is None:
-    raise Exception('Invalid name: %s' % target)
+    raise Exception('Cannot list %s; not a valid bucket name' % target)
 
   if key or not re.search('\?|\*|\[', target):
     # List the contents of the bucket
@@ -317,7 +317,7 @@ def _storage_list(args, _):
     if bucket.exists():
       return _storage_list_keys(bucket, key)
     else:
-      raise Exception('%s does not exist' % target)
+      raise Exception('Bucket %s does not exist' % target)
 
   else:
     # Treat the bucket name as a pattern and show matches. We don't use bucket_name as that
@@ -327,11 +327,13 @@ def _storage_list(args, _):
 
 def _get_item_contents(source_name):
   source_bucket, source_key = gcp.storage._bucket.parse_name(source_name)
-  if source_bucket is None or source_key is None:
-    raise Exception('Invalid source object %s' % source_name)
+  if source_bucket is None:
+    raise Exception('Invalid source object name %s; no bucket specified.' % source_name)
+  if source_key is None:
+    raise Exception('Invalid source object name %si; source cannot be a bucket.' % source_name)
   source = gcp.storage.Item(source_bucket, source_key)
   if not source.exists():
-    raise Exception('Source %s does not exist' % source_name)
+    raise Exception('Source object %s does not exist' % source_name)
   return source.read_from()
 
 
@@ -360,7 +362,7 @@ def _storage_write(args, _):
   target_name = args['object']
   target_bucket, target_key = gcp.storage._bucket.parse_name(target_name)
   if target_bucket is None or target_key is None:
-    raise Exception('Invalid target object %s' % target_name)
+    raise Exception('Invalid target object name %s' % target_name)
   target = gcp.storage.Item(target_bucket, target_key)
   ipy = IPython.get_ipython()
   contents = ipy.user_ns[args['variable']]

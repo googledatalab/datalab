@@ -243,7 +243,7 @@ class Items(object):
       try:
         items = [Item(self._bucket, info['name'], info, context=self._context) for info in items]
       except KeyError:
-        raise Exception('Unexpected item list response.')
+        raise Exception('Unexpected response from server')
 
     page_token = list_info.get('nextPageToken', None)
     return items, page_token
