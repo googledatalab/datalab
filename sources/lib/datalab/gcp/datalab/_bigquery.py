@@ -764,6 +764,9 @@ def _dispatch_handler(args, cell, parser, handler, cell_required=False, cell_pro
 def _table_viewer(table, rows_per_page=25, fields=None):
   """  Return a table viewer.
 
+    This includes a static rendering of the first page of the table, that gets replaced
+    by the charting code in environments where Javascript is executable and BQ is available.
+
   Args:
     table: the table to view.
     rows_per_page: how many rows to display at one time.
@@ -775,20 +778,20 @@ def _table_viewer(table, rows_per_page=25, fields=None):
     raise Exception('%s does not exist' % str(table))
 
   _HTML_TEMPLATE = """
-    <div class="bqtv" id="%s"></div>
-    <br />%s<br />
+    <div class="bqtv" id="{div_id}">{static_table}</div>
+    <br />{meta_data}<br />
     <script>
-      require(['extensions/charting', 'element!%s', 'style!/static/extensions/charting.css'],
-        function(charts, dom) {
+      require(['extensions/charting', 'element!{div_id}', 'style!/static/extensions/charting.css'],
+        function(charts, dom) {{
           charts.render(dom,
-            {
-              chartStyle:"%s",
-              dataName:"%s",
-              fields:"%s",
-              totalRows:%d,
-              rowsPerPage:%d,
-            }, {}, %s);
-        }
+            {{
+              chartStyle:"{chart_style}",
+              dataName:"{data_name}",
+              fields:"{fields}",
+              totalRows:{total_rows},
+              rowsPerPage:{rows_per_page},
+            }}, {{}}, {data});
+        }}
       );
     </script>
   """
@@ -822,10 +825,15 @@ def _table_viewer(table, rows_per_page=25, fields=None):
   meta_entries = [meta_count, meta_time, meta_cost, meta_name]
   meta_data = '(%s)' % (', '.join([entry for entry in meta_entries if len(entry)]))
 
-  return _HTML_TEMPLATE %\
-      (div_id, meta_data, div_id, chart,
-       _utils.get_data_source_index(str(table)), ','.join(fields), total_count, rows_per_page,
-       json.dumps(data, cls=gcp._util.JSONEncoder))
+  return _HTML_TEMPLATE.format(div_id=div_id,
+                               static_table=_html.HtmlBuilder.render_chart_data(data),
+                               meta_data=meta_data,
+                               chart_style=chart,
+                               data_name=_utils.get_data_source_index(str(table)),
+                               fields=','.join(fields),
+                               total_rows=total_count,
+                               rows_per_page=rows_per_page,
+                               data=json.dumps(data, cls=gcp._util.JSONEncoder))
 
 
 def _repr_html_query(query):
