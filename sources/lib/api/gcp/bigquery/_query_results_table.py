@@ -42,7 +42,7 @@ class QueryResultsTable(_table.Table):
     if self._is_temporary:
       return 'QueryResultsTable %s' % self.job_id
     else:
-      super.__repr__()
+      return super(QueryResultsTable, self).__repr__()
 
   @property
   def job(self):
