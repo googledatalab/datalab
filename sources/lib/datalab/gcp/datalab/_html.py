@@ -87,19 +87,27 @@ class HtmlBuilder(object):
     """
     self._segments = []
 
-  def _render_objects(self, items, attributes=None, dictionary=False):
+  def _render_objects(self, items, attributes=None, datatype='object'):
     """Renders an HTML table with the specified list of objects.
 
     Args:
       items: the iterable collection of objects to render.
       attributes: the optional list of properties or keys to render.
+      datatype: the type of data; one of 'object' for Python objects, 'dict' for a list
+          of dictionaries, or 'chartdata' for Google chart data.
       dictionary: whether the list contains generic object or specifically dict instances.
     """
     if not items:
       return
 
-    if dictionary:
+    if datatype == 'dict':
       getter = lambda obj, attribute: obj.get(attribute, None)
+    elif datatype == 'chartdata':
+      if not attributes:
+        attributes = [items['cols'][i]['label'] for i in range(0, len(items['cols']))]
+      items = items['rows']
+      indices = {attributes[i]: i for i in range(0, len(attributes))}
+      getter = lambda obj, attribute: obj['c'][indices[attribute]]['v']
     else:
       getter = lambda obj, attribute: obj.__getattribute__(attribute)
 
@@ -110,7 +118,7 @@ class HtmlBuilder(object):
     for o in items:
       if first:
         first = False
-        if dictionary and not attributes:
+        if datatype == 'dict' and not attributes:
           attributes = o.keys()
 
         if attributes is not None:
@@ -199,7 +207,18 @@ class HtmlBuilder(object):
       headers: the keys in the dictionary to use as table columns, in order.
     """
     builder = HtmlBuilder()
-    builder._render_objects(data, headers, dictionary=True)
+    builder._render_objects(data, headers, datatype='dict')
+    return builder._to_html()
+
+  @staticmethod
+  def render_chart_data(data):
+    """ Return a dictionary list formatted as a HTML table.
+
+    Args:
+      data: data in the form consumed by Google Charts.
+    """
+    builder = HtmlBuilder()
+    builder._render_objects(data, datatype='chartdata')
     return builder._to_html()
 
   @staticmethod
