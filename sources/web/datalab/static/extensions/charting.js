@@ -196,6 +196,59 @@ define("extensions/charting", function () {
     }
   }
 
+  function getCell(model) {
+    // Get the associated cell
+    var cells = IPython.notebook.get_cells();
+    for (var cellindex in cells) {
+      var cell = cells[cellindex];
+      if (cell.element && cell.element.length) {
+        var element = cell.element[0];
+        var chartDivs = element.getElementsByClassName('bqgc');
+        if (chartDivs && chartDivs.length && chartDivs[0].id == model.dom.id) {
+          return cell;
+        }
+      }
+    }
+    return undefined;
+  }
+
+  function removeStaticChart(model) {
+    var cell = getCell(model);
+    if (cell) {
+      var pngDivs = cell.element[0].getElementsByClassName('output_png');
+      if (pngDivs) {
+        for (var i = 0; i < pngDivs.length; i++) {
+          pngDivs[i].innerHTML = '';
+        }
+      }
+      var cell_outputs = cell.output_area.outputs;
+      for (var outputindex in cell_outputs) {
+        var output = cell_outputs[outputindex];
+        if (output.output_type == 'display_data') {
+          cell.output_area.outputs.splice(outputindex, 1);
+          return;
+        }
+      }
+    }
+  }
+
+  function addStaticChart(model, chart) {
+    var cell;
+    if (chart.getImageURI == undefined || (cell = getCell(model)) == undefined) {
+      return;
+    }
+    var static_chart = chart.getImageURI();
+    var img = static_chart.substr(static_chart.indexOf(',') + 1);  // strip leading base64 etc.
+    var static_output = {
+      metadata: {},
+      data: {
+        'image/png': img
+      },
+      output_type: 'display_data'
+    };
+    cell.output_area.outputs.push(static_output);
+  }
+
   // The main render method, called from Python-generated code. dom is the DOM element
   // for the chart, model is a set of parameters from Python, and options is a JSON
   // set of options provided by the user in the cell magic body, which takes precedence over
@@ -215,10 +268,17 @@ define("extensions/charting", function () {
       data = convertListToDataTable(data);
     }
     convertDates(data);
+    model.dom = dom;
 
+    removeStaticChart(model);  // Remove any existing chart PNG.
     require(['visualization!' + chartScript], function (visualization) {
       var chartType = visualization[chartInfo.name];
       var chart = new chartType(dom);
+
+      // Generate and add a new static chart once chart is ready.
+      google.visualization.events.addListener(chart, 'ready', function () {
+        addStaticChart(model, chart);
+      });
 
       options = options || {};
       if ((model.chartStyle == 'paged_table') || (model.chartStyle == 'table')) {
@@ -242,7 +302,6 @@ define("extensions/charting", function () {
         if (options.pageSize == undefined) {
           options.pageSize = model.rowsPerPage || 25;
         }
-        model.dom = dom;
         model.chart = chart;
         model.visualization = visualization;
         model.fetchCode = '%_get_chart_data ' + model.dataName + ' ' + (model.fields || '*');
