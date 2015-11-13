@@ -214,6 +214,55 @@ define(function () {
       var chartType = visualization[chartInfo.name];
       var chart = new chartType(dom);
 
+      if (chart.getImageURI != undefined) {
+        google.visualization.events.addListener(chart, 'ready', function () {
+          // Find this cell in the notebook and add this as a image/png display output.
+          var cells = IPython.notebook.get_cells();
+          for (var cellindex in cells) {
+            var cell = cells[cellindex];
+            if (cell.cell_type == 'code') {
+              var cell_outputs = cell.output_area.outputs;
+              for (var outputindex in cell_outputs) {
+                var output = cell_outputs[outputindex].data;
+                for (var mimetype in output) {
+                  if (mimetype != 'text/html') {
+                    continue;
+                  }
+                  var data = output[mimetype];
+                  if (data.indexOf('<div class="bqgc" id="' + dom.id) >= 0) {
+                    // We see if we already have an output for the PNG. If so we want to find its
+                    // element and hide it so it doesn't show up twice. If not, we add it to the 
+                    // notebook (but don't display it).
+                    if (cell_outputs.length > 1) {
+                      var elements = cell.output_area.element;
+                      for (var i = 0; i < elements.length; i++) {
+                        var pngs = elements[i].getElementsByClassName('output_png');
+                        if (pngs) {
+                          // Should just be one but anyway...
+                          for (var j = 0; j < pngs.length; j++) {
+                            pngs[j].style.display = "none";
+                          }
+                        }
+                      }
+                    } else {
+                      var static_chart = chart.getImageURI();
+                      var img = static_chart.substr(static_chart.indexOf(',') + 1);  // strip leading base64 etc.
+                      cell_outputs.push({
+                        metadata: {},
+                        data: {
+                          'image/png': img
+                        },
+                        output_type: 'display_data'
+                      });
+                    }
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+
       options = options || {};
       if ((model.chartStyle == 'paged_table') || (model.chartStyle == 'table')) {
         // Cleanup table rendering
