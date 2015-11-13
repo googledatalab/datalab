@@ -28,46 +28,38 @@ import _utils
 
 def _create_sql_parser():
   sql_parser = _commands.CommandParser(prog="%%sql",
-                                       formatter_class=argparse.RawDescriptionHelpFormatter,
+                                       formatter_class=_utils.PagerHelpFormatter,
                                        description="""
 Create a named SQL module with one or more queries.
 
-The cell body should contain an optional initial part defining the default
-values for the variables, if any, using Python code, followed by one or more
-queries.
+The cell body should contain an optional initial part defining the default values for the variables, if any,
+using Python code, followed by one or more queries.
 
-Queries should start with 'DEFINE QUERY <name>' in order to bind them to
-<module name>.<query name> in the notebook (as gcp.data.SqlStament instances).
-The final query can optionally omit 'DEFINE QUERY <name>', as using the module
-name in places where a SqlStatement is expected will resolve to the final query
-in the module.
+Queries should start with 'DEFINE QUERY <name>' in order to bind them to <module name>.<query name> in the notebook
+(as gcp.data.SqlStament instances). The final query can optionally omit 'DEFINE QUERY <name>', as using the module
+name in places where a SqlStatement is expected will resolve to the final query in the module.
 
-Queries can refer to variables with '$<name>', as well as refer to other queries
-within the same module, making it easy to compose nested queries and test their
-parts.
+Queries can refer to variables with '$<name>', as well as refer to other queries within the same module, making it
+easy to compose nested queries and test their parts.
 
-The Python code defining the variable default values can assign scalar values to
-variables, or one of the two special functions 'datestring' and 'source'. When a
-variable with a datestring default is expanded it will expand to a formatted string
-based on the current date, while a 'source' default will expand to a table whose
-name is based on the current date.
+The Python code defining the variable default values can assign scalar values to variables, or one of the two special
+functions 'datestring' and 'source'. When a variable with a datestring default is expanded it will expand to a
+formatted string based on the current date, while a 'source' default will expand to a table whose name is based on
+the current date.
 
-datestring() takes two named arguments, 'format' and 'offset'. The former is a
-format string that is the same as for Python's time.strftime function. The latter
-is a string containing a comma-separated list of expressions such as -1y, +2m,
-etc; these are offsets from the time of expansion that are applied in order. The
-suffix (y, m, d, h, M) correspond to units of years, months, days, hours and
-minutes, while the +n or -n prefix is the number of units to add or subtract from
-the time of expansion. Three special values 'now', 'today' and 'yesterday' are
-also supported; 'today' and 'yesterday' will be midnight UTC on the current date
-or previous days date.
+datestring() takes two named arguments, 'format' and 'offset'. The former is a format string that is the same as
+for Python's time.strftime function. The latter is a string containing a comma-separated list of expressions such
+as -1y, +2m, etc; these are offsets from the time of expansion that are applied in order. The suffix (y, m, d, h, M)
+correspond to units of years, months, days, hours and minutes, while the +n or -n prefix is the number of units to
+add or subtract from the time of expansion. Three special values 'now', 'today' and 'yesterday' are also supported;
+'today' and 'yesterday' will be midnight UTC on the current date or previous days date.
 
-source() can take a 'name' argument for a fixed table name, or 'format' and 'offset'
-arguments similar to datestring(), but unlike datestring() will resolve to a Table
-with the specified name.
+source() can take a 'name' argument for a fixed table name, or 'format' and 'offset' arguments similar to datestring(),
+but unlike datestring() will resolve to a Table with the specified name.
 """)
   sql_parser.add_argument('-m', '--module', help='The name for this SQL module')
   sql_parser.set_defaults(func=lambda args, cell: sql_cell(args, cell))
+  _utils.redirect_parser_help(sql_parser)
   return sql_parser
 
 
@@ -77,7 +69,7 @@ _sql_parser = _create_sql_parser()
 # Register the line magic as well as the cell magic so we can at least give people help
 # without requiring them to enter cell content first.
 @IPython.core.magic.register_line_cell_magic
-def sql(line, cell):
+def sql(line, cell=None):
   """ Create a SQL module with one or more queries. Use %sql --help for more details.
 
   The supported syntax is:
