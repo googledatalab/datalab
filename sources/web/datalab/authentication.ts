@@ -20,7 +20,7 @@ import logging = require('./logging');
 var googleapis = require('googleapis');
 
 /**
- * The datastore service used to query Datastore to see if a user is whitelisted.
+ * The datastore service used to query Datastore to see if a user is allowed to access.
  */
 var datastore : any;
 
@@ -57,14 +57,13 @@ export function getAuthenticationUrl(): string {
 }
 
 export function init(settings: common.Settings, cb: common.Callback0) : void {
-  authUrl = "http://stage-dot-cloud-datalab-deploy.appspot.com?startinproject="
+  authUrl = "https://datalab.cloud.google.com?startinproject="
             + settings.projectId + "&name=" + settings.instanceName;
 
   var compute = new googleapis.auth.Compute();
   if (settings.metadataHost) {
-    logging.getLogger().info("overriding auth url");
-    // For local run, we change the token url to be a local metadata server
-    // by overriding its options.
+    logging.getLogger().info("overriding metadata url.");
+    // For local run, we change the token url to point to a local metadata server.
     compute.opts.tokenUrl = "http://" + settings.metadataHost
       + "/computemetadata/v1/instance/service-accounts/default/token";
   }
@@ -81,7 +80,7 @@ export function init(settings: common.Settings, cb: common.Callback0) : void {
         projectId: settings.projectId,
         params: {datasetId: settings.projectId}
       });
-      logging.getLogger().info("Successfully got access token and created datastore service");
+      logging.getLogger().info("Successfully got access token and created datastore service.");
       cb && cb(null);
     }
   });
