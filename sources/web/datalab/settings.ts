@@ -63,6 +63,7 @@ export function loadSettings(): common.Settings {
     settings.projectId = process.env['DATALAB_PROJECT_ID'] || '';
     settings.projectNumber = process.env['DATALAB_PROJECT_NUM'] || '';
     settings.versionId = process.env['DATALAB_VERSION'] || '';
+    settings.metadataHost = process.env['METADATA_HOST'] || '';
     if (!settings.analyticsId) {
       settings.analyticsId = process.env['DATALAB_ANALYTICS_ID'] || '';
     }

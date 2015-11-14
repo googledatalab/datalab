@@ -15,6 +15,7 @@
 /// <reference path="../../../externs/ts/node/node.d.ts" />
 /// <reference path="common.d.ts" />
 
+import auth = require('./authentication');
 import fs = require('fs');
 import health = require('./health');
 import http = require('http');
@@ -106,42 +107,19 @@ function handleJupyterRequest(request: http.ServerRequest, response: http.Server
 }
 
 /**
- * Handles all requests sent to the proxy web server. Some requests are handled within
- * the server, while some are proxied to the Jupyter notebook server.
+ * Handles all requests after being authenticated.
  * @param request the incoming HTTP request.
  * @param response the out-going HTTP response.
+ * @path the parsed path in the request.
  */
-function requestHandler(request: http.ServerRequest, response: http.ServerResponse) {
-  var path = url.parse(request.url).pathname;
-
-  // /_ah/* paths implement the AppEngine health check.
-  if (path.indexOf('/_ah') == 0) {
-    healthHandler(request, response);
-    return;
-  }
-
+function handledAuthenticatedRequest(request: http.ServerRequest,
+                                     response: http.ServerResponse,
+                                     path: string) {
   // TODO(jupyter): Additional custom path - should go away eventually with replaced
   // pages.
   // /static and /custom paths for returning static content
   if ((path.indexOf('/static') == 0) || (path.indexOf('/custom') == 0)) {
     staticHandler(request, response);
-    return;
-  }
-
-  // /ping allows the deployer to validate existence.
-  if (path.indexOf('/ping') == 0) {
-    // TODO: Remove support for CORS once the existence checks move to the deployment server.
-    response.writeHead(200, {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
-    });
-
-    // Respond with an object to singal availability and identity.
-    var pingResponse = {
-      name: appSettings.instanceName,
-      id: appSettings.instanceId
-    };
-    response.end(JSON.stringify(pingResponse));
     return;
   }
 
@@ -196,6 +174,57 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
 }
 
 /**
+ * Handles all requests sent to the proxy web server. Some requests are handled within
+ * the server, while some are proxied to the Jupyter notebook server.
+ * @param request the incoming HTTP request.
+ * @param response the out-going HTTP response.
+ */
+function requestHandler(request: http.ServerRequest, response: http.ServerResponse) {
+  var path = url.parse(request.url).pathname;
+
+  // /_ah/* paths implement the AppEngine health check.
+  if (path.indexOf('/_ah') == 0) {
+    healthHandler(request, response);
+    return;
+  }
+
+  // /ping allows the deployer to validate existence.
+  if (path.indexOf('/ping') == 0) {
+    // TODO: Remove support for CORS once the existence checks move to the deployment server.
+    response.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    });
+
+    // Respond with an object to singal availability and identity.
+    var pingResponse = {
+      name: appSettings.instanceName,
+      id: appSettings.instanceId
+    };
+    response.end(JSON.stringify(pingResponse));
+    return;
+  }
+
+  // Check if user has access.
+  var userId = userManager.getUserId(request);
+  auth.checkUserAccess(userId, function(e, hasAccess) {
+    if (e) {
+      response.statusCode = 500;
+      response.end("Authentication failure.");
+      return;
+    }
+    if (hasAccess) {
+      handledAuthenticatedRequest(request, response, path);
+    }
+    else {
+      response.statusCode = 302;
+      response.setHeader('Location', auth.getAuthenticationUrl());
+      response.end();
+    }
+  });  
+}
+
+/**
  * Runs the proxy web server.
  * @param settings the configuration settings to use.
  */
@@ -209,12 +238,18 @@ export function run(settings: common.Settings): void {
   infoHandler = info.createHandler(settings);
   staticHandler = static.createHandler(settings);
 
-  server = http.createServer(requestHandler);
-  sockets.wrapServer(server);
-
-  logging.getLogger().info('Starting DataLab server at http://localhost:%d',
+  // auth's initialization is async.
+  auth.init(settings, function(e: Error) {
+    if (!e) {
+      // Initialize web server after auth is initialized successfully
+      // so we can safely accept requests.
+      server = http.createServer(requestHandler);
+      sockets.wrapServer(server);
+      logging.getLogger().info('Starting DataLab server at http://localhost:%d',
                            settings.serverPort);
-  server.listen(settings.serverPort);
+      server.listen(settings.serverPort);
+    }
+  });
 }
 
 /**
