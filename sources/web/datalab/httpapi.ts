@@ -47,7 +47,7 @@ export function gets(host: string, path: string, args: common.Map<any>,
 export function post(host: string, path: string, args: common.Map<any>, data: Object,
                      token: string, headers: common.Map<string>,
                      callback: common.Callback<any>) {
-  request(host, HTTP_PORT, 'POST', path, args, null, token, headers, callback);
+  request(host, HTTP_PORT, 'POST', path, args, data, token, headers, callback);
 }
 
 /**
@@ -56,7 +56,7 @@ export function post(host: string, path: string, args: common.Map<any>, data: Ob
 export function posts(host: string, path: string, args: common.Map<any>, data: Object,
                       token: string, headers: common.Map<string>,
                       callback: common.Callback<any>) {
-  request(host, HTTPS_PORT, 'POST', path, args, null, token, headers, callback);
+  request(host, HTTPS_PORT, 'POST', path, args, data, token, headers, callback);
 }
 
 /**
@@ -81,7 +81,7 @@ function request(host: string, port: number, method: string, path: string,
     headers['Content-Length'] = requestBody.length.toString();
   }
   if (token) {
-    headers['Authorization'] = 'Bearer ' + token
+    headers['Authorization'] = 'Bearer ' + token;
   }
 
   var options: any = {
@@ -93,7 +93,7 @@ function request(host: string, port: number, method: string, path: string,
   };
 
   function requestCallback(response: http.ClientResponse) {
-    if (response.statusCode != 200) {
+    if (response.statusCode > 300) {
       var error = util.format('Failed %s %s%s: %d', method, host, path, response.statusCode);
       callback(new Error(error), null);
     }
@@ -105,7 +105,15 @@ function request(host: string, port: number, method: string, path: string,
       data += chunk;
     });
     response.on('end', function() {
-      callback(null, JSON.parse(data));
+      var obj: Object = null;
+      try {
+        obj = JSON.parse(data)
+      }
+      catch (e) {
+        callback(e, null);
+        return;
+      }
+      callback(null, obj);
     });
   }
 
