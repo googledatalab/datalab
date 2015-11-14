@@ -71,6 +71,13 @@ declare module common {
      * Useful when debugging multi-user functionality locally.
      */
     supportUserOverride: boolean;
+
+    /**
+     * Metadata host name. If specified, will override the default
+     * metadata host in AppEngine VM, mostly for local run so that
+     * the service account access token will be available locally.
+     */
+    metadataHost: string;
   }
 
   interface Map<T> {
