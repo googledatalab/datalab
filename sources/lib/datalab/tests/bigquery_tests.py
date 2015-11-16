@@ -57,8 +57,6 @@ function(r, emitFn) {
     udf = env['word_filter']
     self.assertIsNotNone(udf)
     self.assertEquals('word_filter', udf._name)
-    self.assertEquals([('word', 'string'), ('corpus', 'string'), ('word_count', 'integer')],
-                      udf._inputs)
     self.assertEquals([('word', 'string'), ('corpus', 'string'), ('count', 'integer')],
                       udf._outputs)
     self.assertEquals(cell_body, udf._implementation)

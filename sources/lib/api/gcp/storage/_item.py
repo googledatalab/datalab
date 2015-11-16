@@ -81,6 +81,11 @@ class Item(object):
     self._key = key
     self._info = info
 
+  @staticmethod
+  def from_url(url):
+    bucket, item = _bucket.parse_name(url)
+    return Item(bucket, item)
+
   @property
   def key(self):
     """Returns the key of the item."""
@@ -239,3 +244,6 @@ class Items(object):
 
   def __iter__(self):
     return iter(gcp._util.Iterator(self._retrieve_items))
+
+
+import _bucket

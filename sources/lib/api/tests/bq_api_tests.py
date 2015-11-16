@@ -116,6 +116,7 @@ class TestCases(unittest.TestCase):
         'query': {
           'query': 'SQL',
           'useQueryCache': True,
+          'userDefinedFunctionResources': [],
           'allowLargeResults': False
         },
         'dryRun': False,
@@ -124,7 +125,8 @@ class TestCases(unittest.TestCase):
     }
     self.validate(mock_http_request, 'https://www.googleapis.com/bigquery/v2/projects/test/jobs/',
                   expected_data=expected_data)
-    api.jobs_insert_query('SQL2', ['CODE'], gcp.bigquery._utils.TableName('p', 'd', 't', ''),
+    api.jobs_insert_query('SQL2', ['CODE'],
+                          table_name=gcp.bigquery._utils.TableName('p', 'd', 't', ''),
                           append=True, dry_run=True, use_cache=False, batch=False,
                           allow_large_results=True)
     expected_data = {
