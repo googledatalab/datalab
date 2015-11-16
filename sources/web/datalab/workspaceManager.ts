@@ -192,7 +192,7 @@ export function scheduleWorkspaceUpdate(userId: string) {
         if (syncRequests[userId] < MAX_SYNC_RETRY) {
           logging.getLogger().info('Reschedule sync for user: %s for %d times.',
                                    userId, syncRequests[userId]);
-          scheduleWorkspaceUpdate(userId);
+          setTimeout(deferredUpdate, MIN_SYNC_INTERVAL);
         }
         else {
           // TODO: Store a sync status for the user, so it can be reported
