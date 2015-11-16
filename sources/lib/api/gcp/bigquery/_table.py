@@ -627,7 +627,7 @@ class Table(object):
 
     # Need to reorder the dataframe to preserve column ordering
     ordered_fields = [field.name for field in self.schema]
-    return df[ordered_fields]
+    return df[ordered_fields] if df else pandas.DataFrame()
 
   def to_file(self, destination, format='csv', csv_delimiter=',', csv_header=True):
     """Save the results to a local file in CSV format.
