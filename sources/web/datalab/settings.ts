@@ -67,7 +67,7 @@ export function loadSettings(): common.Settings {
     if (!settings.analyticsId) {
       settings.analyticsId = process.env['DATALAB_ANALYTICS_ID'] || '';
     }
-
+    settings.enableAuth = (env != 'local');
     return settings;
   }
   catch (e) {

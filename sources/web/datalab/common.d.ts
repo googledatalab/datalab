@@ -78,6 +78,11 @@ declare module common {
      * the service account access token will be available locally.
      */
     metadataHost: string;
+
+    /**
+     * Whether authentication is enabled.
+     */
+    enableAuth: boolean;
   }
 
   interface Map<T> {
