@@ -12,7 +12,7 @@
  * the License.
  */
 
-define(function () {
+define("extensions/charting", function () {
 
   // For each chart type, we have a constructor name, and optionally a package to load
   // ('script').
@@ -201,6 +201,12 @@ define(function () {
   // set of options provided by the user in the cell magic body, which takes precedence over
   // model. An initial set of data can be passed in as a final optional parameter.
   function render(dom, model, options, data) {
+    if (model.chartStyle == 'paged_table' && document._in_nbconverted) {
+       model.chartStyle = 'table';
+       var p = document.createElement("div");
+       p.innerHTML = '<br>(Truncated to first page of results)';
+       dom.parentNode.insertBefore(p, dom.nextSibling);
+    }
     var chartInfo = chartMap[model.chartStyle];
     var chartScript = chartInfo.script || 'corechart';
     dom.innerHTML = '';

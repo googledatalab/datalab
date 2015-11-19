@@ -107,14 +107,26 @@ ADD build/lib/GCPData-0.1.0.tar.gz /datalab/lib/
 ADD build/lib/GCPDataLab-0.1.0.tar.gz /datalab/lib/
 ADD build/metadata /datalab/metadata
 ADD build/web /datalab/web
+ADD nbconvert /datalab/nbconvert
 ADD content/ /datalab
 ADD config/ipython.py /root/.ipython/profile_default/ipython_config.py
+ADD config/nbconvert.py /root/.jupyter/jupyter_notebook_config.py
 
 # Install build artifacts
 RUN cd /datalab/lib/GCPData-0.1.0 && python setup.py install && \
     cd /datalab/lib/GCPDataLab-0.1.0 && python setup.py install && \
     cd /datalab/web && /tools/node/bin/npm install && \
     cd /
+
+# Link stuff needed for nbconvert to a location where Jinja will find it.
+# I'd prefer to just use absolute path in Jinja imports but those don't work.
+RUN ln -s /datalab/web/static/extensions/charting.js /datalab/nbconvert/charting.js && \
+    ln -s /datalab/web/static/require/element.js /datalab/nbconvert/element.js && \
+    ln -s /datalab/web/static/require/style.js /datalab/nbconvert/style.js && \
+    ln -s /datalab/web/static/require/visualization.js /datalab/nbconvert/visualization.js && \
+    ln -s /usr/local/lib/python2.7/dist-packages/notebook/static/custom/custom.css /datalab/nbconvert/custom.css && \
+    ln -s /datalab/web/static/extensions/charting.css /datalab/nbconvert/charting.css && \
+    ln -s /datalab/web/static/datalab.css /datalab/nbconvert/datalab.css
 
 # Startup
 ENV DATALAB_VERSION _version_
