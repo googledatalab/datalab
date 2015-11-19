@@ -96,7 +96,7 @@ function lookupUserFromDatastore(userId: string, accessToken: string, cb: common
  * Checks whether a given user has access to this instance of Datalab.
  */
 export function checkUserAccess(userId: string, cb: common.Callback<boolean>) {
-  if (authCache.get(userId)) {
+  if (!appSettings.enableAuth || authCache.get(userId)) {
     process.nextTick(function() {
       cb(null, true);
     });
