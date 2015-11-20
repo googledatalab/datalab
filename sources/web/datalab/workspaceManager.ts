@@ -54,16 +54,19 @@ var callbackManager: callbacks.CallbackManager = new callbacks.CallbackManager()
 /**
  * Calls 'wsync sync' to do an on-demand sync
  */
-function updateWorkspace(userDir: string, repoUrl: string, cb: common.Callback0) {
+function updateWorkspace(userId: string, userDir: string, repoUrl: string, workspaceName: string,
+                         cb: common.Callback0) {
   if (!appSettings.useWorkspace) {
     process.nextTick(function() {
       cb(null);
     });
     return;
   }
-
-  var wsyncSyncCommand = '/wsync/wsync -credential_helper git-credential-gcloud.sh sync' +
-                         ' -file-strategy ours -repo ' + userDir + ' ' + repoUrl;
+  var userName: string = userId.split('@')[0];
+  var wsyncSyncCommand = '/wsync/wsync -credential_helper git-credential-gcloud.sh' + 
+                         ' -username ' + userName + ' -email ' + userId + ' sync' +
+                         ' -file-strategy ours -workdir ' + userDir + ' ' + repoUrl + ' ' +
+                         workspaceName;
   childProcess.exec(wsyncSyncCommand, {env: process.env}, function(err, stdout, stderr) {
     if (err) {
       logging.getLogger().error(err, 'wsync sync failed for dir %s. stderr: %s', userDir, stderr);
@@ -75,7 +78,7 @@ function updateWorkspace(userDir: string, repoUrl: string, cb: common.Callback0)
 /**
  * Initialize workspace for given user, including 'git clone', 'wsync checkout', and 'wsync sync'
  */
-function initializeWorkspace(userDir: string, repoUrl: string, workspaceName: string,
+function initializeWorkspace(userId: string, userDir: string, repoUrl: string, workspaceName: string,
                             branch: string, cb: common.Callback0) {
   var gitCloneCommand = 'git clone -b ' + branch + ' --single-branch ' + repoUrl + ' ' +  userDir;
   childProcess.exec(gitCloneCommand, {env: process.env}, function(err, stdout, stderr) {
@@ -87,7 +90,7 @@ function initializeWorkspace(userDir: string, repoUrl: string, workspaceName: st
 
     // Proceed with 'wsync checkout' command.
     var wsyncCheckoutCommand = '/wsync/wsync -credential_helper git-credential-gcloud.sh checkout' +
-                               ' -repo ' + userDir + ' ' + repoUrl + ' ' + workspaceName;
+                               ' -workdir ' + userDir + ' ' + repoUrl + ' ' + workspaceName;
     childProcess.exec(wsyncCheckoutCommand, {env: process.env}, function(err, stdout, stderr) {
       if (err) {
         logging.getLogger().error(err, 'wsync checkout failed for dir %s. stderr: %s',
@@ -97,7 +100,7 @@ function initializeWorkspace(userDir: string, repoUrl: string, workspaceName: st
       }
 
       // Proceed with 'wsync sync' command.
-      updateWorkspace(userDir, repoUrl, cb);
+      updateWorkspace(userId, userDir, repoUrl, workspaceName, cb);
     });
   });
 }
@@ -144,18 +147,17 @@ export function updateWorkspaceNow(userId: string, cb: common.Callback0) {
   if (!callbackManager.checkOngoingAndRegisterCallback(userId, cb)) {
     return;
   }
-
+  var workspaceName = 'acropolis__' + userId + '__' + branchName;
   if (fs.existsSync(userDir) && fs.readdirSync(userDir).length > 0) {
     userWorkspaceInitialized[userDir] = true;
-    updateWorkspace(userDir, repoUrl, function(e) {
+    updateWorkspace(userId, userDir, repoUrl, workspaceName, function(e) {
       callbackManager.invokeAllCallbacks(userId, e);
     });
     return;
   }
 
   logging.getLogger().info('Initializing workspace for %s.', userId);
-  var workspaceName = 'acropolis__' + userId + '__' + branchName;
-  initializeWorkspace(userDir, repoUrl, workspaceName, branchName, function(e) {
+  initializeWorkspace(userId, userDir, repoUrl, workspaceName, branchName, function(e) {
     if (!e) {
       userWorkspaceInitialized[userDir] = true;
       logging.getLogger().info('Initial sync completed for %s.', userId);
