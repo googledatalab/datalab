@@ -29,8 +29,8 @@ class Query(object):
   """
 
   @staticmethod
-  def sampling_query(sql, context, fields=None, count=5, sampling=None, scripts=None,
-                     external_tables=None):
+  def sampling_query(sql, context, fields=None, count=5, sampling=None, udfs=None,
+                     data_sources=None):
     """Returns a sampling Query for the SQL object.
 
     Args:
@@ -40,14 +40,15 @@ class Query(object):
       count: an optional count of rows to retrieve which is used if a specific
           sampling is not specified.
       sampling: an optional sampling strategy to apply to the table.
-      scripts: array of UDFs referenced in the SQL.
+      udfs: array of UDFs referenced in the SQL.
+      data_sources: dictionary of federated (external) tables referenced in the SQL.
     Returns:
       A Query object for sampling the table.
     """
     return Query(_sampling.Sampling.sampling_query(sql, fields, count, sampling), context=context,
-                 scripts=scripts, data_sources=external_tables)
+                 udfs=udfs, data_sources=data_sources)
 
-  def __init__(self, sql, scripts=None, data_sources=None, context=None, values=None, udfs=None, **kwargs):
+  def __init__(self, sql, context=None, values=None, udfs=None, data_sources=None, **kwargs):
     """Initializes an instance of a Query object.
 
     Args:
@@ -58,14 +59,13 @@ class Query(object):
           It is possible to have variable references in a query string too provided the variables
           are passed as keyword arguments to this constructor.
 
-      scripts: list of UDFs referenced in the SQL.
-      data_sources: dictionary of federated (external) tables referenced in the SQL.
       context: an optional Context object providing project_id and credentials. If a specific
           project id or credentials are unspecified, the default ones configured at the global
           level are used.
       values: a dictionary used to expand variables if passed a SqlStatement or a string with
           variable references.
       udfs: array of UDFs referenced in the SQL.
+      data_sources: dictionary of federated (external) tables referenced in the SQL.
       kwargs: arguments to use when expanding the variables if passed a SqlStatement
           or a string with variable references.
 
@@ -78,6 +78,8 @@ class Query(object):
       context = gcp.Context.default()
     self._context = context
     self._api = _api.Api(context)
+    self._data_sources = data_sources
+    self._udfs = udfs
 
     if data_sources is None:
       data_sources = {}
@@ -332,8 +334,8 @@ class Query(object):
       Exception if the query could not be executed or query response was malformed.
     """
     return Query.sampling_query(self._sql, self._context, count=count, fields=fields,
-                                sampling=sampling, scripts=self._scripts,
-                                external_tables=self._external_tables).results(use_cache=use_cache)
+                                sampling=sampling, udfs=self._udfs,
+                                data_sources=self._data_sources).results(use_cache=use_cache)
 
   def execute_dry_run(self):
     """Dry run a query, to check the validity of the query and return some useful statistics.
