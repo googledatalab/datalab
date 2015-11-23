@@ -96,6 +96,7 @@ function request(host: string, port: number, method: string, path: string,
     if (response.statusCode > 300) {
       var error = util.format('Failed %s %s%s: %d', method, host, path, response.statusCode);
       callback(new Error(error), null);
+      return;
     }
 
     response.setEncoding('utf8');
