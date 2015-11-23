@@ -11,6 +11,7 @@
   "contentDir": "/content",
   "useWorkspace": false,
   "supportUserOverride": false,
+  "configUrl": "https://storage.googleapis.com/cloud-datalab/deploy/version_check_stage.js",
   "jupyterArgs": [
     "notebook",
     "-y",

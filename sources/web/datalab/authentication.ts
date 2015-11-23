@@ -57,37 +57,29 @@ function getAccessTokenFromMetadataServer(cb: common.Callback<string>) {
   }
 }
 
-function lookupUserFromDatastore(userId: string, accessToken: string, cb: common.Callback<boolean>) {
-  var postData: any = {
-    keys: [
-      {
-        path: [
-          {
-            kind: 'DatalabUser',
-            name: userId
-          }
-        ]
-      }
-    ]
-  };
-  var dataStorePath: string = '/datastore/v1beta2/datasets/' + appSettings.projectId + '/lookup';
+function lookupUserFromStorage(userId: string, accessToken: string, cb: common.Callback<boolean>) {
+  var bucketId = appSettings.projectId + '-datalab';
+  var storagePath: string = '/storage/v1/b/' + bucketId + '/o/users%2F' + userId;
   try {
-    httpapi.posts('www.googleapis.com', dataStorePath, null, postData, accessToken, null, function(e: Error, data: any) {
+    httpapi.gets('www.googleapis.com', storagePath, null, accessToken, null, function(e: Error, data: any) {
       if (e) {
-        logging.getLogger().error(e, 'Failed to query Datastore for authentication.');
-        cb && cb(e, null);
+        if (e.message.length >= 3 && e.message.substr(e.message.length - 3) == '404') {
+          // Most of times we cannot tell whether it is a transient error or the object not found,
+          // because they both return 404. But we assume it is caused by the object not exist.
+          cb && cb(null, false);
+        }
+        else {
+          logging.getLogger().error(e, 'Failed to query storage for authentication.');
+          cb && cb(e, false);
+        }
         return;
       }
-      var found: boolean = data && data.found && data.found.length > 0;
-      if (found) {
-        // Add user to cache and set expiration to 10 mintutes.
-        authCache.set(userId, true, 600);
-      }
-      cb && cb(null, found);
+      authCache.set(userId, true, 600);
+      cb && cb(null, true);
     });
   } 
   catch (e) {
-    logging.getLogger().error(e, 'Failed to query Datastore for authentication.');
+    logging.getLogger().error(e, 'Failed to query storage for authentication.');
     cb && cb(e, null);
   }
 }
@@ -107,7 +99,7 @@ export function checkUserAccess(userId: string, cb: common.Callback<boolean>) {
       cb && cb(e, false);
       return;
     }
-    lookupUserFromDatastore(userId, accessToken, cb);
+    lookupUserFromStorage(userId, accessToken, cb);
   });
 }
 

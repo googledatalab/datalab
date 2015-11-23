@@ -283,6 +283,7 @@ function responseHandler(proxyResponse: http.ClientResponse,
       instanceId: appSettings.instanceId,
       instanceName: appSettings.instanceName,
       userId: userManager.getUserId(request),
+      configUrl: appSettings.configUrl,
       baseUrl: '/'
     };
 
