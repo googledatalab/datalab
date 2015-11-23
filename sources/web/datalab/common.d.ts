@@ -43,7 +43,7 @@ declare module common {
     versionId: string;
     instanceId: string;
     analyticsId: string;
-    versionCheckScriptUrl: string;
+    configUrl: string;
     feedbackId: string;
     logEndpoint: string;
 
