@@ -277,3 +277,7 @@ class Schema(list):
       if not self._map[name] == other_map[name]:
         return False
     return True
+
+  def __ne__(self, other):
+    """ Compares two schema for inequality. """
+    return not(self.__eq__(other))
