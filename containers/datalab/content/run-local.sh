@@ -18,6 +18,7 @@
 export DATALAB_ENV=local
 export DATALAB_INSTANCE_NAME=local
 export METADATA_HOST=localhost
+export VERSION_CHECK_SCRIPT_URL=https://storage.googleapis.com/cloud-datalab/deploy/version_check_stage.js
 
 # Setup environment variables.
 . /datalab/setup-env.sh
