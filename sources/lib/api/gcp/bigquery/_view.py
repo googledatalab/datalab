@@ -72,7 +72,7 @@ class View(object):
       return None
     self._table._load_info()
     if 'view' in self._table._info and 'query' in self._table._info['view']:
-      return _query.Query(self._table._info['view']['query'], self._context)
+      return _query.Query(self._table._info['view']['query'], context=self._context)
     return None
 
   def exists(self):
