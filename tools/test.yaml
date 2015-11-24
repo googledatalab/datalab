@@ -1,0 +1,126 @@
+# Copyright 2015 Google Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Each entry should consist of a 'notebook' value with the relative
+# path to the notebook, and optional boolean 'disabled' to disable
+# the test completely, an optional 'ignore' list with the indices of
+# cells whose failure is expected and should not cause the overall
+# test to fail, and an optional 'expect' list of expected cell failures
+# for specific MIME types, useful for if the cell is expected to pass 
+# but one of the MIME output types is problematic.
+
+- notebook: datalab/intro/Introduction to Notebooks.ipynb
+
+- notebook: datalab/intro/Using Datalab - Accessing Cloud Data.ipynb
+  ignore:
+  - 4
+  - 7  # Because the cells are not executed in saved notebook
+
+- notebook: datalab/intro/Using Datalab - Managing Notebooks with Git.ipynb
+
+- notebook: datalab/samples/Anomaly Detection in HTTP Logs.ipynb
+  # These should not be needed but the notebook is out-of-date.
+  expect:
+  - 3/text/html:F
+  - 6/text/html:F
+  - 9/text/html:F
+
+- notebook: datalab/samples/Conversion Analysis with Google Analytics Data.ipynb
+  # These should not be needed but the notebook is out-of-date.
+  expect:
+  - 5/text/html:F
+  - 7/text/html:F
+  - 10/text/html:F
+
+- notebook: datalab/samples/Exploring Genomics Data.ipynb
+  # These should not be needed but the notebook is out-of-date.
+  expect:
+  - 8/text/html:F
+  - 14/text/html:F
+  - 17/text/html:F
+
+- notebook: datalab/samples/Programming Language Correlation.ipynb
+  # These should not be needed but the notebook is out-of-date.
+  expect:
+  - 8/text/html:F
+  - 13/text/html:F
+  # These are subject to changing data.
+  ignore:
+  - 14
+  - 19
+  - 22
+  - 25
+  - 27
+  - 31
+
+- notebook: datalab/tutorials/BigQuery/BigQuery APIs.ipynb
+  # These should not be needed but the notebook is out-of-date.
+  expect:
+  - 4/text/html:F
+  - 7/text/html:F
+  - 13/text/html:F
+  ignore:
+  - 24  # As it is scrubbed in saved notebook.
+
+- notebook: datalab/tutorials/BigQuery/BigQuery Commands.ipynb
+  # These should not be needed but the notebook is out-of-date.
+  expect:
+  - 6/text/html:F
+  - 7/text/html:F
+  - 14/text/html:F
+  - 15/text/html:F
+  - 17/text/html:F
+  - 19/text/html:F
+
+- notebook: datalab/tutorials/BigQuery/Hello BigQuery.ipynb
+  ignore:
+  - 2  # As it is scrubbed in saved notebook.
+
+- notebook: datalab/tutorials/BigQuery/Importing and Exporting Data.ipynb
+  ignore:
+  - 12  # Because output order can vary.
+  - 15  # Because we scrub it.
+  - 18  # Because it has a GCS timestamp that varies.
+
+# This one is currently broken as it defines a module 'requests' that conflicts with requests
+- notebook: datalab/tutorials/BigQuery/SQL and Pandas DataFrames.ipynb
+  disabled: true
+
+- notebook: datalab/tutorials/BigQuery/SQL Parameters.ipynb
+  # These should not be needed but the notebook is out-of-date.
+  expect:
+  - 2/text/html:F
+  - 3/text/html:F
+  - 7/text/html:F
+  - 10/text/html:F
+  - 13/text/html:F
+  - 18/text/html:F
+
+- notebook: datalab/tutorials/BigQuery/SQL Query Composition.ipynb
+  # These should not be needed but the notebook is out-of-date.
+  expect:
+  - 4/text/html:F
+  - 5/text/html:F
+  - 8/text/html:F
+  - 15/text/html:F
+
+- notebook: datalab/tutorials/Data/Interactive Charts with Google Charting APIs.ipynb
+
+- notebook: datalab/tutorials/Storage/Storage APIs.ipynb
+  ignore:
+  - 4  # As it is scrubbed
+
+- notebook: datalab/tutorials/Storage/Storage Commands.ipynb
+  disabled: true  # This notebook is very out-of-date
+
