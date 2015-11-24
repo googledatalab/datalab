@@ -27,7 +27,6 @@ COMMIT_SUBSTITUTION="s/_commit_/$COMMIT/"
 cat Dockerfile.in | sed $VERSION_SUBSTITUTION | sed $COMMIT_SUBSTITUTION > Dockerfile
 echo "RUN pip install -U requests==2.8.1" >> Dockerfile
 echo "RUN pip install -U vcrpy==1.7.4" >> Dockerfile
-echo "ADD build/tests /tests" >> Dockerfile
 
 # Temp fix until vcrpy gets this: https://github.com/kevin1024/vcrpy/pull/223/files
 echo "RUN mv /usr/local/lib/python2.7/dist-packages/vcr/stubs/requests_stubs.py /tmp/stubs.py" >> Dockerfile
