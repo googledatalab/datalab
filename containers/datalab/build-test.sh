@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Builds the Google Cloud DataLab docker image
+# Builds the Google Cloud DataLab docker image with vcrpy and urllib
+# added.
+#
 
 # Create a versioned Dockerfile based on current date and git commit hash
 VERSION=`date +%Y%m%d`
@@ -23,6 +25,12 @@ COMMIT=`git log --pretty=format:'%H' -n 1`
 COMMIT_SUBSTITUTION="s/_commit_/$COMMIT/"
 
 cat Dockerfile.in | sed $VERSION_SUBSTITUTION | sed $COMMIT_SUBSTITUTION > Dockerfile
+echo "RUN pip install -U requests==2.8.1" >> Dockerfile
+echo "RUN pip install -U vcrpy==1.7.4" >> Dockerfile
+
+# Temp fix until vcrpy gets this: https://github.com/kevin1024/vcrpy/pull/223/files
+echo "RUN mv /usr/local/lib/python2.7/dist-packages/vcr/stubs/requests_stubs.py /tmp/stubs.py" >> Dockerfile
+echo "RUN sed 's/requests.packages.urllib3/urllib3/' < /tmp/stubs.py > /usr/local/lib/python2.7/dist-packages/vcr/stubs/requests_stubs.py" >> Dockerfile
 
 # Copy build outputs as a dependency of the Dockerfile
 rsync -avp ../../build/ build
@@ -31,8 +39,9 @@ rsync -avp ../../build/ build
 cp ../../tools/test.js build/web/static/extensions/
 
 # Build the docker image
-docker build -t datalab .
+docker build -t datalab-test .
 
 # Finally cleanup
 rm -rf build
 rm Dockerfile
+
