@@ -70,7 +70,7 @@ RUN pip install -U \
 # Setup Workspace-Sync
 RUN mkdir -p /wsync && \
     cd /wsync && \
-    wget -nv https://storage.googleapis.com/cloud-datalab/deploy/wsync/20151118/wsync && \
+    wget -nv https://storage.googleapis.com/cloud-datalab/deploy/wsync/20151125/wsync && \
     chmod u+r,g+x /wsync/* && cd /
 
 # Container configuration
