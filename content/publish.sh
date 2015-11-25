@@ -14,9 +14,13 @@
 # limitations under the License.
 
 # Publishes content files to Google Cloud Storage as publicly accessible content.
-
 # Synchronize content from the repository content directory to the
 # cloud within gs://cloud-datalab/content
+
+# First delete all content because rsync may not always override destination objects.
+gsutil -m rm -r -f gs://cloud-datalab/content
+
+# Now copy all contents over.
 # Add -n to dry-run to validate when making any change to this.
 gsutil -m rsync -r -d -x publish.sh $REPO_DIR/content gs://cloud-datalab/content
 
