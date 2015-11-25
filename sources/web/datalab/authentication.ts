@@ -59,7 +59,9 @@ function getAccessTokenFromMetadataServer(cb: common.Callback<string>) {
 
 function lookupUserFromStorage(userId: string, accessToken: string, cb: common.Callback<boolean>) {
   var bucketId = appSettings.projectId + '-datalab';
-  var storagePath: string = '/storage/v1/b/' + bucketId + '/o/users%2F' + userId;
+  // For some reasons the email from deployer is all lower cased when creating the GCS object,
+  // so we lower case the userId here to match the path.
+  var storagePath: string = '/storage/v1/b/' + bucketId + '/o/users%2F' + userId.toLowerCase();
   try {
     httpapi.gets('www.googleapis.com', storagePath, null, accessToken, null, function(e: Error, data: any) {
       if (e) {
