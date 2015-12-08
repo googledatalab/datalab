@@ -54,6 +54,15 @@ class TestCases(unittest.TestCase):
     # Mock API for getting item metadata.
     mock_api_objects_get.side_effect = self._mock_api_objects_get()
 
+    items = gcp.datalab._storage._expand_list(None)
+    self.assertEqual([], items)
+
+    items = gcp.datalab._storage._expand_list([])
+    self.assertEqual([], items)
+
+    items = gcp.datalab._storage._expand_list('gs://bar/o*')
+    self.assertEqual(['gs://bar/object1', 'gs://bar/object3'], items)
+
     items = gcp.datalab._storage._expand_list(['gs://foo', 'gs://bar'])
     self.assertEqual(['gs://foo', 'gs://bar'], items)
 
