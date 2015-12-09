@@ -123,7 +123,9 @@ def _expand_list(names):
     Currently we support wildchars in the key name only.
   """
 
-  if isinstance(names, basestring):
+  if names is None:
+    names = []
+  elif isinstance(names, basestring):
     names = [names]
 
   results = []  # The expanded list.
