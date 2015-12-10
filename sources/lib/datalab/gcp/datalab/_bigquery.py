@@ -61,7 +61,7 @@ def _create_dry_run_subparser(parser):
   dry_run_parser = parser.subcommand('dryrun',
       'Execute a dry run of a BigQuery query and display approximate usage statistics')
   dry_run_parser.add_argument('-q', '--query',
-                             help='The name of the query to be dry run')
+                              help='The name of the query to be dry run')
   dry_run_parser.add_argument('-v', '--verbose',
                               help='Show the expanded SQL that is being executed',
                               action='store_true')
@@ -78,9 +78,8 @@ def _create_execute_subparser(parser):
                               choices=['create', 'append', 'overwrite'])
   execute_parser.add_argument('-l', '--large', help='Whether to allow large results',
                               action='store_true')
-  execute_parser.add_argument('-q', '--query', help='The name of query to run',
-                              nargs='?')
-  execute_parser.add_argument('-t', '--target', help='target table name', nargs='?')
+  execute_parser.add_argument('-q', '--query', help='The name of query to run')
+  execute_parser.add_argument('-t', '--target', help='target table name')
   execute_parser.add_argument('-v', '--verbose',
                               help='Show the expanded SQL that is being executed',
                               action='store_true')
@@ -184,32 +183,40 @@ def _create_load_subparser(parser):
   return load_parser
 
 
-def _get_query_argument(args, config, env):
+def _get_query_argument(args, cell, env):
   """ Get a query argument to a cell magic.
 
   The query is specified with args['query']. We look that up and if it is a BQ query
   just return it. If it is instead a SqlModule or SqlStatement it may have variable
   references. We resolve those using the arg parser for the SqlModule, then override
-  the resulting defaults with either the Python code in config, or the dictionary in
+  the resulting defaults with either the Python code in cell, or the dictionary in
   overrides. The latter is for if the overrides are specified with YAML or JSON and
   eventually we should eliminate code in favor of this.
 
   Args:
     args: the dictionary of magic arguments.
-    config: the cell contents which can be variable value overrides.
+    cell: the cell contents which can be variable value overrides (if args has a 'query'
+        value) or inline SQL otherwise.
     env: a dictionary that is used for looking up variable values.
   Returns:
     A Query object.
   """
-  sql_arg = args['query']
+  sql_arg = args.get('query', None)
+  if sql_arg is None:
+    # Assume we have inline SQL in the cell
+    if not isinstance(cell, basestring):
+      raise Exception('Expected a --query argument or inline SQL')
+    return gcp.bigquery.Query(cell, values=env)
+
   item = _get_notebook_item(sql_arg)
   if isinstance(item, gcp.bigquery.Query):  # Queries are already expanded.
     return item
 
   # Create an expanded BQ Query.
+  env = _utils.parse_config(cell, env)
   item, env = gcp.data.SqlModule.get_sql_statement_with_environment(item, env)
-  if config:
-    env.update(config)
+  if cell:
+    env.update(cell)
   return gcp.bigquery.Query(item, values=env)
 
 
@@ -230,8 +237,7 @@ def _sample_cell(args, cell_body):
   view = None
 
   if args['query']:
-    config = _utils.parse_config(cell_body, env)
-    query = _get_query_argument(args, config, env)
+    query = _get_query_argument(args, cell_body, env)
   elif args['table']:
     table = _get_table(args['table'])
   elif args['view']:
@@ -270,22 +276,20 @@ def _sample_cell(args, cell_body):
   return results
 
 
-def _dryrun_cell(args, config):
+def _dryrun_cell(args, cell_body):
   """Implements the BigQuery cell magic used to dry run BQ queries.
 
    The supported syntax is:
-   %%bigquery dryrun -q|--sql <query identifier>
-   <config>
+   %%bigquery dryrun [-q|--sql <query identifier>]
+   [<YAML or JSON cell_body or inline SQL>]
 
   Args:
     args: the argument following '%bigquery dryrun'.
-    config: optional contents of the cell interpreted as YAML or JSON.
+    cell_body: optional contents of the cell interpreted as YAML or JSON.
   Returns:
     The response wrapped in a DryRunStats object
   """
-  env = _notebook_environment()
-  config = _utils.parse_config(config, env)
-  query = _get_query_argument(args, config, env)
+  query = _get_query_argument(args, cell_body, _notebook_environment())
 
   if args['verbose']:
     print query.sql
@@ -362,38 +366,36 @@ def _udf_cell(args, js):
   _notebook_environment()[variable_name] = udf
 
 
-def _execute_cell(args, config):
+def _execute_cell(args, cell_body):
   """Implements the BigQuery cell magic used to execute BQ queries.
 
    The supported syntax is:
-   %%bigquery execute -q|--sql <query identifier> <other args>
-   <config>
+   %%bigquery execute [-q|--sql <query identifier>] <other args>
+   [<YAML or JSON cell_body or inline SQL>]
 
   Args:
     args: the arguments following '%bigquery execute'.
-    config: optional contents of the cell interpreted as YAML or JSON.
+    cell_body: optional contents of the cell interpreted as YAML or JSON.
   Returns:
     The QueryResultsTable
   """
-  env = _notebook_environment()
-  config = _utils.parse_config(config, env)
-  query = _get_query_argument(args, config, env)
+  query = _get_query_argument(args, cell_body, _notebook_environment())
   if args['verbose']:
     print query.sql
   return query.execute(args['target'], table_mode=args['mode'], use_cache=not args['nocache'],
                        allow_large_results=args['large']).results
 
 
-def _pipeline_cell(args, config):
+def _pipeline_cell(args, cell_body):
   """Implements the BigQuery cell magic used to validate, execute or deploy BQ pipelines.
 
    The supported syntax is:
-   %%bigquery pipeline -q|--sql <query identifier> <other args> <action>
-   <config>
+   %%bigquery pipeline [-q|--sql <query identifier>] <other args> <action>
+   [<YAML or JSON cell_body or inline SQL>]
 
   Args:
     args: the arguments following '%bigquery pipeline'.
-    config: optional contents of the cell interpreted as YAML or JSON.
+    cell_body: optional contents of the cell interpreted as YAML or JSON.
   Returns:
     The QueryResultsTable
   """
@@ -405,8 +407,7 @@ def _pipeline_cell(args, config):
     if isinstance(value, gcp.bigquery._udf.FunctionCall):
       env[key] = value
 
-  config = _utils.parse_config(config, env)
-  query = _get_query_argument(args, config, env)
+  query = _get_query_argument(args, cell_body, env)
   if args['verbose']:
     print query.sql
   if args['action'] == 'dryrun':
