@@ -322,7 +322,15 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
         }
         else {
           this.element.addClass('completed');
-          this.element.find('div.status').remove();
+          var status = this.element.find('div.status');
+          if (status) {
+            status.remove();
+          }
+        }
+      } else {
+        var status = this.element.find('div.status');
+        if (status) {
+          status.remove();
         }
       }
     }
