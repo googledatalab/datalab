@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="/static/components/codemirror/lib/codemirror.css" />
   <link rel="stylesheet" href="/static/style/style.min.css" type="text/css" />
   <link rel="stylesheet" href="/static/style/custom.css" type="text/css" />
+  <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/2.5-latest/MathJax.js?config=TeX-AMS_HTML-full,Safe&delayStartupUntil=configured" charset="utf-8"></script>
+
 </head>
 <body class="notebook_app"
   data-project=""
@@ -202,7 +204,7 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="/static/components/requirejs/require.js"></script>
   <script>
-    window.mathjax_url = '';
+    window.mathjax_url = "https://cdn.mathjax.org/mathjax/2.5-latest/MathJax.js";
     window.sys_info = {};
     require.config({
       baseUrl: '/static/',

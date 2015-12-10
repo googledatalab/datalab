@@ -16,7 +16,6 @@
     "notebook",
     "-y",
     "--no-browser",
-    "--no-mathjax",
     "--log-level=DEBUG",
     "--debug",
     "--NotebookApp.allow_origin=\"*\"",

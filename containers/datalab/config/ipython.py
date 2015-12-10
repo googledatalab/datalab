@@ -29,3 +29,5 @@ c.InteractiveShellApp.exec_lines = []
 # Enable matplotlib renderings to show up inline in the notebook.
 c.InteractiveShellApp.matplotlib = 'inline'
 
+c.NotebookApp.mathjax_url = 'https://cdn.mathjax.org/mathjax/latest/MathJax.js';
+
