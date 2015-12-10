@@ -73,7 +73,7 @@ class QueryJob(_job.Job):
     while not self._is_complete:
       try:
         query_result = self._api.jobs_query_results(self._job_id,
-                                                    project_id=self._table.name.project_id,
+                                                    project_id=self._context.project_id,
                                                     page_size=0,
                                                     timeout=poll * 1000)
       except Exception as e:
