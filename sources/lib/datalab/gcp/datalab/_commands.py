@@ -26,9 +26,9 @@ class CommandParser(argparse.ArgumentParser):
     self._subcommands = None
 
   @staticmethod
-  def create(name):
+  def create(name, **kwargs):
     """Creates a CommandParser for a specific magic. """
-    return CommandParser(prog=name)
+    return CommandParser(prog=name, **kwargs)
 
   def exit(self, status=0, message=None):
     """Overridden exit method to stop parsing without calling sys.exit(). """
@@ -69,8 +69,11 @@ class CommandParser(argparse.ArgumentParser):
         print e.message
       return None
 
-  def subcommand(self, name, help):
+  def subcommand(self, name, help, description=None, formatter=None):
     """Creates a parser for a sub-command. """
+    if not formatter:
+      formatter = argparse.HelpFormatter
     if self._subcommands is None:
       self._subcommands = self.add_subparsers(help='commands')
-    return self._subcommands.add_parser(name, help=help)
+    return self._subcommands.add_parser(name, help=help, description=description,
+                                        formatter_class=formatter)

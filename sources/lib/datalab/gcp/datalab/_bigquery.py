@@ -27,10 +27,10 @@ import _utils
 
 
 def _create_sample_subparser(parser):
-  sample_parser = parser.subcommand('sample',
-      'Display a sample of the results of a BigQuery SQL query.\n' +
-      'The cell can optionally contain arguments for expanding variables in the query,\n' +
-      'if -q/--query was used, or it can contain SQL for a query.')
+  sample_parser = parser.subcommand('sample', """
+Display a sample of the results of a BigQuery SQL query. The cell can optionally contain arguments for expanding
+variables in the query, if -q/--query was used, or it can contain SQL for a query.
+""", formatter=_utils.PagerHelpFormatter)
   group = sample_parser.add_mutually_exclusive_group()
   group.add_argument('-q', '--query', help='the name of the query to sample')
   group.add_argument('-t', '--table', help='the name of the table to sample')
@@ -52,14 +52,16 @@ def _create_sample_subparser(parser):
 
 
 def _create_udf_subparser(parser):
-  udf_parser = parser.subcommand('udf', 'Create a named Javascript BigQuery UDF')
+  udf_parser = parser.subcommand('udf', 'Create a named Javascript BigQuery UDF',
+                                 formatter=_utils.PagerHelpFormatter)
   udf_parser.add_argument('-m', '--module', help='The name for this UDF')
   return udf_parser
 
 
 def _create_dry_run_subparser(parser):
   dry_run_parser = parser.subcommand('dryrun',
-      'Execute a dry run of a BigQuery query and display approximate usage statistics')
+      'Execute a dry run of a BigQuery query and display approximate usage statistics',
+                                     formatter=_utils.PagerHelpFormatter)
   dry_run_parser.add_argument('-q', '--query',
                              help='The name of the query to be dry run')
   dry_run_parser.add_argument('-v', '--verbose',
@@ -69,9 +71,10 @@ def _create_dry_run_subparser(parser):
 
 
 def _create_execute_subparser(parser):
-  execute_parser = parser.subcommand('execute',
-      'Execute a BigQuery SQL query and optionally send the results to a named table.\n' +
-      'The cell can optionally contain arguments for expanding variables in the query.')
+  execute_parser = parser.subcommand('execute', """
+Execute a BigQuery SQL query and optionally send the results to a named table. The cell can optionally contain
+arguments for expanding variables in the query.
+""", formatter=_utils.PagerHelpFormatter)
   execute_parser.add_argument('-nc', '--nocache', help='Don\'t used previously cached results',
                               action='store_true')
   execute_parser.add_argument('-m', '--mode', help='The table creation mode', default='create',
@@ -88,9 +91,10 @@ def _create_execute_subparser(parser):
 
 
 def _create_pipeline_subparser(parser):
-  pipeline_parser = parser.subcommand('pipeline',
-      'Define a deployable pipeline based on a BigQuery query.\n' +
-      'The cell can optionally contain arguments for expanding variables in the query.')
+  pipeline_parser = parser.subcommand('pipeline', """
+Define a deployable pipeline based on a BigQuery query. The cell can optionally contain arguments for expanding
+variables in the query.
+""", formatter=_utils.PagerHelpFormatter)
   pipeline_parser.add_argument('-n', '--name', help='The pipeline name')
   pipeline_parser.add_argument('-nc', '--nocache', help='Don\'t used previously cached results',
                                action='store_true')
@@ -112,7 +116,8 @@ def _create_pipeline_subparser(parser):
 
 
 def _create_table_subparser(parser):
-  table_parser = parser.subcommand('table', 'View a BigQuery table.')
+  table_parser = parser.subcommand('table', 'View a BigQuery table.',
+                                   formatter=_utils.PagerHelpFormatter)
   table_parser.add_argument('-r', '--rows', type=int, default=25,
                             help='Rows to display per page')
   table_parser.add_argument('-c', '--cols',
@@ -122,7 +127,8 @@ def _create_table_subparser(parser):
 
 
 def _create_schema_subparser(parser):
-  schema_parser = parser.subcommand('schema', 'View a BigQuery table or view schema.')
+  schema_parser = parser.subcommand('schema', 'View a BigQuery table or view schema.',
+                                    formatter=_utils.PagerHelpFormatter)
   group = schema_parser.add_mutually_exclusive_group()
   group.add_argument('-v', '--view', help='the name of the view whose schema should be displayed')
   group.add_argument('-t', '--table', help='the name of the table whose schema should be displayed')
@@ -130,14 +136,16 @@ def _create_schema_subparser(parser):
 
 
 def _create_datasets_subparser(parser):
-  datasets_parser = parser.subcommand('datasets', 'List the datasets in a BigQuery project.')
+  datasets_parser = parser.subcommand('datasets', 'List the datasets in a BigQuery project.',
+                                      formatter=_utils.PagerHelpFormatter)
   datasets_parser.add_argument('-p', '--project',
                                help='The project whose datasets should be listed')
   return datasets_parser
 
 
 def _create_tables_subparser(parser):
-  tables_parser = parser.subcommand('tables', 'List the tables in a BigQuery project or dataset.')
+  tables_parser = parser.subcommand('tables', 'List the tables in a BigQuery project or dataset.',
+                                    formatter=_utils.PagerHelpFormatter)
   tables_parser.add_argument('-p', '--project',
                              help='The project whose tables should be listed')
   tables_parser.add_argument('-d', '--dataset',
@@ -146,7 +154,8 @@ def _create_tables_subparser(parser):
 
 
 def _create_extract_subparser(parser):
-  extract_parser = parser.subcommand('extract', 'Extract BigQuery query results or table to GCS.')
+  extract_parser = parser.subcommand('extract', 'Extract BigQuery query results or table to GCS.',
+                                     formatter=_utils.PagerHelpFormatter)
   extract_parser.add_argument('-f', '--format', choices=['csv', 'json'], default='csv',
                               help='The format to use for the export')
   extract_parser.add_argument('-c', '--compress', action='store_true',
@@ -161,7 +170,8 @@ def _create_extract_subparser(parser):
 
 
 def _create_load_subparser(parser):
-  load_parser = parser.subcommand('load', 'Load data from GCS into a BigQuery table.')
+  load_parser = parser.subcommand('load', 'Load data from GCS into a BigQuery table.',
+                                  formatter=_utils.PagerHelpFormatter)
   load_parser.add_argument('-m', '--mode', help='One of create (default), append or overwrite',
                            choices=['create', 'append', 'overwrite'], default='create')
   load_parser.add_argument('-f', '--format', help='The source format', choices=['json', 'csv'],
@@ -651,6 +661,7 @@ def _add_command(parser, subparser_fn, handler, cell_required=False, cell_prohib
   sub_parser = subparser_fn(parser)
   sub_parser.set_defaults(func=lambda args, cell: _dispatch_handler(args, cell, sub_parser, handler,
                           cell_required=cell_required, cell_prohibited=cell_prohibited))
+  _utils.redirect_parser_help(sub_parser)
 
 
 def _create_bigquery_parser():
@@ -664,7 +675,8 @@ def _create_bigquery_parser():
   parser = _commands.CommandParser(prog='bigquery', description="""
 Execute various BigQuery-related operations. Use "%bigquery <command> -h"
 for help on a specific command.
-  """)
+  """, formatter_class=_utils.PagerHelpFormatter)
+  _utils.redirect_parser_help(parser)
 
   # This is a bit kludgy because we want to handle some line magics and some cell magics
   # with the bigquery command.

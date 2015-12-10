@@ -12,6 +12,7 @@
 
 """Utility functions."""
 
+import argparse
 import json
 import pandas
 import sys
@@ -26,6 +27,29 @@ try:
   import IPython
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
+
+
+def _print_help(self, file=None):
+  """ Replacement argparse help printer that sends help to the pager. """
+  help = self.format_help()
+  if file:
+    self._print_message(help, file)
+  else:
+    IPython.core.page.page(help)
+
+
+def redirect_parser_help(argparser):
+  """ Confifures the supplied argparser to send help to pager. """
+  argparser.print_help = types.MethodType(_print_help, argparser)
+
+
+class PagerHelpFormatter(argparse.RawDescriptionHelpFormatter):
+  """ Replacement formatter. Currently just overrides default width to 120. """
+  def __init__(self, prog, indent_increment=2, max_help_position=24, width=120):
+    super(argparse.RawDescriptionHelpFormatter, self).__init__(prog,
+                                                               indent_increment=indent_increment,
+                                                               max_help_position=max_help_position,
+                                                               width=120)
 
 
 def get_field_list(fields, schema):

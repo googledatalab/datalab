@@ -24,7 +24,7 @@ import _utils
 def pymodule(line, cell=None):
   """Creates and subsequently auto-imports a python module.
   """
-  parser = _commands.CommandParser.create('pymodule')
+  parser = _commands.CommandParser.create('pymodule', formatter_class=_utils.PagerHelpFormatter)
   parser.add_argument('-n', '--name',
                       help='the name of the python module to create and import')
   parser.set_defaults(func=_pymodule_cell)

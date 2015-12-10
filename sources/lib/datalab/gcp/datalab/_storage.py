@@ -40,7 +40,8 @@ def storage(line):
   parser = _commands.CommandParser(prog='storage', description="""
 Execute various storage-related operations. Use "%storage <command> -h"
 for help on a specific command.
-""")
+""", formatter_class=_utils.PagerHelpFormatter)
+  _utils.redirect_parser_help(parser)
 
   # TODO(gram): consider adding a move command too. I did try this already using the
   # objects.patch API to change the object name but that fails with an error:
@@ -51,26 +52,30 @@ for help on a specific command.
   # This is despite 'name' being identified as writable in the storage API docs.
   # The alternative would be to use a copy/delete.
   copy_parser = parser.subcommand('copy',
-                                  'Copy one or more GCS objects to a different location.')
+                                  'Copy one or more GCS objects to a different location.',
+                                  formatter=_utils.PagerHelpFormatter)
   copy_parser.add_argument('-s', '--source', help='The name of the object(s) to copy', nargs='+')
   copy_parser.add_argument('-d', '--destination', required=True,
       help='The copy destination. For multiple source items this must be a bucket.')
   copy_parser.set_defaults(func=_storage_copy)
 
-  create_parser = parser.subcommand('create', 'Create one or more GCS buckets.')
+  create_parser = parser.subcommand('create', 'Create one or more GCS buckets.',
+                                    formatter=_utils.PagerHelpFormatter)
   create_parser.add_argument('-p', '--project', help='The project associated with the objects')
   create_parser.add_argument('-b', '--bucket', help='The name of the bucket(s) to create',
                              nargs='+')
   create_parser.set_defaults(func=_storage_create)
 
-  delete_parser = parser.subcommand('delete', 'Delete one or more GCS buckets or objects.')
+  delete_parser = parser.subcommand('delete', 'Delete one or more GCS buckets or objects.',
+                                    formatter=_utils.PagerHelpFormatter)
   delete_parser.add_argument('-b', '--bucket', nargs='*',
                              help='The name of the bucket(s) to remove')
   delete_parser.add_argument('-o', '--object', nargs='*',
                              help='The name of the object(s) to remove')
   delete_parser.set_defaults(func=_storage_delete)
 
-  list_parser = parser.subcommand('list', 'List buckets in a project, or contents of a bucket.')
+  list_parser = parser.subcommand('list', 'List buckets in a project, or contents of a bucket.',
+                                  formatter=_utils.PagerHelpFormatter)
   list_parser.add_argument('-p', '--project', help='The project associated with the objects')
   group = list_parser.add_mutually_exclusive_group()
   group.add_argument('-o', '--object',
@@ -82,14 +87,16 @@ for help on a specific command.
   list_parser.set_defaults(func=_storage_list)
 
   read_parser = parser.subcommand('read',
-                                  'Read the contents of a storage object into a Python variable.')
+                                  'Read the contents of a storage object into a Python variable.',
+                                  formatter=_utils.PagerHelpFormatter)
   read_parser.add_argument('-o', '--object', help='The name of the object to read',
                            required=True)
   read_parser.add_argument('-v', '--variable', required=True,
                            help='The name of the Python variable to set')
   read_parser.set_defaults(func=_storage_read)
 
-  view_parser = parser.subcommand('view', 'View the contents of a storage object.')
+  view_parser = parser.subcommand('view', 'View the contents of a storage object.',
+                                  formatter=_utils.PagerHelpFormatter)
   view_parser.add_argument('-n', '--head', type=int, default=20,
                            help='The number of initial lines to view')
   view_parser.add_argument('-t', '--tail', type=int, default=20,
@@ -99,12 +106,17 @@ for help on a specific command.
   view_parser.set_defaults(func=_storage_view)
 
   write_parser = parser.subcommand('write',
-                                   'Write the value of a Python variable to a storage object.')
+                                   'Write the value of a Python variable to a storage object.',
+                                   formatter=_utils.PagerHelpFormatter)
   write_parser.add_argument('-v', '--variable', help='The name of the source Python variable',
                             required=True)
   write_parser.add_argument('-o', '--object', required=True,
                             help='The name of the destination GCS object to write')
   write_parser.set_defaults(func=_storage_write)
+
+  for subparser in [copy_parser, create_parser, delete_parser, list_parser, read_parser,
+                    view_parser, write_parser]:
+    _utils.redirect_parser_help(subparser)
 
   return _utils.handle_magic_line(line, None, parser)
 
