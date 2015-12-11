@@ -44,3 +44,34 @@ th.gchart-table-headercell, table.dataframe th {
 div.bqgc img {
   max-width: none; // Fix the conflict with maps and Bootstrap that messes up zoom controls.
 }
+.gchart-slider {
+  width: 80%;
+  float: left;
+}
+.gchart-slider-value {
+  text-align: center;
+  float: left;
+  width: 20%;
+}
+.gchart-control {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.gchart-controls {
+  font-size: 14px;
+  color: #333333;	 
+  background: #f4f4f4;
+  padding: 10px;
+  width: 180px;
+  float: left;
+}
+.bqgc {
+  padding: 0;
+  max-width: 100%;
+}
+.bqgc-controlled {
+  margin-left: 190px;
+}
+.bqgc-container {
+  display: block;
+}

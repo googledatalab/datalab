@@ -28,6 +28,18 @@ except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
 
+def notebook_environment():
+  """ Get the IPython user namespace. """
+  ipy = IPython.get_ipython()
+  return ipy.user_ns
+
+
+def get_notebook_item(name):
+  """ Get an item from the IPython environment. """
+  env = notebook_environment()
+  return gcp._util.get_item(env, name)
+
+
 def get_field_list(fields, schema):
   """ Convert a field list spec into a real list of field names.
 
@@ -121,7 +133,7 @@ def _get_data_from_table(source, fields='*', first_row=0, count=-1):
   return {'cols': _get_cols(fields, schema), 'rows': rows}, source.length
 
 
-def get_data(source, fields='*', first_row=0, count=-1):
+def get_data(source, fields='*', env={}, first_row=0, count=-1):
   """ A utility function to get a subset of data from a Table, Query, Pandas dataframe or List.
 
   Args:
@@ -129,6 +141,8 @@ def get_data(source, fields='*', first_row=0, count=-1):
         lists, or a string, in which case it is expected to be the name of a table in BQ.
     fields: a list of fields that we want to return as a list of strings, comma-separated string,
         or '*' for all.
+    env: if the data source is a Query module, this is the set of variable overrides fori
+        parameterizing the Query.
     first_row: the index of the first row to return; default 0. Onl;y used if count is non-negative.
     count: the number or rows to return. If negative (the default), return all rows.
 
@@ -149,7 +163,7 @@ def get_data(source, fields='*', first_row=0, count=-1):
       source = gcp.bigquery.Table(source)
 
   if isinstance(source, types.ModuleType) or isinstance(source, gcp.data.SqlStatement):
-    source = gcp.bigquery.Query(source)
+    source = gcp.bigquery.Query(source, values=env)
 
   if isinstance(source, list):
     if len(source) == 0:
