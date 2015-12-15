@@ -46,10 +46,11 @@ Queries can refer to variables with '$<name>', as well as refer to other queries
 within the same module, making it easy to compose nested queries and test their
 parts.
 
-The Python code defining the variable default values can assign scalar values to
-variables, or one of the two special functions 'datestring' and 'source'. When a
-variable with a datestring default is expanded it will expand to a formatted string
-based on the current date, while a 'source' default will expand to a table whose
+The Python code defining the variable default values can assign scalar or list/tuple values to
+variables, or one of the special functions 'datestring' and 'source'.
+
+When a variable with a 'datestring' default is expanded it will expand to a formatted
+string based on the current date, while a 'source' default will expand to a table whose
 name is based on the current date.
 
 datestring() takes two named arguments, 'format' and 'offset'. The former is a
@@ -240,6 +241,11 @@ def _arguments(code, module):
       elif isinstance(val, basestring) or isinstance(val, int) or isinstance(val, float) \
           or isinstance(val, long):
         arg_parser.add_argument(key, default=val)
+      elif isinstance(val, list):
+        arg_parser.add_argument(key, default=val, nargs='+')
+      elif isinstance(val, tuple):
+        arg_parser.add_argument(key, default=list(val), nargs='+')
+
       # Is this one of our pseudo-types for dates/tables?
       elif isinstance(val, dict) and 'type' in val:
         if val['type'] == 'datestring':
