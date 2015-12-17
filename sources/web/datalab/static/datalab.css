@@ -115,14 +115,13 @@ body {
 #mainToolbar, #sidebarToolbar {
   line-height: 48px;
   vertical-align: middle;
-  min-height: 48px;
+  height: 48px;
   color: #444;
   background-color: #f3f3f3;
   padding-left: 10px;
   padding-right: 10px;
   padding-top: 2px;
   border-bottom: solid 1px #e6e6e6;
-  overflow: auto;
 }
 #updateMessageArea {
   display: none;
@@ -130,6 +129,7 @@ body {
 }
 #mainContent, #sidebarContent {
   overflow: auto;
+  position: absolute;
   top: 48px;
   left: 0px;
   right: 0px;
@@ -138,7 +138,6 @@ body {
 #sidebarContent {
   color: #000;
   padding: 10px 20px;
-  position: absolute;
 }
 .container {
   min-width: 200px;
