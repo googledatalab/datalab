@@ -25,6 +25,7 @@ except ImportError:
 # Import the modules that do cell magics
 import _bigquery
 import _chart
+import _extension
 import _modules
 import _sql
 import _storage
