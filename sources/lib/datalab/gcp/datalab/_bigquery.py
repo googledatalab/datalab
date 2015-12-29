@@ -834,7 +834,7 @@ def _table_viewer(table, rows_per_page=25, fields=None):
                                fields=','.join(fields),
                                total_rows=total_count,
                                rows_per_page=rows_per_page,
-                               data=json.dumps(data, cls=gcp._util.JSONEncoder))
+                               data=json.dumps(data, ensure_ascii=False, cls=gcp._util.JSONEncoder))
 
 
 def _repr_html_query(query):
