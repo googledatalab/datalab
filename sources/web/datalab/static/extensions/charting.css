@@ -41,3 +41,6 @@ td.gchart-table-rownumcell, table.dataframe tr th {
 th.gchart-table-headercell, table.dataframe th {
   border: solid 1px #cfcfcf;
 }
+div.bqgc img {
+  max-width: none; // Fix the conflict with maps and Bootstrap that messes up zoom controls.
+}
