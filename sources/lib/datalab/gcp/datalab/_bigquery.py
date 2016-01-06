@@ -778,7 +778,7 @@ def _table_viewer(table, rows_per_page=25, fields=None):
   if not table.exists():
     raise Exception('%s does not exist' % str(table))
 
-  _HTML_TEMPLATE = """
+  _HTML_TEMPLATE = u"""
     <div class="bqtv" id="{div_id}">{static_table}</div>
     <br />{meta_data}<br />
     <script>
@@ -834,7 +834,7 @@ def _table_viewer(table, rows_per_page=25, fields=None):
                                fields=','.join(fields),
                                total_rows=total_count,
                                rows_per_page=rows_per_page,
-                               data=json.dumps(data, ensure_ascii=False, cls=gcp._util.JSONEncoder))
+                               data=json.dumps(data, cls=gcp._util.JSONEncoder))
 
 
 def _repr_html_query(query):
