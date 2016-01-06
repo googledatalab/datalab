@@ -54,7 +54,7 @@ def _chart_cell(args, cell):
     chart_options = {}
   fields = args['fields'] if args['fields'] else '*'
 
-  _HTML_TEMPLATE = """
+  _HTML_TEMPLATE = u"""
     <div class="bqgc" id="%s">
     </div>
     <script>
@@ -73,7 +73,7 @@ def _chart_cell(args, cell):
   return IPython.core.display.HTML(
     _HTML_TEMPLATE % (div_id, div_id, chart_type, _utils.get_data_source_index(source), fields,
                       json.dumps(chart_options, cls=gcp._util.JSONEncoder),
-                      json.dumps(data, ensure_ascii=False, cls=gcp._util.JSONEncoder)))
+                      json.dumps(data, cls=gcp._util.JSONEncoder)))
 
 
 @IPython.core.magic.register_line_magic
@@ -89,4 +89,4 @@ def _get_chart_data(line):
     gcp._util.print_exception_with_last_stack(e)
     data = {}
 
-  return IPython.core.display.JSON(json.dumps({'data': data}, ensure_ascii=False, cls=gcp._util.JSONEncoder))
+  return IPython.core.display.JSON(json.dumps({'data': data}, cls=gcp._util.JSONEncoder))
