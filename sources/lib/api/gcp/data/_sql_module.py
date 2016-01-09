@@ -92,7 +92,7 @@ class SqlModule(object):
     elif not isinstance(item, _sql_statement.SqlStatement):
       item = SqlModule.get_default_query_from_module(item)
       if not item:
-        raise Exception('Expected a SQL statement or module')
+        raise Exception('Expected a SQL statement or module but got %s' % str(item))
 
     env = {}
     if item.module:
