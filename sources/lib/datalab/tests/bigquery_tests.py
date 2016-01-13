@@ -34,7 +34,7 @@ import gcp.datalab
 
 class TestCases(unittest.TestCase):
 
-  @mock.patch('gcp.datalab._bigquery._notebook_environment')
+  @mock.patch('gcp.datalab._utils.notebook_environment')
   @mock.patch('gcp._context.Context.default')
   def test_udf_cell(self, mock_default_context, mock_notebook_environment):
     env = {}
