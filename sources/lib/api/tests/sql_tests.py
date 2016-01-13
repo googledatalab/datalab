@@ -139,6 +139,16 @@ class TestCases(unittest.TestCase):
     e = error.exception
     self.assertEqual(e.message, 'Unsatisfied dependency $status')
 
+  def test_invalid_args(self):
+    query = 'SELECT time FROM [logs.today] WHERE status == $0'
+
+    with self.assertRaises(Exception) as error:
+      _ = SqlStatement.format(query, {})
+
+    e = error.exception
+    self.assertEqual(e.message,
+        'Invalid sql; $ with no following $ or identifier: ' + query + '.')
+
   def test_nested_queries(self):
     query1 = SqlStatement('SELECT 3 as x')
     query2 = SqlStatement('SELECT x FROM $query1')
