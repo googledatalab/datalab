@@ -102,22 +102,27 @@ class Api(object):
           'createDisposition': 'CREATE_IF_NEEDED' if create else 'CREATE_NEVER',
           'writeDisposition': write_disposition,
           'sourceFormat': source_format,
-          'fieldDelimiter': field_delimiter,
-          'allowJaggedRows': allow_jagged_rows,
-          'allowQuotedNewlines': allow_quoted_newlines,
-          'encoding': encoding,
           'ignoreUnknownValues': ignore_unknown_values,
           'maxBadRecords': max_bad_records,
-          'quote': quote,
-          'skipLeadingRows': skip_leading_rows
         }
       }
     }
+    if source_format == 'CSV':
+      load_config = data['configuration']['load']
+      load_config.update({
+        'fieldDelimiter': field_delimiter,
+        'allowJaggedRows': allow_jagged_rows,
+        'allowQuotedNewlines': allow_quoted_newlines,
+        'quote': quote,
+        'encoding': encoding,
+        'skipLeadingRows': skip_leading_rows
+      })
+
     return gcp._util.Http.request(url, data=data, credentials=self._credentials)
 
-  def jobs_insert_query(self, sql, code=None, imports=None, table_name=None, append=False, overwrite=False,
-                        dry_run=False, use_cache=True, batch=True, allow_large_results=False,
-                        table_definitions=None):
+  def jobs_insert_query(self, sql, code=None, imports=None, table_name=None, append=False,
+                        overwrite=False, dry_run=False, use_cache=True, batch=True,
+                        allow_large_results=False, table_definitions=None):
     """Issues a request to insert a query job.
 
     Args:
