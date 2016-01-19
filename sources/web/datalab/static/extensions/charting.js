@@ -213,11 +213,18 @@ define("extensions/charting", function () {
     // TODO: hook into the notebook UI to enable/disable 'Running...' while we
     // fetch more data.
     if (!model.cellElement) {
-      model.cellElement = getCell(model).element;
+      var cell = getCell(model);
+      if (cell) {
+        model.cellElement = cell.element;
+      }
     }
-    model.cellElement.removeClass('completed');
+    if (model.cellElement) {
+      model.cellElement.removeClass('completed');
+    }
     datalab.session.execute(code, function (error, newData) {
-      model.cellElement.addClass('completed');
+      if (model.cellElement) {
+        model.cellElement.addClass('completed');
+      }
       if (error) {
         onError(model.visualization, model.dom, error);
       } else {
@@ -264,7 +271,9 @@ define("extensions/charting", function () {
   }
 
   function getCell(model) {
-    // Get the associated cell
+    if (!model.hasIPython) {
+      return undefined;
+    }
     var cells = IPython.notebook.get_cells();
     for (var cellindex in cells) {
       var cell = cells[cellindex];
@@ -294,6 +303,32 @@ define("extensions/charting", function () {
         if (output.output_type == 'display_data') {
           cell.output_area.outputs.splice(outputindex, 1);
           return;
+        }
+      }
+    } else {
+      // Not running under IPython; use a different approach and just clear the DOM.
+      // Iterate through the IPython outputs...
+      var outputDivs = document.getElementsByClassName('output_wrapper');
+      if (outputDivs) {
+        for (var i = 0; i < outputDivs.length; i++) {
+          // ...and any chart outputs in each...
+          var chartDivs = outputDivs[i].getElementsByClassName('bqgc');
+          if (chartDivs) {
+            for (var j = 0; j < chartDivs.length; j++) {
+              // ...until we find the chart div ID we want...
+              if (chartDivs[j].id == model.dom.id) {
+                // ...then get any PNG outputs in that same output group...
+                var pngDivs = outputDivs[i].getElementsByClassName('output_png');
+                if (pngDivs) {
+                  for (var k = 0; k < pngDivs.length; k++) {
+                    // ... and clear their contents.
+                    pngDivs[k].innerHTML = '';
+                  }
+                }
+                return;
+              }
+            }
+          }
         }
       }
     }
@@ -327,6 +362,15 @@ define("extensions/charting", function () {
        p.innerHTML = '<br>(Truncated to first page of results)';
        dom.parentNode.insertBefore(p, dom.nextSibling);
     }
+
+    model.hasIPython = false;
+    try {
+      if (IPython) {
+        model.hasIPython = true;
+      }
+    } catch(e) {
+    }
+
     var chartInfo = chartMap[model.chartStyle];
     var chartScript = chartInfo.script || 'corechart';
     dom.innerHTML = '';
@@ -358,14 +402,18 @@ define("extensions/charting", function () {
           var count = parseInt(id.substring(split + 1));
           var base = id.substring(0, split + 1);
           for (var j = 0; j < count; j++) {
-            document.getElementById(base + j).addEventListener('change', controlHandler);
+            var control = document.getElementById(base + j);
+            control.disabled = !model.hasIPython;
+            control.addEventListener('change', controlHandler);
           }
           continue;
         }
         // See if we have an associated control that needs dual binding.
         var control = document.getElementById(id);
+        control.disabled = !model.hasIPython;
         var textControl = document.getElementById(id + '_value');
         if (textControl) {
+          textControl.disabled = !model.hasIPython;
           textControl.addEventListener('change', function() {
             if (control.value != textControl.value) {
               control.value = textControl.value;

@@ -93,7 +93,7 @@ def _chart_cell(args, cell):
         for i, choice in enumerate(choices):
           choices_html += "<option value=\"%s\" %s>%s</option>" % \
               (choice, ("selected=\"selected\"" if choice == value else ''), choice)
-        control_html = "{label}<select id=\"{id}\">{choices}</select>"\
+        control_html = "{label}<select disabled id=\"{id}\">{choices}</select>"\
             .format(label=label, id=control_id, choices=choices_html)
       elif type == 'set':  # Multi-picker; implemented as checkboxes.
         # TODO(gram): consider using "name" property of the control to group checkboxes. That
@@ -114,7 +114,7 @@ def _chart_cell(args, cell):
           choices_html += """
             <div>
               <label>
-                <input type="checkbox" id="{id}" value="{choice}" {checked}>
+                <input type="checkbox" id="{id}" value="{choice}" {checked} disabled>
                 {choice}
               </label>
             </div>
@@ -123,7 +123,7 @@ def _chart_cell(args, cell):
       elif type == 'checkbox':
         control_html = """
               <label>
-                <input type="checkbox" id="{id}" {checked}>
+                <input type="checkbox" id="{id}" {checked} disabled>
                 {label}
               </label>
           """.format(label=label, id=control_id, checked="checked" if value else '')
@@ -140,14 +140,14 @@ def _chart_cell(args, cell):
           value = min
         control_html = """
           {label}
-          <input type="text" class="gchart-slider_value" id="{id}_value" value="{value}"/>
+          <input type="text" class="gchart-slider_value" id="{id}_value" value="{value}" disabled/>
           <input type="range" class="gchart-slider" id="{id}" min="{min}" max="{max}" step="{step}"
-              value="{value}"/>
+              value="{value}" disabled/>
         """.format(label=label, id=control_id, value=value, min=min, max=max, step=step)
       elif type == 'textbox':
         if value is None:
           value = ''
-        control_html = "{label}<input type=\"text\" value=\"{value}\" id=\"{id}\"/>"\
+        control_html = "{label}<input type=\"text\" value=\"{value}\" id=\"{id}\" disabled/>"\
             .format(label=label, value=value, id=control_id)
       else:
         raise Exception(
