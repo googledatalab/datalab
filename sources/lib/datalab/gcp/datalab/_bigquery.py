@@ -803,7 +803,7 @@ def _table_viewer(table, rows_per_page=25, fields=None):
     meta_cost = ''
     meta_time = ''
 
-  data, total_count = _utils.get_data(table, fields, 0, rows_per_page)
+  data, total_count = _utils.get_data(table, fields, first_row=0, count=rows_per_page)
 
   if total_count < 0:
     # The table doesn't have a length metadata property but may still be small if we fetched less
