@@ -220,13 +220,6 @@ class TestCases(unittest.TestCase):
     mock_api_tables_insert.return_value = {'selfLink': 'http://foo'}
     self.assertIsNotNone(self._create_table_with_schema(schema), 'Expected a table')
 
-  @mock.patch('gcp.bigquery._api.Api.tables_list')
-  def test_tables_schema_from_dataframe(self, mock_api_tables_list):
-    mock_api_tables_list.return_value = []
-    df = self._create_data_frame()
-    result = gcp.bigquery.Schema.from_data(df)
-    self.assertEqual(gcp.bigquery.Schema.from_data(self._create_inferred_schema()), result)
-
   @mock.patch('uuid.uuid4')
   @mock.patch('time.sleep')
   @mock.patch('gcp.bigquery._api.Api.tables_list')
