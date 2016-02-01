@@ -77,8 +77,7 @@ class TestCases(unittest.TestCase):
     api.jobs_insert_load('SOURCE2', gcp.bigquery._utils.TableName('p2', 'd2', 't2', ''),
                          append=True, create=True, allow_jagged_rows=True,
                          allow_quoted_newlines=True, ignore_unknown_values=True,
-                         source_format='JSON', max_bad_records=1, skip_leading_rows=2,
-                         encoding='ASCII', quote="'")
+                         source_format='JSON', max_bad_records=1)
     expected_data = {
       'kind': 'bigquery#job',
       'configuration': {
@@ -92,14 +91,8 @@ class TestCases(unittest.TestCase):
           'createDisposition': 'CREATE_IF_NEEDED',
           'writeDisposition': 'WRITE_APPEND',
           'sourceFormat': 'JSON',
-          'fieldDelimiter': ',',
-          'allowJaggedRows': True,
-          'allowQuotedNewlines': True,
-          'encoding': 'ASCII',
           'ignoreUnknownValues': True,
-          'maxBadRecords': 1,
-          'quote': "'",
-          'skipLeadingRows': 2
+          'maxBadRecords': 1
         }
       }
     }
