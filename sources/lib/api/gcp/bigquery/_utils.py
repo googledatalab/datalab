@@ -17,8 +17,23 @@ import re
 
 
 DataSetName = collections.namedtuple('DataSetName', ['project_id', 'dataset_id'])
+""" A namedtuple for DataSet names.
+
+  Args:
+    project_id: the project id for the dataset.
+    dataset_id: the dataset id for the dataset.
+"""
+
 TableName = collections.namedtuple('TableName',
                                    ['project_id', 'dataset_id', 'table_id', 'decorator'])
+""" A namedtuple for Table names.
+
+  Args:
+    project_id: the project id for the table.
+    dataset_id: the dataset id for the table.
+    table_id: the table id for the table.
+    decorator: the optional decorator for the table (for windowing/snap-shotting).
+"""
 
 # Absolute project-qualified name pattern: <project>:<dataset>
 _ABS_DATASET_NAME_PATTERN = r'^([a-z\d\-_\.:]+)\:(\w+)$'

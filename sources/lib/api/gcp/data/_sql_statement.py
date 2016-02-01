@@ -54,7 +54,7 @@ class SqlStatement(object):
 
   @property
   def module(self):
-    """ The parent SqlModule for the SqlStatrement, if any. """
+    """ The parent SqlModule for the SqlStatement, if any. """
     return self._module
 
   @staticmethod

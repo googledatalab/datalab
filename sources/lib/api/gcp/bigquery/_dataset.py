@@ -220,7 +220,7 @@ class DataSet(object):
 
 
 class DataSets(object):
-  """ Helper class for enumerating the datasets in a project. """
+  """ Iterator class for enumerating the datasets in a project. """
 
   def __init__(self, project_id=None, context=None):
     """ Initialize the DataSetLister.
