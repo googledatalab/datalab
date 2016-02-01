@@ -289,10 +289,10 @@ def _split_cell(cell, module):
   define_wild_re = re.compile('^DEFINE\s+.*$', re.IGNORECASE)
   define_re = re.compile('^DEFINE\s+QUERY\s+([A-Z]\w*)\s*?(.*)$', re.IGNORECASE)
   select_re = re.compile('^SELECT\s*.*$', re.IGNORECASE)
+  # TODO(gram): a potential issue with this code is if we have leading Python code followed
+  # by a SQL-style comment before we see SELECT/DEFINE. When switching to the tokenizer see
+  # if we can address this.
   for i, line in enumerate(lines):
-    # Strip comment lines; doing this here means we can allow comments in SQL QUERY sections too.
-    if len(line) and line[0] == '#':
-      continue
     define_match = define_re.match(line)
     select_match = select_re.match(line)
     if select_match and i:
@@ -310,8 +310,7 @@ def _split_cell(cell, module):
       elif last_def >= 0:
 
         # This is not the first query, so gather the previous query text.
-        query = '\n'.join([line for line in lines[last_def:i] if len(line) and line[0] != '#']) \
-          .strip()
+        query = '\n'.join([line for line in lines[last_def:i] if len(line)]).strip()
         if select_match and name != gcp.data.SqlModule._SQL_MODULE_MAIN and len(query) == 0:
           # Avoid DEFINE query name\nSELECT ... being seen as an empty DEFINE followed by SELECT
           continue
@@ -338,7 +337,7 @@ def _split_cell(cell, module):
 
   if last_def >= 0:
     # We were in a query so save this tail query.
-    query = '\n'.join([line for line in lines[last_def:] if len(line) and line[0] != '#']).strip()
+    query = '\n'.join([line for line in lines[last_def:] if len(line)]).strip()
     statement = gcp.data.SqlStatement(query, module)
     module.__dict__[name] = statement
     module.__dict__[gcp.data.SqlModule._SQL_MODULE_LAST] = statement
