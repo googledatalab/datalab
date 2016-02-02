@@ -208,15 +208,15 @@ def _get_query_argument(args, cell, env):
       raise Exception('Expected a --query argument or inline SQL')
     return gcp.bigquery.Query(cell, values=env)
 
-  item = _get_notebook_item(sql_arg)
+  item = _utils.get_notebook_item(sql_arg)
   if isinstance(item, gcp.bigquery.Query):  # Queries are already expanded.
     return item
 
   # Create an expanded BQ Query.
-  env = _utils.parse_config(cell, env)
-  item, env = gcp.data.SqlModule.get_sql_statement_with_environment(item, env)
+  config = _utils.parse_config(cell, env)
+  item, env = gcp.data.SqlModule.get_sql_statement_with_environment(item, config)
   if cell:
-    env.update(cell)
+    env.update(config)  # config is both a fallback and an override.
   return gcp.bigquery.Query(item, values=env)
 
 
