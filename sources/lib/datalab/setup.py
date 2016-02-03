@@ -23,6 +23,7 @@ setup(
   description='Google Cloud DataLab',
   requires=[
     'IPython',
-    'GCPData'
+    'GCPData',
+    'pandas'
   ]
 )

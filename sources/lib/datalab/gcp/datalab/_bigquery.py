@@ -14,7 +14,6 @@
 
 import json
 import re
-import types
 import IPython
 import IPython.core.display
 import IPython.core.magic
@@ -307,7 +306,6 @@ def _udf_cell(args, js):
 
   Args:
     args: the optional arguments following '%%bigquery udf'.
-    declaration: the variable to initialize with the resulting UDF object.
     js: the UDF declaration (inputs and outputs) and implementation in javascript.
   Returns:
     The results of executing the UDF converted to a dataframe if no variable
@@ -404,7 +402,7 @@ def _pipeline_cell(args, cell_body):
 
   env = {}
   for key, value in _utils.notebook_environment().iteritems():
-    if isinstance(value, gcp.bigquery._udf.FunctionCall):
+    if isinstance(value, gcp.bigquery._udf.UDF):
       env[key] = value
 
   query = _get_query_argument(args, cell_body, env)
@@ -623,14 +621,15 @@ def _load_cell(args, schema):
   # TODO(gram): we should probably try do the schema infer ourselves as BQ doesn't really seem
   # to be able to do it. Alternatively we can drop the --infer argument and force the user
   # to use a pre-existing table or supply a JSON schema.
+  csv_options = gcp.bigquery.CSVOptions(delimiter=args['delimiter'],
+                                        skip_leading_rows=args['skip'],
+                                        allow_jagged_rows=not args['strict'],
+                                        quote=args['quote'])
   job = table.load(args['source'],
                    mode=args['mode'],
                    source_format=('CSV' if args['format'] == 'csv' else 'NEWLINE_DELIMITED_JSON'),
-                   csv_delimiter=args['delimiter'],
-                   csv_skip_header_rows=args['skip'],
-                   allow_jagged_rows=not args['strict'],
-                   ignore_unknown_values=not args['strict'],
-                   quote=args['quote'])
+                   csv_options=csv_options,
+                   ignore_unknown_values=not args['strict'])
   if job.failed:
     raise Exception('Load failed: %s' % str(job.fatal_error))
   elif job.errors:
@@ -704,17 +703,24 @@ _bigquery_parser = _create_bigquery_parser()
 def bigquery(line, cell=None):
   """Implements the bigquery cell magic for ipython notebooks.
 
-  The supported syntax is:
+    The supported syntax is:
 
-    %%bigquery <command> [<args>]
-    <cell>
+      %%bigquery <command> [<args>]
+      <cell>
 
-  or:
+    or:
 
-    %bigquery <command> [<args>]
+      %bigquery <command> [<args>]
 
-  Use %bigquery --help for a list of commands, or %bigquery <command> --help for help
-  on a specific command.
+    Use %bigquery --help for a list of commands, or %bigquery <command> --help for help
+    on a specific command.
+
+  Args:
+    line: the magic line.
+    cell: the body of the notebook cell.
+
+  Returns:
+    The result of processing the magic.
   """
   namespace = {}
   if line.find('$') >= 0:
