@@ -41,8 +41,6 @@ RUN wget -nv https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.zip && \
     tools/google-cloud-sdk/install.sh --usage-reporting=false \
         --path-update=false --bash-completion=false \
         --disable-installation-options && \
-    tools/google-cloud-sdk/bin/gcloud config set --scope=installation \
-        component_manager/fixed_sdk_version 0.9.57 && \
     tools/google-cloud-sdk/bin/gcloud -q components update \
         gcloud core bq gsutil compute preview alpha beta && \
     rm -rf /root/.config/gcloud
