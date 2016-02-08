@@ -35,7 +35,11 @@ def notebook_environment():
 
 
 def get_notebook_item(name):
-  """ Get an item from the IPython environment. """
+  """ Get an item from the IPython environment.
+
+  Args:
+    name: the name of the item.
+  """
   env = notebook_environment()
   return gcp._util.get_item(env, name)
 
@@ -45,6 +49,10 @@ def get_field_list(fields, schema):
 
       For tables, we return only the top-level non-RECORD fields as Google charts
       can't handle nested data.
+
+  Args:
+    fields: a list of field names, or string with comma-separated names, or '*' for all.
+    schema: the table schema (used to expand '*').
   """
   # If the fields weren't supplied get them from the schema.
   if isinstance(fields, list):
@@ -57,7 +65,12 @@ def get_field_list(fields, schema):
 
 
 def _get_cols(fields, schema):
-  """ Get column metadata for Google Charts based on field list and schema. """
+  """ Get column metadata for Google Charts based on field list and schema.
+
+  Args:
+    fields: a list of field names.
+    schema: the schema of the data.
+  """
   typemap = {
     'STRING': 'string',
     'INTEGER': 'number',
@@ -133,7 +146,7 @@ def _get_data_from_table(source, fields='*', first_row=0, count=-1):
   return {'cols': _get_cols(fields, schema), 'rows': rows}, source.length
 
 
-def get_data(source, fields='*', env={}, first_row=0, count=-1):
+def get_data(source, fields='*', env=None, first_row=0, count=-1):
   """ A utility function to get a subset of data from a Table, Query, Pandas dataframe or List.
 
   Args:
@@ -141,7 +154,7 @@ def get_data(source, fields='*', env={}, first_row=0, count=-1):
         lists, or a string, in which case it is expected to be the name of a table in BQ.
     fields: a list of fields that we want to return as a list of strings, comma-separated string,
         or '*' for all.
-    env: if the data source is a Query module, this is the set of variable overrides fori
+    env: if the data source is a Query module, this is the set of variable overrides for
         parameterizing the Query.
     first_row: the index of the first row to return; default 0. Onl;y used if count is non-negative.
     count: the number or rows to return. If negative (the default), return all rows.
@@ -156,6 +169,8 @@ def get_data(source, fields='*', env={}, first_row=0, count=-1):
     Exception if the request could not be fulfilled.
   """
 
+  if env is None:
+    env = {}
   if isinstance(source, basestring):
     ipy = IPython.get_ipython()
     source = gcp._util.get_item(ipy.user_ns, source, source)
@@ -185,7 +200,14 @@ def get_data(source, fields='*', env={}, first_row=0, count=-1):
 
 
 def handle_magic_line(line, cell, parser, namespace=None):
-  """ Helper function for handling magic command lines given a parser with handlers set. """
+  """ Helper function for handling magic command lines given a parser with handlers set.
+
+  Args:
+    line: the magic line.
+    cell: the magic cell body.
+    parser: the magic command parser.
+    namespace: a dictionary used for metavariable expansion.
+  """
   args = parser.parse(line, namespace)
   if args:
     try:
@@ -221,6 +243,10 @@ def parse_config(config, env):
   """ Parse a config from a magic cell body. This could be JSON or YAML. We turn it into
       a Python dictionary then recursively replace any variable references using the supplied
       env dictionary.
+
+  Args:
+    config: the cell contents.
+    env: the dictionary used for variable replacement.
   """
   def expand_var(v, env):
     if len(v) == 0:

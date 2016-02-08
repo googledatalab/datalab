@@ -23,6 +23,10 @@ import _utils
 @IPython.core.magic.register_line_cell_magic
 def pymodule(line, cell=None):
   """Creates and subsequently auto-imports a python module.
+
+  Args:
+    line: the magic line.
+    cell: the cell body.
   """
   parser = _commands.CommandParser.create('pymodule')
   parser.add_argument('-n', '--name',

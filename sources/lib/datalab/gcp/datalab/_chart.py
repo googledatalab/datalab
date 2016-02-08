@@ -25,7 +25,12 @@ import _utils
 
 @IPython.core.magic.register_line_cell_magic
 def chart(line, cell=None):
-  """ Generate charts with Google Charts. Use %chart --help for more details. """
+  """ Generate charts with Google Charts. Use %chart --help for more details.
+
+  Args:
+    line: the %chart magic line.
+    cell: the contents of the cell. Can contain YAML chart options.
+  """
   parser = _commands.CommandParser(prog='%%chart', description="""
 Generate an inline chart using Google Charts using the data in a Table, Query, dataframe, or list.
 Numerous types of charts are supported. Options for the charts can be specified in the cell body

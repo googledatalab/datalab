@@ -42,11 +42,18 @@ class Html(object):
 
   def add_class(self, class_name):
     """Adds a CSS class to be generated on the output HTML.
+
+    Args:
+      class_name: the name of the CSS class.
     """
     self._class = class_name
 
   def add_dependency(self, path, name):
     """Adds a script dependency to be loaded before any script is executed.
+
+    Args:
+      path: the path passed to require() for the script.
+      name: the argument used for the script module in the require() callback.
     """
     self._dependencies.append((path, name))
 
