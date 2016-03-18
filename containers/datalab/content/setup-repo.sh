@@ -22,7 +22,7 @@ git config --global push.default matching
 
 create_branch ( ) {
   REPOURL="https://source.developers.google.com/p/$DATALAB_PROJECT_ID/"
-  git ls-remote --heads $REPOURL 2>&1 | grep "refs/heads/$1" > /dev/null
+  git ls-remote --heads $REPOURL 2>&1 | grep "refs/heads/$1$" > /dev/null
   if [ $? != "0" ]; then
     BRANCHDIR="$1_branch"
     echo "creating $1 branch"
