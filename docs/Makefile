@@ -194,9 +194,9 @@ pseudoxml:
 publish:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	cd ../gh-pages/html
-        touch .nojekyll
+	touch .nojekyll
 	git add .
-        git commit -m "Updated"
-        git push -u origin gh-pages
+	git commit -m "Updated"
+	git push -u origin gh-pages
 
  
