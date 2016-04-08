@@ -26,10 +26,13 @@ cat Dockerfile.in | sed $VERSION_SUBSTITUTION | sed $COMMIT_SUBSTITUTION > Docke
 
 # Copy build outputs as a dependency of the Dockerfile
 rsync -avp ../../build/ build
+rsync -avp ../../content/datalab/ notebooks
 
 # Build the docker image
 docker build -t datalab .
 
 # Finally cleanup
 rm -rf build
+rm -rf notebooks
 rm Dockerfile
+

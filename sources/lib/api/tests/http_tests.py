@@ -10,14 +10,13 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+import mock
 import unittest
 
 # The httplib2 import is implicitly used when mocking its functionality.
 # pylint: disable=unused-import
 from gcp._util._http import Http
 from gcp._util._http import httplib2
-
-import mock
 
 
 class TestCases(unittest.TestCase):

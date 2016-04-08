@@ -13,6 +13,7 @@
 """Implements Job functionality for async tasks."""
 
 import concurrent.futures
+import datetime
 import time
 import traceback
 import uuid
@@ -49,12 +50,17 @@ class Job(object):
       job_id: a unique ID for the job. If None, a UUID will be generated.
       future: the Future associated with the Job, if any.
     """
-    self._job_id = uuid.uuid4() if job_id is None else job_id
+    self._job_id = str(uuid.uuid4()) if job_id is None else job_id
     self._future = future
     self._is_complete = False
     self._errors = None
     self._fatal_error = None
     self._result = None
+    self._start_time = datetime.datetime.utcnow()
+    self._end_time = None
+
+  def __str__(self):
+    return self._job_id
 
   @property
   def id(self):
@@ -121,6 +127,23 @@ class Job(object):
       raise self._fatal_error
     return self._result
 
+  @property
+  def start_time_utc(self):
+    """ The UTC start time of the job as a Python datetime. """
+    return self._start_time
+
+  @property
+  def end_time_utc(self):
+    """ The UTC end time of the job (or None if incomplete) as a Python datetime. """
+    return self._end_time
+
+  @property
+  def total_time(self):
+    """ The total time in fractional seconds that the job took, or None if not complete. """
+    if self._end_time is None:
+      return None
+    return (self._end_time - self._start_time).total_seconds()
+
   def _refresh_state(self):
     """ Get the state of a job. Must be overridden by derived Job classes
         for Jobs that don't use a Future.
@@ -133,14 +156,16 @@ class Job(object):
 
     if self._future.done():
       self._is_complete = True
+      self._end_time = datetime.datetime.utcnow()
       try:
         self._result = self._future.result()
       except Exception as e:
-        self._fatal_error = JobError(location=traceback.format_exc(), message=e.message,
+        message = e.message if e.message else e.strerror
+        self._fatal_error = JobError(location=traceback.format_exc(), message=message,
                                      reason=str(type(e)))
 
   def _timeout(self):
-    """ Helper for rasing timeout errors. """
+    """ Helper for raising timeout errors. """
     raise concurrent.futures.TimeoutError('Timed out waiting for Job %s to complete' % self._job_id)
 
   def wait(self, timeout=None):
@@ -158,6 +183,7 @@ class Job(object):
         self._future.exception(timeout)
       except concurrent.futures.TimeoutError:
         self._timeout()
+      self._refresh_state()
     else:
       # fall back to polling
       while not self.is_complete:
@@ -168,8 +194,12 @@ class Job(object):
         time.sleep(Job._POLL_INTERVAL_SECONDS)
     return self
 
-  def __repr__(self):
-    """ Get the notebook representation for the job. """
+  @property
+  def state(self):
+    """ Describe the state of a Job.
+
+    Returns: A string describing the job's state.
+    """
     state = 'in progress'
     if self.is_complete:
       if self.failed:
@@ -178,7 +208,11 @@ class Job(object):
         state = 'completed with some non-fatal errors'
       else:
         state = 'completed'
-    return 'Job %s %s' % (self._job_id, state)
+    return state
+
+  def __repr__(self):
+    """ Get the notebook representation for the job. """
+    return 'Job %s %s' % (self._job_id, self.state)
 
   @staticmethod
   def _wait(jobs, timeout, return_when):

@@ -12,10 +12,15 @@
 
 """Implementation of various module magics"""
 
+try:
+  import IPython
+  import IPython.core.magic
+except ImportError:
+  raise Exception('This module can only be loaded in ipython.')
+
 import sys
 import types
-import IPython
-import IPython.core.magic
+
 import _commands
 import _utils
 
@@ -23,10 +28,6 @@ import _utils
 @IPython.core.magic.register_line_cell_magic
 def pymodule(line, cell=None):
   """Creates and subsequently auto-imports a python module.
-
-  Args:
-    line: the magic line.
-    cell: the cell body.
   """
   parser = _commands.CommandParser.create('pymodule')
   parser.add_argument('-n', '--name',

@@ -13,10 +13,12 @@
  */
 
 /// <reference path="../../../externs/ts/node/node.d.ts" />
+/// <reference path="../../../externs/ts/request/request.d.ts" />
+/// <reference path="../../../externs/ts/googleapis/googleapis.d.ts" />
 /// <reference path="common.d.ts" />
 
-import auth = require('./authentication');
 import fs = require('fs');
+import google = require('googleapis');
 import health = require('./health');
 import http = require('http');
 import info = require('./info');
@@ -24,16 +26,36 @@ import jupyter = require('./jupyter');
 import logging = require('./logging');
 import net = require('net');
 import path = require('path');
-import sockets = require('./sockets');
-import static = require('./static');
+import request = require('request');
+import static_ = require('./static');
+import updateDocs = require('./updateDocs');
 import url = require('url');
 import userManager = require('./userManager');
-import workspaceManager = require('./workspaceManager');
 
 var server: http.Server;
 var healthHandler: http.RequestHandler;
 var infoHandler: http.RequestHandler;
 var staticHandler: http.RequestHandler;
+
+var oauth2Client: any = undefined;
+var tokenExpiry: any = undefined;
+
+// These are the gcloud credentials and are not actually secret.
+let clientId = '32555940559.apps.googleusercontent.com';
+let clientSecret = 'ZmssLNjJy2998hD4CTg2ejr2';
+
+let scopes = [
+  'https://www.googleapis.com/auth/userinfo.email',
+  'https://www.googleapis.com/auth/cloud-platform',
+  // TODO: remove the following once 'cloud-platform' is sufficient.
+  'https://www.googleapis.com/auth/appengine.admin',
+  'https://www.googleapis.com/auth/compute'  // needed by autoscaler
+];
+
+// Datalab config file for things like default project. If this doesn't exist the EULA hasn't been accepted.
+let configFile = '/notebooks/.datalabconfig';
+
+let tokensFile = '/datalab/tokens.json';  // Where we store credentials.
 
 /**
  * The application settings instance.
@@ -42,22 +64,14 @@ var appSettings: common.Settings;
 
 /**
  * If it is the user's first request since the web server restarts,
- * need to initialize workspace, and start jupyter server for that user.
- * We don't track results here. Later requests will go through initializaion
+ * need to start jupyter server for that user.
+ * We don't track results here. Later requests will go through initialization
  * checks again, and if it is still initializing, those requests will be parked
  * and wait for initialization to complete or fail.
  */
 function startInitializationForUser(request: http.ServerRequest): void {
-  var userId = userManager.getUserId(request);
-
-  if (!workspaceManager.isWorkspaceInitialized(userId)) {
-    // Do a sync as early as possible if workspace is not initialized.
-    // Giving null callback so this is fire-and-forget.
-    workspaceManager.updateWorkspaceNow(userId, null);
-  }
-
   if (jupyter.getPort(request) == 0) {
-    // Do a sync as early as possible if workspace is not initialized.
+    var userId = userManager.getUserId(request);
     // Giving null callback so this is fire-and-forget.
     jupyter.startForUser(userId, null);
   }
@@ -70,22 +84,6 @@ function startInitializationForUser(request: http.ServerRequest): void {
  */
 function handleJupyterRequest(request: http.ServerRequest, response: http.ServerResponse): void {
   var userId = userManager.getUserId(request);
-
-  if (!workspaceManager.isWorkspaceInitialized(userId)) {
-    // Workspace is not initialized was not created yet. Initializing it and call self again.
-    // Note that another 'syncNow' may already be ongoing so this 'syncNow' will probably
-    // be parked until the ongoing one is done.
-    workspaceManager.updateWorkspaceNow(userId, function(e) {
-      if (e) {
-        response.statusCode = 500;
-        response.end();
-      }
-      else {
-        handleJupyterRequest(request, response);
-      }
-    });
-    return;
-  }
 
   if (jupyter.getPort(request) == 0) {
     // Jupyter server is not created yet. Creating it for user and call self again.
@@ -103,18 +101,17 @@ function handleJupyterRequest(request: http.ServerRequest, response: http.Server
     return;
   }
   jupyter.handleRequest(request, response);
-  workspaceManager.scheduleWorkspaceUpdate(userId);
 }
 
 /**
- * Handles all requests after being authenticated.
+ * Handles all requests.
  * @param request the incoming HTTP request.
  * @param response the out-going HTTP response.
  * @path the parsed path in the request.
  */
-function handledAuthenticatedRequest(request: http.ServerRequest,
-                                     response: http.ServerResponse,
-                                     path: string) {
+function handleRequest(request: http.ServerRequest,
+                       response: http.ServerResponse,
+                       path: string) {
   // TODO(jupyter): Additional custom path - should go away eventually with replaced
   // pages.
   // /static and /custom paths for returning static content
@@ -127,7 +124,7 @@ function handledAuthenticatedRequest(request: http.ServerRequest,
   // into the log.
   logging.logRequest(request, response);
 
-  // If workspace or jupyter is not initialized, do it as early as possible.
+  // If Jupyter is not initialized, do it as early as possible after authentication.
   startInitializationForUser(request);
 
   // Landing page redirects to /tree to be able to use the Jupyter file list as
@@ -136,7 +133,7 @@ function handledAuthenticatedRequest(request: http.ServerRequest,
     userManager.maybeSetUserIdCookie(request, response);
 
     response.statusCode = 302;
-    response.setHeader('Location', '/tree');
+    response.setHeader('Location', '/tree/datalab');
     response.end();
     return;
   }
@@ -173,6 +170,16 @@ function handledAuthenticatedRequest(request: http.ServerRequest,
   response.end();
 }
 
+function persistCredentials(tokens: any) {
+  // Store the tokens and expiry in a file that kernels can read to cons up an
+  // OAuthCredentials object from.
+  // We use a temp file then rename, as file renaming is atomic on *nix. This can
+  // avoid problems with the file being overwritten while being read.
+  fs.writeFileSync(tokensFile + '.new', JSON.stringify(tokens));
+  fs.renameSync(tokensFile + '.new', tokensFile)
+  tokenExpiry = tokens.expiry_date;
+}
+
 /**
  * Handles all requests sent to the proxy web server. Some requests are handled within
  * the server, while some are proxied to the Jupyter notebook server.
@@ -180,48 +187,102 @@ function handledAuthenticatedRequest(request: http.ServerRequest,
  * @param response the out-going HTTP response.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse) {
-  var path = url.parse(request.url).pathname;
+  var parsed_url = url.parse(request.url, true);
+  var path = parsed_url.pathname;
 
-  // /_ah/* paths implement the AppEngine health check.
-  if (path.indexOf('/_ah') == 0) {
-    healthHandler(request, response);
+  if (path.indexOf('/oauthcallback') == 0) {
+    var query = parsed_url.query;
+    if (query.code) {  // Response to auth request.
+      logging.getLogger().info('Got auth code');
+      oauth2Client.getToken(query.code, function (err:any, tokens:any) {
+        if (err) {
+          response.writeHead(403);
+          response.end();
+        } else {
+          logging.getLogger().info('Got tokens');
+          oauth2Client.setCredentials(tokens);
+          // Push them to Jupyter and handle request.
+          persistCredentials(tokens);
+          response.statusCode = 302;
+          response.setHeader('Location', query.state);
+          response.end();
+        }
+      });
+    }
     return;
   }
 
-  // /ping allows the deployer to validate existence.
-  if (path.indexOf('/ping') == 0) {
-    // TODO: Remove support for CORS once the existence checks move to the deployment server.
-    response.writeHead(200, {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
+  // Check if EULA has been accepted; if not go to EULA page.
+  if (path.indexOf('/accepted_eula') == 0) {
+    fs.writeFileSync(configFile, '');
+    var i = parsed_url.search.indexOf('referer=');
+    if (i < 0) {
+      logging.getLogger().info('Accepting EULA, but no referer; returning 500');
+      response.writeHead(500);
+    } else {
+      i += 8;
+      var referer = decodeURI(parsed_url.search.substring(i));
+      logging.getLogger().info('Accepting EULA; return to ' + referer);
+      response.writeHead (302, {'Location': referer})
+    }
+    response.end();
+    return;
+  }
+  if (!fs.existsSync(configFile)) {
+    logging.getLogger().info('No Datalab config; redirect to EULA page');
+    fs.readFile('/datalab/web/static/eula.html', function(error, content) {
+      response.writeHead(200);
+      response.end(content);
     });
-
-    // Respond with an object to singal availability and identity.
-    var pingResponse = {
-      name: appSettings.instanceName,
-      id: appSettings.instanceId
-    };
-    response.end(JSON.stringify(pingResponse));
     return;
   }
 
-  // Check if user has access.
-  var userId = userManager.getUserId(request);
-  auth.checkUserAccess(userId, function(e, hasAccess) {
-    if (e) {
-      response.statusCode = 500;
-      response.end("Authentication failure.");
-      return;
-    }
-    if (hasAccess) {
-      handledAuthenticatedRequest(request, response, path);
-    }
-    else {
+  if (process.env.DATALAB_ENV == 'local') {
+    if (oauth2Client) {
+      // We have done auth before. Refresh the token if necessary. Tokens normally have a 1 hour lifetime;
+      // we will do a refresh when we are within 5 minutes of expiry.
+      var tokenLife = tokenExpiry ? (tokenExpiry - (new Date()).getTime() - 5 * 60 * 1000) : 0;
+      var needRefresh = tokenLife < 0;
+      if (needRefresh) {
+        logging.getLogger().info('Refreshing access token');
+        oauth2Client.refreshAccessToken(function (err:any, tokens:any, response_:any) {
+          if (err) {
+            logging.getLogger().error('Failed to refresh access token:' + err);
+            response.writeHead(403);
+            response.end();
+          } else {
+            // Push them to Jupyter and handle request.
+            oauth2Client.setCredentials(tokens);
+            persistCredentials(tokens);
+            handleRequest(request, response, path);
+          }
+        });
+      } else {
+        handleRequest(request, response, path);
+      }
+    } else {
+      // First time auth.
+      var OAuth2: any = google.auth.OAuth2;
+      // TODO(gram): can we get the host and port from somewhere instead of hard-coding?
+      oauth2Client = new OAuth2(clientId, clientSecret, 'http://localhost:8081/oauthcallback');
+      var url_: string = oauth2Client.generateAuthUrl({
+        access_type: 'offline', // 'offline' gets refresh_token
+        scope: scopes,
+        state: request.url
+      });
       response.statusCode = 302;
-      response.setHeader('Location', auth.getAuthenticationUrl(request));
+      response.setHeader('Location', url_);
       response.end();
     }
-  });  
+  } else {
+    // Not local; just handle it.
+    handleRequest(request, response, path);
+  }
+}
+
+
+function socketHandler(request: http.ServerRequest, socket: net.Socket, head: Buffer) {
+  jupyter.handleSocket(request, socket, head);
 }
 
 /**
@@ -231,16 +292,15 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
 export function run(settings: common.Settings): void {
   appSettings = settings;
   userManager.init(settings);
-  workspaceManager.init(settings);
   jupyter.init(settings);
-  auth.init(settings);
+  updateDocs.startUpdate(settings);
 
   healthHandler = health.createHandler(settings);
   infoHandler = info.createHandler(settings);
-  staticHandler = static.createHandler(settings);
+  staticHandler = static_.createHandler(settings);
 
   server = http.createServer(requestHandler);
-  sockets.wrapServer(server);
+  server.on('upgrade', socketHandler);
 
   logging.getLogger().info('Starting DataLab server at http://localhost:%d',
                            settings.serverPort);

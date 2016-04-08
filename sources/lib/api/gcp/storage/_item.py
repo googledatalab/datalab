@@ -13,8 +13,10 @@
 """Implements Object-related Cloud Storage APIs."""
 
 import dateutil.parser
-import gcp
+
 import gcp._util
+import gcp.context
+
 import _api
 
 # TODO(nikhilko): Read/write operations don't account for larger files, or non-textual content.
@@ -74,7 +76,7 @@ class Item(object):
           level are used.
     """
     if context is None:
-      context = gcp.Context.default()
+      context = gcp.context.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._bucket = bucket
@@ -124,7 +126,7 @@ class Item(object):
   def exists(self):
     """ Checks if the item exists. """
     try:
-      return self.metadata() is not None
+      return self.metadata is not None
     except gcp._util.RequestException:
       return False
     except Exception as e:
@@ -142,6 +144,7 @@ class Item(object):
       except Exception as e:
         raise e
 
+  @property
   def metadata(self):
     """Retrieves metadata about the bucket.
 
@@ -157,18 +160,51 @@ class Item(object):
         raise e
     return ItemMetadata(self._info) if self._info else None
 
-  def read_from(self):
+  def read_from(self, start_offset=0, byte_count=None):
     """Reads the content of this item as text.
 
+    Args:
+      start_offset: the start offset of bytes to read.
+      byte_count: the number of bytes to read. If None, it reads to the end.
     Returns:
       The text content within the item.
     Raises:
       Exception if there was an error requesting the item's content.
     """
     try:
-      return self._api.object_download(self._bucket, self._key)
+      return self._api.object_download(self._bucket, self._key,
+                                       start_offset=start_offset, byte_count=byte_count)
     except Exception as e:
       raise e
+
+  def read_lines(self, max_lines=None):
+    """Reads the content of this item as text, and return a list of lines up to some max.
+
+    Args:
+      max_lines: max number of lines to return. If None, return all lines.
+    Returns:
+      The text content of the item as a list of lines.
+    Raises:
+      Exception if there was an error requesting the item's content.
+    """
+    if max_lines is None:
+      return self.read_from().split('\n')
+
+    max_to_read = self.metadata.size
+    bytes_to_read = min(100 * max_lines, self.metadata.size)
+    lines = []
+    while True:
+      content = self.read_from(byte_count=bytes_to_read)
+
+      lines = content.split('\n')
+      if len(lines) > max_lines or bytes_to_read >= max_to_read:
+        break
+      # try 10 times more bytes or max
+      bytes_to_read = min(bytes_to_read * 10, max_to_read)
+
+    # remove the partial line at last
+    del lines[-1]
+    return lines[0:max_lines]
 
   def write_to(self, content, content_type):
     """Writes text content to this item.
@@ -203,7 +239,7 @@ class Items(object):
           level are used.
     """
     if context is None:
-      context = gcp.Context.default()
+      context = gcp.context.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._bucket = bucket

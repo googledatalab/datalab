@@ -10,20 +10,26 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-from distutils.core import setup
+import datetime
+from setuptools import setup
 
 # TODO(nikhilko):
 # Fill in various other bits that can/should be specified once we have them.
 # These include url, license, long_description (readme), author & author_email.
 
+minor = datetime.datetime.now().strftime("%y%m%d%H%M")
+
 setup(
-  name='GCPDataLab',
-  version='0.1.0',
+  name='gcpdatalab',
+  version='0.1.' + minor,
+  namespace_packages=['gcp'],
   packages=['gcp.datalab'],
-  description='Google Cloud DataLab',
-  requires=[
-    'IPython',
-    'GCPData',
-    'pandas'
+  description='Google Cloud Datalab',
+  install_requires=[
+    'httplib2==0.9.2',
+    'ipython>=4.0,<4.1',
+    'pandas>=0.17.1',
+    'pandas-profiling==1.0.0a2',
+    'gcpdata>=0.1'
   ]
 )

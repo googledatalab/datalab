@@ -22,7 +22,7 @@ import uuid = require('node-uuid');
 import path = require('path');
 import util = require('util');
 
-var SETTINGS_FILE = 'settings.%s.json';
+var SETTINGS_FILE = 'settings.json';
 var METADATA_FILE = 'metadata.json';
 
 interface Metadata {
@@ -35,8 +35,7 @@ interface Metadata {
  * @returns the settings object for the application to use.
  */
 export function loadSettings(): common.Settings {
-  var env = process.env.DATALAB_ENV || 'cloud';
-  var settingsPath = path.join(__dirname, 'config', util.format(SETTINGS_FILE, env));
+  var settingsPath = path.join(__dirname, 'config', SETTINGS_FILE);
   var metadataPath = path.join(__dirname, 'config', METADATA_FILE);
 
   if (!fs.existsSync(settingsPath)) {
@@ -64,13 +63,9 @@ export function loadSettings(): common.Settings {
     settings.projectNumber = process.env['DATALAB_PROJECT_NUM'] || '';
     settings.versionId = process.env['DATALAB_VERSION'] || '';
     settings.metadataHost = process.env['METADATA_HOST'] || 'metadata.google.internal';
-    if (!settings.analyticsId) {
-      settings.analyticsId = process.env['DATALAB_ANALYTICS_ID'] || '';
-    }
     if (process.env['DATALAB_CONFIG_URL']) {
       settings.configUrl = process.env['DATALAB_CONFIG_URL'];
     }
-    settings.enableAuth = (env != 'local');
     return settings;
   }
   catch (e) {

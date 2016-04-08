@@ -19,20 +19,6 @@ var debug = {
 
 function placeHolder() {}
 
-// Install Google Analytics - this is the standard tracking code, reformatted.
-(function(i, s, o, g, r, a, m) {
-  i['GoogleAnalyticsObject'] = r;
-  i[r] = i[r] || function() {
-    (i[r].q = i[r].q || []).push(arguments)
-  };
-  i[r].l = 1 * new Date();
-  a = s.createElement(o);
-  m = s.getElementsByTagName(o)[0];
-  a.async = 1;
-  a.src = g;
-  m.parentNode.insertBefore(a, m)
-})(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
-
 // Override WebSocket
 (function() {
   if (!window.io) {
@@ -149,28 +135,18 @@ function initializePage(dialog) {
     window.open('https://groups.google.com/forum/#!newtopic/google-cloud-datalab-feedback');
   });
 
-  var projectId = document.body.getAttribute('data-project-id');
-  var instanceName = document.body.getAttribute('data-instance-name');
-  var consoleLink = 'https://console.developers.google.com/project/' + projectId;
-  var instancesLink = consoleLink + '/appengine/versions?moduleId=datalab';
-  var repoLink = consoleLink + '/clouddev/develop/browse/default/datalab_' + instanceName;
+  if (document.getElementById('repoLink')) {
+    // repoLink only exists in cloud version.
+    var projectId = document.body.getAttribute('data-project-id');
+    var instanceName = document.body.getAttribute('data-instance-name');
+    var consoleLink = 'https://console.developers.google.com/project/' + projectId;
+    var instancesLink = consoleLink + '/appengine/versions?moduleId=datalab';
+    var repoLink = consoleLink + '/clouddev/develop/browse/default/datalab_' + instanceName;
 
-  document.getElementById('consoleLink').href = consoleLink;
-  document.getElementById('instancesLink').href = instancesLink;
-  document.getElementById('repoLink').href = repoLink;
-  document.getElementById('userId').textContent = document.body.getAttribute('data-user-id');
-
-  var analyticsId = document.body.getAttribute('data-analytics-id');
-  if (analyticsId) {
-    ga('create', analyticsId);
-    ga('set', {
-      dimension2: document.body.getAttribute('data-version-id'),
-      dimension3: document.body.getAttribute('data-instance-id')
-    });
-    ga('set', 'hostname', 'datalab.cloud.google.com');
-    ga('set', 'page', '/' + document.body.getAttribute('data-analytics-path'));
-    ga('set', 'title', document.body.getAttribute('data-analytics-title'));
-    ga('send', 'pageview');
+    document.getElementById('consoleLink').href = consoleLink;
+    document.getElementById('instancesLink').href = instancesLink;
+    document.getElementById('repoLink').href = repoLink;
+    document.getElementById('userId').textContent = document.body.getAttribute('data-user-id');
   }
 }
 
@@ -182,12 +158,25 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
       d3: '//cdnjs.cloudflare.com/ajax/libs/d3/3.4.13/d3',
       element: '/static/require/element',
       style: '/static/require/style',
-      visualization: '/static/require/visualization'
+      visualization: '/static/require/visualization',
+      jquery: '//ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min',
+      plotly: 'https://cdn.plot.ly/plotly-1.5.1.min.js?noext'
+    },
+    shim: {
+      plotly: {
+        deps: ['d3', 'jquery'],
+        exports: 'plotly'
+      }
     }
   });
 
   function DataLabSession() {
   }
+
+  DataLabSession.prototype.is_connected = function() {
+    return notebook.kernel && notebook.kernel.is_connected();
+  }
+
   DataLabSession.prototype.execute = function(code, callback) {
     function shellHandler(reply) {
       if (callback) {
@@ -241,6 +230,10 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 
   window.datalab.session = new DataLabSession();
 
+  $([IPython.events]).on('app_initialized.NotebookApp', function(){
+    // Bind Alt-Z to undo cell deletion.
+    IPython.keyboard_manager.command_shortcuts.add_shortcut('Alt-z','ipython.undo-last-cell-deletion')
+  });
 
   require(['notebook/js/notebook'], function(ipy) {
     var notebook = ipy.Notebook;
@@ -275,8 +268,8 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
       var base_url = this.base_url;
       var w = window.open('', IPython._target);
       var parent = utils.url_path_split(this.notebook_path)[0];
-      if (parent.startsWith('datalab/')) {
-        parent = '';
+      if (parent == 'datalab' || parent.startsWith('datalab/')) {
+        parent = 'My Notebooks';
       }
       this.contents.copy(this.notebook_path, parent).then(
         function (data) {
@@ -600,6 +593,23 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     this.blur();
   });
 
+  function toggleSidebar() {
+    var d = document.getElementById('sidebarArea');
+    d.style.display = (d.style.display == 'none') ? 'block' : 'none';
+    document.getElementById('hideSidebarButton').classList.toggle('fa-flip-vertical');
+    this.blur();
+    // Chrome at least seems to render the notebook poorly after this for a little
+    // while. If you scroll new content into view it is messed up until you click 
+    // in the notebook. This does not repro with Firefox or Safari so seems to be
+    // a Chrome bug. Triggering a resize or similar doesn't help because the content
+    // that is messed up is currently out of the viewable part of the window. Will
+    // file a bug against Chrome.
+  }
+
+  $('#hideSidebarButton').click(function() {
+    toggleSidebar();
+  });
+
   $('#keyboardHelpLink').click(function(e) {
     showHelp(document.getElementById('shortcutsHelp').textContent);
     e.preventDefault();
@@ -611,11 +621,17 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   });
 
   $('#navigationButton').click(function() {
+    if (document.getElementById('sidebarArea').style.display == 'none') {
+      toggleSidebar();
+    }
     showNavigation();
     this.blur();
   });
 
   $('#helpButton').click(function() {
+    if (document.getElementById('sidebarArea').style.display == 'none') {
+      toggleSidebar();
+    }
     showHelp();
     this.blur();
   });
@@ -784,7 +800,9 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
   document.getElementById('addNotebookButton').addEventListener('click', addNotebook, false);
   document.getElementById('addFolderButton').addEventListener('click', addFolder, false);
 
-  document.getElementById('repoButton').addEventListener('click', browseRepository, false);
+  if (document.getElementById('repoButton')) {
+    document.getElementById('repoButton').addEventListener('click', browseRepository, false);
+  }
 
   (function buildBreadcrumbContent() {
     var path = location.pathname;
@@ -834,7 +852,11 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
     if (versionInfo == undefined) {
       return;
     }
-    var version = parseInt(document.body.getAttribute('data-version-id').split('.')[2]);
+    var vid = document.body.getAttribute('data-version-id');
+    if (vid == undefined) {
+      return;
+    }
+    var version = parseInt(vid.split('.')[2]);
     if (version >= versionInfo.latest) {
       return;
     }

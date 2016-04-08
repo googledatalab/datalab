@@ -10,12 +10,9 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-"""Implemenents External Table functionality."""
+"""Implements External Table functionality."""
 
-import gcp
-import _api
 import _csv_options
-import _job
 
 
 class FederatedTable(object):
@@ -33,7 +30,7 @@ class FederatedTable(object):
       csv_options: For CSV files, the options such as quote character and delimiter.
       ignore_unknown_values: If True, accept rows that contain values that do not match the schema;
           the unknown values are ignored (default False).
-      max_bad_records The maximum number of bad records that are allowed (and ignored) before
+      max_bad_records: The maximum number of bad records that are allowed (and ignored) before
           returning an 'invalid' error in the Job result (default 0).
       compressed: whether the data is GZ compressed or not (default False). Note that compressed
           data can be used as a federated table but cannot be loaded into a BQ Table.

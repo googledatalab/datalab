@@ -17,7 +17,7 @@ import gcp._util
 import _api
 
 
-class Job(gcp._util.Job):
+class Job(gcp._util.GCPJob):
   """Represents a BigQuery Job.
   """
 
@@ -28,33 +28,10 @@ class Job(gcp._util.Job):
       job_id: the BigQuery job ID corresponding to this job.
       context: a Context object providing project_id and credentials.
     """
-    super(Job, self).__init__(job_id)
-    self._context = context
-    self._api = _api.Api(context)
-    self._start_time = None
-    self._end_time = None
+    super(Job, self).__init__(job_id, context)
 
-  def __repr__(self):
-    """Returns a representation for the job for showing in the notebook.
-    """
-    return 'Job %s' % self._job_id
-
-  @property
-  def start_time_utc(self):
-    """ The UTC start time of the job as a Python datetime. """
-    return self._start_time
-
-  @property
-  def end_time_utc(self):
-    """ The UTC end time of the job (or None if incomplete) as a Python datetime. """
-    return self._end_time
-
-  @property
-  def total_time(self):
-    """ The total time in fractional seconds that the job took, or None if not complete. """
-    if self._end_time is None:
-      return None
-    return (self._end_time - self._start_time).total_seconds()
+  def _create_api(self, context):
+    return _api.Api(context)
 
   def _refresh_state(self):
     """ Get the state of a job. If the job is complete this does nothing;
@@ -70,21 +47,20 @@ class Job(gcp._util.Job):
     except Exception as e:
       raise e
 
-    if 'statistics' in response:
-      statistics = response['statistics']
-      start_time = statistics.get('creationTime', None)
-      if start_time:
-        self._start_time = datetime.datetime.fromtimestamp(float(start_time) / 1000.0)
-      end_time = statistics.get('endTime', None)
-      if end_time:
-        self._end_time = datetime.datetime.fromtimestamp(float(end_time) / 1000.0)
-
     if 'status' in response:
       status = response['status']
       if 'state' in status and status['state'] == 'DONE':
         self._end_time = datetime.datetime.utcnow()
         self._is_complete = True
         self._process_job_status(status)
+
+    if 'statistics' in response:
+      statistics = response['statistics']
+      start_time = statistics.get('creationTime', None)
+      end_time = statistics.get('endTime', None)
+      if start_time and end_time and end_time >= start_time:
+        self._start_time = datetime.datetime.fromtimestamp(float(start_time) / 1000.0)
+        self._end_time = datetime.datetime.fromtimestamp(float(end_time) / 1000.0)
 
   def _process_job_status(self, status):
     if 'errorResult' in status:

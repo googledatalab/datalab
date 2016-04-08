@@ -11,12 +11,12 @@
 # the License.
 
 import collections
-import unittest
-import gcp
-import gcp.bigquery
-import gcp._util
 import mock
 import pandas
+import unittest
+
+import gcp.bigquery
+import gcp._util
 
 
 class TestCases(unittest.TestCase):

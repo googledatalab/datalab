@@ -12,20 +12,20 @@
 
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 
-import fnmatch
-import re
-
-import gcp.storage
-import _commands
-import _html
-import _utils
-
 try:
   import IPython
   import IPython.core.display
   import IPython.core.magic
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
+
+import fnmatch
+import re
+
+import gcp.storage
+
+import _commands
+import _utils
 
 
 @IPython.core.magic.register_line_magic
@@ -143,7 +143,7 @@ def _expand_list(names):
         # Expand possible key values.
         if bucket not in items and key[:1] == '*':
           # We need the full list; cache a copy for efficiency.
-          items[bucket] = [item.metadata().name for item in gcp.storage.Bucket(bucket).items()]
+          items[bucket] = [item.metadata.name for item in gcp.storage.Bucket(bucket).items()]
         # If we have a cached copy use it
         if bucket in items:
           candidates = items[bucket]
@@ -156,7 +156,7 @@ def _expand_list(names):
           if match:
             prefix = key[0:match.start()]
 
-          candidates = [item.metadata().name
+          candidates = [item.metadata.name
                         for item in gcp.storage.Bucket(bucket).items(prefix=prefix)]
 
         for item in candidates:
@@ -247,42 +247,32 @@ def _storage_delete(args, _):
     raise Exception('\n'.join(errs))
 
 
-def _render_dictionary(data, headers=None):
-  """ Return a dictionary list formatted as a HTML table.
-
-  Args:
-    data: the dictionary list
-    headers: the keys in the dictionary to use as table columns, in order.
-  """
-  return IPython.core.display.HTML(_html.HtmlBuilder.render_table(data, headers))
-
-
 def _storage_list_buckets(project, pattern):
   """ List all storage buckets that match a pattern. """
-  data = [{'Bucket': 'gs://' + bucket.name, 'Created': bucket.metadata().created_on}
+  data = [{'Bucket': 'gs://' + bucket.name, 'Created': bucket.metadata.created_on}
           for bucket in gcp.storage.Buckets(project_id=project)
           if fnmatch.fnmatch(bucket.name, pattern)]
-  return _render_dictionary(data, ['Bucket', 'Created'])
+  return _utils.render_dictionary(data, ['Bucket', 'Created'])
 
 
 def _storage_get_keys(bucket, pattern):
   """ Get names of all storage keys in a specified bucket that match a pattern. """
-  return [item for item in bucket.items() if fnmatch.fnmatch(item.metadata().name, pattern)]
+  return [item for item in bucket.items() if fnmatch.fnmatch(item.metadata.name, pattern)]
 
 
 def _storage_get_key_names(bucket, pattern):
   """ Get names of all storage keys in a specified bucket that match a pattern. """
-  return [item.metadata().name for item in _storage_get_keys(bucket, pattern)]
+  return [item.metadata.name for item in _storage_get_keys(bucket, pattern)]
 
 
 def _storage_list_keys(bucket, pattern):
   """ List all storage keys in a specified bucket that match a pattern. """
-  data = [{'Name': item.metadata().name,
-           'Type': item.metadata().content_type,
-           'Size': item.metadata().size,
-           'Updated': item.metadata().updated_on}
+  data = [{'Name': item.metadata.name,
+           'Type': item.metadata.content_type,
+           'Size': item.metadata.size,
+           'Updated': item.metadata.updated_on}
           for item in _storage_get_keys(bucket, pattern)]
-  return _render_dictionary(data, ['Name', 'Type', 'Size', 'Updated'])
+  return _utils.render_dictionary(data, ['Name', 'Type', 'Size', 'Updated'])
 
 
 def _storage_list(args, _):

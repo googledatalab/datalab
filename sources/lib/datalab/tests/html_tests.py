@@ -29,8 +29,6 @@ IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.get_ipython = mock.Mock()
 
-import gcp.datalab
-
 
 class TestCases(unittest.TestCase):
 

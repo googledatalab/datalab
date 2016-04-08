@@ -32,7 +32,6 @@ import cs_bucket_tests
 import cs_item_tests
 import http_tests
 import lru_cache_tests
-import metadataservice_tests
 import sql_tests
 import util_tests
 
@@ -54,7 +53,6 @@ _TEST_MODULES = [
   cs_item_tests,
   http_tests,
   lru_cache_tests,
-  metadataservice_tests,
   sql_tests,
   util_tests
 ]

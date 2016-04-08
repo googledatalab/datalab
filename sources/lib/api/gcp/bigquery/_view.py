@@ -12,7 +12,8 @@
 
 """Implements BigQuery Views."""
 
-import gcp
+import gcp.context
+
 import _query
 import _table
 
@@ -41,7 +42,7 @@ class View(object):
       Exception if the name is invalid.
       """
     if context is None:
-      context = gcp.Context.default()
+      context = gcp.context.Context.default()
     self._context = context
     self._table = _table.Table(name, context=context)
     self._materialization = _query.Query('SELECT * FROM %s' % self._repr_sql_(), context=context)
@@ -53,7 +54,7 @@ class View(object):
   @property
   def name(self):
     """The name for the view as a named tuple."""
-    return self._table._name_parts
+    return self._table.name
 
   @property
   def description(self):
@@ -97,7 +98,7 @@ class View(object):
     if isinstance(query, _query.Query):
       query = query.sql
     try:
-      response = self._table._api.tables_insert(self._table._name_parts, query=query)
+      response = self._table._api.tables_insert(self._table.name, query=query)
     except Exception as e:
       raise e
     if 'selfLink' in response:
@@ -139,7 +140,6 @@ class View(object):
     Args:
       friendly_name: if not None, the new friendly name.
       description: if not None, the new description.
-      expiry: if not None, the new expiry time, either as a DateTime or milliseconds since epoch.
       query: if not None, a new query string for the View.
     """
     self._table._load_info()
@@ -168,7 +168,6 @@ class View(object):
     """Materialize the View asynchronously.
 
     Args:
-      dataset_id: the datasetId for the result table.
       table_name: the result table name; if None, then a temporary table will be used.
       table_mode: one of 'create', 'overwrite' or 'append'. If 'create' (the default), the request
           will fail if the table exists.
@@ -192,7 +191,6 @@ class View(object):
     """Materialize the View synchronously.
 
     Args:
-      dataset_id: the datasetId for the result table.
       table_name: the result table name; if None, then a temporary table will be used.
       table_mode: one of 'create', 'overwrite' or 'append'. If 'create' (the default), the request
           will fail if the table exists.

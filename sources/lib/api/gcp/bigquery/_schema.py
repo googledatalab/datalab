@@ -236,7 +236,7 @@ class Schema(list):
           Note that there is potential ambiguity when passing a list of lists or a list of
           dicts between whether that should be treated as a list of records or a single record
           that is a list. The heuristic used is to check the length of the entries in the
-          list; if they are equal then a list of records is assumed. To avoid this ambuity
+          list; if they are equal then a list of records is assumed. To avoid this ambiguity
           you can instead use the Schema.from_record method which assumes a single record,
           in either list of values or dictionary of key-values form.
 

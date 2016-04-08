@@ -12,6 +12,7 @@
 
 """Implements HTTP client helper functionality."""
 
+import datetime
 import json
 import urllib
 import httplib2
@@ -27,7 +28,10 @@ class RequestException(Exception):
     self.message = 'HTTP request failed'
     # Try extract a message from the body; swallow possible resulting ValueErrors and KeyErrors.
     try:
-      self.message = json.loads(content)['error']['errors'][0]['message']
+      error = json.loads(content)['error']
+      if 'errors' in error:
+        error = error['errors'][0]
+      self.message += error['message']
     except ValueError:
       pass
     except KeyError:
@@ -48,7 +52,7 @@ class Http(object):
 
   @staticmethod
   def request(url, args=None, data=None, headers=None, method=None,
-              credentials=None, raw_response=False):
+              credentials=None, raw_response=False, stats=None):
     """Issues HTTP requests.
 
     Args:
@@ -60,6 +64,9 @@ class Http(object):
           (GET or POST) based on the existence of request data.
       credentials: optional set of credentials to authorize the request.
       raw_response: whether the raw response content should be returned as-is.
+      stats: an optional dictionary that, if provided, will be populated with some
+          useful info about the request, like 'duration' in seconds and 'data_size' in
+          bytes. These may be useful optimizing the access to rate-limited APIs.
     Returns:
       The parsed response object.
     Raises:
@@ -107,7 +114,10 @@ class Http(object):
     http.disable_ssl_certificate_validation = True
     if credentials is not None:
       http = credentials.authorize(http)
+    if stats is not None:
+      stats['duration'] = datetime.datetime.utcnow()
 
+    response = None
     try:
       response, content = http.request(url,
                                        method=method,
@@ -123,3 +133,8 @@ class Http(object):
       raise Exception('Failed to process HTTP response.')
     except httplib2.HttpLib2Error:
       raise Exception('Failed to send HTTP request.')
+    finally:
+      if stats is not None:
+        stats['data_size'] = len(data)
+        stats['status'] = response.status
+        stats['duration'] = (datetime.datetime.utcnow() - stats['duration']).total_seconds()

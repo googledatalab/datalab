@@ -12,16 +12,22 @@
 
 """Google Cloud Platform library - %%arguments IPython Cell Magic Functionality."""
 
+try:
+  import IPython
+  import IPython.core.magic
+except ImportError:
+  raise Exception('This module can only be loaded in ipython.')
+
 import argparse
 import datetime
 import imp
 import re
 import sys
 import time
-import IPython
-import IPython.core.magic
+
 import gcp.bigquery
 import gcp.data
+
 import _commands
 import _utils
 
@@ -37,7 +43,7 @@ values for the variables, if any, using Python code, followed by one or more
 queries.
 
 Queries should start with 'DEFINE QUERY <name>' in order to bind them to
-<module name>.<query name> in the notebook (as gcp.data.SqlStatement instances).
+<module name>.<query name> in the notebook (as gcp.data.SqlStament instances).
 The final query can optionally omit 'DEFINE QUERY <name>', as using the module
 name in places where a SqlStatement is expected will resolve to the final query
 in the module.
@@ -81,22 +87,22 @@ _sql_parser = _create_sql_parser()
 def sql(line, cell):
   """ Create a SQL module with one or more queries. Use %sql --help for more details.
 
-    The supported syntax is:
+  The supported syntax is:
 
-    %%sql [--module <modulename>]
-    [<optional Python code for default argument values>]
-    [<optional named queries>]
-    [<optional unnamed query>]
+  %%sql [--module <modulename>]
+  [<optional Python code for default argument values>]
+  [<optional named queries>]
+  [<optional unnamed query>]
 
-    At least one query should be present. Named queries should start with:
+  At least one query should be present. Named queries should start with:
 
-      DEFINE QUERY <name>
+    DEFINE QUERY <name>
 
-    on a line by itself.
+  on a line by itself.
 
   Args:
-    line: the optional arguments following '%%sql'.
-    cell: the contents of the cell; Python code for arguments followed by SQL queries.
+  args: the optional arguments following '%%sql'.
+  cell: the contents of the cell; Python code for arguments followed by SQL queries.
    """
   if cell is None:
     _sql_parser.print_help()

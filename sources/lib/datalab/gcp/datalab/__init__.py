@@ -12,8 +12,6 @@
 
 """Google Cloud Platform library - IPython Functionality."""
 
-import httplib2 as _httplib2
-import requests as _requests
 
 try:
   import IPython as _IPython
@@ -22,11 +20,21 @@ try:
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
+import httplib2 as _httplib2
+import requests as _requests
+import os
+
+import gcp.context as _context
+
 # Import the modules that do cell magics
 import _bigquery
 import _chart
+import _chart_data
+import _csv
 import _extension
+import _job
 import _modules
+import _projects
 import _sql
 import _storage
 
@@ -65,6 +73,7 @@ _requests.Session.__init__ = _init_session
 _orig_run_cell_magic = _shell.InteractiveShell.run_cell_magic
 _orig_run_line_magic = _shell.InteractiveShell.run_line_magic
 
+
 def _run_line_magic(self, magic_name, line):
   fn = self.find_line_magic(magic_name)
   if fn is None:
@@ -85,4 +94,28 @@ def _run_cell_magic(self, magic_name, line, cell):
 
 _shell.InteractiveShell.run_cell_magic = _run_cell_magic
 _shell.InteractiveShell.run_line_magic = _run_line_magic
+
+# Define global 'project_id' and 'set_project_id' functions to manage the default project ID. We
+# do this conditionally in a try/catch # to avoid the call to Context.default() when running tests
+# which mock IPython.get_ipython().
+
+def _get_project_id():
+  try:
+    return _context.Context.default().project_id
+  except Exception:
+    return None
+
+def _set_project_id(project_id):
+  _context.Context.default(project_id)
+
+try:
+  if 'project_id' not in _IPython.get_ipython().user_ns:
+    _IPython.get_ipython().user_ns['project_id'] = _get_project_id
+    _IPython.get_ipython().user_ns['set_project_id'] = _set_project_id
+except TypeError:
+  pass
+
+if os.environ.get('PROJECT_ID', None):
+  _set_project_id(os.environ['PROJECT_ID'])
+
 

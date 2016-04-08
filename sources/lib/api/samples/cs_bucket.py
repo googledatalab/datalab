@@ -28,7 +28,7 @@ def main():
 
   print 'Information about datastudio-test bucket:'
   bucket = storage.bucket('datastudio-test')
-  bucket_md = bucket.metadata()
+  bucket_md = bucket.metadata
   print 'Name   : ' + bucket_md.name
   print 'ETag   : ' + bucket_md.etag
   print 'Created: ' + str(bucket_md.created_on)
