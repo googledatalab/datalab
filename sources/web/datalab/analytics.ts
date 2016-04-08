@@ -17,6 +17,7 @@
 
 import crypto = require('crypto');
 import https = require('https');
+import logging = require('./logging');
 import qs = require('querystring');
 import util = require('util');
 
@@ -24,12 +25,16 @@ import util = require('util');
  * The application settings instance.
  */
 var appSettings: common.Settings;
+var analyticsEnabled = true;
 
 export function initialize(settings: common.Settings): void {
   appSettings = settings;
 }
 
 function emitLog(logEvent: string, data: common.Map<string>): void {
+  if (!analyticsEnabled) {
+    return;
+  }
   try {
     var options: any = {
       method: 'POST',
@@ -66,6 +71,10 @@ export function logPage(page: string, path: string, user: string): void {
 }
 
 export function logStart(): void {
+  if (!process.env.DATALAB_MANAGED) {
+    analyticsEnabled = false;
+    logging.getLogger().info("Google Analytics disabled for local run");
+  }
   var data: common.Map<string> = {
     project: appSettings.projectNumber,
     instance: appSettings.instanceId,

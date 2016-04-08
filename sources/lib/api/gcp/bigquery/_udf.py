@@ -13,7 +13,6 @@
 """Google Cloud Platform library - BigQuery UDF Functionality."""
 
 import json
-import gcp.storage
 
 
 class UDF(object):
@@ -75,7 +74,7 @@ class UDF(object):
     # Build the JS from the individual bits with proper escaping of the implementation
     if support_code is None:
       support_code = ''
-    return ('{code}\n{name}={implementation};\n' + \
+    return ('{code}\n{name}={implementation};\n' +
             'bigquery.defineFunction(\'{name}\', {inputs}, {outputs}, {name});')\
                 .format(code=support_code,
                         name=name,

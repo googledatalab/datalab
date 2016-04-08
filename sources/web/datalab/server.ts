@@ -25,7 +25,8 @@ import logging = require('./logging');
 import net = require('net');
 import path = require('path');
 import sockets = require('./sockets');
-import static = require('./static');
+import static_ = require('./static');
+import updateDocs = require('./updateDocs');
 import url = require('url');
 import userManager = require('./userManager');
 import workspaceManager = require('./workspaceManager');
@@ -136,7 +137,7 @@ function handledAuthenticatedRequest(request: http.ServerRequest,
     userManager.maybeSetUserIdCookie(request, response);
 
     response.statusCode = 302;
-    response.setHeader('Location', '/tree');
+    response.setHeader('Location', '/tree/datalab');
     response.end();
     return;
   }
@@ -180,29 +181,67 @@ function handledAuthenticatedRequest(request: http.ServerRequest,
  * @param response the out-going HTTP response.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse) {
-  var path = url.parse(request.url).pathname;
+  var parsed_url = url.parse(request.url);
+  var path = parsed_url.pathname;
 
-  // /_ah/* paths implement the AppEngine health check.
-  if (path.indexOf('/_ah') == 0) {
-    healthHandler(request, response);
-    return;
-  }
+  if (!process.env.DATALAB_MANAGED) {
+    // Check if we are configured correctly; if not send user to landing page.
+    if (!fs.existsSync('/root/.config/gcloud')) {
+      logging.getLogger().info('No gcloud config; redirect to landing page');
+      fs.readFile('/datalab/web/static/landingpage.html', function(error, content) {
+        response.writeHead(200);
+        response.end(content);
+      });
+      return;
+    }
+    // Check if EULA has been accepted; if not go to EULA page.
+    if (path.indexOf('/accepted_eula') == 0) {
+      fs.mkdirSync('/root/.config/datalab');
+      var i = parsed_url.search.indexOf('referer=');
+      if (i < 0) {
+        logging.getLogger().info('Accepting EULA, but no referer; returning 500');
+        response.writeHead(500);
+      } else {
+        i += 8;
+        var referer = decodeURI(parsed_url.search.substring(i));
+        logging.getLogger().info('Accepting EULA; return to ' + referer);
+        response.writeHead (302, {'Location': referer})
+      }
+      response.end();
+      return;
+    }
+    if (!fs.existsSync('/root/.config/datalab')) {
+      logging.getLogger().info('No Datalab config; redirect to EULA page');
+      fs.readFile('/datalab/web/static/eula.html', function(error, content) {
+        response.writeHead(200);
+        response.end(content);
+      });
+      return;
+    }
+  } else {
+    // Not local.
+    // /_ah/* paths implement the AppEngine health check.
+    if (path.indexOf('/_ah') == 0) {
+      healthHandler(request, response);
+      return;
+    }
 
-  // /ping allows the deployer to validate existence.
-  if (path.indexOf('/ping') == 0) {
-    // TODO: Remove support for CORS once the existence checks move to the deployment server.
-    response.writeHead(200, {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
-    });
+    // /ping allows the deployer to validate existence.
+    if (path.indexOf('/ping') == 0) {
+      // TODO: Remove support for CORS once the existence checks move to the deployment server.
+      response.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
 
-    // Respond with an object to singal availability and identity.
-    var pingResponse = {
-      name: appSettings.instanceName,
-      id: appSettings.instanceId
-    };
-    response.end(JSON.stringify(pingResponse));
-    return;
+      // Respond with an object to signal availability and identity.
+      var pingResponse = {
+        name: appSettings.instanceName,
+        id: appSettings.instanceId
+      };
+      response.end(JSON.stringify(pingResponse));
+      return;
+    }
   }
 
   // Check if user has access.
@@ -224,6 +263,11 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   });  
 }
 
+
+function socketHandler(request: http.ServerRequest, socket: net.Socket, head: Buffer) {
+  jupyter.handleSocket(request, socket, head);
+}
+
 /**
  * Runs the proxy web server.
  * @param settings the configuration settings to use.
@@ -234,13 +278,19 @@ export function run(settings: common.Settings): void {
   workspaceManager.init(settings);
   jupyter.init(settings);
   auth.init(settings);
+  updateDocs.startUpdate(settings);
 
   healthHandler = health.createHandler(settings);
   infoHandler = info.createHandler(settings);
-  staticHandler = static.createHandler(settings);
+  staticHandler = static_.createHandler(settings);
 
   server = http.createServer(requestHandler);
-  sockets.wrapServer(server);
+  if (process.env.DATALAB_MANAGED) {
+    sockets.wrapServer(server);
+  }
+  else {
+    server.on('upgrade', socketHandler);
+  }
 
   logging.getLogger().info('Starting DataLab server at http://localhost:%d',
                            settings.serverPort);

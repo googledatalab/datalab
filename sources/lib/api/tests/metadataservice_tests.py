@@ -10,14 +10,13 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+import httplib2
+import mock
 import unittest
 
 # The httplib2 import is implicitly used when mocking its functionality.
 # pylint: disable=unused-import
-from gcp._util._metadata import httplib2
-from gcp._util._metadata import MetadataService
-
-import mock
+from gcp.context._metadata import MetadataService
 
 
 class TestCases(unittest.TestCase):

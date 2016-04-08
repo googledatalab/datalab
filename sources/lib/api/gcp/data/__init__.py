@@ -12,27 +12,8 @@
 
 """Google Cloud Platform library - Generic SQL Helpers."""
 
-import gcp._util as _util
 from _sql_module import SqlModule
 from _sql_statement import SqlStatement
-
-
-def sql(sql_template, **kwargs):
-  """Formats SQL templates by replacing placeholders with actual values.
-
-  Placeholders in SQL are represented as $<name>. If '$' must appear within the
-  SQL statement literally, then it can be escaped as '$$'.
-
-  Args:
-    sql_template: the template of the SQL statement with named placeholders.
-    **kwargs: the dictionary of name/value pairs to use for placeholder values.
-  Returns:
-    The formatted SQL statement with placeholders replaced with their values.
-  Raises:
-    Exception if a placeholder was found in the SQL statement, but did not have
-    a corresponding argument value.
-  """
-  return _util.Sql.format(sql_template, kwargs)
 
 
 def _next_token(sql):
@@ -76,7 +57,7 @@ def _next_token(sql):
   end_number = lambda s, i: not s[i].isdigit()
   start_identifier = lambda s, i: s[i].isalpha() or s[i] == '_' or s[i] == '$'
   end_identifier = lambda s, i: not(s[i].isalnum() or s[i] == '_')
-  start_string = lambda s, i: s[i] =='"' or s[i] == "'"
+  start_string = lambda s, i: s[i] == '"' or s[i] == "'"
   always_true = lambda s, i: True
 
   while i < len(sql):

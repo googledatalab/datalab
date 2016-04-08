@@ -14,7 +14,8 @@
 
 """Implements Context functionality."""
 
-import _util
+import _credentials
+import _metadata
 
 
 class Context(object):
@@ -57,16 +58,16 @@ class Context(object):
 
     The default Context is based on project id and credentials inferred from
     metadata returned by the cloud metadata service. It is also managed as a
-    global shared instance used everytime the default context is retrieved.
+    global shared instance used every time the default context is retrieved.
 
     Returns:
       An initialized and shared instance of a Context object.
     """
 
     if Context._global_context is None:
-      ms = _util.MetadataService()
+      ms = _metadata.MetadataService()
       project_id = ms.project_id
-      credentials = _util.MetadataCredentials(ms)
+      credentials = _credentials.MetadataCredentials(ms)
 
       Context._global_context = Context(project_id, credentials)
 

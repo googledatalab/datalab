@@ -53,9 +53,14 @@ var callbackManager: callbacks.CallbackManager = new callbacks.CallbackManager()
 /**
  * Templates
  */
-var templates: common.Map<string> = {
-  'tree': fs.readFileSync(path.join(__dirname, 'templates', 'tree.html'), { encoding: 'utf8' }),
-  'nb': fs.readFileSync(path.join(__dirname, 'templates', 'nb.html'), { encoding: 'utf8' })
+var local_templates: common.Map<string> = {
+  'tree': fs.readFileSync(path.join(__dirname, 'templates', 'local_tree.html'), { encoding: 'utf8' }),
+  'nb': fs.readFileSync(path.join(__dirname, 'templates', 'local_nb.html'), { encoding: 'utf8' })
+};
+
+var managed_templates: common.Map<string> = {
+  'tree': fs.readFileSync(path.join(__dirname, 'templates', 'managed_tree.html'), { encoding: 'utf8' }),
+  'nb': fs.readFileSync(path.join(__dirname, 'templates', 'managed_nb.html'), { encoding: 'utf8' })
 };
 
 /**
@@ -86,7 +91,7 @@ function createJupyterServer(userId: string): JupyterServer {
 
   var userDir = userManager.getUserDir(userId);
   if (!fs.existsSync(userDir)) {
-    fs.mkdirSync(userDir, 0755);
+    fs.mkdirSync(userDir, parseInt('0755', 8));
   }
 
   var server: JupyterServer = {
@@ -224,6 +229,19 @@ export function close(): void {
   jupyterServers = {};
 }
 
+
+export function handleSocket(request: http.ServerRequest, socket: net.Socket, head: Buffer) {
+  var userId = userManager.getUserId(request);
+  var server = jupyterServers[userId];
+  if (!server) {
+    // should never be here.
+    logging.getLogger().error('Jupyter server was not created yet for user %s.', userId);
+    return;
+  }
+  server.proxy.ws(request, socket, head);
+}
+
+
 export function handleRequest(request: http.ServerRequest, response: http.ServerResponse) {
   var userId = userManager.getUserId(request);
   var server = jupyterServers[userId];
@@ -239,7 +257,7 @@ export function handleRequest(request: http.ServerRequest, response: http.Server
 
 
 function sendTemplate(key: string, data: common.Map<string>, response: http.ServerResponse) {
-  var template = templates[key];
+  var template = process.env.DATALAB_MANAGED ?  managed_templates[key] : local_templates[key];
 
   // NOTE: Uncomment to use external templates mapped into the container.
   //       This is only useful when actively developing the templates themselves.

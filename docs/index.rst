@@ -11,8 +11,8 @@ Contents:
 .. toctree::
    :maxdepth: 4
 
-   gcp
    gcp.bigquery
+   gcp.context
    gcp.data
    gcp.storage
 

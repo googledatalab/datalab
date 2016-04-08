@@ -108,7 +108,7 @@ declare module SocketIO {
 
 		/**
 		 * Sets the adapter (class) that we're going to use for handling rooms
-		 * @param v The class for the adapter to create
+		 * @param v The class for the adapter to init
 		 * @default typeof Adapter
 		 * @return This Server
 		 */
@@ -170,7 +170,7 @@ declare module SocketIO {
 
 		/**
 		 * Looks up/creates a Namespace
-		 * @param nsp The name of the NameSpace to look up/create. Should start
+		 * @param nsp The name of the NameSpace to look up/init. Should start
 		 * with a '/'
 		 * @return The Namespace
 		 */

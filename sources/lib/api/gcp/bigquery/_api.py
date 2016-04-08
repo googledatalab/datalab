@@ -12,7 +12,6 @@
 
 """Implements BigQuery HTTP API wrapper."""
 
-import gcp
 import gcp._util
 
 
@@ -20,7 +19,6 @@ class Api(object):
   """A helper class to issue BigQuery HTTP requests."""
 
   # TODO(nikhilko): Use named placeholders in these string templates.
-  # TODO(gram): Remove default params from this class's methods.
   _ENDPOINT = 'https://www.googleapis.com/bigquery/v2'
   _JOBS_PATH = '/projects/%s/jobs/%s'
   _QUERIES_PATH = '/projects/%s/queries/%s'
@@ -70,7 +68,7 @@ class Api(object):
       encoding: The character encoding of the data, either 'UTF-8' (the default) or 'ISO-8859-1'.
       ignore_unknown_values: If True, accept rows that contain values that do not match the schema;
           the unknown values are ignored (default False).
-      max_bad_records The maximum number of bad records that are allowed (and ignored) before
+      max_bad_records: The maximum number of bad records that are allowed (and ignored) before
           returning an 'invalid' error in the Job result (default 0).
       quote: The value used to quote data sections in a CSV file; default '"'. If your data does
           not contain quoted sections, set the property value to an empty string. If your data
@@ -400,7 +398,7 @@ class Api(object):
 
     return gcp._util.Http.request(url, data=data, credentials=self._credentials)
 
-  def tabledata_insertAll(self, table_name, rows):
+  def tabledata_insert_all(self, table_name, rows):
     """Issues a request to insert data into a table.
 
     Args:
@@ -457,7 +455,7 @@ class Api(object):
     return gcp._util.Http.request(url, method='DELETE', credentials=self._credentials,
                                   raw_response=True)
 
-  def table_extract(self, table_name, destination, format='CSV', compressed=True,
+  def table_extract(self, table_name, destination, format='CSV', compress=True,
                     field_delimiter=',', print_header=True):
     """Exports the table to GCS.
 
@@ -466,7 +464,7 @@ class Api(object):
       destination: the destination URI(s). Can be a single URI or a list.
       format: the format to use for the exported data; one of CSV, NEWLINE_DELIMITED_JSON or AVRO.
           Defaults to CSV.
-      compress whether to compress the data on export. Compression is not supported for
+      compress: whether to compress the data on export. Compression is not supported for
           AVRO format. Defaults to False.
       field_delimiter: for CSV exports, the field delimiter to use. Defaults to ','
       print_header: for CSV exports, whether to include an initial header line. Default true.
@@ -489,7 +487,7 @@ class Api(object):
             'datasetId': table_name.dataset_id,
             'tableId': table_name.table_id,
           },
-          'compression': 'GZIP' if compressed else 'NONE',
+          'compression': 'GZIP' if compress else 'NONE',
           'fieldDelimiter': field_delimiter,
           'printHeader': print_header,
           'destinationUris': destination,

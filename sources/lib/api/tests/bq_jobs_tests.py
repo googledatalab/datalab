@@ -10,10 +10,11 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-import unittest
-import gcp
-import gcp.bigquery
 import mock
+import unittest
+
+import gcp.bigquery
+import gcp.context
 from oauth2client.client import AccessTokenCredentials
 
 
@@ -86,7 +87,7 @@ class TestCases(unittest.TestCase):
   def _create_context(self):
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return gcp.Context(project_id, creds)
+    return gcp.context.Context(project_id, creds)
 
   def _create_api(self):
     return gcp.bigquery._api.Api(self._create_context())

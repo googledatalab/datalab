@@ -27,6 +27,7 @@ IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.get_ipython = mock.Mock()
 
+import gcp.context
 import gcp.datalab
 import gcp.storage
 
@@ -36,7 +37,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.storage._item.Item.exists', autospec=True)
   @mock.patch('gcp.storage._bucket.Bucket.items', autospec=True)
   @mock.patch('gcp.storage._api.Api.objects_get', autospec=True)
-  @mock.patch('gcp._context.Context.default')
+  @mock.patch('gcp.context._context.Context.default')
   def test_expand_list(self, mock_context_default, mock_api_objects_get, mock_bucket_items,
                        mock_item_exists):
     context = self._create_context()
@@ -88,7 +89,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.storage._item.Item.copy_to', autospec=True)
   @mock.patch('gcp.storage._bucket.Bucket.items', autospec=True)
   @mock.patch('gcp.storage._api.Api.objects_get', autospec=True)
-  @mock.patch('gcp._context.Context.default')
+  @mock.patch('gcp.context._context.Context.default')
   def test_storage_copy(self, mock_context_default, mock_api_objects_get, mock_bucket_items,
                         mock_storage_item_copy_to):
     context = self._create_context()
@@ -125,7 +126,7 @@ class TestCases(unittest.TestCase):
       }, None)
 
   @mock.patch('gcp.storage._api.Api.buckets_insert', autospec=True)
-  @mock.patch('gcp._context.Context.default')
+  @mock.patch('gcp.context._context.Context.default')
   def test_storage_create(self, mock_context_default, mock_api_buckets_insert):
     context = self._create_context()
     mock_context_default.return_value = context
@@ -154,7 +155,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.storage._bucket.Bucket.items', autospec=True)
   @mock.patch('gcp.storage._api.Api.objects_delete', autospec=True)
   @mock.patch('gcp.storage._api.Api.buckets_delete', autospec=True)
-  @mock.patch('gcp._context.Context.default')
+  @mock.patch('gcp.context._context.Context.default')
   def test_storage_delete(self, mock_context_default, mock_api_bucket_delete,
                           mock_api_objects_delete, mock_bucket_items, mock_api_objects_get,
                           mock_api_buckets_get):
@@ -182,13 +183,13 @@ class TestCases(unittest.TestCase):
     mock_api_bucket_delete.assert_called_with(mock.ANY, 'bar')
     mock_api_objects_delete.assert_called_with(mock.ANY, 'foo', 'item1')
 
-  @mock.patch('gcp._context.Context.default')
+  @mock.patch('gcp.context._context.Context.default')
   def test_storage_view(self, mock_context_default):
     context = self._create_context()
     mock_context_default.return_value = context
     # TODO(gram): complete this test
 
-  @mock.patch('gcp._context.Context.default')
+  @mock.patch('gcp.context._context.Context.default')
   def test_storage_write(self, mock_context_default):
     context = self._create_context()
     mock_context_default.return_value = context
@@ -197,7 +198,7 @@ class TestCases(unittest.TestCase):
   def _create_context(self):
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return gcp.Context(project_id, creds)
+    return gcp.context.Context(project_id, creds)
 
   def _mock_bucket_items_return(self, context):
     # Mock API for getting items in a bucket.

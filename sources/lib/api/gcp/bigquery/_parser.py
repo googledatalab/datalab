@@ -32,7 +32,15 @@ class Parser(object):
       The parsed row object.
     """
     def parse_value(data_type, value):
-      """Parses a value returned from a BigQuery response."""
+      """Parses a value returned from a BigQuery response.
+
+      Args:
+        data_type: the type of the value as specified by the schema.
+        value: the raw value to return (before casting to data_type).
+
+      Returns:
+        The value cast to the data_type.
+      """
       if value is not None:
         if value == 'null':
           value = None
@@ -45,7 +53,7 @@ class Parser(object):
         elif data_type == 'BOOLEAN':
           value = value == 'true'
         elif (type(value) != str) and (type(value) != unicode):
-          # TODO(nikhilko): Handle nested JSON records
+          # TODO(gram): Handle nested JSON records
           value = str(value)
       return value
 

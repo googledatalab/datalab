@@ -32,7 +32,7 @@ TableName = collections.namedtuple('TableName',
     project_id: the project id for the table.
     dataset_id: the dataset id for the table.
     table_id: the table id for the table.
-    decorator: the optional decorator for the table (for windowing/snap-shotting).
+    decorator: the optional decorator for the table (for windowing/snapshot-ing).
 """
 
 # Absolute project-qualified name pattern: <project>:<dataset>

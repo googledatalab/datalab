@@ -11,8 +11,8 @@
 # the License.
 
 import unittest
-import gcp
 import gcp.bigquery
+import gcp.context
 import gcp._util
 import mock
 from oauth2client.client import AccessTokenCredentials
@@ -182,7 +182,7 @@ class TestCases(unittest.TestCase):
   def _create_context(self):
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return gcp.Context(project_id, creds)
+    return gcp.context.Context(project_id, creds)
 
   def _create_dataset(self, name, metadata=None):
     # Patch get_info so we don't have to mock it everywhere else.

@@ -48,6 +48,11 @@ declare module common {
     logEndpoint: string;
 
     /**
+     * Where to update docs, samples.
+     */
+    docsGcsPath: string;
+
+    /**
      * The port that the server should listen to.
      */
     serverPort: number;

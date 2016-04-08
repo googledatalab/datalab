@@ -32,18 +32,6 @@
       </span>
       <div class="btn-toolbar pull-right">
         <div class="btn-group">
-          <button class="btn" data-toggle="dropdown" title="User and Project Information">
-            <span class="fa fa-user"></span>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-right">
-            <li><a href="#" id="userId">User ID</a></li>
-            <li class="divider"></li>
-            <li><a href="#" id="consoleLink" target="_blank">Developer Console</a></li>
-            <li><a href="#" id="instancesLink" target="_blank">Developer Console: Cloud Datalab Instances</a></li>
-            <li><a href="#" id="repoLink" target="_blank">Developer Console: Git Repository</a></li>
-          </ul>
-        </div>
-        <div class="btn-group">
           <button id="feedbackButton" title="Provide feedback">
             <span class="fa fa-comment"></span>
           </button>
@@ -52,6 +40,13 @@
           <button id="aboutButton" title="About Google Cloud Datalab">
             <span class="fa fa-info-circle"></span>
           </button>
+        </div>
+        <div class="btn-group">
+          <a href="/tree/datalab/docs" class="btn"">
+            <button title="Samples and Tutorials">
+              <span class="fa fa-book"></span>
+            </button>
+          </a>
         </div>
       </div>
     </div>
@@ -66,10 +61,15 @@
               <button id="sessionsButton" type="button" class="btn" title="View Active Notebook Sessions">
                 <span class="fa fa-tasks"></span> Sessions
               </button>
+              <a href="/tree/datalab/docs" class="btn"">
+                <button type="button" class="btn" title="View Tutorials and Sample Notebooks">
+                  <span class="fa fa-book"></span> Docs
+                </button>
+              </a>
             </div>
           </div>
         </div>
-        <div id="mainContent" class="container">
+        <div id="mainContent" class="container treeMainContent">
           <div id="ipython-main-app">
             <div id="updateMessageArea">
             </div>
@@ -99,13 +99,6 @@
                           </button>
                           <button id="deleteButton" type="button" class="btn delete-button" title="Deleted selected item(s)">
                             <span class="fa fa-trash-o"></span> Delete
-                          </button>
-                        </div>
-                      </div>
-                      <div class="btn-toolbar pull-right">
-                        <div class="btn-group">
-                          <button id="repoButton" type="button" class="btn" title="Browse associated Git repository">
-                            <span class="fa fa-git"></span> Repository
                           </button>
                         </div>
                       </div>

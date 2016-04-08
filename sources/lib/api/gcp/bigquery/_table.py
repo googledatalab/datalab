@@ -23,17 +23,18 @@ import traceback
 import uuid
 
 import gcp._util
+import gcp.context
+
 import _api
 import _csv_options
-import _federated_table
 import _job
 import _parser
 import _schema
 import _utils
 
+
 # import of Query is at end of module as we have a circular dependency of
 # Query.execute().results -> Table and Table.sample() -> Query
-
 
 class TableMetadata(object):
   """Represents metadata about a BigQuery table."""
@@ -88,6 +89,10 @@ class TableMetadata(object):
     """The size of the table in bytes, or -1 if unknown. """
     return int(self._info['numBytes']) if 'numBytes' in self._info else -1
 
+  def refresh(self):
+    """ Refresh the metadata. """
+    self._info = self._table._load_info()
+
 
 class Table(object):
   """Represents a Table object referencing a BigQuery table. """
@@ -114,7 +119,7 @@ class Table(object):
       Exception if the name is invalid.
     """
     if context is None:
-      context = gcp.Context.default()
+      context = gcp.context.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._name_parts = _utils.parse_table_name(name, self._api.project_id)
@@ -171,13 +176,14 @@ class Table(object):
       Exception if there was an error requesting information about the table.
     """
     try:
-      _ = self._api.tables_get(self._name_parts)
+      info = self._api.tables_get(self._name_parts)
     except gcp._util.RequestException as e:
       if e.status == 404:
         return False
       raise e
     except Exception as e:
       raise e
+    self._info = info
     return True
 
   def delete(self):
@@ -301,10 +307,11 @@ class Table(object):
     # max_bytes_per_post = 1000000
     # max_bytes_per_second = 10000000
     #
-    # It is non-trivial to enforce these here, but as an approximation we enforce the 500 row limit
-    # with a 0.1 sec POST interval.
+    # It is non-trivial to enforce these here, and the max bytes per row is not something we
+    # can really control. As an approximation we enforce the 500 row limit
+    # with a 0.05 sec POST interval (to enforce the 10,000 rows per sec limit).
     max_rows_per_post = 500
-    post_interval = 0.1
+    post_interval = 0.05
 
     # TODO(gram): add different exception types for each failure case.
     if not self.exists():
@@ -361,7 +368,7 @@ class Table(object):
 
       if (total_pushed == total_rows) or (len(rows) == max_rows_per_post):
         try:
-          response = self._api.tabledata_insertAll(self._name_parts, rows)
+          response = self._api.tabledata_insert_all(self._name_parts, rows)
         except Exception as e:
           raise e
         if 'insertErrors' in response:
@@ -369,6 +376,16 @@ class Table(object):
 
         time.sleep(post_interval)  # Streaming API is rate-limited
         rows = []
+
+    # Block until data is ready
+    while True:
+      self._info = self._api.tables_get(self._name_parts)
+      if 'streamingBuffer' not in self._info or \
+              'estimatedRows' not in self._info['streamingBuffer'] or \
+              self._info['streamingBuffer']['estimatedRows'] > 0:
+        break
+      time.sleep(2)
+
     return self
 
   def _init_job_from_response(self, response):
@@ -393,6 +410,9 @@ class Table(object):
     Returns:
       A Job object for the export Job if it was started successfully; else None.
     """
+    format = format.upper()
+    if format == 'JSON':
+      format = 'NEWLINE_DELIMITED_JSON'
     try:
       response = self._api.table_extract(self._name_parts, destination, format, compress,
                                          csv_delimiter, csv_header)
@@ -415,13 +435,18 @@ class Table(object):
     Returns:
       A Job object for the completed export Job if it was started successfully; else None.
     """
-    format = format.upper()
-    if format == 'JSON':
-      format = 'NEWLINE_DELIMITED_JSON'
     job = self.extract_async(destination, format=format, csv_delimiter=csv_delimiter,
                              csv_header=csv_header, compress=compress)
     if job is not None:
       job.wait()
+
+    # Block for the extracted data to be ready
+    while True:
+      self._info = self._api.tables_get(self._name_parts)
+      if 'streamingBuffer' not in self._info:
+        break
+      time.sleep(2)
+
     return job
 
   def load_async(self, source, mode='create', source_format='csv', csv_options=None,
@@ -438,7 +463,7 @@ class Table(object):
       csv_options: if source format is 'csv', additional options as a CSVOptions object.
       ignore_unknown_values: If True, accept rows that contain values that do not match the schema;
           the unknown values are ignored (default False).
-      max_bad_records The maximum number of bad records that are allowed (and ignored) before
+      max_bad_records: the maximum number of bad records that are allowed (and ignored) before
           returning an 'invalid' error in the Job result (default 0).
 
     Returns:
@@ -489,9 +514,9 @@ class Table(object):
           'create'. If 'create' the schema will be inferred if necessary.
       source_format: the format of the data, 'csv' or 'json'; default 'csv'.
       csv_options: if source format is 'csv', additional options as a CSVOptions object.
-      ignore_unknown_values: If True, accept rows that contain values that do not match the schema;
+      ignore_unknown_values: if True, accept rows that contain values that do not match the schema;
           the unknown values are ignored (default False).
-      max_bad_records The maximum number of bad records that are allowed (and ignored) before
+      max_bad_records: the maximum number of bad records that are allowed (and ignored) before
           returning an 'invalid' error in the Job result (default 0).
 
     Returns:

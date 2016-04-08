@@ -10,36 +10,35 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-from distutils.core import setup
+import datetime
+from setuptools import setup
 
 # TODO(nikhilko):
 # Fill in various other bits that can/should be specified once we have them.
 # These include url, license, long_description (readme), author & author_email.
 
-# TODO(nikhilko):
-# Also, figure out publishing, so this works with pip install, and specifying
-# dependencies, so they can be accounted for during installation.
-# Known depdenencies:
-# - httplib2
-# - oauth2client
-# - pandas
+minor = datetime.datetime.now().strftime("%y%m%d%H%M")
 
 setup(
-    name='GCPData',
-    version='0.1.0',
-    packages=['gcp',
-              'gcp._util',
+    name='gcpdata',
+    version='0.1.' + minor,
+    namespace_packages=['gcp'],
+    packages=['gcp._util',
               'gcp.bigquery',
+              'gcp.context',
               'gcp.data',
               'gcp.storage',
              ],
     description='Google Cloud APIs for data analysis scenarios.',
-    requires=['dateutil',
-              'futures',
-              'httplib2',
-              'IPython',
-              'oauth2client',
-              'pandas',
-              'requests'
-             ]
+    # These should be pinned to the version in the Docker container.
+    install_requires=['python-dateutil==2.5.0',
+                      'futures==3.0.5',
+                      'httplib2==0.9.2',
+                      'ipython>=4.0,<4.1',
+                      'oauth2client==1.5.2',
+                      'pandas>=0.17.1',
+                      'pytz>=2015.4',
+                      'requests==2.9.1',
+                      'tensorflow==0.7.1'
+                     ]
 )

@@ -41,7 +41,8 @@ class LRUCache(object):
       KeyError if the key is not found.
     """
     if not isinstance(key, basestring):
-      raise Exception("LRU cache can only be indexed by strings")
+      raise Exception("LRU cache can only be indexed by strings (%s has type %s)" %
+                      (str(key), str(type(key))))
 
     if key in self._cache:
       entry = self._cache[key]
@@ -49,6 +50,16 @@ class LRUCache(object):
       return entry['value']
     else:
       raise KeyError(key)
+
+  def __delitem__(self, key):
+    """ Remove an item from the cache.
+
+    Args:
+      key: a string key for retrieving the item.
+    """
+    if not isinstance(key, basestring):
+      raise Exception("LRU cache can only be indexed by strings")
+    del self._cache[key]
 
   def __setitem__(self, key, value):
     """ Put an item in the cache.
@@ -76,3 +87,12 @@ class LRUCache(object):
     entry['value'] = value
     entry['key'] = key
     entry['last_used'] = datetime.datetime.now()
+
+  def __contains__(self, key):
+    return key in self._cache
+
+  def get(self, key, value):
+    if key in self._cache:
+      return self._cache[key]['value']
+    return value
+

@@ -28,4 +28,3 @@ mkdir -p $BUILD_DIR
 
 # Build a source distribution package
 python setup.py sdist --dist-dir=$BUILD_DIR
-mv MANIFEST $BUILD_DIR/GCPDataLab.manifest

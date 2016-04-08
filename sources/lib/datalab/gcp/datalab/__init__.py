@@ -12,8 +12,6 @@
 
 """Google Cloud Platform library - IPython Functionality."""
 
-import httplib2 as _httplib2
-import requests as _requests
 
 try:
   import IPython as _IPython
@@ -22,10 +20,18 @@ try:
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
+import gcp.context as _context
+
+import httplib2 as _httplib2
+import requests as _requests
+
 # Import the modules that do cell magics
 import _bigquery
 import _chart
+import _chart_data
+import _csv
 import _extension
+import _job
 import _modules
 import _sql
 import _storage
@@ -65,6 +71,7 @@ _requests.Session.__init__ = _init_session
 _orig_run_cell_magic = _shell.InteractiveShell.run_cell_magic
 _orig_run_line_magic = _shell.InteractiveShell.run_line_magic
 
+
 def _run_line_magic(self, magic_name, line):
   fn = self.find_line_magic(magic_name)
   if fn is None:
@@ -85,4 +92,15 @@ def _run_cell_magic(self, magic_name, line, cell):
 
 _shell.InteractiveShell.run_cell_magic = _run_cell_magic
 _shell.InteractiveShell.run_line_magic = _run_line_magic
+
+# Define a 'project_id' variable with the default project ID. We do this conditionally
+# in a try/catch # to avoid the call to Context.default() when running tests which mock
+# IPython.get_ipython().
+
+try:
+  if 'project_id' not in _IPython.get_ipython().user_ns:
+    _IPython.get_ipython().user_ns['project_id'] = _context.Context.default().project_id
+except TypeError:
+  pass
+
 

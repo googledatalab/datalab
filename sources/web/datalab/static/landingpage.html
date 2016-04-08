@@ -1,0 +1,24 @@
+<html>
+  <head>
+  </head>
+  <body>
+<h1>Welcome to Google Datalab!</h1>
+
+It appears your Datalab container is not yet set up correctly. These
+are the steps needed:
+
+<ul>
+<li>Install gcloud, and run 'gcloud auth login' to log in to Google's cloud services. This should create a 
+.config/gcloud directory in your home directory.</li>
+<li>Set up the two volumes in the containers settings in Kitematic. The 'home' volume should
+point to your home directory (typically shown as '~' when set) 
+and the 'notebooks' volume should point to the root directory
+of where you want to store your notebooks.</li>
+<li>If you have not yet done so, create a datalab directory in your notebooks folder and 
+clone the samples and tutorials.</li>
+</ul>
+
+Once complete, restart the container and try again.
+  </body>
+</html>
+

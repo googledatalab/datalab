@@ -45,7 +45,7 @@ class MetadataCredentials(oauth2client.client.OAuth2Credentials):
     """
     headers['Authorization'] = 'Bearer ' + self._metadata_service.auth_token
 
-  def refresh(self, unused_http):
+  def refresh(self, _):
     """Refreshes the auth token on expiry.
     """
     self._metadata_service.refresh()
