@@ -5,7 +5,11 @@
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 PAPER         =
-BUILDDIR      = ../gh-pages
+
+# The buildir is out of the main repo. It is the location of the gh-pages
+# branch of Datalab that contains none of the source but just the HTML
+# output from Sphinx. This is to support GitHub Pages documentation.
+BUILDDIR      = ../../datalab-docs
 
 # User-friendly check for sphinx-build
 ifeq ($(shell which $(SPHINXBUILD) >/dev/null 2>&1; echo $$?), 1)
@@ -191,12 +195,14 @@ pseudoxml:
 	@echo
 	@echo "Build finished. The pseudo-XML files are in $(BUILDDIR)/pseudoxml."
 
+# Publishing requires a cloned repo in the ../../datalab/docs directory.
+# You can use the prepublish target for this.
+prepublish:
+	mkdir -p ../../datalab-docs/html
+	cd ../../datalab-docs && git clone https://github.com/GoogleCloudPlatform/datalab.git html && \
+		git checkout gh-pages
+
 publish:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
-	cd ../gh-pages/html
-	touch .nojekyll
-	git add .
-	git commit -m "Updated"
-	git push -u origin gh-pages
+	cd ../../datalab-docs/html && git add . && git commit -m "Updated" && git push --force origin gh-pages
 
- 
