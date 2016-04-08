@@ -29,5 +29,6 @@ LINTER="flake8 --ignore=E111,E114,F401 --max-line-length=100"
 $LINTER gcp/_util
 $LINTER gcp/bigquery
 $LINTER gcp/data
+$LINTER gcp/stackdriver
 $LINTER gcp/storage
 
