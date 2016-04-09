@@ -25,7 +25,7 @@ import logging = require('./logging');
 import net = require('net');
 import path = require('path');
 import sockets = require('./sockets');
-import static = require('./static');
+import static_ = require('./static');
 import url = require('url');
 import userManager = require('./userManager');
 import workspaceManager = require('./workspaceManager');
@@ -237,7 +237,7 @@ export function run(settings: common.Settings): void {
 
   healthHandler = health.createHandler(settings);
   infoHandler = info.createHandler(settings);
-  staticHandler = static.createHandler(settings);
+  staticHandler = static_.createHandler(settings);
 
   server = http.createServer(requestHandler);
   sockets.wrapServer(server);

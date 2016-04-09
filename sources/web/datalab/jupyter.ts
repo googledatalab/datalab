@@ -86,7 +86,7 @@ function createJupyterServer(userId: string): JupyterServer {
 
   var userDir = userManager.getUserDir(userId);
   if (!fs.existsSync(userDir)) {
-    fs.mkdirSync(userDir, 0755);
+    fs.mkdirSync(userDir, parseInt('0755',8));
   }
 
   var server: JupyterServer = {
