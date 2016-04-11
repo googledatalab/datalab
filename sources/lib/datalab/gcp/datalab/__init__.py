@@ -29,6 +29,7 @@ import _extension
 import _modules
 import _sql
 import _storage
+import _monitoring
 
 
 # Inject our user agent on all requests by monkey-patching a wrapper around httplib2.Http.request.
