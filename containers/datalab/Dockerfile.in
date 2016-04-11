@@ -58,6 +58,7 @@ RUN pip install -U tornado==4.3 \
     pip install -U seaborn==0.7.0 && \
     pip install -U notebook==4.0.2 && \
     pip install -U PyYAML==3.11 && \
+    pip install -U plotly==1.9.6 && \
     pip install -U six==1.9.0 && \
     easy_install pip && \
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf
