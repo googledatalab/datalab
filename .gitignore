@@ -6,6 +6,7 @@ test
 *.pyc
 *.idea
 *.iml
+*.ipynb.yaml
 
 # For building the server incrementally from an IDE like Eclipse it can be useful to create
 # the two symlinks below to point to sources/server/src/shared, but we don't want them
