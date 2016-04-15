@@ -20,7 +20,6 @@ try:
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
-import gcp.ml
 import gcp._util
 
 import _html
@@ -57,10 +56,8 @@ def html_job_status(job_name, job_type, refresh_interval, html_on_running, html_
 @IPython.core.magic.register_line_magic
 def _get_job_status(line):
   """magic used as an endpoint for client to get job status.
-     For example:
-       %_get_job_status \
-         projects/cloud-ml-users/operations/adb1a1d2-f6eb-40bd-8595-c3c2b842686d \
-         cloud
+
+       %_get_job_status <name>
 
   Returns:
     A JSON object of the job status.
@@ -68,17 +65,12 @@ def _get_job_status(line):
   try:
     args = line.strip().split()
     job_name = args[0]
-    job_type = args[1]
 
     job = None
-    if job_type == 'cloud':
-      # TODO: check if job exists. If not set job to None
-      job = gcp.ml.Job(job_name)
-    elif job_type == 'local':
-      if job_name in _local_jobs:
-        job = _local_jobs[job_name]
+    if job_name in _local_jobs:
+      job = _local_jobs[job_name]
     else:
-      raise Exception('invalid job type %s' % job_type)
+      raise Exception('invalid job %s' % job_name)
 
     if job is not None:
       error = '' if job.fatal_error is None else str(job.fatal_error)

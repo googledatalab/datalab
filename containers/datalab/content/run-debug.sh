@@ -25,9 +25,8 @@ then
   export DATALAB_PROJECT_NUM=`gcloud -q projects describe $PROJECT_ID | grep projectNumber | awk '{print substr($2,2,length($2)-2)}'`
 fi
 
-export DATALAB_ENV=debug
 export DATALAB_INSTANCE_NAME=debug
-export METADATA_HOST=localhost
+export DATALAB_ENV=local
 
 mkdir -p /content/datalab/notebooks
 mkdir -p /content/datalab/docs
@@ -36,8 +35,5 @@ rsync -r /datalab/docs/* /content/datalab/docs
 # Setup environment variables.
 . /datalab/setup-env.sh
 
-# Simulate the metadata service
-forever start /datalab/metadata/server.js &
-
-# Start the DataLab server
-forever /datalab/web/app.js
+# Start the DataLab server with debugging enabled on port 5858
+forever -c 'node --debug' /datalab/web/app.js

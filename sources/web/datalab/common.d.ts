@@ -42,7 +42,6 @@ declare module common {
     release: string;
     versionId: string;
     instanceId: string;
-    analyticsId: string;
     configUrl: string;
     feedbackId: string;
     logEndpoint: string;
@@ -85,10 +84,6 @@ declare module common {
      */
     metadataHost: string;
 
-    /**
-     * Whether authentication is enabled.
-     */
-    enableAuth: boolean;
   }
 
   interface Map<T> {

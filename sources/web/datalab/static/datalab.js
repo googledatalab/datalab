@@ -147,19 +147,6 @@ function initializePage(dialog) {
     document.getElementById('instancesLink').href = instancesLink;
     document.getElementById('repoLink').href = repoLink;
     document.getElementById('userId').textContent = document.body.getAttribute('data-user-id');
-
-    var analyticsId = document.body.getAttribute('data-analytics-id');
-    if (analyticsId) {
-      ga('create', analyticsId);
-      ga('set', {
-        dimension2: document.body.getAttribute('data-version-id'),
-        dimension3: document.body.getAttribute('data-instance-id')
-      });
-      ga('set', 'hostname', 'datalab.cloud.google.com');
-      ga('set', 'page', '/' + document.body.getAttribute('data-analytics-path'));
-      ga('set', 'title', document.body.getAttribute('data-analytics-title'));
-      ga('send', 'pageview');
-    }
   }
 }
 

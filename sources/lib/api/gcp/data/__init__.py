@@ -12,6 +12,7 @@
 
 """Google Cloud Platform library - Generic SQL Helpers."""
 
+from _csv import Csv
 from _sql_module import SqlModule
 from _sql_statement import SqlStatement
 

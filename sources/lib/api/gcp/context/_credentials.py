@@ -10,24 +10,41 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-"""Implements Metadata-based Credentials functionality."""
+"""Implements Credentials functionality."""
 
+import httplib2
+import json
 import oauth2client.client
 
 
-class MetadataCredentials(oauth2client.client.OAuth2Credentials):
-  """OAuth credentials using auth tokens retrieved from the metadata service.
+class Credentials(oauth2client.client.OAuth2Credentials):
+  """OAuth credentials using auth tokens.
   """
 
-  def __init__(self, metadata_service):
-    """Initializes an instance of MetadataCredentials.
+  def _get_token(self):
+    try:
+      # This works when running in GCE only.
+      if self._creds is None:
+        self._creds = oauth2client.client.GoogleCredentials.get_application_default()
+      self._creds.refresh(httplib2.Http())
+      return self._creds.access_token
+    except Exception:
+      self._creds = None
+      # Load from file created by node server.
+      # TODO(gram): record the timestamp on the file so we don't reread the file every time;
+      # only when it has changed.
+      with open('/root/tokens.json') as f:
+        return json.load(f).get('access_token', None)
 
-    Args:
-      metadata_service: the metadata service to use to retrieve auth tokens.
+  def __init__(self):
+    """Initializes an instance of Credentials.
+
     """
+    self._creds = None
+    access_token = self._get_token()
 
-    super(MetadataCredentials, self).__init__(
-        access_token=metadata_service.auth_token,
+    super(Credentials, self).__init__(
+        access_token=access_token,
         client_id=None,
         client_secret=None,
         refresh_token=None,
@@ -35,7 +52,6 @@ class MetadataCredentials(oauth2client.client.OAuth2Credentials):
         token_uri=None,
         user_agent=None
     )
-    self._metadata_service = metadata_service
 
   def apply(self, headers):
     """Adds the authorization header into a headers collection.
@@ -43,16 +59,14 @@ class MetadataCredentials(oauth2client.client.OAuth2Credentials):
     Args:
       headers: the dictionary of HTTP headers
     """
-    headers['Authorization'] = 'Bearer ' + self._metadata_service.auth_token
+    headers['Authorization'] = 'Bearer ' + self._get_token()
 
   def refresh(self, _):
     """Refreshes the auth token on expiry.
     """
-    self._metadata_service.refresh()
+    pass
 
   def _refresh(self, unused_http):
     """Refreshes the auth token on expiry.
     """
-    # Refreshing can also be done by directly calling this method, instead of just through
-    # refresh() above!
-    self._metadata_service.refresh()
+    pass

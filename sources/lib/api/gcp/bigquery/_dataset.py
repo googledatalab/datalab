@@ -224,7 +224,7 @@ class DataSets(object):
   """ Iterator class for enumerating the datasets in a project. """
 
   def __init__(self, project_id=None, context=None):
-    """ Initialize the DataSetLister.
+    """ Initialize the DataSets object.
 
     Args:
       project_id: the ID of the project whose datasets you want to list. If None defaults

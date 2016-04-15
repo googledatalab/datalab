@@ -35,7 +35,6 @@ fi
 
 docker run -i --entrypoint=$ENTRYPOINT \
   -p 8081:8080 \
-  -v "$HOME/.config:/config" \
   -v "$CONTENT:/content" \
   -t datalab
 

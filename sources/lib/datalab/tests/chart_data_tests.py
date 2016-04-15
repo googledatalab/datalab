@@ -29,7 +29,6 @@ IPython.core.display.HTML = lambda x: x
 IPython.core.display.JSON = lambda x: x
 
 import gcp.datalab
-import gcp.ml
 
 
 class TestCases(unittest.TestCase):
@@ -74,32 +73,4 @@ class TestCases(unittest.TestCase):
                       "cols": [{"type": "string", "id": "country", "label": "country"}]},
                       "refresh_interval": 0, "options": {}}, data)
 
-  @mock.patch('gcp.datalab._ml._get_ml_data')
-  def test_get_chart_data_ml(self, mock_get_ml_data):
-    gcp.ml.LocalModel.set_base_path('/tmp')
-    try:
-      model = gcp.ml.LocalModel('foo.v1')
-      model.create_folders()
-
-      mock_get_ml_data.return_value = ([], '*', 0, {}, {})
-
-      gcp.datalab._chart_data._get_chart_data('', json.dumps({
-        'metric': 'losses_and_errors',
-        'width': 400,
-        'models': [{'name': 'foo.v1', 'where': 'local', 'path': '/tmp'}],
-        'controls': {'x': 'Steps'}
-      }))
-      mock_get_ml_data.assert_called_with(models=[model], x_axis='Steps',
-                                          data_type='losses_and_errors', width=400)
-
-      gcp.datalab._chart_data._get_chart_data('', json.dumps({
-        'metric': 'loss',
-        'width': 400,
-        'models': [{'name': 'foo.v1', 'where': 'local', 'path': '/tmp'}],
-        'controls': {'x': 'Time'}
-      }))
-      mock_get_ml_data.assert_called_with(models=[model], x_axis='Time',
-                                          data_type='loss', width=400)
-    finally:
-      model.delete()
 

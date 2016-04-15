@@ -17,7 +17,6 @@
 /// <reference path="../../../externs/ts/node/tcp-port-used.d.ts" />
 /// <reference path="common.d.ts" />
 
-import analytics = require('./analytics');
 import callbacks = require('./callbacks');
 import childProcess = require('child_process');
 import fs = require('fs');
@@ -53,14 +52,9 @@ var callbackManager: callbacks.CallbackManager = new callbacks.CallbackManager()
 /**
  * Templates
  */
-var local_templates: common.Map<string> = {
-  'tree': fs.readFileSync(path.join(__dirname, 'templates', 'local_tree.html'), { encoding: 'utf8' }),
-  'nb': fs.readFileSync(path.join(__dirname, 'templates', 'local_nb.html'), { encoding: 'utf8' })
-};
-
-var managed_templates: common.Map<string> = {
-  'tree': fs.readFileSync(path.join(__dirname, 'templates', 'managed_tree.html'), { encoding: 'utf8' }),
-  'nb': fs.readFileSync(path.join(__dirname, 'templates', 'managed_nb.html'), { encoding: 'utf8' })
+var templates: common.Map<string> = {
+  'tree': fs.readFileSync(path.join(__dirname, 'templates', 'tree.html'), { encoding: 'utf8' }),
+  'nb': fs.readFileSync(path.join(__dirname, 'templates', 'nb.html'), { encoding: 'utf8' })
 };
 
 /**
@@ -257,7 +251,7 @@ export function handleRequest(request: http.ServerRequest, response: http.Server
 
 
 function sendTemplate(key: string, data: common.Map<string>, response: http.ServerResponse) {
-  var template = process.env.DATALAB_MANAGED ?  managed_templates[key] : local_templates[key];
+  var template = templates[key];
 
   // NOTE: Uncomment to use external templates mapped into the container.
   //       This is only useful when actively developing the templates themselves.
@@ -293,8 +287,6 @@ function responseHandler(proxyResponse: http.ClientResponse,
   if ((path.indexOf('/tree') == 0) || (path.indexOf('/notebooks') == 0)) {
     var templateData: common.Map<string> = {
       feedbackId: appSettings.feedbackId,
-      analyticsId: appSettings.analyticsId,
-      analyticsPath: analytics.hashPath(path, 'sha256'),
       projectNumber: appSettings.projectNumber,
       projectId: appSettings.projectId,
       versionId: appSettings.versionId,
@@ -330,8 +322,6 @@ function responseHandler(proxyResponse: http.ClientResponse,
     response.writeHead = placeHolder;
     response.write = placeHolder;
     response.end = placeHolder;
-
-    analytics.logPage(page, path, request.headers['x-appengine-user-id']);
   }
 }
 

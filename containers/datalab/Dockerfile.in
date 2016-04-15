@@ -85,15 +85,9 @@ RUN wget -nv https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.zip && \
     ln -s /root/.config /config && \
     touch /tools/google-cloud-sdk/lib/third_party/google.py
 
-# Setup Workspace-Sync
-RUN mkdir -p /wsync && \
-    cd /wsync && \
-    wget -nv https://storage.googleapis.com/cloud-datalab/deploy/wsync/20151125/wsync && \
-    chmod u+r,g+x /wsync/* && cd /
-
 # Container configuration
 EXPOSE 8080
-VOLUME [ "/notebooks", "/config" ]
+VOLUME [ "/notebooks" ]
 
 # Path configuration
 ENV PATH $PATH:/tools/node/bin:/tools/google-cloud-sdk/bin
@@ -118,28 +112,19 @@ RUN mkdir -p /datalab/web && \
     cd / && \
     /tools/node/bin/npm install -g forever
 
-# Install ProtoBuf, TensorFlow, DataFlow, CloudML SDK (All non-public builds)
+# Install ProtoBuf, TensorFlow, DataFlow
 RUN pip install protobuf==3.0.0b2.post2 && \
-    gsutil cp gs://cloud-datalab/deploy/tf/tensorflow-0.7.1+-20160309100405_7022c01-cp27-none-linux_x86_64.whl \
-        /tmp/tensorflow-0.7.1-cp27-none-linux_x86_64.whl && \
-    pip install /tmp/tensorflow-0.7.1-cp27-none-linux_x86_64.whl && \
-    rm /tmp/tensorflow-0.7.1-cp27-none-linux_x86_64.whl && \
-    gsutil cp gs://cloud-datalab/deploy/dataflow/google-cloud-dataflow-python-sdk-160303.tgz \
-        /tmp/dataflow.tgz && \
-    easy_install /tmp/dataflow.tgz && \
-    rm /tmp/dataflow.tgz && \
+    wget https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow-0.7.1-cp27-none-linux_x86_64.whl && \
+    pip install tensorflow-0.7.1-cp27-none-linux_x86_64.whl && \
+    rm tensorflow-0.7.1-cp27-none-linux_x86_64.whl && \
+    easy_install https://github.com/GoogleCloudPlatform/DataflowPythonSDK/archive/v0.2.2.tar.gz && \
     echo "try:\n  __import__('pkg_resources').declare_namespace(__name__)\nexcept \
         ImportError:\n  __path__ = __import__('pkgutil').extend_path(__path__, __name__)\n" \
-        > /usr/local/lib/python2.7/dist-packages/google/__init__.py && \
-    gsutil cp gs://cloud-datalab/deploy/sdk/sdk-160403.tar.gz /tmp/sdk.tgz && \
-    pip install /tmp/sdk.tgz && \
-    mkdir -p /root/google-cloud-ml && \
-    mv /tmp/sdk.tgz /root/google-cloud-ml/cloudml.tar.gz
+        > /usr/local/lib/python2.7/dist-packages/google/__init__.py
 
 # Add build artifacts
 ADD build/lib/gcpdata-0.1.*.tar.gz /datalab/lib/
 ADD build/lib/gcpdatalab-0.1.*.tar.gz /datalab/lib/
-ADD build/metadata /datalab/metadata
 ADD build/web /datalab/web
 ADD nbconvert /datalab/nbconvert
 ADD content/ /datalab

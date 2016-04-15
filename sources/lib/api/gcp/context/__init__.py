@@ -13,3 +13,4 @@
 """Google Cloud Platform library - authorization Context for Cloud services."""
 
 from ._context import Context
+from ._project import Project, Projects

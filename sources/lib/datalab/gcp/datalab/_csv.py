@@ -20,8 +20,6 @@ try:
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
-import gcp.ml
-
 import pandas as pd
 
 import _commands
@@ -46,7 +44,7 @@ def csv(line, cell=None):
 
 
 def _view(args, cell):
-  csv = gcp.ml.Csv(args['input'])
+  csv = gcp.data.Csv(args['input'])
   num_lines = int(args['count'] or 5)
   headers = None
   if cell:

@@ -35,9 +35,9 @@ class TestCases(unittest.TestCase):
   def test_chart_cell(self):
     t = [{'country': 'US', 'quantity': 100}, {'country': 'ZA', 'quantity': 50}]
     chart = gcp.datalab._chart._chart_cell({'chart': 'geo', 'data': t, 'fields': None}, '')
-    self.assertTrue(chart.find('charts.render(dom, events,') > 0)
-    self.assertTrue(chart.find('{chartStyle:\'geo\'') > 0)
-    self.assertTrue(chart.find('fields:\'*\'') > 0)
+    self.assertTrue(chart.find('charts.render(') > 0)
+    self.assertTrue(chart.find('\'geo\'') > 0)
+    self.assertTrue(chart.find('"fields": "*"') > 0)
     self.assertTrue(chart.find('{"c": [{"v": "US"}, {"v": 100}]}') > 0)
     self.assertTrue(chart.find('{"c": [{"v": "ZA"}, {"v": 50}]}') > 0)
     self.assertTrue(chart.find('"cols": [{"type": "string", "id": "country", "label": "country"},' +

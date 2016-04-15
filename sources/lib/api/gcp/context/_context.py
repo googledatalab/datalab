@@ -15,7 +15,7 @@
 """Implements Context functionality."""
 
 import _credentials
-import _metadata
+import _project
 
 
 class Context(object):
@@ -65,10 +65,13 @@ class Context(object):
     """
 
     if Context._global_context is None:
-      ms = _metadata.MetadataService()
-      project_id = ms.project_id
-      credentials = _credentials.MetadataCredentials(ms)
+      credentials = _credentials.Credentials()
+      for project in _project.Projects(credentials):
+        if project.is_active:
+          break
+      else:
+        raise Exception('Couldn\'t find active project')
 
-      Context._global_context = Context(project_id, credentials)
+      Context._global_context = Context(project.id, credentials)
 
     return Context._global_context

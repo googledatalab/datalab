@@ -25,7 +25,6 @@ import gcp._util
 import gcp.data
 
 import _utils
-import _ml
 
 
 @IPython.core.magic.register_cell_magic
@@ -40,17 +39,13 @@ def _get_chart_data(line, cell_body=''):
     first_row = int(metadata.get('first', 0))
     count = int(metadata.get('count', -1))
 
-    if source_index is not None:
-      source_index = int(source_index)
-      if source_index >= len(_utils._data_sources):  # Can happen after e.g. kernel restart
-        # TODO(gram): get kernel restart events in charting.js and disable any refresh timers.
-        print 'No source %d' % source_index
-        return IPython.core.display.JSON({'data': {}})
-      source = _utils._data_sources[source_index]
-      schema = None
-
-    else:  # ML data
-      source, fields, refresh, schema, options = _ml._chart_source(metadata)
+    source_index = int(source_index)
+    if source_index >= len(_utils._data_sources):  # Can happen after e.g. kernel restart
+      # TODO(gram): get kernel restart events in charting.js and disable any refresh timers.
+      print 'No source %d' % source_index
+      return IPython.core.display.JSON({'data': {}})
+    source = _utils._data_sources[source_index]
+    schema = None
 
     controls = metadata['controls'] if 'controls' in metadata else {}
     data, _ = _utils.get_data(source, fields, controls, first_row, count, schema)
