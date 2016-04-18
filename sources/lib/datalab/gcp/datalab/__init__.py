@@ -33,6 +33,7 @@ import _csv
 import _extension
 import _job
 import _modules
+import _projects
 import _sql
 import _storage
 

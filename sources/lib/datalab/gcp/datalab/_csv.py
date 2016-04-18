@@ -22,8 +22,11 @@ except ImportError:
 
 import pandas as pd
 
+import gcp.data
+
 import _commands
 import _utils
+
 
 @IPython.core.magic.register_line_cell_magic
 def csv(line, cell=None):
