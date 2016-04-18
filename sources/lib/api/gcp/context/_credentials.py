@@ -15,11 +15,14 @@
 import httplib2
 import json
 import oauth2client.client
+import os
 
 
 class Credentials(oauth2client.client.OAuth2Credentials):
   """OAuth credentials using auth tokens.
   """
+
+  _NODE_TOKEN_FILE = '/datalab/tokens.json'
 
   def _get_token(self):
     try:
@@ -30,11 +33,16 @@ class Credentials(oauth2client.client.OAuth2Credentials):
       return self._creds.access_token
     except Exception:
       self._creds = None
-      # Load from file created by node server.
-      # TODO(gram): record the timestamp on the file so we don't reread the file every time;
-      # only when it has changed.
-      with open('/root/tokens.json') as f:
-        return json.load(f).get('access_token', None)
+      if os.path.exists(Credentials._NODE_TOKEN_FILE):
+        # Load from file created by node server.
+        # TODO(gram): record the timestamp on the file so we don't reread the file every time;
+        # only when it has changed.
+        with open(Credentials._NODE_TOKEN_FILE) as f:
+          return json.load(f).get('access_token', None)
+      else:
+        # Try use ~/.config/gcloud. Raise exception on failure.
+        # TODO(gram): implement this and add back the volume in the container
+        pass
 
   def __init__(self):
     """Initializes an instance of Credentials.

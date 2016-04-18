@@ -93,13 +93,23 @@ def _run_cell_magic(self, magic_name, line, cell):
 _shell.InteractiveShell.run_cell_magic = _run_cell_magic
 _shell.InteractiveShell.run_line_magic = _run_line_magic
 
-# Define a 'project_id' variable with the default project ID. We do this conditionally
-# in a try/catch # to avoid the call to Context.default() when running tests which mock
-# IPython.get_ipython().
+# Define global 'project_id' and 'set_project_id' functions to manage the default project ID. We
+# do this conditionally in a try/catch # to avoid the call to Context.default() when running tests
+# which mock IPython.get_ipython().
+
+def _get_project_id():
+  try:
+    return _context.Context.default().project_id
+  except Exception:
+    return None
+
+def _set_project_id(project_id):
+  _context.Context.default(project_id)
 
 try:
   if 'project_id' not in _IPython.get_ipython().user_ns:
-    _IPython.get_ipython().user_ns['project_id'] = _context.Context.default().project_id
+    _IPython.get_ipython().user_ns['project_id'] = _get_project_id
+    _IPython.get_ipython().user_ns['set_project_id'] = _set_project_id
 except TypeError:
   pass
 

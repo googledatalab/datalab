@@ -29,7 +29,7 @@ class Api(object):
     url = Api._ENDPOINT + Api._PROJECTS_PATH
     args = {}
     if max_results != 0:
-      args['maxResults'] = max_results
+      args['pageSize'] = max_results
     if page_token is not None:
       args['pageToken'] = page_token
 

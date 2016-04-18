@@ -51,6 +51,11 @@ let scopes = [
   'https://www.googleapis.com/auth/compute'  // needed by autoscaler
 ];
 
+// Datalab config file for things like default project. If this doesn't exist the EULA hasn't been accepted.
+let configFile = '/notebooks/.datalabconfig';
+
+let tokensFile = '/datalab/tokens.json';  // Where we store credentials.
+
 /**
  * The application settings instance.
  */
@@ -167,9 +172,10 @@ function handleRequest(request: http.ServerRequest,
 function persistCredentials(tokens: any) {
   // Store the tokens and expiry in a file that kernels can read to cons up an
   // OAuthCredentials object from.
-  // We use a temp file then rename, as file renaming is atomic on *nix.
-  fs.writeFileSync('/root/tokens.json.new', JSON.stringify(tokens));
-  fs.renameSync('/root/tokens.json.new', '/root/tokens.json')
+  // We use a temp file then rename, as file renaming is atomic on *nix. This can
+  // avoid problems with the file being overwritten while being read.
+  fs.writeFileSync(tokensFile + '.new', JSON.stringify(tokens));
+  fs.renameSync(tokensFile + '.new', tokensFile)
 }
 
 /**
@@ -204,18 +210,9 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     return;
   }
 
-  // Check if we are configured correctly; if not send user to landing page.
-  if (!fs.existsSync('/root/.config/gcloud')) {
-    logging.getLogger().info('No gcloud config; redirect to landing page');
-    fs.readFile('/datalab/web/static/landingpage.html', function(error, content) {
-      response.writeHead(200);
-      response.end(content);
-    });
-    return;
-  }
   // Check if EULA has been accepted; if not go to EULA page.
   if (path.indexOf('/accepted_eula') == 0) {
-    fs.mkdirSync('/root/.config/datalab');
+    fs.writeFileSync(configFile, '');
     var i = parsed_url.search.indexOf('referer=');
     if (i < 0) {
       logging.getLogger().info('Accepting EULA, but no referer; returning 500');
@@ -229,7 +226,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     response.end();
     return;
   }
-  if (!fs.existsSync('/root/.config/datalab')) {
+  if (!fs.existsSync(configFile)) {
     logging.getLogger().info('No Datalab config; redirect to EULA page');
     fs.readFile('/datalab/web/static/eula.html', function(error, content) {
       response.writeHead(200);

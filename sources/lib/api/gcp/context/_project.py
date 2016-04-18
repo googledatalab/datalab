@@ -32,12 +32,11 @@ import _credentials
 class Project(object):
   """ Simple wrapper class for Cloud projects. """
 
-  def __init__(self, api, id, number, name, state):
+  def __init__(self, api, id, number, name):
     self._api = api
     self._id = id
     self._number = number
     self._name = name
-    self._state = state
 
   @property
   def id(self):
@@ -54,19 +53,9 @@ class Project(object):
   def __str__(self):
     return self._id
 
-  @property
-  def is_active(self, refresh=False):
-    if refresh:
-      try:
-        project = self._api.project_get()
-        self._state = project['lifecycleState']
-      except Exception:
-        pass
-    return self._state == 'ACTIVE'
-
 
 class Projects(object):
-  """ Iterator class for enumerating the projects accessible to the account. """
+  """ Iterator class for enumerating the active projects accessible to the account. """
 
   def __init__(self, credentials=None):
     """ Initialize the Projects object.
@@ -91,9 +80,8 @@ class Projects(object):
         projects = [Project(self._api,
                              info['projectId'],
                              info['projectNumber'],
-                             info['name'],
-                             info['lifecycleState'])
-                    for info in projects]
+                             info['name'])
+                    for info in projects if info['lifecycleState'] == 'ACTIVE']
       except KeyError:
         raise Exception('Unexpected response from server.')
 
