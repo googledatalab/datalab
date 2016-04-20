@@ -287,8 +287,6 @@ function responseHandler(proxyResponse: http.ClientResponse,
   if ((path.indexOf('/tree') == 0) || (path.indexOf('/notebooks') == 0)) {
     var templateData: common.Map<string> = {
       feedbackId: appSettings.feedbackId,
-      projectNumber: appSettings.projectNumber,
-      projectId: appSettings.projectId,
       versionId: appSettings.versionId,
       instanceId: appSettings.instanceId,
       instanceName: appSettings.instanceName,

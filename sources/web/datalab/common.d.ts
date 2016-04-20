@@ -33,12 +33,6 @@ declare module common {
      */
     instanceUser: string;
 
-    /**
-     * Id of the cloud project that the datalab instance runs in.
-     */
-    projectId: string;
-    projectNumber: string;
-
     release: string;
     versionId: string;
     instanceId: string;
