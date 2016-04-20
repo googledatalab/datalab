@@ -20,6 +20,8 @@ import logging = require('./logging');
 import path = require('path');
 import url = require('url');
 
+// TODO(gram): can we get rid of all of this now for local run?
+
 /**
  * The application settings instance.
  */

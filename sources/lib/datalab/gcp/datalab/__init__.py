@@ -106,7 +106,8 @@ def _get_project_id():
     return None
 
 def _set_project_id(project_id):
-  _context.Context.default(project_id)
+  context = _context.Context.default()
+  context.set_project_id(project_id)
 
 try:
   if 'project_id' not in _IPython.get_ipython().user_ns:
@@ -114,8 +115,4 @@ try:
     _IPython.get_ipython().user_ns['set_project_id'] = _set_project_id
 except TypeError:
   pass
-
-if os.environ.get('PROJECT_ID', None):
-  _set_project_id(os.environ['PROJECT_ID'])
-
 

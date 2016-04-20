@@ -9,6 +9,9 @@ Module contents
     :undoc-members:
     :show-inheritance:
 
+.. autoclass:: gcp.data.Csv
+    :members:
+
 .. autoclass:: gcp.data.SqlModule
     :members:
 

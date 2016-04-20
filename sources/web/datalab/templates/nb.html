@@ -134,6 +134,13 @@
                 <i id="kernel_indicator_icon"></i> Reset Session
               </button>
             </div>
+            <!-- The next div and its contents are for ipywidgets. They insert their own menu before #help_menu -->
+            <div class="btn-group">
+              <div>
+                <div id="help_menu">
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div id="sidebarToolbar">
@@ -144,7 +151,7 @@
             </div>
             <div class="btn-group">
               <button id="hideSidebarButton" type="button" class="btn" title="Toggle sidebar on/off">
-                <span class="fa fa-chevron-down fa-flip-vertical"></span>
+                <span class="fa fa-chevron-down"></span>
               </button>
             </div>
           </div>
@@ -161,7 +168,7 @@
             </div>
           </div>
         </div>
-        <div id="sidebarArea">
+        <div id="sidebarArea" style="display:none">
           <div id="sidebarContent">
             <div class="btn-group">
               <button id="toggleSidebarButton" type="button" class="btn" title="Toggle the size of the sidebar">

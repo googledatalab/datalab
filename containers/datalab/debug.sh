@@ -37,8 +37,9 @@ fi
 
 docker run -it --entrypoint=$ENTRYPOINT \
   -p 8081:8080 \
-  -v "$HOME/.config:/config" \
   -v "$CONTENT:/content" \
   -e "PROJECT_ID=$PROJECT_ID" \
+  -e "DATALAB_ENV=local" \
+  -e "CLOUDSDK_CONFIG=/content/datalab" \
   datalab
 

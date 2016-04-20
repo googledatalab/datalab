@@ -32,15 +32,15 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 
 # Setup Python packages. Rebuilding numpy/scipy is expensive so we move this early
 # to reduce the chance that prior steps can cause changes requiring a rebuild.
-RUN pip install -U numpy==1.10.4 && \
-    pip install -U pandas==0.17.1 && \
+RUN pip install -U numpy==1.11.0 && \
+    pip install -U pandas==0.18.0 && \
     pip install -U scipy==0.17.0 && \
-    pip install -U scikit-learn==0.17.0 && \
+    pip install -U scikit-learn==0.17.1 && \
     pip install -U sympy==0.7.6.1 && \
     pip install -U statsmodels==0.6.1
 
 RUN pip install -U tornado==4.3 \
-                   pyzmq==14.4.0 \
+                   pyzmq==15.2.0 \
                    jinja2==2.8 \
                    jsonschema==2.5.1 \
                    python-dateutil==2.5.0 \
@@ -50,15 +50,16 @@ RUN pip install -U tornado==4.3 \
                    argparse==1.2.1 \
                    mock==1.2.0 \
                    requests==2.9.1 \
-                   oauth2client==1.5.2 \
+                   oauth2client==2.0.2 \
                    httplib2==0.9.2 \
                    futures==3.0.5 && \
     pip install -U matplotlib==1.5.1 && \
     pip install -U ggplot==0.6.8 && \
     pip install -U seaborn==0.7.0 && \
-    pip install -U notebook==4.0.2 && \
+    pip install -U notebook==4.2.0 && \
     pip install -U PyYAML==3.11 && \
     pip install -U six==1.9.0 && \
+    pip install -U ipywidgets==5.0.0 && \
     easy_install pip && \
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf
 
@@ -103,7 +104,6 @@ RUN mkdir -p /datalab/web && \
         mkdirp@0.5.1 \
         node-uuid@1.4.7 \
         bunyan@1.7.1 \
-        socket.io@1.4.5 \
         tcp-port-used@0.1.2 \
         node-cache@3.2.0 && \
     cd / && \
@@ -111,9 +111,9 @@ RUN mkdir -p /datalab/web && \
 
 # Install ProtoBuf, TensorFlow, DataFlow
 RUN pip install protobuf==3.0.0b2.post2 && \
-    wget https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow-0.7.1-cp27-none-linux_x86_64.whl && \
-    pip install tensorflow-0.7.1-cp27-none-linux_x86_64.whl && \
-    rm tensorflow-0.7.1-cp27-none-linux_x86_64.whl
+    wget https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.8.0-cp27-none-linux_x86_64.whl && \
+    pip install tensorflow-0.8.0-cp27-none-linux_x86_64.whl && \
+    rm tensorflow-0.8.0-cp27-none-linux_x86_64.whl
 
 # Add build artifacts
 ADD build/lib/gcpdata-0.1.*.tar.gz /datalab/lib/
@@ -141,6 +141,10 @@ RUN ipython profile create default && \
     ln -s /usr/local/lib/python2.7/dist-packages/notebook/static/custom/custom.css /datalab/nbconvert/custom.css && \
     ln -s /datalab/web/static/extensions/charting.css /datalab/nbconvert/charting.css && \
     ln -s /datalab/web/static/datalab.css /datalab/nbconvert/datalab.css
+
+# Include this line above to enable ipywidgets. These aren't working 100% yet so 
+# we don't enable them.
+#    jupyter nbextension enable --py widgetsnbextension && \
 
 # Startup
 ENV DATALAB_VERSION _version_

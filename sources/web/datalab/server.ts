@@ -14,11 +14,10 @@
 
 /// <reference path="../../../externs/ts/node/node.d.ts" />
 /// <reference path="../../../externs/ts/request/request.d.ts" />
-/// <reference path="../../../externs/ts/googleapis/googleapis.d.ts" />
 /// <reference path="common.d.ts" />
 
+import auth = require('./auth')
 import fs = require('fs');
-import google = require('googleapis');
 import health = require('./health');
 import http = require('http');
 import info = require('./info');
@@ -37,25 +36,8 @@ var healthHandler: http.RequestHandler;
 var infoHandler: http.RequestHandler;
 var staticHandler: http.RequestHandler;
 
-var oauth2Client: any = undefined;
-var tokenExpiry: any = undefined;
-
-// These are the gcloud credentials and are not actually secret.
-let clientId = '32555940559.apps.googleusercontent.com';
-let clientSecret = 'ZmssLNjJy2998hD4CTg2ejr2';
-
-let scopes = [
-  'https://www.googleapis.com/auth/userinfo.email',
-  'https://www.googleapis.com/auth/cloud-platform',
-  // TODO: remove the following once 'cloud-platform' is sufficient.
-  'https://www.googleapis.com/auth/appengine.admin',
-  'https://www.googleapis.com/auth/compute'  // needed by autoscaler
-];
-
 // Datalab config file for things like default project. If this doesn't exist the EULA hasn't been accepted.
-let configFile = '/root/.config/datalab';
-
-let tokensFile = '/root/tokens.json';  // Where we store credentials.
+let configFile = '/content/datalab/.config';
 
 /**
  * The application settings instance.
@@ -143,7 +125,9 @@ function handleRequest(request: http.ServerRequest,
       (path.indexOf('/tree') == 0) ||
       (path.indexOf('/notebooks') == 0) ||
       (path.indexOf('/nbconvert') == 0) ||
-      (path.indexOf('/files') == 0)) {
+      (path.indexOf('/nbextensions') == 0) ||
+      (path.indexOf('/files') == 0) ||
+      (path.indexOf('/edit') == 0)) {
     handleJupyterRequest(request, response);
     return;
   }
@@ -170,16 +154,6 @@ function handleRequest(request: http.ServerRequest,
   response.end();
 }
 
-function persistCredentials(tokens: any) {
-  // Store the tokens and expiry in a file that kernels can read to cons up an
-  // OAuthCredentials object from.
-  // We use a temp file then rename, as file renaming is atomic on *nix. This can
-  // avoid problems with the file being overwritten while being read.
-  fs.writeFileSync(tokensFile + '.new', JSON.stringify(tokens));
-  fs.renameSync(tokensFile + '.new', tokensFile)
-  tokenExpiry = tokens.expiry_date;
-}
-
 /**
  * Handles all requests sent to the proxy web server. Some requests are handled within
  * the server, while some are proxied to the Jupyter notebook server.
@@ -190,31 +164,9 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   var parsed_url = url.parse(request.url, true);
   var path = parsed_url.pathname;
 
-  if (path.indexOf('/oauthcallback') == 0) {
-    var query = parsed_url.query;
-    if (query.code) {  // Response to auth request.
-      logging.getLogger().info('Got auth code');
-      oauth2Client.getToken(query.code, function (err:any, tokens:any) {
-        if (err) {
-          response.writeHead(403);
-          response.end();
-        } else {
-          logging.getLogger().info('Got tokens');
-          oauth2Client.setCredentials(tokens);
-          // Push them to Jupyter and handle request.
-          persistCredentials(tokens);
-          response.statusCode = 302;
-          response.setHeader('Location', query.state);
-          response.end();
-        }
-      });
-    }
-    return;
-  }
-
   // Check if EULA has been accepted; if not go to EULA page.
   if (path.indexOf('/accepted_eula') == 0) {
-    fs.writeFileSync(configFile, '');
+    fs.writeFileSync(configFile, '');  // TODO(gram): this should go in the mounted volume so we don't keep asking.
     var i = parsed_url.search.indexOf('referer=');
     if (i < 0) {
       logging.getLogger().info('Accepting EULA, but no referer; returning 500');
@@ -237,45 +189,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     return;
   }
 
-  if (process.env.DATALAB_ENV == 'local') {
-    if (oauth2Client) {
-      // We have done auth before. Refresh the token if necessary. Tokens normally have a 1 hour lifetime;
-      // we will do a refresh when we are within 5 minutes of expiry.
-      var tokenLife = tokenExpiry ? (tokenExpiry - (new Date()).getTime() - 5 * 60 * 1000) : 0;
-      var needRefresh = tokenLife < 0;
-      if (needRefresh) {
-        logging.getLogger().info('Refreshing access token');
-        oauth2Client.refreshAccessToken(function (err:any, tokens:any, response_:any) {
-          if (err) {
-            logging.getLogger().error('Failed to refresh access token:' + err);
-            response.writeHead(403);
-            response.end();
-          } else {
-            // Push them to Jupyter and handle request.
-            oauth2Client.setCredentials(tokens);
-            persistCredentials(tokens);
-            handleRequest(request, response, path);
-          }
-        });
-      } else {
-        handleRequest(request, response, path);
-      }
-    } else {
-      // First time auth.
-      var OAuth2: any = google.auth.OAuth2;
-      // TODO(gram): can we get the host and port from somewhere instead of hard-coding?
-      oauth2Client = new OAuth2(clientId, clientSecret, 'http://localhost:8081/oauthcallback');
-      var url_: string = oauth2Client.generateAuthUrl({
-        access_type: 'offline', // 'offline' gets refresh_token
-        scope: scopes,
-        state: request.url
-      });
-      response.statusCode = 302;
-      response.setHeader('Location', url_);
-      response.end();
-    }
-  } else {
-    // Not local; just handle it.
+  if (auth.handleAuthFlow(request, response, parsed_url)) {
     handleRequest(request, response, path);
   }
 }

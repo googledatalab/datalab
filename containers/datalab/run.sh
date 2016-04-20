@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Runs the docker container locally.
+# Runs the docker container locally. Auth will happen in the browser when
+# the user first opens Datalab after accepting the EULA.
+
 # Passing in 'shell' flag causes the docker container to break into a
 # command prompt, which is useful for tinkering within the container before
 # manually starting the server.
@@ -35,8 +37,8 @@ fi
 
 docker run -it --entrypoint=$ENTRYPOINT \
   -p 8081:8080 \
-  -v "$HOME/.config:/root/.config" \
   -v "$CONTENT:/content" \
   -e "PROJECT_ID=$PROJECT_ID" \
+  -e "DATALAB_ENV=local" \
+  -e "CLOUDSDK_CONFIG=/content/datalab" \
   datalab
-

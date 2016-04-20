@@ -53,4 +53,5 @@ def _list_line(args, _):
 
 
 def _set_line(args, _):
-  gcp.context.Context.default(args['id'])
+  context = gcp.context.Context.default()
+  context.set_project_id(['id'])

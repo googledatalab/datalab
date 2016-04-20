@@ -27,9 +27,9 @@ setup(
   description='Google Cloud Datalab',
   install_requires=[
     'httplib2==0.9.2',
-    'ipython>=4.0,<4.1',
+    'ipython>=4.0,<4.2',
     'pandas>=0.17.1',
-    'pandas-profiling==1.0.0a2',
+    'pandas-profiling>=1.0.0a2',
     'gcpdata>=0.1'
   ]
 )

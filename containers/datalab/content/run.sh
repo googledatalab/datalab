@@ -16,7 +16,6 @@
 # Runs the docker container locally.
 
 export DATALAB_INSTANCE_NAME=local
-export DATALAB_ENV=local
 
 mkdir -p /content/datalab/notebooks
 mkdir -p /content/datalab/docs
