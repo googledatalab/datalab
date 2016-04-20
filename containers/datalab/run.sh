@@ -33,9 +33,10 @@ fi
 # Use this flag to map in web server content during development
 #  -v $REPO_DIR/sources/web:/sources \
 
-docker run -i --entrypoint=$ENTRYPOINT \
+docker run -it --entrypoint=$ENTRYPOINT \
   -p 8081:8080 \
   -v "$HOME/.config:/root/.config" \
   -v "$CONTENT:/content" \
-  -t datalab
+  -e "PROJECT_ID=$PROJECT_ID" \
+  datalab
 
