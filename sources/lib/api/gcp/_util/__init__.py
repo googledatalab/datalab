@@ -13,12 +13,11 @@
 """Google Cloud Platform library - Internal Helpers."""
 
 from ._async import async, async_function, async_method
-from ._credentials import MetadataCredentials
-from ._http import Http
-from ._http import RequestException
+from ._gcp_job import GCPJob
+from ._http import Http, RequestException
 from ._iterator import Iterator
 from ._job import Job, JobError
 from ._json_encoder import JSONEncoder
 from ._lru_cache import LRUCache
-from ._metadata import MetadataService
-from ._utils import print_exception_with_last_stack, get_item
+from ._lambda_job import LambdaJob
+from ._utils import print_exception_with_last_stack, get_item, compare_datetimes

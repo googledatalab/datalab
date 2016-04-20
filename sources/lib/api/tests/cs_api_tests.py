@@ -14,7 +14,7 @@ import unittest
 import mock
 from oauth2client.client import AccessTokenCredentials
 
-import gcp
+import gcp.context
 from gcp.storage._api import Api
 
 
@@ -143,4 +143,4 @@ class TestCases(unittest.TestCase):
   def _create_context(self):
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return gcp.Context(project_id, creds)
+    return gcp.context.Context(project_id, creds)

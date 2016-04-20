@@ -27,7 +27,7 @@ def main():
   print 'datastudio-test/test.txt exists? ' + str(items.contains('test.txt'))
 
   item = bucket.item('test.txt')
-  item_md = item.metadata()
+  item_md = item.metadata
   print 'Name   : ' + item_md.name
   print 'ETag   : ' + item_md.etag
   print 'Updated: ' + str(item_md.updated_on)

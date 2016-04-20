@@ -12,8 +12,9 @@
 
 """Implements DataSet, and related DataSet BigQuery APIs."""
 
-import gcp
 import gcp._util
+import gcp.context
+
 import _api
 import _table
 import _utils
@@ -35,7 +36,7 @@ class DataSet(object):
       Exception if the name is invalid.
       """
     if context is None:
-      context = gcp.Context.default()
+      context = gcp.context.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._name_parts = _utils.parse_dataset_name(name, self._api.project_id)
@@ -223,7 +224,7 @@ class DataSets(object):
   """ Iterator class for enumerating the datasets in a project. """
 
   def __init__(self, project_id=None, context=None):
-    """ Initialize the DataSetLister.
+    """ Initialize the DataSets object.
 
     Args:
       project_id: the ID of the project whose datasets you want to list. If None defaults
@@ -233,14 +234,15 @@ class DataSets(object):
           level are used.
     """
     if context is None:
-      context = gcp.Context.default()
+      context = gcp.context.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._project_id = project_id if project_id else self._api.project_id
 
   def _retrieve_datasets(self, page_token, count):
     try:
-      list_info = self._api.datasets_list(self._project_id, page_token=page_token)
+      list_info = self._api.datasets_list(self._project_id, max_results=count,
+                                          page_token=page_token)
     except Exception as e:
       raise e
 

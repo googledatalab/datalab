@@ -12,13 +12,14 @@
 
 import calendar
 import datetime as dt
-import unittest
-import gcp
-import gcp.bigquery
-import gcp._util
 import mock
 from oauth2client.client import AccessTokenCredentials
 import pandas
+import unittest
+
+import gcp.bigquery
+import gcp.context
+import gcp._util
 
 
 class TestCases(unittest.TestCase):
@@ -225,7 +226,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._api.Api.tables_list')
   @mock.patch('gcp.bigquery._api.Api.tables_insert')
   @mock.patch('gcp.bigquery._api.Api.tables_get')
-  @mock.patch('gcp.bigquery._api.Api.tabledata_insertAll')
+  @mock.patch('gcp.bigquery._api.Api.tabledata_insert_all')
   @mock.patch('gcp.bigquery._api.Api.datasets_get')
   def test_insert_data_no_table(self,
                                 mock_api_datasets_get,
@@ -256,7 +257,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._api.Api.tables_list')
   @mock.patch('gcp.bigquery._api.Api.tables_insert')
   @mock.patch('gcp.bigquery._api.Api.tables_get')
-  @mock.patch('gcp.bigquery._api.Api.tabledata_insertAll')
+  @mock.patch('gcp.bigquery._api.Api.tabledata_insert_all')
   def test_insert_data_missing_field(self,
                                      mock_api_tabledata_insert_all,
                                      mock_api_tables_get,
@@ -288,7 +289,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._api.Api.tables_list')
   @mock.patch('gcp.bigquery._api.Api.tables_insert')
   @mock.patch('gcp.bigquery._api.Api.tables_get')
-  @mock.patch('gcp.bigquery._api.Api.tabledata_insertAll')
+  @mock.patch('gcp.bigquery._api.Api.tabledata_insert_all')
   @mock.patch('gcp.bigquery._api.Api.datasets_get')
   def test_insert_data_mismatched_schema(self,
                                          mock_api_datasets_get,
@@ -324,7 +325,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._api.Api.tables_list')
   @mock.patch('gcp.bigquery._api.Api.tables_insert')
   @mock.patch('gcp.bigquery._api.Api.tables_get')
-  @mock.patch('gcp.bigquery._api.Api.tabledata_insertAll')
+  @mock.patch('gcp.bigquery._api.Api.tabledata_insert_all')
   def test_insert_data_dataframe(self,
                                  mock_api_tabledata_insert_all,
                                  mock_api_tables_get,
@@ -346,7 +347,7 @@ class TestCases(unittest.TestCase):
     df = self._create_data_frame()
 
     result = table.insert_data(df)
-    self.assertIsNotNone(result, "insertAll should return the table object")
+    self.assertIsNotNone(result, "insert_all should return the table object")
     mock_api_tabledata_insert_all.assert_called_with(('test', 'testds', 'testTable0', ''), [
       {'insertId': '#0', 'json': {u'column': 'r0', u'headers': 10.0, u'some': 0}},
       {'insertId': '#1', 'json': {u'column': 'r1', u'headers': 10.0, u'some': 1}},
@@ -360,7 +361,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._api.Api.tables_list')
   @mock.patch('gcp.bigquery._api.Api.tables_insert')
   @mock.patch('gcp.bigquery._api.Api.tables_get')
-  @mock.patch('gcp.bigquery._api.Api.tabledata_insertAll')
+  @mock.patch('gcp.bigquery._api.Api.tabledata_insert_all')
   def test_insert_data_dictlist(self,
                                 mock_api_tabledata_insert_all,
                                 mock_api_tables_get,
@@ -386,7 +387,7 @@ class TestCases(unittest.TestCase):
       {u'column': 'r2', u'headers': 10.0, u'some': 2},
       {u'column': 'r3', u'headers': 10.0, u'some': 3}
     ])
-    self.assertIsNotNone(result, "insertAll should return the table object")
+    self.assertIsNotNone(result, "insert_all should return the table object")
     mock_api_tabledata_insert_all.assert_called_with(('test', 'testds', 'testTable0', ''), [
       {'insertId': '#0', 'json': {u'column': 'r0', u'headers': 10.0, u'some': 0}},
       {'insertId': '#1', 'json': {u'column': 'r1', u'headers': 10.0, u'some': 1}},
@@ -400,7 +401,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._api.Api.tables_list')
   @mock.patch('gcp.bigquery._api.Api.tables_insert')
   @mock.patch('gcp.bigquery._api.Api.tables_get')
-  @mock.patch('gcp.bigquery._api.Api.tabledata_insertAll')
+  @mock.patch('gcp.bigquery._api.Api.tabledata_insert_all')
   def test_insert_data_dictlist_index(self,
                                       mock_api_tabledata_insert_all,
                                       mock_api_tables_get,
@@ -426,7 +427,7 @@ class TestCases(unittest.TestCase):
       {u'column': 'r2', u'headers': 10.0, u'some': 2},
       {u'column': 'r3', u'headers': 10.0, u'some': 3}
     ], include_index=True)
-    self.assertIsNotNone(result, "insertAll should return the table object")
+    self.assertIsNotNone(result, "insert_all should return the table object")
     mock_api_tabledata_insert_all.assert_called_with(('test', 'testds', 'testTable0', ''), [
       {'insertId': '#0', 'json': {u'column': 'r0', u'headers': 10.0, u'some': 0, 'Index': 0}},
       {'insertId': '#1', 'json': {u'column': 'r1', u'headers': 10.0, u'some': 1, 'Index': 1}},
@@ -440,7 +441,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._api.Api.tables_list')
   @mock.patch('gcp.bigquery._api.Api.tables_insert')
   @mock.patch('gcp.bigquery._api.Api.tables_get')
-  @mock.patch('gcp.bigquery._api.Api.tabledata_insertAll')
+  @mock.patch('gcp.bigquery._api.Api.tabledata_insert_all')
   def test_insert_data_dictlist_named_index(self,
                                             mock_api_tabledata_insert_all,
                                             mock_api_tables_get,
@@ -466,7 +467,7 @@ class TestCases(unittest.TestCase):
         {u'column': 'r2', u'headers': 10.0, u'some': 2},
         {u'column': 'r3', u'headers': 10.0, u'some': 3}
     ], include_index=True, index_name='Row')
-    self.assertIsNotNone(result, "insertAll should return the table object")
+    self.assertIsNotNone(result, "insert_all should return the table object")
     mock_api_tabledata_insert_all.assert_called_with(('test', 'testds', 'testTable0', ''), [
       {'insertId': '#0', 'json': {u'column': 'r0', u'headers': 10.0, u'some': 0, 'Row': 0}},
       {'insertId': '#1', 'json': {u'column': 'r1', u'headers': 10.0, u'some': 1, 'Row': 1}},
@@ -491,7 +492,9 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('gcp.bigquery._api.Api.table_extract')
   @mock.patch('gcp.bigquery._api.Api.jobs_get')
-  def test_table_extract(self, mock_api_jobs_get, mock_api_table_extract):
+  @mock.patch('gcp.bigquery._api.Api.tables_get')
+  def test_table_extract(self, mock_api_tables_get, mock_api_jobs_get, mock_api_table_extract):
+    mock_api_tables_get.return_value = {}
     mock_api_jobs_get.return_value = {'status': {'state': 'DONE'}}
     mock_api_table_extract.return_value = None
     tbl = gcp.bigquery.Table('testds.testTable0', context=self._create_context())
@@ -663,7 +666,7 @@ class TestCases(unittest.TestCase):
   def _create_context(self):
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return gcp.Context(project_id, creds)
+    return gcp.context.Context(project_id, creds)
 
   def _create_table(self, name):
     return gcp.bigquery.Table(name, self._create_context())

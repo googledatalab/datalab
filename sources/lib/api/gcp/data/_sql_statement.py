@@ -116,7 +116,7 @@ class SqlStatement(object):
     return '"' + s.replace('"', '\\"') + '"'
 
   @staticmethod
-  def format(sql, args=None, udfs=None):
+  def format(sql, args=None):
     """ Resolve variable references in a query within an environment.
 
     This computes and resolves the transitive dependencies in the query and raises an
@@ -125,10 +125,9 @@ class SqlStatement(object):
     Args:
       sql: query to format.
       args: a dictionary of values to use in variable expansion.
-      udfs: a list of UDFs referenced in the query.
 
     Returns:
-      The resolved SQL text, and an array of any referenced UDFs.
+      The resolved SQL text with variables expanded.
 
     Raises:
       Exception on failure.

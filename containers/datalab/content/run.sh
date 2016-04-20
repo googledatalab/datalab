@@ -15,15 +15,25 @@
 
 # Runs the docker container locally.
 
-export DATALAB_ENV=local
+# We use the presence of /root/.config to tell whether to show landing page.
+# Running gcloud will create it in whatever volume we mapped in which may
+# not be the user's home, so we guard against calling gcloud below unless
+# it already exists.
+if [ -d /root/.config/gcloud ]
+then
+  PROJECT_ID=`gcloud -q config list --format yaml | grep project | awk -F" " '{print $2}'`
+  export DATALAB_PROJECT_NUM=`gcloud -q projects describe $PROJECT_ID | grep projectNumber | awk '{print substr($2,2,length($2)-2)}'`
+fi
+
 export DATALAB_INSTANCE_NAME=local
-export METADATA_HOST=localhost
+export DATALAB_ENV=local
+
+mkdir -p /content/datalab/notebooks
+mkdir -p /content/datalab/docs
+rsync -r /datalab/docs/* /content/datalab/docs
 
 # Setup environment variables.
 . /datalab/setup-env.sh
-
-# Simulate the metadata service
-forever start /datalab/metadata/server.js &
 
 # Start the DataLab server
 forever /datalab/web/app.js

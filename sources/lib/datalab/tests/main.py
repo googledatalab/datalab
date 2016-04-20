@@ -18,6 +18,7 @@ import unittest
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../api')))
 
 import bigquery_tests
+import chart_data_tests
 import chart_tests
 import commands_tests
 import html_tests
@@ -28,6 +29,7 @@ import utils_tests
 
 _TEST_MODULES = [
     bigquery_tests,
+    chart_data_tests,
     chart_tests,
     commands_tests,
     html_tests,

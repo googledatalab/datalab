@@ -48,8 +48,7 @@ class Api(object):
 
     Args:
       bucket: the name of the bucket.
-      projection: the projection of the bucket information to retrieve.
-      project: the project to use when inserting the bucket.
+      project_id: the project to use when inserting the bucket.
     Returns:
       A parsed bucket information dictionary.
     Raises:
@@ -66,7 +65,6 @@ class Api(object):
 
     Args:
       bucket: the name of the bucket.
-      projection: the projection of the bucket information to retrieve.
     Raises:
       Exception if there is an error performing the operation.
     """
@@ -113,21 +111,29 @@ class Api(object):
     url = Api._ENDPOINT + (Api._BUCKET_PATH % '')
     return gcp._util.Http.request(url, args=args, credentials=self._credentials)
 
-  def object_download(self, bucket, key):
+  def object_download(self, bucket, key, start_offset=0, byte_count=None):
     """Reads the contents of an object as text.
 
     Args:
       bucket: the name of the bucket containing the object.
       key: the key of the object to be read.
+      start_offset: the start offset of bytes to read.
+      byte_count: the number of bytes to read. If None, it reads to the end.
     Returns:
       The text content within the object.
     Raises:
       Exception if the object could not be read from.
     """
     args = {'alt': 'media'}
-
+    headers = {}
+    if start_offset > 0 or byte_count is not None:
+      header = 'bytes=%d-' % start_offset
+      if byte_count is not None:
+        header += '%d' % byte_count
+      headers['Range'] = header
     url = Api._DOWNLOAD_ENDPOINT + (Api._OBJECT_PATH % (bucket, Api._escape_key(key)))
-    return gcp._util.Http.request(url, args=args, credentials=self._credentials, raw_response=True)
+    return gcp._util.Http.request(url, args=args, headers=headers,
+        credentials=self._credentials, raw_response=True)
 
   def object_upload(self, bucket, key, content, content_type):
     """Writes text content to the object.

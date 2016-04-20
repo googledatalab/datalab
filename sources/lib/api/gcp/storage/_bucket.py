@@ -15,8 +15,9 @@
 import dateutil.parser
 import re
 
-import gcp
 import gcp._util
+import gcp.context
+
 import _api
 import _item
 
@@ -94,7 +95,7 @@ class Bucket(object):
           level are used.
     """
     if context is None:
-      context = gcp.Context.default()
+      context = gcp.context.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._name = name
@@ -110,6 +111,7 @@ class Bucket(object):
     """
     return 'Bucket gs://%s' % self._name
 
+  @property
   def metadata(self):
     """Retrieves metadata about the bucket.
 
@@ -155,7 +157,7 @@ class Bucket(object):
   def exists(self):
     """ Checks if the bucket exists. """
     try:
-      return self.metadata() is not None
+      return self.metadata is not None
     except Exception:
       return False
 
@@ -163,7 +165,7 @@ class Bucket(object):
     """Creates the bucket.
 
     Args:
-      The project in which to create the bucket.
+      project_id: the project in which to create the bucket.
     Returns:
       The bucket.
     Raises:
@@ -205,7 +207,7 @@ class Buckets(object):
           level are used.
     """
     if context is None:
-      context = gcp.Context.default()
+      context = gcp.context.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._project_id = project_id if project_id else self._api.project_id

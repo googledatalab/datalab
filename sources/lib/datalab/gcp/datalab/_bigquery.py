@@ -12,17 +12,55 @@
 
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 
+try:
+  import IPython
+  import IPython.core.display
+  import IPython.core.magic
+except ImportError:
+  raise Exception('This module can only be loaded in ipython.')
+
+import fnmatch
 import json
 import re
-import IPython
-import IPython.core.display
-import IPython.core.magic
+
 import gcp.bigquery
 import gcp.data
 import gcp._util
+
 import _commands
 import _html
 import _utils
+
+
+def _create_create_subparser(parser):
+  create_parser = parser.subcommand('create', 'Create a dataset or table.')
+  sub_commands = create_parser.add_subparsers(dest='command')
+
+  create_dataset_parser = sub_commands.add_parser('dataset', help='Create a dataset.')
+  create_dataset_parser.add_argument('-n', '--name', help='The name of the dataset to create.',
+                                     required=True)
+  create_dataset_parser.add_argument('-f', '--friendly', help='The friendly name of the dataset.')
+
+  create_table_parser = sub_commands.add_parser('table', help='Create a table.')
+  create_table_parser.add_argument('-n', '--name', help='The name of the table to create.',
+                                   required=True)
+  create_table_parser.add_argument('-o', '--overwrite', help='Overwrite table if it exists.',
+                                   action='store_true')
+  return create_parser
+
+
+def _create_delete_subparser(parser):
+  delete_parser = parser.subcommand('delete', 'Delete a dataset or table.')
+  sub_commands = delete_parser.add_subparsers(dest='command')
+
+  delete_dataset_parser = sub_commands.add_parser('dataset', help='Delete a dataset.')
+  delete_dataset_parser.add_argument('-n', '--name', help='The name of the dataset to delete.',
+                                     required=True)
+
+  delete_table_parser = sub_commands.add_parser('table', help='Delete a table.')
+  delete_table_parser.add_argument('-n', '--name', help='The name of the table to delete.',
+                                   required=True)
+  return delete_parser
 
 
 def _create_sample_subparser(parser):
@@ -44,6 +82,8 @@ def _create_sample_subparser(parser):
                              help='The field to use for sorted or hashed sampling')
   sample_parser.add_argument('-o', '--order', choices=['ascending', 'descending'],
                              default='ascending', help='The sort order to use for sorted sampling')
+  sample_parser.add_argument('-P', '--profile', action='store_true',
+                             default=False, help='Generate an interactive profile of the data')
   sample_parser.add_argument('--verbose',
                              help='Show the expanded SQL that is being executed',
                              action='store_true')
@@ -131,6 +171,8 @@ def _create_datasets_subparser(parser):
   datasets_parser = parser.subcommand('datasets', 'List the datasets in a BigQuery project.')
   datasets_parser.add_argument('-p', '--project',
                                help='The project whose datasets should be listed')
+  datasets_parser.add_argument('-f', '--filter',
+                               help='Optional wildcard filter string used to limit the results')
   return datasets_parser
 
 
@@ -140,6 +182,8 @@ def _create_tables_subparser(parser):
                              help='The project whose tables should be listed')
   tables_parser.add_argument('-d', '--dataset',
                              help='The dataset to restrict to')
+  tables_parser.add_argument('-f', '--filter',
+                             help='Optional wildcard filter string used to limit the results')
   return tables_parser
 
 
@@ -226,8 +270,7 @@ def _sample_cell(args, cell_body):
     args: the optional arguments following '%%bigquery sample'.
     cell_body: optional contents of the cell interpreted as SQL, YAML or JSON.
   Returns:
-    The results of executing the query converted to a dataframe if no variable
-    was specified. None otherwise.
+    The results of executing the sampling query, or a profile of the sample data.
   """
 
   env = _utils.notebook_environment()
@@ -272,7 +315,72 @@ def _sample_cell(args, cell_body):
     results = table.sample(sampling=sampling)
   if args['verbose']:
     print results.sql
-  return results
+  if args['profile']:
+    return _utils.profile_df(results.to_dataframe())
+  else:
+    return results
+
+
+def _create_cell(args, cell_body):
+  """Implements the BigQuery cell magic used to create datasets and tables.
+
+   The supported syntax is:
+
+     %%bigquery create dataset -n|--name <name> [-f|--friendly <friendlyname>]
+     [<description>]
+
+   or:
+
+     %%bigquery create table -n|--name <tablename> [--overwrite]
+     [<YAML or JSON cell_body defining schema to use for tables>]
+
+  Args:
+    args: the argument following '%bigquery create <command>'.
+  """
+  if args['command'] == 'dataset':
+    try:
+      gcp.bigquery.DataSet(args['name']).create(friendly_name=args['friendly'],
+                                                description=cell_body)
+    except Exception as e:
+      print 'Failed to create dataset %s: %s' % (args['name'], e)
+  else:
+    if cell_body is None:
+      print 'Failed to create %s: no schema specified' % args['name']
+    else:
+      try:
+        record = _utils.parse_config(cell_body, _utils.notebook_environment(), as_dict=False)
+        schema = gcp.bigquery.Schema(record)
+        gcp.bigquery.Table(args['name']).create(schema=schema, overwrite=args['overwrite'])
+      except Exception as e:
+        print 'Failed to create table %s: %s' % (args['name'], e)
+
+
+def _delete_cell(args, _):
+  """Implements the BigQuery cell magic used to delete datasets and tables.
+
+   The supported syntax is:
+
+     %%bigquery delete dataset -n|--name <name>
+
+   or:
+
+     %%bigquery delete table -n|--name <name>
+
+  Args:
+    args: the argument following '%bigquery delete <command>'.
+  """
+  # TODO(gram): add support for wildchars and multiple arguments at some point. The latter is
+  # easy, the former a bit more tricky if non-default projects are involved.
+  if args['command'] == 'dataset':
+    try:
+      gcp.bigquery.DataSet(args['name']).delete()
+    except Exception as e:
+      print 'Failed to delete dataset %s: %s' % (args['name'], e)
+  else:
+    try:
+      gcp.bigquery.Table(args['name']).delete()
+    except Exception as e:
+      print 'Failed to delete table %s: %s' % (args['name'], e)
 
 
 def _dryrun_cell(args, cell_body):
@@ -352,7 +460,7 @@ def _udf_cell(args, js):
   # block with @param and assume this is the primary function, up to a closing '}' at the start
   # of the line. The remaining cell content is used as support code.
   split_pattern = r'(.*)(/\*.*?@param.*?@param.*?\*/\w*\n\w*function\w*\(.*?^}\n?)(.*)'
-  parts = re.match(split_pattern, js, re.MULTILINE|re.DOTALL)
+  parts = re.match(split_pattern, js, re.MULTILINE | re.DOTALL)
   support_code = ''
   if parts:
     support_code = (parts.group(1) + parts.group(3)).strip()
@@ -441,8 +549,6 @@ def _table_line(args):
     raise Exception('Table %s does not exist; cannot display' % name)
 
 
-
-
 def _get_schema(name):
   """ Given a variable or table name, get the Schema if it exists. """
   item = _utils.get_notebook_item(name)
@@ -520,14 +626,16 @@ def _datasets_line(args):
 
    The supported syntax is:
 
-       %bigquery datasets -p|--project <project_id>
+       %bigquery datasets [-f <filter>] [-p|--project <project_id>]
 
   Args:
     args: the arguments following '%bigquery datasets'.
   Returns:
     The HTML rendering for the table of datasets.
   """
-  return _render_list([str(dataset) for dataset in gcp.bigquery.DataSets(args['project'])])
+  filter_ = args['filter'] if args['filter'] else '*'
+  return _render_list([str(dataset) for dataset in gcp.bigquery.DataSets(args['project'])
+                       if fnmatch.fnmatch(str(dataset), filter_)])
 
 
 def _tables_line(args):
@@ -542,6 +650,7 @@ def _tables_line(args):
   Returns:
     The HTML rendering for the list of tables.
   """
+  filter_ = args['filter'] if args['filter'] else '*'
   if args['dataset']:
     if args['project'] is None:
       datasets = [gcp.bigquery.DataSet(args['dataset'])]
@@ -552,7 +661,7 @@ def _tables_line(args):
 
   tables = []
   for dataset in datasets:
-    tables.extend([str(table) for table in dataset])
+    tables.extend([str(table) for table in dataset if fnmatch.fnmatch(str(table), filter_)])
 
   return _render_list(tables)
 
@@ -662,6 +771,12 @@ for help on a specific command.
   # %%bigquery sample
   _add_command(parser, _create_sample_subparser, _sample_cell)
 
+  # %%bigquery create
+  _add_command(parser, _create_create_subparser, _create_cell)
+
+  # %%bigquery delete
+  _add_command(parser, _create_delete_subparser, _delete_cell)
+
   # %%bigquery dryrun
   _add_command(parser, _create_dry_run_subparser, _dryrun_cell)
 
@@ -703,24 +818,17 @@ _bigquery_parser = _create_bigquery_parser()
 def bigquery(line, cell=None):
   """Implements the bigquery cell magic for ipython notebooks.
 
-    The supported syntax is:
+  The supported syntax is:
 
-      %%bigquery <command> [<args>]
-      <cell>
+    %%bigquery <command> [<args>]
+    <cell>
 
-    or:
+  or:
 
-      %bigquery <command> [<args>]
+    %bigquery <command> [<args>]
 
-    Use %bigquery --help for a list of commands, or %bigquery <command> --help for help
-    on a specific command.
-
-  Args:
-    line: the magic line.
-    cell: the body of the notebook cell.
-
-  Returns:
-    The result of processing the magic.
+  Use %bigquery --help for a list of commands, or %bigquery <command> --help for help
+  on a specific command.
   """
   namespace = {}
   if line.find('$') >= 0:
@@ -771,6 +879,9 @@ def _table_viewer(table, rows_per_page=25, fields=None):
   Returns:
     A string containing the HTML for the table viewer.
   """
+
+  # TODO(gram): rework this to use _utils.chart_html
+
   if not table.exists():
     raise Exception('Table %s does not exist' % str(table))
 
@@ -778,16 +889,26 @@ def _table_viewer(table, rows_per_page=25, fields=None):
     <div class="bqtv" id="{div_id}">{static_table}</div>
     <br />{meta_data}<br />
     <script>
-      require(['extensions/charting', 'element!{div_id}', 'style!/static/extensions/charting.css'],
-        function(charts, dom) {{
-          charts.render(dom,
+      require(['extensions/charting', 'element!{div_id}', 'base/js/events',
+          'style!/static/extensions/charting.css'],
+        function(charts, dom, events) {{
+          charts.render('gcharts', dom, events, '{chart_style}', [], {data},
             {{
-              chartStyle:"{chart_style}",
-              dataName:"{data_name}",
-              fields:"{fields}",
-              totalRows:{total_rows},
-              rowsPerPage:{rows_per_page},
-            }}, {{}}, {data});
+              pageSize: {rows_per_page},
+              cssClassNames:  {{
+                tableRow: 'gchart-table-row',
+                headerRow: 'gchart-table-headerrow',
+                oddTableRow: 'gchart-table-oddrow',
+                selectedTableRow: 'gchart-table-selectedrow',
+                hoverTableRow: 'gchart-table-hoverrow',
+                tableCell: 'gchart-table-cell',
+                headerCell: 'gchart-table-headercell',
+                rowNumberCell: 'gchart-table-rownumcell'
+              }}
+            }},
+            {{source_index: {source_index}, fields: '{fields}'}},
+            0,
+            {total_rows});
         }}
       );
     </script>
@@ -826,7 +947,7 @@ def _table_viewer(table, rows_per_page=25, fields=None):
                                static_table=_html.HtmlBuilder.render_chart_data(data),
                                meta_data=meta_data,
                                chart_style=chart,
-                               data_name=_utils.get_data_source_index(str(table)),
+                               source_index=_utils.get_data_source_index(str(table)),
                                fields=','.join(fields),
                                total_rows=total_count,
                                rows_per_page=rows_per_page,

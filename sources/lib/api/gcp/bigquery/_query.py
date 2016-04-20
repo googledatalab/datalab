@@ -12,9 +12,10 @@
 
 """Implements Query BigQuery API."""
 
-import re
 import gcp._util
+import gcp.context
 import gcp.data
+
 import _api
 import _federated_table
 import _sampling
@@ -74,7 +75,7 @@ class Query(object):
       Exception if expansion of any variables failed.
       """
     if context is None:
-      context = gcp.Context.default()
+      context = gcp.context.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._data_sources = data_sources
@@ -89,7 +90,7 @@ class Query(object):
     if values is None:
       values = kwargs
 
-    self._sql = gcp.data.SqlModule.expand(sql, values, udfs)
+    self._sql = gcp.data.SqlModule.expand(sql, values)
 
     # We need to take care not to include the same UDF code twice so we use sets.
     udfs = set(udfs if udfs else [])
@@ -225,7 +226,7 @@ class Query(object):
           (default 'csv').
       csv_delimiter: for csv exports, the field delimiter to use (default ',').
       csv_header: for csv exports, whether to include an initial header line (default True).
-      compress whether to compress the data on export. Compression is not supported for
+      compress: whether to compress the data on export. Compression is not supported for
           AVRO format (default False).
       use_cache: whether to use cached results or not (default True).
     Returns:
@@ -256,7 +257,7 @@ class Query(object):
           (default 'csv').
       csv_delimiter: for CSV exports, the field delimiter to use (default ',').
       csv_header: for CSV exports, whether to include an initial header line (default True).
-      compress whether to compress the data on export. Compression is not supported for
+      compress: whether to compress the data on export. Compression is not supported for
           AVRO format (default False).
       use_cache: whether to use cached results or not (default True).
     Returns:
@@ -356,7 +357,6 @@ class Query(object):
     """ Initiate the query and return a QueryJob.
 
     Args:
-      dataset_id: the datasetId for the result table.
       table_name: the result table name as a string or TableName; if None (the default), then a
           temporary table will be used.
       table_mode: one of 'create', 'overwrite' or 'append'. If 'create' (the default), the request

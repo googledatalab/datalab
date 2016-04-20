@@ -15,14 +15,14 @@
 
 # Releases the built docker image to the registry with the latest tag.
 
-# Grant read permissions to all users on all objects added in the GCS bucket
-# that holds docker image files by ACLing the bucket and setting the default
-# for any new items added
-gsutil acl ch -g all:R gs://artifacts.cloud-datalab.appspot.com
-gsutil defacl ch -u all:R gs://artifacts.cloud-datalab.appspot.com
 
 LOCAL_IMAGE=datalab
-CLOUD_IMAGE=gcr.io/cloud_datalab/datalab:latest
+CLOUD_IMAGE=gcr.io/cloud-datalab/datalab:local
+
+# Grant read permissions to all users on all objects added in the GCS bucket
+# that holds docker image files by ACLing the bucket and setting the default
+# for any new items added (only needed for public containers)
+# gsutil -m acl ch -r -u AllUsers:R gs://artifacts.cloud-datalab.appspot.com
 
 echo "Publishing $LOCAL_IMAGE to $CLOUD_IMAGE ..."
 docker tag -f $LOCAL_IMAGE $CLOUD_IMAGE

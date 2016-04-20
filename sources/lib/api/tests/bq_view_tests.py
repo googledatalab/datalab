@@ -11,11 +11,11 @@
 # the License.
 
 import mock
+from oauth2client.client import AccessTokenCredentials
 import unittest
 
-import gcp
 import gcp.bigquery
-from oauth2client.client import AccessTokenCredentials
+import gcp.context
 
 
 class TestCases(unittest.TestCase):
@@ -77,7 +77,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp.bigquery._api.Api.tables_insert')
   @mock.patch('gcp.bigquery._api.Api.tables_get')
   @mock.patch('gcp.bigquery._api.Api.table_update')
-  @mock.patch('gcp._context.Context.default')
+  @mock.patch('gcp.context.Context.default')
   def test_view_update(self, mock_context_default, mock_api_table_update,
                        mock_api_tables_get, mock_api_tables_insert):
     mock_api_tables_insert.return_value = self._create_tables_insert_success_result()
@@ -149,4 +149,4 @@ class TestCases(unittest.TestCase):
   def _create_context(self):
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return gcp.Context(project_id, creds)
+    return gcp.context.Context(project_id, creds)

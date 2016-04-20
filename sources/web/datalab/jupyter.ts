@@ -17,7 +17,6 @@
 /// <reference path="../../../externs/ts/node/tcp-port-used.d.ts" />
 /// <reference path="common.d.ts" />
 
-import analytics = require('./analytics');
 import callbacks = require('./callbacks');
 import childProcess = require('child_process');
 import fs = require('fs');
@@ -86,7 +85,7 @@ function createJupyterServer(userId: string): JupyterServer {
 
   var userDir = userManager.getUserDir(userId);
   if (!fs.existsSync(userDir)) {
-    fs.mkdirSync(userDir, 0755);
+    fs.mkdirSync(userDir, parseInt('0755', 8));
   }
 
   var server: JupyterServer = {
@@ -224,6 +223,19 @@ export function close(): void {
   jupyterServers = {};
 }
 
+
+export function handleSocket(request: http.ServerRequest, socket: net.Socket, head: Buffer) {
+  var userId = userManager.getUserId(request);
+  var server = jupyterServers[userId];
+  if (!server) {
+    // should never be here.
+    logging.getLogger().error('Jupyter server was not created yet for user %s.', userId);
+    return;
+  }
+  server.proxy.ws(request, socket, head);
+}
+
+
 export function handleRequest(request: http.ServerRequest, response: http.ServerResponse) {
   var userId = userManager.getUserId(request);
   var server = jupyterServers[userId];
@@ -275,8 +287,6 @@ function responseHandler(proxyResponse: http.ClientResponse,
   if ((path.indexOf('/tree') == 0) || (path.indexOf('/notebooks') == 0)) {
     var templateData: common.Map<string> = {
       feedbackId: appSettings.feedbackId,
-      analyticsId: appSettings.analyticsId,
-      analyticsPath: analytics.hashPath(path, 'sha256'),
       projectNumber: appSettings.projectNumber,
       projectId: appSettings.projectId,
       versionId: appSettings.versionId,
@@ -312,8 +322,6 @@ function responseHandler(proxyResponse: http.ClientResponse,
     response.writeHead = placeHolder;
     response.write = placeHolder;
     response.end = placeHolder;
-
-    analytics.logPage(page, path, request.headers['x-appengine-user-id']);
   }
 }
 

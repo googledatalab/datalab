@@ -12,9 +12,13 @@
 
 """Implementation of command parsing and handling within magics."""
 
+try:
+  import IPython
+except ImportError:
+  raise Exception('This module can only be loaded in ipython.')
+
 import argparse
 import shlex
-import IPython
 
 
 class CommandParser(argparse.ArgumentParser):
@@ -27,20 +31,11 @@ class CommandParser(argparse.ArgumentParser):
 
   @staticmethod
   def create(name):
-    """Creates a CommandParser for a specific magic.
-
-    Args:
-      name: the magic command name.
-    """
+    """Creates a CommandParser for a specific magic. """
     return CommandParser(prog=name)
 
   def exit(self, status=0, message=None):
-    """Overridden exit method to stop parsing without calling sys.exit().
-
-    Args:
-      status: the exit status.
-      message: the exit reason.
-    """
+    """Overridden exit method to stop parsing without calling sys.exit(). """
     raise Exception(message)
 
   def format_usage(self):
@@ -49,15 +44,7 @@ class CommandParser(argparse.ArgumentParser):
 
   @staticmethod
   def create_args(line, namespace):
-    """ Tokenize a magic command line, expanding any meta-variable references.
-
-    Args:
-       line: the magic command line as a string.
-       namespace: a dictionary to use for meta-variable replacement.
-
-    Returns:
-      The line as an expanded list of arguments.
-    """
+    """ Expand any meta-variable references in the argument list. """
     args = []
     # Using shlex.split handles quotes args and escape characters.
     for arg in shlex.split(line):
@@ -74,15 +61,7 @@ class CommandParser(argparse.ArgumentParser):
     return args
 
   def parse(self, line, namespace=None):
-    """Parses a line into a dictionary of arguments, expanding meta-variables from a namespace.
-
-    Args:
-       line: the magic command line as a string.
-       namespace: a dictionary to use for meta-variable replacement.
-
-    Returns:
-      The parsed line as a dictionary of argument names and values.
-    """
+    """Parses a line into a dictionary of arguments, expanding meta-variables from a namespace. """
     try:
       if namespace is None:
         ipy = IPython.get_ipython()
@@ -95,15 +74,7 @@ class CommandParser(argparse.ArgumentParser):
       return None
 
   def subcommand(self, name, help):
-    """ Creates a parser for a sub-command.
-
-    Args:
-      name: the name of the sub-command.
-      help: the help string for the sub-command.
-
-    Returns:
-      An argument parser for the sub-command.
-    """
+    """Creates a parser for a sub-command. """
     if self._subcommands is None:
       self._subcommands = self.add_subparsers(help='commands')
     return self._subcommands.add_parser(name, help=help)

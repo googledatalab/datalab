@@ -10,11 +10,12 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-import unittest
-import gcp
-import gcp.storage
 import mock
 from oauth2client.client import AccessTokenCredentials
+import unittest
+
+import gcp.context
+import gcp.storage
 
 
 class TestCases(unittest.TestCase):
@@ -35,7 +36,7 @@ class TestCases(unittest.TestCase):
 
     b = self._create_bucket()
     i = b.item('test_item1')
-    m = i.metadata()
+    m = i.metadata
 
     self.assertEqual(m.name, 'test_item1')
     self.assertEqual(m.content_type, 'text/plain')
@@ -79,7 +80,7 @@ class TestCases(unittest.TestCase):
   def _create_context(self):
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return gcp.Context(project_id, creds)
+    return gcp.context.Context(project_id, creds)
 
   def _create_objects_get_result(self):
     return {'name': 'test_item1', 'contentType': 'text/plain'}

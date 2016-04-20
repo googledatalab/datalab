@@ -42,10 +42,14 @@ declare module common {
     release: string;
     versionId: string;
     instanceId: string;
-    analyticsId: string;
     configUrl: string;
     feedbackId: string;
     logEndpoint: string;
+
+    /**
+     * Where to update docs, samples.
+     */
+    docsGcsPath: string;
 
     /**
      * The port that the server should listen to.
@@ -80,10 +84,6 @@ declare module common {
      */
     metadataHost: string;
 
-    /**
-     * Whether authentication is enabled.
-     */
-    enableAuth: boolean;
   }
 
   interface Map<T> {

@@ -1,0 +1,81 @@
+<html>
+  <head>
+    <title>
+      Google Cloud Datalab Terms of Service
+    </title>
+  <script>
+  function acceptEULA() {
+    console.log('Accepting location; referer ' + window.location);
+    window.location = '/accepted_eula?referer=' + encodeURI(window.location);
+  }
+  </script>
+  <style>
+body {
+  font-family: Arial;
+  font-size: 13px;
+}
+.banner {
+  position: relative;
+  padding: 72px 64px 40px 430px;
+  min-height: 103px;
+  color: #FFF;
+  background-color: #253238;
+  background: linear-gradient(#253238, #3A464B);
+  font-family: Roboto;
+  font-size: 14px;
+}
+.logo {
+  padding: 8px 8px 8px 96px;
+  position: relative;
+  max-width: 1024px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+.logo-datalab {
+  display: block;
+  position: absolute;
+  top: 8px;
+  left: 0;
+  z-index: 1;
+  background-image: url(https://cloud.google.com/images/sprites/product-logos.png);
+  height: 72px;
+  width: 80px;
+  background-position: 0px -240px;
+}
+.body {
+  padding: 26px 10px 20px;
+  font: medium Roboto;
+}
+.bodytext {
+}
+.buttonarea {
+  text-align: center;
+}
+.button {
+  font-size: 14px;
+}
+  </style>
+  </head>
+  <body>
+    <header class="banner">
+      <div class="logo">
+        <span class="logo-datalab"></span>
+        <h1 class="hero-title text-display-1">Cloud Datalab<sup>Beta</sup></h1>
+      </div>
+    </header>
+
+    <div class="body">
+      <div class="bodytext">
+        The Google Cloud Platform Standard Terms of Sevice notwithstanding, your use of Google Cloud Datalab Alpha
+        is governed by the <a href="http://cloud-tta.appspot.com/">TTA</a>  and by using Google Cloud Datalab Alpha
+        you agree to its terms.
+      </div>
+    </div>
+
+    <div class="buttonarea">
+      <button class="button" onclick="acceptEULA()">Accept</button>
+    </div>
+  </body>
+</html>
+

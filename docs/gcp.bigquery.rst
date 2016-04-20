@@ -9,6 +9,9 @@ Module contents
     :undoc-members:
     :show-inheritance:
 
+.. autoclass:: gcp.bigquery.CSVOptions
+    :members:
+
 .. autoclass:: gcp.bigquery.DataSet
     :members:
 
@@ -16,6 +19,9 @@ Module contents
     :members:
 
 .. autoclass:: gcp.bigquery.DataSets
+    :members:
+
+.. autoclass:: gcp.bigquery.FederatedTable
     :members:
 
 .. autoclass:: gcp.bigquery.Job

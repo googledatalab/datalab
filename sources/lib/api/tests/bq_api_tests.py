@@ -14,7 +14,9 @@ import unittest
 import mock
 from oauth2client.client import AccessTokenCredentials
 
-import gcp
+import gcp.bigquery
+import gcp.context
+import gcp._util
 from gcp.bigquery._api import Api
 
 
@@ -287,7 +289,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('gcp._util.Http.request')
   def test_tabledata_insertAll(self, mock_http_request):
     api = self._create_api()
-    api.tabledata_insertAll(gcp.bigquery._utils.TableName('p', 'd', 't', ''), 'ROWS')
+    api.tabledata_insert_all(gcp.bigquery._utils.TableName('p', 'd', 't', ''), 'ROWS')
     expected_data = {
       'kind': 'bigquery#tableDataInsertAllRequest',
       'rows': 'ROWS'
@@ -347,7 +349,7 @@ class TestCases(unittest.TestCase):
                   expected_data=expected_data)
 
     api.table_extract(gcp.bigquery._utils.TableName('p', 'd', 't', ''),
-                      ['DEST'], format='JSON', compressed=False, field_delimiter=':',
+                      ['DEST'], format='JSON', compress=False, field_delimiter=':',
                       print_header=False)
     expected_data = {
       'kind': 'bigquery#job',
@@ -384,4 +386,4 @@ class TestCases(unittest.TestCase):
   def _create_context(self):
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return gcp.Context(project_id, creds)
+    return gcp.context.Context(project_id, creds)

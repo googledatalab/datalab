@@ -28,7 +28,7 @@ IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.get_ipython = mock.Mock()
 
-import gcp
+import gcp.context
 import gcp.data
 import gcp.datalab
 
@@ -86,7 +86,7 @@ class TestCases(unittest.TestCase):
     self.assertEquals('SELECT * FROM $q1', m.__dict__[gcp.data.SqlModule._SQL_MODULE_MAIN].sql)
     self.assertEquals('SELECT * FROM $q1', m.__dict__[gcp.data.SqlModule._SQL_MODULE_LAST].sql)
 
-  @mock.patch('gcp._context.Context.default')
+  @mock.patch('gcp.context._context.Context.default')
   def test_arguments(self, mock_default_context):
     mock_default_context.return_value = self._create_context()
     m = imp.new_module('m')
@@ -143,4 +143,4 @@ LIMIT $limit
   def _create_context(self):
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return gcp.Context(project_id, creds)
+    return gcp.context.Context(project_id, creds)

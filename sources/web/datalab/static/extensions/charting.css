@@ -41,6 +41,10 @@ td.gchart-table-rownumcell, table.dataframe tr th {
 th.gchart-table-headercell, table.dataframe th {
   border: solid 1px #cfcfcf;
 }
+div.bqgc {
+  display: flex;
+  justify-content: center;
+}
 div.bqgc img {
   max-width: none; // Fix the conflict with maps and Bootstrap that messes up zoom controls.
 }
@@ -70,8 +74,15 @@ div.bqgc img {
   max-width: 100%;
 }
 .bqgc-controlled {
-  margin-left: 190px;
+  display: flex;
+  flex-direction: row;
+  justify-content:space-between;
 }
 .bqgc-container {
   display: block;
+}
+.bqgc-ml-metrics {
+  display: flex;
+  flex-direction: row;
+  justify-content:left;
 }

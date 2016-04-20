@@ -14,7 +14,7 @@
 
 """Implements Context functionality."""
 
-import _util
+import _credentials
 
 
 class Context(object):
@@ -30,6 +30,12 @@ class Context(object):
       project_id: the current cloud project.
       credentials: the credentials to use to authorize requests.
     """
+    if project_id is None:
+      if Context._global_context:
+        project_id = Context._global_context._project_id
+      else:
+        raise Exception('Cannot create Context with no project_id. ' +
+                        'Please use set_project_id to set a default project.')
     self._project_id = project_id
     self._credentials = credentials
 
@@ -52,22 +58,24 @@ class Context(object):
     return self._project_id
 
   @staticmethod
-  def default():
+  def default(project_id=None):
     """Creates a default Context object.
 
-    The default Context is based on project id and credentials inferred from
-    metadata returned by the cloud metadata service. It is also managed as a
-    global shared instance used everytime the default context is retrieved.
+    The default Context is a global shared instance used every time the default context is
+    retrieved.
+
+    Args:
+      The project ID to use for global context. If this has been set previously, it can be omitted.
+      Attempting to use a Context with no project_id will raise an exception.
 
     Returns:
       An initialized and shared instance of a Context object.
     """
 
     if Context._global_context is None:
-      ms = _util.MetadataService()
-      project_id = ms.project_id
-      credentials = _util.MetadataCredentials(ms)
-
+      credentials = _credentials.Credentials()
       Context._global_context = Context(project_id, credentials)
+    elif project_id is not None:
+      Context._global_context._project_id = project_id
 
     return Context._global_context

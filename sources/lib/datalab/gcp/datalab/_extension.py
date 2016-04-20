@@ -12,20 +12,20 @@
 
 """Google Cloud Platform library - Extension cell magic."""
 
-import IPython
-import IPython.core.display
-import IPython.core.magic
+try:
+  import IPython
+  import IPython.core.display
+  import IPython.core.magic
+except ImportError:
+  raise Exception('This module can only be loaded in ipython.')
+
 import _commands
 import _utils
 
 
 @IPython.core.magic.register_line_magic
 def extension(line):
-  """ Load an extension. Use %extension --help for more details.
-
-  Args:
-    line: the magic command line.
-  """
+  """ Load an extension. Use %extension --help for more details. """
   parser = _commands.CommandParser(prog='%extension', description="""
 Load an extension into Datalab. Currently only mathjax is supported.
 """)
@@ -35,7 +35,7 @@ Load an extension into Datalab. Currently only mathjax is supported.
   return _utils.handle_magic_line(line, None, parser)
 
 
-def _extension(args, _):
+def _extension(args, cell):
   ext = args['ext']
   if ext == 'mathjax':
     url = "https://cdn.mathjax.org/mathjax/latest/MathJax.js"

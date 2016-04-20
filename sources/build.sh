@@ -23,7 +23,6 @@ fi
 SRC_PATHS=(
   "lib/api"
   "lib/datalab"
-  "tools"
   "web"
 )
 
