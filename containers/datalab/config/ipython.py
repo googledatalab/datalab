@@ -18,9 +18,9 @@ c = get_config()
 
 # Implicitly imported packages.
 c.InteractiveShellApp.extensions = [
-  'gcp.datalab',
+  'datalab.kernel',
   'matplotlib',
-  'seaborn'
+  'seaborn',
 ]
 
 # Startup code.

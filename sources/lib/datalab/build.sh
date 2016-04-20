@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Builds the Google Cloud DataLab python library.
+# Builds the Google Cloud DataLab python package.
 
 # Fail the build on the first error, instead of carrying on by default
 set -o errexit;
@@ -26,5 +26,7 @@ fi
 BUILD_DIR="$REPO_DIR/build/lib"
 mkdir -p $BUILD_DIR
 
-# Build a source distribution package
+# Build a distribution package
+tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts
 python setup.py sdist --dist-dir=$BUILD_DIR
+rm datalab/notebook/static/*.js

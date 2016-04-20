@@ -21,7 +21,6 @@ if [ -z "$REPO_DIR" ];
 fi
 
 TEST_PATHS=(
-  "lib/api"
   "lib/datalab"
 )
 
