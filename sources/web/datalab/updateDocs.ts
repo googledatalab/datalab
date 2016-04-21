@@ -38,6 +38,7 @@ export function startUpdate(settings: common.Settings) {
     childProcess.execSync('rm -r -f ' + docsDownloadDir, {env: process.env});
   }
   fs.mkdirSync(docsDownloadDir);
+  // TODO(gram): must replace this with a git clone.
   var downloadCommand = 'gsutil -m cp -r ' + docsSourceGcsPath + ' ' + docsDownloadDir;
   childProcess.exec(downloadCommand, {env: process.env}, function(err, stdout, stderr) {
     if (err) {

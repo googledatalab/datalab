@@ -53,9 +53,9 @@ let scopes = [
 ];
 
 // Datalab config file for things like default project. If this doesn't exist the EULA hasn't been accepted.
-let configFile = '/notebooks/.datalabconfig';
+let configFile = '/root/.config/datalab';
 
-let tokensFile = '/datalab/tokens.json';  // Where we store credentials.
+let tokensFile = '/root/tokens.json';  // Where we store credentials.
 
 /**
  * The application settings instance.

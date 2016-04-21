@@ -15,16 +15,6 @@
 
 # Runs the docker container locally.
 
-# We use the presence of /root/.config to tell whether to show landing page.
-# Running gcloud will create it in whatever volume we mapped in which may
-# not be the user's home, so we guard against calling gcloud below unless
-# it already exists.
-if [ -d /root/.config/gcloud ]
-then
-  PROJECT_ID=`gcloud -q config list --format yaml | grep project | awk -F" " '{print $2}'`
-  export DATALAB_PROJECT_NUM=`gcloud -q projects describe $PROJECT_ID | grep projectNumber | awk '{print substr($2,2,length($2)-2)}'`
-fi
-
 export DATALAB_INSTANCE_NAME=debug
 export DATALAB_ENV=local
 

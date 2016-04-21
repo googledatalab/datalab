@@ -22,7 +22,7 @@ class Credentials(oauth2client.client.OAuth2Credentials):
   """OAuth credentials using auth tokens.
   """
 
-  _NODE_TOKEN_FILE = '/datalab/tokens.json'
+  _NODE_TOKEN_FILE = '/root/tokens.json'
 
   def _get_token(self):
     try:

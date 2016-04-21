@@ -35,6 +35,7 @@ fi
 
 docker run -it --entrypoint=$ENTRYPOINT \
   -p 8081:8080 \
+  -v "$HOME/.config:/root/.config" \
   -v "$CONTENT:/content" \
   -e "PROJECT_ID=$PROJECT_ID" \
   datalab

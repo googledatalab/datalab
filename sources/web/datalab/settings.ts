@@ -59,10 +59,7 @@ export function loadSettings(): common.Settings {
     settings.instanceId = metadata.instanceId;
     settings.instanceName = process.env['DATALAB_INSTANCE_NAME'] || '';
     settings.instanceUser = process.env['DATALAB_USER'] || '';
-    settings.projectId = process.env['DATALAB_PROJECT_ID'] || '';
-    settings.projectNumber = process.env['DATALAB_PROJECT_NUM'] || '';
     settings.versionId = process.env['DATALAB_VERSION'] || '';
-    settings.metadataHost = process.env['METADATA_HOST'] || 'metadata.google.internal';
     if (process.env['DATALAB_CONFIG_URL']) {
       settings.configUrl = process.env['DATALAB_CONFIG_URL'];
     }
