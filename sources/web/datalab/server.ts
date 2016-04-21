@@ -143,7 +143,8 @@ function handleRequest(request: http.ServerRequest,
       (path.indexOf('/tree') == 0) ||
       (path.indexOf('/notebooks') == 0) ||
       (path.indexOf('/nbconvert') == 0) ||
-      (path.indexOf('/files') == 0)) {
+      (path.indexOf('/files') == 0) ||
+      (path.indexOf('/edit') == 0)) {
     handleJupyterRequest(request, response);
     return;
   }
