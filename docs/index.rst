@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 Welcome to Cloud Datalab's documentation!
-===============================
+=========================================
 
 Contents:
 
@@ -14,6 +14,7 @@ Contents:
    gcp.bigquery
    gcp.context
    gcp.data
+   gcp.stackdriver.monitoring
    gcp.storage
 
 
