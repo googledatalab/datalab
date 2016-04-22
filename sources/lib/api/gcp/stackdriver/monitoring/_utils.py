@@ -19,7 +19,7 @@ from . import _impl
 
 
 def make_client(project_id=None, context=None):
-  context = context or gcp.Context.default()
+  context = context or gcp.context.Context.default()
   project_id = project_id or context.project_id
   return _impl.Client(project_id, context.credentials)
 
