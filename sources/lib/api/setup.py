@@ -29,7 +29,6 @@ setup(
               'gcp.data',
               'gcp.stackdriver',
               'gcp.stackdriver.monitoring',
-              'gcp.stackdriver.monitoring._impl',
               'gcp.storage',
              ],
     description='Google Cloud APIs for data analysis scenarios.',

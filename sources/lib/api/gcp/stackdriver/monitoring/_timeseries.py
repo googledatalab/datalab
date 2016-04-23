@@ -14,49 +14,54 @@
 
 """Provides access to metric data as pandas dataframes."""
 
+import gcloud.monitoring
 import pandas
 
 import gcp
-from . import _impl
 from . import _utils
 
 
-class Query(_impl.Query):
+class Query(gcloud.monitoring.Query):
   """Query object for retrieving metric data."""
 
   def __init__(self,
-               metric_type=_impl.Query.DEFAULT_METRIC_TYPE,
-               end_time=None, start_time=None,
-               days=0, hours=0, minutes=0,
+               metric_type=gcloud.monitoring.Query.DEFAULT_METRIC_TYPE,
+               end_time=None, days=0, hours=0, minutes=0,
                project_id=None, context=None):
     """Initializes the core query parameters.
+
+    The start time (exclusive) is determined by combining the
+    values of "days", "hours", and "minutes", and subtracting
+    the resulting duration from "end_time".
+
+    It is also allowed to omit the end time and duration here,
+    in which case the select_interval() method must be called
+    before the query is executed.
 
     Args:
       metric_type: The metric type name. The default value is
           "compute.googleapis.com/instance/cpu/utilization", but
           please note that this default value is provided only for
           demonstration purposes and is subject to change.
-      end_time: The end time (inclusive) of the time interval for which results
-          should be returned, as a Python datetime object. The default is the
-          start of the current minute. If the days/hours/minutes parameters are
-          not used, the end time can alternatively be provided as a timestamp
-          string in RFC3339 UTC "Zulu" format.
-      start_time: An optional start time (exclusive) of the time interval for
-          which results should be returned, as either a datetime object or a
-          timestamp string. If omitted and no non-zero duration is specified,
-          the interval is a point in time. If any of days, hours, or minutes
-          is non-zero, these are combined and subtracted from the end time to
-          determine the start time.
+      end_time: The end time (inclusive) of the time interval for which
+          results should be returned, as a datetime object. The default
+          is the start of the current minute.
       days: The number of days in the time interval.
       hours: The number of hours in the time interval.
       minutes: The number of minutes in the time interval.
       project_id: An optional project ID or number to override the one provided
           by the context.
       context: An optional Context object to use instead of the global default.
+
+    Raises:
+        ValueError: "end_time" was specified but "days", "hours", and "minutes"
+            are all zero. If you really want to specify a point in time, use
+            the select_interval() method.
     """
     client = _utils.make_client(project_id, context)
     super(Query, self).__init__(client, metric_type,
-                                end_time, start_time, days, hours, minutes)
+                                end_time=end_time,
+                                days=days, hours=hours, minutes=minutes)
 
   def labels_as_dataframe(self):
     """Returns the resource and metric metadata as a dataframe.
@@ -77,7 +82,7 @@ class Query(_impl.Query):
         [col.rsplit('.', 1) for col in df.columns])
 
     # Re-order the columns.
-    resource_keys = _impl.timeseries.sorted_resource_labels(
+    resource_keys = gcloud.monitoring._dataframe._sorted_resource_labels(
         df['resource.labels'].columns)
     sorted_columns = [('resource', 'type')]
     sorted_columns += [('resource.labels', key) for key in resource_keys]
