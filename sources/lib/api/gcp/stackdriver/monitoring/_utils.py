@@ -14,14 +14,18 @@
 
 """Provides utility methods for the Monitoring API."""
 
-import gcp
-from . import _impl
+import gcloud.monitoring
+
+import gcp.context
 
 
 def make_client(project_id=None, context=None):
   context = context or gcp.context.Context.default()
   project_id = project_id or context.project_id
-  return _impl.Client(project_id, context.credentials)
+  return gcloud.monitoring.Client(
+      project=project_id,
+      credentials=context.credentials,
+  )
 
 
 def list_resource_descriptors(project_id=None, context=None):
