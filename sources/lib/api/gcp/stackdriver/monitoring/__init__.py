@@ -14,4 +14,5 @@
 
 """Google Cloud Platform library - Monitoring Functionality."""
 
+from gcloud.monitoring import Aligner, Reducer
 from ._timeseries import Query
