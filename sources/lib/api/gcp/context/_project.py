@@ -12,10 +12,12 @@
 
 """Implements Projects functionality."""
 
+import os
+
 import gcp._util
 
 import _api
-import _credentials
+import _utils
 
 
 # We could do this with the gcloud SDK. However, installing that while locked on oauth2.5
@@ -64,7 +66,7 @@ class Projects(object):
       credentials: the credentials for the account.
     """
     if credentials is None:
-      credentials = _credentials.Credentials()
+      credentials = _utils.get_credentials()
     self._api = _api.Api(credentials)
 
   def _retrieve_projects(self, page_token, count):
@@ -92,3 +94,12 @@ class Projects(object):
     """ Returns an iterator for iterating through the DataSets in the project.
     """
     return iter(gcp._util.Iterator(self._retrieve_projects))
+
+  @staticmethod
+  def get_default_id(credentials=None):
+    project_id = os.getenv('PROJECT_ID')
+    if project_id is None:
+      projects, _ = Projects(credentials)._retrieve_projects(None, 2)
+      if len(projects) == 1:
+        project_id = projects[0].id
+    return project_id

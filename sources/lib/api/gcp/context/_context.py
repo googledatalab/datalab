@@ -14,7 +14,8 @@
 
 """Implements Context functionality."""
 
-import _credentials
+import _project
+import _utils
 
 
 class Context(object):
@@ -30,12 +31,6 @@ class Context(object):
       project_id: the current cloud project.
       credentials: the credentials to use to authorize requests.
     """
-    if project_id is None:
-      if Context._global_context:
-        project_id = Context._global_context._project_id
-      else:
-        raise Exception('Cannot create Context with no project_id. ' +
-                        'Please use set_project_id to set a default project.')
     self._project_id = project_id
     self._credentials = credentials
 
@@ -48,6 +43,10 @@ class Context(object):
     """
     return self._credentials
 
+  def set_credentials(self, credentials):
+    """ Set the credentials for the context. """
+    self._credentials = credentials
+
   @property
   def project_id(self):
     """Retrieves the value of the project_id property.
@@ -57,25 +56,25 @@ class Context(object):
     """
     return self._project_id
 
+  def set_project_id(self, project_id):
+    """ Set the project_id for the context. """
+    self._project_id = project_id
+
   @staticmethod
-  def default(project_id=None):
-    """Creates a default Context object.
+  def default():
+    """Retrieves a default Context object, creating it if necessary.
 
-    The default Context is a global shared instance used every time the default context is
-    retrieved.
+      The default Context is a global shared instance used every time the default context is
+      retrieved.
 
-    Args:
-      The project ID to use for global context. If this has been set previously, it can be omitted.
-      Attempting to use a Context with no project_id will raise an exception.
+      Attempting to use a Context with no project_id will raise an exception, so on first use
+      set_project_id must be called.
 
     Returns:
       An initialized and shared instance of a Context object.
     """
-
     if Context._global_context is None:
-      credentials = _credentials.Credentials()
-      Context._global_context = Context(project_id, credentials)
-    elif project_id is not None:
-      Context._global_context._project_id = project_id
-
+      credentials = _utils.get_credentials()
+      project = _project.Projects.get_default_id(credentials)
+      Context._global_context = Context(project, credentials)
     return Context._global_context

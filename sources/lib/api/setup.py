@@ -34,8 +34,8 @@ setup(
     install_requires=['python-dateutil==2.5.0',
                       'futures==3.0.5',
                       'httplib2==0.9.2',
-                      'ipython>=4.0,<4.1',
-                      'oauth2client==1.5.2',
+                      'ipython>=4.0,<4.2',
+                      'oauth2client==2.0.2',
                       'pandas>=0.17.1',
                       'pytz>=2015.4',
                       'requests==2.9.1'
