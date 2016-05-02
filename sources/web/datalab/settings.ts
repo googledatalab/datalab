@@ -56,9 +56,6 @@ export function loadSettings(): common.Settings {
     }
 
     var settings = <common.Settings>JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-    settings.instanceId = metadata.instanceId;
-    settings.instanceName = process.env['DATALAB_INSTANCE_NAME'] || '';
-    settings.instanceUser = process.env['DATALAB_USER'] || '';
     settings.versionId = process.env['DATALAB_VERSION'] || '';
     if (process.env['DATALAB_CONFIG_URL']) {
       settings.configUrl = process.env['DATALAB_CONFIG_URL'];

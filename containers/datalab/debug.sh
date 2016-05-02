@@ -40,6 +40,5 @@ docker run -it --entrypoint=$ENTRYPOINT \
   -v "$CONTENT:/content" \
   -e "PROJECT_ID=$PROJECT_ID" \
   -e "DATALAB_ENV=local" \
-  -e "CLOUDSDK_CONFIG=/content/datalab" \
   datalab
 

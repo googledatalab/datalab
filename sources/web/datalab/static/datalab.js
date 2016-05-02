@@ -46,20 +46,6 @@ function initializePage(dialog) {
   $('#feedbackButton').click(function() {
     window.open('https://groups.google.com/forum/#!newtopic/google-cloud-datalab-feedback');
   });
-
-  if (document.getElementById('repoLink')) {
-    // repoLink only exists in cloud version.
-    var projectId = document.body.getAttribute('data-project-id');
-    var instanceName = document.body.getAttribute('data-instance-name');
-    var consoleLink = 'https://console.developers.google.com/project/' + projectId;
-    var instancesLink = consoleLink + '/appengine/versions?moduleId=datalab';
-    var repoLink = consoleLink + '/clouddev/develop/browse/default/datalab_' + instanceName;
-
-    document.getElementById('consoleLink').href = consoleLink;
-    document.getElementById('instancesLink').href = instancesLink;
-    document.getElementById('repoLink').href = repoLink;
-    document.getElementById('userId').textContent = document.body.getAttribute('data-user-id');
-  }
 }
 
 function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
@@ -701,20 +687,11 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
     e.target.blur();
   }
 
-  function browseRepository(e) {
-    window.open(document.getElementById('repoLink').href, '_blank');
-    e.target.blur();
-  }
-
   document.getElementById('contentButton').addEventListener('click', showContent, false);
   document.getElementById('sessionsButton').addEventListener('click', showSessions, false);
 
   document.getElementById('addNotebookButton').addEventListener('click', addNotebook, false);
   document.getElementById('addFolderButton').addEventListener('click', addFolder, false);
-
-  if (document.getElementById('repoButton')) {
-    document.getElementById('repoButton').addEventListener('click', browseRepository, false);
-  }
 
   (function buildBreadcrumbContent() {
     var path = location.pathname;
@@ -772,14 +749,11 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
     if (version >= versionInfo.latest) {
       return;
     }
-    var instance = document.body.getAttribute('data-instance-name');
-    var deployerLink = 'https://datalab.cloud.google.com?name=' + instance;
     var optional = (version >= versionInfo.last);
     var messageDiv = document.getElementById('updateMessageArea');
     var message = 'You are using DataLab 0.5.' + version + '. ' + 
         (optional ? 'An optional' : 'A recommended') + ' update (0.5.' + versionInfo.latest + 
-        ') is <a href="' + deployerLink + 
-        '"> available</a> (see <a href="https://github.com/GoogleCloudPlatform/datalab/wiki/Release-Info"' + 
+        ') is available (see <a href="https://github.com/GoogleCloudPlatform/datalab/wiki/Release-Info"' + 
         '>what\'s new)</a>.'
     messageDiv.innerHTML = message;
     messageDiv.classList.add('alert');
@@ -795,7 +769,7 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
 function initializeDataLab(ipy, events, dialog, utils, security) {
   initializePage(dialog);
 
-  // Override the sanitizer - all notebooks within the user's repository are implicity
+  // Override the sanitizer - all notebooks within the user's volume are implicity
   // trusted, and there is no need to remove scripts from cell outputs of notebooks
   // with previously saved results.
   security.sanitize_html = function(html) {

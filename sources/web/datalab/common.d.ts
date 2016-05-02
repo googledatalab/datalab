@@ -21,18 +21,6 @@ declare module common {
     logFilePeriod: string;
     logFileCount: number;
 
-    /**
-     * Name of this datalab instance.
-     * It is also used as part of the name of the cloud source repository
-     * branch that stores all notebooks created from this datalab instance.
-     */
-    instanceName: string;
-
-    /**
-     * User ID of the email when running locally.
-     */
-    instanceUser: string;
-
     release: string;
     versionId: string;
     instanceId: string;
