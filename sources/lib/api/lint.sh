@@ -30,5 +30,6 @@ $LINTER gcp/_util
 $LINTER gcp/bigquery
 $LINTER gcp/context
 $LINTER gcp/data
+$LINTER gcp/stackdriver
 $LINTER gcp/storage
 

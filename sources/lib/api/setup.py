@@ -27,6 +27,8 @@ setup(
               'gcp.bigquery',
               'gcp.context',
               'gcp.data',
+              'gcp.stackdriver',
+              'gcp.stackdriver.monitoring',
               'gcp.storage',
              ],
     description='Google Cloud APIs for data analysis scenarios.',
