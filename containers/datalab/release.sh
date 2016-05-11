@@ -15,7 +15,6 @@
 
 # Releases the built docker image to the registry with the latest tag.
 
-
 LOCAL_IMAGE=datalab
 CLOUD_IMAGE=gcr.io/cloud-datalab/datalab:local
 

@@ -48,7 +48,7 @@ export function getUserId(request: http.ServerRequest): string {
     }
   }
 
-  return request.headers['x-appengine-user-email'] || appSettings.instanceUser || 'anonymous';
+  return request.headers['x-appengine-user-email'] || 'anonymous';
 }
 
 /**

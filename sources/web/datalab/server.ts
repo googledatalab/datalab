@@ -189,7 +189,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     return;
   }
 
-  if (auth.handleAuthFlow(request, response, parsed_url)) {
+  if (auth.handleAuthFlow(request, response, parsed_url, appSettings)) {
     handleRequest(request, response, path);
   }
 }

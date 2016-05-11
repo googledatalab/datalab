@@ -26,10 +26,7 @@ which are themselves written in the form of notebooks.
 DataLab is packaged as a docker container which contains Jupyter/IPython, and a variety of python
 libraries such as numpy, pandas, scikit-learn and matplotlib, in a ready-to-use form.
 
-The simplest way to start using DataLab is on Google Cloud Platform. Head over to the
-[Google Cloud DataLab deployer](https://datalab.cloud.google.com) and deploy your own instance.
-
-You can also run the docker container locally, as described in the
+You can run the docker container locally or in GCE, as described in the
 [wiki](https://github.com/googlecloudplatform/datalab/wiki/Getting-Started).
 
 ### Contacting Us

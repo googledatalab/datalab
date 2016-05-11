@@ -288,8 +288,6 @@ function responseHandler(proxyResponse: http.ClientResponse,
     var templateData: common.Map<string> = {
       feedbackId: appSettings.feedbackId,
       versionId: appSettings.versionId,
-      instanceId: appSettings.instanceId,
-      instanceName: appSettings.instanceName,
       userId: userManager.getUserId(request),
       configUrl: appSettings.configUrl,
       baseUrl: '/'

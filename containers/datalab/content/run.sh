@@ -15,8 +15,6 @@
 
 # Runs the docker container locally.
 
-export DATALAB_INSTANCE_NAME=local
-
 mkdir -p /content/datalab/notebooks
 mkdir -p /content/datalab/docs
 rsync -r /datalab/docs/* /content/datalab/docs

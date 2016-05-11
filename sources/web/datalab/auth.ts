@@ -29,9 +29,9 @@ var oauth2Client: any = undefined;
 // These are the gcloud credentials and are not actually secret.
 let clientId = '32555940559.apps.googleusercontent.com';
 let clientSecret = 'ZmssLNjJy2998hD4CTg2ejr2';
-let gcloudDir = process.env.CLOUDSDK_CONFIG || '/root/.config/gcloud';
+let gcloudDir = '/content/datalab';
 let userCredFile = gcloudDir + '/credentials';
-let appCredFile = process.env.GOOGLE_APPLICATION_CREDENTIALS || (gcloudDir + '/application_default_credentials.json')
+let appCredFile = gcloudDir + '/application_default_credentials.json';
 
 let scopes = [
   'https://www.googleapis.com/auth/userinfo.email',
@@ -59,7 +59,7 @@ function setGcloudAccount(email: string) {
   });
 }
 
-function saveUserCredFile(tokens: any) {
+function saveUserCredFile(tokens: any): string {
   var segments = tokens.id_token.split('.');
   var payload = JSON.parse(base64decodeSegment(segments[1]));
   fs.writeFileSync(userCredFile,
@@ -99,6 +99,7 @@ function saveUserCredFile(tokens: any) {
   );
   // Tell gcloud which account we are using.
   setGcloudAccount(payload.email);
+  return payload.email;
 }
 
 function saveApplicationCredFile(tokens: any) {
@@ -115,15 +116,16 @@ function saveApplicationCredFile(tokens: any) {
 /**
  * Save the tokens in a credentials file that Datalab and gcloud can both use.
  */
-function persistCredentials(tokens: any) {
+function persistCredentials(tokens: any): string {
   if (!fs.existsSync(gcloudDir)) {
     fs.mkdirSync(gcloudDir);
   }
   saveApplicationCredFile(tokens);
-  saveUserCredFile(tokens);
+  return saveUserCredFile(tokens);
 }
 
-export function handleAuthFlow(request: http.ServerRequest, response: http.ServerResponse, parsed_url: any): boolean {
+export function handleAuthFlow(request: http.ServerRequest, response: http.ServerResponse,
+    parsed_url: any, settings: any): boolean {
   var path = parsed_url.pathname;
   if (path.indexOf('/oauthcallback') == 0) {  // Return from auth flow.
     var query = parsed_url.query;
@@ -136,7 +138,7 @@ export function handleAuthFlow(request: http.ServerRequest, response: http.Serve
           logging.getLogger().info('Got tokens');
           oauth2Client.setCredentials(tokens);
           // Push them to Jupyter and handle request.
-          persistCredentials(tokens);
+          var email = persistCredentials(tokens);
           response.statusCode = 302;
           response.setHeader('Location', query.state);
           response.end();
