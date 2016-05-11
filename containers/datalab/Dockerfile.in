@@ -78,8 +78,6 @@ RUN wget -nv https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.zip && \
     tools/google-cloud-sdk/install.sh --usage-reporting=false \
         --path-update=false --bash-completion=false \
         --disable-installation-options && \
-    tools/google-cloud-sdk/bin/gcloud config set --scope=installation \
-        component_manager/fixed_sdk_version 102.0.0 && \
     tools/google-cloud-sdk/bin/gcloud -q components update \
         gcloud core bq gsutil compute preview alpha beta && \
     touch /tools/google-cloud-sdk/lib/third_party/google.py
@@ -116,8 +114,7 @@ RUN pip install protobuf==3.0.0b2.post2 && \
     rm tensorflow-0.8.0-cp27-none-linux_x86_64.whl
 
 # Add build artifacts
-ADD build/lib/gcpdata-0.1.*.tar.gz /datalab/lib/
-ADD build/lib/gcpdatalab-0.1.*.tar.gz /datalab/lib/
+ADD build/lib/datalab-0.1.*.tar.gz /datalab/lib/
 ADD build/web /datalab/web
 ADD nbconvert /datalab/nbconvert
 ADD content/ /datalab
@@ -130,8 +127,8 @@ ADD notebooks /datalab/docs
 # I'd prefer to just use absolute path in Jinja imports but those don't work.
 RUN ipython profile create default && \
     jupyter notebook --generate-config && \
-    cd /datalab/lib/gcpdata-0.1.* && pip install . && \
-    cd /datalab/lib/gcpdatalab-0.1.* && pip install . && \
+    cd /datalab/lib/datalab-0.1.* && pip install . && \
+    jupyter nbextension install --py datalab.notebook && \
     cd /datalab/web && /tools/node/bin/npm install && \
     cd / && \
     ln -s /datalab/web/static/extensions/charting.js /datalab/nbconvert/charting.js && \
