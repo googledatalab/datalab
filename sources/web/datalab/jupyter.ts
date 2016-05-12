@@ -17,6 +17,7 @@
 /// <reference path="../../../externs/ts/node/tcp-port-used.d.ts" />
 /// <reference path="common.d.ts" />
 
+import auth = require('./auth')
 import callbacks = require('./callbacks');
 import childProcess = require('child_process');
 import fs = require('fs');
@@ -297,6 +298,9 @@ function responseHandler(proxyResponse: http.ClientResponse,
     if (path.indexOf('/tree') == 0) {
       // stripping off the /tree/ from the path
       templateData['notebookPath'] = path.substr(6);
+      if (process.env.DATALAB_ENV == 'local') {
+        templateData['isSignedIn'] = auth.isSignedIn().toString();
+      }
 
       sendTemplate('tree', templateData, response);
       page = 'tree';

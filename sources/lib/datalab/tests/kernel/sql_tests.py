@@ -17,7 +17,7 @@ import unittest
 
 # import Python so we can mock the parts we need to here.
 import IPython
-import IPython.core
+import IPython.core.magic
 
 
 def noop_decorator(func):
@@ -28,6 +28,7 @@ IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.get_ipython = mock.Mock()
 
+import datalab.bigquery
 import datalab.context
 import datalab.data
 import datalab.data.commands

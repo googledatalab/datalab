@@ -178,18 +178,17 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       response.writeHead (302, {'Location': referer})
     }
     response.end();
-    return;
-  }
-  if (!fs.existsSync(configFile)) {
+  } else if (path.indexOf('/signin') == 0 || path.indexOf('/signout') == 0 ||
+      path.indexOf('/oauthcallback') == 0) {
+    // Start or return from auth flow.
+    auth.handleAuthFlow(request, response, parsed_url, appSettings);
+  } else if (!fs.existsSync(configFile)) {
     logging.getLogger().info('No Datalab config; redirect to EULA page');
     fs.readFile('/datalab/web/static/eula.html', function(error, content) {
       response.writeHead(200);
       response.end(content);
     });
-    return;
-  }
-
-  if (auth.handleAuthFlow(request, response, parsed_url, appSettings)) {
+  } else {
     handleRequest(request, response, path);
   }
 }

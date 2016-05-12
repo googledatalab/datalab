@@ -20,6 +20,7 @@ except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
 import fnmatch
+import json
 import re
 
 import datalab.storage

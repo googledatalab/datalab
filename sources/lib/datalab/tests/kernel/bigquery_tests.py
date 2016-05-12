@@ -16,7 +16,6 @@ import unittest
 
 # import Python so we can mock the parts we need to here.
 import IPython
-import IPython.core
 import IPython.core.magic
 
 

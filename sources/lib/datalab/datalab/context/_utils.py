@@ -17,6 +17,11 @@
 import oauth2client.client
 import json
 import os
+import path
+
+
+def _in_datalab_docker():
+  return path.exists('/datalab') and os.getenv('DATALAB_ENV')
 
 
 def get_config_dir():
@@ -56,5 +61,10 @@ def get_credentials():
       for entry in creds['data']:
         if entry['key']['type'] == 'google-cloud-sdk':
           return oauth2client.client.OAuth2Credentials.from_json(json.dumps(entry['credential']))
+
+    if type(e) == oauth2client.client.ApplicationDefaultCredentialsError:
+      # If we are in Datalab container, change the message to be about signing in.
+      if _in_datalab_docker():
+        raise Exception('No application credentials found. Perhaps you should sign in.')
 
     raise e

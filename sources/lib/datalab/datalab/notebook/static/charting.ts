@@ -427,7 +427,7 @@ module Charting {
         }
       } catch (e) {
       }
-      this.dom.innerHTML = '';
+      (<HTMLElement>this.dom).innerHTML = '';
       this.removeStaticChart();
       this.addControls();
       // Generate and add a new static chart once chart is ready.
