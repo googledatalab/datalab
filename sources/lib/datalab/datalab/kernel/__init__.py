@@ -83,7 +83,7 @@ def load_ipython_extension(shell):
     return _orig_run_line_magic(self, magic_name, line)
 
   def _run_cell_magic(self, magic_name, line, cell):
-    if cell.isspace():
+    if len(cell) == 0 or cell.isspace():
       fn = self.find_line_magic(magic_name)
       if fn:
         return _orig_run_line_magic(self, magic_name, line)

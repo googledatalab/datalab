@@ -35,7 +35,6 @@ let appCredFile = gcloudDir + '/application_default_credentials.json';
 
 let scopes = [
   'https://www.googleapis.com/auth/userinfo.email',
-  //'https://www.googleapis.com/auth/userinfo.profile',
   'https://www.googleapis.com/auth/cloud-platform',
 ];
 
@@ -124,18 +123,39 @@ function persistCredentials(tokens: any): string {
   return saveUserCredFile(tokens);
 }
 
+export function isSignedIn(): boolean {
+  // If not local, then we should have service account available so consider that signed in.
+  return (process.env.DATALAB_ENV != 'local' || fs.existsSync(appCredFile));
+}
+
 export function handleAuthFlow(request: http.ServerRequest, response: http.ServerResponse,
-    parsed_url: any, settings: any): boolean {
+    parsed_url: any, settings: any): void {
   var path = parsed_url.pathname;
-  if (path.indexOf('/oauthcallback') == 0) {  // Return from auth flow.
-    var query = parsed_url.query;
+  var query = parsed_url.query;
+  if (path.indexOf('/signout') == 0) {
+    if (fs.existsSync(userCredFile)) {
+      try {
+        fs.unlinkSync(userCredFile);
+      } catch (e) {
+        logging.getLogger().error('Could not delete ' + userCredFile + ': ' + e);
+      }
+    }
+    if (fs.existsSync(appCredFile)) {
+      try {
+        fs.unlinkSync(appCredFile);
+      } catch (e) {
+        logging.getLogger().error('Could not delete ' + appCredFile + ': ' + e);
+      }
+    }
+  } else if (path.indexOf('/oauthcallback') == 0) {  // Return from auth flow.
     if (query.code) {
       oauth2Client.getToken(query.code, function (err:any, tokens:any) {
         if (err) {
+          logging.getLogger().info('Auth failed');
           response.writeHead(403);
           response.end();
         } else {
-          logging.getLogger().info('Got tokens');
+          logging.getLogger().info('Auth succeeded');
           oauth2Client.setCredentials(tokens);
           // Push them to Jupyter and handle request.
           var email = persistCredentials(tokens);
@@ -145,24 +165,30 @@ export function handleAuthFlow(request: http.ServerRequest, response: http.Serve
         }
       });
     }
-  } else if (!oauth2Client && process.env.DATALAB_ENV == 'local' && !fs.existsSync(appCredFile)) {
+    return;
+  } else if (path.indexOf('/signin') == 0 && !isSignedIn()) {
     // Do auth.
     // TODO(gram): instead of initiating it here we should add a sign in button to our templates so it becomes
     // user-initiated.
+    var referer = decodeURIComponent(query.referer);
+    logging.getLogger().info('Starting auth from referer ' + referer);
     var OAuth2:any = google.auth.OAuth2;
     // TODO(gram): can we get the host and port from somewhere instead of hard-coding?
     oauth2Client = new OAuth2(clientId, clientSecret, 'http://localhost:8081/oauthcallback');
     var url_:string = oauth2Client.generateAuthUrl({
       access_type: 'offline', // 'offline' gets refresh_token
       scope: scopes,
-      state: request.url
+      state: referer
     });
     response.statusCode = 302;
     response.setHeader('Location', url_);
     response.end();
-  } else {
-    // Not local or already done auth; just handle it.
-    return true;
+    return;
   }
-  return false;  // Don't handle the request.
+
+  // Return to referer.
+  var referer = decodeURIComponent(query.referer);
+  response.statusCode = 302;
+  response.setHeader('Location', referer);
+  response.end();
 }

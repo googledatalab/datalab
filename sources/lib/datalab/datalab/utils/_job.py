@@ -160,7 +160,7 @@ class Job(object):
       try:
         self._result = self._future.result()
       except Exception as e:
-        message = e.message if e.message else e.strerror
+        message = e.message if e.message else str(e)
         self._fatal_error = JobError(location=traceback.format_exc(), message=message,
                                      reason=str(type(e)))
 

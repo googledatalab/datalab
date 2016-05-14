@@ -16,6 +16,7 @@ import unittest
 
 import datalab.context
 import datalab.storage
+import datalab.utils
 
 
 class TestCases(unittest.TestCase):

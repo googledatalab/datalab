@@ -610,12 +610,12 @@ def _schema_line(args):
 
 def _render_table(data, fields=None):
   """ Helper to render a list of dictionaries as an HTML display object. """
-  return IPython.core.display.HTML(_html.HtmlBuilder.render_table(data, fields))
+  return IPython.core.display.HTML(datalab.utils.commands.HtmlBuilder.render_table(data, fields))
 
 
 def _render_list(data):
   """ Helper to render a list of objects as an HTML list object. """
-  return IPython.core.display.HTML(_html.HtmlBuilder.render_list(data))
+  return IPython.core.display.HTML(datalab.utils.commands.HtmlBuilder.render_list(data))
 
 
 def _datasets_line(args):
@@ -913,7 +913,7 @@ def _table_viewer(table, rows_per_page=25, fields=None):
 
   if fields is None:
     fields = datalab.utils.commands.get_field_list(fields, table.schema)
-  div_id = _html.Html.next_id()
+  div_id = datalab.utils.commands.Html.next_id()
   meta_count = ('rows: %d' % table.length) if table.length >= 0 else ''
   meta_name = str(table) if table.job is None else ('job: %s' % table.job.id)
   if table.job:
@@ -941,7 +941,7 @@ def _table_viewer(table, rows_per_page=25, fields=None):
   meta_data = '(%s)' % (', '.join([entry for entry in meta_entries if len(entry)]))
 
   return _HTML_TEMPLATE.format(div_id=div_id,
-                               static_table=_html.HtmlBuilder.render_chart_data(data),
+                               static_table=datalab.utils.commands.HtmlBuilder.render_chart_data(data),
                                meta_data=meta_data,
                                chart_style=chart,
                                source_index=datalab.utils.commands.get_data_source_index(str(table)),
@@ -953,7 +953,7 @@ def _table_viewer(table, rows_per_page=25, fields=None):
 
 def _repr_html_query(query):
   # TODO(nikhilko): Pretty print the SQL
-  return _html.HtmlBuilder.render_text(query.sql, preformatted=True)
+  return datalab.utils.commands.HtmlBuilder.render_text(query.sql, preformatted=True)
 
 
 def _repr_html_query_results_table(results):
@@ -976,7 +976,7 @@ def _repr_html_table_schema(schema):
       );
     </script>
     """
-  id = _html.Html.next_id()
+  id = datalab.utils.commands.Html.next_id()
   return _HTML_TEMPLATE % (id, id, json.dumps(schema._bq_schema))
 
 

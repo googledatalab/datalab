@@ -46,6 +46,20 @@ function initializePage(dialog) {
   $('#feedbackButton').click(function() {
     window.open('https://groups.google.com/forum/#!newtopic/google-cloud-datalab-feedback');
   });
+  var signedIn = document.body.getAttribute('data-signed-in');
+  if (signedIn != undefined) {  // i.e. running locally.
+    if (signedIn == "true") {
+      $('#signOutButton').show();
+    } else {
+      $('#signInButton').show();
+    }
+    $('#signInButton').click(function() {
+      window.location = '/signin?referer=' + encodeURIComponent(window.location);
+    });
+    $('#signOutButton').click(function() {
+      window.location = '/signout?referer=' + encodeURIComponent(window.location);
+    });
+  }
 }
 
 function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
