@@ -17,11 +17,10 @@
 import oauth2client.client
 import json
 import os
-import path
 
 
 def _in_datalab_docker():
-  return path.exists('/datalab') and os.getenv('DATALAB_ENV')
+  return os.path.exists('/datalab') and os.getenv('DATALAB_ENV')
 
 
 def get_config_dir():
