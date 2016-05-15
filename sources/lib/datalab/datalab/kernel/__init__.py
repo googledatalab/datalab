@@ -22,10 +22,10 @@ try:
   import IPython.core.magic as _magic
   import IPython.core.interactiveshell as _shell
   from IPython import get_ipython
-
-  import datalab.context as _context
 except ImportError:
   raise Exception('This package requires an IPython notebook installation')
+
+import datalab.context as _context
 
 # Import the modules that do cell magics.
 import datalab.bigquery.commands
