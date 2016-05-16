@@ -17,7 +17,13 @@
 
 mkdir -p /content/datalab/notebooks
 mkdir -p /content/datalab/docs
-rsync -r /datalab/docs/* /content/datalab/docs
+
+if [ -d /content/datalab/docs/notebooks/.git ]
+then
+  (cd /content/datalab/docs/notebooks; git fetch origin master; git reset --hard origin/master)
+else
+  (cd /content/datalab/docs; git clone -b master --single-branch https://github.com/googledatalab/notebooks.git)
+fi
 
 # Setup environment variables.
 . /datalab/setup-env.sh

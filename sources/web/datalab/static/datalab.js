@@ -173,6 +173,21 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
       return originalSave.apply(this, /* check_lastmodified */ [ false ]);
     }
 
+    function isSample() {
+      var path = window.location.pathname;
+      var lastSepPos = path.lastIndexOf('/');
+      return lastSepPos >= 23 &&
+          path.substring(lastSepPos-23, lastSepPos) == '/datalab/docs/notebooks';
+    }
+    
+    // Remove save and rename menu items if under our docs directory.
+    if (isSample()) {
+      // Can't just hide them as they will get redisplayed on drop down, so we 
+      // strip their content.
+      document.getElementById('saveButton').innerHTML = '';
+      document.getElementById('renameButton').innerHTML = '';
+    }
+
     // A replacement notebook copy function that makes copies in the root if
     // the source is under datalab/.
     notebook.prototype.copy_notebook = function() {
@@ -180,8 +195,12 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
       var base_url = this.base_url;
       var w = window.open('', IPython._target);
       var parent = utils.url_path_split(this.notebook_path)[0];
-      if (parent == 'datalab' || parent.startsWith('datalab/')) {
-        parent = 'My Notebooks';
+      if (isSample()) {
+        var path = window.location.pathname;
+        var lastSepPos = path.lastIndexOf('/');
+        // Strip off leading /notebooks/ and trailing sample path to get datalab
+        // path, then add /notebooks.
+        parent = path.substring(11, lastSepPos-14) + 'notebooks';
       }
       this.contents.copy(this.notebook_path, parent).then(
         function (data) {
