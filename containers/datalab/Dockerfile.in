@@ -120,7 +120,6 @@ ADD nbconvert /datalab/nbconvert
 ADD content/ /datalab
 ADD config/ipython.py /etc/ipython/ipython_config.py
 ADD config/nbconvert.py /etc/jupyter/jupyter_notebook_config.py
-ADD notebooks /datalab/docs
 
 # Do IPython configuration and install build artifacts
 # Then link stuff needed for nbconvert to a location where Jinja will find it.

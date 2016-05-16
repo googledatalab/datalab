@@ -27,7 +27,6 @@ import net = require('net');
 import path = require('path');
 import request = require('request');
 import static_ = require('./static');
-import updateDocs = require('./updateDocs');
 import url = require('url');
 import userManager = require('./userManager');
 
@@ -206,7 +205,6 @@ export function run(settings: common.Settings): void {
   appSettings = settings;
   userManager.init(settings);
   jupyter.init(settings);
-  updateDocs.startUpdate(settings);
 
   healthHandler = health.createHandler(settings);
   infoHandler = info.createHandler(settings);
