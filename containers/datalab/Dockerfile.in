@@ -128,15 +128,14 @@ RUN ipython profile create default && \
     jupyter notebook --generate-config && \
     cd /datalab/lib/datalab-0.1.* && pip install . && \
     jupyter nbextension install --py datalab.notebook && \
-    cd /datalab/web && /tools/node/bin/npm install && \
-    cd / && \
-    ln -s /datalab/web/static/extensions/charting.js /datalab/nbconvert/charting.js && \
-    ln -s /datalab/web/static/require/element.js /datalab/nbconvert/element.js && \
-    ln -s /datalab/web/static/require/style.js /datalab/nbconvert/style.js && \
-    ln -s /datalab/web/static/require/visualization.js /datalab/nbconvert/visualization.js && \
+    mkdir -p /datalab/nbconvert && \
+    cp /usr/local/share/jupyter/nbextensions/gcpdatalab/* /datalab/nbconvert && \
     ln -s /usr/local/lib/python2.7/dist-packages/notebook/static/custom/custom.css /datalab/nbconvert/custom.css && \
-    ln -s /datalab/web/static/extensions/charting.css /datalab/nbconvert/charting.css && \
-    ln -s /datalab/web/static/datalab.css /datalab/nbconvert/datalab.css
+    ln -s /datalab/web/static/datalab.css /datalab/nbconvert/datalab.css&& \
+    mkdir -p /usr/local/lib/python2.7/dist-packages/notebook/static/components/codemirror/mode/text/sql/text && \
+    ln -s /usr/local/share/jupyter/nbextensions/gcpdatalab/codemirror/mode/sql.js /usr/local/lib/python2.7/dist-packages/notebook/static/components/codemirror/mode/text/sql/text/sql.js && \
+    cd /datalab/web && /tools/node/bin/npm install && \
+    cd /
 
 # Include this line above to enable ipywidgets. These aren't working 100% yet so 
 # we don't enable them.

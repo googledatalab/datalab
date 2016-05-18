@@ -886,6 +886,26 @@ def _table_viewer(table, rows_per_page=25, fields=None):
     <div class="bqtv" id="{div_id}">{static_table}</div>
     <br />{meta_data}<br />
     <script>
+
+      require.config({{
+        paths: {{
+          d3: '//cdnjs.cloudflare.com/ajax/libs/d3/3.4.13/d3',
+          plotly: 'https://cdn.plot.ly/plotly-1.5.1.min.js?noext',
+          jquery: '//ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min'
+        }},
+        map: {{
+          '*': {{
+            datalab: 'nbextensions/gcpdatalab'
+          }}
+        }},
+        shim: {{
+          plotly: {{
+            deps: ['d3', 'jquery'],
+            exports: 'plotly'
+          }}
+        }}
+      }});
+
       require(['datalab/charting', 'datalab/element!{div_id}', 'base/js/events',
           'datalab/style!/nbextensions/gcpdatalab/charting.css'],
         function(charts, dom, events) {{
