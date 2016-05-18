@@ -22,6 +22,6 @@ fi
 
 if [ $DATALAB_ENV = "local" ]
 then
-  export CLOUDSDK_CONFIG=/content/datalab
+  export CLOUDSDK_CONFIG=/content/datalab/.config
 fi
 

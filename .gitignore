@@ -6,5 +6,6 @@ test
 *.pyc
 *.idea
 *.iml
+*.map
 *.egg-info
 

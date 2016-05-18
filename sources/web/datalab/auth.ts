@@ -29,7 +29,7 @@ var oauth2Client: any = undefined;
 // These are the gcloud credentials and are not actually secret.
 let clientId = '32555940559.apps.googleusercontent.com';
 let clientSecret = 'ZmssLNjJy2998hD4CTg2ejr2';
-let gcloudDir = '/content/datalab';
+let gcloudDir = '/content/datalab/.config';
 let userCredFile = gcloudDir + '/credentials';
 let appCredFile = gcloudDir + '/application_default_credentials.json';
 
