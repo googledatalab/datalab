@@ -149,8 +149,6 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 
   require(['notebook/js/notebook'], function(ipy) {
     var notebook = ipy.Notebook;
-    notebook.prototype.list_checkpoints = placeHolder;
-    notebook.prototype.create_checkpoint = placeHolder;
 
     var originalFromJSON = notebook.prototype.fromJSON;
     notebook.prototype.fromJSON = function(data) {
@@ -165,12 +163,6 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
       });
 
       return originalFromJSON.apply(this, [ data ]);
-    }
-
-    // This is a hack to disable timestamp check due to a Workspace-sync bug.
-    var originalSave = notebook.prototype.save_notebook;
-    notebook.prototype.save_notebook = function() {
-      return originalSave.apply(this, /* check_lastmodified */ [ false ]);
     }
 
     function isSample() {
@@ -218,6 +210,40 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 
   require(['notebook/js/menubar'], function(ipy) {
     ipy.MenuBar.prototype.add_kernel_help_links = placeHolder;
+
+    // This is just a copy of the one from Jupyter but changes the first 
+    // line from this.element.find('restore_checkpoint') to
+    // $('#restoreButton').
+    ipy.MenuBar.prototype.update_restore_checkpoint = function(checkpoints) {
+        var ul = $('#restoreButton').find("ul");
+        ul.empty();
+        if (!checkpoints || checkpoints.length === 0) {
+            ul.append(
+                $("<li/>")
+                .addClass("disabled")
+                .append(
+                    $("<a/>")
+                    .text("No checkpoints")
+                )
+            );
+            return;
+        }
+
+        var that = this;
+        checkpoints.map(function (checkpoint) {
+            var d = new Date(checkpoint.last_modified);
+            ul.append(
+                $("<li/>").append(
+                    $("<a/>")
+                    .attr("href", "#")
+                    .text(moment(d).format("LLLL"))
+                    .click(function () {
+                        that.notebook.restore_checkpoint_dialog(checkpoint);
+                    })
+                )
+            );
+  });
+    };
   });
 
   require(['notebook/js/textcell'], function(ipy) {
@@ -427,7 +453,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   }
 
   $('#saveButton').click(function() {
-    notebook.save_notebook();
+    notebook.save_checkpoint();
   })
 
   $('#saveCopyButton').click(function() {
@@ -436,6 +462,10 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 
   $('#renameButton').click(function() {
     notebook.save_widget.rename_notebook({ notebook: notebook });
+  })
+
+  $('#restoreButton').click(function() {
+    notebook.restore_checkpoint();
   })
 
   $('#downloadButton').click(function() {

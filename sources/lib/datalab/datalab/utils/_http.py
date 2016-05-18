@@ -32,13 +32,11 @@ class RequestException(Exception):
       error = json.loads(content)['error']
       if 'errors' in error:
         error = error['errors'][0]
-      self.message += error['message']
-    except ValueError:
-      pass
-    except KeyError:
-      pass
-    except TypeError:
-      pass
+      self.message += ': ' + error['message']
+    except Exception:
+      lines = content.split('\n') if isinstance(content, basestring) else []
+      if lines:
+        self.message += ': ' + lines[0]
 
   def __str__(self):
     return self.message
