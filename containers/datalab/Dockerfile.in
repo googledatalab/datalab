@@ -61,7 +61,7 @@ RUN pip install -U tornado==4.3 \
     pip install -U plotly==1.9.10 && \
     pip install -U six==1.9.0 && \
     pip install -U ipywidgets==5.0.0 && \
-    pip install -U gcloud==0.13.0 && \
+    pip install -U gcloud==0.14.0 && \
     easy_install pip && \
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf
 
