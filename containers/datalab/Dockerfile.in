@@ -129,7 +129,7 @@ RUN ipython profile create default && \
     cd /datalab/lib/datalab-0.1.* && pip install . && \
     jupyter nbextension install --py datalab.notebook && \
     mkdir -p /datalab/nbconvert && \
-    cp /usr/local/share/jupyter/nbextensions/gcpdatalab/* /datalab/nbconvert && \
+    cp -R /usr/local/share/jupyter/nbextensions/gcpdatalab/* /datalab/nbconvert && \
     ln -s /usr/local/lib/python2.7/dist-packages/notebook/static/custom/custom.css /datalab/nbconvert/custom.css && \
     ln -s /datalab/web/static/datalab.css /datalab/nbconvert/datalab.css&& \
     mkdir -p /usr/local/lib/python2.7/dist-packages/notebook/static/components/codemirror/mode/text/sql/text && \
