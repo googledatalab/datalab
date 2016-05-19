@@ -114,7 +114,6 @@ RUN pip install protobuf==3.0.0b2.post2 && \
     rm tensorflow-0.8.0-cp27-none-linux_x86_64.whl
 
 # Add build artifacts
-ADD build/lib/datalab-0.1.*.tar.gz /datalab/lib/
 ADD build/web /datalab/web
 ADD nbconvert /datalab/nbconvert
 ADD content/ /datalab
@@ -126,7 +125,10 @@ ADD config/nbconvert.py /etc/jupyter/jupyter_notebook_config.py
 # I'd prefer to just use absolute path in Jinja imports but those don't work.
 RUN ipython profile create default && \
     jupyter notebook --generate-config && \
-    cd /datalab/lib/datalab-0.1.* && pip install . && \
+    mkdir -p /datalab/lib && \
+    cd /datalab/lib && \
+    git clone https://github.com/googledatalab/datalab.git && \
+    cd /datalab/lib/datalab && pip install . && \
     jupyter nbextension install --py datalab.notebook && \
     mkdir -p /datalab/nbconvert && \
     cp /usr/local/share/jupyter/nbextensions/gcpdatalab/* /datalab/nbconvert && \

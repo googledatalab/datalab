@@ -21,7 +21,6 @@ if [ -z "$REPO_DIR" ];
 fi
 
 SRC_PATHS=(
-  "lib/datalab"
   "web"
 )
 
