@@ -29,5 +29,14 @@ fi
 # Setup environment variables.
 . /datalab/setup-env.sh
 
+# Run the user's custom extension script if it exists. To avoid platform issues with 
+# execution permissions, line endings, etc, we create a local sanitized copy.
+if [ -f /content/datalab/.config/startup.sh ]
+then
+  tr -d '\r' < /content/datalab/.config/startup.sh > ~/startup.sh
+  chmod +x ~/startup.sh
+  . ~/startup.sh
+fi
+
 # Start the DataLab server
 forever /datalab/web/app.js

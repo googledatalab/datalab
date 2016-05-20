@@ -45,7 +45,9 @@ then
     if [ -f custom-packages.txt ];
     then
         # First create a new Docker file called Dockerfile-custom-packages. Start with the standard image
-        echo 'FROM gcr.io/cloud-datalab/datalab:latest' > Dockerfile-custom-packages
+        # TODO: at some point the local Datalab container will be tagged 'latest' rather than 'local'
+        # and the line below should change.
+        echo 'FROM gcr.io/cloud-datalab/datalab:local' > Dockerfile-custom-packages
 
         # Add the script with a list of custom packages to the Dockerfile
         echo 'ADD custom-packages.txt /datalab/custom-packages.txt' >> Dockerfile-custom-packages
@@ -62,9 +64,6 @@ then
 
     # Build the customized docker image derived from the standard datalab image
     docker build -t $DOCKERIMAGE -f $DOCKERFILE .
-
-    # TODO (Tony): Remove this line when gcr.io/cloud-datalab/datalab:latest is updated to a newer version that has /datalab/run.sh
-    ENTRYPOINT="/datalab/run-local.sh"
 fi
 
 # On linux docker runs directly on host machine, so bind to 127.0.0.1 only
