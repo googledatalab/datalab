@@ -16,7 +16,7 @@
 # Sets up various environment variables within the docker container.
 
 export DATALAB_USER=`gcloud -q config list --format yaml | grep account | awk -F" " '{print $2}'`
-export DATALAB_PROJECT_ID=`gcloud -q config list --format yaml | grep project | awk -F" " '{print $2}'`
+export DATALAB_PROJECT_ID=`gcloud -q config list --format yaml | grep project: | awk -F" " '{print $2}'`
 if [ -z $DATALAB_PROJECT_NUM ]; then
   export DATALAB_PROJECT_NUM=`curl --silent -H "Metadata-Flavor=Google" http://metadata.google.internal/computeMetadata/v1beta1/project/numeric-project-id`
 fi

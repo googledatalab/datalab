@@ -41,8 +41,8 @@ RUN wget -nv https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.zip && \
     tools/google-cloud-sdk/install.sh --usage-reporting=false \
         --path-update=false --bash-completion=false \
         --disable-installation-options && \
-    tools/google-cloud-sdk/bin/gcloud config set --scope=installation \
-        component_manager/fixed_sdk_version 0.9.57 && \
+    tools/google-cloud-sdk/bin/gcloud config set \
+        component_manager/fixed_sdk_version 106.0.0 && \
     tools/google-cloud-sdk/bin/gcloud -q components update \
         gcloud core bq gsutil compute preview alpha beta && \
     rm -rf /root/.config/gcloud
@@ -105,9 +105,9 @@ RUN mkdir -p /datalab/web && \
 # Install TensorFlow. 
 # Need to install protobuf first due to a TF bug https://github.com/tensorflow/tensorflow/issues/487
 RUN pip install protobuf==3.0.0a3
-RUN gsutil cp gs://cloud-datalab/deploy/tensorflow-0.6.0-cp27-none-linux_x86_64.whl /tmp/tensorflow-0.6.0-cp27-none-linux_x86_64.whl && \
-  pip install /tmp/tensorflow-0.6.0-cp27-none-linux_x86_64.whl && \
-  rm /tmp/tensorflow-0.6.0-cp27-none-linux_x86_64.whl
+RUN gsutil cp gs://cloud-datalab/deploy/tensorflow-0.7.1-cp27-none-linux_x86_64.whl /tmp/tensorflow-0.7.1-cp27-none-linux_x86_64.whl && \
+  pip install /tmp/tensorflow-0.7.1-cp27-none-linux_x86_64.whl && \
+  rm /tmp/tensorflow-0.7.1-cp27-none-linux_x86_64.whl
 
 # Add build artifacts
 ADD build/lib/GCPData-0.1.0.tar.gz /datalab/lib/
