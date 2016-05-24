@@ -60,6 +60,7 @@ RUN pip install -U tornado==4.3 \
     pip install -U PyYAML==3.11 && \
     pip install -U six==1.9.0 && \
     pip install -U ipywidgets==5.0.0 && \
+    pip install -U future==0.15.2 && \
     easy_install pip && \
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf
 
@@ -105,7 +106,8 @@ RUN mkdir -p /datalab/web && \
         tcp-port-used@0.1.2 \
         node-cache@3.2.0 && \
     cd / && \
-    /tools/node/bin/npm install -g forever
+    /tools/node/bin/npm install -g forever && \
+    /tools/node/bin/npm install -g typescript
 
 # Install ProtoBuf, TensorFlow, DataFlow
 RUN pip install protobuf==3.0.0b2.post2 && \
@@ -134,7 +136,7 @@ RUN ipython profile create default && \
     jupyter nbextension install --py datalab.notebook && \
     rm datalab/notebook/static/*.js && \
     mkdir -p /datalab/nbconvert && \
-    cp /usr/local/share/jupyter/nbextensions/gcpdatalab/* /datalab/nbconvert && \
+    cp -R /usr/local/share/jupyter/nbextensions/gcpdatalab/* /datalab/nbconvert && \
     ln -s /usr/local/lib/python2.7/dist-packages/notebook/static/custom/custom.css /datalab/nbconvert/custom.css && \
     ln -s /datalab/web/static/datalab.css /datalab/nbconvert/datalab.css&& \
     mkdir -p /usr/local/lib/python2.7/dist-packages/notebook/static/components/codemirror/mode/text/sql/text && \
