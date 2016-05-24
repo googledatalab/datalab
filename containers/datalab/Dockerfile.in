@@ -128,8 +128,11 @@ RUN ipython profile create default && \
     mkdir -p /datalab/lib && \
     cd /datalab/lib && \
     git clone https://github.com/googledatalab/datalab.git && \
-    cd /datalab/lib/datalab && pip install . && \
+    cd /datalab/lib/datalab && \
+    tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts && \
+    pip install . && \
     jupyter nbextension install --py datalab.notebook && \
+    rm datalab/notebook/static/*.js && \
     mkdir -p /datalab/nbconvert && \
     cp /usr/local/share/jupyter/nbextensions/gcpdatalab/* /datalab/nbconvert && \
     ln -s /usr/local/lib/python2.7/dist-packages/notebook/static/custom/custom.css /datalab/nbconvert/custom.css && \
