@@ -25,6 +25,7 @@ body {
   font-family: 'Open Sans', Helvetica, sans-serif;
   font-size: 14px;
   background: #fff;
+  min-width: 1200px;
 }
 
 /* Layout */
