@@ -17,7 +17,6 @@
 
 mkdir -p /content/datalab/notebooks
 mkdir -p /content/datalab/docs
-mkdir -p /content/datalab/.config
 
 if [ -d /content/datalab/docs/notebooks/.git ]
 then
