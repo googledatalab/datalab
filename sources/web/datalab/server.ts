@@ -165,7 +165,9 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
 
   // Check if EULA has been accepted; if not go to EULA page.
   if (path.indexOf('/accepted_eula') == 0) {
-    fs.mkdirSync(configDir);
+    if (!fs.existsSync(configDir)) {
+      fs.mkdirSync(configDir);
+    }
     var i = parsed_url.search.indexOf('referer=');
     if (i < 0) {
       logging.getLogger().info('Accepting EULA, but no referer; returning 500');

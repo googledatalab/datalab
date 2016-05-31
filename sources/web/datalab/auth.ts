@@ -22,6 +22,7 @@ import fs = require('fs');
 import google = require('googleapis');
 import http = require('http');
 import logging = require('./logging');
+import url = require('url');
 
 
 var oauth2Client: any = undefined;
@@ -128,6 +129,37 @@ export function isSignedIn(): boolean {
   return (process.env.DATALAB_ENV != 'local' || fs.existsSync(appCredFile));
 }
 
+function getPortNumber(parsed_url: any): number {
+  // TODO(ojarjur): Fix the passing-through of the port.
+  //
+  // For some reason, most of the request headers are being
+  // stripped before we get to this point, and the only data left in the
+  // parsed_url tends to be the 'referer' query parameter.
+  //
+  // We often (but not always) can still get the port number from the
+  // referer if the port is missing, but this does not work if the referer
+  // is also missing. We should just fix it so that the port is always present.
+  if (parsed_url['port']) {
+    return parsed_url['port'];
+  } else if (parsed_url['query'] && parsed_url['query']['referer']) {
+    var referer_url = url.parse(parsed_url['query']['referer'], true);
+    return getPortNumber(referer_url);
+  }
+  return 8081;
+}
+
+function setOauth2Client(parsed_url: any): void {
+  if (!oauth2Client) {
+    var OAuth2:any = google.auth.OAuth2;
+    // TODO(ojarjur): Ideally, we would get the host from the parsed_url rather
+    // than hard-coding it. However, the client ID and secret we are using
+    // are limited to localhost only. We should consider making this
+    // configurable, or using the OAuth flow for non-web applications.
+    oauth2Client = new OAuth2(clientId, clientSecret,
+       'http://localhost:' + getPortNumber(parsed_url) + '/oauthcallback');
+  }
+}
+
 export function handleAuthFlow(request: http.ServerRequest, response: http.ServerResponse,
     parsed_url: any, settings: any): void {
   var path = parsed_url.pathname;
@@ -148,6 +180,7 @@ export function handleAuthFlow(request: http.ServerRequest, response: http.Serve
       }
     }
   } else if (path.indexOf('/oauthcallback') == 0) {  // Return from auth flow.
+    setOauth2Client(parsed_url);
     if (query.code) {
       oauth2Client.getToken(query.code, function (err:any, tokens:any) {
         if (err) {
@@ -172,9 +205,7 @@ export function handleAuthFlow(request: http.ServerRequest, response: http.Serve
     // user-initiated.
     var referer = decodeURIComponent(query.referer);
     logging.getLogger().info('Starting auth from referer ' + referer);
-    var OAuth2:any = google.auth.OAuth2;
-    // TODO(gram): can we get the host and port from somewhere instead of hard-coding?
-    oauth2Client = new OAuth2(clientId, clientSecret, 'http://localhost:8081/oauthcallback');
+    setOauth2Client(parsed_url);
     var url_:string = oauth2Client.generateAuthUrl({
       access_type: 'offline', // 'offline' gets refresh_token
       scope: scopes,
