@@ -29,17 +29,18 @@ create_branch ( ) {
     if [ -d $BRANCHDIR ]; then
       rm -r -f $BRANCHDIR
     fi
-    git init $BRANCHDIR
+    gcloud alpha source repos clone --autocreate default $BRANCHDIR
     cd $BRANCHDIR
+    git checkout -b $1
     if [ $1 = "datalab" ]; then
       gsutil -m cp -r gs://cloud-datalab/content/* .
       echo '*.ipynb_checkpoints' > .gitignore
       git add .
       git commit -m "Initial Cloud Datalab content including samples and docs."
-      git push $REPOURL master:$1
+      git push $REPOURL $1:$1
     elif [ $1 = "master" ]; then
       git commit  --allow-empty -m "$1 creation"
-      git push $REPOURL master:$1
+      git push $REPOURL $1:$1
     else
       case $1 in
         datalab_*)
