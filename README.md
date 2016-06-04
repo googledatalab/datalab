@@ -17,7 +17,7 @@ to effortlessly access data and resources accessible from the project, and to sh
 git.
 
 You can see an example of the notebooks by browsing through the
-[samples and documentation](https://github.com/GoogleCloudPlatform/datalab/tree/master/content/datalab),
+[samples and documentation](https://github.com/googledatalab/notebooks),
 which are themselves written in the form of notebooks.
 
 
