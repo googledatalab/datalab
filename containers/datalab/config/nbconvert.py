@@ -16,4 +16,4 @@
 
 c = get_config()
 c.TemplateExporter.template_path.insert(0, '/datalab/nbconvert')
-c.TemplateExporter.template_file = 'html'
+c.HTMLExporter.template_file = 'html'
