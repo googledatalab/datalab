@@ -293,14 +293,14 @@ function responseHandler(proxyResponse: http.ClientResponse,
       configUrl: appSettings.configUrl,
       baseUrl: '/'
     };
+    if (process.env.DATALAB_ENV == 'local') {
+      templateData['isSignedIn'] = auth.isSignedIn().toString();
+    }
 
     var page: string = null;
     if (path.indexOf('/tree') == 0) {
       // stripping off the /tree/ from the path
       templateData['notebookPath'] = path.substr(6);
-      if (process.env.DATALAB_ENV == 'local') {
-        templateData['isSignedIn'] = auth.isSignedIn().toString();
-      }
 
       sendTemplate('tree', templateData, response);
       page = 'tree';
