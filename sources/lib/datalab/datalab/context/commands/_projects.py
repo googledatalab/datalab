@@ -50,5 +50,6 @@ def _list_line(args, _):
 
 
 def _set_line(args, _):
+  id_ = args['id'] if args['id'] else ''
   context = datalab.context.Context.default()
-  context.set_project_id(['id'])
+  context.set_project_id(id_)
