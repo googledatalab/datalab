@@ -54,6 +54,8 @@ class Context(object):
     Returns:
       The current project id to associate with API requests.
     """
+    if not self._project_id:
+      raise Exception('No project ID found. Perhaps you should set one with the "%projects set ..." magic.')
     return self._project_id
 
   def set_project_id(self, project_id):
