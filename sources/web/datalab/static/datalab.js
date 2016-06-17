@@ -19,7 +19,7 @@ var debug = {
 
 function placeHolder() {}
 
-function initializePage(dialog) {
+function initializePage(dialog, saveFn) {
 
   function showAbout() {
     var version = document.body.getAttribute('data-version-id');
@@ -54,9 +54,11 @@ function initializePage(dialog) {
       $('#signInButton').show();
     }
     $('#signInButton').click(function() {
+      saveFn();
       window.location = '/signin?referer=' + encodeURIComponent(window.location);
     });
     $('#signOutButton').click(function() {
+      saveFn();
       window.location = '/signout?referer=' + encodeURIComponent(window.location);
     });
   }
@@ -830,7 +832,12 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
 
 
 function initializeDataLab(ipy, events, dialog, utils, security) {
-  initializePage(dialog);
+  var saveFn = function() {
+    if (('notebook' in ipy) && ipy.notebook) {
+      ipy.notebook.save_checkpoint();
+    }
+  }
+  initializePage(dialog, saveFn);
 
   // Override the sanitizer - all notebooks within the user's volume are implicity
   // trusted, and there is no need to remove scripts from cell outputs of notebooks
