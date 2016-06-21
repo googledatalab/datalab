@@ -714,6 +714,36 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 }
 
 
+function initializeEditApplication(ipy, editor) {
+  function navigateAlternate(alt) {
+    var url = document.location.href.replace('/edit', alt);
+    url = url + '?download=true';
+
+    if (!editor.clean) {
+      var w = window.open('');
+      editor.save().then(function() {
+        window.open(url);
+      });
+    }
+    else {
+      window.open(url);
+    }
+  }
+
+  $('#saveButton').click(function() {
+    editor.save();
+  })
+
+  $('#renameButton').click(function() {
+    notebook.save_widget.rename();
+  })
+
+  $('#downloadButton').click(function() {
+    navigateAlternate('/files');
+  })
+}
+
+
 function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, utils) {
   function showContent(e) {
     document.getElementById('notebooks').classList.add('active');
@@ -849,6 +879,9 @@ function initializeDataLab(ipy, events, dialog, utils, security) {
   var pageClass = document.body.className;
   if (pageClass.indexOf('notebook_app') >= 0) {
     initializeNotebookApplication(ipy, ipy.notebook, events, dialog, utils);
+  }
+  else if (pageClass.indexOf('edit_app') >= 0) {
+    initializeEditApplication(ipy, ipy.editor);
   }
   else if (pageClass.indexOf('notebook_list') >= 0) {
     initializeNotebookList(ipy, ipy.notebook_list, ipy.new_notebook_widget, events, dialog, utils);

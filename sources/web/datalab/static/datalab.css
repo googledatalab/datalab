@@ -166,6 +166,14 @@ body {
   right: 0px;
   bottom: 0px;
 }
+.fileMainContent {
+  overflow: auto;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+}
 .treeMainContent {
   overflow: auto;
   position: absolute;
