@@ -717,6 +717,9 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 function initializeEditApplication(ipy, editor) {
   function navigateAlternate(alt) {
     var url = document.location.href.replace('/edit', alt);
+    if (url.includes("?")) {
+      url = url.slice(0, url.lastIndexOf("?"));
+    }
     url = url + '?download=true';
 
     if (!editor.clean) {
