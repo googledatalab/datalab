@@ -55,6 +55,7 @@ var callbackManager: callbacks.CallbackManager = new callbacks.CallbackManager()
  */
 var templates: common.Map<string> = {
   'tree': fs.readFileSync(path.join(__dirname, 'templates', 'tree.html'), { encoding: 'utf8' }),
+  'edit': fs.readFileSync(path.join(__dirname, 'templates', 'edit.html'), { encoding: 'utf8' }),
   'nb': fs.readFileSync(path.join(__dirname, 'templates', 'nb.html'), { encoding: 'utf8' })
 };
 
@@ -285,7 +286,7 @@ function responseHandler(proxyResponse: http.ClientResponse,
   // Set a cookie to provide information about the project and authenticated user to the client.
   // Ensure this happens only for page requests, rather than for API requests.
   var path = url.parse(request.url).pathname;
-  if ((path.indexOf('/tree') == 0) || (path.indexOf('/notebooks') == 0)) {
+  if ((path.indexOf('/tree') == 0) || (path.indexOf('/notebooks') == 0) || (path.indexOf('/edit') == 0)) {
     var templateData: common.Map<string> = {
       feedbackId: appSettings.feedbackId,
       versionId: appSettings.versionId,
@@ -302,17 +303,21 @@ function responseHandler(proxyResponse: http.ClientResponse,
       // stripping off the /tree/ from the path
       templateData['notebookPath'] = path.substr(6);
 
-      sendTemplate('tree', templateData, response);
       page = 'tree';
-    }
-    else {
+    } else if (path.indexOf('/edit') == 0) {
+      // stripping off the /edit/ from the path
+      templateData['filePath'] = path.substr(6);
+      templateData['fileName'] = path.substr(path.lastIndexOf('/') + 1);
+
+      page = 'edit';
+    } else {
       // stripping off the /notebooks/ from the path
       templateData['notebookPath'] = path.substr(11);
       templateData['notebookName'] = path.substr(path.lastIndexOf('/') + 1);
 
-      sendTemplate('nb', templateData, response);
       page = 'notebook';
     }
+    sendTemplate(page, templateData, response);
 
     // Suppress further writing to the response to prevent sending response
     // from the notebook server. There is no way to communicate that, so hack around the
