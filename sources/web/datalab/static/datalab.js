@@ -720,7 +720,6 @@ function initializeEditApplication(ipy, editor) {
     url = url + '?download=true';
 
     if (!editor.clean) {
-      var w = window.open('');
       editor.save().then(function() {
         window.open(url);
       });
