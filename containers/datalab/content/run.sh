@@ -37,5 +37,11 @@ then
   . ~/startup.sh
 fi
 
+# Install the kernel gateway server extension, if a kernel gateway URL has been specified
+if [ -n "${KG_URL}" ]
+then
+    jupyter serverextension enable --py nb2kg --sys-prefix
+fi
+
 # Start the DataLab server
 forever /datalab/web/app.js
