@@ -315,7 +315,7 @@ function responseHandler(proxyResponse: http.ClientResponse,
       templateData['notebookPath'] = path.substr(11);
       templateData['notebookName'] = path.substr(path.lastIndexOf('/') + 1);
 
-      page = 'notebook';
+      page = 'nb';
     }
     sendTemplate(page, templateData, response);
 
