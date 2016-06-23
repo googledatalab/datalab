@@ -19,7 +19,7 @@ var debug = {
 
 function placeHolder() {}
 
-function initializePage(dialog) {
+function initializePage(dialog, saveFn) {
 
   function showAbout() {
     var version = document.body.getAttribute('data-version-id');
@@ -54,9 +54,11 @@ function initializePage(dialog) {
       $('#signInButton').show();
     }
     $('#signInButton').click(function() {
+      saveFn();
       window.location = '/signin?referer=' + encodeURIComponent(window.location);
     });
     $('#signOutButton').click(function() {
+      saveFn();
       window.location = '/signout?referer=' + encodeURIComponent(window.location);
     });
   }
@@ -712,6 +714,38 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 }
 
 
+function initializeEditApplication(ipy, editor) {
+  function navigateAlternate(alt) {
+    var url = document.location.href.replace('/edit', alt);
+    if (url.includes("?")) {
+      url = url.slice(0, url.lastIndexOf("?"));
+    }
+    url = url + '?download=true';
+
+    if (!editor.clean) {
+      editor.save().then(function() {
+        window.open(url);
+      });
+    }
+    else {
+      window.open(url);
+    }
+  }
+
+  $('#saveButton').click(function() {
+    editor.save();
+  })
+
+  $('#renameButton').click(function() {
+    notebook.save_widget.rename();
+  })
+
+  $('#downloadButton').click(function() {
+    navigateAlternate('/files');
+  })
+}
+
+
 function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, utils) {
   function showContent(e) {
     document.getElementById('notebooks').classList.add('active');
@@ -830,7 +864,12 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
 
 
 function initializeDataLab(ipy, events, dialog, utils, security) {
-  initializePage(dialog);
+  var saveFn = function() {
+    if (('notebook' in ipy) && ipy.notebook) {
+      ipy.notebook.save_checkpoint();
+    }
+  }
+  initializePage(dialog, saveFn);
 
   // Override the sanitizer - all notebooks within the user's volume are implicity
   // trusted, and there is no need to remove scripts from cell outputs of notebooks
@@ -842,6 +881,9 @@ function initializeDataLab(ipy, events, dialog, utils, security) {
   var pageClass = document.body.className;
   if (pageClass.indexOf('notebook_app') >= 0) {
     initializeNotebookApplication(ipy, ipy.notebook, events, dialog, utils);
+  }
+  else if (pageClass.indexOf('edit_app') >= 0) {
+    initializeEditApplication(ipy, ipy.editor);
   }
   else if (pageClass.indexOf('notebook_list') >= 0) {
     initializeNotebookList(ipy, ipy.notebook_list, ipy.new_notebook_widget, events, dialog, utils);

@@ -144,6 +144,14 @@ RUN ipython profile create default && \
     cd /datalab/web && /tools/node/bin/npm install && \
     cd /
 
+RUN wget https://github.com/jupyter/kernel_gateway_demos/archive/e653b2bd3ca91ef1af2a13c397766484dcb7b76d.zip && \
+    unzip -qq e653b2bd3ca91ef1af2a13c397766484dcb7b76d.zip -d kernel_gateway_demos && \
+    rm e653b2bd3ca91ef1af2a13c397766484dcb7b76d.zip && \
+    cd ./kernel_gateway_demos/kernel_gateway_demos-e653b2bd3ca91ef1af2a13c397766484dcb7b76d && \
+    pip install ./nb2kg/
+
+ENV EXPERIMENTAL_KERNEL_GATEWAY_URL=""
+
 # Include this line above to enable ipywidgets. These aren't working 100% yet so 
 # we don't enable them.
 #    jupyter nbextension enable --py widgetsnbextension && \

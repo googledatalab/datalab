@@ -35,8 +35,8 @@ var healthHandler: http.RequestHandler;
 var infoHandler: http.RequestHandler;
 var staticHandler: http.RequestHandler;
 
-// Datalab config file for things like default project. If this doesn't exist the EULA hasn't been accepted.
-let configFile = '/content/datalab/.config';
+// Datalab config directory; if this doesn't exist the EULA hasn't been accepted.
+let configDir = '/content/datalab/.config';
 
 /**
  * The application settings instance.
@@ -165,7 +165,9 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
 
   // Check if EULA has been accepted; if not go to EULA page.
   if (path.indexOf('/accepted_eula') == 0) {
-    fs.writeFileSync(configFile, '');  // TODO(gram): this should go in the mounted volume so we don't keep asking.
+    if (!fs.existsSync(configDir)) {
+      fs.mkdirSync(configDir);
+    }
     var i = parsed_url.search.indexOf('referer=');
     if (i < 0) {
       logging.getLogger().info('Accepting EULA, but no referer; returning 500');
@@ -181,7 +183,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       path.indexOf('/oauthcallback') == 0) {
     // Start or return from auth flow.
     auth.handleAuthFlow(request, response, parsed_url, appSettings);
-  } else if (!fs.existsSync(configFile)) {
+  } else if (!fs.existsSync(configDir)) {
     logging.getLogger().info('No Datalab config; redirect to EULA page');
     fs.readFile('/datalab/web/static/eula.html', function(error, content) {
       response.writeHead(200);

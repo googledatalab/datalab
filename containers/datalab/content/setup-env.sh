@@ -25,3 +25,7 @@ then
   export CLOUDSDK_CONFIG=/content/datalab/.config
 fi
 
+if [ -n "${EXPERIMENTAL_KERNEL_GATEWAY_URL}" ]
+then
+  export KG_URL="${EXPERIMENTAL_KERNEL_GATEWAY_URL}"
+fi

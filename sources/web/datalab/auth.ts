@@ -22,6 +22,7 @@ import fs = require('fs');
 import google = require('googleapis');
 import http = require('http');
 import logging = require('./logging');
+import url = require('url');
 
 
 var oauth2Client: any = undefined;
@@ -128,6 +129,28 @@ export function isSignedIn(): boolean {
   return (process.env.DATALAB_ENV != 'local' || fs.existsSync(appCredFile));
 }
 
+function getPortNumber(request: http.ServerRequest): number {
+  if (request.headers['host']) {
+    var parsedHost = url.parse('http://' + request.headers['host']);
+    if (parsedHost['port']) {
+      return parseInt(parsedHost['port']);
+    }
+  }
+  return 8081;
+}
+
+function setOauth2Client(request: http.ServerRequest): void {
+  if (!oauth2Client) {
+    var OAuth2:any = google.auth.OAuth2;
+    // TODO(ojarjur): Ideally, we would get the host from the parsed_url rather
+    // than hard-coding it. However, the client ID and secret we are using
+    // are limited to localhost only. We should consider making this
+    // configurable, or using the OAuth flow for non-web applications.
+    oauth2Client = new OAuth2(clientId, clientSecret,
+       'http://localhost:' + getPortNumber(request) + '/oauthcallback');
+  }
+}
+
 export function handleAuthFlow(request: http.ServerRequest, response: http.ServerResponse,
     parsed_url: any, settings: any): void {
   var path = parsed_url.pathname;
@@ -148,6 +171,7 @@ export function handleAuthFlow(request: http.ServerRequest, response: http.Serve
       }
     }
   } else if (path.indexOf('/oauthcallback') == 0) {  // Return from auth flow.
+    setOauth2Client(request);
     if (query.code) {
       oauth2Client.getToken(query.code, function (err:any, tokens:any) {
         if (err) {
@@ -172,9 +196,7 @@ export function handleAuthFlow(request: http.ServerRequest, response: http.Serve
     // user-initiated.
     var referer = decodeURIComponent(query.referer);
     logging.getLogger().info('Starting auth from referer ' + referer);
-    var OAuth2:any = google.auth.OAuth2;
-    // TODO(gram): can we get the host and port from somewhere instead of hard-coding?
-    oauth2Client = new OAuth2(clientId, clientSecret, 'http://localhost:8081/oauthcallback');
+    setOauth2Client(request);
     var url_:string = oauth2Client.generateAuthUrl({
       access_type: 'offline', // 'offline' gets refresh_token
       scope: scopes,

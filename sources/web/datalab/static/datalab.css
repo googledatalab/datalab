@@ -25,6 +25,7 @@ body {
   font-family: 'Open Sans', Helvetica, sans-serif;
   font-size: 14px;
   background: #fff;
+  min-width: 1200px;
 }
 
 /* Layout */
@@ -158,6 +159,14 @@ body {
   margin-bottom: 0px;
 }
 .notebookMainContent, #sidebarContent {
+  overflow: auto;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+}
+.fileMainContent {
   overflow: auto;
   position: absolute;
   top: 0px;

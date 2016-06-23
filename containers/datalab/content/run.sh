@@ -17,7 +17,6 @@
 
 mkdir -p /content/datalab/notebooks
 mkdir -p /content/datalab/docs
-mkdir -p /content/datalab/.config
 
 if [ -d /content/datalab/docs/notebooks/.git ]
 then
@@ -28,6 +27,21 @@ fi
 
 # Setup environment variables.
 . /datalab/setup-env.sh
+
+# Run the user's custom extension script if it exists. To avoid platform issues with 
+# execution permissions, line endings, etc, we create a local sanitized copy.
+if [ -f /content/datalab/.config/startup.sh ]
+then
+  tr -d '\r' < /content/datalab/.config/startup.sh > ~/startup.sh
+  chmod +x ~/startup.sh
+  . ~/startup.sh
+fi
+
+# Install the kernel gateway server extension, if a kernel gateway URL has been specified
+if [ -n "${KG_URL}" ]
+then
+    jupyter serverextension enable --py nb2kg --sys-prefix
+fi
 
 # Start the DataLab server
 forever /datalab/web/app.js

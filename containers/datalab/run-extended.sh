@@ -45,7 +45,9 @@ then
     if [ -f custom-packages.txt ];
     then
         # First create a new Docker file called Dockerfile-custom-packages. Start with the standard image
-        echo 'FROM gcr.io/cloud-datalab/datalab:latest' > Dockerfile-custom-packages
+        # TODO: at some point the local Datalab container will be tagged 'latest' rather than 'local'
+        # and the line below should change.
+        echo 'FROM gcr.io/cloud-datalab/datalab:local' > Dockerfile-custom-packages
 
         # Add the script with a list of custom packages to the Dockerfile
         echo 'ADD custom-packages.txt /datalab/custom-packages.txt' >> Dockerfile-custom-packages
@@ -62,17 +64,25 @@ then
 
     # Build the customized docker image derived from the standard datalab image
     docker build -t $DOCKERIMAGE -f $DOCKERFILE .
+fi
 
-    # TODO (Tony): Remove this line when gcr.io/cloud-datalab/datalab:latest is updated to a newer version that has /datalab/run.sh
-    ENTRYPOINT="/datalab/run-local.sh"
+# On linux docker runs directly on host machine, so bind to 127.0.0.1 only
+# to avoid it being accessible from network.
+# On other platform, it needs to bind to all ip addresses so VirtualBox can
+# access it. Users need to make sure in their VirtualBox port forwarding
+# settings only 127.0.0.1 is bound.
+if [ "$OSTYPE" == "linux"* ]; then
+  PORTMAP="127.0.0.1:8081:8080"
+else
+  PORTMAP="8081:8080"
 fi
 
 # Use this flag to map in web server content during development
 #  -v $REPO_DIR/sources/web:/sources \
-
 docker run -it --entrypoint=$ENTRYPOINT \
-  -p 8081:8080 \
+  -p $PORTMAP \
   -v "$CONTENT:/content" \
   -e "PROJECT_ID=$PROJECT_ID" \
   -e "DATALAB_ENV=local" \
+  -e "EXPERIMENTAL_KERNEL_GATEWAY_URL=${EXPERIMENTAL_KERNEL_GATEWAY_URL}" \
   $DOCKERIMAGE
