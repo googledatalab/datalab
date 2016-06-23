@@ -107,9 +107,20 @@ function createJupyterServer(userId: string): JupyterServer {
     '--notebook-dir="' + server.notebooks + '"'
   ]);
 
+  var notebookEnv: any = process.env;
+  if ('KG_URL' in notebookEnv && notebookEnv['KG_URL']) {
+    logging.getLogger().info(
+      'Found a kernel gateway URL of %s... configuring the notebook to use it', notebookEnv['KG_URL']);
+    processArgs = processArgs.concat([
+      '--NotebookApp.session_manager_class=nb2kg.managers.SessionManager',
+      '--NotebookApp.kernel_manager_class=nb2kg.managers.RemoteKernelManager',
+      '--NotebookApp.kernel_spec_manager_class=nb2kg.managers.RemoteKernelSpecManager'
+    ]);
+  }
+
   var processOptions = {
     detached: false,
-    env: process.env
+    env: notebookEnv
   };
 
   server.childProcess = childProcess.spawn('jupyter', processArgs, processOptions);
