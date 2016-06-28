@@ -18,5 +18,7 @@ declare module 'tcp-port-used' {
     then(resolved: () => void, rejected: (error: Error) => void): void;
   }
 
-  export function waitUntilUsed(port: number): SimplePromise;
+  export function waitUntilFree(port: number): SimplePromise;
+
+  export function waitUntilUsed(port: number, retryMs: number, timeOutMs: number): SimplePromise;
 }
