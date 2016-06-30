@@ -18,7 +18,11 @@ declare module 'tcp-port-used' {
     then(resolved: () => void, rejected: (error: Error) => void): void;
   }
 
-  export function waitUntilFree(port: number): SimplePromise;
+  class BooleanPromise {
+    then(resolved: (b: boolean) => void, rejected: (error: Error) => void): void;
+  }
+
+  export function check(port: number, host: any): BooleanPromise;
 
   export function waitUntilUsed(port: number, retryMs: number, timeOutMs: number): SimplePromise;
 }
