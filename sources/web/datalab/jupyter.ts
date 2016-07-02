@@ -45,6 +45,42 @@ interface JupyterServer {
  */
 var jupyterServers: common.Map<JupyterServer> = {};
 var nextJupyterPort = 9000;
+var portRetryAttempts = 500;
+
+/**
+ * Get the next available port and pass it to the given `resolved` callback.
+ */
+function getNextJupyterPort(attempts: number, resolved: (port: number)=>void, failed: (error: Error)=>void) {
+   if (attempts < 0) {
+     var e = new Error('Failed to find a free port after ' + portRetryAttempts + ' attempts.');
+     logging.getLogger().error(e, 'Failed to find a free port for the Jupyter server');
+     failed(e);
+     return;
+   }
+
+   if (nextJupyterPort > 65535) {
+     // We've exhausted the entire port space. This is an extraordinary circumstance
+     // so we log an error for it (but still continue).
+     var e = new Error('Port range exhausted.');
+     logging.getLogger().error(e, 'Exhausted the entire address space looking for free ports');
+     nextJupyterPort = 9000;
+   }
+
+   var port = nextJupyterPort;
+   nextJupyterPort++;
+
+   tcp.check(port, null).then(
+     function(inUse: boolean) {
+       if (inUse) {
+         getNextJupyterPort(attempts - 1, resolved, failed);
+       }
+       else {
+         logging.getLogger().info('Returning port %d', port);
+         resolved(port);
+       }
+     },
+     failed);
+}
 
 /**
  * Used to make sure no multiple initialization runs happen for the same user
@@ -84,11 +120,10 @@ function pipeOutput(stream: NodeJS.ReadableStream, port: number, error: boolean)
  * routing HTTP and WebSocket requests to Jupyter.
  */
 function createJupyterServer(userId: string, remainingAttempts: number) {
-  var port = nextJupyterPort;
-  nextJupyterPort++;
-
-  tcp.waitUntilFree(port).then(
-    function() {
+  logging.getLogger().info('Looking for a free port on which to start Jupyter for %s', userId);
+  getNextJupyterPort(
+    portRetryAttempts,
+    function(port: number) {
       var userDir = userManager.getUserDir(userId);
       if (!fs.existsSync(userDir)) {
         fs.mkdirSync(userDir, parseInt('0755',8));
@@ -148,7 +183,7 @@ function createJupyterServer(userId: string, remainingAttempts: number) {
         });
     },
     function(e) {
-      logging.getLogger().error(e, 'Failed to find a free port at %d', port);
+      logging.getLogger().error(e, 'Failed to find a free port');
       if (remainingAttempts > 0) {
         attemptStartForUser(userId, remainingAttempts - 1);
       }
