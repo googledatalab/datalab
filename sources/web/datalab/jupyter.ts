@@ -43,6 +43,42 @@ interface JupyterServer {
  */
 var jupyterServers: common.Map<JupyterServer> = {};
 var nextJupyterPort = 9000;
+var portRetryAttempts = 500;
+
+/**
+ * Get the next available port and pass it to the given `resolved` callback.
+ */
+function getNextJupyterPort(attempts: number, resolved: (port: number)=>void, failed: (error: Error)=>void) {
+   if (attempts < 0) {
+     var e = new Error('Failed to find a free port after ' + portRetryAttempts + ' attempts.');
+     logging.getLogger().error(e, 'Failed to find a free port for the Jupyter server');
+     failed(e);
+     return;
+   }
+
+   if (nextJupyterPort > 65535) {
+     // We've exhausted the entire port space. This is an extraordinary circumstance
+     // so we log an error for it (but still continue).
+     var e = new Error('Port range exhausted.');
+     logging.getLogger().error(e, 'Exhausted the entire address space looking for free ports');
+     nextJupyterPort = 9000;
+   }
+
+   var port = nextJupyterPort;
+   nextJupyterPort++;
+
+   tcp.check(port, null).then(
+     function(inUse: boolean) {
+       if (inUse) {
+         getNextJupyterPort(attempts - 1, resolved, failed);
+       }
+       else {
+         logging.getLogger().info('Returning port %d', port);
+         resolved(port);
+       }
+     },
+     failed);
+}
 
 /**
  * Used to make sure no multiple initialization runs happen for the same user
@@ -66,6 +102,7 @@ var appSettings: common.Settings;
 
 function pipeOutput(stream: NodeJS.ReadableStream, port: number, error: boolean) {
   stream.setEncoding('utf8');
+
   stream.on('data', (data: string) => {
     // Jupyter generates a polling kernel message once every 3 seconds
     // per kernel! This adds too much noise into the log, so avoid
@@ -81,67 +118,124 @@ function pipeOutput(stream: NodeJS.ReadableStream, port: number, error: boolean)
  * Starts the Jupyter server, and then creates a proxy object enabling
  * routing HTTP and WebSocket requests to Jupyter.
  */
-function createJupyterServer(userId: string): JupyterServer {
-  var port = nextJupyterPort;
-  nextJupyterPort++;
+function createJupyterServer(userId: string, remainingAttempts: number) {
+  logging.getLogger().info('Looking for a free port on which to start Jupyter for %s', userId);
+  getNextJupyterPort(
+    portRetryAttempts,
+    function(port: number) {
+      var userDir = userManager.getUserDir(userId);
+      if (!fs.existsSync(userDir)) {
+        fs.mkdirSync(userDir, parseInt('0755', 8));
+      }
 
-  var userDir = userManager.getUserDir(userId);
-  if (!fs.existsSync(userDir)) {
-    fs.mkdirSync(userDir, parseInt('0755', 8));
+      var server: JupyterServer = {
+        userId: userId,
+        port: port,
+        notebooks: userDir,
+      };
+
+      function exitHandler(code: number, signal: string): void {
+        logging.getLogger().error('Jupyter process %d for user %s exited due to signal: %s',
+                                  server.childProcess.pid, userId, signal);
+        delete jupyterServers[server.userId];
+      }
+
+      var processArgs = appSettings.jupyterArgs.slice().concat([
+        '--port=' + server.port,
+        '--port-retries=0',
+        '--notebook-dir="' + server.notebooks + '"'
+      ]);
+
+      var notebookEnv: any = process.env;
+      if ('KG_URL' in notebookEnv && notebookEnv['KG_URL']) {
+        logging.getLogger().info(
+          'Found a kernel gateway URL of %s... configuring the notebook to use it', notebookEnv['KG_URL']);
+        processArgs = processArgs.concat([
+          '--NotebookApp.session_manager_class=nb2kg.managers.SessionManager',
+          '--NotebookApp.kernel_manager_class=nb2kg.managers.RemoteKernelManager',
+          '--NotebookApp.kernel_spec_manager_class=nb2kg.managers.RemoteKernelSpecManager'
+        ]);
+      }
+
+      var processOptions = {
+        detached: false,
+        env: notebookEnv
+      };
+
+      server.childProcess = childProcess.spawn('jupyter', processArgs, processOptions);
+      server.childProcess.on('exit', exitHandler);
+      logging.getLogger().info('Jupyter process for user %s started with pid %d and args %j',
+                               userId, server.childProcess.pid, processArgs);
+
+      // Capture the output, so it can be piped for logging.
+      pipeOutput(server.childProcess.stdout, server.port, /* error */ false);
+      pipeOutput(server.childProcess.stderr, server.port, /* error */ true);
+
+      // Create the proxy.
+      var proxyOptions: httpProxy.ProxyServerOptions = {
+        target: 'http://127.0.0.1:' + port
+      };
+
+      server.proxy = httpProxy.createProxyServer(proxyOptions);
+      server.proxy.on('proxyRes', responseHandler);
+      server.proxy.on('error', errorHandler);
+
+      tcp.waitUntilUsed(server.port, 100, 3000).then(
+        function() {
+          jupyterServers[userId] = server;
+          logging.getLogger().info('Jupyter server started for %s.', userId);
+          callbackManager.invokeAllCallbacks(userId, null);
+        },
+        function(e) {
+          logging.getLogger().error(e, 'Failed to start Jupyter server for user %s.', userId);
+          callbackManager.invokeAllCallbacks(userId, e);
+        });
+    },
+    function(e) {
+      logging.getLogger().error(e, 'Failed to find a free port');
+      if (remainingAttempts > 0) {
+        attemptStartForUser(userId, remainingAttempts - 1);
+      }
+      else {
+        logging.getLogger().error('Failed to start Jupyter server for user %s.', userId);
+        callbackManager.invokeAllCallbacks(userId, new Error('failed to start jupyter server.'));
+      }
+    });
+}
+
+function listJupyterServers(): number[] {
+  var psStdout = '';
+  try {
+    psStdout = childProcess.execSync('ps -C jupyter-notebook -o pid=', {}).toString();
+  } catch (err) {
+    // In the default case, where there are no jupyter-notebook processes running,
+    // the 'ps' call will throw an error. We distinguish that case by ignoring
+    // the error unless the stdout or stderr values are non-empty.
+    if (err['stdout'] != '' || err['stderr'] != '') {
+      throw err;
+    }
   }
 
-  var server: JupyterServer = {
-    userId: userId,
-    port: port,
-    notebooks: userDir
-  };
-
-  function exitHandler(code: number, signal: string): void {
-    logging.getLogger().error('Jupyter process %d for user %s exited due to signal: %s',
-                              server.childProcess.pid, userId, signal);
-    delete jupyterServers[server.userId];
+  var jupyterProcesses: number[] = [];
+  var jupyterProcessIdStrings = psStdout.split('\n');
+  for (var i in jupyterProcessIdStrings) {
+    if (jupyterProcessIdStrings[i]) {
+      var processId = parseInt(jupyterProcessIdStrings[i]);
+      if (processId != NaN) {
+        jupyterProcesses.push(processId);
+      }
+    }
   }
+  return jupyterProcesses;
+}
 
-  var processArgs = appSettings.jupyterArgs.slice().concat([
-    '--port=' + server.port,
-    '--notebook-dir="' + server.notebooks + '"'
-  ]);
-
-  var notebookEnv: any = process.env;
-  if ('KG_URL' in notebookEnv && notebookEnv['KG_URL']) {
-    logging.getLogger().info(
-      'Found a kernel gateway URL of %s... configuring the notebook to use it', notebookEnv['KG_URL']);
-    processArgs = processArgs.concat([
-      '--NotebookApp.session_manager_class=nb2kg.managers.SessionManager',
-      '--NotebookApp.kernel_manager_class=nb2kg.managers.RemoteKernelManager',
-      '--NotebookApp.kernel_spec_manager_class=nb2kg.managers.RemoteKernelSpecManager'
-    ]);
+function killAllJupyterServers() {
+  var jupyterProcesses = listJupyterServers();
+  for (var i in jupyterProcesses) {
+    var processId = jupyterProcesses[i];
+    logging.getLogger().info('Killing abandoned Jupyter notebook process: %d', processId);
+    process.kill(processId);
   }
-
-  var processOptions = {
-    detached: false,
-    env: notebookEnv
-  };
-
-  server.childProcess = childProcess.spawn('jupyter', processArgs, processOptions);
-  server.childProcess.on('exit', exitHandler);
-  logging.getLogger().info('Jupyter process for user %s started with pid %d and args %j',
-                           userId, server.childProcess.pid, processArgs);
-
-  // Capture the output, so it can be piped for logging.
-  pipeOutput(server.childProcess.stdout, server.port, /* error */ false);
-  pipeOutput(server.childProcess.stderr, server.port, /* error */ true);
-
-  // Then create the proxy.
-  var proxyOptions: httpProxy.ProxyServerOptions = {
-    target: 'http://127.0.0.1:' + server.port
-  };
-
-  server.proxy = httpProxy.createProxyServer(proxyOptions);
-  server.proxy.on('proxyRes', responseHandler);
-  server.proxy.on('error', errorHandler);
-
-  return server;
 }
 
 export function getPort(request: http.ServerRequest): number {
@@ -168,6 +262,16 @@ export function getInfo(): Array<common.Map<any>> {
   return info;
 }
 
+function attemptStartForUser(userId: string, remainingAttempts: number) {
+  try {
+    createJupyterServer(userId, remainingAttempts);
+  }
+  catch (e) {
+    logging.getLogger().error(e, 'Failed to start Jupyter server for user %s.', userId);
+    callbackManager.invokeAllCallbacks(userId, e);
+  }
+}
+
 /**
  * Starts a jupyter server instance for given user.
  */
@@ -184,31 +288,8 @@ export function startForUser(userId: string, cb: common.Callback0) {
     return;
   }
 
-  try {
-    logging.getLogger().info('Starting jupyter server for %s.', userId);
-    server = createJupyterServer(userId);
-    if (server) {
-      tcp.waitUntilUsed(server.port).then(
-        function() {
-          jupyterServers[userId] = server;
-          logging.getLogger().info('Jupyter server started for %s.', userId);
-          callbackManager.invokeAllCallbacks(userId, null);
-        },
-        function(e) {
-          logging.getLogger().error(e, 'Failed to start Jupyter server for user %s.', userId);
-          callbackManager.invokeAllCallbacks(userId, e);
-        });
-    }
-    else {
-      // Should never be here.
-      logging.getLogger().error('Failed to start Jupyter server for user %s.', userId);
-      callbackManager.invokeAllCallbacks(userId, new Error('failed to start jupyter server.'));
-    }
-  }
-  catch (e) {
-    logging.getLogger().error(e, 'Failed to start Jupyter server for user %s.', userId);
-    callbackManager.invokeAllCallbacks(userId, e);
-  }
+  logging.getLogger().info('Starting jupyter server for %s.', userId);
+  attemptStartForUser(userId, 10);
 }
 
 /**
@@ -216,6 +297,8 @@ export function startForUser(userId: string, cb: common.Callback0) {
  */
 export function init(settings: common.Settings): void {
   appSettings = settings;
+
+  killAllJupyterServers();
 }
 
 /**
