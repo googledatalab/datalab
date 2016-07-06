@@ -36,8 +36,6 @@ interface JupyterServer {
   notebooks: string;
   childProcess?: childProcess.ChildProcess;
   proxy?: httpProxy.ProxyServer;
-
-  portResolved: ()=>void;
 }
 
 /**
@@ -134,7 +132,6 @@ function createJupyterServer(userId: string, remainingAttempts: number) {
         userId: userId,
         port: port,
         notebooks: userDir,
-        portResolved: function() {},
       };
 
       function exitHandler(code: number, signal: string): void {
@@ -206,6 +203,41 @@ function createJupyterServer(userId: string, remainingAttempts: number) {
     });
 }
 
+function listJupyterServers(): number[] {
+  var psStdout = '';
+  try {
+    psStdout = childProcess.execSync('ps -C jupyter-notebook -o pid=', {}).toString();
+  } catch (err) {
+    // In the default case, where there are no jupyter-notebook processes running,
+    // the 'ps' call will throw an error. We distinguish that case by ignoring
+    // the error unless the stdout or stderr values are non-empty.
+    if (err['stdout'] != '' || err['stderr'] != '') {
+      throw err;
+    }
+  }
+
+  var jupyterProcesses: number[] = [];
+  var jupyterProcessIdStrings = psStdout.split('\n');
+  for (var i in jupyterProcessIdStrings) {
+    if (jupyterProcessIdStrings[i]) {
+      var processId = parseInt(jupyterProcessIdStrings[i]);
+      if (processId != NaN) {
+        jupyterProcesses.push(processId);
+      }
+    }
+  }
+  return jupyterProcesses;
+}
+
+function killAllJupyterServers() {
+  var jupyterProcesses = listJupyterServers();
+  for (var i in jupyterProcesses) {
+    var processId = jupyterProcesses[i];
+    logging.getLogger().info('Killing abandoned Jupyter notebook process: %d', processId);
+    process.kill(processId);
+  }
+}
+
 export function getPort(request: http.ServerRequest): number {
   var userId = userManager.getUserId(request);
   var server = jupyterServers[userId];
@@ -265,6 +297,8 @@ export function startForUser(userId: string, cb: common.Callback0) {
  */
 export function init(settings: common.Settings): void {
   appSettings = settings;
+
+  killAllJupyterServers();
 }
 
 /**
