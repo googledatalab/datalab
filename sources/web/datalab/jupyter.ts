@@ -91,6 +91,7 @@ var callbackManager: callbacks.CallbackManager = new callbacks.CallbackManager()
  */
 var templates: common.Map<string> = {
   'tree': fs.readFileSync(path.join(__dirname, 'templates', 'tree.html'), { encoding: 'utf8' }),
+  'sessions': fs.readFileSync(path.join(__dirname, 'templates', 'sessions.html'), { encoding: 'utf8' }),
   'edit': fs.readFileSync(path.join(__dirname, 'templates', 'edit.html'), { encoding: 'utf8' }),
   'nb': fs.readFileSync(path.join(__dirname, 'templates', 'nb.html'), { encoding: 'utf8' })
 };
@@ -354,9 +355,29 @@ export function handleRequest(request: http.ServerRequest, response: http.Server
     response.end();
     return;
   }
+
+  var path = url.parse(request.url).pathname;
+  if (path.indexOf('/sessions') == 0) {
+    var templateData: common.Map<string> = getBaseTemplateData(request);
+    sendTemplate('sessions', templateData, response);
+    return;
+  }
   server.proxy.web(request, response);
 }
 
+function getBaseTemplateData(request: http.ServerRequest): common.Map<string> {
+  var templateData: common.Map<string> = {
+    feedbackId: appSettings.feedbackId,
+    versionId: appSettings.versionId,
+    userId: userManager.getUserId(request),
+    configUrl: appSettings.configUrl,
+    baseUrl: '/'
+  };
+  if (process.env.DATALAB_ENV == 'local') {
+    templateData['isSignedIn'] = auth.isSignedIn().toString();
+  }
+  return templateData;
+}
 
 function sendTemplate(key: string, data: common.Map<string>, response: http.ServerResponse) {
   var template = templates[key];
@@ -393,17 +414,7 @@ function responseHandler(proxyResponse: http.ClientResponse,
   // Ensure this happens only for page requests, rather than for API requests.
   var path = url.parse(request.url).pathname;
   if ((path.indexOf('/tree') == 0) || (path.indexOf('/notebooks') == 0) || (path.indexOf('/edit') == 0)) {
-    var templateData: common.Map<string> = {
-      feedbackId: appSettings.feedbackId,
-      versionId: appSettings.versionId,
-      userId: userManager.getUserId(request),
-      configUrl: appSettings.configUrl,
-      baseUrl: '/'
-    };
-    if (process.env.DATALAB_ENV == 'local') {
-      templateData['isSignedIn'] = auth.isSignedIn().toString();
-    }
-
+    var templateData: common.Map<string> = getBaseTemplateData(request);
     var page: string = null;
     if (path.indexOf('/tree') == 0) {
       // stripping off the /tree/ from the path

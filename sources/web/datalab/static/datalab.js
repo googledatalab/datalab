@@ -747,18 +747,6 @@ function initializeEditApplication(ipy, editor) {
 
 
 function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, utils) {
-  function showContent(e) {
-    document.getElementById('notebooks').classList.add('active');
-    document.getElementById('running').classList.remove('active');
-    e.target.blur();
-  }
-
-  function showSessions(e) {
-    document.getElementById('notebooks').classList.remove('active');
-    document.getElementById('running').classList.add('active');
-    e.target.blur();
-  }
-
   function addNotebook(e) {
     newNotebook.new_notebook();
     e.target.blur();
@@ -783,9 +771,6 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
       });
     e.target.blur();
   }
-
-  document.getElementById('contentButton').addEventListener('click', showContent, false);
-  document.getElementById('sessionsButton').addEventListener('click', showSessions, false);
 
   document.getElementById('addNotebookButton').addEventListener('click', addNotebook, false);
   document.getElementById('addFolderButton').addEventListener('click', addFolder, false);
@@ -859,7 +844,6 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
   }
 
   checkVersion(window.datalab.versions);
-
 }
 
 
