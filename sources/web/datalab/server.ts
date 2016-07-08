@@ -174,12 +174,16 @@ function handledAuthenticatedRequest(request: http.ServerRequest,
 }
 
 /**
- * Handles all requests sent to the proxy web server. Some requests are handled within
- * the server, while some are proxied to the Jupyter notebook server.
+ * Base logic for handling all requests sent to the proxy web server. Some
+ * requests are handled within the server, while some are proxied to the
+ * Jupyter notebook server.
+ *
+ * Error handling is left to the caller.
+ *
  * @param request the incoming HTTP request.
  * @param response the out-going HTTP response.
  */
-function requestHandler(request: http.ServerRequest, response: http.ServerResponse) {
+function uncheckedRequestHandler(request: http.ServerRequest, response: http.ServerResponse) {
   var path = url.parse(request.url).pathname;
 
   // /_ah/* paths implement the AppEngine health check.
@@ -222,6 +226,20 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       response.end();
     }
   });  
+}
+
+/**
+ * Handles all requests sent to the proxy web server. Some requests are handled within
+ * the server, while some are proxied to the Jupyter notebook server.
+ * @param request the incoming HTTP request.
+ * @param response the out-going HTTP response.
+ */
+function requestHandler(request: http.ServerRequest, response: http.ServerResponse) {
+  try {
+    uncheckedRequestHandler(request, response);
+  } catch (e) {
+    logging.getLogger().error('Uncaught error handling a request: %s', e);
+  }
 }
 
 /**

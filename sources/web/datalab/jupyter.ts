@@ -113,71 +113,83 @@ function pipeOutput(stream: NodeJS.ReadableStream, port: number, error: boolean)
   })
 }
 
+function createJupyterServerAtPort(port: number, userId: string, userDir: string) {
+  var server: JupyterServer = {
+    userId: userId,
+    port: port,
+    notebooks: userDir,
+  };
+
+  function exitHandler(code: number, signal: string): void {
+    logging.getLogger().error('Jupyter process %d for user %s exited due to signal: %s',
+                              server.childProcess.pid, userId, signal);
+    delete jupyterServers[server.userId];
+  }
+
+  var processArgs = appSettings.jupyterArgs.slice().concat([
+    '--port=' + server.port,
+    '--port-retries=0',
+    '--notebook-dir="' + server.notebooks + '"'
+  ]);
+
+  var processOptions = {
+    detached: false,
+    env: process.env
+  };
+
+  server.childProcess = childProcess.spawn('jupyter', processArgs, processOptions);
+  server.childProcess.on('exit', exitHandler);
+  logging.getLogger().info('Jupyter process for user %s started with pid %d and args %j',
+                           userId, server.childProcess.pid, processArgs);
+
+  // Capture the output, so it can be piped for logging.
+  pipeOutput(server.childProcess.stdout, server.port, /* error */ false);
+  pipeOutput(server.childProcess.stderr, server.port, /* error */ true);
+
+  // Create the proxy.
+  var proxyOptions: httpProxy.ProxyServerOptions = {
+    target: 'http://127.0.0.1:' + port
+  };
+
+  server.proxy = httpProxy.createProxyServer(proxyOptions);
+  server.proxy.on('proxyRes', responseHandler);
+  server.proxy.on('error', errorHandler);
+
+  tcp.waitUntilUsed(server.port, 100, 3000).then(
+    function() {
+      jupyterServers[userId] = server;
+      logging.getLogger().info('Jupyter server started for %s.', userId);
+      callbackManager.invokeAllCallbacks(userId, null);
+    },
+    function(e) {
+      logging.getLogger().error(e, 'Failed to start Jupyter server for user %s.', userId);
+      callbackManager.invokeAllCallbacks(userId, e);
+    });
+}
+
 /**
  * Starts the Jupyter server, and then creates a proxy object enabling
  * routing HTTP and WebSocket requests to Jupyter.
  */
 function createJupyterServer(userId: string, remainingAttempts: number) {
+  logging.getLogger().info('Checking user dir for %s exists', userId);
+  var userDir = userManager.getUserDir(userId);
+  if (!fs.existsSync(userDir)) {
+    logging.getLogger().info('Creating user dir %s', userDir);
+    fs.mkdirSync(userDir, parseInt('0755',8));
+  }
+
   logging.getLogger().info('Looking for a free port on which to start Jupyter for %s', userId);
   getNextJupyterPort(
     portRetryAttempts,
     function(port: number) {
-      var userDir = userManager.getUserDir(userId);
-      if (!fs.existsSync(userDir)) {
-        fs.mkdirSync(userDir, parseInt('0755',8));
+      logging.getLogger().info('Launching Jupyter server for %s at %d', userId, port);
+      try {
+        createJupyterServerAtPort(port, userId, userDir);
+      } catch (e) {
+        logging.getLogger().error(e, 'Error creating the Jupyter process for user %s', userId);
+        callbackManager.invokeAllCallbacks(userId, e);
       }
-
-      var server: JupyterServer = {
-        userId: userId,
-        port: port,
-        notebooks: userDir,
-      };
-
-      function exitHandler(code: number, signal: string): void {
-        logging.getLogger().error('Jupyter process %d for user %s exited due to signal: %s',
-                                  server.childProcess.pid, userId, signal);
-        delete jupyterServers[server.userId];
-      }
-
-      var processArgs = appSettings.jupyterArgs.slice().concat([
-        '--port=' + server.port,
-        '--port-retries=0',
-        '--notebook-dir="' + server.notebooks + '"'
-      ]);
-
-      var processOptions = {
-        detached: false,
-        env: process.env
-      };
-
-      server.childProcess = childProcess.spawn('jupyter', processArgs, processOptions);
-      server.childProcess.on('exit', exitHandler);
-      logging.getLogger().info('Jupyter process for user %s started with pid %d and args %j',
-                               userId, server.childProcess.pid, processArgs);
-
-      // Capture the output, so it can be piped for logging.
-      pipeOutput(server.childProcess.stdout, server.port, /* error */ false);
-      pipeOutput(server.childProcess.stderr, server.port, /* error */ true);
-
-      // Create the proxy.
-      var proxyOptions: httpProxy.ProxyServerOptions = {
-        target: 'http://127.0.0.1:' + port
-      };
-
-      server.proxy = httpProxy.createProxyServer(proxyOptions);
-      server.proxy.on('proxyRes', responseHandler);
-      server.proxy.on('error', errorHandler);
-
-      tcp.waitUntilUsed(server.port, 100, 3000).then(
-        function() {
-          jupyterServers[userId] = server;
-          logging.getLogger().info('Jupyter server started for %s.', userId);
-          callbackManager.invokeAllCallbacks(userId, null);
-        },
-        function(e) {
-          logging.getLogger().error(e, 'Failed to start Jupyter server for user %s.', userId);
-          callbackManager.invokeAllCallbacks(userId, e);
-        });
     },
     function(e) {
       logging.getLogger().error(e, 'Failed to find a free port');
