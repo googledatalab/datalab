@@ -24,45 +24,20 @@ import url = require('url');
  */
 var appSettings: common.Settings;
 
-function stringifyMap(map: {[index: string]: string}): string {
-  var textBuilder: string[] = [];
-
-  var names: string[] = [];
-  for (var n in map) {
-    names.push(n);
-  }
-  names = names.sort();
-
-  for (var i = 0; i < names.length; i++) {
-    textBuilder.push(names[i] + ': ' + map[names[i]]);
-  }
-
-  return textBuilder.join('\n');
-}
-
 /**
  * Implements information request handling.
  * @param request the incoming health request.
  * @param response the outgoing health response.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
+  var info: any = {};
+  info['env'] = process.env;
+  info['requestHeaders'] = request.headers;
+  info['settings'] = appSettings;
+  info['servers'] = jupyter.getInfo();
+
   response.writeHead(200, { 'Content-Type': 'text/plain' });
-
-  response.write('Environment Variables:\n');
-  response.write(stringifyMap(process.env));
-  response.write('\n\n');
-
-  response.write('Application Settings:\n');
-  response.write(JSON.stringify(appSettings, null, 2));
-  response.write('\n\n');
-
-  response.write('Request Headers:\n');
-  response.write(stringifyMap(request.headers));
-  response.write('\n\n');
-
-  response.write('Jupyter Servers:\n');
-  response.write(JSON.stringify(jupyter.getInfo(), null, 2));
-  response.write('\n\n');
+  response.write(JSON.stringify(info, null, 2));
   response.end();
 }
 
