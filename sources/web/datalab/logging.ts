@@ -43,6 +43,7 @@ export function getLogger(): bunyan.ILogger {
  * @param response the response to be logged.
  */
 export function logRequest(request: http.ServerRequest, response: http.ServerResponse): void {
+  requestLogger.info({ url: request.url, method: request.method }, 'Received a new request');
   response.on('finish', function() {
     requestLogger.info({ url: request.url, method: request.method, status: response.statusCode });
   });
