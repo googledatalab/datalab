@@ -18,6 +18,9 @@
 
 export DATALAB_ENV=cloud
 
+# Create the '/content' directory where we will store user workspaces.
+mkdir -p /content
+
 # Setup environment variables.
 . /datalab/setup-env.sh
 
