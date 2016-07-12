@@ -134,8 +134,8 @@ RUN ipython profile create default && \
     jupyter notebook --generate-config && \
     mkdir -p /datalab/lib && \
     cd /datalab/lib && \
-    git clone https://github.com/googledatalab/datalab.git && \
-    cd /datalab/lib/datalab && \
+    git clone https://github.com/googledatalab/pydatalab.git && \
+    cd /datalab/lib/pydatalab && \
     tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts && \
     pip install . && \
     jupyter nbextension install --py datalab.notebook && \
