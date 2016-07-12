@@ -59,6 +59,23 @@ function readProcFile(filename: string): any {
 }
 
 /**
+ * Given a map of HTTP request headers, remove any that might contain auth information.
+ *
+ * This makes it easier for users to submit the response of their '/_info' API in
+ * bug reports, without worrying about it leaking their auth credentials.
+ *
+ * @param headers the map from header names to values.
+ */
+function scrubHeaders(headers: common.Map<string>): common.Map<string> {
+  for (var key in headers) {
+    if ((key == 'cookie') || (key.indexOf('x-') == 0)) {
+      delete headers[key];
+    }
+  }
+  return headers;
+}
+
+/**
  * Implements information request handling.
  * @param request the incoming health request.
  * @param response the outgoing health response.
@@ -67,7 +84,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   var info: any = {};
   info['env'] = process.env;
   info['mem'] = readProcFile('/proc/meminfo');
-  info['requestHeaders'] = request.headers;
+  info['requestHeaders'] = scrubHeaders(request.headers);
   info['settings'] = appSettings;
   info['servers'] = jupyter.getInfo();
 
