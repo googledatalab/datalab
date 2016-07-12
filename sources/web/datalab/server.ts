@@ -126,7 +126,8 @@ function handleRequest(request: http.ServerRequest,
       (path.indexOf('/nbconvert') == 0) ||
       (path.indexOf('/nbextensions') == 0) ||
       (path.indexOf('/files') == 0) ||
-      (path.indexOf('/edit') == 0)) {
+      (path.indexOf('/edit') == 0) ||
+      (path.indexOf('/sessions') == 0)) {
     handleJupyterRequest(request, response);
     return;
   }
