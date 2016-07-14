@@ -34,7 +34,7 @@ docker build -t datalab-base .
 popd
 
 # Build the docker image
-docker build -t datalab .
+docker build -t datalab-gateway .
 
 # Finally cleanup
 rm -rf build
