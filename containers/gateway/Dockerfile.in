@@ -15,26 +15,12 @@
 FROM datalab-base
 MAINTAINER Google Cloud DataLab
 
-# Add build artifacts
-ADD build/web /datalab/web
 ADD content/ /datalab
 
-# Install the build artifacts
-RUN ln -s /datalab/web/static/datalab.css /datalab/nbconvert/datalab.css && \
-    cd /datalab/web && /tools/node/bin/npm install && \
-    cd /
-
-# Install the support for connecting to a kernel gateway
-RUN wget https://github.com/jupyter/kernel_gateway_demos/archive/e653b2bd3ca91ef1af2a13c397766484dcb7b76d.zip && \
-    unzip -qq e653b2bd3ca91ef1af2a13c397766484dcb7b76d.zip -d kernel_gateway_demos && \
-    rm e653b2bd3ca91ef1af2a13c397766484dcb7b76d.zip && \
-    cd ./kernel_gateway_demos/kernel_gateway_demos-e653b2bd3ca91ef1af2a13c397766484dcb7b76d && \
-    pip install ./nb2kg/
-
-ENV EXPERIMENTAL_KERNEL_GATEWAY_URL=""
+# Install the support for running a kernel gateway
+RUN pip install jupyter_kernel_gateway
 
 # Startup
 ENV DATALAB_VERSION _version_
 ENV DATALAB_COMMIT _commit_
 ENTRYPOINT [ "/datalab/run.sh" ]
-

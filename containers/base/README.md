@@ -1,4 +1,4 @@
-# DataLab Docker Container
+# DataLab Base Docker Image
 
 This briefly describes the important aspects of the Dockerfile definition
 (separately, so changes to comments don't change the layering, and trigger
