@@ -65,7 +65,7 @@ if [[ -z "${INSTANCE}" ]]; then
   echo "Could not find an existing GCE VM. Will create one..."
   pushd ./
   cd ../gateway
-  ./deploy.sh || exit ${ERR_DEPLOY}
+  ./deploy.sh "${PROJECT}" "${ZONE}" || exit ${ERR_DEPLOY}
   popd
   INSTANCE=`gcloud compute instances list --regex "datalab-kernel-gateway-[0-9]*" --limit 1 --format "value(name)"`
 fi
