@@ -14,9 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-USAGE="USAGE: ${0} <PROJECT> <ZONE>
+USAGE="USAGE: ${0} [<PROJECT> <ZONE> [<INSTANCE>]]
 
-Alternatively, you can set the default project and zone using the gcloud tool:
+If the project and zone are not provided, then they must be set using the gcloud tool:
 
     gcloud config set project <PROJECT>
     gcloud config set compute/zone <ZONE>
@@ -48,15 +48,16 @@ instance of Datalab connected to that VM via an SSH tunnel.
 
 PROJECT=${1:-`gcloud config list 2> /dev/null | grep 'project = ' | cut -d ' ' -f 3`}
 ZONE=${2:-`gcloud config list 2> /dev/null | grep 'zone = ' | cut -d ' ' -f 3`}
+INSTANCE=${3:-"datalab-kernel-gateway"}
 
-if [[ -z "${PROJECT}" || -z "${ZONE}" ]]; then
+if [[ -z "${PROJECT}" || -z "${ZONE}" || -z "${INSTANCE}" ]]; then
   echo "${USAGE}"
   exit ${ERR_USAGE}
 fi
 
 echo "${DOCS}"
 
-echo "Will deploy a GCE VM to project ${PROJECT} in zone ${ZONE}"
+echo "Will deploy a GCE VM named '${INSTANCE}' to the project '${PROJECT}' in zone '${ZONE}'"
 read -p "Proceed? [y/N] " PROCEED
 
 if [[ "${PROCEED}" != "y" ]]; then
@@ -72,17 +73,16 @@ docker tag -f datalab-gateway "${IMAGE}"
 gcloud docker push "${IMAGE}" || exit ${ERR_DOCKER_PUSH}
 
 NETWORK="datalab-kernels"
-if [[ -z `gcloud compute networks list | grep ${NETWORK}` ]]; then
+if [[ -z `gcloud --project "${PROJECT}" compute networks list | grep ${NETWORK}` ]]; then
   echo "Creating the compute network '${NETWORK}'"
   gcloud compute networks create "${NETWORK}" --project "${PROJECT}" --description "Network for Datalab kernel gateway VMs" || exit ${ERR_NETWORK_CREATE}
   gcloud compute firewall-rules create allow-ssh --project "${PROJECT}" --allow tcp:22 --description 'Allow SSH access' --network "${NETWORK}" || exit ${ERR_FIREWALL_RULE}
 fi
 
-INSTANCE="datalab-kernel-gateway-${RANDOM}"
 CONFIG="apiVersion: v1
 kind: Pod
 metadata:
-  name: datalab-kernel-gateway
+  name: '${INSTANCE}'
 spec:
   containers:
     - name: datalab-kernel-gateway
