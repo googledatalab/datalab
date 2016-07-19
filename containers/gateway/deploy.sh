@@ -95,6 +95,24 @@ spec:
       env:
         - name: DATALAB_ENV
           value: GCE
+    - name: logger
+      image: gcr.io/google_containers/fluentd-gcp:1.18
+      env:
+        - name: FLUENTD_ARGS
+          value: -q
+      volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+  volumes:
+    - name: varlog
+      hostPath:
+        path: /var/log
+    - name: varlibdockercontainers
+      hostPath:
+        path: /var/lib/docker/containers
 "
 
 echo "Creating the compute VM ${INSTANCE} with config: ${CONFIG}"
