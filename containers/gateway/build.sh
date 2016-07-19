@@ -28,10 +28,9 @@ cat Dockerfile.in | sed $VERSION_SUBSTITUTION | sed $COMMIT_SUBSTITUTION > Docke
 rsync -avp ../../build/ build
 
 # Build the base docker image
-pushd ./
 cd ../base
 docker build -t datalab-base .
-popd
+cd ../gateway
 
 # Build the docker image
 docker build -t datalab-gateway .
