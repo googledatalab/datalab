@@ -14,23 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-USAGE="USAGE: ${0} [<PROJECT> <ZONE> [<INSTANCE>]]
+ERR_DOCKER_PUSH=1
+ERR_NETWORK_CREATE=2
+ERR_FIREWALL_RULE=3
+ERR_INSTANCE_CREATE=4
 
-If the project and zone are not provided, then they must be set using the gcloud tool:
-
-    gcloud config set project <PROJECT>
-    gcloud config set compute/zone <ZONE>
-"
-
-ERR_USAGE=1
-ERR_CANCELLED=2
-ERR_DOCKER_BUILD=3
-ERR_DOCKER_PUSH=4
-ERR_NETWORK_CREATE=5
-ERR_FIREWALL_RULE=6
-ERR_INSTANCE_CREATE=7
-
-DOCS="This script deploys the Datalab kernel gateway to a GCE VM.
+DOCS="We are about to deploy the Datalab kernel gateway to a GCE VM.
 
 This will:
 
@@ -41,36 +30,16 @@ This will:
    'datalab-kernels' network.
 4. Run the gateway image in that VM
 
-The resulting VM can be used by running the 'run-with-gce.sh'
-script in the 'containers/datalab' directory to set up an
-instance of Datalab connected to that VM via an SSH tunnel.
+Datalab will then connect to the resulting VM via an SSH tunnel.
 "
 
-PROJECT=${1:-`gcloud config list 2> /dev/null | grep 'project = ' | cut -d ' ' -f 3`}
-ZONE=${2:-`gcloud config list 2> /dev/null | grep 'zone = ' | cut -d ' ' -f 3`}
-INSTANCE=${3:-"datalab-kernel-gateway"}
-
-if [[ -z "${PROJECT}" || -z "${ZONE}" || -z "${INSTANCE}" ]]; then
-  echo "${USAGE}"
-  exit ${ERR_USAGE}
-fi
+PROJECT=${1}
+ZONE=${2}
+INSTANCE=${3}
 
 echo "${DOCS}"
 
 echo "Will deploy a GCE VM named '${INSTANCE}' to the project '${PROJECT}' in zone '${ZONE}'"
-read -p "Proceed? [y/N] " PROCEED
-
-if [[ "${PROCEED}" != "y" ]]; then
-  echo "Deploy cancelled"
-  exit ${ERR_CANCELLED}
-fi
-
-# TODO(ojarjur): Add support for pulling a pre-built version of the
-# datalab-gateway image, rather than building from source.
-./build.sh || exit ${ERR_DOCKER_BUILD}
-IMAGE="gcr.io/${PROJECT}/datalab-gateway"
-docker tag -f datalab-gateway "${IMAGE}"
-gcloud docker push "${IMAGE}" || exit ${ERR_DOCKER_PUSH}
 
 NETWORK="datalab-kernels"
 if [[ -z `gcloud --project "${PROJECT}" compute networks list | grep ${NETWORK}` ]]; then
@@ -79,6 +48,7 @@ if [[ -z `gcloud --project "${PROJECT}" compute networks list | grep ${NETWORK}`
   gcloud compute firewall-rules create allow-ssh --project "${PROJECT}" --allow tcp:22 --description 'Allow SSH access' --network "${NETWORK}" || exit ${ERR_FIREWALL_RULE}
 fi
 
+IMAGE="gcr.io/${PROJECT}/datalab-gateway"
 CONFIG="apiVersion: v1
 kind: Pod
 metadata:

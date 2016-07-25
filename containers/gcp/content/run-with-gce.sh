@@ -14,21 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-USAGE="USAGE: ${0} [<PROJECT> <ZONE> [<DOCKER_BRIDGE_IP>]]
+USAGE="USAGE: ${0}
 
-Where <PROJECT> is the ID of the Google Cloud Platform project that will host
-the kernel gateway, <ZONE> is the Google Compute Engine zone where the kernel
-gateway will run, and <DOCKER_BRIDGE_IP> is the IP address of the 'docker0'
-network bridge.
+You must also specify a project ID and zone. The project ID is the ID of
+the Google Cloud Platform project that will host the kernel gateway and 
+the zone is the Google Compute Engine zone where the kernel gateway will run.
 
-The <PROJECT> and <ZONE> arguments can be omitted if you set the default
-project and zone using the gcloud tool:
+These may be specified by either setting the PROJECT_ID and ZONE environment
+variables, or by setting the default project and zone using the gcloud tool:
 
-    gcloud config set project <PROJECT>
+    gcloud config set project <PROJECT_ID>
     gcloud config set compute/zone <ZONE>
-
-If the <DOCKER_BRIDGE_IP> argument is omitted, then the tool will attempt
-to look it up using the 'ifconfig' command.
 "
 
 ERR_USAGE=1
@@ -50,11 +46,14 @@ please remember to delete that VM if you no longer need it to avoid incurring
 unnecessary costs.
 "
 
-PROJECT=${1:-`gcloud config list 2> /dev/null | grep 'project = ' | cut -d ' ' -f 3`}
-ZONE=${2:-`gcloud config list 2> /dev/null | grep 'zone = ' | cut -d ' ' -f 3`}
-DOCKER_IP=${3:-`ifconfig docker0 | grep inet\ addr: | cut -d ':' -f 2 | cut -d ' ' -f 1`}
+export DATALAB_ENV="local"
+source /datalab/setup-env.sh
+export HOME=/content
 
-if [[ -z "${PROJECT}" || -z "${ZONE}" || -z "${DOCKER_IP}" ]]; then
+export PROJECT_ID=${PROJECT_ID:-`gcloud config list 2> /dev/null | grep 'project = ' | cut -d ' ' -f 3`}
+export ZONE=${ZONE:-`gcloud config list 2> /dev/null | grep 'zone = ' | cut -d ' ' -f 3`}
+
+if [[ -z "${PROJECT_ID}" || -z "${ZONE}" ]]; then
   echo "${USAGE}"
   exit ${ERR_USAGE}
 fi
@@ -107,45 +106,21 @@ else
   INSTANCE_PREFIX="datalab-${ESCAPED_USER_EMAIL}"
 fi
 
-INSTANCE=`gcloud compute instances list --project "${PROJECT}" --zone "${ZONE}" --regex "${INSTANCE_PREFIX}-[0-9]*" --limit 1 --format "value(name)"`
+INSTANCE=`gcloud compute instances list --project "${PROJECT_ID}" --zone "${ZONE}" --regex "${INSTANCE_PREFIX}-[0-9]*" --limit 1 --format "value(name)"`
 if [[ -z "${INSTANCE}" ]]; then
   echo "Could not find an existing gateway VM for '${USER_EMAIL}'. Will create one..."
   INSTANCE="${INSTANCE_PREFIX}-${RANDOM}"
-  pushd ./
-  cd ../gateway
-  ./deploy.sh "${PROJECT}" "${ZONE}" "${INSTANCE}" || exit ${ERR_DEPLOY}
-  popd
+  /datalab/deploy.sh "${PROJECT_ID}" "${ZONE}" "${INSTANCE}" || exit ${ERR_DEPLOY}
 fi
 
 echo "Will connect to the kernel gateway running on ${INSTANCE}"
-
-# We want to run the SSH command in the background but save the PID
-# so we can kill it on exit. However, if we ran the command through
-# gcloud, then the PID we would get would be that of the gcloud
-# command, which exits after starting the SSH command.
-#
-# To get around this, we only use gcloud to print the SSH command
-# (via the --dry-run flag), and then run that SSH command directly.
-#
-# Unfortunately, the --dry-run flag also prevents the SSH keys from
-# being cascaded to the VM, so we also have to run a no-op SSH
-# command first to perform the SSH key setup. However, that has the
-# added benefit of ensuring that the VM is SSH-able before we try
-# to connect to it
-gcloud compute ssh --project "${PROJECT}" \
+gcloud compute ssh --quiet \
+  --project "${PROJECT_ID}" \
   --zone "${ZONE}" \
-  "${INSTANCE}" \
-  "true"
-SSH_CMD=`gcloud compute ssh --dry-run --project "${PROJECT}" --zone "${ZONE}" --ssh-flag="-NL" --ssh-flag="${DOCKER_IP}:8082:localhost:8080" "${INSTANCE}"`
-${SSH_CMD} &
-SSH_PID="$!"
+  --ssh-flag="-NL" \
+  --ssh-flag="localhost:8082:localhost:8080" \
+  "${INSTANCE}" &
 
-# Install a trap that will kill the background SSH process on exit.
-trap "kill -9 ${SSH_PID}" EXIT
-
-echo "Started SSH tunnel with PID ${SSH_PID}"
-
-EXPERIMENTAL_KERNEL_GATEWAY_URL="http://${DOCKER_IP}:8082" ./run.sh
-
-# The following command should be redundant given the trap above, but better safe than sorry.
-kill -9 "${SSH_PID}"
+export DATALAB_ENV="local"
+export EXPERIMENTAL_KERNEL_GATEWAY_URL="http://localhost:8082"
+/datalab/run.sh
