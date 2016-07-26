@@ -26,4 +26,4 @@ then
 fi
 
 # Start the DataLab kernel gateway
-jupyter kernelgateway --KernelGatewayApp.list_kernels=True --KernelGatewayApp.port=8080 --KernelGatewayApp.ip=0.0.0.0
+jupyter kernelgateway --JupyterWebsocketPersonality.list_kernels=True --KernelGatewayApp.port=8080 --KernelGatewayApp.ip=0.0.0.0
