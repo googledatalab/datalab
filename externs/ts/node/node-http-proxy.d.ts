@@ -25,7 +25,7 @@ declare module 'http-proxy' {
 
   export interface ProxyServer extends events.EventEmitter {
     options: ProxyServerOptions;
-    web(request: http.ServerRequest, response: http.ServerResponse): void;
+    web(request: http.ServerRequest, response: http.ServerResponse, options: ProxyServerOptions): void;
     ws(request: http.ServerRequest, socket: net.Socket, head: Buffer): void;
     listen(options: any): void;
     close(): void;

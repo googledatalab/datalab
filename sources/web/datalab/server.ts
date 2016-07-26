@@ -26,6 +26,7 @@ import logging = require('./logging');
 import net = require('net');
 import path = require('path');
 import request = require('request');
+import reverseProxy = require('./reverseProxy');
 import static_ = require('./static');
 import url = require('url');
 import userManager = require('./userManager');
@@ -116,6 +117,12 @@ function handleRequest(request: http.ServerRequest,
     response.statusCode = 302;
     response.setHeader('Location', '/tree/datalab');
     response.end();
+    return;
+  }
+
+  var targetPort: string = reverseProxy.getRequestPort(request, path);
+  if (targetPort) {
+    reverseProxy.handleRequest(request, response, targetPort);
     return;
   }
 
@@ -226,6 +233,8 @@ export function run(settings: common.Settings): void {
   appSettings = settings;
   userManager.init(settings);
   jupyter.init(settings);
+  auth.init();
+  reverseProxy.init();
 
   healthHandler = health.createHandler(settings);
   infoHandler = info.createHandler(settings);

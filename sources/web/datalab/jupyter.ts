@@ -362,7 +362,7 @@ export function handleRequest(request: http.ServerRequest, response: http.Server
     sendTemplate('sessions', templateData, response);
     return;
   }
-  server.proxy.web(request, response);
+  server.proxy.web(request, response, null);
 }
 
 function getBaseTemplateData(request: http.ServerRequest): common.Map<string> {

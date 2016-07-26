@@ -33,6 +33,7 @@ let clientSecret = 'ZmssLNjJy2998hD4CTg2ejr2';
 let gcloudDir = '/content/datalab/.config';
 let userCredFile = gcloudDir + '/credentials';
 let appCredFile = gcloudDir + '/application_default_credentials.json';
+let botoFile = '/etc/boto.cfg';
 
 let scopes = [
   'https://www.googleapis.com/auth/userinfo.email',
@@ -113,6 +114,13 @@ function saveApplicationCredFile(tokens: any) {
   );
 }
 
+function saveBotoFile(tokens: any) {
+  // Create botoFile and set refresh token to get gsutil working.
+  // See https://cloud.google.com/storage/docs/gsutil/commands/config.
+  var botoContent:string = '[Credentials]\ngs_oauth2_refresh_token = ' + tokens.refresh_token;
+  fs.writeFileSync(botoFile, botoContent);
+}
+
 /**
  * Save the tokens in a credentials file that Datalab and gcloud can both use.
  */
@@ -121,6 +129,7 @@ function persistCredentials(tokens: any): string {
     fs.mkdirSync(gcloudDir);
   }
   saveApplicationCredFile(tokens);
+  saveBotoFile(tokens);
   return saveUserCredFile(tokens);
 }
 
@@ -170,6 +179,13 @@ export function handleAuthFlow(request: http.ServerRequest, response: http.Serve
         logging.getLogger().error('Could not delete ' + appCredFile + ': ' + e);
       }
     }
+    if (fs.existsSync(botoFile)) {
+      try {
+        fs.unlinkSync(botoFile);
+      } catch (e) {
+        logging.getLogger().error('Could not delete ' + botoFile + ': ' + e);
+      }
+    }
   } else if (path.indexOf('/oauthcallback') == 0) {  // Return from auth flow.
     setOauth2Client(request);
     if (query.code) {
@@ -213,4 +229,12 @@ export function handleAuthFlow(request: http.ServerRequest, response: http.Serve
   response.statusCode = 302;
   response.setHeader('Location', referer);
   response.end();
+}
+
+export function init() {
+  if (fs.existsSync(appCredFile)) {
+    var tokensContent:string = fs.readFileSync(appCredFile, 'utf8');
+    var tokens:any = JSON.parse(tokensContent);
+    saveBotoFile(tokens);
+  }
 }
