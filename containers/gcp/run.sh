@@ -67,13 +67,11 @@ variables, or by setting the default project and zone using the gcloud tool:
 "
 
 # Verify that the necessary prerequisites have been set
-GCLOUD_CONFIG=`gcloud info --quiet --format 'value(config.paths.global_config_dir)'`
 GCLOUD_ACCOUNT=`gcloud auth list --format 'value(active_account)'`
-
 PROJECT_ID=${PROJECT_ID:-`gcloud config list 2> /dev/null | grep 'project = ' | cut -d ' ' -f 3`}
 ZONE=${ZONE:-`gcloud config list 2> /dev/null | grep 'zone = ' | cut -d ' ' -f 3`}
 
-if [[ -z "${CONTENT}" || -z "${GCLOUD_CONFIG}" || -z "${GCLOUD_ACCOUNT}" || -z "${PROJECT_ID}" || -z "${ZONE}" ]]; then
+if [[ -z "${CONTENT}" || -z "${GCLOUD_ACCOUNT}" || -z "${PROJECT_ID}" || -z "${ZONE}" ]]; then
   echo "${USAGE}"
   exit 1
 fi
@@ -122,7 +120,6 @@ fi
 docker run -it --entrypoint=$ENTRYPOINT \
   -p $PORTMAP \
   -v "${CONTENT}:/content" \
-  -v "${GCLOUD_CONFIG}:/content/datalab/.config" \
   -e "PROJECT_ID=${PROJECT_ID}" \
   -e "ZONE=${ZONE}" \
   datalab-gcp

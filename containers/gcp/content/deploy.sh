@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ERR_DOCKER_PUSH=1
+ERR_CANCELLED=1
 ERR_NETWORK_CREATE=2
 ERR_FIREWALL_RULE=3
 ERR_INSTANCE_CREATE=4
@@ -23,12 +23,11 @@ DOCS="We are about to deploy the Datalab kernel gateway to a GCE VM.
 
 This will:
 
-1. Build the gateway image and push it to GCR.
-2. Ensure that the project contains a network named
+1. Ensure that the project contains a network named
    'datalab-kernels' with inbound SSH connections allowed
-3. Crate a new VM in the default zone connected to the
+2. Crate a new VM in the default zone connected to the
    'datalab-kernels' network.
-4. Run the gateway image in that VM
+3. Run the gateway image in that VM
 
 Datalab will then connect to the resulting VM via an SSH tunnel.
 "
@@ -40,6 +39,12 @@ INSTANCE=${3}
 echo "${DOCS}"
 
 echo "Will deploy a GCE VM named '${INSTANCE}' to the project '${PROJECT}' in zone '${ZONE}'"
+read -p "Proceed? [y/N] " PROCEED
+
+if [[ "${PROCEED}" != "y" ]]; then
+  echo "Deploy cancelled"
+  exit ${ERR_CANCELLED}
+fi
 
 NETWORK="datalab-kernels"
 if [[ -z `gcloud --project "${PROJECT}" compute networks list | grep ${NETWORK}` ]]; then
