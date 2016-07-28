@@ -61,6 +61,7 @@ RUN pip install -U tornado==4.3 \
     pip install -U six==1.9.0 && \
     pip install -U ipywidgets==5.0.0 && \
     pip install -U future==0.15.2 && \
+    pip install -U psutil==4.3.0 && \
     easy_install pip && \
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf
 
