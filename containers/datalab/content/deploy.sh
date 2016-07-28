@@ -67,6 +67,7 @@ spec:
       ports:
         - containerPort: 8080
           hostPort: 8080
+          hostIP: 127.0.0.1
       env:
         - name: DATALAB_ENV
           value: GCE
