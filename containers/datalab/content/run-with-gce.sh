@@ -142,5 +142,4 @@ if [[ -n "${INSTANCE}" ]]; then
   export EXPERIMENTAL_KERNEL_GATEWAY_URL="http://localhost:8082"
 fi
 
-export DATALAB_ENV="local"
 /datalab/run.sh

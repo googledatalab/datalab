@@ -27,6 +27,7 @@ import net = require('net');
 import path = require('path');
 import request = require('request');
 import reverseProxy = require('./reverseProxy');
+import settings_ = require('./settings');
 import static_ = require('./static');
 import url = require('url');
 import userManager = require('./userManager');
@@ -34,10 +35,11 @@ import userManager = require('./userManager');
 var server: http.Server;
 var healthHandler: http.RequestHandler;
 var infoHandler: http.RequestHandler;
+var settingHandler: http.RequestHandler;
 var staticHandler: http.RequestHandler;
 
-// Datalab config directory; if this doesn't exist the EULA hasn't been accepted.
-let configDir = '/content/datalab/.config';
+// Datalab eula directory; if this doesn't exist the EULA hasn't been accepted.
+let eulaDir = '/content/datalab/.config/eula';
 
 /**
  * The application settings instance.
@@ -94,14 +96,6 @@ function handleJupyterRequest(request: http.ServerRequest, response: http.Server
 function handleRequest(request: http.ServerRequest,
                        response: http.ServerResponse,
                        path: string) {
-  // TODO(jupyter): Additional custom path - should go away eventually with replaced
-  // pages.
-  // /static and /custom paths for returning static content
-  if ((path.indexOf('/static') == 0) || (path.indexOf('/custom') == 0)) {
-    staticHandler(request, response);
-    return;
-  }
-
   // All requests below are logged, while the ones above aren't, to avoid generating noise
   // into the log.
   logging.logRequest(request, response);
@@ -156,6 +150,12 @@ function handleRequest(request: http.ServerRequest,
     return;
   }
 
+  // /setting updates a per-user setting.
+  if (path.indexOf('/_setting') == 0) {
+    settingHandler(request, response);
+    return;
+  }
+
   // Not Found
   response.statusCode = 404;
   response.end();
@@ -177,8 +177,8 @@ function uncheckedRequestHandler(request: http.ServerRequest, response: http.Ser
 
   // Check if EULA has been accepted; if not go to EULA page.
   if (path.indexOf('/accepted_eula') == 0) {
-    if (!fs.existsSync(configDir)) {
-      fs.mkdirSync(configDir);
+    if (!fs.existsSync(eulaDir)) {
+      fs.mkdirSync(eulaDir);
     }
     var i = parsed_url.search.indexOf('referer=');
     if (i < 0) {
@@ -195,7 +195,12 @@ function uncheckedRequestHandler(request: http.ServerRequest, response: http.Ser
       path.indexOf('/oauthcallback') == 0) {
     // Start or return from auth flow.
     auth.handleAuthFlow(request, response, parsed_url, appSettings);
-  } else if (!fs.existsSync(configDir)) {
+  } else if ((path.indexOf('/static') == 0) || (path.indexOf('/custom') == 0)) {
+    // /static and /custom paths for returning static content
+    // We serve these even if the EULA has not been accepted, so that the
+    // EULA page can include static resources.
+    staticHandler(request, response);
+  } else if (!fs.existsSync(eulaDir)) {
     logging.getLogger().info('No Datalab config; redirect to EULA page');
     fs.readFile('/datalab/web/static/eula.html', function(error, content) {
       response.writeHead(200);
@@ -238,6 +243,7 @@ export function run(settings: common.Settings): void {
 
   healthHandler = health.createHandler(settings);
   infoHandler = info.createHandler(settings);
+  settingHandler = settings_.createHandler();
   staticHandler = static_.createHandler(settings);
 
   server = http.createServer(requestHandler);

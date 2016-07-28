@@ -15,14 +15,15 @@
 
 # Sets up various environment variables within the docker container.
 
-if [ -z "$DATALAB_ENV" ]
-then
-  export DATALAB_ENV="local"
-fi
+export DATALAB_ENV="local"
+export CLOUDSDK_CONFIG=/content/datalab/.config
 
-if [ $DATALAB_ENV = "local" ]
+if [ "${ENABLE_USAGE_REPORTING}" = "true" ]
 then
-  export CLOUDSDK_CONFIG=/content/datalab/.config
+  if [ -n "${PROJECT_ID}" ]
+  then
+    export PROJECT_NUMBER=`gcloud projects describe "${PROJECT_ID}" --format 'value(projectNumber)'`
+  fi
 fi
 
 if [ -n "${EXPERIMENTAL_KERNEL_GATEWAY_URL}" ]

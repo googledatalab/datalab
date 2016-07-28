@@ -28,7 +28,8 @@ var CONTENT_TYPES: common.Map<string> = {
   '.css': 'text/css',
   '.png': 'image/png',
   '.ico': 'image/x-icon',
-  '.txt': 'text/plain'
+  '.txt': 'text/plain',
+  '.html': 'text/html'
 };
 
 var contentCache: common.Map<Buffer> = {};
@@ -126,6 +127,9 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   }
   else if (path.lastIndexOf('/about.txt') > 0) {
     sendDataLabFile('datalab.txt', response);
+  }
+  else if (path.lastIndexOf('/reporting.html') > 0) {
+    sendDataLabFile('reporting.html', response);
   }
   else if (path.indexOf('/codemirror/mode/') > 0) {
     var split = path.lastIndexOf('/');

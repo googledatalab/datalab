@@ -20,12 +20,14 @@
 import auth = require('./auth')
 import callbacks = require('./callbacks');
 import childProcess = require('child_process');
+import crypto = require('crypto');
 import fs = require('fs');
 import http = require('http');
 import httpProxy = require('http-proxy');
 import logging = require('./logging');
 import net = require('net');
 import path = require('path');
+import settings = require('./settings');
 import tcp = require('tcp-port-used');
 import url = require('url');
 import userManager = require('./userManager');
@@ -366,15 +368,29 @@ export function handleRequest(request: http.ServerRequest, response: http.Server
 }
 
 function getBaseTemplateData(request: http.ServerRequest): common.Map<string> {
+  var userId: string = userManager.getUserId(request);
+  var reportingEnabled: string = process.env.ENABLE_USAGE_REPORTING;
+  if (reportingEnabled) {
+    var userSettings: common.Map<string> = settings.loadUserSettings(userId);
+    if ('enableUsageReporting' in userSettings && userSettings['enableUsageReporting'] != 'true') {
+      reportingEnabled = 'false';
+    }
+  }
   var templateData: common.Map<string> = {
     feedbackId: appSettings.feedbackId,
     versionId: appSettings.versionId,
-    userId: userManager.getUserId(request),
+    userId: userId,
     configUrl: appSettings.configUrl,
-    baseUrl: '/'
+    baseUrl: '/',
+    reportingEnabled: reportingEnabled,
   };
   if (process.env.DATALAB_ENV == 'local') {
     templateData['isSignedIn'] = auth.isSignedIn().toString();
+  }
+  if (auth.isSignedIn() && process.env.PROJECT_NUMBER != '') {
+    var hash = crypto.createHash('sha256');
+    hash.update(process.env.PROJECT_NUMBER);
+    templateData['projectHash'] = hash.digest('hex');
   }
   return templateData;
 }
