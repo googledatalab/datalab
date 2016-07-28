@@ -36,5 +36,7 @@ ENV EXPERIMENTAL_KERNEL_GATEWAY_URL=""
 # Startup
 ENV DATALAB_VERSION _version_
 ENV DATALAB_COMMIT _commit_
-ENTRYPOINT [ "/datalab/run.sh" ]
+ENV DEPLOY_VM "false"
 
+# Startup
+ENTRYPOINT [ "/datalab/run-with-gce.sh" ]

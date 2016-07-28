@@ -24,7 +24,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         libpng-dev libfreetype6-dev libxft-dev \
         rsync \
         libxml2-dev \
-        python2.7 python-dev python-setuptools python-zmq && \
+        python2.7 python-dev python-setuptools python-zmq openssh-client && \
     easy_install pip && \
     mkdir -p /tools && \
     mkdir -p /srcs && \
