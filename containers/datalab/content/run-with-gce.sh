@@ -49,7 +49,7 @@ if [[ -n "${GATEWAY_VM}" ]]; then
   GATEWAY_PART_2=`echo "${GATEWAY_VM}" | cut -d '/' -f 2`
   GATEWAY_PART_3=`echo "${GATEWAY_VM}" | cut -d '/' -f 3`
 
-  if [[ -z "${GATEWAY_PART_3}" &&  -z "${GATEWAY_PART_3}" ]]; then
+  if [[ -z "${GATEWAY_PART_3}" &&  -z "${GATEWAY_PART_2}" ]]; then
     export INSTANCE="${GATEWAY_PART_1}"
   elif [[ -z "${GATEWAY_PART_1}" || -z "${GATEWAY_PART_2}" || -z "${GATEWAY_PART_3}" ]]; then
     echo "Malformed gateway VM name"
@@ -63,7 +63,7 @@ if [[ -n "${GATEWAY_VM}" ]]; then
 fi
 
 if [[ -n "${INSTANCE}" ]]; then
-  USER_EMAIL=`gcloud info --format="value(config.account)"`
+  USER_EMAIL=`gcloud auth list --format="value(account)"`
   if [[ -z "${USER_EMAIL}" ]]; then
     FAILED_LOGIN=""
     gcloud auth login || FAILED_LOGIN="true"
