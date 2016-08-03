@@ -387,7 +387,7 @@ function getBaseTemplateData(request: http.ServerRequest): common.Map<string> {
   if (process.env.DATALAB_ENV == 'local') {
     templateData['isSignedIn'] = auth.isSignedIn().toString();
   }
-  if (auth.isSignedIn() && process.env.PROJECT_NUMBER != '') {
+  if (auth.isSignedIn() && process.env.PROJECT_NUMBER) {
     var hash = crypto.createHash('sha256');
     hash.update(process.env.PROJECT_NUMBER);
     templateData['projectHash'] = hash.digest('hex');
