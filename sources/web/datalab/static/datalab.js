@@ -19,10 +19,26 @@ var debug = {
 
 function placeHolder() {}
 
+function reportEvent(event) {
+  var reportingEnabled = (document.body.getAttribute('data-reporting-enabled') == 'true');
+  if (!reportingEnabled) { return; }
+
+  var signedIn = (document.body.getAttribute('data-signed-in') == 'true');
+  var additionalMetadata = 'signedIn=' + signedIn;
+  if (event['metadata']) {
+    event['metadata'] = event['metadata'] + ',' + additionalMetadata;
+  } else {
+    event['metadata'] = additionalMetadata;
+  }
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push(event);
+}
+
 function initializePage(dialog, saveFn) {
 
   function showAbout() {
     var version = document.body.getAttribute('data-version-id');
+    var reportingEnabled = (document.body.getAttribute('data-reporting-enabled') == 'true');
     var dialogContent =
       '<p>Interactive notebooks, with Python and SQL on Google Cloud Platform.</p>' +
       '<p>Explore, transform, visualize and process data using BigQuery and Google Cloud Storage.</p><br />' +
@@ -32,7 +48,8 @@ function initializePage(dialog, saveFn) {
       '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://github.com/GoogleCloudPlatform/datalab" target="_blank">Project on GitHub</a><br />' +
       '<span class="fa fa-external-link-square">&nbsp;</span><a href="/static/about.txt" target="_blank">License and software information</a><br />' +
       '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://cloud.google.com/terms/" target="_blank">Terms of Service</a><br />' +
-      '<span class="fa fa-external-link-square">&nbsp;</span><a href="http://www.google.com/intl/en/policies/" target="_blank">Privacy Policy</a><br />';
+      '<span class="fa fa-external-link-square">&nbsp;</span><a href="http://www.google.com/intl/en/policies/" target="_blank">Privacy Policy</a><br />' +
+      '<span class="fa fa-external-link-square">&nbsp;</span><a href="/static/reporting.html?enabled=' + reportingEnabled + '" target="_blank">Usage Statistics</a><br />';
 
     var dialogOptions = {
       title: 'About Google Cloud Datalab',
@@ -475,10 +492,28 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   })
 
   $('#convertHTMLButton').click(function() {
+    var event = {
+      'event': 'concordEvent',
+      'pagePath': '/virtual/datalab/exportNotebook',
+      'eventType': 'datalab',
+      'eventName': 'exportNotebook',
+      'metadata': 'format=html',
+    }
+    reportEvent(event);
+
     navigateAlternate('/nbconvert/html');
   })
 
   $('#convertPythonButton').click(function() {
+    var event = {
+      'event': 'concordEvent',
+      'pagePath': '/virtual/datalab/exportNotebook',
+      'eventType': 'datalab',
+      'eventName': 'exportNotebook',
+      'metadata': 'format=py',
+    }
+    reportEvent(event);
+
     navigateAlternate('/nbconvert/python');
   })
 
@@ -750,6 +785,14 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
   function addNotebook(e) {
     newNotebook.new_notebook();
     e.target.blur();
+
+    var event = {
+      'event': 'concordEvent',
+      'pagePath': '/virtual/datalab/createNotebook',
+      'eventType': 'datalab',
+      'eventName': 'createNotebook',
+    }
+    reportEvent(event);
   }
 
   function addFolder(e) {

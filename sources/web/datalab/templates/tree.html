@@ -17,7 +17,39 @@
   data-feedback-id="<%feedbackId%>"
   data-version-id="<%versionId%>"
   data-signed-in="<%isSignedIn%>"
-  data-user-id="<%userId%>">
+  data-user-id="<%userId%>"
+  data-reporting-enabled="<%reportingEnabled%>"
+  data-project-hash="<%projectHash%>">
+
+  <script>
+     window.datalab = {};
+  </script>
+  <script src="<%configUrl%>"></script>
+  <script>
+    var reportingEnabled = (document.body.getAttribute('data-reporting-enabled') == 'true');
+    if (reportingEnabled) {
+      // Snippet to initialize the Google Tag Manager, which provides anonymized usage reporting
+      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+      '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer',window.datalab.gtmAccount);
+      // End Google Tag Manager
+
+      var signedIn = (document.body.getAttribute('data-signed-in') == 'true');
+      var projectHash = document.body.getAttribute('data-project-hash');
+      var event = {
+        'event': 'concordEvent',
+        'pagePath': '/virtual/datalab/openDirectory',
+        'eventType': 'datalab',
+        'eventName': 'openDirectory',
+        'projectNumber': projectHash,
+        'metadata': 'signedIn=' + signedIn,
+      }
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push(event);
+    }
+  </script>
 
   <div id="app">
     <div id="appBar">
@@ -170,9 +202,7 @@
          }
        }
      });
-     window.datalab = {};
   </script>
-  <script src="<%configUrl%>"></script>
   <script src="/static/tree/js/main.min.js" charset="utf-8"></script>
   <script src="//www.gstatic.com/feedback/api.js" async="true" defer="true"></script>
 </body>
