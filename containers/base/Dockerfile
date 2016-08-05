@@ -26,9 +26,14 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         libxml2-dev \
         python2.7 python-dev python-setuptools python-zmq openssh-client && \
     easy_install pip && \
-    mkdir -p /tools && \
-    mkdir -p /srcs && \
-    cd /srcs && apt-get source -d python-zmq && cd /
+    mkdir -p /tools
+
+# Save GPL source packages
+RUN mkdir -p /srcs && \
+    cd /srcs && \
+    apt-get source -d python-zmq wget git ca-certificates pkg-config libpng-dev && \
+    wget ftp://ftp.gnu.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.bz2 && \
+    cd /
 
 # Setup Python packages. Rebuilding numpy/scipy is expensive so we move this early
 # to reduce the chance that prior steps can cause changes requiring a rebuild.
