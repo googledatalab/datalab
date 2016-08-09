@@ -35,6 +35,10 @@ RUN mkdir -p /srcs && \
     wget ftp://ftp.gnu.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.bz2 && \
     cd /
 
+# Force an earlier version of ipykernel until https://github.com/ipython/ipykernel/issues/173
+# is resolved.
+RUN pip install -U ipykernel==4.3.1
+
 # Setup Python packages. Rebuilding numpy/scipy is expensive so we move this early
 # to reduce the chance that prior steps can cause changes requiring a rebuild.
 RUN pip install -U numpy==1.11.0 && \
