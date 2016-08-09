@@ -151,5 +151,3 @@ RUN ipython profile create default && \
 # we don't enable them.
 #    jupyter nbextension enable --py widgetsnbextension && \
 
-# Force an older version of ipykernel until https://github.com/ipython/ipykernel/issues/173 is fixed.
-RUN pip install --upgrade --force-reinstall ipykernel==4.3.1
