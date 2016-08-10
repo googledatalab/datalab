@@ -44,4 +44,6 @@ then
 fi
 
 # Start the DataLab server
-forever /datalab/web/app.js
+echo "Starting Datalab in silent mode, for debug output, use --entrypoint /datalab/run-debug.sh"
+echo "Open your browser to http://localhost:8081/ to connect to Datalab."
+forever --minUptime 1000 --spinSleepTime 1000 -s /datalab/web/app.js
