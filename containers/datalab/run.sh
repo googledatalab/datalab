@@ -21,7 +21,7 @@
 # manually starting the server.
 
 CONTENT=$HOME
-ENTRYPOINT="/datalab/run-with-gce.sh"
+ENTRYPOINT="/datalab/run.sh"
 if [ "$1" != "" ]; then
   if [ "$1" != "shell" ]; then
     CONTENT=$1
