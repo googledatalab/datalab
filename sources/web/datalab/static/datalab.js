@@ -45,7 +45,7 @@ function initializePage(dialog, saveFn) {
       '<pre>Version: ' + version  + '\nBased on Jupyter (formerly IPython) 4</pre>' +
       '<h5><b>More Information</b></h5>' +
       '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://cloud.google.com" target="_blank">Product information</a><br />' +
-      '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://github.com/GoogleCloudPlatform/datalab" target="_blank">Project on GitHub</a><br />' +
+      '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://github.com/googledatalab/datalab" target="_blank">Project on GitHub</a><br />' +
       '<span class="fa fa-external-link-square">&nbsp;</span><a href="/static/about.txt" target="_blank">License and software information</a><br />' +
       '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://cloud.google.com/terms/" target="_blank">Terms of Service</a><br />' +
       '<span class="fa fa-external-link-square">&nbsp;</span><a href="http://www.google.com/intl/en/policies/" target="_blank">Privacy Policy</a><br />' +
@@ -878,7 +878,7 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
     var messageDiv = document.getElementById('updateMessageArea');
     var message = 'You are using DataLab 0.5.' + version + '. ' + 
         (optional ? 'An optional' : 'A recommended') + ' update (0.5.' + versionInfo.latest + 
-        ') is available (see <a href="https://github.com/GoogleCloudPlatform/datalab/wiki/Release-Info"' + 
+        ') is available (see <a href="https://github.com/googledatalab/datalab/wiki/Release-Info"' +
         '>what\'s new)</a>.'
     messageDiv.innerHTML = message;
     messageDiv.classList.add('alert');
