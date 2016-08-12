@@ -40,4 +40,4 @@ ENV DEPLOY_VM "false"
 ENV ENABLE_USAGE_REPORTING true
 
 # Startup
-ENTRYPOINT [ "/datalab/run-with-gce.sh" ]
+ENTRYPOINT [ "/datalab/run.sh" ]
