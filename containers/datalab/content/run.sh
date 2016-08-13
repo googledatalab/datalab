@@ -66,7 +66,7 @@ if [[ -n "${INSTANCE}" ]]; then
   USER_EMAIL=`gcloud auth list --format="value(account)"`
   if [[ -z "${USER_EMAIL}" ]]; then
     FAILED_LOGIN=""
-    gcloud auth login || FAILED_LOGIN="true"
+    node /datalab/web/login.js 2>/dev/null || FAILED_LOGIN="true"
     if [[ -n "${FAILED_LOGIN}" ]]; then
       echo "Failed to log in to gcloud"
       exit "${ERR_LOGIN}"
@@ -121,6 +121,7 @@ if [[ -n "${INSTANCE}" ]]; then
     --zone "${ZONE}" \
     --ssh-flag="-fNL" \
     --ssh-flag="localhost:8082:localhost:8080" \
+    --ssh-key-file="/content/datalab/.config/.ssh/google_compute_engine" \
     "${INSTANCE}"
 
   # Test that we can actually call the gateway API via the SSH tunnel

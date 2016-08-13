@@ -52,12 +52,12 @@ function base64decodeSegment(str: string) {
 
 function setGcloudAccount(email: string) {
   // Tell gcloud which account we are using.
-  childProcess.exec('gcloud config set account ' + email, {env: process.env}, function(err, stdout, stderr) {
-    if (err) {
-      logging.getLogger().error(err, 'Failed to set gcloud account. stderr: %s', stderr);
-      return;
-    }
-  });
+  try {
+    childProcess.execSync('gcloud config set account ' + email, {env: process.env});
+  } catch (err) {
+    logging.getLogger().error(err, 'Failed to set gcloud account. stderr: %s', err.stderr);
+    return;
+  }
 }
 
 function saveUserCredFile(tokens: any): string {
