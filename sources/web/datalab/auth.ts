@@ -50,6 +50,18 @@ function base64decodeSegment(str: string) {
   return new Buffer(str, 'base64').toString();
 }
 
+export function getGcloudAccount(): string {
+  // Ask gcloud which account we are using.
+  try {
+    var account = childProcess.execSync('gcloud config list --format "value(core.account)"', {env: process.env});
+    account = account.toString().trim();
+    return account;
+  } catch (err) {
+    logging.getLogger().error(err, 'Failed to get the gcloud account. stderr: %s', err.stderr);
+    return "unknown";
+  }
+}
+
 function setGcloudAccount(email: string) {
   // Tell gcloud which account we are using.
   try {
