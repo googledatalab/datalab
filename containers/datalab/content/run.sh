@@ -168,6 +168,13 @@ then
     jupyter serverextension enable --py nb2kg --sys-prefix
 fi
 
+# Create the notebook notary secret if one does not already exist
+if [ ! -f /content/datalab/.config/notary_secret ]
+then
+  mkdir -p /content/datalab/.config
+  openssl rand -base64 128 > /content/datalab/.config/notary_secret
+fi
+
 # Start the DataLab server
 FOREVER_CMD="forever --minUptime 1000 --spinSleepTime 1000"
 if [ -z "${DATALAB_DEBUG}" ]

@@ -143,7 +143,9 @@ function createJupyterServerAtPort(port: number, userId: string, userDir: string
     processArgs = processArgs.concat([
       '--NotebookApp.session_manager_class=nb2kg.managers.SessionManager',
       '--NotebookApp.kernel_manager_class=nb2kg.managers.RemoteKernelManager',
-      '--NotebookApp.kernel_spec_manager_class=nb2kg.managers.RemoteKernelSpecManager'
+      '--NotebookApp.kernel_spec_manager_class=nb2kg.managers.RemoteKernelSpecManager',
+      '--NotebookNotary.algorithm=sha256',
+      '--NotebookNotary.secret_file=/content/datalab/.config/notary_secret'
     ]);
   }
 
