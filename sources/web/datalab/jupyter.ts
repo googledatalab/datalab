@@ -172,7 +172,7 @@ function createJupyterServerAtPort(port: number, userId: string, userDir: string
   server.proxy.on('proxyRes', responseHandler);
   server.proxy.on('error', errorHandler);
 
-  tcp.waitUntilUsed(server.port, 100, 3000).then(
+  tcp.waitUntilUsed(server.port, 100, 15000).then(
     function() {
       jupyterServers[userId] = server;
       logging.getLogger().info('Jupyter server started for %s.', userId);
