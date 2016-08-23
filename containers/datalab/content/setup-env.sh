@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -e
 # Copyright 2015 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,22 +15,15 @@
 
 # Sets up various environment variables within the docker container.
 
+# TODO(ojarjur): This is a remnant of the old App-Engine based environment,
+# and as such, we should remove it.
 export DATALAB_ENV="local"
+
+# Ensure that gcloud has been told to use a config directory under the
+# mounted volume (so that the results of 'gcloud auth login' are persisted).
 export CLOUDSDK_CONFIG=/content/datalab/.config
 
-if [ "${ENABLE_USAGE_REPORTING}" = "true" ]
-then
-  if [ -n "${PROJECT_ID}" ]
-  then
-    USER_EMAIL=`gcloud auth list --format="value(account)"`
-    if [ -n "${USER_EMAIL}" ]
-    then
-      export PROJECT_NUMBER=`gcloud projects describe "${PROJECT_ID}" --format 'value(projectNumber)'`
-    fi
-  fi
-fi
+# Lookup the project and zone, which may be in the mapped gcloud config.
+export PROJECT_ID=${PROJECT_ID:-`gcloud config list -q --format 'value(core.project)' 2> /dev/null`}
+export ZONE=${ZONE:-`gcloud config list -q --format 'value(compute.zone)' 2> /dev/null`}
 
-if [ -n "${EXPERIMENTAL_KERNEL_GATEWAY_URL}" ]
-then
-  export KG_URL="${EXPERIMENTAL_KERNEL_GATEWAY_URL}"
-fi
