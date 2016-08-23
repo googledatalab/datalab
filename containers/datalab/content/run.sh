@@ -18,13 +18,13 @@ USAGE='USAGE: One of...
 
 To run locally:
 
-    docker run -it -p "8081:8080" -v "${HOME}:/content" gcr.io/cloud-datalab/datalab
+    docker run -it -p "8081:8080" -v "${HOME}:/content" gcr.io/cloud-datalab/datalab:local
 
 Or, to connect to a kernel gateway in a GCE VM;
 
     docker run -it -p "8081:8080" -v "${HOME}:/content" \
       -e "GATEWAY_VM=${PROJECT_ID}/${ZONE}/${INSTANCE}"
-      gcr.io/cloud-datalab/datalab
+      gcr.io/cloud-datalab/datalab:local
 '
 
 ERR_MALFORMED_GATEWAY=1
@@ -36,13 +36,7 @@ ERR_DEPLOY=6
 ERR_TUNNEL_FAILED=7
 ERR_GATEWAY_FAILED=7
 
-# Run the 'setup-env' script to ensure that gcloud has been told to use
-# a config directory under the mounted volume (so that the results of
-# 'gcloud auth login' are persisted).
 source /datalab/setup-env.sh
-
-export PROJECT_ID=${PROJECT_ID:-`gcloud config list -q --format 'value(core.project)' 2> /dev/null`}
-export ZONE=${ZONE:-`gcloud config list -q --format 'value(compute.zone)' 2> /dev/null`}
 
 if [[ -n "${GATEWAY_VM}" ]]; then
   GATEWAY_PART_1=`echo "${GATEWAY_VM}" | cut -d '/' -f 1`
@@ -141,6 +135,23 @@ if [[ -n "${INSTANCE}" ]]; then
   fi
 
   export EXPERIMENTAL_KERNEL_GATEWAY_URL="http://localhost:8082"
+fi
+
+if [ -n "${EXPERIMENTAL_KERNEL_GATEWAY_URL}" ]
+then
+  export KG_URL="${EXPERIMENTAL_KERNEL_GATEWAY_URL}"
+fi
+
+if [ "${ENABLE_USAGE_REPORTING}" = "true" ]
+then
+  if [ -n "${PROJECT_ID}" ]
+  then
+    USER_EMAIL=`gcloud auth list --format="value(account)"`
+    if [ -n "${USER_EMAIL}" ]
+    then
+      export PROJECT_NUMBER=`gcloud projects describe "${PROJECT_ID}" --format 'value(projectNumber)'`
+    fi
+  fi
 fi
 
 mkdir -p /content/datalab/notebooks
