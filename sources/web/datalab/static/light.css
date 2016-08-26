@@ -1,0 +1,80 @@
+/*
+ * Copyright 2015 Google Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
+body {
+  background: #fff;
+}
+#mainToolbar, #sidebarToolbar, #sidebarArea {
+  background-color: #f3f3f3;
+}
+#sidebarArea, #sidebarContent {
+  color: #000;
+}
+#mainToolbar, #sidebarToolbar {
+  color: #444;
+  border-bottom: solid 1px #e6e6e6;
+}
+#appBar button {
+  color: #ccc;
+  background-color: transparent;
+}
+#appBar button:hover {
+  color: #fff;
+}
+div.btn-toolbar .btn {
+  color: #666;
+  background-color: transparent;
+}
+div.btn-toolbar .btn:hover, div.btn-toolbar .btn:focus {
+  color: #000;
+}
+div.btn-toolbar .btn.active {
+  color: #337ab7;
+  border-bottom: solid 2px #337ab7;
+}
+#button-select-all {
+  border-color: transparent;
+  background-color: transparent;
+}
+.notebook_app {
+  background: #fff;
+}
+#notebook_name:hover {
+  background-color: transparent;
+}
+span.autosave_status {
+  color: #ddd;
+}
+div.code_cell.session.completed div.input {
+  border-left: solid 4px #337ab7;
+}
+div.code_cell div.input {
+  background-color: #f7f7f7;
+}
+.cm-keyword {
+  color: #00f !important;
+}
+.cm-number, .cm-string, .cm-string2 {
+  color: #000080 !important;
+}
+.cm-def, .cm-variable, .cm-variable-2, .cm-variable-3, .cm-property,
+.cm-qualifier, .cm-operator, .cm-meta, .cm-builtin,
+.cm-tag, .cm-attribute, .cm-header, .cm-hr, .cm-atom {
+  color: #000 !important;
+}
+.cm-link, .cm-url {
+  color: #337ab7 !important;
+}
+code {
+  background-color: #eee;
+}

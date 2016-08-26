@@ -1,0 +1,141 @@
+/*
+ * Copyright 2015 Google Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+body {
+  color: #fff;
+  background: #000;
+}
+#mainToolbar, #sidebarToolbar, #sidebarArea {
+  background-color: #444;
+}
+#mainToolbar, #sidebarToolbar {
+  border-bottom: solid 1px #000;
+}
+#notebook-container {
+  background: #000;
+}
+button, .btn {
+  color: #ccc;
+  background-color: transparent;
+}
+button:hover, .btn-toolbar, .btn:hover, .btn:focus {
+  color: #fff;
+}
+.btn.active {
+  color: #557ab7;
+  border-bottom: solid 2px #559ad7;
+}
+#button-select-all {
+  border-color: transparent;
+  background-color: transparent;
+}
+.notebook_app {
+  color: #fff;
+  background: #000;
+}
+#notebook_name:hover {
+  background-color: transparent;
+}
+span.autosave_status {
+  color: #ddd;
+}
+a:hover {
+  color: #5bc0de;
+}
+.breadcrumb, .list_header {
+  color: #6ee;
+  background: #333;
+}
+.list_item:hover {
+  background: #555;
+}
+div.code_cell.session.completed div.input {
+  border-left: solid 4px #559ad7;
+}
+div.code_cell div.input {
+  background-color: #333;
+}
+div.output, div.output_area pre {
+  color: #fff;
+}
+div.output {
+  background-color: #555;
+}
+div.output_stderr {
+  background-color: #a94442;
+}
+.CodeMirror, .CodeMirror pre, .CodeMirror-lines, .CodeMirror-linenumber {
+  color: #fff;
+  background: #333;
+}
+.CodeMirror-gutters {
+  color: #fff;
+  background: #333;
+}
+.cm-keyword {
+  color: #aaf !important;
+}
+.cm-number, .cm-string, .cm-string2 {
+  color: lightgreen !important;
+}
+.cm-def, .cm-variable, .cm-variable-2, .cm-variable-3, .cm-property,
+.cm-qualifier, .cm-operator, .cm-meta, .cm-builtin,
+.cm-tag, .cm-attribute, .cm-header, .cm-hr, .cm-atom {
+  color: #337ab7 !important;
+}
+.cm-link, .cm-url {
+  color: #559ad7 !important;
+}
+code {
+  background-color: #666;
+}
+
+.ansicyan {
+  color: lightblue;
+}
+.ansigreen {
+  color: lightgreen;
+}
+.ansigray {
+  color: lightgray;
+}
+.ansiyellow {
+  color: #ff0;
+}
+.cm-magic, .ansired {
+  color: #f00;
+}
+.item_icon {
+  color: #adadad;
+}
+
+#texteditor-backdrop, #texteditor-backdrop #texteditor-container .CodeMirror-gutter {
+  background: #333;
+}
+
+.rendered_html, div.text_cell_render {
+  color: #fff;
+}
+
+.modal-content {
+  background-color: #333;
+}
+
+.close {
+  color: inherit;
+}
+
+.google-visualization-table {
+  color: #000;
+}

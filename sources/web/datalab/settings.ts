@@ -72,14 +72,23 @@ export function loadSettings(): common.Settings {
 }
 
 /**
+ * Loads the path of the configuration directory for the user.
+ *
+ * @returns the path of the user's config directory.
+ */
+export function getUserConfigDir(userId: string): string {
+  var userDir = userManager.getUserDir(userId);
+  var configPath = path.join(userDir, 'datalab', '.config');
+  return configPath;
+}
+
+/**
  * Loads the configuration settings for the user.
  *
  * @returns the key:value mapping of settings for the user.
  */
 export function loadUserSettings(userId: string): common.Map<string> {
-  var userDir = userManager.getUserDir(userId);
-  var settingsPath = path.join(userDir, 'datalab', '.config', SETTINGS_FILE);
-
+  var settingsPath = path.join(getUserConfigDir(userId), SETTINGS_FILE);
   if (!fs.existsSync(settingsPath)) {
     console.log('Settings file %s not found.', settingsPath);
     return {};
