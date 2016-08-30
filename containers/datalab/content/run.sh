@@ -65,6 +65,7 @@ if [[ -n "${INSTANCE}" ]]; then
       echo "Failed to log in to gcloud"
       exit "${ERR_LOGIN}"
     fi
+    USER_EMAIL=`gcloud auth list --format="value(account)"`
   fi
 
   PROJECT_NOT_FOUND=""
