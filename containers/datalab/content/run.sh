@@ -65,6 +65,7 @@ if [[ -n "${INSTANCE}" ]]; then
       echo "Failed to log in to gcloud"
       exit "${ERR_LOGIN}"
     fi
+    USER_EMAIL=`gcloud auth list --format="value(account)"`
   fi
 
   PROJECT_NOT_FOUND=""
@@ -109,14 +110,15 @@ if [[ -n "${INSTANCE}" ]]; then
     fi
   fi
 
-  echo "Will connect to the kernel gateway running on the GCE VM ${INSTANCE}"
+  SSH_USER=`echo ${USER_EMAIL} | cut -d '@' -f 1`
+  echo "Will connect to the kernel gateway running on the GCE VM ${INSTANCE} as ${SSH_USER}"
   gcloud compute ssh --quiet \
     --project "${PROJECT_ID}" \
     --zone "${ZONE}" \
     --ssh-flag="-fNL" \
     --ssh-flag="localhost:8082:localhost:8080" \
     --ssh-key-file="/content/datalab/.config/.ssh/google_compute_engine" \
-    "${INSTANCE}"
+    "${SSH_USER}@${INSTANCE}"
 
   # Test that we can actually call the gateway API via the SSH tunnel
   TUNNEL_FAILED=""
