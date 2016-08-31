@@ -38,6 +38,7 @@ ENV DATALAB_VERSION _version_
 ENV DATALAB_COMMIT _commit_
 ENV DEPLOY_VM "false"
 ENV ENABLE_USAGE_REPORTING true
+ENV CLI_LOGIN false
 
 # Startup
 ENTRYPOINT [ "/datalab/run.sh" ]
