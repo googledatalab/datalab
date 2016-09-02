@@ -32,7 +32,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 RUN mkdir -p /srcs && \
     cd /srcs && \
     apt-get source -d python-zmq wget git ca-certificates pkg-config libpng-dev && \
-    wget ftp://ftp.gnu.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.bz2 && \
+    wget https://mirrors.kernel.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.bz2 && \
     cd /
 
 # Setup Python packages. Rebuilding numpy/scipy is expensive so we move this early
