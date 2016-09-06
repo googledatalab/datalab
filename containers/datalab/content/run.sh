@@ -36,6 +36,21 @@ ERR_DEPLOY=6
 ERR_TUNNEL_FAILED=7
 ERR_GATEWAY_FAILED=7
 
+run_login() {
+  local login_cmd=${1:-"gcloud auth login"}
+
+  USER_EMAIL=`gcloud auth list --format="value(account)"`
+  if [[ -z "${USER_EMAIL}" ]]; then
+    local failed_login=""
+    ${login_cmd} || failed_login="true"
+    if [[ -n "${failed_login}" ]]; then
+      echo "Failed to log in to gcloud"
+      exit "${ERR_LOGIN}"
+    fi
+  fi
+  USER_EMAIL=`gcloud auth list --format="value(account)"`
+}
+
 source /datalab/setup-env.sh
 
 if [[ -n "${GATEWAY_VM}" ]]; then
@@ -56,17 +71,12 @@ if [[ -n "${GATEWAY_VM}" ]]; then
   fi
 fi
 
+if [[ "${CLI_LOGIN}" == "true" ]]; then
+  run_login
+fi
+
 if [[ -n "${INSTANCE}" ]]; then
-  USER_EMAIL=`gcloud auth list --format="value(account)"`
-  if [[ -z "${USER_EMAIL}" ]]; then
-    FAILED_LOGIN=""
-    node /datalab/web/login.js 2>/dev/null || FAILED_LOGIN="true"
-    if [[ -n "${FAILED_LOGIN}" ]]; then
-      echo "Failed to log in to gcloud"
-      exit "${ERR_LOGIN}"
-    fi
-    USER_EMAIL=`gcloud auth list --format="value(account)"`
-  fi
+  run_login "node /datalab/web/login.js 2>/dev/null"
 
   PROJECT_NOT_FOUND=""
   ZONE_NOT_FOUND=""
