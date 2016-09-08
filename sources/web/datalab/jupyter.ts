@@ -371,6 +371,10 @@ export function handleRequest(request: http.ServerRequest, response: http.Server
 
 function getBaseTemplateData(request: http.ServerRequest): common.Map<string> {
   var userId: string = userManager.getUserId(request);
+  var proxyWebSockets: string = process.env.PROXY_WEB_SOCKETS;
+  if (proxyWebSockets != 'true') {
+    proxyWebSockets = 'false';
+  }
   var reportingEnabled: string = process.env.ENABLE_USAGE_REPORTING;
   if (reportingEnabled) {
     var userSettings: common.Map<string> = settings.loadUserSettings(userId);
@@ -385,6 +389,7 @@ function getBaseTemplateData(request: http.ServerRequest): common.Map<string> {
     configUrl: appSettings.configUrl,
     baseUrl: '/',
     reportingEnabled: reportingEnabled,
+    proxyWebSockets: proxyWebSockets
   };
   if (process.env.DATALAB_ENV == 'local') {
     templateData['isSignedIn'] = auth.isSignedIn().toString();

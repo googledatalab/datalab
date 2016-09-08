@@ -27,6 +27,7 @@ import net = require('net');
 import path = require('path');
 import request = require('request');
 import reverseProxy = require('./reverseProxy');
+import sockets = require('./sockets');
 import settings_ = require('./settings');
 import static_ = require('./static');
 import url = require('url');
@@ -247,7 +248,12 @@ export function run(settings: common.Settings): void {
   staticHandler = static_.createHandler(settings);
 
   server = http.createServer(requestHandler);
-  server.on('upgrade', socketHandler);
+  var proxyWebSockets: string = process.env.PROXY_WEB_SOCKETS;
+  if (proxyWebSockets == 'true') {
+    sockets.wrapServer(server);
+  } else {
+    server.on('upgrade', socketHandler);
+  }
 
   logging.getLogger().info('Starting DataLab server at http://localhost:%d',
                            settings.serverPort);
