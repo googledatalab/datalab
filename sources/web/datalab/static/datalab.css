@@ -307,16 +307,20 @@ div.cell {
   border: solid 1px transparent;
   border-radius: 0px;
   padding: 0px;
+  padding-left: 4px;
   margin-bottom: 10px;
 }
 div.cell.selected, div.cell.text_cell.selected, div.cell.code_cell.selected {
   border: solid 1px #ddd;
+  padding-left: 4px;
   box-shadow: 0px 0px 6px 0px rgba(0, 0, 0, 0.2);
 }
 .edit_mode div.cell.text_cell.selected, .edit_mode div.code_cell.selected {
   border: solid 1px #ddd;
+  padding-left: 4px;
   box-shadow: 0px 0px 6px 0px rgba(0, 0, 0, 0.2);
 }
+
 div.code_cell div.input {
   border-left: solid 4px #ddd;
 }
