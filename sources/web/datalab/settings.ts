@@ -180,11 +180,26 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     } else {
       response.writeHead(500, { 'Content-Type': 'text/plain' });
     }
+    response.end();
+    return;
   } else {
-    response.writeHead(400, { 'Content-Type': 'text/plain' });
+    var userSettings = loadUserSettings(userId);
+    if ('key' in parsedUrl.query) {
+      var key = parsedUrl.query['key'];
+      if (key in userSettings) {
+        response.writeHead(200, { 'Content-Type': 'application/json' });
+        response.end(JSON.stringify(userSettings[key]));
+      } else {
+        response.writeHead(404, { 'Content-Type': 'text/plain' });
+        response.end();
+      }
+      return;
+    } else {
+      response.writeHead(200, { 'Content-Type': 'application/json' });
+      response.end(JSON.stringify(userSettings));
+      return;
+    }
   }
-
-  response.end();
 }
 
 /**
