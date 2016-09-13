@@ -24,18 +24,18 @@ body {
   color: #444;
   border-bottom: solid 1px #e6e6e6;
 }
-#appBar button {
+#appBar .toolbar-btn {
   color: #ccc;
   background-color: transparent;
 }
-#appBar button:hover {
+#appBar .toolbar-btn:hover {
   color: #fff;
 }
-div.btn-toolbar .btn {
+div.btn-toolbar .toolbar-btn {
   color: #666;
   background-color: transparent;
 }
-div.btn-toolbar .btn:hover, div.btn-toolbar .btn:focus {
+div.btn-toolbar .toolbar-btn:hover, div.btn-toolbar .btn:focus {
   color: #000;
 }
 div.btn-toolbar .btn.active {

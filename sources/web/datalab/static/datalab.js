@@ -158,7 +158,7 @@ function initializePage(dialog, saveFn) {
   var signedIn = document.body.getAttribute('data-signed-in');
   if (signedIn != undefined) {  // i.e. running locally.
     if (signedIn == "true") {
-      $('#signOutButton').show();
+      $('#signOutGroup').show();
     } else {
       $('#signInButton').show();
     }
@@ -282,10 +282,10 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
       return lastSepPos >= 23 &&
           path.substring(lastSepPos-23, lastSepPos) == '/datalab/docs/notebooks';
     }
-    
+
     // Remove save and rename menu items if under our docs directory.
     if (isSample()) {
-      // Can't just hide them as they will get redisplayed on drop down, so we 
+      // Can't just hide them as they will get redisplayed on drop down, so we
       // strip their content.
       document.getElementById('saveButton').innerHTML = '';
       document.getElementById('renameButton').innerHTML = '';
@@ -322,7 +322,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   require(['notebook/js/menubar'], function(ipy) {
     ipy.MenuBar.prototype.add_kernel_help_links = placeHolder;
 
-    // This is just a copy of the one from Jupyter but changes the first 
+    // This is just a copy of the one from Jupyter but changes the first
     // line from this.element.find('restore_checkpoint') to
     // $('#restoreButton').
     ipy.MenuBar.prototype.update_restore_checkpoint = function(checkpoints) {
@@ -440,7 +440,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 
   /**
    * Patch the cell auto_highlight code to use a working mode for magic_ MIME types.
-   * The Jupyter code uses a broken multiplexor. This _auto_highlight function is 
+   * The Jupyter code uses a broken multiplexor. This _auto_highlight function is
    * just the Jupyter code with the multiplexor stripped out and an overlay mode
    * put in instead. First we have a function to return the mode that works,
    * then we have the original Jupyter code with a call to our function replacing the
@@ -689,7 +689,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     document.getElementById('hideSidebarButton').classList.toggle('fa-flip-vertical');
     this.blur();
     // Chrome at least seems to render the notebook poorly after this for a little
-    // while. If you scroll new content into view it is messed up until you click 
+    // while. If you scroll new content into view it is messed up until you click
     // in the notebook. This does not repro with Firefox or Safari so seems to be
     // a Chrome bug. Triggering a resize or similar doesn't help because the content
     // that is messed up is currently out of the viewable part of the window. Will
@@ -968,8 +968,8 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
     }
     var optional = (version >= versionInfo.last);
     var messageDiv = document.getElementById('updateMessageArea');
-    var message = 'You are using DataLab 0.5.' + version + '. ' + 
-        (optional ? 'An optional' : 'A recommended') + ' update (0.5.' + versionInfo.latest + 
+    var message = 'You are using DataLab 0.5.' + version + '. ' +
+        (optional ? 'An optional' : 'A recommended') + ' update (0.5.' + versionInfo.latest +
         ') is available (see <a href="https://github.com/googledatalab/datalab/wiki/Release-Info"' +
         '>what\'s new)</a>.'
     messageDiv.innerHTML = message;
