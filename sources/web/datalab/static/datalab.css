@@ -46,7 +46,6 @@ body {
   align-content: space-between;
 }
 #appBar {
-  color: white;
   background-color: #333;
   box-shadow: 0 0 8px 0 #000;
   -webkit-order: 1;
@@ -57,7 +56,6 @@ body {
   align-self: auto;
   height: 48px;
   min-height: 48px;
-  color: white;
   padding-left: 10px;
   padding-right: 10px;
   position: relative;
@@ -187,7 +185,7 @@ body {
 div.btn-group a {
   cursor: default;
 }
-#appBar button {
+#appBar .toolbar-btn {
   background-color: transparent;
   border: none;
   height: 48px;
@@ -202,9 +200,10 @@ div.btn-group a {
 div.btn-toolbar {
   margin: 0px;
 }
-div.btn-toolbar .btn {
+div.btn-toolbar .toolbar-btn {
   background-color: transparent;
   border: none;
+  font-family: 'Open Sans', Helvetica, sans-serif;
   font-weight: normal;
   font-size: 14px;
   outline: solid 1px transparent !important;
@@ -214,18 +213,18 @@ div.btn-toolbar .btn {
   cursor: pointer;
   vertical-align: middle;
 }
-div.btn-toolbar .btn:hover, div.btn-toolbar .btn:focus {
+div.btn-toolbar .toolbar-btn:hover, div.btn-toolbar .toolbar-btn:focus {
   border: none;
 }
-div.btn-toolbar button:focus {
+div.btn-toolbar .toolbar-btn:focus {
   outline: solid 1px transparent !important;
 }
-div.btn-toolbar .btn.dropdown-toggle {
+div.btn-toolbar .toolbar-btn.dropdown-toggle {
   padding-left: 2px;
   padding-right: 2px;
   margin-left: -2px;
 }
-div.btn-toolbar .btn.active {
+div.btn-toolbar .toolbar-btn.active {
   font-weight: bold;
   border: none;
   box-shadow: none;

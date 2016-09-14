@@ -59,38 +59,42 @@
       </span>
       <div class="btn-toolbar pull-right">
         <div class="btn-group">
-          <button id="feedbackButton" title="Provide feedback">
+          <button id="feedbackButton" title="Provide feedback" class="toolbar-btn">
             <span class="fa fa-comment"></span>
           </button>
         </div>
         <div class="btn-group">
-          <button id="aboutButton" title="About Google Cloud Datalab">
+          <button id="aboutButton" title="About Google Cloud Datalab" class="toolbar-btn">
             <span class="fa fa-info-circle"></span>
           </button>
         </div>
         <div class="btn-group">
-          <a href="/tree/datalab/docs/notebooks" class="btn">
-            <button title="Samples and Tutorials">
+          <a href="/tree/datalab/docs/notebooks">
+            <button title="Samples and Tutorials" class="toolbar-btn">
               <span class="fa fa-book"></span>
             </button>
           </a>
         </div>
         <div class="btn-group">
-          <a href="/sessions" target="_blank" id="sessionsButton" class="btn">
-            <button title="Running Sessions">
+          <a href="/sessions" target="_blank" id="sessionsButton">
+            <button title="Running Sessions" class="toolbar-btn">
               <span class="fa fa-tasks"></span>
             </button>
           </a>
         </div>
         <div class="btn-group">
-          <button id="signInButton" title="Sign In" style="display:none">
-            <span class="fa fa-sign-in"></span>
-          </button>
-        </div>
-        <div class="btn-group">
-          <button id="signOutButton" title="Sign Out (<%account%>)" style="display:none">
-            <span class="fa fa-sign-out"></span>
-          </button>
+          <button id="signInButton" title="Sign In" style="display:none" class="toolbar-btn">Sign In</button>
+          <div id="signOutGroup" style="display:none">
+            <button title="Account" data-toggle="dropdown" class="toolbar-btn">
+              <span class="fa fa-user"></span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-right" style="padding: 10px">
+              <li>
+                <label">Signed in as <%account%></label>
+                <button id="signOutButton" title="Sign Out" class="btn btn-danger" style="width: 100%">Sign Out</button>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
@@ -107,24 +111,24 @@
                     <form id="alternate_upload"  class="alternate_upload">
                       <div class="btn-toolbar pull-left">
                         <div class="btn-group">
-                          <button id="addNotebookButton" type="button" class="btn" title="Add a new notebook">
+                          <button id="addNotebookButton" type="button" class="toolbar-btn" title="Add a new notebook">
                             <span class="fa fa-plus-square"></span> Notebook
                           </button>
-                          <button id="addFolderButton" type="button" class="btn" title="Add a new folder">
+                          <button id="addFolderButton" type="button" class="toolbar-btn" title="Add a new folder">
                             <span class="fa fa-plus-square"></span> Folder
                           </button>
-                          <span id="uploadButton" type="button" class="btn" title="Upload notebook(s)">
+                          <span id="uploadButton" type="button" class="toolbar-btn" title="Upload notebook(s)">
                             <span class="fa fa-upload"></span>
                             <input type="file" name="datafile" class="fileinput" multiple="multiple" value="Upload" />
                             Upload
                           </span>
-                          <button id="duplicateButton" type="button" class="btn duplicate-button" title="Create a copy of the selected item(s)">
+                          <button id="duplicateButton" type="button" class="toolbar-btn duplicate-button" title="Create a copy of the selected item(s)">
                             <span class="fa fa-files-o"></span> Copy
                           </button>
-                          <button id="renameButton" type="button" class="btn rename-button" title="Rename selected item(s)">
+                          <button id="renameButton" type="button" class="toolbar-btn rename-button" title="Rename selected item(s)">
                             <span class="fa fa-edit"></span> Rename
                           </button>
-                          <button id="deleteButton" type="button" class="btn delete-button" title="Deleted selected item(s)">
+                          <button id="deleteButton" type="button" class="toolbar-btn delete-button" title="Deleted selected item(s)">
                             <span class="fa fa-trash-o"></span> Delete
                           </button>
                         </div>
