@@ -67,6 +67,11 @@ RUN pip install -U tornado==4.3 \
     pip install -U ipywidgets==5.0.0 && \
     pip install -U future==0.15.2 && \
     pip install -U psutil==4.3.0 && \
+    pip install -U google-api-python-client==1.5.1  && \
+    pip install -U plotly==1.12.5 && \
+    pip install -U nltk==3.2.1 && \
+    pip install -U bs4==0.0.1 && \
+    pip install -U crcmod==1.7 && \
     easy_install pip && \
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf
 
