@@ -15,6 +15,7 @@
 FROM datalab-base
 MAINTAINER Google Cloud DataLab
 
+ADD build/web/kernelproxy /datalab/web
 ADD content/ /datalab
 
 # Install the support for running a kernel gateway

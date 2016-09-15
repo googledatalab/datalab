@@ -25,5 +25,15 @@ then
   . ~/startup.sh
 fi
 
-# Start the DataLab kernel gateway
-jupyter kernelgateway --JupyterWebsocketPersonality.list_kernels=True --KernelGatewayApp.port=8080 --KernelGatewayApp.ip=0.0.0.0
+# Start the DataLab kernel gateway.
+jupyter kernelgateway --JupyterWebsocketPersonality.list_kernels=True --KernelGatewayApp.port=8081 --KernelGatewayApp.ip=0.0.0.0 &
+
+# Start the proxy.
+FOREVER_CMD="forever --minUptime 1000 --spinSleepTime 1000"
+if [ -z "${DATALAB_DEBUG}" ]
+then
+  echo "Starting Datalab Kernel Gateway in silent mode, for debug output, rerun with an additional '-e DATALAB_DEBUG=true' argument"
+  FOREVER_CMD="${FOREVER_CMD} -s"
+fi
+
+${FOREVER_CMD} /datalab/web/app.js

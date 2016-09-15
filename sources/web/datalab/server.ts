@@ -24,6 +24,7 @@ import info = require('./info');
 import jupyter = require('./jupyter');
 import logging = require('./logging');
 import net = require('net');
+import noCacheContent = require('./noCacheContent')
 import path = require('path');
 import request = require('request');
 import reverseProxy = require('./reverseProxy');
@@ -118,6 +119,16 @@ function handleRequest(request: http.ServerRequest,
   var targetPort: string = reverseProxy.getRequestPort(request, path);
   if (targetPort) {
     reverseProxy.handleRequest(request, response, targetPort);
+    return;
+  }
+
+  if (path.indexOf('/_nocachecontent/') == 0) {
+    if (process.env.KG_URL) {
+      reverseProxy.handleRequest(request, response, null);
+    }
+    else {
+      noCacheContent.handleRequest(path, response);
+    }
     return;
   }
 
