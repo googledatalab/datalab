@@ -90,7 +90,10 @@
             </button>
             <ul class="dropdown-menu dropdown-menu-right" style="padding: 10px">
               <li>
-                <label">Signed in as <%account%></label>
+                <label>Signed in as <%account%></label>
+              </li>
+              <hr />
+              <li>
                 <button id="signOutButton" title="Sign Out" class="btn btn-danger" style="width: 100%">Sign Out</button>
               </li>
             </ul>
@@ -117,11 +120,11 @@
                           <button id="addFolderButton" type="button" class="toolbar-btn" title="Add a new folder">
                             <span class="fa fa-plus-square"></span> Folder
                           </button>
-                          <span id="uploadButton" type="button" class="toolbar-btn" title="Upload notebook(s)">
+                          <button id="uploadButton" type="button" class="toolbar-btn" title="Upload notebook(s)">
                             <span class="fa fa-upload"></span>
                             <input type="file" name="datafile" class="fileinput" multiple="multiple" value="Upload" />
                             Upload
-                          </span>
+                          </button>
                           <button id="duplicateButton" type="button" class="toolbar-btn duplicate-button" title="Create a copy of the selected item(s)">
                             <span class="fa fa-files-o"></span> Copy
                           </button>
