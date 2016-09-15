@@ -155,16 +155,21 @@ code {
 .google-visualization-table {
   color: #000;
 }
-.gchart-table-cell {
-  background-color: #444;
-  color: #ddd;
-}
 .gchart-table-hoverrow>.gchart-table-cell {
   background-color: #333;
   color: #fff;
 }
-tr.gchart-table-oddrow, table.dataframe tr:nth-child(odd) {
-  opacity: 0.9;
+.gchart-table-cell, tr.google-visualization-table-tr-odd, tr.gchart-table-oddrow, table.dataframe tbody tr:nth-child(odd) {
+  background-color: #444;
+  color: #ddd;
+}
+tr.google-visualization-table-tr-even {
+  background-color: #333;
+  color: #ddd;
+}
+tr.gchart-table-hoverrow, table.dataframe tbody tr:hover, tr.google-visualization-table-tr-over {
+  background-color: #222;
+  color: #fff;
 }
 table.bqsv th, table.bqsv td {
   background-color: #444;
@@ -196,4 +201,11 @@ table.bqsv th, table.bqsv td {
 }
 .rendered_html, div.text_cell_render {
   color: #ddd;
+}
+
+svg>rect {
+  fill: #444;
+}
+svg text {
+  fill: #ddd;
 }
