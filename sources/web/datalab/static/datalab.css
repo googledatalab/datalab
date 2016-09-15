@@ -393,7 +393,7 @@ pre, code, .CodeMirror, .CodeMirror pre, .CodeMirror-linenumber {
   background-color: #addfff !important;
 }
 .CodeMirror-cursor {
-  border-left: 2px solid #222 !important;
+  border-left: 2px solid #222;
 }
 .CodeMirror-gutters {
   border-right: 1px solid #eee;
