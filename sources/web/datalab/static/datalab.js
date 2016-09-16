@@ -126,6 +126,17 @@ function reportEvent(event) {
   window.dataLayer.push(event);
 }
 
+function xhr(url, callback) {
+  let request = new XMLHttpRequest();
+  request.onreadystatechange = callback.bind(request);
+  request.open("GET", url);
+  request.send();
+}
+
+function getSettingKeyAddress(setting) {
+  return window.location.protocol + "//" + window.location.host + "/_settings?key=" + setting;
+}
+
 function initializePage(dialog, saveFn) {
 
   function showAbout() {
@@ -152,6 +163,19 @@ function initializePage(dialog, saveFn) {
   }
 
   $('#aboutButton').click(showAbout);
+
+  // Prepare signOutGroup
+  $('#signOutGroup button').on('click', function (event) {
+    $(this).parent().toggleClass('open');
+  });
+  $('body').on('click', function (e) {
+    if (!$('#signOutGroup').is(e.target)
+        && $('#signOutGroup').has(e.target).length === 0
+        && $('.open').has(e.target).length === 0
+    ) {
+        $('#signOutGroup').removeClass('open');
+    }
+  });
   $('#feedbackButton').click(function() {
     window.open('https://groups.google.com/forum/#!newtopic/google-cloud-datalab-feedback');
   });
@@ -170,6 +194,18 @@ function initializePage(dialog, saveFn) {
       saveFn();
       window.location = '/signout?referer=' + encodeURIComponent(window.location);
     });
+
+    // Prepare the theme selector dropdown
+    themeDropdown = document.getElementById("themeDropdown")
+    xhr(getSettingKeyAddress("theme"), function() {
+      themeDropdown.selectedIndex = this.responseText === "\"dark\"" ? 0 : 1;
+    })
+    themeDropdown.onchange = function() {
+      xhr(getSettingKeyAddress("theme") + "&value=" + (themeDropdown.selectedIndex === 0 ? "dark" : "light"), function() {
+        sheetAddress = document.getElementById("themeStylesheet").href + "?v=" + Date.now()
+        document.getElementById("themeStylesheet").setAttribute('href', sheetAddress);
+      })
+    };
   }
 }
 

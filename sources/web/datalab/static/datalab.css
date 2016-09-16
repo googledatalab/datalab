@@ -224,6 +224,15 @@ div.btn-toolbar .toolbar-btn.dropdown-toggle {
   padding-right: 2px;
   margin-left: -2px;
 }
+#themeDropdown {
+   border-radius: 2px;
+   color: #555;
+   padding: 5px 10px;
+   width: 150px;
+}
+#signOutGroup ul li {
+   padding: 5px 0px 0px 0px;
+}
 div.btn-toolbar .toolbar-btn.active {
   font-weight: bold;
   border: none;
