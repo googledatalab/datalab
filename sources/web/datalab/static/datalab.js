@@ -152,6 +152,16 @@ function showHelp(markup) {
   if (document.getElementById('sidebarArea').style.display == 'none') {
     toggleSidebar();
   }
+
+function xhr(url, callback) {
+  let request = new XMLHttpRequest();
+  request.onreadystatechange = callback.bind(request);
+  request.open("GET", url);
+  request.send();
+}
+
+function getSettingKeyAddress(setting) {
+  return window.location.protocol + "//" + window.location.host + "/_settings?key=" + setting;
 }
 
 function initializePage(dialog, saveFn) {
@@ -214,7 +224,20 @@ function initializePage(dialog, saveFn) {
       });
     }
 
-    // UI buttons inside of appbar
+    // UI that relies on appbar load
+    // Prepare the theme selector dropdown
+    themeDropdown = document.getElementById("themeDropdown")
+    xhr(getSettingKeyAddress("theme"), function() {
+      themeDropdown.selectedIndex = this.responseText === "\"dark\"" ? 0 : 1;
+    })
+    themeDropdown.onchange = function() {
+      xhr(getSettingKeyAddress("theme") + "&value=" + (themeDropdown.selectedIndex === 0 ? "dark" : "light"), function() {
+        sheetAddress = document.getElementById("themeStylesheet").href + "?v=" + Date.now()
+        document.getElementById("themeStylesheet").setAttribute('href', sheetAddress);
+      })
+    };
+
+    // About button
     $('#aboutButton').click(showAbout);
     $('#feedbackButton').click(function() {
       window.open('https://groups.google.com/forum/#!newtopic/google-cloud-datalab-feedback');

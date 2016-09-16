@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="/static/components/codemirror/lib/codemirror.css" />
   <link rel="stylesheet" href="/static/style/style.min.css" type="text/css" />
   <link rel="stylesheet" href="/static/style/datalab.css" type="text/css" />
-  <link rel="stylesheet" href="/static/style/custom.css" type="text/css" />
+  <link rel="stylesheet" id="themeStylesheet" href="/static/style/custom.css" type="text/css" />
 </head>
 <body class="notebook_list"
   data-base-url="<%baseUrl%>"
@@ -77,7 +77,7 @@
                           </button>
                           <button id="uploadButton" type="button" class="toolbar-btn" title="Upload notebook(s)">
                             <span class="fa fa-upload"></span>
-                            <input type="file" name="datafile" class="fileinput" multiple="multiple" value="Upload" />
+                            <input type="file" name="datafile" class="fileinput" multiple="multiple" value="Upload" style="cursor: pointer" />
                             Upload
                           </button>
                           <button id="duplicateButton" type="button" class="toolbar-btn duplicate-button" title="Create a copy of the selected item(s)">
