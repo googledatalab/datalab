@@ -224,6 +224,9 @@ div.btn-toolbar .toolbar-btn.dropdown-toggle {
   padding-right: 2px;
   margin-left: -2px;
 }
+#accountDropdown div div {
+  padding: 10px 15px 15px 15px;
+}
 div.btn-toolbar .toolbar-btn.active {
   font-weight: bold;
   border: none;
