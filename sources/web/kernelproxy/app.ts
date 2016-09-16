@@ -15,7 +15,7 @@
 
 /**
  * This file defines a simple web server that does three things:
- *   1. Serve static files if the request path matches /_static/*.
+ *   1. Serve static files if the request path matches /_nocachecontent/*.
  *   2. Reverse proxy the request if the request path is like /_proxy/1234.
  *   3. For everything else, send it to Jupyter Kernel Gateway server, assuming it is already
  *      started at 127.0.0.1:8081.
@@ -33,7 +33,7 @@
 import http = require('http');
 import httpProxy = require('http-proxy');
 import net = require('net');
-import noCacheContent = require('./noCacheContent')
+import noCacheContent = require('../datalab/noCacheContent')
 import url = require('url');
 
 var proxy: httpProxy.ProxyServer = httpProxy.createProxyServer({ target: 'http://127.0.0.1:8081' });
