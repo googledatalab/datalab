@@ -38,6 +38,7 @@ rsync -avp ./datalab/static/ $WEB_DIR/static
 rsync -avp ./datalab/templates/ $WEB_DIR/templates
 rsync -avp ./datalab/package.json $WEB_DIR/package.json
 
+# Compile kernel proxy
 KERNELPROXY_DIR=$BUILD_DIR/web/kernelproxy
 
 mkdir -p $KERNELPROXY_DIR
