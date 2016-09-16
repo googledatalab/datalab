@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="/static/components/codemirror/lib/codemirror.css" />
   <link rel="stylesheet" href="/static/style/style.min.css" type="text/css" />
   <link rel="stylesheet" href="/static/style/datalab.css" type="text/css" />
-  <link rel="stylesheet" href="/static/style/custom.css" type="text/css" />
+  <link rel="stylesheet" id="themeStylesheet" href="/static/style/custom.css" type="text/css" id="stylesheet" />
 </head>
 <body class="notebook_app"
   data-project=""
@@ -143,12 +143,18 @@
         <div class="btn-group">
           <button id="signInButton" title="Sign In" style="display:none" class="toolbar-btn">Sign In</button>
           <div id="signOutGroup" style="display:none">
-            <button title="Account" data-toggle="dropdown" class="toolbar-btn">
+            <button title="Account" class="toolbar-btn">
               <span class="fa fa-user"></span>
             </button>
-            <ul class="dropdown-menu dropdown-menu-right" style="padding: 10px">
+            <ul class="dropdown-menu dropdown-menu-right" style="padding: 15px">
               <li>
                 <label>Signed in as <%account%></label>
+              </li>
+              <li>
+                <select id="themeDropdown">
+                  <option>Dark Theme</option>
+                  <option>Light Theme</option>
+                </select>
               </li>
               <hr />
               <li>
