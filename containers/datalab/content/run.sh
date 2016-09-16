@@ -167,10 +167,11 @@ mkdir -p /content/datalab/docs
 
 if [ -d /content/datalab/docs/notebooks/.git ]
 then
-  (cd /content/datalab/docs/notebooks; git fetch origin master; git reset --hard origin/master)
+  (cd /content/datalab/docs/notebooks; git fetch origin mlbeta2; git reset --hard origin/mlbeta2)
 else
-  (cd /content/datalab/docs; git clone -b master --single-branch https://github.com/googledatalab/notebooks.git)
+  (cd /content/datalab/docs; git clone -b mlbeta2 --single-branch https://github.com/googledatalab/notebooks.git)
 fi
+
 
 # Run the user's custom extension script if it exists. To avoid platform issues with 
 # execution permissions, line endings, etc, we create a local sanitized copy.

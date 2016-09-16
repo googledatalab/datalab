@@ -31,7 +31,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 # Save GPL source packages
 RUN mkdir -p /srcs && \
     cd /srcs && \
-    apt-get source -d python-zmq wget git ca-certificates pkg-config libpng-dev && \
+    apt-get source -d python-zmq wget ca-certificates pkg-config libpng-dev && \
     wget https://mirrors.kernel.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.bz2 && \
     cd /
 
@@ -126,6 +126,10 @@ RUN pip install protobuf==3.0.0b2.post2 && \
 # Install DataFlow
 RUN pip install google-cloud-dataflow==0.4.1
 
+# Install CloudML SDK
+RUN gsutil cp gs://cloud-ml/sdk/cloudml-0.1.2.latest.tar.gz cloudml-0.1.2.latest.tar.gz && \
+    pip install cloudml-0.1.2.latest.tar.gz && \
+    rm cloudml-0.1.2.latest.tar.gz
 
 ADD nbconvert /datalab/nbconvert
 ADD config/ipython.py /etc/ipython/ipython_config.py
@@ -141,7 +145,7 @@ RUN ipython profile create default && \
     if [ -d /datalab/lib/pydatalab/.git ]; then \
         echo "use local lib"; \
       else \
-        git clone https://github.com/googledatalab/pydatalab.git /datalab/lib/pydatalab; \
+        git clone https://github.com/googledatalab/pydatalab.git  --single-branch --branch feature/ml /datalab/lib/pydatalab; \
       fi && \
     cd /datalab/lib/pydatalab && \
     tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts && \
