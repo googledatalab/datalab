@@ -546,6 +546,10 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     };
   });
 
+  require (["notebook/js/outputarea"], function(ipy) {
+    ipy.OutputArea.auto_scroll_threshold = 1000;
+  });
+
   function navigateAlternate(alt, download) {
     var url = document.location.href.replace('/notebooks', alt);
     if (download) {

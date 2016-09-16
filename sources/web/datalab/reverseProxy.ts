@@ -53,8 +53,13 @@ export function getRequestPort(request: http.ServerRequest, path: string): strin
 export function handleRequest(request: http.ServerRequest,
                               response: http.ServerResponse,
                               port: String) {
-  request.url = request.url.replace(regex, '/');
-  proxy.web(request, response, { target: 'http://127.0.0.1:' + port });
+  if (process.env.KG_URL) {
+    proxy.web(request, response, { target: process.env.KG_URL });
+  }
+  else {
+    request.url = request.url.replace(regex, '/');
+    proxy.web(request, response, { target: 'http://127.0.0.1:' + port });
+  }
 }
 
 /**

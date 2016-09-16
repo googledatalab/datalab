@@ -16,7 +16,7 @@ FROM datalab-base
 MAINTAINER Google Cloud DataLab
 
 # Add build artifacts
-ADD build/web /datalab/web
+ADD build/web/nb /datalab/web
 ADD content/ /datalab
 
 # Install the build artifacts

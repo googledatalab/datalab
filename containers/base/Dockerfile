@@ -67,6 +67,11 @@ RUN pip install -U tornado==4.3 \
     pip install -U ipywidgets==5.0.0 && \
     pip install -U future==0.15.2 && \
     pip install -U psutil==4.3.0 && \
+    pip install -U google-api-python-client==1.5.1  && \
+    pip install -U plotly==1.12.5 && \
+    pip install -U nltk==3.2.1 && \
+    pip install -U bs4==0.0.1 && \
+    pip install -U crcmod==1.7 && \
     easy_install pip && \
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf
 
@@ -114,14 +119,13 @@ RUN /tools/node/bin/npm install \
 
 # Install ProtoBuf, TensorFlow
 RUN pip install protobuf==3.0.0b2.post2 && \
-    wget https://storage.googleapis.com/cloud-datalab/deploy/tf/tensorflow-0.9.0-cp27-none-linux_x86_64.whl && \
-    pip install tensorflow-0.9.0-cp27-none-linux_x86_64.whl && \
-    rm tensorflow-0.9.0-cp27-none-linux_x86_64.whl
+    wget https://storage.googleapis.com/cloud-datalab/deploy/tf/tensorflow-0.10.0rc0-cp27-none-linux_x86_64.whl && \
+    pip install tensorflow-0.10.0rc0-cp27-none-linux_x86_64.whl && \
+    rm tensorflow-0.10.0rc0-cp27-none-linux_x86_64.whl
 
 # Install DataFlow
-RUN wget https://github.com/GoogleCloudPlatform/DataflowPythonSDK/archive/v0.2.7.tar.gz && \
-    pip install v0.2.7.tar.gz && \
-    rm v0.2.7.tar.gz
+RUN pip install google-cloud-dataflow==0.4.1
+
 
 ADD nbconvert /datalab/nbconvert
 ADD config/ipython.py /etc/ipython/ipython_config.py
