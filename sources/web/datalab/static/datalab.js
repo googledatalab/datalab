@@ -183,18 +183,6 @@ function initializePage(dialog, saveFn) {
   // The sign in/out functionality and the about button depend on the appbar's
   //   HTML having been loaded, so wait for it before running this code
   $("#appBar").load("/static/appbar.html", function() {
-    // Prepare the theme selector dropdown
-    themeDropdown = document.getElementById("themeDropdown")
-    xhr(getSettingKeyAddress("theme"), function() {
-      themeDropdown.selectedIndex = this.responseText === "\"dark\"" ? 0 : 1;
-    })
-    themeDropdown.onchange = function() {
-      xhr(getSettingKeyAddress("theme") + "&value=" + (themeDropdown.selectedIndex === 0 ? "dark" : "light"), function() {
-        sheetAddress = document.getElementById("themeStylesheet").href + "?v=" + Date.now()
-        document.getElementById("themeStylesheet").setAttribute('href', sheetAddress);
-      })
-    };
-
     // Prepare sign in/out UI
     $('#accountDropdownButton').on('click', function (event) {
       $(this).parent().toggleClass('open');
