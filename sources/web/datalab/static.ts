@@ -176,7 +176,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       sendJupyterFile(path.substr(1), response);
     }
   }
-  else if (path.lastIndexOf('/custom.js') > 0) {
+  else if (path.lastIndexOf('/custom.js') >= 0) {
     // NOTE: Uncomment to use external content mapped into the container.
     //       This is only useful when actively developing the content itself.
     // var text = fs.readFileSync('/sources/datalab/static/datalab.js', { encoding: 'utf8' });
