@@ -75,6 +75,9 @@ a:hover {
   background-color: #555;
   color: #ddd;
 }
+.dropdown-menu li a {
+  color: #ddd;
+}
 
 /* Inside Notebooks */
 #contentArea,#notebook-container {

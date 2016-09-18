@@ -62,6 +62,18 @@ export function getGcloudAccount(): string {
   }
 }
 
+export function getGcloudProjectId(): string {
+  // Get project id from gcloud
+  try {
+    var projectid = childProcess.execSync('gcloud config list --format "value(core.project)"', {env: process.env});
+    projectid = projectid.toString().trim();
+    return projectid;
+  } catch (err) {
+    logging.getLogger().error(err, 'Failed to get the gcloud project ID. stderr: %s', err.stderr);
+    return "unknown";
+  }
+}
+
 function setGcloudAccount(email: string) {
   // Tell gcloud which account we are using.
   try {
