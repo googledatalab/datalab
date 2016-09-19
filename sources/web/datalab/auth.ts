@@ -55,6 +55,7 @@ export function getGcloudAccount(): string {
   try {
     var account = childProcess.execSync('gcloud config list --format "value(core.account)"', {env: process.env});
     account = account.toString().trim();
+    console.log("got account: ", account);
     return account;
   } catch (err) {
     logging.getLogger().error(err, 'Failed to get the gcloud account. stderr: %s', err.stderr);
@@ -65,8 +66,10 @@ export function getGcloudAccount(): string {
 export function getGcloudProjectId(): string {
   // Get project id from gcloud
   try {
+    console.log("getting project id");
     var projectid = childProcess.execSync('gcloud config list --format "value(core.project)"', {env: process.env});
     projectid = projectid.toString().trim();
+    console.log("got project id: ", projectid);
     return projectid;
   } catch (err) {
     logging.getLogger().error(err, 'Failed to get the gcloud project ID. stderr: %s', err.stderr);

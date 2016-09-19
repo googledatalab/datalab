@@ -152,6 +152,7 @@ function showHelp(markup) {
   if (document.getElementById('sidebarArea').style.display == 'none') {
     toggleSidebar();
   }
+}
 
 function xhr(url, callback) {
   let request = new XMLHttpRequest();
@@ -211,6 +212,11 @@ function initializePage(dialog, saveFn) {
         $('#signOutGroup').show();
         var username = document.body.getAttribute('data-account');
         $("#usernameLabel").text("Signed in as " + username);
+        var projectId = document.body.getAttribute('data-project-id');
+        if (projectId && projectId !== "unknown") {
+          $('#projectLabel').text("Project: " + projectId);
+          $('#projectLabel').show();
+        }
       } else {
         $('#signInButton').show();
       }
@@ -261,7 +267,7 @@ function initializePage(dialog, saveFn) {
     $('#feedbackButton').click(function() {
       window.open('https://groups.google.com/forum/#!newtopic/google-cloud-datalab-feedback');
     });
-  } // End of shared appbar component load
+  }); // End of shared appbar component load
 }
 
 function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
