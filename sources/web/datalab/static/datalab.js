@@ -230,27 +230,33 @@ function initializePage(dialog, saveFn) {
       });
     }
 
-    // UI that relies on appbar load
-    // Prepare the theme selector dropdown
-    themeDropdown = document.getElementById("themeDropdown")
+    // More UI that relies on appbar load
+    // Prepare the theme selector radio boxes
+    lightThemeRadioOption = document.getElementById("lightThemeRadioOption")
+    darkThemeRadioOption = document.getElementById("darkThemeRadioOption")
     xhr(getSettingKeyAddress("theme"), function() {
-      themeDropdown.selectedIndex = this.responseText === "\"dark\"" ? 0 : 1;
+      lightThemeRadioOption.checked = this.responseText === "\"light\"";
+      darkThemeRadioOption.checked = this.responseText === "\"dark\"";
     })
-    themeDropdown.onchange = function() {
-      xhr(getSettingKeyAddress("theme") + "&value=" + (themeDropdown.selectedIndex === 0 ? "dark" : "light"), function() {
+    lightThemeRadioOption.onclick = function() {
+      setTheme("light");
+      darkThemeRadioOption.checked = false;
+    };
+    darkThemeRadioOption.onclick = function() {
+      setTheme("dark");
+      lightThemeRadioOption.checked = false;
+    };
+
+    function setTheme(theme) {
+      xhr(getSettingKeyAddress("theme") + "&value=" + theme, function() {
+        // Reload the stylesheet by resetting its address with a random (time) version querystring
         sheetAddress = document.getElementById("themeStylesheet").href + "?v=" + Date.now()
         document.getElementById("themeStylesheet").setAttribute('href', sheetAddress);
       })
-    };
+    }
 
-    // About button
-    $('#aboutButton').click(showAbout);
-    $('#feedbackButton').click(function() {
-      window.open('https://groups.google.com/forum/#!newtopic/google-cloud-datalab-feedback');
-    });
-    var d = document.getElementById('sidebarArea');
-    // If inside a notebook, show notebook-specific help link
-    if (d !== null) {
+    // If inside a notebook, prepare notebook-specific help link inside the sidebar
+    if (document.getElementById('sidebarArea') !== null) {
       $('#keyboardHelpLink').click(function(e) {
         showHelp(document.getElementById('shortcutsHelp').textContent);
         e.preventDefault();
