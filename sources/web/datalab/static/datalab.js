@@ -197,6 +197,14 @@ function initializePage(dialog, saveFn) {
     // Prepare sign in/out UI
     $('#accountDropdownButton').on('click', function (event) {
       $(this).parent().toggleClass('open');
+      if (window.datalab && window.datalab.session) {
+        window.datalab.session.execute("datalab_project_id()", function(error, projectId) {
+          if (error === null || error === undefined) {
+            $('#projectLabel').text("Active project: " + projectId);
+            $('#projectLabel').show();
+          }
+        });
+      }
     });
     $('body').on('click', function (e) {
       if (!$('#accountDropdown').is(e.target)
@@ -212,11 +220,6 @@ function initializePage(dialog, saveFn) {
         $('#signOutGroup').show();
         var username = document.body.getAttribute('data-account');
         $("#usernameLabel").text("Signed in as " + username);
-        var projectId = document.body.getAttribute('data-project-id');
-        if (projectId && projectId !== "unknown") {
-          $('#projectLabel').text("Project: " + projectId);
-          $('#projectLabel').show();
-        }
       } else {
         $('#signInButton').show();
       }
@@ -325,7 +328,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
         var error = null;
         try {
           if (output.msg_type == 'execute_result') {
-            values = output.content.data['application/json'];
+            values = output.content.data['text/plain'];
           }
         }
         catch (e) {

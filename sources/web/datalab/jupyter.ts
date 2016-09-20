@@ -386,7 +386,6 @@ function getBaseTemplateData(request: http.ServerRequest): common.Map<string> {
     feedbackId: appSettings.feedbackId,
     versionId: appSettings.versionId,
     userId: userId,
-    projectId: "unknown",
     configUrl: appSettings.configUrl,
     baseUrl: '/',
     reportingEnabled: reportingEnabled,
@@ -397,7 +396,6 @@ function getBaseTemplateData(request: http.ServerRequest): common.Map<string> {
   }
   if (auth.isSignedIn()) {
     templateData['account'] = auth.getGcloudAccount();
-    templateData['projectId'] = auth.getGcloudProjectId();
     if (process.env.PROJECT_NUMBER) {
       var hash = crypto.createHash('sha256');
       hash.update(process.env.PROJECT_NUMBER);
