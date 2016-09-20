@@ -167,6 +167,9 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   else if (path.lastIndexOf('/datalab.css') > 0) {
     sendDataLabFile('datalab.css', response);
   }
+  else if (path.lastIndexOf('/appbar.html') > 0) {
+    sendDataLabFile('appbar.html', response);
+  }
   else if (path.indexOf('/codemirror/mode/') > 0) {
     var split = path.lastIndexOf('/');
     var newPath = 'codemirror/mode/' + path.substring(split + 1);

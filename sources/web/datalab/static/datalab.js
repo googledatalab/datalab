@@ -126,6 +126,34 @@ function reportEvent(event) {
   window.dataLayer.push(event);
 }
 
+function toggleSidebar() {
+  var d = document.getElementById('sidebarArea');
+  d.style.display = (d.style.display == 'none') ? 'block' : 'none';
+  document.getElementById('hideSidebarButton').classList.toggle('fa-flip-vertical');
+  this.blur();
+  // Chrome at least seems to render the notebook poorly after this for a little
+  // while. If you scroll new content into view it is messed up until you click
+  // in the notebook. This does not repro with Firefox or Safari so seems to be
+  // a Chrome bug. Triggering a resize or similar doesn't help because the content
+  // that is messed up is currently out of the viewable part of the window. Will
+  // file a bug against Chrome.
+}
+
+function showHelp(markup) {
+  document.getElementById('navigation').style.display = 'none';
+  document.getElementById('help').style.display = '';
+
+  document.getElementById('navigationButton').classList.remove('active');
+  document.getElementById('helpButton').classList.add('active');
+
+  if (markup) {
+    document.getElementById('help').innerHTML = markup;
+  }
+  if (document.getElementById('sidebarArea').style.display == 'none') {
+    toggleSidebar();
+  }
+}
+
 function initializePage(dialog, saveFn) {
 
   function showAbout() {
@@ -151,26 +179,62 @@ function initializePage(dialog, saveFn) {
     dialog.modal(dialogOptions);
   }
 
-  $('#aboutButton').click(showAbout);
-  $('#feedbackButton').click(function() {
-    window.open('https://groups.google.com/forum/#!newtopic/google-cloud-datalab-feedback');
-  });
-  var signedIn = document.body.getAttribute('data-signed-in');
-  if (signedIn != undefined) {  // i.e. running locally.
-    if (signedIn == "true") {
-      $('#signOutGroup').show();
-    } else {
-      $('#signInButton').show();
+  // Load the appbar shared component using jquery
+  // The sign in/out functionality and the about button depend on the appbar's
+  //   HTML having been loaded, so wait for it before running this code
+  $("#appBar").load("/static/appbar.html", function() {
+    // Prepare sign in/out UI
+    $('#accountDropdownButton').on('click', function (event) {
+      $(this).parent().toggleClass('open');
+    });
+    $('body').on('click', function (e) {
+      if (!$('#accountDropdown').is(e.target)
+          && $('#accountDropdown').has(e.target).length === 0
+          && $('.open').has(e.target).length === 0
+      ) {
+          $('#accountDropdown').removeClass('open');
+      }
+    });
+    var signedIn = document.body.getAttribute('data-signed-in');
+    if (signedIn != undefined) {  // i.e. running locally.
+      if (signedIn == "true") {
+        $('#signOutGroup').show();
+        var username = document.body.getAttribute('data-account');
+        $("#usernameLabel").text("Signed in as " + username);
+      } else {
+        $('#signInButton').show();
+      }
+      $('#signInButton').click(function() {
+        saveFn();
+        window.location = '/signin?referer=' + encodeURIComponent(window.location);
+      });
+      $('#signOutButton').click(function() {
+        saveFn();
+        window.location = '/signout?referer=' + encodeURIComponent(window.location);
+      });
     }
-    $('#signInButton').click(function() {
-      saveFn();
-      window.location = '/signin?referer=' + encodeURIComponent(window.location);
+
+    // UI buttons inside of appbar
+    $('#aboutButton').click(showAbout);
+    $('#feedbackButton').click(function() {
+      window.open('https://groups.google.com/forum/#!newtopic/google-cloud-datalab-feedback');
     });
-    $('#signOutButton').click(function() {
-      saveFn();
-      window.location = '/signout?referer=' + encodeURIComponent(window.location);
-    });
-  }
+    var d = document.getElementById('sidebarArea');
+    // If inside a notebook, show notebook-specific help link
+    if (d !== null) {
+      $('#keyboardHelpLink').click(function(e) {
+        showHelp(document.getElementById('shortcutsHelp').textContent);
+        e.preventDefault();
+      });
+      $('#keyboardHelpLink').show()
+      $('#markdownHelpLink').click(function(e) {
+        showHelp(document.getElementById('markdownHelp').textContent);
+        e.preventDefault();
+      });
+      $('#markdownHelpLink').show()
+      $('#notebookHelpDivider').show()
+    }
+  });
 }
 
 function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
@@ -687,31 +751,8 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     this.blur();
   });
 
-  function toggleSidebar() {
-    var d = document.getElementById('sidebarArea');
-    d.style.display = (d.style.display == 'none') ? 'block' : 'none';
-    document.getElementById('hideSidebarButton').classList.toggle('fa-flip-vertical');
-    this.blur();
-    // Chrome at least seems to render the notebook poorly after this for a little
-    // while. If you scroll new content into view it is messed up until you click
-    // in the notebook. This does not repro with Firefox or Safari so seems to be
-    // a Chrome bug. Triggering a resize or similar doesn't help because the content
-    // that is messed up is currently out of the viewable part of the window. Will
-    // file a bug against Chrome.
-  }
-
   $('#hideSidebarButton').click(function() {
     toggleSidebar();
-  });
-
-  $('#keyboardHelpLink').click(function(e) {
-    showHelp(document.getElementById('shortcutsHelp').textContent);
-    e.preventDefault();
-  });
-
-  $('#markdownHelpLink').click(function(e) {
-    showHelp(document.getElementById('markdownHelp').textContent);
-    e.preventDefault();
   });
 
   $('#navigationButton').click(function() {
@@ -749,18 +790,6 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 
     document.getElementById('navigationButton').classList.add('active');
     document.getElementById('helpButton').classList.remove('active');
-  }
-
-  function showHelp(markup) {
-    document.getElementById('navigation').style.display = 'none';
-    document.getElementById('help').style.display = '';
-
-    document.getElementById('navigationButton').classList.remove('active');
-    document.getElementById('helpButton').classList.add('active');
-
-    if (markup) {
-      document.getElementById('help').innerHTML = markup;
-    }
   }
 
   function updateNavigation() {
