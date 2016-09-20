@@ -130,15 +130,16 @@ RUN pip install google-cloud-dataflow==0.4.1
 ADD nbconvert /datalab/nbconvert
 ADD config/ipython.py /etc/ipython/ipython_config.py
 ADD config/nbconvert.py /etc/jupyter/jupyter_notebook_config.py
+# Directory "py" may be empty and in that case it will git clone pydatalab from repo
+ADD py /datalab/lib/pydatalab
 
 # Do IPython configuration and install build artifacts
 # Then link stuff needed for nbconvert to a location where Jinja will find it.
 # I'd prefer to just use absolute path in Jinja imports but those don't work.
 RUN ipython profile create default && \
     jupyter notebook --generate-config && \
-    mkdir -p /datalab/lib && \
-    cd /datalab/lib && \
-    git clone https://github.com/googledatalab/pydatalab.git && \
+    if [ -d /datalab/lib/pydatalab/.git ]; then echo "use local lib"; else \
+      git clone https://github.com/googledatalab/pydatalab.git /datalab/lib/pydatalab; fi && \
     cd /datalab/lib/pydatalab && \
     tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts && \
     pip install . && \
