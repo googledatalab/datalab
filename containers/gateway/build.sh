@@ -13,7 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Builds the Google Cloud DataLab docker image
+# Builds the Google Cloud DataLab gateway docker image. Usage:
+#   build.sh [path_of_pydatalab_dir]
+# If [path_of_pydatalab_dir] is provided, it will copy the content of that dir into image.
+# Otherwise, it will get the pydatalab by "git clone" from pydatalab repo.
 
 # Create a versioned Dockerfile based on current date and git commit hash
 VERSION=`date +%Y%m%d`
@@ -29,7 +32,7 @@ rsync -avp ../../build/ build
 
 # Build the base docker image
 cd ../base
-docker build -t datalab-base .
+./build.sh $1
 cd ../gateway
 
 # Build the docker image
