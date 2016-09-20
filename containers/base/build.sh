@@ -19,6 +19,11 @@
 # Otherwise, it will get the pydatalab by "git clone" from pydatalab repo.
 
 # Build the docker image
-if [ -n "$1" ]; then rsync -avp $1 py; else mkdir -p py; fi
+if [ -n "$1" ]; then
+  rsync -avp "$1" py;
+else
+  # Create empty dir to make docker build happy.
+  mkdir -p py;
+fi
 docker build -t datalab-base .
 rm -rf py
