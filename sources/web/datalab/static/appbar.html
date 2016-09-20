@@ -53,9 +53,18 @@
         </div>
         <div id="signOutGroup" style="display:none">
           <label id="usernameLabel" style="padding:0 0 10px 0"></label>
+          <label id="projectLabel" style="display:none; padding:0 0 10px 0"></label>
           <button id="signOutButton" title="Sign Out" class="btn btn-danger" style="width: 100%; float: none">Sign Out</button>
         </div>
         <hr />
+        <div>
+          <div class="radio">
+            <label><input type="radio" id="lightThemeRadioOption" checked="">Light Theme</label>
+          </div>
+          <div class="radio">
+            <label><input type="radio" id="darkThemeRadioOption" checked="">Dark Theme</label>
+          </div>
+        </div>
         <div id="feedbackButton" title="Provide feedback" class="btn">
           <span class="fa fa-comment" id="feedbackButton"></span>
           <span>Feedback</span>
@@ -63,6 +72,5 @@
       </div>
     </div>
   </div>
-  <script src="/static/appbar.js" />
 </body>
 </html>

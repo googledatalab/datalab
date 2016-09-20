@@ -225,7 +225,10 @@ div.btn-toolbar .toolbar-btn.dropdown-toggle {
   margin-left: -2px;
 }
 #accountDropdown div div {
-  padding: 10px 15px 15px 15px;
+  margin: 10px 15px 10px 15px;
+}
+#signOutGroup ul li {
+   padding: 5px 0px 0px 0px;
 }
 div.btn-toolbar .toolbar-btn.active {
   font-weight: bold;

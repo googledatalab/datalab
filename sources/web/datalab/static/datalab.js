@@ -154,6 +154,17 @@ function showHelp(markup) {
   }
 }
 
+function xhr(url, callback) {
+  let request = new XMLHttpRequest();
+  request.onreadystatechange = callback.bind(request);
+  request.open("GET", url);
+  request.send();
+}
+
+function getSettingKeyAddress(setting) {
+  return window.location.protocol + "//" + window.location.host + "/_settings?key=" + setting;
+}
+
 function initializePage(dialog, saveFn) {
 
   function showAbout() {
@@ -186,6 +197,14 @@ function initializePage(dialog, saveFn) {
     // Prepare sign in/out UI
     $('#accountDropdownButton').on('click', function (event) {
       $(this).parent().toggleClass('open');
+      if (window.datalab && window.datalab.session) {
+        window.datalab.session.execute("datalab_project_id()", function(error, projectId) {
+          if (error === null || error === undefined) {
+            $('#projectLabel').text("Active project: " + projectId);
+            $('#projectLabel').show();
+          }
+        });
+      }
     });
     $('body').on('click', function (e) {
       if (!$('#accountDropdown').is(e.target)
@@ -214,14 +233,33 @@ function initializePage(dialog, saveFn) {
       });
     }
 
-    // UI buttons inside of appbar
-    $('#aboutButton').click(showAbout);
-    $('#feedbackButton').click(function() {
-      window.open('https://groups.google.com/forum/#!newtopic/google-cloud-datalab-feedback');
-    });
-    var d = document.getElementById('sidebarArea');
-    // If inside a notebook, show notebook-specific help link
-    if (d !== null) {
+    // More UI that relies on appbar load
+    // Prepare the theme selector radio boxes
+    lightThemeRadioOption = document.getElementById("lightThemeRadioOption")
+    darkThemeRadioOption = document.getElementById("darkThemeRadioOption")
+    xhr(getSettingKeyAddress("theme"), function() {
+      lightThemeRadioOption.checked = this.responseText === "\"light\"";
+      darkThemeRadioOption.checked = this.responseText === "\"dark\"";
+    })
+    lightThemeRadioOption.onclick = function() {
+      setTheme("light");
+      darkThemeRadioOption.checked = false;
+    };
+    darkThemeRadioOption.onclick = function() {
+      setTheme("dark");
+      lightThemeRadioOption.checked = false;
+    };
+
+    function setTheme(theme) {
+      xhr(getSettingKeyAddress("theme") + "&value=" + theme, function() {
+        // Reload the stylesheet by resetting its address with a random (time) version querystring
+        sheetAddress = document.getElementById("themeStylesheet").href + "?v=" + Date.now()
+        document.getElementById("themeStylesheet").setAttribute('href', sheetAddress);
+      })
+    }
+
+    // If inside a notebook, prepare notebook-specific help link inside the sidebar
+    if (document.getElementById('sidebarArea') !== null) {
       $('#keyboardHelpLink').click(function(e) {
         showHelp(document.getElementById('shortcutsHelp').textContent);
         e.preventDefault();
@@ -234,7 +272,11 @@ function initializePage(dialog, saveFn) {
       $('#markdownHelpLink').show()
       $('#notebookHelpDivider').show()
     }
-  });
+    $('#aboutButton').click(showAbout);
+    $('#feedbackButton').click(function() {
+      window.open('https://groups.google.com/forum/#!newtopic/google-cloud-datalab-feedback');
+    });
+  }); // End of shared appbar component load
 }
 
 function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
@@ -286,7 +328,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
         var error = null;
         try {
           if (output.msg_type == 'execute_result') {
-            values = output.content.data['application/json'];
+            values = output.content.data['text/plain'];
           }
         }
         catch (e) {

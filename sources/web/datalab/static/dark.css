@@ -75,6 +75,9 @@ a:hover {
   background-color: #555;
   color: #ddd;
 }
+.dropdown-menu li a {
+  color: #ddd;
+}
 
 /* Inside Notebooks */
 #contentArea,#notebook-container {
@@ -148,9 +151,6 @@ code {
 }
 .item_icon {
   color: #adadad;
-}
-.dropdown-menu > li > a {
-  color: #ddd;
 }
 .google-visualization-table {
   color: #000;
