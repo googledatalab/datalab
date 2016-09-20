@@ -32,7 +32,7 @@ rsync -avp ../../build/ build
 
 # Build the base docker image
 cd ../base
-./build.sh $1
+./build.sh "$1"
 cd ../gateway
 
 # Build the docker image

@@ -20,10 +20,10 @@
 
 # Build the docker image
 if [ -n "$1" ]; then
-  rsync -avp "$1" py;
+  rsync -avp "$1" pydatalab;
 else
   # Create empty dir to make docker build happy.
-  mkdir -p py;
+  mkdir -p pydatalab;
 fi
 docker build -t datalab-base .
-rm -rf py
+rm -rf pydatalab

@@ -131,7 +131,7 @@ ADD nbconvert /datalab/nbconvert
 ADD config/ipython.py /etc/ipython/ipython_config.py
 ADD config/nbconvert.py /etc/jupyter/jupyter_notebook_config.py
 # Directory "py" may be empty and in that case it will git clone pydatalab from repo
-ADD py /datalab/lib/pydatalab
+ADD pydatalab /datalab/lib/
 
 # Do IPython configuration and install build artifacts
 # Then link stuff needed for nbconvert to a location where Jinja will find it.
