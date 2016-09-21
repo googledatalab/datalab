@@ -146,8 +146,8 @@ function persistCredentials(tokens: any): string {
 }
 
 export function isSignedIn(): boolean {
-  // If not local, then we should have service account available so consider that signed in.
-  return (process.env.DATALAB_ENV != 'local' || fs.existsSync(appCredFile));
+  var gcloudAccount:string = getGcloudAccount();
+  return (gcloudAccount != '' && gcloudAccount != 'unknown');
 }
 
 function getPortNumber(request: http.ServerRequest): number {

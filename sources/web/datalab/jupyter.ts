@@ -391,10 +391,9 @@ function getBaseTemplateData(request: http.ServerRequest): common.Map<string> {
     reportingEnabled: reportingEnabled,
     proxyWebSockets: proxyWebSockets
   };
-  if (process.env.DATALAB_ENV == 'local') {
-    templateData['isSignedIn'] = auth.isSignedIn().toString();
-  }
-  if (auth.isSignedIn()) {
+  var signedIn = auth.isSignedIn();
+  templateData['isSignedIn'] = signedIn.toString();
+  if (signedIn) {
     templateData['account'] = auth.getGcloudAccount();
     if (process.env.PROJECT_NUMBER) {
       var hash = crypto.createHash('sha256');
