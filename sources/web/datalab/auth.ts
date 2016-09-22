@@ -53,7 +53,9 @@ function base64decodeSegment(str: string) {
 export function getGcloudAccount(): string {
   // Ask gcloud which account we are using.
   try {
-    var account = childProcess.execSync('gcloud config list --format "value(core.account)"', {env: process.env});
+    var account = childProcess.execSync(
+      'gcloud auth list --filter=status:ACTIVE --format "value(account)"',
+      {env: process.env});
     account = account.toString().trim();
     return account;
   } catch (err) {
@@ -146,8 +148,8 @@ function persistCredentials(tokens: any): string {
 }
 
 export function isSignedIn(): boolean {
-  // If not local, then we should have service account available so consider that signed in.
-  return (process.env.DATALAB_ENV != 'local' || fs.existsSync(appCredFile));
+  var gcloudAccount:string = getGcloudAccount();
+  return (gcloudAccount != '' && gcloudAccount != 'unknown');
 }
 
 function getPortNumber(request: http.ServerRequest): number {

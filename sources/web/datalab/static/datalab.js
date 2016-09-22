@@ -220,6 +220,9 @@ function initializePage(dialog, saveFn) {
         $('#signOutGroup').show();
         var username = document.body.getAttribute('data-account');
         $("#usernameLabel").text("Signed in as " + username);
+        if (username.indexOf('gserviceaccount.com') < 0) {
+          $('#signOutButton').show();
+        }
       } else {
         $('#signInButton').show();
       }
