@@ -53,7 +53,9 @@ function base64decodeSegment(str: string) {
 export function getGcloudAccount(): string {
   // Ask gcloud which account we are using.
   try {
-    var account = childProcess.execSync('gcloud config list --format "value(core.account)"', {env: process.env});
+    var account = childProcess.execSync(
+      'gcloud auth list --filter=status:ACTIVE --format "value(account)"',
+      {env: process.env});
     account = account.toString().trim();
     return account;
   } catch (err) {
