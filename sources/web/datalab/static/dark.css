@@ -83,7 +83,11 @@ a:hover {
 #contentArea,#notebook-container {
   background-color: #444;
 }
-.rendered_html, div.text_cell_render {
+div.text_cell_render {
+  color: #ddd;
+}
+.rendered_html pre, .rendered_html code, .rendered_html {
+  background-color: #333;
   color: #ddd;
 }
 div.cell.selected {
@@ -201,9 +205,6 @@ table.bqsv th, table.bqsv td {
 
 #texteditor-backdrop, #texteditor-backdrop #texteditor-container .CodeMirror-gutter {
   background: #333;
-}
-.rendered_html, div.text_cell_render {
-  color: #ddd;
 }
 
 svg>rect {
