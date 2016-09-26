@@ -61,6 +61,9 @@ div.code_cell.session.completed div.input {
 div.code_cell div.input {
   background-color: #f7f7f7;
 }
+.CodeMirror-selected {
+  background-color: #addfff !important;
+}
 .cm-keyword {
   color: #00f !important;
 }

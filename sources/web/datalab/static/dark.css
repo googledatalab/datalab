@@ -110,6 +110,9 @@ div.output_stderr {
   color: #ddd;
   background: #333;
 }
+.CodeMirror-selected {
+  background-color: #555 !important;
+}
 .CodeMirror-gutters {
   color: #ddd;
   background: #333;
