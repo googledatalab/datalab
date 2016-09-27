@@ -119,7 +119,7 @@ RUN /tools/node/bin/npm install \
 
 # Install ProtoBuf, TensorFlow
 RUN pip install protobuf==3.0.0b2.post2 && \
-    wget http://ci.tensorflow.org/view/Nightly/job/nightly-debian-cpu/lastCompletedBuild/artifact/artifacts/tensorflow-0.10.0+-20160923_094206_9c11fe2-cp27-none-linux_x86_64.whl && \
+    wget http://ci.tensorflow.org/view/Nightly/job/nightly-debian-cpu/lastSuccessfulBuild/artifact/artifacts/tensorflow-0.10.0+-20160923_094206_9c11fe2-cp27-none-linux_x86_64.whl && \
     pip install tensorflow-0.10.0+-20160923_094206_9c11fe2-cp27-none-linux_x86_64.whl && \
     rm tensorflow-0.10.0+-20160923_094206_9c11fe2-cp27-none-linux_x86_64.whl
 
