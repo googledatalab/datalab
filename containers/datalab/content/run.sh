@@ -163,14 +163,21 @@ then
 fi
 
 mkdir -p /content/datalab/notebooks
-mkdir -p /content/datalab/docs
 
-if [ -d /content/datalab/docs/notebooks/.git ]
-then
-  (cd /content/datalab/docs/notebooks; git fetch origin master; git reset --hard origin/master)
+if [ -d /content/datalab/docs ]; then
+  # The docs directory already exists, so we have to either update or initialize it as a git repository
+  pushd ./
+  cd /content/datalab/docs
+  if [ -d /content/datalab/docs/.git ]; then
+    git fetch origin master; git reset --hard origin/master
+  else
+    git init; git remote add origin https://github.com/googledatalab/notebooks.git; git fetch origin; 
+  fi
+  popd
 else
-  (cd /content/datalab/docs; git clone -b master --single-branch https://github.com/googledatalab/notebooks.git)
+  (cd /content/datalab; git clone -n --single-branch https://github.com/googledatalab/notebooks.git docs)
 fi
+(cd /content/datalab/docs; git config core.sparsecheckout true; echo $'intro/\nsamples/\ntutorials/\n*.ipynb\n' > .git/info/sparse-checkout; git checkout master)
 
 # Run the user's custom extension script if it exists. To avoid platform issues with 
 # execution permissions, line endings, etc, we create a local sanitized copy.
