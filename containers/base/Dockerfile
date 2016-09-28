@@ -119,13 +119,17 @@ RUN /tools/node/bin/npm install \
 
 # Install ProtoBuf, TensorFlow
 RUN pip install protobuf==3.0.0b2.post2 && \
-    wget https://storage.googleapis.com/cloud-datalab/deploy/tf/tensorflow-0.10.0rc0-cp27-none-linux_x86_64.whl && \
-    pip install tensorflow-0.10.0rc0-cp27-none-linux_x86_64.whl && \
-    rm tensorflow-0.10.0rc0-cp27-none-linux_x86_64.whl
+    wget https://storage.googleapis.com/cloud-datalab/deploy/tf/tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
+    pip install tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
+    rm tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl
 
 # Install DataFlow
 RUN pip install google-cloud-dataflow==0.4.1
 
+# Install CloudML SDK
+RUN gsutil cp gs://cloud-ml/sdk/cloudml-0.1.6-alpha.tar.gz cloudml-0.1.6-alpha.tar.gz && \
+    pip install cloudml-0.1.6-alpha.tar.gz && \
+    rm cloudml-0.1.6-alpha.tar.gz
 
 ADD nbconvert /datalab/nbconvert
 ADD config/ipython.py /etc/ipython/ipython_config.py
