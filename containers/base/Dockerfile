@@ -31,7 +31,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 # Save GPL source packages
 RUN mkdir -p /srcs && \
     cd /srcs && \
-    apt-get source -d python-zmq wget ca-certificates pkg-config libpng-dev && \
+    apt-get source -d python-zmq wget git ca-certificates pkg-config libpng-dev && \
     wget https://mirrors.kernel.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.bz2 && \
     cd /
 
@@ -145,7 +145,7 @@ RUN ipython profile create default && \
     if [ -d /datalab/lib/pydatalab/.git ]; then \
         echo "use local lib"; \
       else \
-        git clone https://github.com/googledatalab/pydatalab.git  --single-branch --branch feature/ml /datalab/lib/pydatalab; \
+        git clone https://github.com/googledatalab/pydatalab.git /datalab/lib/pydatalab; \
       fi && \
     cd /datalab/lib/pydatalab && \
     tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts && \

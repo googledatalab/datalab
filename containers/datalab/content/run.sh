@@ -179,7 +179,6 @@ else
 fi
 (cd /content/datalab/docs; git config core.sparsecheckout true; echo $'intro/\nsamples/\ntutorials/\n*.ipynb\n' > .git/info/sparse-checkout; git checkout master)
 
-
 # Run the user's custom extension script if it exists. To avoid platform issues with 
 # execution permissions, line endings, etc, we create a local sanitized copy.
 if [ -f /content/datalab/.config/startup.sh ]
