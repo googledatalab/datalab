@@ -155,7 +155,7 @@ function handleRequest(request: http.ServerRequest,
 
     if (path.indexOf('/tree') == 0) {
         loadedSettings[startup_path_setting] = path
-        settings_.updateUserSetting(userId, startup_path_setting, path);
+        settings_.updateUserSetting(userId, startup_path_setting, path, true);
     }
     handleJupyterRequest(request, response);
     return;

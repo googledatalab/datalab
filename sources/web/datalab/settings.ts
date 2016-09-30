@@ -130,7 +130,7 @@ function ensureDirExists(fullPath: string): boolean {
  * @param value the updated value of the setting.
  * @returns true iff the update was applied.
  */
-export function updateUserSetting(userId: string, key: string, value: string): boolean {
+export function updateUserSetting(userId: string, key: string, value: string, asynchronous: boolean = false): boolean {
   var userDir = userManager.getUserDir(userId);
   var settingsDir =  path.join(userDir, 'datalab', '.config');
   var settingsPath = path.join(settingsDir, SETTINGS_FILE);
@@ -149,8 +149,9 @@ export function updateUserSetting(userId: string, key: string, value: string): b
 
   try {
     var settingsString = JSON.stringify(settings);
+    var writeFunc = asynchronous ? fs.writeFile : fs.writeFileSync;
     if (ensureDirExists(path.normalize(settingsDir))) {
-      fs.writeFileSync(settingsPath, settingsString);
+      writeFunc(settingsPath, settingsString);
     }
   }
   catch (e) {
