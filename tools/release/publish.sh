@@ -20,19 +20,28 @@
 # updates the main tags for the images to the given build, and then updates
 # the config_local.js file in Google Cloud Storage.
 
+# The script supports two (optional) environment variables that can be
+# defined externally to modify its behavior:
+#
+#  1. "PROJECT_ID": Sets the name of the target project where the
+#     images will be pulled from and pushed to. Defaults to "cloud-datalab"
+#  2. "BUILD": The label of the builds to pull down and publish. If omitted
+#     this will default to the current date (which is what the build.sh
+#     script uses by default).
+
 PROJECT_ID="${PROJECT_ID:-cloud-datalab}"
 BUILD="${BUILD:-$(date +%Y%m%d)}"
-BACKEND_IMAGE="gcr.io/${PROJECT_ID}/datalab-gateway:${BUILD}"
-FRONTEND_IMAGE="gcr.io/${PROJECT_ID}/datalab:local-${BUILD}"
+GATEWAY_IMAGE="gcr.io/${PROJECT_ID}/datalab-gateway:${BUILD}"
+DATALAB_IMAGE="gcr.io/${PROJECT_ID}/datalab:local-${BUILD}"
 
-echo "Releasing the backend image: ${BACKEND_IMAGE}"
-gcloud docker -- pull ${BACKEND_IMAGE}
-docker tag -f ${BACKEND_IMAGE} gcr.io/${PROJECT_ID}/datalab-gateway:latest
+echo "Releasing the gateway image: ${GATEWAY_IMAGE}"
+gcloud docker -- pull ${GATEWAY_IMAGE}
+docker tag -f ${GATEWAY_IMAGE} gcr.io/${PROJECT_ID}/datalab-gateway:latest
 gcloud docker -- push gcr.io/${PROJECT_ID}/datalab-gateway:latest
 
-echo "Releasing the frontend image: ${FRONTEND_IMAGE}"
-gcloud docker -- pull ${FRONTEND_IMAGE}
-docker tag -f ${FRONTEND_IMAGE} gcr.io/${PROJECT_ID}/datalab:local
+echo "Releasing the Datalab image: ${DATALAB_IMAGE}"
+gcloud docker -- pull ${DATALAB_IMAGE}
+docker tag -f ${DATALAB_IMAGE} gcr.io/${PROJECT_ID}/datalab:local
 gcloud docker -- push gcr.io/${PROJECT_ID}/datalab:local
 
 gsutil cp gs://${PROJECT_ID}/deploy/config_local.js ./config_local.js

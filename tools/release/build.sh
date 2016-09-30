@@ -21,11 +21,19 @@
 # resulting images with the current date; and then pushing the
 # datalab and datalab-gateway images to the Google Container Registry.
 
+# The script supports two (optional) environment variables that can be
+# defined externally to modify its behavior:
+#
+#  1. "PROJECT_ID": Sets the name of the target project where the
+#     images will be pushed. Defaults to "cloud-datalab"
+#  2. "LABEL_PREFIX": Adds a prefix to the image labels. This defaults
+#     to the empty string and is intended for things like feature builds.
+
 PROJECT_ID="${PROJECT_ID:-cloud-datalab}"
 TIMESTAMP=$(date +%Y%m%d)
 LABEL="${LABEL_PREFIX:-}${TIMESTAMP}"
-BACKEND_IMAGE="gcr.io/${PROJECT_ID}/datalab-gateway:${LABEL}"
-FRONTEND_IMAGE="gcr.io/${PROJECT_ID}/datalab:local-${LABEL}"
+GATEWAY_IMAGE="gcr.io/${PROJECT_ID}/datalab-gateway:${LABEL}"
+DATALAB_IMAGE="gcr.io/${PROJECT_ID}/datalab:local-${LABEL}"
 
 function install_node() {
   echo "Installing NodeJS"
@@ -66,16 +74,16 @@ mkdir -p pydatalab
 docker build --no-cache -t datalab-base .
 rm -rf pydatalab
 
-echo "Building the backend image ${BACKEND_IMAGE}"
+echo "Building the gateway image ${GATEWAY_IMAGE}"
 cd ../../containers/gateway
 ./build.sh
-docker tag -f datalab-gateway ${BACKEND_IMAGE}
-gcloud docker -- push ${BACKEND_IMAGE}
+docker tag -f datalab-gateway ${GATEWAY_IMAGE}
+gcloud docker -- push ${GATEWAY_IMAGE}
 
-echo "Building the frontend image ${FRONTEND_IMAGE}"
+echo "Building the Datalab image ${DATALAB_IMAGE}"
 cd ../../containers/datalab
 ./build.sh
-docker tag -f datalab ${FRONTEND_IMAGE}
-gcloud docker -- push ${FRONTEND_IMAGE}
+docker tag -f datalab ${DATALAB_IMAGE}
+gcloud docker -- push ${DATALAB_IMAGE}
 
 popd
