@@ -130,7 +130,7 @@ function ensureDirExists(fullPath: string): boolean {
  * @param value the updated value of the setting.
  * @returns true iff the update was applied.
  */
-function updateUserSetting(userId: string, key: string, value: string): boolean {
+export function updateUserSetting(userId: string, key: string, value: string): boolean {
   var userDir = userManager.getUserDir(userId);
   var settingsDir =  path.join(userDir, 'datalab', '.config');
   var settingsPath = path.join(settingsDir, SETTINGS_FILE);

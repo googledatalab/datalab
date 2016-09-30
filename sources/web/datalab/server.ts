@@ -47,6 +47,8 @@ let eulaDir = '/content/datalab/.config/eula';
  * The application settings instance.
  */
 var appSettings: common.Settings;
+var loadedSettings: common.Map<string> = null;
+var startup_path_setting = 'startuppath'
 
 /**
  * If it is the user's first request since the web server restarts,
@@ -98,6 +100,11 @@ function handleJupyterRequest(request: http.ServerRequest, response: http.Server
 function handleRequest(request: http.ServerRequest,
                        response: http.ServerResponse,
                        path: string) {
+
+  var userId = userManager.getUserId(request);
+  if (loadedSettings === null) {
+      loadedSettings = settings_.loadUserSettings(userId);
+  }
   // All requests below are logged, while the ones above aren't, to avoid generating noise
   // into the log.
   logging.logRequest(request, response);
@@ -111,7 +118,11 @@ function handleRequest(request: http.ServerRequest,
     userManager.maybeSetUserIdCookie(request, response);
 
     response.statusCode = 302;
-    response.setHeader('Location', '/tree/datalab');
+    if (startup_path_setting in loadedSettings) {
+        response.setHeader('Location', loadedSettings[startup_path_setting])
+    } else {
+        response.setHeader('Location', '/tree/datalab');
+    }
     response.end();
     return;
   }
@@ -141,6 +152,11 @@ function handleRequest(request: http.ServerRequest,
       (path.indexOf('/files') == 0) ||
       (path.indexOf('/edit') == 0) ||
       (path.indexOf('/sessions') == 0)) {
+
+    if (path.indexOf('/tree') == 0) {
+        loadedSettings[startup_path_setting] = path
+        settings_.updateUserSetting(userId, startup_path_setting, path);
+    }
     handleJupyterRequest(request, response);
     return;
   }
