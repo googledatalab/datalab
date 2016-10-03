@@ -1049,7 +1049,7 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
     var message = 'You are using DataLab 0.5.' + version + '. ' +
         (optional ? 'An optional' : 'A recommended') + ' update (0.5.' + versionInfo.latest +
         ') is available (see <a href="https://github.com/googledatalab/datalab/wiki/Release-Info"' +
-        '>what\'s new)</a>.'
+        '>what\'s new</a>).'
     messageDiv.innerHTML = message;
     messageDiv.classList.add('alert');
     messageDiv.classList.add(optional ? 'alert-warning' : 'alert-danger');
