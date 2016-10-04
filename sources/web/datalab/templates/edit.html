@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="/static/style/style.min.css" type="text/css" />
   <link rel="stylesheet" href="/static/style/datalab.css" type="text/css" />
   <link rel="stylesheet" id="themeStylesheet" href="/static/style/custom.css" type="text/css" />
+
+  <script src="/static/components/jquery/jquery.min.js"></script>
 </head>
 <body class="edit_app"
   data-project=""
@@ -80,8 +82,11 @@
        }
     });
     window.datalab = {};
+
+    $("#appBar").load("/static/appbar.html", function() {
+      require(['edit/js/main.min']);
+    });
   </script>
-  <script src="/static/edit/js/main.min.js" charset="utf-8"></script>
   <script src="//www.gstatic.com/feedback/api.js" async="true" defer="true"></script>
 </body>
 </html>
