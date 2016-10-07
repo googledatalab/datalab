@@ -8,7 +8,10 @@
 
   <link rel="stylesheet" href="/static/components/codemirror/lib/codemirror.css" />
   <link rel="stylesheet" href="/static/style/style.min.css" type="text/css" />
-  <link rel="stylesheet" href="/static/style/custom.css" type="text/css" />
+  <link rel="stylesheet" href="/static/style/datalab.css" type="text/css" />
+  <link rel="stylesheet" id="themeStylesheet" href="/static/style/custom.css" type="text/css" />
+
+  <script src="/static/components/jquery/jquery.min.js"></script>
 </head>
 <body class="notebook_list"
   data-base-url="<%baseUrl%>"
@@ -17,49 +20,43 @@
   data-feedback-id="<%feedbackId%>"
   data-version-id="<%versionId%>"
   data-signed-in="<%isSignedIn%>"
-  data-user-id="<%userId%>">
+  data-user-id="<%userId%>"
+  data-account="<%account%>"
+  data-reporting-enabled="<%reportingEnabled%>"
+  data-project-hash="<%projectHash%>">
+
+  <script>
+     window.datalab = {};
+  </script>
+  <script src="<%configUrl%>"></script>
+  <script>
+    var reportingEnabled = (document.body.getAttribute('data-reporting-enabled') == 'true');
+    if (reportingEnabled) {
+      // Snippet to initialize the Google Tag Manager, which provides anonymized usage reporting
+      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+      '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer',window.datalab.gtmAccount);
+      // End Google Tag Manager
+
+      var signedIn = (document.body.getAttribute('data-signed-in') == 'true');
+      var projectHash = document.body.getAttribute('data-project-hash');
+      var event = {
+        'event': 'concordEvent',
+        'pagePath': '/virtual/datalab/openDirectory',
+        'eventType': 'datalab',
+        'eventName': 'openDirectory',
+        'projectNumber': projectHash,
+        'metadata': 'signedIn=' + signedIn,
+      }
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push(event);
+    }
+  </script>
 
   <div id="app">
     <div id="appBar">
-      <span id="logo" class="nav navbar-brand pull-left">
-        <a href="/tree"><img src="/static/logo.png" alt="Google Cloud DataLab" /></a>
-      </span>
-      <div class="btn-toolbar pull-right">
-        <div class="btn-group">
-          <button id="feedbackButton" title="Provide feedback">
-            <span class="fa fa-comment"></span>
-          </button>
-        </div>
-        <div class="btn-group">
-          <button id="aboutButton" title="About Google Cloud Datalab">
-            <span class="fa fa-info-circle"></span>
-          </button>
-        </div>
-        <div class="btn-group">
-          <a href="/tree/datalab/docs/notebooks" class="btn">
-            <button title="Samples and Tutorials">
-              <span class="fa fa-book"></span>
-            </button>
-          </a>
-        </div>
-        <div class="btn-group">
-          <a href="/sessions" target="_blank" id="sessionsButton" class="btn">
-            <button title="Running Sessions">
-              <span class="fa fa-tasks"></span>
-            </button>
-          </a>
-        </div>
-        <div class="btn-group">
-          <button id="signInButton" title="Sign In" style="display:none">
-            <span class="fa fa-sign-in"></span>
-          </button>
-        </div>
-        <div class="btn-group">
-          <button id="signOutButton" title="Sign Out" style="display:none">
-            <span class="fa fa-sign-out"></span>
-          </button>
-        </div>
-      </div>
     </div>
     <div id="appContent">
       <div id="mainArea">
@@ -74,24 +71,24 @@
                     <form id="alternate_upload"  class="alternate_upload">
                       <div class="btn-toolbar pull-left">
                         <div class="btn-group">
-                          <button id="addNotebookButton" type="button" class="btn" title="Add a new notebook">
+                          <button id="addNotebookButton" type="button" class="toolbar-btn" title="Add a new notebook">
                             <span class="fa fa-plus-square"></span> Notebook
                           </button>
-                          <button id="addFolderButton" type="button" class="btn" title="Add a new folder">
+                          <button id="addFolderButton" type="button" class="toolbar-btn" title="Add a new folder">
                             <span class="fa fa-plus-square"></span> Folder
                           </button>
-                          <span id="uploadButton" type="button" class="btn" title="Upload notebook(s)">
+                          <button id="uploadButton" type="button" class="toolbar-btn" title="Upload notebook(s)">
                             <span class="fa fa-upload"></span>
-                            <input type="file" name="datafile" class="fileinput" multiple="multiple" value="Upload" />
+                            <input type="file" name="datafile" class="fileinput" multiple="multiple" value="Upload" style="cursor: pointer" />
                             Upload
-                          </span>
-                          <button id="duplicateButton" type="button" class="btn duplicate-button" title="Create a copy of the selected item(s)">
+                          </button>
+                          <button id="duplicateButton" type="button" class="toolbar-btn duplicate-button" title="Create a copy of the selected item(s)">
                             <span class="fa fa-files-o"></span> Copy
                           </button>
-                          <button id="renameButton" type="button" class="btn rename-button" title="Rename selected item(s)">
+                          <button id="renameButton" type="button" class="toolbar-btn rename-button" title="Rename selected item(s)">
                             <span class="fa fa-edit"></span> Rename
                           </button>
-                          <button id="deleteButton" type="button" class="btn delete-button" title="Deleted selected item(s)">
+                          <button id="deleteButton" type="button" class="toolbar-btn delete-button" title="Deleted selected item(s)">
                             <span class="fa fa-trash-o"></span> Delete
                           </button>
                         </div>
@@ -169,11 +166,12 @@
            'contents': 'services/contents',
          }
        }
-     });
-     window.datalab = {};
+    });
+
+    $("#appBar").load("/static/appbar.html", function() {
+      require(['tree/js/main.min']);
+    });
   </script>
-  <script src="<%configUrl%>"></script>
-  <script src="/static/tree/js/main.min.js" charset="utf-8"></script>
   <script src="//www.gstatic.com/feedback/api.js" async="true" defer="true"></script>
 </body>
 </html>

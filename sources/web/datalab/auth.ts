@@ -33,6 +33,7 @@ let clientSecret = 'ZmssLNjJy2998hD4CTg2ejr2';
 let gcloudDir = '/content/datalab/.config';
 let userCredFile = gcloudDir + '/credentials';
 let appCredFile = gcloudDir + '/application_default_credentials.json';
+let botoFile = '/etc/boto.cfg';
 
 let scopes = [
   'https://www.googleapis.com/auth/userinfo.email',
@@ -49,14 +50,28 @@ function base64decodeSegment(str: string) {
   return new Buffer(str, 'base64').toString();
 }
 
+export function getGcloudAccount(): string {
+  // Ask gcloud which account we are using.
+  try {
+    var account = childProcess.execSync(
+      'gcloud auth list --filter=status:ACTIVE --format "value(account)"',
+      {env: process.env});
+    account = account.toString().trim();
+    return account;
+  } catch (err) {
+    logging.getLogger().error(err, 'Failed to get the gcloud account. stderr: %s', err.stderr);
+    return "unknown";
+  }
+}
+
 function setGcloudAccount(email: string) {
   // Tell gcloud which account we are using.
-  childProcess.exec('gcloud config set account ' + email, {env: process.env}, function(err, stdout, stderr) {
-    if (err) {
-      logging.getLogger().error(err, 'Failed to set gcloud account. stderr: %s', stderr);
-      return;
-    }
-  });
+  try {
+    childProcess.execSync('gcloud config set account ' + email, {env: process.env});
+  } catch (err) {
+    logging.getLogger().error(err, 'Failed to set gcloud account. stderr: %s', err.stderr);
+    return;
+  }
 }
 
 function saveUserCredFile(tokens: any): string {
@@ -113,6 +128,13 @@ function saveApplicationCredFile(tokens: any) {
   );
 }
 
+function saveBotoFile(tokens: any) {
+  // Create botoFile and set refresh token to get gsutil working.
+  // See https://cloud.google.com/storage/docs/gsutil/commands/config.
+  var botoContent:string = '[Credentials]\ngs_oauth2_refresh_token = ' + tokens.refresh_token;
+  fs.writeFileSync(botoFile, botoContent);
+}
+
 /**
  * Save the tokens in a credentials file that Datalab and gcloud can both use.
  */
@@ -121,12 +143,13 @@ function persistCredentials(tokens: any): string {
     fs.mkdirSync(gcloudDir);
   }
   saveApplicationCredFile(tokens);
+  saveBotoFile(tokens);
   return saveUserCredFile(tokens);
 }
 
 export function isSignedIn(): boolean {
-  // If not local, then we should have service account available so consider that signed in.
-  return (process.env.DATALAB_ENV != 'local' || fs.existsSync(appCredFile));
+  var gcloudAccount:string = getGcloudAccount();
+  return (gcloudAccount != '' && gcloudAccount != 'unknown');
 }
 
 function getPortNumber(request: http.ServerRequest): number {
@@ -168,6 +191,13 @@ export function handleAuthFlow(request: http.ServerRequest, response: http.Serve
         fs.unlinkSync(appCredFile);
       } catch (e) {
         logging.getLogger().error('Could not delete ' + appCredFile + ': ' + e);
+      }
+    }
+    if (fs.existsSync(botoFile)) {
+      try {
+        fs.unlinkSync(botoFile);
+      } catch (e) {
+        logging.getLogger().error('Could not delete ' + botoFile + ': ' + e);
       }
     }
   } else if (path.indexOf('/oauthcallback') == 0) {  // Return from auth flow.
@@ -213,4 +243,12 @@ export function handleAuthFlow(request: http.ServerRequest, response: http.Serve
   response.statusCode = 302;
   response.setHeader('Location', referer);
   response.end();
+}
+
+export function init() {
+  if (fs.existsSync(appCredFile)) {
+    var tokensContent:string = fs.readFileSync(appCredFile, 'utf8');
+    var tokens:any = JSON.parse(tokensContent);
+    saveBotoFile(tokens);
+  }
 }

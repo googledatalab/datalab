@@ -27,13 +27,13 @@ DataLab is packaged as a docker container which contains Jupyter/IPython, and a 
 libraries such as numpy, pandas, scikit-learn and matplotlib, in a ready-to-use form.
 
 You can run the docker container locally or in GCE, as described in the
-[wiki](https://github.com/googlecloudplatform/datalab/wiki/Getting-Started).
+[wiki](https://github.com/googledatalab/datalab/wiki/Getting-Started).
 
 ### Contacting Us
 
 For support or help using DataLab, please submit questions tagged with `google-cloud-datalab` on [StackOverflow](http://stackoverflow.com/questions/tagged/google-cloud-datalab).
 
-For any product issues, you can either [submit issues](https://github.com/GoogleCloudPlatform/datalab/issues)
+For any product issues, you can either [submit issues](https://github.com/googledatalab/datalab/issues)
 here on this project page, or you can submit your feedback using the feedback link available
 within the product.
 
@@ -42,14 +42,14 @@ within the product.
 
 ### Building and Running
 
-The [wiki](https://github.com/googlecloudplatform/datalab/wiki/Development-Environment) describes
+The [wiki](https://github.com/googledatalab/datalab/wiki/Development-Environment) describes
 the process of setting up a local development environment, as well as the steps to build and run,
 and the developer workflow.
 
 ### Contributing
 
-Contributions are welcome! Please see our [roadmap](https://github.com/GoogleCloudPlatform/datalab/wiki/Roadmap)
-page. Please check the page on [contributing](https://github.com/GoogleCloudPlatform/datalab/wiki/Contributing)
+Contributions are welcome! Please see our [roadmap](https://github.com/googledatalab/datalab/wiki/Roadmap)
+page. Please check the page on [contributing](https://github.com/googledatalab/datalab/wiki/Contributing)
 for more details.
 
 You can always contribute even without code submissions by submitting issues and suggestions to

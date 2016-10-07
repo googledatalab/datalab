@@ -20,12 +20,14 @@
 import auth = require('./auth')
 import callbacks = require('./callbacks');
 import childProcess = require('child_process');
+import crypto = require('crypto');
 import fs = require('fs');
 import http = require('http');
 import httpProxy = require('http-proxy');
 import logging = require('./logging');
 import net = require('net');
 import path = require('path');
+import settings = require('./settings');
 import tcp = require('tcp-port-used');
 import url = require('url');
 import userManager = require('./userManager');
@@ -141,7 +143,9 @@ function createJupyterServerAtPort(port: number, userId: string, userDir: string
     processArgs = processArgs.concat([
       '--NotebookApp.session_manager_class=nb2kg.managers.SessionManager',
       '--NotebookApp.kernel_manager_class=nb2kg.managers.RemoteKernelManager',
-      '--NotebookApp.kernel_spec_manager_class=nb2kg.managers.RemoteKernelSpecManager'
+      '--NotebookApp.kernel_spec_manager_class=nb2kg.managers.RemoteKernelSpecManager',
+      '--NotebookNotary.algorithm=sha256',
+      '--NotebookNotary.secret_file=/content/datalab/.config/notary_secret'
     ]);
   }
 
@@ -168,7 +172,7 @@ function createJupyterServerAtPort(port: number, userId: string, userDir: string
   server.proxy.on('proxyRes', responseHandler);
   server.proxy.on('error', errorHandler);
 
-  tcp.waitUntilUsed(server.port, 100, 3000).then(
+  tcp.waitUntilUsed(server.port, 100, 15000).then(
     function() {
       jupyterServers[userId] = server;
       logging.getLogger().info('Jupyter server started for %s.', userId);
@@ -362,19 +366,40 @@ export function handleRequest(request: http.ServerRequest, response: http.Server
     sendTemplate('sessions', templateData, response);
     return;
   }
-  server.proxy.web(request, response);
+  server.proxy.web(request, response, null);
 }
 
 function getBaseTemplateData(request: http.ServerRequest): common.Map<string> {
+  var userId: string = userManager.getUserId(request);
+  var proxyWebSockets: string = process.env.PROXY_WEB_SOCKETS;
+  if (proxyWebSockets != 'true') {
+    proxyWebSockets = 'false';
+  }
+  var reportingEnabled: string = process.env.ENABLE_USAGE_REPORTING;
+  if (reportingEnabled) {
+    var userSettings: common.Map<string> = settings.loadUserSettings(userId);
+    if ('enableUsageReporting' in userSettings && userSettings['enableUsageReporting'] != 'true') {
+      reportingEnabled = 'false';
+    }
+  }
   var templateData: common.Map<string> = {
     feedbackId: appSettings.feedbackId,
     versionId: appSettings.versionId,
-    userId: userManager.getUserId(request),
+    userId: userId,
     configUrl: appSettings.configUrl,
-    baseUrl: '/'
+    baseUrl: '/',
+    reportingEnabled: reportingEnabled,
+    proxyWebSockets: proxyWebSockets
   };
-  if (process.env.DATALAB_ENV == 'local') {
-    templateData['isSignedIn'] = auth.isSignedIn().toString();
+  var signedIn = auth.isSignedIn();
+  templateData['isSignedIn'] = signedIn.toString();
+  if (signedIn) {
+    templateData['account'] = auth.getGcloudAccount();
+    if (process.env.PROJECT_NUMBER) {
+      var hash = crypto.createHash('sha256');
+      hash.update(process.env.PROJECT_NUMBER);
+      templateData['projectHash'] = hash.digest('hex');
+    }
   }
   return templateData;
 }

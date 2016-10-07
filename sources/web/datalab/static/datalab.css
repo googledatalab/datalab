@@ -24,7 +24,6 @@
 body {
   font-family: 'Open Sans', Helvetica, sans-serif;
   font-size: 14px;
-  background: #fff;
   min-width: 1200px;
 }
 
@@ -47,6 +46,8 @@ body {
   align-content: space-between;
 }
 #appBar {
+  background-color: #333;
+  box-shadow: 0 0 8px 0 #000;
   -webkit-order: 1;
   order: 1;
   -webkit-flex: 0 1 auto;
@@ -55,13 +56,10 @@ body {
   align-self: auto;
   height: 48px;
   min-height: 48px;
-  color: white;
-  background-color: #333;
   padding-left: 10px;
   padding-right: 10px;
   position: relative;
   z-index: 10;
-  box-shadow: 0 0 8px 0 #000;
 }
 #appContent {
   -webkit-order: 2;
@@ -100,8 +98,6 @@ body {
   order: 1;
   -webkit-flex: 0 1 auto;
   flex: 0 1 auto;
-  -webkit-box-shadow: 1px 2px 8px 0px rgba(0, 0, 0, 0.25);
-  box-shadow: 1px 2px 8px 0px rgba(0, 0, 0, 0.25);
 }
 #contentArea {
   -webkit-order: 2;
@@ -127,7 +123,6 @@ body {
   -webkit-align-self: auto;
   align-self: auto;
   min-width: 100px;
-  background-color: #f3f3f3;
   position: relative;
 }
 #sidebarToolbar.larger {
@@ -135,7 +130,6 @@ body {
   flex-grow: 3;
 }
 #sidebarArea {
-  color: #000;
   padding: 10px 20px;
 }
 #sidebarArea.larger {
@@ -146,12 +140,9 @@ body {
   line-height: 48px;
   vertical-align: middle;
   height: 48px;
-  color: #444;
-  background-color: #f3f3f3;
   padding-left: 10px;
   padding-right: 10px;
   padding-top: 2px;
-  border-bottom: solid 1px #e6e6e6;
   z-index: 8;
 }
 #updateMessageArea {
@@ -183,7 +174,6 @@ body {
   bottom: 0px;
 }
 #sidebarContent {
-  color: #000;
   padding: 10px 20px;
 }
 .container {
@@ -195,18 +185,14 @@ body {
 div.btn-group a {
   cursor: default;
 }
-#appBar button {
+#appBar .toolbar-btn {
   background-color: transparent;
   border: none;
   height: 48px;
   font-size: 16px;
   padding: 4px;
-  color: #ccc;
   margin-right: 10px;
   margin-left: 0px;
-}
-#appBar button:hover {
-  color: #fff;
 }
 #appbar div.btn-group {
   margin-left: 0px !important;
@@ -214,10 +200,10 @@ div.btn-group a {
 div.btn-toolbar {
   margin: 0px;
 }
-div.btn-toolbar .btn {
+div.btn-toolbar .toolbar-btn {
   background-color: transparent;
   border: none;
-  color: #666;
+  font-family: 'Open Sans', Helvetica, sans-serif;
   font-weight: normal;
   font-size: 14px;
   outline: solid 1px transparent !important;
@@ -227,24 +213,27 @@ div.btn-toolbar .btn {
   cursor: pointer;
   vertical-align: middle;
 }
-div.btn-toolbar .btn:hover, div.btn-toolbar .btn:focus {
-  color: #000;
+div.btn-toolbar .toolbar-btn:hover, div.btn-toolbar .toolbar-btn:focus {
   border: none;
 }
-div.btn-toolbar button:focus {
+div.btn-toolbar .toolbar-btn:focus {
   outline: solid 1px transparent !important;
 }
-div.btn-toolbar .btn.dropdown-toggle {
+div.btn-toolbar .toolbar-btn.dropdown-toggle {
   padding-left: 2px;
   padding-right: 2px;
   margin-left: -2px;
 }
-div.btn-toolbar .btn.active {
+#accountDropdown div div {
+  margin: 10px 15px 10px 15px;
+}
+#signOutGroup ul li {
+   padding: 5px 0px 0px 0px;
+}
+div.btn-toolbar .toolbar-btn.active {
   font-weight: bold;
-  color: #337ab7;
   border: none;
   box-shadow: none;
-  border-bottom: solid 2px #337ab7;
 }
 #toggleSidebarButton {
   margin-bottom: 8px;
@@ -282,9 +271,6 @@ div.btn-toolbar .btn.active {
   font-size: 16px;
   padding: 0px;
 }
-.notebook_app {
-  background: #fff;
-}
 #ipython-main-app {
   position: relative;
   padding: 10px 40px;
@@ -312,7 +298,6 @@ span.save_widget span.filename {
   margin: 0px;
 }
 span.autosave_status {
-  color: #ddd;
   font-size: 13px;
   line-height: 35px;
   vertical-align: middle;
@@ -325,13 +310,18 @@ div.cell {
   border: solid 1px transparent;
   border-radius: 0px;
   padding: 0px;
+  padding-left: 0px;
   margin-bottom: 10px;
 }
 div.cell.selected, div.cell.text_cell.selected, div.cell.code_cell.selected {
+  background: none;
   border: solid 1px #ddd;
+  padding-left: 0px;
+  box-shadow: 0px 0px 6px 0px rgba(0, 0, 0, 0.2);
 }
 .edit_mode div.cell.text_cell.selected, .edit_mode div.code_cell.selected {
   border: solid 1px #ddd;
+  padding-left: 0px;
   box-shadow: 0px 0px 6px 0px rgba(0, 0, 0, 0.2);
 }
 
@@ -344,11 +334,7 @@ div.code_cell.session div.input {
 div.code_cell.running div.input {
   border-left: solid 4px #ddd;
 }
-div.code_cell.session.completed div.input {
-  border-left: solid 4px #337ab7;
-}
 div.code_cell div.input {
-  background-color: #f7f7f7;
   border-top: none;
 }
 div.input_area {
@@ -408,11 +394,8 @@ pre, code, .CodeMirror, .CodeMirror pre, .CodeMirror-linenumber {
 .CodeMirror pre, .CodeMirror-linenumber {
   line-height: 1.4 !important;
 }
-.CodeMirror-selected {
-  background-color: #addfff !important;
-}
 .CodeMirror-cursor {
-  border-left: 2px solid #222 !important;
+  border-left: 2px solid #222;
 }
 .CodeMirror-gutters {
   border-right: 1px solid #eee;
@@ -432,26 +415,14 @@ div.selected .CodeMirror-linenumber {
   font-weight: bold !important;
 }
 .cm-keyword {
-  color: #00f !important;
   font-weight: normal !important;
-}
-.cm-number, .cm-string, .cm-string2 {
-  color: #000080 !important;
 }
 .cm-comment {
   color: #008000 !important;
   font-style: normal !important;
 }
-.cm-def, .cm-variable, .cm-variable-2, .cm-variable-3, .cm-property,
-.cm-qualifier, .cm-operator, .cm-meta, .cm-builtin,
-.cm-tag, .cm-attribute, .cm-header, .cm-hr, .cm-atom {
-  color: #000 !important;
-}
 .cm-error {
   color: red !important;
-}
-.cm-link, .cm-url {
-  color: #337ab7 !important;
 }
 .cm-header-1, .cm-header-2, .cm-header-3, .cm-header-4, .cm-header-5, .cm-header-6 {
   font-family: inherit !important;
@@ -464,10 +435,6 @@ div.modal-dialog pre, div.modal-dialog code, #help code, #help pre {
 }
 #help pre {
   border: none;
-}
-
-code {
-  background-color: #eee;
 }
 
 @media print {

@@ -54,6 +54,10 @@ cat /datalab/license.txt
 - tornado [http://www.tornadoweb.org/en/stable/]
 - PyYAML [https://pypi.python.org/pypi/PyYAML]
 
+## Js Libraries
+- Sylvester [https://github.com/jcoglan/sylvester]
+- Parallel Coordinates [https://github.com/syntagmatic/parallel-coordinates]
+
 ## Node.js Modules
 - bunyan [https://www.npmjs.com/package/bunyan]
 - forever [https://www.npmjs.com/package/forever]

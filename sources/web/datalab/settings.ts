@@ -18,9 +18,12 @@
 
 import childProcess = require('child_process');
 import fs = require('fs');
+import http = require('http');
 import uuid = require('node-uuid');
 import path = require('path');
+import url = require('url');
 import util = require('util');
+import userManager = require('./userManager');
 
 var SETTINGS_FILE = 'settings.json';
 var METADATA_FILE = 'metadata.json';
@@ -66,4 +69,144 @@ export function loadSettings(): common.Settings {
     console.log(e);
     return null;
   }
+}
+
+/**
+ * Loads the path of the configuration directory for the user.
+ *
+ * @returns the path of the user's config directory.
+ */
+export function getUserConfigDir(userId: string): string {
+  var userDir = userManager.getUserDir(userId);
+  var configPath = path.join(userDir, 'datalab', '.config');
+  return configPath;
+}
+
+/**
+ * Loads the configuration settings for the user.
+ *
+ * @returns the key:value mapping of settings for the user.
+ */
+export function loadUserSettings(userId: string): common.Map<string> {
+  var settingsPath = path.join(getUserConfigDir(userId), SETTINGS_FILE);
+  if (!fs.existsSync(settingsPath)) {
+    console.log('Settings file %s not found.', settingsPath);
+    return {};
+  }
+
+  try {
+    var settings = <common.Map<string>>JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    return settings;
+  }
+  catch (e) {
+    console.log(e);
+    return {};
+  }
+}
+
+function ensureDirExists(fullPath: string): boolean {
+  if (path.dirname(fullPath) == fullPath) {
+    // This should only happen once we hit the root directory
+    return true;
+  }
+  if (fs.existsSync(fullPath)) {
+    if (!fs.lstatSync(fullPath).isDirectory()) {
+      console.log('Path ' + fullPath + ' is not a directory');
+      return false;
+    }
+    return true;
+  }
+  if (!ensureDirExists(path.dirname(fullPath))) {
+    return false;
+  }
+  fs.mkdirSync(fullPath);
+  return true;
+}
+
+/**
+ * Updates a single configuration setting for the user.
+ *
+ * @param key the name of the setting to update.
+ * @param value the updated value of the setting.
+ * @returns true iff the update was applied.
+ */
+export function updateUserSetting(userId: string, key: string, value: string, asynchronous: boolean = false): boolean {
+  var userDir = userManager.getUserDir(userId);
+  var settingsDir =  path.join(userDir, 'datalab', '.config');
+  var settingsPath = path.join(settingsDir, SETTINGS_FILE);
+
+  var settings: common.Map<string> = {};
+  if (fs.existsSync(settingsPath)) {
+    try {
+      settings = <common.Map<string>>JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    }
+    catch (e) {
+      console.log(e);
+      return false;
+    }
+  }
+  settings[key] = value;
+
+  try {
+    var settingsString = JSON.stringify(settings);
+    var writeFunc = asynchronous ? fs.writeFile : fs.writeFileSync;
+    if (ensureDirExists(path.normalize(settingsDir))) {
+      writeFunc(settingsPath, settingsString);
+    }
+  }
+  catch (e) {
+    console.log(e);
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Implements setting update request handling.
+ * @param request the incoming http request.
+ * @param response the outgoing http response.
+ */
+function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
+  var userId = userManager.getUserId(request);
+  var parsedUrl = url.parse(request.url, true);
+  if (('key' in parsedUrl.query) && ('value' in parsedUrl.query)) {
+    var key = parsedUrl.query['key'];
+    var value = parsedUrl.query['value'];
+    if (updateUserSetting(userId, key, value)) {
+      if ('redirect' in parsedUrl.query) {
+        response.writeHead(302, { 'Location': parsedUrl.query['redirect'] });
+      } else {
+        response.writeHead(200, { 'Content-Type': 'text/plain' });
+      }
+    } else {
+      response.writeHead(500, { 'Content-Type': 'text/plain' });
+    }
+    response.end();
+    return;
+  } else {
+    var userSettings = loadUserSettings(userId);
+    if ('key' in parsedUrl.query) {
+      var key = parsedUrl.query['key'];
+      if (key in userSettings) {
+        response.writeHead(200, { 'Content-Type': 'application/json' });
+        response.end(JSON.stringify(userSettings[key]));
+      } else {
+        response.writeHead(404, { 'Content-Type': 'text/plain' });
+        response.end();
+      }
+      return;
+    } else {
+      response.writeHead(200, { 'Content-Type': 'application/json' });
+      response.end(JSON.stringify(userSettings));
+      return;
+    }
+  }
+}
+
+/**
+ * Creates the setting updater request handler.
+ * @returns the request handler to handle setting update requests.
+ */
+export function createHandler(): http.RequestHandler {
+  return requestHandler;
 }

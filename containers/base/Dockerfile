@@ -24,11 +24,16 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         libpng-dev libfreetype6-dev libxft-dev \
         rsync \
         libxml2-dev \
-        python2.7 python-dev python-setuptools python-zmq && \
+        python2.7 python-dev python-setuptools python-zmq openssh-client && \
     easy_install pip && \
-    mkdir -p /tools && \
-    mkdir -p /srcs && \
-    cd /srcs && apt-get source -d python-zmq && cd /
+    mkdir -p /tools
+
+# Save GPL source packages
+RUN mkdir -p /srcs && \
+    cd /srcs && \
+    apt-get source -d python-zmq wget git ca-certificates pkg-config libpng-dev && \
+    wget https://mirrors.kernel.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.bz2 && \
+    cd /
 
 # Setup Python packages. Rebuilding numpy/scipy is expensive so we move this early
 # to reduce the chance that prior steps can cause changes requiring a rebuild.
@@ -61,6 +66,12 @@ RUN pip install -U tornado==4.3 \
     pip install -U six==1.9.0 && \
     pip install -U ipywidgets==5.0.0 && \
     pip install -U future==0.15.2 && \
+    pip install -U psutil==4.3.0 && \
+    pip install -U google-api-python-client==1.5.1  && \
+    pip install -U plotly==1.12.5 && \
+    pip install -U nltk==3.2.1 && \
+    pip install -U bs4==0.0.1 && \
+    pip install -U crcmod==1.7 && \
     easy_install pip && \
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf
 
@@ -108,27 +119,34 @@ RUN /tools/node/bin/npm install \
 
 # Install ProtoBuf, TensorFlow
 RUN pip install protobuf==3.0.0b2.post2 && \
-    wget https://storage.googleapis.com/cloud-datalab/deploy/tf/tensorflow-0.9.0-cp27-none-linux_x86_64.whl && \
-    pip install tensorflow-0.9.0-cp27-none-linux_x86_64.whl && \
-    rm tensorflow-0.9.0-cp27-none-linux_x86_64.whl
+    wget https://storage.googleapis.com/cloud-datalab/deploy/tf/tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
+    pip install tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
+    rm tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl
 
 # Install DataFlow
-RUN wget https://github.com/GoogleCloudPlatform/DataflowPythonSDK/archive/v0.2.7.tar.gz && \
-    pip install v0.2.7.tar.gz && \
-    rm v0.2.7.tar.gz
+RUN pip install google-cloud-dataflow==0.4.2
+
+# Install CloudML SDK
+RUN gsutil cp gs://cloud-ml/sdk/cloudml-0.1.6-alpha.tar.gz cloudml-0.1.6-alpha.tar.gz && \
+    pip install cloudml-0.1.6-alpha.tar.gz && \
+    rm cloudml-0.1.6-alpha.tar.gz
 
 ADD nbconvert /datalab/nbconvert
 ADD config/ipython.py /etc/ipython/ipython_config.py
 ADD config/nbconvert.py /etc/jupyter/jupyter_notebook_config.py
+# Directory "py" may be empty and in that case it will git clone pydatalab from repo
+ADD pydatalab /datalab/lib/pydatalab
 
 # Do IPython configuration and install build artifacts
 # Then link stuff needed for nbconvert to a location where Jinja will find it.
 # I'd prefer to just use absolute path in Jinja imports but those don't work.
 RUN ipython profile create default && \
     jupyter notebook --generate-config && \
-    mkdir -p /datalab/lib && \
-    cd /datalab/lib && \
-    git clone https://github.com/googledatalab/pydatalab.git && \
+    if [ -d /datalab/lib/pydatalab/.git ]; then \
+        echo "use local lib"; \
+      else \
+        git clone https://github.com/googledatalab/pydatalab.git /datalab/lib/pydatalab; \
+      fi && \
     cd /datalab/lib/pydatalab && \
     tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts && \
     pip install . && \
@@ -144,3 +162,4 @@ RUN ipython profile create default && \
 # Include this line above to enable ipywidgets. These aren't working 100% yet so 
 # we don't enable them.
 #    jupyter nbextension enable --py widgetsnbextension && \
+

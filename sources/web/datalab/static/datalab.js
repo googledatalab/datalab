@@ -12,6 +12,98 @@
  * the License.
  */
 
+// Override WebSocket
+(function() {
+    var proxyWebSockets = (document.body.getAttribute('data-proxy-web-sockets') == 'true');
+    if (!proxyWebSockets) {
+	return;
+    }
+
+    if (!window.io) {
+	// If socket.io was not loaded into the page, then do not override the existing
+	// WebSocket functionality.
+	return;
+    }
+
+    function WebSocketShim(url) {
+	var self = this;
+	this._url = url;
+	this.readyState = WebSocketShim.CLOSED;
+
+	var socketUri = location.protocol + '//' + location.host + '/session';
+	var socketOptions = {
+	    upgrade: false,
+	    multiplex: false
+	};
+
+	function errorHandler() {
+	    if (self.onerror) {
+		self.onerror({ target: self });
+	    }
+	}
+	var socket = io.connect(socketUri, socketOptions);
+	socket.on('connect', function() {
+	    socket.emit('start', { url: url });
+	});
+	socket.on('disconnect', function() {
+	    self._socket = null;
+	    self.readyState = WebSocketShim.CLOSED;
+	    if (self.onclose) {
+		self.onclose({ target: self });
+	    }
+	});
+	socket.on('open', function(msg) {
+	    self._socket = socket;
+	    self.readyState = WebSocketShim.OPEN;
+	    if (self.onopen) {
+		self.onopen({ target: self });
+	    }
+	});
+	socket.on('close', function(msg) {
+	    self._socket = null;
+	    self.readyState = WebSocketShim.CLOSED;
+	    if (self.onclose) {
+		self.onclose({ target: self });
+	    }
+	});
+	socket.on('data', function(msg) {
+	    if (self.onmessage) {
+		self.onmessage({ target: self, data: msg.data });
+	    }
+	});
+	socket.on('error', errorHandler);
+	socket.on('connect_error', errorHandler);
+	socket.on('reconnect_error', errorHandler);
+    }
+    WebSocketShim.prototype = {
+	onopen: null,
+	onclose: null,
+	onmessage: null,
+	onerror: null,
+
+	send: function(data) {
+	    if (this.readyState != WebSocketShim.OPEN) {
+		throw new Error('WebSocket is not yet opened');
+	    }
+	    this._socket.emit('data', { data: data });
+	},
+
+	close: function() {
+	    if (this.readyState == WebSocketShim.OPEN) {
+		this.readyState = WebSocketShim.CLOSED;
+
+		this._socket.emit('stop', { url: this._url });
+		this._socket.close();
+	    }
+	}
+    };
+    WebSocketShim.CLOSED = 0;
+    WebSocketShim.OPEN = 1;
+
+    var nativeWebSocket = window.WebSocket;
+    window.WebSocket = WebSocketShim;
+})();
+
 var debug = {
   enabled: true,
   log: function() { console.log.apply(console, arguments); }
@@ -19,20 +111,76 @@ var debug = {
 
 function placeHolder() {}
 
+function reportEvent(event) {
+  var reportingEnabled = (document.body.getAttribute('data-reporting-enabled') == 'true');
+  if (!reportingEnabled) { return; }
+
+  var signedIn = (document.body.getAttribute('data-signed-in') == 'true');
+  var additionalMetadata = 'signedIn=' + signedIn;
+  if (event['metadata']) {
+    event['metadata'] = event['metadata'] + ',' + additionalMetadata;
+  } else {
+    event['metadata'] = additionalMetadata;
+  }
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push(event);
+}
+
+function toggleSidebar() {
+  var d = document.getElementById('sidebarArea');
+  d.style.display = (d.style.display == 'none') ? 'block' : 'none';
+  document.getElementById('hideSidebarButton').classList.toggle('fa-flip-vertical');
+  this.blur();
+  // Chrome at least seems to render the notebook poorly after this for a little
+  // while. If you scroll new content into view it is messed up until you click
+  // in the notebook. This does not repro with Firefox or Safari so seems to be
+  // a Chrome bug. Triggering a resize or similar doesn't help because the content
+  // that is messed up is currently out of the viewable part of the window. Will
+  // file a bug against Chrome.
+}
+
+function showHelp(markup) {
+  document.getElementById('navigation').style.display = 'none';
+  document.getElementById('help').style.display = '';
+
+  document.getElementById('navigationButton').classList.remove('active');
+  document.getElementById('helpButton').classList.add('active');
+
+  if (markup) {
+    document.getElementById('help').innerHTML = markup;
+  }
+  if (document.getElementById('sidebarArea').style.display == 'none') {
+    toggleSidebar();
+  }
+}
+
+function xhr(url, callback) {
+  let request = new XMLHttpRequest();
+  request.onreadystatechange = callback.bind(request);
+  request.open("GET", url);
+  request.send();
+}
+
+function getSettingKeyAddress(setting) {
+  return window.location.protocol + "//" + window.location.host + "/_settings?key=" + setting;
+}
+
 function initializePage(dialog, saveFn) {
 
   function showAbout() {
     var version = document.body.getAttribute('data-version-id');
+    var reportingEnabled = (document.body.getAttribute('data-reporting-enabled') == 'true');
     var dialogContent =
       '<p>Interactive notebooks, with Python and SQL on Google Cloud Platform.</p>' +
       '<p>Explore, transform, visualize and process data using BigQuery and Google Cloud Storage.</p><br />' +
       '<pre>Version: ' + version  + '\nBased on Jupyter (formerly IPython) 4</pre>' +
       '<h5><b>More Information</b></h5>' +
       '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://cloud.google.com" target="_blank">Product information</a><br />' +
-      '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://github.com/GoogleCloudPlatform/datalab" target="_blank">Project on GitHub</a><br />' +
+      '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://github.com/googledatalab/datalab" target="_blank">Project on GitHub</a><br />' +
       '<span class="fa fa-external-link-square">&nbsp;</span><a href="/static/about.txt" target="_blank">License and software information</a><br />' +
       '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://cloud.google.com/terms/" target="_blank">Terms of Service</a><br />' +
-      '<span class="fa fa-external-link-square">&nbsp;</span><a href="http://www.google.com/intl/en/policies/" target="_blank">Privacy Policy</a><br />';
+      '<span class="fa fa-external-link-square">&nbsp;</span><a href="http://www.google.com/intl/en/policies/" target="_blank">Privacy Policy</a><br />' +
+      '<span class="fa fa-external-link-square">&nbsp;</span><a href="/static/reporting.html?enabled=' + reportingEnabled + '" target="_blank">Usage Statistics</a><br />';
 
     var dialogOptions = {
       title: 'About Google Cloud Datalab',
@@ -42,14 +190,35 @@ function initializePage(dialog, saveFn) {
     dialog.modal(dialogOptions);
   }
 
-  $('#aboutButton').click(showAbout);
-  $('#feedbackButton').click(function() {
-    window.open('https://groups.google.com/forum/#!newtopic/google-cloud-datalab-feedback');
+  // Prepare sign in/out UI
+  $('#accountDropdownButton').on('click', function (event) {
+    $(this).parent().toggleClass('open');
+    if (window.datalab && window.datalab.session) {
+      window.datalab.session.execute("datalab_project_id()", function(error, projectId) {
+        if (error === null || error === undefined) {
+          $('#projectLabel').text("Active project: " + projectId);
+          $('#projectLabel').show();
+        }
+      });
+    }
+  });
+  $('body').on('click', function (e) {
+    if (!$('#accountDropdown').is(e.target)
+        && $('#accountDropdown').has(e.target).length === 0
+        && $('.open').has(e.target).length === 0
+    ) {
+        $('#accountDropdown').removeClass('open');
+    }
   });
   var signedIn = document.body.getAttribute('data-signed-in');
   if (signedIn != undefined) {  // i.e. running locally.
     if (signedIn == "true") {
-      $('#signOutButton').show();
+      $('#signOutGroup').show();
+      var username = document.body.getAttribute('data-account');
+      $("#usernameLabel").text("Signed in as " + username);
+      if (username.indexOf('gserviceaccount.com') < 0) {
+        $('#signOutButton').show();
+      }
     } else {
       $('#signInButton').show();
     }
@@ -62,6 +231,50 @@ function initializePage(dialog, saveFn) {
       window.location = '/signout?referer=' + encodeURIComponent(window.location);
     });
   }
+
+  // More UI that relies on appbar load
+  // Prepare the theme selector radio boxes
+  lightThemeRadioOption = document.getElementById("lightThemeRadioOption")
+  darkThemeRadioOption = document.getElementById("darkThemeRadioOption")
+  xhr(getSettingKeyAddress("theme"), function() {
+    lightThemeRadioOption.checked = this.responseText === "\"light\"";
+    darkThemeRadioOption.checked = this.responseText === "\"dark\"";
+  })
+  lightThemeRadioOption.onclick = function() {
+    setTheme("light");
+    darkThemeRadioOption.checked = false;
+  };
+  darkThemeRadioOption.onclick = function() {
+    setTheme("dark");
+    lightThemeRadioOption.checked = false;
+  };
+
+  function setTheme(theme) {
+    xhr(getSettingKeyAddress("theme") + "&value=" + theme, function() {
+      // Reload the stylesheet by resetting its address with a random (time) version querystring
+      sheetAddress = document.getElementById("themeStylesheet").href + "?v=" + Date.now()
+      document.getElementById("themeStylesheet").setAttribute('href', sheetAddress);
+    })
+  }
+
+  // If inside a notebook, prepare notebook-specific help link inside the sidebar
+  if (document.getElementById('sidebarArea') !== null) {
+    $('#keyboardHelpLink').click(function(e) {
+      showHelp(document.getElementById('shortcutsHelp').textContent);
+      e.preventDefault();
+    });
+    $('#keyboardHelpLink').show()
+    $('#markdownHelpLink').click(function(e) {
+      showHelp(document.getElementById('markdownHelp').textContent);
+      e.preventDefault();
+    });
+    $('#markdownHelpLink').show()
+    $('#notebookHelpDivider').show()
+  }
+  $('#aboutButton').click(showAbout);
+  $('#feedbackButton').click(function() {
+    window.open('https://groups.google.com/forum/#!newtopic/google-cloud-datalab-feedback');
+  });
 }
 
 function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
@@ -113,7 +326,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
         var error = null;
         try {
           if (output.msg_type == 'execute_result') {
-            values = output.content.data['application/json'];
+            values = output.content.data['text/plain'];
           }
         }
         catch (e) {
@@ -173,10 +386,10 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
       return lastSepPos >= 23 &&
           path.substring(lastSepPos-23, lastSepPos) == '/datalab/docs/notebooks';
     }
-    
+
     // Remove save and rename menu items if under our docs directory.
     if (isSample()) {
-      // Can't just hide them as they will get redisplayed on drop down, so we 
+      // Can't just hide them as they will get redisplayed on drop down, so we
       // strip their content.
       document.getElementById('saveButton').innerHTML = '';
       document.getElementById('renameButton').innerHTML = '';
@@ -213,7 +426,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   require(['notebook/js/menubar'], function(ipy) {
     ipy.MenuBar.prototype.add_kernel_help_links = placeHolder;
 
-    // This is just a copy of the one from Jupyter but changes the first 
+    // This is just a copy of the one from Jupyter but changes the first
     // line from this.element.find('restore_checkpoint') to
     // $('#restoreButton').
     ipy.MenuBar.prototype.update_restore_checkpoint = function(checkpoints) {
@@ -331,7 +544,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 
   /**
    * Patch the cell auto_highlight code to use a working mode for magic_ MIME types.
-   * The Jupyter code uses a broken multiplexor. This _auto_highlight function is 
+   * The Jupyter code uses a broken multiplexor. This _auto_highlight function is
    * just the Jupyter code with the multiplexor stripped out and an overlay mode
    * put in instead. First we have a function to return the mode that works,
    * then we have the original Jupyter code with a call to our function replacing the
@@ -437,6 +650,10 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     };
   });
 
+  require (["notebook/js/outputarea"], function(ipy) {
+    ipy.OutputArea.auto_scroll_threshold = 1000;
+  });
+
   function navigateAlternate(alt, download) {
     var url = document.location.href.replace('/notebooks', alt);
     if (download) {
@@ -475,10 +692,28 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   })
 
   $('#convertHTMLButton').click(function() {
+    var event = {
+      'event': 'concordEvent',
+      'pagePath': '/virtual/datalab/exportNotebook',
+      'eventType': 'datalab',
+      'eventName': 'exportNotebook',
+      'metadata': 'format=html',
+    }
+    reportEvent(event);
+
     navigateAlternate('/nbconvert/html');
   })
 
   $('#convertPythonButton').click(function() {
+    var event = {
+      'event': 'concordEvent',
+      'pagePath': '/virtual/datalab/exportNotebook',
+      'eventType': 'datalab',
+      'eventName': 'exportNotebook',
+      'metadata': 'format=py',
+    }
+    reportEvent(event);
+
     navigateAlternate('/nbconvert/python');
   })
 
@@ -556,31 +791,8 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     this.blur();
   });
 
-  function toggleSidebar() {
-    var d = document.getElementById('sidebarArea');
-    d.style.display = (d.style.display == 'none') ? 'block' : 'none';
-    document.getElementById('hideSidebarButton').classList.toggle('fa-flip-vertical');
-    this.blur();
-    // Chrome at least seems to render the notebook poorly after this for a little
-    // while. If you scroll new content into view it is messed up until you click 
-    // in the notebook. This does not repro with Firefox or Safari so seems to be
-    // a Chrome bug. Triggering a resize or similar doesn't help because the content
-    // that is messed up is currently out of the viewable part of the window. Will
-    // file a bug against Chrome.
-  }
-
   $('#hideSidebarButton').click(function() {
     toggleSidebar();
-  });
-
-  $('#keyboardHelpLink').click(function(e) {
-    showHelp(document.getElementById('shortcutsHelp').textContent);
-    e.preventDefault();
-  });
-
-  $('#markdownHelpLink').click(function(e) {
-    showHelp(document.getElementById('markdownHelp').textContent);
-    e.preventDefault();
   });
 
   $('#navigationButton').click(function() {
@@ -618,18 +830,6 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 
     document.getElementById('navigationButton').classList.add('active');
     document.getElementById('helpButton').classList.remove('active');
-  }
-
-  function showHelp(markup) {
-    document.getElementById('navigation').style.display = 'none';
-    document.getElementById('help').style.display = '';
-
-    document.getElementById('navigationButton').classList.remove('active');
-    document.getElementById('helpButton').classList.add('active');
-
-    if (markup) {
-      document.getElementById('help').innerHTML = markup;
-    }
   }
 
   function updateNavigation() {
@@ -750,6 +950,14 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
   function addNotebook(e) {
     newNotebook.new_notebook();
     e.target.blur();
+
+    var event = {
+      'event': 'concordEvent',
+      'pagePath': '/virtual/datalab/createNotebook',
+      'eventType': 'datalab',
+      'eventName': 'createNotebook',
+    }
+    reportEvent(event);
   }
 
   function addFolder(e) {
@@ -833,10 +1041,10 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
     }
     var optional = (version >= versionInfo.last);
     var messageDiv = document.getElementById('updateMessageArea');
-    var message = 'You are using DataLab 0.5.' + version + '. ' + 
-        (optional ? 'An optional' : 'A recommended') + ' update (0.5.' + versionInfo.latest + 
-        ') is available (see <a href="https://github.com/GoogleCloudPlatform/datalab/wiki/Release-Info"' + 
-        '>what\'s new)</a>.'
+    var message = 'You are using DataLab 0.5.' + version + '. ' +
+        (optional ? 'An optional' : 'A recommended') + ' update (0.5.' + versionInfo.latest +
+        ') is available (see <a href="https://github.com/googledatalab/datalab/wiki/Release-Info"' +
+        '>what\'s new</a>).'
     messageDiv.innerHTML = message;
     messageDiv.classList.add('alert');
     messageDiv.classList.add(optional ? 'alert-warning' : 'alert-danger');

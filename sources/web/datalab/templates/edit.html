@@ -9,7 +9,10 @@
 
   <link rel="stylesheet" href="/static/components/codemirror/lib/codemirror.css" />
   <link rel="stylesheet" href="/static/style/style.min.css" type="text/css" />
-  <link rel="stylesheet" href="/static/style/custom.css" type="text/css" />
+  <link rel="stylesheet" href="/static/style/datalab.css" type="text/css" />
+  <link rel="stylesheet" id="themeStylesheet" href="/static/style/custom.css" type="text/css" />
+
+  <script src="/static/components/jquery/jquery.min.js"></script>
 </head>
 <body class="edit_app"
   data-project=""
@@ -20,59 +23,17 @@
   data-feedback-id="<%feedbackId%>"
   data-version-id="<%versionId%>"
   data-signed-in="<%isSignedIn%>"
-  data-user-id="<%userId%>">
+  data-user-id="<%userId%>"
+  data-account="<%account%>">
   <div id="app">
     <div id="appBar">
-      <span id="logo" class="nav navbar-brand pull-left">
-        <a href="/tree"><img src="/static/logo.png" alt="Google Cloud DataLab" /></a>
-      </span>
-      <span id="save_widget" class="pull-left save_widget">
-        <button class="btn" title="Rename file"><span id="file_name" class="filename"></span></button>
-        <span class="autosave_status"></span>
-      </span>
-      <div class="btn-toolbar pull-right">
-        <div class="btn-group">
-          <button id="feedbackButton" title="Provide feedback">
-            <span class="fa fa-comment"></span>
-          </button>
-        </div>
-        <div class="btn-group">
-          <button id="aboutButton" title="About Google Cloud Datalab">
-            <span class="fa fa-info-circle"></span>
-          </button>
-        </div>
-        <div class="btn-group">
-          <a href="/tree/datalab/docs/notebooks" target="_blank" id="docsButton" class="btn">
-            <button id="docsButton" title="Samples and Tutorials">
-              <span class="fa fa-book"></span>
-            </button>
-          </a>
-        </div>
-        <div class="btn-group">
-          <a href="/sessions" target="_blank" id="sessionsButton" class="btn">
-            <button title="Running Sessions">
-              <span class="fa fa-tasks"></span>
-            </button>
-          </a>
-        </div>
-        <div class="btn-group">
-          <button id="signInButton" title="Sign In" style="display:none">
-            <span class="fa fa-sign-in"></span>
-          </button>
-        </div>
-        <div class="btn-group">
-          <button id="signOutButton" title="Sign Out" style="display:none">
-            <span class="fa fa-sign-out"></span>
-          </button>
-        </div>
-      </div>
     </div>
     <div id="appContent">
       <div id="toolbarArea">
         <div id="mainToolbar">
           <div class="btn-toolbar pull-left">
             <div class="btn-group">
-              <button type="button" class="btn" data-toggle="dropdown" title="File commands">
+              <button type="button" class="toolbar-btn" data-toggle="dropdown" title="File commands">
                 <span class="fa fa-book"></span> File <span class="caret"></span>
               </button>
               <ul class="dropdown-menu">
@@ -121,8 +82,11 @@
        }
     });
     window.datalab = {};
+
+    $("#appBar").load("/static/appbar.html", function() {
+      require(['edit/js/main.min']);
+    });
   </script>
-  <script src="/static/edit/js/main.min.js" charset="utf-8"></script>
   <script src="//www.gstatic.com/feedback/api.js" async="true" defer="true"></script>
 </body>
 </html>

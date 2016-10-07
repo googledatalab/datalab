@@ -24,8 +24,12 @@ import info = require('./info');
 import jupyter = require('./jupyter');
 import logging = require('./logging');
 import net = require('net');
+import noCacheContent = require('./noCacheContent')
 import path = require('path');
 import request = require('request');
+import reverseProxy = require('./reverseProxy');
+import sockets = require('./sockets');
+import settings_ = require('./settings');
 import static_ = require('./static');
 import url = require('url');
 import userManager = require('./userManager');
@@ -33,15 +37,18 @@ import userManager = require('./userManager');
 var server: http.Server;
 var healthHandler: http.RequestHandler;
 var infoHandler: http.RequestHandler;
+var settingHandler: http.RequestHandler;
 var staticHandler: http.RequestHandler;
 
-// Datalab config directory; if this doesn't exist the EULA hasn't been accepted.
-let configDir = '/content/datalab/.config';
+// Datalab eula directory; if this doesn't exist the EULA hasn't been accepted.
+let eulaDir = '/content/datalab/.config/eula';
 
 /**
  * The application settings instance.
  */
 var appSettings: common.Settings;
+var loadedSettings: common.Map<string> = null;
+var startup_path_setting = 'startuppath'
 
 /**
  * If it is the user's first request since the web server restarts,
@@ -93,14 +100,11 @@ function handleJupyterRequest(request: http.ServerRequest, response: http.Server
 function handleRequest(request: http.ServerRequest,
                        response: http.ServerResponse,
                        path: string) {
-  // TODO(jupyter): Additional custom path - should go away eventually with replaced
-  // pages.
-  // /static and /custom paths for returning static content
-  if ((path.indexOf('/static') == 0) || (path.indexOf('/custom') == 0)) {
-    staticHandler(request, response);
-    return;
-  }
 
+  var userId = userManager.getUserId(request);
+  if (loadedSettings === null) {
+      loadedSettings = settings_.loadUserSettings(userId);
+  }
   // All requests below are logged, while the ones above aren't, to avoid generating noise
   // into the log.
   logging.logRequest(request, response);
@@ -114,8 +118,28 @@ function handleRequest(request: http.ServerRequest,
     userManager.maybeSetUserIdCookie(request, response);
 
     response.statusCode = 302;
-    response.setHeader('Location', '/tree/datalab');
+    if (startup_path_setting in loadedSettings) {
+        response.setHeader('Location', loadedSettings[startup_path_setting])
+    } else {
+        response.setHeader('Location', '/tree/datalab');
+    }
     response.end();
+    return;
+  }
+
+  var targetPort: string = reverseProxy.getRequestPort(request, path);
+  if (targetPort) {
+    reverseProxy.handleRequest(request, response, targetPort);
+    return;
+  }
+
+  if (path.indexOf('/_nocachecontent/') == 0) {
+    if (process.env.KG_URL) {
+      reverseProxy.handleRequest(request, response, null);
+    }
+    else {
+      noCacheContent.handleRequest(path, response);
+    }
     return;
   }
 
@@ -128,6 +152,11 @@ function handleRequest(request: http.ServerRequest,
       (path.indexOf('/files') == 0) ||
       (path.indexOf('/edit') == 0) ||
       (path.indexOf('/sessions') == 0)) {
+
+    if (path.indexOf('/tree') == 0) {
+        loadedSettings[startup_path_setting] = path
+        settings_.updateUserSetting(userId, startup_path_setting, path, true);
+    }
     handleJupyterRequest(request, response);
     return;
   }
@@ -146,6 +175,12 @@ function handleRequest(request: http.ServerRequest,
     setTimeout(function() { process.exit(0); }, 0);
     response.statusCode = 200;
     response.end();
+    return;
+  }
+
+  // /setting updates a per-user setting.
+  if (path.indexOf('/_setting') == 0) {
+    settingHandler(request, response);
     return;
   }
 
@@ -170,8 +205,8 @@ function uncheckedRequestHandler(request: http.ServerRequest, response: http.Ser
 
   // Check if EULA has been accepted; if not go to EULA page.
   if (path.indexOf('/accepted_eula') == 0) {
-    if (!fs.existsSync(configDir)) {
-      fs.mkdirSync(configDir);
+    if (!fs.existsSync(eulaDir)) {
+      fs.mkdirSync(eulaDir);
     }
     var i = parsed_url.search.indexOf('referer=');
     if (i < 0) {
@@ -188,7 +223,12 @@ function uncheckedRequestHandler(request: http.ServerRequest, response: http.Ser
       path.indexOf('/oauthcallback') == 0) {
     // Start or return from auth flow.
     auth.handleAuthFlow(request, response, parsed_url, appSettings);
-  } else if (!fs.existsSync(configDir)) {
+  } else if ((path.indexOf('/static') == 0) || (path.indexOf('/custom') == 0)) {
+    // /static and /custom paths for returning static content
+    // We serve these even if the EULA has not been accepted, so that the
+    // EULA page can include static resources.
+    staticHandler(request, response);
+  } else if (!fs.existsSync(eulaDir)) {
     logging.getLogger().info('No Datalab config; redirect to EULA page');
     fs.readFile('/datalab/web/static/eula.html', function(error, content) {
       response.writeHead(200);
@@ -226,13 +266,21 @@ export function run(settings: common.Settings): void {
   appSettings = settings;
   userManager.init(settings);
   jupyter.init(settings);
+  auth.init();
+  reverseProxy.init();
 
   healthHandler = health.createHandler(settings);
   infoHandler = info.createHandler(settings);
+  settingHandler = settings_.createHandler();
   staticHandler = static_.createHandler(settings);
 
   server = http.createServer(requestHandler);
-  server.on('upgrade', socketHandler);
+  var proxyWebSockets: string = process.env.PROXY_WEB_SOCKETS;
+  if (proxyWebSockets == 'true') {
+    sockets.wrapServer(server);
+  } else {
+    server.on('upgrade', socketHandler);
+  }
 
   logging.getLogger().info('Starting DataLab server at http://localhost:%d',
                            settings.serverPort);

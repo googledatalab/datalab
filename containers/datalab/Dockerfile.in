@@ -16,7 +16,7 @@ FROM datalab-base
 MAINTAINER Google Cloud DataLab
 
 # Add build artifacts
-ADD build/web /datalab/web
+ADD build/web/nb /datalab/web
 ADD content/ /datalab
 
 # Install the build artifacts
@@ -36,5 +36,9 @@ ENV EXPERIMENTAL_KERNEL_GATEWAY_URL=""
 # Startup
 ENV DATALAB_VERSION _version_
 ENV DATALAB_COMMIT _commit_
-ENTRYPOINT [ "/datalab/run.sh" ]
+ENV DEPLOY_VM "false"
+ENV ENABLE_USAGE_REPORTING true
+ENV CLI_LOGIN false
 
+# Startup
+ENTRYPOINT [ "/datalab/run.sh" ]
