@@ -387,9 +387,14 @@ a.anchor-link {
 }
 div.hoverable {
   position: absolute;
-  top: -12px;
-  right: 50%;
+  top: -15px;
+  right: 0px;
   z-index: 9999;
+  0px 0px 6px 0px rgba(0, 0, 0, 0.2);
+  display: none;
+}
+div.cellPlaceholder {
+  height: 30px;
   display: none;
 }
 

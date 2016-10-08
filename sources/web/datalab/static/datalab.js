@@ -277,13 +277,74 @@ function initializePage(dialog, saveFn) {
   });
 }
 
+function toggleCollapseCell(cell) {
+  let isHidden = cell.element.find('div.input')[0].style.display === 'none';
+  if (isHidden) {
+    cell.element.find('div.input').show();
+    cell.element.find('div.output_wrapper').show();
+    cell.element.find('div.cellPlaceholder').hide();
+  } else {
+    cell.element.find('div.input').hide();
+    cell.element.find('div.output_wrapper').hide();
+    cell.element.find('div.cellPlaceholder').show();
+  }
+}
+
+function toggleCollapseCellOutput(cell) {
+  let isHidden = cell.element[0].getElementsByClassName('output')[0].style.display === 'none';
+  if (isHidden) {
+    cell.expand_output();
+    cell.metadata.hiddenOutput = false;
+  } else {
+    cell.collapse_output();
+    cell.metadata.hiddenOutput = true;
+  }
+}
+
 /**
  * Patch the cell's element to add a collapse/expand button
  */
 function addCollapseExpandButton() {
   Jupyter.notebook.get_cells().forEach(function(cell) {
-    let buttonHtml = '<div class="hoverable"><button class="btn btn-default"><span class="fa fa-compress"> Collapse</span></button></div>';
-    cell.element.append(buttonHtml);
+    
+    if (cell.cell_type !== 'code') {
+      return;
+    }
+
+    hoverableDiv = document.createElement('div');
+    hoverableDiv.className = 'hoverable';
+
+    // collapse cell button
+    collapseButton = document.createElement('button')
+    collapseButton.className = 'btn btn-default';
+    collapseButton.innerHTML = '<span class="fa fa-eye-slash"></span>';
+    collapseButton.title = 'Collapse cell';
+    collapseButton.addEventListener('click', function() {
+      toggleCollapseCell(cell);
+    });
+    hoverableDiv.appendChild(collapseButton);
+
+    // collapse output button
+    hideButton = document.createElement('button')
+    hideButton.className = 'btn btn-default';
+    hideButton.innerHTML = '<span class="fa fa-minus-square-o"></span>';
+    hideButton.title = 'Collapse output';
+    hideButton.addEventListener('click', function() {
+      toggleCollapseCellOutput(cell);
+    });
+    hoverableDiv.appendChild(hideButton);
+
+    // cell collapse placeholder
+    placeholderDiv = document.createElement('div');
+    placeholderDiv.className = 'cellPlaceholder btn btn-default';
+    placeholderDiv.innerText = '-- Collapsed cell --';
+    placeholderDiv.addEventListener('click', function() {
+      toggleCollapseCell(cell);
+    });
+    cell.element.append(placeholderDiv);
+
+    cell.element.append(hoverableDiv);
+
     cell.element[0].onmouseenter = function() {
       this.getElementsByClassName('hoverable')[0].style.display = 'block';
     };
@@ -311,10 +372,6 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
         exports: 'plotly'
       }
     }
-  });
-
-  $([IPython.events]).on('kernel_ready.Kernel kernel_created.Session notebook_loaded.Notebook', function() {
-    addCollapseExpandButton()
   });
 
   function DataLabSession() {
@@ -908,6 +965,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   }
 
   events.on('notebook_loaded.Notebook', function() {
+    addCollapseExpandButton()
     events.on('set_dirty.Notebook', function(e) {
       updateNavigation();
     });
@@ -917,6 +975,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 
     updateNavigation();
   });
+
   events.on('open_with_text.Pager', function(e, payload) {
     var help = payload.data['text/html'];
     if (!help) {
