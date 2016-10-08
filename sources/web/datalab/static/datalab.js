@@ -277,6 +277,22 @@ function initializePage(dialog, saveFn) {
   });
 }
 
+/**
+ * Patch the cell's element to add a collapse/expand button
+ */
+function addCollapseExpandButton() {
+  Jupyter.notebook.get_cells().forEach(function(cell) {
+    let buttonHtml = '<div class="hoverable"><button class="btn btn-default"><span class="fa fa-compress"> Collapse</span></button></div>';
+    cell.element.append(buttonHtml);
+    cell.element[0].onmouseenter = function() {
+      this.getElementsByClassName('hoverable')[0].style.display = 'block';
+    };
+    cell.element[0].onmouseleave = function() {
+      this.getElementsByClassName('hoverable')[0].style.display = 'none';
+    };
+  })
+}
+
 function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   // Various RequireJS additions used for notebook functionality
   require.config({
@@ -295,6 +311,10 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
         exports: 'plotly'
       }
     }
+  });
+
+  $([IPython.events]).on('kernel_ready.Kernel kernel_created.Session notebook_loaded.Notebook', function() {
+    addCollapseExpandButton()
   });
 
   function DataLabSession() {

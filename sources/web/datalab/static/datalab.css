@@ -312,6 +312,7 @@ div.cell {
   padding: 0px;
   padding-left: 0px;
   margin-bottom: 10px;
+  position: relative;
 }
 div.cell.selected, div.cell.text_cell.selected, div.cell.code_cell.selected {
   background: none;
@@ -324,7 +325,6 @@ div.cell.selected, div.cell.text_cell.selected, div.cell.code_cell.selected {
   padding-left: 0px;
   box-shadow: 0px 0px 6px 0px rgba(0, 0, 0, 0.2);
 }
-
 div.code_cell div.input {
   border-left: solid 4px #ddd;
 }
@@ -383,6 +383,13 @@ div.rendered_html h4, div.rendered_html h5, div.rendered_html h6 {
   margin-top: 0px !important;
 }
 a.anchor-link {
+  display: none;
+}
+div.hoverable {
+  position: absolute;
+  top: -12px;
+  right: 50%;
+  z-index: 9999;
   display: none;
 }
 
