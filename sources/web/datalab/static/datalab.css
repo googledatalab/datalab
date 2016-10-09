@@ -388,10 +388,16 @@ a.anchor-link {
 div.hoverable {
   position: absolute;
   top: -15px;
-  right: 0px;
-  z-index: 9999;
+  right: 5px;
   0px 0px 6px 0px rgba(0, 0, 0, 0.2);
   display: none;
+  background-color: #eee;
+  padding: 5px;
+  border-radius: 2px;
+  z-index: 2;
+}
+div.hoverable>button {
+  margin: 2px;
 }
 div.cellPlaceholder {
   height: 30px;

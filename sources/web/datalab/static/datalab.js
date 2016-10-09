@@ -304,12 +304,12 @@ function toggleCollapseCellOutput(cell, hide) {
   collapseSpan = cell.element.find('span.collapse-output')[0];
   if (isHidden) {
     cell.expand_output();
-    collapseSpan.classList.add('fa-minus-square-o');
-    collapseSpan.classList.remove('fa-plus-square-o');
+    collapseSpan.classList.add('fa-compress');
+    collapseSpan.classList.remove('fa-expand');
   } else {
     cell.collapse_output();
-    collapseSpan.classList.remove('fa-minus-square-o');
-    collapseSpan.classList.add('fa-plus-square-o');
+    collapseSpan.classList.remove('fa-compress');
+    collapseSpan.classList.add('fa-expand');
   }
   cell.metadata[CELL_METADATA_OUTPUT_COLLAPSED] = !isHidden;
 }
@@ -340,7 +340,7 @@ function addCellMiniToolbar() {
     // collapse output button
     let hideButton = document.createElement('button')
     hideButton.className = 'btn btn-default';
-    hideButton.innerHTML = '<span class="collapse-output fa fa-minus-square-o"></span>';
+    hideButton.innerHTML = '<span class="collapse-output fa fa-compress"></span>';
     hideButton.title = 'Collapse/Expand output';
     hideButton.addEventListener('click', function() {
       toggleCollapseCellOutput(cell);
@@ -376,11 +376,24 @@ function addCellMiniToolbar() {
       toggleCollapseCellOutput(cell, true /*hide*/);
     }
 
+    // cell clear button
+    let clearButton = document.createElement('button')
+    clearButton.className = 'btn btn-default';
+    clearButton.innerHTML = '<span class="fa fa-minus-square-o"></span>';
+    clearButton.title = 'Clear cell output';
+    clearButton.addEventListener('click', function() {
+      cell.clear_output();
+      // let's also expand the cell and cell output
+      toggleCollapseCell(cell, false /*hide*/);
+      toggleCollapseCellOutput(cell, false /*hide*/);
+    });
+    hoverableDiv.appendChild(clearButton);
+
     // cell run button
     let runButton = document.createElement('button')
     runButton.className = 'btn btn-default';
-    runButton.innerHTML = '<span class="collapse-output fa fa-play"></span>';
-    runButton.title = 'Execute cell';
+    runButton.innerHTML = '<span class="fa fa-play"></span>';
+    runButton.title = 'Run cell';
     runButton.addEventListener('click', function() {
       cell.execute();
       // let's also expand the cell and cell output
