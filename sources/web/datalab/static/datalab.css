@@ -401,6 +401,7 @@ div.hoverable>button {
 }
 div.cellPlaceholder {
   height: 30px;
+  width: 100%;
   display: none;
 }
 

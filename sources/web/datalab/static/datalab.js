@@ -281,17 +281,20 @@ var CELL_METADATA_COLLAPSED = 'hiddenCell';
 var CELL_METADATA_OUTPUT_COLLAPSED = 'hiddenOutput';
 
 function toggleCollapseCell(cell, hide) {
-  let isHidden = typeof(hide) !== 'undefined' ? !hide : cell.element.find('div.input')[0].style.display === 'none';
+  let inputDiv = cell.cell_type === 'code' ? 'div.input' : 'div.inner_cell';
+  let isHidden = typeof(hide) !== 'undefined' ? !hide : cell.element.find(inputDiv)[0].style.display === 'none';
   collapseSpan = cell.element.find('span.collapse-cell')[0];
   if (isHidden) {
-    cell.element.find('div.input').show();
-    cell.element.find('div.output_wrapper').show();
+    cell.element.find(inputDiv).show();
+    if (cell.cell_type == 'code')
+      cell.element.find('div.output_wrapper').show();
     cell.element.find('div.cellPlaceholder').hide();
     collapseSpan.classList.add('fa-eye-slash');
     collapseSpan.classList.remove('fa-eye');
   } else {
-    cell.element.find('div.input').hide();
-    cell.element.find('div.output_wrapper').hide();
+    cell.element.find(inputDiv).hide();
+    if (cell.cell_type == 'code')
+      cell.element.find('div.output_wrapper').hide();
     cell.element.find('div.cellPlaceholder').show();
     collapseSpan.classList.remove('fa-eye-slash');
     collapseSpan.classList.add('fa-eye');
@@ -314,41 +317,29 @@ function toggleCollapseCellOutput(cell, hide) {
   cell.metadata[CELL_METADATA_OUTPUT_COLLAPSED] = !isHidden;
 }
 
+function createCellMiniToolbarButton(classNames, title, callback) {
+  let buttonDiv = document.createElement('button');
+  buttonDiv.className = 'btn btn-default';
+  buttonDiv.innerHTML = '<span class="' + classNames + '"></span>';
+  buttonDiv.title = title;
+  buttonDiv.addEventListener('click', callback);
+  return buttonDiv;
+}
+
 /**
  * Patch the cell's element to add a collapse/expand button
  */
 function addCellMiniToolbar() {
   Jupyter.notebook.get_cells().forEach(function(cell) {
     
-    if (cell.cell_type !== 'code') {
-      return;
-    }
-
     let hoverableDiv = document.createElement('div');
     hoverableDiv.className = 'hoverable';
 
     // collapse cell button
-    let collapseButton = document.createElement('button')
-    collapseButton.className = 'btn btn-default';
-    collapseButton.innerHTML = '<span class="collapse-cell fa fa-eye-slash"></span>';
-    collapseButton.title = 'Collapse/Expand cell';
-    collapseButton.addEventListener('click', function() {
+    let collapseButton = createCellMiniToolbarButton('collapse-cell fa fa-eye-slash', 'Collapse/Expand cell', function() {
       toggleCollapseCell(cell);
     });
     hoverableDiv.appendChild(collapseButton);
-
-    // collapse output button
-    let hideButton = document.createElement('button')
-    hideButton.className = 'btn btn-default';
-    hideButton.innerHTML = '<span class="collapse-output fa fa-compress"></span>';
-    hideButton.title = 'Collapse/Expand output';
-    hideButton.addEventListener('click', function() {
-      toggleCollapseCellOutput(cell);
-    });
-    cell.element.find('div.output_collapsed')[0].addEventListener('click', function() {
-      toggleCollapseCellOutput(cell, false /*hide*/);
-    });
-    hoverableDiv.appendChild(hideButton);
 
     // cell collapse placeholder
     let placeholderDiv = document.createElement('div');
@@ -359,14 +350,26 @@ function addCellMiniToolbar() {
     });
     cell.element.append(placeholderDiv);
 
-    cell.element.append(hoverableDiv);
+    // only for code cells, add clear and output collapse buttons
+    if (cell.cell_type === 'code') {
+      // collapse output button
+      let hideButton = createCellMiniToolbarButton('collapse-output fa fa-compress', 'Collapse/Expand output', function() {
+        toggleCollapseCellOutput(cell);
+      });
+      cell.element.find('div.output_collapsed')[0].addEventListener('click', function() {
+        toggleCollapseCellOutput(cell, false /*hide*/);
+      });
+      hoverableDiv.appendChild(hideButton);
 
-    cell.element[0].onmouseenter = function() {
-      this.getElementsByClassName('hoverable')[0].style.display = 'block';
-    };
-    cell.element[0].onmouseleave = function() {
-      this.getElementsByClassName('hoverable')[0].style.display = 'none';
-    };
+      // cell clear button
+      let clearButton = createCellMiniToolbarButton('fa fa-minus-square-o', 'Clear cell output', function() {
+        cell.clear_output();
+        // let's also expand the cell and cell output
+        toggleCollapseCell(cell, false /*hide*/);
+        toggleCollapseCellOutput(cell, false /*hide*/);
+      });
+      hoverableDiv.appendChild(clearButton);
+    }
 
     // collapse cells according to their saved metadata
     if (CELL_METADATA_COLLAPSED in cell.metadata && cell.metadata[CELL_METADATA_COLLAPSED] === true) {
@@ -376,31 +379,24 @@ function addCellMiniToolbar() {
       toggleCollapseCellOutput(cell, true /*hide*/);
     }
 
-    // cell clear button
-    let clearButton = document.createElement('button')
-    clearButton.className = 'btn btn-default';
-    clearButton.innerHTML = '<span class="fa fa-minus-square-o"></span>';
-    clearButton.title = 'Clear cell output';
-    clearButton.addEventListener('click', function() {
-      cell.clear_output();
-      // let's also expand the cell and cell output
-      toggleCollapseCell(cell, false /*hide*/);
-      toggleCollapseCellOutput(cell, false /*hide*/);
-    });
-    hoverableDiv.appendChild(clearButton);
-
     // cell run button
-    let runButton = document.createElement('button')
-    runButton.className = 'btn btn-default';
-    runButton.innerHTML = '<span class="fa fa-play"></span>';
-    runButton.title = 'Run cell';
-    runButton.addEventListener('click', function() {
+    let runButton = createCellMiniToolbarButton('fa fa-play', 'Run cell', function() {
       cell.execute();
       // let's also expand the cell and cell output
       toggleCollapseCell(cell, false /*hide*/);
       toggleCollapseCellOutput(cell, false /*hide*/);
     });
     hoverableDiv.appendChild(runButton);
+
+    // add the toolbar to the cell
+    cell.element.append(hoverableDiv);
+
+    cell.element[0].onmouseenter = function() {
+      this.getElementsByClassName('hoverable')[0].style.display = 'block';
+    };
+    cell.element[0].onmouseleave = function() {
+      this.getElementsByClassName('hoverable')[0].style.display = 'none';
+    };
   })
 }
 
