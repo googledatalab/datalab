@@ -277,65 +277,81 @@ function initializePage(dialog, saveFn) {
   });
 }
 
-function toggleCollapseCell(cell) {
-  let isHidden = cell.element.find('div.input')[0].style.display === 'none';
+var CELL_METADATA_COLLAPSED = 'hiddenCell';
+var CELL_METADATA_OUTPUT_COLLAPSED = 'hiddenOutput';
+
+function toggleCollapseCell(cell, hide) {
+  let isHidden = typeof(hide) !== 'undefined' ? !hide : cell.element.find('div.input')[0].style.display === 'none';
+  collapseSpan = cell.element.find('span.collapse-cell')[0];
   if (isHidden) {
     cell.element.find('div.input').show();
     cell.element.find('div.output_wrapper').show();
     cell.element.find('div.cellPlaceholder').hide();
+    collapseSpan.classList.add('fa-eye-slash');
+    collapseSpan.classList.remove('fa-eye');
   } else {
     cell.element.find('div.input').hide();
     cell.element.find('div.output_wrapper').hide();
     cell.element.find('div.cellPlaceholder').show();
+    collapseSpan.classList.remove('fa-eye-slash');
+    collapseSpan.classList.add('fa-eye');
   }
+  cell.metadata[CELL_METADATA_COLLAPSED] = !isHidden;
 }
 
-function toggleCollapseCellOutput(cell) {
-  let isHidden = cell.element[0].getElementsByClassName('output')[0].style.display === 'none';
+function toggleCollapseCellOutput(cell, hide) {
+  let isHidden = typeof(hide) !== 'undefined' ? !hide : cell.element[0].getElementsByClassName('output')[0].style.display === 'none';
+  collapseSpan = cell.element.find('span.collapse-output')[0];
   if (isHidden) {
     cell.expand_output();
-    cell.metadata.hiddenOutput = false;
+    collapseSpan.classList.add('fa-minus-square-o');
+    collapseSpan.classList.remove('fa-plus-square-o');
   } else {
     cell.collapse_output();
-    cell.metadata.hiddenOutput = true;
+    collapseSpan.classList.remove('fa-minus-square-o');
+    collapseSpan.classList.add('fa-plus-square-o');
   }
+  cell.metadata[CELL_METADATA_OUTPUT_COLLAPSED] = !isHidden;
 }
 
 /**
  * Patch the cell's element to add a collapse/expand button
  */
-function addCollapseExpandButton() {
+function addCellMiniToolbar() {
   Jupyter.notebook.get_cells().forEach(function(cell) {
     
     if (cell.cell_type !== 'code') {
       return;
     }
 
-    hoverableDiv = document.createElement('div');
+    let hoverableDiv = document.createElement('div');
     hoverableDiv.className = 'hoverable';
 
     // collapse cell button
-    collapseButton = document.createElement('button')
+    let collapseButton = document.createElement('button')
     collapseButton.className = 'btn btn-default';
-    collapseButton.innerHTML = '<span class="fa fa-eye-slash"></span>';
-    collapseButton.title = 'Collapse cell';
+    collapseButton.innerHTML = '<span class="collapse-cell fa fa-eye-slash"></span>';
+    collapseButton.title = 'Collapse/Expand cell';
     collapseButton.addEventListener('click', function() {
       toggleCollapseCell(cell);
     });
     hoverableDiv.appendChild(collapseButton);
 
     // collapse output button
-    hideButton = document.createElement('button')
+    let hideButton = document.createElement('button')
     hideButton.className = 'btn btn-default';
-    hideButton.innerHTML = '<span class="fa fa-minus-square-o"></span>';
-    hideButton.title = 'Collapse output';
+    hideButton.innerHTML = '<span class="collapse-output fa fa-minus-square-o"></span>';
+    hideButton.title = 'Collapse/Expand output';
     hideButton.addEventListener('click', function() {
       toggleCollapseCellOutput(cell);
+    });
+    cell.element.find('div.output_collapsed')[0].addEventListener('click', function() {
+      toggleCollapseCellOutput(cell, false /*hide*/);
     });
     hoverableDiv.appendChild(hideButton);
 
     // cell collapse placeholder
-    placeholderDiv = document.createElement('div');
+    let placeholderDiv = document.createElement('div');
     placeholderDiv.className = 'cellPlaceholder btn btn-default';
     placeholderDiv.innerText = '-- Collapsed cell --';
     placeholderDiv.addEventListener('click', function() {
@@ -351,6 +367,27 @@ function addCollapseExpandButton() {
     cell.element[0].onmouseleave = function() {
       this.getElementsByClassName('hoverable')[0].style.display = 'none';
     };
+
+    // collapse cells according to their saved metadata
+    if (CELL_METADATA_COLLAPSED in cell.metadata && cell.metadata[CELL_METADATA_COLLAPSED] === true) {
+      toggleCollapseCell(cell, true /*hide*/);
+    }
+    if (CELL_METADATA_OUTPUT_COLLAPSED in cell.metadata && cell.metadata[CELL_METADATA_OUTPUT_COLLAPSED] === true) {
+      toggleCollapseCellOutput(cell, true /*hide*/);
+    }
+
+    // cell run button
+    let runButton = document.createElement('button')
+    runButton.className = 'btn btn-default';
+    runButton.innerHTML = '<span class="collapse-output fa fa-play"></span>';
+    runButton.title = 'Execute cell';
+    runButton.addEventListener('click', function() {
+      cell.execute();
+      // let's also expand the cell and cell output
+      toggleCollapseCell(cell, false /*hide*/);
+      toggleCollapseCellOutput(cell, false /*hide*/);
+    });
+    hoverableDiv.appendChild(runButton);
   })
 }
 
@@ -965,7 +1002,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   }
 
   events.on('notebook_loaded.Notebook', function() {
-    addCollapseExpandButton()
+    addCellMiniToolbar()
     events.on('set_dirty.Notebook', function(e) {
       updateNavigation();
     });
