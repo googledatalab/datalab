@@ -326,7 +326,10 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
         var error = null;
         try {
           if (output.msg_type == 'execute_result') {
-            values = output.content.data['text/plain'];
+            values = output.content.data['application/json'];
+            if (!values) {
+              values = output.content.data['text/plain'];
+            }
           }
         }
         catch (e) {
