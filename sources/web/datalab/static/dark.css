@@ -32,9 +32,20 @@ button {
 button:hover {
   color: #fff;
 }
+.btn-default {
+  background-color: #333;
+  color: #ddd;
+}
+.btn-default:hover {
+  background-color: #222;
+  color: #ddd;
+}
 #button-select-all {
   border-color: transparent;
   background-color: transparent;
+}
+div.hoverable {
+  background-color: #555;
 }
 .notebook_app {
   color: #ddd;
