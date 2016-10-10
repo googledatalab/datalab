@@ -40,6 +40,9 @@ button:hover {
   color: #ddd;
   background: #000;
 }
+.cmd-palette form {
+  background-color: inherit;
+}
 #notebook_name:hover {
   background-color: transparent;
 }
@@ -54,6 +57,9 @@ a:visited {
 }
 a:hover {
   color: #fff;
+}
+input {
+  background-color: #333;
 }
 .breadcrumb a {
   color: #3399ff;
