@@ -279,7 +279,7 @@ function initializePage(dialog, saveFn) {
 
 // constants for minitoolbar operations
 const CELL_METADATA_COLLAPSED = 'hiddenCell';
-const CELL_METADATA_OUTPUT_COLLAPSED = 'hiddenOutput';
+const CELL_METADATA_OUTPUT_COLLAPSED = 'collapsed';
 const COLLAPSE_BUTTON_CLASS = 'fa-eye';
 const UNCOLLAPSE_BUTTON_CLASS = 'fa-eye-slash';
 const COLLAPSE_OUTPUT_BUTTON_CLASS = 'fa-compress';
@@ -292,9 +292,11 @@ const COLLAPSED_CELL_INNER_HTML = '-- Collapsed cell --';
  * Collapse entire cell
  */
 function toggleCollapseCell(cell, hide) {
-  // the cell is currently hidden if its input div is
+  if (!(CELL_METADATA_COLLAPSED in cell.metadata)) {
+    return;
+  }
+  let isHidden = typeof(hide) !== 'undefined' ? !hide : cell.metadata[CELL_METADATA_COLLAPSED];
   let inputDiv = cell.cell_type === 'code' ? 'div.input' : 'div.inner_cell';
-  let isHidden = typeof(hide) !== 'undefined' ? !hide : cell.element.find(inputDiv)[0].style.display === 'none';
   collapseSpan = cell.element.find('span.collapse-cell')[0];
   if (isHidden) {
     cell.element.find(inputDiv).show();
@@ -320,8 +322,10 @@ function toggleCollapseCell(cell, hide) {
  * Collapse output of a cell
  */
 function toggleCollapseCellOutput(cell, hide) {
-  // the cell's output is currently collapsed if its output div is hidden
-  let isHidden = typeof(hide) !== 'undefined' ? !hide : cell.element[0].getElementsByClassName('output')[0].style.display === 'none';
+  if (!(CELL_METADATA_OUTPUT_COLLAPSED in cell.metadata)) {
+    return;
+  }
+  let isHidden = typeof(hide) !== 'undefined' ? !hide : cell.metadata[CELL_METADATA_OUTPUT_COLLAPSED];
   collapseSpan = cell.element.find('span.collapse-output')[0];
   if (isHidden) {
     cell.expand_output();
@@ -350,91 +354,89 @@ function createCellMiniToolbarButton(classNames, title, callback) {
 /**
  * Patch the cell's element to add the hoverable minitoolbar
  */
-function addCellMiniToolbar() {
-  Jupyter.notebook.get_cells().forEach(function(cell) {
+function addCellMiniToolbar(cell) {
 
-    let hoverableDiv = document.createElement('div');
-    hoverableDiv.className = 'hoverable';
+  let hoverableDiv = document.createElement('div');
+  hoverableDiv.className = 'hoverable';
 
-    // only for code cells, add collapse-output and clear buttons
-    if (cell.cell_type === 'code') {
-      // collapse output button
-      let hideButton = createCellMiniToolbarButton(
-        'collapse-output fa ' + COLLAPSE_OUTPUT_BUTTON_CLASS,
-        'Collapse/Expand output',
-        function() {
-          toggleCollapseCellOutput(cell);
-        }
-      );
-      cell.element.find('div.output_collapsed')[0].addEventListener('click', function() {
-        toggleCollapseCellOutput(cell, false /*hide*/);
-      });
-      hoverableDiv.appendChild(hideButton);
-
-      // clear cell button
-      let clearButton = createCellMiniToolbarButton(
-        'fa ' + CLEAR_BUTTON_CLASS,
-        'Clear cell output',
-        function() {
-          cell.clear_output();
-          // let's also expand the cell and cell output
-          toggleCollapseCell(cell, false /*hide*/);
-          toggleCollapseCellOutput(cell, false /*hide*/);
-        }
-      );
-      hoverableDiv.appendChild(clearButton);
-    }
-
-    // collapse cell button
-    let collapseButton = createCellMiniToolbarButton(
-      'collapse-cell fa ' + UNCOLLAPSE_BUTTON_CLASS,
-      'Collapse/Expand cell',
+  // only for code cells, add collapse-output and clear buttons
+  if (cell.cell_type === 'code') {
+    // collapse output button
+    let hideButton = createCellMiniToolbarButton(
+      'collapse-output fa ' + COLLAPSE_OUTPUT_BUTTON_CLASS,
+      'Collapse/Expand output',
       function() {
-        toggleCollapseCell(cell);
+        toggleCollapseCellOutput(cell);
       }
     );
-    hoverableDiv.appendChild(collapseButton);
-
-    // cell collapse placeholder
-    let placeholderDiv = document.createElement('div');
-    placeholderDiv.className = 'cellPlaceholder btn btn-default';
-    placeholderDiv.innerHTML = COLLAPSED_CELL_INNER_HTML;
-    placeholderDiv.addEventListener('click', function() {
-      toggleCollapseCell(cell);
+    cell.element.find('div.output_collapsed')[0].addEventListener('click', function() {
+      toggleCollapseCellOutput(cell, false /*hide*/);
     });
-    cell.element.append(placeholderDiv);
+    hoverableDiv.appendChild(hideButton);
 
-    // run cell button
-    let runButton = createCellMiniToolbarButton(
-      'fa ' + RUN_BUTTON_CLASS,
-      'Run cell',
+    // clear cell button
+    let clearButton = createCellMiniToolbarButton(
+      'fa ' + CLEAR_BUTTON_CLASS,
+      'Clear cell output',
       function() {
-        cell.execute();
+        cell.clear_output();
         // let's also expand the cell and cell output
         toggleCollapseCell(cell, false /*hide*/);
         toggleCollapseCellOutput(cell, false /*hide*/);
       }
     );
-    hoverableDiv.appendChild(runButton);
+    hoverableDiv.appendChild(clearButton);
+  }
 
-    // add the minitoolbar to the cell
-    cell.element.append(hoverableDiv);
-
-    cell.element[0].onmouseenter = function() {
-      this.getElementsByClassName('hoverable')[0].style.display = 'block';
-    };
-    cell.element[0].onmouseleave = function() {
-      this.getElementsByClassName('hoverable')[0].style.display = 'none';
-    };
-
-    // collapse cells according to their saved metadata
-    if (CELL_METADATA_COLLAPSED in cell.metadata && cell.metadata[CELL_METADATA_COLLAPSED] === true) {
-      toggleCollapseCell(cell, true /*hide*/);
+  // collapse cell button
+  let collapseButton = createCellMiniToolbarButton(
+    'collapse-cell fa ' + UNCOLLAPSE_BUTTON_CLASS,
+    'Collapse/Expand cell',
+    function() {
+      toggleCollapseCell(cell);
     }
-    if (CELL_METADATA_OUTPUT_COLLAPSED in cell.metadata && cell.metadata[CELL_METADATA_OUTPUT_COLLAPSED] === true) {
-      toggleCollapseCellOutput(cell, true /*hide*/);
+  );
+  hoverableDiv.appendChild(collapseButton);
+
+  // cell collapse placeholder
+  let placeholderDiv = document.createElement('div');
+  placeholderDiv.className = 'cellPlaceholder btn btn-default';
+  placeholderDiv.innerHTML = COLLAPSED_CELL_INNER_HTML;
+  placeholderDiv.addEventListener('click', function() {
+    toggleCollapseCell(cell);
+  });
+  cell.element.append(placeholderDiv);
+
+  // run cell button
+  let runButton = createCellMiniToolbarButton(
+    'fa ' + RUN_BUTTON_CLASS,
+    'Run cell',
+    function() {
+      cell.execute();
+      // let's also expand the cell and cell output
+      toggleCollapseCell(cell, false /*hide*/);
+      toggleCollapseCellOutput(cell, false /*hide*/);
     }
-  })
+  );
+  hoverableDiv.appendChild(runButton);
+
+  // add the minitoolbar to the cell
+  cell.element.append(hoverableDiv);
+
+  cell.element[0].onmouseenter = function() {
+    this.getElementsByClassName('hoverable')[0].style.display = 'block';
+  };
+  cell.element[0].onmouseleave = function() {
+    this.getElementsByClassName('hoverable')[0].style.display = 'none';
+  };
+
+  // collapse cells according to their saved metadata
+  if (CELL_METADATA_COLLAPSED in cell.metadata && cell.metadata[CELL_METADATA_COLLAPSED] === true) {
+    toggleCollapseCell(cell, true /*hide*/);
+  }
+  if (CELL_METADATA_OUTPUT_COLLAPSED in cell.metadata && cell.metadata[CELL_METADATA_OUTPUT_COLLAPSED] === true) {
+    toggleCollapseCellOutput(cell, true /*hide*/);
+  }
 }
 
 function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
@@ -1048,7 +1050,13 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   }
 
   events.on('notebook_loaded.Notebook', function() {
-    addCellMiniToolbar()
+    Jupyter.notebook.get_cells().forEach(function(cell) {
+      addCellMiniToolbar(cell)
+    });
+    // patch any cell created from now on
+    $([IPython.events]).on('create.Cell', function(ev, params) {
+      addCellMiniToolbar(params.cell);
+    });
     events.on('set_dirty.Notebook', function(e) {
       updateNavigation();
     });
