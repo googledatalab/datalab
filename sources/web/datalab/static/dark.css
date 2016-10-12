@@ -119,6 +119,16 @@ div.output {
 div.output_stderr {
   background-color: #a94442;
 }
+input.raw_input {
+  color: #ddd;
+  background-color: #333;
+}
+input.raw_input::selection {
+  background: rgba(85, 85, 85, 0.99);
+}
+input.raw_input::-moz-selection {
+  background: rgba(85, 85, 85, 0.99);
+}
 .CodeMirror {
   color: #ddd;
   background: #333;
