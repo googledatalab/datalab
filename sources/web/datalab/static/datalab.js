@@ -277,6 +277,103 @@ function initializePage(dialog, saveFn) {
   });
 }
 
+// constants for minitoolbar operations
+const CELL_METADATA_COLLAPSED = 'hiddenCell';
+const COLLAPSE_BUTTON_CLASS = 'fa-minus';
+const UNCOLLAPSE_BUTTON_CLASS = 'fa-plus';
+const COLLAPSED_CELL_INNER_HTML = '-- Collapsed cell --';
+
+/**
+ * Collapse entire cell
+ */
+function toggleCollapseCell(cell) {
+  isHidden = cell.metadata[CELL_METADATA_COLLAPSED] || false;
+  if (isHidden) {
+    uncollapseCell(cell);
+  } else {
+    collapseCell(cell);
+  }
+}
+function collapseCell(cell) {
+
+  function getCollapsedCellHeader(cell) {
+    if (cell.cell_type === 'code') {
+      return cell.element.find('pre.CodeMirror-line')[0].children[0].innerHTML;
+    } else {
+      return cell.element.find('div.rendered_html')[0].children[0].innerHTML;
+    }
+  }
+
+  cell.element.find('div.inner_cell').hide();
+  // for code cells, also hide the output div
+  if (cell.cell_type === 'code')
+    cell.element.find('div.output_wrapper').hide();
+  cell.element.find('div.cellPlaceholder').show();
+  cell.element.find('div.cellPlaceholder')[0].innerHTML = getCollapsedCellHeader(cell) + '<br><span>. . .</span>';
+  collapseSpan = cell.element.find('span.collapse-cell')[0];
+  collapseSpan.classList.remove(COLLAPSE_BUTTON_CLASS);
+  collapseSpan.classList.add(UNCOLLAPSE_BUTTON_CLASS);
+  cell.metadata[CELL_METADATA_COLLAPSED] = true;
+}
+function uncollapseCell(cell) {
+  cell.element.find('div.inner_cell').show();
+  // for code cells, also show the output div
+  if (cell.cell_type == 'code')
+    cell.element.find('div.output_wrapper').show();
+  cell.element.find('div.cellPlaceholder').hide();
+  collapseSpan = cell.element.find('span.collapse-cell')[0];
+  collapseSpan.classList.add(COLLAPSE_BUTTON_CLASS);
+  collapseSpan.classList.remove(UNCOLLAPSE_BUTTON_CLASS);
+  cell.metadata[CELL_METADATA_COLLAPSED] = false;
+}
+
+/**
+ * Create an HTML button for the cell minitoolbar and return it
+ */
+function createCellMiniToolbarButton(classNames, title, callback) {
+  let buttonDiv = document.createElement('span');
+  buttonDiv.className = classNames + ' btn btn-default';
+  buttonDiv.title = title;
+  buttonDiv.addEventListener('click', callback);
+  return buttonDiv;
+}
+
+/**
+ * Patch the cell's element to add the hoverable minitoolbar
+ */
+function addCellMiniToolbar(cell) {
+
+  let hoverableDiv = document.createElement('div');
+  hoverableDiv.className = 'hoverable';
+
+  // collapse cell button
+  let collapseButton = createCellMiniToolbarButton(
+    'collapse-cell fa ' + COLLAPSE_BUTTON_CLASS,
+    'Collapse/Expand cell',
+    function() {
+      toggleCollapseCell(cell);
+    }
+  );
+  hoverableDiv.appendChild(collapseButton);
+
+  // cell collapse placeholder
+  let placeholderDiv = document.createElement('div');
+  placeholderDiv.className = 'cellPlaceholder btn btn-default';
+  placeholderDiv.innerHTML = COLLAPSED_CELL_INNER_HTML;
+  placeholderDiv.addEventListener('click', function() {
+    uncollapseCell(cell);
+  });
+  cell.element.append(placeholderDiv);
+
+  // add the minitoolbar to the cell
+  cell.element.prepend(hoverableDiv);
+
+  // collapse cells according to their saved metadata
+  if (CELL_METADATA_COLLAPSED in cell.metadata && cell.metadata[CELL_METADATA_COLLAPSED] === true) {
+    collapseCell(cell);
+  }
+}
+
 function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   // Various RequireJS additions used for notebook functionality
   require.config({
@@ -891,6 +988,22 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   }
 
   events.on('notebook_loaded.Notebook', function() {
+    Jupyter.notebook.get_cells().forEach(function(cell) {
+      addCellMiniToolbar(cell)
+    });
+    // patch any cell created from now on
+    events.on('create.Cell', function(e, params) {
+      addCellMiniToolbar(params.cell);
+    });
+    events.on('select.Cell', function(e, params) {
+      cell = params.cell;
+      // there's no reliable 'blur' event exposed by Jupyter
+      // so we have to unselect all cells manually
+      Jupyter.notebook.get_cells().forEach(function(cell) {
+        cell.element.find('div.hoverable')[0].style.display = 'none';
+      });
+      cell.element.find('div.hoverable')[0].style.display = 'block';
+    });
     events.on('set_dirty.Notebook', function(e) {
       updateNavigation();
     });
@@ -900,6 +1013,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 
     updateNavigation();
   });
+
   events.on('open_with_text.Pager', function(e, payload) {
     var help = payload.data['text/html'];
     if (!help) {
