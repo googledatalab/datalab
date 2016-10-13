@@ -295,25 +295,33 @@ function toggleCollapseCell(cell) {
   }
 }
 function collapseCell(cell) {
-  let inputDiv = cell.cell_type === 'code' ? 'div.input' : 'div.inner_cell';
-  collapseSpan = cell.element.find('span.collapse-cell')[0];
-  cell.element.find(inputDiv).hide();
+
+  function getCollapsedCellHeader(cell) {
+    if (cell.cell_type === 'code') {
+      return cell.element.find('pre.CodeMirror-line')[0].children[0].innerHTML;
+    } else {
+      return cell.element.find('div.rendered_html')[0].children[0].innerHTML;
+    }
+  }
+
+  cell.element.find('div.inner_cell').hide();
   // for code cells, also hide the output div
   if (cell.cell_type === 'code')
     cell.element.find('div.output_wrapper').hide();
   cell.element.find('div.cellPlaceholder').show();
+  cell.element.find('div.cellPlaceholder')[0].innerHTML = getCollapsedCellHeader(cell) + '<br><span>. . .</span>';
+  collapseSpan = cell.element.find('span.collapse-cell')[0];
   collapseSpan.classList.remove(COLLAPSE_BUTTON_CLASS);
   collapseSpan.classList.add(UNCOLLAPSE_BUTTON_CLASS);
   cell.metadata[CELL_METADATA_COLLAPSED] = true;
 }
 function uncollapseCell(cell) {
-  let inputDiv = cell.cell_type === 'code' ? 'div.input' : 'div.inner_cell';
-  collapseSpan = cell.element.find('span.collapse-cell')[0];
-  cell.element.find(inputDiv).show();
+  cell.element.find('div.inner_cell').show();
   // for code cells, also show the output div
   if (cell.cell_type == 'code')
     cell.element.find('div.output_wrapper').show();
   cell.element.find('div.cellPlaceholder').hide();
+  collapseSpan = cell.element.find('span.collapse-cell')[0];
   collapseSpan.classList.add(COLLAPSE_BUTTON_CLASS);
   collapseSpan.classList.remove(UNCOLLAPSE_BUTTON_CLASS);
   cell.metadata[CELL_METADATA_COLLAPSED] = false;
@@ -986,6 +994,8 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     });
     events.on('select.Cell', function(e, params) {
       cell = params.cell;
+      // there's no reliable 'blur' event exposed by Jupyter
+      // so we have to unselect all cells manually
       Jupyter.notebook.get_cells().forEach(function(cell) {
         cell.element.find('div.hoverable')[0].style.display = 'none';
       });

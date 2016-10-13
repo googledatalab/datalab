@@ -396,8 +396,8 @@ div.hoverable>span {
   color: #888;
 }
 div.cellPlaceholder {
-  height: 30px;
   width: 100%;
+  text-align: left;
   display: none;
 }
 
