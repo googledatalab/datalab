@@ -98,7 +98,7 @@ div.text_cell_render {
   color: #ddd;
 }
 .rendered_html pre, .rendered_html code, .rendered_html {
-  background-color: #333;
+  background-color: none;
   color: #ddd;
 }
 div.cell.selected {

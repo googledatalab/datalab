@@ -385,15 +385,20 @@ div.rendered_html h4, div.rendered_html h5, div.rendered_html h6 {
 a.anchor-link {
   display: none;
 }
-div.hoverable {
+div.minitoolbar {
   position: absolute;
   left: -16px;
   display: none;
 }
-div.hoverable>span {
+div.minitoolbar>span {
   padding: 2px;
   font-size: xx-small;
   color: #888;
+}
+div.cellPlaceholder>div>pre {
+  background-color: inherit;
+  margin: 0px;
+  overflow: hidden;
 }
 div.cellPlaceholder {
   width: 100%;
