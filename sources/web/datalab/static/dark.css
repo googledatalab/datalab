@@ -44,9 +44,6 @@ button:hover {
   border-color: transparent;
   background-color: transparent;
 }
-div.hoverable {
-  background-color: #555;
-}
 .notebook_app {
   color: #ddd;
   background: #000;
