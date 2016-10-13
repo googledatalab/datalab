@@ -32,6 +32,14 @@ button {
 button:hover {
   color: #fff;
 }
+.btn-default {
+  background-color: #333;
+  color: #ddd;
+}
+.btn-default:hover {
+  background-color: #222;
+  color: #ddd;
+}
 #button-select-all {
   border-color: transparent;
   background-color: transparent;
@@ -96,7 +104,7 @@ div.text_cell_render {
   color: #ddd;
 }
 .rendered_html pre, .rendered_html code, .rendered_html {
-  background-color: #333;
+  background-color: none;
   color: #ddd;
 }
 div.cell.selected {
