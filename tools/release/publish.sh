@@ -30,17 +30,32 @@
 #     script uses by default).
 
 PROJECT_ID="${PROJECT_ID:-cloud-datalab}"
+TEST_PROJECT_ID="${TEST_PROJECT_ID:-`gcloud config list -q --format 'value(core.project)' 2> /dev/null`}"
 BUILD="${BUILD:-$(date +%Y%m%d)}"
 GATEWAY_IMAGE="gcr.io/${PROJECT_ID}/datalab-gateway:${BUILD}"
 DATALAB_IMAGE="gcr.io/${PROJECT_ID}/datalab:local-${BUILD}"
 
-echo "Releasing the gateway image: ${GATEWAY_IMAGE}"
+echo "Pulling the daily gateway and Datalab images: ${GATEWAY_IMAGE}, ${DATALAB_IMAGE}"
 gcloud docker -- pull ${GATEWAY_IMAGE}
+gcloud docker -- pull ${DATALAB_IMAGE}
+
+echo "Running the Notebook tests..."
+mkdir -p tests
+git clone https://github.com/googledatalab/notebooks tests/notebooks
+docker run \
+  --net host \
+  -v "$(pwd)/tests:/content/datalab" \
+  -e "PROJECT_ID=${TEST_PROJECT_ID}" \
+  --entrypoint /content/datalab/notebooks/.test.sh \
+  --workdir /content/datalab/notebooks \
+  ${DATALAB_IMAGE}
+sudo rm -rf tests
+
+echo "Releasing the gateway image: ${GATEWAY_IMAGE}"
 docker tag -f ${GATEWAY_IMAGE} gcr.io/${PROJECT_ID}/datalab-gateway:latest
 gcloud docker -- push gcr.io/${PROJECT_ID}/datalab-gateway:latest
 
 echo "Releasing the Datalab image: ${DATALAB_IMAGE}"
-gcloud docker -- pull ${DATALAB_IMAGE}
 docker tag -f ${DATALAB_IMAGE} gcr.io/${PROJECT_ID}/datalab:local
 gcloud docker -- push gcr.io/${PROJECT_ID}/datalab:local
 
