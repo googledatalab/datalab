@@ -358,7 +358,7 @@ div.status div.progress {
   margin-bottom: 4px
 }
 
-div.prompt, div.output_prompt, div.out_prompt_overlay {
+div.input_prompt, div.output_prompt, div.out_prompt_overlay {
   min-width: 0px;
   display: none;
   padding: 0px;
