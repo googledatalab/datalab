@@ -310,6 +310,7 @@ function collapseCell(cell) {
 
   cell.element.find('div.inner_cell').hide();
   cell.element.find('div.output_wrapper').hide();
+  cell.element.find('div.widget-area>').hide();
 
   cell.element.find('div.minitoolbar').show();
   cell.element.find('div.cellPlaceholder').show();
@@ -328,6 +329,7 @@ function collapseCell(cell) {
 function uncollapseCell(cell) {
   cell.element.find('div.inner_cell').show();
   cell.element.find('div.output_wrapper').show();
+  cell.element.find('div.widget-area>').show();
 
   cell.element.find('div.cellPlaceholder').hide();
   cell.element.find('div.cellPlaceholder')[0].innerHTML = '';
