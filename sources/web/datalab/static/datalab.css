@@ -45,23 +45,7 @@ body {
   -webkit-align-content: space-between;
   align-content: space-between;
 }
-#appBar {
-  background-color: #333;
-  box-shadow: 0 0 8px 0 #000;
-  -webkit-order: 1;
-  order: 1;
-  -webkit-flex: 0 1 auto;
-  flex: 0 1 auto;
-  -webkit-align-self: auto;
-  align-self: auto;
-  height: 48px;
-  min-height: 48px;
-  padding-left: 10px;
-  padding-right: 10px;
-  position: relative;
-  z-index: 10;
-}
-#appContent {
+#site {
   -webkit-order: 2;
   order: 2;
   -webkit-flex: 1 1 auto;
@@ -79,7 +63,29 @@ body {
   -webkit-align-content: space-between;
   align-content: space-between;
 }
+#appContent {
+  -webkit-order: 2;
+  order: 2;
+}
+#appBar {
+  background-color: #333;
+  box-shadow: 0 0 8px 0 #000;
+  -webkit-order: 1;
+  order: 1;
+  -webkit-flex: 0 1 auto;
+  flex: 0 1 auto;
+  -webkit-align-self: auto;
+  align-self: auto;
+  height: 48px;
+  min-height: 48px;
+  padding-left: 10px;
+  padding-right: 10px;
+  position: relative;
+  z-index: 10;
+}
 #toolbarArea, #contentArea {
+  -webkit-order: 1;
+  order: 1;
   -webkit-align-self: stretch;
   align-self: stretch;
   display: -webkit-flex;
@@ -104,6 +110,7 @@ body {
   order: 2;
   -webkit-flex: 1 1 auto;
   flex: 1 1 auto;
+  height: 100%;
 }
 #mainToolbar, #mainArea {
   -webkit-order: 1;
@@ -151,7 +158,6 @@ body {
 }
 .notebookMainContent, #sidebarContent {
   overflow: auto;
-  position: absolute;
   top: 0px;
   left: 0px;
   right: 0px;

@@ -214,7 +214,7 @@ table.bqsv th, table.bqsv td {
 .modal-content {
   background-color: #444;
 }
-.modal-header,.modal-body,.modal-footer {
+.modal-header,.modal-body,.modal-body>textarea,.modal-footer {
   background-color: #333;
   color: #ddd;
 }
