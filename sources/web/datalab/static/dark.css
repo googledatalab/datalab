@@ -17,11 +17,9 @@ body {
   color: #ddd;
   background: #444;
 }
-#mainToolbar, #sidebarToolbar, #sidebarArea {
-  background-color: #444;
-}
-#mainToolbar, #sidebarToolbar {
-  border-bottom: solid 1px #000;
+#toolbarArea {
+  background-color: #333;
+  color: #ddd;
 }
 #notebook-container {
   background: #000;
@@ -46,7 +44,7 @@ button:hover {
 }
 .notebook_app {
   color: #ddd;
-  background: #000;
+  background: #444;
 }
 .cmd-palette form {
   background-color: inherit;
