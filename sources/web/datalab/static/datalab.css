@@ -131,6 +131,7 @@ body {
   align-self: auto;
   position: relative;
   min-width: 200px;
+  overflow: auto;
 }
 #sidebarArea {
   -webkit-order: 2;
@@ -167,6 +168,7 @@ body {
   left: 0px;
   right: 0px;
   bottom: 0px;
+  overflow: auto;
 }
 .fileMainContent {
   overflow: auto;
