@@ -64,7 +64,7 @@ RUN pip install -U tornado==4.3 \
     pip install -U notebook==4.2.0 && \
     pip install -U PyYAML==3.11 && \
     pip install -U six==1.9.0 && \
-    pip install -U ipywidgets==5.0.0 && \
+    pip install -U ipywidgets==5.2.2 && \
     pip install -U future==0.15.2 && \
     pip install -U psutil==4.3.0 && \
     pip install -U google-api-python-client==1.5.1  && \
@@ -151,6 +151,7 @@ RUN ipython profile create default && \
     tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts && \
     pip install . && \
     jupyter nbextension install --py datalab.notebook && \
+    jupyter nbextension enable --py widgetsnbextension && \
     rm datalab/notebook/static/*.js && \
     mkdir -p /datalab/nbconvert && \
     cp -R /usr/local/share/jupyter/nbextensions/gcpdatalab/* /datalab/nbconvert && \
@@ -158,8 +159,4 @@ RUN ipython profile create default && \
     mkdir -p /usr/local/lib/python2.7/dist-packages/notebook/static/components/codemirror/mode/text/sql/text && \
     ln -s /usr/local/share/jupyter/nbextensions/gcpdatalab/codemirror/mode/sql.js /usr/local/lib/python2.7/dist-packages/notebook/static/components/codemirror/mode/text/sql/text/sql.js && \
     cd /
-
-# Include this line above to enable ipywidgets. These aren't working 100% yet so 
-# we don't enable them.
-#    jupyter nbextension enable --py widgetsnbextension && \
 

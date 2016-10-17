@@ -24,12 +24,14 @@
 body {
   font-family: 'Open Sans', Helvetica, sans-serif;
   font-size: 14px;
-  min-width: 1200px;
+  min-width: 1250px;
 }
 
 /* Layout */
 #app {
   position: absolute;
+  overflow: auto;
+  height: 100%;
   left: 0px;
   top: 0px;
   right: 0px;
@@ -61,7 +63,19 @@ body {
   position: relative;
   z-index: 10;
 }
+#site {
+  -webkit-order: 2;
+  order: 2;
+  position: relative;
+  height: 100%;
+}
 #appContent {
+  position: absolute;
+  top: 0px;
+  bottom: 0px;
+  left: 0px;
+  right: 0px;
+  height: 100%;
   -webkit-order: 2;
   order: 2;
   -webkit-flex: 1 1 auto;
@@ -80,6 +94,7 @@ body {
   align-content: space-between;
 }
 #toolbarArea, #contentArea {
+  position: relative;
   -webkit-align-self: stretch;
   align-self: stretch;
   display: -webkit-flex;
@@ -92,56 +107,54 @@ body {
   align-items: stretch;
   -webkit-align-content: space-between;
   align-content: space-between;
+  border-bottom: solid 1px #000;
 }
 #toolbarArea {
   -webkit-order: 1;
   order: 1;
-  -webkit-flex: 0 1 auto;
-  flex: 0 1 auto;
+  justify-content: space-between;
 }
 #contentArea {
+  height: 100%;
   -webkit-order: 2;
   order: 2;
   -webkit-flex: 1 1 auto;
   flex: 1 1 auto;
+  overflow: auto;
 }
-#mainToolbar, #mainArea {
+#mainArea {
   -webkit-order: 1;
   order: 1;
-  -webkit-flex: 1 1 auto;
-  flex: 1 1 auto;
+  -webkit-flex: 70%;
+  flex: 70%;
   -webkit-align-self: auto;
   align-self: auto;
-  min-width: 200px;
   position: relative;
+  min-width: 200px;
+  overflow: auto;
 }
-#sidebarToolbar, #sidebarArea {
+#sidebarArea {
   -webkit-order: 2;
   order: 2;
-  -webkit-flex: .5 0 auto;
-  flex: .5 0 auto;
+  -webkit-flex: 30%;
+  flex: 30%;
   -webkit-align-self: auto;
   align-self: auto;
-  min-width: 100px;
   position: relative;
+  padding-top: 10px;
+  min-width: 100px;
 }
 #sidebarToolbar.larger {
   -webkit-flex-grow: 3;
   flex-grow: 3;
 }
-#sidebarArea {
-  padding: 10px 20px;
-}
 #sidebarArea.larger {
-  -webkit-flex-grow: 3;
-  flex-grow: 3;
+  -webkit-flex: 50%;
+  flex: 50%;
 }
 #mainToolbar, #sidebarToolbar {
   line-height: 48px;
   vertical-align: middle;
-  height: 48px;
-  padding-left: 10px;
-  padding-right: 10px;
   padding-top: 2px;
   z-index: 8;
 }
@@ -151,11 +164,11 @@ body {
 }
 .notebookMainContent, #sidebarContent {
   overflow: auto;
-  position: absolute;
   top: 0px;
   left: 0px;
   right: 0px;
   bottom: 0px;
+  overflow: auto;
 }
 .fileMainContent {
   overflow: auto;
@@ -358,7 +371,7 @@ div.status div.progress {
   margin-bottom: 4px
 }
 
-div.prompt, div.output_prompt, div.out_prompt_overlay {
+div.input_prompt, div.output_prompt, div.out_prompt_overlay {
   min-width: 0px;
   display: none;
   padding: 0px;
