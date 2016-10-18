@@ -70,7 +70,6 @@ body {
   height: 100%;
 }
 #appContent {
-  position: absolute;
   top: 0px;
   bottom: 0px;
   left: 0px;
@@ -369,6 +368,9 @@ div.status div.progress {
   width: 150px;
   height: 8px;
   margin-bottom: 4px
+}
+div.output_text {
+  line-height: inherit;
 }
 
 div.input_prompt, div.output_prompt, div.out_prompt_overlay {
