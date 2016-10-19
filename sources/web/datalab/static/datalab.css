@@ -67,7 +67,7 @@ body {
   -webkit-order: 2;
   order: 2;
   position: relative;
-  height: 100%;
+  height: 100% !important;
 }
 #appContent {
   top: 0px;
@@ -316,6 +316,10 @@ span.autosave_status {
   display: inline-block;
 }
 
+/* Edit page */
+#texteditor-backdrop {
+  padding: 0px;
+}
 
 /* Cell Customizations */
 div.cell {
