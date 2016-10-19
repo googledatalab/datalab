@@ -445,7 +445,7 @@ pre, code, .CodeMirror, .CodeMirror pre, .CodeMirror-linenumber {
 div.selected .CodeMirror-gutters {
   border-right: 1px solid #ddd;
 }
-div.selected .CodeMirror-linenumber {
+div.selected .CodeMirror-linenumber, div#texteditor-container .CodeMirror-linenumber {
   visibility: visible;
 }
 .CodeMirror-matchingbracket {
