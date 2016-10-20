@@ -72,6 +72,7 @@ RUN pip install -U tornado==4.3 \
     pip install -U nltk==3.2.1 && \
     pip install -U bs4==0.0.1 && \
     pip install -U crcmod==1.7 && \
+    pip install -U pillow==3.4.1 && \
     easy_install pip && \
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf
 
