@@ -142,6 +142,9 @@ RUN wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64
 RUN mv cloud_sql_proxy.linux.amd64 cloud_sql_proxy
 RUN chmod +x cloud_sql_proxy
 
+# Install mysqlDB.
+RUN apt-get --assume-yes install python-mysqldb
+
 # Do IPython configuration and install build artifacts
 # Then link stuff needed for nbconvert to a location where Jinja will find it.
 # I'd prefer to just use absolute path in Jinja imports but those don't work.
