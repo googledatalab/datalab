@@ -9,4 +9,5 @@ test
 *.map
 *.egg-info
 *.swp
+*.swo
 

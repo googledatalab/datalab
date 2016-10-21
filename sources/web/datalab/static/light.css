@@ -14,15 +14,12 @@
 body {
   background: #fff;
 }
-#mainToolbar, #sidebarToolbar, #sidebarArea {
-  background-color: #f3f3f3;
-}
 #sidebarArea, #sidebarContent {
   color: #000;
 }
-#mainToolbar, #sidebarToolbar {
+#toolbarArea {
+  background-color: #eee;
   color: #444;
-  border-bottom: solid 1px #e6e6e6;
 }
 #appBar .toolbar-btn {
   color: #ccc;

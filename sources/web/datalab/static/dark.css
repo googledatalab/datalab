@@ -17,11 +17,9 @@ body {
   color: #ddd;
   background: #444;
 }
-#mainToolbar, #sidebarToolbar, #sidebarArea {
-  background-color: #444;
-}
-#mainToolbar, #sidebarToolbar {
-  border-bottom: solid 1px #000;
+#toolbarArea {
+  background-color: #333;
+  color: #ddd;
 }
 #notebook-container {
   background: #000;
@@ -32,13 +30,24 @@ button {
 button:hover {
   color: #fff;
 }
+.btn-default {
+  background-color: #333;
+  color: #ddd;
+}
+.btn-default:hover {
+  background-color: #222;
+  color: #ddd;
+}
 #button-select-all {
   border-color: transparent;
   background-color: transparent;
 }
 .notebook_app {
   color: #ddd;
-  background: #000;
+  background: #444;
+}
+.cmd-palette form {
+  background-color: inherit;
 }
 #notebook_name:hover {
   background-color: transparent;
@@ -54,6 +63,9 @@ a:visited {
 }
 a:hover {
   color: #fff;
+}
+input {
+  background-color: #333;
 }
 .breadcrumb a {
   color: #3399ff;
@@ -90,7 +102,7 @@ div.text_cell_render {
   color: #ddd;
 }
 .rendered_html pre, .rendered_html code, .rendered_html {
-  background-color: #333;
+  background-color: none;
   color: #ddd;
 }
 div.cell.selected {
@@ -112,6 +124,16 @@ div.output {
 }
 div.output_stderr {
   background-color: #a94442;
+}
+input.raw_input {
+  color: #ddd;
+  background-color: #333;
+}
+input.raw_input::selection {
+  background: rgba(85, 85, 85, 0.99);
+}
+input.raw_input::-moz-selection {
+  background: rgba(85, 85, 85, 0.99);
 }
 .CodeMirror {
   color: #ddd;
@@ -190,7 +212,7 @@ table.bqsv th, table.bqsv td {
 .modal-content {
   background-color: #444;
 }
-.modal-header,.modal-body,.modal-footer {
+.modal-header,.modal-body,.modal-body>textarea,.modal-footer {
   background-color: #333;
   color: #ddd;
 }
