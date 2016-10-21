@@ -164,6 +164,8 @@ fi
 
 mkdir -p /content/datalab/notebooks
 
+# Fetch docs and tutorials. This should not abort startup if it fails
+{
 if [ -d /content/datalab/docs ]; then
   # The docs directory already exists, so we have to either update or initialize it as a git repository
   pushd ./
@@ -178,6 +180,7 @@ else
   (cd /content/datalab; git clone -n --single-branch https://github.com/googledatalab/notebooks.git docs)
 fi
 (cd /content/datalab/docs; git config core.sparsecheckout true; echo $'intro/\nsamples/\ntutorials/\n*.ipynb\n' > .git/info/sparse-checkout; git checkout master)
+} || echo "Fetching tutorials and samples failed."
 
 # Run the user's custom extension script if it exists. To avoid platform issues with 
 # execution permissions, line endings, etc, we create a local sanitized copy.
