@@ -15,36 +15,33 @@
 FROM debian:jessie
 MAINTAINER Google Cloud DataLab
 
+# Directory "py" may be empty and in that case it will git clone pydatalab from repo
+ADD pydatalab /datalab/lib/pydatalab
+
+# Container configuration
+EXPOSE 8080
+
+# Path configuration
+ENV PATH $PATH:/tools/node/bin:/tools/google-cloud-sdk/bin
+ENV PYTHONPATH /env/python
+
 # Setup OS and core packages
 RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sources.list && \
     apt-get update -y && \
-    apt-get install --no-install-recommends -y -q \
-        curl wget unzip git vim build-essential ca-certificates pkg-config \
-        libatlas-base-dev liblapack-dev gfortran \
-        libpng-dev libfreetype6-dev libxft-dev \
-        rsync \
-        libxml2-dev \
-        python2.7 python-dev python-setuptools python-zmq openssh-client && \
+    apt-get install --no-install-recommends -y -q python unzip ca-certificates build-essential python2.7 python-dev python-setuptools openssh-client wget git pkg-config libfreetype6-dev && \
     easy_install pip && \
-    mkdir -p /tools
-
-# Save GPL source packages
-RUN mkdir -p /srcs && \
-    cd /srcs && \
-    apt-get source -d python-zmq wget git ca-certificates pkg-config libpng-dev && \
-    wget https://mirrors.kernel.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.bz2 && \
-    cd /
+    mkdir -p /tools && \
 
 # Setup Python packages. Rebuilding numpy/scipy is expensive so we move this early
 # to reduce the chance that prior steps can cause changes requiring a rebuild.
-RUN pip install -U numpy==1.11.0 && \
+    pip install -U numpy==1.11.0 && \
     pip install -U pandas==0.18.0 && \
     pip install -U scipy==0.17.0 && \
     pip install -U scikit-learn==0.17.1 && \
     pip install -U sympy==0.7.6.1 && \
-    pip install -U statsmodels==0.6.1
+    pip install -U statsmodels==0.6.1 && \
 
-RUN pip install -U tornado==4.3 \
+    pip install -U tornado==4.3 \
                    pyzmq==15.2.0 \
                    jinja2==2.8 \
                    jsonschema==2.5.1 \
@@ -73,19 +70,19 @@ RUN pip install -U tornado==4.3 \
     pip install -U bs4==0.0.1 && \
     pip install -U crcmod==1.7 && \
     pip install -U pillow==3.4.1 && \
-    easy_install pip && \
-    find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf
+    #easy_install pip && \
+    find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf && \
 
 # Setup Node.js
-RUN mkdir -p /tools/node && \
+    mkdir -p /tools/node && \
     wget -nv https://nodejs.org/dist/v4.3.2/node-v4.3.2-linux-x64.tar.gz -O node.tar.gz && \
     tar xzf node.tar.gz -C /tools/node --strip-components=1 && \
-    rm node.tar.gz
+    rm node.tar.gz && \
 
 # Setup Google Cloud SDK
 # Also apply workaround for gsutil failure brought by this version of Google Cloud.
 # (https://code.google.com/p/google-cloud-sdk/issues/detail?id=538) in final step.
-RUN wget -nv https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.zip && \
+    wget -nv https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.zip && \
     unzip -qq google-cloud-sdk.zip -d tools && \
     rm google-cloud-sdk.zip && \
     tools/google-cloud-sdk/install.sh --usage-reporting=false \
@@ -93,20 +90,13 @@ RUN wget -nv https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.zip && \
         --disable-installation-options && \
     tools/google-cloud-sdk/bin/gcloud -q components update \
         gcloud core bq gsutil compute preview alpha beta && \
-    touch /tools/google-cloud-sdk/lib/third_party/google.py
-
-# Container configuration
-EXPOSE 8080
-
-# Path configuration
-ENV PATH $PATH:/tools/node/bin:/tools/google-cloud-sdk/bin
-ENV PYTHONPATH /env/python
+    touch /tools/google-cloud-sdk/lib/third_party/google.py && \
 
 # Add some unchanging bits - specifically node modules (that need to be kept in sync
 # with packages.json manually, but help save build time, by preincluding them in an
 # earlier layer).
 # Note: ws is now over 1.0 but using that gives issues so leaving at 0.4.2 for now.
-RUN /tools/node/bin/npm install \
+    /tools/node/bin/npm install \
         ws@0.4.32 \
         http-proxy@1.13.2 \
         mkdirp@0.5.1 \
@@ -116,27 +106,42 @@ RUN /tools/node/bin/npm install \
         node-cache@3.2.0 && \
     cd / && \
     /tools/node/bin/npm install -g forever && \
-    /tools/node/bin/npm install -g typescript
+    /tools/node/bin/npm install -g typescript && \
 
 # Install ProtoBuf, TensorFlow
-RUN pip install protobuf==3.0.0b2.post2 && \
+    pip install protobuf==3.0.0b2.post2 && \
     wget https://storage.googleapis.com/cloud-datalab/deploy/tf/tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
     pip install tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
-    rm tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl
+    rm tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
 
 # Install DataFlow
-RUN pip install google-cloud-dataflow==0.4.2
+    pip install google-cloud-dataflow==0.4.2 && \
 
 # Install CloudML SDK
-RUN gsutil cp gs://cloud-ml/sdk/cloudml-0.1.6-alpha.tar.gz cloudml-0.1.6-alpha.tar.gz && \
+    gsutil cp gs://cloud-ml/sdk/cloudml-0.1.6-alpha.tar.gz cloudml-0.1.6-alpha.tar.gz && \
     pip install cloudml-0.1.6-alpha.tar.gz && \
-    rm cloudml-0.1.6-alpha.tar.gz
+    rm cloudml-0.1.6-alpha.tar.gz && \
+
+# Clean up
+    apt-get purge -y build-essential bzip2 cpp cpp-4.9 python-setuptools pkg-config libfreetype6-dev && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /var/lib/dpkg/info/* && \
+    rm -rf /tmp/* && \
+    rm -rf /root/.cache/* && \
+    rm -rf /tools/google-cloud-sdk/.install && \
+    rm -rf /usr/share/doc/* && \
+    rm -rf /usr/share/locale/* && \
+    rm -rf /usr/share/man/* && \
+    rm -rf /usr/share/doc/* && \
+    rm -rf /usr/share/i18n/locales/* && \
+    rm -rf /usr/local/lib/python3.5 && \
+    rm -rf /usr/share/perl && \
+    cd /
 
 ADD nbconvert /datalab/nbconvert
 ADD config/ipython.py /etc/ipython/ipython_config.py
 ADD config/nbconvert.py /etc/jupyter/jupyter_notebook_config.py
-# Directory "py" may be empty and in that case it will git clone pydatalab from repo
-ADD pydatalab /datalab/lib/pydatalab
 
 # Do IPython configuration and install build artifacts
 # Then link stuff needed for nbconvert to a location where Jinja will find it.
