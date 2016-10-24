@@ -768,6 +768,12 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     ipy.OutputArea.auto_scroll_threshold = 1000;
   });
 
+  function removeCompletedMarks() {
+    Jupyter.notebook.get_cells().forEach(function(cell) {
+      cell.element.removeClass('completed');
+    });
+  }
+
   function navigateAlternate(alt, download) {
     var url = document.location.href.replace('/notebooks', alt);
     if (download) {
@@ -895,7 +901,8 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   });
 
   $('#resetSessionButton').click(function() {
-    notebook.restart_kernel();
+    notebook.restart_kernel()
+      .then(success => removeCompletedMarks());
     this.blur();
   });
 
