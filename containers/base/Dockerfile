@@ -17,6 +17,7 @@ MAINTAINER Google Cloud DataLab
 
 # Directory "py" may be empty and in that case it will git clone pydatalab from repo
 ADD pydatalab /datalab/lib/pydatalab
+ADD nbconvert /datalab/nbconvert
 
 # Container configuration
 EXPOSE 8080
@@ -28,49 +29,57 @@ ENV PYTHONPATH /env/python
 # Setup OS and core packages
 RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sources.list && \
     apt-get update -y && \
-    apt-get install --no-install-recommends -y -q python unzip ca-certificates build-essential python2.7 python-dev python-setuptools openssh-client wget git pkg-config libfreetype6-dev && \
+    apt-get install --no-install-recommends -y -q python unzip ca-certificates build-essential \
+    libatlas-base-dev liblapack-dev gfortran libpng-dev libfreetype6-dev libxft-dev libxml2-dev \
+    python2.7 python-dev python-setuptools openssh-client wget git pkg-config && \
     easy_install pip && \
     mkdir -p /tools && \
 
+# Save GPL source packages
+    mkdir -p /srcs && \
+    cd /srcs && \
+    apt-get source -d python-zmq wget git ca-certificates pkg-config libpng-dev && \
+    wget https://mirrors.kernel.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.bz2 && \
+    cd / && \
+
 # Setup Python packages. Rebuilding numpy/scipy is expensive so we move this early
 # to reduce the chance that prior steps can cause changes requiring a rebuild.
-    pip install -U numpy==1.11.0 && \
-    pip install -U pandas==0.18.0 && \
-    pip install -U scipy==0.17.0 && \
-    pip install -U scikit-learn==0.17.1 && \
-    pip install -U sympy==0.7.6.1 && \
-    pip install -U statsmodels==0.6.1 && \
+    pip install -U --no-cache-dir numpy==1.11.0 && \
+    pip install -U --no-cache-dir pandas==0.18.0 && \
+    pip install -U --no-cache-dir scipy==0.17.0 && \
+    pip install -U --no-cache-dir scikit-learn==0.17.1 && \
+    pip install -U --no-cache-dir sympy==0.7.6.1 && \
+    pip install -U --no-cache-dir statsmodels==0.6.1 && \
 
-    pip install -U tornado==4.3 \
-                   pyzmq==15.2.0 \
-                   jinja2==2.8 \
-                   jsonschema==2.5.1 \
-                   python-dateutil==2.5.0 \
-                   pytz==2015.4 \
-                   pandocfilters==1.3.0 \
-                   pygments==2.1.3 \
-                   argparse==1.2.1 \
-                   mock==1.2.0 \
-                   requests==2.9.1 \
-                   oauth2client==2.0.2 \
-                   httplib2==0.9.2 \
-                   futures==3.0.5 && \
-    pip install -U matplotlib==1.5.1 && \
-    pip install -U ggplot==0.6.8 && \
-    pip install -U seaborn==0.7.0 && \
-    pip install -U notebook==4.2.0 && \
-    pip install -U PyYAML==3.11 && \
-    pip install -U six==1.9.0 && \
-    pip install -U ipywidgets==5.2.2 && \
-    pip install -U future==0.15.2 && \
-    pip install -U psutil==4.3.0 && \
-    pip install -U google-api-python-client==1.5.1  && \
-    pip install -U plotly==1.12.5 && \
-    pip install -U nltk==3.2.1 && \
-    pip install -U bs4==0.0.1 && \
-    pip install -U crcmod==1.7 && \
-    pip install -U pillow==3.4.1 && \
-    #easy_install pip && \
+    pip install -U --no-cache-dir tornado==4.3 \
+                   --no-cache-dir pyzmq==15.2.0 \
+                   --no-cache-dir jinja2==2.8 \
+                   --no-cache-dir jsonschema==2.5.1 \
+                   --no-cache-dir python-dateutil==2.5.0 \
+                   --no-cache-dir pytz==2015.4 \
+                   --no-cache-dir pandocfilters==1.3.0 \
+                   --no-cache-dir pygments==2.1.3 \
+                   --no-cache-dir argparse==1.2.1 \
+                   --no-cache-dir mock==1.2.0 \
+                   --no-cache-dir requests==2.9.1 \
+                   --no-cache-dir oauth2client==2.0.2 \
+                   --no-cache-dir httplib2==0.9.2 \
+                   --no-cache-dir futures==3.0.5 && \
+    pip install -U --no-cache-dir matplotlib==1.5.1 && \
+    pip install -U --no-cache-dir ggplot==0.6.8 && \
+    pip install -U --no-cache-dir seaborn==0.7.0 && \
+    pip install -U --no-cache-dir notebook==4.2.0 && \
+    pip install -U --no-cache-dir PyYAML==3.11 && \
+    pip install -U --no-cache-dir six==1.9.0 && \
+    pip install -U --no-cache-dir ipywidgets==5.2.2 && \
+    pip install -U --no-cache-dir future==0.15.2 && \
+    pip install -U --no-cache-dir psutil==4.3.0 && \
+    pip install -U --no-cache-dir google-api-python-client==1.5.1  && \
+    pip install -U --no-cache-dir plotly==1.12.5 && \
+    pip install -U --no-cache-dir nltk==3.2.1 && \
+    pip install -U --no-cache-dir bs4==0.0.1 && \
+    pip install -U --no-cache-dir crcmod==1.7 && \
+    pip install -U --no-cache-dir pillow==3.4.1 && \
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf && \
 
 # Setup Node.js
@@ -106,20 +115,19 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         node-cache@3.2.0 && \
     cd / && \
     /tools/node/bin/npm install -g forever && \
-    /tools/node/bin/npm install -g typescript && \
 
 # Install ProtoBuf, TensorFlow
-    pip install protobuf==3.0.0b2.post2 && \
+    pip install --no-cache-dir protobuf==3.0.0b2.post2 && \
     wget https://storage.googleapis.com/cloud-datalab/deploy/tf/tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
-    pip install tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
+    pip install --no-cache-dir tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
     rm tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
 
 # Install DataFlow
-    pip install google-cloud-dataflow==0.4.2 && \
+    pip install --no-cache-dir google-cloud-dataflow==0.4.2 && \
 
 # Install CloudML SDK
     gsutil cp gs://cloud-ml/sdk/cloudml-0.1.6-alpha.tar.gz cloudml-0.1.6-alpha.tar.gz && \
-    pip install cloudml-0.1.6-alpha.tar.gz && \
+    pip install --no-cache-dir cloudml-0.1.6-alpha.tar.gz && \
     rm cloudml-0.1.6-alpha.tar.gz && \
 
 # Clean up
@@ -135,11 +143,8 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     rm -rf /usr/share/man/* && \
     rm -rf /usr/share/doc/* && \
     rm -rf /usr/share/i18n/locales/* && \
-    rm -rf /usr/local/lib/python3.5 && \
-    rm -rf /usr/share/perl && \
     cd /
 
-ADD nbconvert /datalab/nbconvert
 ADD config/ipython.py /etc/ipython/ipython_config.py
 ADD config/nbconvert.py /etc/jupyter/jupyter_notebook_config.py
 
@@ -154,8 +159,10 @@ RUN ipython profile create default && \
         git clone https://github.com/googledatalab/pydatalab.git /datalab/lib/pydatalab; \
       fi && \
     cd /datalab/lib/pydatalab && \
+    /tools/node/bin/npm install -g typescript && \
     tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts && \
-    pip install . && \
+    /tools/node/bin/npm uninstall -g typescript && \
+    pip install --no-cache-dir . && \
     jupyter nbextension install --py datalab.notebook && \
     jupyter nbextension enable --py widgetsnbextension && \
     rm datalab/notebook/static/*.js && \
