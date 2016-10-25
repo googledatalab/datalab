@@ -112,20 +112,6 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     cd / && \
     /tools/node/bin/npm install -g forever && \
 
-# Install ProtoBuf, TensorFlow
-    pip install --no-cache-dir protobuf==3.0.0b2.post2 && \
-    wget https://storage.googleapis.com/cloud-datalab/deploy/tf/tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
-    pip install --no-cache-dir tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
-    rm tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
-
-# Install DataFlow
-    pip install --no-cache-dir google-cloud-dataflow==0.4.2 && \
-
-# Install CloudML SDK
-    gsutil cp gs://cloud-ml/sdk/cloudml-0.1.6-alpha.tar.gz cloudml-0.1.6-alpha.tar.gz && \
-    pip install --no-cache-dir cloudml-0.1.6-alpha.tar.gz && \
-    rm cloudml-0.1.6-alpha.tar.gz && \
-
 # Clean up
     apt-get purge -y build-essential bzip2 cpp cpp-4.9 python-setuptools pkg-config libfreetype6-dev && \
     apt-get autoremove -y && \
@@ -137,6 +123,20 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     rm -rf /usr/share/locale/* && \
     rm -rf /usr/share/i18n/locales/* && \
     cd /
+
+# Install ProtoBuf, TensorFlow
+RUN pip install --no-cache-dir protobuf==3.0.0b2.post2 && \
+    wget https://storage.googleapis.com/cloud-datalab/deploy/tf/tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
+    pip install --no-cache-dir tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
+    rm tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
+
+# Install DataFlow
+RUN pip install --no-cache-dir google-cloud-dataflow==0.4.2 && \
+
+# Install CloudML SDK
+RUN gsutil cp gs://cloud-ml/sdk/cloudml-0.1.6-alpha.tar.gz cloudml-0.1.6-alpha.tar.gz && \
+    pip install --no-cache-dir cloudml-0.1.6-alpha.tar.gz && \
+    rm cloudml-0.1.6-alpha.tar.gz
 
 ADD config/ipython.py /etc/ipython/ipython_config.py
 ADD config/nbconvert.py /etc/jupyter/jupyter_notebook_config.py
