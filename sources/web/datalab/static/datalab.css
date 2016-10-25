@@ -376,7 +376,17 @@ div.status div.progress {
 div.output_text {
   line-height: inherit;
 }
-
+div.code-collapse-btn {
+  padding: 1px;
+  margin 0px;
+  height: 20px;
+}
+span.code-collapse-span {
+  width: 100%;
+  height: 100%;
+  padding: 1px;
+  font-width: bold;
+}
 div.input_prompt, div.output_prompt, div.out_prompt_overlay {
   min-width: 0px;
   display: none;

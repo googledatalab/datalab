@@ -353,6 +353,18 @@ function createCellMiniToolbarButton(classNames, title, callback) {
 }
 
 /**
+ * Create code collapse button
+ */
+function createCodeCollapseButton() {
+  let buttonDiv = document.createElement('div');
+  buttonDiv.className = 'code-collapse-btn';
+  let span = document.createElement('span');
+  span.className = 'btn btn-default fa fa-code code-collapse-span');
+  buttonDiv.appendChild(span);
+  return buttonDiv;
+}
+
+/**
  * Patch the cell's element to add a minitoolbar div to contain extra buttons
  */
 function addCellMiniToolbar(cell) {
