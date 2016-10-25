@@ -15,10 +15,6 @@
 FROM debian:jessie
 MAINTAINER Google Cloud DataLab
 
-# Directory "py" may be empty and in that case it will git clone pydatalab from repo
-ADD pydatalab /datalab/lib/pydatalab
-ADD nbconvert /datalab/nbconvert
-
 # Container configuration
 EXPOSE 8080
 
@@ -31,14 +27,14 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     apt-get update -y && \
     apt-get install --no-install-recommends -y -q python unzip ca-certificates build-essential \
     libatlas-base-dev liblapack-dev gfortran libpng-dev libfreetype6-dev libxft-dev libxml2-dev \
-    python-dev python-setuptools openssh-client wget git pkg-config && \
+    python-dev python-setuptools python-zmq openssh-client wget git pkg-config && \
     easy_install pip && \
     mkdir -p /tools && \
 
 # Save GPL source packages
     mkdir -p /srcs && \
     cd /srcs && \
-    apt-get source -d wget git ca-certificates pkg-config libpng-dev && \
+    apt-get source -d wget git python-zmq ca-certificates pkg-config libpng-dev && \
     wget https://mirrors.kernel.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.bz2 && \
     cd / && \
 
@@ -144,6 +140,10 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 
 ADD config/ipython.py /etc/ipython/ipython_config.py
 ADD config/nbconvert.py /etc/jupyter/jupyter_notebook_config.py
+
+# Directory "py" may be empty and in that case it will git clone pydatalab from repo
+ADD pydatalab /datalab/lib/pydatalab
+ADD nbconvert /datalab/nbconvert
 
 # Do IPython configuration and install build artifacts
 # Then link stuff needed for nbconvert to a location where Jinja will find it.
