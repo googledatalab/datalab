@@ -327,7 +327,7 @@ div.cell {
   border-radius: 0px;
   padding: 0px;
   padding-left: 0px;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
   position: relative;
 }
 div.cell.selected, div.cell.text_cell.selected, div.cell.code_cell.selected {
@@ -376,6 +376,19 @@ div.status div.progress {
 div.output_text {
   line-height: inherit;
 }
+div.code-collapse-btn {
+  display: none;
+  position: absolute;
+  bottom: -5px;
+  left: calc(50% - 10px);
+  height: 20px;
+  width: 40px;
+  padding: 0px;
+  z-index: 3;
+}
+div.selected .code-collapse-btn {
+  display: block;
+}
 
 div.input_prompt, div.output_prompt, div.out_prompt_overlay {
   min-width: 0px;
@@ -385,6 +398,24 @@ div.input_prompt, div.output_prompt, div.out_prompt_overlay {
 }
 div.input_prompt {
   min-width: 30px;
+}
+div.inner_cell {
+  padding-bottom: 5px;
+}
+.codehidden * div.inner_cell {
+  display: none;
+}
+div.input {
+  position: relative;
+}
+.codehidden>div.input {
+  height: 20px;
+  border: 1px;
+  border-style: solid;
+  border-color: #ddd;
+}
+.codehidden * div.code-collapse-btn {
+  display: block;
 }
 div.output_area {
   margin-top: 4px;
