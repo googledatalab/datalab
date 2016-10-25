@@ -31,14 +31,14 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     apt-get update -y && \
     apt-get install --no-install-recommends -y -q python unzip ca-certificates build-essential \
     libatlas-base-dev liblapack-dev gfortran libpng-dev libfreetype6-dev libxft-dev libxml2-dev \
-    python2.7 python-dev python-setuptools openssh-client wget git pkg-config && \
+    python-dev python-setuptools openssh-client wget git pkg-config && \
     easy_install pip && \
     mkdir -p /tools && \
 
 # Save GPL source packages
     mkdir -p /srcs && \
     cd /srcs && \
-    apt-get source -d python-zmq wget git ca-certificates pkg-config libpng-dev && \
+    apt-get source -d wget git ca-certificates pkg-config libpng-dev && \
     wget https://mirrors.kernel.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.bz2 && \
     cd / && \
 
@@ -138,10 +138,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     rm -rf /tmp/* && \
     rm -rf /root/.cache/* && \
     rm -rf /tools/google-cloud-sdk/.install && \
-    rm -rf /usr/share/doc/* && \
     rm -rf /usr/share/locale/* && \
-    rm -rf /usr/share/man/* && \
-    rm -rf /usr/share/doc/* && \
     rm -rf /usr/share/i18n/locales/* && \
     cd /
 
