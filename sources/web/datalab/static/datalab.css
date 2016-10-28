@@ -330,7 +330,7 @@ div.cell {
   border-radius: 0px;
   padding: 0px;
   padding-left: 0px;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
   position: relative;
 }
 div.cell.selected, div.cell.text_cell.selected, div.cell.code_cell.selected {
@@ -379,10 +379,11 @@ div.status div.progress {
 div.output_text {
   line-height: inherit;
 }
-div.selected div.minitoolbar, .cellhidden>div.minitoolbar, .codehidden>div.minitoolbar {
+div.selected div.minitoolbar, .cellhidden>div.minitoolbar, .codehidden>div.minitoolbar,
+div.cellhidden div.cellPlaceholder {
   display: block;
 }
-.codehidden * div.inner_cell {
+div.cellhidden div.input, div.cellhidden div.output_wrapper, .codehidden * div.inner_cell {
   display: none;
 }
 .codehidden>div.input {
@@ -402,9 +403,6 @@ div.input_prompt, div.output_prompt, div.out_prompt_overlay {
 }
 div.input_prompt {
   min-width: 30px;
-}
-div.inner_cell {
-  padding-bottom: 5px;
 }
 div.output_area {
   margin-top: 4px;
@@ -449,9 +447,6 @@ div.cellPlaceholder {
   width: 100%;
   text-align: left;
   display: none;
-}
-div.collapse-cell {
-  padding-right: 5px;
 }
 
 /* CodeMirror Customization */
