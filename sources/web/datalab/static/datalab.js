@@ -311,11 +311,12 @@ function collapseCell(cell) {
     return '<div class="rendered_html">' + cell.element.find('pre.CodeMirror-line')[0].outerHTML + dots + '</div>';
   }
 
+  cell.element.addClass('cellhidden');
+
   cell.element.find('div.input').hide();
   cell.element.find('div.output_wrapper').hide();
   cell.element.find('div.widget-area>').hide();
 
-  cell.element.find('div.minitoolbar').show();
   cell.element.find('div.cellPlaceholder').show();
   cell.element.find('div.cellPlaceholder')[0].innerHTML = getCollapsedCellHeader(cell);
 
@@ -330,6 +331,8 @@ function collapseCell(cell) {
  * Uncollapse entire cell
  */
 function uncollapseCell(cell) {
+  cell.element.removeClass('cellhidden');
+
   cell.element.find('div.input').show();
   cell.element.find('div.output_wrapper').show();
   cell.element.find('div.widget-area>').show();
@@ -342,6 +345,9 @@ function uncollapseCell(cell) {
   collapseSpan.classList.remove(UNCOLLAPSE_BUTTON_CLASS);
 
   cell.metadata[CELL_METADATA_COLLAPSED] = false;
+
+  // uncollapse code section as well
+  uncollapseCode(cell);
 }
 
 /**
@@ -1095,20 +1101,6 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     // patch any cell created from now on
     events.on('create.Cell', function(e, params) {
       patchCellUI(params.cell);
-    });
-
-    // on cell select, show the toolbar on all collapsed cells as well as currently selected code cell
-    events.on('select.Cell', function(e, params) {
-      cell = params.cell;
-      // there's no reliable 'blur' event exposed by Jupyter
-      // so we have to unselect all markdown and uncollapsed cells manually
-      Jupyter.notebook.get_cells().forEach(function(cell) {
-        if (cell.cell_type === 'code' &&
-          (!(CELL_METADATA_COLLAPSED in cell.metadata) || cell.metadata[CELL_METADATA_COLLAPSED] === false))
-          cell.element.find('div.minitoolbar')[0].style.display = 'none';
-      });
-      if (cell.cell_type === 'code')
-        cell.element.find('div.minitoolbar')[0].style.display = 'block';
     });
 
     events.on('set_dirty.Notebook', function(e) {
