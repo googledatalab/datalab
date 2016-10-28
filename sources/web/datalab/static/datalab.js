@@ -282,8 +282,8 @@ const CELL_METADATA_COLLAPSED = 'hiddenCell';
 const COLLAPSE_BUTTON_CLASS = 'fa-minus';
 const UNCOLLAPSE_BUTTON_CLASS = 'fa-plus';
 const CELL_METADATA_CODE_COLLAPSED = 'codeCollapsed';
-const COLLAPSE_CODE_BUTTON_CLASS = 'fa-angle-up';
-const UNCOLLAPSE_CODE_BUTTON_CLASS = 'fa-angle-down';
+const COLLAPSE_CODE_BUTTON_CLASS = 'fa-chevron-up';
+const UNCOLLAPSE_CODE_BUTTON_CLASS = 'fa-chevron-down';
 
 function toggleCollapseCell(cell) {
   isCollapsed = cell.metadata[CELL_METADATA_COLLAPSED] || false;
@@ -348,11 +348,19 @@ function uncollapseCell(cell) {
  * Create an HTML button for the cell minitoolbar and return it
  */
 function createCellMiniToolbarButton(classNames, title, callback) {
-  let buttonDiv = document.createElement('span');
-  buttonDiv.className = classNames + ' btn btn-default';
-  buttonDiv.title = title;
-  buttonDiv.addEventListener('click', callback);
-  return buttonDiv;
+  let buttonLi = document.createElement('li');
+  let anchor = document.createElement('a');
+  anchor.href = "#";
+  let glyphSpan = document.createElement('span');
+  glyphSpan.className = classNames;
+  glyphSpan.style.width = '20px';
+  anchor.appendChild(glyphSpan);
+  let titleSpan = document.createElement('span');
+  titleSpan.innerText = title;
+  anchor.appendChild(titleSpan);
+  buttonLi.appendChild(anchor);
+  buttonLi.addEventListener('click', callback);
+  return buttonLi;
 }
 
 /**
@@ -378,8 +386,8 @@ function collapseCode(cell) {
 
   cell.element.addClass('codehidden');
 
-  cell.element.find('div.code-collapse-btn>span').addClass(UNCOLLAPSE_CODE_BUTTON_CLASS);
-  cell.element.find('div.code-collapse-btn>span').removeClass(COLLAPSE_CODE_BUTTON_CLASS);
+  cell.element.find('span.collapse-code').addClass(UNCOLLAPSE_CODE_BUTTON_CLASS);
+  cell.element.find('span.collapse-code').removeClass(COLLAPSE_CODE_BUTTON_CLASS);
 
   cell.metadata[CELL_METADATA_CODE_COLLAPSED] = true;
 }
@@ -390,26 +398,10 @@ function collapseCode(cell) {
 function uncollapseCode(cell) {
   cell.element.removeClass('codehidden');
 
-  cell.element.find('div.code-collapse-btn>span').addClass(COLLAPSE_CODE_BUTTON_CLASS);
-  cell.element.find('div.code-collapse-btn>span').removeClass(UNCOLLAPSE_CODE_BUTTON_CLASS);
+  cell.element.find('span.collapse-code').addClass(COLLAPSE_CODE_BUTTON_CLASS);
+  cell.element.find('span.collapse-code').removeClass(UNCOLLAPSE_CODE_BUTTON_CLASS);
 
   cell.metadata[CELL_METADATA_CODE_COLLAPSED] = false;
-}
-
-/**
- * Create code collapse button
- */
-function createCodeCollapseButton(cell) {
-  let buttonDiv = document.createElement('div');
-  buttonDiv.className = 'btn btn-default code-collapse-btn';
-  buttonDiv.title = 'Collapse/Expand code';
-  buttonDiv.addEventListener('click', () => {
-    toggleCollapseCode(cell);
-  });
-  let span = document.createElement('span');
-  span.className = 'fa ' + COLLAPSE_CODE_BUTTON_CLASS;
-  buttonDiv.appendChild(span);
-  return buttonDiv;
 }
 
 /**
@@ -418,7 +410,17 @@ function createCodeCollapseButton(cell) {
 function patchCellUI(cell) {
 
   let toolbarDiv = document.createElement('div');
-  toolbarDiv.className = 'minitoolbar';
+  toolbarDiv.className = 'dropdown minitoolbar';
+
+  let toolbarToggle = document.createElement('button');
+  toolbarToggle.className = 'btn btn-default dropdown-toggle minitoolbar-toggle';
+  toolbarToggle.setAttribute('data-toggle', 'dropdown');
+  toolbarToggle.innerHTML = '<span class="fa fa-bars"></span>';
+  toolbarDiv.appendChild(toolbarToggle);
+
+  let toolbarButtonList = document.createElement('ul');
+  toolbarButtonList.className = 'dropdown-menu';
+  toolbarDiv.appendChild(toolbarButtonList);
 
   // collapse cell button
   let collapseButton = createCellMiniToolbarButton(
@@ -428,7 +430,7 @@ function patchCellUI(cell) {
       toggleCollapseCell(cell);
     }
   );
-  toolbarDiv.appendChild(collapseButton);
+  toolbarButtonList.appendChild(collapseButton);
 
   // cell collapse placeholder
   let placeholderDiv = document.createElement('div');
@@ -439,6 +441,15 @@ function patchCellUI(cell) {
   });
   cell.element.append(placeholderDiv);
 
+  let codeCollapseButton = createCellMiniToolbarButton(
+    'collapse-code fa ' + COLLAPSE_CODE_BUTTON_CLASS,
+    'Collapse/Expand code',
+    function() {
+      toggleCollapseCode(cell);
+    }
+  );
+  toolbarButtonList.appendChild(codeCollapseButton);
+
   // add the minitoolbar to the cell
   cell.element.prepend(toolbarDiv);
 
@@ -446,10 +457,6 @@ function patchCellUI(cell) {
   if (CELL_METADATA_COLLAPSED in cell.metadata && cell.metadata[CELL_METADATA_COLLAPSED] === true) {
     collapseCell(cell);
   }
-
-  // collapse cell code button
-  let collapseCodeButton = createCodeCollapseButton(cell);
-  cell.element.find('div.inner_cell')[0].insertAdjacentElement('afterend', collapseCodeButton);
 
   // collapse cell code according to their saved metadata if any
   if (CELL_METADATA_CODE_COLLAPSED in cell.metadata && cell.metadata[CELL_METADATA_CODE_COLLAPSED] === true) {

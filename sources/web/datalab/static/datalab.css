@@ -389,7 +389,6 @@ div.code-collapse-btn {
 div.selected .code-collapse-btn {
   display: block;
 }
-
 div.input_prompt, div.output_prompt, div.out_prompt_overlay {
   min-width: 0px;
   display: none;
@@ -438,7 +437,13 @@ a.anchor-link {
 div.minitoolbar {
   position: absolute;
   left: -16px;
+  z-index: 10;
   display: none;
+}
+button.minitoolbar-toggle {
+  width: 25px;
+  height: 25px;
+  padding: 0;
 }
 div.minitoolbar>span {
   padding: 2px;
@@ -454,6 +459,9 @@ div.cellPlaceholder {
   width: 100%;
   text-align: left;
   display: none;
+}
+div.collapse-cell {
+  padding-right: 5px;
 }
 
 /* CodeMirror Customization */
