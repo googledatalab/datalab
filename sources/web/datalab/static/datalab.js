@@ -317,8 +317,9 @@ function collapseCell(cell) {
 
   cell.element.find('div.widget-area').hide();
   cell.element.find('div.cellPlaceholder')[0].innerHTML = getCollapsedCellHeader(cell);
-  collapseSpan = cell.element.find('span.collapse-cell').removeClass(COLLAPSE_BUTTON_CLASS);
-  collapseSpan = cell.element.find('span.collapse-cell').addClass(UNCOLLAPSE_BUTTON_CLASS);
+  collapseSpan = cell.element.find('span.glyph-collapse-cell').removeClass(COLLAPSE_BUTTON_CLASS);
+  collapseSpan = cell.element.find('span.glyph-collapse-cell').addClass(UNCOLLAPSE_BUTTON_CLASS);
+  collapseSpan = cell.element.find('span.title-collapse-cell')[0].innerText = 'Expand';
 
   cell.metadata[CELL_METADATA_COLLAPSED] = true;
 }
@@ -334,8 +335,9 @@ function uncollapseCell(cell) {
   if (widgetSubarea.children.length > 0)
     cell.element.find('div.widget-area').show();
   cell.element.find('div.cellPlaceholder')[0].innerHTML = '';
-  collapseSpan = cell.element.find('span.collapse-cell').removeClass(UNCOLLAPSE_BUTTON_CLASS);
-  collapseSpan = cell.element.find('span.collapse-cell').addClass(COLLAPSE_BUTTON_CLASS);
+  collapseSpan = cell.element.find('span.glyph-collapse-cell').removeClass(UNCOLLAPSE_BUTTON_CLASS);
+  collapseSpan = cell.element.find('span.glyph-collapse-cell').addClass(COLLAPSE_BUTTON_CLASS);
+  collapseSpan = cell.element.find('span.title-collapse-cell')[0].innerText = 'Collapse';
 
   cell.metadata[CELL_METADATA_COLLAPSED] = false;
 
@@ -344,26 +346,7 @@ function uncollapseCell(cell) {
 }
 
 /**
- * Create an HTML button for the cell minitoolbar and return it
- */
-function createCellMiniToolbarButton(classNames, title, callback) {
-  let buttonLi = document.createElement('li');
-  let anchor = document.createElement('a');
-  anchor.href = "#";
-  let glyphSpan = document.createElement('span');
-  glyphSpan.className = classNames;
-  glyphSpan.style.width = '20px';
-  anchor.appendChild(glyphSpan);
-  let titleSpan = document.createElement('span');
-  titleSpan.innerText = title;
-  anchor.appendChild(titleSpan);
-  buttonLi.appendChild(anchor);
-  buttonLi.addEventListener('click', callback);
-  return buttonLi;
-}
-
-/**
- * Patch the cell's element to add a minitoolbar div to contain extra buttons
+ * Toggle collapsing the code part of the cell
  */
 function toggleCollapseCode(cell) {
   isCollapsed = cell.metadata[CELL_METADATA_CODE_COLLAPSED] || false;
@@ -384,6 +367,7 @@ function collapseCode(cell) {
   }
 
   cell.element.addClass('codehidden');
+  cell.element.find('span.title-collapse-code')[0].innerText = 'Show Code';
   cell.metadata[CELL_METADATA_CODE_COLLAPSED] = true;
 }
 
@@ -392,11 +376,38 @@ function collapseCode(cell) {
  */
 function uncollapseCode(cell) {
   cell.element.removeClass('codehidden');
+  cell.element.find('span.title-collapse-code')[0].innerText = 'Hide Code';
   cell.metadata[CELL_METADATA_CODE_COLLAPSED] = false;
 }
 
 /**
- * Patch the cell's element to add collapse cell and code buttons
+ * Create an HTML button for the cell minitoolbar and return it
+ */
+function createCellMiniToolbarButton(description) {
+  let buttonLi = document.createElement('li');
+
+  let anchor = document.createElement('a');
+  anchor.href = "#";
+
+  // span for button icon
+  let glyphSpan = document.createElement('span');
+  glyphSpan.className = description.className + ' glyph-' + description.id;
+  glyphSpan.style.width = '20px';
+  anchor.appendChild(glyphSpan);
+
+  // span for button title
+  let titleSpan = document.createElement('span');
+  titleSpan.innerText = description.title;
+  titleSpan.className = 'title-' + description.id;
+
+  anchor.appendChild(titleSpan);
+  buttonLi.appendChild(anchor);
+  buttonLi.addEventListener('click', description.clickHandler);
+  return buttonLi;
+}
+
+/**
+ * Patch the cell's element to add custom UI buttons
  */
 function addCellMiniToolbar(cell) {
 
@@ -413,36 +424,45 @@ function addCellMiniToolbar(cell) {
   toolbarButtonList.className = 'dropdown-menu';
   toolbarDiv.appendChild(toolbarButtonList);
 
-  // run cell
-  let playButton = createCellMiniToolbarButton(
-    'collapse-code fa ' + RUN_CELL_BUTTON_CLASS,
-    'Run cell',
-    function() {
-      cell.execute();
-    }
-  );
-  toolbarButtonList.appendChild(playButton);
 
-
-  // clear cell
-  let clearButton = createCellMiniToolbarButton(
-    'collapse-code fa ' + CLEAR_CELL_BUTTON_CLASS,
-    'Clear cell',
-    function() {
-      cell.clear_output();
+  minitoolbarButtons = [
+    // run cell
+    {
+      id: 'run-cell',
+      title: 'Run',
+      className: 'fa ' + RUN_CELL_BUTTON_CLASS,
+      clickHandler: function() {
+        cell.execute();
+      }
+    },
+    // clear cell
+    {
+      id: 'clear-cell',
+      title: 'Clear',
+      className: 'fa ' + CLEAR_CELL_BUTTON_CLASS,
+      clickHandler: function() {
+        cell.clear_output();
+      }
+    },
+    // collapse cell
+    {
+      id: 'collapse-cell',
+      title: 'Collapse',
+      className: 'fa ' + COLLAPSE_BUTTON_CLASS,
+      clickHandler: function() {
+        toggleCollapseCell(cell);
+      }
+    },
+    // collapse code
+    {
+      id: 'collapse-code',
+      title: 'Hide Code',
+      className: 'fa ' + COLLAPSE_CODE_BUTTON_CLASS,
+      clickHandler: function() {
+        toggleCollapseCode(cell);
+      }
     }
-  );
-  toolbarButtonList.appendChild(clearButton);
-
-  // collapse cell button
-  let collapseButton = createCellMiniToolbarButton(
-    'collapse-cell fa ' + COLLAPSE_BUTTON_CLASS,
-    'Collapse/Expand cell',
-    function() {
-      toggleCollapseCell(cell);
-    }
-  );
-  toolbarButtonList.appendChild(collapseButton);
+  ];
 
   // cell collapse placeholder
   let placeholderDiv = document.createElement('div');
@@ -453,14 +473,10 @@ function addCellMiniToolbar(cell) {
   });
   cell.element.append(placeholderDiv);
 
-  let codeCollapseButton = createCellMiniToolbarButton(
-    'collapse-code fa ' + COLLAPSE_CODE_BUTTON_CLASS,
-    'Hide/Show code',
-    function() {
-      toggleCollapseCode(cell);
-    }
-  );
-  toolbarButtonList.appendChild(codeCollapseButton);
+  minitoolbarButtons.forEach(button => {
+    buttonHtml = createCellMiniToolbarButton(button);
+    toolbarButtonList.appendChild(buttonHtml);
+  });
 
   // add the minitoolbar to the cell
   cell.element.prepend(toolbarDiv);
