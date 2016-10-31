@@ -387,7 +387,7 @@ div.cellhidden div.input, div.cellhidden div.output_wrapper, .codehidden * div.i
   display: none;
 }
 .codehidden>div.input {
-  height: 25px;
+  height: 33px;
   border: 1px;
   border-style: solid;
   border-color: #ddd;
