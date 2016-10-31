@@ -937,7 +937,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     if (index !== null) {
       var cell = notebook.get_cells()[index];
 
-      var scrollable = $('#mainContent');
+      var scrollable = $('#mainArea');
       var scrollTop = scrollable.scrollTop() - scrollable.offset().top +
                       cell.element.offset().top;
       scrollable.animate({ scrollTop: scrollTop }, 250);
