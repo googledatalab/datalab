@@ -27,7 +27,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     apt-get update -y && \
     apt-get install --no-install-recommends -y -q python unzip ca-certificates build-essential \
     libatlas-base-dev liblapack-dev gfortran libpng-dev libfreetype6-dev libxft-dev libxml2-dev \
-    python-dev python-setuptools python-zmq openssh-client wget git pkg-config && \
+    python-dev python-setuptools python-zmq openssh-client wget curl git pkg-config && \
     easy_install pip && \
     mkdir -p /tools && \
 
