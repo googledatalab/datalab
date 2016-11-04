@@ -279,8 +279,13 @@ function initializePage(dialog, saveFn) {
 
 // constants for minitoolbar operations
 const CELL_METADATA_COLLAPSED = 'hiddenCell';
-const COLLAPSE_BUTTON_CLASS = 'fa-minus';
-const UNCOLLAPSE_BUTTON_CLASS = 'fa-plus';
+const COLLAPSE_BUTTON_CLASS = 'fa-compress';
+const UNCOLLAPSE_BUTTON_CLASS = 'fa-expand';
+const CELL_METADATA_CODE_COLLAPSED = 'codeCollapsed';
+const COLLAPSE_CODE_BUTTON_CLASS = 'fa-code';
+const UNCOLLAPSE_CODE_BUTTON_CLASS = 'fa-code';
+const RUN_CELL_BUTTON_CLASS = 'fa-play';
+const CLEAR_CELL_BUTTON_CLASS = 'fa-minus-square-o';
 
 function toggleCollapseCell(cell) {
   isCollapsed = cell.metadata[CELL_METADATA_COLLAPSED] || false;
@@ -308,17 +313,13 @@ function collapseCell(cell) {
     return '<div class="rendered_html">' + cell.element.find('pre.CodeMirror-line')[0].outerHTML + dots + '</div>';
   }
 
-  cell.element.find('div.inner_cell').hide();
-  cell.element.find('div.output_wrapper').hide();
-  cell.element.find('div.widget-area>').hide();
+  cell.element.addClass('cellhidden');
 
-  cell.element.find('div.minitoolbar').show();
-  cell.element.find('div.cellPlaceholder').show();
+  cell.element.find('div.widget-area').hide();
   cell.element.find('div.cellPlaceholder')[0].innerHTML = getCollapsedCellHeader(cell);
-
-  collapseSpan = cell.element.find('span.collapse-cell')[0];
-  collapseSpan.classList.remove(COLLAPSE_BUTTON_CLASS);
-  collapseSpan.classList.add(UNCOLLAPSE_BUTTON_CLASS);
+  collapseSpan = cell.element.find('span.glyph-collapse-cell').removeClass(COLLAPSE_BUTTON_CLASS);
+  collapseSpan = cell.element.find('span.glyph-collapse-cell').addClass(UNCOLLAPSE_BUTTON_CLASS);
+  collapseSpan = cell.element.find('span.title-collapse-cell')[0].innerText = 'Expand';
 
   cell.metadata[CELL_METADATA_COLLAPSED] = true;
 }
@@ -327,48 +328,141 @@ function collapseCell(cell) {
  * Uncollapse entire cell
  */
 function uncollapseCell(cell) {
-  cell.element.find('div.inner_cell').show();
-  cell.element.find('div.output_wrapper').show();
-  cell.element.find('div.widget-area>').show();
+  cell.element.removeClass('cellhidden');
 
-  cell.element.find('div.cellPlaceholder').hide();
+  widgetSubarea = cell.element.find('div.widget-subarea')[0];
+  // show the widgets area only if there are widgets in it (has children nodes)
+  if (widgetSubarea.children.length > 0)
+    cell.element.find('div.widget-area').show();
   cell.element.find('div.cellPlaceholder')[0].innerHTML = '';
-
-  collapseSpan = cell.element.find('span.collapse-cell')[0];
-  collapseSpan.classList.add(COLLAPSE_BUTTON_CLASS);
-  collapseSpan.classList.remove(UNCOLLAPSE_BUTTON_CLASS);
+  collapseSpan = cell.element.find('span.glyph-collapse-cell').removeClass(UNCOLLAPSE_BUTTON_CLASS);
+  collapseSpan = cell.element.find('span.glyph-collapse-cell').addClass(COLLAPSE_BUTTON_CLASS);
+  collapseSpan = cell.element.find('span.title-collapse-cell')[0].innerText = 'Collapse';
 
   cell.metadata[CELL_METADATA_COLLAPSED] = false;
+
+  // uncollapse code section as well
+  uncollapseCode(cell);
+}
+
+/**
+ * Toggle collapsing the code part of the cell
+ */
+function toggleCollapseCode(cell) {
+  isCollapsed = cell.metadata[CELL_METADATA_CODE_COLLAPSED] || false;
+  if (isCollapsed) {
+    uncollapseCode(cell);
+  } else {
+    collapseCode(cell);
+  }
+}
+
+/**
+ * Collapse the code part of the cell
+ */
+function collapseCode(cell) {
+  if (cell.cell_type !== 'code') {
+    // can't collapse code in non-code cells
+    return;
+  }
+
+  cell.element.addClass('codehidden');
+  cell.element.find('span.title-collapse-code')[0].innerText = 'Show Code';
+  cell.metadata[CELL_METADATA_CODE_COLLAPSED] = true;
+}
+
+/**
+ * Uncollapse the code part of the cell
+ */
+function uncollapseCode(cell) {
+  cell.element.removeClass('codehidden');
+  cell.element.find('span.title-collapse-code')[0].innerText = 'Hide Code';
+  cell.metadata[CELL_METADATA_CODE_COLLAPSED] = false;
 }
 
 /**
  * Create an HTML button for the cell minitoolbar and return it
  */
-function createCellMiniToolbarButton(classNames, title, callback) {
-  let buttonDiv = document.createElement('span');
-  buttonDiv.className = classNames + ' btn btn-default';
-  buttonDiv.title = title;
-  buttonDiv.addEventListener('click', callback);
-  return buttonDiv;
+function createCellMiniToolbarButton(description) {
+  let buttonLi = document.createElement('li');
+
+  let anchor = document.createElement('a');
+  anchor.href = "#";
+
+  // span for button icon
+  let glyphSpan = document.createElement('span');
+  glyphSpan.className = description.className + ' glyph-' + description.id;
+  glyphSpan.style.width = '20px';
+  anchor.appendChild(glyphSpan);
+
+  // span for button title
+  let titleSpan = document.createElement('span');
+  titleSpan.innerText = description.title;
+  titleSpan.className = 'title-' + description.id;
+
+  anchor.appendChild(titleSpan);
+  buttonLi.appendChild(anchor);
+  buttonLi.addEventListener('click', description.clickHandler);
+  return buttonLi;
 }
 
 /**
- * Patch the cell's element to add a minitoolbar div to contain extra buttons
+ * Patch the cell's element to add custom UI buttons
  */
 function addCellMiniToolbar(cell) {
 
   let toolbarDiv = document.createElement('div');
-  toolbarDiv.className = 'minitoolbar';
+  toolbarDiv.className = 'dropdown minitoolbar';
 
-  // collapse cell button
-  let collapseButton = createCellMiniToolbarButton(
-    'collapse-cell fa ' + COLLAPSE_BUTTON_CLASS,
-    'Collapse/Expand cell',
-    function() {
-      toggleCollapseCell(cell);
+  let toolbarToggle = document.createElement('button');
+  toolbarToggle.className = 'btn btn-default dropdown-toggle minitoolbar-toggle';
+  toolbarToggle.setAttribute('data-toggle', 'dropdown');
+  toolbarToggle.innerHTML = '<span class="fa fa-bars"></span>';
+  toolbarDiv.appendChild(toolbarToggle);
+
+  let toolbarButtonList = document.createElement('ul');
+  toolbarButtonList.className = 'dropdown-menu';
+  toolbarDiv.appendChild(toolbarButtonList);
+
+
+  minitoolbarButtons = [
+    // run cell
+    {
+      id: 'run-cell',
+      title: 'Run',
+      className: 'fa ' + RUN_CELL_BUTTON_CLASS,
+      clickHandler: function() {
+        cell.execute();
+      }
+    },
+    // clear cell
+    {
+      id: 'clear-cell',
+      title: 'Clear',
+      className: 'fa ' + CLEAR_CELL_BUTTON_CLASS,
+      clickHandler: function() {
+        cell.clear_output();
+      }
+    },
+    // collapse cell
+    {
+      id: 'collapse-cell',
+      title: 'Collapse',
+      className: 'fa ' + COLLAPSE_BUTTON_CLASS,
+      clickHandler: function() {
+        toggleCollapseCell(cell);
+      }
+    },
+    // collapse code
+    {
+      id: 'collapse-code',
+      title: 'Hide Code',
+      className: 'fa ' + COLLAPSE_CODE_BUTTON_CLASS,
+      clickHandler: function() {
+        toggleCollapseCode(cell);
+      }
     }
-  );
-  toolbarDiv.appendChild(collapseButton);
+  ];
 
   // cell collapse placeholder
   let placeholderDiv = document.createElement('div');
@@ -379,12 +473,22 @@ function addCellMiniToolbar(cell) {
   });
   cell.element.append(placeholderDiv);
 
+  minitoolbarButtons.forEach(button => {
+    buttonHtml = createCellMiniToolbarButton(button);
+    toolbarButtonList.appendChild(buttonHtml);
+  });
+
   // add the minitoolbar to the cell
   cell.element.prepend(toolbarDiv);
 
   // collapse cells according to their saved metadata if any
   if (CELL_METADATA_COLLAPSED in cell.metadata && cell.metadata[CELL_METADATA_COLLAPSED] === true) {
     collapseCell(cell);
+  }
+
+  // collapse cell code according to their saved metadata if any
+  if (CELL_METADATA_CODE_COLLAPSED in cell.metadata && cell.metadata[CELL_METADATA_CODE_COLLAPSED] === true) {
+    collapseCode(cell);
   }
 }
 
@@ -768,6 +872,12 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     ipy.OutputArea.auto_scroll_threshold = 1000;
   });
 
+  function removeCompletedMarks() {
+    Jupyter.notebook.get_cells().forEach(function(cell) {
+      cell.element.removeClass('completed');
+    });
+  }
+
   function navigateAlternate(alt, download) {
     var url = document.location.href.replace('/notebooks', alt);
     if (download) {
@@ -895,7 +1005,8 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   });
 
   $('#resetSessionButton').click(function() {
-    notebook.restart_kernel();
+    notebook.restart_kernel()
+      .then(success => removeCompletedMarks());
     this.blur();
   });
 
@@ -930,7 +1041,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     if (index !== null) {
       var cell = notebook.get_cells()[index];
 
-      var scrollable = $('#mainContent');
+      var scrollable = $('#mainArea');
       var scrollTop = scrollable.scrollTop() - scrollable.offset().top +
                       cell.element.offset().top;
       scrollable.animate({ scrollTop: scrollTop }, 250);
@@ -1012,20 +1123,6 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     // patch any cell created from now on
     events.on('create.Cell', function(e, params) {
       addCellMiniToolbar(params.cell);
-    });
-
-    // on cell select, show the toolbar on all collapsed cells as well as currently selected code cell
-    events.on('select.Cell', function(e, params) {
-      cell = params.cell;
-      // there's no reliable 'blur' event exposed by Jupyter
-      // so we have to unselect all markdown and uncollapsed cells manually
-      Jupyter.notebook.get_cells().forEach(function(cell) {
-        if (cell.cell_type === 'code' &&
-          (!(CELL_METADATA_COLLAPSED in cell.metadata) || cell.metadata[CELL_METADATA_COLLAPSED] === false))
-          cell.element.find('div.minitoolbar')[0].style.display = 'none';
-      });
-      if (cell.cell_type === 'code')
-        cell.element.find('div.minitoolbar')[0].style.display = 'block';
     });
 
     events.on('set_dirty.Notebook', function(e) {

@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="/static/components/jquery-ui/themes/smoothness/jquery-ui.min.css" />
 
   <script src="/static/components/jquery/jquery.min.js"></script>
+  <script type="text/javascript" src="/static/components/MathJax/MathJax.js?config=TeX-AMS_HTML-full,Safe&delayStartupUntil=configured" charset="utf-8"></script>
 </head>
 <body class="notebook_app"
   data-project=""
@@ -252,7 +253,6 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="/static/components/requirejs/require.js"></script>
   <script>
-    window.mathjax_url = '';
     window.sys_info = {};
     require.config({
       baseUrl: '/static/',
