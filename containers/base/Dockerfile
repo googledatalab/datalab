@@ -138,20 +138,20 @@ RUN gsutil cp gs://cloud-ml/sdk/cloudml-0.1.6-alpha.tar.gz cloudml-0.1.6-alpha.t
     pip install --no-cache-dir cloudml-0.1.6-alpha.tar.gz && \
     rm cloudml-0.1.6-alpha.tar.gz
 
-ADD config/ipython.py /etc/ipython/ipython_config.py
-ADD config/nbconvert.py /etc/jupyter/jupyter_notebook_config.py
-
-# Directory "py" may be empty and in that case it will git clone pydatalab from repo
-ADD pydatalab /datalab/lib/pydatalab
-ADD nbconvert /datalab/nbconvert
-
 # Install Cloud SQL Proxy
 RUN wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64
 RUN mv cloud_sql_proxy.linux.amd64 cloud_sql_proxy
 RUN chmod +x cloud_sql_proxy
 
 # Install mysqlDB.
-RUN apt-get --assume-yes install python-mysqldb
+RUN apt-get update -y && apt-get --assume-yes install python-mysqldb
+
+ADD config/ipython.py /etc/ipython/ipython_config.py
+ADD config/nbconvert.py /etc/jupyter/jupyter_notebook_config.py
+
+# Directory "py" may be empty and in that case it will git clone pydatalab from repo
+ADD pydatalab /datalab/lib/pydatalab
+ADD nbconvert /datalab/nbconvert
 
 # Do IPython configuration and install build artifacts
 # Then link stuff needed for nbconvert to a location where Jinja will find it.
