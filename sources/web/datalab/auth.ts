@@ -22,6 +22,7 @@ import fs = require('fs');
 import google = require('googleapis');
 import http = require('http');
 import logging = require('./logging');
+import path = require('path');
 import url = require('url');
 
 
@@ -30,15 +31,33 @@ var oauth2Client: any = undefined;
 // These are the gcloud credentials and are not actually secret.
 let clientId = '32555940559.apps.googleusercontent.com';
 let clientSecret = 'ZmssLNjJy2998hD4CTg2ejr2';
-let gcloudDir = '/content/datalab/.config';
-let userCredFile = gcloudDir + '/credentials';
-let appCredFile = gcloudDir + '/application_default_credentials.json';
-let botoFile = '/etc/boto.cfg';
+
+// The application settings instance.
+var appSettings: common.Settings;
 
 let scopes = [
   'https://www.googleapis.com/auth/userinfo.email',
   'https://www.googleapis.com/auth/cloud-platform',
 ];
+
+// Path to the root of the gcloud configuration.
+function gcloudDir(): string {
+  return path.join(appSettings.datalabRoot, '/content/datalab/.config');
+}
+
+// Path for user-specific credentials.
+function userCredFile(): string {
+  return path.join(gcloudDir(), '/credentials');
+}
+
+// Path for application default credentials.
+function appCredFile(): string {
+  return path.join(gcloudDir(), '/application_default_credentials.json');
+}
+
+function botoFile(): string {
+  return path.join(appSettings.datalabRoot, '/etc/boto.cfg');
+}
 
 /**
  * Take a id_token_id and decode it. These are base64 but with the some character substitutions and the
@@ -77,7 +96,7 @@ function setGcloudAccount(email: string) {
 function saveUserCredFile(tokens: any): string {
   var segments = tokens.id_token.split('.');
   var payload = JSON.parse(base64decodeSegment(segments[1]));
-  fs.writeFileSync(userCredFile,
+  fs.writeFileSync(userCredFile(),
       JSON.stringify({
         data:
             [
@@ -118,7 +137,7 @@ function saveUserCredFile(tokens: any): string {
 }
 
 function saveApplicationCredFile(tokens: any) {
-  fs.writeFileSync(appCredFile,
+  fs.writeFileSync(appCredFile(),
       JSON.stringify({
         client_id: clientId,
         client_secret: clientSecret,
@@ -132,15 +151,16 @@ function saveBotoFile(tokens: any) {
   // Create botoFile and set refresh token to get gsutil working.
   // See https://cloud.google.com/storage/docs/gsutil/commands/config.
   var botoContent:string = '[Credentials]\ngs_oauth2_refresh_token = ' + tokens.refresh_token;
-  fs.writeFileSync(botoFile, botoContent);
+  fs.writeFileSync(botoFile(), botoContent);
 }
 
 /**
  * Save the tokens in a credentials file that Datalab and gcloud can both use.
  */
 function persistCredentials(tokens: any): string {
-  if (!fs.existsSync(gcloudDir)) {
-    fs.mkdirSync(gcloudDir);
+  
+  if (!fs.existsSync(gcloudDir())) {
+    fs.mkdirSync(gcloudDir());
   }
   saveApplicationCredFile(tokens);
   saveBotoFile(tokens);
@@ -179,25 +199,25 @@ export function handleAuthFlow(request: http.ServerRequest, response: http.Serve
   var path = parsed_url.pathname;
   var query = parsed_url.query;
   if (path.indexOf('/signout') == 0) {
-    if (fs.existsSync(userCredFile)) {
+    if (fs.existsSync(userCredFile())) {
       try {
-        fs.unlinkSync(userCredFile);
+        fs.unlinkSync(userCredFile());
       } catch (e) {
-        logging.getLogger().error('Could not delete ' + userCredFile + ': ' + e);
+        logging.getLogger().error('Could not delete ' + userCredFile() + ': ' + e);
       }
     }
-    if (fs.existsSync(appCredFile)) {
+    if (fs.existsSync(appCredFile())) {
       try {
-        fs.unlinkSync(appCredFile);
+        fs.unlinkSync(appCredFile());
       } catch (e) {
-        logging.getLogger().error('Could not delete ' + appCredFile + ': ' + e);
+        logging.getLogger().error('Could not delete ' + appCredFile() + ': ' + e);
       }
     }
-    if (fs.existsSync(botoFile)) {
+    if (fs.existsSync(botoFile())) {
       try {
-        fs.unlinkSync(botoFile);
+        fs.unlinkSync(botoFile());
       } catch (e) {
-        logging.getLogger().error('Could not delete ' + botoFile + ': ' + e);
+        logging.getLogger().error('Could not delete ' + botoFile() + ': ' + e);
       }
     }
   } else if (path.indexOf('/oauthcallback') == 0) {  // Return from auth flow.
@@ -245,9 +265,10 @@ export function handleAuthFlow(request: http.ServerRequest, response: http.Serve
   response.end();
 }
 
-export function init() {
-  if (fs.existsSync(appCredFile)) {
-    var tokensContent:string = fs.readFileSync(appCredFile, 'utf8');
+export function init(settings: common.Settings) {
+  appSettings = settings;
+  if (fs.existsSync(appCredFile())) {
+    var tokensContent:string = fs.readFileSync(appCredFile(), 'utf8');
     var tokens:any = JSON.parse(tokensContent);
     saveBotoFile(tokens);
   }

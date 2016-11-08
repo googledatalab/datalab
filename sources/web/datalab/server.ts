@@ -266,7 +266,7 @@ export function run(settings: common.Settings): void {
   appSettings = settings;
   userManager.init(settings);
   jupyter.init(settings);
-  auth.init();
+  auth.init(settings);
   reverseProxy.init();
 
   healthHandler = health.createHandler(settings);

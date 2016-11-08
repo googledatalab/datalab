@@ -24,7 +24,7 @@ import settings = require('./settings');
 import url = require('url');
 import userManager = require('./userManager');
 
-var JUPYTER_DIR = '/usr/local/lib/python2.7/dist-packages/notebook';
+var appSettings: common.Settings;
 var CONTENT_TYPES: common.Map<string> = {
   '.js': 'text/javascript',
   '.css': 'text/css',
@@ -38,6 +38,10 @@ var DEFAULT_THEME_FILE = 'light.css';
 
 var contentCache: common.Map<Buffer> = {};
 var watchedDynamicContent: common.Map<boolean> = {};
+
+function jupyterDir(): string {
+  return path.join(appSettings.datalabRoot, '/usr/local/lib/python2.7/dist-packages/notebook');
+}
 
 function getContent(filePath: string, cb: common.Callback<Buffer>, isDynamic: boolean = false): void {
   var content = contentCache[filePath];
@@ -114,7 +118,7 @@ function sendDataLabFile(filePath: string, response: http.ServerResponse) {
  * @param response the out-going response associated with the current HTTP request.
  */
 function sendJupyterFile(relativePath: string, response: http.ServerResponse) {
-  var filePath = path.join(JUPYTER_DIR, relativePath);
+  var filePath = path.join(jupyterDir(), relativePath);
   fs.stat(filePath, function(e, stats) {
     if (e || !stats.isFile()) {
       response.writeHead(404);

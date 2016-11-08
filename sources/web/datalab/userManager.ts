@@ -56,14 +56,15 @@ export function getUserId(request: http.ServerRequest): string {
  * the directory is root_dir + emailaddress, such as '/content/user@domain.com'.
  */
 export function getUserDir(userId: string): string {
+  var contentDir = path.join(appSettings.datalabRoot, appSettings.contentDir);
   if (!appSettings.useWorkspace) {
     // If the workspace feature is not enabled, then just use the content directory specified
     // in configuration.
-    return appSettings.contentDir;
+    return contentDir;
   }
 
   // Forward slash '/' is allowed in email but not in file system so replace it.
-  return path.join(appSettings.contentDir, userId.replace('/', '_fsfs_'));
+  return path.join(contentDir, userId.replace('/', '_fsfs_'));
 }
 
 /**

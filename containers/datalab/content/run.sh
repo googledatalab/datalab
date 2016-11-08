@@ -36,6 +36,8 @@ ERR_DEPLOY=6
 ERR_TUNNEL_FAILED=7
 ERR_GATEWAY_FAILED=7
 
+DATALAB_ROOT=${DATALAB_ROOT:-""}
+
 run_login() {
   local login_cmd=${1:-"gcloud auth login"}
 
@@ -51,7 +53,7 @@ run_login() {
   USER_EMAIL=`gcloud auth list --format="value(account)"`
 }
 
-source /datalab/setup-env.sh
+source "${DATALAB_ROOT}"/datalab/setup-env.sh
 
 if [[ -n "${GATEWAY_VM}" ]]; then
   GATEWAY_PART_1=`echo "${GATEWAY_VM}" | cut -d '/' -f 1`
@@ -76,7 +78,7 @@ if [[ "${CLI_LOGIN}" == "true" ]]; then
 fi
 
 if [[ -n "${INSTANCE}" ]]; then
-  run_login "node /datalab/web/login.js 2>/dev/null"
+  run_login "node ${DATALAB_ROOT}/datalab/web/login.js 2>/dev/null"
 
   PROJECT_NOT_FOUND=""
   ZONE_NOT_FOUND=""
@@ -113,7 +115,7 @@ if [[ -n "${INSTANCE}" ]]; then
   if [[ -n "${INSTANCE_NOT_FOUND}" ]]; then
     echo "Instance ${INSTANCE} not found"
     if [[ "${DEPLOY_VM}" == "true" ]]; then
-      /datalab/deploy.sh "${PROJECT_ID}" "${ZONE}" "${INSTANCE}" || exit ${ERR_DEPLOY}
+      "${DATALAB_ROOT}"/datalab/deploy.sh "${PROJECT_ID}" "${ZONE}" "${INSTANCE}" || exit ${ERR_DEPLOY}
     else
       echo "${USAGE}"
       exit "${ERR_INSTANCE_NOT_FOUND}"
@@ -127,7 +129,7 @@ if [[ -n "${INSTANCE}" ]]; then
     --zone "${ZONE}" \
     --ssh-flag="-fNL" \
     --ssh-flag="localhost:8082:localhost:8080" \
-    --ssh-key-file="/content/datalab/.config/.ssh/google_compute_engine" \
+    --ssh-key-file="${DATALAB_ROOT}/content/datalab/.config/.ssh/google_compute_engine" \
     "${SSH_USER}@${INSTANCE}"
 
   # Test that we can actually call the gateway API via the SSH tunnel
@@ -162,31 +164,31 @@ then
   fi
 fi
 
-mkdir -p /content/datalab/notebooks
+mkdir -p "${DATALAB_ROOT}"/content/datalab/notebooks
 
 # Fetch docs and tutorials. This should not abort startup if it fails
 {
-if [ -d /content/datalab/docs ]; then
+if [ -d "${DATALAB_ROOT}"/content/datalab/docs ]; then
   # The docs directory already exists, so we have to either update or initialize it as a git repository
   pushd ./
-  cd /content/datalab/docs
-  if [ -d /content/datalab/docs/.git ]; then
+  cd "${DATALAB_ROOT}"/content/datalab/docs
+  if [ -d "${DATALAB_ROOT}"/content/datalab/docs/.git ]; then
     git fetch origin master; git reset --hard origin/master
   else
     git init; git remote add origin https://github.com/googledatalab/notebooks.git; git fetch origin; 
   fi
   popd
 else
-  (cd /content/datalab; git clone -n --single-branch https://github.com/googledatalab/notebooks.git docs)
+  (cd "${DATALAB_ROOT}"/content/datalab; git clone -n --single-branch https://github.com/googledatalab/notebooks.git docs)
 fi
-(cd /content/datalab/docs; git config core.sparsecheckout true; echo $'intro/\nsamples/\ntutorials/\n*.ipynb\n' > .git/info/sparse-checkout; git checkout master)
+(cd "${DATALAB_ROOT}"/content/datalab/docs; git config core.sparsecheckout true; echo $'intro/\nsamples/\ntutorials/\n*.ipynb\n' > .git/info/sparse-checkout; git checkout master)
 } || echo "Fetching tutorials and samples failed."
 
 # Run the user's custom extension script if it exists. To avoid platform issues with 
 # execution permissions, line endings, etc, we create a local sanitized copy.
-if [ -f /content/datalab/.config/startup.sh ]
+if [ -f "${DATALAB_ROOT}"/content/datalab/.config/startup.sh ]
 then
-  tr -d '\r' < /content/datalab/.config/startup.sh > ~/startup.sh
+  tr -d '\r' < "${DATALAB_ROOT}"/content/datalab/.config/startup.sh > ~/startup.sh
   chmod +x ~/startup.sh
   . ~/startup.sh
 fi
@@ -198,10 +200,10 @@ then
 fi
 
 # Create the notebook notary secret if one does not already exist
-if [ ! -f /content/datalab/.config/notary_secret ]
+if [ ! -f "${DATALAB_ROOT}"/content/datalab/.config/notary_secret ]
 then
-  mkdir -p /content/datalab/.config
-  openssl rand -base64 128 > /content/datalab/.config/notary_secret
+  mkdir -p "${DATALAB_ROOT}"/content/datalab/.config
+  openssl rand -base64 128 > "${DATALAB_ROOT}"/content/datalab/.config/notary_secret
 fi
 
 # Start the DataLab server
@@ -213,4 +215,4 @@ then
 fi
 
 echo "Open your browser to http://localhost:8081/ to connect to Datalab."
-${FOREVER_CMD} /datalab/web/app.js
+${FOREVER_CMD} "${DATALAB_ROOT}"/datalab/web/app.js
