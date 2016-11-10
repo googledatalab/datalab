@@ -230,6 +230,21 @@ function initializePage(dialog, saveFn) {
       saveFn();
       window.location = '/signout?referer=' + encodeURIComponent(window.location);
     });
+    $('#ungitButton').click(function() {
+      var path = location.pathname;
+
+      // Extract the current directory name
+      if (path.indexOf('/tree') == 0) {
+        path = path.substr('/tree'.length);
+      } else if (path.indexOf('/notebooks') == 0) {
+        path = path.substr('/notebooks'.length);
+        path = path.substr(0, path.lastIndexOf('/'));
+      }
+      path = encodeURIComponent('/content' + path);
+      prefix = window.location.protocol + '//' + window.location.host;
+
+      window.open(prefix + '/_proxy/8083/#/repository?path=' + path);
+    });
   }
 
   // More UI that relies on appbar load
