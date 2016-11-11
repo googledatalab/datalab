@@ -76,7 +76,7 @@ if [[ "${CLI_LOGIN}" == "true" ]]; then
 fi
 
 if [[ -n "${INSTANCE}" ]]; then
-  run_login "node ${DATALAB_ROOT}/datalab/web/login.js 2>/dev/null"
+  run_login "node /datalab/web/login.js 2>/dev/null"
 
   PROJECT_NOT_FOUND=""
   ZONE_NOT_FOUND=""
@@ -127,7 +127,7 @@ if [[ -n "${INSTANCE}" ]]; then
     --zone "${ZONE}" \
     --ssh-flag="-fNL" \
     --ssh-flag="localhost:8082:localhost:8080" \
-    --ssh-key-file="${DATALAB_ROOT}/content/datalab/.config/.ssh/google_compute_engine" \
+    --ssh-key-file="/content/datalab/.config/.ssh/google_compute_engine" \
     "${SSH_USER}@${INSTANCE}"
 
   # Test that we can actually call the gateway API via the SSH tunnel
