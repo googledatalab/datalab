@@ -48,13 +48,11 @@ export function getRequestPort(request: http.ServerRequest, path: string): strin
 }
 
 /**
- * Checks if a request should be exempted from reverse proxying to the gateway
+ * Check if traffic to this port should be proxied back to the gateway
  */
-function shouldSkipGateway(port: String) {
-  // skip requests to 8083 for ungit
-  if (port === '8083')
-    return true;
-  return false;
+function shouldProxyPort(port: String) {
+  // Do not proxy 8083 to gateway, it's open for ungit
+  return !!process.env.KG_URL && port !== '8083';
 }
 
 /**
@@ -63,7 +61,7 @@ function shouldSkipGateway(port: String) {
 export function handleRequest(request: http.ServerRequest,
                               response: http.ServerResponse,
                               port: String) {
-  if (process.env.KG_URL && !shouldSkipGateway(port)) {
+  if (shouldProxyPort(port)) {
     proxy.web(request, response, { target: process.env.KG_URL });
   }
   else {

@@ -67,6 +67,7 @@ cat /datalab/license.txt
 - socket.io [https://www.npmjs.com/package/socket.io]
 - tcp-port-used [https://www.npmjs.com/package/tcp-port-used]
 - ws [https://www.npmjs.com/package/ws]
+- ungit [https://github.com/FredrikNoren/ungit]
 
 ## Other Packages:
 - curl
