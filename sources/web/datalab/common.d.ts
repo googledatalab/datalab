@@ -48,7 +48,7 @@ declare module common {
      * these settings. Useful for testing outside a Docker container.
      */
     datalabRoot: string;
-      
+
     /**
      * Local directory which stores notebooks in the container
      */

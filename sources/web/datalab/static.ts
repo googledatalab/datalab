@@ -39,8 +39,10 @@ var DEFAULT_THEME_FILE = 'light.css';
 var contentCache: common.Map<Buffer> = {};
 var watchedDynamicContent: common.Map<boolean> = {};
 
+// Path to use for fetching static resources provided by Jupyter.
 function jupyterDir(): string {
-  return path.join(appSettings.datalabRoot, '/usr/local/lib/python2.7/dist-packages/notebook');
+  var prefix = appSettings.datalabRoot || '/usr/local/lib/python2.7';
+  return path.join(prefix, '/dist-packages/notebook')
 }
 
 function getContent(filePath: string, cb: common.Callback<Buffer>, isDynamic: boolean = false): void {
@@ -225,5 +227,6 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
  * @returns the request handler to handle static requests.
  */
 export function createHandler(settings: common.Settings): http.RequestHandler {
+  appSettings = settings;
   return requestHandler;
 }

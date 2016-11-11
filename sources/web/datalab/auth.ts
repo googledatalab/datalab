@@ -55,6 +55,7 @@ function appCredFile(): string {
   return path.join(gcloudDir(), '/application_default_credentials.json');
 }
 
+// Path for shared boto config (used by gsutil).
 function botoFile(): string {
   return path.join(appSettings.datalabRoot, '/etc/boto.cfg');
 }
@@ -158,7 +159,6 @@ function saveBotoFile(tokens: any) {
  * Save the tokens in a credentials file that Datalab and gcloud can both use.
  */
 function persistCredentials(tokens: any): string {
-  
   if (!fs.existsSync(gcloudDir())) {
     fs.mkdirSync(gcloudDir());
   }
