@@ -20,7 +20,18 @@ import fs = require('fs');
 import http = require('http');
 import path = require('path');
 
-var noCacheDir: string = '/datalab/nocachecontent'
+var appSettings: common.Settings;
+
+/**
+ * Initializes settings for the noCacheContent handler.
+ */
+export function init(settings: common.Settings): void {
+  appSettings = settings;
+}
+
+function noCacheDir(): string {
+  return path.join(appSettings.datalabRoot, '/datalab/nocachecontent')
+}
 
 function getContent(filePath: string, cb: common.Callback<Buffer>): void {
   fs.readFile(filePath, function(error, content) {
@@ -45,7 +56,7 @@ function sendFile(fileName: string, response: http.ServerResponse) {
     response.writeHead(400);
     response.end();
   }
-  var filePath: string = path.join(noCacheDir, fileName)
+  var filePath: string = path.join(noCacheDir(), fileName)
   getContent(filePath, function(error, content) {
     if (error) {
       response.writeHead(404);

@@ -14,6 +14,9 @@
 
 """IPython nbconvert configuration for Google Cloud DataLab."""
 
+import os
+nbconvert_dir = os.path.join(os.getenv('DATALAB_ROOT', '/'), 'datalab/nbconvert')
+
 c = get_config()
-c.TemplateExporter.template_path.insert(0, '/datalab/nbconvert')
+c.TemplateExporter.template_path.insert(0, nbconvert_dir)
 c.HTMLExporter.template_file = 'html'

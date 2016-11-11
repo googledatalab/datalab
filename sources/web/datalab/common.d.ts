@@ -44,6 +44,12 @@ declare module common {
     jupyterArgs: string[];
 
     /**
+     * If provided, use this as a prefix to all paths created from
+     * these settings. Useful for testing outside a Docker container.
+     */
+    datalabRoot: string;
+
+    /**
      * Local directory which stores notebooks in the container
      */
     contentDir: string;

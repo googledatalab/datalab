@@ -41,7 +41,9 @@ var settingHandler: http.RequestHandler;
 var staticHandler: http.RequestHandler;
 
 // Datalab eula directory; if this doesn't exist the EULA hasn't been accepted.
-let eulaDir = '/content/datalab/.config/eula';
+function eulaDir(): string {
+  return path.join(appSettings.datalabRoot, '/content/datalab/.config/eula');
+}
 
 /**
  * The application settings instance.
@@ -201,12 +203,12 @@ function handleRequest(request: http.ServerRequest,
  */
 function uncheckedRequestHandler(request: http.ServerRequest, response: http.ServerResponse) {
   var parsed_url = url.parse(request.url, true);
-  var path = parsed_url.pathname;
+  var urlpath = parsed_url.pathname;
 
   // Check if EULA has been accepted; if not go to EULA page.
-  if (path.indexOf('/accepted_eula') == 0) {
-    if (!fs.existsSync(eulaDir)) {
-      fs.mkdirSync(eulaDir);
+  if (urlpath.indexOf('/accepted_eula') == 0) {
+    if (!fs.existsSync(eulaDir())) {
+      fs.mkdirSync(eulaDir());
     }
     var i = parsed_url.search.indexOf('referer=');
     if (i < 0) {
@@ -219,23 +221,24 @@ function uncheckedRequestHandler(request: http.ServerRequest, response: http.Ser
       response.writeHead (302, {'Location': referer})
     }
     response.end();
-  } else if (path.indexOf('/signin') == 0 || path.indexOf('/signout') == 0 ||
-      path.indexOf('/oauthcallback') == 0) {
+  } else if (urlpath.indexOf('/signin') == 0 || urlpath.indexOf('/signout') == 0 ||
+      urlpath.indexOf('/oauthcallback') == 0) {
     // Start or return from auth flow.
     auth.handleAuthFlow(request, response, parsed_url, appSettings);
-  } else if ((path.indexOf('/static') == 0) || (path.indexOf('/custom') == 0)) {
+  } else if ((urlpath.indexOf('/static') == 0) || (urlpath.indexOf('/custom') == 0)) {
     // /static and /custom paths for returning static content
     // We serve these even if the EULA has not been accepted, so that the
     // EULA page can include static resources.
     staticHandler(request, response);
-  } else if (!fs.existsSync(eulaDir)) {
+  } else if (!fs.existsSync(eulaDir())) {
     logging.getLogger().info('No Datalab config; redirect to EULA page');
-    fs.readFile('/datalab/web/static/eula.html', function(error, content) {
+    var eula = path.join(appSettings.datalabRoot, '/datalab/web/static/eula.html');
+    fs.readFile(eula, function(error, content) {
       response.writeHead(200);
       response.end(content);
     });
   } else {
-    handleRequest(request, response, path);
+    handleRequest(request, response, urlpath);
   }
 }
 
@@ -254,7 +257,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   try {
     uncheckedRequestHandler(request, response);
   } catch (e) {
-    logging.getLogger().error('Uncaught error handling a request: %s', e);
+    logging.getLogger().error('Uncaught error handling a request to "%s": %s', request.url, e);
   }
 }
 
@@ -266,7 +269,8 @@ export function run(settings: common.Settings): void {
   appSettings = settings;
   userManager.init(settings);
   jupyter.init(settings);
-  auth.init();
+  auth.init(settings);
+  noCacheContent.init(settings);
   reverseProxy.init();
 
   healthHandler = health.createHandler(settings);

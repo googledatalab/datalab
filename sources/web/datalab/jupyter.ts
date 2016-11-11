@@ -140,12 +140,13 @@ function createJupyterServerAtPort(port: number, userId: string, userDir: string
   if ('KG_URL' in notebookEnv && notebookEnv['KG_URL']) {
     logging.getLogger().info(
       'Found a kernel gateway URL of %s... configuring the notebook to use it', notebookEnv['KG_URL']);
+    var secretPath = path.join(appSettings.datalabRoot, '/content/datalab/.config/notary_secret');
     processArgs = processArgs.concat([
       '--NotebookApp.session_manager_class=nb2kg.managers.SessionManager',
       '--NotebookApp.kernel_manager_class=nb2kg.managers.RemoteKernelManager',
       '--NotebookApp.kernel_spec_manager_class=nb2kg.managers.RemoteKernelSpecManager',
       '--NotebookNotary.algorithm=sha256',
-      '--NotebookNotary.secret_file=/content/datalab/.config/notary_secret'
+      '--NotebookNotary.secret_file=' + secretPath,
     ]);
   }
 
