@@ -21,7 +21,7 @@ export DATALAB_ENV="local"
 
 # Ensure that gcloud has been told to use a config directory under the
 # mounted volume (so that the results of 'gcloud auth login' are persisted).
-export CLOUDSDK_CONFIG="${DATALAB_ROOT}"/content/datalab/.config
+export CLOUDSDK_CONFIG=/content/datalab/.config
 
 # Lookup the project and zone, which may be in the mapped gcloud config.
 export PROJECT_ID=${PROJECT_ID:-`gcloud config list -q --format 'value(core.project)' 2> /dev/null`}

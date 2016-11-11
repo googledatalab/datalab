@@ -36,8 +36,6 @@ ERR_DEPLOY=6
 ERR_TUNNEL_FAILED=7
 ERR_GATEWAY_FAILED=7
 
-DATALAB_ROOT=${DATALAB_ROOT:-""}
-
 run_login() {
   local login_cmd=${1:-"gcloud auth login"}
 
@@ -53,7 +51,7 @@ run_login() {
   USER_EMAIL=`gcloud auth list --format="value(account)"`
 }
 
-source "${DATALAB_ROOT}"/datalab/setup-env.sh
+source /datalab/setup-env.sh
 
 if [[ -n "${GATEWAY_VM}" ]]; then
   GATEWAY_PART_1=`echo "${GATEWAY_VM}" | cut -d '/' -f 1`
@@ -115,7 +113,7 @@ if [[ -n "${INSTANCE}" ]]; then
   if [[ -n "${INSTANCE_NOT_FOUND}" ]]; then
     echo "Instance ${INSTANCE} not found"
     if [[ "${DEPLOY_VM}" == "true" ]]; then
-      "${DATALAB_ROOT}"/datalab/deploy.sh "${PROJECT_ID}" "${ZONE}" "${INSTANCE}" || exit ${ERR_DEPLOY}
+      /datalab/deploy.sh "${PROJECT_ID}" "${ZONE}" "${INSTANCE}" || exit ${ERR_DEPLOY}
     else
       echo "${USAGE}"
       exit "${ERR_INSTANCE_NOT_FOUND}"
@@ -164,31 +162,31 @@ then
   fi
 fi
 
-mkdir -p "${DATALAB_ROOT}"/content/datalab/notebooks
+mkdir -p /content/datalab/notebooks
 
 # Fetch docs and tutorials. This should not abort startup if it fails
 {
-if [ -d "${DATALAB_ROOT}"/content/datalab/docs ]; then
+if [ -d /content/datalab/docs ]; then
   # The docs directory already exists, so we have to either update or initialize it as a git repository
   pushd ./
-  cd "${DATALAB_ROOT}"/content/datalab/docs
-  if [ -d "${DATALAB_ROOT}"/content/datalab/docs/.git ]; then
+  cd /content/datalab/docs
+  if [ -d /content/datalab/docs/.git ]; then
     git fetch origin master; git reset --hard origin/master
   else
     git init; git remote add origin https://github.com/googledatalab/notebooks.git; git fetch origin; 
   fi
   popd
 else
-  (cd "${DATALAB_ROOT}"/content/datalab; git clone -n --single-branch https://github.com/googledatalab/notebooks.git docs)
+  (cd /content/datalab; git clone -n --single-branch https://github.com/googledatalab/notebooks.git docs)
 fi
-(cd "${DATALAB_ROOT}"/content/datalab/docs; git config core.sparsecheckout true; echo $'intro/\nsamples/\ntutorials/\n*.ipynb\n' > .git/info/sparse-checkout; git checkout master)
+(cd /content/datalab/docs; git config core.sparsecheckout true; echo $'intro/\nsamples/\ntutorials/\n*.ipynb\n' > .git/info/sparse-checkout; git checkout master)
 } || echo "Fetching tutorials and samples failed."
 
 # Run the user's custom extension script if it exists. To avoid platform issues with 
 # execution permissions, line endings, etc, we create a local sanitized copy.
-if [ -f "${DATALAB_ROOT}"/content/datalab/.config/startup.sh ]
+if [ -f /content/datalab/.config/startup.sh ]
 then
-  tr -d '\r' < "${DATALAB_ROOT}"/content/datalab/.config/startup.sh > ~/startup.sh
+  tr -d '\r' < /content/datalab/.config/startup.sh > ~/startup.sh
   chmod +x ~/startup.sh
   . ~/startup.sh
 fi
@@ -200,10 +198,10 @@ then
 fi
 
 # Create the notebook notary secret if one does not already exist
-if [ ! -f "${DATALAB_ROOT}"/content/datalab/.config/notary_secret ]
+if [ ! -f /content/datalab/.config/notary_secret ]
 then
-  mkdir -p "${DATALAB_ROOT}"/content/datalab/.config
-  openssl rand -base64 128 > "${DATALAB_ROOT}"/content/datalab/.config/notary_secret
+  mkdir -p /content/datalab/.config
+  openssl rand -base64 128 > /content/datalab/.config/notary_secret
 fi
 
 # Start the DataLab server
@@ -215,4 +213,4 @@ then
 fi
 
 echo "Open your browser to http://localhost:8081/ to connect to Datalab."
-${FOREVER_CMD} "${DATALAB_ROOT}"/datalab/web/app.js
+${FOREVER_CMD} /datalab/web/app.js
