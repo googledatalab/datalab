@@ -60,9 +60,14 @@ docker tag -f ${DATALAB_IMAGE} gcr.io/${PROJECT_ID}/datalab:local
 gcloud docker -- push gcr.io/${PROJECT_ID}/datalab:local
 
 gsutil cp gs://${PROJECT_ID}/deploy/config_local.js ./config_local.js
-OLD_VERSION=`cat ./config_local.js | grep latest | cut -d ':' -f 2`
+OLD_VERSION=`cat ./config_local.js | grep last | cut -d ':' -f 2`
+CURRENT_VERSION=`cat ./config_local.js | grep latest | cut -d ':' -f 2`
 NEW_VERSION=" ${BUILD},"
-echo "Replacing ${OLD_VERSION} with ${NEW_VERSION}"
-sed -i -e "s/${OLD_VERSION}/${NEW_VERSION}/" ./config_local.js
+
+echo "Replacing latest=${CURRENT_VERSION} with latest=${NEW_VERSION}"
+sed -i -e "s/${CURRENT_VERSION}/${NEW_VERSION}/" ./config_local.js
+echo "Replacing last=${OLD_VERSION} with last=${CURRENT_VERSION}"
+sed -i -e "s/${OLD_VERSION}/${CURRENT_VERSION}/" ./config_local.js
+
 gsutil cp ./config_local.js gs://${PROJECT_ID}/deploy/config_local_${BUILD}.js
 gsutil cp ./config_local.js gs://${PROJECT_ID}/deploy/config_local.js
