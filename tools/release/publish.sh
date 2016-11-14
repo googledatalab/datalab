@@ -28,6 +28,10 @@
 #  2. "BUILD": The label of the builds to pull down and publish. If omitted
 #     this will default to the current date (which is what the build.sh
 #     script uses by default).
+#
+# The script sets a 'previous' variable in the config_local script to define
+# the rollback version. This script should NOT be executed more than once
+# using the same image, as it will overwrite this previous field.
 
 PROJECT_ID="${PROJECT_ID:-cloud-datalab}"
 TEST_PROJECT_ID="${TEST_PROJECT_ID:-`gcloud config list -q --format 'value(core.project)' 2> /dev/null`}"
