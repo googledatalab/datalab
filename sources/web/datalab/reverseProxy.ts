@@ -48,12 +48,20 @@ export function getRequestPort(request: http.ServerRequest, path: string): strin
 }
 
 /**
+ * Check if traffic to this port should be proxied back to the gateway
+ */
+function shouldProxyPort(port: String) {
+  // Do not proxy 8083 to gateway, it's open for ungit
+  return !!process.env.KG_URL && port !== '8083';
+}
+
+/**
  * Handle request by sending it to the internal http endpoint.
  */
 export function handleRequest(request: http.ServerRequest,
                               response: http.ServerResponse,
                               port: String) {
-  if (process.env.KG_URL) {
+  if (shouldProxyPort(port)) {
     proxy.web(request, response, { target: process.env.KG_URL });
   }
   else {

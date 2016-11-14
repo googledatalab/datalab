@@ -204,6 +204,9 @@ then
   openssl rand -base64 128 > /content/datalab/.config/notary_secret
 fi
 
+# Start the ungit server
+ungit --port=8083 --no-launchBrowser --forcedLaunchPath=/content/datalab 1> /dev/null &
+
 # Start the DataLab server
 FOREVER_CMD="forever --minUptime 1000 --spinSleepTime 1000"
 if [ -z "${DATALAB_DEBUG}" ]
