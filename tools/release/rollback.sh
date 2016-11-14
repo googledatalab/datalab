@@ -27,19 +27,23 @@
 # 1. "PROJECT_ID": Sets the name of the target project where the
 #    images will be pulled from and pushed to. Defaults to "cloud-datalab"
 # 2. "ROLLBACK_BUILD": The label of the build to pull down and rollback to.
-#    If omitted, this will extract the 'last' field from the config_local.js
+#    If omitted, this will extract the 'porevious' field from the config_local.js
 
 PROJECT_ID="${PROJECT_ID:-cloud-datalab}"
 
 gsutil cp gs://${PROJECT_ID}/deploy/config_local.js ./config_local.js
-REGEX='latest: ([0-9]+),.*last: ([0-9]+),'
-[[ $(cat config_local.js) =~ $REGEX ]]
-LATEST_BUILD=${BASH_REMATCH[1]}
-OLD_BUILD=${BASH_REMATCH[2]}
-LAST_BUILD="${ROLLBACK_BUILD:-$OLD_BUILD}"
+REGEX='latest: ([0-9]+),.*previous: ([0-9]+)'
+if [[ $(cat config_local.js) =~ $REGEX ]]; then
+  LATEST_BUILD=${BASH_REMATCH[1]}
+  OLD_BUILD=${BASH_REMATCH[2]}
+  PREVIOUS_BUILD="${ROLLBACK_BUILD:-$OLD_BUILD}"
+else
+  echo "Could not extract previous build to rollback to. Aborting."
+  exit 1
+fi
 
-GATEWAY_IMAGE="gcr.io/${PROJECT_ID}/datalab-gateway:${LAST_BUILD}"
-DATALAB_IMAGE="gcr.io/${PROJECT_ID}/datalab:local-${LAST_BUILD}"
+GATEWAY_IMAGE="gcr.io/${PROJECT_ID}/datalab-gateway:${PREVIOUS_BUILD}"
+DATALAB_IMAGE="gcr.io/${PROJECT_ID}/datalab:local-${PREVIOUS_BUILD}"
 
 read -p "Proceed to release ${GATEWAY_IMAGE} and ${DATALAB_IMAGE} as latest? [Y/n]: " answer
 if echo $answer | grep -iq -v '^y'; then
@@ -47,9 +51,9 @@ if echo $answer | grep -iq -v '^y'; then
 fi
 
 echo "Moving config_local.js to config_local_${LATEST_BUILD}.js"
-echo "Updating config_local_${LAST_BUILD}.js to be config_local.js"
+echo "Updating config_local_${PREVIOUS_BUILD}.js to be config_local.js"
 gsutil cp gs://${PROJECT_ID}/deploy/config_local.js gs://${PROJECT_ID}/deploy/config_local_${LATEST_BUILD}.js
-gsutil cp gs://${PROJECT_ID}/deploy/config_local_${LAST_BUILD}.js gs://${PROJECT_ID}/deploy/config_local.js
+gsutil cp gs://${PROJECT_ID}/deploy/config_local_${PREVIOUS_BUILD}.js gs://${PROJECT_ID}/deploy/config_local.js
 
 echo "Pulling the rollback gateway and Datalab images: ${GATEWAY_IMAGE}, ${DATALAB_IMAGE}"
 gcloud docker -- pull ${GATEWAY_IMAGE}
