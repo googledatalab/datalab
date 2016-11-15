@@ -28,6 +28,10 @@
 #  2. "BUILD": The label of the builds to pull down and publish. If omitted
 #     this will default to the current date (which is what the build.sh
 #     script uses by default).
+#
+# The script sets a 'previous' variable in the config_local script to define
+# the rollback version. This script should NOT be executed more than once
+# using the same image, as it will overwrite this previous field.
 
 PROJECT_ID="${PROJECT_ID:-cloud-datalab}"
 TEST_PROJECT_ID="${TEST_PROJECT_ID:-`gcloud config list -q --format 'value(core.project)' 2> /dev/null`}"
@@ -60,9 +64,14 @@ docker tag -f ${DATALAB_IMAGE} gcr.io/${PROJECT_ID}/datalab:local
 gcloud docker -- push gcr.io/${PROJECT_ID}/datalab:local
 
 gsutil cp gs://${PROJECT_ID}/deploy/config_local.js ./config_local.js
-OLD_VERSION=`cat ./config_local.js | grep latest | cut -d ':' -f 2`
+OLD_VERSION=`cat ./config_local.js | grep previous | cut -d ':' -f 2`
+CURRENT_VERSION=`cat ./config_local.js | grep latest | cut -d ':' -f 2`
 NEW_VERSION=" ${BUILD},"
-echo "Replacing ${OLD_VERSION} with ${NEW_VERSION}"
-sed -i -e "s/${OLD_VERSION}/${NEW_VERSION}/" ./config_local.js
+
+echo "Replacing latest=${CURRENT_VERSION} with latest=${NEW_VERSION}"
+sed -i -e "s/${CURRENT_VERSION}/${NEW_VERSION}/" ./config_local.js
+echo "Replacing previous=${OLD_VERSION} with previous=${CURRENT_VERSION}"
+sed -i -e "s/${OLD_VERSION}/${CURRENT_VERSION}/" ./config_local.js
+
 gsutil cp ./config_local.js gs://${PROJECT_ID}/deploy/config_local_${BUILD}.js
 gsutil cp ./config_local.js gs://${PROJECT_ID}/deploy/config_local.js
