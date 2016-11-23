@@ -8,6 +8,7 @@
   "feedbackId": "",
   "logEndpoint": "stage-dot-cloud-datalab-logs.appspot.com",
   "serverPort": 8080,
+  "nextJupyterPort": 9000,
   "datalabRoot": "",
   "contentDir": "/content",
   "useWorkspace": false,

@@ -50,6 +50,11 @@ declare module common {
     datalabRoot: string;
 
     /**
+     * Initial port to use when searching for a free Jupyter port.
+     */
+    nextJupyterPort: number;
+
+    /**
      * Local directory which stores notebooks in the container
      */
     contentDir: string;
