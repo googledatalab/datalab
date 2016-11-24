@@ -197,6 +197,7 @@ function createJupyterServer(userId: string, remainingAttempts: number) {
     fs.mkdirSync(userDir, parseInt('0755', 8));
   }
 
+  nextJupyterPort = appSettings.nextJupyterPort;
   logging.getLogger().info('Looking for a free port on which to start Jupyter for %s', userId);
   getNextJupyterPort(
     portRetryAttempts,
