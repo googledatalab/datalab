@@ -72,6 +72,11 @@ declare module common {
      */
     metadataHost: string;
 
+    /**
+     * The value for the access-control-allow-origin header. This
+     * allows another frontend to connect to Datalab.
+     */
+    allowOriginOverride: string;
   }
 
   interface Map<T> {

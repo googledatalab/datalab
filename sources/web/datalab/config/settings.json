@@ -14,6 +14,7 @@
   "supportUserOverride": false,
   "configUrl": "https://storage.googleapis.com/cloud-datalab/deploy/config_local.js",
   "docsGcsPath": "gs://cloud-datalab/deploy/docs/",
+  "allowOriginOverride": "",
   "jupyterArgs": [
     "notebook",
     "-y",
