@@ -426,7 +426,9 @@ function sendTemplate(key: string, data: common.Map<string>, response: http.Serv
 
 function responseHandler(proxyResponse: http.ClientResponse,
                          request: http.ServerRequest, response: http.ServerResponse) {
-  if (proxyResponse.headers['access-control-allow-origin'] !== undefined) {
+  if (appSettings.allowOriginOverride) {
+    proxyResponse.headers['access-control-allow-origin'] = appSettings.allowOriginOverride;
+  } else if (proxyResponse.headers['access-control-allow-origin'] !== undefined) {
     // Delete the allow-origin = * header that is sent (likely as a result of a workaround
     // notebook configuration to allow server-side websocket connections that are
     // interpreted by Jupyter as cross-domain).
