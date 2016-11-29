@@ -240,7 +240,7 @@ function initializePage(dialog, saveFn) {
         path = path.substr('/notebooks'.length);
         path = path.substr(0, path.lastIndexOf('/'));
       }
-      path = encodeURIComponent('/content' + path);
+      path = '/content' + path;
       prefix = window.location.protocol + '//' + window.location.host;
 
       window.open(prefix + '/_proxy/8083/#/repository?path=' + path);
