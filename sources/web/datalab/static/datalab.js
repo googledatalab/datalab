@@ -240,7 +240,7 @@ function initializePage(dialog, saveFn) {
         path = path.substr('/notebooks'.length);
         path = path.substr(0, path.lastIndexOf('/'));
       }
-      path = encodeURIComponent('/content' + path);
+      path = '/content' + path;
       prefix = window.location.protocol + '//' + window.location.host;
 
       window.open(prefix + '/_proxy/8083/#/repository?path=' + path);
@@ -1234,8 +1234,25 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
     e.target.blur();
   }
 
+  function openEditor(e) {
+    prefix = location.protocol + '//' + location.host + "/edit/";
+    Jupyter.notebook_list.selected.forEach(notebook => {
+      window.open(prefix + notebook.path, '_blank');
+    });
+  }
+
+  notebookSelectedFn = notebookList._selection_changed;
+  notebookList._selection_changed = function() {
+    notebookSelectedFn.apply(this, arguments);
+    if (notebookList.selected.length === 1)
+      $('#editorButton').show();
+    else
+      $('#editorButton').hide();
+  }
+
   document.getElementById('addNotebookButton').addEventListener('click', addNotebook, false);
   document.getElementById('addFolderButton').addEventListener('click', addFolder, false);
+  document.getElementById('editorButton').addEventListener('click', openEditor, false);
 
   (function buildBreadcrumbContent() {
     var path = location.pathname;
