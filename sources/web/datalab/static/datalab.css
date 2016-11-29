@@ -281,8 +281,6 @@ div.btn-toolbar .toolbar-btn.active {
 }
 #editorButton {
   display: none;
-  float: right;
-  top: 5px;
 }
 /* Notebook page */
 #notebook {
