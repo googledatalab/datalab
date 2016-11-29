@@ -1234,8 +1234,26 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
     e.target.blur();
   }
 
+  function openEditor(e) {
+    prefix = location.protocol + '//' + location.host + "/edit/";
+    Jupyter.notebook_list.selected.forEach(notebook => {
+      window.open(prefix + notebook.path, '_blank');
+    });
+  }
+
+  // Extend the selection changed method to show/hide the editor button
+  notebookSelectedFn = notebookList._selection_changed;
+  notebookList._selection_changed = function() {
+    notebookSelectedFn.apply(this, arguments);
+    if (notebookList.selected.length === 1 && notebookList.selected[0].type !== 'directory')
+      $('#editorButton').show();
+    else
+      $('#editorButton').hide();
+  }
+
   document.getElementById('addNotebookButton').addEventListener('click', addNotebook, false);
   document.getElementById('addFolderButton').addEventListener('click', addFolder, false);
+  document.getElementById('editorButton').addEventListener('click', openEditor, false);
 
   (function buildBreadcrumbContent() {
     var path = location.pathname;
