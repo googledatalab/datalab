@@ -1241,10 +1241,11 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
     });
   }
 
+  // Extend the selection changed method to show/hide the editor button
   notebookSelectedFn = notebookList._selection_changed;
   notebookList._selection_changed = function() {
     notebookSelectedFn.apply(this, arguments);
-    if (notebookList.selected.length === 1)
+    if (notebookList.selected.length === 1 && notebookList.selected[0].type !== 'directory')
       $('#editorButton').show();
     else
       $('#editorButton').hide();
