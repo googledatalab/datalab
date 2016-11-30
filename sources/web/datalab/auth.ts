@@ -194,6 +194,20 @@ function setOauth2Client(request: http.ServerRequest): void {
   }
 }
 
+function redirect(response: http.ServerResponse, referer: string) {
+  if (referer == 'popup') {
+    // If auth is triggered from a pop-up window, close the window.
+    response.writeHead(200, { 'Content-Type': 'text/html' });
+    response.end(
+        '<html><body onload="javascript:close()">Authorization succeeded. ' +
+        'This window should close automatically</body></html>');
+  } else {
+    response.statusCode = 302;
+    response.setHeader('Location', referer);
+    response.end();
+  }
+}
+
 export function handleAuthFlow(request: http.ServerRequest, response: http.ServerResponse,
     parsed_url: any, settings: any): void {
   var path = parsed_url.pathname;
@@ -233,9 +247,7 @@ export function handleAuthFlow(request: http.ServerRequest, response: http.Serve
           oauth2Client.setCredentials(tokens);
           // Push them to Jupyter and handle request.
           var email = persistCredentials(tokens);
-          response.statusCode = 302;
-          response.setHeader('Location', query.state);
-          response.end();
+          redirect(response, query.state);
         }
       });
     }
@@ -260,9 +272,7 @@ export function handleAuthFlow(request: http.ServerRequest, response: http.Serve
 
   // Return to referer.
   var referer = decodeURIComponent(query.referer);
-  response.statusCode = 302;
-  response.setHeader('Location', referer);
-  response.end();
+  redirect(response, referer);
 }
 
 export function init(settings: common.Settings) {
