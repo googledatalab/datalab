@@ -196,7 +196,9 @@ function setOauth2Client(request: http.ServerRequest): void {
 
 function redirect(response: http.ServerResponse, referer: string) {
   if (referer == 'popup') {
-    // If auth is triggered from a pop-up window, close the window.
+    // Other frontends that connect to Datalab may choose to use a popup
+    // instead of a full redirect for auth.  Close the window if this came
+    // from a pop-up.
     response.writeHead(200, { 'Content-Type': 'text/html' });
     response.end(
         '<html><body onload="javascript:close()">Authorization succeeded. ' +
