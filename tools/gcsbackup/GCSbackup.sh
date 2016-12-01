@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 #
-# Please note: GCSbackup should only run inside a GCloud VM instance.
+# Please note: GCSbackup should only run inside a Google Compute Engine VM instance.
 #
 # GCSbackup is a tool to create and maintain a tagged .tar backup archive
 # for a given local path and copy it to a GCS bucket. It can be configured to
@@ -72,7 +72,7 @@ done
 timestamp=$(date "+%Y%m%d%H%M%S")
 machine_id=$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/id" -H "Metadata-Flavor: Google" || echo "")
 project_id=$(gcloud info |tr -d '[]' | awk '/project:/ {print $2}')
-default_bucket="${project_id}_datalab-backups"
+default_bucket="${project_id}.appspot.com"
 tag="${tag:-backup}"
 num_backups=${num_backups:-10}
 gcs_bucket=${gcs_bucket:-$default_bucket}
@@ -85,7 +85,7 @@ echo "gcs bucket:  ${gcs_bucket}"
 echo
 
 if [[ -z $machine_id ]]; then
-  echo "GCSbackup can only run on a GCloud VM instance"
+  echo "GCSbackup can only run on a Google Compute Engine VM instance"
   exit 1
 fi
 
@@ -103,13 +103,14 @@ tar -cf ${archive_name} "${backup_path}" || {
   exit 1
 }
 
-backup_id="${gcs_bucket}${backup_path}/${machine_id}-${USER}-${tag}-${timestamp}"
+# backup_path is an absolute path that starts with '/'
+backup_id="${gcs_bucket}/datalab-backups${backup_path}/${machine_id}-${USER}-${tag}-${timestamp}"
 
 echo "Creating a new backup point with id: ${backup_id}"
 gsutil cp ${archive_name} "gs://${backup_id}"
 
 # remove excessive backups
-all_backups=($(gsutil ls "gs://${gcs_bucket}${backup_path}/${machine_id}-${USER}-${tag}-*"))
+all_backups=($(gsutil ls "gs://${gcs_bucket}/datalab-backups${backup_path}/${machine_id}-${USER}-${tag}-*"))
 
 echo "Found ${#all_backups[@]} backups with the tag ${tag}:"
 printf '%s\n' "${all_backups[@]}"

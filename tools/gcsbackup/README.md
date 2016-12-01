@@ -1,7 +1,7 @@
 # GCSbackup
-Please note: GCSbackup should only run inside a GCloud VM instance.
+Please note: GCSbackup should only run inside a Google Compute Engine VM instance.
 
-GCSbackup is a tool to create a tagged .tar backup for a given local path and copy it to a GCS bucket. It can be configured to maintain a maximum of n backups for the specified tag. It automatically deletes older backups.
+GCSbackup is a tool to create a tagged .tar backup for a given local path and copy it to a Google Cloud Storage (GCS) bucket. It can be configured to maintain a maximum of n backups for the specified tag. It automatically deletes older backups.
 
 On GCS, the .tar is copied to a qualified path that is unique to the VM where this script is running, the username, backup path, tag, and timestamp.
 
@@ -12,9 +12,7 @@ On GCS, the .tar is copied to a qualified path that is unique to the VM where th
   -b, --bucket        Name of GCS bucket to store the backups in. Default is "{project-id}_datalab-backups
                       Follow the bucket naming guidelines here: https://cloud.google.com/storage/docs/naming
   -p, --path          Path to backup. Default is current directory
-  -t, --tag           Tag to mak grouping similar backups easy. Default is "backup"
-
-If no PATH is specified, the current working directory is backed up.
+  -t, --tag           Tag to make grouping similar backups easy. Default is "backup"
 
 ## Example
 ./GCSbackup.sh -n 5 -p /home/mypath -t daily
