@@ -107,6 +107,31 @@ tar -cf ${archive_name} "${backup_path}" || {
 backup_id="${gcs_bucket}/datalab-backups${backup_path}/${machine_id}-${USER}-${tag}-${timestamp}"
 
 echo "Creating a new backup point with id: ${backup_id}"
+
+# get new archive md5 hash
+hash_regex="Hash \(md5\):\s+(.*)"
+hash_output=$(gsutil hash -m "${archive_name}")
+[[ "${hash_output}" =~ $hash_regex ]] && new_backup_hash="${BASH_REMATCH[1]}"
+
+# get last backup md5 hash
+{
+  last_backup_id=$(
+    gsutil ls "gs://${gcs_bucket}/datalab-backups${backup_path}/${machine_id}-${USER}-${tag}-*" \
+    | tail -1
+  )
+  last_backup_metadata=$(gsutil ls -L "${last_backup_id}" | grep "Hash (md5)")
+  [[ "${last_backup_metadata}" =~ $hash_regex ]] && last_backup_hash="${BASH_REMATCH[1]}"
+} || echo "No previous backup hash found. First backup?"
+
+# skip backup if nothing changed since last backup
+echo "New archive md5 hash: ${new_backup_hash}"
+echo "Last backup md5 hash: ${last_backup_hash}"
+if [[ $new_backup_hash == $last_backup_hash ]]; then
+  echo "Hash not different from last backup. Skipping this backup round."
+  exit 0
+fi
+
+# copying backup to GCS
 gsutil cp ${archive_name} "gs://${backup_id}"
 
 # remove excessive backups
