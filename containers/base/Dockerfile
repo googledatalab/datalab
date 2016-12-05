@@ -40,31 +40,31 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 
 # Setup Python packages. Rebuilding numpy/scipy is expensive so we move this early
 # to reduce the chance that prior steps can cause changes requiring a rebuild.
-    pip install -U --no-cache-dir numpy==1.11.0 && \
-    pip install -U --no-cache-dir pandas==0.18.0 && \
-    pip install -U --no-cache-dir scipy==0.17.0 && \
+    pip install -U --no-cache-dir numpy==1.11.2 && \
+    pip install -U --no-cache-dir pandas==0.19.1 && \
+    pip install -U --no-cache-dir scipy==0.18.0 && \
     pip install -U --no-cache-dir scikit-learn==0.17.1 && \
     pip install -U --no-cache-dir sympy==0.7.6.1 && \
     pip install -U --no-cache-dir statsmodels==0.6.1 && \
 
-    pip install -U --no-cache-dir tornado==4.3 \
-                   --no-cache-dir pyzmq==15.2.0 \
+    pip install -U --no-cache-dir tornado==4.4.2 \
+                   --no-cache-dir pyzmq==16.0.2 \
                    --no-cache-dir jinja2==2.8 \
                    --no-cache-dir jsonschema==2.5.1 \
                    --no-cache-dir python-dateutil==2.5.0 \
-                   --no-cache-dir pytz==2015.4 \
+                   --no-cache-dir pytz==2016.7 \
                    --no-cache-dir pandocfilters==1.3.0 \
                    --no-cache-dir pygments==2.1.3 \
                    --no-cache-dir argparse==1.2.1 \
-                   --no-cache-dir mock==1.2.0 \
+                   --no-cache-dir mock==2.0.0 \
                    --no-cache-dir requests==2.9.1 \
                    --no-cache-dir oauth2client==2.0.2 \
                    --no-cache-dir httplib2==0.9.2 \
                    --no-cache-dir futures==3.0.5 && \
-    pip install -U --no-cache-dir matplotlib==1.5.1 && \
+    pip install -U --no-cache-dir matplotlib==1.5.3 && \
     pip install -U --no-cache-dir ggplot==0.6.8 && \
     pip install -U --no-cache-dir seaborn==0.7.0 && \
-    pip install -U --no-cache-dir notebook==4.2.0 && \
+    pip install -U --no-cache-dir notebook==4.2.3 && \
     pip install -U --no-cache-dir PyYAML==3.11 && \
     pip install -U --no-cache-dir six==1.9.0 && \
     pip install -U --no-cache-dir ipywidgets==5.2.2 && \
