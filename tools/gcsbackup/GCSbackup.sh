@@ -22,7 +22,7 @@
 # deletes older backups with the same tag.
 #
 # On GCS, the .tar is copied to a qualified path that is unique to the VM
-# where this script is running, the username, path, tag, and timestamp.
+# where this script is running, path, tag, and timestamp.
 
 USAGE='USAGE:
 
@@ -35,6 +35,8 @@ OPTIONS:
                       Follow the bucket naming guidelines here: https://cloud.google.com/storage/docs/naming
   -p, --path          Path to backup. Default is current directory
   -t, --tag           Tag to make grouping similar backups easy. Default is "backup"
+  -l, --log-file      Name of log file to use. If none is specified, no output is logged
+  -h, --help          Display this message
 '
 
 while [[ $# -gt 1 ]]; do
@@ -56,6 +58,10 @@ while [[ $# -gt 1 ]]; do
         tag="$2"
         shift
         ;;
+      -l|--log)
+        log_file="$2"
+        shift
+        ;;
       --default)
         DEFAULT=YES
         shift
@@ -69,9 +75,14 @@ while [[ $# -gt 1 ]]; do
   shift   # skip option value
 done
 
+if [[ $1 == "-h" || $1 == "--help" ]]; then
+  echo "${USAGE}"
+  exit 0
+fi
+
 timestamp=$(date "+%Y%m%d%H%M%S")
 machine_id=$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/id" -H "Metadata-Flavor: Google" || echo "")
-project_id=$(gcloud info |tr -d '[]' | awk '/project:/ {print $2}')
+project_id=$(curl -s "http://metadata.google.internal/computeMetadata/v1/project/project-id" -H "Metadata-Flavor: Google" || echo "")
 default_bucket="${project_id}.appspot.com"
 tag="${tag:-backup}"
 num_backups=${num_backups:-10}
@@ -81,10 +92,16 @@ backup_path=`readlink -f "${backup_path:-.}"`
 echo "tag: ${tag}"
 echo "backups to keep: ${num_backups}"
 echo "backup path: ${backup_path}"
-echo "gcs bucket:  ${gcs_bucket}"
+echo "project id: ${project_id}"
+echo "timestamp: ${timestamp}"
+echo "machine id: ${machine_id}"
+echo "gcs bucket: ${gcs_bucket}"
+echo "log file: ${log_file}"
 echo
 
-if [[ -z $machine_id ]]; then
+echo "${timestamp}: Running GCS backup tool.." | tee -a ${log_file}
+
+if [[ -z $machine_id || -z $project_id ]]; then
   echo "GCSbackup can only run on a Google Compute Engine VM instance"
   exit 1
 fi
@@ -104,7 +121,7 @@ tar -cf ${archive_name} "${backup_path}" || {
 }
 
 # backup_path is an absolute path that starts with '/'
-backup_id="${gcs_bucket}/datalab-backups${backup_path}/${machine_id}-${USER}-${tag}-${timestamp}"
+backup_id="${gcs_bucket}/datalab-backups/${machine_id}${backup_path}/${tag}-${timestamp}"
 
 echo "Creating a new backup point with id: ${backup_id}"
 
@@ -116,7 +133,7 @@ hash_output=$(gsutil hash -m "${archive_name}")
 # get last backup md5 hash
 {
   last_backup_id=$(
-    gsutil ls "gs://${gcs_bucket}/datalab-backups${backup_path}/${machine_id}-${USER}-${tag}-*" \
+    gsutil ls "gs://${gcs_bucket}/datalab-backups/${machine_id}${backup_path}/${tag}-*" \
     | tail -1
   )
   last_backup_metadata=$(gsutil ls -L "${last_backup_id}" | grep "Hash (md5)")
@@ -127,7 +144,7 @@ hash_output=$(gsutil hash -m "${archive_name}")
 echo "New archive md5 hash: ${new_backup_hash}"
 echo "Last backup md5 hash: ${last_backup_hash}"
 if [[ $new_backup_hash == $last_backup_hash ]]; then
-  echo "Hash not different from last backup. Skipping this backup round."
+  echo "Hash not different from last backup. Skipping this backup round." | tee -a $log_file
   exit 0
 fi
 
@@ -135,7 +152,7 @@ fi
 gsutil cp ${archive_name} "gs://${backup_id}"
 
 # remove excessive backups
-all_backups=($(gsutil ls "gs://${gcs_bucket}/datalab-backups${backup_path}/${machine_id}-${USER}-${tag}-*"))
+all_backups=($(gsutil ls "gs://${gcs_bucket}/datalab-backups/${machine_id}${backup_path}/${tag}-*"))
 
 echo "Found ${#all_backups[@]} backups with the tag ${tag}:"
 printf '%s\n' "${all_backups[@]}"
@@ -147,4 +164,8 @@ if [[ $num_extra -gt 0 ]]; then
   for i in "${all_backups[@]:0:$num_extra}"; do
     gsutil rm ${i}
   done
+fi
+
+if [[ $log_file ]]; then
+  echo "GCS backup point created successfully: ${backup_id}" >> "${log_file}"
 fi
