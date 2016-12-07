@@ -87,6 +87,26 @@ declare module common {
      * If true, allow HTTP requests via websockets.
      */
     allowHttpOverWebsocket: boolean;
+    
+    /**
+     * Whether to automatically back up user's contents dir to GCS
+     */
+    enableAutoGCSBackups: boolean;
+
+    /**
+     * Number of hourly GCS backups of the user's content dir to keep
+     */
+    numHourlyBackups: number;
+
+    /**
+     * Number of daily GCS backups of the user's content dir to keep
+     */
+    numDailyBackups: number;
+
+    /**
+     * Number of weekly GCS backups of the user's content dir to keep
+     */
+    numWeeklyBackups: number;
   }
 
   interface Map<T> {

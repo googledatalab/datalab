@@ -110,7 +110,7 @@ echo
 echo "${timestamp}: Running GCS backup tool.." | tee -a ${log_file}
 
 if [[ -z $machine_id || -z $project_id ]]; then
-  echo "GCSbackup can only run on a Google Compute Engine VM instance"
+  echo "GCSbackup can only run on a Google Compute Engine VM instance" | tee -a ${log_file}
   exit 1
 fi
 
@@ -124,7 +124,7 @@ gsutil ls gs://${gcs_bucket} &>/dev/null || {
 archive_name=$(mktemp -d)"/archive.tar"
 echo "Creating archive: $archive_name"
 tar -cf ${archive_name} "${backup_path}" || {
-  echo "Failed creating the backup archive"
+  echo "Failed creating the backup archive" | tee -a ${log_file}
   exit 1
 }
 
@@ -175,5 +175,5 @@ if [[ $num_extra -gt 0 ]]; then
 fi
 
 if [[ $log_file ]]; then
-  echo "GCS backup point created successfully: ${backup_id}" >> "${log_file}"
+  echo "GCS Backup point created successfully: ${backup_id}" >> "${log_file}"
 fi
