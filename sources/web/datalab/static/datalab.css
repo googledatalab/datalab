@@ -427,7 +427,6 @@ a.anchor-link {
 div.minitoolbar {
   position: absolute;
   left: -30px;
-  z-index: 10;
   display: none;
 }
 button.minitoolbar-toggle {

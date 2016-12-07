@@ -456,6 +456,22 @@ function addCellMiniToolbar(cell) {
 
   let toolbarButtonList = document.createElement('ul');
   toolbarButtonList.className = 'dropdown-menu';
+  toolbarButtonList.addEventListener('load', function() {
+    parentElm.addClass('open');
+    var parentElm = $(this.parentElement);
+    var off = parentElm.offset().top;
+    var btn = parentElm.find('button')[0];
+    var dropDown = parentElm.find('ul')[0];
+    var minHeight = off + btn.clientHeight + dropDown.clientHeight;
+    parentElm.removeClass('open');
+    if ($(window).height() > minHeight) {
+      parentElm.addClass('dropdown');
+      parentElm.removeClass('dropup');
+    } else {
+      parentElm.addClass('dropup');
+      parentElm.removeClass('dropdown');
+    }
+  });
   toolbarDiv.appendChild(toolbarButtonList);
 
 
