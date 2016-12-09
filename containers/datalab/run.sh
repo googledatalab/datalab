@@ -42,14 +42,14 @@ if [ "$OSTYPE" == "linux"* ]; then
 else
   PORTMAP="8081:8080"
 fi
-# Use this flag to map in web server content during development
-#  -v $REPO_DIR/sources/web:/sources \
+
 export REPO_DIR=$(git rev-parse --show-toplevel)
 docker run -it --entrypoint=$ENTRYPOINT \
   -p $PORTMAP \
   -v "$CONTENT:/content" \
   -v "$REPO_DIR/sources/web/datalab:/datalab/sources" \
   -v "$REPO_DIR/externs:/externs" \
+  -e "DATALAB_DEBUG=true" \
   -e "PROJECT_ID=$PROJECT_ID" \
   -e "DATALAB_ENV=local" \
   datalab
