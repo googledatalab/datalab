@@ -49,7 +49,7 @@ function install_typescript() {
   npm -h >/dev/null 2>&1 || install_node
 
   echo "Installing Typescript"
-  /tools/node/bin/npm install -g typescript
+  npm install -g typescript
 }
 
 function install_prereqs() {

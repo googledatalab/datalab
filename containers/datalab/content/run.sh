@@ -207,7 +207,20 @@ fi
 # Start the ungit server
 ungit --port=8083 --no-launchBrowser --forcedLaunchPath=/content/datalab 1> /dev/null &
 
-# Start the DataLab server
+# Build and start the Datalab server
+BUILD_DIR="/datalab/web"
+echo "creating DIRECTORY: ${BUILD_DIR}"
+mkdir -p $BUILD_DIR
+cd /datalab/sources
+tsc --module commonjs --noImplicitAny --outDir $BUILD_DIR *.ts
+cp -r config/ $BUILD_DIR/config
+cp -r static/ $BUILD_DIR/static
+cp -r templates/ $BUILD_DIR/templates
+cp -r package.json $BUILD_DIR/package.json
+
+cd $BUILD_DIR
+npm install
+
 FOREVER_CMD="forever --minUptime 1000 --spinSleepTime 1000"
 if [ -z "${DATALAB_DEBUG}" ]
 then
@@ -216,4 +229,4 @@ then
 fi
 
 echo "Open your browser to http://localhost:8081/ to connect to Datalab."
-${FOREVER_CMD} /datalab/web/app.js
+${FOREVER_CMD} $BUILD_DIR/app.js

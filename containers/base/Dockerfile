@@ -79,10 +79,8 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf && \
 
 # Setup Node.js
-    mkdir -p /tools/node && \
-    wget -nv https://nodejs.org/dist/v4.3.2/node-v4.3.2-linux-x64.tar.gz -O node.tar.gz && \
-    tar xzf node.tar.gz -C /tools/node --strip-components=1 && \
-    rm node.tar.gz && \
+    curl -sL https://deb.nodesource.com/setup_6.x | bash - && \
+    apt-get install -y nodejs && \
 
 # Setup Google Cloud SDK
 # Also apply workaround for gsutil failure brought by this version of Google Cloud.
@@ -101,16 +99,16 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 # with packages.json manually, but help save build time, by preincluding them in an
 # earlier layer).
 # Note: ws is now over 1.0 but using that gives issues so leaving at 0.4.2 for now.
-    /tools/node/bin/npm install \
-        ws@0.4.32 \
-        http-proxy@1.13.2 \
-        mkdirp@0.5.1 \
-        node-uuid@1.4.7 \
-        bunyan@1.7.1 \
-        tcp-port-used@0.1.2 \
-        node-cache@3.2.0 && \
-    cd / && \
-    /tools/node/bin/npm install -g forever && \
+    #npm install \
+        #ws@0.4.32 \
+        #http-proxy@1.13.2 \
+        #mkdirp@0.5.1 \
+        #node-uuid@1.4.7 \
+        #bunyan@1.7.1 \
+        #tcp-port-used@0.1.2 \
+        #node-cache@3.2.0 && \
+    #cd / && \
+    npm install -g forever typescript && \
 
 # Clean up
     apt-get purge -y build-essential bzip2 cpp cpp-4.9 python-setuptools pkg-config libfreetype6-dev && \
@@ -160,9 +158,7 @@ RUN ipython profile create default && \
         git clone https://github.com/googledatalab/pydatalab.git /datalab/lib/pydatalab; \
       fi && \
     cd /datalab/lib/pydatalab && \
-    /tools/node/bin/npm install -g typescript && \
     tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts && \
-    /tools/node/bin/npm uninstall -g typescript && \
     pip install --no-cache-dir . && \
     jupyter nbextension install --py datalab.notebook && \
     jupyter nbextension enable --py widgetsnbextension && \
