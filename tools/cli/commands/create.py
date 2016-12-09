@@ -14,23 +14,20 @@
 
 """Methods for implementing the `datalab create` command."""
 
-import argparse
 import subprocess
 import tempfile
 
 import connect
 
 
-description=(
-"""{0} {1} creates a new Datalab instances running in a Google
+description = ("""{0} {1} creates a new Datalab instances running in a Google
 Compute Engine VM.
 
 This command also creates the 'datalab-network' network if necessary.
 
 By default, the command creates a persistent connection to the newly
 created instance. You can disable that behavior by passing in the
-'--no-connect' flag."""
-)
+'--no-connect' flag.""")
 
 
 _DATALAB_NETWORK = 'datalab-network'
@@ -50,14 +47,17 @@ MOUNT_DIR="/mnt/disks/datalab-pd"
 MOUNT_CMD="mount -o discard,defaults ${PERSISTENT_DISK_DEV} ${MOUNT_DIR}"
 
 format_disk() {
-  mkfs.ext4 -F -E lazy_itable_init=0,lazy_journal_init=0,discard ${PERSISTENT_DISK_DEV}
+  mkfs.ext4 -F \
+    -E lazy_itable_init=0,lazy_journal_init=0,discard \
+    ${PERSISTENT_DISK_DEV}
   ${MOUNT_CMD}
 }
 
 mount_disk() {
   mkdir -p "${MOUNT_DIR}"
   ${MOUNT_CMD} || format_disk
-  mount -o discard,defaults /dev/disk/by-id/google-datalab-pd /mnt/disks/datalab-pd || format_disk
+  mount -o discard,defaults \
+    /dev/disk/by-id/google-datalab-pd /mnt/disks/datalab-pd || format_disk
   chmod a+w "${MOUNT_DIR}"
 }
 
@@ -216,7 +216,8 @@ def ensure_network_exists(args, gcloud_compute):
     Raises:
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
-    get_cmd = ['networks', 'describe', '--format', 'value(name)', _DATALAB_NETWORK]
+    get_cmd = ['networks', 'describe', '--format', 'value(name)',
+               _DATALAB_NETWORK]
     try:
         with tempfile.TemporaryFile() as tf:
             gcloud_compute(args, get_cmd, stdout=tf, stderr=tf)
@@ -304,7 +305,7 @@ def ensure_disk_exists(args, gcloud_compute, disk_name):
         with tempfile.TemporaryFile() as tf:
             gcloud_compute(args, get_cmd, stdout=tf, stderr=tf)
             return
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError:
         create_disk(args, gcloud_compute, disk_name)
     return
 
@@ -360,13 +361,16 @@ def run(args, gcloud_compute):
         'startup-script': _DATALAB_STARTUP_SCRIPT,
         'google-container-manifest': _DATALAB_CONTAINER_SPEC,
     })
+    disk_cfg = (
+        'auto-delete=no,boot=no,device-name=datalab-pd,mode=rw,name=' +
+        disk_name)
     cmd.extend([
         '--network', _DATALAB_NETWORK,
         '--image-family', 'container-vm',
         '--image-project', 'google-containers',
         '--metadata', metadata,
         '--tags', 'datalab',
-        '--disk', 'auto-delete=no,boot=no,device-name=datalab-pd,mode=rw,name=' + disk_name,
+        '--disk', disk_cfg,
         instance])
     gcloud_compute(args, cmd)
 

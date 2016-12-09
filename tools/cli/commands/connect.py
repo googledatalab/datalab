@@ -14,7 +14,6 @@
 
 """Methods for implementing the `datalab connect` command."""
 
-import argparse
 import subprocess
 import tempfile
 import threading
@@ -22,8 +21,7 @@ import urllib2
 import webbrowser
 
 
-description=(
-"""{0} {1} creates a persistent connection to a
+description = ("""{0} {1} creates a persistent connection to a
 Datalab instance running in a Google Compute Engine VM.
 
 This is a thin wrapper around the *ssh(1)* command that takes care
@@ -45,12 +43,10 @@ this command is running.
 """)
 
 
-examples=(
-"""
+examples = ("""
 To connect to 'example-instance' in zone 'us-central1-a', run:
 
-    $ {0} {1} example-instance --zone us-central1-a"""
-)
+    $ {0} {1} example-instance --zone us-central1-a""")
 
 
 def flags(parser):
@@ -64,6 +60,8 @@ def flags(parser):
         metavar='INSTANCE',
         help='name of the instance to which to connect')
     connection_flags(parser)
+    return
+
 
 def connection_flags(parser):
     """Add flags common to every connection-establishing subcommand.
@@ -200,7 +198,7 @@ def connect(args, gcloud_compute):
         health_check_thread.start()
         try:
             create_tunnel()
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             print('Connection broken')
         finally:
             cancelled_event.set()
@@ -211,7 +209,7 @@ def connect(args, gcloud_compute):
     while True:
         try:
             connect_and_check()
-        except KeyboardInterrupt as e:
+        except KeyboardInterrupt:
             return
         if remaining_reconnects == 0:
             return
@@ -237,14 +235,17 @@ def maybe_start(args, gcloud_compute, instance):
     if args.zone:
         get_cmd.extend(['--zone', args.zone])
         start_cmd.extend(['--zone', args.zone])
+    get_cmd.extend(['--format', 'value(status)', instance])
+    start_cmd.extend([instance])
     status = 'UNKNOWN'
     with tempfile.TemporaryFile() as tf:
-        gcloud_compute(args, get_cmd + ['--format', 'value(status)', instance], stdout=tf)
+        gcloud_compute(args, get_cmd, stdout=tf)
         tf.seek(0)
         status = tf.read().strip()
     if status != 'RUNNING':
-        print('Restarting the instance {0} with status {1}'.format(instance, status))
-        gcloud_compute(args, start_cmd + [instance])
+        print('Restarting the instance {0} with status {1}'.format(
+            instance, status))
+        gcloud_compute(args, start_cmd)
     return
 
 

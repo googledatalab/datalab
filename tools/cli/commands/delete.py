@@ -14,11 +14,8 @@
 
 """Methods for implementing the `datalab delete` command."""
 
-import argparse
 
-
-description=(
-"""{0} {1} deletes the given Datalab instance's
+description = ("""{0} {1} deletes the given Datalab instance's
 Google Compute Engine VM.
 
 By default, the persistent disk's auto-delete configuration determines
@@ -29,20 +26,15 @@ If you wish to override that setting, you can pass in one of either the
 
 For more information on disk auto-deletion, see
 https://cloud.google.com/compute/docs/disks/persistent-disks#updateautodelete
-"""
-)
+""")
 
 
-_DELETE_DISK_HELP=(
-"""Whether or not to delete the instance's persistent disk
-regardless of the disks' auto-delete configuration."""
-)
+_DELETE_DISK_HELP = ("""Whether or not to delete the instance's persistent disk
+regardless of the disks' auto-delete configuration.""")
 
 
-_KEEP_DISK_HELP=(
-"""Whether or not to keep the instance's persistent disk
-regardless of the disks' auto-delete configuration."""
-)
+_KEEP_DISK_HELP = ("""Whether or not to keep the instance's persistent disk
+regardless of the disks' auto-delete configuration.""")
 
 
 def flags(parser):

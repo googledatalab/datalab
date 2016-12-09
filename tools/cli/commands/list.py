@@ -14,33 +14,25 @@
 
 """Methods for implementing the `datalab list` command."""
 
-import argparse
 
-
-_FILTER_HELP=(
-"""Apply a Boolean filter EXPRESSION to each resource item
+_FILTER_HELP = ("""Apply a Boolean filter EXPRESSION to each resource item
 to be listed.
 
 If the expression evaluates True then that item is listed.
-For more details run `gcloud topic filters`."""
-)
+For more details run `gcloud topic filters`.""")
 
 
-_ZONES_HELP=(
-"""List of zones to which to limit the resulting list."""
-)
+_ZONES_HELP = """List of zones to which to limit the resulting list."""
 
 
-description=(
-"""{0} {1} displays the Datalab instances running in Google
+description = ("""{0} {1} displays the Datalab instances running in Google
 Compute Engine VM's in a project.
 
 By default, instances from all zones are listed. The results
-can be narrowed down by providing the --zones flag."""
-)
+can be narrowed down by providing the --zones flag.""")
 
 
-examples=("""
+examples = ("""
 To list all of the available Datalab instances in a project:
 
     $ {0} {1}
@@ -53,8 +45,7 @@ To only list the Datalab instances in the zones
 To only list the Datalab instances that are currently running:
 
     $ {0} {1} --filter 'status=RUNNING'
-"""
-)
+""")
 
 
 def flags(parser):
@@ -87,9 +78,9 @@ def _filter(args):
     """
     base_expr = 'labels.{0}=\'\''.format('datalab')
     if args.filter:
-      return '({0}) ({1})'.format(base_expr, args.filter)
+        return '({0}) ({1})'.format(base_expr, args.filter)
     else:
-      return base_expr
+        return base_expr
 
 
 def run(args, gcloud_compute):

@@ -14,13 +14,9 @@
 
 """Methods for implementing the `datalab stop` command."""
 
-import argparse
 
-
-description=(
-"""{0} {1} stops the given Datalab instance's
-Google Compute Engine VM."""
-)
+description = ("""{0} {1} stops the given Datalab instance's
+Google Compute Engine VM.""")
 
 
 def flags(parser):
