@@ -24,6 +24,7 @@
     "--debug",
     "--NotebookApp.allow_origin=\"*\"",
     "--NotebookApp.log_format=\"%(message)s\"",
+    "--NotebookApp.token=",
     "--Session.key=\"\"",
     "--Session.keyfile=\"\"",
     "--ContentsManager.untitled_directory=\"Untitled Folder\"",
