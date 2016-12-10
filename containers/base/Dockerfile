@@ -80,7 +80,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 
 # Setup Node.js
     mkdir -p /tools/node && \
-    wget -nv https://nodejs.org/dist/v4.3.2/node-v4.3.2-linux-x64.tar.gz -O node.tar.gz && \
+    wget -nv https://nodejs.org/dist/v6.9.2/node-v6.9.2-linux-x64.tar.gz -O node.tar.gz && \
     tar xzf node.tar.gz -C /tools/node --strip-components=1 && \
     rm node.tar.gz && \
 
