@@ -138,6 +138,10 @@ RUN gsutil cp gs://cloud-ml/sdk/cloudml-0.1.6-alpha.tar.gz cloudml-0.1.6-alpha.t
     pip install --no-cache-dir cloudml-0.1.6-alpha.tar.gz && \
     rm cloudml-0.1.6-alpha.tar.gz
 
+# Install notebook again and pin version to 4.2.3 
+# ipywidgets and maybe others will update notebook to a newer version that may not work well with datalab.
+RUN pip install -U --no-cache-dir notebook==4.2.3
+
 ADD config/ipython.py /etc/ipython/ipython_config.py
 ADD config/nbconvert.py /etc/jupyter/jupyter_notebook_config.py
 
