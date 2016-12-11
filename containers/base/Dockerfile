@@ -79,8 +79,10 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf && \
 
 # Setup Node.js
-    curl -sL https://deb.nodesource.com/setup_6.x | bash - && \
-    apt-get install -y nodejs && \
+    mkdir -p /tools/node && \
+    wget -nv https://nodejs.org/dist/v4.3.2/node-v4.3.2-linux-x64.tar.gz -O node.tar.gz && \
+    tar xzf node.tar.gz -C /tools/node --strip-components=1 && \
+    rm node.tar.gz && \
 
 # Setup Google Cloud SDK
 # Also apply workaround for gsutil failure brought by this version of Google Cloud.
@@ -99,15 +101,15 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 # with packages.json manually, but help save build time, by preincluding them in an
 # earlier layer).
 # Note: ws is now over 1.0 but using that gives issues so leaving at 0.4.2 for now.
-    #npm install \
-        #ws@0.4.32 \
-        #http-proxy@1.13.2 \
-        #mkdirp@0.5.1 \
-        #node-uuid@1.4.7 \
-        #bunyan@1.7.1 \
-        #tcp-port-used@0.1.2 \
-        #node-cache@3.2.0 && \
-    #cd / && \
+    npm install \
+        ws@0.4.32 \
+        http-proxy@1.13.2 \
+        mkdirp@0.5.1 \
+        node-uuid@1.4.7 \
+        bunyan@1.7.1 \
+        tcp-port-used@0.1.2 \
+        node-cache@3.2.0 && \
+    cd / && \
     npm install -g forever typescript && \
 
 # Clean up

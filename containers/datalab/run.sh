@@ -47,7 +47,7 @@ export REPO_DIR=$(git rev-parse --show-toplevel)
 docker run -it --entrypoint=$ENTRYPOINT \
   -p $PORTMAP \
   -v "$CONTENT:/content" \
-  -v "$REPO_DIR/sources/web/datalab:/datalab/sources" \
+  -v "$REPO_DIR/sources/web:/datalab/sources" \
   -v "$REPO_DIR/externs:/externs" \
   -e "DATALAB_DEBUG=true" \
   -e "PROJECT_ID=$PROJECT_ID" \
