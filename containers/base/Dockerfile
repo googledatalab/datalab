@@ -58,7 +58,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
                    --no-cache-dir argparse==1.2.1 \
                    --no-cache-dir mock==2.0.0 \
                    --no-cache-dir requests==2.9.1 \
-                   --no-cache-dir oauth2client==2.0.2 \
+                   --no-cache-dir oauth2client==2.2.0 \
                    --no-cache-dir httplib2==0.9.2 \
                    --no-cache-dir futures==3.0.5 && \
     pip install -U --no-cache-dir matplotlib==1.5.3 && \
