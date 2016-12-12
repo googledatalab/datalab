@@ -81,7 +81,7 @@ def connection_flags(parser):
         dest='port',
         type=int,
         default=8081,
-        help='local port from which to forward traffic to Datalab')
+        help='local port on which Datalab is accessible')
     parser.add_argument(
         '--max-reconnects',
         dest='max_reconnects',
