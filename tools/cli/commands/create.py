@@ -117,7 +117,7 @@ def flags(parser):
     """
     parser.add_argument(
         'instance',
-        metavar='INSTANCE',
+        metavar='NAME',
         help='a name for the newly created instance')
     parser.add_argument(
         '--disk_name',

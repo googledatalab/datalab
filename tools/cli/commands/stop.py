@@ -27,7 +27,7 @@ def flags(parser):
     """
     parser.add_argument(
         'instance',
-        metavar='INSTANCE',
+        metavar='NAME',
         help='name of the instance to stop')
     return
 

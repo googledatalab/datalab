@@ -59,7 +59,7 @@ def flags(parser):
     """
     parser.add_argument(
         'instance',
-        metavar='INSTANCE',
+        metavar='NAME',
         help='name of the instance to which to connect')
     connection_flags(parser)
     return
