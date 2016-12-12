@@ -111,19 +111,12 @@ def connection_flags(parser):
             'the log level for the SSH command.'
             '\n\n'
             'The default log level is "error".'))
-
-    browser_group = parser.add_mutually_exclusive_group()
-    browser_group.add_argument(
+    parser.add_argument(
         '--no-launch-browser',
-        dest='launch_browser',
-        action='store_false',
-        help='do not open a browser connected to Datalab')
-    browser_group.add_argument(
-        '--launch-browser',
-        dest='launch_browser',
+        dest='no_launch_browser',
         action='store_true',
-        default=True,
-        help='open a browser connected to Datalab')
+        default=False,
+        help='do not open a browser connected to Datalab')
 
     return
 
@@ -204,7 +197,7 @@ def connect(args, gcloud_compute):
     def on_ready():
         """Callback that handles a successful connection."""
         print('You can now connect to Datalab at ' + datalab_address)
-        if args.launch_browser:
+        if not args.no_launch_browser:
             try:
                 webbrowser.open(datalab_address)
             except webbrowser.Error as e:
@@ -273,7 +266,7 @@ def connect(args, gcloud_compute):
         print('Attempting to reconnect...')
         remaining_reconnects -= 1
         # Don't launch the browser on reconnect...
-        args.launch_browser = False
+        args.no_launch_browser = True
     return
 
 

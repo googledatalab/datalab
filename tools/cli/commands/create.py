@@ -135,18 +135,12 @@ def flags(parser):
         default=_DATALAB_DEFAULT_DISK_SIZE_GB,
         help='size of the persistent disk in GB.')
 
-    connect_group = parser.add_mutually_exclusive_group()
-    connect_group.add_argument(
+    parser.add_argument(
         '--no-connect',
-        dest='connect',
-        action='store_false',
-        help='do not connect to the newly created instance')
-    connect_group.add_argument(
-        '--connect',
-        dest='connect',
-        default=True,
+        dest='no_connect',
         action='store_true',
-        help='connect to the newly created instance')
+        default=False,
+        help='do not connect to the newly created instance')
 
     connect.connection_flags(parser)
     return
@@ -375,6 +369,6 @@ def run(args, gcloud_compute):
         instance])
     gcloud_compute(args, cmd)
 
-    if args.connect:
+    if not args.no_connect:
         connect.connect(args, gcloud_compute)
     return
