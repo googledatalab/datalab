@@ -371,6 +371,7 @@ def run(args, gcloud_compute):
         '--metadata', metadata,
         '--tags', 'datalab',
         '--disk', disk_cfg,
+        '--scopes', 'cloud-platform',
         instance])
     gcloud_compute(args, cmd)
 
