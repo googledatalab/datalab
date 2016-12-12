@@ -119,7 +119,6 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     rm -rf /var/lib/dpkg/info/* && \
     rm -rf /tmp/* && \
     rm -rf /root/.cache/* && \
-    rm -rf /tools/google-cloud-sdk/.install && \
     rm -rf /usr/share/locale/* && \
     rm -rf /usr/share/i18n/locales/* && \
     cd /
