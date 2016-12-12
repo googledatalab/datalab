@@ -17,9 +17,27 @@ MAINTAINER Google Cloud DataLab
 
 # Add build artifacts
 ADD content/ /datalab
+ADD web/datalab /datalab/sources/datalab
+ADD web/kernelproxy /datalab/sources/kernelproxy
+ADD externs /externs
 
-# Install the build artifacts
-RUN ln -s /datalab/web/static/datalab.css /datalab/nbconvert/datalab.css && \
+# Build the datalab server and kernel proxy
+RUN NB_DIR="/datalab/web/nb" && \
+    mkdir -p $NB_DIR && \
+    cd /datalab/sources/datalab && \
+    tsc --module commonjs --noImplicitAny --outDir $NB_DIR *.ts && \
+    cp -r config/ $NB_DIR/ && \
+    cp -r static/ $NB_DIR/ && \
+    cp -r templates/ $NB_DIR/ && \
+    cp -r package.json $NB_DIR/ && \
+    ln -s $NB_DIR/static/datalab.css /datalab/nbconvert/datalab.css && \
+    cd $NB_DIR && \
+    npm install && \
+
+    KERNELPROXY_DIR="/datalab/web/kernelproxy" && \
+    mkdir -p $KERNELPROXY_DIR && \
+    cd /datalab/sources/kernelproxy && \
+    tsc --module commonjs --noImplicitAny --outDir $KERNELPROXY_DIR *.ts && \
 
 # Install ungit
     npm install -g ungit@0.10.3 && \
