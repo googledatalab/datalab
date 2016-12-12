@@ -62,9 +62,6 @@ pushd ./
 cd $(dirname "${BASH_SOURCE[0]}")/../../
 install_prereqs
 
-echo "Building the Datalab server"
-./sources/build.sh
-
 echo "Building the base image"
 cd containers/base
 
