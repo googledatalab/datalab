@@ -1,5 +1,5 @@
 containers/datalab/externs/
-containers/datalab/web/
+containers/*/web/
 *.ipynb_checkpoints
 *.gradle
 *.pyc

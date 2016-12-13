@@ -15,10 +15,20 @@
 FROM datalab-base
 MAINTAINER Google Cloud DataLab
 
+# Add build artifacts
 ADD content/ /datalab
+ADD web/kernelproxy /datalab/sources/kernelproxy
+ADD web/datalab /datalab/sources/datalab
+ADD externs /externs
 
 # Install the support for running a kernel gateway
 RUN pip install jupyter_kernel_gateway
+
+# Build the kernel proxy
+RUN NB_DIR="/datalab/web" && \
+    mkdir -p $NB_DIR && \
+    cd /datalab/sources/kernelproxy && \
+    tsc --module commonjs --noImplicitAny --outDir $NB_DIR *.ts
 
 # Startup
 ENV DATALAB_VERSION _version_
