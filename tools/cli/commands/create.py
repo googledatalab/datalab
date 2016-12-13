@@ -72,7 +72,7 @@ metadata:
 spec:
   containers:
     - name: datalab
-      image: gcr.io/cloud-datalab/datalab:local
+      image: {0}
       command: ['/datalab/run.sh']
       imagePullPolicy: IfNotPresent
       ports:
@@ -120,7 +120,16 @@ def flags(parser):
         metavar='NAME',
         help='a name for the newly created instance')
     parser.add_argument(
-        '--disk_name',
+        '--image-name',
+        dest='image_name',
+        default='gcr.io/cloud-datalab/datalab:local',
+        help=(
+            'name of the Datalab image to run.'
+            '\n\n'
+            'If not specified, this defaults to the most recently\n'
+            'published image.'))
+    parser.add_argument(
+        '--disk-name',
         dest='disk_name',
         default=None,
         help=(
@@ -129,7 +138,7 @@ def flags(parser):
             'If not specified, this defaults to having a name based\n'
             'on the instance name.'))
     parser.add_argument(
-        '--disk_size_gb',
+        '--disk-size-gb',
         type=int,
         dest='disk_size_gb',
         default=_DATALAB_DEFAULT_DISK_SIZE_GB,
@@ -353,7 +362,8 @@ def run(args, gcloud_compute):
         cmd.extend(['--zone', args.zone])
     metadata = format_metadata({
         'startup-script': _DATALAB_STARTUP_SCRIPT,
-        'google-container-manifest': _DATALAB_CONTAINER_SPEC,
+        'google-container-manifest': (
+            _DATALAB_CONTAINER_SPEC.format(args.image_name)),
     })
     disk_cfg = (
         'auto-delete=no,boot=no,device-name=datalab-pd,mode=rw,name=' +
