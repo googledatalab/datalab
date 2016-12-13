@@ -208,7 +208,7 @@ fi
 ungit --port=8083 --no-launchBrowser --forcedLaunchPath=/content/datalab 1> /dev/null &
 
 # Build the Datalab server
-NB_DIR="/datalab/web/nb"
+NB_DIR="/datalab/web"
 mkdir -p $NB_DIR
 cd /datalab/sources/datalab
 tsc --module commonjs --noImplicitAny --outDir $NB_DIR *.ts
@@ -219,12 +219,6 @@ cp -r package.json $NB_DIR/
 
 cd $NB_DIR
 npm install
-
-# Build the kernel proxy
-KERNELPROXY_DIR="/datalab/web/kernelproxy"
-mkdir -p $KERNELPROXY_DIR
-cd /datalab/sources/kernelproxy
-tsc --module commonjs --noImplicitAny --outDir $KERNELPROXY_DIR *.ts
 
 # Start the web server
 FOREVER_CMD="forever --minUptime 1000 --spinSleepTime 1000"

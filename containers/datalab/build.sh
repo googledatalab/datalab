@@ -29,7 +29,7 @@ cat Dockerfile.in | sed $VERSION_SUBSTITUTION | sed $COMMIT_SUBSTITUTION > Docke
 
 # Copy of the build sources
 rsync -avp ../../sources/web/* web
-rsync -avp ../../externs/ts/* externs
+rsync -avp ../../externs/* externs
 
 # Build the base docker image
 cd ../base

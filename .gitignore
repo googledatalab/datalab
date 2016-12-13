@@ -1,7 +1,6 @@
+containers/datalab/externs/
+containers/datalab/web/
 *.ipynb_checkpoints
-build
-staging
-test
 *.gradle
 *.pyc
 *.idea
