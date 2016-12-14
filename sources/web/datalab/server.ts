@@ -28,11 +28,12 @@ import noCacheContent = require('./noCacheContent')
 import path = require('path');
 import request = require('request');
 import reverseProxy = require('./reverseProxy');
-import sockets = require('./sockets');
 import settings_ = require('./settings');
+import sockets = require('./sockets');
 import static_ = require('./static');
 import url = require('url');
 import userManager = require('./userManager');
+import wsHttpProxy = require('./wsHttpProxy');
 
 var server: http.Server;
 var healthHandler: http.RequestHandler;
@@ -242,9 +243,14 @@ function uncheckedRequestHandler(request: http.ServerRequest, response: http.Ser
   }
 }
 
+// The path that is used for the optional websocket proxy for HTTP requests.
+const httpOverWebSocketPath: string = '/http_over_websocket';
 
 function socketHandler(request: http.ServerRequest, socket: net.Socket, head: Buffer) {
-  jupyter.handleSocket(request, socket, head);
+  // Avoid proxying websocket requests on this path, as it's handled locally rather than by Jupyter.
+  if (request.url != httpOverWebSocketPath) {
+    jupyter.handleSocket(request, socket, head);
+  }
 }
 
 /**
@@ -284,6 +290,10 @@ export function run(settings: common.Settings): void {
     sockets.wrapServer(server);
   } else {
     server.on('upgrade', socketHandler);
+  }
+
+  if (settings.allowHttpOverWebsocket) {
+    new wsHttpProxy.WsHttpProxy(server, httpOverWebSocketPath, settings.allowOriginOverrides);
   }
 
   logging.getLogger().info('Starting DataLab server at http://localhost:%d',
