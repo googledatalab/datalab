@@ -27,8 +27,8 @@ COMMIT_SUBSTITUTION="s/_commit_/$COMMIT/"
 
 cat Dockerfile.in | sed $VERSION_SUBSTITUTION | sed $COMMIT_SUBSTITUTION > Dockerfile
 
-# Copy of the build sources
-rsync -avp ../../sources/web/* web
+# Copy the sources to be built inside docker container
+rsync -avp ../../sources/web/datalab/* web
 rsync -avp ../../externs/* externs
 
 # Build the base docker image

@@ -15,7 +15,7 @@
 FROM datalab-base
 MAINTAINER Google Cloud DataLab
 
-# Add build artifacts
+# Add build sources
 ADD content /datalab
 ADD web /datalab/sources
 ADD externs /externs
