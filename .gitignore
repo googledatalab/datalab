@@ -1,4 +1,4 @@
-containers/datalab/externs/
+containers/*/externs/
 containers/*/web/
 *.ipynb_checkpoints
 *.gradle

@@ -16,9 +16,8 @@ FROM datalab-base
 MAINTAINER Google Cloud DataLab
 
 # Add build artifacts
-ADD content/ /datalab
-ADD web/kernelproxy /datalab/sources/kernelproxy
-ADD web/datalab /datalab/sources/datalab
+ADD content /datalab
+ADD web /datalab/sources
 ADD externs /externs
 
 # Install the support for running a kernel gateway

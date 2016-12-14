@@ -44,11 +44,13 @@ else
 fi
 
 export REPO_DIR=$(git rev-parse --show-toplevel)
+# To iterate on sources outside the container, you can mount them inside
+# by adding the next two lines in the docker run command
+#-v "$REPO_DIR/sources/web:/datalab/sources" \
+#-v "$REPO_DIR/externs:/externs" \
 docker run -it --entrypoint=$ENTRYPOINT \
   -p $PORTMAP \
   -v "$CONTENT:/content" \
-  -v "$REPO_DIR/sources/web:/datalab/sources" \
-  -v "$REPO_DIR/externs:/externs" \
   -e "DATALAB_DEBUG=true" \
   -e "PROJECT_ID=$PROJECT_ID" \
   -e "DATALAB_ENV=local" \

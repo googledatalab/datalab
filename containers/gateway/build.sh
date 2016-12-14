@@ -28,8 +28,8 @@ COMMIT_SUBSTITUTION="s/_commit_/$COMMIT/"
 cat Dockerfile.in | sed $VERSION_SUBSTITUTION | sed $COMMIT_SUBSTITUTION > Dockerfile
 
 # Copy datalab sources as a dependency of the Dockerfile
-rsync -avp ../datalab/externs/ externs
-rsync -avp ../datalab/web/datalab/ web/datalab
+rsync -avp ../../sources/web/* web
+rsync -avp ../../externs/* externs
 
 # Build the base docker image
 cd ../base
@@ -40,6 +40,6 @@ cd ../gateway
 docker build -t datalab-gateway .
 
 # Finally cleanup
-rm -rf web/datalab externs
+rm -rf web externs
 rm Dockerfile
 
