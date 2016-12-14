@@ -81,7 +81,12 @@ declare module common {
      * The value for the access-control-allow-origin header. This
      * allows another frontend to connect to Datalab.
      */
-    allowOriginOverride: string;
+    allowOriginOverrides: Array<string>;
+
+    /**
+     * If true, allow HTTP requests via websockets.
+     */
+    allowHttpOverWebsocket: boolean;
   }
 
   interface Map<T> {
