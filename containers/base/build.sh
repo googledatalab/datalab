@@ -18,12 +18,17 @@
 # If [path_of_pydatalab_dir] is provided, it will copy the content of that dir into image.
 # Otherwise, it will get the pydatalab by "git clone" from pydatalab repo.
 
-# Build the docker image
+# Copy local pydatalab if supplied
 if [ -n "$1" ]; then
   rsync -avp "$1" pydatalab;
 else
   # Create empty dir to make docker build happy.
   mkdir -p pydatalab;
 fi
+
+# Copy supervisord files
+rsync -avp ../../tools/supervisor/ supervisor
+
+# Build the docker image
 docker build -t datalab-base .
 rm -rf pydatalab

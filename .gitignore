@@ -1,4 +1,5 @@
 *.ipynb_checkpoints
+containers/*/supervisor
 build
 staging
 test

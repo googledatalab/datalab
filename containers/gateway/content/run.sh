@@ -35,11 +35,13 @@ n=0; while true; do
 done
 
 # Start the proxy.
-FOREVER_CMD="forever --minUptime 1000 --spinSleepTime 1000"
 if [ -z "${DATALAB_DEBUG}" ]
 then
   echo "Starting Datalab Kernel Gateway in silent mode, for debug output, rerun with an additional '-e DATALAB_DEBUG=true' argument"
-  FOREVER_CMD="${FOREVER_CMD} -s"
+else
+  # The Datalab job logs to this file, make sure it exists and tail it
+  touch /var/log/gateway.stdout.log
+  tail -f /var/log/gateway.stdout.log &
 fi
 
-${FOREVER_CMD} /datalab/web/kernelproxy/app.js
+supervisord -c /etc/supervisor/conf.d/gateway.conf
