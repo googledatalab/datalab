@@ -217,5 +217,5 @@ else
   tail -f /var/log/datalab.stdout.log &
 fi
 echo "Open your browser to http://localhost:8081/ to connect to Datalab."
-supervisord -c /etc/supervisor/conf.d/datalab.conf
+supervisord -n -c /etc/supervisor/conf.d/datalab.conf
 

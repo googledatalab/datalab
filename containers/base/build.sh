@@ -27,7 +27,7 @@ else
 fi
 
 # Copy supervisord files
-rsync -avp ../../tools/supervisor/ supervisor
+rsync -avp ../supervisor/ supervisor
 
 # Build the docker image
 docker build -t datalab-base .
