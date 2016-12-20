@@ -89,7 +89,7 @@ gcloud docker -- push ${DATALAB_IMAGE}
 
 cd ../../
 tar -cvzf "/tmp/${CLI_TARBALL}" --transform 's,^tools/cli,datalab,' tools/cli
-gsutil cp "/tmp/${CLI_TARBALL}" "gs://${PROJECT}/${CLI_TARBALL}"
+gsutil cp "/tmp/${CLI_TARBALL}" "gs://${PROJECT_ID}/${CLI_TARBALL}"
 
 popd
 
