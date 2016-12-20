@@ -86,4 +86,9 @@ cd ../../containers/datalab
 docker tag -f datalab ${DATALAB_IMAGE}
 gcloud docker -- push ${DATALAB_IMAGE}
 
+cd ../../
+tar -cvzf /tmp/datalab-${TIMESTAMP}.tgz --transform 's,^tools/cli,datalab,' tools/cli
+gsutil cp /tmp/datalab-${TIMESTAMP}.tgz gs://${PROJECT}/datalab-cli-${TIMESTAMP}.tgz
+
 popd
+
