@@ -47,7 +47,6 @@ fi
 docker run -it --entrypoint=$ENTRYPOINT \
   -p $PORTMAP \
   -v "$CONTENT:/content" \
-  -v "$HOME/dev/datalab/build/web/nb:/datalab/web" \
   -e "PROJECT_ID=$PROJECT_ID" \
   -e "DATALAB_ENV=local" \
   datalab

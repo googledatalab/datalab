@@ -21,11 +21,11 @@ import path = require('path');
 import fs = require('fs');
 
 var appSettings: common.Settings;
-var backupInterval: number = null;
+var backupIntervalVar: number = null;
 var backup_log_path: string = '';
 
 // check for backups every 10 minutes so we can retry failed backups
-const BACKUP_INTERVAL: number = 10*60*1000;
+const BACKUP_INTERVAL: number = 10*60*60;
 
 /**
  * Last successful backup timestamps are stored in a file to avoid unnecessary backups,
@@ -52,9 +52,10 @@ function runBackup(tag: string, callback: Function) {
                                '-l', '/datalab/.backup_log.txt']);
   cmd.on('close', (code: number) => {
     if (code > 0) {
-      logging.getLogger().error('WARNING: Backup script failed with code: ' + code);
+      logging.getLogger().error('WARNING: Backup script with tag ' + tag + ' failed with code: ' + code);
+    } else {
+      callback();
     }
-    callback(code);
   });
 }
 
@@ -67,37 +68,32 @@ export function startBackup(settings: common.Settings) {
   appSettings = settings;
   backup_log_path = path.join(appSettings.datalabRoot, '/datalab/.backup_history');
 
-  if (!backupInterval && settings.enableAutoGCSBackups) {
+  if (!backupIntervalVar && settings.enableAutoGCSBackups) {
     var num_hourly = settings.numHourlyBackups;
     var num_daily = settings.numDailyBackups;
     var num_weekly = settings.numWeeklyBackups;
 
-    backupInterval = global.setInterval(() => {
+    backupIntervalVar = global.setInterval(() => {
       var log_history = readBackupLog();
       // test hourly backup
-      if (!log_history.lastHourlyRun || (Date.now()-log_history.lastHourlyRun)/1000 > 10) {
-        runBackup('hourly', (code: number) => {
-          if (code === 0) {
-            log_history.lastHourlyRun = Date.now();
-          }
+      if (!log_history.lastHourlyRun || (Date.now()-log_history.lastHourlyRun)/1000 > 60*60) {
+        runBackup('hourly', () => {
+          writeBackupLog(log_history);
+          log_history.lastHourlyRun = Date.now();
         });
       }
       if (!log_history.lastDailyRun || (Date.now()-log_history.lastDailyRun)/1000 > 60*60*24) {
-        runBackup('daily', (code: number) => {
-          if (code === 0) {
-            log_history.lastDailyRun = Date.now();
-          }
+        runBackup('daily', () => {
+          writeBackupLog(log_history);
+          log_history.lastDailyRun = Date.now();
         });
       }
       if (!log_history.lastWeeklyRun || (Date.now()-log_history.lastWeeklyRun)/1000 > 60*60*24*7) {
-        runBackup('weekly', (code: number) => {
-          if (code === 0) {
-            log_history.lastWeeklyRun = Date.now();
-          }
+        runBackup('weekly', () => {
+          log_history.lastWeeklyRun = Date.now();
+          writeBackupLog(log_history);
         });
       }
-
-      writeBackupLog(log_history);
 
     }, BACKUP_INTERVAL);
   }
