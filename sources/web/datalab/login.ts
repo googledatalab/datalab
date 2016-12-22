@@ -77,6 +77,7 @@ appSettings = settings.loadSettings();
 if (appSettings != null) {
   appSettings.consoleLogging = false;
   logging.initializeLoggers(appSettings);
+  auth.init(appSettings);
 
   server = http.createServer(requestHandler);
   server.listen(appSettings.serverPort);
