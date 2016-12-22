@@ -34,6 +34,7 @@ TIMESTAMP=$(date +%Y%m%d)
 LABEL="${LABEL_PREFIX:-}${TIMESTAMP}"
 GATEWAY_IMAGE="gcr.io/${PROJECT_ID}/datalab-gateway:${LABEL}"
 DATALAB_IMAGE="gcr.io/${PROJECT_ID}/datalab:local-${LABEL}"
+CLI_TARBALL="datalab-cli-${LABEL}.tgz"
 
 function install_node() {
   echo "Installing NodeJS"
@@ -86,4 +87,9 @@ cd ../../containers/datalab
 docker tag -f datalab ${DATALAB_IMAGE}
 gcloud docker -- push ${DATALAB_IMAGE}
 
+cd ../../
+tar -cvzf "/tmp/${CLI_TARBALL}" --transform 's,^tools/cli,datalab,' tools/cli
+gsutil cp "/tmp/${CLI_TARBALL}" "gs://${PROJECT_ID}/${CLI_TARBALL}"
+
 popd
+
