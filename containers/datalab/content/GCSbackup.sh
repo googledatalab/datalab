@@ -62,11 +62,11 @@ while [[ $# -gt 1 ]]; do
         log_file="$2"
         shift
         ;;
-      -m)
+      -m)         # for testing on non-GCE machines, will be detected automatically on GCE VMs
         machine_id="$2"
         shift
         ;;
-      -P)
+      --project)  # for testing on non-GCE machines, will be detected automatically on GCE VMs
         project_id="$2"
         shift
         ;;

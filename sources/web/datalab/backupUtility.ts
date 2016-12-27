@@ -22,7 +22,7 @@ import fs = require('fs');
 
 var appSettings: common.Settings;
 var backupIntervalVar: number = null;
-var backup_log_path: string = '';
+var backupLogPath: string = '';
 
 // check for backups every 10 minutes so we can retry failed backups
 const BACKUP_INTERVAL: number = 10*60*60;
@@ -33,13 +33,13 @@ const BACKUP_INTERVAL: number = 10*60*60;
  */
 function readBackupLog() {
   try {
-    return JSON.parse(fs.readFileSync(backup_log_path, 'utf8'));
+    return JSON.parse(fs.readFileSync(backupLogPath, 'utf8'));
   } catch (err) {
     return {};
   }
 }
 function writeBackupLog(log_history: Object) {
-  return fs.writeFileSync(backup_log_path, JSON.stringify(log_history), 'utf8');
+  return fs.writeFileSync(backupLogPath, JSON.stringify(log_history), 'utf8');
 }
 
 /**
@@ -48,7 +48,7 @@ function writeBackupLog(log_history: Object) {
 function runBackup(tag: string, callback: Function) {
   var cmd = childProcess.spawn('/bin/bash', ['/datalab/GCSbackup.sh',
                                '-t', tag,
-                               '-p', '/content/datalab',
+                               '-p', '/content',
                                '-l', '/datalab/.backup_log.txt']);
   cmd.on('close', (code: number) => {
     if (code > 0) {
@@ -66,7 +66,7 @@ function runBackup(tag: string, callback: Function) {
  */
 export function startBackup(settings: common.Settings) {
   appSettings = settings;
-  backup_log_path = path.join(appSettings.datalabRoot, '/datalab/.backup_history');
+  backupLogPath = path.join(appSettings.datalabRoot, '/datalab/.backup_history');
 
   if (!backupIntervalVar && settings.enableAutoGCSBackups) {
     var num_hourly = settings.numHourlyBackups;
