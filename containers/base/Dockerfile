@@ -35,7 +35,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     mkdir -p /srcs && \
     cd /srcs && \
     apt-get source -d wget git python-zmq ca-certificates pkg-config libpng-dev && \
-    wget https://mirrors.kernel.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.bz2 && \
+    wget --progress=dot:mega https://mirrors.kernel.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.bz2 && \
     cd / && \
 
 # Setup Python packages. Rebuilding numpy/scipy is expensive so we move this early
@@ -125,7 +125,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 
 # Install ProtoBuf, TensorFlow
 RUN pip install --no-cache-dir protobuf==3.0.0b2.post2 && \
-    wget https://storage.googleapis.com/cloud-datalab/deploy/tf/tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
+    wget --progress=dot:mega https://storage.googleapis.com/cloud-datalab/deploy/tf/tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
     pip install --no-cache-dir tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
     rm tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl
 
