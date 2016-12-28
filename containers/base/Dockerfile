@@ -125,7 +125,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 
 # Install ProtoBuf, TensorFlow
 RUN pip install --no-cache-dir protobuf==3.0.0b2.post2 && \
-    wget https://storage.googleapis.com/cloud-datalab/deploy/tf/tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
+    wget --progress=dot:mega https://storage.googleapis.com/cloud-datalab/deploy/tf/tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
     pip install --no-cache-dir tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
     rm tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl
 
