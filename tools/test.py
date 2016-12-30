@@ -129,7 +129,7 @@ if __name__ == '__main__':
   parser.add_argument('--profile', help='profile to use; needed for non-local testing for authentication')
 
   parser.add_argument('--vcr', action='store_true',
-      help='If set, record/replay network requests/responses.\n' + 
+      help='If set, record/replay network requests/responses.\n' +
           'Requires vcr and requests Python packages to be available in notebook environment.')
 
   args = parser.parse_args()
@@ -141,6 +141,6 @@ if __name__ == '__main__':
         testscrubber = tf.read()
     with open('test.js') as tf:
       testscript = '{' + testscrubber + '\n' + tf.read() + '}'
-      
+
     run_tests(args.base, tests, args.vcr, args.profile, testscript)
 

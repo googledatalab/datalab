@@ -17,30 +17,32 @@
 # added.
 #
 
-ENTRYPOINT="/datalab/run-local.sh"
-if [ "$1" == "shell" ]; then
-  ENTRYPOINT="/bin/bash"
+CONTENT=$HOME
+ENTRYPOINT="/datalab/run.sh"
+if [ "$1" != "" ]; then
+  if [ "$1" != "shell" ]; then
+    CONTENT=$1
+    shift
+  fi
+  if [ "$1" == "shell" ]; then
+    ENTRYPOINT="/bin/bash"
+  fi
 fi
 
-# Home directories are mapped from host to boot2docker vm automatically,
-# so use them for both logs and notebooks.
-mkdir -p $HOME/datalab/log/custom_logs
-
-# Delete any existing logs to start fresh on each run.
-rm -f $HOME/datalab/log/custom_logs/*.log
-
-# For local runs we can get project number only from outside container.
-# So get it and then pass to container as DATALAB_PROJECT_NUM env var.
-PROJECT_ID=`gcloud -q config list --format yaml | grep project | awk -F" " '{print $2}'`
-PROJECT_NUM=`gcloud -q alpha projects describe $PROJECT_ID | grep projectNumber | awk '{print substr($2,2,length($2)-2)}'`
-
-# Use this flag to map in web server content during development
-#  -v $REPO_DIR/sources/web:/sources \
+# On linux docker runs directly on host machine, so bind to 127.0.0.1 only
+# to avoid it being accessible from network.
+# On other platform, it needs to bind to all ip addresses so VirtualBox can
+# access it. Users need to make sure in their VirtualBox port forwarding
+# settings only 127.0.0.1 is bound.
+if [ "$OSTYPE" == "linux"* ]; then
+  PORTMAP="127.0.0.1:8081:8080"
+else
+  PORTMAP="8081:8080"
+fi
 
 docker run -i --entrypoint=$ENTRYPOINT \
-  -p 8081:8080 \
-  -v $HOME/datalab/log:/var/log/app_engine \
-  -v $HOME/.config/gcloud:/root/.config/gcloud \
-  -v $REPO_DIR/content:/content \
-  -e "DATALAB_PROJECT_NUM=$PROJECT_NUM" \
+  -p $PORTMAP \
+  -v $CONTENT:/content \
+  -e "PROJECT_ID=$PROJECT_ID" \
+  -e "DATALAB_ENV=local" \
   -t datalab-test

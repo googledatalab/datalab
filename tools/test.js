@@ -14,9 +14,8 @@
 
 // This code is generic and can be factored out into a separate Jupyter testing project.
 
-function get_cell_contents() {
-  var cells = IPython.notebook.get_cells();
-  var outputs = []
+function get_cell_outputs() {
+
   for (var cellindex in cells) {
     var cell = cells[cellindex];
     if (cell.cell_type == 'code') {
@@ -45,72 +44,36 @@ function setStatus(status) {
   document.body.appendChild(e);
 }
 
-function validate(old_outputs, new_outputs) {
+function validate() {
+  var cells = IPython.notebook.get_cells();
+
+  var result = '';
   var failed = false;
   console.log('Validating...');
-  var result = '';
-  if (old_outputs.length != new_outputs.length) {
-    var msg = 'Old output had ' + old_outputs.length + ' entries but new output has ' +
-        new_outputs.length + ' entries';
-    console.log('FAIL: ' + msg);
-    result += '#' + msg;
-    failed = true;
-  }
-  for (var i in new_outputs) {
+
+  cells.forEach(function(cell, cell_id) {
     var cellfailed = false;
-    var old_output = old_outputs[i];
-    var new_output = new_outputs[i];
-    var element = new_output.element;
-    if (old_output.outputs == null) {
-      if (new_output.outputs != null) {
-        var msg = 'Cell ' + i + ' had no outputs but now has ' + new_output.outputs.length;
-        console.log('FAIL: ' + msg);
-        result += '#' + msg;
-        cellfailed = true;
-      }
-    } else if (new_output.outputs == null) {
-      console.log('FAIL: Cell ' + i + ' now has no code output but did before');
-      cellfailed = true;
-    } else if (old_output.outputs.length != new_output.outputs.length) {
-      var msg = 'Cell ' + i + ' had ' + old_output.outputs.length + ' outputs but now has ' +
-          new_output.outputs.length;
-      console.log('FAIL: ' + msg);
-      result += '#' + msg;
-      cellfailed = true;
-    }
-    if (cellfailed) {
-      result += '#' + i + ':F';
-    } else {
-      for (var j in new_output.outputs) {
-        var old_set = old_output.outputs[j];
-        var new_set = new_output.outputs[j];
-        if (old_set.length != new_set.length) {
+    if (cell.cell_type == 'code' && cell.output_area && cell.output_area.outputs) {
+      cell.output_area.outputs.forEach(function(output, output_id) {
+        if ((output.output_type && output.output_type == 'error') ||
+            output.ename || output.traceback) {
           cellfailed = true;
-          result += '#' + i + ':F';
-          break;
+          failed = true
+          result += '#Cell ' + cell_id + ' output number ' + output_id + ' failed';
         }
-        for (var mt in new_set) {
-          if (new_set[mt] != old_set[mt]) {
-            console.log('FAIL: Failed at ' + i + ': ' + mt + '\nExpected: ' + old_set[mt] +
-                '\nbut got: ' + new_set[mt]);
-            cellfailed = true;
-            result += '#' + i + '/' + mt + ':F';
-            break;
-          }
-        }
-      }
+      })
     }
-    if (cellfailed) {
-      failed = true;
+
+    if (cell.output_area && cell.output_area.element) {
+      if (cellfailed)
+        cell.output_area.element[0].style.backgroundColor="#fdc0bf";
+      else
+        cell.output_area.element[0].style.backgroundColor="#b9f7b9";
     }
-    if (new_output.element) {
-      if (cellfailed) {
-        new_output.element[0].style.backgroundColor="red";
-      } else {
-        new_output.element[0].style.backgroundColor="green";
-      }
-    }
-  }
+    if (cellfailed)
+      result += '#' + cell_id + ':F';
+  });
+
   if (failed) {
     setStatus('FAIL' + result);
   } else {
@@ -123,25 +86,23 @@ function getParameter(name) {
   return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
 }
 
-function checkIfDone(old_outputs) {
+function checkIfDone() {
   if (IPython.notebook.kernel_busy) {
     console.log('Busy');
     setTimeout(function() {
-      checkIfDone(old_outputs);
+      checkIfDone();
     }, 1000);
   } else {
     console.log('Finished execution');
-    var new_outputs = get_cell_contents();
     if (getParameter('vcr') == '1') {
       IPython.notebook.kernel.execute("cassette.__exit__(None, None, None)\n")
     }
-    validate(old_outputs, new_outputs);
+    validate();
   }
 }
 
 function runNotebook() {
   if (IPython.notebook.kernel && IPython.notebook.kernel.is_connected()) {
-    var old_outputs = get_cell_contents();
     IPython.notebook.clear_all_output();
     console.log('Starting execution');
     if (getParameter('vcr') == '1') {
@@ -160,7 +121,7 @@ function runNotebook() {
     
     IPython.notebook.execute_all_cells();
     setTimeout(function() {
-      checkIfDone(old_outputs);
+      checkIfDone();
     }, 1000);
   } else {
     setTimeout(function() {
