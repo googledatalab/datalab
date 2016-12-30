@@ -63,6 +63,14 @@ export function loadSettings(): common.Settings {
     if (process.env['DATALAB_CONFIG_URL']) {
       settings.configUrl = process.env['DATALAB_CONFIG_URL'];
     }
+    const settingsOverrides = process.env['DATALAB_SETTINGS_OVERRIDES'];
+    if (settingsOverrides) {
+      // Allow overriding individual settings via JSON provided as an environment variable.
+      const overrides = JSON.parse(settingsOverrides);
+      for (const key of Object.keys(overrides)) {
+        (<any>settings)[key] = overrides[key];
+      }
+    }
     return settings;
   }
   catch (e) {
