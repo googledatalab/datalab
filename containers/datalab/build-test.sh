@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash -e
 # Copyright 2015 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,8 +27,19 @@ COMMIT_SUBSTITUTION="s/_commit_/$COMMIT/"
 cat Dockerfile.in | sed $VERSION_SUBSTITUTION | sed $COMMIT_SUBSTITUTION > Dockerfile
 echo "RUN pip install -U requests==2.8.1 && pip install -U vcrpy==1.7.4" >> Dockerfile
 
+# Build the datalab frontend
+source ../../tools/initenv.sh
+cd ../../sources/web/
+./build.sh
+cd ../../containers/datalab
+
 # Copy build outputs as a dependency of the Dockerfile
 rsync -avp ../../build/ build
+
+# Build the base docker image
+cd ../base
+./build.sh "$1"
+cd ../datalab
 
 # Build the docker image
 docker build -t datalab-test .

@@ -40,6 +40,7 @@ END='\033[0m'
 
 def run_notebook_test(test, notebook, br, results, testscript):
   if testscript:
+    print 'executing script..'
     br.execute_script(testscript)
   result = []
   try:
@@ -81,9 +82,18 @@ def run_notebook_test(test, notebook, br, results, testscript):
   results[notebook] = result
 
 
-def run_tests(url_base='http://localhost:8081', tests=[], vcr=False, profile=None, testscript=None):
+def run_tests(url_base='http://localhost:8081', tests=[], vcr=False, profile=None, local_run=False, testscript=None):
   threads = []
   results = {}
+
+  if not local_run:
+    username = os.environ['SAUCE_USERNAME']
+    access_key = os.environ['SAUCE_ACCESS_KEY']
+    hub_url = "%s:%s@localhost:4445" % (username, access_key)
+    caps = {'browserName': "firefox"}
+    caps['platform'] = "Linux"
+    caps['version'] = "45.0"
+    caps['tunnel-identifier'] = os.environ['TRAVIS_JOB_NUMBER']
 
   for test in tests:
     if 'disabled' in test and test['disabled']:
@@ -94,10 +104,14 @@ def run_tests(url_base='http://localhost:8081', tests=[], vcr=False, profile=Non
     notebook = test['notebook']
 
     # Load the notebook
-    ffprofile = None
-    if profile:
-      ffprofile = FirefoxProfile(profile)
-    br = webdriver.Firefox(ffprofile)
+    br=None
+    if local_run:
+      ffprofile = None
+      if profile:
+        ffprofile = FirefoxProfile(profile)
+      br = webdriver.Firefox(ffprofile)
+    else:
+      br = webdriver.Remote(desired_capabilities=caps, command_executor="http://%s/wd/hub" % hub_url)
     uri = url_base + '/notebooks/%s' % (notebook.replace(' ', '%20'))
     if vcr:
       uri += '?vcr=1'
@@ -131,6 +145,7 @@ if __name__ == '__main__':
   parser.add_argument('--vcr', action='store_true',
       help='If set, record/replay network requests/responses.\n' +
           'Requires vcr and requests Python packages to be available in notebook environment.')
+  parser.add_argument('--local', action='store_true', help='If set, only local testing is performed')
 
   args = parser.parse_args()
   with open(args.tests) as f:
@@ -142,5 +157,5 @@ if __name__ == '__main__':
     with open('test.js') as tf:
       testscript = '{' + testscrubber + '\n' + tf.read() + '}'
 
-    run_tests(args.base, tests, args.vcr, args.profile, testscript)
+    run_tests(args.base, tests, args.vcr, args.profile, args.local, testscript)
 
