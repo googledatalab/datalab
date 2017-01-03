@@ -1,0 +1,9 @@
+sudo: required
+
+services:
+  - docker
+
+script:
+  - flake8 tools/cli/
+  - cd containers/datalab
+  - ./build.sh
