@@ -66,15 +66,13 @@ _SUBCOMMANDS = {
 }
 
 
-_PROJECT_HELP = (
-"""The Google Cloud Platform project name to use
+_PROJECT_HELP = ("""The Google Cloud Platform project name to use
 for this invocation.
 
 If omitted then the current project is assumed.""")
 
 
-_ZONE_HELP = (
-"""The zone containing the instance. If not specified,
+_ZONE_HELP = ("""The zone containing the instance. If not specified,
 you may be prompted to select a zone.
 
 To avoid prompting when this flag is omitted, you can
@@ -116,7 +114,8 @@ def gcloud_compute(args, cmd, api='', stdin=None, stdout=None, stderr=None):
     if args.project:
         base_cmd.extend(['--project', args.project])
     cmd = base_cmd + cmd
-    return subprocess.check_call(cmd, stdin=stdin, stdout=stdout, stderr=stderr)
+    return subprocess.check_call(
+        cmd, stdin=stdin, stdout=stdout, stderr=stderr)
 
 
 def run():
