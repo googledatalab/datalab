@@ -22,6 +22,7 @@ This tool is specific to the use case of running in the Google Cloud Platform.
 from commands import create, connect, list, stop, delete
 
 import argparse
+import os
 import subprocess
 import sys
 
@@ -93,12 +94,21 @@ environment variable CLOUDSDK_COMPUTE_ZONE.
 """)
 
 
-def gcloud_compute(args, cmd, api='', stdin=None, stdout=None, stderr=None):
+try:
+    with open(os.devnull, 'w') as dn:
+        subprocess.call(['gcloud', '--version'], stderr=dn, stdout=dn)
+    gcloud_cmd = 'gcloud'
+except:
+    gcloud_cmd = 'gcloud.cmd'
+
+
+def gcloud_compute(
+        args, compute_cmd, api='', stdin=None, stdout=None, stderr=None):
     """Run the given subcommand of `gcloud compute`
 
     Args:
       args: The Namespace instance returned by argparse
-      cmd: The subcommand of `gcloud compute` to run
+      compute_cmd: The subcommand of `gcloud compute` to run
       api: The optional API version to use (e.g. 'alpha', 'beta', etc)
       stdin: The 'stdin' argument for the subprocess call
       stdout: The 'stdout' argument for the subprocess call
@@ -107,13 +117,13 @@ def gcloud_compute(args, cmd, api='', stdin=None, stdout=None, stderr=None):
       KeyboardInterrupt: If the user kills the command
       subprocess.CalledProcessError: If the command dies on its own
     """
-    base_cmd = ['gcloud']
+    base_cmd = [gcloud_cmd]
     if api:
         base_cmd.append(api)
     base_cmd.append('compute')
     if args.project:
         base_cmd.extend(['--project', args.project])
-    cmd = base_cmd + cmd
+    cmd = base_cmd + compute_cmd
     return subprocess.check_call(
         cmd, stdin=stdin, stdout=stdout, stderr=stderr)
 
