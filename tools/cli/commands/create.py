@@ -14,6 +14,7 @@
 
 """Methods for implementing the `datalab create` command."""
 
+import os
 import subprocess
 import tempfile
 
@@ -313,33 +314,6 @@ def ensure_disk_exists(args, gcloud_compute, disk_name):
     return
 
 
-def format_metadata(metadata_dict):
-    """Format a dictionary of metadata values for use on a command line.
-
-    The `gcloud` command line tool requires that all metadata values for
-    a VM to be provided in a signle flag.
-
-    That, in turn, means the separator used to distinguish multiple entries
-    can not occur in any of the given metadata values.
-
-    The default separator used is '=', which does occur in our metadata
-    values, so we have to override the default separator with a different
-    one.
-
-    In this case, we chose '~~~' as the separator.
-
-    Args:
-      metadata_dict: A dictionay mapping metadata keys to values
-    Returns:
-      A string suitable to passing to `gcloud` on the command line
-    """
-    separator = '~~~'
-    metadata_pairs = [
-        '{0}={1}'.format(k, metadata_dict[k]) for k in metadata_dict]
-    metadata_str = separator.join(metadata_pairs)
-    return '^{0}^{1}'.format(separator, metadata_str)
-
-
 def run(args, gcloud_compute):
     """Implementation of the `datalab create` subcommand.
 
@@ -360,24 +334,34 @@ def run(args, gcloud_compute):
     cmd = ['instances', 'create']
     if args.zone:
         cmd.extend(['--zone', args.zone])
-    metadata = format_metadata({
-        'startup-script': _DATALAB_STARTUP_SCRIPT,
-        'google-container-manifest': (
-            _DATALAB_CONTAINER_SPEC.format(args.image_name)),
-    })
     disk_cfg = (
         'auto-delete=no,boot=no,device-name=datalab-pd,mode=rw,name=' +
         disk_name)
-    cmd.extend([
-        '--network', _DATALAB_NETWORK,
-        '--image-family', 'container-vm',
-        '--image-project', 'google-containers',
-        '--metadata', metadata,
-        '--tags', 'datalab',
-        '--disk', disk_cfg,
-        '--scopes', 'cloud-platform',
-        instance])
-    gcloud_compute(args, cmd)
+    with tempfile.NamedTemporaryFile(delete=False) as startup_script_file:
+        with tempfile.NamedTemporaryFile(delete=False) as manifest_file:
+            try:
+                startup_script_file.write(_DATALAB_STARTUP_SCRIPT)
+                startup_script_file.close()
+                manifest_file.write(
+                    _DATALAB_CONTAINER_SPEC.format(args.image_name))
+                manifest_file.close()
+                metadata_from_file = (
+                    'startup-script={0},google-container-manifest={1}'.format(
+                        startup_script_file.name,
+                        manifest_file.name))
+                cmd.extend([
+                    '--network', _DATALAB_NETWORK,
+                    '--image-family', 'container-vm',
+                    '--image-project', 'google-containers',
+                    '--metadata-from-file', metadata_from_file,
+                    '--tags', 'datalab',
+                    '--disk', disk_cfg,
+                    '--scopes', 'cloud-platform',
+                    instance])
+                gcloud_compute(args, cmd)
+            except:
+                os.remove(startup_script_file)
+                os.remove(manifest_file)
 
     if not args.no_connect:
         connect.connect(args, gcloud_compute)

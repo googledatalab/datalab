@@ -157,7 +157,7 @@ def connect(args, gcloud_compute):
             '--ssh-flag=LogLevel=' + args.log_level])
         cmd.append('datalab@{0}'.format(instance))
         cmd.extend(['--', 'true'])
-        with open(os.devnull, "a") as dn:
+        with open(os.devnull, 'w') as dn:
             while True:
                 try:
                     gcloud_compute(args, cmd, stderr=dn)
