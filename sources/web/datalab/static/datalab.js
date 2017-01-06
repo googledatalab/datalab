@@ -154,10 +154,12 @@ function showHelp(markup) {
   }
 }
 
-function xhr(url, callback) {
+function xhr(url, callback, method) {
+  method = method || "GET";
+
   let request = new XMLHttpRequest();
   request.onreadystatechange = callback.bind(request);
-  request.open("POST", url);
+  request.open(method, url);
   request.send();
 }
 
@@ -176,7 +178,7 @@ function restartDatalab() {
     // We redirect to signal to the user that the restart did something.
     // However, we have to delay that a bit to give Datalab time to restart.  
     window.setTimeout(redirect, 500);
-  });
+  }, "POST");
 }
 
 function initializePage(dialog, saveFn) {
@@ -269,7 +271,7 @@ function initializePage(dialog, saveFn) {
   xhr(getSettingKeyAddress("theme"), function() {
     lightThemeRadioOption.checked = this.responseText === "\"light\"";
     darkThemeRadioOption.checked = this.responseText === "\"dark\"";
-  })
+  });
   lightThemeRadioOption.onclick = function() {
     setTheme("light");
     darkThemeRadioOption.checked = false;
@@ -284,7 +286,7 @@ function initializePage(dialog, saveFn) {
       // Reload the stylesheet by resetting its address with a random (time) version querystring
       sheetAddress = document.getElementById("themeStylesheet").href + "?v=" + Date.now()
       document.getElementById("themeStylesheet").setAttribute('href', sheetAddress);
-    })
+    }, "POST");
   }
 
   // If inside a notebook, prepare notebook-specific help link inside the sidebar
