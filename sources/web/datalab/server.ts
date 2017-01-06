@@ -175,6 +175,9 @@ function handleRequest(request: http.ServerRequest,
   //       this into a real feature, that involves a confirmation prompt, as
   //       well validation to require a POST request.
   if (path.indexOf('/_restart') == 0) {
+    if ('POST' != request.method) {
+      return;
+    }
     setTimeout(function() { process.exit(0); }, 0);
     response.statusCode = 200;
     response.end();

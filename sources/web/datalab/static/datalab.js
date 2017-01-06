@@ -157,7 +157,7 @@ function showHelp(markup) {
 function xhr(url, callback) {
   let request = new XMLHttpRequest();
   request.onreadystatechange = callback.bind(request);
-  request.open("GET", url);
+  request.open("POST", url);
   request.send();
 }
 
