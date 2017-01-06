@@ -229,6 +229,8 @@ function postSettingsHandler(userId: string, request: http.ServerRequest, respon
  */
 function formHandler(userId: string, formData: any, request: http.ServerRequest, response: http.ServerResponse): void {
   if (!(('key' in formData) && ('value' in formData))) {
+    response.writeHead(400, { 'Content-Type': 'text/plain' });
+    response.end('Missing one or more required fields');
     return;
   }
   var key = formData['key'];
