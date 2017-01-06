@@ -219,7 +219,6 @@ function postSettingsHandler(userId: string, request: http.ServerRequest, respon
     }
     formHandler(userId, formData, request, response);
   });
-  request.resume();
 }
 
 /**
