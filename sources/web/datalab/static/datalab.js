@@ -154,15 +154,31 @@ function showHelp(markup) {
   }
 }
 
-function xhr(url, callback) {
+function xhr(url, callback, method) {
+  method = method || "GET";
+
   let request = new XMLHttpRequest();
   request.onreadystatechange = callback.bind(request);
-  request.open("GET", url);
+  request.open(method, url);
   request.send();
 }
 
 function getSettingKeyAddress(setting) {
   return window.location.protocol + "//" + window.location.host + "/_settings?key=" + setting;
+}
+
+function restartDatalab() {
+  var restartUrl = window.location.protocol + "//" + window.location.host + "/_restart";
+
+  function redirect() {
+    window.location = '/';
+  }
+
+  xhr(restartUrl, function(){
+    // We redirect to signal to the user that the restart did something.
+    // However, we have to delay that a bit to give Datalab time to restart.  
+    window.setTimeout(redirect, 500);
+  }, "POST");
 }
 
 function initializePage(dialog, saveFn) {
@@ -180,7 +196,8 @@ function initializePage(dialog, saveFn) {
       '<span class="fa fa-external-link-square">&nbsp;</span><a href="/static/about.txt" target="_blank">License and software information</a><br />' +
       '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://cloud.google.com/terms/" target="_blank">Terms of Service</a><br />' +
       '<span class="fa fa-external-link-square">&nbsp;</span><a href="http://www.google.com/intl/en/policies/" target="_blank">Privacy Policy</a><br />' +
-      '<span class="fa fa-external-link-square">&nbsp;</span><a href="/static/reporting.html?enabled=' + reportingEnabled + '" target="_blank">Usage Statistics</a><br />';
+      '<span class="fa fa-external-link-square">&nbsp;</span><a href="/static/reporting.html?enabled=' + reportingEnabled + '" target="_blank">Usage Statistics</a><br />' +
+      '<span class="fa fa-recycle">&nbsp;</span><a href="javascript:restartDatalab()">Restart Server</a><br />';
 
     var dialogOptions = {
       title: 'About Google Cloud Datalab',
@@ -254,7 +271,7 @@ function initializePage(dialog, saveFn) {
   xhr(getSettingKeyAddress("theme"), function() {
     lightThemeRadioOption.checked = this.responseText === "\"light\"";
     darkThemeRadioOption.checked = this.responseText === "\"dark\"";
-  })
+  });
   lightThemeRadioOption.onclick = function() {
     setTheme("light");
     darkThemeRadioOption.checked = false;
@@ -269,7 +286,7 @@ function initializePage(dialog, saveFn) {
       // Reload the stylesheet by resetting its address with a random (time) version querystring
       sheetAddress = document.getElementById("themeStylesheet").href + "?v=" + Date.now()
       document.getElementById("themeStylesheet").setAttribute('href', sheetAddress);
-    })
+    }, "POST");
   }
 
   // If inside a notebook, prepare notebook-specific help link inside the sidebar

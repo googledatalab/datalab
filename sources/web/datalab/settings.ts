@@ -21,6 +21,7 @@ import fs = require('fs');
 import http = require('http');
 import uuid = require('node-uuid');
 import path = require('path');
+import querystring = require('querystring');
 import url = require('url');
 import util = require('util');
 import userManager = require('./userManager');
@@ -176,39 +177,83 @@ export function updateUserSetting(userId: string, key: string, value: string, as
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
   var userId = userManager.getUserId(request);
+  if ('POST' == request.method) {
+    postSettingsHandler(userId, request, response);
+  } else {
+    getSettingsHandler(userId, request, response);
+  }
+}
+
+/**
+ * Handles 'GET' requests to the settings handler.
+ * @param request the incoming http request.
+ * @param response the outgoing http response.
+ */
+function getSettingsHandler(userId: string, request: http.ServerRequest, response: http.ServerResponse): void {
+  var userSettings = loadUserSettings(userId);
   var parsedUrl = url.parse(request.url, true);
-  if (('key' in parsedUrl.query) && ('value' in parsedUrl.query)) {
+  if ('key' in parsedUrl.query) {
     var key = parsedUrl.query['key'];
-    var value = parsedUrl.query['value'];
-    if (updateUserSetting(userId, key, value)) {
-      if ('redirect' in parsedUrl.query) {
-        response.writeHead(302, { 'Location': parsedUrl.query['redirect'] });
-      } else {
-        response.writeHead(200, { 'Content-Type': 'text/plain' });
-      }
+    if (key in userSettings) {
+      response.writeHead(200, { 'Content-Type': 'application/json' });
+      response.end(JSON.stringify(userSettings[key]));
     } else {
-      response.writeHead(500, { 'Content-Type': 'text/plain' });
+      response.writeHead(404, { 'Content-Type': 'text/plain' });
+      response.end();
     }
-    response.end();
     return;
   } else {
-    var userSettings = loadUserSettings(userId);
-    if ('key' in parsedUrl.query) {
-      var key = parsedUrl.query['key'];
-      if (key in userSettings) {
-        response.writeHead(200, { 'Content-Type': 'application/json' });
-        response.end(JSON.stringify(userSettings[key]));
-      } else {
-        response.writeHead(404, { 'Content-Type': 'text/plain' });
-        response.end();
-      }
-      return;
-    } else {
-      response.writeHead(200, { 'Content-Type': 'application/json' });
-      response.end(JSON.stringify(userSettings));
-      return;
-    }
+    response.writeHead(200, { 'Content-Type': 'application/json' });
+    response.end(JSON.stringify(userSettings));
+    return;
   }
+}
+
+/**
+ * Handles 'POST' requests to the settings handler.
+ * @param request the incoming http request.
+ * @param response the outgoing http response.
+ */
+function postSettingsHandler(userId: string, request: http.ServerRequest, response: http.ServerResponse): void {
+  var formData : any;
+  var body : string = "";
+  request.on('data', function(chunk: string) { body += chunk; });
+  request.on('end', function() {
+    if (body) {
+      formData = querystring.parse(body);
+    } else {
+      var parsedUrl = url.parse(request.url, true);
+      formData = parsedUrl.query;  
+    }
+    formHandler(userId, formData, request, response);
+  });
+}
+
+/**
+ * Handles updating a setting given the parsed form contents.
+ * @param formData the form data parsed from the incoming http request.
+ * @param request the incoming http request.
+ * @param response the outgoing http response.
+ */
+function formHandler(userId: string, formData: any, request: http.ServerRequest, response: http.ServerResponse): void {
+  if (!(('key' in formData) && ('value' in formData))) {
+    response.writeHead(400, { 'Content-Type': 'text/plain' });
+    response.end('Missing one or more required fields');
+    return;
+  }
+  var key = formData['key'];
+  var value = formData['value'];
+  if (updateUserSetting(userId, key, value)) {
+    if ('redirect' in formData) {
+      response.writeHead(302, { 'Location': formData['redirect'] });
+    } else {
+      response.writeHead(200, { 'Content-Type': 'text/plain' });
+    }
+  } else {
+    response.writeHead(500, { 'Content-Type': 'text/plain' });
+  }
+  response.end();
+  return;
 }
 
 /**
