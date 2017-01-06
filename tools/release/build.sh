@@ -50,7 +50,7 @@ function install_typescript() {
   npm -h >/dev/null 2>&1 || install_node
 
   echo "Installing Typescript"
-  /tools/node/bin/npm install -g typescript
+  npm install -g typescript
 }
 
 function install_prereqs() {
@@ -62,9 +62,6 @@ function install_prereqs() {
 pushd ./
 cd $(dirname "${BASH_SOURCE[0]}")/../../
 install_prereqs
-
-echo "Building the Datalab server"
-./sources/build.sh
 
 echo "Building the base image"
 cd containers/base

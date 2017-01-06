@@ -25,6 +25,12 @@ then
   . ~/startup.sh
 fi
 
+# Build the kernel gateway
+NB_DIR="/datalab/web"
+mkdir -p $NB_DIR
+cd /datalab/sources/kernelproxy
+tsc --module commonjs --noImplicitAny --outDir $NB_DIR *.ts
+
 # Start the DataLab kernel gateway.
 jupyter kernelgateway --JupyterWebsocketPersonality.list_kernels=True --KernelGatewayApp.port=8081 --KernelGatewayApp.ip=0.0.0.0 &
 n=0; while true; do
@@ -42,4 +48,4 @@ then
   FOREVER_CMD="${FOREVER_CMD} -s"
 fi
 
-${FOREVER_CMD} /datalab/web/kernelproxy/app.js
+${FOREVER_CMD} $NB_DIR/kernelproxy/app.js

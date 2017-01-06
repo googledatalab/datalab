@@ -298,6 +298,9 @@ export function run(settings: common.Settings): void {
 
   logging.getLogger().info('Starting DataLab server at http://localhost:%d',
                            settings.serverPort);
+  process.on('SIGINT', () => {
+    process.exit();
+  });
   server.listen(settings.serverPort);
 }
 

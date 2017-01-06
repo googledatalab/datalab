@@ -101,7 +101,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 # with packages.json manually, but help save build time, by preincluding them in an
 # earlier layer).
 # Note: ws is now over 1.0 but using that gives issues so leaving at 0.4.2 for now.
-    /tools/node/bin/npm install \
+    npm install \
         ws@0.4.32 \
         http-proxy@1.13.2 \
         mkdirp@0.5.1 \
@@ -110,7 +110,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         tcp-port-used@0.1.2 \
         node-cache@3.2.0 && \
     cd / && \
-    /tools/node/bin/npm install -g forever && \
+    npm install -g forever typescript && \
 
 # Clean up
     apt-get purge -y build-essential bzip2 cpp cpp-4.9 python-setuptools pkg-config libfreetype6-dev && \
@@ -160,9 +160,7 @@ RUN ipython profile create default && \
         git clone https://github.com/googledatalab/pydatalab.git /datalab/lib/pydatalab; \
       fi && \
     cd /datalab/lib/pydatalab && \
-    /tools/node/bin/npm install -g typescript && \
     tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts && \
-    /tools/node/bin/npm uninstall -g typescript && \
     pip install --no-cache-dir . && \
     jupyter nbextension install --py datalab.notebook && \
     jupyter nbextension enable --py widgetsnbextension && \

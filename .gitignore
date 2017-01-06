@@ -1,7 +1,6 @@
+containers/*/externs/
+containers/*/web/
 *.ipynb_checkpoints
-build
-staging
-test
 *.gradle
 *.pyc
 *.idea

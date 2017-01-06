@@ -27,14 +27,9 @@ COMMIT_SUBSTITUTION="s/_commit_/$COMMIT/"
 
 cat Dockerfile.in | sed $VERSION_SUBSTITUTION | sed $COMMIT_SUBSTITUTION > Dockerfile
 
-# Build the datalab frontend
-source ../../tools/initenv.sh
-cd ../../sources/web/
-./build.sh
-cd ../../containers/datalab
-
-# Copy build outputs as a dependency of the Dockerfile
-rsync -avp ../../build/ build
+# Copy the sources to be built inside docker container
+rsync -avp ../../sources/web/datalab/* web
+rsync -avp ../../externs/* externs
 
 # Build the base docker image
 cd ../base
@@ -45,6 +40,6 @@ cd ../datalab
 docker build -t datalab .
 
 # Finally cleanup
-rm -rf build
+rm -rf web externs
 rm Dockerfile
 
