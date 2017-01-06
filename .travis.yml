@@ -9,6 +9,12 @@ node_js:
 services:
 - docker
 
+cache:
+  pip: true
+  directories:
+  - $HOME/.docker/
+  - node_modules
+
 before_install:
 - npm install -g typescript
 - pip install -U pip
