@@ -17,7 +17,7 @@
   "docsGcsPath": "gs://cloud-datalab/deploy/docs/",
   "allowOriginOverrides": [],
   "allowHttpOverWebsocket": false,
-  "enableAutoGCSBackups": true,
+  "enableAutoGCSBackups": false,
   "numHourlyBackups": 10,
   "numDailyBackups": 7,
   "numWeeklyBackups": 20,

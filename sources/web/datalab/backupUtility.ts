@@ -25,7 +25,7 @@ var backupIntervalVar: number = null;
 var backupLogPath: string = '';
 
 // check for backups every 10 minutes so we can retry failed backups
-const BACKUP_INTERVAL: number = 10*60*60;
+const BACKUP_INTERVAL: number = 1000*60*10;
 
 /**
  * Last successful backup timestamps are stored in a file to avoid unnecessary backups,
