@@ -144,6 +144,17 @@ def flags(parser):
         dest='disk_size_gb',
         default=_DATALAB_DEFAULT_DISK_SIZE_GB,
         help='size of the persistent disk in GB.')
+    parser.add_argument(
+        '--machine-type',
+        dest='machine_type',
+        default='n1-standard-1',
+        help=(
+            'the machine type of the instance.'
+            '\n\n'
+            'To get a list of available machine types, run '
+            '\'gcloud compute machine-types list\'.'
+            '\n\n'
+            'If not specified, the default type is n1-standard-1.'))
 
     parser.add_argument(
         '--no-connect',
@@ -353,6 +364,7 @@ def run(args, gcloud_compute):
                     '--network', _DATALAB_NETWORK,
                     '--image-family', 'container-vm',
                     '--image-project', 'google-containers',
+                    '--machine-type', args.machine_type,
                     '--metadata-from-file', metadata_from_file,
                     '--tags', 'datalab',
                     '--disk', disk_cfg,
