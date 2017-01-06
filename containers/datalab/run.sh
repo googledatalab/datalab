@@ -21,14 +21,17 @@
 # manually starting the server.
 
 CONTENT=$HOME
+DAEMON=""
 ENTRYPOINT="/datalab/run.sh"
 if [ "$1" != "" ]; then
-  if [ "$1" != "shell" ]; then
-    CONTENT=$1
-    shift
-  fi
   if [ "$1" == "shell" ]; then
     ENTRYPOINT="/bin/bash"
+  elif [ "$1" == "test" ]; then
+    mkdir -p $CONTENT/datalab/.config/eula
+    DAEMON="-d"
+  else
+    CONTENT=$1
+    shift
   fi
 fi
 
@@ -44,7 +47,7 @@ else
 fi
 # Use this flag to map in web server content during development
 #  -v $REPO_DIR/sources/web:/sources \
-docker run -it --entrypoint=$ENTRYPOINT \
+docker run -it ${DAEMON} --entrypoint=$ENTRYPOINT \
   -p $PORTMAP \
   -v "$CONTENT:/content" \
   -e "PROJECT_ID=$PROJECT_ID" \

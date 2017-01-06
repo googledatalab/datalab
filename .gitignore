@@ -11,4 +11,6 @@ test
 *.egg-info
 *.swp
 *.swo
+*.ipynb.yaml
+*.log
 

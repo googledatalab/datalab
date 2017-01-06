@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# PhantomJS won't install with brew on El Capitan yet.
-# Make sure vcrpy package is installed to use mocked HTTP request/responses,
-# and invoke with a 'vcr' argument. If .ipynb.yaml files exist they will be
-# used; if not they will be created.
+# Tests notebooks listed in test.yaml in the same directory by starting
+# a Firefox instance on SauceLabs.com with travis, or a local instance
+# if --local is specified on the command line. If you want to run tests
+# locally, make sure a Firefox geckodriver proxy binary for your platform
+# exists on your $PATH, grab one from here: https://github.com/mozilla/geckodriver/releases
+# A test.js script is injected into each notebook, which runs all cells
+# and checks for errors, then adds an HTML element with the test result
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -82,7 +85,7 @@ def run_notebook_test(test, notebook, br, results, testscript):
   results[notebook] = result
 
 
-def run_tests(url_base='http://localhost:8081', tests=[], vcr=False, profile=None, local_run=False, testscript=None):
+def run_tests(url_base='http://localhost:8081', tests=[], profile=None, local_run=False, testscript=None):
   threads = []
   results = {}
 
@@ -113,8 +116,6 @@ def run_tests(url_base='http://localhost:8081', tests=[], vcr=False, profile=Non
     else:
       br = webdriver.Remote(desired_capabilities=caps, command_executor="http://%s/wd/hub" % hub_url)
     uri = url_base + '/notebooks/%s' % (notebook.replace(' ', '%20'))
-    if vcr:
-      uri += '?vcr=1'
     br.get(uri)
 
     # Kludge; we need a better way to know notebook is ready
@@ -141,21 +142,13 @@ if __name__ == '__main__':
   #     --profile="`echo ~/Library/Application\ Support/Firefox/Profiles/*`"
   #
   parser.add_argument('--profile', help='profile to use; needed for non-local testing for authentication')
-
-  parser.add_argument('--vcr', action='store_true',
-      help='If set, record/replay network requests/responses.\n' +
-          'Requires vcr and requests Python packages to be available in notebook environment.')
   parser.add_argument('--local', action='store_true', help='If set, only local testing is performed')
 
   args = parser.parse_args()
   with open(args.tests) as f:
     tests = yaml.load(f)
-    testscrubber = ''
-    if os.path.exists('test_scrubber.js'):
-      with open('test_scrubber.js') as tf:
-        testscrubber = tf.read()
     with open('test.js') as tf:
-      testscript = '{' + testscrubber + '\n' + tf.read() + '}'
+      testscript = '{' + tf.read() + '}'
 
-    run_tests(args.base, tests, args.vcr, args.profile, args.local, testscript)
+    run_tests(args.base, tests, args.profile, args.local, testscript)
 

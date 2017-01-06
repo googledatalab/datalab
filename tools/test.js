@@ -14,29 +14,6 @@
 
 // This code is generic and can be factored out into a separate Jupyter testing project.
 
-function get_cell_outputs() {
-
-  for (var cellindex in cells) {
-    var cell = cells[cellindex];
-    if (cell.cell_type == 'code') {
-      var cell_outputs = cell.output_area.outputs;
-      var scrubbed = [];
-      for (var outputindex in cell_outputs) {
-        var output = cell_outputs[outputindex].data;
-        var scrubbed_data = {};
-        for (var mimetype in output) {
-          scrubbed_data[mimetype] = scrubber(mimetype, output[mimetype]);
-        }
-        scrubbed.push(scrubbed_data);
-      }
-      outputs.push({outputs: scrubbed, element: cell.output_area.element});
-    } else {
-      outputs.push({outputs: null});
-    }
-  }
-  return outputs;
-}
-
 function setStatus(status) {
   e = document.createElement('div');
   e.id = 'test_status'
@@ -81,11 +58,6 @@ function validate() {
   }
 }
 
-function getParameter(name) {
-  var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
-  return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
-}
-
 function checkIfDone() {
   if (IPython.notebook.kernel_busy) {
     console.log('Busy');
@@ -94,9 +66,6 @@ function checkIfDone() {
     }, 1000);
   } else {
     console.log('Finished execution');
-    if (getParameter('vcr') == '1') {
-      IPython.notebook.kernel.execute("cassette.__exit__(None, None, None)\n")
-    }
     validate();
   }
 }
@@ -105,19 +74,6 @@ function runNotebook() {
   if (IPython.notebook.kernel && IPython.notebook.kernel.is_connected()) {
     IPython.notebook.clear_all_output();
     console.log('Starting execution');
-    if (getParameter('vcr') == '1') {
-      IPython.notebook.kernel.execute(
-          "import vcr\n" +
-          "import re\n" +
-          "\n" +
-          window.vcr_matchers +
-          "\n" +
-          "cassette_file = '" + IPython.notebook.notebook_path + ".yaml'\n" +
-          "myvcr = vcr.VCR()\n" +
-          "vcr_matcher_register(myvcr)\n" +
-          "cassette = myvcr.use_cassette(cassette_file)\n" +
-          "cassette.__enter__()\n")
-    }
     
     IPython.notebook.execute_all_cells();
     setTimeout(function() {
@@ -135,13 +91,6 @@ function testNotebook() {
   if (pageClass.indexOf('notebook_app') >= 0) {
     runNotebook();
   }
-}
-
-if (!('scrubber' in window)) {
-  window.scrubber = function(mimetype, data) {
-    return data;
-  }
-  window.vcr_matchers = "def vcr_matcher_register(v):\n  pass\n";
 }
 
 require(['base/js/namespace', 'base/js/events', 'base/js/dialog', 'base/js/utils', 'base/js/security'],
