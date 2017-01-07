@@ -17,10 +17,11 @@
 import os
 import os.path
 import subprocess
-import tempfile
 import threading
 import urllib2
 import webbrowser
+
+import utils
 
 
 description = ("""{0} {1} creates a persistent connection to a
@@ -278,23 +279,16 @@ def maybe_start(args, gcloud_compute, instance):
       gcloud_compute: Function that can be used to invoke `gcloud compute`
       instance: The name of the instance to check and (possibly) start
     Raises:
-      subprocess.CalledProcessError: If one of the `gcloud` calls fails
+      subprocess.CalledProcessError: If one of the `gcloud` calls fail
     """
-    get_cmd = ['instances', 'describe']
-    start_cmd = ['instances', 'start']
-    if args.zone:
-        get_cmd.extend(['--zone', args.zone])
-        start_cmd.extend(['--zone', args.zone])
-    get_cmd.extend(['--format', 'value(status)', instance])
-    start_cmd.extend([instance])
-    status = 'UNKNOWN'
-    with tempfile.TemporaryFile() as tf:
-        gcloud_compute(args, get_cmd, stdout=tf)
-        tf.seek(0)
-        status = tf.read().strip()
+    status = utils.get_instance_status(args, gcloud_compute, instance)
     if status != 'RUNNING':
         print('Restarting the instance {0} with status {1}'.format(
             instance, status))
+        start_cmd = ['instances', 'start']
+        if args.zone:
+            start_cmd.extend(['--zone', args.zone])
+        start_cmd.extend([instance])
         gcloud_compute(args, start_cmd)
     return
 

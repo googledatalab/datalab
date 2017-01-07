@@ -14,6 +14,8 @@
 
 """Methods for implementing the `datalab stop` command."""
 
+import utils
+
 
 description = ("""{0} {1} stops the given Datalab instance's
 Google Compute Engine VM.""")
@@ -42,6 +44,8 @@ def run(args, gcloud_compute):
       subprocess.CalledProcessError: If a nested `gcloud` calls fails
     """
     instance = args.instance
+    utils.maybe_prompt_for_zone(args, gcloud_compute, instance)
+
     print('Stopping {0}'.format(instance))
     base_cmd = ['instances', 'stop']
     if args.zone:
