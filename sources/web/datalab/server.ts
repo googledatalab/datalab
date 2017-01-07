@@ -34,6 +34,7 @@ import static_ = require('./static');
 import url = require('url');
 import userManager = require('./userManager');
 import wsHttpProxy = require('./wsHttpProxy');
+import backupUtility = require('./backupUtility');
 
 var server: http.Server;
 var healthHandler: http.RequestHandler;
@@ -301,6 +302,9 @@ export function run(settings: common.Settings): void {
 
   logging.getLogger().info('Starting DataLab server at http://localhost:%d',
                            settings.serverPort);
+  backupUtility.startBackup(settings);
+  process.on('SIGINT', () => process.exit());
+
   server.listen(settings.serverPort);
 }
 
