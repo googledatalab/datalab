@@ -316,9 +316,11 @@ def ensure_disk_exists(args, gcloud_compute, disk_name):
     """
     get_cmd = [
         'disks', 'describe', disk_name, '--format', 'value(name)']
+    if args.zone:
+        get_cmd.extend(['--zone', args.zone])
     try:
         with tempfile.TemporaryFile() as tf:
-            gcloud_compute(args, get_cmd, stdout=tf, stderr=tf)
+            gcloud_compute(args, get_cmd, stdout=tf)
             return
     except subprocess.CalledProcessError:
         create_disk(args, gcloud_compute, disk_name)
