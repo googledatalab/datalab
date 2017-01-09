@@ -19,6 +19,7 @@ import subprocess
 import tempfile
 
 import connect
+import utils
 
 
 description = ("""{0} {1} creates a new Datalab instances running in a Google
@@ -167,7 +168,7 @@ def flags(parser):
     return
 
 
-def call_gcloud_quietly(args, gcloud_compute, cmd):
+def call_gcloud_quietly(args, gcloud_compute, cmd, report_errors=True):
     """Call `gcloud` and silence any output unless it fails.
 
     Normally, the `gcloud` command line tool can output a lot of
@@ -192,6 +193,7 @@ def call_gcloud_quietly(args, gcloud_compute, cmd):
       args: The Namespace returned by argparse
       gcloud_compute: Function that can be used for invoking `gcloud compute`
       cmd: The subcommand to run
+      report_errors: Whether or not to report errors to the user
     Raises:
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
@@ -199,8 +201,9 @@ def call_gcloud_quietly(args, gcloud_compute, cmd):
         try:
             gcloud_compute(args, cmd, stdout=tf, stderr=tf)
         except subprocess.CalledProcessError:
-            tf.seek(0)
-            print(tf.read())
+            if report_errors:
+                tf.seek(0)
+                print(tf.read())
             raise
     return
 
@@ -282,13 +285,14 @@ def ensure_firewall_rule_exists(args, gcloud_compute):
     return
 
 
-def create_disk(args, gcloud_compute, disk_name):
+def create_disk(args, gcloud_compute, disk_name, report_errors):
     """Create the user's persistent disk.
 
     Args:
       args: The Namespace returned by argparse
       gcloud_compute: Function that can be used for invoking `gcloud compute`
       disk_name: The name of the persistent disk to create
+      report_errors: Whether or not to report errors to the end user
     Raises:
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
@@ -300,11 +304,11 @@ def create_disk(args, gcloud_compute, disk_name):
         '--size', str(args.disk_size_gb) + 'GB',
         '--description', _DATALAB_DISK_DESCRIPTION,
         disk_name])
-    call_gcloud_quietly(args, gcloud_compute, create_cmd)
+    call_gcloud_quietly(args, gcloud_compute, create_cmd, report_errors)
     return
 
 
-def ensure_disk_exists(args, gcloud_compute, disk_name):
+def ensure_disk_exists(args, gcloud_compute, disk_name, report_errors=False):
     """Create the given persistent disk if it does not already exist.
 
     Args:
@@ -315,15 +319,26 @@ def ensure_disk_exists(args, gcloud_compute, disk_name):
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
     get_cmd = [
-        'disks', 'describe', disk_name, '--format', 'value(name)']
+        'disks', 'describe', '--quiet', disk_name, '--format', 'value(name)']
     if args.zone:
         get_cmd.extend(['--zone', args.zone])
     try:
         with tempfile.TemporaryFile() as tf:
-            gcloud_compute(args, get_cmd, stdout=tf)
+            gcloud_compute(args, get_cmd, stdout=tf, stderr=tf)
             return
     except subprocess.CalledProcessError:
-        create_disk(args, gcloud_compute, disk_name)
+        try:
+            create_disk(args, gcloud_compute, disk_name, report_errors)
+        except:
+            if args.zone:
+                raise
+            else:
+                # We take this failure as a sign that gcloud might need
+                # to prompt for a zone. As such, we do that prompting
+                # for it, and then try again.
+                args.zone = utils.prompt_for_zone(args, gcloud_compute)
+                ensure_disk_exists(args, gcloud_compute, disk_name,
+                                   report_errors=True)
     return
 
 
