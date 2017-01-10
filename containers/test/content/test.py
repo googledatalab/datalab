@@ -13,10 +13,7 @@
 # limitations under the License.
 
 # Tests notebooks listed in test.yaml in the same directory by starting
-# a Firefox instance on SauceLabs.com with travis, or a local instance
-# if --local is specified on the command line. If you want to run tests
-# locally, make sure a Firefox geckodriver proxy binary for your platform
-# exists on your $PATH, grab one from here: https://github.com/mozilla/geckodriver/releases
+# a Firefox instance for each notebook and running it.
 # A test.js script is injected into each notebook, which runs all cells
 # and checks for errors, then adds an HTML element with the test result
 
@@ -24,7 +21,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.firefox.webdriver import FirefoxProfile
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 import argparse
 import os
@@ -43,9 +40,10 @@ END='\033[0m'
 
 def run_notebook_test(test, notebook, br, results, testscript):
   if testscript:
-    print 'executing script..'
+    print 'Running notebook ' + notebook
     br.execute_script(testscript)
   result = []
+  failed=False
   try:
     element = WebDriverWait(br, 240).until(
         EC.presence_of_element_located((By.ID, "test_status"))
@@ -64,39 +62,28 @@ def run_notebook_test(test, notebook, br, results, testscript):
           continue
       parts.append(part)
 
-    actuals = '#'.join(sorted(parts))
-    expect = []
-    if 'expect' in test and len(test['expect']):
-      expect.extend(test['expect'])
-    expectations = '#'.join(sorted(expect))
+    errors = '#'.join(sorted(parts))
 
-    if actuals == expectations:
+    if not errors:
       result.append('%s%s: pass%s' % (GREEN, notebook, END))
       br.quit()
     else:
       result.append('%s%s: fail%s' % (RED, notebook, END))
-      result.append('%sExpected: %s%s' % (BLUE, expectations, END))
-      result.append('%s  Actual: %s%s' % (YELLOW,  actuals, END))
-      # We leave this one open
+      result.append('%s  Errors: %s%s' % (YELLOW,  errors, END))
+      failed=True
   except Exception as e:
     result.append(e.message)
     result.append('%s: timed out' % notebook)
     br.quit()
-  results[notebook] = result
+  results[notebook] = (result, failed)
 
 
-def run_tests(url_base='http://localhost:8081', tests=[], profile=None, local_run=False, testscript=None):
+def run_tests(url_base='http://localhost:8080', tests=[], profile=None, testscript=None):
   threads = []
   results = {}
+  failed=False
 
-  if not local_run:
-    username = os.environ['SAUCE_USERNAME']
-    access_key = os.environ['SAUCE_ACCESS_KEY']
-    hub_url = "%s:%s@localhost:4445" % (username, access_key)
-    caps = {'browserName': "firefox"}
-    caps['platform'] = "Linux"
-    caps['version'] = "45.0"
-    caps['tunnel-identifier'] = os.environ['TRAVIS_JOB_NUMBER']
+  print 'Tests started..'
 
   for test in tests:
     if 'disabled' in test and test['disabled']:
@@ -107,14 +94,7 @@ def run_tests(url_base='http://localhost:8081', tests=[], profile=None, local_ru
     notebook = test['notebook']
 
     # Load the notebook
-    br=None
-    if local_run:
-      ffprofile = None
-      if profile:
-        ffprofile = FirefoxProfile(profile)
-      br = webdriver.Firefox(ffprofile)
-    else:
-      br = webdriver.Remote(desired_capabilities=caps, command_executor="http://%s/wd/hub" % hub_url)
+    br = webdriver.Firefox()
     uri = url_base + '/notebooks/%s' % (notebook.replace(' ', '%20'))
     br.get(uri)
 
@@ -129,11 +109,15 @@ def run_tests(url_base='http://localhost:8081', tests=[], profile=None, local_ru
     t.join()
 
   for result in results.values():
-    print '\n'.join(result)
+    print '\n'.join(result[0])
+    failed = failed or result[1]
+
+  if failed:
+    sys.exit(1)
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser('tests')
-  parser.add_argument('--base', default='http://localhost:8081', help='Base URL for Datalab instance')
+  parser.add_argument('--base', default='http://localhost:8080', help='Base URL for Datalab instance')
   parser.add_argument('--tests', default='test.yaml', help='YAML file containing test specifications')
 
   # If testing a deployment we need an authorized account so don't want to use an anonymous profile.
@@ -142,7 +126,6 @@ if __name__ == '__main__':
   #     --profile="`echo ~/Library/Application\ Support/Firefox/Profiles/*`"
   #
   parser.add_argument('--profile', help='profile to use; needed for non-local testing for authentication')
-  parser.add_argument('--local', action='store_true', help='If set, only local testing is performed')
 
   args = parser.parse_args()
   with open(args.tests) as f:
@@ -150,5 +133,5 @@ if __name__ == '__main__':
     with open('test.js') as tf:
       testscript = '{' + tf.read() + '}'
 
-    run_tests(args.base, tests, args.profile, args.local, testscript)
+    run_tests(args.base, tests, args.profile, testscript)
 

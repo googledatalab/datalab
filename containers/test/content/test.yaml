@@ -16,9 +16,7 @@
 # path to the notebook, and optional boolean 'disabled' to disable
 # the test completely, an optional 'ignore' list with the indices of
 # cells whose failure is expected and should not cause the overall
-# test to fail, and an optional 'expect' list of expected cell failures
-# for specific MIME types, useful for if the cell is expected to pass 
-# but one of the MIME output types is problematic.
+# test to fail
 
 - notebook: datalab/docs/Hello World.ipynb
 

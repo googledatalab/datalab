@@ -1,7 +1,6 @@
 *.ipynb_checkpoints
 build
 staging
-test
 *.gradle
 *.pyc
 *.idea
