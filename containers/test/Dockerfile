@@ -19,6 +19,7 @@ RUN pip install selenium
 # add test files
 ADD content/ /datalab/test
 
+# Use virtual display to open firefox
 ENV DISPLAY=:10
 
 # Startup

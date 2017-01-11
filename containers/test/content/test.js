@@ -25,7 +25,7 @@ function validate() {
   var cells = IPython.notebook.get_cells();
 
   var result = '';
-  var failed = false;
+  var testfailed = false;
   console.log('Validating...');
 
   cells.forEach(function(cell, cell_id) {
@@ -35,7 +35,7 @@ function validate() {
         if ((output.output_type && output.output_type == 'error') ||
             output.ename || output.traceback) {
           cellfailed = true;
-          failed = true
+          testfailed = true
           result += '#Cell ' + cell_id + ' output number ' + output_id + ' failed';
         }
       })
@@ -51,7 +51,7 @@ function validate() {
       result += '#' + cell_id + ':F';
   });
 
-  if (failed) {
+  if (testfailed) {
     setStatus('FAIL' + result);
   } else {
     setStatus('PASS');

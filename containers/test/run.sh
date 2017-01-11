@@ -19,7 +19,7 @@ mkdir -p $CONTENT/datalab/.config/eula
 # access it. Users need to make sure in their VirtualBox port forwarding
 # settings only 127.0.0.1 is bound.
 if [ "$OSTYPE" == "linux"* ]; then
-  PORTMAP="127.0.0.1:8082:8080"
+  PORTMAP="127.0.0.1:8081:8080"
 else
   PORTMAP="8081:8080"
 fi

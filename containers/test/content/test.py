@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+#
+#
 # Tests notebooks listed in test.yaml in the same directory by starting
 # a Firefox instance for each notebook and running it.
 # A test.js script is injected into each notebook, which runs all cells
@@ -38,12 +39,30 @@ BLUE='\033[94m'
 END='\033[0m'
 
 
-def run_notebook_test(test, notebook, br, results, testscript):
+def run_notebook_test(test, notebook, url_base, results, testscript):
+  # load the notebook
+  br = webdriver.Firefox()
+  retries = 30
+  while retries:
+    uri = url_base + '/notebooks/%s' % (notebook.replace(' ', '%20'))
+    try:
+      br.get(uri)
+      break
+    except:
+      time.sleep(1)
+      retries -= 1
+      if not retries:
+        print 'Timed out waiting on notebook: ' + notebook
+        sys.exit(1)
+
+  # make sure notebook is ready
+  br.find_element_by_id('notebook_panel')
+
   if testscript:
     print 'Running notebook ' + notebook
     br.execute_script(testscript)
   result = []
-  failed=False
+  failed = False
   try:
     element = WebDriverWait(br, 240).until(
         EC.presence_of_element_located((By.ID, "test_status"))
@@ -70,18 +89,19 @@ def run_notebook_test(test, notebook, br, results, testscript):
     else:
       result.append('%s%s: fail%s' % (RED, notebook, END))
       result.append('%s  Errors: %s%s' % (YELLOW,  errors, END))
-      failed=True
+      failed = True
   except Exception as e:
     result.append(e.message)
     result.append('%s: timed out' % notebook)
+    failed = True
     br.quit()
   results[notebook] = (result, failed)
 
 
-def run_tests(url_base='http://localhost:8080', tests=[], profile=None, testscript=None):
+def run_tests(url_base, tests=[], testscript=None):
   threads = []
   results = {}
-  failed=False
+  failed = False
 
   print 'Tests started..'
 
@@ -89,19 +109,10 @@ def run_tests(url_base='http://localhost:8080', tests=[], profile=None, testscri
     if 'disabled' in test and test['disabled']:
       continue
 
-    # We create each browser sequentially as doing it in parallel can cause the 
-    # tests to be flaky
     notebook = test['notebook']
 
-    # Load the notebook
-    br = webdriver.Firefox()
-    uri = url_base + '/notebooks/%s' % (notebook.replace(' ', '%20'))
-    br.get(uri)
-
-    # Kludge; we need a better way to know notebook is ready
-    br.find_element_by_tag_name('html')
-
-    t = Thread(target=run_notebook_test, args=[test, notebook, br, results, testscript])
+    # start tests in parallel browser sessions
+    t = Thread(target=run_notebook_test, args=[test, notebook, url_base, results, testscript])
     threads.append(t)
     t.start()
 
@@ -120,18 +131,11 @@ if __name__ == '__main__':
   parser.add_argument('--base', default='http://localhost:8080', help='Base URL for Datalab instance')
   parser.add_argument('--tests', default='test.yaml', help='YAML file containing test specifications')
 
-  # If testing a deployment we need an authorized account so don't want to use an anonymous profile.
-  # The profile must be specified here. On a Mac if you have a single profile, this should work:
-  #
-  #     --profile="`echo ~/Library/Application\ Support/Firefox/Profiles/*`"
-  #
-  parser.add_argument('--profile', help='profile to use; needed for non-local testing for authentication')
-
   args = parser.parse_args()
   with open(args.tests) as f:
     tests = yaml.load(f)
     with open('test.js') as tf:
       testscript = '{' + tf.read() + '}'
 
-    run_tests(args.base, tests, args.profile, testscript)
+      run_tests(args.base, tests, testscript)
 
