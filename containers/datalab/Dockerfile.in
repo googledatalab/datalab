@@ -12,130 +12,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM debian:jessie
+FROM datalab-base
 MAINTAINER Google Cloud DataLab
 
-# Setup OS and core packages
-RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sources.list && \
-    apt-get update -y && \
-    apt-get install --no-install-recommends -y -q \
-        curl wget unzip git vim build-essential ca-certificates pkg-config \
-        libatlas-base-dev liblapack-dev gfortran \
-        libpng-dev libfreetype6-dev libxft-dev \
-        libxml2-dev \
-        python2.7 python-dev python-pip python-setuptools python-zmq && \
-    mkdir -p /tools && \
-    mkdir -p /srcs && \
-    cd /srcs && apt-get source -d python-zmq && cd /
-
-# Setup Node.js
-RUN mkdir -p /tools/node && \
-    wget -nv https://nodejs.org/dist/v0.12.7/node-v0.12.7-linux-x64.tar.gz -O node.tar.gz && \
-    tar xzf node.tar.gz -C /tools/node --strip-components=1 && \
-    rm node.tar.gz
-
-# Setup Google Cloud SDK
-RUN wget -nv https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.zip && \
-    unzip -qq google-cloud-sdk.zip -d tools && \
-    rm google-cloud-sdk.zip && \
-    tools/google-cloud-sdk/install.sh --usage-reporting=false \
-        --path-update=false --bash-completion=false \
-        --disable-installation-options && \
-    tools/google-cloud-sdk/bin/gcloud config set --scope=installation \
-        component_manager/fixed_sdk_version 0.9.57 && \
-    tools/google-cloud-sdk/bin/gcloud -q components update \
-        gcloud core bq gsutil compute preview alpha beta && \
-    rm -rf /root/.config/gcloud
-
-# Setup Python packages
-RUN pip install -U \
-        tornado==4.2.1 pyzmq==14.4.0 jinja2==2.7.3 \
-        jsonschema==2.5.1 py-dateutil==2.2 pytz==2015.4 pandocfilters==1.2.4 pygments==2.0.2 \
-        argparse==1.2.1 mock==1.2.0 requests==2.4.3 oauth2client==1.4.12 httplib2==0.9.2 \
-        futures==3.0.3 && \
-    pip install -U numpy==1.9.2 && \
-    pip install -U pandas==0.16.2 && \
-    pip install -U scikit-learn==0.16.1 && \
-    pip install -U scipy==0.15.1 && \
-    pip install -U sympy==0.7.6 && \
-    pip install -U statsmodels==0.6.1 && \
-    pip install -U matplotlib==1.4.3 && \
-    pip install -U ggplot==0.6.5 && \
-    pip install -U seaborn==0.6.0 && \
-    pip install -U notebook==4.0.2 && \
-    pip install -U PyYAML==3.11 && \
-    easy_install pip && \
-    find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf
-
-# Setup Workspace-Sync
-RUN mkdir -p /wsync && \
-    cd /wsync && \
-    wget -nv https://storage.googleapis.com/cloud-datalab/deploy/wsync/20151125/wsync && \
-    chmod u+r,g+x /wsync/* && cd /
-
-# Container configuration
-EXPOSE 8080
-VOLUME [ "/var/log/app_engine", "/nb", "/root/.config/gcloud" ]
-
-# Path configuration
-ENV PATH $PATH:/tools/node/bin:/tools/google-cloud-sdk/bin
-ENV PYTHONPATH /env/python
-
-# IPython configuration
-RUN ipython profile create default
-RUN jupyter notebook --generate-config
-
-# Add some unchanging bits - specifically node modules (that need to be kept in sync
-# with packages.json manually, but help save build time, by preincluding them in an
-# earlier layer).
-RUN mkdir -p /datalab/web && \
-    cd /datalab/web && \
-    /tools/node/bin/npm install \
-        ws@0.4.32 \
-        http-proxy@1.11.1 \
-        mkdirp@0.5.1 \
-        node-uuid@1.4.3 \
-        bunyan@1.4.0 \
-        socket.io@1.3.6 \
-        tcp-port-used@0.1.2 \
-        node-cache@3.0.0 && \
-    cd / && \
-    /tools/node/bin/npm install -g forever
-
-# Install TensorFlow. 
-# Need to install protobuf first due to a TF bug https://github.com/tensorflow/tensorflow/issues/487
-RUN pip install protobuf==3.0.0a3
-RUN gsutil cp gs://cloud-datalab/deploy/tensorflow-0.6.0-cp27-none-linux_x86_64.whl /tmp/tensorflow-0.6.0-cp27-none-linux_x86_64.whl && \
-  pip install /tmp/tensorflow-0.6.0-cp27-none-linux_x86_64.whl && \
-  rm /tmp/tensorflow-0.6.0-cp27-none-linux_x86_64.whl
-
 # Add build artifacts
-ADD build/lib/GCPData-0.1.0.tar.gz /datalab/lib/
-ADD build/lib/GCPDataLab-0.1.0.tar.gz /datalab/lib/
-ADD build/metadata /datalab/metadata
-ADD build/web /datalab/web
-ADD nbconvert /datalab/nbconvert
+ADD build/web/nb /datalab/web
 ADD content/ /datalab
-ADD config/ipython.py /root/.ipython/profile_default/ipython_config.py
-ADD config/nbconvert.py /root/.jupyter/jupyter_notebook_config.py
 
-# Install build artifacts
-RUN cd /datalab/lib/GCPData-0.1.0 && python setup.py install && \
-    cd /datalab/lib/GCPDataLab-0.1.0 && python setup.py install && \
+# Install the build artifacts
+RUN ln -s /datalab/web/static/datalab.css /datalab/nbconvert/datalab.css && \
     cd /datalab/web && /tools/node/bin/npm install && \
-    cd /
+    cd / && \
 
-# Link stuff needed for nbconvert to a location where Jinja will find it.
-# I'd prefer to just use absolute path in Jinja imports but those don't work.
-RUN ln -s /datalab/web/static/extensions/charting.js /datalab/nbconvert/charting.js && \
-    ln -s /datalab/web/static/require/element.js /datalab/nbconvert/element.js && \
-    ln -s /datalab/web/static/require/style.js /datalab/nbconvert/style.js && \
-    ln -s /datalab/web/static/require/visualization.js /datalab/nbconvert/visualization.js && \
-    ln -s /usr/local/lib/python2.7/dist-packages/notebook/static/custom/custom.css /datalab/nbconvert/custom.css && \
-    ln -s /datalab/web/static/extensions/charting.css /datalab/nbconvert/charting.css && \
-    ln -s /datalab/web/static/datalab.css /datalab/nbconvert/datalab.css
+# Install ungit
+    /tools/node/bin/npm install -g ungit@0.10.3 && \
+
+# Install the support for connecting to a kernel gateway
+    wget https://github.com/jupyter/kernel_gateway_demos/archive/e653b2bd3ca91ef1af2a13c397766484dcb7b76d.zip && \
+    unzip -qq e653b2bd3ca91ef1af2a13c397766484dcb7b76d.zip -d kernel_gateway_demos && \
+    rm e653b2bd3ca91ef1af2a13c397766484dcb7b76d.zip && \
+    cd ./kernel_gateway_demos/kernel_gateway_demos-e653b2bd3ca91ef1af2a13c397766484dcb7b76d && \
+    pip install ./nb2kg/
+
+ENV EXPERIMENTAL_KERNEL_GATEWAY_URL=""
 
 # Startup
 ENV DATALAB_VERSION _version_
 ENV DATALAB_COMMIT _commit_
-ENTRYPOINT [ "/datalab/run-cloud.sh" ]
+ENV DEPLOY_VM "false"
+ENV ENABLE_USAGE_REPORTING true
+ENV CLI_LOGIN false
+
+# Startup
+ENTRYPOINT [ "/datalab/run.sh" ]

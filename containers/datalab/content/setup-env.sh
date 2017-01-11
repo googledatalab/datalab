@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash -e
 # Copyright 2015 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,12 +15,15 @@
 
 # Sets up various environment variables within the docker container.
 
-export DATALAB_USER=`gcloud -q config list --format yaml | grep account | awk -F" " '{print $2}'`
-export DATALAB_PROJECT_ID=`gcloud -q config list --format yaml | grep project | awk -F" " '{print $2}'`
-if [ -z $DATALAB_PROJECT_NUM ]; then
-  export DATALAB_PROJECT_NUM=`curl --silent -H "Metadata-Flavor=Google" http://metadata.google.internal/computeMetadata/v1beta1/project/numeric-project-id`
-fi
-if [ -z $DATALAB_INSTANCE_NAME ]; then
-  export DATALAB_INSTANCE_NAME=$GAE_MODULE_VERSION
-fi
+# TODO(ojarjur): This is a remnant of the old App-Engine based environment,
+# and as such, we should remove it.
+export DATALAB_ENV="local"
+
+# Ensure that gcloud has been told to use a config directory under the
+# mounted volume (so that the results of 'gcloud auth login' are persisted).
+export CLOUDSDK_CONFIG=/content/datalab/.config
+
+# Lookup the project and zone, which may be in the mapped gcloud config.
+export PROJECT_ID=${PROJECT_ID:-`gcloud config list -q --format 'value(core.project)' 2> /dev/null`}
+export ZONE=${ZONE:-`gcloud config list -q --format 'value(compute.zone)' 2> /dev/null`}
 

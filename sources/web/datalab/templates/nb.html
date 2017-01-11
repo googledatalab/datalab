@@ -8,7 +8,12 @@
 
   <link rel="stylesheet" href="/static/components/codemirror/lib/codemirror.css" />
   <link rel="stylesheet" href="/static/style/style.min.css" type="text/css" />
-  <link rel="stylesheet" href="/static/style/custom.css" type="text/css" />
+  <link rel="stylesheet" href="/static/style/datalab.css" type="text/css" />
+  <link rel="stylesheet" id="themeStylesheet" href="/static/style/custom.css" type="text/css" id="stylesheet" />
+  <link rel="stylesheet" href="/static/components/jquery-ui/themes/smoothness/jquery-ui.min.css" />
+
+  <script src="/static/components/jquery/jquery.min.js"></script>
+  <script type="text/javascript" src="/static/components/MathJax/MathJax.js?config=TeX-AMS_HTML-full,Safe&delayStartupUntil=configured" charset="utf-8"></script>
 </head>
 <body class="notebook_app"
   data-project=""
@@ -17,78 +22,104 @@
   data-notebook-name="<%notebookName%>"
   data-notebook-path="<%notebookPath%>"
   data-feedback-id="<%feedbackId%>"
-  data-analytics-id="<%analyticsId%>"
-  data-analytics-path="<%analyticsPath%>"
-  data-analytics-title="notebook"
-  data-project-num="<%projectNumber%>"
-  data-project-id="<%projectId%>"
   data-version-id="<%versionId%>"
-  data-instance-id="<%instanceId%>"
-  data-instance-name="<%instanceName%>"
-  data-user-id="<%userId%>">
+  data-signed-in="<%isSignedIn%>"
+  data-user-id="<%userId%>"
+  data-account="<%account%>"
+  data-reporting-enabled="<%reportingEnabled%>"
+  data-project-hash="<%projectHash%>"
+  data-proxy-web-sockets="<%proxyWebSockets%>">
+
+  <script>
+     window.datalab = {};
+  </script>
+  <script src="<%configUrl%>"></script>
+  <script>
+    var reportingEnabled = (document.body.getAttribute('data-reporting-enabled') == 'true');
+    if (reportingEnabled) {
+      // Snippet to initialize the Google Tag Manager, which provides anonymized usage reporting
+      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+      '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer',window.datalab.gtmAccount);
+      // End Google Tag Manager
+
+      var signedIn = (document.body.getAttribute('data-signed-in') == 'true');
+      var projectHash = document.body.getAttribute('data-project-hash');
+      var notebookName = document.body.getAttribute('data-notebook-name');
+
+      var knownTutorials = [
+        'Interactive%20Charts%20with%20Google%20Charting%20APIs.ipynb',
+        'UDFs%20in%20BigQuery.ipynb',
+        'SQL%20and%20Pandas%20DataFrames.ipynb',
+        'SQL%20Query%20Composition.ipynb',
+        'SQL%20Parameters.ipynb',
+        'UDFs%20using%20Code%20in%20Cloud%20Storage.ipynb',
+        'Hello%20BigQuery.ipynb',
+        'Importing%20and%20Exporting%20Data.ipynb',
+        'Using%20External%20Tables%20from%20BigQuery.ipynb',
+        'UDF%20Testing%20in%20the%20Notebook.ipynb',
+        'BigQuery%20APIs.ipynb',
+        'BigQuery%20Commands.ipynb',
+        'Storage%20Commands.ipynb',
+        'Storage%20APIs.ipynb',
+        'Programming%20Language%20Correlation.ipynb',
+        'Conversion%20Analysis%20with%20Google%20Analytics%20Data.ipynb',
+        'Anomaly%20Detection%20in%20HTTP%20Logs.ipynb',
+        'Exploring%20Genomics%20Data.ipynb',
+        'TensorFlow%20Machine%20Learning%20with%20Financial%20Data%20on%20Google%20Cloud%20Platform.ipynb',
+        'Hello%20World.ipynb',
+        'Readme.ipynb',
+        'Introduction%20to%20Python.ipynb',
+        'Using%20Datalab%20-%20Accessing%20Cloud%20Data.ipynb',
+        'Introduction%20to%20Notebooks.ipynb'
+      ];
+
+      var tutorialName = '';
+      if (knownTutorials.indexOf(notebookName) >= 0) {
+         tutorialName = notebookName;
+      }
+
+      var event = {
+        'event': 'concordEvent',
+        'pagePath': '/virtual/datalab/openNotebook',
+        'eventType': 'datalab',
+        'eventName': 'openNotebook',
+        'projectNumber': projectHash,
+        'metadata': 'signedIn=' + signedIn + ',tutorialName=' + tutorialName,
+      }
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push(event);
+    }
+  </script>
+
   <div id="app">
     <div id="appBar">
-      <span id="logo" class="nav navbar-brand pull-left">
-        <a href="/tree"><img src="/static/logo.png" alt="Google Cloud DataLab" /></a>
-      </span>
-      <span id="save_widget" class="pull-left save_widget">
-        <button class="btn" title="Rename notebook"><span id="notebook_name" class="filename"></span></button>
-        <span class="autosave_status"></span>
-      </span>
-      <div class="btn-toolbar pull-right">
-        <div class="btn-group">
-          <button class="btn" data-toggle="dropdown" title="Help Links">
-            <span class="fa fa-question-circle"></span>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-right">
-            <li><a id="keyboardHelpLink" href="#">Keyboard Shortcuts</a></li>
-            <li><a id="markdownHelpLink" href="#">Markdown Syntax</a></li>
-            <li class="divider"></li>
-            <li><a href="https://cloud.google.com/bigquery/what-is-bigquery" target="_blank"><i class="fa fa-external-link pull-right menu-icon"></i><span>BigQuery&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></a></li>
-            <li><a href="https://cloud.google.com/storage/docs/overview" target="_blank"><i class="fa fa-external-link pull-right menu-icon"></i><span>Cloud Storage&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></a></li>
-            <li class="divider"></li>
-            <li><a href="https://developers.google.com/chart/" target="_blank"><i class="fa fa-external-link pull-right menu-icon"></i><span>Google Charts</span></a></li>
-            <li><a href="http://matplotlib.org/contents.html" target="_blank"><i class="fa fa-external-link pull-right menu-icon"></i><span>Matplotlib</span></a></li>
-            <li><a href="http://pandas.pydata.org/pandas-docs/stable/" target="_blank"><i class="fa fa-external-link pull-right menu-icon"></i><span>Pandas</span></a></li>
-            <li><a href="http://scikit-learn.org/stable/" target="_blank"><i class="fa fa-external-link pull-right menu-icon"></i><span>SciKit-Learn</span></a></li>
-          </ul>
-        </div>
-        <div class="btn-group">
-          <button class="btn" data-toggle="dropdown" title="User and Project Information">
-            <span class="fa fa-user"></span>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-right">
-            <li><a href="#" id="userId">User ID</a></li>
-            <li class="divider"></li>
-            <li><a href="#" id="consoleLink" target="_blank">Developer Console</a></li>
-            <li><a href="#" id="instancesLink" target="_blank">Developer Console: Cloud Datalab Instances</a></li>
-            <li><a href="#" id="repoLink" target="_blank">Developer Console: Git Repository</a></li>
-          </ul>
-        </div>
-        <div class="btn-group">
-          <button id="feedbackButton" title="Provide feedback">
-            <span class="fa fa-comment"></span>
-          </button>
-        </div>
-        <div class="btn-group">
-          <button id="aboutButton" title="About Google Cloud Datalab">
-            <span class="fa fa-info-circle"></span>
-          </button>
-        </div>
-      </div>
     </div>
+    <div id="site">
     <div id="appContent">
-      <div id="mainArea">
+      <div id="toolbarArea">
         <div id="mainToolbar">
           <div class="btn-toolbar pull-left">
             <div class="btn-group">
-              <button type="button" class="btn" data-toggle="dropdown" title="Notebook commands">
+              <button type="button" class="toolbar-btn" data-toggle="dropdown" title="Notebook commands">
                 <span class="fa fa-book"></span> Notebook <span class="caret"></span>
               </button>
               <ul class="dropdown-menu">
-                <li id="saveButton"><a href="#">Save</a></li>
+                <li id="saveButton"><a href="#">Save and Checkpoint</a></li>
                 <li id="saveCopyButton"><a href="#">Save copy</a></li>
                 <li id="renameButton"><a href="#">Rename...</a></li>
+                <li class="divider"></li>
+                <li id="restoreButton" class="dropdown-submenu"><a href="#">Revert to Checkpoint</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="#"></a></li>
+                    <li><a href="#"></a></li>
+                    <li><a href="#"></a></li>
+                    <li><a href="#"></a></li>
+                    <li><a href="#"></a></li>
+                  </ul>
+                </li>
                 <li class="divider"></li>
                 <li id="downloadButton"><a href="#">Download</a></li>
                 <li class="divider"></li>
@@ -97,29 +128,29 @@
               </ul>
             </div>
           </div>
-          <div class="btn-toolbar pull-right">
+          <div class="btn-toolbar pull-left">
             <div class="btn-group">
-              <button id="addCodeCellButton" type="button" class="btn" title="Append a new code cell">
+              <button id="addCodeCellButton" type="button" class="toolbar-btn" title="Append a new code cell">
                 <span class="fa fa-plus-square"></span> Add Code
               </button>
-              <button id="addMarkdownCellButton" type="button" class="btn" title="Append a new markdown cell">
+              <button id="addMarkdownCellButton" type="button" class="toolbar-btn" title="Append a new markdown cell">
                 <span class="fa fa-plus-square"></span> Add Markdown
               </button>
-              <button id="deleteCellButton" type="button" class="btn" title="Delete the selected cell">
+              <button id="deleteCellButton" type="button" class="toolbar-btn" title="Delete the selected cell">
                 <span class="fa fa-minus-square"></span> Delete
               </button>
-              <button id="moveCellUpButton" type="button" class="btn" title="Move the selected cell up">
+              <button id="moveCellUpButton" type="button" class="toolbar-btn" title="Move the selected cell up">
                 <span class="fa fa-chevron-up"></span> Move Up
               </button>
-              <button id="moveCellDownButton" type="button" class="btn" title="Move the selected cell down">
+              <button id="moveCellDownButton" type="button" class="toolbar-btn" title="Move the selected cell down">
                 <span class="fa fa-chevron-down"></span> Move Down
               </button>
             </div>
             <div class="btn-group">
-              <button id="runButton" type="button" class="btn" title="Run the selected cell">
+              <button id="runButton" type="button" class="toolbar-btn" title="Run the selected cell">
                 <span class="fa fa-play"></span> Run
               </button>
-              <button type="button" class="btn dropdown-toggle" data-toggle="dropdown">
+              <button type="button" class="toolbar-btn dropdown-toggle" data-toggle="dropdown">
                 <span class="caret"></span>
               </button>
               <ul class="dropdown-menu">
@@ -129,10 +160,10 @@
               </ul>
             </div>
             <div class="btn-group">
-              <button id="clearButton" type="button" class="btn" title="Clear outputs of the selected cell">
+              <button id="clearButton" type="button" class="toolbar-btn" title="Clear outputs of the selected cell">
                 <span class="fa fa-minus-square-o"></span> Clear
               </button>
-              <button type="button" class="btn dropdown-toggle" data-toggle="dropdown">
+              <button type="button" class="toolbar-btn dropdown-toggle" data-toggle="dropdown">
                 <span class="caret"></span>
               </button>
               <ul class="dropdown-menu">
@@ -140,69 +171,88 @@
               </ul>
             </div>
             <div class="btn-group">
-              <button id="resetSessionButton" type="button" class="btn" title="Restart the current notebook session">
+              <button id="resetSessionButton" type="button" class="toolbar-btn" title="Restart the current notebook session">
                 <i id="kernel_indicator_icon"></i> Reset Session
               </button>
             </div>
+            <!-- The next div and its contents are for ipywidgets. They insert their own menu before #help_menu -->
+            <div class="btn-group">
+              <div>
+                <div id="help_menu">
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <div id="mainContent" class="container">
-          <div id="ipython-main-app">
-            <div id="notebook_panel" style="position: relative">
-              <div id="notebook"></div>
-              <div id='tooltip' class='ipython_tooltip' style='display:none'></div>
+        <div id="sidebarToolbar">
+          <div class="btn-toolbar pull-right">
+            <div class="btn-group">
+              <button id="navigationButton" type="button" class="toolbar-btn">Navigation</button>
+              <button id="helpButton" type="button" class="toolbar-btn active">Help</button>
+            </div>
+            <div class="btn-group">
+              <button id="hideSidebarButton" type="button" class="toolbar-btn" title="Toggle sidebar on/off">
+                <span class="fa fa-chevron-down"></span>
+              </button>
             </div>
           </div>
         </div>
       </div>
-      <div id="sidebarArea">
-        <div id="sidebarToolbar">
-          <div class="btn-toolbar pull-left">
+      <div id="contentArea">
+        <div id="mainArea">
+          <div id="mainContent" class="container notebookMainContent">
+            <div id="ipython-main-app">
+              <div id="notebook_panel" style="position: relative">
+                <div id="notebook"></div>
+                <div id='tooltip' class='ipython_tooltip' style='display:none'></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="sidebarArea" style="display:none">
+          <div id="sidebarContent">
             <div class="btn-group">
-              <button id="toggleSidebarButton" type="button" class="btn" title="Toggle the size of the sidebar">
+              <button id="toggleSidebarButton" type="button" class="toolbar-btn" title="Toggle the size of the sidebar">
                 <span class="fa fa-chevron-right fa-flip-horizontal"></span>
               </button>
             </div>
-            <div class="btn-group">
-              <button id="navigationButton" type="button" class="btn">Navigation</button>
-              <button id="helpButton" type="button" class="btn active">Help</button>
+            <div>
+              <div id="navigation" style="display: none"></div>
+              <div id="help">
+                <p><b>Help for Python APIs</b></p>
+                <p>
+                  You can enter <code>class?</code> or <code>member?</code> within a code cell in the
+                  notebook to get help on a Python API.
+                </p>
+                <br />
+                <p>
+                  For example, try <code>str?</code> to get help information on the built-in Python
+                  method to convert a value to its string representation.
+                </p>
+                <br />
+                <p>
+                  Additional help topics and links are also available from the menu off the Help
+                  icon on the top of the page.
+                </p>
+                <br />
+                <p><b>Docs and Samples</b></p>
+                <p>
+                  The <a href="/notebooks/datalab/docs/notebooks/Readme.ipynb"
+                    target="_blank">Cloud Datalab Guide</a> featuring
+                  documentation and sample notebooks is also a great way to check out how you can use Cloud Datalab.
+                </p>
+              </div>
             </div>
           </div>
         </div>
-        <div id="sidebarContent">
-          <div id="navigation" style="display: none"></div>
-          <div id="help">
-            <p><b>Help for Python APIs</b></p>
-            <p>
-              You can enter <code>class?</code> or <code>member?</code> within a code cell in the
-              notebook to get help on a Python API.
-            </p>
-            <br />
-            <p>
-              For example, try <code>str?</code> to get help information on the built-in Python
-              method to convert a value to its string representation.
-            </p>
-            <br />
-            <p>
-              Additional help topics and links are also available from the menu off the Help
-              icon on the top of the page.
-            </p>
-            <br />
-            <p><b>Docs and Samples</b></p>
-            <p>
-              The <a href="/notebooks/datalab/Readme.ipynb" target"_blank">Cloud Datalab Guide</a> featuring
-              documentation and sample notebooks is also a great way to check out how you can use Cloud Datalab.
-            </p>
-          </div>
-        </div>
       </div>
+    </div>
     </div>
   </div>
   <script src="/static/components/es6-promise/promise.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="/static/components/requirejs/require.js"></script>
   <script>
-    window.mathjax_url = '';
     window.sys_info = {};
     require.config({
       baseUrl: '/static/',
@@ -250,10 +300,13 @@
            'contents': 'services/contents',
          }
        }
-     });
-     window.datalab = {};
+    });
+    window.datalab = {};
+
+    $("#appBar").load("/static/appbar.html", function() {
+      require(['notebook/js/main.min']);
+    });
   </script>
-  <script src="/static/notebook/js/main.min.js" charset="utf-8"></script>
   <script src="//www.gstatic.com/feedback/api.js" async="true" defer="true"></script>
   <script type="text/fragment" id="cellStatus">
     <div class="status" style="display: none;">
@@ -276,8 +329,6 @@
       <div><code>m</code>: to markdown</div>
       <div><code>Up</code>: select previous cell</div>
       <div><code>Down</code>: select next cell</div>
-      <div><code>Ctrl+K</code>: move cell up</div>
-      <div><code>Ctrl+J</code>: move cell down</div>
       <div><code>a</code>: insert cell above</div>
       <div><code>b</code>: insert cell below</div>
       <div><code>x</code>: cut cell</div>

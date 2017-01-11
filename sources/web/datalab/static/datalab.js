@@ -12,6 +12,98 @@
  * the License.
  */
 
+// Override WebSocket
+(function() {
+    var proxyWebSockets = (document.body.getAttribute('data-proxy-web-sockets') == 'true');
+    if (!proxyWebSockets) {
+	return;
+    }
+
+    if (!window.io) {
+	// If socket.io was not loaded into the page, then do not override the existing
+	// WebSocket functionality.
+	return;
+    }
+
+    function WebSocketShim(url) {
+	var self = this;
+	this._url = url;
+	this.readyState = WebSocketShim.CLOSED;
+
+	var socketUri = location.protocol + '//' + location.host + '/session';
+	var socketOptions = {
+	    upgrade: false,
+	    multiplex: false
+	};
+
+	function errorHandler() {
+	    if (self.onerror) {
+		self.onerror({ target: self });
+	    }
+	}
+	var socket = io.connect(socketUri, socketOptions);
+	socket.on('connect', function() {
+	    socket.emit('start', { url: url });
+	});
+	socket.on('disconnect', function() {
+	    self._socket = null;
+	    self.readyState = WebSocketShim.CLOSED;
+	    if (self.onclose) {
+		self.onclose({ target: self });
+	    }
+	});
+	socket.on('open', function(msg) {
+	    self._socket = socket;
+	    self.readyState = WebSocketShim.OPEN;
+	    if (self.onopen) {
+		self.onopen({ target: self });
+	    }
+	});
+	socket.on('close', function(msg) {
+	    self._socket = null;
+	    self.readyState = WebSocketShim.CLOSED;
+	    if (self.onclose) {
+		self.onclose({ target: self });
+	    }
+	});
+	socket.on('data', function(msg) {
+	    if (self.onmessage) {
+		self.onmessage({ target: self, data: msg.data });
+	    }
+	});
+	socket.on('error', errorHandler);
+	socket.on('connect_error', errorHandler);
+	socket.on('reconnect_error', errorHandler);
+    }
+    WebSocketShim.prototype = {
+	onopen: null,
+	onclose: null,
+	onmessage: null,
+	onerror: null,
+
+	send: function(data) {
+	    if (this.readyState != WebSocketShim.OPEN) {
+		throw new Error('WebSocket is not yet opened');
+	    }
+	    this._socket.emit('data', { data: data });
+	},
+
+	close: function() {
+	    if (this.readyState == WebSocketShim.OPEN) {
+		this.readyState = WebSocketShim.CLOSED;
+
+		this._socket.emit('stop', { url: this._url });
+		this._socket.close();
+	    }
+	}
+    };
+    WebSocketShim.CLOSED = 0;
+    WebSocketShim.OPEN = 1;
+
+    var nativeWebSocket = window.WebSocket;
+    window.WebSocket = WebSocketShim;
+})();
+
 var debug = {
   enabled: true,
   log: function() { console.log.apply(console, arguments); }
@@ -19,122 +111,93 @@ var debug = {
 
 function placeHolder() {}
 
-// Install Google Analytics - this is the standard tracking code, reformatted.
-(function(i, s, o, g, r, a, m) {
-  i['GoogleAnalyticsObject'] = r;
-  i[r] = i[r] || function() {
-    (i[r].q = i[r].q || []).push(arguments)
-  };
-  i[r].l = 1 * new Date();
-  a = s.createElement(o);
-  m = s.getElementsByTagName(o)[0];
-  a.async = 1;
-  a.src = g;
-  m.parentNode.insertBefore(a, m)
-})(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+function reportEvent(event) {
+  var reportingEnabled = (document.body.getAttribute('data-reporting-enabled') == 'true');
+  if (!reportingEnabled) { return; }
 
-// Override WebSocket
-(function() {
-  if (!window.io) {
-    // If socket.io was not loaded into the page, then do not override the existing
-    // WebSocket functionality.
-    return;
+  var signedIn = (document.body.getAttribute('data-signed-in') == 'true');
+  var additionalMetadata = 'signedIn=' + signedIn;
+  if (event['metadata']) {
+    event['metadata'] = event['metadata'] + ',' + additionalMetadata;
+  } else {
+    event['metadata'] = additionalMetadata;
+  }
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push(event);
+}
+
+function toggleSidebar() {
+  var d = document.getElementById('sidebarArea');
+  d.style.display = (d.style.display == 'none') ? 'block' : 'none';
+  document.getElementById('hideSidebarButton').classList.toggle('fa-flip-vertical');
+  this.blur();
+  // Chrome at least seems to render the notebook poorly after this for a little
+  // while. If you scroll new content into view it is messed up until you click
+  // in the notebook. This does not repro with Firefox or Safari so seems to be
+  // a Chrome bug. Triggering a resize or similar doesn't help because the content
+  // that is messed up is currently out of the viewable part of the window. Will
+  // file a bug against Chrome.
+}
+
+function showHelp(markup) {
+  document.getElementById('navigation').style.display = 'none';
+  document.getElementById('help').style.display = '';
+
+  document.getElementById('navigationButton').classList.remove('active');
+  document.getElementById('helpButton').classList.add('active');
+
+  if (markup) {
+    document.getElementById('help').innerHTML = markup;
+  }
+  if (document.getElementById('sidebarArea').style.display == 'none') {
+    toggleSidebar();
+  }
+}
+
+function xhr(url, callback, method) {
+  method = method || "GET";
+
+  let request = new XMLHttpRequest();
+  request.onreadystatechange = callback.bind(request);
+  request.open(method, url);
+  request.send();
+}
+
+function getSettingKeyAddress(setting) {
+  return window.location.protocol + "//" + window.location.host + "/_settings?key=" + setting;
+}
+
+function restartDatalab() {
+  var restartUrl = window.location.protocol + "//" + window.location.host + "/_restart";
+
+  function redirect() {
+    window.location = '/';
   }
 
-  function WebSocketShim(url) {
-    var self = this;
-    this._url = url;
-    this.readyState = WebSocketShim.CLOSED;
+  xhr(restartUrl, function(){
+    // We redirect to signal to the user that the restart did something.
+    // However, we have to delay that a bit to give Datalab time to restart.  
+    window.setTimeout(redirect, 500);
+  }, "POST");
+}
 
-    var socketUri = location.protocol + '//' + location.host + '/session';
-    var socketOptions = {
-      upgrade: false,
-      multiplex: false
-    };
-
-    function errorHandler() {
-      if (self.onerror) {
-        self.onerror({ target: self });
-      }
-    }
-    var socket = io.connect(socketUri, socketOptions);
-    socket.on('connect', function() {
-      socket.emit('start', { url: url });
-    });
-    socket.on('disconnect', function() {
-      self._socket = null;
-      self.readyState = WebSocketShim.CLOSED;
-      if (self.onclose) {
-        self.onclose({ target: self });
-      }
-    });
-    socket.on('open', function(msg) {
-      self._socket = socket;
-      self.readyState = WebSocketShim.OPEN;
-      if (self.onopen) {
-        self.onopen({ target: self });
-      }
-    });
-    socket.on('close', function(msg) {
-      self._socket = null;
-      self.readyState = WebSocketShim.CLOSED;
-      if (self.onclose) {
-        self.onclose({ target: self });
-      }
-    });
-    socket.on('data', function(msg) {
-      if (self.onmessage) {
-        self.onmessage({ target: self, data: msg.data });
-      }
-    });
-    socket.on('error', errorHandler);
-    socket.on('connect_error', errorHandler);
-    socket.on('reconnect_error', errorHandler);
-  }
-  WebSocketShim.prototype = {
-    onopen: null,
-    onclose: null,
-    onmessage: null,
-    onerror: null,
-
-    send: function(data) {
-      if (this.readyState != WebSocketShim.OPEN) {
-        throw new Error('WebSocket is not yet opened');
-      }
-      this._socket.emit('data', { data: data });
-    },
-
-    close: function() {
-      if (this.readyState == WebSocketShim.OPEN) {
-        this.readyState = WebSocketShim.CLOSED;
-
-        this._socket.emit('stop', { url: this._url });
-        this._socket.close();
-      }
-    }
-  };
-  WebSocketShim.CLOSED = 0;
-  WebSocketShim.OPEN = 1;
-
-  var nativeWebSocket = window.WebSocket;
-  window.WebSocket = WebSocketShim;
-})();
-
-
-function initializePage(dialog) {
+function initializePage(dialog, saveFn) {
 
   function showAbout() {
     var version = document.body.getAttribute('data-version-id');
+    var reportingEnabled = (document.body.getAttribute('data-reporting-enabled') == 'true');
     var dialogContent =
       '<p>Interactive notebooks, with Python and SQL on Google Cloud Platform.</p>' +
       '<p>Explore, transform, visualize and process data using BigQuery and Google Cloud Storage.</p><br />' +
       '<pre>Version: ' + version  + '\nBased on Jupyter (formerly IPython) 4</pre>' +
       '<h5><b>More Information</b></h5>' +
       '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://cloud.google.com" target="_blank">Product information</a><br />' +
-      '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://github.com/GoogleCloudPlatform/datalab" target="_blank">Project on GitHub</a><br />' +
+      '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://github.com/googledatalab/datalab" target="_blank">Project on GitHub</a><br />' +
       '<span class="fa fa-external-link-square">&nbsp;</span><a href="/static/about.txt" target="_blank">License and software information</a><br />' +
       '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://cloud.google.com/terms/" target="_blank">Terms of Service</a><br />' +
-      '<span class="fa fa-external-link-square">&nbsp;</span><a href="http://www.google.com/intl/en/policies/" target="_blank">Privacy Policy</a><br />';
+      '<span class="fa fa-external-link-square">&nbsp;</span><a href="http://www.google.com/intl/en/policies/" target="_blank">Privacy Policy</a><br />' +
+      '<span class="fa fa-external-link-square">&nbsp;</span><a href="/static/reporting.html?enabled=' + reportingEnabled + '" target="_blank">Usage Statistics</a><br />' +
+      '<span class="fa fa-recycle">&nbsp;</span><a href="javascript:restartDatalab()">Restart Server</a><br />';
 
     var dialogOptions = {
       title: 'About Google Cloud Datalab',
@@ -144,33 +207,320 @@ function initializePage(dialog) {
     dialog.modal(dialogOptions);
   }
 
+  // Prepare sign in/out UI
+  $('#accountDropdownButton').on('click', function (event) {
+    $(this).parent().toggleClass('open');
+    if (window.datalab && window.datalab.session) {
+      window.datalab.session.execute("datalab_project_id()", function(error, projectId) {
+        if (error === null || error === undefined) {
+          $('#projectLabel').text("Active project: " + projectId);
+          $('#projectLabel').show();
+        }
+      });
+    }
+  });
+  $('body').on('click', function (e) {
+    if (!$('#accountDropdown').is(e.target)
+        && $('#accountDropdown').has(e.target).length === 0
+        && $('.open').has(e.target).length === 0
+    ) {
+        $('#accountDropdown').removeClass('open');
+    }
+  });
+  var signedIn = document.body.getAttribute('data-signed-in');
+  if (signedIn != undefined) {  // i.e. running locally.
+    if (signedIn == "true") {
+      $('#signOutGroup').show();
+      var username = document.body.getAttribute('data-account');
+      $("#usernameLabel").text("Signed in as " + username);
+      if (username.indexOf('gserviceaccount.com') < 0) {
+        $('#signOutButton').show();
+      }
+    } else {
+      $('#signInButton').show();
+    }
+    $('#signInButton').click(function() {
+      saveFn();
+      window.location = '/signin?referer=' + encodeURIComponent(window.location);
+    });
+    $('#signOutButton').click(function() {
+      saveFn();
+      window.location = '/signout?referer=' + encodeURIComponent(window.location);
+    });
+    $('#ungitButton').click(function() {
+      var path = location.pathname;
+
+      // Extract the current directory name
+      if (path.indexOf('/tree') == 0) {
+        path = path.substr('/tree'.length);
+      } else if (path.indexOf('/notebooks') == 0) {
+        path = path.substr('/notebooks'.length);
+        path = path.substr(0, path.lastIndexOf('/'));
+      }
+      path = '/content' + path;
+      prefix = window.location.protocol + '//' + window.location.host;
+
+      window.open(prefix + '/_proxy/8083/#/repository?path=' + path);
+    });
+  }
+
+  // More UI that relies on appbar load
+  // Prepare the theme selector radio boxes
+  lightThemeRadioOption = document.getElementById("lightThemeRadioOption")
+  darkThemeRadioOption = document.getElementById("darkThemeRadioOption")
+  xhr(getSettingKeyAddress("theme"), function() {
+    lightThemeRadioOption.checked = this.responseText === "\"light\"";
+    darkThemeRadioOption.checked = this.responseText === "\"dark\"";
+  });
+  lightThemeRadioOption.onclick = function() {
+    setTheme("light");
+    darkThemeRadioOption.checked = false;
+  };
+  darkThemeRadioOption.onclick = function() {
+    setTheme("dark");
+    lightThemeRadioOption.checked = false;
+  };
+
+  function setTheme(theme) {
+    xhr(getSettingKeyAddress("theme") + "&value=" + theme, function() {
+      // Reload the stylesheet by resetting its address with a random (time) version querystring
+      sheetAddress = document.getElementById("themeStylesheet").href + "?v=" + Date.now()
+      document.getElementById("themeStylesheet").setAttribute('href', sheetAddress);
+    }, "POST");
+  }
+
+  // If inside a notebook, prepare notebook-specific help link inside the sidebar
+  if (document.getElementById('sidebarArea') !== null) {
+    $('#keyboardHelpLink').click(function(e) {
+      showHelp(document.getElementById('shortcutsHelp').textContent);
+      e.preventDefault();
+    });
+    $('#keyboardHelpLink').show()
+    $('#markdownHelpLink').click(function(e) {
+      showHelp(document.getElementById('markdownHelp').textContent);
+      e.preventDefault();
+    });
+    $('#markdownHelpLink').show()
+    $('#notebookHelpDivider').show()
+  }
   $('#aboutButton').click(showAbout);
   $('#feedbackButton').click(function() {
     window.open('https://groups.google.com/forum/#!newtopic/google-cloud-datalab-feedback');
   });
+}
 
-  var projectId = document.body.getAttribute('data-project-id');
-  var instanceName = document.body.getAttribute('data-instance-name');
-  var consoleLink = 'https://console.developers.google.com/project/' + projectId;
-  var instancesLink = consoleLink + '/appengine/versions?moduleId=datalab';
-  var repoLink = consoleLink + '/clouddev/develop/browse/default/datalab_' + instanceName;
+// constants for minitoolbar operations
+const CELL_METADATA_COLLAPSED = 'hiddenCell';
+const COLLAPSE_BUTTON_CLASS = 'fa-compress';
+const UNCOLLAPSE_BUTTON_CLASS = 'fa-expand';
+const CELL_METADATA_CODE_COLLAPSED = 'codeCollapsed';
+const COLLAPSE_CODE_BUTTON_CLASS = 'fa-code';
+const UNCOLLAPSE_CODE_BUTTON_CLASS = 'fa-code';
+const RUN_CELL_BUTTON_CLASS = 'fa-play';
+const CLEAR_CELL_BUTTON_CLASS = 'fa-minus-square-o';
 
-  document.getElementById('consoleLink').href = consoleLink;
-  document.getElementById('instancesLink').href = instancesLink;
-  document.getElementById('repoLink').href = repoLink;
-  document.getElementById('userId').textContent = document.body.getAttribute('data-user-id');
+function toggleCollapseCell(cell) {
+  isCollapsed = cell.metadata[CELL_METADATA_COLLAPSED] || false;
+  if (isCollapsed) {
+    uncollapseCell(cell);
+  } else {
+    collapseCell(cell);
+  }
+}
 
-  var analyticsId = document.body.getAttribute('data-analytics-id');
-  if (analyticsId) {
-    ga('create', analyticsId);
-    ga('set', {
-      dimension2: document.body.getAttribute('data-version-id'),
-      dimension3: document.body.getAttribute('data-instance-id')
-    });
-    ga('set', 'hostname', 'datalab.cloud.google.com');
-    ga('set', 'page', '/' + document.body.getAttribute('data-analytics-path'));
-    ga('set', 'title', document.body.getAttribute('data-analytics-title'));
-    ga('send', 'pageview');
+/**
+ * Collapse entire cell
+ */
+function collapseCell(cell) {
+  if (cell.cell_type !== 'code') {
+    // can't collapse markdown cells
+    return;
+  }
+
+  function getCollapsedCellHeader(cell) {
+    dots = '';
+    // add dots if the cell has more than one code line
+    if (cell.element.find('pre.CodeMirror-line').length > 1)
+      dots = '. . .';
+    return '<div class="rendered_html">' + cell.element.find('pre.CodeMirror-line')[0].outerHTML + dots + '</div>';
+  }
+
+  cell.element.addClass('cellhidden');
+
+  cell.element.find('div.widget-area').hide();
+  cell.element.find('div.cellPlaceholder')[0].innerHTML = getCollapsedCellHeader(cell);
+  collapseSpan = cell.element.find('span.glyph-collapse-cell').removeClass(COLLAPSE_BUTTON_CLASS);
+  collapseSpan = cell.element.find('span.glyph-collapse-cell').addClass(UNCOLLAPSE_BUTTON_CLASS);
+  collapseSpan = cell.element.find('span.title-collapse-cell')[0].innerText = 'Expand';
+
+  cell.metadata[CELL_METADATA_COLLAPSED] = true;
+}
+
+/**
+ * Uncollapse entire cell
+ */
+function uncollapseCell(cell) {
+  cell.element.removeClass('cellhidden');
+
+  widgetSubarea = cell.element.find('div.widget-subarea')[0];
+  // show the widgets area only if there are widgets in it (has children nodes)
+  if (widgetSubarea.children.length > 0)
+    cell.element.find('div.widget-area').show();
+  cell.element.find('div.cellPlaceholder')[0].innerHTML = '';
+  collapseSpan = cell.element.find('span.glyph-collapse-cell').removeClass(UNCOLLAPSE_BUTTON_CLASS);
+  collapseSpan = cell.element.find('span.glyph-collapse-cell').addClass(COLLAPSE_BUTTON_CLASS);
+  collapseSpan = cell.element.find('span.title-collapse-cell')[0].innerText = 'Collapse';
+
+  cell.metadata[CELL_METADATA_COLLAPSED] = false;
+
+  // uncollapse code section as well
+  uncollapseCode(cell);
+}
+
+/**
+ * Toggle collapsing the code part of the cell
+ */
+function toggleCollapseCode(cell) {
+  isCollapsed = cell.metadata[CELL_METADATA_CODE_COLLAPSED] || false;
+  if (isCollapsed) {
+    uncollapseCode(cell);
+  } else {
+    collapseCode(cell);
+  }
+}
+
+/**
+ * Collapse the code part of the cell
+ */
+function collapseCode(cell) {
+  if (cell.cell_type !== 'code') {
+    // can't collapse code in non-code cells
+    return;
+  }
+
+  cell.element.addClass('codehidden');
+  cell.element.find('span.title-collapse-code')[0].innerText = 'Show Code';
+  cell.metadata[CELL_METADATA_CODE_COLLAPSED] = true;
+}
+
+/**
+ * Uncollapse the code part of the cell
+ */
+function uncollapseCode(cell) {
+  cell.element.removeClass('codehidden');
+  cell.element.find('span.title-collapse-code')[0].innerText = 'Hide Code';
+  cell.metadata[CELL_METADATA_CODE_COLLAPSED] = false;
+}
+
+/**
+ * Create an HTML button for the cell minitoolbar and return it
+ */
+function createCellMiniToolbarButton(description) {
+  let buttonLi = document.createElement('li');
+
+  let anchor = document.createElement('a');
+  anchor.href = "#";
+
+  // span for button icon
+  let glyphSpan = document.createElement('span');
+  glyphSpan.className = description.className + ' glyph-' + description.id;
+  glyphSpan.style.width = '20px';
+  anchor.appendChild(glyphSpan);
+
+  // span for button title
+  let titleSpan = document.createElement('span');
+  titleSpan.innerText = description.title;
+  titleSpan.className = 'title-' + description.id;
+
+  anchor.appendChild(titleSpan);
+  buttonLi.appendChild(anchor);
+  buttonLi.addEventListener('click', description.clickHandler);
+  return buttonLi;
+}
+
+/**
+ * Patch the cell's element to add custom UI buttons
+ */
+function addCellMiniToolbar(cell) {
+
+  let toolbarDiv = document.createElement('div');
+  toolbarDiv.className = 'dropdown minitoolbar';
+
+  let toolbarToggle = document.createElement('button');
+  toolbarToggle.className = 'btn btn-default dropdown-toggle minitoolbar-toggle';
+  toolbarToggle.setAttribute('data-toggle', 'dropdown');
+  toolbarToggle.innerHTML = '<span class="fa fa-bars"></span>';
+  toolbarDiv.appendChild(toolbarToggle);
+
+  let toolbarButtonList = document.createElement('ul');
+  toolbarButtonList.className = 'dropdown-menu';
+  toolbarDiv.appendChild(toolbarButtonList);
+
+
+  minitoolbarButtons = [
+    // run cell
+    {
+      id: 'run-cell',
+      title: 'Run',
+      className: 'fa ' + RUN_CELL_BUTTON_CLASS,
+      clickHandler: function() {
+        cell.execute();
+      }
+    },
+    // clear cell
+    {
+      id: 'clear-cell',
+      title: 'Clear',
+      className: 'fa ' + CLEAR_CELL_BUTTON_CLASS,
+      clickHandler: function() {
+        cell.clear_output();
+      }
+    },
+    // collapse cell
+    {
+      id: 'collapse-cell',
+      title: 'Collapse',
+      className: 'fa ' + COLLAPSE_BUTTON_CLASS,
+      clickHandler: function() {
+        toggleCollapseCell(cell);
+      }
+    },
+    // collapse code
+    {
+      id: 'collapse-code',
+      title: 'Hide Code',
+      className: 'fa ' + COLLAPSE_CODE_BUTTON_CLASS,
+      clickHandler: function() {
+        toggleCollapseCode(cell);
+      }
+    }
+  ];
+
+  // cell collapse placeholder
+  let placeholderDiv = document.createElement('div');
+  placeholderDiv.className = 'cellPlaceholder btn btn-default';
+  placeholderDiv.title = 'Uncollapse cell';
+  placeholderDiv.addEventListener('click', function() {
+    uncollapseCell(cell);
+  });
+  cell.element.append(placeholderDiv);
+
+  minitoolbarButtons.forEach(button => {
+    buttonHtml = createCellMiniToolbarButton(button);
+    toolbarButtonList.appendChild(buttonHtml);
+  });
+
+  // add the minitoolbar to the cell
+  cell.element.prepend(toolbarDiv);
+
+  // collapse cells according to their saved metadata if any
+  if (CELL_METADATA_COLLAPSED in cell.metadata && cell.metadata[CELL_METADATA_COLLAPSED] === true) {
+    collapseCell(cell);
+  }
+
+  // collapse cell code according to their saved metadata if any
+  if (CELL_METADATA_CODE_COLLAPSED in cell.metadata && cell.metadata[CELL_METADATA_CODE_COLLAPSED] === true) {
+    collapseCode(cell);
   }
 }
 
@@ -182,12 +532,25 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
       d3: '//cdnjs.cloudflare.com/ajax/libs/d3/3.4.13/d3',
       element: '/static/require/element',
       style: '/static/require/style',
-      visualization: '/static/require/visualization'
+      visualization: '/static/require/visualization',
+      jquery: '//ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min',
+      plotly: 'https://cdn.plot.ly/plotly-1.5.1.min.js?noext'
+    },
+    shim: {
+      plotly: {
+        deps: ['d3', 'jquery'],
+        exports: 'plotly'
+      }
     }
   });
 
   function DataLabSession() {
   }
+
+  DataLabSession.prototype.is_connected = function() {
+    return notebook.kernel && notebook.kernel.is_connected();
+  }
+
   DataLabSession.prototype.execute = function(code, callback) {
     function shellHandler(reply) {
       if (callback) {
@@ -211,6 +574,9 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
         try {
           if (output.msg_type == 'execute_result') {
             values = output.content.data['application/json'];
+            if (!values) {
+              values = output.content.data['text/plain'];
+            }
           }
         }
         catch (e) {
@@ -241,11 +607,13 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 
   window.datalab.session = new DataLabSession();
 
+  $([IPython.events]).on('app_initialized.NotebookApp', function(){
+    // Bind Alt-Z to undo cell deletion.
+    IPython.keyboard_manager.command_shortcuts.add_shortcut('Alt-z','ipython.undo-last-cell-deletion')
+  });
 
   require(['notebook/js/notebook'], function(ipy) {
     var notebook = ipy.Notebook;
-    notebook.prototype.list_checkpoints = placeHolder;
-    notebook.prototype.create_checkpoint = placeHolder;
 
     var originalFromJSON = notebook.prototype.fromJSON;
     notebook.prototype.fromJSON = function(data) {
@@ -259,13 +627,22 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
         }
       });
 
-      originalFromJSON.apply(this, [ data ]);
+      return originalFromJSON.apply(this, [ data ]);
     }
 
-    // This is a hack to disable timestamp check due to a Workspace-sync bug.
-    var originalSave = notebook.prototype.save_notebook;
-    notebook.prototype.save_notebook = function() {
-      return originalSave.apply(this, /* check_lastmodified */ [ false ]);
+    function isSample() {
+      var path = window.location.pathname;
+      var lastSepPos = path.lastIndexOf('/');
+      return lastSepPos >= 23 &&
+          path.substring(lastSepPos-23, lastSepPos) == '/datalab/docs/notebooks';
+    }
+
+    // Remove save and rename menu items if under our docs directory.
+    if (isSample()) {
+      // Can't just hide them as they will get redisplayed on drop down, so we
+      // strip their content.
+      document.getElementById('saveButton').innerHTML = '';
+      document.getElementById('renameButton').innerHTML = '';
     }
 
     // A replacement notebook copy function that makes copies in the root if
@@ -275,8 +652,12 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
       var base_url = this.base_url;
       var w = window.open('', IPython._target);
       var parent = utils.url_path_split(this.notebook_path)[0];
-      if (parent.startsWith('datalab/')) {
-        parent = '';
+      if (isSample()) {
+        var path = window.location.pathname;
+        var lastSepPos = path.lastIndexOf('/');
+        // Strip off leading /notebooks/ and trailing sample path to get datalab
+        // path, then add /notebooks.
+        parent = path.substring(11, lastSepPos-14) + 'notebooks';
       }
       this.contents.copy(this.notebook_path, parent).then(
         function (data) {
@@ -294,6 +675,40 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 
   require(['notebook/js/menubar'], function(ipy) {
     ipy.MenuBar.prototype.add_kernel_help_links = placeHolder;
+
+    // This is just a copy of the one from Jupyter but changes the first
+    // line from this.element.find('restore_checkpoint') to
+    // $('#restoreButton').
+    ipy.MenuBar.prototype.update_restore_checkpoint = function(checkpoints) {
+        var ul = $('#restoreButton').find("ul");
+        ul.empty();
+        if (!checkpoints || checkpoints.length === 0) {
+            ul.append(
+                $("<li/>")
+                .addClass("disabled")
+                .append(
+                    $("<a/>")
+                    .text("No checkpoints")
+                )
+            );
+            return;
+        }
+
+        var that = this;
+        checkpoints.map(function (checkpoint) {
+            var d = new Date(checkpoint.last_modified);
+            ul.append(
+                $("<li/>").append(
+                    $("<a/>")
+                    .attr("href", "#")
+                    .text(moment(d).format("LLLL"))
+                    .click(function () {
+                        that.notebook.restore_checkpoint_dialog(checkpoint);
+                    })
+                )
+            );
+  });
+    };
   });
 
   require(['notebook/js/textcell'], function(ipy) {
@@ -373,13 +788,13 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
           }
         }
       }
-      originalExecute.apply(this, [ code, callbacks, options ]);
+      return originalExecute.apply(this, [ code, callbacks, options ]);
     }
   });
 
   /**
    * Patch the cell auto_highlight code to use a working mode for magic_ MIME types.
-   * The Jupyter code uses a broken multiplexor. This _auto_highlight function is 
+   * The Jupyter code uses a broken multiplexor. This _auto_highlight function is
    * just the Jupyter code with the multiplexor stripped out and an overlay mode
    * put in instead. First we have a function to return the mode that works,
    * then we have the original Jupyter code with a call to our function replacing the
@@ -485,6 +900,16 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     };
   });
 
+  require (["notebook/js/outputarea"], function(ipy) {
+    ipy.OutputArea.auto_scroll_threshold = 1000;
+  });
+
+  function removeCompletedMarks() {
+    Jupyter.notebook.get_cells().forEach(function(cell) {
+      cell.element.removeClass('completed');
+    });
+  }
+
   function navigateAlternate(alt, download) {
     var url = document.location.href.replace('/notebooks', alt);
     if (download) {
@@ -503,7 +928,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   }
 
   $('#saveButton').click(function() {
-    notebook.save_notebook();
+    notebook.save_checkpoint();
   })
 
   $('#saveCopyButton').click(function() {
@@ -514,15 +939,37 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     notebook.save_widget.rename_notebook({ notebook: notebook });
   })
 
+  $('#restoreButton').click(function() {
+    notebook.restore_checkpoint();
+  })
+
   $('#downloadButton').click(function() {
     navigateAlternate('/files', /* download */ true);
   })
 
   $('#convertHTMLButton').click(function() {
+    var event = {
+      'event': 'concordEvent',
+      'pagePath': '/virtual/datalab/exportNotebook',
+      'eventType': 'datalab',
+      'eventName': 'exportNotebook',
+      'metadata': 'format=html',
+    }
+    reportEvent(event);
+
     navigateAlternate('/nbconvert/html');
   })
 
   $('#convertPythonButton').click(function() {
+    var event = {
+      'event': 'concordEvent',
+      'pagePath': '/virtual/datalab/exportNotebook',
+      'eventType': 'datalab',
+      'eventName': 'exportNotebook',
+      'metadata': 'format=py',
+    }
+    reportEvent(event);
+
     navigateAlternate('/nbconvert/python');
   })
 
@@ -590,7 +1037,8 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   });
 
   $('#resetSessionButton').click(function() {
-    notebook.restart_kernel();
+    notebook.restart_kernel()
+      .then(success => removeCompletedMarks());
     this.blur();
   });
 
@@ -600,22 +1048,22 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     this.blur();
   });
 
-  $('#keyboardHelpLink').click(function(e) {
-    showHelp(document.getElementById('shortcutsHelp').textContent);
-    e.preventDefault();
-  });
-
-  $('#markdownHelpLink').click(function(e) {
-    showHelp(document.getElementById('markdownHelp').textContent);
-    e.preventDefault();
+  $('#hideSidebarButton').click(function() {
+    toggleSidebar();
   });
 
   $('#navigationButton').click(function() {
+    if (document.getElementById('sidebarArea').style.display == 'none') {
+      toggleSidebar();
+    }
     showNavigation();
     this.blur();
   });
 
   $('#helpButton').click(function() {
+    if (document.getElementById('sidebarArea').style.display == 'none') {
+      toggleSidebar();
+    }
     showHelp();
     this.blur();
   });
@@ -625,7 +1073,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     if (index !== null) {
       var cell = notebook.get_cells()[index];
 
-      var scrollable = $('#mainContent');
+      var scrollable = $('#mainArea');
       var scrollTop = scrollable.scrollTop() - scrollable.offset().top +
                       cell.element.offset().top;
       scrollable.animate({ scrollTop: scrollTop }, 250);
@@ -639,18 +1087,6 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 
     document.getElementById('navigationButton').classList.add('active');
     document.getElementById('helpButton').classList.remove('active');
-  }
-
-  function showHelp(markup) {
-    document.getElementById('navigation').style.display = 'none';
-    document.getElementById('help').style.display = '';
-
-    document.getElementById('navigationButton').classList.remove('active');
-    document.getElementById('helpButton').classList.add('active');
-
-    if (markup) {
-      document.getElementById('help').innerHTML = markup;
-    }
   }
 
   function updateNavigation() {
@@ -709,15 +1145,29 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   }
 
   events.on('notebook_loaded.Notebook', function() {
+
+    // create the cell toolbar
+    Jupyter.notebook.get_cells().forEach(function(cell) {
+      if (cell.cell_type === 'code')
+        addCellMiniToolbar(cell)
+    });
+
+    // patch any cell created from now on
+    events.on('create.Cell', function(e, params) {
+      addCellMiniToolbar(params.cell);
+    });
+
     events.on('set_dirty.Notebook', function(e) {
       updateNavigation();
     });
+
     events.on('command_mode.Cell', function(e) {
       updateNavigation();
     });
 
     updateNavigation();
   });
+
   events.on('open_with_text.Pager', function(e, payload) {
     var help = payload.data['text/html'];
     if (!help) {
@@ -735,22 +1185,50 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 }
 
 
+function initializeEditApplication(ipy, editor) {
+  function navigateAlternate(alt) {
+    var url = document.location.href.replace('/edit', alt);
+    if (url.includes("?")) {
+      url = url.slice(0, url.lastIndexOf("?"));
+    }
+    url = url + '?download=true';
+
+    if (!editor.clean) {
+      editor.save().then(function() {
+        window.open(url);
+      });
+    }
+    else {
+      window.open(url);
+    }
+  }
+
+  $('#saveButton').click(function() {
+    editor.save();
+  })
+
+  $('#renameButton').click(function() {
+    notebook.save_widget.rename();
+  })
+
+  $('#downloadButton').click(function() {
+    navigateAlternate('/files');
+  })
+}
+
+
 function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, utils) {
-  function showContent(e) {
-    document.getElementById('notebooks').classList.add('active');
-    document.getElementById('running').classList.remove('active');
-    e.target.blur();
-  }
-
-  function showSessions(e) {
-    document.getElementById('notebooks').classList.remove('active');
-    document.getElementById('running').classList.add('active');
-    e.target.blur();
-  }
-
   function addNotebook(e) {
     newNotebook.new_notebook();
     e.target.blur();
+
+    var event = {
+      'event': 'concordEvent',
+      'pagePath': '/virtual/datalab/createNotebook',
+      'eventType': 'datalab',
+      'eventName': 'createNotebook',
+    }
+    reportEvent(event);
   }
 
   function addFolder(e) {
@@ -773,18 +1251,26 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
     e.target.blur();
   }
 
-  function browseRepository(e) {
-    window.open(document.getElementById('repoLink').href, '_blank');
-    e.target.blur();
+  function openEditor(e) {
+    prefix = location.protocol + '//' + location.host + "/edit/";
+    Jupyter.notebook_list.selected.forEach(notebook => {
+      window.open(prefix + notebook.path, '_blank');
+    });
   }
 
-  document.getElementById('contentButton').addEventListener('click', showContent, false);
-  document.getElementById('sessionsButton').addEventListener('click', showSessions, false);
+  // Extend the selection changed method to show/hide the editor button
+  notebookSelectedFn = notebookList._selection_changed;
+  notebookList._selection_changed = function() {
+    notebookSelectedFn.apply(this, arguments);
+    if (notebookList.selected.length === 1 && notebookList.selected[0].type !== 'directory')
+      $('#editorButton').show();
+    else
+      $('#editorButton').hide();
+  }
 
   document.getElementById('addNotebookButton').addEventListener('click', addNotebook, false);
   document.getElementById('addFolderButton').addEventListener('click', addFolder, false);
-
-  document.getElementById('repoButton').addEventListener('click', browseRepository, false);
+  document.getElementById('editorButton').addEventListener('click', openEditor, false);
 
   (function buildBreadcrumbContent() {
     var path = location.pathname;
@@ -834,19 +1320,20 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
     if (versionInfo == undefined) {
       return;
     }
-    var version = parseInt(document.body.getAttribute('data-version-id').split('.')[2]);
+    var vid = document.body.getAttribute('data-version-id');
+    if (vid == undefined) {
+      return;
+    }
+    var version = parseInt(vid.split('.')[2]);
     if (version >= versionInfo.latest) {
       return;
     }
-    var instance = document.body.getAttribute('data-instance-name');
-    var deployerLink = 'https://datalab.cloud.google.com?name=' + instance;
     var optional = (version >= versionInfo.last);
     var messageDiv = document.getElementById('updateMessageArea');
-    var message = 'You are using DataLab 0.5.' + version + '. ' + 
-        (optional ? 'An optional' : 'A recommended') + ' update (0.5.' + versionInfo.latest + 
-        ') is <a href="' + deployerLink + 
-        '"> available</a> (see <a href="https://github.com/GoogleCloudPlatform/datalab/wiki/Release-Info"' + 
-        '>what\'s new)</a>.'
+    var message = 'You are using DataLab 0.5.' + version + '. ' +
+        (optional ? 'An optional' : 'A recommended') + ' update (0.5.' + versionInfo.latest +
+        ') is available (see <a href="https://github.com/googledatalab/datalab/wiki/Release-Info"' +
+        '>what\'s new</a>).'
     messageDiv.innerHTML = message;
     messageDiv.classList.add('alert');
     messageDiv.classList.add(optional ? 'alert-warning' : 'alert-danger');
@@ -854,14 +1341,18 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
   }
 
   checkVersion(window.datalab.versions);
-
 }
 
 
 function initializeDataLab(ipy, events, dialog, utils, security) {
-  initializePage(dialog);
+  var saveFn = function() {
+    if (('notebook' in ipy) && ipy.notebook) {
+      ipy.notebook.save_checkpoint();
+    }
+  }
+  initializePage(dialog, saveFn);
 
-  // Override the sanitizer - all notebooks within the user's repository are implicity
+  // Override the sanitizer - all notebooks within the user's volume are implicity
   // trusted, and there is no need to remove scripts from cell outputs of notebooks
   // with previously saved results.
   security.sanitize_html = function(html) {
@@ -871,6 +1362,9 @@ function initializeDataLab(ipy, events, dialog, utils, security) {
   var pageClass = document.body.className;
   if (pageClass.indexOf('notebook_app') >= 0) {
     initializeNotebookApplication(ipy, ipy.notebook, events, dialog, utils);
+  }
+  else if (pageClass.indexOf('edit_app') >= 0) {
+    initializeEditApplication(ipy, ipy.editor);
   }
   else if (pageClass.indexOf('notebook_list') >= 0) {
     initializeNotebookList(ipy, ipy.notebook_list, ipy.new_notebook_widget, events, dialog, utils);

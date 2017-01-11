@@ -1,0 +1,17 @@
+sudo: required
+language: python
+python:
+  - "2.7"
+
+before_install:
+  - npm install -g typescript
+  - pip install -U pip
+  - pip install flake8
+
+services:
+  - docker
+
+script:
+  - flake8 tools/cli/
+  - cd containers/datalab
+  - ./build.sh

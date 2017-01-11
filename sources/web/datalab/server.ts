@@ -13,9 +13,10 @@
  */
 
 /// <reference path="../../../externs/ts/node/node.d.ts" />
+/// <reference path="../../../externs/ts/request/request.d.ts" />
 /// <reference path="common.d.ts" />
 
-import auth = require('./authentication');
+import auth = require('./auth')
 import fs = require('fs');
 import health = require('./health');
 import http = require('http');
@@ -23,41 +24,46 @@ import info = require('./info');
 import jupyter = require('./jupyter');
 import logging = require('./logging');
 import net = require('net');
+import noCacheContent = require('./noCacheContent')
 import path = require('path');
+import request = require('request');
+import reverseProxy = require('./reverseProxy');
+import settings_ = require('./settings');
 import sockets = require('./sockets');
-import static = require('./static');
+import static_ = require('./static');
 import url = require('url');
 import userManager = require('./userManager');
-import workspaceManager = require('./workspaceManager');
+import wsHttpProxy = require('./wsHttpProxy');
+import backupUtility = require('./backupUtility');
 
 var server: http.Server;
 var healthHandler: http.RequestHandler;
 var infoHandler: http.RequestHandler;
+var settingHandler: http.RequestHandler;
 var staticHandler: http.RequestHandler;
+
+// Datalab eula directory; if this doesn't exist the EULA hasn't been accepted.
+function eulaDir(): string {
+  return path.join(appSettings.datalabRoot, '/content/datalab/.config/eula');
+}
 
 /**
  * The application settings instance.
  */
 var appSettings: common.Settings;
+var loadedSettings: common.Map<string> = null;
+var startup_path_setting = 'startuppath'
 
 /**
  * If it is the user's first request since the web server restarts,
- * need to initialize workspace, and start jupyter server for that user.
- * We don't track results here. Later requests will go through initializaion
+ * need to start jupyter server for that user.
+ * We don't track results here. Later requests will go through initialization
  * checks again, and if it is still initializing, those requests will be parked
  * and wait for initialization to complete or fail.
  */
 function startInitializationForUser(request: http.ServerRequest): void {
-  var userId = userManager.getUserId(request);
-
-  if (!workspaceManager.isWorkspaceInitialized(userId)) {
-    // Do a sync as early as possible if workspace is not initialized.
-    // Giving null callback so this is fire-and-forget.
-    workspaceManager.updateWorkspaceNow(userId, null);
-  }
-
   if (jupyter.getPort(request) == 0) {
-    // Do a sync as early as possible if workspace is not initialized.
+    var userId = userManager.getUserId(request);
     // Giving null callback so this is fire-and-forget.
     jupyter.startForUser(userId, null);
   }
@@ -70,22 +76,6 @@ function startInitializationForUser(request: http.ServerRequest): void {
  */
 function handleJupyterRequest(request: http.ServerRequest, response: http.ServerResponse): void {
   var userId = userManager.getUserId(request);
-
-  if (!workspaceManager.isWorkspaceInitialized(userId)) {
-    // Workspace is not initialized was not created yet. Initializing it and call self again.
-    // Note that another 'syncNow' may already be ongoing so this 'syncNow' will probably
-    // be parked until the ongoing one is done.
-    workspaceManager.updateWorkspaceNow(userId, function(e) {
-      if (e) {
-        response.statusCode = 500;
-        response.end();
-      }
-      else {
-        handleJupyterRequest(request, response);
-      }
-    });
-    return;
-  }
 
   if (jupyter.getPort(request) == 0) {
     // Jupyter server is not created yet. Creating it for user and call self again.
@@ -103,31 +93,27 @@ function handleJupyterRequest(request: http.ServerRequest, response: http.Server
     return;
   }
   jupyter.handleRequest(request, response);
-  workspaceManager.scheduleWorkspaceUpdate(userId);
 }
 
 /**
- * Handles all requests after being authenticated.
+ * Handles all requests.
  * @param request the incoming HTTP request.
  * @param response the out-going HTTP response.
  * @path the parsed path in the request.
  */
-function handledAuthenticatedRequest(request: http.ServerRequest,
-                                     response: http.ServerResponse,
-                                     path: string) {
-  // TODO(jupyter): Additional custom path - should go away eventually with replaced
-  // pages.
-  // /static and /custom paths for returning static content
-  if ((path.indexOf('/static') == 0) || (path.indexOf('/custom') == 0)) {
-    staticHandler(request, response);
-    return;
-  }
+function handleRequest(request: http.ServerRequest,
+                       response: http.ServerResponse,
+                       path: string) {
 
+  var userId = userManager.getUserId(request);
+  if (loadedSettings === null) {
+      loadedSettings = settings_.loadUserSettings(userId);
+  }
   // All requests below are logged, while the ones above aren't, to avoid generating noise
   // into the log.
   logging.logRequest(request, response);
 
-  // If workspace or jupyter is not initialized, do it as early as possible.
+  // If Jupyter is not initialized, do it as early as possible after authentication.
   startInitializationForUser(request);
 
   // Landing page redirects to /tree to be able to use the Jupyter file list as
@@ -136,8 +122,28 @@ function handledAuthenticatedRequest(request: http.ServerRequest,
     userManager.maybeSetUserIdCookie(request, response);
 
     response.statusCode = 302;
-    response.setHeader('Location', '/tree');
+    if (startup_path_setting in loadedSettings) {
+        response.setHeader('Location', loadedSettings[startup_path_setting])
+    } else {
+        response.setHeader('Location', '/tree/datalab');
+    }
     response.end();
+    return;
+  }
+
+  var targetPort: string = reverseProxy.getRequestPort(request, path);
+  if (targetPort) {
+    reverseProxy.handleRequest(request, response, targetPort);
+    return;
+  }
+
+  if (path.indexOf('/_nocachecontent/') == 0) {
+    if (process.env.KG_URL) {
+      reverseProxy.handleRequest(request, response, null);
+    }
+    else {
+      noCacheContent.handleRequest(path, response);
+    }
     return;
   }
 
@@ -146,7 +152,15 @@ function handledAuthenticatedRequest(request: http.ServerRequest,
       (path.indexOf('/tree') == 0) ||
       (path.indexOf('/notebooks') == 0) ||
       (path.indexOf('/nbconvert') == 0) ||
-      (path.indexOf('/files') == 0)) {
+      (path.indexOf('/nbextensions') == 0) ||
+      (path.indexOf('/files') == 0) ||
+      (path.indexOf('/edit') == 0) ||
+      (path.indexOf('/sessions') == 0)) {
+
+    if (path.indexOf('/tree') == 0) {
+        loadedSettings[startup_path_setting] = path
+        settings_.updateUserSetting(userId, startup_path_setting, path, true);
+    }
     handleJupyterRequest(request, response);
     return;
   }
@@ -162,9 +176,18 @@ function handledAuthenticatedRequest(request: http.ServerRequest,
   //       this into a real feature, that involves a confirmation prompt, as
   //       well validation to require a POST request.
   if (path.indexOf('/_restart') == 0) {
+    if ('POST' != request.method) {
+      return;
+    }
     setTimeout(function() { process.exit(0); }, 0);
     response.statusCode = 200;
     response.end();
+    return;
+  }
+
+  // /setting updates a per-user setting.
+  if (path.indexOf('/_setting') == 0) {
+    settingHandler(request, response);
     return;
   }
 
@@ -174,54 +197,78 @@ function handledAuthenticatedRequest(request: http.ServerRequest,
 }
 
 /**
+ * Base logic for handling all requests sent to the proxy web server. Some
+ * requests are handled within the server, while some are proxied to the
+ * Jupyter notebook server.
+ *
+ * Error handling is left to the caller.
+ *
+ * @param request the incoming HTTP request.
+ * @param response the out-going HTTP response.
+ */
+function uncheckedRequestHandler(request: http.ServerRequest, response: http.ServerResponse) {
+  var parsed_url = url.parse(request.url, true);
+  var urlpath = parsed_url.pathname;
+
+  // Check if EULA has been accepted; if not go to EULA page.
+  if (urlpath.indexOf('/accepted_eula') == 0) {
+    if (!fs.existsSync(eulaDir())) {
+      fs.mkdirSync(eulaDir());
+    }
+    var i = parsed_url.search.indexOf('referer=');
+    if (i < 0) {
+      logging.getLogger().info('Accepting EULA, but no referer; returning 500');
+      response.writeHead(500);
+    } else {
+      i += 8;
+      var referer = decodeURI(parsed_url.search.substring(i));
+      logging.getLogger().info('Accepting EULA; return to ' + referer);
+      response.writeHead (302, {'Location': referer})
+    }
+    response.end();
+  } else if (urlpath.indexOf('/signin') == 0 || urlpath.indexOf('/signout') == 0 ||
+      urlpath.indexOf('/oauthcallback') == 0) {
+    // Start or return from auth flow.
+    auth.handleAuthFlow(request, response, parsed_url, appSettings);
+  } else if ((urlpath.indexOf('/static') == 0) || (urlpath.indexOf('/custom') == 0)) {
+    // /static and /custom paths for returning static content
+    // We serve these even if the EULA has not been accepted, so that the
+    // EULA page can include static resources.
+    staticHandler(request, response);
+  } else if (!fs.existsSync(eulaDir())) {
+    logging.getLogger().info('No Datalab config; redirect to EULA page');
+    var eula = path.join(appSettings.datalabRoot, '/datalab/web/static/eula.html');
+    fs.readFile(eula, function(error, content) {
+      response.writeHead(200);
+      response.end(content);
+    });
+  } else {
+    handleRequest(request, response, urlpath);
+  }
+}
+
+// The path that is used for the optional websocket proxy for HTTP requests.
+const httpOverWebSocketPath: string = '/http_over_websocket';
+
+function socketHandler(request: http.ServerRequest, socket: net.Socket, head: Buffer) {
+  // Avoid proxying websocket requests on this path, as it's handled locally rather than by Jupyter.
+  if (request.url != httpOverWebSocketPath) {
+    jupyter.handleSocket(request, socket, head);
+  }
+}
+
+/**
  * Handles all requests sent to the proxy web server. Some requests are handled within
  * the server, while some are proxied to the Jupyter notebook server.
  * @param request the incoming HTTP request.
  * @param response the out-going HTTP response.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse) {
-  var path = url.parse(request.url).pathname;
-
-  // /_ah/* paths implement the AppEngine health check.
-  if (path.indexOf('/_ah') == 0) {
-    healthHandler(request, response);
-    return;
+  try {
+    uncheckedRequestHandler(request, response);
+  } catch (e) {
+    logging.getLogger().error('Uncaught error handling a request to "%s": %s', request.url, e);
   }
-
-  // /ping allows the deployer to validate existence.
-  if (path.indexOf('/ping') == 0) {
-    // TODO: Remove support for CORS once the existence checks move to the deployment server.
-    response.writeHead(200, {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
-    });
-
-    // Respond with an object to singal availability and identity.
-    var pingResponse = {
-      name: appSettings.instanceName,
-      id: appSettings.instanceId
-    };
-    response.end(JSON.stringify(pingResponse));
-    return;
-  }
-
-  // Check if user has access.
-  var userId = userManager.getUserId(request);
-  auth.checkUserAccess(userId, function(e, hasAccess) {
-    if (e) {
-      response.statusCode = 500;
-      response.end("Authentication failure.");
-      return;
-    }
-    if (hasAccess) {
-      handledAuthenticatedRequest(request, response, path);
-    }
-    else {
-      response.statusCode = 302;
-      response.setHeader('Location', auth.getAuthenticationUrl(request));
-      response.end();
-    }
-  });  
 }
 
 /**
@@ -231,19 +278,33 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
 export function run(settings: common.Settings): void {
   appSettings = settings;
   userManager.init(settings);
-  workspaceManager.init(settings);
   jupyter.init(settings);
   auth.init(settings);
+  noCacheContent.init(settings);
+  reverseProxy.init();
 
   healthHandler = health.createHandler(settings);
   infoHandler = info.createHandler(settings);
-  staticHandler = static.createHandler(settings);
+  settingHandler = settings_.createHandler();
+  staticHandler = static_.createHandler(settings);
 
   server = http.createServer(requestHandler);
-  sockets.wrapServer(server);
+  var proxyWebSockets: string = process.env.PROXY_WEB_SOCKETS;
+  if (proxyWebSockets == 'true') {
+    sockets.wrapServer(server);
+  } else {
+    server.on('upgrade', socketHandler);
+  }
+
+  if (settings.allowHttpOverWebsocket) {
+    new wsHttpProxy.WsHttpProxy(server, httpOverWebSocketPath, settings.allowOriginOverrides);
+  }
 
   logging.getLogger().info('Starting DataLab server at http://localhost:%d',
                            settings.serverPort);
+  backupUtility.startBackup(settings);
+  process.on('SIGINT', () => process.exit());
+
   server.listen(settings.serverPort);
 }
 

@@ -21,31 +21,17 @@ declare module common {
     logFilePeriod: string;
     logFileCount: number;
 
-    /**
-     * Name of this datalab instance.
-     * It is also used as part of the name of the cloud source repository
-     * branch that stores all notebooks created from this datalab instance.
-     */
-    instanceName: string;
-
-    /**
-     * User ID of the email when running locally.
-     */
-    instanceUser: string;
-
-    /**
-     * Id of the cloud project that the datalab instance runs in.
-     */
-    projectId: string;
-    projectNumber: string;
-
     release: string;
     versionId: string;
     instanceId: string;
-    analyticsId: string;
     configUrl: string;
     feedbackId: string;
     logEndpoint: string;
+
+    /**
+     * Where to update docs, samples.
+     */
+    docsGcsPath: string;
 
     /**
      * The port that the server should listen to.
@@ -56,6 +42,17 @@ declare module common {
      * The list of static arguments to be used when launching jupyter.
      */
     jupyterArgs: string[];
+
+    /**
+     * If provided, use this as a prefix to all paths created from
+     * these settings. Useful for testing outside a Docker container.
+     */
+    datalabRoot: string;
+
+    /**
+     * Initial port to use when searching for a free Jupyter port.
+     */
+    nextJupyterPort: number;
 
     /**
      * Local directory which stores notebooks in the container
@@ -81,9 +78,35 @@ declare module common {
     metadataHost: string;
 
     /**
-     * Whether authentication is enabled.
+     * The value for the access-control-allow-origin header. This
+     * allows another frontend to connect to Datalab.
      */
-    enableAuth: boolean;
+    allowOriginOverrides: Array<string>;
+
+    /**
+     * If true, allow HTTP requests via websockets.
+     */
+    allowHttpOverWebsocket: boolean;
+    
+    /**
+     * Whether to automatically back up user's contents dir to GCS
+     */
+    enableAutoGCSBackups: boolean;
+
+    /**
+     * Number of hourly GCS backups of the user's content dir to keep
+     */
+    numHourlyBackups: number;
+
+    /**
+     * Number of daily GCS backups of the user's content dir to keep
+     */
+    numDailyBackups: number;
+
+    /**
+     * Number of weekly GCS backups of the user's content dir to keep
+     */
+    numWeeklyBackups: number;
   }
 
   interface Map<T> {

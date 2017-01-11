@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash -e
 # Copyright 2015 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Builds the Google Cloud DataLab docker image
+# Builds the Google Cloud DataLab docker image. Usage:
+#   build.sh [path_of_pydatalab_dir]
+# If [path_of_pydatalab_dir] is provided, it will copy the content of that dir into image.
+# Otherwise, it will get the pydatalab by "git clone" from pydatalab repo.
 
 # Create a versioned Dockerfile based on current date and git commit hash
 VERSION=`date +%Y%m%d`
@@ -24,8 +27,19 @@ COMMIT_SUBSTITUTION="s/_commit_/$COMMIT/"
 
 cat Dockerfile.in | sed $VERSION_SUBSTITUTION | sed $COMMIT_SUBSTITUTION > Dockerfile
 
+# Build the datalab frontend
+source ../../tools/initenv.sh
+cd ../../sources/web/
+./build.sh
+cd ../../containers/datalab
+
 # Copy build outputs as a dependency of the Dockerfile
 rsync -avp ../../build/ build
+
+# Build the base docker image
+cd ../base
+./build.sh "$1"
+cd ../datalab
 
 # Build the docker image
 docker build -t datalab .
@@ -33,3 +47,4 @@ docker build -t datalab .
 # Finally cleanup
 rm -rf build
 rm Dockerfile
+

@@ -20,6 +20,8 @@ import logging = require('./logging');
 import path = require('path');
 import url = require('url');
 
+// TODO(gram): can we get rid of all of this now for local run?
+
 /**
  * The application settings instance.
  */
@@ -46,7 +48,7 @@ export function getUserId(request: http.ServerRequest): string {
     }
   }
 
-  return request.headers['x-appengine-user-email'] || appSettings.instanceUser || 'anonymous';
+  return request.headers['x-appengine-user-email'] || 'anonymous';
 }
 
 /**
@@ -54,14 +56,15 @@ export function getUserId(request: http.ServerRequest): string {
  * the directory is root_dir + emailaddress, such as '/content/user@domain.com'.
  */
 export function getUserDir(userId: string): string {
+  var contentDir = path.join(appSettings.datalabRoot, appSettings.contentDir);
   if (!appSettings.useWorkspace) {
     // If the workspace feature is not enabled, then just use the content directory specified
     // in configuration.
-    return appSettings.contentDir;
+    return contentDir;
   }
 
   // Forward slash '/' is allowed in email but not in file system so replace it.
-  return path.join(appSettings.contentDir, userId.replace('/', '_fsfs_'));
+  return path.join(contentDir, userId.replace('/', '_fsfs_'));
 }
 
 /**

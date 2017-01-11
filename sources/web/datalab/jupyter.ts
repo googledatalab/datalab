@@ -17,15 +17,17 @@
 /// <reference path="../../../externs/ts/node/tcp-port-used.d.ts" />
 /// <reference path="common.d.ts" />
 
-import analytics = require('./analytics');
+import auth = require('./auth')
 import callbacks = require('./callbacks');
 import childProcess = require('child_process');
+import crypto = require('crypto');
 import fs = require('fs');
 import http = require('http');
 import httpProxy = require('http-proxy');
 import logging = require('./logging');
 import net = require('net');
 import path = require('path');
+import settings = require('./settings');
 import tcp = require('tcp-port-used');
 import url = require('url');
 import userManager = require('./userManager');
@@ -43,6 +45,42 @@ interface JupyterServer {
  */
 var jupyterServers: common.Map<JupyterServer> = {};
 var nextJupyterPort = 9000;
+var portRetryAttempts = 500;
+
+/**
+ * Get the next available port and pass it to the given `resolved` callback.
+ */
+function getNextJupyterPort(attempts: number, resolved: (port: number)=>void, failed: (error: Error)=>void) {
+   if (attempts < 0) {
+     var e = new Error('Failed to find a free port after ' + portRetryAttempts + ' attempts.');
+     logging.getLogger().error(e, 'Failed to find a free port for the Jupyter server');
+     failed(e);
+     return;
+   }
+
+   if (nextJupyterPort > 65535) {
+     // We've exhausted the entire port space. This is an extraordinary circumstance
+     // so we log an error for it (but still continue).
+     var e = new Error('Port range exhausted.');
+     logging.getLogger().error(e, 'Exhausted the entire address space looking for free ports');
+     nextJupyterPort = 9000;
+   }
+
+   var port = nextJupyterPort;
+   nextJupyterPort++;
+
+   tcp.check(port, null).then(
+     function(inUse: boolean) {
+       if (inUse) {
+         getNextJupyterPort(attempts - 1, resolved, failed);
+       }
+       else {
+         logging.getLogger().info('Returning port %d', port);
+         resolved(port);
+       }
+     },
+     failed);
+}
 
 /**
  * Used to make sure no multiple initialization runs happen for the same user
@@ -55,6 +93,8 @@ var callbackManager: callbacks.CallbackManager = new callbacks.CallbackManager()
  */
 var templates: common.Map<string> = {
   'tree': fs.readFileSync(path.join(__dirname, 'templates', 'tree.html'), { encoding: 'utf8' }),
+  'sessions': fs.readFileSync(path.join(__dirname, 'templates', 'sessions.html'), { encoding: 'utf8' }),
+  'edit': fs.readFileSync(path.join(__dirname, 'templates', 'edit.html'), { encoding: 'utf8' }),
   'nb': fs.readFileSync(path.join(__dirname, 'templates', 'nb.html'), { encoding: 'utf8' })
 };
 
@@ -65,6 +105,7 @@ var appSettings: common.Settings;
 
 function pipeOutput(stream: NodeJS.ReadableStream, port: number, error: boolean) {
   stream.setEncoding('utf8');
+
   stream.on('data', (data: string) => {
     // Jupyter generates a polling kernel message once every 3 seconds
     // per kernel! This adds too much noise into the log, so avoid
@@ -76,23 +117,11 @@ function pipeOutput(stream: NodeJS.ReadableStream, port: number, error: boolean)
   })
 }
 
-/**
- * Starts the Jupyter server, and then creates a proxy object enabling
- * routing HTTP and WebSocket requests to Jupyter.
- */
-function createJupyterServer(userId: string): JupyterServer {
-  var port = nextJupyterPort;
-  nextJupyterPort++;
-
-  var userDir = userManager.getUserDir(userId);
-  if (!fs.existsSync(userDir)) {
-    fs.mkdirSync(userDir, 0755);
-  }
-
+function createJupyterServerAtPort(port: number, userId: string, userDir: string) {
   var server: JupyterServer = {
     userId: userId,
     port: port,
-    notebooks: userDir
+    notebooks: userDir,
   };
 
   function exitHandler(code: number, signal: string): void {
@@ -103,12 +132,27 @@ function createJupyterServer(userId: string): JupyterServer {
 
   var processArgs = appSettings.jupyterArgs.slice().concat([
     '--port=' + server.port,
+    '--port-retries=0',
     '--notebook-dir="' + server.notebooks + '"'
   ]);
 
+  var notebookEnv: any = process.env;
+  if ('KG_URL' in notebookEnv && notebookEnv['KG_URL']) {
+    logging.getLogger().info(
+      'Found a kernel gateway URL of %s... configuring the notebook to use it', notebookEnv['KG_URL']);
+    var secretPath = path.join(appSettings.datalabRoot, '/content/datalab/.config/notary_secret');
+    processArgs = processArgs.concat([
+      '--NotebookApp.session_manager_class=nb2kg.managers.SessionManager',
+      '--NotebookApp.kernel_manager_class=nb2kg.managers.RemoteKernelManager',
+      '--NotebookApp.kernel_spec_manager_class=nb2kg.managers.RemoteKernelSpecManager',
+      '--NotebookNotary.algorithm=sha256',
+      '--NotebookNotary.secret_file=' + secretPath,
+    ]);
+  }
+
   var processOptions = {
     detached: false,
-    env: process.env
+    env: notebookEnv
   };
 
   server.childProcess = childProcess.spawn('jupyter', processArgs, processOptions);
@@ -120,16 +164,97 @@ function createJupyterServer(userId: string): JupyterServer {
   pipeOutput(server.childProcess.stdout, server.port, /* error */ false);
   pipeOutput(server.childProcess.stderr, server.port, /* error */ true);
 
-  // Then create the proxy.
+  // Create the proxy.
   var proxyOptions: httpProxy.ProxyServerOptions = {
-    target: 'http://127.0.0.1:' + server.port
+    target: 'http://127.0.0.1:' + port
   };
 
   server.proxy = httpProxy.createProxyServer(proxyOptions);
   server.proxy.on('proxyRes', responseHandler);
   server.proxy.on('error', errorHandler);
 
-  return server;
+  tcp.waitUntilUsed(server.port, 100, 15000).then(
+    function() {
+      jupyterServers[userId] = server;
+      logging.getLogger().info('Jupyter server started for %s.', userId);
+      callbackManager.invokeAllCallbacks(userId, null);
+    },
+    function(e) {
+      logging.getLogger().error(e, 'Failed to start Jupyter server for user %s.', userId);
+      callbackManager.invokeAllCallbacks(userId, e);
+    });
+}
+
+/**
+ * Starts the Jupyter server, and then creates a proxy object enabling
+ * routing HTTP and WebSocket requests to Jupyter.
+ */
+function createJupyterServer(userId: string, remainingAttempts: number) {
+  logging.getLogger().info('Checking user dir for %s exists', userId);
+  var userDir = userManager.getUserDir(userId);
+  if (!fs.existsSync(userDir)) {
+    logging.getLogger().info('Creating user dir %s', userDir);
+    fs.mkdirSync(userDir, parseInt('0755', 8));
+  }
+
+  nextJupyterPort = appSettings.nextJupyterPort;
+  logging.getLogger().info('Looking for a free port on which to start Jupyter for %s', userId);
+  getNextJupyterPort(
+    portRetryAttempts,
+    function(port: number) {
+      logging.getLogger().info('Launching Jupyter server for %s at %d', userId, port);
+      try {
+        createJupyterServerAtPort(port, userId, userDir);
+      } catch (e) {
+        logging.getLogger().error(e, 'Error creating the Jupyter process for user %s', userId);
+        callbackManager.invokeAllCallbacks(userId, e);
+      }
+    },
+    function(e) {
+      logging.getLogger().error(e, 'Failed to find a free port');
+      if (remainingAttempts > 0) {
+        attemptStartForUser(userId, remainingAttempts - 1);
+      }
+      else {
+        logging.getLogger().error('Failed to start Jupyter server for user %s.', userId);
+        callbackManager.invokeAllCallbacks(userId, new Error('failed to start jupyter server.'));
+      }
+    });
+}
+
+function listJupyterServers(): number[] {
+  var psStdout = '';
+  try {
+    psStdout = childProcess.execSync('ps -C jupyter-notebook -o pid=', {}).toString();
+  } catch (err) {
+    // In the default case, where there are no jupyter-notebook processes running,
+    // the 'ps' call will throw an error. We distinguish that case by ignoring
+    // the error unless the stdout or stderr values are non-empty.
+    if (err['stdout'] != '' || err['stderr'] != '') {
+      throw err;
+    }
+  }
+
+  var jupyterProcesses: number[] = [];
+  var jupyterProcessIdStrings = psStdout.split('\n');
+  for (var i in jupyterProcessIdStrings) {
+    if (jupyterProcessIdStrings[i]) {
+      var processId = parseInt(jupyterProcessIdStrings[i]);
+      if (processId != NaN) {
+        jupyterProcesses.push(processId);
+      }
+    }
+  }
+  return jupyterProcesses;
+}
+
+function killAllJupyterServers() {
+  var jupyterProcesses = listJupyterServers();
+  for (var i in jupyterProcesses) {
+    var processId = jupyterProcesses[i];
+    logging.getLogger().info('Killing abandoned Jupyter notebook process: %d', processId);
+    process.kill(processId);
+  }
 }
 
 export function getPort(request: http.ServerRequest): number {
@@ -156,6 +281,16 @@ export function getInfo(): Array<common.Map<any>> {
   return info;
 }
 
+function attemptStartForUser(userId: string, remainingAttempts: number) {
+  try {
+    createJupyterServer(userId, remainingAttempts);
+  }
+  catch (e) {
+    logging.getLogger().error(e, 'Failed to start Jupyter server for user %s.', userId);
+    callbackManager.invokeAllCallbacks(userId, e);
+  }
+}
+
 /**
  * Starts a jupyter server instance for given user.
  */
@@ -172,31 +307,8 @@ export function startForUser(userId: string, cb: common.Callback0) {
     return;
   }
 
-  try {
-    logging.getLogger().info('Starting jupyter server for %s.', userId);
-    server = createJupyterServer(userId);
-    if (server) {
-      tcp.waitUntilUsed(server.port).then(
-        function() {
-          jupyterServers[userId] = server;
-          logging.getLogger().info('Jupyter server started for %s.', userId);
-          callbackManager.invokeAllCallbacks(userId, null);
-        },
-        function(e) {
-          logging.getLogger().error(e, 'Failed to start Jupyter server for user %s.', userId);
-          callbackManager.invokeAllCallbacks(userId, e);
-        });
-    }
-    else {
-      // Should never be here.
-      logging.getLogger().error('Failed to start Jupyter server for user %s.', userId);
-      callbackManager.invokeAllCallbacks(userId, new Error('failed to start jupyter server.'));
-    }
-  }
-  catch (e) {
-    logging.getLogger().error(e, 'Failed to start Jupyter server for user %s.', userId);
-    callbackManager.invokeAllCallbacks(userId, e);
-  }
+  logging.getLogger().info('Starting jupyter server for %s.', userId);
+  attemptStartForUser(userId, 10);
 }
 
 /**
@@ -204,6 +316,8 @@ export function startForUser(userId: string, cb: common.Callback0) {
  */
 export function init(settings: common.Settings): void {
   appSettings = settings;
+
+  killAllJupyterServers();
 }
 
 /**
@@ -224,6 +338,19 @@ export function close(): void {
   jupyterServers = {};
 }
 
+
+export function handleSocket(request: http.ServerRequest, socket: net.Socket, head: Buffer) {
+  var userId = userManager.getUserId(request);
+  var server = jupyterServers[userId];
+  if (!server) {
+    // should never be here.
+    logging.getLogger().error('Jupyter server was not created yet for user %s.', userId);
+    return;
+  }
+  server.proxy.ws(request, socket, head);
+}
+
+
 export function handleRequest(request: http.ServerRequest, response: http.ServerResponse) {
   var userId = userManager.getUserId(request);
   var server = jupyterServers[userId];
@@ -234,9 +361,50 @@ export function handleRequest(request: http.ServerRequest, response: http.Server
     response.end();
     return;
   }
-  server.proxy.web(request, response);
+
+  var path = url.parse(request.url).pathname;
+  if (path.indexOf('/sessions') == 0) {
+    var templateData: common.Map<string> = getBaseTemplateData(request);
+    sendTemplate('sessions', templateData, response);
+    return;
+  }
+  server.proxy.web(request, response, null);
 }
 
+function getBaseTemplateData(request: http.ServerRequest): common.Map<string> {
+  var userId: string = userManager.getUserId(request);
+  var proxyWebSockets: string = process.env.PROXY_WEB_SOCKETS;
+  if (proxyWebSockets != 'true') {
+    proxyWebSockets = 'false';
+  }
+  var reportingEnabled: string = process.env.ENABLE_USAGE_REPORTING;
+  if (reportingEnabled) {
+    var userSettings: common.Map<string> = settings.loadUserSettings(userId);
+    if ('enableUsageReporting' in userSettings && userSettings['enableUsageReporting'] != 'true') {
+      reportingEnabled = 'false';
+    }
+  }
+  var templateData: common.Map<string> = {
+    feedbackId: appSettings.feedbackId,
+    versionId: appSettings.versionId,
+    userId: userId,
+    configUrl: appSettings.configUrl,
+    baseUrl: '/',
+    reportingEnabled: reportingEnabled,
+    proxyWebSockets: proxyWebSockets
+  };
+  var signedIn = auth.isSignedIn();
+  templateData['isSignedIn'] = signedIn.toString();
+  if (signedIn) {
+    templateData['account'] = auth.getGcloudAccount();
+    if (process.env.PROJECT_NUMBER) {
+      var hash = crypto.createHash('sha256');
+      hash.update(process.env.PROJECT_NUMBER);
+      templateData['projectHash'] = hash.digest('hex');
+    }
+  }
+  return templateData;
+}
 
 function sendTemplate(key: string, data: common.Map<string>, response: http.ServerResponse) {
   var template = templates[key];
@@ -258,7 +426,10 @@ function sendTemplate(key: string, data: common.Map<string>, response: http.Serv
 
 function responseHandler(proxyResponse: http.ClientResponse,
                          request: http.ServerRequest, response: http.ServerResponse) {
-  if (proxyResponse.headers['access-control-allow-origin'] !== undefined) {
+  if (appSettings.allowOriginOverrides.length &&
+      appSettings.allowOriginOverrides.indexOf(request.headers['origin']) != -1) {
+      proxyResponse.headers['access-control-allow-origin'] = request.headers['origin'];
+  } else if (proxyResponse.headers['access-control-allow-origin'] !== undefined) {
     // Delete the allow-origin = * header that is sent (likely as a result of a workaround
     // notebook configuration to allow server-side websocket connections that are
     // interpreted by Jupyter as cross-domain).
@@ -272,37 +443,28 @@ function responseHandler(proxyResponse: http.ClientResponse,
   // Set a cookie to provide information about the project and authenticated user to the client.
   // Ensure this happens only for page requests, rather than for API requests.
   var path = url.parse(request.url).pathname;
-  if ((path.indexOf('/tree') == 0) || (path.indexOf('/notebooks') == 0)) {
-    var templateData: common.Map<string> = {
-      feedbackId: appSettings.feedbackId,
-      analyticsId: appSettings.analyticsId,
-      analyticsPath: analytics.hashPath(path, 'sha256'),
-      projectNumber: appSettings.projectNumber,
-      projectId: appSettings.projectId,
-      versionId: appSettings.versionId,
-      instanceId: appSettings.instanceId,
-      instanceName: appSettings.instanceName,
-      userId: userManager.getUserId(request),
-      configUrl: appSettings.configUrl,
-      baseUrl: '/'
-    };
-
+  if ((path.indexOf('/tree') == 0) || (path.indexOf('/notebooks') == 0) || (path.indexOf('/edit') == 0)) {
+    var templateData: common.Map<string> = getBaseTemplateData(request);
     var page: string = null;
     if (path.indexOf('/tree') == 0) {
       // stripping off the /tree/ from the path
       templateData['notebookPath'] = path.substr(6);
 
-      sendTemplate('tree', templateData, response);
       page = 'tree';
-    }
-    else {
+    } else if (path.indexOf('/edit') == 0) {
+      // stripping off the /edit/ from the path
+      templateData['filePath'] = path.substr(6);
+      templateData['fileName'] = path.substr(path.lastIndexOf('/') + 1);
+
+      page = 'edit';
+    } else {
       // stripping off the /notebooks/ from the path
       templateData['notebookPath'] = path.substr(11);
       templateData['notebookName'] = path.substr(path.lastIndexOf('/') + 1);
 
-      sendTemplate('nb', templateData, response);
-      page = 'notebook';
+      page = 'nb';
     }
+    sendTemplate(page, templateData, response);
 
     // Suppress further writing to the response to prevent sending response
     // from the notebook server. There is no way to communicate that, so hack around the
@@ -312,8 +474,6 @@ function responseHandler(proxyResponse: http.ClientResponse,
     response.writeHead = placeHolder;
     response.write = placeHolder;
     response.end = placeHolder;
-
-    analytics.logPage(page, path, request.headers['x-appengine-user-id']);
   }
 }
 

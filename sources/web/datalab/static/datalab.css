@@ -24,12 +24,14 @@
 body {
   font-family: 'Open Sans', Helvetica, sans-serif;
   font-size: 14px;
-  background: #fff;
+  min-width: 1250px;
 }
 
 /* Layout */
 #app {
   position: absolute;
+  overflow: auto;
+  height: 100%;
   left: 0px;
   top: 0px;
   right: 0px;
@@ -46,6 +48,8 @@ body {
   align-content: space-between;
 }
 #appBar {
+  background-color: #333;
+  box-shadow: 0 0 8px 0 #000;
   -webkit-order: 1;
   order: 1;
   -webkit-flex: 0 1 auto;
@@ -54,19 +58,42 @@ body {
   align-self: auto;
   height: 48px;
   min-height: 48px;
-  color: white;
-  background-color: #333;
   padding-left: 10px;
   padding-right: 10px;
   position: relative;
   z-index: 10;
-  box-shadow: 0 0 8px 0 #000;
+}
+#site {
+  -webkit-order: 2;
+  order: 2;
+  position: relative;
+  height: 100% !important;
 }
 #appContent {
+  top: 0px;
+  bottom: 0px;
+  left: 0px;
+  right: 0px;
+  height: 100%;
   -webkit-order: 2;
   order: 2;
   -webkit-flex: 1 1 auto;
   flex: 1 1 auto;
+  -webkit-align-self: stretch;
+  align-self: stretch;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-flow: column nowrap;
+  flex-flow: column nowrap;
+  -webkit-justify-content: flex-start;
+  justify-content: flex-start;
+  -webkit-align-items: stretch;
+  align-items: stretch;
+  -webkit-align-content: space-between;
+  align-content: space-between;
+}
+#toolbarArea, #contentArea {
+  position: relative;
   -webkit-align-self: stretch;
   align-self: stretch;
   display: -webkit-flex;
@@ -79,65 +106,90 @@ body {
   align-items: stretch;
   -webkit-align-content: space-between;
   align-content: space-between;
+  border-bottom: solid 1px #000;
+}
+#toolbarArea {
+  -webkit-order: 1;
+  order: 1;
+  justify-content: space-between;
+}
+#contentArea {
+  height: 100%;
+  -webkit-order: 2;
+  order: 2;
+  -webkit-flex: 1 1 auto;
+  flex: 1 1 auto;
+  overflow: auto;
 }
 #mainArea {
   -webkit-order: 1;
   order: 1;
-  -webkit-flex: 1 1 auto;
-  flex: 1 1 auto;
+  -webkit-flex: 70%;
+  flex: 70%;
   -webkit-align-self: auto;
   align-self: auto;
-  min-width: 200px;
   position: relative;
-  -webkit-box-shadow: 1px 2px 8px 0px rgba(0, 0, 0, 0.25);
-  box-shadow: 1px 2px 8px 0px rgba(0, 0, 0, 0.25);
-  z-index: 1;
+  min-width: 200px;
+  overflow: auto;
 }
 #sidebarArea {
-  -webkit-order: 1;
-  order: 1;
-  -webkit-flex-grow: .5;
-  flex-grow: .5;
-  -webkit-flex-shrink: 0;
-  flex-shrink: 0;
-  -webkit-flex-basis: auto;
-  flex-basis: auto;
+  -webkit-order: 2;
+  order: 2;
+  -webkit-flex: 30%;
+  flex: 30%;
   -webkit-align-self: auto;
   align-self: auto;
-  min-width: 100px;
-  background-color: #f3f3f3;
   position: relative;
+  padding-top: 10px;
+  min-width: 100px;
 }
-#sidebarArea.larger {
+#sidebarToolbar.larger {
   -webkit-flex-grow: 3;
   flex-grow: 3;
+}
+#sidebarArea.larger {
+  -webkit-flex: 50%;
+  flex: 50%;
 }
 #mainToolbar, #sidebarToolbar {
   line-height: 48px;
   vertical-align: middle;
-  height: 48px;
-  color: #444;
-  background-color: #f3f3f3;
-  padding-left: 10px;
-  padding-right: 10px;
   padding-top: 2px;
-  border-bottom: solid 1px #e6e6e6;
+  z-index: 8;
 }
 #updateMessageArea {
   display: none;
   margin-bottom: 0px;
 }
-#mainContent, #sidebarContent {
+.notebookMainContent, #sidebarContent {
+  overflow: auto;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+  overflow: auto;
+}
+.fileMainContent {
   overflow: auto;
   position: absolute;
-  top: 48px;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+}
+.treeMainContent {
+  overflow: auto;
+  position: absolute;
+  top: 0px;
   left: 0px;
   right: 0px;
   bottom: 0px;
 }
 #sidebarContent {
-  color: #000;
   padding: 10px 20px;
+}
+#notebook-container {
+  padding: 35px;
 }
 .container {
   min-width: 200px;
@@ -148,18 +200,14 @@ body {
 div.btn-group a {
   cursor: default;
 }
-#appBar button {
+#appBar .toolbar-btn {
   background-color: transparent;
   border: none;
   height: 48px;
   font-size: 16px;
   padding: 4px;
-  color: #ccc;
   margin-right: 10px;
   margin-left: 0px;
-}
-#appBar button:hover {
-  color: #fff;
 }
 #appbar div.btn-group {
   margin-left: 0px !important;
@@ -167,10 +215,10 @@ div.btn-group a {
 div.btn-toolbar {
   margin: 0px;
 }
-div.btn-toolbar .btn {
+div.btn-toolbar .toolbar-btn {
   background-color: transparent;
   border: none;
-  color: #666;
+  font-family: 'Open Sans', Helvetica, sans-serif;
   font-weight: normal;
   font-size: 14px;
   outline: solid 1px transparent !important;
@@ -180,24 +228,30 @@ div.btn-toolbar .btn {
   cursor: pointer;
   vertical-align: middle;
 }
-div.btn-toolbar .btn:hover, div.btn-toolbar .btn:focus {
-  color: #000;
+div.btn-toolbar .toolbar-btn:hover, div.btn-toolbar .toolbar-btn:focus {
   border: none;
 }
-div.btn-toolbar button:focus {
+div.btn-toolbar .toolbar-btn:focus {
   outline: solid 1px transparent !important;
 }
-div.btn-toolbar .btn.dropdown-toggle {
+div.btn-toolbar .toolbar-btn.dropdown-toggle {
   padding-left: 2px;
   padding-right: 2px;
   margin-left: -2px;
 }
-div.btn-toolbar .btn.active {
+#accountDropdown div div {
+  margin: 10px 15px 10px 15px;
+}
+#signOutGroup ul li {
+   padding: 5px 0px 0px 0px;
+}
+div.btn-toolbar .toolbar-btn.active {
   font-weight: bold;
-  color: #337ab7;
   border: none;
   box-shadow: none;
-  border-bottom: solid 2px #337ab7;
+}
+#toggleSidebarButton {
+  margin-bottom: 8px;
 }
 
 #logo {
@@ -225,19 +279,18 @@ div.btn-toolbar .btn.active {
 #uploadButton {
   padding: 4px 8px;
 }
-
+#editorButton {
+  display: none;
+}
 /* Notebook page */
 #notebook {
   font-family: Lato, 'Open Sans', Helvetica, sans-serif;
   font-size: 16px;
   padding: 0px;
 }
-.notebook_app {
-  background: #fff;
-}
 #ipython-main-app {
   position: relative;
-  padding: 10px 40px;
+  padding: 10px;
 }
 div.end_space {
   min-height: 20px;
@@ -262,29 +315,37 @@ span.save_widget span.filename {
   margin: 0px;
 }
 span.autosave_status {
-  color: #ddd;
   font-size: 13px;
   line-height: 35px;
   vertical-align: middle;
   display: inline-block;
 }
 
+/* Edit page */
+#texteditor-backdrop {
+  padding: 0px;
+}
 
 /* Cell Customizations */
 div.cell {
   border: solid 1px transparent;
   border-radius: 0px;
   padding: 0px;
+  padding-left: 0px;
   margin-bottom: 10px;
+  position: relative;
 }
 div.cell.selected, div.cell.text_cell.selected, div.cell.code_cell.selected {
+  background: none;
   border: solid 1px #ddd;
+  padding-left: 0px;
+  box-shadow: 0px 0px 6px 0px rgba(0, 0, 0, 0.2);
 }
 .edit_mode div.cell.text_cell.selected, .edit_mode div.code_cell.selected {
   border: solid 1px #ddd;
+  padding-left: 0px;
   box-shadow: 0px 0px 6px 0px rgba(0, 0, 0, 0.2);
 }
-
 div.code_cell div.input {
   border-left: solid 4px #ddd;
 }
@@ -294,11 +355,7 @@ div.code_cell.session div.input {
 div.code_cell.running div.input {
   border-left: solid 4px #ddd;
 }
-div.code_cell.session.completed div.input {
-  border-left: solid 4px #337ab7;
-}
 div.code_cell div.input {
-  background-color: #f7f7f7;
   border-top: none;
 }
 div.input_area {
@@ -321,8 +378,26 @@ div.status div.progress {
   height: 8px;
   margin-bottom: 4px
 }
-
-div.prompt, div.output_prompt, div.out_prompt_overlay {
+div.output_text {
+  line-height: inherit;
+}
+div.selected div.minitoolbar, .cellhidden>div.minitoolbar, .codehidden>div.minitoolbar,
+div.cellhidden div.cellPlaceholder {
+  display: block;
+}
+div.cellhidden div.input, div.cellhidden div.output_wrapper, .codehidden * div.inner_cell {
+  display: none;
+}
+.codehidden>div.input {
+  height: 33px;
+  border: 1px;
+  border-style: solid;
+  border-color: #ddd;
+}
+div.input {
+  position: relative;
+}
+div.input_prompt, div.output_prompt, div.out_prompt_overlay {
   min-width: 0px;
   display: none;
   padding: 0px;
@@ -349,6 +424,32 @@ div.rendered_html h4, div.rendered_html h5, div.rendered_html h6 {
 a.anchor-link {
   display: none;
 }
+div.minitoolbar {
+  position: absolute;
+  left: -30px;
+  z-index: 10;
+  display: none;
+}
+button.minitoolbar-toggle {
+  width: 25px;
+  height: 25px;
+  padding: 0;
+}
+div.minitoolbar>span {
+  padding: 2px;
+  font-size: xx-small;
+  color: #888;
+}
+div.cellPlaceholder>div>pre {
+  background-color: inherit;
+  margin: 0px;
+  overflow: hidden;
+}
+div.cellPlaceholder {
+  width: 100%;
+  text-align: left;
+  display: none;
+}
 
 /* CodeMirror Customization */
 pre, code, .CodeMirror, .CodeMirror pre, .CodeMirror-linenumber {
@@ -358,11 +459,8 @@ pre, code, .CodeMirror, .CodeMirror pre, .CodeMirror-linenumber {
 .CodeMirror pre, .CodeMirror-linenumber {
   line-height: 1.4 !important;
 }
-.CodeMirror-selected {
-  background-color: #addfff !important;
-}
 .CodeMirror-cursor {
-  border-left: 2px solid #222 !important;
+  border-left: 2px solid #222;
 }
 .CodeMirror-gutters {
   border-right: 1px solid #eee;
@@ -373,7 +471,7 @@ pre, code, .CodeMirror, .CodeMirror pre, .CodeMirror-linenumber {
 div.selected .CodeMirror-gutters {
   border-right: 1px solid #ddd;
 }
-div.selected .CodeMirror-linenumber {
+div.selected .CodeMirror-linenumber, div#texteditor-container .CodeMirror-linenumber {
   visibility: visible;
 }
 .CodeMirror-matchingbracket {
@@ -382,26 +480,14 @@ div.selected .CodeMirror-linenumber {
   font-weight: bold !important;
 }
 .cm-keyword {
-  color: #00f !important;
   font-weight: normal !important;
-}
-.cm-number, .cm-string, .cm-string2 {
-  color: #000080 !important;
 }
 .cm-comment {
   color: #008000 !important;
   font-style: normal !important;
 }
-.cm-def, .cm-variable, .cm-variable-2, .cm-variable-3, .cm-property,
-.cm-qualifier, .cm-operator, .cm-meta, .cm-builtin,
-.cm-tag, .cm-attribute, .cm-header, .cm-hr, .cm-atom {
-  color: #000 !important;
-}
 .cm-error {
   color: red !important;
-}
-.cm-link, .cm-url {
-  color: #337ab7 !important;
 }
 .cm-header-1, .cm-header-2, .cm-header-3, .cm-header-4, .cm-header-5, .cm-header-6 {
   font-family: inherit !important;
@@ -416,12 +502,8 @@ div.modal-dialog pre, div.modal-dialog code, #help code, #help pre {
   border: none;
 }
 
-code {
-  background-color: #eee;
-}
-
 @media print {
-  #appBar, #sidebarArea, #mainToolbar {
+  #appBar, #sidebarToolbar, #sidebarContent, #mainToolbar {
     display: none;
   }
   #app, #appContent {

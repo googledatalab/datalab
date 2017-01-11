@@ -7,11 +7,8 @@ test
 *.idea
 *.iml
 *.ipynb.yaml
+*.map
+*.egg-info
+*.swp
+*.swo
 
-# For building the server incrementally from an IDE like Eclipse it can be useful to create
-# the two symlinks below to point to sources/server/src/shared, but we don't want them
-# committed.
-# TODO(gram): We ideally want to be able to build the code in sources/server/src/shared as
-# a shared library instead, but Typescript doesn't support this elegantly yet.
-sources/server/src/node/app/shared
-sources/server/src/ui/scripts/app/shared

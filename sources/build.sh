@@ -16,14 +16,11 @@
 # Builds all components.
 
 if [ -z "$REPO_DIR" ];
-  then echo "REPO_DIR is not set. Please run `source tools/initenv.sh` first";
+  then echo "REPO_DIR is not set. Please run source \`../tools/initenv.sh\` first";
   exit 1;
 fi
 
 SRC_PATHS=(
-  "lib/api"
-  "lib/datalab"
-  "tools"
   "web"
 )
 

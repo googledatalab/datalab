@@ -43,6 +43,7 @@ export function getLogger(): bunyan.ILogger {
  * @param response the response to be logged.
  */
 export function logRequest(request: http.ServerRequest, response: http.ServerResponse): void {
+  requestLogger.info({ url: request.url, method: request.method }, 'Received a new request');
   response.on('finish', function() {
     requestLogger.info({ url: request.url, method: request.method, status: response.statusCode });
   });
@@ -64,11 +65,12 @@ export function logJupyterOutput(text: string, error: boolean): void {
  */
 export function initializeLoggers(settings: common.Settings): void {
   // Ensure the directory containing logs exists (as bunyan doesn't create the directory itself).
-  mkdirp.sync(path.dirname(settings.logFilePath));
+  var logFilePath = path.join(settings.datalabRoot, settings.logFilePath);
+  mkdirp.sync(path.dirname(logFilePath));
 
   var streams: bunyan.LogStream[] = [
     { level: 'info', type: 'rotating-file',
-      path: settings.logFilePath, period: settings.logFilePeriod, count: settings.logFileCount }
+      path: logFilePath, period: settings.logFilePeriod, count: settings.logFileCount }
   ];
   if (settings.consoleLogging) {
     streams.push({ level: 'info', type: 'stream', stream: process.stderr });

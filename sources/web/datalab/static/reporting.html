@@ -1,0 +1,107 @@
+<html>
+  <head>
+    <title>
+      Google Cloud Datalab Anonymized Usage Reporting
+    </title>
+  <style>
+body {
+  font-family: Arial;
+  font-size: 13px;
+}
+.banner {
+  position: relative;
+  padding: 72px 64px 40px 430px;
+  min-height: 103px;
+  color: #FFF;
+  background-color: #253238;
+  background: linear-gradient(#253238, #3A464B);
+  font-family: Roboto;
+  font-size: 14px;
+}
+.logo {
+  padding: 8px 8px 8px 96px;
+  position: relative;
+  max-width: 1024px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+.logo-datalab {
+  display: block;
+  position: absolute;
+  top: 8px;
+  left: 0;
+  z-index: 1;
+  background-image: url(https://cloud.google.com/images/sprites/product-logos.png);
+  height: 72px;
+  width: 80px;
+  background-position: 0px -240px;
+}
+.body {
+  padding: 26px 10px 20px;
+  font: medium Roboto;
+}
+.bodytext {
+}
+.buttonarea {
+  text-align: center;
+}
+.button {
+  font-size: 14px;
+}
+  </style>
+
+  <script>
+    function toggleEnabled() {
+      var checkedElem = document.getElementById("checked");
+      var uncheckedElem = document.getElementById("unchecked");
+      if (checkedElem.checked) {
+        uncheckedElem.disabled = true;
+      } else {
+        uncheckedElem.disabled = false;
+      }
+    }
+
+    function initializeEnabled() {
+      var checkedElem = document.getElementById("checked");
+      var uncheckedElem = document.getElementById("unchecked");
+      if (window.location.href.includes("enabled=true")) {
+        checkedElem.checked = true;
+        uncheckedElem.disabled = true;
+      } else {
+        checkedElem.checked = false;
+        uncheckedElem.disabled = false;
+      }
+    }
+  </script>
+  </head>
+  <body>
+    <header class="banner">
+      <div class="logo">
+        <span class="logo-datalab"></span>
+        <h1 class="hero-title text-display-1">Cloud Datalab<sup>Beta</sup></h1>
+      </div>
+    </header>
+
+    <div class="body">
+      <div class="bodytext">
+        <p>In order to continually innovate and improve our software and identify which additional features are most needed, Google may collect usage statistics when Cloud Datalab is running on your local machine. To turn off the collection of Cloud Datalab usage statistics, uncheck the box below and choose <b>Submit</b>.
+      </div>
+    </div>
+
+    <div class="buttonarea">
+      <form action="/_setting" method="post">
+        <input type="hidden" name="redirect" value="/">
+        <input type="hidden" name="key" value="enableUsageReporting">
+        <input id="unchecked" type="hidden" name="value" value="false">
+        <input id="checked" type="checkbox" name="value" value="true" onclick="toggleEnabled()">Enable usage reporting<br>
+        <input type="submit" value="Submit">
+      </form>
+    </div>
+
+    <script>
+      initializeEnabled();
+    </script>
+  </body>
+</html>
+
