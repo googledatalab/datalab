@@ -9,7 +9,7 @@ RUN touch /etc/apt/sources.list.d/debian-mozilla.list && \
     dpkg -i pkg-mozilla-archive-keyring_1.1_all.deb && \
     apt-get update && apt-get install -y --no-install-recommends -t jessie-backports firefox xvfb
 
-# download the firefox gecko driver for selenium and place it in PATH
+# download the firefox gecko driver for selenium and place it under PATH
 RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.13.0/geckodriver-v0.13.0-linux64.tar.gz && \
     tar -xvf geckodriver-v0.13.0-linux64.tar.gz && \
     mv geckodriver /usr/local/bin/

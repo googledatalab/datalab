@@ -3,16 +3,12 @@ language: python
 python:
 - "2.7"
 
-node_js:
-- stable
-
 services:
 - docker
 
 cache:
   pip: true
   directories:
-  - $HOME/.docker/
   - node_modules
 
 before_install:
@@ -21,11 +17,11 @@ before_install:
 - pip install flake8
 
 install:
-- cd containers/test
+- cd $TRAVIS_BUILD_DIR/containers/test
 - ./build.sh
 
 script:
-- cd ../../tools/
+- cd $TRAVIS_BUILD_DIR/tools/
 - flake8 cli/
-- cd ../containers/test
+- cd $TRAVIS_BUILD_DIR/containers/test
 - ./run.sh
