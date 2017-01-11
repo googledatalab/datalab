@@ -84,6 +84,8 @@ spec:
       env:
         - name: DATALAB_ENV
           value: GCE
+        - name: PROXY_WEB_SOCKETS
+          value: '{1}'
       volumeMounts:
         - name: home
           mountPath: /content
@@ -163,6 +165,13 @@ def flags(parser):
         action='store_true',
         default=False,
         help='do not connect to the newly created instance')
+
+    parser.add_argument(
+        '--proxy-websockets',
+        dest='proxy_websockets',
+        action='store_true',
+        default=False,
+        help='(Experiemental!) proxy websocket connections over HTTP')
 
     connect.connection_flags(parser)
     return
@@ -370,8 +379,11 @@ def run(args, gcloud_compute):
             try:
                 startup_script_file.write(_DATALAB_STARTUP_SCRIPT)
                 startup_script_file.close()
+                proxy_websockets = "true" if args.proxy_websockets else "false"
                 manifest_file.write(
-                    _DATALAB_CONTAINER_SPEC.format(args.image_name))
+                    _DATALAB_CONTAINER_SPEC.format(
+                        args.image_name,
+                        proxy_websockets))
                 manifest_file.close()
                 metadata_from_file = (
                     'startup-script={0},google-container-manifest={1}'.format(
