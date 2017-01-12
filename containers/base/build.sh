@@ -20,7 +20,14 @@
 
 # Build the docker image
 if [ -n "$1" ]; then
-  rsync -avp "$1" pydatalab;
+  src_pydatalab="$1"
+
+  # Append trailing / if needed.
+  if [ "${src_pydatalab: -1}" != "/" ]; then
+  	src_pydatalab=$src_pydatalab"/"
+  fi
+
+  rsync -avp "$src_pydatalab" pydatalab;
 else
   # Create empty dir to make docker build happy.
   mkdir -p pydatalab;
