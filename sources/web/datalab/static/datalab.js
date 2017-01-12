@@ -12,13 +12,17 @@
  * the License.
  */
 
+var debug = {
+  enabled: true,
+  log: function() { console.log.apply(console, arguments); }
+};
+
+function shimWebSockets() {
+    return location.host.substr(-12) === '.appspot.com';
+}
+
 // Override WebSocket
 (function() {
-    var proxyWebSockets = (document.body.getAttribute('data-proxy-web-sockets') == 'true');
-    if (!proxyWebSockets) {
-	return;
-    }
-
     if (!window.io) {
 	// If socket.io was not loaded into the page, then do not override the existing
 	// WebSocket functionality.
@@ -100,14 +104,12 @@
     WebSocketShim.CLOSED = 0;
     WebSocketShim.OPEN = 1;
 
-    var nativeWebSocket = window.WebSocket;
-    window.WebSocket = WebSocketShim;
+    if (shimWebSockets()) {
+        debug.log('Replacing native websockets with socket.io');
+        var nativeWebSocket = window.WebSocket;
+        window.WebSocket = WebSocketShim;
+    }
 })();
-
-var debug = {
-  enabled: true,
-  log: function() { console.log.apply(console, arguments); }
-};
 
 function placeHolder() {}
 

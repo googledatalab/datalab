@@ -289,12 +289,8 @@ export function run(settings: common.Settings): void {
   staticHandler = static_.createHandler(settings);
 
   server = http.createServer(requestHandler);
-  var proxyWebSockets: string = process.env.PROXY_WEB_SOCKETS;
-  if (proxyWebSockets == 'true') {
-    sockets.wrapServer(server);
-  } else {
-    server.on('upgrade', socketHandler);
-  }
+  server.on('upgrade', socketHandler);
+  sockets.wrapServer(server);
 
   if (settings.allowHttpOverWebsocket) {
     new wsHttpProxy.WsHttpProxy(server, httpOverWebSocketPath, settings.allowOriginOverrides);
