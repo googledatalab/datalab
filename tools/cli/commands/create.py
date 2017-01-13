@@ -85,7 +85,7 @@ spec:
         - name: DATALAB_ENV
           value: GCE
         - name: DATALAB_SETTINGS_OVERRIDES
-          value: '{{"enableAutoGCSBackups": "{1}"}}'
+          value: '{{"enableAutoGCSBackups": {1} }}'
       volumeMounts:
         - name: home
           mountPath: /content
