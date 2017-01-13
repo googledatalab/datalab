@@ -17,7 +17,7 @@ var debug = {
   log: function() { console.log.apply(console, arguments); }
 };
 
-function shimWebSockets() {
+function shouldShimWebsockets() {
     return location.host.substr(-12) === '.appspot.com';
 }
 
@@ -104,7 +104,7 @@ function shimWebSockets() {
     WebSocketShim.CLOSED = 0;
     WebSocketShim.OPEN = 1;
 
-    if (shimWebSockets()) {
+    if (shouldShimWebsockets()) {
         debug.log('Replacing native websockets with socket.io');
         var nativeWebSocket = window.WebSocket;
         window.WebSocket = WebSocketShim;
