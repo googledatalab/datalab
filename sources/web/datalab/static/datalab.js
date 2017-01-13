@@ -18,7 +18,7 @@ var debug = {
 };
 
 function shouldShimWebsockets() {
-    return location.host.substr(-12) === '.appspot.com';
+    return location.host.toLowerCase().substr(-12) === '.appspot.com';
 }
 
 // Override WebSocket
@@ -106,7 +106,7 @@ function shouldShimWebsockets() {
 
     if (shouldShimWebsockets()) {
         debug.log('Replacing native websockets with socket.io');
-        var nativeWebSocket = window.WebSocket;
+        window.nativeWebSocket = window.WebSocket;
         window.WebSocket = WebSocketShim;
     }
 })();
