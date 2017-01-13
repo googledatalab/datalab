@@ -30,6 +30,5 @@ docker run -it --entrypoint=$ENTRYPOINT \
   -p $PORTMAP \
   -p 8910:8910 \
   -e "DATALAB_ENV=local" \
-  -e "PROXY_WEB_SOCKETS=true" \
   datalab-test
 
