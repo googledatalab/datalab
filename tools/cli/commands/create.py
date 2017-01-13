@@ -84,6 +84,8 @@ spec:
       env:
         - name: DATALAB_ENV
           value: GCE
+        - name: DATALAB_SETTINGS_OVERRIDES
+          value: '{{"enableAutoGCSBackups": "{1}"}}'
       volumeMounts:
         - name: home
           mountPath: /content
@@ -163,6 +165,13 @@ def flags(parser):
         action='store_true',
         default=False,
         help='do not connect to the newly created instance')
+
+    parser.add_argument(
+        '--no-backups',
+        dest='no_backups',
+        action='store_true',
+        default=False,
+        help='do not automatically backup the disk contents to GCS')
 
     connect.connection_flags(parser)
     return
@@ -365,13 +374,15 @@ def run(args, gcloud_compute):
     disk_cfg = (
         'auto-delete=no,boot=no,device-name=datalab-pd,mode=rw,name=' +
         disk_name)
+    enable_backups = "false" if args.no_backups else "true"
     with tempfile.NamedTemporaryFile(delete=False) as startup_script_file:
         with tempfile.NamedTemporaryFile(delete=False) as manifest_file:
             try:
                 startup_script_file.write(_DATALAB_STARTUP_SCRIPT)
                 startup_script_file.close()
                 manifest_file.write(
-                    _DATALAB_CONTAINER_SPEC.format(args.image_name))
+                    _DATALAB_CONTAINER_SPEC.format(
+                        args.image_name, enable_backups))
                 manifest_file.close()
                 metadata_from_file = (
                     'startup-script={0},google-container-manifest={1}'.format(
@@ -388,9 +399,9 @@ def run(args, gcloud_compute):
                     '--scopes', 'cloud-platform',
                     instance])
                 gcloud_compute(args, cmd)
-            except:
-                os.remove(startup_script_file)
-                os.remove(manifest_file)
+            finally:
+                os.remove(startup_script_file.name)
+                os.remove(manifest_file.name)
 
     if not args.no_connect:
         connect.connect(args, gcloud_compute)
