@@ -34,6 +34,7 @@ _SUBCOMMANDS = {
         'flags': create.flags,
         'run': create.run,
         'require-zone': True,
+        'require-email': True,
     },
     'connect': {
         'help': 'Connect to an existing Datalab instance',
@@ -41,6 +42,7 @@ _SUBCOMMANDS = {
         'flags': connect.flags,
         'run': connect.run,
         'require-zone': True,
+        'require-email': False,
     },
     'list': {
         'help': 'List the existing Datalab instances in a project',
@@ -49,6 +51,7 @@ _SUBCOMMANDS = {
         'flags': list.flags,
         'run': list.run,
         'require-zone': False,
+        'require-email': False,
     },
     'stop': {
         'help': 'Stop an existing Datalab instance',
@@ -56,6 +59,7 @@ _SUBCOMMANDS = {
         'flags': stop.flags,
         'run': stop.run,
         'require-zone': True,
+        'require-email': False,
     },
     'delete': {
         'help': 'Delete an existing Datalab instance',
@@ -63,6 +67,7 @@ _SUBCOMMANDS = {
         'flags': delete.flags,
         'run': delete.run,
         'require-zone': True,
+        'require-email': False,
     },
 }
 
@@ -92,6 +97,10 @@ To unset the property, run:
 Alternatively, the zone can be stored in the
 environment variable CLOUDSDK_COMPUTE_ZONE.
 """)
+
+_EMAIL_HELP = ("""The email address associated with the instance.
+
+This should represent the user of Datalab.""")
 
 
 try:
@@ -126,6 +135,19 @@ def gcloud_compute(
     cmd = base_cmd + compute_cmd
     return subprocess.check_call(
         cmd, stdin=stdin, stdout=stdout, stderr=stderr)
+
+
+def get_email_address():
+    """Get the email address of the user's active gcloud account.
+
+    Returns:
+
+    Raises:
+      subprocess.CalledProcessError: If the gcloud command fails
+    """
+    return subprocess.check_output([
+        gcloud_cmd, 'auth', 'list', '--quiet', '--format',
+        'value(account)', '--filter', 'status:ACTIVE'])
 
 
 def run():
@@ -170,6 +192,12 @@ def run():
                 dest='zone',
                 default=None,
                 help=_ZONE_HELP)
+        if command_config['require-email']:
+            subcommand_parser.add_argument(
+                '--email',
+                dest='email',
+                default=get_email_address(),
+                help=_EMAIL_HELP)
 
     args = parser.parse_args()
     try:
