@@ -58,8 +58,6 @@ format_disk() {
 mount_disk() {
   mkdir -p "${MOUNT_DIR}"
   ${MOUNT_CMD} || format_disk
-  mount -o discard,defaults \
-    /dev/disk/by-id/google-datalab-pd /mnt/disks/datalab-pd || format_disk
   chmod a+w "${MOUNT_DIR}"
 }
 
