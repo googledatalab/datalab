@@ -452,7 +452,6 @@ div.cellPlaceholder {
 
 /* CodeMirror Customization */
 pre, code, .CodeMirror, .CodeMirror pre, .CodeMirror-linenumber {
-  font-family: 'Lucida Console', 'Source Code Pro', monospace !important;
   font-size: 15px !important;
 }
 .CodeMirror pre, .CodeMirror-linenumber {

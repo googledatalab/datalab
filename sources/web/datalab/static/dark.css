@@ -101,8 +101,8 @@ input {
 div.text_cell_render {
   color: #ddd;
 }
-.rendered_html pre, .rendered_html code, .rendered_html {
-  background-color: none;
+.rendered_html pre, .rendered_html code, .rendered_html, .rendered_html table, .rendered_html th, .rendered_html tr, .rendered_html td, .rendered_html h1 {
+  background-color: #444;
   color: #ddd;
 }
 div.cell.selected {
@@ -149,20 +149,6 @@ input.raw_input::-moz-selection {
 .CodeMirror-cursor {
   border-left-color: #eee;
 }
-.cm-keyword {
-  color: #aaf !important;
-}
-.cm-number, .cm-string, .cm-string2 {
-  color: lightgreen !important;
-}
-.cm-def, .cm-variable, .cm-variable-2, .cm-variable-3, .cm-property,
-.cm-qualifier, .cm-operator, .cm-meta, .cm-builtin,
-.cm-tag, .cm-attribute, .cm-header, .cm-hr, .cm-atom {
-  color: #559edd !important;
-}
-.cm-link, .cm-url {
-  color: #559ad7 !important;
-}
 code {
   background-color: #666;
 }
@@ -177,9 +163,6 @@ code {
 }
 .ansiyellow {
   color: #ff0;
-}
-.cm-magic, .ansired {
-  color: #559edd;
 }
 .item_icon {
   color: #adadad;

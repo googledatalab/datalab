@@ -174,3 +174,9 @@ RUN ipython profile create default && \
     ln -s /usr/local/share/jupyter/nbextensions/gcpdatalab/codemirror/mode/sql.js /usr/local/lib/python2.7/dist-packages/notebook/static/components/codemirror/mode/text/sql/text/sql.js && \
     cd /
 
+RUN mkdir -p $(jupyter --data-dir)/nbextensions && \
+    cd $(jupyter --data-dir)/nbextensions && \
+    mkdir jupyter_themes && cd jupyter_themes && \
+    wget https://raw.githubusercontent.com/merqurio/jupyter_themes/master/theme_selector.js && \
+    cd ../ && jupyter nbextension enable jupyter_themes/theme_selector
+
