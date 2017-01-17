@@ -18,11 +18,13 @@
 import http = require('http');
 import jupyter = require('./jupyter');
 import url = require('url');
+import httprequest = require('request');
 
 /**
  * The application settings instance.
  */
 var appSettings: common.Settings;
+var machineId: string = null;
 
 function stringifyMap(map: {[index: string]: string}): string {
   var textBuilder: string[] = [];
@@ -46,24 +48,55 @@ function stringifyMap(map: {[index: string]: string}): string {
  * @param response the outgoing health response.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
-  response.writeHead(200, { 'Content-Type': 'text/plain' });
+  var requestUrl = url.parse(request.url);
+  var path = requestUrl.pathname;
 
-  response.write('Environment Variables:\n');
-  response.write(stringifyMap(process.env));
-  response.write('\n\n');
+  if (path === '/_info/vmid') {
+    if (machineId !== null) {
+      response.writeHead(200, { 'Content-Type': 'text/plain' });
+      response.write(machineId);
+      response.end();
+    } else {
+      var options = {
+        url: 'http://metadata.google.internal/computeMetadata/v1/instance/id',
+        headers: {
+          'Metadata-Flavor': 'Google'
+        }
+      };
 
-  response.write('Application Settings:\n');
-  response.write(JSON.stringify(appSettings, null, 2));
-  response.write('\n\n');
+      httprequest(options, function(error, res, body) {
+        if (!error && res.statusCode == 200) {
+          machineId = body;
+          response.writeHead(200, { 'Content-Type': 'text/plain' });
+          response.write(machineId);
+          response.end();
+        } else {
+          response.writeHead(501, { 'Content-Type': 'text/plain' });
+          response.write('Not a Google cloud VM');
+          response.end();
+        }
+      });
+    }
+  } else {
+    response.writeHead(200, { 'Content-Type': 'text/plain' });
 
-  response.write('Request Headers:\n');
-  response.write(stringifyMap(request.headers));
-  response.write('\n\n');
+    response.write('Environment Variables:\n');
+    response.write(stringifyMap(process.env));
+    response.write('\n\n');
 
-  response.write('Jupyter Servers:\n');
-  response.write(JSON.stringify(jupyter.getInfo(), null, 2));
-  response.write('\n\n');
-  response.end();
+    response.write('Application Settings:\n');
+    response.write(JSON.stringify(appSettings, null, 2));
+    response.write('\n\n');
+
+    response.write('Request Headers:\n');
+    response.write(stringifyMap(request.headers));
+    response.write('\n\n');
+
+    response.write('Jupyter Servers:\n');
+    response.write(JSON.stringify(jupyter.getInfo(), null, 2));
+    response.write('\n\n');
+    response.end();
+  }
 }
 
 /**
