@@ -163,8 +163,8 @@ function socketHandler(socket: SocketIO.Socket) {
   });
 }
 
-export function wrapServer(server: http.Server): void {
-  var io = socketio.listen(server, {
+export function init(): void {
+  var io = socketio('8084', {
     transports: [ 'polling' ],
     allowUpgrades: false
   });

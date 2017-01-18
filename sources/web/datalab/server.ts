@@ -282,6 +282,7 @@ export function run(settings: common.Settings): void {
   auth.init(settings);
   noCacheContent.init(settings);
   reverseProxy.init();
+  sockets.init();
 
   healthHandler = health.createHandler(settings);
   infoHandler = info.createHandler(settings);
@@ -290,7 +291,6 @@ export function run(settings: common.Settings): void {
 
   server = http.createServer(requestHandler);
   server.on('upgrade', socketHandler);
-  sockets.wrapServer(server);
 
   if (settings.allowHttpOverWebsocket) {
     new wsHttpProxy.WsHttpProxy(server, httpOverWebSocketPath, settings.allowOriginOverrides);
