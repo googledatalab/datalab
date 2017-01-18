@@ -52,15 +52,13 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   var path = requestUrl.pathname;
 
   if (path === '/_info/vminfo') {
-    if (process.env['VM_NAME'] && process.env['VM_ZONE']) {
-      response.writeHead(200, { 'Content-Type': 'application/json' });
-      response.write(JSON.stringify({VM_NAME: process.env['VM_NAME'], VM_ZONE: process.env['VM_ZONE']}));
-      response.end();
-    } else {
-      response.writeHead(501, { 'Content-Type': 'text/plain' });
-      response.write('Not a google cloud VM');
-      response.end();
-    }
+    var vminfo = {
+      VM_NAME: process.env['VM_NAME'],
+      VM_ZONE: process.env['VM_ZONE']
+    };
+    response.writeHead(200, { 'Content-Type': 'application/json' });
+    response.write(JSON.stringify(vminfo));
+    response.end();
   } else {
     response.writeHead(200, { 'Content-Type': 'text/plain' });
 
