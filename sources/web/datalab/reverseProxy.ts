@@ -44,6 +44,11 @@ function getPort(url: string) {
  */
 export function getRequestPort(request: http.ServerRequest, path: string): string {
   var port: string = getPort(path) || getPort(request.headers.referer);
+  if (!port) {
+    if (path.indexOf('/socket.io/') == 0) {
+      port = '8084';
+    }
+  }
   return port;
 }
 
@@ -52,7 +57,8 @@ export function getRequestPort(request: http.ServerRequest, path: string): strin
  */
 function shouldProxyPort(port: String) {
   // Do not proxy 8083 to gateway, it's open for ungit
-  return !!process.env.KG_URL && port !== '8083';
+  // Do not proxy 8084 to gateway, it's open for socket.io wrapping
+  return !!process.env.KG_URL && port !== '8083' && port !== '8084';
 }
 
 /**
