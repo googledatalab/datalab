@@ -293,7 +293,7 @@ def maybe_start(args, gcloud_compute, instance):
     return
 
 
-def run(args, gcloud_compute):
+def run(args, gcloud_compute, **unused_kwargs):
     """Implementation of the `datalab connect` subcommand.
 
     Args:
