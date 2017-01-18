@@ -15,6 +15,7 @@
 /// <reference path="../../../externs/ts/node/node.d.ts" />
 /// <reference path="common.d.ts" />
 
+import fs = require('fs');
 import http = require('http');
 import jupyter = require('./jupyter');
 import url = require('url');
@@ -24,20 +25,54 @@ import url = require('url');
  */
 var appSettings: common.Settings;
 
-function stringifyMap(map: {[index: string]: string}): string {
-  var textBuilder: string[] = [];
-
-  var names: string[] = [];
-  for (var n in map) {
-    names.push(n);
+/**
+ * Read one of the 'human readable' files from '/proc' and parse it.
+ *
+ * This assumes that the given 'filename' refers to one of the files under
+ * the '/proc' directory that is meant to be in human readable format. Those
+ * files are formatted as a newline-separated list of key-value pairs (with
+ * the keys and values separated by a ':').
+ *
+ * Since these files are already formatted in a manner that is very similar
+ * to a JSON dictionary, they are trivial to convert to JSON for use in the
+ * '/_info' API.
+ *
+ * @param filename the fully qualified name of the file to read.
+ */
+function readProcFile(filename: string): any {
+  var obj: any = {};
+  try {
+    var contents: string = fs.readFileSync(filename, { encoding: 'utf8' });
+    var lines: Array<string> = contents.split('\n');
+    for (var l in lines) {
+      var line: string = lines[l];
+      var lineParts: Array<string> = line.split(":");
+      if (lineParts.length >= 2) {
+        obj[lineParts[0].trim()] = lineParts[1].trim();
+      }
+    }
+    var lines: Array<string> = contents.split('\n');
+  } catch (e) {
+    return e.message;
   }
-  names = names.sort();
+  return obj;
+}
 
-  for (var i = 0; i < names.length; i++) {
-    textBuilder.push(names[i] + ': ' + map[names[i]]);
+/**
+ * Given a map of HTTP request headers, remove any that might contain auth information.
+ *
+ * This makes it easier for users to submit the response of their '/_info' API in
+ * bug reports, without worrying about it leaking their auth credentials.
+ *
+ * @param headers the map from header names to values.
+ */
+function scrubHeaders(headers: common.Map<string>): common.Map<string> {
+  for (var key in headers) {
+    if ((key == 'cookie') || (key.indexOf('x-') == 0)) {
+      delete headers[key];
+    }
   }
-
-  return textBuilder.join('\n');
+  return headers;
 }
 
 /**
@@ -46,23 +81,15 @@ function stringifyMap(map: {[index: string]: string}): string {
  * @param response the outgoing health response.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
+  var info: any = {};
+  info['env'] = process.env;
+  info['mem'] = readProcFile('/proc/meminfo');
+  info['requestHeaders'] = scrubHeaders(request.headers);
+  info['settings'] = appSettings;
+  info['servers'] = jupyter.getInfo();
+
   response.writeHead(200, { 'Content-Type': 'text/plain' });
-
-  response.write('Environment Variables:\n');
-  response.write(stringifyMap(process.env));
-  response.write('\n\n');
-
-  response.write('Application Settings:\n');
-  response.write(JSON.stringify(appSettings, null, 2));
-  response.write('\n\n');
-
-  response.write('Request Headers:\n');
-  response.write(stringifyMap(request.headers));
-  response.write('\n\n');
-
-  response.write('Jupyter Servers:\n');
-  response.write(JSON.stringify(jupyter.getInfo(), null, 2));
-  response.write('\n\n');
+  response.write(JSON.stringify(info, null, 2));
   response.end();
 }
 
