@@ -191,10 +191,15 @@ then
   . ~/startup.sh
 fi
 
+# Get VM information if running on google cloud
+machine_metadata_url="http://metadata.google.internal/computeMetadata/v1/instance"
+export VM_NAME=$(curl -s "${machine_metadata_url}/hostname" -H "Metadata-Flavor: Google" | cut -d '.' -f 1)
+export VM_ZONE=$(curl -s "${machine_metadata_url}/zone" -H "Metadata-Flavor: Google" | sed 's/.*zones\///')
+
 # Install the kernel gateway server extension, if a kernel gateway URL has been specified
 if [ -n "${KG_URL}" ]
 then
-    jupyter serverextension enable --py nb2kg --sys-prefix
+  jupyter serverextension enable --py nb2kg --sys-prefix
 fi
 
 # Create the notebook notary secret if one does not already exist
