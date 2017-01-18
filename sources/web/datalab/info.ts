@@ -18,13 +18,11 @@
 import http = require('http');
 import jupyter = require('./jupyter');
 import url = require('url');
-import httprequest = require('request');
 
 /**
  * The application settings instance.
  */
 var appSettings: common.Settings;
-var machineId: string = null;
 
 function stringifyMap(map: {[index: string]: string}): string {
   var textBuilder: string[] = [];
@@ -42,6 +40,13 @@ function stringifyMap(map: {[index: string]: string}): string {
   return textBuilder.join('\n');
 }
 
+export function getVmInfo() {
+  return {
+    VM_NAME: process.env['VM_NAME'],
+    VM_ZONE: process.env['VM_ZONE']
+  };
+}
+
 /**
  * Implements information request handling.
  * @param request the incoming health request.
@@ -52,10 +57,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   var path = requestUrl.pathname;
 
   if (path === '/_info/vminfo') {
-    var vminfo = {
-      VM_NAME: process.env['VM_NAME'],
-      VM_ZONE: process.env['VM_ZONE']
-    };
+    var vminfo = getVmInfo();
     response.writeHead(200, { 'Content-Type': 'application/json' });
     response.write(JSON.stringify(vminfo));
     response.end();

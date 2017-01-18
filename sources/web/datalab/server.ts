@@ -35,6 +35,7 @@ import url = require('url');
 import userManager = require('./userManager');
 import wsHttpProxy = require('./wsHttpProxy');
 import backupUtility = require('./backupUtility');
+import childProcess = require('child_process');
 
 var server: http.Server;
 var healthHandler: http.RequestHandler;
@@ -183,6 +184,21 @@ function handleRequest(request: http.ServerRequest,
     response.statusCode = 200;
     response.end();
     return;
+  }
+
+  if (path.indexOf('/_killvm') == 0) {
+    if ('POST' != request.method) {
+      return;
+    }
+    try {
+      let vminfo = info.getVmInfo();
+      childProcess.execSync(
+        'gcloud compute instances stop ' + vminfo.VM_NAME + ' --zone ' + vminfo.VM_ZONE,
+        {env: process.env});
+    } catch (err) {
+      logging.getLogger().error(err, 'Failed to stop the VM. stderr: %s', err.stderr);
+      return "unknown";
+    }
   }
 
   // /setting updates a per-user setting.

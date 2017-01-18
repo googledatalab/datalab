@@ -215,6 +215,19 @@ function manageVm() {
   });
 }
 
+function killVm() {
+  let action = confirm(' You are about to shutdown this machine, are you sure? ' +
+      'You will lose any unsaved notebook state');
+  if (action === true) {
+    path = window.location.protocol + '//' + window.location.host + '/_killvm';
+    xhr(path, function() {
+      window.setTimeout(function () {
+        window.location = '/';
+      }, 500);
+    }, 'POST');
+  }
+}
+
 function initializePage(dialog, saveFn) {
 
   function showAbout() {
@@ -237,7 +250,7 @@ function initializePage(dialog, saveFn) {
       if (vminfo && vminfo.VM_NAME) {
         dialogContent += '<hr><div>This Datalab instance is running from a Google Cloud VM: <b>' + vminfo.VM_NAME + '</b></span></div>' +
         '<div><a href="javascript:manageVm()">Click here to manage the VM</a></div>' +
-        '<br><button id="killVmButton" title="Shutdown VM" class="btn btn-danger" style="">Shutdown VM</button>';
+        '<br><button id="killVmButton" title="Shutdown VM" class="btn btn-danger" onclick="killVm()">Shutdown VM</button>';
       }
 
       var dialogOptions = {
