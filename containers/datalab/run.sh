@@ -32,20 +32,10 @@ if [ "$1" != "" ]; then
   fi
 fi
 
-# On linux docker runs directly on host machine, so bind to 127.0.0.1 only
-# to avoid it being accessible from network.
-# On other platform, it needs to bind to all ip addresses so VirtualBox can
-# access it. Users need to make sure in their VirtualBox port forwarding
-# settings only 127.0.0.1 is bound.
-if [ "$OSTYPE" == "linux"* ]; then
-  PORTMAP="127.0.0.1:8081:8080"
-else
-  PORTMAP="8081:8080"
-fi
 # Use this flag to map in web server content during development
 #  -v $REPO_DIR/sources/web:/sources \
 docker run -it --entrypoint=$ENTRYPOINT \
-  -p $PORTMAP \
+  -p 8081:8080 \
   -v "$CONTENT:/content" \
   -e "PROJECT_ID=$PROJECT_ID" \
   -e "DATALAB_ENV=local" \

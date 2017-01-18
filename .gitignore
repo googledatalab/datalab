@@ -5,7 +5,6 @@ staging
 *.pyc
 *.idea
 *.iml
-*.ipynb.yaml
 *.map
 *.egg-info
 *.swp
