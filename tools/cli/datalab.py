@@ -132,6 +132,7 @@ def get_email_address():
     """Get the email address of the user's active gcloud account.
 
     Returns:
+      The email address of the "active" gcloud authenticated account.
 
     Raises:
       subprocess.CalledProcessError: If the gcloud command fails
