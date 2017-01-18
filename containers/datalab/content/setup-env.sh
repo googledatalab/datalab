@@ -28,5 +28,6 @@ export PROJECT_ID=${PROJECT_ID:-`gcloud config list -q --format 'value(core.proj
 export ZONE=${ZONE:-`gcloud config list -q --format 'value(compute.zone)' 2> /dev/null`}
 
 # Lookup the author email address to use for git commits, and then configure git accordingly
-export GIT_AUTHOR=${DATALAB_GIT_AUTHOR:-`gcloud auth list --format 'value(account)' --filter 'status:ACTIVE'`}
-git config --global user.email "${GIT_AUTHOR}"
+export DATALAB_GIT_AUTHOR=${DATALAB_GIT_AUTHOR:-`gcloud auth list --format 'value(account)' --filter 'status:ACTIVE'`}
+git config --global user.email "${DATALAB_GIT_AUTHOR}"
+git config --global user.name "${DATALAB_GIT_AUTHOR}"
