@@ -18,6 +18,11 @@
 # If [path_of_pydatalab_dir] is provided, it will copy the content of that dir into image.
 # Otherwise, it will get the pydatalab by "git clone" from pydatalab repo.
 
+# Get VM information if running on google cloud
+machine_metadata_url="http://metadata.google.internal/computeMetadata/v1/instance"
+export VM_NAME=$(curl -s "${machine_metadata_url}/hostname" -H "Metadata-Flavor: Google" | cut -d '.' -f 1)
+export VM_ZONE=$(curl -s "${machine_metadata_url}/zone" -H "Metadata-Flavor: Google" | sed 's/.*zones\///')
+
 # Build the docker image
 if [ -n "$1" ]; then
   src_pydatalab="$1"

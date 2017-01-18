@@ -174,3 +174,5 @@ RUN ipython profile create default && \
     ln -s /usr/local/share/jupyter/nbextensions/gcpdatalab/codemirror/mode/sql.js /usr/local/lib/python2.7/dist-packages/notebook/static/components/codemirror/mode/text/sql/text/sql.js && \
     cd /
 
+ENV VM_NAME $VM_NAME
+ENV VM_ZONE $VM_ZONE

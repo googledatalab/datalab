@@ -51,31 +51,15 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   var requestUrl = url.parse(request.url);
   var path = requestUrl.pathname;
 
-  if (path === '/_info/vmid') {
-    if (machineId !== null) {
-      response.writeHead(200, { 'Content-Type': 'text/plain' });
-      response.write(machineId);
+  if (path === '/_info/vminfo') {
+    if (process.env['VM_NAME'] && process.env['VM_ZONE']) {
+      response.writeHead(200, { 'Content-Type': 'application/json' });
+      response.write(JSON.stringify({VM_NAME: process.env['VM_NAME'], VM_ZONE: process.env['VM_ZONE']}));
       response.end();
     } else {
-      var options = {
-        url: 'http://metadata.google.internal/computeMetadata/v1/instance/id',
-        headers: {
-          'Metadata-Flavor': 'Google'
-        }
-      };
-
-      httprequest(options, function(error, res, body) {
-        if (!error && res.statusCode == 200) {
-          machineId = body;
-          response.writeHead(200, { 'Content-Type': 'text/plain' });
-          response.write(machineId);
-          response.end();
-        } else {
-          response.writeHead(501, { 'Content-Type': 'text/plain' });
-          response.write('Not a Google cloud VM');
-          response.end();
-        }
-      });
+      response.writeHead(501, { 'Content-Type': 'text/plain' });
+      response.write('Not a google cloud VM');
+      response.end();
     }
   } else {
     response.writeHead(200, { 'Content-Type': 'text/plain' });
