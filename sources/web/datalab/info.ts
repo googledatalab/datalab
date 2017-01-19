@@ -42,8 +42,9 @@ function stringifyMap(map: {[index: string]: string}): string {
 
 export function getVmInfo() {
   return {
-    VM_NAME: process.env['VM_NAME'],
-    VM_ZONE: process.env['VM_ZONE']
+    vm_name: process.env['VM_NAME'],
+    vm_zone: process.env['VM_ZONE'],
+    project_id: process.env['PROJECT_ID']
   };
 }
 

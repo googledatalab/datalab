@@ -206,25 +206,21 @@ function getVmInfo(callback) {
 
 function manageVm() {
   getVmInfo(function(vminfo) {
-    if (vminfo && vminfo.VM_NAME && vminfo.VM_ZONE) {
+    if (vminfo && vminfo.vm_name && vminfo.vm_zone) {
       prefix = 'https://console.cloud.google.com/compute/instancesDetail';
-      window.open(prefix + '/zones/' + vminfo.VM_ZONE + '/instances/' + vminfo.VM_NAME);
+      window.open(prefix + '/zones/' + vminfo.vm_zone + '/instances/' + vminfo.vm_name);
     } else {
       console.log('Error, could not retrieve VM information. Is this a google cloud VM?');
     }
   });
 }
 
-function killVm() {
-  let action = confirm(' You are about to shutdown this machine, are you sure? ' +
+function stopVm() {
+  let action = confirm(' You are about to stop this machine, are you sure? ' +
       'You will lose any unsaved notebook state');
   if (action === true) {
-    path = window.location.protocol + '//' + window.location.host + '/_killvm';
-    xhr(path, function() {
-      window.setTimeout(function () {
-        window.location = '/';
-      }, 500);
-    }, 'POST');
+    path = window.location.protocol + '//' + window.location.host + '/_stopvm';
+    xhr(path, null, 'POST');
   }
 }
 
@@ -247,10 +243,10 @@ function initializePage(dialog, saveFn) {
         '<span class="fa fa-external-link-square">&nbsp;</span><a href="/static/reporting.html?enabled=' + reportingEnabled + '" target="_blank">Usage Statistics</a><br />' +
         '<span class="fa fa-recycle">&nbsp;</span><a href="javascript:restartDatalab()">Restart Server</a><br />';
 
-      if (vminfo && vminfo.VM_NAME) {
-        dialogContent += '<hr><div>This Datalab instance is running from a Google Cloud VM: <b>' + vminfo.VM_NAME + '</b></span></div>' +
+      if (vminfo && vminfo.vm_name) {
+        dialogContent += '<hr><div>This Datalab instance is running from a Google Cloud VM: <b>' + vminfo.vm_name + '</b></span></div>' +
         '<div><a href="javascript:manageVm()">Click here to manage the VM</a></div>' +
-        '<br><button id="killVmButton" title="Shutdown VM" class="btn btn-danger" onclick="killVm()">Shutdown VM</button>';
+        '<br><button id="stopVmButton" title="Stop VM" class="btn btn-danger" onclick="stopVm()">Stop VM</button>';
       }
 
       var dialogOptions = {
