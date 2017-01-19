@@ -264,7 +264,7 @@ function stopVmHandler(request: http.ServerRequest, response: http.ServerRespons
     let vminfo = info.getVmInfo();
     childProcess.execSync(
       'gcloud compute instances stop ' + vminfo.vm_name +
-         ' --project ' + vminfo.project_id + ' --zone ' + vminfo.vm_zone,
+         ' --project ' + vminfo.vm_project + ' --zone ' + vminfo.vm_zone,
       {env: process.env});
   } catch (err) {
     logging.getLogger().error(err, 'Failed to stop the VM. stderr: %s', err.stderr);

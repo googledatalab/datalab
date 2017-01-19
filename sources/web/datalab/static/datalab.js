@@ -207,8 +207,10 @@ function getVmInfo(callback) {
 function manageVm() {
   getVmInfo(function(vminfo) {
     if (vminfo && vminfo.vm_name && vminfo.vm_zone) {
-      prefix = 'https://console.cloud.google.com/compute/instancesDetail';
-      window.open(prefix + '/zones/' + vminfo.vm_zone + '/instances/' + vminfo.vm_name);
+      window.open('https://console.cloud.google.com/compute/instancesDetail' +
+          '/zones/' + vminfo.vm_zone +
+          '/instances/' + vminfo.vm_name +
+          '?project=' + vminfo.vm_project);
     } else {
       console.log('Error, could not retrieve VM information. Is this a google cloud VM?');
     }

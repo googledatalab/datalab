@@ -44,7 +44,7 @@ export function getVmInfo() {
   return {
     vm_name: process.env['VM_NAME'],
     vm_zone: process.env['VM_ZONE'],
-    project_id: process.env['PROJECT_ID']
+    vm_project: process.env['VM_PROJECT']
   };
 }
 
