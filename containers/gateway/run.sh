@@ -35,7 +35,7 @@ fi
 # Use this flag to map in web server content during development
 #  -v $REPO_DIR/sources/web:/sources \
 docker run -it --entrypoint=$ENTRYPOINT \
-  -p 8082:8080 \
+  -p 127.0.0.1:8082:8080 \
   -v "$CONTENT:/content" \
   -e "DATALAB_ENV=local" \
   datalab-gateway
