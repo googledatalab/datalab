@@ -25,11 +25,6 @@ then
   . ~/startup.sh
 fi
 
-# Get VM information if running on google cloud
-machine_metadata_url="http://metadata.google.internal/computeMetadata/v1/instance"
-export VM_NAME=$(curl -s "${machine_metadata_url}/hostname" -H "Metadata-Flavor: Google" | cut -d '.' -f 1)
-export VM_ZONE=$(curl -s "${machine_metadata_url}/zone" -H "Metadata-Flavor: Google" | sed 's/.*zones\///')
-
 # Start the DataLab kernel gateway.
 jupyter kernelgateway --JupyterWebsocketPersonality.list_kernels=True --KernelGatewayApp.port=8081 --KernelGatewayApp.ip=0.0.0.0 &
 n=0; while true; do

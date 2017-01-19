@@ -161,8 +161,9 @@ function xhr(url, callback, method) {
 
   let request = new XMLHttpRequest();
   request.onreadystatechange = function() {
-    if (request.readyState === 4 && request.status === 200)
+    if (request.readyState === 4 && request.status === 200) {
       callback.call(request);
+    }
   }
   request.open(method, url);
   request.send();
@@ -218,8 +219,7 @@ function manageVm() {
 }
 
 function stopVm() {
-  let action = confirm(' You are about to stop this machine, are you sure? ' +
-      'You will lose any unsaved notebook state');
+  let action = confirm('Stopping this VM will discard any unsaved state. Are you sure?');
   if (action === true) {
     path = window.location.protocol + '//' + window.location.host + '/_stopvm';
     xhr(path, null, 'POST');
@@ -229,35 +229,27 @@ function stopVm() {
 function initializePage(dialog, saveFn) {
 
   function showAbout() {
-    getVmInfo(function(vminfo) {
-      var version = document.body.getAttribute('data-version-id');
-      var reportingEnabled = (document.body.getAttribute('data-reporting-enabled') == 'true');
-      var dialogContent =
-        '<p>Interactive notebooks, with Python and SQL on Google Cloud Platform.</p>' +
-        '<p>Explore, transform, visualize and process data using BigQuery and Google Cloud Storage.</p><br />' +
-        '<pre>Version: ' + version  + '\nBased on Jupyter (formerly IPython) 4</pre>' +
-        '<h5><b>More Information</b></h5>' +
-        '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://cloud.google.com" target="_blank">Product information</a><br />' +
-        '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://github.com/googledatalab/datalab" target="_blank">Project on GitHub</a><br />' +
-        '<span class="fa fa-external-link-square">&nbsp;</span><a href="/static/about.txt" target="_blank">License and software information</a><br />' +
-        '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://cloud.google.com/terms/" target="_blank">Terms of Service</a><br />' +
-        '<span class="fa fa-external-link-square">&nbsp;</span><a href="http://www.google.com/intl/en/policies/" target="_blank">Privacy Policy</a><br />' +
-        '<span class="fa fa-external-link-square">&nbsp;</span><a href="/static/reporting.html?enabled=' + reportingEnabled + '" target="_blank">Usage Statistics</a><br />' +
-        '<span class="fa fa-recycle">&nbsp;</span><a href="javascript:restartDatalab()">Restart Server</a><br />';
+    var version = document.body.getAttribute('data-version-id');
+    var reportingEnabled = (document.body.getAttribute('data-reporting-enabled') == 'true');
+    var dialogContent =
+      '<p>Interactive notebooks, with Python and SQL on Google Cloud Platform.</p>' +
+      '<p>Explore, transform, visualize and process data using BigQuery and Google Cloud Storage.</p><br />' +
+      '<pre>Version: ' + version  + '\nBased on Jupyter (formerly IPython) 4</pre>' +
+      '<h5><b>More Information</b></h5>' +
+      '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://cloud.google.com" target="_blank">Product information</a><br />' +
+      '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://github.com/googledatalab/datalab" target="_blank">Project on GitHub</a><br />' +
+      '<span class="fa fa-external-link-square">&nbsp;</span><a href="/static/about.txt" target="_blank">License and software information</a><br />' +
+      '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://cloud.google.com/terms/" target="_blank">Terms of Service</a><br />' +
+      '<span class="fa fa-external-link-square">&nbsp;</span><a href="http://www.google.com/intl/en/policies/" target="_blank">Privacy Policy</a><br />' +
+      '<span class="fa fa-external-link-square">&nbsp;</span><a href="/static/reporting.html?enabled=' + reportingEnabled + '" target="_blank">Usage Statistics</a><br />' +
+      '<span class="fa fa-recycle">&nbsp;</span><a href="javascript:restartDatalab()">Restart Server</a><br />';
 
-      if (vminfo && vminfo.vm_name) {
-        dialogContent += '<hr><div>This Datalab instance is running from a Google Cloud VM: <b>' + vminfo.vm_name + '</b></span></div>' +
-        '<div><a href="javascript:manageVm()">Click here to manage the VM</a></div>' +
-        '<br><button id="stopVmButton" title="Stop VM" class="btn btn-danger" onclick="stopVm()">Stop VM</button>';
-      }
-
-      var dialogOptions = {
-        title: 'About Google Cloud Datalab',
-        body: $(dialogContent),
-        buttons: { 'OK': {} }
-      };
-      dialog.modal(dialogOptions);
-    });
+    var dialogOptions = {
+      title: 'About Google Cloud Datalab',
+      body: $(dialogContent),
+      buttons: { 'OK': {} }
+    };
+    dialog.modal(dialogOptions);
   }
 
   // Prepare sign in/out UI
@@ -281,7 +273,7 @@ function initializePage(dialog, saveFn) {
     }
   });
   var signedIn = document.body.getAttribute('data-signed-in');
-  if (signedIn != undefined) {  // i.e. running locally.
+  if (signedIn != undefined) {
     if (signedIn == "true") {
       $('#signOutGroup').show();
       var username = document.body.getAttribute('data-account');
@@ -316,6 +308,14 @@ function initializePage(dialog, saveFn) {
       window.open(prefix + '/_proxy/8083/#/repository?path=' + path);
     });
   }
+
+  getVmInfo(function() {
+    if (vminfo && vminfo.vm_name) {
+      $('#stopVmGroup').show();
+      $('#vmName').text(vminfo.vm_name);
+      $('#stopVmButton').click(stopVm);
+    }
+  });
 
   // More UI that relies on appbar load
   // Prepare the theme selector radio boxes
