@@ -42,24 +42,34 @@ _DATALAB_DEFAULT_DISK_SIZE_GB = 200
 _DATALAB_DISK_DESCRIPTION = (
     'Persistent disk for a Google Cloud Datalab instance')
 
+_DATALAB_NOTEBOOKS_REPOSITORY = 'datalab-notebooks'
+
 _DATALAB_STARTUP_SCRIPT = """#!/bin/bash
 
 PERSISTENT_DISK_DEV="/dev/disk/by-id/google-datalab-pd"
 MOUNT_DIR="/mnt/disks/datalab-pd"
-MOUNT_CMD="mount -o discard,defaults ${PERSISTENT_DISK_DEV} ${MOUNT_DIR}"
+MOUNT_CMD="mount -o discard,defaults ${{PERSISTENT_DISK_DEV}} ${{MOUNT_DIR}}"
 
-format_disk() {
+clone_repo() {{
+  mkdir -p ${{MOUNT_DIR}}/datalab
+  docker run -v "${{MOUNT_DIR}}:/content" \
+    --entrypoint "/bin/bash" {0} \
+    gcloud source repos clone {1} /content/datalab/notebooks
+}}
+
+format_disk() {{
   mkfs.ext4 -F \
     -E lazy_itable_init=0,lazy_journal_init=0,discard \
-    ${PERSISTENT_DISK_DEV}
-  ${MOUNT_CMD}
-}
+    ${{PERSISTENT_DISK_DEV}}
+  ${{MOUNT_CMD}}
+  clone_repo
+}}
 
-mount_disk() {
-  mkdir -p "${MOUNT_DIR}"
-  ${MOUNT_CMD} || format_disk
-  chmod a+w "${MOUNT_DIR}"
-}
+mount_disk() {{
+  mkdir -p "${{MOUNT_DIR}}"
+  ${{MOUNT_CMD}} || format_disk
+  chmod a+w "${{MOUNT_DIR}}"
+}}
 
 mount_disk
 """
@@ -172,6 +182,13 @@ def flags(parser):
         action='store_true',
         default=False,
         help='do not automatically backup the disk contents to GCS')
+
+    parser.add_argument(
+        '--no-create-repository',
+        dest='no_create_repository',
+        action='store_true',
+        default=False,
+        help='do not create the datalab-notebooks repository if it is missing')
 
     connect.connection_flags(parser)
     return
@@ -351,12 +368,57 @@ def ensure_disk_exists(args, gcloud_compute, disk_name, report_errors=False):
     return
 
 
-def run(args, gcloud_compute, email='', **kwargs):
+def create_repo(args, gcloud_repos, repo_name):
+    """Create the given repository.
+
+    Args:
+      args: The Namespace returned by argparse
+      gcloud_repos: Function that can be used for invoking
+        `gcloud alpha source repos`
+      repo_name: The name of the repository to create
+    Raises:
+      subprocess.CalledProcessError: If the `gcloud` command fails
+    """
+    create_cmd = ['create', '--quiet', repo_name]
+    with tempfile.TemporaryFile() as tf:
+        try:
+            gcloud_repos(args, create_cmd, stdout=tf, stderr=tf)
+        except subprocess.CalledProcessError:
+            tf.seek(0)
+            print(tf.read())
+            raise
+
+
+def ensure_repo_exists(args, gcloud_repos, repo_name):
+    """Create the given repository if it does not already exist.
+
+    Args:
+      args: The Namespace returned by argparse
+      gcloud_repos: Function that can be used for invoking
+        `gcloud alpha source repos`
+      repo_name: The name of the repository to check
+    Raises:
+      subprocess.CalledProcessError: If the `gcloud` command fails
+    """
+    list_cmd = ['list', '--quiet',
+                '--filter', 'name:{}'.format(repo_name),
+                '--format', 'value(name)']
+    with tempfile.TemporaryFile() as tf:
+        gcloud_repos(args, list_cmd, stdout=tf)
+        tf.seek(0)
+        matching_repos = tf.read().strip()
+        if not matching_repos:
+            create_repo(args, gcloud_repos, repo_name)
+
+
+def run(args, gcloud_compute, gcloud_repos, email='', **kwargs):
     """Implementation of the `datalab create` subcommand.
 
     Args:
       args: The Namespace instance returned by argparse
       gcloud_compute: Function that can be used to invoke `gcloud compute`
+      gcloud_repos: Function that can be used to invoke
+        `gcloud alpha source repos`
       email: The user's email address
     Raises:
       subprocess.CalledProcessError: If a nested `gcloud` calls fails
@@ -367,6 +429,9 @@ def run(args, gcloud_compute, email='', **kwargs):
     instance = args.instance
     disk_name = args.disk_name or '{0}-pd'.format(instance)
     ensure_disk_exists(args, gcloud_compute, disk_name)
+
+    if not args.no_create_repository:
+        ensure_repo_exists(args, gcloud_repos, _DATALAB_NOTEBOOKS_REPOSITORY)
 
     print('Creating the instance {0}'.format(instance))
     cmd = ['instances', 'create']
@@ -379,7 +444,8 @@ def run(args, gcloud_compute, email='', **kwargs):
     with tempfile.NamedTemporaryFile(delete=False) as startup_script_file:
         with tempfile.NamedTemporaryFile(delete=False) as manifest_file:
             try:
-                startup_script_file.write(_DATALAB_STARTUP_SCRIPT)
+                startup_script_file.write(_DATALAB_STARTUP_SCRIPT.format(
+                    args.image_name, _DATALAB_NOTEBOOKS_REPOSITORY))
                 startup_script_file.close()
                 manifest_file.write(
                     _DATALAB_CONTAINER_SPEC.format(

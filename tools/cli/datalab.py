@@ -128,6 +128,28 @@ def gcloud_compute(
         cmd, stdin=stdin, stdout=stdout, stderr=stderr)
 
 
+def gcloud_repos(
+        args, repos_cmd, stdin=None, stdout=None, stderr=None):
+    """Run the given subcommand of `gcloud alpha source repos`
+
+    Args:
+      args: The Namespace instance returned by argparse
+      repos_cmd: The subcommand of `gcloud alpha source repos` to run
+      stdin: The 'stdin' argument for the subprocess call
+      stdout: The 'stdout' argument for the subprocess call
+      stderr: The 'stderr' argument for the subprocess call
+    Raises:
+      KeyboardInterrupt: If the user kills the command
+      subprocess.CalledProcessError: If the command dies on its own
+    """
+    base_cmd = [gcloud_cmd, 'alpha', 'source', 'repos']
+    if args.project:
+        base_cmd.extend(['--project', args.project])
+    cmd = base_cmd + repos_cmd
+    return subprocess.check_call(
+        cmd, stdin=stdin, stdout=stdout, stderr=stderr)
+
+
 def get_email_address():
     """Get the email address of the user's active gcloud account.
 
@@ -188,7 +210,9 @@ def run():
     args = parser.parse_args()
     try:
         _SUBCOMMANDS[args.subcommand]['run'](
-            args, gcloud_compute, email=get_email_address())
+            args, gcloud_compute,
+            gcloud_repos=gcloud_repos,
+            email=get_email_address())
     except subprocess.CalledProcessError:
         print('A nested call to gcloud failed.')
 
