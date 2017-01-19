@@ -84,6 +84,8 @@ spec:
           value: GCE
         - name: DATALAB_SETTINGS_OVERRIDES
           value: '{{"enableAutoGCSBackups": {1} }}'
+        - name: DATALAB_GIT_AUTHOR
+          value: '{2}'
       volumeMounts:
         - name: home
           mountPath: /content
@@ -349,12 +351,13 @@ def ensure_disk_exists(args, gcloud_compute, disk_name, report_errors=False):
     return
 
 
-def run(args, gcloud_compute):
+def run(args, gcloud_compute, email='', **kwargs):
     """Implementation of the `datalab create` subcommand.
 
     Args:
       args: The Namespace instance returned by argparse
       gcloud_compute: Function that can be used to invoke `gcloud compute`
+      email: The user's email address
     Raises:
       subprocess.CalledProcessError: If a nested `gcloud` calls fails
     """
@@ -380,7 +383,7 @@ def run(args, gcloud_compute):
                 startup_script_file.close()
                 manifest_file.write(
                     _DATALAB_CONTAINER_SPEC.format(
-                        args.image_name, enable_backups))
+                        args.image_name, enable_backups, email))
                 manifest_file.close()
                 metadata_from_file = (
                     'startup-script={0},google-container-manifest={1}'.format(

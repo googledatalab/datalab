@@ -83,7 +83,7 @@ def _filter(args):
         return base_expr
 
 
-def run(args, gcloud_compute):
+def run(args, gcloud_compute, **unused_kwargs):
     """Implementation of the `datalab list` subcommand.
 
     Args:

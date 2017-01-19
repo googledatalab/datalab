@@ -64,7 +64,7 @@ def flags(parser):
     return
 
 
-def run(args, gcloud_compute):
+def run(args, gcloud_compute, **unused_kwargs):
     """Implementation of the `datalab delete` subcommand.
 
     Args:

@@ -27,3 +27,7 @@ export CLOUDSDK_CONFIG=/content/datalab/.config
 export PROJECT_ID=${PROJECT_ID:-`gcloud config list -q --format 'value(core.project)' 2> /dev/null`}
 export ZONE=${ZONE:-`gcloud config list -q --format 'value(compute.zone)' 2> /dev/null`}
 
+# Lookup the author email address to use for git commits, and then configure git accordingly
+export DATALAB_GIT_AUTHOR=${DATALAB_GIT_AUTHOR:-`gcloud auth list --format 'value(account)' --filter 'status:ACTIVE'`}
+git config --global user.email "${DATALAB_GIT_AUTHOR}"
+git config --global user.name "${DATALAB_GIT_AUTHOR}"

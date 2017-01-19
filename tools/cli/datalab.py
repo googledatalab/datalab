@@ -128,6 +128,20 @@ def gcloud_compute(
         cmd, stdin=stdin, stdout=stdout, stderr=stderr)
 
 
+def get_email_address():
+    """Get the email address of the user's active gcloud account.
+
+    Returns:
+      The email address of the "active" gcloud authenticated account.
+
+    Raises:
+      subprocess.CalledProcessError: If the gcloud command fails
+    """
+    return subprocess.check_output([
+        gcloud_cmd, 'auth', 'list', '--quiet', '--format',
+        'value(account)', '--filter', 'status:ACTIVE']).strip()
+
+
 def run():
     """Run the command line tool."""
     parser = argparse.ArgumentParser(
@@ -173,7 +187,8 @@ def run():
 
     args = parser.parse_args()
     try:
-        _SUBCOMMANDS[args.subcommand]['run'](args, gcloud_compute)
+        _SUBCOMMANDS[args.subcommand]['run'](
+            args, gcloud_compute, email=get_email_address())
     except subprocess.CalledProcessError:
         print('A nested call to gcloud failed.')
 
