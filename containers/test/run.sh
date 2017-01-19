@@ -17,7 +17,7 @@ mkdir -p $CONTENT/datalab/.config/eula
 #  -v $REPO_DIR/sources/web:/sources \
 docker run -it --entrypoint=$ENTRYPOINT \
   -v "$CONTENT:/content" \
-  -p 8081:8080 \
+  -p 127.0.0.1:8081:8080 \
   -p 8910:8910 \
   -e "DATALAB_ENV=local" \
   -e "ENABLE_USAGE_REPORTING=false" \
