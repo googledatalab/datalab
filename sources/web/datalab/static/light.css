@@ -61,20 +61,21 @@ div.code_cell div.input {
 .CodeMirror-selected {
   background-color: #addfff !important;
 }
-.cm-keyword {
-  color: #00f !important;
-}
-.cm-number, .cm-string, .cm-string2 {
-  color: #000080 !important;
-}
-.cm-def, .cm-variable, .cm-variable-2, .cm-variable-3, .cm-property,
-.cm-qualifier, .cm-operator, .cm-meta, .cm-builtin,
-.cm-tag, .cm-attribute, .cm-header, .cm-hr, .cm-atom {
-  color: #000 !important;
-}
-.cm-link, .cm-url {
-  color: #337ab7 !important;
-}
 code {
   background-color: #eee;
 }
+
+/* Scrollbars */
+::-webkit-scrollbar {
+	width: 12px;
+	background-color: #eee;
+}
+::-webkit-scrollbar-thumb {
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+	background-color: #ccc;
+}
+::-webkit-scrollbar-thumb:hover {
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+	background-color: #bbb;
+}
+

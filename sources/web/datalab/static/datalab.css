@@ -452,7 +452,6 @@ div.cellPlaceholder {
 
 /* CodeMirror Customization */
 pre, code, .CodeMirror, .CodeMirror pre, .CodeMirror-linenumber {
-  font-family: 'Lucida Console', 'Source Code Pro', monospace !important;
   font-size: 15px !important;
 }
 .CodeMirror pre, .CodeMirror-linenumber {
@@ -461,14 +460,8 @@ pre, code, .CodeMirror, .CodeMirror pre, .CodeMirror-linenumber {
 .CodeMirror-cursor {
   border-left: 2px solid #222;
 }
-.CodeMirror-gutters {
-  border-right: 1px solid #eee;
-}
 .CodeMirror-linenumber {
   visibility: hidden;
-}
-div.selected .CodeMirror-gutters {
-  border-right: 1px solid #ddd;
 }
 div.selected .CodeMirror-linenumber, div#texteditor-container .CodeMirror-linenumber {
   visibility: visible;
