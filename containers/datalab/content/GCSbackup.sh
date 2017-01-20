@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 #
-# Please note: GCSbackup should only run inside a Google Compute Engine VM instance.
+# Please note: GCSbackup should only run inside an instance of Google Cloud Datalab
 #
 # GCSbackup is a tool to create and maintain a tagged .tar backup archive
 # for a given local path and copy it to a GCS bucket. It can be configured to
@@ -62,12 +62,16 @@ while [[ $# -gt 1 ]]; do
         log_file="$2"
         shift
         ;;
-      -m)         # for testing on non-GCE machines, will be detected automatically on GCE VMs
-        machine_id="$2"
-        shift
-        ;;
       --project)  # for testing on non-GCE machines, will be detected automatically on GCE VMs
         project_id="$2"
+        shift
+        ;;
+      --zone)     # for testing on non-GCE machines, will be detected automatically on GCE VMs
+        zone="$2"
+        shift
+        ;;
+      --machine)  # for testing on non-GCE machines, will be detected automatically on GCE VMs
+        machine_name="$2"
         shift
         ;;
       --default)
@@ -89,8 +93,9 @@ if [[ $1 == "-h" || $1 == "--help" ]]; then
 fi
 
 timestamp=$(date "+%Y%m%d%H%M%S")
-machine_id=${machine_id:-$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/id" -H "Metadata-Flavor: Google" || echo "")}
-project_id=${project_id:-$(curl -s "http://metadata.google.internal/computeMetadata/v1/project/project-id" -H "Metadata-Flavor: Google" || echo "")}
+project_id=${project_id:-$VM_PROJECT}
+zone=${zone:-${VM_ZONE}}
+machine_name=${machine_name:-$VM_NAME}
 default_bucket="${project_id}.appspot.com"
 tag="${tag:-backup}"
 num_backups=${num_backups:-10}
@@ -101,16 +106,17 @@ echo "tag: ${tag}"
 echo "backups to keep: ${num_backups}"
 echo "backup path: ${backup_path}"
 echo "project id: ${project_id}"
+echo "zone: ${zone}"
+echo "machine name: ${machine_name}"
 echo "timestamp: ${timestamp}"
-echo "machine id: ${machine_id}"
 echo "gcs bucket: ${gcs_bucket}"
 echo "log file: ${log_file}"
 echo
 
 echo "${timestamp}: Running GCS backup tool.." | tee -a ${log_file}
 
-if [[ -z $machine_id || -z $project_id ]]; then
-  echo "GCSbackup can only run on a Google Compute Engine VM instance" | tee -a ${log_file}
+if [[ -z $machine_name || -z $project_id || -z $zone ]]; then
+  echo "GCSbackup should only run inside an instance of Datalab" | tee -a ${log_file}
   exit 1
 fi
 
@@ -129,7 +135,7 @@ tar -cf ${archive_name} "${backup_path}" || {
 }
 
 # backup_path is an absolute path that starts with '/'
-backup_id="${gcs_bucket}/datalab-backups/${machine_id}${backup_path}/${tag}-${timestamp}"
+backup_id="${gcs_bucket}/datalab-backups/${zone}/${machine_name}${backup_path}/${tag}-${timestamp}"
 
 echo "Creating a new backup point with id: ${backup_id}"
 
@@ -141,7 +147,7 @@ hash_output=$(gsutil hash -m "${archive_name}")
 # get last backup md5 hash
 {
   last_backup_id=$(
-    gsutil ls "gs://${gcs_bucket}/datalab-backups/${machine_id}${backup_path}/${tag}-*" \
+    gsutil ls "gs://${gcs_bucket}/datalab-backups/${zone}/${machine_name}${backup_path}/${tag}-*" \
     | tail -1
   )
   last_backup_metadata=$(gsutil ls -L "${last_backup_id}" | grep "Hash (md5)")
@@ -160,7 +166,7 @@ fi
 gsutil cp ${archive_name} "gs://${backup_id}"
 
 # remove excessive backups
-all_backups=($(gsutil ls "gs://${gcs_bucket}/datalab-backups/${machine_id}${backup_path}/${tag}-*"))
+all_backups=($(gsutil ls "gs://${gcs_bucket}/datalab-backups/${zone}/${machine_name}${backup_path}/${tag}-*"))
 
 echo "Found ${#all_backups[@]} backups with the tag ${tag}:"
 printf '%s\n' "${all_backups[@]}"
