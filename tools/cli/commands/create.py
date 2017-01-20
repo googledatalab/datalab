@@ -78,13 +78,18 @@ mount_disk() {{
 mount_disk
 """
 
+_DATALAB_CONTAINER_MANIFEST_URL = (
+    'http://metadata.google.internal/' +
+    'computeMetadata/v1/instance/attributes/google-container-manifest')
+
 _DATALAB_CLOUD_CONFIG = """
 #cloud-config
 
 runcmd:
-- ['curl', '-X', 'GET', '-H', 'Metadata-Flavor: Google', 'http://metadata.google.internal/computeMetadata/v1/instance/attributes/google-container-manifest', '-o', '/tmp/podspec.yaml']
+- ['curl', '-X', 'GET', '-H', 'Metadata-Flavor: Google','{0}',
+   '-o', '/tmp/podspec.yaml']
 - ['kubelet', '--pod-manifest-path', '/tmp/podspec.yaml']
-"""
+""".format(_DATALAB_CONTAINER_MANIFEST_URL)
 
 _DATALAB_CONTAINER_SPEC = """
 apiVersion: v1
@@ -466,8 +471,12 @@ def run(args, gcloud_compute, gcloud_repos, email='', **kwargs):
                         _DATALAB_CONTAINER_SPEC.format(
                             args.image_name, enable_backups, email))
                     manifest_file.close()
+                    metadata_template = (
+                        'startup-script={0},' +
+                        'user-data={1},' +
+                        'google-container-manifest={2}')
                     metadata_from_file = (
-                        'startup-script={0},user-data={1},google-container-manifest={2}'.format(
+                        metadata_template.format(
                             startup_script_file.name,
                             user_data_file.name,
                             manifest_file.name))
