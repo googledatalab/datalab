@@ -78,14 +78,14 @@ export function startBackup(settings: common.Settings) {
       // test hourly backup
       if (!log_history.lastHourlyRun || (Date.now()-log_history.lastHourlyRun)/1000 > 60*60) {
         runBackup('hourly', () => {
-          writeBackupLog(log_history);
           log_history.lastHourlyRun = Date.now();
+          writeBackupLog(log_history);
         });
       }
       if (!log_history.lastDailyRun || (Date.now()-log_history.lastDailyRun)/1000 > 60*60*24) {
         runBackup('daily', () => {
-          writeBackupLog(log_history);
           log_history.lastDailyRun = Date.now();
+          writeBackupLog(log_history);
         });
       }
       if (!log_history.lastWeeklyRun || (Date.now()-log_history.lastWeeklyRun)/1000 > 60*60*24*7) {
