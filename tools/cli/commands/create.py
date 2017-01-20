@@ -51,13 +51,16 @@ MOUNT_DIR="/mnt/disks/datalab-pd"
 MOUNT_CMD="mount -o discard,defaults ${{PERSISTENT_DISK_DEV}} ${{MOUNT_DIR}}"
 
 clone_repo() {{
+  echo "Creating the datalab directory"
   mkdir -p ${{MOUNT_DIR}}/datalab
+  echo "Cloning the repo {0}"
   docker run -v "${{MOUNT_DIR}}:/content" \
     --entrypoint "/bin/bash" {0} \
     gcloud source repos clone {1} /content/datalab/notebooks
 }}
 
 format_disk() {{
+  echo "Formatting the persistent disk"
   mkfs.ext4 -F \
     -E lazy_itable_init=0,lazy_journal_init=0,discard \
     ${{PERSISTENT_DISK_DEV}}
@@ -66,6 +69,7 @@ format_disk() {{
 }}
 
 mount_disk() {{
+  echo "Trying to mount the persistent disk"
   mkdir -p "${{MOUNT_DIR}}"
   ${{MOUNT_CMD}} || format_disk
   chmod a+w "${{MOUNT_DIR}}"
@@ -73,6 +77,19 @@ mount_disk() {{
 
 mount_disk
 """
+
+_DATALAB_CONTAINER_MANIFEST_URL = (
+    'http://metadata.google.internal/' +
+    'computeMetadata/v1/instance/attributes/google-container-manifest')
+
+_DATALAB_CLOUD_CONFIG = """
+#cloud-config
+
+runcmd:
+- ['curl', '-X', 'GET', '-H', 'Metadata-Flavor: Google','{0}',
+   '-o', '/tmp/podspec.yaml']
+- ['kubelet', '--pod-manifest-path', '/tmp/podspec.yaml']
+""".format(_DATALAB_CONTAINER_MANIFEST_URL)
 
 _DATALAB_CONTAINER_SPEC = """
 apiVersion: v1
@@ -442,33 +459,42 @@ def run(args, gcloud_compute, gcloud_repos, email='', **kwargs):
         disk_name)
     enable_backups = "false" if args.no_backups else "true"
     with tempfile.NamedTemporaryFile(delete=False) as startup_script_file:
-        with tempfile.NamedTemporaryFile(delete=False) as manifest_file:
-            try:
-                startup_script_file.write(_DATALAB_STARTUP_SCRIPT.format(
-                    args.image_name, _DATALAB_NOTEBOOKS_REPOSITORY))
-                startup_script_file.close()
-                manifest_file.write(
-                    _DATALAB_CONTAINER_SPEC.format(
-                        args.image_name, enable_backups, email))
-                manifest_file.close()
-                metadata_from_file = (
-                    'startup-script={0},google-container-manifest={1}'.format(
-                        startup_script_file.name,
-                        manifest_file.name))
-                cmd.extend([
-                    '--network', _DATALAB_NETWORK,
-                    '--image-family', 'container-vm',
-                    '--image-project', 'google-containers',
-                    '--machine-type', args.machine_type,
-                    '--metadata-from-file', metadata_from_file,
-                    '--tags', 'datalab',
-                    '--disk', disk_cfg,
-                    '--scopes', 'cloud-platform',
-                    instance])
-                gcloud_compute(args, cmd)
-            finally:
-                os.remove(startup_script_file.name)
-                os.remove(manifest_file.name)
+        with tempfile.NamedTemporaryFile(delete=False) as user_data_file:
+            with tempfile.NamedTemporaryFile(delete=False) as manifest_file:
+                try:
+                    startup_script_file.write(_DATALAB_STARTUP_SCRIPT.format(
+                        args.image_name, _DATALAB_NOTEBOOKS_REPOSITORY))
+                    startup_script_file.close()
+                    user_data_file.write(_DATALAB_CLOUD_CONFIG)
+                    user_data_file.close()
+                    manifest_file.write(
+                        _DATALAB_CONTAINER_SPEC.format(
+                            args.image_name, enable_backups, email))
+                    manifest_file.close()
+                    metadata_template = (
+                        'startup-script={0},' +
+                        'user-data={1},' +
+                        'google-container-manifest={2}')
+                    metadata_from_file = (
+                        metadata_template.format(
+                            startup_script_file.name,
+                            user_data_file.name,
+                            manifest_file.name))
+                    cmd.extend([
+                        '--network', _DATALAB_NETWORK,
+                        '--image-family', 'gci-stable',
+                        '--image-project', 'google-containers',
+                        '--machine-type', args.machine_type,
+                        '--metadata-from-file', metadata_from_file,
+                        '--tags', 'datalab',
+                        '--disk', disk_cfg,
+                        '--scopes', 'cloud-platform',
+                        instance])
+                    gcloud_compute(args, cmd)
+                finally:
+                    os.remove(startup_script_file.name)
+                    os.remove(user_data_file.name)
+                    os.remove(manifest_file.name)
 
     if not args.no_connect:
         connect.connect(args, gcloud_compute)
