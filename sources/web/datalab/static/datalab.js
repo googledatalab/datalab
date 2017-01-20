@@ -160,7 +160,11 @@ function xhr(url, callback, method) {
   method = method || "GET";
 
   let request = new XMLHttpRequest();
-  request.onreadystatechange = callback.bind(request);
+  request.onreadystatechange = function() {
+    if (request.readyState === 4 && request.status === 200) {
+      callback.call(request);
+    }
+  }
   request.open(method, url);
   request.send();
 }
@@ -181,6 +185,45 @@ function restartDatalab() {
     // However, we have to delay that a bit to give Datalab time to restart.  
     window.setTimeout(redirect, 500);
   }, "POST");
+}
+
+function getVmInfo(callback) {
+  if (window.datalab.vminfo) {
+    callback(window.datalab.vminfo);
+    return;
+  }
+
+  path = window.location.protocol + '//' + window.location.host + '/_info/vminfo';
+  xhr(path, function() {
+    try {
+      vminfo = JSON.parse(this.responseText);
+      window.datalab.vminfo = vminfo;
+      callback(vminfo);
+    } catch(e) {
+      callback(null);
+    }
+  });
+}
+
+function manageVm() {
+  getVmInfo(function(vminfo) {
+    if (vminfo && vminfo.vm_name && vminfo.vm_zone) {
+      window.open('https://console.cloud.google.com/compute/instancesDetail' +
+          '/zones/' + vminfo.vm_zone +
+          '/instances/' + vminfo.vm_name +
+          '?project=' + vminfo.vm_project);
+    } else {
+      console.log('Error, could not retrieve VM information. Is this a google cloud VM?');
+    }
+  });
+}
+
+function stopVm() {
+  let action = confirm('Stopping this VM will discard any unsaved state. Are you sure?');
+  if (action === true) {
+    path = window.location.protocol + '//' + window.location.host + '/_stopvm';
+    xhr(path, null, 'POST');
+  }
 }
 
 function initializePage(dialog, saveFn) {
@@ -230,7 +273,7 @@ function initializePage(dialog, saveFn) {
     }
   });
   var signedIn = document.body.getAttribute('data-signed-in');
-  if (signedIn != undefined) {  // i.e. running locally.
+  if (signedIn != undefined) {
     if (signedIn == "true") {
       $('#signOutGroup').show();
       var username = document.body.getAttribute('data-account');
@@ -265,6 +308,14 @@ function initializePage(dialog, saveFn) {
       window.open(prefix + '/_proxy/8083/#/repository?path=' + path);
     });
   }
+
+  getVmInfo(function() {
+    if (vminfo && vminfo.vm_name) {
+      $('#stopVmGroup').show();
+      $('#vmName').text(vminfo.vm_name);
+      $('#stopVmButton').click(stopVm);
+    }
+  });
 
   // More UI that relies on appbar load
   // Prepare the theme selector radio boxes

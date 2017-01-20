@@ -40,30 +40,48 @@ function stringifyMap(map: {[index: string]: string}): string {
   return textBuilder.join('\n');
 }
 
+export function getVmInfo() {
+  return {
+    vm_name: process.env['VM_NAME'],
+    vm_zone: process.env['VM_ZONE'],
+    vm_project: process.env['VM_PROJECT']
+  };
+}
+
 /**
  * Implements information request handling.
  * @param request the incoming health request.
  * @param response the outgoing health response.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
-  response.writeHead(200, { 'Content-Type': 'text/plain' });
+  var requestUrl = url.parse(request.url);
+  var path = requestUrl.pathname;
 
-  response.write('Environment Variables:\n');
-  response.write(stringifyMap(process.env));
-  response.write('\n\n');
+  if (path === '/_info/vminfo') {
+    var vminfo = getVmInfo();
+    response.writeHead(200, { 'Content-Type': 'application/json' });
+    response.write(JSON.stringify(vminfo));
+    response.end();
+  } else {
+    response.writeHead(200, { 'Content-Type': 'text/plain' });
 
-  response.write('Application Settings:\n');
-  response.write(JSON.stringify(appSettings, null, 2));
-  response.write('\n\n');
+    response.write('Environment Variables:\n');
+    response.write(stringifyMap(process.env));
+    response.write('\n\n');
 
-  response.write('Request Headers:\n');
-  response.write(stringifyMap(request.headers));
-  response.write('\n\n');
+    response.write('Application Settings:\n');
+    response.write(JSON.stringify(appSettings, null, 2));
+    response.write('\n\n');
 
-  response.write('Jupyter Servers:\n');
-  response.write(JSON.stringify(jupyter.getInfo(), null, 2));
-  response.write('\n\n');
-  response.end();
+    response.write('Request Headers:\n');
+    response.write(stringifyMap(request.headers));
+    response.write('\n\n');
+
+    response.write('Jupyter Servers:\n');
+    response.write(JSON.stringify(jupyter.getInfo(), null, 2));
+    response.write('\n\n');
+    response.end();
+  }
 }
 
 /**

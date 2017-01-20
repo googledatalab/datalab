@@ -35,6 +35,7 @@ import url = require('url');
 import userManager = require('./userManager');
 import wsHttpProxy = require('./wsHttpProxy');
 import backupUtility = require('./backupUtility');
+import childProcess = require('child_process');
 
 var server: http.Server;
 var healthHandler: http.RequestHandler;
@@ -185,6 +186,11 @@ function handleRequest(request: http.ServerRequest,
     return;
   }
 
+  if (path.indexOf('/_stopvm') == 0) {
+    stopVmHandler(request, response);
+    return;
+  }
+
   // /setting updates a per-user setting.
   if (path.indexOf('/_setting') == 0) {
     settingHandler(request, response);
@@ -249,6 +255,22 @@ function uncheckedRequestHandler(request: http.ServerRequest, response: http.Ser
 
 // The path that is used for the optional websocket proxy for HTTP requests.
 const httpOverWebSocketPath: string = '/http_over_websocket';
+
+function stopVmHandler(request: http.ServerRequest, response: http.ServerResponse) {
+  if ('POST' != request.method) {
+    return;
+  }
+  try {
+    let vminfo = info.getVmInfo();
+    childProcess.execSync(
+      'gcloud compute instances stop ' + vminfo.vm_name +
+         ' --project ' + vminfo.vm_project + ' --zone ' + vminfo.vm_zone,
+      {env: process.env});
+  } catch (err) {
+    logging.getLogger().error(err, 'Failed to stop the VM. stderr: %s', err.stderr);
+    return "unknown";
+  }
+}
 
 function socketHandler(request: http.ServerRequest, socket: net.Socket, head: Buffer) {
   // Avoid proxying websocket requests on this path, as it's handled locally rather than by Jupyter.
