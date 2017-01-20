@@ -1,7 +1,6 @@
 *.ipynb_checkpoints
 build
 staging
-test
 *.gradle
 *.pyc
 *.idea
@@ -10,4 +9,6 @@ test
 *.egg-info
 *.swp
 *.swo
-
+*.ipynb.yaml
+*.log
+containers/datalab/Dockerfile

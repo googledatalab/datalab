@@ -1,17 +1,27 @@
 sudo: required
 language: python
 python:
-  - "2.7"
-
-before_install:
-  - npm install -g typescript
-  - pip install -U pip
-  - pip install flake8
+- "2.7"
 
 services:
-  - docker
+- docker
+
+cache:
+  pip: true
+  directories:
+  - node_modules
+
+before_install:
+- npm install -g typescript
+- pip install -U pip
+- pip install flake8
+
+install:
+- cd $TRAVIS_BUILD_DIR/containers/test
+- ./build.sh
 
 script:
-  - flake8 tools/cli/
-  - cd containers/datalab
-  - ./build.sh
+- cd $TRAVIS_BUILD_DIR/tools/
+- flake8 cli/
+- cd $TRAVIS_BUILD_DIR/containers/test
+- ./run.sh
