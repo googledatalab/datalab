@@ -193,9 +193,12 @@ fi
 
 # Get VM information if running on google cloud
 compute_metadata_url="http://metadata.google.internal/computeMetadata/v1"
-export VM_NAME=$(curl -s "${compute_metadata_url}/instance/hostname" -H "Metadata-Flavor: Google" | cut -d '.' -f 1)
-export VM_ZONE=$(curl -s "${compute_metadata_url}/instance/zone" -H "Metadata-Flavor: Google" | sed 's/.*zones\///')
-export VM_PROJECT=$(curl -s "${compute_metadata_url}/project/project-id" -H "Metadata-Flavor: Google")
+vm_project=$(curl -s "${compute_metadata_url}/project/project-id" -H "Metadata-Flavor: Google")
+if [ -n "${vm_project}" ] && [ "${vm_project}" != "no-project-id" ]; then
+   export VM_PROJECT="${vm_project}"
+   export VM_NAME=$(curl -s "${compute_metadata_url}/instance/hostname" -H "Metadata-Flavor: Google" | cut -d '.' -f 1)
+   export VM_ZONE=$(curl -s "${compute_metadata_url}/instance/zone" -H "Metadata-Flavor: Google" | sed 's/.*zones\///')
+fi
 
 # Install the kernel gateway server extension, if a kernel gateway URL has been specified
 if [ -n "${KG_URL}" ]
