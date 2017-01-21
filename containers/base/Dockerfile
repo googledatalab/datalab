@@ -40,42 +40,42 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 
 # Setup Python packages. Rebuilding numpy/scipy is expensive so we move this early
 # to reduce the chance that prior steps can cause changes requiring a rebuild.
-    pip install -U --no-cache-dir numpy==1.11.2 && \
-    pip install -U --no-cache-dir pandas==0.19.1 && \
-    pip install -U --no-cache-dir scipy==0.18.0 && \
-    pip install -U --no-cache-dir scikit-learn==0.17.1 && \
-    pip install -U --no-cache-dir sympy==0.7.6.1 && \
-    pip install -U --no-cache-dir statsmodels==0.6.1 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir numpy==1.11.2 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir pandas==0.19.1 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir scipy==0.18.0 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir scikit-learn==0.17.1 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir sympy==0.7.6.1 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir statsmodels==0.6.1 && \
 
-    pip install -U --no-cache-dir tornado==4.4.2 \
-                   --no-cache-dir pyzmq==16.0.2 \
-                   --no-cache-dir jinja2==2.8 \
-                   --no-cache-dir jsonschema==2.5.1 \
-                   --no-cache-dir python-dateutil==2.5.0 \
-                   --no-cache-dir pytz==2016.7 \
-                   --no-cache-dir pandocfilters==1.3.0 \
-                   --no-cache-dir pygments==2.1.3 \
-                   --no-cache-dir argparse==1.2.1 \
-                   --no-cache-dir mock==2.0.0 \
-                   --no-cache-dir requests==2.9.1 \
-                   --no-cache-dir oauth2client==2.2.0 \
-                   --no-cache-dir httplib2==0.9.2 \
-                   --no-cache-dir futures==3.0.5 && \
-    pip install -U --no-cache-dir matplotlib==1.5.3 && \
-    pip install -U --no-cache-dir ggplot==0.6.8 && \
-    pip install -U --no-cache-dir seaborn==0.7.0 && \
-    pip install -U --no-cache-dir notebook==4.2.3 && \
-    pip install -U --no-cache-dir PyYAML==3.11 && \
-    pip install -U --no-cache-dir six==1.9.0 && \
-    pip install -U --no-cache-dir ipywidgets==5.2.2 && \
-    pip install -U --no-cache-dir future==0.15.2 && \
-    pip install -U --no-cache-dir psutil==4.3.0 && \
-    pip install -U --no-cache-dir google-api-python-client==1.5.1  && \
-    pip install -U --no-cache-dir plotly==1.12.5 && \
-    pip install -U --no-cache-dir nltk==3.2.1 && \
-    pip install -U --no-cache-dir bs4==0.0.1 && \
-    pip install -U --no-cache-dir crcmod==1.7 && \
-    pip install -U --no-cache-dir pillow==3.4.1 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir tornado==4.4.2 \
+                   --upgrade-strategy only-if-needed --no-cache-dir pyzmq==16.0.2 \
+                   --upgrade-strategy only-if-needed --no-cache-dir jinja2==2.8 \
+                   --upgrade-strategy only-if-needed --no-cache-dir jsonschema==2.5.1 \
+                   --upgrade-strategy only-if-needed --no-cache-dir python-dateutil==2.5.0 \
+                   --upgrade-strategy only-if-needed --no-cache-dir pytz==2016.7 \
+                   --upgrade-strategy only-if-needed --no-cache-dir pandocfilters==1.3.0 \
+                   --upgrade-strategy only-if-needed --no-cache-dir pygments==2.1.3 \
+                   --upgrade-strategy only-if-needed --no-cache-dir argparse==1.2.1 \
+                   --upgrade-strategy only-if-needed --no-cache-dir mock==2.0.0 \
+                   --upgrade-strategy only-if-needed --no-cache-dir requests==2.9.1 \
+                   --upgrade-strategy only-if-needed --no-cache-dir oauth2client==2.2.0 \
+                   --upgrade-strategy only-if-needed --no-cache-dir httplib2==0.9.2 \
+                   --upgrade-strategy only-if-needed --no-cache-dir futures==3.0.5 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir matplotlib==1.5.3 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir ggplot==0.6.8 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir seaborn==0.7.0 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir notebook==4.2.3 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir PyYAML==3.11 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir six==1.9.0 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir ipywidgets==5.2.2 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir future==0.15.2 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir psutil==4.3.0 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir google-api-python-client==1.5.1  && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir plotly==1.12.5 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir nltk==3.2.1 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir bs4==0.0.1 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir crcmod==1.7 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir pillow==3.4.1 && \
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf && \
 
 # Setup Node.js
@@ -124,23 +124,23 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     cd /
 
 # Install ProtoBuf, TensorFlow
-RUN pip install --no-cache-dir protobuf==3.0.0b2.post2 && \
+RUN pip install --upgrade-strategy only-if-needed --no-cache-dir protobuf==3.0.0b2.post2 && \
     wget --progress=dot:mega https://storage.googleapis.com/cloud-datalab/deploy/tf/tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
-    pip install --no-cache-dir tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
+    pip install --upgrade-strategy only-if-needed --no-cache-dir tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
     rm tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl
 
 # Install DataFlow
-RUN pip install --no-cache-dir google-cloud-dataflow==0.4.2
+RUN pip install --upgrade-strategy only-if-needed --no-cache-dir google-cloud-dataflow==0.4.2
 
 # Install CloudML SDK
 RUN gsutil cp gs://cloud-ml/sdk/cloudml-0.1.6-alpha.tar.gz cloudml-0.1.6-alpha.tar.gz && \
-    pip install --no-cache-dir cloudml-0.1.6-alpha.tar.gz && \
+    pip install --upgrade-strategy only-if-needed --no-cache-dir cloudml-0.1.6-alpha.tar.gz && \
     rm cloudml-0.1.6-alpha.tar.gz
 
 # Install notebook again and pin version to 4.2.3 
 # ipywidgets and maybe others will update notebook to a newer version that may not work well with datalab.
 # For example, kernel gateway doesn't work with 4.3.0 notebook (https://github.com/googledatalab/datalab/issues/1083)
-RUN pip install -U --no-cache-dir notebook==4.2.3
+RUN pip install -U --upgrade-strategy only-if-needed --no-cache-dir notebook==4.2.3
 
 ADD config/ipython.py /etc/ipython/ipython_config.py
 ADD config/nbconvert.py /etc/jupyter/jupyter_notebook_config.py
@@ -163,7 +163,7 @@ RUN ipython profile create default && \
     /tools/node/bin/npm install -g typescript && \
     tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts && \
     /tools/node/bin/npm uninstall -g typescript && \
-    pip install --no-cache-dir . && \
+    pip install --upgrade-strategy only-if-needed --no-cache-dir . && \
     jupyter nbextension install --py datalab.notebook && \
     jupyter nbextension enable --py widgetsnbextension && \
     rm datalab/notebook/static/*.js && \
