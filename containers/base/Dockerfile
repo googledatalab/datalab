@@ -66,7 +66,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir seaborn==0.7.0 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir notebook==4.2.3 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir PyYAML==3.11 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir six==1.9.0 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir six==1.10.0 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir ipywidgets==5.2.2 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir future==0.15.2 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir psutil==4.3.0 && \
