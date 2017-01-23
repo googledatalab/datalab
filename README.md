@@ -49,7 +49,7 @@ and the developer workflow.
 ### Contributing
 
 Contributions are welcome! Please see our [roadmap](https://github.com/googledatalab/datalab/wiki/Roadmap)
-page. Please check the page on [contributing](https://github.com/googledatalab/datalab/wiki/Contributing)
+page. Please check the page on [contributing](https://github.com/googledatalab/datalab/blob/master/CONTRIBUTING.md)
 for more details.
 
 You can always contribute even without code submissions by submitting issues and suggestions to
