@@ -193,7 +193,7 @@ fi
 
 # Get VM information if running on google cloud
 compute_metadata_url="http://metadata.google.internal/computeMetadata/v1"
-vm_project=$(curl -s "${compute_metadata_url}/project/project-id" -H "Metadata-Flavor: Google")
+vm_project=$(curl -s "${compute_metadata_url}/project/project-id" -H "Metadata-Flavor: Google" || true)
 if [ -n "${vm_project}" ] && [ "${vm_project}" != "no-project-id" ]; then
    export VM_PROJECT="${vm_project}"
    export VM_NAME=$(curl -s "${compute_metadata_url}/instance/hostname" -H "Metadata-Flavor: Google" | cut -d '.' -f 1)
