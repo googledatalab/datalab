@@ -34,7 +34,7 @@ ERR_ZONE_NOT_FOUND=4
 ERR_INSTANCE_NOT_FOUND=5
 ERR_DEPLOY=6
 ERR_TUNNEL_FAILED=7
-ERR_GATEWAY_FAILED=7
+ERR_GATEWAY_FAILED=8
 
 run_login() {
   local login_cmd=${1:-"gcloud auth login"}
@@ -49,6 +49,38 @@ run_login() {
     fi
   fi
   USER_EMAIL=`gcloud auth list --format="value(account)"`
+}
+
+setup_tunnel() {
+  project_id=$1
+  zone=$2
+  instance=$3
+  ssh_user=$4
+  echo "Will connect to the kernel gateway running on the GCE VM ${instance} as ${ssh_user}"
+  gcloud compute ssh --quiet \
+    --project "${project_id}" \
+    --zone "${zone}" \
+    --ssh-flag="-fNL" \
+    --ssh-flag="localhost:8082:localhost:8080" \
+    --ssh-key-file="/content/datalab/.config/.ssh/google_compute_engine" \
+    "${ssh_user}@${instance}"
+
+  # Test that we can actually call the gateway API via the SSH tunnel
+  tunnel_failed=""
+  curl -o /tmp/kernel_specs http://localhost:8082/api/kernelspecs 2>/dev/null || tunnel_failed="true"
+  if [[ "${tunnel_failed}" == true ]]; then
+    echo "Failed to set up the SSH tunnel to the VM ${instance}"
+    echo "If the VM was recently created, then it may still be starting up, and retrying the command may work."
+    exit "${ERR_TUNNEL_FAILED}"
+  fi
+
+  default_kernel_spec=`cat /tmp/kernel_specs | python -c $'import json\nprint json.loads(raw_input())["default"]'`
+  if [[ -z "${default_kernel_spec}" ]]; then
+    echo "Failed to verify that the kernel gateway is running"
+    echo "If the VM was recently created, then it may still be starting up, and retrying the command may work."
+    exit "${ERR_GATEWAY_FAILED}"
+  fi
+  echo "Successfully established SSH tunnel to ${instance}"
 }
 
 source /datalab/setup-env.sh
@@ -121,31 +153,7 @@ if [[ -n "${INSTANCE}" ]]; then
   fi
 
   SSH_USER=`echo ${USER_EMAIL} | cut -d '@' -f 1`
-  echo "Will connect to the kernel gateway running on the GCE VM ${INSTANCE} as ${SSH_USER}"
-  gcloud compute ssh --quiet \
-    --project "${PROJECT_ID}" \
-    --zone "${ZONE}" \
-    --ssh-flag="-fNL" \
-    --ssh-flag="localhost:8082:localhost:8080" \
-    --ssh-key-file="/content/datalab/.config/.ssh/google_compute_engine" \
-    "${SSH_USER}@${INSTANCE}"
-
-  # Test that we can actually call the gateway API via the SSH tunnel
-  TUNNEL_FAILED=""
-  curl -o /tmp/kernel_specs http://localhost:8082/api/kernelspecs 2>/dev/null || TUNNEL_FAILED="true"
-  if [[ "${TUNNEL_FAILED}" == true ]]; then
-    echo "Failed to set up the SSH tunnel to the VM ${INSTANCE}"
-    echo "If the VM was recently created, then it may still be starting up, and retrying the command may work."
-    exit "${ERR_TUNNEL_FAILED}"
-  fi
-
-  DEFAULT_KERNEL_SPEC=`cat /tmp/kernel_specs | python -c $'import json\nprint json.loads(raw_input())["default"]'`
-  if [[ -z "${DEFAULT_KERNEL_SPEC}" ]]; then
-    echo "Failed to verify that the kernel gateway is running"
-    echo "If the VM was recently created, then it may still be starting up, and retrying the command may work."
-    exit "${ERR_GATEWAY_FAILED}"
-  fi
-
+  setup_tunnel "${PROJECT_ID}" "${ZONE}" "${INSTANCE}" "${SSH_USER}"
   export EXPERIMENTAL_KERNEL_GATEWAY_URL="http://localhost:8082"
 fi
 
