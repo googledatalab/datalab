@@ -81,6 +81,15 @@ setup_tunnel() {
     exit "${ERR_GATEWAY_FAILED}"
   fi
   echo "Successfully established SSH tunnel to ${instance}"
+
+  watch_and_restart_tunnel &
+}
+
+watch_and_restart_tunnel() {
+  while ps --ppid $$ -C ssh 2>&1 > /dev/null; do
+    sleep 1
+  done
+  setup_tunnel > /dev/null
 }
 
 source /datalab/setup-env.sh
