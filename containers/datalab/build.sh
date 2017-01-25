@@ -36,6 +36,9 @@ cd ../../containers/datalab
 # Copy build outputs as a dependency of the Dockerfile
 rsync -avp ../../build/ build
 
+# Copy the license file into the container
+cp ../../third_party/license.txt content/license.txt
+
 # Build the base docker image
 cd ../base
 ./build.sh "$1"
@@ -46,5 +49,6 @@ docker build -t datalab .
 
 # Finally cleanup
 rm -rf build
+rm content/license.txt
 rm Dockerfile
 

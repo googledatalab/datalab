@@ -25,9 +25,9 @@
  */
 
 
-/// <reference path="../../../externs/ts/node/node.d.ts" />
-/// <reference path="../../../externs/ts/node/node-http-proxy.d.ts" />
-/// <reference path="../../../externs/ts/request/request.d.ts" />
+/// <reference path="../../../third_party/externs/ts/node/node.d.ts" />
+/// <reference path="../../../third_party/externs/ts/node/node-http-proxy.d.ts" />
+/// <reference path="../../../third_party/externs/ts/request/request.d.ts" />
 
 
 import http = require('http');

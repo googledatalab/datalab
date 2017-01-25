@@ -12,9 +12,9 @@
  * the License.
  */
 
-/// <reference path="../../../externs/ts/node/node.d.ts" />
-/// <reference path="../../../externs/ts/node/node-http-proxy.d.ts" />
-/// <reference path="../../../externs/ts/node/tcp-port-used.d.ts" />
+/// <reference path="../../../third_party/externs/ts/node/node.d.ts" />
+/// <reference path="../../../third_party/externs/ts/node/node-http-proxy.d.ts" />
+/// <reference path="../../../third_party/externs/ts/node/tcp-port-used.d.ts" />
 /// <reference path="common.d.ts" />
 
 import auth = require('./auth')
