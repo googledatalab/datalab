@@ -33,8 +33,9 @@ ERR_PROJECT_NOT_FOUND=3
 ERR_ZONE_NOT_FOUND=4
 ERR_INSTANCE_NOT_FOUND=5
 ERR_DEPLOY=6
-ERR_TUNNEL_FAILED=7
-ERR_GATEWAY_FAILED=8
+ERR_GCLOUD_SSH_FAILED=7
+ERR_TUNNEL_FAILED=8
+ERR_GATEWAY_FAILED=9
 
 run_login() {
   local login_cmd=${1:-"gcloud auth login"}
@@ -51,6 +52,22 @@ run_login() {
   USER_EMAIL=`gcloud auth list --format="value(account)"`
 }
 
+kill_container() {
+  echo "Failing with error code $1"
+  # Docker will keep running as long as any processes remain
+  # running, so we have to kill all of them (not just the first process)
+  for PID in `ps -o pid=`; do
+    # We have to make sure that the current process does not get
+    # killed until it has finished killing all the other processes  
+    if [ "$PID" != "$BASHPID" ]; then
+      kill -SIGKILL $PID 2>&1 > /dev/null
+    fi
+  done
+
+  # Finally, we kill the current process.
+  exit $1
+}
+
 setup_tunnel() {
   project_id=$1
   zone=$2
@@ -63,7 +80,7 @@ setup_tunnel() {
     --ssh-flag="-fNL" \
     --ssh-flag="localhost:8082:localhost:8080" \
     --ssh-key-file="/content/datalab/.config/.ssh/google_compute_engine" \
-    "${ssh_user}@${instance}"
+    "${ssh_user}@${instance}" || kill_container "${ERR_GCLOUD_SSH_FAILED}"
 
   # Test that we can actually call the gateway API via the SSH tunnel
   tunnel_failed=""
@@ -71,25 +88,31 @@ setup_tunnel() {
   if [[ "${tunnel_failed}" == true ]]; then
     echo "Failed to set up the SSH tunnel to the VM ${instance}"
     echo "If the VM was recently created, then it may still be starting up, and retrying the command may work."
-    exit "${ERR_TUNNEL_FAILED}"
+    kill_container "${ERR_TUNNEL_FAILED}"
   fi
 
   default_kernel_spec=`cat /tmp/kernel_specs | python -c $'import json\nprint json.loads(raw_input())["default"]'`
   if [[ -z "${default_kernel_spec}" ]]; then
     echo "Failed to verify that the kernel gateway is running"
     echo "If the VM was recently created, then it may still be starting up, and retrying the command may work."
-    exit "${ERR_GATEWAY_FAILED}"
+    kill_container "${ERR_GATEWAY_FAILED}"
   fi
   echo "Successfully established SSH tunnel to ${instance}"
 
-  watch_and_restart_tunnel &
+  watch_and_restart_tunnel "${project_id}" "${zone}" "${instance}" "${ssh_user}" &
 }
 
 watch_and_restart_tunnel() {
-  while ps --ppid $$ -C ssh 2>&1 > /dev/null; do
+  project_id=$1
+  zone=$2
+  instance=$3
+  ssh_user=$4
+  
+  while [ "$(ps --ppid $$ -o comm= | grep ssh)" != "" ]; do
     sleep 1
   done
-  setup_tunnel > /dev/null
+  echo "Restarting SSH tunnel"
+  setup_tunnel "${project_id}" "${zone}" "${instance}" "${ssh_user}"
 }
 
 source /datalab/setup-env.sh
