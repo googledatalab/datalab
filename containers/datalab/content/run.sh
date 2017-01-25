@@ -109,7 +109,7 @@ watch_and_restart_tunnel() {
   ssh_user=$4
   
   while [ "$(ps --ppid $$ -o comm= | grep ssh)" != "" ]; do
-    sleep 1
+    sleep 5
   done
   echo "Restarting SSH tunnel"
   setup_tunnel "${project_id}" "${zone}" "${instance}" "${ssh_user}"
