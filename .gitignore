@@ -12,3 +12,6 @@ staging
 *.ipynb.yaml
 *.log
 containers/datalab/Dockerfile
+containers/datalab/content/license.txt
+containers/gateway/Dockerfile
+containers/gateway/content/license.txt
