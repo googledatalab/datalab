@@ -123,7 +123,11 @@ fi
 # test and create bucket if necessary
 gsutil ls gs://${gcs_bucket} &>/dev/null || {
   echo "Bucket '${gcs_bucket}' was not found. Creating it.."
-  gsutil mb gs://"${gcs_bucket}"
+  gsutil mb gs://"${gcs_bucket}" || {
+    echo "Bucket '${gcs_bucket}' coult not be created. Will try bucket name ${project_id}"
+    gcs_bucket="${project_id}"
+    gsutil mb gs://"${gcs_bucket}" || true
+  }
 }
 
 # create an archive of the backup path
@@ -159,11 +163,13 @@ echo "New archive md5 hash: ${new_backup_hash}"
 echo "Last backup md5 hash: ${last_backup_hash}"
 if [[ $new_backup_hash == $last_backup_hash ]]; then
   echo "Hash not different from last backup. Skipping this backup round." | tee -a $log_file
+  rm -f "${archive_name}"
   exit 0
 fi
 
 # copying backup to GCS
 gsutil cp ${archive_name} "gs://${backup_id}"
+rm -f "${archive_name}"
 
 # remove excessive backups
 all_backups=($(gsutil ls "gs://${gcs_bucket}/datalab-backups/${zone}/${machine_name}${backup_path}/${tag}-*"))
