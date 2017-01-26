@@ -321,6 +321,11 @@ function initializePage(dialog, saveFn) {
   // Prepare the theme selector radio boxes
   lightThemeRadioOption = document.getElementById("lightThemeRadioOption")
   darkThemeRadioOption = document.getElementById("darkThemeRadioOption")
+
+  // By default, check the light theme radio button
+  // TODO: When we have support for default settings on server side, remove this
+  lightThemeRadioOption.checked = true;
+  darkThemeRadioOption.checked = false;
   xhr(getSettingKeyAddress("theme"), function() {
     lightThemeRadioOption.checked = this.responseText === "\"light\"";
     darkThemeRadioOption.checked = this.responseText === "\"dark\"";

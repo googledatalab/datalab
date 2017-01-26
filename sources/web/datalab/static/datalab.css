@@ -467,9 +467,8 @@ div.selected .CodeMirror-linenumber, div#texteditor-container .CodeMirror-linenu
   visibility: visible;
 }
 .CodeMirror-matchingbracket {
-  color: #800000 !important;
-  text-decoration: none !important;
-  font-weight: bold !important;
+  color: inherit !important;
+  outline: solid 1px #888;
 }
 .cm-keyword {
   font-weight: normal !important;
