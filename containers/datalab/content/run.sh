@@ -254,7 +254,7 @@ then
 fi
 
 # Start the ungit server
-ungit --port=8083 --no-launchBrowser --forcedLaunchPath=/content/datalab 1> /dev/null &
+ungit --port=8083 --no-launchBrowser --forcedLaunchPath=/content/datalab --ungitVersionCheckOverride 1> /dev/null &
 
 # Start the DataLab server
 FOREVER_CMD="forever --minUptime 1000 --spinSleepTime 1000"
