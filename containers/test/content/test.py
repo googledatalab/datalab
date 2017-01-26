@@ -11,8 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-#
+
 # Tests notebooks listed in test.yaml in the same directory by starting
 # a Firefox instance for each notebook and running it.
 # A test.js script is injected into each notebook, which runs all cells

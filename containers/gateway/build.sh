@@ -30,6 +30,9 @@ cat Dockerfile.in | sed $VERSION_SUBSTITUTION | sed $COMMIT_SUBSTITUTION > Docke
 # Copy build outputs as a dependency of the Dockerfile
 rsync -avp ../../build/ build
 
+# Copy the license file into the container
+cp ../../third_party/license.txt content/license.txt
+
 # Build the base docker image
 cd ../base
 ./build.sh "$1"
@@ -40,5 +43,6 @@ docker build -t datalab-gateway .
 
 # Finally cleanup
 rm -rf build
+rm content/license.txt
 rm Dockerfile
 
