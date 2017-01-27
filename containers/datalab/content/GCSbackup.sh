@@ -96,10 +96,28 @@ timestamp=$(date "+%Y%m%d%H%M%S")
 project_id=${project_id:-$VM_PROJECT}
 zone=${zone:-${VM_ZONE}}
 machine_name=${machine_name:-$VM_NAME}
-default_bucket="${project_id}.appspot.com"
 tag="${tag:-backup}"
 num_backups=${num_backups:-10}
-gcs_bucket=${gcs_bucket:-$default_bucket}
+
+# If no bucket is provided, try $project_id.appspot.com, then try $project_id
+if [ -z "${gcs_bucket}" ]; then
+  default_bucket="${project_id}.appspot.com"
+  echo "Will use ${default_bucket} for bucket name"
+  gsutil ls "gs://${default_bucket}" &>/dev/null && gcs_bucket="${default_bucket}" || {
+    # We cannot create the $project_id.appspot.com bucket, so don't try that
+    gcs_bucket=${project_id}
+    echo "Could not list bucket ${default_bucket}. Next will use ${gcs_bucket} for bucket name"
+    gsutil ls "gs://${gcs_bucket}" &>/dev/null || {
+      gsutil mb gs://"${gcs_bucket}"
+    }
+  }
+else
+  gsutil ls gs://"${gcs_bucket}" &>/dev/null || {
+    echo "Could not list bucket '${gcs_bucket}'. Will try to create it.."
+    gsutil mb gs://"${gcs_bucket}"
+  }
+fi
+
 backup_path=`readlink -f "${backup_path:-.}"`
 
 echo "tag: ${tag}"
@@ -119,12 +137,6 @@ if [[ -z $machine_name || -z $project_id || -z $zone ]]; then
   echo "GCSbackup should only run inside an instance of Datalab" | tee -a ${log_file}
   exit 1
 fi
-
-# test and create bucket if necessary
-gsutil ls gs://${gcs_bucket} &>/dev/null || {
-  echo "Bucket '${gcs_bucket}' was not found. Creating it.."
-  gsutil mb gs://"${gcs_bucket}"
-}
 
 # create an archive of the backup path
 archive_name=$(mktemp -d)"/archive.tar"
@@ -159,11 +171,13 @@ echo "New archive md5 hash: ${new_backup_hash}"
 echo "Last backup md5 hash: ${last_backup_hash}"
 if [[ $new_backup_hash == $last_backup_hash ]]; then
   echo "Hash not different from last backup. Skipping this backup round." | tee -a $log_file
+  rm -f "${archive_name}"
   exit 0
 fi
 
 # copying backup to GCS
 gsutil cp ${archive_name} "gs://${backup_id}"
+rm -f "${archive_name}"
 
 # remove excessive backups
 all_backups=($(gsutil ls "gs://${gcs_bucket}/datalab-backups/${zone}/${machine_name}${backup_path}/${tag}-*"))
