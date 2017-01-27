@@ -49,7 +49,7 @@ git clone https://github.com/googledatalab/notebooks tests/notebooks
 docker run \
   --net host \
   -v "$(pwd)/tests:/content/datalab" \
-  -e "PROJECT_ID=${TEST_PROJECT_ID}" \
+  -e "CLOUDSDK_CORE_PROJECT=${TEST_PROJECT_ID}" \
   --entrypoint /content/datalab/notebooks/.test.sh \
   --workdir /content/datalab/notebooks \
   ${DATALAB_IMAGE}
