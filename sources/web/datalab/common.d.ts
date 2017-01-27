@@ -16,7 +16,18 @@ declare module common {
 
   interface Settings {
 
+    /**
+     * Whether or not to write log statements to stderr
+     */
     consoleLogging: boolean;
+
+    /**
+     * The minimum threshold for log statements to be written to stderr.
+     * Values should be one of 'trace', 'debug', 'info',
+     * 'warn', 'error', or 'fatal'.
+     */
+    consoleLogLevel: string;
+
     logFilePath: string;
     logFilePeriod: string;
     logFileCount: number;

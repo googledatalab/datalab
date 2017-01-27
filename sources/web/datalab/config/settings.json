@@ -1,5 +1,6 @@
 {
   "consoleLogging": true,
+  "consoleLogLevel": "warn",
   "release": "beta",
   "logFilePath": "/var/log/app_engine/custom_logs/app.log",
   "logFilePeriod": "300000ms",
