@@ -34,6 +34,10 @@ fi
 
 # Use this flag to map in web server content during development
 #  -v $REPO_DIR/sources/web:/sources \
+#
+# To turn on debug logs, add the following:
+#  -e 'DATALAB_SETTINGS_OVERRIDES={"consoleLogLevel": "debug" }' \
+
 docker run -it --entrypoint=$ENTRYPOINT \
   -p 127.0.0.1:8081:8080 \
   -v "$CONTENT:/content" \
