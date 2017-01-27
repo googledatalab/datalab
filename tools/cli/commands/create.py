@@ -54,7 +54,7 @@ clone_repo() {{
   echo "Creating the datalab directory"
   mkdir -p ${{MOUNT_DIR}}/datalab
   echo "Cloning the repo {0}"
-  docker run -v "${{MOUNT_DIR}}:/content" \
+  docker run -v --rm "${{MOUNT_DIR}}:/content" \
     --entrypoint "/bin/bash" {0} \
     gcloud source repos clone {1} /content/datalab/notebooks
 }}
@@ -481,6 +481,7 @@ def run(args, gcloud_compute, gcloud_repos, email='', **kwargs):
                             user_data_file.name,
                             manifest_file.name))
                     cmd.extend([
+                        '--boot-disk-size=20GB',
                         '--network', _DATALAB_NETWORK,
                         '--image-family', 'gci-stable',
                         '--image-project', 'google-containers',
