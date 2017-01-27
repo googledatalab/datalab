@@ -73,7 +73,7 @@ export function initializeLoggers(settings: common.Settings): void {
       path: logFilePath, period: settings.logFilePeriod, count: settings.logFileCount }
   ];
   if (settings.consoleLogging) {
-    streams.push({ level: 'info', type: 'stream', stream: process.stderr });
+    streams.push({ level: settings.consoleLogLevel, type: 'stream', stream: process.stderr });
   }
 
   logger = bunyan.createLogger({ name: 'app', streams: streams });
