@@ -109,10 +109,12 @@ spec:
       env:
         - name: DATALAB_ENV
           value: GCE
+        - name: DATALAB_DEBUG
+          value: 'true'
         - name: DATALAB_SETTINGS_OVERRIDES
-          value: '{{"enableAutoGCSBackups": {1} }}'
+          value: '{{"enableAutoGCSBackups": {1}, "consoleLogLevel": "{2}" }}'
         - name: DATALAB_GIT_AUTHOR
-          value: '{2}'
+          value: '{3}'
       volumeMounts:
         - name: home
           mountPath: /content
@@ -206,6 +208,19 @@ def flags(parser):
         action='store_true',
         default=False,
         help='do not create the datalab-notebooks repository if it is missing')
+
+    parser.add_argument(
+        '--log-level',
+        dest='log_level',
+        choices=['trace', 'debug', 'info', 'warn', 'error', 'fatal'],
+        default='warn',
+        help=(
+            'the log level for Datalab instance.'
+            '\n\n'
+            'This is the threshold under which log entries from the '
+            'Datalab instance will not be written to StackDriver logging.'
+            '\n\n'
+            'The default log level is "warn".'))
 
     connect.connection_flags(parser)
     return
@@ -458,6 +473,7 @@ def run(args, gcloud_compute, gcloud_repos, email='', **kwargs):
         'auto-delete=no,boot=no,device-name=datalab-pd,mode=rw,name=' +
         disk_name)
     enable_backups = "false" if args.no_backups else "true"
+    console_log_level = args.log_level or "warn"
     with tempfile.NamedTemporaryFile(delete=False) as startup_script_file:
         with tempfile.NamedTemporaryFile(delete=False) as user_data_file:
             with tempfile.NamedTemporaryFile(delete=False) as manifest_file:
@@ -469,7 +485,8 @@ def run(args, gcloud_compute, gcloud_repos, email='', **kwargs):
                     user_data_file.close()
                     manifest_file.write(
                         _DATALAB_CONTAINER_SPEC.format(
-                            args.image_name, enable_backups, email))
+                            args.image_name, enable_backups,
+                            console_log_level, email))
                     manifest_file.close()
                     metadata_template = (
                         'startup-script={0},' +

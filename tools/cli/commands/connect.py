@@ -93,8 +93,8 @@ def connection_flags(parser):
             '\n\n'
             'A negative value means no limit.'))
     parser.add_argument(
-        '--log-file',
-        dest='log_file',
+        '--ssh-log-file',
+        dest='ssh_log_file',
         default=os.devnull,
         help=(
             'log file to write messages from the SSH command.'
@@ -103,8 +103,8 @@ def connection_flags(parser):
             '\n\n'
             'By default, all such messages are discarded.'))
     parser.add_argument(
-        '--log-level',
-        dest='log_level',
+        '--ssh-log-level',
+        dest='ssh_log_level',
         choices=['quiet', 'fatal', 'error', 'info', 'verbose',
                  'debug', 'debug1', 'debug2', 'debug3'],
         default='error',
@@ -155,7 +155,7 @@ def connect(args, gcloud_compute):
         cmd.extend([
             '--ssh-flag=-4',
             '--ssh-flag=-o',
-            '--ssh-flag=LogLevel=' + args.log_level])
+            '--ssh-flag=LogLevel=' + args.ssh_log_level])
         cmd.append('datalab@{0}'.format(instance))
         cmd.extend(['--', 'true'])
         with open(os.devnull, 'w') as dn:
@@ -185,13 +185,14 @@ def connect(args, gcloud_compute):
         cmd.extend([
             '--ssh-flag=-4',
             '--ssh-flag=-o',
-            '--ssh-flag=LogLevel=' + args.log_level,
+            '--ssh-flag=LogLevel=' + args.ssh_log_level,
             '--ssh-flag=-N',
             '--ssh-flag=-L',
             '--ssh-flag=' + port_mapping])
         cmd.append('datalab@{0}'.format(instance))
-        log_file = os.path.expandvars(os.path.expanduser(args.log_file))
-        with open(log_file, "a") as lf:
+        ssh_log_file = os.path.expandvars(
+            os.path.expanduser(args.ssh_log_file))
+        with open(ssh_log_file, "a") as lf:
             gcloud_compute(args, cmd, stdout=lf, stderr=lf)
         return
 
