@@ -163,7 +163,8 @@ RUN ipython profile create default && \
     /tools/node/bin/npm install -g typescript && \
     tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts && \
     /tools/node/bin/npm uninstall -g typescript && \
-    pip install --upgrade-strategy only-if-needed --no-cache-dir . && \
+    pip install -U pip"<9" && \
+    pip install --no-cache-dir . && \
     jupyter nbextension install --py datalab.notebook && \
     jupyter nbextension enable --py widgetsnbextension && \
     rm datalab/notebook/static/*.js && \
