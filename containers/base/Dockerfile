@@ -155,18 +155,18 @@ ADD nbconvert /datalab/nbconvert
 RUN ipython profile create default && \
     jupyter notebook --generate-config && \
     if [ -d /datalab/lib/pydatalab/.git ]; then \
-        echo "use local lib"; \
+        echo "use local lib" && \
+        cd /datalab/lib/pydatalab && \
+        /tools/node/bin/npm install -g typescript && \
+        tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts && \
+        /tools/node/bin/npm uninstall -g typescript && \
+        pip install --upgrade-strategy only-if-needed --no-cache-dir . && \
+        rm datalab/notebook/static/*.js; \
       else \
-        git clone https://github.com/googledatalab/pydatalab.git /datalab/lib/pydatalab; \
+        pip install datalab; \
       fi && \
-    cd /datalab/lib/pydatalab && \
-    /tools/node/bin/npm install -g typescript && \
-    tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts && \
-    /tools/node/bin/npm uninstall -g typescript && \
-    pip install --upgrade-strategy only-if-needed --no-cache-dir . && \
     jupyter nbextension install --py datalab.notebook && \
     jupyter nbextension enable --py widgetsnbextension && \
-    rm datalab/notebook/static/*.js && \
     mkdir -p /datalab/nbconvert && \
     cp -R /usr/local/share/jupyter/nbextensions/gcpdatalab/* /datalab/nbconvert && \
     ln -s /usr/local/lib/python2.7/dist-packages/notebook/static/custom/custom.css /datalab/nbconvert/custom.css && \
