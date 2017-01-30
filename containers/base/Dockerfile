@@ -163,7 +163,7 @@ RUN ipython profile create default && \
         pip install --upgrade-strategy only-if-needed --no-cache-dir . && \
         rm datalab/notebook/static/*.js; \
       else \
-        pip install datalab; \
+        pip install --upgrade-strategy only-if-needed --no-cache-dir datalab==0.1.1701301349; \
       fi && \
     jupyter nbextension install --py datalab.notebook && \
     jupyter nbextension enable --py widgetsnbextension && \
