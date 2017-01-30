@@ -32,7 +32,7 @@ RUN ln -s /datalab/web/static/datalab.css /datalab/nbconvert/datalab.css && \
     unzip -qq e653b2bd3ca91ef1af2a13c397766484dcb7b76d.zip -d kernel_gateway_demos && \
     rm e653b2bd3ca91ef1af2a13c397766484dcb7b76d.zip && \
     cd ./kernel_gateway_demos/kernel_gateway_demos-e653b2bd3ca91ef1af2a13c397766484dcb7b76d && \
-    pip install --upgrade-strategy only-if-needed ./nb2kg/
+    pip install ./nb2kg/
 
 ENV EXPERIMENTAL_KERNEL_GATEWAY_URL=""
 

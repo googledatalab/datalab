@@ -19,7 +19,7 @@ ADD build/web/kernelproxy /datalab/web
 ADD content/ /datalab
 
 # Install the support for running a kernel gateway
-RUN pip install --upgrade-strategy only-if-needed jupyter_kernel_gateway
+RUN pip install jupyter_kernel_gateway
 
 # Startup
 ENV DATALAB_VERSION _version_
