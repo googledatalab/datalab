@@ -388,7 +388,7 @@ def ensure_disk_exists(args, gcloud_compute, disk_name, report_errors=False):
         try:
             create_disk(args, gcloud_compute, disk_name, report_errors)
         except:
-            if args.zone:
+            if args.zone or args.quiet:
                 raise
             else:
                 # We take this failure as a sign that gcloud might need
