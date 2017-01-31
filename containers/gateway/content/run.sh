@@ -26,20 +26,24 @@ then
 fi
 
 # Start the DataLab kernel gateway.
-jupyter kernelgateway --JupyterWebsocketPersonality.list_kernels=True --KernelGatewayApp.port=8081 --KernelGatewayApp.ip=0.0.0.0 &
+supervisord -c /etc/supervisor/conf.d/jupyter-gateway.conf
+
 n=0; while true; do
-  n=$((n+1)); sleep 1s; curl -s 'http://127.0.0.1:8081' >/dev/null 2>&1
-  if [ $? = 0 ]; then echo 'Jupyter kernel gateway started.'; break
-  elif [ $n -gt 10 ]; then echo 'Failed to start jupyter kernel gateway.'; exit 1
+  n=$((n+1)); sleep 1s
+  curl -s 'http://127.0.0.1:8081' >/dev/null 2>&1 && curl_error=0 || curl_error=$?
+  if [ $curl_error = 0 ]; then echo 'Jupyter kernel gateway started.'; break
+  elif [ $curl_error -gt 10 ]; then echo 'Failed to start jupyter kernel gateway.'; exit 1
   fi
 done
 
 # Start the proxy.
-FOREVER_CMD="forever --minUptime 1000 --spinSleepTime 1000"
 if [ -z "${DATALAB_DEBUG}" ]
 then
   echo "Starting Datalab Kernel Gateway in silent mode, for debug output, rerun with an additional '-e DATALAB_DEBUG=true' argument"
-  FOREVER_CMD="${FOREVER_CMD} -s"
+else
+  # The Datalab job logs to this file, make sure it exists and tail it
+  touch /var/log/gateway.stdout.log
+  tail -f /var/log/gateway.stdout.log &
 fi
 
-${FOREVER_CMD} /datalab/web/kernelproxy/app.js
+supervisord -n -c /etc/supervisor/conf.d/gateway.conf

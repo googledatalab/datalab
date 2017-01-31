@@ -27,7 +27,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     apt-get update -y && \
     apt-get install --no-install-recommends -y -q python unzip ca-certificates build-essential \
     libatlas-base-dev liblapack-dev gfortran libpng-dev libfreetype6-dev libxft-dev libxml2-dev \
-    python-dev python-setuptools python-zmq openssh-client wget curl git pkg-config && \
+    python-dev python-setuptools python-zmq openssh-client wget curl git pkg-config supervisor && \
     easy_install pip && \
     mkdir -p /tools && \
 
@@ -110,7 +110,6 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         tcp-port-used@0.1.2 \
         node-cache@3.2.0 && \
     cd / && \
-    /tools/node/bin/npm install -g forever && \
 
 # Clean up
     apt-get purge -y build-essential bzip2 cpp cpp-4.9 python-setuptools pkg-config libfreetype6-dev && \
@@ -148,6 +147,9 @@ ADD config/nbconvert.py /etc/jupyter/jupyter_notebook_config.py
 # Directory "py" may be empty and in that case it will git clone pydatalab from repo
 ADD pydatalab /datalab/lib/pydatalab
 ADD nbconvert /datalab/nbconvert
+
+# Copy supervisord files
+ADD supervisor/*.conf /etc/supervisor/conf.d/
 
 # Do IPython configuration and install build artifacts
 # Then link stuff needed for nbconvert to a location where Jinja will find it.

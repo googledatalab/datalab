@@ -257,12 +257,14 @@ fi
 ungit --port=8083 --no-launchBrowser --forcedLaunchPath=/content/datalab --ungitVersionCheckOverride 1> /dev/null &
 
 # Start the DataLab server
-FOREVER_CMD="forever --minUptime 1000 --spinSleepTime 1000"
 if [ -z "${DATALAB_DEBUG}" ]
 then
   echo "Starting Datalab in silent mode, for debug output, rerun with an additional '-e DATALAB_DEBUG=true' argument"
-  FOREVER_CMD="${FOREVER_CMD} -s"
+else
+  # The Datalab job logs to this file, make sure it exists and tail it
+  touch /var/log/datalab.stdout.log
+  tail -f /var/log/datalab.stdout.log &
 fi
-
 echo "Open your browser to http://localhost:8081/ to connect to Datalab."
-${FOREVER_CMD} /datalab/web/app.js
+supervisord -n -c /etc/supervisor/conf.d/datalab.conf
+
