@@ -78,6 +78,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir pillow==3.4.1 && \
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf && \
 
+
 # Setup Node.js
     mkdir -p /tools/node && \
     wget -nv https://nodejs.org/dist/v4.3.2/node-v4.3.2-linux-x64.tar.gz -O node.tar.gz && \
@@ -122,20 +123,6 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     rm -rf /usr/share/locale/* && \
     rm -rf /usr/share/i18n/locales/* && \
     cd /
-
-# Install ProtoBuf, TensorFlow
-RUN pip install --upgrade-strategy only-if-needed --no-cache-dir protobuf==3.0.0b2.post2 && \
-    wget --progress=dot:mega https://storage.googleapis.com/cloud-datalab/deploy/tf/tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
-    pip install --upgrade-strategy only-if-needed --no-cache-dir tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl && \
-    rm tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl
-
-# Install DataFlow
-RUN pip install --upgrade-strategy only-if-needed --no-cache-dir google-cloud-dataflow==0.4.2
-
-# Install CloudML SDK
-RUN gsutil cp gs://cloud-ml/sdk/cloudml-0.1.6-alpha.tar.gz cloudml-0.1.6-alpha.tar.gz && \
-    pip install --upgrade-strategy only-if-needed --no-cache-dir cloudml-0.1.6-alpha.tar.gz && \
-    rm cloudml-0.1.6-alpha.tar.gz
 
 # Install notebook again and pin version to 4.2.3 
 # ipywidgets and maybe others will update notebook to a newer version that may not work well with datalab.

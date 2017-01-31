@@ -32,5 +32,6 @@ else
   # Create empty dir to make docker build happy.
   mkdir -p pydatalab;
 fi
+
+trap 'rm -rf pydatalab' exit
 docker build -t datalab-base .
-rm -rf pydatalab
