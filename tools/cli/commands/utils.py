@@ -95,4 +95,5 @@ def maybe_prompt_for_zone(args, gcloud_compute, instance):
     Raises:
       subprocess.CalledProcessError: If the `gcloud` call fails
     """
-    get_instance_status(args, gcloud_compute, instance)
+    if not args.quiet:
+        get_instance_status(args, gcloud_compute, instance)

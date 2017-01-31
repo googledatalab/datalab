@@ -123,6 +123,8 @@ def gcloud_compute(
     base_cmd.append('compute')
     if args.project:
         base_cmd.extend(['--project', args.project])
+    if args.quiet:
+        base_cmd.append('--quiet')
     cmd = base_cmd + compute_cmd
     return subprocess.check_call(
         cmd, stdin=stdin, stdout=stdout, stderr=stderr)
@@ -178,6 +180,11 @@ def run():
         dest='zone',
         default=None,
         help=_ZONE_HELP)
+    parser.add_argument(
+        '--quiet',
+        dest='quiet',
+        action='store_true',
+        help='do not issue any interactive prompts')
 
     subparsers = parser.add_subparsers(dest='subcommand')
     for subcommand in _SUBCOMMANDS:
@@ -200,6 +207,11 @@ def run():
             dest='project',
             default=None,
             help=_PROJECT_HELP)
+        subcommand_parser.add_argument(
+            '--quiet',
+            dest='quiet',
+            action='store_true',
+            help='do not issue any interactive prompts')
         if command_config['require-zone']:
             subcommand_parser.add_argument(
                 '--zone',

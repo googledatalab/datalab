@@ -73,11 +73,6 @@ def connection_flags(parser):
       parser: The argparse parser to which to add the flags.
     """
     parser.add_argument(
-        '--quiet',
-        dest='quiet',
-        action='store_true',
-        help='do not issue any interactive prompts')
-    parser.add_argument(
         '--port',
         dest='port',
         type=int,
