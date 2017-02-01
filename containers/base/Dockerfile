@@ -124,6 +124,16 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     rm -rf /usr/share/i18n/locales/* && \
     cd /
 
+# Install TensorFlow
+RUN wget https://storage.googleapis.com/cloud-datalab/deploy/tf/tensorflow-0.12.0rc1-cp27-none-linux_x86_64.whl && \
+    pip install --no-cache-dir tensorflow-0.12.0rc1-cp27-none-linux_x86_64.whl && \
+    rm tensorflow-0.12.0rc1-cp27-none-linux_x86_64.whl
+
+# Install CloudML SDK
+RUN gsutil cp gs://cloud-ml/sdk/cloudml.latest.tar.gz cloudml.latest.tar.gz && \
+    pip install --upgrade-strategy only-if-needed --no-cache-dir cloudml.latest.tar.gz && \
+    rm cloudml.latest.tar.gz
+
 # Install notebook again and pin version to 4.2.3 
 # ipywidgets and maybe others will update notebook to a newer version that may not work well with datalab.
 # For example, kernel gateway doesn't work with 4.3.0 notebook (https://github.com/googledatalab/datalab/issues/1083)
