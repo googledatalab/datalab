@@ -389,7 +389,13 @@ def ensure_disk_exists(args, gcloud_compute, disk_name, report_errors=False):
             create_disk(args, gcloud_compute, disk_name, report_errors)
         except:
             if args.zone or args.quiet:
-                raise
+                if report_errors:
+                    raise
+                # We know the command failed (and will almost certainly
+                # fail again), but we did not forward the errors that
+                # it reported to the user. To work around this, we
+                # re-run the command with 'report_errors' set to True
+                create_disk(args, gcloud_compute, disk_name, True)
             else:
                 # We take this failure as a sign that gcloud might need
                 # to prompt for a zone. As such, we do that prompting
