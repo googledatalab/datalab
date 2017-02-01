@@ -66,6 +66,11 @@ declare module common {
     nextJupyterPort: number;
 
     /**
+     * The port to use for socketio proxying.
+     */
+    socketioPort: number;
+
+    /**
      * Local directory which stores notebooks in the container
      */
     contentDir: string;

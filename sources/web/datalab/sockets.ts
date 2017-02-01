@@ -163,8 +163,8 @@ function socketHandler(socket: SocketIO.Socket) {
   });
 }
 
-export function init(): void {
-  var io = socketio('8084', {
+export function init(settings: common.Settings): void {
+  var io = socketio(String(settings.socketioPort), {
     transports: [ 'polling' ],
     allowUpgrades: false
   });

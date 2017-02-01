@@ -303,8 +303,8 @@ export function run(settings: common.Settings): void {
   jupyter.init(settings);
   auth.init(settings);
   noCacheContent.init(settings);
-  reverseProxy.init();
-  sockets.init();
+  reverseProxy.init(settings);
+  sockets.init(settings);
 
   healthHandler = health.createHandler(settings);
   infoHandler = info.createHandler(settings);
