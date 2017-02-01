@@ -75,7 +75,28 @@ mount_disk() {{
   chmod a+w "${{MOUNT_DIR}}"
 }}
 
+configure_swap() {{
+  memory_kb=`cat /proc/meminfo | grep MemTotal | cut -d ':' -f 2 | cut -d 'k' -f 1 | tr -d '[:space:]'`
+  swapfile="${{MOUNT_DIR}}/swapfile"
+
+  # Create the swapfile if it is either missing or not big enough
+  current_size="0"
+  if [ -e "${{swapfile}}" ]; then
+    current_size=`ls -s ${{swapfile}} | cut -d ' ' -f 1`
+  fi
+  if [ "${{memory_kb}}" -gt "${{current_size}}" ]; then
+    dd if=/dev/zero of="${{swapfile}}" bs=1024 count="${{memory_kb}}"
+  fi
+  mkswap "${{swapfile}}"
+  
+  # Enable swap
+  sysctl vm.disk_based_swap=1
+  swapon "${{swapfile}}"
+}}
+
 mount_disk
+
+configure_swap
 """
 
 _DATALAB_CONTAINER_MANIFEST_URL = (
