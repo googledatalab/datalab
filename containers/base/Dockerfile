@@ -126,7 +126,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 
 # Install TensorFlow
 RUN wget https://storage.googleapis.com/cloud-datalab/deploy/tf/tensorflow-0.12.0rc1-cp27-none-linux_x86_64.whl && \
-    pip install --no-cache-dir tensorflow-0.12.0rc1-cp27-none-linux_x86_64.whl && \
+    pip install --upgrade-strategy only-if-needed --no-cache-dir tensorflow-0.12.0rc1-cp27-none-linux_x86_64.whl && \
     rm tensorflow-0.12.0rc1-cp27-none-linux_x86_64.whl
 
 # Install CloudML SDK
