@@ -14,6 +14,7 @@
 
 /// <reference path="../../../third_party/externs/ts/node/node.d.ts" />
 /// <reference path="../../../third_party/externs/ts/node/node-http-proxy.d.ts" />
+/// <reference path="common.d.ts" />
 
 
 import http = require('http');
@@ -22,6 +23,7 @@ import logging = require('./logging');
 
 var proxy: httpProxy.ProxyServer = httpProxy.createProxyServer(null);
 var regex: any = new RegExp('\/_proxy\/([0-9]+)($|\/)');
+var socketioPort: string = '';
 
 function errorHandler(error: Error, request: http.ServerRequest, response: http.ServerResponse) {
   response.writeHead(500, 'Reverse Proxy Error.');
@@ -46,7 +48,7 @@ export function getRequestPort(request: http.ServerRequest, path: string): strin
   var port: string = getPort(path) || getPort(request.headers.referer);
   if (!port) {
     if (path.indexOf('/socket.io/') == 0) {
-      port = '8084';
+      port = socketioPort;
     }
   }
   return port;
@@ -56,9 +58,9 @@ export function getRequestPort(request: http.ServerRequest, path: string): strin
  * Check if traffic to this port should be proxied back to the gateway
  */
 function shouldProxyPort(port: String) {
-  // Do not proxy 8083 to gateway, it's open for ungit
-  // Do not proxy 8084 to gateway, it's open for socket.io wrapping
-  return !!process.env.KG_URL && port !== '8083' && port !== '8084';
+  // Do not proxy 8083 to gateway, it's open for ungit.
+  // Do not proxy socketio's port to gateway, it's open for socket.io wrapping.
+  return !!process.env.KG_URL && port !== '8083' && port !== socketioPort;
 }
 
 /**
@@ -79,6 +81,8 @@ export function handleRequest(request: http.ServerRequest,
 /**
  * Initialize the handler.
  */
-export function init() {
+export function init(settings: common.Settings) {
+  socketioPort = String(settings.socketioPort);
   proxy.on('error', errorHandler);
 }
+
