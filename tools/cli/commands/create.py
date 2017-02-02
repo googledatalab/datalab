@@ -499,6 +499,7 @@ def run(args, gcloud_compute, gcloud_repos, email='', **kwargs):
                             manifest_file.name))
                     cmd.extend([
                         '--boot-disk-size=20GB',
+                        '--verbosity=error',
                         '--network', _DATALAB_NETWORK,
                         '--image-family', 'gci-stable',
                         '--image-project', 'google-containers',
