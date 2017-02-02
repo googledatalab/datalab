@@ -54,7 +54,7 @@ clone_repo() {{
   echo "Creating the datalab directory"
   mkdir -p ${{MOUNT_DIR}}/datalab
   echo "Cloning the repo {0}"
-  docker run -v --rm "${{MOUNT_DIR}}:/content" \
+  docker run --rm -v "${{MOUNT_DIR}}:/content" \
     --entrypoint "/bin/bash" {0} \
     gcloud source repos clone {1} /content/datalab/notebooks
 }}
@@ -87,10 +87,12 @@ configure_swap() {{
     current_size=`ls -s ${{swapfile}} | cut -d ' ' -f 1`
   fi
   if [ "${{memory_kb}}" -gt "${{current_size}}" ]; then
+    echo "Creating a ${{memory_kb}} kilobyte swapfile at ${{swapfile}}"
     dd if=/dev/zero of="${{swapfile}}" bs=1024 count="${{memory_kb}}"
   fi
+  chmod 0600 "${{swapfile}}"
   mkswap "${{swapfile}}"
-  
+
   # Enable swap
   sysctl vm.disk_based_swap=1
   swapon "${{swapfile}}"
@@ -99,6 +101,8 @@ configure_swap() {{
 mount_disk
 
 configure_swap
+
+journalctl -u google-startup-scripts --no-pager > /var/log/startupscript.log
 """
 
 _DATALAB_CONTAINER_MANIFEST_URL = (
