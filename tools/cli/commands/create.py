@@ -76,7 +76,9 @@ mount_disk() {{
 }}
 
 configure_swap() {{
-  memory_kb=`cat /proc/meminfo | grep MemTotal | cut -d ':' -f 2 | cut -d 'k' -f 1 | tr -d '[:space:]'`
+  mem_total_line=`cat /proc/meminfo | grep MemTotal`
+  mem_total_value=`echo "${{mem_total_line}}" | cut -d ':' -f 2`
+  memory_kb=`echo "${{mem_total_value}}" | cut -d 'k' -f 1 | tr -d '[:space:]'`
   swapfile="${{MOUNT_DIR}}/swapfile"
 
   # Create the swapfile if it is either missing or not big enough
