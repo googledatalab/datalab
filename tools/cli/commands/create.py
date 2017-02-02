@@ -54,7 +54,7 @@ clone_repo() {{
   echo "Creating the datalab directory"
   mkdir -p ${{MOUNT_DIR}}/datalab
   echo "Cloning the repo {0}"
-  docker run -v --rm "${{MOUNT_DIR}}:/content" \
+  docker run --rm -v "${{MOUNT_DIR}}:/content" \
     --entrypoint "/bin/bash" {0} \
     gcloud source repos clone {1} /content/datalab/notebooks
 }}
@@ -75,7 +75,34 @@ mount_disk() {{
   chmod a+w "${{MOUNT_DIR}}"
 }}
 
+configure_swap() {{
+  mem_total_line=`cat /proc/meminfo | grep MemTotal`
+  mem_total_value=`echo "${{mem_total_line}}" | cut -d ':' -f 2`
+  memory_kb=`echo "${{mem_total_value}}" | cut -d 'k' -f 1 | tr -d '[:space:]'`
+  swapfile="${{MOUNT_DIR}}/swapfile"
+
+  # Create the swapfile if it is either missing or not big enough
+  current_size="0"
+  if [ -e "${{swapfile}}" ]; then
+    current_size=`ls -s ${{swapfile}} | cut -d ' ' -f 1`
+  fi
+  if [ "${{memory_kb}}" -gt "${{current_size}}" ]; then
+    echo "Creating a ${{memory_kb}} kilobyte swapfile at ${{swapfile}}"
+    dd if=/dev/zero of="${{swapfile}}" bs=1024 count="${{memory_kb}}"
+  fi
+  chmod 0600 "${{swapfile}}"
+  mkswap "${{swapfile}}"
+
+  # Enable swap
+  sysctl vm.disk_based_swap=1
+  swapon "${{swapfile}}"
+}}
+
 mount_disk
+
+configure_swap
+
+journalctl -u google-startup-scripts --no-pager > /var/log/startupscript.log
 """
 
 _DATALAB_CONTAINER_MANIFEST_URL = (
