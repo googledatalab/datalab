@@ -63,6 +63,15 @@ wrong_user_message = (
     '--no-user-checking flag.')
 
 
+# The list of web browsers that we don't want to automatically open.
+#
+# This is a subset of the canonical list of python browser types
+# defined here: https://docs.python.org/2/library/webbrowser.html
+unsupported_browsers = [
+    'BackgroundBrowser', 'Elinks', 'GenericBrowser', 'Grail'
+]
+
+
 def flags(parser):
     """Add command line flags for the `connect` subcommand.
 
@@ -210,14 +219,22 @@ def connect(args, gcloud_compute, email):
             gcloud_compute(args, cmd, stdout=lf, stderr=lf)
         return
 
+    def maybe_open_browser(address):
+        """Try to open a browser if we reasonably can."""
+        browser_context = webbrowser.get()
+        browser_name = type(browser_context).__name__
+        if browser_name in unsupported_browsers:
+            return
+        try:
+            webbrowser.open(datalab_address)
+        except webbrowser.Error as e:
+            print('Unable to open the webbrowser: ' + str(e))
+
     def on_ready():
         """Callback that handles a successful connection."""
         print('You can now connect to Datalab at ' + datalab_address)
         if not args.no_launch_browser:
-            try:
-                webbrowser.open(datalab_address)
-            except webbrowser.Error as e:
-                print('Unable to open the webbrowser: ' + str(e))
+            maybe_open_browser(datalab_address)
         return
 
     def health_check(cancelled_event):
