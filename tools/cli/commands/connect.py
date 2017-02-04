@@ -57,10 +57,10 @@ wrong_user_message = (
     'are attempting to connect to it as {1}.'
     '\n\n'
     'Datalab instances are single-user environments, and trying '
-    'to share one will cause problems.'
+    'to share one is not supported.'
     '\n\n'
-    'If you are sure you want to do this, then re-run the command '
-    'with the `--no-user-checking` flag.')
+    'To override this behavior, re-run the command with the '
+    '--no-user-checking flag.')
 
 
 def flags(parser):
