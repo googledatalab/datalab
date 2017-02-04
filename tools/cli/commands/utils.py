@@ -91,7 +91,7 @@ def describe_instance(args, gcloud_compute, instance):
       gcloud_compute: Function that can be used to invoke `gcloud compute`
       instance: The name of the instance to check
     Returns:
-      A tupe of the string describing the status of the instance
+      A tuple of the string describing the status of the instance
       (e.g. 'RUNNING' or 'TERMINATED'), and the list of metadata items.
     Raises:
       subprocess.CalledProcessError: If the `gcloud` call fails
