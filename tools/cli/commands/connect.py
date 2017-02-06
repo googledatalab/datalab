@@ -52,6 +52,17 @@ To connect to 'example-instance' in zone 'us-central1-a', run:
     $ {0} {1} example-instance --zone us-central1-a""")
 
 
+wrong_user_message = (
+    'The specified Datalab instance was created for {0}, but you '
+    'are attempting to connect to it as {1}.'
+    '\n\n'
+    'Datalab instances are single-user environments, and trying '
+    'to share one is not supported.'
+    '\n\n'
+    'To override this behavior, re-run the command with the '
+    '--no-user-checking flag.')
+
+
 # The list of web browsers that we don't want to automatically open.
 #
 # This is a subset of the canonical list of python browser types
@@ -71,6 +82,13 @@ def flags(parser):
         'instance',
         metavar='NAME',
         help='name of the instance to which to connect')
+    parser.add_argument(
+        '--no-user-checking',
+        dest='no_user_checking',
+        action='store_true',
+        default=False,
+        help='do not check if the current user matches the Datalab instance')
+
     connection_flags(parser)
     return
 
@@ -126,12 +144,13 @@ def connection_flags(parser):
     return
 
 
-def connect(args, gcloud_compute):
+def connect(args, gcloud_compute, email):
     """Create a persistent connection to a Datalab instance.
 
     Args:
       args: The Namespace object constructed by argparse
       gcloud_compute: A function that can be called to invoke `gcloud compute`
+      email: The user's email address
     """
     instance = args.instance
     print('Connecting to {0}'.format(instance))
@@ -284,17 +303,17 @@ def connect(args, gcloud_compute):
     return
 
 
-def maybe_start(args, gcloud_compute, instance):
+def maybe_start(args, gcloud_compute, instance, status):
     """Start the given Google Compute Engine VM if it is not running.
 
     Args:
       args: The Namespace instance returned by argparse
       gcloud_compute: Function that can be used to invoke `gcloud compute`
       instance: The name of the instance to check and (possibly) start
+      status: The string describing the status of the instance
     Raises:
       subprocess.CalledProcessError: If one of the `gcloud` calls fail
     """
-    status = utils.get_instance_status(args, gcloud_compute, instance)
     if status != 'RUNNING':
         print('Restarting the instance {0} with status {1}'.format(
             instance, status))
@@ -306,16 +325,24 @@ def maybe_start(args, gcloud_compute, instance):
     return
 
 
-def run(args, gcloud_compute, **unused_kwargs):
+def run(args, gcloud_compute, email='', **unused_kwargs):
     """Implementation of the `datalab connect` subcommand.
 
     Args:
       args: The Namespace instance returned by argparse
       gcloud_compute: Function that can be used to invoke `gcloud compute`
+      email: The user's email address
     Raises:
       subprocess.CalledProcessError: If a nested `gcloud` calls fails
     """
     instance = args.instance
-    maybe_start(args, gcloud_compute, instance)
-    connect(args, gcloud_compute)
+    status, metadata_items = utils.describe_instance(
+        args, gcloud_compute, instance)
+    for_user = metadata_items.get('for-user', '')
+    if (not args.no_user_checking) and for_user and (for_user != email):
+        print(wrong_user_message.format(for_user, email))
+        return
+
+    maybe_start(args, gcloud_compute, instance, status)
+    connect(args, gcloud_compute, email)
     return

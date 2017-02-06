@@ -249,6 +249,11 @@ def flags(parser):
             '\n\n'
             'The default log level is "warn".'))
 
+    parser.add_argument(
+        '--for-user',
+        dest='for_user',
+        help='create the datalab instance on behalf of the specified user')
+
     connect.connection_flags(parser)
     return
 
@@ -501,47 +506,56 @@ def run(args, gcloud_compute, gcloud_repos, email='', **kwargs):
         disk_name)
     enable_backups = "false" if args.no_backups else "true"
     console_log_level = args.log_level or "warn"
-    with tempfile.NamedTemporaryFile(delete=False) as startup_script_file:
-        with tempfile.NamedTemporaryFile(delete=False) as user_data_file:
-            with tempfile.NamedTemporaryFile(delete=False) as manifest_file:
-                try:
-                    startup_script_file.write(_DATALAB_STARTUP_SCRIPT.format(
-                        args.image_name, _DATALAB_NOTEBOOKS_REPOSITORY))
-                    startup_script_file.close()
-                    user_data_file.write(_DATALAB_CLOUD_CONFIG)
-                    user_data_file.close()
-                    manifest_file.write(
-                        _DATALAB_CONTAINER_SPEC.format(
-                            args.image_name, enable_backups,
-                            console_log_level, email))
-                    manifest_file.close()
-                    metadata_template = (
-                        'startup-script={0},' +
-                        'user-data={1},' +
-                        'google-container-manifest={2}')
-                    metadata_from_file = (
-                        metadata_template.format(
-                            startup_script_file.name,
-                            user_data_file.name,
-                            manifest_file.name))
-                    cmd.extend([
-                        '--boot-disk-size=20GB',
-                        '--verbosity=error',
-                        '--network', _DATALAB_NETWORK,
-                        '--image-family', 'gci-stable',
-                        '--image-project', 'google-containers',
-                        '--machine-type', args.machine_type,
-                        '--metadata-from-file', metadata_from_file,
-                        '--tags', 'datalab',
-                        '--disk', disk_cfg,
-                        '--scopes', 'cloud-platform',
-                        instance])
-                    gcloud_compute(args, cmd)
-                finally:
-                    os.remove(startup_script_file.name)
-                    os.remove(user_data_file.name)
-                    os.remove(manifest_file.name)
+    user_email = args.for_user or email
+    # We have to escape the user's email before using it in the YAML template.
+    escaped_email = user_email.replace("'", "''")
+    with tempfile.NamedTemporaryFile(delete=False) as startup_script_file, \
+            tempfile.NamedTemporaryFile(delete=False) as user_data_file, \
+            tempfile.NamedTemporaryFile(delete=False) as manifest_file, \
+            tempfile.NamedTemporaryFile(delete=False) as for_user_file:
+        try:
+            startup_script_file.write(_DATALAB_STARTUP_SCRIPT.format(
+                args.image_name, _DATALAB_NOTEBOOKS_REPOSITORY))
+            startup_script_file.close()
+            user_data_file.write(_DATALAB_CLOUD_CONFIG)
+            user_data_file.close()
+            manifest_file.write(
+                _DATALAB_CONTAINER_SPEC.format(
+                    args.image_name, enable_backups,
+                    console_log_level, escaped_email))
+            manifest_file.close()
+            for_user_file.write(user_email)
+            for_user_file.close()
+            metadata_template = (
+                'startup-script={0},' +
+                'user-data={1},' +
+                'google-container-manifest={2},' +
+                'for-user={3}')
+            metadata_from_file = (
+                metadata_template.format(
+                    startup_script_file.name,
+                    user_data_file.name,
+                    manifest_file.name,
+                    for_user_file.name))
+            cmd.extend([
+                '--boot-disk-size=20GB',
+                '--verbosity=error',
+                '--network', _DATALAB_NETWORK,
+                '--image-family', 'gci-stable',
+                '--image-project', 'google-containers',
+                '--machine-type', args.machine_type,
+                '--metadata-from-file', metadata_from_file,
+                '--tags', 'datalab',
+                '--disk', disk_cfg,
+                '--scopes', 'cloud-platform',
+                instance])
+            gcloud_compute(args, cmd)
+        finally:
+            os.remove(startup_script_file.name)
+            os.remove(user_data_file.name)
+            os.remove(manifest_file.name)
+            os.remove(for_user_file.name)
 
-    if not args.no_connect:
-        connect.connect(args, gcloud_compute)
+    if (not args.no_connect) and (not args.for_user):
+        connect.connect(args, gcloud_compute, email)
     return

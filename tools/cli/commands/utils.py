@@ -14,6 +14,7 @@
 
 """Utility methods common to multiple commands."""
 
+import json
 import tempfile
 
 
@@ -49,8 +50,39 @@ def prompt_for_zone(args, gcloud_compute, instance=None):
     return raw_input('Your selected zone: ')
 
 
-def get_instance_status(args, gcloud_compute, instance):
-    """Get the status of the given Google Compute Engine VM.
+def flatten_metadata(metadata):
+    """Flatten the given API-style dictionary into a Python dictionary.
+
+    This takes a mapping of key-value pairs as returned by the Google
+    Compute Engine API, and converts it to a Python dictionary.
+
+    The `metadata` argument is an object that has an `items` field
+    containing a list of key->value mappings. Each key->value mapping
+    is an object with a `key` field and a `value` field.
+
+    Example:
+       Given the following input:
+          { "items": [
+              { "key": "a",
+                "value": 1
+              },
+              { "key": "b",
+                "value": 2
+              },
+            ],
+            "fingerprint": "<something>"
+          }
+       ... this will return {"a": 1, "b": 2}
+    """
+    items = metadata.get('items', [])
+    result = {}
+    for mapping in items:
+        result[mapping.get('key', '')] = mapping.get('value', '')
+    return result
+
+
+def describe_instance(args, gcloud_compute, instance):
+    """Get the status and metadata of the given Google Compute Engine VM.
 
     This will prompt the user to select a zone if necessary.
 
@@ -59,28 +91,34 @@ def get_instance_status(args, gcloud_compute, instance):
       gcloud_compute: Function that can be used to invoke `gcloud compute`
       instance: The name of the instance to check
     Returns:
-      A string describing the status of the instance
-      (e.g. 'RUNNING' or 'TERMINATED')
+      A tuple of the string describing the status of the instance
+      (e.g. 'RUNNING' or 'TERMINATED'), and the list of metadata items.
     Raises:
       subprocess.CalledProcessError: If the `gcloud` call fails
+      ValueError: If the result returned by gcloud is not valid JSON
     """
     get_cmd = ['instances', 'describe', '--quiet']
     if args.zone:
         get_cmd.extend(['--zone', args.zone])
-    get_cmd.extend(['--format', 'value(status)', instance])
+    get_cmd.extend(['--format', 'json(status,metadata.items)', instance])
     try:
         with tempfile.TemporaryFile() as tf:
             gcloud_compute(args, get_cmd, stdout=tf, stderr=tf)
             tf.seek(0)
-            return tf.read().strip()
+            json_result = tf.read().strip()
+            status_and_metadata = json.loads(json_result)
+            status = status_and_metadata.get('status', 'UNKNOWN')
+            metadata = status_and_metadata.get('metadata', {})
+            return (status, flatten_metadata(metadata))
     except:
         if args.zone:
             raise
         else:
             args.zone = prompt_for_zone(
                 args, gcloud_compute, instance=instance)
-            return get_instance_status(args, gcloud_compute, instance)
-    return 'UNKNOWN'
+            return describe_instance(
+                args, gcloud_compute, instance)
+    return ('UNKNOWN', [])
 
 
 def maybe_prompt_for_zone(args, gcloud_compute, instance):
@@ -96,4 +134,4 @@ def maybe_prompt_for_zone(args, gcloud_compute, instance):
       subprocess.CalledProcessError: If the `gcloud` call fails
     """
     if not args.quiet:
-        get_instance_status(args, gcloud_compute, instance)
+        describe_instance(args, gcloud_compute, instance)
