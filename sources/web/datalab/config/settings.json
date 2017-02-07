@@ -23,6 +23,7 @@
   "numHourlyBackups": 10,
   "numDailyBackups": 7,
   "numWeeklyBackups": 20,
+  "eulaAccepted": false,
   "jupyterArgs": [
     "notebook",
     "-y",

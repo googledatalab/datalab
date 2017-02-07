@@ -241,7 +241,7 @@ function uncheckedRequestHandler(request: http.ServerRequest, response: http.Ser
     // We serve these even if the EULA has not been accepted, so that the
     // EULA page can include static resources.
     staticHandler(request, response);
-  } else if (!fs.existsSync(eulaDir())) {
+  } else if (!appSettings.eulaAccepted && !fs.existsSync(eulaDir())) {
     logging.getLogger().info('No Datalab config; redirect to EULA page');
     var eula = path.join(appSettings.datalabRoot, '/datalab/web/static/eula.html');
     fs.readFile(eula, function(error, content) {
