@@ -63,6 +63,11 @@ wrong_user_message = (
     '--no-user-checking flag.')
 
 
+web_preview_message = (
+    'Click on the *Web Preview* (up-arrow button at top-left), '
+    'select *port {}*, and start using Datalab.')
+
+
 # The list of web browsers that we don't want to automatically open.
 #
 # This is a subset of the canonical list of python browser types
@@ -144,18 +149,21 @@ def connection_flags(parser):
     return
 
 
-def connect(args, gcloud_compute, email):
+def connect(args, gcloud_compute, email, in_cloud_shell):
     """Create a persistent connection to a Datalab instance.
 
     Args:
       args: The Namespace object constructed by argparse
       gcloud_compute: A function that can be called to invoke `gcloud compute`
       email: The user's email address
+      in_cloud_shell: Whether or not the command is being run in the
+        Google Cloud Shell
     """
     instance = args.instance
     print('Connecting to {0}'.format(instance))
 
-    datalab_address = 'http://localhost:{0}/'.format(str(args.port))
+    datalab_port = args.port
+    datalab_address = 'http://localhost:{0}/'.format(str(datalab_port))
 
     def ensure_sshable():
         """Ensure that the instance has been configured for SSH access.
@@ -232,9 +240,14 @@ def connect(args, gcloud_compute, email):
 
     def on_ready():
         """Callback that handles a successful connection."""
-        print('You can now connect to Datalab at ' + datalab_address)
-        if not args.no_launch_browser:
-            maybe_open_browser(datalab_address)
+        print('The connection to Datalab is now open and will '
+              'remain until this command is killed.\n\n')
+        if in_cloud_shell:
+            print(web_preview_message.format(datalab_port))
+        else:
+            print('You can connect to Datalab at ' + datalab_address)
+            if not args.no_launch_browser:
+                maybe_open_browser(datalab_address)
         return
 
     def health_check(cancelled_event):
@@ -325,13 +338,15 @@ def maybe_start(args, gcloud_compute, instance, status):
     return
 
 
-def run(args, gcloud_compute, email='', **unused_kwargs):
+def run(args, gcloud_compute, email='', in_cloud_shell=False, **unused_kwargs):
     """Implementation of the `datalab connect` subcommand.
 
     Args:
       args: The Namespace instance returned by argparse
       gcloud_compute: Function that can be used to invoke `gcloud compute`
       email: The user's email address
+      in_cloud_shell: Whether or not the command is being run in the
+        Google Cloud Shell
     Raises:
       subprocess.CalledProcessError: If a nested `gcloud` calls fails
     """
@@ -344,5 +359,5 @@ def run(args, gcloud_compute, email='', **unused_kwargs):
         return
 
     maybe_start(args, gcloud_compute, instance, status)
-    connect(args, gcloud_compute, email)
+    connect(args, gcloud_compute, email, in_cloud_shell)
     return
