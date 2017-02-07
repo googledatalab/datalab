@@ -240,8 +240,8 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
 
     def on_ready():
         """Callback that handles a successful connection."""
-        print('The connection to Datalab is now open and will '
-              'remain until this command is killed.\n\n')
+        print('\nThe connection to Datalab is now open and will '
+              'remain until this command is killed.')
         if in_cloud_shell:
             print(web_preview_message.format(datalab_port))
         else:
