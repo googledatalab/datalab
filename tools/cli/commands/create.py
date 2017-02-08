@@ -481,7 +481,8 @@ def ensure_repo_exists(args, gcloud_repos, repo_name):
             create_repo(args, gcloud_repos, repo_name)
 
 
-def run(args, gcloud_compute, gcloud_repos, email='', **kwargs):
+def run(args, gcloud_compute, gcloud_repos,
+        email='', in_cloud_shell=False, **kwargs):
     """Implementation of the `datalab create` subcommand.
 
     Args:
@@ -490,6 +491,8 @@ def run(args, gcloud_compute, gcloud_repos, email='', **kwargs):
       gcloud_repos: Function that can be used to invoke
         `gcloud alpha source repos`
       email: The user's email address
+      in_cloud_shell: Whether or not the command is being run in the
+        Google Cloud Shell
     Raises:
       subprocess.CalledProcessError: If a nested `gcloud` calls fails
     """
@@ -563,5 +566,5 @@ def run(args, gcloud_compute, gcloud_repos, email='', **kwargs):
             os.remove(for_user_file.name)
 
     if (not args.no_connect) and (not args.for_user):
-        connect.connect(args, gcloud_compute, email)
+        connect.connect(args, gcloud_compute, email, in_cloud_shell)
     return

@@ -224,7 +224,8 @@ def run():
         _SUBCOMMANDS[args.subcommand]['run'](
             args, gcloud_compute,
             gcloud_repos=gcloud_repos,
-            email=get_email_address())
+            email=get_email_address(),
+            in_cloud_shell=('DEVSHELL_CLIENT_PORT' in os.environ))
     except subprocess.CalledProcessError:
         print('A nested call to gcloud failed.')
 
