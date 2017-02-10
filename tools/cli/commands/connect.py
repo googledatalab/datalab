@@ -229,11 +229,11 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
 
     def maybe_open_browser(address):
         """Try to open a browser if we reasonably can."""
-        browser_context = webbrowser.get()
-        browser_name = type(browser_context).__name__
-        if browser_name in unsupported_browsers:
-            return
         try:
+            browser_context = webbrowser.get()
+            browser_name = type(browser_context).__name__
+            if browser_name in unsupported_browsers:
+                return
             webbrowser.open(datalab_address)
         except webbrowser.Error as e:
             print('Unable to open the webbrowser: ' + str(e))
