@@ -254,6 +254,20 @@ def flags(parser):
         dest='for_user',
         help='create the datalab instance on behalf of the specified user')
 
+    parser.add_argument(
+        '--service-account',
+        dest='service_account',
+        help=('A service account is an identity attached to the instance. '
+              'Its access tokens can be accessed through the instance '
+              'metadata server and are used to authenticate API calls made '
+              'from Datalab. The account can be either an email address or '
+              'an alias corresponding to a service account. You can '
+              'explicitly specify the Compute Engine default service account '
+              'using the \'default\' alias.'
+              '\n\n'
+              'If not provided, the instance will get project\'s default '
+              'service account.'))
+
     connect.connection_flags(parser)
     return
 
@@ -516,6 +530,7 @@ def run(args, gcloud_compute, gcloud_repos,
     enable_backups = "false" if args.no_backups else "true"
     console_log_level = args.log_level or "warn"
     user_email = args.for_user or email
+    service_account = args.service_account or "default"
     # We have to escape the user's email before using it in the YAML template.
     escaped_email = user_email.replace("'", "''")
     with tempfile.NamedTemporaryFile(delete=False) as startup_script_file, \
@@ -556,6 +571,7 @@ def run(args, gcloud_compute, gcloud_repos,
                 '--metadata-from-file', metadata_from_file,
                 '--tags', 'datalab',
                 '--disk', disk_cfg,
+                '--service-account', service_account,
                 '--scopes', 'cloud-platform',
                 instance])
             gcloud_compute(args, cmd)
