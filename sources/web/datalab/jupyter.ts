@@ -69,7 +69,7 @@ function getNextJupyterPort(attempts: number, resolved: (port: number)=>void, fa
    var port = nextJupyterPort;
    nextJupyterPort++;
 
-   tcp.check(port, null).then(
+   tcp.check(port, "localhost").then(
      function(inUse: boolean) {
        if (inUse) {
          getNextJupyterPort(attempts - 1, resolved, failed);
@@ -166,14 +166,14 @@ function createJupyterServerAtPort(port: number, userId: string, userDir: string
 
   // Create the proxy.
   var proxyOptions: httpProxy.ProxyServerOptions = {
-    target: 'http://127.0.0.1:' + port
+    target: 'http://localhost:' + port
   };
 
   server.proxy = httpProxy.createProxyServer(proxyOptions);
   server.proxy.on('proxyRes', responseHandler);
   server.proxy.on('error', errorHandler);
 
-  tcp.waitUntilUsed(server.port, 100, 15000).then(
+  tcp.waitUntilUsedOnHost(server.port, "localhost", 100, 15000).then(
     function() {
       jupyterServers[userId] = server;
       logging.getLogger().info('Jupyter server started for %s.', userId);
