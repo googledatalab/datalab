@@ -73,6 +73,7 @@ mount_disk() {{
   mkdir -p "${{MOUNT_DIR}}"
   ${{MOUNT_CMD}} || format_disk
   chmod a+w "${{MOUNT_DIR}}"
+  mkdir -p ${{MOUNT_DIR}}/datalab
 }}
 
 configure_swap() {{
@@ -98,9 +99,15 @@ configure_swap() {{
   swapon "${{swapfile}}"
 }}
 
-mount_disk
+cleanup_tmp() {{
+  tmpdir="${{MOUNT_DIR}}/tmp"
+  rm -rf "${{tmpdir}}"
+  mkdir -p "${{tmpdir}}"
+}}
 
+mount_disk
 configure_swap
+cleanup_tmp
 
 journalctl -u google-startup-scripts --no-pager > /var/log/startupscript.log
 """
@@ -143,8 +150,10 @@ spec:
         - name: DATALAB_GIT_AUTHOR
           value: '{3}'
       volumeMounts:
-        - name: home
-          mountPath: /content
+        - name: datalab
+          mountPath: /content/datalab
+        - name: tmp
+          mountPath: /tmp
     - name: logger
       image: gcr.io/google_containers/fluentd-gcp:1.18
       env:
@@ -157,9 +166,12 @@ spec:
           mountPath: /var/lib/docker/containers
           readOnly: true
   volumes:
-    - name: home
+    - name: datalab
       hostPath:
-        path: /mnt/disks/datalab-pd
+        path: /mnt/disks/datalab-pd/datalab
+    - name: tmp
+      hostPath:
+        path: /mnt/disks/datalab-pd/tmp
     - name: varlog
       hostPath:
         path: /var/log
