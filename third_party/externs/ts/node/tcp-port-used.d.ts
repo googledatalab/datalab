@@ -25,4 +25,6 @@ declare module 'tcp-port-used' {
   export function check(port: number, host: any): BooleanPromise;
 
   export function waitUntilUsed(port: number, retryMs: number, timeOutMs: number): SimplePromise;
+
+  export function waitUntilUsedOnHost(port: number, host: string, retryTimeMs: number, timeOutMs: number): SimplePromise;
 }

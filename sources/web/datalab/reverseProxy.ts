@@ -74,7 +74,7 @@ export function handleRequest(request: http.ServerRequest,
   }
   else {
     request.url = request.url.replace(regex, '/');
-    proxy.web(request, response, { target: 'http://127.0.0.1:' + port });
+    proxy.web(request, response, { target: 'http://localhost:' + port });
   }
 }
 

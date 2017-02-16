@@ -47,7 +47,7 @@ var sessionCounter = 0;
  * Creates a WebSocket connected to the Jupyter server for the URL in the specified session.
  */
 function createWebSocket(port: number, session: Session): WebSocket {
-  var socketUrl = 'ws://127.0.0.1:' + port + url.parse(session.url).path;
+  var socketUrl = 'ws://localhost:' + port + url.parse(session.url).path;
   logging.getLogger().debug('Creating WebSocket to %s for session %d', socketUrl, session.id);
 
   var ws = new WebSocket(socketUrl);
