@@ -77,6 +77,9 @@ unsupported_browsers = [
 ]
 
 
+max_ssh_attempts = 10
+
+
 def flags(parser):
     """Add command line flags for the `connect` subcommand.
 
@@ -178,9 +181,7 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         """
         print('Ensuring that {0} can be connected to via SSH').format(instance)
 
-        cmd = ['ssh']
-        if args.quiet:
-            cmd.append('--quiet')
+        cmd = ['ssh', '--verbosity=error']
         if args.zone:
             cmd.extend(['--zone', args.zone])
         cmd.extend([
@@ -189,13 +190,12 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
             '--ssh-flag=LogLevel=' + args.ssh_log_level])
         cmd.append('datalab@{0}'.format(instance))
         cmd.extend(['--', 'true'])
-        with open(os.devnull, 'w') as dn:
-            while True:
-                try:
-                    gcloud_compute(args, cmd, stderr=dn)
-                    return
-                except subprocess.CalledProcessError:
-                    pass
+        for attempt in range(max_ssh_attempts):
+            try:
+                gcloud_compute(args, cmd)
+                return
+            except subprocess.CalledProcessError:
+                pass
         return
 
     def create_tunnel():
@@ -208,8 +208,6 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
           subprocess.CalledProcessError: If the connection dies on its own
         """
         cmd = ['ssh']
-        if args.quiet:
-            cmd.append('--quiet')
         if args.zone:
             cmd.extend(['--zone', args.zone])
         port_mapping = 'localhost:' + str(args.port) + ':localhost:8080'

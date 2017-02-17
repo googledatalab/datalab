@@ -15,7 +15,49 @@
 """Utility methods common to multiple commands."""
 
 import json
+import subprocess
 import tempfile
+
+
+def call_gcloud_quietly(args, gcloud_surface, cmd, report_errors=True):
+    """Call `gcloud` and silence any output unless it fails.
+
+    Normally, the `gcloud` command line tool can output a lot of
+    messages that are relevant to users in general, but may not
+    be relevant to the way a Datalab instance is created.
+
+    For example, creating a persistent disk will result in a
+    message that the disk needs to be formatted before it can
+    be used. However, the instance we create formats the disk
+    if necessary, so that message is erroneous in our case.
+
+    These messages are output regardless of the `--quiet` flag.
+
+    This method allows us to avoid any confusion from those
+    messages by redirecting them to a temporary file.
+
+    In the case of an error in the `gcloud` invocation, we
+    still print the messages by reading from the temporary
+    file and printing its contents.
+
+    Args:
+      args: The Namespace returned by argparse
+      gcloud_surface: Function that can be used for invoking `gcloud <surface>`
+      cmd: The subcommand to run
+      report_errors: Whether or not to report errors to the user
+    Raises:
+      subprocess.CalledProcessError: If the `gcloud` command fails
+    """
+    with tempfile.TemporaryFile() as tf:
+        try:
+            cmd = ['--quiet'] + cmd
+            gcloud_surface(args, cmd, stdout=tf, stderr=tf)
+        except subprocess.CalledProcessError:
+            if report_errors:
+                tf.seek(0)
+                print(tf.read())
+            raise
+    return
 
 
 def prompt_for_zone(args, gcloud_compute, instance=None):

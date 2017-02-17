@@ -284,46 +284,6 @@ def flags(parser):
     return
 
 
-def call_gcloud_quietly(args, gcloud_compute, cmd, report_errors=True):
-    """Call `gcloud` and silence any output unless it fails.
-
-    Normally, the `gcloud` command line tool can output a lot of
-    messages that are relevant to users in general, but may not
-    be relevant to the way a Datalab instance is created.
-
-    For example, creating a persistent disk will result in a
-    message that the disk needs to be formatted before it can
-    be used. However, the instance we create formats the disk
-    if necessary, so that message is erroneous in our case.
-
-    These messages are output regardless of the `--quiet` flag.
-
-    This method allows us to avoid any confusion from those
-    messages by redirecting them to a temporary file.
-
-    In the case of an error in the `gcloud` invocation, we
-    still print the messages by reading from the temporary
-    file and printing its contents.
-
-    Args:
-      args: The Namespace returned by argparse
-      gcloud_compute: Function that can be used for invoking `gcloud compute`
-      cmd: The subcommand to run
-      report_errors: Whether or not to report errors to the user
-    Raises:
-      subprocess.CalledProcessError: If the `gcloud` command fails
-    """
-    with tempfile.TemporaryFile() as tf:
-        try:
-            gcloud_compute(args, cmd, stdout=tf, stderr=tf)
-        except subprocess.CalledProcessError:
-            if report_errors:
-                tf.seek(0)
-                print(tf.read())
-            raise
-    return
-
-
 def create_network(args, gcloud_compute):
     """Create the `datalab-network` network.
 
@@ -335,9 +295,9 @@ def create_network(args, gcloud_compute):
     """
     print('Creating the network {0}'.format(_DATALAB_NETWORK))
     create_cmd = [
-        'networks', 'create', '--quiet', _DATALAB_NETWORK,
+        'networks', 'create', _DATALAB_NETWORK,
         '--description', _DATALAB_NETWORK_DESCRIPTION]
-    call_gcloud_quietly(args, gcloud_compute, create_cmd)
+    utils.call_gcloud_quietly(args, gcloud_compute, create_cmd)
     return
 
 
@@ -353,9 +313,8 @@ def ensure_network_exists(args, gcloud_compute):
     get_cmd = ['networks', 'describe', '--format', 'value(name)',
                _DATALAB_NETWORK]
     try:
-        with tempfile.TemporaryFile() as tf:
-            gcloud_compute(args, get_cmd, stdout=tf, stderr=tf)
-            return
+        utils.call_gcloud_quietly(
+            args, gcloud_compute, get_cmd, report_errors=False)
     except subprocess.CalledProcessError:
         create_network(args, gcloud_compute)
     return
@@ -372,11 +331,11 @@ def create_firewall_rule(args, gcloud_compute):
     """
     print('Creating the firewall rule {0}'.format(_DATALAB_FIREWALL_RULE))
     create_cmd = [
-        'firewall-rules', 'create', '--quiet', _DATALAB_FIREWALL_RULE,
+        'firewall-rules', 'create', _DATALAB_FIREWALL_RULE,
         '--allow', 'tcp:22',
         '--network', _DATALAB_NETWORK,
         '--description', _DATALAB_FIREWALL_RULE_DESCRIPTION]
-    call_gcloud_quietly(args, gcloud_compute, create_cmd)
+    utils.call_gcloud_quietly(args, gcloud_compute, create_cmd)
     return
 
 
@@ -393,9 +352,8 @@ def ensure_firewall_rule_exists(args, gcloud_compute):
         'firewall-rules', 'describe', _DATALAB_FIREWALL_RULE,
         '--format', 'value(name)']
     try:
-        with tempfile.TemporaryFile() as tf:
-            gcloud_compute(args, get_cmd, stdout=tf, stderr=tf)
-            return
+        utils.call_gcloud_quietly(
+            args, gcloud_compute, get_cmd, report_errors=False)
     except subprocess.CalledProcessError:
         create_firewall_rule(args, gcloud_compute)
     return
@@ -413,14 +371,14 @@ def create_disk(args, gcloud_compute, disk_name, report_errors):
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
     print('Creating the disk {0}'.format(disk_name))
-    create_cmd = ['disks', 'create', '--quiet']
+    create_cmd = ['disks', 'create']
     if args.zone:
         create_cmd.extend(['--zone', args.zone])
     create_cmd.extend([
         '--size', str(args.disk_size_gb) + 'GB',
         '--description', _DATALAB_DISK_DESCRIPTION,
         disk_name])
-    call_gcloud_quietly(args, gcloud_compute, create_cmd, report_errors)
+    utils.call_gcloud_quietly(args, gcloud_compute, create_cmd, report_errors)
     return
 
 
@@ -435,13 +393,12 @@ def ensure_disk_exists(args, gcloud_compute, disk_name, report_errors=False):
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
     get_cmd = [
-        'disks', 'describe', '--quiet', disk_name, '--format', 'value(name)']
+        'disks', 'describe', disk_name, '--format', 'value(name)']
     if args.zone:
         get_cmd.extend(['--zone', args.zone])
     try:
-        with tempfile.TemporaryFile() as tf:
-            gcloud_compute(args, get_cmd, stdout=tf, stderr=tf)
-            return
+        utils.call_gcloud_quietly(
+            args, gcloud_compute, get_cmd, report_errors=False)
     except subprocess.CalledProcessError:
         try:
             create_disk(args, gcloud_compute, disk_name, report_errors)
@@ -475,14 +432,8 @@ def create_repo(args, gcloud_repos, repo_name):
     Raises:
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
-    create_cmd = ['create', '--quiet', repo_name]
-    with tempfile.TemporaryFile() as tf:
-        try:
-            gcloud_repos(args, create_cmd, stdout=tf, stderr=tf)
-        except subprocess.CalledProcessError:
-            tf.seek(0)
-            print(tf.read())
-            raise
+    create_cmd = ['create', repo_name]
+    utils.call_gcloud_quietly(args, gcloud_repos, create_cmd)
 
 
 def ensure_repo_exists(args, gcloud_repos, repo_name):
