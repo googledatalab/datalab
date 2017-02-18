@@ -38,6 +38,10 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     wget --progress=dot:mega https://mirrors.kernel.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.bz2 && \
     cd / && \
 
+# Force an earlier version of ipykernel until https://github.com/ipython/ipykernel/issues/173
+# is resolved.
+RUN pip install -U ipykernel==4.3.1
+
 # Setup Python packages. Rebuilding numpy/scipy is expensive so we move this early
 # to reduce the chance that prior steps can cause changes requiring a rebuild.
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir numpy==1.11.2 && \
