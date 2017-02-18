@@ -77,9 +77,6 @@ unsupported_browsers = [
 ]
 
 
-max_ssh_attempts = 10
-
-
 def flags(parser):
     """Add command line flags for the `connect` subcommand.
 
@@ -190,12 +187,7 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
             '--ssh-flag=LogLevel=' + args.ssh_log_level])
         cmd.append('datalab@{0}'.format(instance))
         cmd.extend(['--', 'true'])
-        for attempt in range(max_ssh_attempts):
-            try:
-                gcloud_compute(args, cmd)
-                return
-            except subprocess.CalledProcessError:
-                pass
+        gcloud_compute(args, cmd)
         return
 
     def create_tunnel():
