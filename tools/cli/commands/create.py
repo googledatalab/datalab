@@ -181,6 +181,18 @@ spec:
 """
 
 
+class RepositoryException(Exception):
+
+    _MESSAGE = (
+        'Failed to find or create the repository {}.'
+        '\n\n'
+        'Ask a project owner to create it for you.')
+
+    def __init__(self, repo_name):
+        super(RepositoryException, self).__init__(
+            RepositoryException._MESSAGE.format(repo_name))
+
+
 def flags(parser):
     """Add command line flags for the `create` subcommand.
 
@@ -455,7 +467,10 @@ def ensure_repo_exists(args, gcloud_repos, repo_name):
         tf.seek(0)
         matching_repos = tf.read().strip()
         if not matching_repos:
-            create_repo(args, gcloud_repos, repo_name)
+            try:
+                create_repo(args, gcloud_repos, repo_name)
+            except:
+                raise RepositoryException(repo_name)
 
 
 def run(args, gcloud_compute, gcloud_repos,
