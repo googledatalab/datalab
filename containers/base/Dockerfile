@@ -125,9 +125,9 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     cd /
 
 # Install TensorFlow
-RUN wget https://storage.googleapis.com/cloud-datalab/deploy/tf/tensorflow-0.12.0rc1-cp27-none-linux_x86_64.whl && \
-    pip install --upgrade-strategy only-if-needed --no-cache-dir tensorflow-0.12.0rc1-cp27-none-linux_x86_64.whl && \
-    rm tensorflow-0.12.0rc1-cp27-none-linux_x86_64.whl
+# Setting protobuf to 3.1.0 to workaround a tensorflow 1.0 issue in tcmalloc
+RUN pip install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow==1.0 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir protobuf==3.1.0
 
 # Install CloudML SDK
 RUN gsutil cp gs://cloud-ml/sdk/cloudml.latest.tar.gz cloudml.latest.tar.gz && \
