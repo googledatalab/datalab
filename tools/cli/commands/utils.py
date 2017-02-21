@@ -15,7 +15,9 @@
 """Utility methods common to multiple commands."""
 
 import json
+import os
 import subprocess
+import sys
 import tempfile
 
 
@@ -48,14 +50,17 @@ def call_gcloud_quietly(args, gcloud_surface, cmd, report_errors=True):
     Raises:
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
-    with tempfile.TemporaryFile() as tf:
+    with tempfile.TemporaryFile() as stdout, \
+            tempfile.TemporaryFile() as stderr:
         try:
             cmd = ['--quiet'] + cmd
-            gcloud_surface(args, cmd, stdout=tf, stderr=tf)
+            gcloud_surface(args, cmd, stdout=stdout, stderr=stderr)
         except subprocess.CalledProcessError:
             if report_errors:
-                tf.seek(0)
-                print(tf.read())
+                stdout.seek(0)
+                stderr.seek(0)
+                print(stdout.read())
+                sys.stderr.write(stderr.read())
             raise
     return
 
@@ -76,10 +81,12 @@ def prompt_for_zone(args, gcloud_compute, instance=None):
             'name={}'.format(instance), '--format', 'value(zone)']
         matching_zones = []
         try:
-            with tempfile.TemporaryFile() as tf:
-                gcloud_compute(args, filtered_list_cmd, stdout=tf, stderr=tf)
-                tf.seek(0)
-                matching_zones = tf.read().strip().splitlines()
+            with tempfile.TemporaryFile() as stdout, \
+                    open(os.devnull, 'w') as stderr:
+                gcloud_compute(args, filtered_list_cmd,
+                               stdout=stdout, stderr=stderr)
+                stdout.seek(0)
+                matching_zones = stdout.read().strip().splitlines()
         except:
             # Just ignore this error and prompt the user
             pass
@@ -143,23 +150,26 @@ def describe_instance(args, gcloud_compute, instance):
     if args.zone:
         get_cmd.extend(['--zone', args.zone])
     get_cmd.extend(['--format', 'json(status,metadata.items)', instance])
-    try:
-        with tempfile.TemporaryFile() as tf:
-            gcloud_compute(args, get_cmd, stdout=tf, stderr=tf)
-            tf.seek(0)
-            json_result = tf.read().strip()
+    with tempfile.TemporaryFile() as stdout, \
+            tempfile.TemporaryFile() as stderr:
+        try:
+            gcloud_compute(args, get_cmd, stdout=stdout, stderr=stderr)
+            stdout.seek(0)
+            json_result = stdout.read().strip()
             status_and_metadata = json.loads(json_result)
             status = status_and_metadata.get('status', 'UNKNOWN')
             metadata = status_and_metadata.get('metadata', {})
             return (status, flatten_metadata(metadata))
-    except:
-        if args.zone:
-            raise
-        else:
-            args.zone = prompt_for_zone(
-                args, gcloud_compute, instance=instance)
-            return describe_instance(
-                args, gcloud_compute, instance)
+        except:
+            if args.zone:
+                stderr.seek(0)
+                sys.stderr.write(stderr.read())
+                raise
+            else:
+                args.zone = prompt_for_zone(
+                    args, gcloud_compute, instance=instance)
+                return describe_instance(
+                    args, gcloud_compute, instance)
     return ('UNKNOWN', [])
 
 
