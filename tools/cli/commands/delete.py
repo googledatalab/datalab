@@ -17,7 +17,7 @@
 import utils
 
 
-description = ("""{0} {1} deletes the given Datalab instance's
+description = ("""`{0} {1}` deletes the given Datalab instance's
 Google Compute Engine VM.
 
 By default, the persistent disk's auto-delete configuration determines

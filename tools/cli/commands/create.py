@@ -22,7 +22,7 @@ import connect
 import utils
 
 
-description = ("""{0} {1} creates a new Datalab instances running in a Google
+description = ("""`{0} {1}` creates a new Datalab instances running in a Google
 Compute Engine VM.
 
 This command also creates the 'datalab-network' network if necessary.
