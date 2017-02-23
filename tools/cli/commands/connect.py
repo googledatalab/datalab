@@ -24,7 +24,7 @@ import webbrowser
 import utils
 
 
-description = ("""{0} {1} creates a persistent connection to a
+description = ("""`{0} {1}` creates a persistent connection to a
 Datalab instance running in a Google Compute Engine VM.
 
 This is a thin wrapper around the *ssh(1)* command that takes care

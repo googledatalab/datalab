@@ -25,7 +25,7 @@ For more details run `gcloud topic filters`.""")
 _ZONES_HELP = """List of zones to which to limit the resulting list."""
 
 
-description = ("""{0} {1} displays the Datalab instances running in Google
+description = ("""`{0} {1}` displays the Datalab instances running in Google
 Compute Engine VM's in a project.
 
 By default, instances from all zones are listed. The results

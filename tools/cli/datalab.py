@@ -24,7 +24,6 @@ from commands import create, connect, list, stop, delete
 import argparse
 import os
 import subprocess
-import sys
 
 
 _SUBCOMMANDS = {
@@ -168,8 +167,9 @@ def get_email_address():
 
 def run():
     """Run the command line tool."""
+    prog = 'datalab'
     parser = argparse.ArgumentParser(
-        formatter_class=argparse.RawTextHelpFormatter)
+        prog=prog, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument(
         '--project',
         dest='project',
@@ -190,7 +190,6 @@ def run():
     for subcommand in _SUBCOMMANDS:
         command_config = _SUBCOMMANDS[subcommand]
         description_template = command_config.get('description')
-        prog = sys.argv[0]
         command_description = (
             description_template.format(prog, subcommand))
         examples = command_config.get('examples', '').format(prog, subcommand)
