@@ -124,6 +124,7 @@ def gcloud_compute(
         base_cmd.extend(['--project', args.project])
     if args.quiet:
         base_cmd.append('--quiet')
+    base_cmd.append('--verbosity={}'.format(args.verbosity))
     cmd = base_cmd + compute_cmd
     return subprocess.check_call(
         cmd, stdin=stdin, stdout=stdout, stderr=stderr)
@@ -146,6 +147,7 @@ def gcloud_repos(
     base_cmd = [gcloud_cmd, 'alpha', 'source', 'repos']
     if args.project:
         base_cmd.extend(['--project', args.project])
+    base_cmd.append('--verbosity={}'.format(args.verbosity))
     cmd = base_cmd + repos_cmd
     return subprocess.check_call(
         cmd, stdin=stdin, stdout=stdout, stderr=stderr)
@@ -185,6 +187,12 @@ def run():
         dest='quiet',
         action='store_true',
         help='do not issue any interactive prompts')
+    parser.add_argument(
+        '--verbosity',
+        dest='verbosity',
+        choices=['debug', 'info', 'warning', 'error', 'critical', 'none'],
+        default='error',
+        help='Override the default output verbosity for this command.')
 
     subparsers = parser.add_subparsers(dest='subcommand')
     for subcommand in _SUBCOMMANDS:
@@ -211,6 +219,12 @@ def run():
             dest='quiet',
             action='store_true',
             help='do not issue any interactive prompts')
+        subcommand_parser.add_argument(
+            '--verbosity',
+            dest='verbosity',
+            choices=['debug', 'info', 'warning', 'error', 'critical', 'none'],
+            default='error',
+            help='Override the default output verbosity for this command.')
         if command_config['require-zone']:
             subcommand_parser.add_argument(
                 '--zone',

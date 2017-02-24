@@ -305,7 +305,8 @@ def create_network(args, gcloud_compute):
     Raises:
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
-    print('Creating the network {0}'.format(_DATALAB_NETWORK))
+    if utils.print_info_messages(args):
+        print('Creating the network {0}'.format(_DATALAB_NETWORK))
     create_cmd = [
         'networks', 'create', _DATALAB_NETWORK,
         '--description', _DATALAB_NETWORK_DESCRIPTION]
@@ -341,7 +342,8 @@ def create_firewall_rule(args, gcloud_compute):
     Raises:
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
-    print('Creating the firewall rule {0}'.format(_DATALAB_FIREWALL_RULE))
+    if utils.print_info_messages(args):
+        print('Creating the firewall rule {0}'.format(_DATALAB_FIREWALL_RULE))
     create_cmd = [
         'firewall-rules', 'create', _DATALAB_FIREWALL_RULE,
         '--allow', 'tcp:22',
@@ -382,7 +384,8 @@ def create_disk(args, gcloud_compute, disk_name, report_errors):
     Raises:
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
-    print('Creating the disk {0}'.format(disk_name))
+    if utils.print_info_messages(args):
+        print('Creating the disk {0}'.format(disk_name))
     create_cmd = ['disks', 'create']
     if args.zone:
         create_cmd.extend(['--zone', args.zone])
@@ -540,8 +543,8 @@ def run(args, gcloud_compute, gcloud_repos,
                     manifest_file.name,
                     for_user_file.name))
             cmd.extend([
+                '--format=none',
                 '--boot-disk-size=20GB',
-                '--verbosity=error',
                 '--network', _DATALAB_NETWORK,
                 '--image-family', 'gci-stable',
                 '--image-project', 'google-containers',
