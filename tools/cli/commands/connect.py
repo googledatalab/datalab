@@ -14,8 +14,6 @@
 
 """Methods for implementing the `datalab connect` command."""
 
-import os
-import os.path
 import subprocess
 import threading
 import urllib2
