@@ -223,7 +223,7 @@ def run():
             '--verbosity',
             dest='verbosity',
             choices=['debug', 'info', 'warning', 'error', 'critical', 'none'],
-            default='warning',
+            default='error',
             help='Override the default output verbosity for this command.')
         if command_config['require-zone']:
             subcommand_parser.add_argument(

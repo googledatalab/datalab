@@ -160,7 +160,10 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         Google Cloud Shell
     """
     instance = args.instance
-    print('Connecting to {0}'.format(instance))
+    connect_msg = ('Connecting to {0}.\n'
+                   'This will create an SSH tunnel '
+                   'and may prompt you to create an rsa key pair.')
+    print(connect_msg.format(instance))
 
     datalab_port = args.port
     datalab_address = 'http://localhost:{0}/'.format(str(datalab_port))
@@ -180,7 +183,7 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
             print('Ensuring that {0} can be connected to via SSH').format(
                 instance)
 
-        cmd = ['ssh', '--verbosity=error']
+        cmd = ['ssh']
         if args.zone:
             cmd.extend(['--zone', args.zone])
         cmd.extend([
