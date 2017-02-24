@@ -120,16 +120,6 @@ def connection_flags(parser):
             '\n\n'
             'A negative value means no limit.'))
     parser.add_argument(
-        '--ssh-log-file',
-        dest='ssh_log_file',
-        default=os.devnull,
-        help=(
-            'log file to write messages from the SSH command.'
-            '\n\n'
-            'This may be useful for debugging issues with an SSH connection.'
-            '\n\n'
-            'By default, all such messages are discarded.'))
-    parser.add_argument(
         '--ssh-log-level',
         dest='ssh_log_level',
         choices=['quiet', 'fatal', 'error', 'info', 'verbose',
@@ -137,6 +127,8 @@ def connection_flags(parser):
         default='error',
         help=(
             'the log level for the SSH command.'
+            '\n\n'
+            'This may be useful for debugging issues with an SSH connection.'
             '\n\n'
             'The default log level is "error".'))
     parser.add_argument(
@@ -168,33 +160,6 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
     datalab_port = args.port
     datalab_address = 'http://localhost:{0}/'.format(str(datalab_port))
 
-    def ensure_sshable():
-        """Ensure that the instance has been configured for SSH access.
-
-        This method is separate from the `create_tunnel` method, as the
-        first time we SSH in to an instance may involve interactive
-        prompts that the user wants to interact with, even if they
-        otherwise want the output from an SSH command to go to a log file.
-
-        Raises:
-          KeyboardInterrupt: When the end user kills the connection
-        """
-        if utils.print_info_messages(args):
-            print('Ensuring that {0} can be connected to via SSH').format(
-                instance)
-
-        cmd = ['ssh']
-        if args.zone:
-            cmd.extend(['--zone', args.zone])
-        cmd.extend([
-            '--ssh-flag=-4',
-            '--ssh-flag=-o',
-            '--ssh-flag=LogLevel=' + args.ssh_log_level])
-        cmd.append('datalab@{0}'.format(instance))
-        cmd.extend(['--', 'true'])
-        gcloud_compute(args, cmd)
-        return
-
     def create_tunnel():
         """Create an SSH tunnel to the Datalab instance.
 
@@ -204,6 +169,9 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
           KeyboardInterrupt: When the end user kills the connection
           subprocess.CalledProcessError: If the connection dies on its own
         """
+        if utils.print_info_messages(args):
+            print('Connecting to {0} via SSH').format(instance)
+
         cmd = ['ssh']
         if args.zone:
             cmd.extend(['--zone', args.zone])
@@ -216,10 +184,7 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
             '--ssh-flag=-L',
             '--ssh-flag=' + port_mapping])
         cmd.append('datalab@{0}'.format(instance))
-        ssh_log_file = os.path.expandvars(
-            os.path.expanduser(args.ssh_log_file))
-        with open(ssh_log_file, "a") as lf:
-            gcloud_compute(args, cmd, stdout=lf, stderr=lf)
+        gcloud_compute(args, cmd)
         return
 
     def maybe_open_browser(address):
@@ -295,7 +260,6 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
             health_check_thread.join()
         return
 
-    ensure_sshable()
     remaining_reconnects = args.max_reconnects
     while True:
         try:
