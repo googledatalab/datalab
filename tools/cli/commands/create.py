@@ -543,6 +543,7 @@ def run(args, gcloud_compute, gcloud_repos,
                     manifest_file.name,
                     for_user_file.name))
             cmd.extend([
+                '--format=none',
                 '--boot-disk-size=20GB',
                 '--network', _DATALAB_NETWORK,
                 '--image-family', 'gci-stable',
