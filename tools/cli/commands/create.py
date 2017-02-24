@@ -206,7 +206,7 @@ def flags(parser):
     parser.add_argument(
         '--image-name',
         dest='image_name',
-        default='gcr.io/cloud-datalab/datalab:local',
+        default='gcr.io/cloud-datalab/datalab:latest',
         help=(
             'name of the Datalab image to run.'
             '\n\n'

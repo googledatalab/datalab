@@ -62,6 +62,8 @@ gcloud docker -- push gcr.io/${PROJECT_ID}/datalab-gateway:latest
 echo "Releasing the Datalab image: ${DATALAB_IMAGE}"
 docker tag -f ${DATALAB_IMAGE} gcr.io/${PROJECT_ID}/datalab:local
 gcloud docker -- push gcr.io/${PROJECT_ID}/datalab:local
+docker tag -f ${DATALAB_IMAGE} gcr.io/${PROJECT_ID}/datalab:latest
+gcloud docker -- push gcr.io/${PROJECT_ID}/datalab:latest
 
 gsutil cp gs://${PROJECT_ID}/deploy/config_local.js ./config_local.js
 OLD_VERSION=`cat ./config_local.js | grep previous | cut -d ':' -f 2`
