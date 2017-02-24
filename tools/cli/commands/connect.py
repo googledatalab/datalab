@@ -259,8 +259,7 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         """
         health_url = '{0}_info/'.format(datalab_address)
         healthy = False
-        if utils.print_info_messages(args):
-            print('Waiting for Datalab to be reachable at ' + datalab_address)
+        print('Waiting for Datalab to be reachable at ' + datalab_address)
         while not cancelled_event.is_set():
             try:
                 health_resp = urllib2.urlopen(health_url)
