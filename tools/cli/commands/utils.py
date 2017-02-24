@@ -187,3 +187,16 @@ def maybe_prompt_for_zone(args, gcloud_compute, instance):
     """
     if not args.quiet:
         describe_instance(args, gcloud_compute, instance)
+    return
+
+
+def print_info_messages(args):
+    """Return whether or not info messages should be printed.
+
+    Args:
+      args: The Namespace instance returned by argparse
+    Returns:
+      True iff the verbosity has been set to a level that includes
+          info messages.
+    """
+    return args.verbosity in ['debug', 'info']

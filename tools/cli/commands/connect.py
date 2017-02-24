@@ -176,7 +176,9 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         Raises:
           KeyboardInterrupt: When the end user kills the connection
         """
-        print('Ensuring that {0} can be connected to via SSH').format(instance)
+        if utils.print_info_messages(args):
+            print('Ensuring that {0} can be connected to via SSH').format(
+                instance)
 
         cmd = ['ssh', '--verbosity=error']
         if args.zone:
@@ -254,7 +256,8 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         """
         health_url = '{0}_info/'.format(datalab_address)
         healthy = False
-        print('Waiting for Datalab to be reachable at ' + datalab_address)
+        if utils.print_info_messages(args):
+            print('Waiting for Datalab to be reachable at ' + datalab_address)
         while not cancelled_event.is_set():
             try:
                 health_resp = urllib2.urlopen(health_url)
@@ -318,8 +321,9 @@ def maybe_start(args, gcloud_compute, instance, status):
       subprocess.CalledProcessError: If one of the `gcloud` calls fail
     """
     if status != 'RUNNING':
-        print('Restarting the instance {0} with status {1}'.format(
-            instance, status))
+        if utils.print_info_messages(args):
+            print('Restarting the instance {0} with status {1}'.format(
+                instance, status))
         start_cmd = ['instances', 'start']
         if args.zone:
             start_cmd.extend(['--zone', args.zone])
