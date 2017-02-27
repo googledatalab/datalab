@@ -410,6 +410,9 @@ div.output_area {
   margin-top: 4px;
   margin-left: 38px;
 }
+div.output_area div.prompt {
+  display: none;
+}
 div.output_scroll {
   border-radius: 0;
   -webkit-box-shadow: none;
