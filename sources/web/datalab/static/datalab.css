@@ -215,14 +215,14 @@ div.btn-group a {
 div.btn-toolbar {
   margin: 0px;
 }
-div.btn-toolbar .toolbar-btn {
+div.btn-toolbar .toolbar-btn, #help_menu_container .dropdown-toggle {
   background-color: transparent;
   border: none;
   font-family: 'Open Sans', Helvetica, sans-serif;
   font-weight: normal;
   font-size: 14px;
   outline: solid 1px transparent !important;
-  height: 46px;
+  /* height: 46px; */
   margin-left: 0px;
   padding: 0px 8px;
   cursor: pointer;
@@ -252,6 +252,12 @@ div.btn-toolbar .toolbar-btn.active {
 }
 #toggleSidebarButton {
   margin-bottom: 8px;
+}
+#help_menu_container li.dropdown {
+  list-style: none;
+}
+#help_menu_container li.dropdown a {
+  text-decoration: none;
 }
 
 #logo {

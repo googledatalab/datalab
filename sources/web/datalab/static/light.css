@@ -32,6 +32,12 @@ div.btn-toolbar .toolbar-btn {
   color: #666;
   background-color: transparent;
 }
+#help_menu_container li.dropdown a {
+  color: #666;
+}
+#help_menu_container li.dropdown a:hover {
+  color: #000;
+}
 div.btn-toolbar .toolbar-btn:hover, div.btn-toolbar .btn:focus {
   color: #000;
 }

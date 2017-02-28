@@ -34,6 +34,12 @@ button:hover {
   background-color: #333;
   color: #ddd;
 }
+#help_menu_container li.dropdown a {
+  color: #ddd;
+}
+#help_menu_container li.dropdown a:hover {
+  color: #fff;
+}
 .btn-default:hover, .btn-default:focus {
   background-color: #222;
   color: #ddd;
