@@ -211,15 +211,15 @@ if [ -d /content/datalab/docs ]; then
   pushd ./
   cd /content/datalab/docs
   if [ -d /content/datalab/docs/.git ]; then
-    git fetch origin master; git reset --hard origin/master
+    git config remote.origin.fetch "+refs/heads/ga:refs/remotes/origin/ga"; git fetch origin ga; git reset --hard origin/ga;
   else
-    git init; git remote add origin https://github.com/googledatalab/notebooks.git; git fetch origin; 
+    git init; git remote add origin https://github.com/googledatalab/notebooks.git; git fetch origin; git checkout ga; 
   fi
   popd
 else
-  (cd /content/datalab; git clone -n --single-branch https://github.com/googledatalab/notebooks.git docs)
+  (cd /content/datalab; git clone -n --branch ga --single-branch https://github.com/googledatalab/notebooks.git docs)
 fi
-(cd /content/datalab/docs; git config core.sparsecheckout true; echo $'intro/\nsamples/\ntutorials/\n*.ipynb\n' > .git/info/sparse-checkout; git checkout master)
+(cd /content/datalab/docs; git config core.sparsecheckout true; echo $'intro/\nsamples/\ntutorials/\n*.ipynb\n' > .git/info/sparse-checkout; git checkout ga)
 } || echo "Fetching tutorials and samples failed."
 
 # Run the user's custom extension script if it exists. To avoid platform issues with 
