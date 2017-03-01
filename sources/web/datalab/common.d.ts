@@ -103,7 +103,7 @@ declare module common {
      * If true, allow HTTP requests via websockets.
      */
     allowHttpOverWebsocket: boolean;
-    
+
     /**
      * Whether to automatically back up user's contents dir to GCS
      */
@@ -123,6 +123,12 @@ declare module common {
      * Number of weekly GCS backups of the user's content dir to keep
      */
     numWeeklyBackups: number;
+
+    /**
+     * False if the EULA checks can be skipped because they have been enforced
+     * at a higher level.
+     */
+    eulaAccepted: boolean;
   }
 
   interface Map<T> {
