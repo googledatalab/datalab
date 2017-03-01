@@ -161,6 +161,8 @@ RUN ipython profile create default && \
     tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts && \
     /tools/node/bin/npm uninstall -g typescript && \
     pip install --upgrade-strategy only-if-needed --no-cache-dir . && \
+    pip install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/inception/. && \
+    pip install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/structured_data/. && \
     jupyter nbextension install --py datalab.notebook && \
     jupyter nbextension enable --py widgetsnbextension && \
     rm datalab/notebook/static/*.js && \
