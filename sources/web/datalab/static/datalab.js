@@ -293,8 +293,8 @@ function initializePage(dialog, saveFn) {
     });
     $('#ungitButton').click(function() {
       // Always open at the root of the notebooks repository
-      path = '/content/datalab/notebooks';
-      prefix = window.location.protocol + '//' + window.location.host;
+      const path = '/content/datalab/notebooks';
+      const prefix = window.location.protocol + '//' + window.location.host;
 
       window.open(prefix + '/_proxy/8083/#/repository?path=' + path);
     });
