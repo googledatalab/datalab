@@ -24,9 +24,6 @@ if [ "$1" != "" ]; then
   fi
 fi
 
-# disable EULA for the sake of tests
-mkdir -p $CONTENT/datalab/.config/eula
-
 # Use this flag to map in web server content during development
 #  -v $REPO_DIR/sources/web:/sources \
 docker run -it --entrypoint=$ENTRYPOINT \

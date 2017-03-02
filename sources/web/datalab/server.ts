@@ -43,11 +43,6 @@ var infoHandler: http.RequestHandler;
 var settingHandler: http.RequestHandler;
 var staticHandler: http.RequestHandler;
 
-// Datalab eula directory; if this doesn't exist the EULA hasn't been accepted.
-function eulaDir(): string {
-  return path.join(appSettings.datalabRoot, '/content/datalab/.config/eula');
-}
-
 /**
  * The application settings instance.
  */
@@ -215,39 +210,13 @@ function handleRequest(request: http.ServerRequest,
 function uncheckedRequestHandler(request: http.ServerRequest, response: http.ServerResponse) {
   var parsed_url = url.parse(request.url, true);
   var urlpath = parsed_url.pathname;
-
-  // Check if EULA has been accepted; if not go to EULA page.
-  if (urlpath.indexOf('/accepted_eula') == 0) {
-    if (!fs.existsSync(eulaDir())) {
-      fs.mkdirSync(eulaDir());
-    }
-    var i = parsed_url.search.indexOf('referer=');
-    if (i < 0) {
-      logging.getLogger().info('Accepting EULA, but no referer; returning 500');
-      response.writeHead(500);
-    } else {
-      i += 8;
-      var referer = decodeURI(parsed_url.search.substring(i));
-      logging.getLogger().info('Accepting EULA; return to ' + referer);
-      response.writeHead (302, {'Location': referer})
-    }
-    response.end();
-  } else if (urlpath.indexOf('/signin') == 0 || urlpath.indexOf('/signout') == 0 ||
+  if (urlpath.indexOf('/signin') == 0 || urlpath.indexOf('/signout') == 0 ||
       urlpath.indexOf('/oauthcallback') == 0) {
     // Start or return from auth flow.
     auth.handleAuthFlow(request, response, parsed_url, appSettings);
   } else if ((urlpath.indexOf('/static') == 0) || (urlpath.indexOf('/custom') == 0)) {
     // /static and /custom paths for returning static content
-    // We serve these even if the EULA has not been accepted, so that the
-    // EULA page can include static resources.
     staticHandler(request, response);
-  } else if (!fs.existsSync(eulaDir())) {
-    logging.getLogger().info('No Datalab config; redirect to EULA page');
-    var eula = path.join(appSettings.datalabRoot, '/datalab/web/static/eula.html');
-    fs.readFile(eula, function(error, content) {
-      response.writeHead(200);
-      response.end(content);
-    });
   } else {
     handleRequest(request, response, urlpath);
   }
