@@ -16,12 +16,12 @@
 
 # Please note: GCSbackup should only run inside an instance of Google Cloud Datalab
 #
-# GCSbackup is a tool to create and maintain a tagged .tar backup archive
+# GCSbackup is a tool to create and maintain a tagged .zip backup archive
 # for a given local path and copy it to a GCS bucket. It can be configured to
 # maintain a maximum of n backups for specified tag. It automatically
 # deletes older backups with the same tag.
 #
-# On GCS, the .tar is copied to a qualified path that is unique to the VM
+# On GCS, the .zip is copied to a qualified path that is unique to the VM
 # where this script is running, path, tag, and timestamp.
 
 USAGE='USAGE:
@@ -99,6 +99,11 @@ machine_name=${machine_name:-$VM_NAME}
 tag="${tag:-backup}"
 num_backups=${num_backups:-10}
 
+if [[ -z $machine_name || -z $project_id || -z $zone ]]; then
+  echo "GCSbackup should only run inside an instance of Datalab" | tee -a ${log_file}
+  exit 1
+fi
+
 # If no bucket is provided, try $project_id.appspot.com, then try $project_id
 if [ -z "${gcs_bucket}" ]; then
   default_bucket="${project_id}.appspot.com"
@@ -133,15 +138,10 @@ echo
 
 echo "${timestamp}: Running GCS backup tool.." | tee -a ${log_file}
 
-if [[ -z $machine_name || -z $project_id || -z $zone ]]; then
-  echo "GCSbackup should only run inside an instance of Datalab" | tee -a ${log_file}
-  exit 1
-fi
-
 # create an archive of the backup path
-archive_name=$(mktemp -d)"/archive.tar"
+archive_name=$(mktemp -d)"/archive.zip"
 echo "Creating archive: $archive_name"
-tar -cf ${archive_name} "${backup_path}" || {
+zip -rq ${archive_name} "${backup_path}" || {
   echo "Failed creating the backup archive" | tee -a ${log_file}
   exit 1
 }
