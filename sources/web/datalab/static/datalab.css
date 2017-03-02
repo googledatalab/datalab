@@ -253,6 +253,10 @@ div.btn-toolbar .toolbar-btn.active {
 #toggleSidebarButton {
   margin-bottom: 8px;
 }
+/* Suppress the ipywidget Widgets menu until we figure out how to handle it. */
+#help_menu_container {
+  display: none;
+}
 
 #logo {
   margin-left: 12px;
