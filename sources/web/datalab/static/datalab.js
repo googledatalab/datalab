@@ -292,17 +292,9 @@ function initializePage(dialog, saveFn) {
       window.location = '/signout?referer=' + encodeURIComponent(window.location);
     });
     $('#ungitButton').click(function() {
-      var path = location.pathname;
-
-      // Extract the current directory name
-      if (path.indexOf('/tree') == 0) {
-        path = path.substr('/tree'.length);
-      } else if (path.indexOf('/notebooks') == 0) {
-        path = path.substr('/notebooks'.length);
-        path = path.substr(0, path.lastIndexOf('/'));
-      }
-      path = '/content' + path;
-      prefix = window.location.protocol + '//' + window.location.host;
+      // Always open at the root of the notebooks repository
+      const path = '/content/datalab/notebooks';
+      const prefix = window.location.protocol + '//' + window.location.host;
 
       window.open(prefix + '/_proxy/8083/#/repository?path=' + path);
     });
