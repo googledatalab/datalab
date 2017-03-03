@@ -68,7 +68,7 @@ div.code_cell.session.completed div.input {
 div.code_cell div.input {
   background-color: #f7f7f7;
 }
-.codemirror-selected {
+.CodeMirror-selected {
   background-color: #addfff !important;
 }
 code {

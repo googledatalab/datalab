@@ -327,11 +327,25 @@ svg text {
 }
 
 /* ANSI colors */
-span.ansiblack {color: #323537;}
-span.ansiblue {color: #6aa7ea;}
-span.ansigray {color: #838184;}
-span.ansigreen {color: #98ef8a;}
-span.ansipurple {color: #9b859d;}
-span.ansired {color: #ff1d1d;}
-span.ansiyellow {color: #f9ee98;}
+span.ansiblack {
+  color: #323537;
+}
+span.ansiblue {
+  color: #6aa7ea;
+}
+span.ansigray {
+  color: #838184;
+}
+span.ansigreen {
+  color: #98ef8a;
+}
+span.ansipurple {
+  color: #9b859d;
+}
+span.ansired {
+  color: #ff1d1d;
+}
+span.ansiyellow {
+  color: #f9ee98;
+}
 
