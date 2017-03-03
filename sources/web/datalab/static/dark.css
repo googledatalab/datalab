@@ -277,7 +277,6 @@ table.bqsv th, table.bqsv td {
 }
 
 .cm-s-ipython .CodeMirror-matchingbracket {
-  text-decoration: underline;
   color: white !important;
 }
 
