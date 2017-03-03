@@ -13,7 +13,7 @@
  */
 
 /* Font Imports */
-@import url(https://fonts.googleapis.com/css?family=Source+Code+Pro:400,700|Open+Sans:400,700|Lato:400,700&subset=latin,latin-ext);
+@import url(https://fonts.googleapis.com/css?family=Source+Code+Pro:400,700|Open+Sans:400,700);
 
 * {
   padding: 0px;
@@ -106,7 +106,6 @@ body {
   align-items: stretch;
   -webkit-align-content: space-between;
   align-content: space-between;
-  border-bottom: solid 1px #000;
 }
 #toolbarArea {
   -webkit-order: 1;
@@ -152,9 +151,6 @@ body {
   flex: 50%;
 }
 #mainToolbar, #sidebarToolbar {
-  line-height: 48px;
-  vertical-align: middle;
-  padding-top: 2px;
   z-index: 8;
 }
 #updateMessageArea {
@@ -252,6 +248,8 @@ div.btn-toolbar .toolbar-btn.active {
 }
 #toggleSidebarButton {
   margin-bottom: 8px;
+  background: none;
+  border: none;
 }
 /* Suppress the ipywidget Widgets menu until we figure out how to handle it. */
 #help_menu_container {
@@ -288,8 +286,8 @@ div.btn-toolbar .toolbar-btn.active {
 }
 /* Notebook page */
 #notebook {
-  font-family: Lato, 'Open Sans', Helvetica, sans-serif;
-  font-size: 16px;
+  font-family: 'Open Sans';
+  font-size: 16px !important;
   padding: 0px;
 }
 #ipython-main-app {
@@ -341,14 +339,10 @@ div.cell {
 }
 div.cell.selected, div.cell.text_cell.selected, div.cell.code_cell.selected {
   background: none;
-  border: solid 1px #ddd;
   padding-left: 0px;
-  box-shadow: 0px 0px 6px 0px rgba(0, 0, 0, 0.2);
 }
 .edit_mode div.cell.text_cell.selected, .edit_mode div.code_cell.selected {
-  border: solid 1px #ddd;
   padding-left: 0px;
-  box-shadow: 0px 0px 6px 0px rgba(0, 0, 0, 0.2);
 }
 div.code_cell div.input {
   border-left: solid 4px #ddd;
@@ -459,6 +453,7 @@ div.cellPlaceholder {
 
 /* CodeMirror Customization */
 pre, code, .CodeMirror, .CodeMirror pre, .CodeMirror-linenumber {
+  font-family: 'Source Code Pro';
   font-size: 15px !important;
 }
 .CodeMirror pre, .CodeMirror-linenumber {
