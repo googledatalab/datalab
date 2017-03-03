@@ -130,19 +130,26 @@
           <div class="btn-toolbar pull-left">
             <div class="btn-group">
               <button id="addCodeCellButton" type="button" class="toolbar-btn" title="Append a new code cell">
-                <span class="fa fa-plus-square"></span> Add Code
+                <span class="fa fa-plus-square">
+                  <span class="fa fa-code"></span>
+                </span>
+                <span class="toolbar-text">Add Code</span>
               </button>
               <button id="addMarkdownCellButton" type="button" class="toolbar-btn" title="Append a new markdown cell">
-                <span class="fa fa-plus-square"></span> Add Markdown
+                <span class="fa fa-plus-square"> T</span>
+                <span class="toolbar-text">Add Markdown</span>
               </button>
               <button id="deleteCellButton" type="button" class="toolbar-btn" title="Delete the selected cell">
-                <span class="fa fa-minus-square"></span> Delete
+                <span class="fa fa-times"></span>
+                <span class="toolbar-text">Delete</span>
               </button>
               <button id="moveCellUpButton" type="button" class="toolbar-btn" title="Move the selected cell up">
-                <span class="fa fa-chevron-up"></span> Move Up
+                <span class="fa fa-chevron-up"></span>
+                <span class="toolbar-text">Move Up</span>
               </button>
               <button id="moveCellDownButton" type="button" class="toolbar-btn" title="Move the selected cell down">
-                <span class="fa fa-chevron-down"></span> Move Down
+                <span class="fa fa-chevron-down"></span>
+                <span class="toolbar-text">Move Down</span>
               </button>
             </div>
             <div class="btn-group">
@@ -171,7 +178,8 @@
             </div>
             <div class="btn-group">
               <button id="resetSessionButton" type="button" class="toolbar-btn" title="Restart the current notebook session">
-                <i id="kernel_indicator_icon"></i> Reset Session
+                <i id="kernel_indicator_icon"></i> Reset
+                <span class="toolbar-text">Session</span>
               </button>
             </div>
             <!-- The next div and its contents are for ipywidgets. They insert their own menu before #help_menu -->
@@ -186,8 +194,14 @@
         <div id="sidebarToolbar">
           <div class="btn-toolbar pull-right">
             <div class="btn-group">
-              <button id="navigationButton" type="button" class="toolbar-btn">Navigation</button>
-              <button id="helpButton" type="button" class="toolbar-btn active">Help</button>
+              <button id="navigationButton" type="button" class="toolbar-btn" title="Notebook Navigation">
+                <span class="fa fa-bookmark-o"></span>
+                <span class="toolbar-text">Navigation</span>
+              </button>
+              <button id="helpButton" type="button" class="toolbar-btn active" title="Help">
+                <span class="fa fa-question"></span>
+                <span class="toolbar-text">Help</span>
+              </button>
             </div>
             <div class="btn-group">
               <button id="hideSidebarButton" type="button" class="toolbar-btn" title="Toggle sidebar on/off">
