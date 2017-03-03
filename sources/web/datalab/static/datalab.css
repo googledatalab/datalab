@@ -24,7 +24,7 @@
 body {
   font-family: 'Open Sans', Helvetica, sans-serif;
   font-size: 14px;
-  min-width: 1250px;
+  min-width: 700px;
 }
 
 /* Layout */
@@ -141,6 +141,7 @@ body {
   position: relative;
   padding-top: 10px;
   min-width: 100px;
+  overflow: auto;
 }
 #sidebarToolbar.larger {
   -webkit-flex-grow: 3;
@@ -163,7 +164,6 @@ body {
   left: 0px;
   right: 0px;
   bottom: 0px;
-  overflow: auto;
 }
 .fileMainContent {
   overflow: auto;
@@ -508,5 +508,12 @@ div.modal-dialog pre, div.modal-dialog code, #help code, #help pre {
   div.cell.selected {
     border: none !important;
     box-shadow: none !important;
+  }
+}
+
+/* Responsive Design */
+@media screen and (max-width: 1150px) {
+  span.toolbar-text {
+    display: none;
   }
 }
