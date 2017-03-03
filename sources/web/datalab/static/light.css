@@ -20,6 +20,11 @@ body {
 #toolbarArea {
   background-color: #eee;
   color: #444;
+  border-bottom: solid 1px #ccc;
+}
+#sidebarArea {
+  background-color: #ddd;
+  border-left: solid 1px #ccc
 }
 #appBar .toolbar-btn {
   color: #ccc;
@@ -52,13 +57,18 @@ div.btn-toolbar .btn.active {
 span.autosave_status {
   color: #ddd;
 }
+div.cell.selected {
+  background: linear-gradient(to right, #42A5F5 -40px, #42A5F5 5px, transparent 5px, transparent 100%);
+  border: solid 1px #ccc !important;
+  box-shadow: 0px 0px 6px 0px rgba(0, 0, 0, 0.3);
+}
 div.code_cell.session.completed div.input {
   border-left: solid 4px #337ab7;
 }
 div.code_cell div.input {
   background-color: #f7f7f7;
 }
-.CodeMirror-selected {
+.codemirror-selected {
   background-color: #addfff !important;
 }
 code {
