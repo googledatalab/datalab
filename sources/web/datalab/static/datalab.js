@@ -131,7 +131,8 @@ function reportEvent(event) {
 function toggleSidebar() {
   var d = document.getElementById('sidebarArea');
   d.style.display = (d.style.display == 'none') ? 'block' : 'none';
-  document.getElementById('hideSidebarButton').classList.toggle('fa-flip-vertical');
+  rotated = $('#hideSidebarButton>.material-icons').css('transform').indexOf('matrix') > -1;
+  $('#hideSidebarButton>.material-icons').css('transform', rotated ? '' : 'rotate(180deg)')
   this.blur();
   // Chrome at least seems to render the notebook poorly after this for a little
   // while. If you scroll new content into view it is messed up until you click
@@ -236,12 +237,12 @@ function initializePage(dialog, saveFn) {
       '<p>Explore, transform, visualize and process data using BigQuery and Google Cloud Storage.</p><br />' +
       '<pre>Version: ' + version  + '\nBased on Jupyter (formerly IPython) 4</pre>' +
       '<h5><b>More Information</b></h5>' +
-      '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://cloud.google.com" target="_blank">Product information</a><br />' +
-      '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://github.com/googledatalab/datalab" target="_blank">Project on GitHub</a><br />' +
-      '<span class="fa fa-external-link-square">&nbsp;</span><a href="/static/about.txt" target="_blank">License and software information</a><br />' +
-      '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://cloud.google.com/terms/" target="_blank">Terms of Service</a><br />' +
-      '<span class="fa fa-external-link-square">&nbsp;</span><a href="http://www.google.com/intl/en/policies/" target="_blank">Privacy Policy</a><br />' +
-      '<span class="fa fa-recycle">&nbsp;</span><a href="javascript:restartDatalab()">Restart Server</a><br />';
+      '<i class="material-icons">open_in_new</i><a href="https://cloud.google.com" target="_blank">Product information</a><br />' +
+      '<i class="material-icons">open_in_new</i><a href="https://github.com/googledatalab/datalab" target="_blank">Project on GitHub</a><br />' +
+      '<i class="material-icons">open_in_new</i><a href="/static/about.txt" target="_blank">License and software information</a><br />' +
+      '<i class="material-icons">open_in_new</i><a href="https://cloud.google.com/terms/" target="_blank">Terms of Service</a><br />' +
+      '<i class="material-icons">open_in_new</i><a href="http://www.google.com/intl/en/policies/" target="_blank">Privacy Policy</a><br />' +
+      '<i class="material-icons">open_in_new</i><a href="javascript:restartDatalab()">Restart Server</a><br />';
 
     var dialogOptions = {
       title: 'About Google Cloud Datalab',
@@ -360,13 +361,12 @@ function initializePage(dialog, saveFn) {
 
 // constants for minitoolbar operations
 const CELL_METADATA_COLLAPSED = 'hiddenCell';
-const COLLAPSE_BUTTON_CLASS = 'fa-compress';
-const UNCOLLAPSE_BUTTON_CLASS = 'fa-expand';
+const COLLAPSE_BUTTON_CLASS = 'vertical_align_top';
+const UNCOLLAPSE_BUTTON_CLASS = 'vertical_align_bottom';
 const CELL_METADATA_CODE_COLLAPSED = 'codeCollapsed';
-const COLLAPSE_CODE_BUTTON_CLASS = 'fa-code';
-const UNCOLLAPSE_CODE_BUTTON_CLASS = 'fa-code';
-const RUN_CELL_BUTTON_CLASS = 'fa-play';
-const CLEAR_CELL_BUTTON_CLASS = 'fa-minus-square-o';
+const COLLAPSE_CODE_BUTTON_CLASS = 'code';
+const RUN_CELL_BUTTON_CLASS = 'play_arrow';
+const CLEAR_CELL_BUTTON_CLASS = 'check_box_outline_blank';
 
 function toggleCollapseCell(cell) {
   isCollapsed = cell.metadata[CELL_METADATA_COLLAPSED] || false;
@@ -398,9 +398,8 @@ function collapseCell(cell) {
 
   cell.element.find('div.widget-area').hide();
   cell.element.find('div.cellPlaceholder')[0].innerHTML = getCollapsedCellHeader(cell);
-  collapseSpan = cell.element.find('span.glyph-collapse-cell').removeClass(COLLAPSE_BUTTON_CLASS);
-  collapseSpan = cell.element.find('span.glyph-collapse-cell').addClass(UNCOLLAPSE_BUTTON_CLASS);
-  collapseSpan = cell.element.find('span.title-collapse-cell')[0].innerText = 'Expand';
+  collapseSpan = cell.element.find('.glyph-collapse-cell')[0].innerText = UNCOLLAPSE_BUTTON_CLASS;
+  collapseSpan = cell.element.find('.title-collapse-cell')[0].innerText = 'Expand';
 
   cell.metadata[CELL_METADATA_COLLAPSED] = true;
 }
@@ -416,9 +415,8 @@ function uncollapseCell(cell) {
   if (widgetSubarea.children.length > 0)
     cell.element.find('div.widget-area').show();
   cell.element.find('div.cellPlaceholder')[0].innerHTML = '';
-  collapseSpan = cell.element.find('span.glyph-collapse-cell').removeClass(UNCOLLAPSE_BUTTON_CLASS);
-  collapseSpan = cell.element.find('span.glyph-collapse-cell').addClass(COLLAPSE_BUTTON_CLASS);
-  collapseSpan = cell.element.find('span.title-collapse-cell')[0].innerText = 'Collapse';
+  collapseSpan = cell.element.find('.glyph-collapse-cell')[0].innerText = COLLAPSE_BUTTON_CLASS;
+  collapseSpan = cell.element.find('.title-collapse-cell')[0].innerText = 'Collapse';
 
   cell.metadata[CELL_METADATA_COLLAPSED] = false;
 
@@ -471,10 +469,11 @@ function createCellMiniToolbarButton(description) {
   anchor.href = "#";
 
   // span for button icon
-  let glyphSpan = document.createElement('span');
-  glyphSpan.className = description.className + ' glyph-' + description.id;
-  glyphSpan.style.width = '20px';
-  anchor.appendChild(glyphSpan);
+  let glyphElement = document.createElement('i');
+  glyphElement.className = 'material-icons' + ' glyph-' + description.id;
+  glyphElement.innerText = description.className;
+  glyphElement.style.paddingRight = '10px';
+  anchor.appendChild(glyphElement);
 
   // span for button title
   let titleSpan = document.createElement('span');
@@ -498,7 +497,7 @@ function addCellMiniToolbar(cell) {
   let toolbarToggle = document.createElement('button');
   toolbarToggle.className = 'btn btn-default dropdown-toggle minitoolbar-toggle';
   toolbarToggle.setAttribute('data-toggle', 'dropdown');
-  toolbarToggle.innerHTML = '<span class="fa fa-bars"></span>';
+  toolbarToggle.innerHTML = '<i class="material-icons">menu</i>';
   toolbarDiv.appendChild(toolbarToggle);
 
   let toolbarButtonList = document.createElement('ul');
@@ -535,7 +534,7 @@ function addCellMiniToolbar(cell) {
     {
       id: 'run-cell',
       title: 'Run',
-      className: 'fa ' + RUN_CELL_BUTTON_CLASS,
+      className: RUN_CELL_BUTTON_CLASS,
       clickHandler: function() {
         cell.execute();
       }
@@ -544,7 +543,7 @@ function addCellMiniToolbar(cell) {
     {
       id: 'clear-cell',
       title: 'Clear',
-      className: 'fa ' + CLEAR_CELL_BUTTON_CLASS,
+      className: CLEAR_CELL_BUTTON_CLASS,
       clickHandler: function() {
         cell.clear_output();
       }
@@ -553,7 +552,7 @@ function addCellMiniToolbar(cell) {
     {
       id: 'collapse-cell',
       title: 'Collapse',
-      className: 'fa ' + COLLAPSE_BUTTON_CLASS,
+      className: COLLAPSE_BUTTON_CLASS,
       clickHandler: function() {
         toggleCollapseCell(cell);
       }
@@ -562,7 +561,7 @@ function addCellMiniToolbar(cell) {
     {
       id: 'collapse-code',
       title: 'Hide Code',
-      className: 'fa ' + COLLAPSE_CODE_BUTTON_CLASS,
+      className: COLLAPSE_CODE_BUTTON_CLASS,
       clickHandler: function() {
         toggleCollapseCode(cell);
       }
@@ -1117,7 +1116,8 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 
   $('#toggleSidebarButton').click(function() {
     document.getElementById('sidebarArea').classList.toggle('larger');
-    document.getElementById('toggleSidebarButton').classList.toggle('fa-flip-horizontal');
+    rotated = $('#toggleSidebarButton').css('transform').indexOf('matrix') > -1;
+    $('#toggleSidebarButton').css('transform', rotated ? '' : 'rotate(180deg)');
     this.blur();
   });
 
@@ -1361,7 +1361,7 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
 
     var html = [];
     html.push('<ul class="breadcrumb">');
-    html.push('<li><a href="/tree"><i class="fa fa-home"></i></a></li>');
+    html.push('<li><a href="/tree"><i class="material-icons">home</i></a></li>');
 
     var segments = [];
 

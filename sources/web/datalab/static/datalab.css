@@ -13,7 +13,7 @@
  */
 
 /* Font Imports */
-@import url(https://fonts.googleapis.com/css?family=Source+Code+Pro:400,700|Open+Sans:400,700);
+@import url(https://fonts.googleapis.com/css?family=Source+Code+Pro:400,700|Open+Sans:400,700|Material+Icons);
 
 * {
   padding: 0px;
@@ -24,7 +24,7 @@
 body {
   font-family: 'Open Sans', Helvetica, sans-serif;
   font-size: 14px;
-  min-width: 650px;
+  min-width: 710px;
 }
 
 /* Layout */
@@ -247,6 +247,10 @@ div.btn-toolbar .toolbar-btn.active {
   font-weight: bold;
   border: none;
   box-shadow: none;
+}
+i.material-icons {
+  font-size: 18px !important;
+  vertical-align: sub !important;
 }
 #toggleSidebarButton {
   margin-bottom: 8px;
@@ -523,7 +527,7 @@ div.modal-dialog pre, div.modal-dialog code, #help code, #help pre {
 }
 
 /* Responsive Design */
-@media screen and (max-width: 1170px) {
+@media screen and (max-width: 1230px) {
   span.toolbar-text {
     display: none;
   }
