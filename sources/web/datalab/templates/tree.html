@@ -72,27 +72,27 @@
                       <div class="btn-toolbar pull-left">
                         <div class="btn-group">
                           <button id="addNotebookButton" type="button" class="toolbar-btn" title="Add a new notebook">
-                            <span class="fa fa-plus-square"></span> Notebook
+                            <i class="material-icons">add_box</i> Notebook
                           </button>
                           <button id="addFolderButton" type="button" class="toolbar-btn" title="Add a new folder">
-                            <span class="fa fa-plus-square"></span> Folder
+                            <i class="material-icons">add_box</i> Folder
                           </button>
                           <button id="uploadButton" type="button" class="toolbar-btn" title="Upload notebook(s)">
-                            <span class="fa fa-upload"></span>
+                            <i class="material-icons">file_upload</i>
                             <input type="file" name="datafile" class="fileinput" multiple="multiple" value="Upload" style="cursor: pointer" />
                             Upload
                           </button>
                           <button id="duplicateButton" type="button" class="toolbar-btn duplicate-button" title="Create a copy of the selected item(s)">
-                            <span class="fa fa-files-o"></span> Copy
+                            <i class="material-icons">content_copy</i> Copy
                           </button>
                           <button id="renameButton" type="button" class="toolbar-btn rename-button" title="Rename selected item(s)">
-                            <span class="fa fa-edit"></span> Rename
+                            <i class="material-icons">border_color</i> Rename
                           </button>
                           <button id="deleteButton" type="button" class="toolbar-btn delete-button" title="Deleted selected item(s)">
-                            <span class="fa fa-trash-o"></span> Delete
+                            <i class="material-icons">clear</i> Delete
                           </button>
                           <button id="editorButton" type="button" class="toolbar-btn editor-button" title="Open selected file in editor">
-                            <span class="fa fa-file-text-o"></span> Open as Text
+                            <i class="material-icons">format_align_left</i> Open as Text
                           </button>
                         </div>
                       </div>
@@ -107,7 +107,11 @@
                       </div>
                       <div id="project_name">
                         <ul class="breadcrumb">
-                          <li><a href="/tree"><i class="fa fa-home"></i></a></li>
+                          <li>
+                            <a href="/tree">
+                              <i class="material-icons">home</i>
+                            </a>
+                          </li>
                         </ul>
                       </div>
                     </div>
