@@ -839,7 +839,10 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     ];
 
     codeCell.config_defaults.highlight_modes['magic_text/sql'] = {
-      reg: [ /^%%sql/ ]
+      reg: [ /%%?sql\b/ ]
+    };
+    codeCell.config_defaults.highlight_modes['magic_text/bigquery'] = {
+      reg: [ /%%?bq\s+query\b/ ]
     };
   });
 
