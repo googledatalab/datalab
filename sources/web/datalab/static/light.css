@@ -75,6 +75,20 @@ code {
   background-color: #eee;
 }
 
+/* Code theme */
+.cm-comment {
+  color: #008000 !important;
+}
+.cm-error {
+  color: red !important;
+}
+.cm-function {
+  color: #ff4056;
+}
+.cm-type {
+  color: #d67135;
+}
+
 /* Scrollbars */
 ::-webkit-scrollbar {
 	width: 12px;
