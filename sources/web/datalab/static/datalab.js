@@ -620,7 +620,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   }
 
   DataLabSession.prototype.is_connected = function() {
-    return notebook.kernel && notebook.kernel.is_connected();
+    return Jupyter.notebook.kernel && Jupyter.notebook.kernel.is_connected();
   }
 
   DataLabSession.prototype.execute = function(code, callback) {
@@ -670,7 +670,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
         shell: { reply: shellHandler },
         iopub: { output: iopubHandler }
       };
-      notebook.kernel.execute(code, callbacks, { silent: false, store_history: false });
+      Jupyter.notebook.kernel.execute(code, callbacks, { silent: false, store_history: false });
     }
     catch (e) {
       callback(e, null);
@@ -681,7 +681,8 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 
   $([IPython.events]).on('app_initialized.NotebookApp', function(){
     // Bind Alt-Z to undo cell deletion.
-    IPython.keyboard_manager.command_shortcuts.add_shortcut('Alt-z','ipython.undo-last-cell-deletion')
+    IPython.keyboard_manager.command_shortcuts.add_shortcut('Alt-z',
+        Jupyter.notebook.undelete_cell.bind(Jupyter.notebook))
   });
 
   require(['notebook/js/notebook'], function(ipy) {
@@ -988,9 +989,9 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
       url = url.replace('.ipynb', '.ipynb?download=true');
     }
 
-    if (notebook.dirty) {
+    if (Jupyter.notebook.dirty) {
       var w = window.open('');
-      notebook.save_notebook().then(function() {
+      Jupyter.notebook.save_notebook().then(function() {
         w.location = url;
       });
     }
@@ -1000,19 +1001,19 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   }
 
   $('#saveButton').click(function() {
-    notebook.save_checkpoint();
+    Jupyter.notebook.save_checkpoint();
   })
 
   $('#saveCopyButton').click(function() {
-    notebook.copy_notebook();
+    Jupyter.notebook.copy_notebook();
   })
 
   $('#renameButton').click(function() {
-    notebook.save_widget.rename_notebook({ notebook: notebook });
+    Jupyter.notebook.save_widget.rename_notebook({ notebook: notebook });
   })
 
   $('#restoreButton').click(function() {
-    notebook.restore_checkpoint();
+    Jupyter.notebook.restore_checkpoint();
   })
 
   $('#downloadButton').click(function() {
@@ -1048,68 +1049,68 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   $('#addCodeCellButton').click(function() {
     this.blur();
 
-    notebook.insert_cell_below('code');
-    notebook.select_next();
-    notebook.focus_cell();
-    notebook.edit_mode();
+    Jupyter.notebook.insert_cell_below('code');
+    Jupyter.notebook.select_next();
+    Jupyter.notebook.focus_cell();
+    Jupyter.notebook.edit_mode();
   });
 
   $('#addMarkdownCellButton').click(function() {
     this.blur();
 
-    notebook.insert_cell_below('markdown');
-    notebook.select_next();
-    notebook.focus_cell();
-    notebook.edit_mode();
+    Jupyter.notebook.insert_cell_below('markdown');
+    Jupyter.notebook.select_next();
+    Jupyter.notebook.focus_cell();
+    Jupyter.notebook.edit_mode();
   });
 
   $('#deleteCellButton').click(function() {
-    notebook.delete_cell();
+    Jupyter.notebook.delete_cell();
     this.blur();
   });
 
   $('#moveCellUpButton').click(function() {
-    notebook.move_cell_up();
+    Jupyter.notebook.move_cell_up();
     this.blur();
   })
 
   $('#moveCellDownButton').click(function() {
-    notebook.move_cell_down();
+    Jupyter.notebook.move_cell_down();
     this.blur();
   });
 
   $('#runButton').click(function() {
-    notebook.execute_cell_and_select_below();
+    Jupyter.notebook.execute_cell_and_select_below();
     this.blur();
   });
 
   $('#runAllButton').click(function() {
-    notebook.execute_all_cells();
+    Jupyter.notebook.execute_all_cells();
     this.blur();
   });
 
   $('#runToButton').click(function() {
-    notebook.execute_cells_above();
+    Jupyter.notebook.execute_cells_above();
     this.blur();
   });
 
   $('#runFromButton').click(function() {
-    notebook.execute_cells_below();
+    Jupyter.notebook.execute_cells_below();
     this.blur();
   });
 
   $('#clearButton').click(function() {
-    notebook.clear_output();
+    Jupyter.notebook.clear_output();
     this.blur();
   });
 
   $('#clearAllButton').click(function() {
-    notebook.clear_all_output();
+    Jupyter.notebook.clear_all_output();
     this.blur();
   });
 
   $('#resetSessionButton').click(function() {
-    notebook.restart_kernel()
+    Jupyter.notebook.restart_kernel()
       .then(success => removeCompletedMarks());
     this.blur();
   });
@@ -1144,7 +1145,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   $('#navigation').click(function(e) {
     var index = e.target.getAttribute('cellIndex');
     if (index !== null) {
-      var cell = notebook.get_cells()[index];
+      var cell = Jupyter.notebook.get_cells()[index];
 
       var scrollable = $('#mainArea');
       var scrollTop = scrollable.scrollTop() - scrollable.offset().top +
@@ -1181,7 +1182,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     content.push('<div><b>Notebook Outline</b></div>');
 
     var headers = 0;
-    var cells = notebook.get_cells();
+    var cells = Jupyter.notebook.get_cells();
     cells.forEach(function(c, i) {
       if (c.cell_type != 'markdown') {
         return;
@@ -1281,7 +1282,7 @@ function initializeEditApplication(ipy, editor) {
   })
 
   $('#renameButton').click(function() {
-    notebook.save_widget.rename();
+    Jupyter.notebook.save_widget.rename();
   })
 
   $('#downloadButton').click(function() {
