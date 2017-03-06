@@ -36,6 +36,7 @@ declare module common {
     versionId: string;
     instanceId: string;
     configUrl: string;
+    knownTutorialsUrl: string;
     feedbackId: string;
     logEndpoint: string;
 

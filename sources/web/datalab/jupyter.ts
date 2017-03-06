@@ -385,6 +385,7 @@ function getBaseTemplateData(request: http.ServerRequest): common.Map<string> {
     versionId: appSettings.versionId,
     userId: userId,
     configUrl: appSettings.configUrl,
+    knownTutorialsUrl: appSettings.knownTutorialsUrl,
     baseUrl: '/',
     reportingEnabled: reportingEnabled
   };
