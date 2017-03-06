@@ -225,7 +225,7 @@ table.bqsv th, table.bqsv td {
   border-left: 1px solid #f8f8f0;
 }
 .cm-s-ipython span.cm-comment {
-  color: #75715e;
+  color: #888;
 }
 .cm-s-ipython span.cm-atom {
   color: #ae81ff;
@@ -236,7 +236,7 @@ table.bqsv th, table.bqsv td {
 .cm-s-ipython span.cm-property, .cm-s-ipython span.cm-attribute {
   color: #a6e22e;
 }
-.cm-s-ipython span.cm-keyword {
+.cm-s-ipython span.cm-keyword, .cm-s-ipython span.cm-builtin {
   color: #48c34e;
 }
 .cm-s-ipython span.cm-function {
@@ -246,7 +246,7 @@ table.bqsv th, table.bqsv td {
   color: #e6db74;
 }
 .cm-s-ipython span.cm-operator {
-  color: #ff7878;
+  color: #fff;
 }
 .cm-s-ipython span.cm-type {
   color: #d67135;
@@ -256,9 +256,6 @@ table.bqsv th, table.bqsv td {
 }
 .cm-s-ipython span.cm-variable-2 {
   color: #9effff;
-}
-.cm-s-ipython span.cm-variable-3 {
-  color: #66d9ef;
 }
 .cm-s-ipython span.cm-def {
   color: #fd971f;
@@ -276,7 +273,7 @@ table.bqsv th, table.bqsv td {
   color: #ae81ff;
 }
 .cm-s-ipython span.cm-error {
-  color: #f8f8f0;
+  color: red;
 }
 .cm-s-ipython .CodeMirror-activeline-background {
   background: #373831;
