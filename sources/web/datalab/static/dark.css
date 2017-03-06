@@ -311,20 +311,6 @@ svg text {
   fill: #ddd;
 }
 
-/* Scrollbars */
-::-webkit-scrollbar {
-	width: 12px;
-	background-color: #555;
-}
-::-webkit-scrollbar-thumb {
-	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
-	background-color: #333;
-}
-::-webkit-scrollbar-thumb:hover {
-	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
-	background-color: #222;
-}
-
 /* ANSI colors */
 span.ansiblack {
   color: #323537;
