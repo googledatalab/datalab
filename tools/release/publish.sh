@@ -77,3 +77,24 @@ sed -i -e "s/${OLD_VERSION}/${CURRENT_VERSION}/" ./config_local.js
 
 gsutil cp ./config_local.js gs://${PROJECT_ID}/deploy/config_local_${BUILD}.js
 gsutil cp ./config_local.js gs://${PROJECT_ID}/deploy/config_local.js
+
+echo "Updating the list of sample notebooks"
+pushd ./
+git_dir=`mktemp -d`
+echo "Cloning into temporary directory ${git_dir}"
+cd "${git_dir}"
+git clone -b master --depth 1 https://github.com/googledatalab/notebooks ./
+nb_list=""
+for nb in `find ./ -name '*.ipynb' | sed -e 's/^.\//datalab\/docs\//g' -e 's/ /%20/g'`; do
+    if [ -n "${nb_list}" ]; then
+	nb_list="${nb_list}, "
+    fi
+    nb_list="${nb_list}\"${nb}\""
+done
+nb_js="window.datalab.knownTutorials = [${nb_list}];"
+echo "${nb_js}" > ./sample_notebooks.js
+gsutil cp sample_notebooks.js gs://${PROJECT_ID}/deploy/sample_notebooks_${BUILD}.js
+gsutil cp sample_notebooks.js gs://${PROJECT_ID}/deploy/sample_notebooks.js
+popd
+echo "Removing temporary directory ${git_dir}"
+rm -rf "${git_dir}"
