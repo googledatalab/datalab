@@ -162,17 +162,21 @@ RUN ipython profile create default && \
     cd /datalab/lib/pydatalab && \
     /tools/node/bin/npm install -g typescript && \
     tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts && \
+    tsc --module amd --noImplicitAny --outdir google/datalab/notebook/static google/datalab/notebook/static/*.ts && \
     /tools/node/bin/npm uninstall -g typescript && \
     pip install --upgrade-strategy only-if-needed --no-cache-dir . && \
     pip install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/image_classification/. && \
     pip install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/structured_data/. && \
     jupyter nbextension install --py datalab.notebook && \
+    jupyter nbextension install --py google.datalab.notebook && \
     jupyter nbextension enable --py widgetsnbextension && \
-    rm datalab/notebook/static/*.js && \
+    rm datalab/notebook/static/*.js google/datalab/notebook/static/*.js && \
     mkdir -p /datalab/nbconvert && \
     cp -R /usr/local/share/jupyter/nbextensions/gcpdatalab/* /datalab/nbconvert && \
     ln -s /usr/local/lib/python2.7/dist-packages/notebook/static/custom/custom.css /datalab/nbconvert/custom.css && \
     mkdir -p /usr/local/lib/python2.7/dist-packages/notebook/static/components/codemirror/mode/text/sql/text && \
     ln -s /usr/local/share/jupyter/nbextensions/gcpdatalab/codemirror/mode/sql.js /usr/local/lib/python2.7/dist-packages/notebook/static/components/codemirror/mode/text/sql/text/sql.js && \
+    mkdir -p /usr/local/lib/python2.7/dist-packages/notebook/static/components/codemirror/mode/text/bigquery/text && \
+    ln -s /usr/local/share/jupyter/nbextensions/gcpdatalab/codemirror/mode/bigquery.js /usr/local/lib/python2.7/dist-packages/notebook/static/components/codemirror/mode/text/bigquery/text/bigquery.js && \
     cd /
 

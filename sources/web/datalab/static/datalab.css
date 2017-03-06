@@ -490,15 +490,11 @@ div.selected .CodeMirror-linenumber, div#texteditor-container .CodeMirror-linenu
   color: inherit !important;
   outline: solid 1px #888;
 }
-.cm-keyword {
+.cm-keyword, .cm-operator {
   font-weight: normal !important;
 }
 .cm-comment {
-  color: #008000 !important;
   font-style: normal !important;
-}
-.cm-error {
-  color: red !important;
 }
 .cm-header-1, .cm-header-2, .cm-header-3, .cm-header-4, .cm-header-5, .cm-header-6 {
   font-family: inherit !important;

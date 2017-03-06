@@ -231,19 +231,25 @@ table.bqsv th, table.bqsv td {
   color: #ae81ff;
 }
 .cm-s-ipython span.cm-number {
-  color: #ae81ff;
+  color: white;
 }
 .cm-s-ipython span.cm-property, .cm-s-ipython span.cm-attribute {
   color: #a6e22e;
 }
 .cm-s-ipython span.cm-keyword {
-  color: #f92672;
+  color: #48c34e;
+}
+.cm-s-ipython span.cm-function {
+  color: #ff4056;
 }
 .cm-s-ipython span.cm-string {
   color: #e6db74;
 }
 .cm-s-ipython span.cm-operator {
-  color: #ae81ff;
+  color: #ff7878;
+}
+.cm-s-ipython span.cm-type {
+  color: #d67135;
 }
 .cm-s-ipython span.cm-variable {
   color: #f8f8f2;
