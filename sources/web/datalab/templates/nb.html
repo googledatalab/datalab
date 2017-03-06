@@ -33,6 +33,7 @@
      window.datalab = {};
   </script>
   <script src="<%configUrl%>"></script>
+  <script src="<%knownTutorialsUrl%>"></script>
   <script>
     var reportingEnabled = (document.body.getAttribute('data-reporting-enabled') == 'true');
     if (reportingEnabled) {
@@ -46,38 +47,11 @@
 
       var signedIn = (document.body.getAttribute('data-signed-in') == 'true');
       var projectHash = document.body.getAttribute('data-project-hash');
-      var notebookName = document.body.getAttribute('data-notebook-name');
-
-      var knownTutorials = [
-        'Interactive%20Charts%20with%20Google%20Charting%20APIs.ipynb',
-        'UDFs%20in%20BigQuery.ipynb',
-        'SQL%20and%20Pandas%20DataFrames.ipynb',
-        'SQL%20Query%20Composition.ipynb',
-        'SQL%20Parameters.ipynb',
-        'UDFs%20using%20Code%20in%20Cloud%20Storage.ipynb',
-        'Hello%20BigQuery.ipynb',
-        'Importing%20and%20Exporting%20Data.ipynb',
-        'Using%20External%20Tables%20from%20BigQuery.ipynb',
-        'UDF%20Testing%20in%20the%20Notebook.ipynb',
-        'BigQuery%20APIs.ipynb',
-        'BigQuery%20Commands.ipynb',
-        'Storage%20Commands.ipynb',
-        'Storage%20APIs.ipynb',
-        'Programming%20Language%20Correlation.ipynb',
-        'Conversion%20Analysis%20with%20Google%20Analytics%20Data.ipynb',
-        'Anomaly%20Detection%20in%20HTTP%20Logs.ipynb',
-        'Exploring%20Genomics%20Data.ipynb',
-        'TensorFlow%20Machine%20Learning%20with%20Financial%20Data%20on%20Google%20Cloud%20Platform.ipynb',
-        'Hello%20World.ipynb',
-        'Readme.ipynb',
-        'Introduction%20to%20Python.ipynb',
-        'Using%20Datalab%20-%20Accessing%20Cloud%20Data.ipynb',
-        'Introduction%20to%20Notebooks.ipynb'
-      ];
+      var notebookPath = document.body.getAttribute('data-notebook-path');
 
       var tutorialName = '';
-      if (knownTutorials.indexOf(notebookName) >= 0) {
-         tutorialName = notebookName;
+      if (window.datalab.knownTutorials.indexOf(notebookPath) >= 0) {
+         tutorialName = notebookPath;
       }
 
       var event = {
