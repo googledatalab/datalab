@@ -88,18 +88,3 @@ code {
 .cm-type {
   color: #d67135;
 }
-
-/* Scrollbars */
-::-webkit-scrollbar {
-	width: 12px;
-	background-color: #eee;
-}
-::-webkit-scrollbar-thumb {
-	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
-	background-color: #ccc;
-}
-::-webkit-scrollbar-thumb:hover {
-	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
-	background-color: #bbb;
-}
-

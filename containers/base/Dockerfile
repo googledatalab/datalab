@@ -76,6 +76,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir bs4==0.0.1 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir crcmod==1.7 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir pillow==3.4.1 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir google-cloud-dataflow==0.5.5 && \
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf && \
 
 
@@ -96,6 +97,8 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         --disable-installation-options && \
     tools/google-cloud-sdk/bin/gcloud -q components update \
         gcloud core bq gsutil compute preview alpha beta && \
+    # disable the gcloud update message
+    tools/google-cloud-sdk/bin/gcloud config set component_manager/disable_update_check true && \
     touch /tools/google-cloud-sdk/lib/third_party/google.py && \
 
 # Add some unchanging bits - specifically node modules (that need to be kept in sync

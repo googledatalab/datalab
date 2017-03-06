@@ -426,6 +426,9 @@ div.output_area {
 div.output_area div.prompt {
   display: none;
 }
+div.output_subarea {
+  max-width: inherit;
+}
 div.output_scroll {
   border-radius: 0;
   -webkit-box-shadow: none;
