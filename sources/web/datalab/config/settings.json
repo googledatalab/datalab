@@ -16,6 +16,7 @@
   "useWorkspace": false,
   "supportUserOverride": false,
   "configUrl": "https://storage.googleapis.com/cloud-datalab/deploy/config_local.js",
+  "knownTutorialsUrl": "https://storage.googleapis.com/cloud-datalab/deploy/sample_notebooks.js",
   "docsGcsPath": "gs://cloud-datalab/deploy/docs/",
   "allowOriginOverrides": [],
   "allowHttpOverWebsocket": false,

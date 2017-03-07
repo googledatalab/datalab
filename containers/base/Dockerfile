@@ -76,6 +76,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir bs4==0.0.1 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir crcmod==1.7 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir pillow==3.4.1 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir google-cloud-dataflow==0.5.5 && \
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf && \
 
 
@@ -96,6 +97,8 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         --disable-installation-options && \
     tools/google-cloud-sdk/bin/gcloud -q components update \
         gcloud core bq gsutil compute preview alpha beta && \
+    # disable the gcloud update message
+    tools/google-cloud-sdk/bin/gcloud config set component_manager/disable_update_check true && \
     touch /tools/google-cloud-sdk/lib/third_party/google.py && \
 
 # Add some unchanging bits - specifically node modules (that need to be kept in sync
@@ -159,17 +162,21 @@ RUN ipython profile create default && \
     cd /datalab/lib/pydatalab && \
     /tools/node/bin/npm install -g typescript && \
     tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts && \
+    tsc --module amd --noImplicitAny --outdir google/datalab/notebook/static google/datalab/notebook/static/*.ts && \
     /tools/node/bin/npm uninstall -g typescript && \
     pip install --upgrade-strategy only-if-needed --no-cache-dir . && \
     pip install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/image_classification/. && \
     pip install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/structured_data/. && \
     jupyter nbextension install --py datalab.notebook && \
+    jupyter nbextension install --py google.datalab.notebook && \
     jupyter nbextension enable --py widgetsnbextension && \
-    rm datalab/notebook/static/*.js && \
+    rm datalab/notebook/static/*.js google/datalab/notebook/static/*.js && \
     mkdir -p /datalab/nbconvert && \
     cp -R /usr/local/share/jupyter/nbextensions/gcpdatalab/* /datalab/nbconvert && \
     ln -s /usr/local/lib/python2.7/dist-packages/notebook/static/custom/custom.css /datalab/nbconvert/custom.css && \
     mkdir -p /usr/local/lib/python2.7/dist-packages/notebook/static/components/codemirror/mode/text/sql/text && \
     ln -s /usr/local/share/jupyter/nbextensions/gcpdatalab/codemirror/mode/sql.js /usr/local/lib/python2.7/dist-packages/notebook/static/components/codemirror/mode/text/sql/text/sql.js && \
+    mkdir -p /usr/local/lib/python2.7/dist-packages/notebook/static/components/codemirror/mode/text/bigquery/text && \
+    ln -s /usr/local/share/jupyter/nbextensions/gcpdatalab/codemirror/mode/bigquery.js /usr/local/lib/python2.7/dist-packages/notebook/static/components/codemirror/mode/text/bigquery/text/bigquery.js && \
     cd /
 

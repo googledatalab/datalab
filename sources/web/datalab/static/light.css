@@ -75,17 +75,31 @@ code {
   background-color: #eee;
 }
 
-/* Scrollbars */
-::-webkit-scrollbar {
-	width: 12px;
-	background-color: #eee;
+/* Code theme */
+.cm-s-ipython span.cm-comment {
+  color: #008000 !important;
 }
-::-webkit-scrollbar-thumb {
-	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
-	background-color: #ccc;
+.cm-s-ipython span.cm-error {
+  color: red !important;
 }
-::-webkit-scrollbar-thumb:hover {
-	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
-	background-color: #bbb;
+.cm-s-ipython span.cm-function {
+  color: #800000;
 }
-
+.cm-s-ipython span.cm-type {
+  color: #800080;
+}
+.cm-s-ipython span.cm-builtin {
+  color: #0000ff;
+}
+.cm-s-ipython span.cm-atom {
+  color: #ff8c00;
+}
+.cm-s-ipython span.cm-keyword {
+  color: #0000ff;
+}
+.cm-s-ipython span.cm-string {
+  color: #000080;
+}
+.cm-s-ipython span.cm-operator {
+  color: #000;
+}

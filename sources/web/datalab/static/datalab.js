@@ -131,7 +131,8 @@ function reportEvent(event) {
 function toggleSidebar() {
   var d = document.getElementById('sidebarArea');
   d.style.display = (d.style.display == 'none') ? 'block' : 'none';
-  document.getElementById('hideSidebarButton').classList.toggle('fa-flip-vertical');
+  rotated = $('#hideSidebarButton>.material-icons').css('transform').indexOf('matrix') > -1;
+  $('#hideSidebarButton>.material-icons').css('transform', rotated ? '' : 'rotate(180deg)')
   this.blur();
   // Chrome at least seems to render the notebook poorly after this for a little
   // while. If you scroll new content into view it is messed up until you click
@@ -236,12 +237,12 @@ function initializePage(dialog, saveFn) {
       '<p>Explore, transform, visualize and process data using BigQuery and Google Cloud Storage.</p><br />' +
       '<pre>Version: ' + version  + '\nBased on Jupyter (formerly IPython) 4</pre>' +
       '<h5><b>More Information</b></h5>' +
-      '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://cloud.google.com" target="_blank">Product information</a><br />' +
-      '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://github.com/googledatalab/datalab" target="_blank">Project on GitHub</a><br />' +
-      '<span class="fa fa-external-link-square">&nbsp;</span><a href="/static/about.txt" target="_blank">License and software information</a><br />' +
-      '<span class="fa fa-external-link-square">&nbsp;</span><a href="https://cloud.google.com/terms/" target="_blank">Terms of Service</a><br />' +
-      '<span class="fa fa-external-link-square">&nbsp;</span><a href="http://www.google.com/intl/en/policies/" target="_blank">Privacy Policy</a><br />' +
-      '<span class="fa fa-recycle">&nbsp;</span><a href="javascript:restartDatalab()">Restart Server</a><br />';
+      '<i class="material-icons">open_in_new</i><a href="https://cloud.google.com" target="_blank"> Product information</a><br />' +
+      '<i class="material-icons">open_in_new</i><a href="https://github.com/googledatalab/datalab" target="_blank"> Project on GitHub</a><br />' +
+      '<i class="material-icons">open_in_new</i><a href="/static/about.txt" target="_blank"> License and software information</a><br />' +
+      '<i class="material-icons">open_in_new</i><a href="https://cloud.google.com/terms/" target="_blank"> Terms of Service</a><br />' +
+      '<i class="material-icons">open_in_new</i><a href="http://www.google.com/intl/en/policies/" target="_blank"> Privacy Policy</a><br />' +
+      '<i class="material-icons">open_in_new</i><a href="javascript:restartDatalab()"> Restart Server</a><br />';
 
     var dialogOptions = {
       title: 'About Google Cloud Datalab',
@@ -360,13 +361,12 @@ function initializePage(dialog, saveFn) {
 
 // constants for minitoolbar operations
 const CELL_METADATA_COLLAPSED = 'hiddenCell';
-const COLLAPSE_BUTTON_CLASS = 'fa-compress';
-const UNCOLLAPSE_BUTTON_CLASS = 'fa-expand';
+const COLLAPSE_BUTTON_CLASS = 'vertical_align_top';
+const UNCOLLAPSE_BUTTON_CLASS = 'vertical_align_bottom';
 const CELL_METADATA_CODE_COLLAPSED = 'codeCollapsed';
-const COLLAPSE_CODE_BUTTON_CLASS = 'fa-code';
-const UNCOLLAPSE_CODE_BUTTON_CLASS = 'fa-code';
-const RUN_CELL_BUTTON_CLASS = 'fa-play';
-const CLEAR_CELL_BUTTON_CLASS = 'fa-minus-square-o';
+const COLLAPSE_CODE_BUTTON_CLASS = 'code';
+const RUN_CELL_BUTTON_CLASS = 'play_arrow';
+const CLEAR_CELL_BUTTON_CLASS = 'check_box_outline_blank';
 
 function toggleCollapseCell(cell) {
   isCollapsed = cell.metadata[CELL_METADATA_COLLAPSED] || false;
@@ -398,9 +398,8 @@ function collapseCell(cell) {
 
   cell.element.find('div.widget-area').hide();
   cell.element.find('div.cellPlaceholder')[0].innerHTML = getCollapsedCellHeader(cell);
-  collapseSpan = cell.element.find('span.glyph-collapse-cell').removeClass(COLLAPSE_BUTTON_CLASS);
-  collapseSpan = cell.element.find('span.glyph-collapse-cell').addClass(UNCOLLAPSE_BUTTON_CLASS);
-  collapseSpan = cell.element.find('span.title-collapse-cell')[0].innerText = 'Expand';
+  collapseSpan = cell.element.find('.glyph-collapse-cell')[0].innerText = UNCOLLAPSE_BUTTON_CLASS;
+  collapseSpan = cell.element.find('.title-collapse-cell')[0].innerText = 'Expand';
 
   cell.metadata[CELL_METADATA_COLLAPSED] = true;
 }
@@ -416,9 +415,8 @@ function uncollapseCell(cell) {
   if (widgetSubarea.children.length > 0)
     cell.element.find('div.widget-area').show();
   cell.element.find('div.cellPlaceholder')[0].innerHTML = '';
-  collapseSpan = cell.element.find('span.glyph-collapse-cell').removeClass(UNCOLLAPSE_BUTTON_CLASS);
-  collapseSpan = cell.element.find('span.glyph-collapse-cell').addClass(COLLAPSE_BUTTON_CLASS);
-  collapseSpan = cell.element.find('span.title-collapse-cell')[0].innerText = 'Collapse';
+  collapseSpan = cell.element.find('.glyph-collapse-cell')[0].innerText = COLLAPSE_BUTTON_CLASS;
+  collapseSpan = cell.element.find('.title-collapse-cell')[0].innerText = 'Collapse';
 
   cell.metadata[CELL_METADATA_COLLAPSED] = false;
 
@@ -471,10 +469,11 @@ function createCellMiniToolbarButton(description) {
   anchor.href = "#";
 
   // span for button icon
-  let glyphSpan = document.createElement('span');
-  glyphSpan.className = description.className + ' glyph-' + description.id;
-  glyphSpan.style.width = '20px';
-  anchor.appendChild(glyphSpan);
+  let glyphElement = document.createElement('i');
+  glyphElement.className = 'material-icons' + ' glyph-' + description.id;
+  glyphElement.innerText = description.className;
+  glyphElement.style.paddingRight = '10px';
+  anchor.appendChild(glyphElement);
 
   // span for button title
   let titleSpan = document.createElement('span');
@@ -498,7 +497,7 @@ function addCellMiniToolbar(cell) {
   let toolbarToggle = document.createElement('button');
   toolbarToggle.className = 'btn btn-default dropdown-toggle minitoolbar-toggle';
   toolbarToggle.setAttribute('data-toggle', 'dropdown');
-  toolbarToggle.innerHTML = '<span class="fa fa-bars"></span>';
+  toolbarToggle.innerHTML = '<i class="material-icons">menu</i>';
   toolbarDiv.appendChild(toolbarToggle);
 
   let toolbarButtonList = document.createElement('ul');
@@ -535,7 +534,7 @@ function addCellMiniToolbar(cell) {
     {
       id: 'run-cell',
       title: 'Run',
-      className: 'fa ' + RUN_CELL_BUTTON_CLASS,
+      className: RUN_CELL_BUTTON_CLASS,
       clickHandler: function() {
         cell.execute();
       }
@@ -544,7 +543,7 @@ function addCellMiniToolbar(cell) {
     {
       id: 'clear-cell',
       title: 'Clear',
-      className: 'fa ' + CLEAR_CELL_BUTTON_CLASS,
+      className: CLEAR_CELL_BUTTON_CLASS,
       clickHandler: function() {
         cell.clear_output();
       }
@@ -553,7 +552,7 @@ function addCellMiniToolbar(cell) {
     {
       id: 'collapse-cell',
       title: 'Collapse',
-      className: 'fa ' + COLLAPSE_BUTTON_CLASS,
+      className: COLLAPSE_BUTTON_CLASS,
       clickHandler: function() {
         toggleCollapseCell(cell);
       }
@@ -562,7 +561,7 @@ function addCellMiniToolbar(cell) {
     {
       id: 'collapse-code',
       title: 'Hide Code',
-      className: 'fa ' + COLLAPSE_CODE_BUTTON_CLASS,
+      className: COLLAPSE_CODE_BUTTON_CLASS,
       clickHandler: function() {
         toggleCollapseCode(cell);
       }
@@ -621,7 +620,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   }
 
   DataLabSession.prototype.is_connected = function() {
-    return notebook.kernel && notebook.kernel.is_connected();
+    return Jupyter.notebook.kernel && Jupyter.notebook.kernel.is_connected();
   }
 
   DataLabSession.prototype.execute = function(code, callback) {
@@ -671,7 +670,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
         shell: { reply: shellHandler },
         iopub: { output: iopubHandler }
       };
-      notebook.kernel.execute(code, callbacks, { silent: false, store_history: false });
+      Jupyter.notebook.kernel.execute(code, callbacks, { silent: false, store_history: false });
     }
     catch (e) {
       callback(e, null);
@@ -682,7 +681,8 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 
   $([IPython.events]).on('app_initialized.NotebookApp', function(){
     // Bind Alt-Z to undo cell deletion.
-    IPython.keyboard_manager.command_shortcuts.add_shortcut('Alt-z','ipython.undo-last-cell-deletion')
+    IPython.keyboard_manager.command_shortcuts.add_shortcut('Alt-z',
+        Jupyter.notebook.undelete_cell.bind(Jupyter.notebook))
   });
 
   require(['notebook/js/notebook'], function(ipy) {
@@ -840,7 +840,10 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     ];
 
     codeCell.config_defaults.highlight_modes['magic_text/sql'] = {
-      reg: [ /^%%sql/ ]
+      reg: [ /%%?sql\b/ ]
+    };
+    codeCell.config_defaults.highlight_modes['magic_text/bigquery'] = {
+      reg: [ /%%?bq\s+query\b/ ]
     };
   });
 
@@ -989,9 +992,9 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
       url = url.replace('.ipynb', '.ipynb?download=true');
     }
 
-    if (notebook.dirty) {
+    if (Jupyter.notebook.dirty) {
       var w = window.open('');
-      notebook.save_notebook().then(function() {
+      Jupyter.notebook.save_notebook().then(function() {
         w.location = url;
       });
     }
@@ -1001,19 +1004,19 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   }
 
   $('#saveButton').click(function() {
-    notebook.save_checkpoint();
+    Jupyter.notebook.save_checkpoint();
   })
 
   $('#saveCopyButton').click(function() {
-    notebook.copy_notebook();
+    Jupyter.notebook.copy_notebook();
   })
 
   $('#renameButton').click(function() {
-    notebook.save_widget.rename_notebook({ notebook: notebook });
+    Jupyter.notebook.save_widget.rename_notebook({ notebook: notebook });
   })
 
   $('#restoreButton').click(function() {
-    notebook.restore_checkpoint();
+    Jupyter.notebook.restore_checkpoint();
   })
 
   $('#downloadButton').click(function() {
@@ -1049,75 +1052,76 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   $('#addCodeCellButton').click(function() {
     this.blur();
 
-    notebook.insert_cell_below('code');
-    notebook.select_next();
-    notebook.focus_cell();
-    notebook.edit_mode();
+    Jupyter.notebook.insert_cell_below('code');
+    Jupyter.notebook.select_next();
+    Jupyter.notebook.focus_cell();
+    Jupyter.notebook.edit_mode();
   });
 
   $('#addMarkdownCellButton').click(function() {
     this.blur();
 
-    notebook.insert_cell_below('markdown');
-    notebook.select_next();
-    notebook.focus_cell();
-    notebook.edit_mode();
+    Jupyter.notebook.insert_cell_below('markdown');
+    Jupyter.notebook.select_next();
+    Jupyter.notebook.focus_cell();
+    Jupyter.notebook.edit_mode();
   });
 
   $('#deleteCellButton').click(function() {
-    notebook.delete_cell();
+    Jupyter.notebook.delete_cell();
     this.blur();
   });
 
   $('#moveCellUpButton').click(function() {
-    notebook.move_cell_up();
+    Jupyter.notebook.move_cell_up();
     this.blur();
   })
 
   $('#moveCellDownButton').click(function() {
-    notebook.move_cell_down();
+    Jupyter.notebook.move_cell_down();
     this.blur();
   });
 
   $('#runButton').click(function() {
-    notebook.execute_cell_and_select_below();
+    Jupyter.notebook.execute_cell_and_select_below();
     this.blur();
   });
 
   $('#runAllButton').click(function() {
-    notebook.execute_all_cells();
+    Jupyter.notebook.execute_all_cells();
     this.blur();
   });
 
   $('#runToButton').click(function() {
-    notebook.execute_cells_above();
+    Jupyter.notebook.execute_cells_above();
     this.blur();
   });
 
   $('#runFromButton').click(function() {
-    notebook.execute_cells_below();
+    Jupyter.notebook.execute_cells_below();
     this.blur();
   });
 
   $('#clearButton').click(function() {
-    notebook.clear_output();
+    Jupyter.notebook.clear_output();
     this.blur();
   });
 
   $('#clearAllButton').click(function() {
-    notebook.clear_all_output();
+    Jupyter.notebook.clear_all_output();
     this.blur();
   });
 
   $('#resetSessionButton').click(function() {
-    notebook.restart_kernel()
+    Jupyter.notebook.restart_kernel()
       .then(success => removeCompletedMarks());
     this.blur();
   });
 
   $('#toggleSidebarButton').click(function() {
     document.getElementById('sidebarArea').classList.toggle('larger');
-    document.getElementById('toggleSidebarButton').classList.toggle('fa-flip-horizontal');
+    rotated = $('#toggleSidebarButton').css('transform').indexOf('matrix') > -1;
+    $('#toggleSidebarButton').css('transform', rotated ? '' : 'rotate(180deg)');
     this.blur();
   });
 
@@ -1144,7 +1148,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   $('#navigation').click(function(e) {
     var index = e.target.getAttribute('cellIndex');
     if (index !== null) {
-      var cell = notebook.get_cells()[index];
+      var cell = Jupyter.notebook.get_cells()[index];
 
       var scrollable = $('#mainArea');
       var scrollTop = scrollable.scrollTop() - scrollable.offset().top +
@@ -1181,7 +1185,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     content.push('<div><b>Notebook Outline</b></div>');
 
     var headers = 0;
-    var cells = notebook.get_cells();
+    var cells = Jupyter.notebook.get_cells();
     cells.forEach(function(c, i) {
       if (c.cell_type != 'markdown') {
         return;
@@ -1281,7 +1285,7 @@ function initializeEditApplication(ipy, editor) {
   })
 
   $('#renameButton').click(function() {
-    notebook.save_widget.rename();
+    Jupyter.notebook.save_widget.rename();
   })
 
   $('#downloadButton').click(function() {
@@ -1361,7 +1365,7 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
 
     var html = [];
     html.push('<ul class="breadcrumb">');
-    html.push('<li><a href="/tree"><i class="fa fa-home"></i></a></li>');
+    html.push('<li><a href="/tree"><i class="material-icons">home</i></a></li>');
 
     var segments = [];
 

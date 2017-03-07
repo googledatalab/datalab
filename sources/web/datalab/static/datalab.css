@@ -13,7 +13,7 @@
  */
 
 /* Font Imports */
-@import url(https://fonts.googleapis.com/css?family=Source+Code+Pro:400,700|Open+Sans:400,700);
+@import url(https://fonts.googleapis.com/css?family=Source+Code+Pro:400,700|Open+Sans:400,700|Material+Icons);
 
 * {
   padding: 0px;
@@ -24,7 +24,7 @@
 body {
   font-family: 'Open Sans', Helvetica, sans-serif;
   font-size: 14px;
-  min-width: 650px;
+  min-width: 710px;
 }
 
 /* Layout */
@@ -248,6 +248,10 @@ div.btn-toolbar .toolbar-btn.active {
   border: none;
   box-shadow: none;
 }
+i.material-icons {
+  font-size: 18px !important;
+  vertical-align: sub !important;
+}
 #toggleSidebarButton {
   margin-bottom: 8px;
   background: none;
@@ -422,6 +426,9 @@ div.output_area {
 div.output_area div.prompt {
   display: none;
 }
+div.output_subarea {
+  max-width: inherit;
+}
 div.output_scroll {
   border-radius: 0;
   -webkit-box-shadow: none;
@@ -483,15 +490,11 @@ div.selected .CodeMirror-linenumber, div#texteditor-container .CodeMirror-linenu
   color: inherit !important;
   outline: solid 1px #888;
 }
-.cm-keyword {
+.cm-keyword, .cm-operator {
   font-weight: normal !important;
 }
 .cm-comment {
-  color: #008000 !important;
   font-style: normal !important;
-}
-.cm-error {
-  color: red !important;
 }
 .cm-header-1, .cm-header-2, .cm-header-3, .cm-header-4, .cm-header-5, .cm-header-6 {
   font-family: inherit !important;
@@ -523,7 +526,7 @@ div.modal-dialog pre, div.modal-dialog code, #help code, #help pre {
 }
 
 /* Responsive Design */
-@media screen and (max-width: 1170px) {
+@media screen and (max-width: 1230px) {
   span.toolbar-text {
     display: none;
   }
