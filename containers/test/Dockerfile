@@ -2,16 +2,16 @@ FROM datalab
 MAINTAINER Google Cloud DataLab
 
 # install firefox and xvfb
-RUN touch /etc/apt/sources.list.d/debian-mozilla.list && \
-    echo "deb http://mozilla.debian.net/ jessie-backports firefox-release" > /etc/apt/sources.list.d/debian-mozilla.list && \
-    cd ~/ && \
-    wget mozilla.debian.net/pkg-mozilla-archive-keyring_1.1_all.deb && \
-    dpkg -i pkg-mozilla-archive-keyring_1.1_all.deb && \
-    apt-get update && apt-get install -y --no-install-recommends -t jessie-backports firefox xvfb
+RUN apt-get update && apt-get install -y pkg-mozilla-archive-keyring
+
+RUN echo 'deb http://mozilla.debian.net/ jessie-backports firefox-esr' > /etc/apt/sources.list.d/jessie-backports.list
+
+RUN apt-get update && apt-get install -y xvfb && \
+    apt-get install -y -t jessie-backports firefox-esr
 
 # download the firefox gecko driver for selenium and place it under PATH
-RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.13.0/geckodriver-v0.13.0-linux64.tar.gz && \
-    tar -xvf geckodriver-v0.13.0-linux64.tar.gz && \
+RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.15.0/geckodriver-v0.15.0-linux64.tar.gz && \
+    tar -xvf geckodriver-v0.15.0-linux64.tar.gz && \
     mv geckodriver /usr/local/bin/
 
 RUN pip install selenium
