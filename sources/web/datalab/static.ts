@@ -182,7 +182,9 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     if (datalabFileExists(newPath)) {
       sendDataLabFile(newPath, response);
     } else {
-      sendJupyterFile(path.substr(1), response);
+      // load codemirror modes from proper path
+      path = path.substr(1).replace('static/codemirror', 'static/components/codemirror');
+      sendJupyterFile(path, response);
     }
   }
   else if (path.lastIndexOf('/custom.js') >= 0) {
