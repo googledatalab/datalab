@@ -36,6 +36,7 @@ ERR_DEPLOY=6
 ERR_GCLOUD_SSH_FAILED=7
 ERR_TUNNEL_FAILED=8
 ERR_GATEWAY_FAILED=9
+ERR_TMP_NOT_WRITABLE=10
 
 run_login() {
   local login_cmd=${1:-"gcloud auth login"}
@@ -113,6 +114,17 @@ watch_and_restart_tunnel() {
   done
   echo "Restarting SSH tunnel"
   setup_tunnel "${project_id}" "${zone}" "${instance}" "${ssh_user}"
+}
+
+check_tmp_directory() {
+    echo "Verifying that the /tmp directory is writable"
+    test_temp_file=$(mktemp --tmpdir=/tmp)
+    if [ ! -e "${test_temp_file}" ]; then
+	echo "Unable to write to the /tmp directory"
+	exit "${ERR_TMP_NOT_WRITABLE}"
+    fi
+    rm "${test_temp_file}"
+    echo "The /tmp directory is writable"
 }
 
 source /datalab/setup-env.sh
@@ -202,6 +214,10 @@ then
   fi
 fi
 
+# Verify that we can write to the /tmp directory
+check_tmp_directory
+
+# Make sure the notebooks directory exists
 mkdir -p /content/datalab/notebooks
 
 # Fetch docs and tutorials. This should not abort startup if it fails
