@@ -155,7 +155,7 @@ def _check_datalab_tag(instance, tags):
       InvalidInstanceException: If the check fails.
     """
     items = tags.get('items', [])
-    if not 'datalab' in items:
+    if 'datalab' not in items:
         raise InvalidInstanceException(instance)
     return
 
