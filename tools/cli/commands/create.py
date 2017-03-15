@@ -59,6 +59,26 @@ clone_repo() {{
     gcloud source repos clone {1} /content/datalab/notebooks
 }}
 
+repo_is_populated() {{
+  cd ${{MOUNT_DIR}}/content/datalab/notebooks
+  git show-ref --quiet
+}}
+
+populate_repo() {{
+  echo "Populating datalab-notebooks repo"
+  docker run --rm -v "${{MOUNT_DIR}}/content:/content" \
+    --workdir=/content/datalab/notebooks \
+    --entrypoint "/bin/bash" {0} -c "\
+        echo '.ipynb_checkpoints' >> .gitignore; \
+        echo '*.pyc' >> .gitignore; \
+        echo '# Project Notebooks' >> README.md; \
+        git add .gitignore README.md; \
+        git -c user.email=nobody -c user.name=Datalab \
+          commit --message='Set up initial notebook repo.'; \
+        git push origin master; \
+    "
+}}
+
 format_disk() {{
   echo "Formatting the persistent disk"
   mkfs.ext4 -F \
@@ -66,6 +86,9 @@ format_disk() {{
     ${{PERSISTENT_DISK_DEV}}
   ${{MOUNT_CMD}}
   clone_repo
+  if ! repo_is_populated; then
+    populate_repo
+  fi
 }}
 
 mount_and_prepare_disk() {{
@@ -457,6 +480,9 @@ def create_repo(args, gcloud_repos, repo_name):
     Raises:
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
+    if utils.print_info_messages(args):
+        print('Creating the repository {0}'.format(repo_name))
+
     create_cmd = ['create', repo_name]
     utils.call_gcloud_quietly(args, gcloud_repos, create_cmd)
 
