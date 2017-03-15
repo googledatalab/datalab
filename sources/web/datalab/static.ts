@@ -158,23 +158,20 @@ function sendUserCustomTheme(userId: string, response: http.ServerResponse): voi
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
   var path = url.parse(request.url).pathname;
 
-  if (path.lastIndexOf('/favicon.ico') > 0) {
-    sendDataLabFile('datalab.ico', response);
-  }
-  else if (path.lastIndexOf('/logo.png') > 0) {
-    sendDataLabFile('datalab.png', response);
-  }
-  else if (path.lastIndexOf('/about.txt') > 0) {
-    sendDataLabFile('datalab.txt', response);
-  }
-  else if (path.lastIndexOf('/reporting.html') > 0) {
-    sendDataLabFile('reporting.html', response);
-  }
-  else if (path.lastIndexOf('/datalab.css') > 0) {
-    sendDataLabFile('datalab.css', response);
-  }
-  else if (path.lastIndexOf('/appbar.html') > 0) {
-    sendDataLabFile('appbar.html', response);
+  var staticResourcesMap: {[key:string]: string} = {
+    'favicon.ico': 'datalab.ico',
+    'logo.png': 'datalab.png',
+    'about.txt': 'datalab.txt',
+    'reporting.html': 'reporting.html',
+    'datalab.css': 'datalab.css',
+    'appbar.html': 'appbar.html',
+    'settings.html': 'settings.html',
+    'settings.js': 'settings.js'
+  };
+
+  var subpath = path.substr(path.lastIndexOf('/') + 1);
+  if (subpath in staticResourcesMap) {
+    sendDataLabFile(staticResourcesMap[subpath], response);
   }
   else if (path.indexOf('/codemirror/mode/') > 0) {
     var split = path.lastIndexOf('/');
