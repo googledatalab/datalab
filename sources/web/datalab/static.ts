@@ -166,8 +166,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     'datalab.css': 'datalab.css',
     'appbar.html': 'appbar.html',
     'settings.html': 'settings.html',
-    'settings.js': 'settings.js',
-    'settings.css': 'settings.css'
+    'settings.js': 'settings.js'
   };
 
   var subpath = path.substr(path.lastIndexOf('/') + 1);
