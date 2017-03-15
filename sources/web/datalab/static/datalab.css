@@ -526,7 +526,7 @@ div.modal-dialog pre, div.modal-dialog code, #help code, #help pre {
 }
 
 /* Responsive Design */
-@media screen and (max-width: 1230px) {
+@media screen and (max-width: 1270px) {
   span.toolbar-text {
     display: none;
   }

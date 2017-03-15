@@ -170,10 +170,6 @@ function xhr(url, callback, method) {
   request.send();
 }
 
-function getSettingKeyAddress(setting) {
-  return window.location.protocol + "//" + window.location.host + "/_settings?key=" + setting;
-}
-
 function restartDatalab() {
   var restartUrl = window.location.protocol + "//" + window.location.host + "/_restart";
 
@@ -309,36 +305,6 @@ function initializePage(dialog, saveFn) {
     }
   });
 
-  // More UI that relies on appbar load
-  // Prepare the theme selector radio boxes
-  lightThemeRadioOption = document.getElementById("lightThemeRadioOption")
-  darkThemeRadioOption = document.getElementById("darkThemeRadioOption")
-
-  // By default, check the light theme radio button
-  // TODO: When we have support for default settings on server side, remove this
-  lightThemeRadioOption.checked = true;
-  darkThemeRadioOption.checked = false;
-  xhr(getSettingKeyAddress("theme"), function() {
-    lightThemeRadioOption.checked = this.responseText === "\"light\"";
-    darkThemeRadioOption.checked = this.responseText === "\"dark\"";
-  });
-  lightThemeRadioOption.onclick = function() {
-    setTheme("light");
-    darkThemeRadioOption.checked = false;
-  };
-  darkThemeRadioOption.onclick = function() {
-    setTheme("dark");
-    lightThemeRadioOption.checked = false;
-  };
-
-  function setTheme(theme) {
-    xhr(getSettingKeyAddress("theme") + "&value=" + theme, function() {
-      // Reload the stylesheet by resetting its address with a random (time) version querystring
-      sheetAddress = document.getElementById("themeStylesheet").href + "?v=" + Date.now()
-      document.getElementById("themeStylesheet").setAttribute('href', sheetAddress);
-    }, "POST");
-  }
-
   // If inside a notebook, prepare notebook-specific help link inside the sidebar
   if (document.getElementById('sidebarArea') !== null) {
     $('#keyboardHelpLink').click(function(e) {
@@ -354,6 +320,15 @@ function initializePage(dialog, saveFn) {
     $('#notebookHelpDivider').show()
   }
   $('#aboutButton').click(showAbout);
+  $('#settingsButton').click(function() {
+    $.get('/static/settings.html', (markup) => {
+      dialog.modal({
+        title: 'Settings',
+        body: $(markup),
+        buttons: { Close: {} }
+      });
+    });
+  });
   $('#feedbackButton').click(function() {
     window.open('https://groups.google.com/forum/#!newtopic/google-cloud-datalab-feedback');
   });
