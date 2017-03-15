@@ -33,6 +33,16 @@ class InvalidInstanceException(Exception):
             InvalidInstanceException._MESSAGE.format(instance_name))
 
 
+class NoSuchInstanceException(Exception):
+
+    _MESSAGE = (
+        'The specified instance, {}, does not exist in any zone.')
+
+    def __init__(self, instance_name):
+        super(NoSuchInstanceException, self).__init__(
+            NoSuchInstanceException._MESSAGE.format(instance_name))
+
+
 def call_gcloud_quietly(args, gcloud_surface, cmd, report_errors=True):
     """Call `gcloud` and silence any output unless it fails.
 
@@ -85,6 +95,8 @@ def prompt_for_zone(args, gcloud_compute, instance=None):
       gcloud_compute: Function that can be used to invoke `gcloud compute`
     Raises:
       subprocess.CalledProcessError: If a nested `gcloud` calls fails
+      NoSuchInstanceException: If the user specified an instance that
+          does not exist in any zone.
     """
     if instance:
         # First, list the matching instances to see if there is exactly one.
@@ -104,6 +116,8 @@ def prompt_for_zone(args, gcloud_compute, instance=None):
             pass
         if len(matching_zones) == 1:
             return matching_zones[0]
+        elif len(matching_zones) == 0:
+            raise NoSuchInstanceException(instance)
 
     list_args = ['zones', '--quiet', 'list', '--format=value(name)']
     print('Please specify a zone from one of:')
@@ -177,6 +191,8 @@ def describe_instance(args, gcloud_compute, instance):
       ValueError: If the result returned by gcloud is not valid JSON
       InvalidInstanceException: If the instance was not created by
           running `datalab create`.
+      NoSuchInstanceException: If the user specified an instance that
+          does not exist in any zone.
     """
     get_cmd = ['instances', 'describe', '--quiet']
     if args.zone:
@@ -220,6 +236,10 @@ def maybe_prompt_for_zone(args, gcloud_compute, instance):
       instance: The name of the instance to check
     Raises:
       subprocess.CalledProcessError: If the `gcloud` call fails
+      InvalidInstanceException: If the instance was not created by
+          running `datalab create`.
+      NoSuchInstanceException: If the user specified an instance that
+          does not exist in any zone.
     """
     if not args.quiet:
         describe_instance(args, gcloud_compute, instance)

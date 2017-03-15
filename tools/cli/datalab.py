@@ -19,11 +19,12 @@
 This tool is specific to the use case of running in the Google Cloud Platform.
 """
 
-from commands import create, connect, list, stop, delete
+from commands import create, connect, list, stop, delete, utils
 
 import argparse
 import os
 import subprocess
+import traceback
 
 
 _SUBCOMMANDS = {
@@ -241,6 +242,10 @@ def run():
             in_cloud_shell=('DEVSHELL_CLIENT_PORT' in os.environ))
     except subprocess.CalledProcessError:
         print('A nested call to gcloud failed.')
+    except Exception as e:
+        if utils.print_info_messages(args):
+            traceback.print_exc(e)
+        print(e)
 
 
 if __name__ == '__main__':
