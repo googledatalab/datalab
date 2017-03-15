@@ -21,6 +21,18 @@ import sys
 import tempfile
 
 
+class InvalidInstanceException(Exception):
+
+    _MESSAGE = (
+        'The specified instance, {}, does not appear '
+        'to have been created by the `datalab` tool, and '
+        'so cannot be managed by it.')
+
+    def __init__(self, instance_name):
+        super(InvalidInstanceException, self).__init__(
+            InvalidInstanceException._MESSAGE.format(instance_name))
+
+
 def call_gcloud_quietly(args, gcloud_surface, cmd, report_errors=True):
     """Call `gcloud` and silence any output unless it fails.
 
@@ -130,6 +142,24 @@ def flatten_metadata(metadata):
     return result
 
 
+def _check_datalab_tag(instance, tags):
+    """Check that the given "tags" object contains `datalab`.
+
+    This is used to verify that a VM was created by the `datalab create`
+    command.
+
+    Args:
+      instance: The name of the instance to check
+      tags: An object with an 'items' field that is a list of tags.
+    Raises:
+      InvalidInstanceException: If the check fails.
+    """
+    items = tags.get('items', [])
+    if 'datalab' not in items:
+        raise InvalidInstanceException(instance)
+    return
+
+
 def describe_instance(args, gcloud_compute, instance):
     """Get the status and metadata of the given Google Compute Engine VM.
 
@@ -145,22 +175,28 @@ def describe_instance(args, gcloud_compute, instance):
     Raises:
       subprocess.CalledProcessError: If the `gcloud` call fails
       ValueError: If the result returned by gcloud is not valid JSON
+      InvalidInstanceException: If the instance was not created by
+          running `datalab create`.
     """
     get_cmd = ['instances', 'describe', '--quiet']
     if args.zone:
         get_cmd.extend(['--zone', args.zone])
-    get_cmd.extend(['--format', 'json(status,metadata.items)', instance])
+    get_cmd.extend(
+        ['--format', 'json(status,tags.items,metadata.items)', instance])
     with tempfile.TemporaryFile() as stdout, \
             tempfile.TemporaryFile() as stderr:
         try:
             gcloud_compute(args, get_cmd, stdout=stdout, stderr=stderr)
             stdout.seek(0)
             json_result = stdout.read().strip()
-            status_and_metadata = json.loads(json_result)
-            status = status_and_metadata.get('status', 'UNKNOWN')
-            metadata = status_and_metadata.get('metadata', {})
+            status_tags_and_metadata = json.loads(json_result)
+            tags = status_tags_and_metadata.get('tags', {})
+            _check_datalab_tag(instance, tags)
+
+            status = status_tags_and_metadata.get('status', 'UNKNOWN')
+            metadata = status_tags_and_metadata.get('metadata', {})
             return (status, flatten_metadata(metadata))
-        except:
+        except subprocess.CalledProcessError:
             if args.zone:
                 stderr.seek(0)
                 sys.stderr.write(stderr.read())
