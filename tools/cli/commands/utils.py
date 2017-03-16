@@ -98,31 +98,42 @@ def prompt_for_zone(args, gcloud_compute, instance=None):
       NoSuchInstanceException: If the user specified an instance that
           does not exist in any zone.
     """
+    matching_zones = []
+    list_cmd = ['zones', '--quiet', 'list', '--format=value(name)']
     if instance:
-        # First, list the matching instances to see if there is exactly one.
-        filtered_list_cmd = [
+        # list the zones for matching instances instea of all zones.
+        list_cmd = [
             'instances', 'list', '--quiet', '--filter',
             'name={}'.format(instance), '--format', 'value(zone)']
-        matching_zones = []
-        try:
-            with tempfile.TemporaryFile() as stdout, \
-                    open(os.devnull, 'w') as stderr:
-                gcloud_compute(args, filtered_list_cmd,
-                               stdout=stdout, stderr=stderr)
-                stdout.seek(0)
-                matching_zones = stdout.read().strip().splitlines()
-        except:
-            # Just ignore this error and prompt the user
-            pass
-        if len(matching_zones) == 1:
-            return matching_zones[0]
-        elif len(matching_zones) == 0:
-            raise NoSuchInstanceException(instance)
+    with tempfile.TemporaryFile() as stdout, \
+            open(os.devnull, 'w') as stderr:
+        gcloud_compute(args, list_cmd,
+                       stdout=stdout, stderr=stderr)
+        stdout.seek(0)
+        matching_zones = stdout.read().strip().splitlines()
 
-    list_args = ['zones', '--quiet', 'list', '--format=value(name)']
+    if len(matching_zones) == 1:
+        # There is only one possible zone, so just return it.
+        return matching_zones[0]
+    elif (instance and len(matching_zones) == 0):
+        raise NoSuchInstanceException(instance)
+
+    zone_number = 1
+    zone_map = {}
     print('Please specify a zone from one of:')
-    gcloud_compute(args, list_args)
-    return raw_input('Your selected zone: ')
+    for zone in matching_zones:
+        zone_map[zone_number] = zone
+        print(' [{}] {}'.format(zone_number, zone))
+        zone_number += 1
+    selected = raw_input('Your selected zone: ')
+    try:
+        zone_number = int(selected)
+        return zone_map[zone_number]
+    except:
+        if selected not in matching_zones:
+            print('Zone {} not recognized'.format(selected))
+            return prompt_for_zone(args, gcloud_compute, instance=instance)
+        return selected
 
 
 def flatten_metadata(metadata):
