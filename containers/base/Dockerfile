@@ -80,9 +80,9 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf && \
 
 
-# Setup Node.js
+# Setup Node.js using LTS 6.10
     mkdir -p /tools/node && \
-    wget -nv https://nodejs.org/dist/v4.3.2/node-v4.3.2-linux-x64.tar.gz -O node.tar.gz && \
+    wget -nv https://nodejs.org/dist/v6.10.0/node-v6.10.0-linux-x64.tar.gz -O node.tar.gz && \
     tar xzf node.tar.gz -C /tools/node --strip-components=1 && \
     rm node.tar.gz && \
 
