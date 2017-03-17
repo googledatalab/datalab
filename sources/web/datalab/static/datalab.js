@@ -1366,6 +1366,22 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
     html.push('</ul>');
 
     document.getElementById('project_name').innerHTML = html.join('');
+
+    fileSearchPath = 'http://localhost:8081/_filesearch?';
+    fileSearchPath += 'prefix=' + Jupyter.notebook_list.notebook_path;
+    fileSearchPath += '&pattern=';
+
+    searchDiv = $('#tree-filter');
+    resultsDiv = $('#tree-filter-results');
+    searchDiv.on('input', () => {
+      $.getJSON(fileSearchPath + searchDiv.val(), (result_files) => {
+        resultsDiv.empty();
+        result_files.forEach((file) => {
+          resultsDiv.append('<div>' + file + '</div>');
+        });
+      });
+    });
+
   })();
 
   function checkVersion(versionInfo) {
