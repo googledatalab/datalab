@@ -174,9 +174,5 @@ RUN ipython profile create default && \
     mkdir -p /datalab/nbconvert && \
     cp -R /usr/local/share/jupyter/nbextensions/gcpdatalab/* /datalab/nbconvert && \
     ln -s /usr/local/lib/python2.7/dist-packages/notebook/static/custom/custom.css /datalab/nbconvert/custom.css && \
-    mkdir -p /usr/local/lib/python2.7/dist-packages/notebook/static/components/codemirror/mode/text/sql/text && \
-    ln -s /usr/local/share/jupyter/nbextensions/gcpdatalab/codemirror/mode/sql.js /usr/local/lib/python2.7/dist-packages/notebook/static/components/codemirror/mode/text/sql/text/sql.js && \
-    mkdir -p /usr/local/lib/python2.7/dist-packages/notebook/static/components/codemirror/mode/text/bigquery/text && \
-    ln -s /usr/local/share/jupyter/nbextensions/gcpdatalab/codemirror/mode/bigquery.js /usr/local/lib/python2.7/dist-packages/notebook/static/components/codemirror/mode/text/bigquery/text/bigquery.js && \
     cd /
 
