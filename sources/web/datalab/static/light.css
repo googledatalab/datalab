@@ -103,3 +103,17 @@ code {
 .cm-s-ipython span.cm-operator {
   color: #000;
 }
+
+/* File finder autocomplete */
+#tree-filter {
+  background-color: #eee;
+}
+.ui-autocomplete {
+  background-color: #eee;
+}
+.ui-menu-item > a {
+  border-bottom: #ccc 1px solid;
+}
+.ui-menu .ui-menu-item a:hover, .ui-menu-item .ui-state-focus {
+  background-color: #ccc;
+}

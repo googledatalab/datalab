@@ -278,9 +278,25 @@ table.bqsv th, table.bqsv td {
 .cm-s-ipython .CodeMirror-activeline-background {
   background: #373831;
 }
-
 .cm-s-ipython .CodeMirror-matchingbracket {
   color: white !important;
+}
+
+/* File finder autocomplete */
+#tree-filter {
+  background-color: #333;
+  color: white;
+  border: none;
+}
+.ui-autocomplete {
+  background-color: #444;
+}
+.ui-menu-item > a {
+  color: white;
+  border-bottom: #666 1px solid;
+}
+.ui-menu .ui-menu-item a:hover, .ui-menu-item .ui-state-focus {
+  background-color: #333;
 }
 
 /* Modals */

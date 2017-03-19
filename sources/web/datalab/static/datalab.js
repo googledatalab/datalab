@@ -1382,34 +1382,30 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
     });
   }
 
-  function search(pattern) {
-    if (window.datalab.fileIndex === null || window.datalab.fileIndex === undefined) {
-      return [];
-    }
-    return window.datalab.fileIndex.filter((item) => {
-      return item.toLowerCase().indexOf(pattern.toLowerCase()) > -1;
-    });
-  }
-
   indexFiles()
   searchDiv = $('#tree-filter');
-  resultsDiv = $('#tree-filter-results');
 
-  searchDiv.on('input', () => {
-    resultsDiv.empty();
-    if (searchDiv.val() === '') {
-      resultsDiv.hide();
-      Jupyter.notebook_list.load_list();
-    } else {
-      Jupyter.notebook_list.clear_list();
+  searchDiv.autocomplete({
+    appendTo: '.tree-filter-complete',
+    position: { of: '.tree-filter-complete' },
+    source: (request, response) => {
 
-      search(searchDiv.val()).forEach((file) => {
-        resultsDiv.append('<div>' + file + '</div>');
-      });
-      resultsDiv.show();
+      function search(pattern) {
+        if (window.datalab.fileIndex === null || window.datalab.fileIndex === undefined) {
+          return [];
+        }
+        return window.datalab.fileIndex.filter((item) => {
+          return item.toLowerCase().indexOf(pattern.toLowerCase()) > -1;
+        });
+      }
+
+      response(search(searchDiv.val()));
+    },
+    messages: {
+      noResults: '',
+      results: function() {}
     }
   });
-
 
   function checkVersion(versionInfo) {
     if (versionInfo == undefined) {
