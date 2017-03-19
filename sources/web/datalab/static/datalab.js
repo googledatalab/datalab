@@ -1367,22 +1367,49 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
 
     document.getElementById('project_name').innerHTML = html.join('');
 
+  })();
+
+  function indexFiles(prefix) {
+    if (window.datalab.fileIndex) {
+      return window.datalab.fileIndex;
+    }
+
     fileSearchPath = 'http://localhost:8081/_filesearch?';
     fileSearchPath += 'prefix=' + Jupyter.notebook_list.notebook_path;
-    fileSearchPath += '&pattern=';
 
-    searchDiv = $('#tree-filter');
-    resultsDiv = $('#tree-filter-results');
-    searchDiv.on('input', () => {
-      $.getJSON(fileSearchPath + searchDiv.val(), (result_files) => {
-        resultsDiv.empty();
-        result_files.forEach((file) => {
-          resultsDiv.append('<div>' + file + '</div>');
-        });
-      });
+    $.getJSON(fileSearchPath, (result_files) => {
+      window.datalab.fileIndex = result_files;
     });
+  }
 
-  })();
+  function search(pattern) {
+    if (window.datalab.fileIndex === null || window.datalab.fileIndex === undefined) {
+      return [];
+    }
+    return window.datalab.fileIndex.filter((item) => {
+      return item.toLowerCase().indexOf(pattern.toLowerCase()) > -1;
+    });
+  }
+
+  indexFiles()
+  searchDiv = $('#tree-filter');
+  resultsDiv = $('#tree-filter-results');
+
+  searchDiv.on('input', () => {
+    resultsDiv.empty();
+    if (searchDiv.val() === '') {
+      resultsDiv.hide();
+      Jupyter.notebook_list.load_list();
+    } else {
+      Jupyter.notebook_list.clear_list();
+
+      search(searchDiv.val()).forEach((file) => {
+        resultsDiv.append('<div>' + file + '</div>');
+      });
+      resultsDiv.show();
+    }
+  });
+
 
   function checkVersion(versionInfo) {
     if (versionInfo == undefined) {

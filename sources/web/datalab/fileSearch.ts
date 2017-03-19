@@ -13,7 +13,6 @@
  */
 
 /// <reference path="../../../third_party/externs/ts/node/node.d.ts" />
-/// <reference path="../../../third_party/externs/ts/fuzzy/fuzzy.d.ts" />
 /// <reference path="common.d.ts" />
 
 import http = require('http');
@@ -22,7 +21,6 @@ import fs = require('fs');
 import path = require('path');
 import querystring = require('querystring');
 import userManager = require('./userManager');
-import fuzzy = require('fuzzy');
 
 /**
  * Implements the file search/filter request handling.
@@ -32,18 +30,15 @@ import fuzzy = require('fuzzy');
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
   var parsedUrl = url.parse(request.url, true);
   var prefix = parsedUrl.query['prefix'];  
-  var pattern = parsedUrl.query['pattern'];
 
   var files: string[] = [];
   var userId = userManager.getUserId(request);
   var searchPath = userManager.getUserDir(userId) + '/' + prefix;
 
   search(searchPath, files);
-  var ranked = rank(pattern, files, 10);
-  var files_only = ranked.map(f => {return f.original});
 
   response.writeHead(200, { 'Content-Type': 'application/json' });
-  response.write(JSON.stringify(files_only));
+  response.write(JSON.stringify(files));
   response.end();
 }
 
@@ -66,11 +61,6 @@ function search(searchpath: string, output: string[]): void {
       output.push(filename);
     }
   }
-}
-
-function rank(pattern: string, files: string[], topk: number): fuzzy.result[] {
-  var results = fuzzy.filter(pattern, files);
-  return results.slice(0, topk);
 }
 
 /**
