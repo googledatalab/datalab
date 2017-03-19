@@ -33,18 +33,22 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
 
   var files: string[] = [];
   var userId = userManager.getUserId(request);
-  var searchPath = userManager.getUserDir(userId) + '/' + prefix;
+  var userdir = userManager.getUserDir(userId);
+  var searchPath = userdir + '/' + prefix;
 
-  search(searchPath, files);
+  search(searchPath, files, userdir.length + 1);
 
   response.writeHead(200, { 'Content-Type': 'application/json' });
   response.write(JSON.stringify(files));
   response.end();
 }
 
-function search(searchpath: string, output: string[]): void {
+function search(searchpath: string, output: string[], trimLeft?: number): void {
   if (!fs.existsSync(searchpath)) {
-    console.log('Path search start with ' + searchpath + ' returned no results.');
+    return;
+  }
+  // stop the search if we've reached 1000 files
+  if (output.length >= 1000) {
     return;
   }
   var files = fs.readdirSync(searchpath);
@@ -58,6 +62,9 @@ function search(searchpath: string, output: string[]): void {
     if (stat.isDirectory()) {
       search(filename, output);
     } else {
+      if (trimLeft) {
+        filename = filename.substr(trimLeft);
+      }
       output.push(filename);
     }
   }

@@ -1401,6 +1401,10 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
 
       response(search(searchDiv.val()));
     },
+    select: (e, selected) => {
+      var path = selected.item.value;
+      window.open(location.protocol + "//" + location.host + "/notebooks/" + path);
+    },
     messages: {
       noResults: '',
       results: function() {}

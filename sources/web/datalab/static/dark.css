@@ -290,13 +290,14 @@ table.bqsv th, table.bqsv td {
 }
 .ui-autocomplete {
   background-color: #444;
+  border: #333 1px solid;
 }
 .ui-menu-item > a {
   color: white;
   border-bottom: #666 1px solid;
 }
 .ui-menu .ui-menu-item a:hover, .ui-menu-item .ui-state-focus {
-  background-color: #333;
+  background-color: #555;
 }
 
 /* Modals */
