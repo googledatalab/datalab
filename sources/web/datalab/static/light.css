@@ -113,4 +113,5 @@ code {
 }
 .ui-menu .ui-menu-item a:hover, .ui-menu-item .ui-state-focus {
   background-color: #eee;
+  color: black;
 }
