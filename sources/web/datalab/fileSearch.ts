@@ -63,19 +63,23 @@ function index(searchpath: string): void {
   if (fileIndex.length >= 1000000) {
     return;
   }
-  fs.readdirSync(searchpath).forEach((file) => {
-    // ignore hidden files/dirs
-    if (file[0] === '.')
-      return;
+  try {
+    fs.readdirSync(searchpath).forEach((file) => {
+      // ignore hidden files/dirs
+      if (file[0] === '.')
+        return;
 
-    var filename = path.join(searchpath, file);
-    var stat = fs.lstatSync(filename);
-    if (stat.isDirectory()) {
-      index(filename);
-    } else {
-      fileIndex.push(filename.substr(appSettings.contentDir.length + 1));
-    }
-  });
+      var filename = path.join(searchpath, file);
+      var stat = fs.lstatSync(filename);
+      if (stat.isDirectory()) {
+        index(filename);
+      } else {
+        fileIndex.push(filename.substr(appSettings.contentDir.length + 1));
+      }
+    });
+  } catch (ex) {
+    logging.getLogger().error('Could not read dir ' + searchpath);
+  }
 }
 
 /**
