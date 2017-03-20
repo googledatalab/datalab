@@ -52,9 +52,9 @@ MOUNT_CMD="mount -o discard,defaults ${{PERSISTENT_DISK_DEV}} ${{MOUNT_DIR}}"
 
 clone_repo() {{
   echo "Creating the datalab directory"
-  mkdir -p ${{MOUNT_DIR}}/datalab
+  mkdir -p ${{MOUNT_DIR}}/content/datalab
   echo "Cloning the repo {0}"
-  docker run --rm -v "${{MOUNT_DIR}}:/content" \
+  docker run --rm -v "${{MOUNT_DIR}}/content:/content" \
     --entrypoint "/bin/bash" {0} \
     gcloud source repos clone {1} /content/datalab/notebooks
 }}
@@ -68,12 +68,22 @@ format_disk() {{
   clone_repo
 }}
 
-mount_disk() {{
+mount_and_prepare_disk() {{
   echo "Trying to mount the persistent disk"
   mkdir -p "${{MOUNT_DIR}}"
   ${{MOUNT_CMD}} || format_disk
   chmod a+w "${{MOUNT_DIR}}"
-  mkdir -p ${{MOUNT_DIR}}/datalab
+  mkdir -p "${{MOUNT_DIR}}/content"
+
+  old_dir="${{MOUNT_DIR}}/datalab"
+  new_dir="${{MOUNT_DIR}}/content/datalab"
+  if [ -d "${{old_dir}}" ] && [ ! -d "${{new_dir}}" ]; then
+    echo "Moving ${{old_dir}} to ${{new_dir}}"
+    mv "${{old_dir}}" "${{new_dir}}"
+  else
+    echo "Creating ${{new_dir}}"
+    mkdir -p "${{new_dir}}"
+  fi
 }}
 
 configure_swap() {{
@@ -105,7 +115,7 @@ cleanup_tmp() {{
   mkdir -p "${{tmpdir}}"
 }}
 
-mount_disk
+mount_and_prepare_disk
 configure_swap
 cleanup_tmp
 
@@ -150,8 +160,8 @@ spec:
         - name: DATALAB_GIT_AUTHOR
           value: '{3}'
       volumeMounts:
-        - name: datalab
-          mountPath: /content/datalab
+        - name: content
+          mountPath: /content
         - name: tmp
           mountPath: /tmp
     - name: logger
@@ -166,9 +176,9 @@ spec:
           mountPath: /var/lib/docker/containers
           readOnly: true
   volumes:
-    - name: datalab
+    - name: content
       hostPath:
-        path: /mnt/disks/datalab-pd/datalab
+        path: /mnt/disks/datalab-pd/content
     - name: tmp
       hostPath:
         path: /mnt/disks/datalab-pd/tmp
