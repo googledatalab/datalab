@@ -30,10 +30,10 @@ var fileIndex: string[] = [];
  * @param response the outgoing search response.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
-  var parsedUrl = url.parse(request.url, true);
-  var pattern = parsedUrl.query['pattern'];  
+  const parsedUrl = url.parse(request.url, true);
+  const pattern = parsedUrl.query['pattern'];  
 
-  var results = filter(pattern);
+  const results = filter(pattern);
 
   response.writeHead(200, { 'Content-Type': 'application/json' });
   response.write(JSON.stringify(results));
@@ -44,42 +44,57 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
  * Builds an index of all files in the content directory to make search faster
  */
 export function indexFiles(): void {
-  var prefix = appSettings.contentDir + '/';
-  var startTime = process.hrtime();
-  index(appSettings.contentDir + '/');
-  var indexTime = process.hrtime(startTime);
-  logging.getLogger().info('Indexed ' + fileIndex.length + ' files in ' + indexTime[0] + ' seconds');
+  const startTime = process.hrtime();
+  index(appSettings.contentDir + '/', () => {
+    const indexTime = process.hrtime(startTime);
+    logging.getLogger().info('Indexed ' + fileIndex.length + ' files in ' + indexTime[0] + ' seconds');
+  });
 }
 
 /**
  * Recursively indexes all files under the given search path into the global fileIndex object
  * @param searchpath the path prefix to start indexing
  */
-function index(searchpath: string): void {
-  if (!fs.existsSync(searchpath)) {
-    return;
-  }
-  // stop the search if we've reached 1000,000 files
+function index(searchpath: string, callback: Function): void {
+  // stop the search if we've reached 1,000,000 files
   if (fileIndex.length >= 1000000) {
     return;
   }
-  try {
-    fs.readdirSync(searchpath).forEach((file) => {
+  fs.readdir(searchpath, (err, list) => {
+    if (err) {
+      logging.getLogger().error('Could not read dir ' + searchpath);
+      return callback(null);
+    }
+    let remaining = list.length;
+    if (remaining === 0) {
+      return callback();
+    }
+    list.forEach((file) => {
       // ignore hidden files/dirs
-      if (file[0] === '.')
+      if (file[0] === '.') {
+        if (--remaining === 0) {
+          callback();
+        }
         return;
-
-      var filename = path.join(searchpath, file);
-      var stat = fs.lstatSync(filename);
-      if (stat.isDirectory()) {
-        index(filename);
-      } else {
-        fileIndex.push(filename.substr(appSettings.contentDir.length + 1));
       }
+
+      const filename = path.join(searchpath, file);
+      fs.lstat(filename, (err, stat) => {
+        if (stat.isDirectory()) {
+          index(filename, () => {
+            if (--remaining === 0) {
+              callback();
+            }
+          });
+        } else {
+          fileIndex.push(filename.substr(appSettings.contentDir.length + 1));
+          if (--remaining === 0) {
+            callback();
+          }
+        }
+      });
     });
-  } catch (ex) {
-    logging.getLogger().error('Could not read dir ' + searchpath);
-  }
+  });
 }
 
 /**

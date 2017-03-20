@@ -1375,7 +1375,7 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
     position: { of: '.tree-filter-complete' },
     source: (request, response) => {
 
-      fileSearchPath = 'http://localhost:8081/_filesearch?';
+      fileSearchPath = location.protocol + '//' + location.host + '/_filesearch?';
       fileSearchPath += 'pattern=' + searchDiv.val();
 
       if (fileSearchPath !== '') {
