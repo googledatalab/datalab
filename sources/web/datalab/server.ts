@@ -287,7 +287,7 @@ export function run(settings: common.Settings): void {
   infoHandler = info.createHandler(settings);
   settingHandler = settings_.createHandler();
   staticHandler = static_.createHandler(settings);
-  fileSearchHandler = fileSearch.createHandler();
+  fileSearchHandler = fileSearch.createHandler(appSettings);
 
   server = http.createServer(requestHandler);
   server.on('upgrade', socketHandler);

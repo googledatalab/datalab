@@ -1369,41 +1369,28 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
 
   })();
 
-  function indexFiles(prefix) {
-    if (window.datalab.fileIndex) {
-      return window.datalab.fileIndex;
-    }
-
-    fileSearchPath = 'http://localhost:8081/_filesearch?';
-    fileSearchPath += 'prefix=' + Jupyter.notebook_list.notebook_path;
-
-    $.getJSON(fileSearchPath, (result_files) => {
-      window.datalab.fileIndex = result_files;
-    });
-  }
-
-  indexFiles()
   searchDiv = $('#tree-filter');
-
   searchDiv.autocomplete({
     appendTo: '.tree-filter-complete',
     position: { of: '.tree-filter-complete' },
     source: (request, response) => {
 
-      function search(pattern) {
-        if (window.datalab.fileIndex === null || window.datalab.fileIndex === undefined) {
-          return [];
-        }
-        return window.datalab.fileIndex.filter((item) => {
-          return item.toLowerCase().indexOf(pattern.toLowerCase()) > -1;
+      fileSearchPath = 'http://localhost:8081/_filesearch?';
+      fileSearchPath += 'pattern=' + searchDiv.val();
+
+      if (fileSearchPath !== '') {
+        $.getJSON(fileSearchPath, (result_files) => {
+          response(result_files);
         });
       }
-
-      response(search(searchDiv.val()));
     },
     select: (e, selected) => {
       var path = selected.item.value;
-      window.open(location.protocol + "//" + location.host + "/notebooks/" + path);
+      if (path.endsWith('.ipynb')) {
+        window.open(location.protocol + "//" + location.host + "/notebooks/" + path);
+      } else {
+        window.open(location.protocol + "//" + location.host + "/edit/" + path);
+      }
     },
     messages: {
       noResults: '',
