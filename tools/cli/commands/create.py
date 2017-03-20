@@ -78,7 +78,7 @@ mount_and_prepare_disk() {{
   old_dir="${{MOUNT_DIR}}/datalab"
   new_dir="${{MOUNT_DIR}}/content/datalab"
   if [ -d "${{old_dir}}" ] && [ ! -d "${{new_dir}}" ]; then
-    echo "Copying ${{old_dir}} to ${{new_dir}}"
+    echo "Moving ${{old_dir}} to ${{new_dir}}"
     mv "${{old_dir}}" "${{new_dir}}"
   else
     echo "Creating ${{new_dir}}"
