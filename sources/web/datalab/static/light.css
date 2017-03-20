@@ -105,9 +105,6 @@ code {
 }
 
 /* File finder autocomplete */
-#tree-filter {
-  background-color: #eee;
-}
 .ui-autocomplete {
   background-color: #f5f5f5;
 }

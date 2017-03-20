@@ -284,9 +284,9 @@ table.bqsv th, table.bqsv td {
 
 /* File finder autocomplete */
 #tree-filter {
-  background-color: #333;
+  background-color: #2b2b2b;
   color: white;
-  border: none;
+  border: #666 1px solid;
 }
 .ui-autocomplete {
   background-color: #444;

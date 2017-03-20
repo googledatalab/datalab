@@ -469,9 +469,24 @@ div.cellPlaceholder {
   display: none;
 }
 
-/* File finder autocomplete */
+/* Notebook list header */
+#notebook_list_header {
+  display: flex;
+}
+#tree-selector {
+  flex: 0 0;
+}
+#project_name {
+  flex: 1 1;
+  padding: 5px;
+}
+#find-file-container {
+  padding: 2px;
+  font-weight: normal;
+}
 #tree-filter {
-  height: 40px;
+  margin: 0px;
+  padding: 5px;
 }
 .ui-autocomplete {
   position: absolute !important;
