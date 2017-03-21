@@ -62,6 +62,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
  */
 export function indexFiles(): void {
   const startTime = process.hrtime();
+  logging.getLogger().info('Started indexing file system');
   chokidar.watch(appSettings.contentDir + '/', {
       usePolling: true,
       interval: 1000,               // we don't need high frequency polling
