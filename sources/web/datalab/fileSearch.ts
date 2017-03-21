@@ -13,6 +13,7 @@
  */
 
 /// <reference path="../../../third_party/externs/ts/node/node.d.ts" />
+/// <reference path="../../../third_party/externs/ts/chokidar/chokidar.d.ts" />
 /// <reference path="common.d.ts" />
 
 import http = require('http');
@@ -20,10 +21,12 @@ import url = require('url');
 import fs = require('fs');
 import path = require('path');
 import logging = require('./logging');
+import chokidar = require('chokidar');
 
-var appSettings: common.Settings;
-var fileIndex: string[] = [];
-var tooManyFiles: boolean = false;
+let appSettings: common.Settings;
+let fileIndex: string[] = [];
+let indexReady: boolean = false;
+let tooManyFiles: boolean = false;
 const fileCountLimit = 1000000;
 
 // this is matched by the client javascript to display a message that
@@ -42,11 +45,13 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
 
   response.writeHead(200, { 'Content-Type': 'application/json' });
   if (pattern !== undefined) {
-    const results = filter(pattern);
+    const results = filter(pattern, fileIndex, clientResultSize);
     response.write(JSON.stringify(results));
   } else if (statusCheck !== undefined) {
     response.write(JSON.stringify({
-      tooManyFiles: tooManyFiles
+      tooManyFiles: tooManyFiles,
+      indexSize: fileIndex.length,
+      indexReady: indexReady
     }));
   }
   response.end();
@@ -57,78 +62,55 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
  */
 export function indexFiles(): void {
   const startTime = process.hrtime();
-  index(appSettings.contentDir + '/', () => {
-    const indexTime = process.hrtime(startTime);
-    if (tooManyFiles) {
-      logging.getLogger().error('Hit file index maximum limit, searching files should be disabled');
-    } else {
-      logging.getLogger().info('Finished indexing ' + fileIndex.length + ' files in ' + indexTime[0] + ' seconds');
-    }
-  });
-}
-
-/**
- * Recursively indexes all files under the given search path into the global fileIndex object
- * @param searchpath the path prefix to start indexing
- */
-function index(searchpath: string, callback: Function): void {
-  // stop the search if we've reached the file count limit
-  if (fileIndex.length >= fileCountLimit) {
-    tooManyFiles = true;
-    return callback();
-  }
-  fs.readdir(searchpath, (err, list) => {
-    if (err) {
-      logging.getLogger().error('Could not read dir ' + searchpath);
-      return callback();
-    }
-    let remaining = list.length;
-    if (remaining === 0) {
-      return callback();
-    }
-    list.forEach((file) => {
-      // ignore hidden files/dirs
-      if (file[0] === '.') {
-        if (--remaining === 0) {
-          callback();
-        }
-        return;
+  chokidar.watch(appSettings.contentDir + '/', {
+      usePolling: true,
+      interval: 1000,               // we don't need high frequency polling
+      ignored: /(^|[\/\\])\../,     // ignore dot files/dirs
+      ignorePermissionErrors: true, // ignore files with no permissions
+    })
+    .on('add', (addedPath) => {
+      fileIndex.push(addedPath.substr(appSettings.contentDir.length + 1));
+    })
+    .on('unlink', (deletedPath) => {
+      deletedPath = deletedPath.substr(appSettings.contentDir.length + 1);
+      let pos = fileIndex.indexOf(deletedPath);
+      if (pos > -1) {
+        fileIndex.splice(pos, 1);
       }
-
-      const filename = path.join(searchpath, file);
-      fs.lstat(filename, (err, stat) => {
-        if (err) {
-          remaining--;
-          callback();
-        } else {
-          if (stat.isDirectory()) {
-            index(filename, () => {
-              if (--remaining === 0) {
-                callback();
-              }
-            });
-          } else {
-            fileIndex.push(filename.substr(appSettings.contentDir.length + 1));
-            if (--remaining === 0) {
-              callback();
-            }
-          }
-        }
-      });
+    })
+    .on('ready', () => {
+      indexReady = true;
+      const indexTime = process.hrtime(startTime);
+      logging.getLogger().info('Finished indexing ' + fileIndex.length + ' files in ' + indexTime[0] + ' seconds');
+    })
+    .on('raw', () => {
+      if (!indexReady) {
+        indexReady = true;
+        const indexTime = process.hrtime(startTime);
+        logging.getLogger().info('Finished indexing ' + fileIndex.length + ' files in ' + indexTime[0] + ' seconds');
+        logging.getLogger().error('Indexing threw raw event');
+      }
+    })
+    .on('error', () => {
+      indexReady = true;
+      const indexTime = process.hrtime(startTime);
+      logging.getLogger().info('Finished indexing ' + fileIndex.length + ' files in ' + indexTime[0] + ' seconds');
+      logging.getLogger().error('Indexing threw error event');
     });
-  });
 }
 
 /**
  * Filters the file index based on the provided pattern
  * @param pattern the search pattern
+ * @param data the data to filter
+ * @param returnLength the number of results to return
  * @returns a list of matches that are superstrings of pattern
  */
-function filter(pattern: string): string[] {
+function filter(pattern: string, data: string[], returnLength: number): string[] {
   pattern = pattern.toLowerCase();
-  return fileIndex.filter((item) => {
+  return data.filter((item) => {
     return item.toLowerCase().indexOf(pattern) > -1;
-  }).slice(0, clientResultSize);
+  }).slice(0, returnLength);
 }
 
 /**
