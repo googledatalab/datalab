@@ -1388,7 +1388,7 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
             $.getJSON(patternSearchPath, (result_files) => {
               response(result_files);
               if (result_files.length === 20) {
-                $('.ui-autocomplete').prepend('<div style="text-align:center">Showing top 20 results</div>');
+                $('.ui-autocomplete').append('<div style="text-align:center">Showing top 20 results</div>');
               }
             });
           }
