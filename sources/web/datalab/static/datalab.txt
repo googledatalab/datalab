@@ -68,6 +68,7 @@ cat /datalab/license.txt
 - tcp-port-used [https://www.npmjs.com/package/tcp-port-used]
 - ws [https://www.npmjs.com/package/ws]
 - ungit [https://github.com/FredrikNoren/ungit]
+- chokidar [https://github.com/paulmillr/chokidar]
 
 ## Other Packages:
 - curl
