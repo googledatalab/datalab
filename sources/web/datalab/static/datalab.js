@@ -1369,32 +1369,44 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
 
   })();
 
+  fileSearchPath = location.protocol + '//' + location.host + '/_filesearch?';
+
   searchDiv = $('#tree-filter');
-  searchDiv.autocomplete({
-    appendTo: '.tree-filter-complete',
-    position: { of: '.tree-filter-complete' },
-    source: (request, response) => {
+  $.getJSON(fileSearchPath + 'status', (result) => {
+    if (result.tooManyFiles === true) {
+      searchDiv.prop('placeholder', 'Find disabled. Too many files');
+      searchDiv.prop('disabled', true);
+    } else {
+      searchDiv.autocomplete({
+        appendTo: '.tree-filter-complete',
+        position: { of: '.tree-filter-complete' },
+        source: (request, response) => {
 
-      fileSearchPath = location.protocol + '//' + location.host + '/_filesearch?';
-      fileSearchPath += 'pattern=' + searchDiv.val();
+          patternSearchPath = fileSearchPath + 'pattern=' + searchDiv.val();
 
-      if (fileSearchPath !== '') {
-        $.getJSON(fileSearchPath, (result_files) => {
-          response(result_files);
-        });
-      }
-    },
-    select: (e, selected) => {
-      var path = selected.item.value;
-      if (path.endsWith('.ipynb')) {
-        window.open(location.protocol + "//" + location.host + "/notebooks/" + path);
-      } else {
-        window.open(location.protocol + "//" + location.host + "/edit/" + path);
-      }
-    },
-    messages: {
-      noResults: '',
-      results: function() {}
+          if (patternSearchPath !== '') {
+            $.getJSON(patternSearchPath, (result_files) => {
+              response(result_files);
+              if (result_files.length === 20) {
+                $('.ui-autocomplete').prepend('<div style="text-align:center">Showing top 20 results</div>');
+              }
+            });
+          }
+        },
+        select: (e, selected) => {
+          var path = selected.item.value;
+          if (path.endsWith('.ipynb')) {
+            window.open(location.protocol + "//" + location.host + "/notebooks/" + path);
+          } else {
+            window.open(location.protocol + "//" + location.host + "/edit/" + path);
+          }
+        },
+        delay: 500,
+        messages: {
+          noResults: '',
+          results: function() {}
+        }
+      });
     }
   });
 

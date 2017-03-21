@@ -23,6 +23,12 @@ import logging = require('./logging');
 
 var appSettings: common.Settings;
 var fileIndex: string[] = [];
+var tooManyFiles: boolean = false;
+const fileCountLimit = 1000000;
+
+// this is matched by the client javascript to display a message that
+// there are more results than shown. Make sure these are in sync
+const clientResultSize = 20; 
 
 /**
  * Implements the file search/filter request handling.
@@ -32,11 +38,17 @@ var fileIndex: string[] = [];
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
   const parsedUrl = url.parse(request.url, true);
   const pattern = parsedUrl.query['pattern'];  
-
-  const results = filter(pattern);
+  const statusCheck = parsedUrl.query['status'];
 
   response.writeHead(200, { 'Content-Type': 'application/json' });
-  response.write(JSON.stringify(results));
+  if (pattern !== undefined) {
+    const results = filter(pattern);
+    response.write(JSON.stringify(results));
+  } else if (statusCheck !== undefined) {
+    response.write(JSON.stringify({
+      tooManyFiles: tooManyFiles
+    }));
+  }
   response.end();
 }
 
@@ -47,7 +59,11 @@ export function indexFiles(): void {
   const startTime = process.hrtime();
   index(appSettings.contentDir + '/', () => {
     const indexTime = process.hrtime(startTime);
-    logging.getLogger().info('Indexed ' + fileIndex.length + ' files in ' + indexTime[0] + ' seconds');
+    if (tooManyFiles) {
+      logging.getLogger().error('Hit file index maximum limit, searching files should be disabled');
+    } else {
+      logging.getLogger().info('Finished indexing ' + fileIndex.length + ' files in ' + indexTime[0] + ' seconds');
+    }
   });
 }
 
@@ -56,14 +72,15 @@ export function indexFiles(): void {
  * @param searchpath the path prefix to start indexing
  */
 function index(searchpath: string, callback: Function): void {
-  // stop the search if we've reached 1,000,000 files
-  if (fileIndex.length >= 1000000) {
-    return;
+  // stop the search if we've reached the file count limit
+  if (fileIndex.length >= fileCountLimit) {
+    tooManyFiles = true;
+    return callback();
   }
   fs.readdir(searchpath, (err, list) => {
     if (err) {
       logging.getLogger().error('Could not read dir ' + searchpath);
-      return callback(null);
+      return callback();
     }
     let remaining = list.length;
     if (remaining === 0) {
@@ -80,16 +97,21 @@ function index(searchpath: string, callback: Function): void {
 
       const filename = path.join(searchpath, file);
       fs.lstat(filename, (err, stat) => {
-        if (stat.isDirectory()) {
-          index(filename, () => {
+        if (err) {
+          remaining--;
+          callback();
+        } else {
+          if (stat.isDirectory()) {
+            index(filename, () => {
+              if (--remaining === 0) {
+                callback();
+              }
+            });
+          } else {
+            fileIndex.push(filename.substr(appSettings.contentDir.length + 1));
             if (--remaining === 0) {
               callback();
             }
-          });
-        } else {
-          fileIndex.push(filename.substr(appSettings.contentDir.length + 1));
-          if (--remaining === 0) {
-            callback();
           }
         }
       });
@@ -100,13 +122,13 @@ function index(searchpath: string, callback: Function): void {
 /**
  * Filters the file index based on the provided pattern
  * @param pattern the search pattern
- * @returns a list of 20 matches that are superstrings of pattern
+ * @returns a list of matches that are superstrings of pattern
  */
 function filter(pattern: string): string[] {
   pattern = pattern.toLowerCase();
   return fileIndex.filter((item) => {
     return item.toLowerCase().indexOf(pattern) > -1;
-  }).slice(0, 20);
+  }).slice(0, clientResultSize);
 }
 
 /**
