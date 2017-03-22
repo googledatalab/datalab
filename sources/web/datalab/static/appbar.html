@@ -13,11 +13,6 @@
   </span>
   <div class="btn-toolbar pull-right right-toolbar">
     <div class="btn-group">
-      <button id="settingsButton" class="toolbar-btn" title="Settings">
-        <i class="material-icons">settings</i>
-      </button>
-    </div>
-    <div class="btn-group">
       <button id="ungitButton" title="Open ungit on the notebooks repository" class="toolbar-btn">
         <span class="fa fa-code-fork"></span>
       </button>
@@ -30,10 +25,21 @@
       </a>
     </div>
     <div class="btn-group">
+      <a href="#" id="navigationButton" style="display:none;">
+        <button title="Navigation" class="toolbar-btn">
+          <i class="material-icons">bookmark</i>
+        </button>
+      </a>
+    </div>
+    <div class="btn-group">
       <button class="toolbar-btn" data-toggle="dropdown" title="Help Links">
         <i class="material-icons">help_outline</i>
       </button>
       <ul class="dropdown-menu dropdown-menu-right" style="width: 200px">
+        <li><a href="/tree/datalab/docs/Readme.ipynb" target="_blank"><span>Getting Started</span></a></li>
+        <li><a href="/tree/datalab/docs" target="_blank"><span>Samples and Tutorials</span></a></li>
+        <li><a href="http://googledatalab.github.io/pydatalab/" target="_blank"><span>Datalab API</span></a></li>
+        <li class="divider"></li>
         <li><a id="keyboardHelpLink" style="display:none" href="#">Keyboard Shortcuts</a></li>
         <li><a id="markdownHelpLink" style="display:none" href="#">Markdown Syntax</a></li>
         <li id="notebookHelpDivider" class="divider" style="display:none"></li>
@@ -46,15 +52,7 @@
         <li><a href="http://pandas.pydata.org/pandas-docs/stable/" target="_blank"><span>Pandas</span></a></li>
         <li><a href="http://scikit-learn.org/stable/" target="_blank"><span>SciKit-Learn</span></a></li>
         <li><a href="http://tensorflow.org" target="_blank"><span>TensorFlow</span></a></li>
-        <li class="divider"></li>
-        <li><a href="/tree/datalab/docs" target="_blank"><span>Samples and Tutorials</span></a></li>
-        <li><a href="http://googledatalab.github.io/pydatalab/" target="_blank"><span>Datalab API</span></a></li>
       </ul>
-    </div>
-    <div class="btn-group">
-      <button id="aboutButton" title="About Google Cloud Datalab" class="toolbar-btn">
-        <i class="material-icons">info_outline</i>
-      </button>
     </div>
     <div id="accountDropdown" class="btn-group">
       <button id="accountDropdownButton" title="Account" class="toolbar-btn">
@@ -79,11 +77,15 @@
           </div>
           <button id="stopVmButton" title="Stop VM" class="btn btn-danger" style="width: 100%; float: none">Stop VM</button>
         </div>
-        <div>
-          <div id="feedbackButton" title="Provide feedback" class="btn btn-default">
-            <i class="material-icons" id="feedbackButton">feedback</i>
-            <span>Feedback</span>
-          </div>
+        <hr/>
+        <div id="settingsButton">
+          <button title="Settings" class="btn btn-default" style="width: 100%; float: none; border: 0">Settings</button>
+        </div>
+        <div id="aboutButton">
+          <button title="About Google Cloud Datalab" class="btn btn-default" style="width: 100%; float: none; border:0">About Datalab</button>
+        </div>
+        <div id="feedbackButton">
+          <button title="Provide feedback" class="btn btn-default" style="width: 100%; float: none; border:0">Feedback</button>
         </div>
       </div>
     </div>

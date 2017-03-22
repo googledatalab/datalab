@@ -252,11 +252,6 @@ i.material-icons {
   font-size: 18px !important;
   vertical-align: sub !important;
 }
-#toggleSidebarButton {
-  margin-bottom: 8px;
-  background: none;
-  border: none;
-}
 /* Suppress the ipywidget Widgets menu until we figure out how to handle it. */
 #help_menu_container {
   display: none;

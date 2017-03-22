@@ -146,9 +146,6 @@ function showHelp(markup) {
   document.getElementById('navigation').style.display = 'none';
   document.getElementById('help').style.display = '';
 
-  document.getElementById('navigationButton').classList.remove('active');
-  document.getElementById('helpButton').classList.add('active');
-
   if (markup) {
     document.getElementById('help').innerHTML = markup;
   }
@@ -318,6 +315,8 @@ function initializePage(dialog, saveFn) {
     });
     $('#markdownHelpLink').show()
     $('#notebookHelpDivider').show()
+
+    $('#navigationButton').show()
   }
   $('#aboutButton').click(showAbout);
   $('#settingsButton').click(function() {
@@ -1093,13 +1092,6 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     this.blur();
   });
 
-  $('#toggleSidebarButton').click(function() {
-    document.getElementById('sidebarArea').classList.toggle('larger');
-    rotated = $('#toggleSidebarButton').css('transform').indexOf('matrix') > -1;
-    $('#toggleSidebarButton').css('transform', rotated ? '' : 'rotate(180deg)');
-    this.blur();
-  });
-
   $('#hideSidebarButton').click(function() {
     toggleSidebar();
   });
@@ -1109,14 +1101,6 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
       toggleSidebar();
     }
     showNavigation();
-    this.blur();
-  });
-
-  $('#helpButton').click(function() {
-    if (document.getElementById('sidebarArea').style.display == 'none') {
-      toggleSidebar();
-    }
-    showHelp();
     this.blur();
   });
 
@@ -1136,9 +1120,6 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   function showNavigation() {
     document.getElementById('navigation').style.display = '';
     document.getElementById('help').style.display = 'none';
-
-    document.getElementById('navigationButton').classList.add('active');
-    document.getElementById('helpButton').classList.remove('active');
   }
 
   function updateNavigation() {
