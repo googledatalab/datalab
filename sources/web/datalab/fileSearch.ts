@@ -44,16 +44,16 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   const statusCheck = parsedUrl.query['status'];
 
   response.writeHead(200, { 'Content-Type': 'application/json' });
-  if (pattern !== undefined) {
-    const results = filter(pattern, fileIndex, clientResultSize);
-    response.write(JSON.stringify(results));
-  } else if (statusCheck !== undefined) {
-    response.write(JSON.stringify({
-      tooManyFiles: tooManyFiles,
-      indexSize: fileIndex.length,
-      indexReady: indexReady
-    }));
+  let results: string[] = [];
+  if (pattern) {
+    results = filter(pattern, fileIndex);
   }
+  response.write(JSON.stringify({
+    files: results.slice(0, clientResultSize),
+    fullResultSize: results.length,
+    tooManyFiles: tooManyFiles,
+    indexReady: indexReady
+  }));
   response.end();
 }
 
@@ -70,7 +70,11 @@ export function indexFiles(): void {
       ignorePermissionErrors: true, // ignore files with no permissions
     })
     .on('add', (addedPath) => {
-      fileIndex.push(addedPath.substr(appSettings.contentDir.length + 1));
+      if (fileIndex.length >= fileCountLimit) {
+        tooManyFiles = true;
+      } else {
+        fileIndex.push(addedPath.substr(appSettings.contentDir.length + 1));
+      }
     })
     .on('unlink', (deletedPath) => {
       deletedPath = deletedPath.substr(appSettings.contentDir.length + 1);
@@ -104,14 +108,13 @@ export function indexFiles(): void {
  * Filters the file index based on the provided pattern
  * @param pattern the search pattern
  * @param data the data to filter
- * @param returnLength the number of results to return
  * @returns a list of matches that are superstrings of pattern
  */
-function filter(pattern: string, data: string[], returnLength: number): string[] {
+function filter(pattern: string, data: string[]): string[] {
   pattern = pattern.toLowerCase();
   return data.filter((item) => {
     return item.toLowerCase().indexOf(pattern) > -1;
-  }).slice(0, returnLength);
+  });
 }
 
 /**

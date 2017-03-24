@@ -1385,10 +1385,18 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
           patternSearchPath = fileSearchPath + 'pattern=' + searchDiv.val();
 
           if (patternSearchPath !== '') {
-            $.getJSON(patternSearchPath, (result_files) => {
-              response(result_files);
-              if (result_files.length === 20) {
-                $('.ui-autocomplete').append('<div style="text-align:center">Showing top 20 results</div>');
+            $.getJSON(patternSearchPath, (result) => {
+              response(result.files);
+              if (result.fullResultSize > 20) {
+                $('.ui-autocomplete').append('<div class="autocomplete-message">Showing 20 out of ' +
+                  result.fullResultSize + ' results</div>');
+              }
+              if (result.tooManyFiles === true) {
+                $('.ui-autocomplete').prepend(
+                  '<div class="autocomplete-message">Too many files found. Showing partial results</div>');
+              } else if (result.indexReady === false) {
+                $('.ui-autocomplete').prepend(
+                  '<div class="autocomplete-message">Indexing files.. Showing partial results</div>');
               }
             });
           }

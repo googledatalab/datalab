@@ -31,6 +31,8 @@ docker run -it --entrypoint=$ENTRYPOINT \
   -p 127.0.0.1:8081:8080 \
   -p 8910:8910 \
   -e "DATALAB_ENV=local" \
+  -e "DATALAB_DEBUG=true" \
+  -e 'DATALAB_SETTINGS_OVERRIDES={"consoleLogLevel": "debug" }' \
   -e "ENABLE_USAGE_REPORTING=false" \
   datalab-test
 
