@@ -38,6 +38,7 @@ END='\033[0m'
 
 
 def run_notebook_test(test, notebook, url_base, results, testscript):
+  print 'Running notebook ' + notebook
   # load the notebook
   br = webdriver.Firefox()
   retries = 30
@@ -56,8 +57,21 @@ def run_notebook_test(test, notebook, url_base, results, testscript):
   # make sure notebook is ready
   br.find_element_by_id('notebook_panel')
 
+  retries = 5
+  while retries:
+    try:
+      kernel_busy = br.execute_script('return Jupyter.notebook.kernel_busy')
+      if not kernel_busy:
+        break
+    except:
+      print('Waiting on kernel..')
+      time.sleep(1)
+      retries -= 1
+      if not retries:
+        print 'Notebook not connected to a kernel, or kernel busy for too long. Aborting'
+        sys.exit(1)
+
   if testscript:
-    print 'Running notebook ' + notebook
     br.execute_script(testscript)
   result = []
   failed = False
