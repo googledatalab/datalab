@@ -27,7 +27,6 @@ import argparse
 import os
 import re
 import sys
-from threading import Thread
 import time
 import yaml
 
@@ -98,25 +97,19 @@ def run_notebook_test(test, notebook, url_base, results, testscript):
 
 
 def run_tests(url_base, tests=[], testscript=None):
-  threads = []
   results = {}
   failed = False
 
   print 'Tests started..'
 
+  # Create each browser sequentially as doing it in parallel can cause the 
+  # tests to be flaky
   for test in tests:
     if 'disabled' in test and test['disabled']:
       continue
 
     notebook = test['notebook']
-
-    # start tests in parallel browser sessions
-    t = Thread(target=run_notebook_test, args=[test, notebook, url_base, results, testscript])
-    threads.append(t)
-    t.start()
-
-  for t in threads:
-    t.join()
+    run_notebook_test(test, notebook, url_base, results, testscript)
 
   for result in results.values():
     print '\n'.join(result[0])

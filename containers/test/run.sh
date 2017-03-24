@@ -13,7 +13,7 @@
 # limitations under the License.
 
 CONTENT=$HOME
-ENTRYPOINT=""
+ENTRYPOINT="/datalab/test/startup.sh"
 if [ "$1" != "" ]; then
   if [ "$1" != "shell" ]; then
     CONTENT=$1
