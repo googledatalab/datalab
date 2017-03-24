@@ -36,16 +36,16 @@
         <i class="material-icons">help_outline</i>
       </button>
       <ul class="dropdown-menu dropdown-menu-right" style="width: 200px">
-        <li><a href="/tree/datalab/docs/Readme.ipynb" target="_blank"><span>Getting Started</span></a></li>
-        <li><a href="/tree/datalab/docs" target="_blank"><span>Samples and Tutorials</span></a></li>
-        <li><a href="http://googledatalab.github.io/pydatalab/" target="_blank"><span>Datalab API</span></a></li>
-        <li class="divider"></li>
+        <li><a id="showHelpLink" style="display:none" href="#">Show Help</a></li>
         <li><a id="keyboardHelpLink" style="display:none" href="#">Keyboard Shortcuts</a></li>
         <li><a id="markdownHelpLink" style="display:none" href="#">Markdown Syntax</a></li>
         <li id="notebookHelpDivider" class="divider" style="display:none"></li>
-        <li><a href="https://cloud.google.com/bigquery/what-is-bigquery" target="_blank"><span>BigQuery&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></a></li>
-        <li><a href="https://cloud.google.com/storage/docs/overview" target="_blank"><span>Cloud Storage&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></a></li>
+        <li><a href="/tree/datalab/docs/Readme.ipynb" target="_blank"><span>Samples and Tutorials</span></a></li>
         <li class="divider"></li>
+        <li><a href="https://cloud.google.com/bigquery/what-is-bigquery" target="_blank"><span>BigQuery</span></a></li>
+        <li><a href="https://cloud.google.com/storage/docs/overview" target="_blank"><span>Cloud Storage</span></a></li>
+        <li class="divider"></li>
+        <li><a href="http://googledatalab.github.io/pydatalab/" target="_blank"><span>Datalab API</span></a></li>
         <li><a href="https://developers.google.com/chart/" target="_blank"><span>Google Charts</span></a></li>
         <li><a href="http://matplotlib.org/contents.html" target="_blank"><span>Matplotlib</span></a></li>
         <li><a href="http://docs.scipy.org/doc/numpy/reference/" target="_blank"><span>Numpy</span></a></li>
@@ -58,7 +58,7 @@
       <button id="accountDropdownButton" title="Account" class="toolbar-btn">
         <i class="material-icons">account_circle</i>
       </button>
-      <div class="dropdown-menu dropdown-menu-right" style="min-width: 250px;">
+      <div class="dropdown-menu dropdown-menu-right" style="min-width: 150px;">
         <div id="signInButton" style="display:none">
           <button title="Sign In" class="btn btn-success" style="width: 100%; float: none">Sign In</button>
         </div>
@@ -78,15 +78,9 @@
           <button id="stopVmButton" title="Stop VM" class="btn btn-danger" style="width: 100%; float: none">Stop VM</button>
         </div>
         <hr/>
-        <div id="settingsButton">
-          <button title="Settings" class="btn btn-default" style="width: 100%; float: none; border: 0">Settings</button>
-        </div>
-        <div id="aboutButton">
-          <button title="About Google Cloud Datalab" class="btn btn-default" style="width: 100%; float: none; border:0">About Datalab</button>
-        </div>
-        <div id="feedbackButton">
-          <button title="Provide feedback" class="btn btn-default" style="width: 100%; float: none; border:0">Feedback</button>
-        </div>
+        <li><a id="settingsButton" href="#">Settings</a></li>
+        <li><a id="aboutButton" href="#">About Datalab</a></li>
+        <li><a id="feedbackButton" href="#">Feedback</a></li>
       </div>
     </div>
   </div>

@@ -304,6 +304,11 @@ function initializePage(dialog, saveFn) {
 
   // If inside a notebook, prepare notebook-specific help link inside the sidebar
   if (document.getElementById('sidebarArea') !== null) {
+    $('#showHelpLink').click(function(e) {
+      showHelp(document.getElementById('datalabHelp').textContent);
+      e.preventDefault();
+    });
+    $('#showHelpLink').show()
     $('#keyboardHelpLink').click(function(e) {
       showHelp(document.getElementById('shortcutsHelp').textContent);
       e.preventDefault();
