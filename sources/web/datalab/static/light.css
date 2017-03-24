@@ -78,6 +78,11 @@ code {
   background-color: #eee;
 }
 
+/* Modals */
+.modal-header,.modal-body,.modal-body>textarea,.modal-footer {
+  color: #333;
+}
+
 /* Code theme */
 .cm-s-ipython span.cm-comment {
   color: #008000 !important;
