@@ -1096,6 +1096,13 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
       .then(success => removeCompletedMarks());
     this.blur();
   });
+  
+  $('#toggleSidebarButton').click(function() {
+    $('#sidebarArea').toggleClass('larger');
+    rotated = $('#toggleSidebarButton').css('transform').indexOf('matrix') > -1;
+    $('#toggleSidebarButton').css('transform', rotated ? '' : 'rotate(180deg)');
+    this.blur();
+  });
 
   $('#hideSidebarButton').click(function() {
     toggleSidebar();
