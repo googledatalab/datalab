@@ -52,7 +52,8 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     files: results.slice(0, clientResultSize),
     fullResultSize: results.length,
     tooManyFiles: tooManyFiles,
-    indexReady: indexReady
+    indexReady: indexReady,
+    indexingEnabled: appSettings.enableFilesystemIndex,
   }));
   response.end();
 }
@@ -123,7 +124,9 @@ function filter(pattern: string, data: string[]): string[] {
  */
 export function createHandler(settings: common.Settings): http.RequestHandler {
   appSettings = settings;
-  indexFiles();
+  if (appSettings.enableFilesystemIndex) {
+    indexFiles();
+  }
 
   return requestHandler;
 }

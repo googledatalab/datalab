@@ -1373,8 +1373,8 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
 
   searchDiv = $('#tree-filter');
   $.getJSON(fileSearchPath + 'status', (result) => {
-    if (result.tooManyFiles === true) {
-      searchDiv.prop('placeholder', 'Find disabled. Too many files');
+    if (result.tooManyFiles === true || !result.indexingEnabled) {
+      searchDiv.prop('placeholder', 'File finder disabled');
       searchDiv.prop('disabled', true);
     } else {
       searchDiv.autocomplete({
