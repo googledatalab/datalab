@@ -156,6 +156,11 @@ body {
 #mainToolbar, #sidebarToolbar {
   z-index: 8;
 }
+#mainToolbar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
 #updateMessageArea {
   display: none;
   margin-bottom: 0px;
@@ -256,7 +261,8 @@ i.material-icons {
   margin-bottom: 8px;
   background: none;
   border: none;
-}
+ }
+
 /* Suppress the ipywidget Widgets menu until we figure out how to handle it. */
 #help_menu_container {
   display: none;
@@ -526,7 +532,7 @@ div.modal-dialog pre, div.modal-dialog code, #help code, #help pre {
 }
 
 /* Responsive Design */
-@media screen and (max-width: 1270px) {
+@media screen and (max-width: 1080px) {
   span.toolbar-text {
     display: none;
   }

@@ -146,16 +146,17 @@ function showHelp(markup) {
   document.getElementById('navigation').style.display = 'none';
   document.getElementById('help').style.display = '';
 
-  document.getElementById('navigationButton').classList.remove('active');
-  document.getElementById('helpButton').classList.add('active');
+  if (markup === undefined)
+    markup = $('#datalabHelp').text();
+  $('#help').html(markup);
 
-  if (markup) {
-    document.getElementById('help').innerHTML = markup;
-  }
   if (document.getElementById('sidebarArea').style.display == 'none') {
     toggleSidebar();
   }
 }
+// Populate help for the first time sidebar is opened
+markup = $('#datalabHelp').text();
+$('#help').html(markup);
 
 function xhr(url, callback, method) {
   method = method || "GET";
@@ -307,6 +308,11 @@ function initializePage(dialog, saveFn) {
 
   // If inside a notebook, prepare notebook-specific help link inside the sidebar
   if (document.getElementById('sidebarArea') !== null) {
+    $('#showHelpLink').click(function(e) {
+      showHelp(document.getElementById('datalabHelp').textContent);
+      e.preventDefault();
+    });
+    $('#showHelpLink').show()
     $('#keyboardHelpLink').click(function(e) {
       showHelp(document.getElementById('shortcutsHelp').textContent);
       e.preventDefault();
@@ -318,6 +324,8 @@ function initializePage(dialog, saveFn) {
     });
     $('#markdownHelpLink').show()
     $('#notebookHelpDivider').show()
+
+    $('#navigationButton').show()
   }
   $('#aboutButton').click(showAbout);
   $('#settingsButton').click(function() {
@@ -1092,9 +1100,9 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
       .then(success => removeCompletedMarks());
     this.blur();
   });
-
+  
   $('#toggleSidebarButton').click(function() {
-    document.getElementById('sidebarArea').classList.toggle('larger');
+    $('#sidebarArea').toggleClass('larger');
     rotated = $('#toggleSidebarButton').css('transform').indexOf('matrix') > -1;
     $('#toggleSidebarButton').css('transform', rotated ? '' : 'rotate(180deg)');
     this.blur();
@@ -1109,14 +1117,6 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
       toggleSidebar();
     }
     showNavigation();
-    this.blur();
-  });
-
-  $('#helpButton').click(function() {
-    if (document.getElementById('sidebarArea').style.display == 'none') {
-      toggleSidebar();
-    }
-    showHelp();
     this.blur();
   });
 
@@ -1136,9 +1136,6 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   function showNavigation() {
     document.getElementById('navigation').style.display = '';
     document.getElementById('help').style.display = 'none';
-
-    document.getElementById('navigationButton').classList.add('active');
-    document.getElementById('helpButton').classList.remove('active');
   }
 
   function updateNavigation() {
@@ -1231,8 +1228,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
       help = utils.fixCarriageReturn(utils.fixConsole(help)).replace(/\n/g, '<br />');
     }
 
-    document.getElementById('help').innerHTML = help;
-    showHelp();
+    showHelp(help);
   });
 }
 
