@@ -156,6 +156,11 @@ body {
 #mainToolbar, #sidebarToolbar {
   z-index: 8;
 }
+#mainToolbar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
 #updateMessageArea {
   display: none;
   margin-bottom: 0px;
@@ -252,7 +257,7 @@ i.material-icons {
   font-size: 18px !important;
   vertical-align: sub !important;
 }
-#toggleSidebarButton, #hideSidebarButton {
+#toggleSidebarButton {
   margin-bottom: 8px;
   background: none;
   border: none;

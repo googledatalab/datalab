@@ -101,8 +101,6 @@
                 <li id="convertPythonButton"><a href="#">Convert to Python</a></li>
               </ul>
             </div>
-          </div>
-          <div class="btn-toolbar pull-left">
             <div class="btn-group">
               <button id="addCodeCellButton" type="button" class="toolbar-btn" title="Append a new code cell">
                 <i class="material-icons">add_box</i>
@@ -165,6 +163,13 @@
               </div>
             </div>
           </div>
+          <div class="btn-toolbar pull-right">
+             <div id="sidebarToolbar" class="btn-group" style="">
+               <button id="hideSidebarButton" type="button" class="toolbar-btn" title="Toggle sidebar on/off">
+                 <i class="material-icons">keyboard_arrow_down</i>
+               </button>
+             </div>
+           </div>
         </div>
       </div>
       <div id="contentArea">
@@ -181,11 +186,6 @@
         <div id="sidebarArea" style="display:none">
           <div id="sidebarContent">
             <div style="overflow: auto">
-              <div class="btn-group pull-right">
-                <button id="hideSidebarButton" type="button" class="toolbar-btn" title="Close sidebar" style="padding:2px">
-                  <i class="material-icons">close</i>
-                </button>
-              </div>
               <div class="btn-group">
                <button id="toggleSidebarButton" type="button" class="toolbar-btn" title="Toggle the size of the sidebar">
                  <i class="material-icons">chevron_left</i>

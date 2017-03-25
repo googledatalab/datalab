@@ -146,13 +146,17 @@ function showHelp(markup) {
   document.getElementById('navigation').style.display = 'none';
   document.getElementById('help').style.display = '';
 
-  if (markup) {
-    document.getElementById('help').innerHTML = markup;
-  }
+  if (markup === undefined)
+    markup = $('#datalabHelp').text();
+  $('#help').html(markup);
+
   if (document.getElementById('sidebarArea').style.display == 'none') {
     toggleSidebar();
   }
 }
+// Populate help for the first time sidebar is opened
+markup = $('#datalabHelp').text();
+$('#help').html(markup);
 
 function xhr(url, callback, method) {
   method = method || "GET";
@@ -1224,8 +1228,7 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
       help = utils.fixCarriageReturn(utils.fixConsole(help)).replace(/\n/g, '<br />');
     }
 
-    document.getElementById('help').innerHTML = help;
-    showHelp();
+    showHelp(help);
   });
 }
 
