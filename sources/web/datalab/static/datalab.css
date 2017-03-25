@@ -115,12 +115,14 @@ body {
   justify-content: space-between;
 }
 #contentArea {
-  height: 100%;
   -webkit-order: 2;
   order: 2;
   -webkit-flex: 1 1 auto;
   flex: 1 1 auto;
   overflow: auto;
+}
+#mainContent {
+  height: 100%;
 }
 #mainArea {
   -webkit-order: 1;
