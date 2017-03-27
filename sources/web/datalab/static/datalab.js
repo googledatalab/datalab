@@ -1372,7 +1372,7 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
   fileSearchPath = location.protocol + '//' + location.host + '/_filesearch?';
 
   searchDiv = $('#tree-filter');
-  $.getJSON(fileSearchPath + 'status', (result) => {
+  $.getJSON(fileSearchPath, (result) => {
     if (result.tooManyFiles === true || !result.indexingEnabled) {
       searchDiv.prop('placeholder', 'File finder disabled');
       searchDiv.prop('disabled', true);
@@ -1382,7 +1382,8 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
         position: { of: '.tree-filter-complete' },
         source: (request, response) => {
 
-          patternSearchPath = fileSearchPath + 'pattern=' + searchDiv.val();
+          pattern = encodeURIComponent(searchDiv.val());
+          patternSearchPath = fileSearchPath + 'pattern=' + pattern;
 
           if (patternSearchPath !== '') {
             $.getJSON(patternSearchPath, (result) => {

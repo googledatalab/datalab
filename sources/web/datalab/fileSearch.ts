@@ -41,13 +41,14 @@ const clientResultSize = 20;
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
   const parsedUrl = url.parse(request.url, true);
   const pattern = parsedUrl.query['pattern'];  
-  const statusCheck = parsedUrl.query['status'];
+  let results: string[] = [];
 
   response.writeHead(200, { 'Content-Type': 'application/json' });
-  let results: string[] = [];
-  if (pattern) {
-    results = filter(pattern, fileIndex);
+  if (pattern !== undefined) {
+    let decodedPattern = decodeURIComponent(pattern);
+    results = filter(decodedPattern, fileIndex);
   }
+
   response.write(JSON.stringify({
     files: results.slice(0, clientResultSize),
     fullResultSize: results.length,
@@ -89,6 +90,9 @@ export function indexFiles(): void {
       const indexTime = process.hrtime(startTime);
       logging.getLogger().info('Finished indexing ' + fileIndex.length + ' files in ' + indexTime[0] + ' seconds');
     })
+    // 'raw' event gets fired sometimes by the underlying fs.watch used by chokidar
+    // and it gets fired multiple times at the end of indexing when I tested indexing
+    // of the container's file system
     .on('raw', () => {
       if (!indexReady) {
         indexReady = true;
@@ -97,6 +101,9 @@ export function indexFiles(): void {
         logging.getLogger().error('Indexing threw raw event');
       }
     })
+    // It's unclear why this event might get fired since permission errors are ignored,
+    // it's here to make sure indexing singals on complete, even if an error occurred
+    // with some of the files
     .on('error', () => {
       indexReady = true;
       const indexTime = process.hrtime(startTime);
