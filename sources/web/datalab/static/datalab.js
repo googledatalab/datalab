@@ -835,8 +835,8 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 
     var originalExecute = kernel.prototype.execute;
     kernel.prototype.execute = function (code, callbacks, options) {
-      // If this is a line magic but has a non-empty cell body change it to a cell magic.
-      if (code.length > 2 && code[0] == '%' && code[1] != '%') {
+      // If this is a sql line magic but has a non-empty cell body change it to a cell magic.
+      if (code.startsWith('%sql')) {
         var lines = code.split('\n');
         if (lines.length > 1) {
           for (var i = 1; i < lines.length; i++) {
