@@ -102,7 +102,7 @@ export function indexFiles(): void {
       }
     })
     // It's unclear why this event might get fired since permission errors are ignored,
-    // it's here to make sure indexing singals on complete, even if an error occurred
+    // it's here to make sure indexing signals on complete, even if an error occurred
     // with some of the files
     .on('error', () => {
       indexReady = true;
