@@ -1362,7 +1362,58 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
     html.push('</ul>');
 
     document.getElementById('project_name').innerHTML = html.join('');
+
   })();
+
+  fileSearchPath = location.protocol + '//' + location.host + '/_filesearch?';
+
+  searchDiv = $('#tree-filter');
+  $.getJSON(fileSearchPath, (result) => {
+    if (result.tooManyFiles === true || !result.indexingEnabled) {
+      searchDiv.prop('placeholder', 'File finder disabled');
+      searchDiv.prop('disabled', true);
+    } else {
+      searchDiv.autocomplete({
+        appendTo: '.tree-filter-complete',
+        position: { of: '.tree-filter-complete' },
+        source: (request, response) => {
+
+          pattern = encodeURIComponent(searchDiv.val());
+          patternSearchPath = fileSearchPath + 'pattern=' + pattern;
+
+          if (patternSearchPath !== '') {
+            $.getJSON(patternSearchPath, (result) => {
+              response(result.files);
+              if (result.fullResultSize > 20) {
+                $('.ui-autocomplete').append('<div class="autocomplete-message">Showing 20 out of ' +
+                  result.fullResultSize + ' results</div>');
+              }
+              if (result.tooManyFiles === true) {
+                $('.ui-autocomplete').prepend(
+                  '<div class="autocomplete-message">Too many files found. Showing partial results</div>');
+              } else if (result.indexReady === false) {
+                $('.ui-autocomplete').prepend(
+                  '<div class="autocomplete-message">Indexing files.. Showing partial results</div>');
+              }
+            });
+          }
+        },
+        select: (e, selected) => {
+          var path = selected.item.value;
+          if (path.endsWith('.ipynb')) {
+            window.open(location.protocol + "//" + location.host + "/notebooks/" + path);
+          } else {
+            window.open(location.protocol + "//" + location.host + "/edit/" + path);
+          }
+        },
+        delay: 500,
+        messages: {
+          noResults: '',
+          results: function() {}
+        }
+      });
+    }
+  });
 
   function checkVersion(versionInfo) {
     if (versionInfo == undefined) {

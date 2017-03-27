@@ -111,6 +111,11 @@ declare module common {
     enableAutoGCSBackups: boolean;
 
     /**
+     * Whether to index the file system for finding files
+     */
+    enableFilesystemIndex: boolean;
+
+    /**
      * Number of hourly GCS backups of the user's content dir to keep
      */
     numHourlyBackups: number;

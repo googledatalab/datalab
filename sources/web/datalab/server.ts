@@ -23,6 +23,7 @@ import http = require('http');
 import info = require('./info');
 import jupyter = require('./jupyter');
 import logging = require('./logging');
+import fileSearch = require('./fileSearch');
 import net = require('net');
 import noCacheContent = require('./noCacheContent')
 import path = require('path');
@@ -42,6 +43,7 @@ var healthHandler: http.RequestHandler;
 var infoHandler: http.RequestHandler;
 var settingHandler: http.RequestHandler;
 var staticHandler: http.RequestHandler;
+var fileSearchHandler: http.RequestHandler;
 
 /**
  * The application settings instance.
@@ -192,6 +194,12 @@ function handleRequest(request: http.ServerRequest,
     return;
   }
 
+  // file search capability
+  if (path.indexOf('/_filesearch') === 0) {
+    fileSearchHandler(request, response);
+    return;
+  }
+
   // Not Found
   response.statusCode = 404;
   response.end();
@@ -279,6 +287,7 @@ export function run(settings: common.Settings): void {
   infoHandler = info.createHandler(settings);
   settingHandler = settings_.createHandler();
   staticHandler = static_.createHandler(settings);
+  fileSearchHandler = fileSearch.createHandler(appSettings);
 
   server = http.createServer(requestHandler);
   server.on('upgrade', socketHandler);

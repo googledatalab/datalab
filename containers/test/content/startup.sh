@@ -15,6 +15,7 @@
 # limitations under the License.
 
 /datalab/run.sh &
+sleep 10
 Xvfb :10 -ac &
 
 cd /datalab/test

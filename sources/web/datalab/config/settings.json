@@ -21,6 +21,7 @@
   "allowOriginOverrides": [],
   "allowHttpOverWebsocket": false,
   "enableAutoGCSBackups": false,
+  "enableFilesystemIndex": true,
   "numHourlyBackups": 10,
   "numDailyBackups": 7,
   "numWeeklyBackups": 20,
