@@ -64,10 +64,14 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir matplotlib==1.5.3 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir ggplot==0.6.8 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir seaborn==0.7.0 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir notebook==4.2.3 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir PyYAML==3.11 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir six==1.10.0 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir ipywidgets==5.2.2 && \
+    # Install notebook after ipywidgets, and keep it pinned to 4.2.3, higher versions may
+    # not work well with datalab. For example, kernel gateway doesn't work with 4.3.0 notebook
+    # (https://github.com/googledatalab/datalab/issues/1083)
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir notebook==4.2.3 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir ipykernel==4.5.2 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir future==0.15.2 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir psutil==4.3.0 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir google-api-python-client==1.5.1  && \
@@ -136,11 +140,6 @@ RUN pip install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow==
 RUN gsutil cp gs://cloud-ml/sdk/cloudml.latest.tar.gz cloudml.latest.tar.gz && \
     pip install --upgrade-strategy only-if-needed --no-cache-dir cloudml.latest.tar.gz && \
     rm cloudml.latest.tar.gz
-
-# Install notebook again and pin version to 4.2.3 
-# ipywidgets and maybe others will update notebook to a newer version that may not work well with datalab.
-# For example, kernel gateway doesn't work with 4.3.0 notebook (https://github.com/googledatalab/datalab/issues/1083)
-RUN pip install -U --upgrade-strategy only-if-needed --no-cache-dir notebook==4.2.3
 
 ADD config/ipython.py /etc/ipython/ipython_config.py
 ADD config/nbconvert.py /etc/jupyter/jupyter_notebook_config.py
