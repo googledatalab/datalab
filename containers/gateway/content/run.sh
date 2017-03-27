@@ -25,8 +25,13 @@ then
   . ~/startup.sh
 fi
 
-# Start the DataLab kernel gateway.
-jupyter kernelgateway --JupyterWebsocketPersonality.list_kernels=True --KernelGatewayApp.port=8081 --KernelGatewayApp.ip=0.0.0.0 &
+# Start the Datalab kernel gateway.
+KG_COMMAND="jupyter kernelgateway --JupyterWebsocketPersonality.list_kernels=True --KernelGatewayApp.port=8081 --KernelGatewayApp.ip=0.0.0.0"
+if [ -n "${DATALAB_NOTEBOOK}" ]; then
+  KG_COMMAND="${KG_COMMAND} --KernelGatewayApp.api=kernel_gateway.notebook_http --KernelGatewayApp.seed_uri=${DATALAB_NOTEBOOK}"
+fi
+
+${KG_COMMAND} &
 n=0; while true; do
   n=$((n+1)); sleep 1s; curl -s 'http://127.0.0.1:8081' >/dev/null 2>&1
   if [ $? = 0 ]; then echo 'Jupyter kernel gateway started.'; break
