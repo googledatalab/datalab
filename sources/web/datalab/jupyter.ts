@@ -130,26 +130,16 @@ function createJupyterServerAtPort(port: number, userId: string, userDir: string
     delete jupyterServers[server.userId];
   }
 
+  var secretPath = path.join(appSettings.datalabRoot, '/content/datalab/.config/notary_secret');
   var processArgs = appSettings.jupyterArgs.slice().concat([
     '--port=' + server.port,
     '--port-retries=0',
-    '--notebook-dir="' + server.notebooks + '"'
+    '--notebook-dir="' + server.notebooks + '"',
+    '--NotebookNotary.algorithm=sha256',
+    '--NotebookNotary.secret_file=' + secretPath
   ]);
 
   var notebookEnv: any = process.env;
-  if ('KG_URL' in notebookEnv && notebookEnv['KG_URL']) {
-    logging.getLogger().info(
-      'Found a kernel gateway URL of %s... configuring the notebook to use it', notebookEnv['KG_URL']);
-    var secretPath = path.join(appSettings.datalabRoot, '/content/datalab/.config/notary_secret');
-    processArgs = processArgs.concat([
-      '--NotebookApp.session_manager_class=nb2kg.managers.SessionManager',
-      '--NotebookApp.kernel_manager_class=nb2kg.managers.RemoteKernelManager',
-      '--NotebookApp.kernel_spec_manager_class=nb2kg.managers.RemoteKernelSpecManager',
-      '--NotebookNotary.algorithm=sha256',
-      '--NotebookNotary.secret_file=' + secretPath,
-    ]);
-  }
-
   var processOptions = {
     detached: false,
     env: notebookEnv
