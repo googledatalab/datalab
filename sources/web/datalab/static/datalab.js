@@ -1101,6 +1101,11 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     this.blur();
   });
   
+  $('#interruptKernelButton').click(function() {
+    Jupyter.notebook.kernel.interrupt();
+    this.blur();
+  });
+  
   $('#toggleSidebarButton').click(function() {
     $('#sidebarArea').toggleClass('larger');
     rotated = $('#toggleSidebarButton').css('transform').indexOf('matrix') > -1;
