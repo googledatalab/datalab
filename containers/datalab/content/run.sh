@@ -14,107 +14,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-USAGE='USAGE: One of...
-
-To run locally:
+USAGE='USAGE:
 
     docker run -it -p "8081:8080" -v "${HOME}:/content" gcr.io/cloud-datalab/datalab:local
-
-Or, to connect to a kernel gateway in a GCE VM;
-
-    docker run -it -p "8081:8080" -v "${HOME}:/content" \
-      -e "GATEWAY_VM=${PROJECT_ID}/${ZONE}/${INSTANCE}"
-      gcr.io/cloud-datalab/datalab:local
 '
 
-ERR_MALFORMED_GATEWAY=1
-ERR_LOGIN=2
-ERR_PROJECT_NOT_FOUND=3
-ERR_ZONE_NOT_FOUND=4
-ERR_INSTANCE_NOT_FOUND=5
-ERR_DEPLOY=6
-ERR_GCLOUD_SSH_FAILED=7
-ERR_TUNNEL_FAILED=8
-ERR_GATEWAY_FAILED=9
-ERR_TMP_NOT_WRITABLE=10
+GATEWAY_DEPRECATED_MSG='Running Datalab against a kernel gateway is no longer supported.
 
-run_login() {
-  local login_cmd=${1:-"gcloud auth login"}
+Please either switch to running all of Datalab in a VM via the `datalab` command line tool,
+or continue to use the unsupported image gcr.io/cloud-datalab/datalab:local-20170224
+'
 
-  USER_EMAIL=`gcloud auth list --format="value(account)"`
-  if [[ -z "${USER_EMAIL}" ]]; then
-    local failed_login=""
-    ${login_cmd} || failed_login="true"
-    if [[ -n "${failed_login}" ]]; then
-      echo "Failed to log in to gcloud"
-      exit "${ERR_LOGIN}"
-    fi
-  fi
-  USER_EMAIL=`gcloud auth list --format="value(account)"`
-}
+ERR_UNSUPPORTED_GATEWAY_OPTION=1
+ERR_TMP_NOT_WRITABLE=2
 
-kill_container() {
-  echo "Failing with error code $1"
-  # Docker will keep running as long as any processes remain
-  # running, so we have to kill all of them (not just the first process)
-  for PID in `ps -o pid=`; do
-    # We have to make sure that the current process does not get
-    # killed until it has finished killing all the other processes  
-    if [ "$PID" != "$BASHPID" ]; then
-      kill -SIGKILL $PID 2>&1 > /dev/null
-    fi
-  done
-
-  # Finally, we kill the current process.
-  exit $1
-}
-
-setup_tunnel() {
-  project_id=$1
-  zone=$2
-  instance=$3
-  ssh_user=$4
-  echo "Will connect to the kernel gateway running on the GCE VM ${instance} as ${ssh_user}"
-  gcloud compute ssh --quiet \
-    --project "${project_id}" \
-    --zone "${zone}" \
-    --ssh-flag="-fNL" \
-    --ssh-flag="localhost:8082:localhost:8080" \
-    --ssh-key-file="/content/datalab/.config/.ssh/google_compute_engine" \
-    "${ssh_user}@${instance}" || kill_container "${ERR_GCLOUD_SSH_FAILED}"
-
-  # Test that we can actually call the gateway API via the SSH tunnel
-  tunnel_failed=""
-  curl -o /tmp/kernel_specs http://localhost:8082/api/kernelspecs 2>/dev/null || tunnel_failed="true"
-  if [[ "${tunnel_failed}" == true ]]; then
-    echo "Failed to set up the SSH tunnel to the VM ${instance}"
-    echo "If the VM was recently created, then it may still be starting up, and retrying the command may work."
-    kill_container "${ERR_TUNNEL_FAILED}"
-  fi
-
-  default_kernel_spec=`cat /tmp/kernel_specs | python -c $'import json\nprint json.loads(raw_input())["default"]'`
-  if [[ -z "${default_kernel_spec}" ]]; then
-    echo "Failed to verify that the kernel gateway is running"
-    echo "If the VM was recently created, then it may still be starting up, and retrying the command may work."
-    kill_container "${ERR_GATEWAY_FAILED}"
-  fi
-  echo "Successfully established SSH tunnel to ${instance}"
-
-  watch_and_restart_tunnel "${project_id}" "${zone}" "${instance}" "${ssh_user}" &
-}
-
-watch_and_restart_tunnel() {
-  project_id=$1
-  zone=$2
-  instance=$3
-  ssh_user=$4
-  
-  while [ "$(ps --ppid $$ -o comm= | grep ssh)" != "" ]; do
-    sleep 5
-  done
-  echo "Restarting SSH tunnel"
-  setup_tunnel "${project_id}" "${zone}" "${instance}" "${ssh_user}"
-}
+if [ -n "${GATEWAY_VM}" ] || [ -n "${EXPERIMENTAL_KERNEL_GATEWAY_URL}" ] || [ -n "${KG_URL}" ]; then
+  echo "${GATEWAY_DEPRECATED_MSG}"
+  exit "${ERR_UNSUPPORTED_GATEWAY_OPTION}"
+fi
 
 check_tmp_directory() {
     echo "Verifying that the /tmp directory is writable"
@@ -128,83 +45,6 @@ check_tmp_directory() {
 }
 
 source /datalab/setup-env.sh
-
-if [[ -n "${GATEWAY_VM}" ]]; then
-  GATEWAY_PART_1=`echo "${GATEWAY_VM}" | cut -d '/' -f 1`
-  GATEWAY_PART_2=`echo "${GATEWAY_VM}" | cut -d '/' -f 2`
-  GATEWAY_PART_3=`echo "${GATEWAY_VM}" | cut -d '/' -f 3`
-
-  if [[ -z "${GATEWAY_PART_3}" &&  -z "${GATEWAY_PART_2}" ]]; then
-    export INSTANCE="${GATEWAY_PART_1}"
-  elif [[ -z "${GATEWAY_PART_1}" || -z "${GATEWAY_PART_2}" || -z "${GATEWAY_PART_3}" ]]; then
-    echo "Malformed gateway VM name"
-    echo "${USAGE}"
-    exit "${ERR_MALFORMED_GATEWAY}"
-  else
-    export PROJECT_ID="${GATEWAY_PART_1}"
-    export ZONE="${GATEWAY_PART_2}"
-    export INSTANCE="${GATEWAY_PART_3}"
-  fi
-fi
-
-if [[ "${CLI_LOGIN}" == "true" ]]; then
-  run_login
-fi
-
-if [[ -n "${INSTANCE}" ]]; then
-  run_login "node /datalab/web/login.js 2>/dev/null"
-
-  PROJECT_NOT_FOUND=""
-  ZONE_NOT_FOUND=""
-  INSTANCE_NOT_FOUND=""
-
-  if [[ -z "${PROJECT_ID}" ]]; then
-    read -p "Please enter the Google Cloud Platform project to use: " PROJECT_ID
-  fi
-  # Verify that the specified project exists...
-  gcloud -q projects describe "${PROJECT_ID}" >/dev/null 2>&1 || PROJECT_NOT_FOUND="true"
-  if [[ -n "${PROJECT_NOT_FOUND}" ]]; then
-    echo "Project ${PROJECT_ID} not found"
-    echo "${USAGE}"
-    exit "${ERR_PROJECT_NOT_FOUND}"
-  fi
-  # Persist the project for future runs.
-  gcloud config set project "${PROJECT_ID}"
-
-  if [[ -z "${ZONE}" ]]; then
-    read -p "Please enter the zone where the VM should be located: " ZONE
-  fi
-  # Verify that the specified zone exists...
-  gcloud -q compute zones describe "${ZONE}" >/dev/null 2>&1 || ZONE_NOT_FOUND="true"
-  if [[ -n "${ZONE_NOT_FOUND}" ]]; then
-    echo "Zone ${ZONE} not found"
-    echo "${USAGE}"
-    exit "${ERR_ZONE_NOT_FOUND}"
-  fi
-  # Persist the project and zone for future runs.
-  gcloud config set compute/zone "${ZONE}"
-
-  # Verify that the specified instance exists...
-  gcloud -q compute instances describe "${INSTANCE}" >/dev/null 2>&1 || INSTANCE_NOT_FOUND="true"
-  if [[ -n "${INSTANCE_NOT_FOUND}" ]]; then
-    echo "Instance ${INSTANCE} not found"
-    if [[ "${DEPLOY_VM}" == "true" ]]; then
-      /datalab/deploy.sh "${PROJECT_ID}" "${ZONE}" "${INSTANCE}" || exit ${ERR_DEPLOY}
-    else
-      echo "${USAGE}"
-      exit "${ERR_INSTANCE_NOT_FOUND}"
-    fi
-  fi
-
-  SSH_USER=`echo ${USER_EMAIL} | cut -d '@' -f 1`
-  setup_tunnel "${PROJECT_ID}" "${ZONE}" "${INSTANCE}" "${SSH_USER}"
-  export EXPERIMENTAL_KERNEL_GATEWAY_URL="http://localhost:8082"
-fi
-
-if [ -n "${EXPERIMENTAL_KERNEL_GATEWAY_URL}" ]
-then
-  export KG_URL="${EXPERIMENTAL_KERNEL_GATEWAY_URL}"
-fi
 
 if [ "${ENABLE_USAGE_REPORTING}" = "true" ]
 then
@@ -254,12 +94,6 @@ if [ -n "${vm_project}" ] && [ "${vm_project}" != "no-project-id" ]; then
    export VM_PROJECT="${vm_project}"
    export VM_NAME=$(curl -s "${compute_metadata_url}/instance/hostname" -H "Metadata-Flavor: Google" | cut -d '.' -f 1)
    export VM_ZONE=$(curl -s "${compute_metadata_url}/instance/zone" -H "Metadata-Flavor: Google" | sed 's/.*zones\///')
-fi
-
-# Install the kernel gateway server extension, if a kernel gateway URL has been specified
-if [ -n "${KG_URL}" ]
-then
-  jupyter serverextension enable --py nb2kg --sys-prefix
 fi
 
 # Create the notebook notary secret if one does not already exist

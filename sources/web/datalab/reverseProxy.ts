@@ -55,27 +55,13 @@ export function getRequestPort(request: http.ServerRequest, path: string): strin
 }
 
 /**
- * Check if traffic to this port should be proxied back to the gateway
- */
-function shouldProxyPort(port: String) {
-  // Do not proxy 8083 to gateway, it's open for ungit.
-  // Do not proxy socketio's port to gateway, it's open for socket.io wrapping.
-  return !!process.env.KG_URL && port !== '8083' && port !== socketioPort;
-}
-
-/**
  * Handle request by sending it to the internal http endpoint.
  */
 export function handleRequest(request: http.ServerRequest,
                               response: http.ServerResponse,
                               port: String) {
-  if (shouldProxyPort(port)) {
-    proxy.web(request, response, { target: process.env.KG_URL });
-  }
-  else {
-    request.url = request.url.replace(regex, '/');
-    proxy.web(request, response, { target: 'http://localhost:' + port });
-  }
+  request.url = request.url.replace(regex, '/');
+  proxy.web(request, response, { target: 'http://localhost:' + port });
 }
 
 /**
