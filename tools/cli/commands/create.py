@@ -134,8 +134,18 @@ configure_swap() {{
 
 cleanup_tmp() {{
   tmpdir="${{MOUNT_DIR}}/tmp"
-  rm -rf "${{tmpdir}}"
+
+  # First, make sure the temporary directory exists.
   mkdir -p "${{tmpdir}}"
+
+  # Remove all files from it.
+  #
+  # We do not remove the directory itself, as that could lead to a broken
+  # volume mount if the Docker container has already started).
+  #
+  # We also do not just use `rm -rf ${{tmpdir}}/*`, as that would leave
+  # behind any hidden files.
+  find "${{tmpdir}}/" -mindepth 1 -delete
 }}
 
 mount_and_prepare_disk
@@ -153,6 +163,8 @@ _DATALAB_CLOUD_CONFIG = """
 #cloud-config
 
 runcmd:
+- ['while', '[', '!', '-e', '/mnt/disks/datalab-pd/tmp', ']', ';',
+   'do', 'sleep', '1', ';', 'done']
 - ['curl', '-X', 'GET', '-H', 'Metadata-Flavor: Google','{0}',
    '-o', '/tmp/podspec.yaml']
 - ['kubelet', '--pod-manifest-path', '/tmp/podspec.yaml']
