@@ -80,7 +80,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir bs4==0.0.1 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir crcmod==1.7 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir pillow==3.4.1 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir google-cloud-dataflow==0.5.5 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir google-cloud-dataflow==0.6.0 && \
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf && \
 
 
@@ -131,15 +131,13 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     rm -rf /usr/share/i18n/locales/* && \
     cd /
 
+# Install tf-transform
+RUN pip install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow-transform==0.1.7
+
 # Install TensorFlow
 # Setting protobuf to 3.1.0 to workaround a tensorflow 1.0 issue in tcmalloc
 RUN pip install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow==1.0 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir protobuf==3.1.0
-
-# Install CloudML SDK
-RUN gsutil cp gs://cloud-ml/sdk/cloudml.latest.tar.gz cloudml.latest.tar.gz && \
-    pip install --upgrade-strategy only-if-needed --no-cache-dir cloudml.latest.tar.gz && \
-    rm cloudml.latest.tar.gz
 
 ADD config/ipython.py /etc/ipython/ipython_config.py
 ADD config/nbconvert.py /etc/jupyter/jupyter_notebook_config.py
