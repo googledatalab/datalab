@@ -155,10 +155,15 @@ function handleRequest(request: http.ServerRequest,
       (path.indexOf('/edit') == 0) ||
       (path.indexOf('/sessions') == 0)) {
 
-    if (path.indexOf('/tree') == 0) {
-        loadedSettings[startup_path_setting] = path
-        settings_.updateUserSetting(userId, startup_path_setting, path, true);
+    // When the user asks for something in the tree, we eventually get called
+    // here with a corresponding URL that starts with /api/contents/.
+    const apiPrefix = '/api/contents/';
+    if (path.indexOf(apiPrefix) == 0 && request.url.indexOf('type=directory') > 0) {
+        const treePath = '/tree/' + path.substr(apiPrefix.length);
+        loadedSettings[startup_path_setting] = treePath;
+        settings_.updateUserSetting(userId, startup_path_setting, treePath, true);
     }
+
     handleJupyterRequest(request, response);
     return;
   }
