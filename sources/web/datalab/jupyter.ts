@@ -414,8 +414,8 @@ function responseHandler(proxyResponse: http.ClientResponse,
                          request: http.ServerRequest, response: http.ServerResponse) {
   if (appSettings.allowOriginOverrides.length &&
       appSettings.allowOriginOverrides.indexOf(request.headers['origin']) != -1) {
-      proxyResponse.headers['access-control-allow-origin'] = request.headers['origin'];
-      proxyResponse.headers['access-control-allow-credentials'] = 'true';
+    proxyResponse.headers['access-control-allow-origin'] = request.headers['origin'];
+    proxyResponse.headers['access-control-allow-credentials'] = 'true';
   } else if (proxyResponse.headers['access-control-allow-origin'] !== undefined) {
     // Delete the allow-origin = * header that is sent (likely as a result of a workaround
     // notebook configuration to allow server-side websocket connections that are

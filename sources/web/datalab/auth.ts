@@ -190,7 +190,7 @@ function setOauth2Client(request: http.ServerRequest): void {
     // are limited to localhost only. We should consider making this
     // configurable, or using the OAuth flow for non-web applications.
     oauth2Client = new OAuth2(clientId, clientSecret,
-       'http://localhost:' + getPortNumber(request) + '/oauthcallback');
+        'http://localhost:' + getPortNumber(request) + '/oauthcallback');
   }
 }
 
