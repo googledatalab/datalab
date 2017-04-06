@@ -136,7 +136,7 @@ function sendJupyterFile(relativePath: string, response: http.ServerResponse) {
  * @param filePath the relative path of the file.
  */
 export function datalabFileExists(filePath: string) {
-    return fs.existsSync(path.join(__dirname, 'static', filePath));
+  return fs.existsSync(path.join(__dirname, 'static', filePath));
 }
 
 /**
@@ -146,8 +146,8 @@ export function datalabFileExists(filePath: string) {
  * @param response the out-going response associated with the current HTTP request.
  */
 function sendUserCustomTheme(userId: string, response: http.ServerResponse): void {
-    var customThemePath = path.join(settings.getUserConfigDir(userId), CUSTOM_THEME_FILE);
-    sendFile(customThemePath, response, DEFAULT_THEME_FILE, true);
+  var customThemePath = path.join(settings.getUserConfigDir(userId), CUSTOM_THEME_FILE);
+  sendFile(customThemePath, response, DEFAULT_THEME_FILE, true);
 }
 
 /**
