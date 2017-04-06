@@ -155,15 +155,17 @@ function handleRequest(request: http.ServerRequest,
       (path.indexOf('/edit') == 0) ||
       (path.indexOf('/sessions') == 0)) {
 
-    // When the user asks for something in the tree, we eventually get called
-    // here with a corresponding URL that starts with /api/contents/.
-    const apiPrefix = '/api/contents/';
-    if (path.indexOf(apiPrefix) == 0 && request.url.indexOf('type=directory') > 0) {
-        const treePath = '/tree/' + path.substr(apiPrefix.length);
-        loadedSettings[startup_path_setting] = treePath;
-        settings_.updateUserSetting(userId, startup_path_setting, treePath, true);
+    if (path.indexOf('/tree') == 0) {
+        const filePath = '/content' + path.substr('/tree'.length);
+        try {
+            if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+              loadedSettings[startup_path_setting] = path
+              settings_.updateUserSetting(userId, startup_path_setting, path, true);
+            }
+        } catch (err) {
+            logging.getLogger().error(err, 'Failed check for file "%s": %s', filePath, err.code);
+        }
     }
-
     handleJupyterRequest(request, response);
     return;
   }
