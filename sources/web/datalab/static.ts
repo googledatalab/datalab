@@ -135,7 +135,7 @@ function sendJupyterFile(relativePath: string, response: http.ServerResponse) {
  * Checks whether a requested static file exists in DataLab.
  * @param filePath the relative path of the file.
  */
-function datalabFileExists(filePath: string) {
+export function datalabFileExists(filePath: string) {
     return fs.existsSync(path.join(__dirname, 'static', filePath));
 }
 
