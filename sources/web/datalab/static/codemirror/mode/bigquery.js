@@ -21,16 +21,16 @@ define(
    * https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical
    */
   var bq_keywords = [
-    'ALL', 'ANY', 'AS', 'ASC', 'ASSERT_ROWS_MODIFIED', 'AT', 'BETWEEN', 'BY', 'CASE', 'CAST',
-    'COLLATE', 'CONTAINS', 'CREATE', 'CROSS', 'CUBE', 'CURRENT', 'DELETE', 'DEFAULT', 'DEFINE',
+    'ALL', 'AND', 'ANY', 'AS', 'ASC', 'ASSERT_ROWS_MODIFIED', 'AT', 'BETWEEN', 'BY', 'CASE', 'CAST',
+    'COLLATE', 'CONTAINS', 'CREATE', 'CROSS', 'CUBE', 'CURRENT', 'DEFAULT', 'DEFINE', 'DELETE',
     'DESC', 'DISTINCT', 'ELSE', 'END', 'ENUM', 'ESCAPE', 'EXCEPT', 'EXCLUDE', 'EXISTS',
     'EXTRACT', 'FALSE', 'FETCH', 'FOLLOWING', 'FOR', 'FROM', 'FULL', 'GROUP', 'GROUPING',
     'GROUPS', 'HASH', 'HAVING', 'IF', 'IGNORE', 'IN', 'INNER', 'INSERT', 'INTERSECT', 'INTERVAL',
-    'INTO', 'JOIN', 'LATERAL', 'LEFT', 'LIMIT', 'LOOKUP', 'NATURAL', 'NEW', 'NULL', 'MERGE',
-    'NO', 'NULLS', 'OF', 'ON', 'ORDER', 'OUTER', 'OVER', 'PARTITION', 'PRECEDING', 'PROTO',
-    'RANGE', 'RECURSIVE', 'RESPECT', 'RIGHT', 'ROLLUP', 'ROWS', 'SELECT', 'SET', 'SOME',
-    'TABLESAMPLE', 'THEN', 'TO', 'TREAT', 'TRUE', 'UNBOUNDED', 'UNION', 'UNNEST', 'UPDATE',
-    'USING', 'WHEN', 'WHERE', 'WINDOW', 'WITH', 'WITHIN'
+    'INTO', 'IS', 'JOIN', 'LATERAL', 'LEFT', 'LIKE', 'LIMIT', 'LOOKUP', 'MERGE', 'NATURAL', 'NEW',
+    'NO', 'NOT', 'NULL', 'NULLS', 'OF', 'ON', 'OR', 'ORDER', 'OUTER', 'OVER', 'PARTITION',
+    'PRECEDING', 'PROTO', 'RANGE', 'RECURSIVE', 'RESPECT', 'RIGHT', 'ROLLUP', 'ROWS', 'SELECT',
+    'SET', 'SOME', 'TABLESAMPLE', 'THEN', 'TO', 'TREAT', 'TRUE', 'UNBOUNDED', 'UNION', 'UNNEST',
+    'UPDATE', 'USING', 'WHEN', 'WHERE', 'WINDOW', 'WITH', 'WITHIN'
   ];
 
   /*
@@ -73,9 +73,6 @@ define(
   ];
 
   var bq_operatorChars = /[.~^!<>*+=&|\\-]/;
-  var bq_operatorWords = [
-    'NOT', 'LIKE', 'IS', 'AND', 'OR'
-  ];
 
   var bq_punctuationChars = /[{}\(\),;\[\]]/;
 
@@ -90,7 +87,6 @@ define(
     keywords = wordRegexp(bq_keywords);
     functions = wordRegexp(bq_functions);
     types = wordRegexp(bq_types);
-    operatorWords = wordRegexp(bq_operatorWords);
 
     function tokenBase(stream, state) {
       var ch = stream.next();
@@ -129,8 +125,6 @@ define(
           return 'keyword';
         else if (types.test(word))
           return 'type';
-        else if (operatorWords.test(word))
-          return 'operator';
         else
           return 'variable';
       }
@@ -247,7 +241,6 @@ define(
     keywords: bq_keywords,
     functions: bq_functions,
     types: bq_types,
-    operatorWords: bq_operatorWords,
     operatorChars: bq_operatorChars
   };
 });
