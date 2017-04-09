@@ -13,7 +13,7 @@
  */
 
 /* Font Imports */
-@import url(https://fonts.googleapis.com/css?family=Source+Code+Pro:400,700|Open+Sans:400,700|Material+Icons);
+@import url('/static/fonts/fonts.css');
 
 * {
   padding: 0px;
@@ -72,11 +72,11 @@ body {
   height: 100% !important;
 }
 #appContent {
-  position: absolute;
   top: 0px;
   bottom: 0px;
   left: 0px;
   right: 0px;
+  height: 100%;
   -webkit-order: 2;
   order: 2;
   -webkit-flex: 1 1 auto;
