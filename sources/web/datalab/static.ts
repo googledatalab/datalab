@@ -158,6 +158,7 @@ function sendUserCustomTheme(userId: string, response: http.ServerResponse): voi
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
   var path = url.parse(request.url).pathname;
 
+  console.log('static request: ' + path);
   var staticResourcesMap: {[key:string]: string} = {
     'favicon.ico': 'datalab.ico',
     'logo.png': 'datalab.png',
@@ -210,10 +211,11 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     }
   }
   else if ((path.indexOf('/static/extensions/') == 0) ||
-           (path.indexOf('/static/require/') == 0)) {
+           (path.indexOf('/static/require/') == 0) ||
+           (path.indexOf('/static/fonts/') == 0)) {
     // Strip off the leading '/static/' to turn path into a relative path within the
     // static directory.
-    sendDataLabFile(path.substr(8), response);
+    sendDataLabFile(path.substr('/static/'.length), response);
   } else {
     // Strip off the leading slash to turn path into a relative file path
     sendJupyterFile(path.substr(1), response);
