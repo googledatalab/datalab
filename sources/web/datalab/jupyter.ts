@@ -91,7 +91,8 @@ var callbackManager: callbacks.CallbackManager = new callbacks.CallbackManager()
 /**
  * Templates
  */
-var templates: common.Map<string> = {
+const templates: common.Map<string> = {
+  // These cached templates can be overridden in sendTemplate
   'tree': fs.readFileSync(path.join(__dirname, 'templates', 'tree.html'), { encoding: 'utf8' }),
   'sessions': fs.readFileSync(path.join(__dirname, 'templates', 'sessions.html'), { encoding: 'utf8' }),
   'edit': fs.readFileSync(path.join(__dirname, 'templates', 'edit.html'), { encoding: 'utf8' }),
@@ -393,16 +394,18 @@ function getBaseTemplateData(request: http.ServerRequest): common.Map<string> {
 }
 
 function sendTemplate(key: string, data: common.Map<string>, response: http.ServerResponse) {
-  var template = templates[key];
+  let template = templates[key];
 
-  // NOTE: Uncomment to use external templates mapped into the container.
-  //       This is only useful when actively developing the templates themselves.
-  // template = fs.readFileSync('/sources/datalab/templates/' + key + '.html', { encoding: 'utf8' });
+  // Set this env var to point to source directory for live updates without restart.
+  const liveTemplatesDir = process.env.DATALAB_LIVE_TEMPLATES_DIR
+  if (liveTemplatesDir) {
+    template = fs.readFileSync(path.join(liveTemplatesDir, key + '.html'), { encoding: 'utf8' });
+  }
 
   // Replace <%name%> placeholders with actual values.
   // TODO: Error handling if template placeholders are out-of-sync with
   //       keys in passed in data object.
-  var htmlContent = template.replace(/\<\%(\w+)\%\>/g, function(match, name) {
+  const htmlContent = template.replace(/\<\%(\w+)\%\>/g, function(match, name) {
     return data[name];
   });
 
