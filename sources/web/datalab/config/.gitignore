@@ -1,0 +1,2 @@
+# Running with --live, the container creates a metadata file here.
+metadata.json

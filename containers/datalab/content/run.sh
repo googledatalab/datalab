@@ -114,5 +114,10 @@ then
   FOREVER_CMD="${FOREVER_CMD} -s"
 fi
 
+DATALAB_APP_DIR=/datalab/web
+if [ -d /devroot ]; then
+  # For development purposes, if the user has mapped a /devroot dir, use it.
+  DATALAB_APP_DIR=/devroot/build-dev/web/nb
+fi
 echo "Open your browser to http://localhost:8081/ to connect to Datalab."
-${FOREVER_CMD} /datalab/web/app.js
+${FOREVER_CMD} ${DATALAB_APP_DIR}/app.js
