@@ -24,82 +24,82 @@ function shouldShimWebsockets() {
 // Override WebSocket
 (function() {
     if (!window.io) {
-	// If socket.io was not loaded into the page, then do not override the existing
-	// WebSocket functionality.
-	return;
+        // If socket.io was not loaded into the page, then do not override the existing
+        // WebSocket functionality.
+        return;
     }
 
     function WebSocketShim(url) {
-	var self = this;
-	this._url = url;
-	this.readyState = WebSocketShim.CLOSED;
+        var self = this;
+        this._url = url;
+        this.readyState = WebSocketShim.CLOSED;
 
-	var socketUri = location.protocol + '//' + location.host + '/session';
-	var socketOptions = {
-	    upgrade: false,
-	    multiplex: false
-	};
+        var socketUri = location.protocol + '//' + location.host + '/session';
+        var socketOptions = {
+            upgrade: false,
+            multiplex: false
+        };
 
-	function errorHandler() {
-	    if (self.onerror) {
-		self.onerror({ target: self });
-	    }
-	}
-	var socket = io.connect(socketUri, socketOptions);
-	socket.on('connect', function() {
-	    socket.emit('start', { url: url });
-	});
-	socket.on('disconnect', function() {
-	    self._socket = null;
-	    self.readyState = WebSocketShim.CLOSED;
-	    if (self.onclose) {
-		self.onclose({ target: self });
-	    }
-	});
-	socket.on('open', function(msg) {
-	    self._socket = socket;
-	    self.readyState = WebSocketShim.OPEN;
-	    if (self.onopen) {
-		self.onopen({ target: self });
-	    }
-	});
-	socket.on('close', function(msg) {
-	    self._socket = null;
-	    self.readyState = WebSocketShim.CLOSED;
-	    if (self.onclose) {
-		self.onclose({ target: self });
-	    }
-	});
-	socket.on('data', function(msg) {
-	    if (self.onmessage) {
-		self.onmessage({ target: self, data: msg.data });
-	    }
-	});
-	socket.on('error', errorHandler);
-	socket.on('connect_error', errorHandler);
-	socket.on('reconnect_error', errorHandler);
+        function errorHandler() {
+            if (self.onerror) {
+                self.onerror({ target: self });
+            }
+        }
+        var socket = io.connect(socketUri, socketOptions);
+        socket.on('connect', function() {
+            socket.emit('start', { url: url });
+        });
+        socket.on('disconnect', function() {
+            self._socket = null;
+            self.readyState = WebSocketShim.CLOSED;
+            if (self.onclose) {
+                self.onclose({ target: self });
+            }
+        });
+        socket.on('open', function(msg) {
+            self._socket = socket;
+            self.readyState = WebSocketShim.OPEN;
+            if (self.onopen) {
+                self.onopen({ target: self });
+            }
+        });
+        socket.on('close', function(msg) {
+            self._socket = null;
+            self.readyState = WebSocketShim.CLOSED;
+            if (self.onclose) {
+                self.onclose({ target: self });
+            }
+        });
+        socket.on('data', function(msg) {
+            if (self.onmessage) {
+                self.onmessage({ target: self, data: msg.data });
+            }
+        });
+        socket.on('error', errorHandler);
+        socket.on('connect_error', errorHandler);
+        socket.on('reconnect_error', errorHandler);
     }
     WebSocketShim.prototype = {
-	onopen: null,
-	onclose: null,
-	onmessage: null,
-	onerror: null,
+        onopen: null,
+        onclose: null,
+        onmessage: null,
+        onerror: null,
 
-	send: function(data) {
-	    if (this.readyState != WebSocketShim.OPEN) {
-		throw new Error('WebSocket is not yet opened');
-	    }
-	    this._socket.emit('data', { data: data });
-	},
+        send: function(data) {
+            if (this.readyState != WebSocketShim.OPEN) {
+                throw new Error('WebSocket is not yet opened');
+            }
+            this._socket.emit('data', { data: data });
+        },
 
-	close: function() {
-	    if (this.readyState == WebSocketShim.OPEN) {
-		this.readyState = WebSocketShim.CLOSED;
+        close: function() {
+            if (this.readyState == WebSocketShim.OPEN) {
+                this.readyState = WebSocketShim.CLOSED;
 
-		this._socket.emit('stop', { url: this._url });
-		this._socket.close();
-	    }
-	}
+                this._socket.emit('stop', { url: this._url });
+                this._socket.close();
+            }
+        }
     };
     WebSocketShim.CLOSED = 0;
     WebSocketShim.OPEN = 1;
@@ -1100,12 +1100,12 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
       .then(success => removeCompletedMarks());
     this.blur();
   });
-  
+
   $('#interruptKernelButton').click(function() {
     Jupyter.notebook.kernel.interrupt();
     this.blur();
   });
-  
+
   $('#toggleSidebarButton').click(function() {
     $('#sidebarArea').toggleClass('larger');
     rotated = $('#toggleSidebarButton').css('transform').indexOf('matrix') > -1;
