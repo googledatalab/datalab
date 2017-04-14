@@ -159,19 +159,26 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   var path = url.parse(request.url).pathname;
 
   console.log('static request: ' + path);
-  var staticResourcesMap: {[key:string]: string} = {
+  // List of resources that are passed through with the same name.
+  const staticResourcesList: [string] = [
+    'appbar.html',
+    'datalab.css',
+    'reporting.html',
+    'settings.html',
+    'settings.js',
+  ];
+  // Map of resources where we change the name.
+  const staticResourcesMap: {[key:string]: string} = {
+    'about.txt': 'datalab.txt',
     'favicon.ico': 'datalab.ico',
     'logo.png': 'datalab.png',
-    'about.txt': 'datalab.txt',
-    'reporting.html': 'reporting.html',
-    'datalab.css': 'datalab.css',
-    'appbar.html': 'appbar.html',
-    'settings.html': 'settings.html',
-    'settings.js': 'settings.js'
   };
 
   var subpath = path.substr(path.lastIndexOf('/') + 1);
-  if (subpath in staticResourcesMap) {
+  if (staticResourcesList.indexOf(subpath) >= 0) {
+    sendDataLabFile(subpath, response);
+  }
+  else if (subpath in staticResourcesMap) {
     sendDataLabFile(staticResourcesMap[subpath], response);
   }
   else if (path.indexOf('/codemirror/mode/') > 0) {
