@@ -25,13 +25,21 @@ VERSION_SUBSTITUTION="s/_version_/0.5.$VERSION/"
 COMMIT=`git log --pretty=format:'%H' -n 1`
 COMMIT_SUBSTITUTION="s/_commit_/$COMMIT/"
 
+if [ -z "$1" ]; then
+  pythonPath=''
+else
+  pythonPath=$(realpath "$1")
+fi
+
+cd $(dirname $0)
+
 cat Dockerfile.in | sed $VERSION_SUBSTITUTION | sed $COMMIT_SUBSTITUTION > Dockerfile
 
-# Build the datalab frontend
+# Set up our required environment
 source ../../tools/initenv.sh
-cd ../../sources/web/
-./build.sh
-cd ../../containers/datalab
+
+# Build the datalab frontend
+../../sources/web/build.sh
 
 # Copy build outputs as a dependency of the Dockerfile
 rsync -avp ../../build/ build
@@ -40,9 +48,7 @@ rsync -avp ../../build/ build
 cp ../../third_party/license.txt content/license.txt
 
 # Build the base docker image
-cd ../base
-./build.sh "$1"
-cd ../datalab
+../base/build.sh "$pythonPath"
 
 # Build the docker image
 docker build -t datalab .
@@ -51,4 +57,3 @@ docker build -t datalab .
 rm -rf build
 rm content/license.txt
 rm Dockerfile
-
