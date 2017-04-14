@@ -63,7 +63,7 @@ then
     fi
 
     # Build the customized docker image derived from the standard datalab image
-    docker build -t $DOCKERIMAGE -f $DOCKERFILE .
+    docker build ${DOCKER_BUILD_ARGS} -t $DOCKERIMAGE -f $DOCKERFILE .
 fi
 
 # On linux docker runs directly on host machine, so bind to 127.0.0.1 only
