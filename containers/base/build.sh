@@ -34,4 +34,4 @@ else
 fi
 
 trap 'rm -rf pydatalab' exit
-docker build -t datalab-base .
+docker build ${DOCKER_BUILD_ARGS} -t datalab-base .

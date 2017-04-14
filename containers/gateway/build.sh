@@ -39,7 +39,7 @@ cd ../base
 cd ../gateway
 
 # Build the docker image
-docker build -t datalab-gateway .
+docker build ${DOCKER_BUILD_ARGS} -t datalab-gateway .
 
 # Finally cleanup
 rm -rf build

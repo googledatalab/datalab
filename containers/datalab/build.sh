@@ -45,7 +45,7 @@ cd ../base
 cd ../datalab
 
 # Build the docker image
-docker build -t datalab .
+docker build ${DOCKER_BUILD_ARGS} -t datalab .
 
 # Finally cleanup
 rm -rf build

@@ -20,5 +20,5 @@ cd ../datalab
 cd ../test
 
 # Build the docker image
-docker build -t datalab-test .
+docker build ${DOCKER_BUILD_ARGS} -t datalab-test .
 
