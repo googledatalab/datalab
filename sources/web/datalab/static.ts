@@ -162,10 +162,16 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   // List of resources that are passed through with the same name.
   const staticResourcesList: [string] = [
     'appbar.html',
+    'edit-app.js',
     'datalab.css',
+    'minitoolbar.js',
+    'notebook-app.js',
+    'notebook-list.js',
+    'page.js',
     'reporting.html',
     'settings.html',
     'settings.js',
+    'websocket.js',
   ];
   // Map of resources where we change the name.
   const staticResourcesMap: {[key:string]: string} = {
