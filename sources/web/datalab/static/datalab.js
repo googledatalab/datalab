@@ -53,7 +53,7 @@ function initializeDataLab(ipy, events, dialog, utils, security) {
       ipy.notebook.save_checkpoint();
     }
   }
-  initializePage(dialog, saveFn);
+  initializeAppBar(dialog, saveFn);
 
   // Override the sanitizer - all notebooks within the user's volume are implicity
   // trusted, and there is no need to remove scripts from cell outputs of notebooks
@@ -75,6 +75,6 @@ function initializeDataLab(ipy, events, dialog, utils, security) {
 }
 
 require(['base/js/namespace', 'base/js/events', 'base/js/dialog', 'base/js/utils', 'base/js/security',
-    'static/edit-app', 'static/minitoolbar', 'static/notebook-app',
-    'static/notebook-list', 'static/page', 'static/websocket'],
+    'static/appbar', 'static/edit-app', 'static/minitoolbar', 'static/notebook-app',
+    'static/notebook-list', 'static/websocket'],
         initializeDataLab);

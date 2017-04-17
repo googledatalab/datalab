@@ -82,7 +82,7 @@ function stopVm() {
   }
 }
 
-function initializePage(dialog, saveFn) {
+function initializeAppBar(dialog, saveFn) {
 
   function showAbout() {
     var version = document.body.getAttribute('data-version-id');
