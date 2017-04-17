@@ -26,9 +26,9 @@ COMMIT=`git log --pretty=format:'%H' -n 1`
 COMMIT_SUBSTITUTION="s/_commit_/$COMMIT/"
 
 if [ -z "$1" ]; then
-  pythonPath=''
+  pydatalabPath=''
 else
-  pythonPath=$(realpath "$1")
+  pydatalabPath=$(realpath "$1")
 fi
 
 cd $(dirname $0)
@@ -48,7 +48,7 @@ rsync -avp ../../build/ build
 cp ../../third_party/license.txt content/license.txt
 
 # Build the base docker image
-../base/build.sh "$pythonPath"
+../base/build.sh "$pydatalabPath"
 
 # Build the docker image
 docker build -t datalab .
