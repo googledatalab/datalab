@@ -162,12 +162,12 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   // List of resources that are passed through with the same name.
   const staticResourcesList: [string] = [
     'appbar.html',
+    'appbar.js',
     'edit-app.js',
     'datalab.css',
     'minitoolbar.js',
     'notebook-app.js',
     'notebook-list.js',
-    'page.js',
     'reporting.html',
     'settings.html',
     'settings.js',
