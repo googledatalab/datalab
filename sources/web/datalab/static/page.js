@@ -1,20 +1,3 @@
-function placeHolder() {}
-
-function reportEvent(event) {
-  var reportingEnabled = (document.body.getAttribute('data-reporting-enabled') == 'true');
-  if (!reportingEnabled) { return; }
-
-  var signedIn = (document.body.getAttribute('data-signed-in') == 'true');
-  var additionalMetadata = 'signedIn=' + signedIn;
-  if (event['metadata']) {
-    event['metadata'] = event['metadata'] + ',' + additionalMetadata;
-  } else {
-    event['metadata'] = additionalMetadata;
-  }
-  window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push(event);
-}
-
 function toggleSidebar() {
   var d = document.getElementById('sidebarArea');
   d.style.display = (d.style.display == 'none') ? 'block' : 'none';
@@ -45,19 +28,6 @@ function showHelp(markup) {
 // Populate help for the first time sidebar is opened
 markup = $('#datalabHelp').text();
 $('#help').html(markup);
-
-function xhr(url, callback, method) {
-  method = method || "GET";
-
-  let request = new XMLHttpRequest();
-  request.onreadystatechange = function() {
-    if (request.readyState === 4 && request.status === 200) {
-      callback.call(request);
-    }
-  }
-  request.open(method, url);
-  request.send();
-}
 
 function restartDatalab() {
   var restartUrl = window.location.protocol + "//" + window.location.host + "/_restart";
