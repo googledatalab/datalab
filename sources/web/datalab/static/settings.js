@@ -1,16 +1,3 @@
-function xhr(url, callback, method) {
-  method = method || "GET";
-
-  let request = new XMLHttpRequest();
-  request.onreadystatechange = function() {
-    if (request.readyState === 4 && request.status === 200) {
-      callback.call(request);
-    }
-  }
-  request.open(method, url);
-  request.send();
-}
-
 function getSettingKeyAddress(setting) {
   return window.location.protocol + "//" + window.location.host + "/_settings?key=" + setting;
 }
