@@ -148,23 +148,62 @@ function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, 
     }
   });
 
-  function checkVersion(versionInfo) {
-    if (versionInfo == undefined) {
+  // Compare two arrays, each representing a semantic version in the form of [0,1,2]
+  // Returns -1, 0, 1. Returns null if they're malformed
+  function semverCompare(v1, v2) {
+    for (var i = 0; i < 3; i++) {
+      var token1 = Number(v1[i]);
+      var token2 = Number(v2[i]);
+      if (token1 > token2)
+        return 1;
+      if (token2 > token1)
+        return -1;
+      if (isNaN(token1) || isNaN(token2))
+        return null;
+    }
+    return 0;
+  }
+
+  // Turn a string version (e.g. "1.1.20170411" or just "20170411") into a backward
+  // compatible version array (e.g [1,1,20170411]).
+  // If the version doesn't have MAJOR and MINOR components (old behavior), then
+  // treat it as only the PATCH part of a semver. Hard code prefix to 0.5 to match
+  // the old version strings, so that clients do not get inconsistent numbers
+  function strToSemver(versionStr) {
+    semver = versionStr.toString().split('.');
+    if (semver.length !== 1 && semver.length !== 3) {
+      debug.log('Malformed current version string. Found:', versionStr);
+      return null;
+    }
+    // If only one component was found, it's the PATCH part
+    if (semver.length === 1) {
+      semver = [0, 5].concat(Number(semver[0]));
+    }
+    return semver;
+  }
+
+  function checkVersion(latestVersion) {
+    // Current version is sent as part of the HTML template document from the notebook server
+    var currentVersion = document.body.getAttribute('data-version-id');
+    if (currentVersion === undefined || latestVersion === undefined) {
+      debug.log('Failed to get current or latest version string.');
       return;
     }
-    var vid = document.body.getAttribute('data-version-id');
-    if (vid == undefined) {
+    currentSemver = strToSemver(currentVersion);
+    latestSemver = strToSemver(latestVersion.latest);
+    lastSemver = strToSemver(latestVersion.last);
+    
+    // Compare, if current version is greater than or equal to latest, we're done
+    if (semverCompare(currentSemver, latestSemver) > -1) {
       return;
     }
-    var version = parseInt(vid.split('.')[2]);
-    if (version >= versionInfo.latest) {
-      return;
-    }
-    var optional = (version >= versionInfo.last);
+
+    // Old client. Display message to recommend update
+    var optional = semverCompare(currentSemver, lastSemver) > -1;
     var messageDiv = document.getElementById('updateMessageArea');
-    var message = 'You are using DataLab 0.5.' + version + '. ' +
-        (optional ? 'An optional' : 'A recommended') + ' update (0.5.' + versionInfo.latest +
-        ') is available (see <a href="https://github.com/googledatalab/datalab/wiki/Release-Info"' +
+    var message = 'You are using DataLab ' + currentSemver.join('.') + '. ' +
+        (optional ? 'An optional' : 'A recommended') + ' update (' + latestSemver.join('.') +
+        ') is available (see <a href="https://github.com/googledatalab/datalab/releases"' +
         '>what\'s new</a>).'
     messageDiv.innerHTML = message;
     messageDiv.classList.add('alert');
