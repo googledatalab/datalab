@@ -18,13 +18,16 @@
 # Fail the build on the first error, instead of carrying on by default
 set -o errexit;
 
-if [ -z "$REPO_DIR" ];
-  then echo "REPO_DIR is not set. Please run source tools/initenv.sh first";
-  exit 1;
+cd $(dirname $0)
+
+if [ -z "$REPO_DIR" ]; then
+  source ../../tools/initenv.sh
 fi
 
 BUILD_DIR="$REPO_DIR/build"
 WEB_DIR=$BUILD_DIR/web/nb
+BUILD_DEV_DIR="$REPO_DIR/build-dev"
+BUILD_DEV_WEB_DIR="$BUILD_DEV_DIR/web/nb"
 
 mkdir -p $WEB_DIR
 
@@ -33,7 +36,23 @@ tsc --module commonjs --noImplicitAny \
     --outDir $WEB_DIR \
     ./datalab/*.ts
 
+echo "Updating config"
 rsync -avp ./datalab/config/ $WEB_DIR/config
+
+echo "Updating static"
 rsync -avp ./datalab/static/ $WEB_DIR/static
+
+echo "Updating templates"
 rsync -avp ./datalab/templates/ $WEB_DIR/templates
+
+echo "Updating package.json"
 rsync -avp ./datalab/package.json $WEB_DIR/package.json
+
+# If the user has run the run.sh script with --devroot,
+# keep that dir updated as well.
+if [ -d "$BUILD_DEV_DIR" ]; then
+  echo "Updating js files in $BUILD_DEV_WEB_DIR"
+  # tsc changes the timestamps on all the js files, so we might as
+  # well just copy them rather than using rsync
+  cp -p  $WEB_DIR/*.js $BUILD_DEV_WEB_DIR
+fi
