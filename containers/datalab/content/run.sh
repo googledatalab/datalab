@@ -114,5 +114,13 @@ then
   FOREVER_CMD="${FOREVER_CMD} -s"
 fi
 
+if [ -d /devroot ]; then
+  # For development purposes, if the user has mapped a /devroot dir, use it.
+  echo "Running notebook server in live mode"
+  export DATALAB_LIVE_STATIC_DIR=/devroot/sources/web/datalab/static
+  export DATALAB_LIVE_TEMPLATES_DIR=/devroot/sources/web/datalab/templates
+  # Make sure we have the latest compiled typescript output
+  cp -p /devroot/build/web/nb/*.js /datalab/web
+fi
 echo "Open your browser to http://localhost:8081/ to connect to Datalab."
 ${FOREVER_CMD} /datalab/web/app.js

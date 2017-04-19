@@ -111,7 +111,15 @@ function sendFile(filePath: string, response: http.ServerResponse,
  * @param response the out-going response associated with the current HTTP request.
  */
 function sendDataLabFile(filePath: string, response: http.ServerResponse) {
-  sendFile(path.join(__dirname, 'static', filePath), response);
+  let live = false
+  let staticDir = path.join(__dirname, 'static')
+  // Set this env var to point to source directory for live updates without restart.
+  const liveStaticDir = process.env.DATALAB_LIVE_STATIC_DIR
+  if (liveStaticDir) {
+    live = true
+    staticDir = liveStaticDir
+  }
+  sendFile(path.join(staticDir, filePath), response, '', live);
 }
 
 /**

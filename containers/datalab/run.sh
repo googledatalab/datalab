@@ -20,27 +20,48 @@
 # command prompt, which is useful for tinkering within the container before
 # manually starting the server.
 
+HERE=$(dirname $0)
 CONTENT=$HOME
 ENTRYPOINT="/datalab/run.sh"
-if [ "$1" != "" ]; then
-  if [ "$1" != "shell" ]; then
-    CONTENT=$1
-    shift
-  fi
-  if [ "$1" == "shell" ]; then
-    ENTRYPOINT="/bin/bash"
-  fi
-fi
+DEVROOT_DOCKER_OPTION=''
+LIVE_MODE=1
 
-# Use this flag to map in web server content during development
-#  -v $REPO_DIR/sources/web:/sources \
-#
-# To turn on debug logs, add the following:
-#  -e 'DATALAB_SETTINGS_OVERRIDES={"consoleLogLevel": "debug" }' \
+function setup_live_mode() {
+    # Live mode makes the datalab container use a live copy of the
+    # development directory so your changes are visible to the container
+    # without rebuilding.
+    echo "Setting up live mode"
+    DEVROOT=$(cd "$HERE" && realpath ../..)
+    DEVROOT_DOCKER_OPTION="-v $DEVROOT:/devroot"
+}
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    shell)
+      ENTRYPOINT="/bin/bash"
+      ;;
+    --no-live)
+      LIVE_MODE=0
+      ;;
+    -*) echo "Unrecognized option '$1'"
+      exit 1
+      ;;
+    *)
+      # For any other non-option argument, assume it is the content root.
+      CONTENT="$1"
+      ;;
+  esac
+  shift
+done
+
+if [[ $LIVE_MODE == 1 ]]; then
+  setup_live_mode
+fi
 
 docker run -it --entrypoint=$ENTRYPOINT \
   -p 127.0.0.1:8081:8080 \
   -v "$CONTENT:/content" \
+  ${DEVROOT_DOCKER_OPTION} \
   -e "PROJECT_ID=$PROJECT_ID" \
   -e "DATALAB_ENV=local" \
   -e "DATALAB_DEBUG=true" \
