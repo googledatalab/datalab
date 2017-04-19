@@ -22,17 +22,12 @@
 if [ -n "$1" ]; then
   src_pydatalab=$(realpath "$1")
 
-  # Append trailing / if needed.
-  if [ "${src_pydatalab: -1}" != "/" ]; then
-  	src_pydatalab=$src_pydatalab"/"
-  fi
-
   cd $(dirname $0)
-  rsync -avp "$src_pydatalab" pydatalab;
+  rsync -avp "$src_pydatalab"/ pydatalab
 else
   # Create empty dir to make docker build happy.
   cd $(dirname $0)
-  mkdir -p pydatalab;
+  mkdir -p pydatalab
 fi
 
 trap 'rm -rf pydatalab' exit
