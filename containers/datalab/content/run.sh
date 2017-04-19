@@ -119,8 +119,12 @@ if [ -d /devroot ]; then
   echo "Running notebook server in live mode"
   export DATALAB_LIVE_STATIC_DIR=/devroot/sources/web/datalab/static
   export DATALAB_LIVE_TEMPLATES_DIR=/devroot/sources/web/datalab/templates
-  # Make sure we have the latest compiled typescript output
-  cp -p /devroot/build/web/nb/*.js /datalab/web
+  # Use our internal node_modules dir
+  export NODE_PATH="${NODE_PATH}:/datalab/web/node_modules"
+  # Auto-restart when the developer builds from the typescript files.
+  echo ${FOREVER_CMD} --watch --watchDirectory /devroot/build/web/nb /devroot/build/web/nb/app.js
+  ${FOREVER_CMD} --watch --watchDirectory /devroot/build/web/nb /devroot/build/web/nb/app.js
+else
+  echo "Open your browser to http://localhost:8081/ to connect to Datalab."
+  ${FOREVER_CMD} /datalab/web/app.js
 fi
-echo "Open your browser to http://localhost:8081/ to connect to Datalab."
-${FOREVER_CMD} /datalab/web/app.js
