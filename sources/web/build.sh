@@ -18,9 +18,10 @@
 # Fail the build on the first error, instead of carrying on by default
 set -o errexit;
 
-if [ -z "$REPO_DIR" ];
-  then echo "REPO_DIR is not set. Please run source tools/initenv.sh first";
-  exit 1;
+cd $(dirname $0)
+
+if [ -z "$REPO_DIR" ]; then
+  source ../../tools/initenv.sh
 fi
 
 BUILD_DIR="$REPO_DIR/build"
