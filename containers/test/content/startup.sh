@@ -14,15 +14,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-/datalab/run.sh &
+/datalab/run.sh &> /tmp/datalab_log.txt &
 Xvfb :10 -ac &
 
-echo -n "Polling on Datalab.."
+echo -n "Polling on Datalab."
 until $(curl --output /dev/null --silent --head --fail http://localhost:8080); do
   printf "."
   sleep 1
 done
 echo " Done."
 
-cd /datalab/test
-python test.py
+echo -n "VM Info: "
+curl http://localhost:8080/_info/vminfo
+curl http://localhost:8080/_filesearch
+
+echo -e "\nRunning UI tests.."
+mocha ui_tests.js
