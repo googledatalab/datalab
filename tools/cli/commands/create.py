@@ -35,6 +35,8 @@ created instance. You can disable that behavior by passing in the
 _DATALAB_NETWORK = 'datalab-network'
 _DATALAB_NETWORK_DESCRIPTION = 'Network for Google Cloud Datalab instances'
 
+_GCE_DEFAULT_NETWORK = 'default'
+
 _DATALAB_FIREWALL_RULE = 'datalab-network-allow-ssh'
 _DATALAB_FIREWALL_RULE_DESCRIPTION = 'Allow SSH access to Datalab instances'
 
@@ -238,6 +240,18 @@ class RepositoryException(Exception):
             RepositoryException._MESSAGE.format(repo_name))
 
 
+class MissingNetworkException(Exception):
+
+    _MESSAGE = (
+        'Failed to find the network {}.'
+        '\n\n'
+        'Remove the --no-create-network flag to create a network for Datalab.')
+
+    def __init__(self, network_name):
+        super(MissingNetworkException, self).__init__(
+            MissingNetworkException._MESSAGE.format(network_name))
+
+
 def flags(parser):
     """Add command line flags for the `create` subcommand.
 
@@ -306,6 +320,14 @@ def flags(parser):
         help='do not create the datalab-notebooks repository if it is missing')
 
     parser.add_argument(
+        '--no-create-network',
+        dest='default_network',
+        action='store_true',
+        default=False,
+        help='do not create the network \'datalab-network\'. Use the network '
+             '\'default\' instead.')
+
+    parser.add_argument(
         '--log-level',
         dest='log_level',
         choices=['trace', 'debug', 'info', 'warn', 'error', 'fatal'],
@@ -369,12 +391,16 @@ def ensure_network_exists(args, gcloud_compute):
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
     get_cmd = ['networks', 'describe', '--format', 'value(name)',
-               _DATALAB_NETWORK]
+               _GCE_DEFAULT_NETWORK
+               if args.default_network else _DATALAB_NETWORK]
     try:
         utils.call_gcloud_quietly(
             args, gcloud_compute, get_cmd, report_errors=False)
     except subprocess.CalledProcessError:
-        create_network(args, gcloud_compute)
+        if args.default_network:
+            raise MissingNetworkException(_GCE_DEFAULT_NETWORK)
+        else:
+            create_network(args, gcloud_compute)
     return
 
 
@@ -540,7 +566,8 @@ def run(args, gcloud_compute, gcloud_repos,
       subprocess.CalledProcessError: If a nested `gcloud` calls fails
     """
     ensure_network_exists(args, gcloud_compute)
-    ensure_firewall_rule_exists(args, gcloud_compute)
+    if not args.default_network:
+        ensure_firewall_rule_exists(args, gcloud_compute)
 
     instance = args.instance
     disk_name = args.disk_name or '{0}-pd'.format(instance)
@@ -593,7 +620,9 @@ def run(args, gcloud_compute, gcloud_repos,
             cmd.extend([
                 '--format=none',
                 '--boot-disk-size=20GB',
-                '--network', _DATALAB_NETWORK,
+                '--network',
+                _GCE_DEFAULT_NETWORK
+                if args.default_network else _DATALAB_NETWORK,
                 '--image-family', 'cos-stable',
                 '--image-project', 'cos-cloud',
                 '--machine-type', args.machine_type,
