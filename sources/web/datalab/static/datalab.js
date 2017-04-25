@@ -64,17 +64,45 @@ function initializeDataLab(ipy, events, dialog, utils, security) {
 
   var pageClass = document.body.className;
   if (pageClass.indexOf('notebook_app') >= 0) {
-    initializeNotebookApplication(ipy, ipy.notebook, events, dialog, utils);
+    initNotebookApplication_preLoad(ipy, ipy.notebook, events, dialog, utils);
+    events.on('notebook_loaded.Notebook', function() {
+      initNotebookApplication_postLoad(ipy, ipy.notebook, events, dialog, utils);
+      window.datalab.loaded = true;
+    });
   }
   else if (pageClass.indexOf('edit_app') >= 0) {
-    initializeEditApplication(ipy, ipy.editor);
+    events.on('file_loaded.Editor', function() {
+      initEditApplication_postLoad(ipy, ipy.editor);
+      window.datalab.loaded = true;
+    });
   }
   else if (pageClass.indexOf('notebook_list') >= 0) {
-    initializeNotebookList(ipy, ipy.notebook_list, ipy.new_notebook_widget, events, dialog, utils);
+    events.on('draw_notebook_list.NotebookList', function() {
+      initNotebookList_postLoad(ipy, ipy.notebook_list, ipy.new_notebook_widget,
+                             events, dialog, utils);
+      window.datalab.loaded = true;
+    });
+  }
+  else if (pageClass.indexOf('session_list') >= 0) {
+    events.on('draw_notebook_list.NotebookList', function() {
+      window.datalab.loaded = true;
+    });
   }
 }
 
-require(['base/js/namespace', 'base/js/events', 'base/js/dialog', 'base/js/utils', 'base/js/security',
-    'static/appbar', 'static/edit-app', 'static/minitoolbar', 'static/notebook-app',
-    'static/notebook-list', 'static/websocket'],
-        initializeDataLab);
+define([
+  'base/js/namespace',
+  'base/js/events',
+  'base/js/dialog',
+  'base/js/utils',
+  'base/js/security',
+  'static/appbar',
+  'static/edit-app',
+  'static/minitoolbar',
+  'static/notebook-app',
+  'static/notebook-list',
+  'static/websocket'
+], function(ipy, events, dialog, utils, security, appbar, editapp,
+            minitoolbar, notebookapp, notebooklist, websocket) {
+  initializeDataLab(IPython, events, dialog, utils, security);
+});
