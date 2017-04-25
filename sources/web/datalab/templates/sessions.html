@@ -15,6 +15,7 @@
 </head>
 <body class="session_list"
   data-base-url="<%baseUrl%>"
+  data-notebook-path="/"
   data-terminals-available="False"
   data-feedback-id="<%feedbackId%>"
   data-version-id="<%versionId%>"
@@ -54,7 +55,6 @@
   </div>
   <script src="/static/components/es6-promise/promise.min.js"></script>
   <script src="/static/components/requirejs/require.js"></script>
-  <script src="<%configUrl%>"></script>
   <script>
     require.config({
       baseUrl: '/static/',

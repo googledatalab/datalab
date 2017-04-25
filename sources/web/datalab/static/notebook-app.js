@@ -1,4 +1,4 @@
-function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
+function initNotebookApplication_preLoad(ipy, notebook, events, dialog, utils) {
   // Various RequireJS additions used for notebook functionality
   require.config({
     paths: {
@@ -18,6 +18,107 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     }
   });
 
+  function updateNavigation() {
+    var content = [];
+    var prefixes = [ '', '&nbsp;&nbsp;&nbsp;', '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' ];
+
+    function createOutlineItem(level, text, index) {
+      if (level == 1) {
+        content.push('<br />');
+      }
+      content.push('<div>');
+      content.push(prefixes[level - 1]);
+      content.push('<a href="#" cellIndex="' + index + '">');
+      content.push(text);
+      content.push('</a></div>');
+      content.push('')
+    }
+
+    content.push('<div><b>Notebook Outline</b></div>');
+
+    var headers = 0;
+    var cells = Jupyter.notebook.get_cells();
+    cells.forEach(function(c, i) {
+      if (c.cell_type != 'markdown') {
+        return;
+      }
+
+      var lines = c.get_text().split('\n');
+      lines.forEach(function(line) {
+        var level = 0;
+        if (line.indexOf('### ') == 0) {
+          level = 3;
+        }
+        else if (line.indexOf('## ') == 0) {
+          level = 2
+        }
+        else if (line.indexOf('# ') == 0) {
+          level = 1;
+        }
+
+        if (level != 0) {
+          var header = line.substr(level + 1);
+          createOutlineItem(level, header, i);
+
+          headers++;
+        }
+      });
+    });
+
+    if (!headers) {
+      content.push('<br /><div><i>Create headings in markdown cells to easily navigate to different parts of your notebook.</i></div>');
+    }
+
+    var markup = content.join('');
+    $('#navigation').html(markup);
+  }
+
+  $([IPython.events]).on('app_initialized.NotebookApp', function(){
+    // Bind Alt-Z to undo cell deletion.
+    IPython.keyboard_manager.command_shortcuts.add_shortcut('Alt-z',
+        Jupyter.notebook.undelete_cell.bind(Jupyter.notebook))
+  });
+
+  events.on('notebook_loaded.Notebook', function() {
+
+    // create the cell toolbar
+    Jupyter.notebook.get_cells().forEach(function(cell) {
+      if (cell.cell_type === 'code')
+        addCellMiniToolbar(cell)
+    });
+
+    // patch any cell created from now on
+    events.on('create.Cell', function(e, params) {
+      addCellMiniToolbar(params.cell);
+    });
+
+    events.on('set_dirty.Notebook', function(e) {
+      updateNavigation();
+    });
+
+    events.on('command_mode.Cell', function(e) {
+      updateNavigation();
+    });
+
+    updateNavigation();
+  });
+
+  events.on('open_with_text.Pager', function(e, payload) {
+    var help = payload.data['text/html'];
+    if (!help) {
+      help = payload.data['text/plain'];
+      if (!help) {
+        return;
+      }
+
+      help = utils.fixCarriageReturn(utils.fixConsole(help)).replace(/\n/g, '<br />');
+    }
+
+    showHelp(help);
+  });
+}
+
+function initNotebookApplication_postLoad(ipy, notebook, events, dialog, utils) {
   function DataLabSession() {
   }
 
@@ -80,12 +181,6 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
   }
 
   window.datalab.session = new DataLabSession();
-
-  $([IPython.events]).on('app_initialized.NotebookApp', function(){
-    // Bind Alt-Z to undo cell deletion.
-    IPython.keyboard_manager.command_shortcuts.add_shortcut('Alt-z',
-        Jupyter.notebook.undelete_cell.bind(Jupyter.notebook))
-  });
 
   require(['notebook/js/notebook'], function(ipy) {
     var notebook = ipy.Notebook;
@@ -561,97 +656,4 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
     document.getElementById('navigation').style.display = '';
     document.getElementById('help').style.display = 'none';
   }
-
-  function updateNavigation() {
-    var content = [];
-    var prefixes = [ '', '&nbsp;&nbsp;&nbsp;', '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' ];
-
-    function createOutlineItem(level, text, index) {
-      if (level == 1) {
-        content.push('<br />');
-      }
-      content.push('<div>');
-      content.push(prefixes[level - 1]);
-      content.push('<a href="#" cellIndex="' + index + '">');
-      content.push(text);
-      content.push('</a></div>');
-      content.push('')
-    }
-
-    content.push('<div><b>Notebook Outline</b></div>');
-
-    var headers = 0;
-    var cells = Jupyter.notebook.get_cells();
-    cells.forEach(function(c, i) {
-      if (c.cell_type != 'markdown') {
-        return;
-      }
-
-      var lines = c.get_text().split('\n');
-      lines.forEach(function(line) {
-        var level = 0;
-        if (line.indexOf('### ') == 0) {
-          level = 3;
-        }
-        else if (line.indexOf('## ') == 0) {
-          level = 2
-        }
-        else if (line.indexOf('# ') == 0) {
-          level = 1;
-        }
-
-        if (level != 0) {
-          var header = line.substr(level + 1);
-          createOutlineItem(level, header, i);
-
-          headers++;
-        }
-      });
-    });
-
-    if (!headers) {
-      content.push('<br /><div><i>Create headings in markdown cells to easily navigate to different parts of your notebook.</i></div>');
-    }
-
-    var markup = content.join('');
-    $('#navigation').html(markup);
-  }
-
-  events.on('notebook_loaded.Notebook', function() {
-
-    // create the cell toolbar
-    Jupyter.notebook.get_cells().forEach(function(cell) {
-      if (cell.cell_type === 'code')
-        addCellMiniToolbar(cell)
-    });
-
-    // patch any cell created from now on
-    events.on('create.Cell', function(e, params) {
-      addCellMiniToolbar(params.cell);
-    });
-
-    events.on('set_dirty.Notebook', function(e) {
-      updateNavigation();
-    });
-
-    events.on('command_mode.Cell', function(e) {
-      updateNavigation();
-    });
-
-    updateNavigation();
-  });
-
-  events.on('open_with_text.Pager', function(e, payload) {
-    var help = payload.data['text/html'];
-    if (!help) {
-      help = payload.data['text/plain'];
-      if (!help) {
-        return;
-      }
-
-      help = utils.fixCarriageReturn(utils.fixConsole(help)).replace(/\n/g, '<br />');
-    }
-
-    showHelp(help);
-  });
 }

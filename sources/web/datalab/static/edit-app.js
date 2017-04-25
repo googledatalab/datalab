@@ -1,4 +1,4 @@
-function initializeEditApplication(ipy, editor) {
+function initEditApplication_postLoad(ipy, editor) {
   function navigateAlternate(alt) {
     var url = document.location.href.replace('/edit', alt);
     if (url.includes("?")) {
