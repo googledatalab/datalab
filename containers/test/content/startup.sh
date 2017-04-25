@@ -15,8 +15,14 @@
 # limitations under the License.
 
 /datalab/run.sh &
-sleep 10
 Xvfb :10 -ac &
+
+echo -n "Polling on Datalab.."
+until $(curl --output /dev/null --silent --head --fail http://localhost:8080); do
+  printf "."
+  sleep 1
+done
+echo " Done."
 
 cd /datalab/test
 python test.py
