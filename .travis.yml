@@ -1,7 +1,19 @@
 sudo: required
-language: python
-python:
-- "2.7"
+language: node_js
+node_js:
+- 7
+addons:
+  apt:
+    source:
+    - ubuntu-toolchain-r-test
+    packages:
+    - build-essential
+    - google-chrome-stable
+    - libcairo2-dev
+    - libjpeg8-dev
+    - libpango1.0-dev
+    - libgif-dev
+    - g++-4.8
 
 services:
 - docker
@@ -15,13 +27,19 @@ before_install:
 - npm install -g typescript
 - pip install -U pip
 - pip install flake8
+- wget http://chromedriver.storage.googleapis.com/2.29/chromedriver_linux64.zip
+- unzip chromedriver_linux64.zip
+- sudo mv chromedriver /usr/local/bin
+- sudo chmod a+x /usr/local/bin/chromedriver
 
 install:
-- cd $TRAVIS_BUILD_DIR/containers/test
+- cd $TRAVIS_BUILD_DIR/containers/datalab
 - ./build.sh
 
 script:
 - cd $TRAVIS_BUILD_DIR/tools/
 - flake8 cli/
-- cd $TRAVIS_BUILD_DIR/containers/test
-- ./run.sh
+- cd $TRAVIS_BUILD_DIR/test
+- npm install
+- npm test
+- for i in ui/failures/*.png; do echo $i; base64 \"$i\"; echo \"-----\"; done
