@@ -22,27 +22,22 @@ function cleanup() {
 
 # For travis, we do not care about interrupts and cleanup,
 # it will just waste time
-#if [ -z "$TRAVIS" ]; then
-  #trap cleanup INT EXIT SIGHUP SIGINT SIGTERM
-#fi
+if [ -z "$TRAVIS" ]; then
+  trap cleanup INT EXIT SIGHUP SIGINT SIGTERM
+fi
 
 mkdir -p $HOME/datalab_content
-container_datalab=$(docker ps -qf "ancestor=datalab")
-if [ -z $container_datalab ]; then
-  echo Starting Datalab container..
-  container_datalab=$(docker run -d \
-    --entrypoint="/datalab/run.sh" \
-    -p 127.0.0.1:8081:8080 \
-    -v $HOME/datalab_content:/content \
-    -e "ENABLE_USAGE_REPORTING=false" \
-    datalab)
-fi
 
-selenium_container=$(docker ps -qf "ancestor=selenium/standalone-chrome")
-if [ -z $selenium_container ]; then
-  echo Starting selenium container..
-  selenium_container=$(docker run -d -p 4444:4444 --net="host" selenium/standalone-chrome)
-fi
+echo Starting Datalab container..
+container_datalab=$(docker run -d \
+  --entrypoint="/datalab/run.sh" \
+  -p 127.0.0.1:8081:8080 \
+  -v $HOME/datalab_content:/content \
+  -e "ENABLE_USAGE_REPORTING=false" \
+  datalab)
+
+echo Starting selenium container..
+selenium_container=$(docker run -d -p 4444:4444 --net="host" selenium/standalone-chrome)
 
 echo -n Polling on Datalab..
 until $(curl --output /dev/null --silent --head --fail http://localhost:8081); do
@@ -56,3 +51,5 @@ until $(curl --output /dev/null --silent --head --fail http://localhost:4444/wd/
   sleep 1
 done
 echo ' Done.'
+
+mocha ui/test.js notebook/test.js

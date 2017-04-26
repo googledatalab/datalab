@@ -1,8 +1,7 @@
 {
   "name": "datalab-tests",
   "scripts": {
-    "pretest": "./run.sh",
-    "test": "mocha ui/test.js"
+    "test": "./run.sh"
   },
   "dependencies": {
     "mocha": "^3.2.0",
