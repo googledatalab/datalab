@@ -153,6 +153,7 @@ function handleRequest(request: http.ServerRequest,
       (path.indexOf('/nbextensions') == 0) ||
       (path.indexOf('/files') == 0) ||
       (path.indexOf('/edit') == 0) ||
+      (path.indexOf('/terminals') == 0) ||
       (path.indexOf('/sessions') == 0)) {
 
     if (path.indexOf('/tree') == 0) {
