@@ -1,4 +1,4 @@
-function initializeNotebookList(ipy, notebookList, newNotebook, events, dialog, utils) {
+function initNotebookList_postLoad(ipy, notebookList, newNotebook, events, dialog, utils) {
   function addNotebook(e) {
     newNotebook.new_notebook();
     e.target.blur();

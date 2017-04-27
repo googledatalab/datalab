@@ -57,7 +57,7 @@ def run_notebook_test(test, notebook, url_base, results, testscript):
   # make sure notebook is ready
   br.find_element_by_id('notebook_panel')
 
-  retries = 5
+  retries = 10
   while retries:
     try:
       kernel_busy = br.execute_script('return Jupyter.notebook.kernel_busy')
@@ -65,7 +65,7 @@ def run_notebook_test(test, notebook, url_base, results, testscript):
         break
     except:
       print('Waiting on kernel..')
-      time.sleep(1)
+      time.sleep(2)
       retries -= 1
       if not retries:
         print 'Notebook not connected to a kernel, or kernel busy for too long. Aborting'
