@@ -55,6 +55,10 @@ for more details.
 You can always contribute even without code submissions by submitting issues and suggestions to
 help improve DataLab and building and sharing samples and being a member of the community.
 
+### Testing
+
+Please take a look at the test directory for instructions on how to run tests locally.
+
 ### Repository Overview
 
 This is a quick description of the repository structure to help understand and

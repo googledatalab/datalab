@@ -27,45 +27,14 @@ var driver = null;
 
 const suiteTimeout = 60000;
 const misMatchThreshold = 0;
-const goldenPathPrefix = 'ui/goldens/';
+const goldenPathPrefix = 'ui/golden/';
 const brokenPathPrefix = 'ui/broken/';
 
-test.before(function() {
-  this.timeout(suiteTimeout);
-  driver = new selenium.Builder()
-    .forBrowser('chrome')
-    .usingServer('http://localhost:4444/wd/hub')
-    .build();
-
-  driver.manage().window().setSize(1024, 768);
-  return driver.get('http://localhost:8081')
-    .then(driver.wait(until.titleIs('Google Cloud DataLab'), 5000))
-    .then(function() {
-      // wait for the Datalab page to finish loading
-      return driver.wait(function() {
-        return driver.executeScript('return window.datalab.loaded')
-          .then(function(loaded) {
-            return loaded === true;
-          });
-      }, 10000);
-    });
-});
-
-test.after(function() {
-  driver.quit();
-});
-
-// Takes a screenshot of the current browser page, and compares it
-// against the specified golden image at goldenPath
-// If the two images have a mismatch that is greater than
-// misMatchThreshold, the test fails, and the bad screenshot is
-// saved under ui/broken with the testName
 function screenshotAndCompare(goldenPath, testName) {
   return driver.takeScreenshot().then(function(shot) {
     if (!fs.existsSync(goldenPathPrefix + goldenPath)) {
-      console.log('Could not find golden: ' + goldenPath);
       fs.writeFileSync(brokenPathPrefix + testName + '.png', shot, 'base64');
-      return;
+      assert(false, 'Could not find golden: ' + goldenPath);
     }
     golden = fs.readFileSync(goldenPathPrefix + goldenPath);
 
@@ -75,7 +44,6 @@ function screenshotAndCompare(goldenPath, testName) {
       }
       if (data.misMatchPercentage > misMatchThreshold) {
         console.log('Image similarity greater than threshold: ', data.misMatchPercentage);
-        console.log('Bad image:', shot);
         fs.writeFileSync(brokenPathPrefix + testName + '.png', shot, 'base64');
       }
 
@@ -87,23 +55,61 @@ function screenshotAndCompare(goldenPath, testName) {
 
 test.describe('UI tests', function() {
 
-  test.it('Makes sure window looks fine at the beginning of tests', function() {
-    return screenshotAndCompare('body.png', 'body');
+  // build the selenium webdriver
+  before(function() {
+    this.timeout(suiteTimeout);
+    let options = {'args': ['disable-infobars']}
+    driver = new selenium.Builder()
+      .forBrowser('chrome')
+      .usingServer('http://localhost:4444/wd/hub')
+      .build();
+
+    return driver.manage().window().setSize(1024, 768);
   });
 
-  test.it('Opens help menu and makes sure it looks fine', function() {
-    return driver.findElement(By.id('helpButton'))
-    .then(function(button) {
-      button.click();
-    })
-    .then(screenshotAndCompare('bodyWithHelp.png', 'bodyWithHelp'));
+  test.describe('Tree page', function() {
+
+    // navigate to localhost:8081, which is redirected to the tree page
+    before(function() {
+      return driver.get('http://localhost:8081')
+        .then(function() {
+          driver.wait(until.titleIs('Google Cloud DataLab'), 5000);
+        })
+        .then(function() {
+          // wait for the Datalab page to finish loading
+          return driver.wait(function() {
+            return driver.executeScript('return window.datalab.loaded')
+              .then(function(loaded) {
+                return loaded === true;
+              });
+          }, 10000);
+        });
+    });
+
+    test.it('appears correctly before any actions have been taken', function() {
+      return screenshotAndCompare('body.png', 'body');
+    });
+
+    test.it('opens help menu correctly when its button is clicked', function() {
+      return driver.findElement(By.id('helpButton'))
+        .then(function(button) {
+          button.click();
+        })
+        .then(screenshotAndCompare('bodyWithHelp.png', 'bodyWithHelp'));
+    });
+
+    test.it('appears correctly after closing help menu by clicking the body element', function() {
+      return driver.findElement(By.tagName('body'))
+        .then(function(button) {
+          button.click();
+        })
+        .then(screenshotAndCompare('body.png', 'body'));
+    });
+
   });
 
-  test.it('Close help menu and makes sure body looks fine', function() {
-    return driver.findElement(By.tagName('body'))
-    .then(function(button) {
-      button.click();
-    })
-    .then(screenshotAndCompare('body.png', 'body'));
+  after(function() {
+    driver.quit();
   });
+
 });

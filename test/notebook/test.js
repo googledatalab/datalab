@@ -106,11 +106,15 @@ function testNotebook(path, ignoreList = []) {
 
 test.describe('Notebook tests', function() {
 
-  this.timeout(timeOut);
   notebooks_config.forEach(function(nb) {
-    test.it('Running notebook ' + nb.path, function() {
-      return testNotebook(nb.path, nb.ignore);
+
+    test.describe(nb.path, function() {
+      this.timeout(timeOut);
+      test.it('runs without errors', function() {
+        return testNotebook(nb.path, nb.ignore);
+      });
     });
+
   });
 
 });
