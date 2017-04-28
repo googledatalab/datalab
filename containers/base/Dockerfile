@@ -105,6 +105,13 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     tools/google-cloud-sdk/bin/gcloud config set component_manager/disable_update_check true && \
     touch /tools/google-cloud-sdk/lib/third_party/google.py && \
 
+# locale
+    DEBIAN_FRONTEND=noninteractive apt-get install -y locales && \
+    sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+    echo 'LANG="en_US.UTF-8"'>/etc/default/locale && \
+    dpkg-reconfigure --frontend=noninteractive locales && \
+    update-locale LANG=en_US.UTF-8 && \
+
 # Add some unchanging bits - specifically node modules (that need to be kept in sync
 # with packages.json manually, but help save build time, by preincluding them in an
 # earlier layer).
@@ -130,6 +137,8 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     rm -rf /usr/share/locale/* && \
     rm -rf /usr/share/i18n/locales/* && \
     cd /
+
+ENV LANG en_US.UTF-8 
 
 # Install tf-transform
 RUN pip install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow-transform==0.1.7
