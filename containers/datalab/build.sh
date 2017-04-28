@@ -57,4 +57,3 @@ docker build ${DOCKER_BUILD_ARGS} -t datalab .
 rm -rf build
 rm content/license.txt
 rm Dockerfile
-rm Dockerfile.py2
