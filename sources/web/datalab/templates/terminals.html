@@ -10,13 +10,14 @@
   <link rel="stylesheet" href="/static/style/style.min.css" type="text/css" />
   <link rel="stylesheet" href="/static/style/datalab.css" type="text/css" />
   <link rel="stylesheet" id="themeStylesheet" href="/static/style/custom.css" type="text/css" />
+  <link rel="stylesheet" href="/static/terminal/css/override.css" type="text/css">
 
   <script src="/static/components/jquery/jquery.min.js"></script>
 </head>
-<body class="session_list"
+<body class="terminal-app"
   data-base-url="<%baseUrl%>"
   data-notebook-path="/"
-  data-terminals-available="True"
+  data-ws-path="<%terminalId%>"
   data-feedback-id="<%feedbackId%>"
   data-version-id="<%versionId%>"
   data-signed-in="<%isSignedIn%>"
@@ -26,53 +27,42 @@
   <div id="app">
     <div id="appBar">
     </div>
+    <div id="header"></div>
     <div id="site">
-    <div id="appContent">
-      <div id="mainArea">
-        <div id="mainContent" class="container treeMainContent">
-          <div id="ipython-main-app">
-            <div id="tab_content" class="tabbable">
-              <div class="tab-content">
-                <div id="running">
-                  <div class="panel-group" id="accordion">
-                    <div class="panel panel-default">
-                      <div class="panel-heading">
-                        <a data-toggle="collapse" data-target="#collapseOne" href="#"
-                           aria-expanded="true" class="">Active Notebooks </a>
-                      </div>
-                      <div id="collapseOne" class="collapse in" aria-expanded="true">
-                        <div class="panel-body">
-                          <div id="running_list" class="list_container">
-                            <div id="running_list_placeholder" class="row list_placeholder">
-                              <div>There are no notebooks running.</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="panel panel-default">
-                      <div class="panel-heading">
-                        <a data-toggle="collapse" data-target="#collapseTwo" href="#"
-                           aria-expanded="true" class="">Active Terminals </a>
-                      </div>
-                      <div id="collapseTwo" class="collapse in" aria-expanded="true">
-                        <div class="panel-body">
-                          <div id="terminal_list" class="list_container">
-                            <div id="terminal_list_header" class="row list_placeholder">
-                              <div>There are no terminals running.</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div id="terminado-container">
       </div>
     </div>
+    <div style="position:absolute; left:-1000em">
+      <!-- The following elements contain dummy content that is used to calculate
+      the size of the terminal characters. For more context, look at terminal/js/main.js -->
+      <pre id="dummy-screen" style="border: solid 5px white;" class="terminal">
+        0
+        1
+        2
+        3
+        4
+        5
+        6
+        7
+        8
+        9
+        0
+        1
+        2
+        3
+        4
+        5
+        6
+        7
+        8
+        9
+        0
+        1
+        2
+        3
+        4
+      <span id="dummy-screen-rows" style="">01234567890123456789012345678901234567890123456789012345678901234567890123456789</span>
+      </pre>
     </div>
   </div>
   <script src="/static/components/es6-promise/promise.min.js"></script>
@@ -128,9 +118,10 @@
     window.datalab = {};
 
     $("#appBar").load("/static/appbar.html", function() {
-      require(['tree/js/main.min']);
+      require(['tree/js/main.min', '/static/terminal/js/main.min.js']);
     });
   </script>
   <script src="//www.gstatic.com/feedback/api.js" async="true" defer="true"></script>
 </body>
 </html>
+
