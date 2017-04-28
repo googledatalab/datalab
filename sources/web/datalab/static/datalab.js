@@ -47,13 +47,16 @@ function xhr(url, callback, method) {
   request.send();
 }
 
-function initializeDataLab(ipy, events, dialog, utils, security) {
+function initializeDataLab(
+    ipy, events, dialog, utils, security, appbar, editapp,
+    notebookapp, notebooklist
+  ) {
   var saveFn = function() {
     if (('notebook' in ipy) && ipy.notebook) {
       ipy.notebook.save_checkpoint();
     }
   }
-  initializeAppBar(dialog, saveFn);
+  appbar.init(dialog, saveFn);
 
   // Override the sanitizer - all notebooks within the user's volume are implicity
   // trusted, and there is no need to remove scripts from cell outputs of notebooks
@@ -64,21 +67,21 @@ function initializeDataLab(ipy, events, dialog, utils, security) {
 
   var pageClass = document.body.className;
   if (pageClass.indexOf('notebook_app') >= 0) {
-    initNotebookApplication_preLoad(ipy, ipy.notebook, events, dialog, utils);
+    notebookapp.preLoad(ipy, ipy.notebook, events, dialog, utils);
     events.on('notebook_loaded.Notebook', function() {
-      initNotebookApplication_postLoad(ipy, ipy.notebook, events, dialog, utils);
+      notebookapp.postLoad(ipy, ipy.notebook, events, dialog, utils);
       window.datalab.loaded = true;
     });
   }
   else if (pageClass.indexOf('edit_app') >= 0) {
     events.on('file_loaded.Editor', function() {
-      initEditApplication_postLoad(ipy, ipy.editor);
+      editapp.postLoad(ipy, ipy.editor);
       window.datalab.loaded = true;
     });
   }
   else if (pageClass.indexOf('notebook_list') >= 0) {
     events.on('draw_notebook_list.NotebookList', function() {
-      initNotebookList_postLoad(ipy, ipy.notebook_list, ipy.new_notebook_widget,
+      notebooklist.postLoad(ipy, ipy.notebook_list, ipy.new_notebook_widget,
                              events, dialog, utils);
       window.datalab.loaded = true;
     });
@@ -98,11 +101,13 @@ define([
   'base/js/security',
   'static/appbar',
   'static/edit-app',
-  'static/minitoolbar',
   'static/notebook-app',
   'static/notebook-list',
+  'static/minitoolbar',
   'static/websocket'
 ], function(ipy, events, dialog, utils, security, appbar, editapp,
-            minitoolbar, notebookapp, notebooklist, websocket) {
-  initializeDataLab(IPython, events, dialog, utils, security);
+            notebookapp, notebooklist, minitoolbar, websocket) {
+     initializeDataLab(
+            ipy, events, dialog, utils, security, appbar, editapp,
+            notebookapp, notebooklist);
 });
