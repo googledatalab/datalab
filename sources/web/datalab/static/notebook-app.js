@@ -80,6 +80,21 @@ define(['static/appbar', 'static/minitoolbar'], function(appbar, minitoolbar) {
           Jupyter.notebook.undelete_cell.bind(Jupyter.notebook))
     });
 
+    events.on('kernel_connected.Kernel', function() {
+      $('#currentKernelName').text(Jupyter.kernelselector.current_selection);
+      $('#kernelSelectorDropdown').empty();
+      Object.keys(Jupyter.kernelselector.kernelspecs).forEach(function(kernel) {     
+        $('#kernelSelectorDropdown').append(`
+          <li>
+            <a href="#" onclick="Jupyter.kernelselector.set_kernel('` + kernel + `')">
+              ` + kernel + `
+            </a>
+          </li>
+          `
+          )
+      })
+    });
+
     events.on('notebook_loaded.Notebook', function() {
 
       // create the cell toolbar
@@ -657,23 +672,11 @@ define(['static/appbar', 'static/minitoolbar'], function(appbar, minitoolbar) {
       document.getElementById('navigation').style.display = '';
       document.getElementById('help').style.display = 'none';
     }
+
   }
 
     showHelp(help);
   });
 
-  events.on('kernel_connected.Kernel', function() {
-    $('#currentKernelName').text(Jupyter.kernelselector.current_selection);
-    $('#kernelSelectorDropdown').empty();
-    Object.keys(Jupyter.kernelselector.kernelspecs).forEach(function(kernel) {     
-      $('#kernelSelectorDropdown').append(`
-        <li>
-          <a href="#" onclick="Jupyter.kernelselector.set_kernel('` + kernel + `')">
-            ` + kernel + `
-          </a>
-        </li>
-        `
-        )
-    })
-  });
-}
+
+
