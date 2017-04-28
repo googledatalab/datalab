@@ -118,9 +118,6 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir seaborn==0.7.0 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir PyYAML==3.11 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir six==1.10.0 && \
-    # Install notebook after ipywidgets, and keep it pinned to 4.2.3, higher versions may
-    # not work well with datalab. For example, kernel gateway doesn't work with 4.3.0 notebook
-    # (https://github.com/googledatalab/datalab/issues/1083)
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir psutil==4.3.0 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir google-api-python-client==1.5.1  && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir plotly==1.12.5 && \
