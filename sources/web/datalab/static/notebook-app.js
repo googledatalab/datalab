@@ -654,4 +654,19 @@ function initializeNotebookApplication(ipy, notebook, events, dialog, utils) {
 
     showHelp(help);
   });
+
+  events.on('kernel_connected.Kernel', function() {
+    $('#currentKernelName').text(Jupyter.kernelselector.current_selection);
+    $('#kernelSelectorDropdown').empty();
+    Object.keys(Jupyter.kernelselector.kernelspecs).forEach(function(kernel) {     
+      $('#kernelSelectorDropdown').append(`
+        <li>
+          <a href="#" onclick="Jupyter.kernelselector.set_kernel('` + kernel + `')">
+            ` + kernel + `
+          </a>
+        </li>
+        `
+        )
+    })
+  });
 }

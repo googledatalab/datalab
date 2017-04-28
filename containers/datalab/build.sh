@@ -34,6 +34,7 @@ fi
 cd $(dirname $0)
 
 cat Dockerfile.in | sed $VERSION_SUBSTITUTION | sed $COMMIT_SUBSTITUTION > Dockerfile
+cat Dockerfile.in | sed $VERSION_SUBSTITUTION | sed $COMMIT_SUBSTITUTION | sed "s/datalab-base/datalab-base-py2/" > Dockerfile.py2
 
 # Set up our required environment
 source ../../tools/initenv.sh
@@ -52,8 +53,10 @@ cp ../../third_party/license.txt content/license.txt
 
 # Build the docker image
 docker build ${DOCKER_BUILD_ARGS} -t datalab .
+docker build ${DOCKER_BUILD_ARGS} -t datalab-py2 -f Dockerfile.py2 .
 
 # Finally cleanup
 rm -rf build
 rm content/license.txt
 rm Dockerfile
+rm Dockerfile.py2
