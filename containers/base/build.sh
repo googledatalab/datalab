@@ -32,4 +32,3 @@ fi
 
 trap 'rm -rf pydatalab' exit
 docker build ${DOCKER_BUILD_ARGS} -t datalab-base .
-docker build ${DOCKER_BUILD_ARGS} -t datalab-base-py2 -f Dockerfile.py2 .
