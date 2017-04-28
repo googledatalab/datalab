@@ -57,8 +57,6 @@ test.describe('UI tests', function() {
 
   // build the selenium webdriver
   before(function() {
-    this.timeout(suiteTimeout);
-    let options = {'args': ['disable-infobars']}
     driver = new selenium.Builder()
       .forBrowser('chrome')
       .usingServer('http://localhost:4444/wd/hub')
@@ -68,6 +66,7 @@ test.describe('UI tests', function() {
   });
 
   test.describe('Tree page', function() {
+    this.timeout(suiteTimeout);
 
     // navigate to localhost:8081, which is redirected to the tree page
     before(function() {
