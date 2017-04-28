@@ -349,6 +349,17 @@ span.autosave_status {
   padding: 0px;
 }
 
+/* Terminals page */
+.terminal-app #terminado-container {
+  margin: 0px;
+  height: 100%;
+  width: 100vw;
+}
+.terminal-app .terminal, .terminal-app {
+  width: 100%;
+  height: 100%;
+}
+
 /* Cell Customizations */
 div.cell {
   border: solid 1px transparent;

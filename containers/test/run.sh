@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-CONTENT=$HOME
+mkdir -p $HOME/datalab_content
+CONTENT=$HOME/datalab_content
 ENTRYPOINT="/datalab/test/startup.sh"
 if [ "$1" != "" ]; then
   if [ "$1" != "shell" ]; then

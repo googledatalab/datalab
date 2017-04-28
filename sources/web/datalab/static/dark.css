@@ -106,6 +106,15 @@ input {
   color: #333;
 }
 
+/* Terminal Page */
+#running .panel {
+  background-color: #444;
+  border-color: #333;
+}
+#running .panel-group .panel .panel-heading {
+  background-color: #333;
+}
+
 /* Inside Notebooks */
 #contentArea,#notebook-container {
   background-color: #444;
