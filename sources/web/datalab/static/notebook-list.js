@@ -32,6 +32,24 @@ function initNotebookList_postLoad(ipy, notebookList, newNotebook, events, dialo
     e.target.blur();
   }
 
+  function addTerminal(e) {
+    let newWindow = window.open(undefined, IPython._target);
+    let prefix = location.protocol + '//' + location.host + '/';
+    let addTerminalUrl = prefix + 'api/terminals';
+    let settings = {
+      type : 'POST',
+      dataType: 'json',
+      success: (data, status, xhr) => {
+        newWindow.location = prefix + 'terminals/' + encodeURIComponent(data.name);
+      },
+      error : function(jqXHR, status, error){
+        newWindow.close();
+        debug.log(jqXHR, status, error);
+      },
+    };
+    $.ajax(addTerminalUrl, settings);
+  }
+
   function openEditor(e) {
     prefix = location.protocol + '//' + location.host + "/edit/";
     Jupyter.notebook_list.selected.forEach(notebook => {
@@ -51,6 +69,7 @@ function initNotebookList_postLoad(ipy, notebookList, newNotebook, events, dialo
 
   document.getElementById('addNotebookButton').addEventListener('click', addNotebook, false);
   document.getElementById('addFolderButton').addEventListener('click', addFolder, false);
+  document.getElementById('addTerminalButton').addEventListener('click', addTerminal, false);
   document.getElementById('editorButton').addEventListener('click', openEditor, false);
 
   (function buildBreadcrumbContent() {
