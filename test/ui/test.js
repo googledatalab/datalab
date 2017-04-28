@@ -105,6 +105,24 @@ test.describe('UI tests', function() {
         .then(screenshotAndCompare('body.png', 'body'));
     });
 
+    it.only('shows extra buttons when a tree item is selected after reloading list', function() {
+      return driver.executeScript('Jupyter.notebook_list.load_list()')
+        .then(driver.findElement(
+          By.xpath('(//div[@id="notebook_list"]/div[@class="list_item row"])[last()]')))
+        .then(function(el) {
+          el.click();
+          return el
+        })
+        .then(function(el) {
+          screenshotAndCompare('listItemSelected.png', 'listItemSelected');
+          return el;
+        })
+        .then(function(el) {
+          el.click();
+        })
+        .then(screenshotAndCompare('listItemUnselected.png', 'listItemUnselected'));
+    });
+
   });
 
   after(function() {
