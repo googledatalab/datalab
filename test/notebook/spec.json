@@ -1,0 +1,12 @@
+[
+  {
+    "path": "datalab/docs/Hello World.ipynb"
+  },
+  {
+    "path": "datalab/docs/intro/Introduction to Notebooks.ipynb"
+  },
+  {
+    "path": "datalab/docs/intro/Introduction to Python.ipynb",
+    "ignore": [5]
+  }
+]
