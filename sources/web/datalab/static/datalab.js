@@ -49,7 +49,7 @@ function xhr(url, callback, method) {
 
 function initializeDataLab(
     ipy, events, dialog, utils, security, appbar, editapp,
-    minitoolbar, notebookapp, notebooklist, websocket
+    notebookapp, notebooklist
   ) {
   var saveFn = function() {
     if (('notebook' in ipy) && ipy.notebook) {
@@ -101,13 +101,13 @@ define([
   'base/js/security',
   'static/appbar',
   'static/edit-app',
-  'static/minitoolbar',
   'static/notebook-app',
   'static/notebook-list',
+  'static/minitoolbar',
   'static/websocket'
-], function(ipy,     events, dialog, utils, security, appbar, editapp,
-            minitoolbar, notebookapp, notebooklist, websocket) {
+], function(ipy, events, dialog, utils, security, appbar, editapp,
+            notebookapp, notebooklist, minitoolbar, websocket) {
      initializeDataLab(
-            IPython, events, dialog, utils, security, appbar, editapp,
-            minitoolbar, notebookapp, notebooklist, websocket);
+            ipy, events, dialog, utils, security, appbar, editapp,
+            notebookapp, notebooklist);
 });
