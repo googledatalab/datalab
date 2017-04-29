@@ -26,6 +26,7 @@ const resemble = require('node-resemble');
 var driver = null;
 
 const suiteTimeout = 60000;
+const initTimeout = 10000;
 const misMatchThreshold = 0;
 const goldenPathPrefix = 'ui/golden/';
 const brokenPathPrefix = 'ui/broken/';
@@ -57,11 +58,13 @@ test.describe('UI tests', function() {
 
   // build the selenium webdriver
   before(function() {
+    this.timeout(initTimeout);
     driver = new selenium.Builder()
       .forBrowser('chrome')
       .usingServer('http://localhost:4444/wd/hub')
       .build();
 
+    driver.manage().timeouts().setScriptTimeout(5000);
     return driver.manage().window().setSize(1024, 768);
   });
 
@@ -105,22 +108,31 @@ test.describe('UI tests', function() {
         .then(screenshotAndCompare('body.png', 'body'));
     });
 
-    it.only('shows extra buttons when a tree item is selected after reloading list', function() {
-      return driver.executeScript('Jupyter.notebook_list.load_list()')
-        .then(driver.findElement(
-          By.xpath('(//div[@id="notebook_list"]/div[@class="list_item row"])[last()]')))
-        .then(function(el) {
-          el.click();
-          return el
-        })
-        .then(function(el) {
-          screenshotAndCompare('listItemSelected.png', 'listItemSelected');
-          return el;
-        })
-        .then(function(el) {
-          el.click();
-        })
-        .then(screenshotAndCompare('listItemUnselected.png', 'listItemUnselected'));
+    test.it('shows(hides) extra buttons when a tree item is (un)selected', function() {
+      // simulate a list reload by calling the Jupyter function, and waiting
+      // on the draw list event to make sure all elements have rendered
+      // this makes sure the tree initialization code isn't executed more than once
+      driver.executeAsyncScript(function() {
+        let callback = arguments[arguments.length - 1];
+        require(['base/js/events'], function(events) {
+          events.on('draw_notebook_list.NotebookList', callback);
+        });
+        Jupyter.notebook_list.load_list()
+      });
+
+      // get an item in the file listing. the reason we're not using first
+      // is because the first item is not selectable (up dir)
+      let listItem = driver.findElement(
+        By.xpath('(//div[@id="notebook_list"]/div[@class="list_item row"])[last()]'));
+
+      // click the item, make sure the UI changes accordingly (extra buttons added)
+      listItem.click();
+      return screenshotAndCompare('listItemSelected.png', 'listItemSelected')
+      .then(function() {
+        // now unselect the same item and make sure the extra icons disappear
+        listItem.click();
+        return screenshotAndCompare('listItemUnselected.png', 'listItemUnselected');
+      });
     });
 
   });

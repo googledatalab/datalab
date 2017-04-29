@@ -80,15 +80,29 @@ function initializeDataLab(
     });
   }
   else if (pageClass.indexOf('notebook_list') >= 0) {
+    // The page is finished loading after the notebook list is drawn for the first
+    // time. The list is refreshed periodically though, so we need to only capture
+    // the first occurrence
+    let notebookListLoaded = false;
     events.on('draw_notebook_list.NotebookList', function() {
-      notebooklist.postLoad(ipy, ipy.notebook_list, ipy.new_notebook_widget,
-                             events, dialog, utils);
-      window.datalab.loaded = true;
+      if (!notebookListLoaded) {
+        notebooklist.postLoad(ipy, ipy.notebook_list, ipy.new_notebook_widget,
+                              events, dialog, utils);
+        window.datalab.loaded = true;
+        notebookListLoaded = true;
+      }
     });
   }
   else if (pageClass.indexOf('session_list') >= 0) {
+    // The page is finished loading after the notebook list is drawn for the first
+    // time. This event is used also after loading the terminal list. These lists are
+    // refreshed periodically though, so we need to only capture the first occurrence
+    let sessionListLoaded = false;
     events.on('draw_notebook_list.NotebookList', function() {
-      window.datalab.loaded = true;
+      if (!sessionListLoaded) {
+        window.datalab.loaded = true;
+        sessionListLoaded = true;
+      }
     });
   }
 }
