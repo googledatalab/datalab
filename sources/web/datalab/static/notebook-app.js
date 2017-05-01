@@ -675,8 +675,11 @@ define(['static/appbar', 'static/minitoolbar'], function(appbar, minitoolbar) {
 
   }
 
-    showHelp(help);
-  });
+  return {
+    preLoad: preLoad,
+    postLoad, postLoad,
+  };
+});
 
 
 
