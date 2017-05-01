@@ -24,7 +24,7 @@
 body {
   font-family: 'Open Sans', Helvetica, sans-serif;
   font-size: 14px;
-  min-width: 720px;
+  min-width: 760px;
 }
 
 /* Layout */
@@ -265,6 +265,11 @@ i.material-icons {
 
 /* Suppress the ipywidget Widgets menu until we figure out how to handle it. */
 #help_menu_container {
+  display: none;
+}
+
+/* Hide the python kernel picker dropdown until it's ready for release. */
+#kernel_picker_menu {
   display: none;
 }
 
@@ -590,7 +595,7 @@ div.modal-dialog pre, div.modal-dialog code, #help code, #help pre {
 }
 
 /* Responsive Design */
-@media screen and (max-width: 1080px) {
+@media screen and (max-width: 1220px) {
   span.toolbar-text {
     display: none;
   }

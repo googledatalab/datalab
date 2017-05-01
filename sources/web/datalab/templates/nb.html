@@ -161,6 +161,15 @@
                 <li id="interruptKernelButton"><a href="#">Interrupt Execution</a></li>
               </ul>
             </div>
+            <div class="btn-group" id="kernel_picker_menu">
+              <button id="kernelSelectorButton" type="button" data-toggle="dropdown" class="toolbar-btn" title="Select kernel">
+                <i class="material-icons">track_changes</i>
+                <span class="toolbar-text">Kernel: </span>
+                <span id="currentKernelName"></span>
+              </button>
+              <ul class="dropdown-menu" id="kernelSelectorDropdown">
+              </ul>
+            </div>
             <!-- The next div and its contents are for ipywidgets. They insert their own menu before #help_menu -->
             <div class="btn-group" id="help_menu_container">
               <div>
