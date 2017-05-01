@@ -83,13 +83,11 @@ function initializeDataLab(
     // The page is finished loading after the notebook list is drawn for the first
     // time. The list is refreshed periodically though, so we need to only capture
     // the first occurrence
-    let notebookListLoaded = false;
     events.on('draw_notebook_list.NotebookList', function() {
-      if (!notebookListLoaded) {
+      if (!window.datalab.loaded) {
         notebooklist.postLoad(ipy, ipy.notebook_list, ipy.new_notebook_widget,
                               events, dialog, utils);
         window.datalab.loaded = true;
-        notebookListLoaded = true;
       }
     });
   }
@@ -97,11 +95,9 @@ function initializeDataLab(
     // The page is finished loading after the notebook list is drawn for the first
     // time. This event is used also after loading the terminal list. These lists are
     // refreshed periodically though, so we need to only capture the first occurrence
-    let sessionListLoaded = false;
     events.on('draw_notebook_list.NotebookList', function() {
-      if (!sessionListLoaded) {
+      if (!window.datalab.loaded) {
         window.datalab.loaded = true;
-        sessionListLoaded = true;
       }
     });
   }
