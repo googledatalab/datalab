@@ -41,7 +41,7 @@
     "--ContentsManager.untitled_notebook=\"Untitled Notebook\"",
     "--NotebookNotary.algorithm=\"sha1\"",
     "--KernelManager.autorestart=True",
-    "--KernelSpecManager.whitelist=[\"python2\"]",
+    "--MultiKernelManager.default_kernel_name=\"python2\"",
     "--ip=\"127.0.0.1\""
   ]
 }
