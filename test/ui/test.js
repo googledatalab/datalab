@@ -12,8 +12,10 @@
  * the License.
  */
 
-// This is a UI test suite that makes sure various parts of the app look
-// as expected, and validates a subset of interactions
+/*
+ * This is a UI test suite that makes sure various parts of the app look
+ * as expected, and validates a subset of interactions
+ */
 
 const assert = require('assert');
 const selenium = require('selenium-webdriver'),
@@ -25,8 +27,9 @@ const resemble = require('node-resemble');
 
 var driver = null;
 
-const suiteTimeout = 60000;
-const initTimeout = 10000;
+const suiteTimeout = 60000; // maximum of one minute for running each suite
+const initTimeout = 10000;  // 10 seconds for initialization time, building the webdriver
+const scriptTimeout = 5000; // 5 seconds for running synchronous js scripts in the driver
 const misMatchThreshold = 0;
 const goldenPathPrefix = 'ui/golden/';
 const brokenPathPrefix = 'ui/broken/';
@@ -64,7 +67,7 @@ test.describe('UI tests', function() {
       .usingServer('http://localhost:4444/wd/hub')
       .build();
 
-    driver.manage().timeouts().setScriptTimeout(5000);
+    driver.manage().timeouts().setScriptTimeout(scriptTimeout);
     return driver.manage().window().setSize(1024, 768);
   });
 
@@ -109,30 +112,30 @@ test.describe('UI tests', function() {
     });
 
     test.it('shows(hides) extra buttons when a tree item is (un)selected', function() {
-      // simulate a list reload by calling the Jupyter function, and waiting
-      // on the draw list event to make sure all elements have rendered
-      // this makes sure the tree initialization code isn't executed more than once
+      // Simulate a list reload by calling the Jupyter function, and waiting
+      // on the draw list event to make sure all elements have rendered.
+      // This makes sure the tree initialization code isn't executed more than once
       driver.executeAsyncScript(function() {
-        let callback = arguments[arguments.length - 1];
+        const callback = arguments[arguments.length - 1];
         require(['base/js/events'], function(events) {
           events.on('draw_notebook_list.NotebookList', callback);
         });
         Jupyter.notebook_list.load_list()
       });
 
-      // get an item in the file listing. the reason we're not using first
+      // Get an item in the file listing. the reason we're not using first
       // is because the first item is not selectable (up dir)
-      let listItem = driver.findElement(
+      const listItem = driver.findElement(
         By.xpath('(//div[@id="notebook_list"]/div[@class="list_item row"])[last()]'));
 
-      // click the item, make sure the UI changes accordingly (extra buttons added)
+      // Click the item, make sure the UI changes accordingly (extra buttons added)
       listItem.click();
       return screenshotAndCompare('listItemSelected.png', 'listItemSelected')
-      .then(function() {
-        // now unselect the same item and make sure the extra icons disappear
-        listItem.click();
-        return screenshotAndCompare('listItemUnselected.png', 'listItemUnselected');
-      });
+        .then(function() {
+          // Now unselect the same item and make sure the extra icons disappear
+          listItem.click();
+          return screenshotAndCompare('listItemUnselected.png', 'listItemUnselected');
+        });
     });
 
   });
