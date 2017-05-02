@@ -24,7 +24,7 @@ cache:
   - node_modules
 
 before_install:
-- npm install -g typescript
+- npm install -s -q -g typescript --depth 0
 - pip install -U pip
 - pip install flake8
 
@@ -36,6 +36,6 @@ script:
 - cd $TRAVIS_BUILD_DIR/tools/
 - flake8 cli/
 - cd $TRAVIS_BUILD_DIR/test
-- npm install
+- npm install -s -q --depth 0
 - npm test
 - for i in `ls ui/broken/`; do echo ui/broken/$i; base64 ui/broken/$i; echo \"-----\"; done
