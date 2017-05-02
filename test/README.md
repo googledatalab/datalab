@@ -23,4 +23,7 @@ Cairo, which is a resemblejs dependency, on your system. Take a look at the Trav
 what is required on a vanilla VM to build resemblejs.
 
 [Mocha JS](https://github.com/mochajs/mocha) is the test runner. After you do `npm install`, you
-can run individual tests using the `mocha` cli, for example: `mocha notebook/test.js`.
+can run individual tests using the `mocha` cli, for example: `mocha notebook/test.js`. Please note
+that any changes made to source files will not appear automatically for the test runner, since
+it does not use the live reload functionality. You will have to rebuild the image manually for
+tests to pick up such changes.

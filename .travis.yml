@@ -38,4 +38,4 @@ script:
 - cd $TRAVIS_BUILD_DIR/test
 - npm install
 - npm test
-- for i in `ls ui/broken/`; do echo $i; base64 \"$i\"; echo \"-----\"; done
+- for i in `ls ui/broken/`; do echo ui/broken/$i; base64 ui/broken/$i; echo \"-----\"; done
