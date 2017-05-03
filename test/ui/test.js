@@ -111,10 +111,9 @@ test.describe('UI tests', function() {
         .then(screenshotAndCompare('body.png', 'body'));
     });
 
-    test.it('shows(hides) extra buttons when a tree item is (un)selected', function() {
-      // Simulate a list reload by calling the Jupyter function, and waiting
-      // on the draw list event to make sure all elements have rendered.
-      // This makes sure the tree initialization code isn't executed more than once
+    // Simulate a list reload by calling the Jupyter function, and waiting
+    // on the draw list event to make sure all elements have rendered
+    function reloadNotebookList() {
       driver.executeAsyncScript(function() {
         const callback = arguments[arguments.length - 1];
         require(['base/js/events'], function(events) {
@@ -122,6 +121,12 @@ test.describe('UI tests', function() {
         });
         Jupyter.notebook_list.load_list()
       });
+    }
+
+    test.it('shows(hides) extra buttons when a tree item is (un)selected', function() {
+      // Reload the notebook list to make sure the tree initialization
+      // code isn't executed more than once
+      reloadNotebookList();
 
       // Get an item in the file listing. the reason we're not using first
       // is because the first item is not selectable (up dir)
@@ -136,6 +141,20 @@ test.describe('UI tests', function() {
           listItem.click();
           return screenshotAndCompare('listItemUnselected.png', 'listItemUnselected');
         });
+    });
+
+    test.it('clicks Add Folder and makes sure a new folder is added', function() {
+      // Add a new folder
+      driver.findElement(By.id('addFolderButton')).click();
+      reloadNotebookList();
+      return screenshotAndCompare('folderAdded.png', 'folderAdded');
+    });
+
+    test.it('clicks Add Notebook and makes sure a new notebook is added', function() {
+      // Add a new notebook
+      driver.findElement(By.id('addNotebookButton')).click();
+      reloadNotebookList();
+      return screenshotAndCompare('folderAndNotebookAdded.png', 'folderAndNotebookAdded');
     });
 
   });
