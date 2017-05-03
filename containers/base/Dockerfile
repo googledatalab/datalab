@@ -59,7 +59,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
                    --upgrade-strategy only-if-needed --no-cache-dir mock==2.0.0 \
                    --upgrade-strategy only-if-needed --no-cache-dir requests==2.9.1 \
                    --upgrade-strategy only-if-needed --no-cache-dir oauth2client==2.2.0 \
-                   --upgrade-strategy only-if-needed --no-cache-dir httplib2==0.9.2 \
+                   --upgrade-strategy only-if-needed --no-cache-dir httplib2==0.10.3 \
                    --upgrade-strategy only-if-needed --no-cache-dir futures==3.0.5 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir matplotlib==1.5.3 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir ggplot==0.6.8 && \
@@ -111,7 +111,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
                    --upgrade-strategy only-if-needed --no-cache-dir mock==2.0.0 \
                    --upgrade-strategy only-if-needed --no-cache-dir requests==2.9.1 \
                    --upgrade-strategy only-if-needed --no-cache-dir oauth2client==2.2.0 \
-                   --upgrade-strategy only-if-needed --no-cache-dir httplib2==0.9.2 \
+                   --upgrade-strategy only-if-needed --no-cache-dir httplib2==0.10.3 \
                    --upgrade-strategy only-if-needed --no-cache-dir futures==3.0.5 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir matplotlib==1.5.3 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir ggplot==0.6.8 && \
@@ -231,6 +231,9 @@ RUN cd /datalab/lib/pydatalab && \
     pip install --upgrade-strategy only-if-needed --no-cache-dir . && \
     pip install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/image_classification/. && \
     pip install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/structured_data/. && \
+    pip3 install --upgrade-strategy only-if-needed --no-cache-dir . && \
+    pip3 install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/image_classification/. && \
+    pip3 install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/structured_data/. && \
     jupyter nbextension install --py datalab.notebook && \
     jupyter nbextension install --py google.datalab.notebook && \
     jupyter nbextension enable --py widgetsnbextension && \
