@@ -29,13 +29,12 @@
     </div>
     <div id="header"></div>
     <div id="site">
-      <div id="terminado-container">
-      </div>
+      <div id="terminado-container"></div>
     </div>
     <div style="position:absolute; left:-1000em">
       <!-- The following elements contain dummy content that is used to calculate
       the size of the terminal characters. For more context, look at terminal/js/main.js -->
-      <pre id="dummy-screen" style="border: solid 5px white;" class="terminal">
+      <pre id="dummy-screen" class="terminal">
         0
         1
         2
@@ -60,9 +59,8 @@
         1
         2
         3
-        4
-      <span id="dummy-screen-rows" style="">01234567890123456789012345678901234567890123456789012345678901234567890123456789</span>
-      </pre>
+        </pre>
+      <span id="dummy-screen-rows" style="">01234567890123456789012345678901234567890123456789012345678901234567890123456789012</span>
     </div>
   </div>
   <script src="/static/components/es6-promise/promise.min.js"></script>
@@ -118,7 +116,7 @@
     window.datalab = {};
 
     $("#appBar").load("/static/appbar.html", function() {
-      require(['tree/js/main.min', '/static/terminal/js/main.min.js']);
+      require(['/static/terminal/js/main.min.js', 'tree/js/main.min']);
     });
   </script>
   <script src="//www.gstatic.com/feedback/api.js" async="true" defer="true"></script>
