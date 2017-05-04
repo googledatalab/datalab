@@ -14,6 +14,7 @@
 
 """Methods for implementing the `datalab connect` command."""
 
+import os
 import subprocess
 import threading
 import urllib2
@@ -128,7 +129,9 @@ def connection_flags(parser):
             '\n\n'
             'This may be useful for debugging issues with an SSH connection.'
             '\n\n'
-            'The default log level is "error".'))
+            'The default log level is "error".'
+            '\n\n'
+            'This has no effect when run on Windows.'))
     parser.add_argument(
         '--no-launch-browser',
         dest='no_launch_browser',
@@ -174,10 +177,18 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         if args.zone:
             cmd.extend(['--zone', args.zone])
         port_mapping = 'localhost:' + str(args.port) + ':localhost:8080'
+        if os.name == 'posix':
+            # The '-o' flag is not supported by all SSH clients (notably,
+            # PuTTY does not support it). To avoid any potential issues
+            # with it, we only add that flag when we believe it will
+            # be supported. In particular, checking for an os name of
+            # 'posix' works for both Linux and Mac OSX, which do support
+            # that flag.
+            cmd.extend([
+                '--ssh-flag=-o',
+                '--ssh-flag=LogLevel=' + args.ssh_log_level])
         cmd.extend([
             '--ssh-flag=-4',
-            '--ssh-flag=-o',
-            '--ssh-flag=LogLevel=' + args.ssh_log_level,
             '--ssh-flag=-N',
             '--ssh-flag=-L',
             '--ssh-flag=' + port_mapping])
