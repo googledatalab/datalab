@@ -85,8 +85,7 @@ function initializeDataLab(
     // the first occurrence
     events.on('draw_notebook_list.NotebookList', function() {
       if (!window.datalab.loaded) {
-        notebooklist.postLoad(ipy, ipy.notebook_list, ipy.new_notebook_widget,
-                              events, dialog, utils);
+        notebooklist.postLoad(ipy.notebook_list, ipy.new_notebook_widget, dialog);
         window.datalab.loaded = true;
       }
     });
