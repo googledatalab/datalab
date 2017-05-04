@@ -23,6 +23,7 @@ import http = require('http');
 import info = require('./info');
 import jupyter = require('./jupyter');
 import logging = require('./logging');
+import idleTimeout = require('./idleTimeout');
 import fileSearch = require('./fileSearch');
 import net = require('net');
 import noCacheContent = require('./noCacheContent')
@@ -44,6 +45,7 @@ var infoHandler: http.RequestHandler;
 var settingHandler: http.RequestHandler;
 var staticHandler: http.RequestHandler;
 var fileSearchHandler: http.RequestHandler;
+var timeoutHandler: http.RequestHandler;
 
 /**
  * The application settings instance.
@@ -107,6 +109,7 @@ function handleRequest(request: http.ServerRequest,
   if (loadedSettings === null) {
     loadedSettings = settings_.loadUserSettings(userId);
   }
+
   // All requests below are logged, while the ones above aren't, to avoid generating noise
   // into the log.
   logging.logRequest(request, response);
@@ -208,6 +211,12 @@ function handleRequest(request: http.ServerRequest,
     return;
   }
 
+  // idle timeout management
+  if (path.indexOf('/_timeout') === 0) {
+    timeoutHandler(request, response);
+    return;
+  }
+
   // Not Found
   response.statusCode = 404;
   response.end();
@@ -271,6 +280,7 @@ function socketHandler(request: http.ServerRequest, socket: net.Socket, head: Bu
  * @param response the out-going HTTP response.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse) {
+  idleTimeout.resetBasedOnPath(request.url);
   try {
     uncheckedRequestHandler(request, response);
   } catch (e) {
@@ -296,6 +306,7 @@ export function run(settings: common.Settings): void {
   settingHandler = settings_.createHandler();
   staticHandler = static_.createHandler(settings);
   fileSearchHandler = fileSearch.createHandler(appSettings);
+  timeoutHandler = idleTimeout.createHandler();
 
   server = http.createServer(requestHandler);
   server.on('upgrade', socketHandler);
@@ -309,6 +320,7 @@ export function run(settings: common.Settings): void {
   backupUtility.startBackup(settings);
   process.on('SIGINT', () => process.exit());
 
+  idleTimeout.initAndStart(appSettings);
   server.listen(settings.serverPort);
 }
 

@@ -1,4 +1,4 @@
-define(['static/appbar', 'static/minitoolbar'], function(appbar, minitoolbar) {
+define(['static/appbar', 'static/minitoolbar', 'static/idle-timeout'], function(appbar, minitoolbar, idleTimeout) {
   function preLoad(ipy, notebook, events, dialog, utils) {
     // Various RequireJS additions used for notebook functionality
     require.config({
@@ -94,6 +94,9 @@ define(['static/appbar', 'static/minitoolbar'], function(appbar, minitoolbar) {
           )
       })
     });
+
+    idleTimeout.setupKernelBusyHeartbeat();
+    $('#mainArea').scroll(idleTimeout.notebookScrolled);
 
     events.on('notebook_loaded.Notebook', function() {
 

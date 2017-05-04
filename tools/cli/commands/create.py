@@ -22,6 +22,8 @@ import connect
 import utils
 
 
+defaultIdleTimeout = '0s'   # Default for now is disabled
+
 description = ("""`{0} {1}` creates a new Datalab instances running in a Google
 Compute Engine VM.
 
@@ -194,6 +196,8 @@ spec:
           value: '{{"enableAutoGCSBackups": {1}, "consoleLogLevel": "{2}" }}'
         - name: DATALAB_GIT_AUTHOR
           value: '{3}'
+        - name: DATALAB_IDLE_TIMEOUT
+          value: '{4}'
       volumeMounts:
         - name: content
           mountPath: /content
@@ -272,6 +276,18 @@ def flags(parser):
         dest='disk_size_gb',
         default=_DATALAB_DEFAULT_DISK_SIZE_GB,
         help='size of the persistent disk in GB.')
+
+    parser.add_argument(
+        '--idle-timeout',
+        dest='idle_timeout',
+        default=defaultIdleTimeout,
+        help=(
+            'interval after which an idle Datalab instance will shut down.'
+            '\n\n'
+            'You can specify a mix of days, hours, minutes and seconds\n'
+            'using those names or d, h, m and s, for example "1h 30m".\n'
+            'Specify 0s to disable.'))
+
     parser.add_argument(
         '--machine-type',
         dest='machine_type',
@@ -558,6 +574,7 @@ def run(args, gcloud_compute, gcloud_repos,
         disk_name)
     enable_backups = "false" if args.no_backups else "true"
     console_log_level = args.log_level or "warn"
+    idle_timeout = args.idle_timeout or defaultIdleTimeout
     user_email = args.for_user or email
     service_account = args.service_account or "default"
     # We have to escape the user's email before using it in the YAML template.
@@ -575,7 +592,7 @@ def run(args, gcloud_compute, gcloud_repos,
             manifest_file.write(
                 _DATALAB_CONTAINER_SPEC.format(
                     args.image_name, enable_backups,
-                    console_log_level, escaped_email))
+                    console_log_level, escaped_email, idle_timeout))
             manifest_file.close()
             for_user_file.write(user_email)
             for_user_file.close()
