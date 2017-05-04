@@ -27,9 +27,9 @@ const resemble = require('node-resemble');
 
 var driver = null;
 
-const suiteTimeout = 60000; // maximum of one minute for running each suite
-const initTimeout = 10000;  // 10 seconds for initialization time, building the webdriver
-const scriptTimeout = 5000; // 5 seconds for running synchronous js scripts in the driver
+const suiteTimeout = 60000;  // maximum of one minute for running each suite
+const initTimeout = 10000;   // 10 seconds for initialization time, building the webdriver
+const scriptTimeout = 10000; // 10 seconds for running synchronous js scripts in the driver
 const misMatchThreshold = 0;
 const goldenPathPrefix = 'ui/golden/';
 const brokenPathPrefix = 'ui/broken/';

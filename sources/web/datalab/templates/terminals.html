@@ -116,7 +116,7 @@
     window.datalab = {};
 
     $("#appBar").load("/static/appbar.html", function() {
-      require(['tree/js/main.min', '/static/terminal/js/main.min.js']);
+      require(['/static/terminal/js/main.min.js', 'tree/js/main.min']);
     });
   </script>
   <script src="//www.gstatic.com/feedback/api.js" async="true" defer="true"></script>

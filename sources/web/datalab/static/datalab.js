@@ -106,7 +106,6 @@ function initializeDataLab(
 define([
   'base/js/namespace',
   'base/js/events',
-  'base/js/dialog',
   'base/js/utils',
   'base/js/security',
   'static/appbar',
@@ -114,9 +113,10 @@ define([
   'static/notebook-app',
   'static/notebook-list',
   'static/minitoolbar',
-  'static/websocket'
-], function(ipy, events, dialog, utils, security, appbar, editapp,
-            notebookapp, notebooklist, minitoolbar, websocket) {
+  'static/websocket',
+  'base/js/dialog'
+], function(ipy, events, utils, security, appbar, editapp,
+            notebookapp, notebooklist, minitoolbar, websocket, dialog) {
      initializeDataLab(
             ipy, events, dialog, utils, security, appbar, editapp,
             notebookapp, notebooklist);
