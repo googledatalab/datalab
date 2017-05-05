@@ -1,5 +1,6 @@
 *.ipynb_checkpoints
 build
+dev
 staging
 *.gradle
 *.pyc
@@ -11,7 +12,6 @@ staging
 *.swo
 *.ipynb.yaml
 *.log
-container.env
 containers/datalab/Dockerfile
 containers/datalab/content/license.txt
 containers/gateway/Dockerfile
