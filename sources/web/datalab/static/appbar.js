@@ -91,7 +91,7 @@ define(() => {
         '<i class="material-icons">open_in_new</i><a href="/static/about.txt" target="_blank"> License and software information</a><br />' +
         '<i class="material-icons">open_in_new</i><a href="https://cloud.google.com/terms/" target="_blank"> Terms of Service</a><br />' +
         '<i class="material-icons">open_in_new</i><a href="http://www.google.com/intl/en/policies/" target="_blank"> Privacy Policy</a><br />' +
-        '<i class="material-icons">open_in_new</i><a href="javascript:restartDatalab()"> Restart Server</a><br />';
+        '<i class="material-icons">open_in_new</i><a href="javascript:require([\'appbar\'],appbar=>appbar.restartDatalab())"> Restart Server</a><br />';
 
       var dialogOptions = {
         title: 'About Google Cloud Datalab',
@@ -196,6 +196,7 @@ define(() => {
 
   return {
     init: initializeAppBar,
+    restartDatalab: restartDatalab,
     showHelp: showHelp,
     toggleSidebar: toggleSidebar,
   };
