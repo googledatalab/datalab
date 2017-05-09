@@ -26,6 +26,10 @@ ENTRYPOINT="/datalab/run.sh"
 DEVROOT_DOCKER_OPTION=''
 LIVE_MODE=1
 
+function realpath() {
+  perl -MCwd -e 'print Cwd::realpath($ARGV[0]),qq<\n>' $1
+}
+
 function setup_live_mode() {
     # Live mode makes the datalab container use a live copy of the
     # development directory so your changes are visible to the container
