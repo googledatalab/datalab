@@ -21,7 +21,12 @@ const assert = require('assert');
 var requirejs = require("requirejs");
 requirejs.config({
   baseUrl: '../sources/web/datalab/static/',
-  nodeRequire: require
+  nodeRequire: require,
+  map: {
+    '*': {
+      util: 'utilMock'
+    }
+  }
 });
 
 describe('Unit tests', function() {

@@ -171,6 +171,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   const staticResourcesList: [string] = [
     'appbar.html',
     'appbar.js',
+    'util.js',
     'edit-app.js',
     'datalab.css',
     'minitoolbar.js',
