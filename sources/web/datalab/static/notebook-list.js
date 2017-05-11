@@ -1,9 +1,4 @@
-define(() => {
-
-  var debug = {
-    enabled: true,
-    log: function() { console.log.apply(console, arguments); }
-  };
+define(['util'], (util) => {
 
   // Compare two arrays, each representing a semantic version in the form of [0,1,2]
   // Returns -1, 0, 1. Returns null if they're malformed
@@ -29,7 +24,7 @@ define(() => {
   function strToSemver(versionStr) {
     let semver = versionStr.toString().split('.').map(x => +x);
     if (semver.length !== 1 && semver.length !== 3) {
-      this.debug.log('Malformed current version string. Found:', versionStr);
+      util.debug.log('Malformed current version string. Found:', versionStr);
       return null;
     }
     // If only one component was found, it's the PATCH part
@@ -43,7 +38,7 @@ define(() => {
     // Current version is sent as part of the HTML template document from the notebook server
     var currentVersion = document.body.getAttribute('data-version-id');
     if (currentVersion === undefined || latestVersion === undefined) {
-      this.debug.log('Failed to get current or latest version string.');
+      util.debug.log('Failed to get current or latest version string.');
       return;
     }
     currentSemver = strToSemver(currentVersion);
@@ -114,7 +109,7 @@ define(() => {
         },
         error : function(jqXHR, status, error){
           newWindow.close();
-          this.debug.log(jqXHR, status, error);
+          util.debug.log(jqXHR, status, error);
         },
       };
       $.ajax(addTerminalUrl, settings);
@@ -244,7 +239,6 @@ define(() => {
     postLoad: postLoad,
     _semverCompare: semverCompare,
     _strToSemver: strToSemver,
-    _checkVersion: checkVersion,
-    debug: debug
+    _checkVersion: checkVersion
   };
 });

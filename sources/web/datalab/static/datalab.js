@@ -12,11 +12,6 @@
  * the License.
  */
 
-var debug = {
-  enabled: true,
-  log: function() { console.log.apply(console, arguments); }
-};
-
 function placeHolder() {}
 
 function reportEvent(event) {

@@ -20,15 +20,14 @@
 const assert = require('assert');
 var requirejs = require("requirejs");
 requirejs.config({
-    baseUrl: '../sources/web/datalab/static/',
-    nodeRequire: require
+  baseUrl: '../sources/web/datalab/static/',
+  nodeRequire: require
 });
 
 describe('Unit tests', function() {
 describe('Notebook list', function() {
 
   var notebookList = requirejs('notebook-list');
-  notebookList.debug.log = () => {};
 
   it('strToSemver converts a string version into a backward compatible semver array', function() {
     // old clients compatibility
