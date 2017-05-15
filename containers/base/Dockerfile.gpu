@@ -12,29 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM _base_image_
+FROM datalab-core-gpu
 MAINTAINER Google Cloud DataLab
 
-# Add build artifacts
-ADD build/web/nb /datalab/web
-ADD content/ /datalab
+# Download and Install GPU specific packages
+RUN pip install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow-gpu==1.0.1 && \
+    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow-gpu==1.0.1
 
-# Install the build artifacts
-RUN ln -s /datalab/web/static/datalab.css /datalab/nbconvert/datalab.css && \
-    cd /datalab/web && /tools/node/bin/npm install && \
-    mv /datalab/.bashrc /root/.bashrc && \
-    cd / && \
 
-# Install ungit
-    /tools/node/bin/npm install -g ungit@1.1.0 && \
-    /tools/node/bin/npm install -s chokidar@1.6.1
-
-# Startup
-ENV ENV /root/.bashrc
-ENV SHELL /bin/bash
-ENV DATALAB_VERSION _version_
-ENV DATALAB_COMMIT _commit_
-ENV ENABLE_USAGE_REPORTING true
-
-# Startup
-ENTRYPOINT [ "/datalab/run.sh" ]

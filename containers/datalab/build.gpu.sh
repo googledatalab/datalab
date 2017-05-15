@@ -25,7 +25,7 @@ VERSION_SUBSTITUTION="s/_version_/0.5.$VERSION/"
 COMMIT=`git log --pretty=format:'%H' -n 1`
 COMMIT_SUBSTITUTION="s/_commit_/$COMMIT/"
 
-BASE_IMAGE_SUBSTITUTION="s/_base_image_/datalab-base/"
+BASE_IMAGE_SUBSTITUTION="s/_base_image_/datalab-base-gpu/"
 
 if [ -z "$1" ]; then
   pydatalabPath=''
@@ -50,10 +50,10 @@ rsync -avp ../../build/ build
 cp ../../third_party/license.txt content/license.txt
 
 # Build the base docker image
-../base/build.sh "$pydatalabPath"
+../base/build.gpu.sh "$pydatalabPath"
 
 # Build the docker image
-docker build ${DOCKER_BUILD_ARGS} -t datalab .
+docker build ${DOCKER_BUILD_ARGS} -t datalab-gpu .
 
 # Finally cleanup
 rm -rf build

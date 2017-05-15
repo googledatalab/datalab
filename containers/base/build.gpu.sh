@@ -32,7 +32,8 @@ fi
 
 trap 'rm -rf pydatalab' exit
 
-BASE_IMAGE_SUBSTITUTION="s/_base_image_/ubuntu:16.04/"
+BASE_IMAGE_SUBSTITUTION="s/_base_image_/nvidia\/cuda:8.0-cudnn5-devel-ubuntu16.04/"
 cat Dockerfile.in | sed $BASE_IMAGE_SUBSTITUTION > Dockerfile
-docker build ${DOCKER_BUILD_ARGS} -t datalab-base .
+docker build ${DOCKER_BUILD_ARGS} -t datalab-core-gpu .
 rm Dockerfile
+docker build ${DOCKER_BUILD_ARGS} -f Dockerfile.gpu -t datalab-base-gpu .
