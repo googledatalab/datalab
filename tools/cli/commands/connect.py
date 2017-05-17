@@ -76,6 +76,10 @@ unsupported_browsers = [
 ]
 
 
+# Status values from describe_instance that we care about.
+_STATUS_RUNNING = 'RUNNING'
+
+
 def flags(parser):
     """Add command line flags for the `connect` subcommand.
 
@@ -278,9 +282,9 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         if remaining_reconnects == 0:
             return
         # Before we try to reconnect, check to see if the VM is still running.
-        status, metadata_items = utils.describe_instance(
+        status, unused_metadata_items = utils.describe_instance(
             args, gcloud_compute, instance)
-        if status != 'RUNNING':
+        if status != _STATUS_RUNNING:
             print('Instance {0} is no longer running ({1})'.format(
                 instance, status))
             return
@@ -302,7 +306,7 @@ def maybe_start(args, gcloud_compute, instance, status):
     Raises:
       subprocess.CalledProcessError: If one of the `gcloud` calls fail
     """
-    if status != 'RUNNING':
+    if status != _STATUS_RUNNING:
         if utils.print_info_messages(args):
             print('Restarting the instance {0} with status {1}'.format(
                 instance, status))
