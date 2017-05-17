@@ -277,6 +277,13 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
             return
         if remaining_reconnects == 0:
             return
+        # Before we try to reconnect, check to see if the VM is still running.
+        status, metadata_items = utils.describe_instance(
+            args, gcloud_compute, instance)
+        if status != 'RUNNING':
+            print('Instance {0} is no longer running ({1})'.format(
+                instance, status))
+            return
         print('Attempting to reconnect...')
         remaining_reconnects -= 1
         # Don't launch the browser on reconnect...
