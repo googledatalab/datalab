@@ -17,13 +17,29 @@ a list of cells to ignore for each notebook, which is useful when specific cells
 intentionally erroneous. Each notebook is then loaded in a browser page, and all its cells are
 executed, and tests pass if no errors are produced.
 
-Tests were written as a nodejs package, so in order to run them locally, you can do `npm install`
-then `npm test` (or `npm install-test`). The one dependency is you have to be able to install
+## Running Tests
+
+### TL;DR
+
+Make sure you can install cairo on your system. Check the `.travis.yml` file for more info
+`cd test`
+`npm install-test`
+Or
+`npm test` if you have already installed the dependencies once
+
+### More on running tests:
+
+Tests were written as a nodejs package, so in order to run them locally, you first do `npm install`
+in order to download all the node dependencies. You only have to do this once to prepare for tests.
+You can then do `npm test` to start the tests. The one dependency is you have to be able to install
 Cairo, which is a resemblejs dependency, on your system. Take a look at the Travis config to see
 what is required on a vanilla VM to build resemblejs.
 
-[Mocha JS](https://github.com/mochajs/mocha) is the test runner. After you do `npm install`, you
-can run individual tests using the `mocha` cli, for example: `mocha notebook/test.js`. Please note
-that any changes made to source files will not appear automatically for the test runner, since
-it does not use the live reload functionality. You will have to rebuild the image manually for
-tests to pick up such changes.
+[Mocha JS](https://github.com/mochajs/mocha) is the test runner. UI and notebook tests require the
+Datalab and Selenium docker containers to be running (check `test/run.sh`). If you want to iterate
+on tests, you can manually start these containers as in the run script, then start a test suite
+by calling the `mocha` command directly. For example: `mocha notebook/test.js`.
+
+Note that any changes made to source files will not appear automatically for the test runner,
+since it does not use the live reload functionality. You will have to rebuild the image manually
+for tests to pick up such changes.
