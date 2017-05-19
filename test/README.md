@@ -1,12 +1,13 @@
 # Testing Google Cloud DataLab
 
-This directory contains tests Datalab. Tests are all written in Javascript, and they use a browser
+This directory contains tests for Datalab. Tests are all written in Javascript, and use a browser
 to run UI automation tests and notebook tests.
 
-It uses a [standalone Chrome browser](https://github.com/SeleniumHQ/docker-selenium/tree/master/StandaloneChrome) in a docker container provided by selenium, and nodejs bindings for selenium to
-write tests that launch a browser instance, take screenshots, and execute notebooks. Using the
-docker container reduces cross platform dependencies, provides a stable platform for tests, 
-and reduces the overall test time, since no image needs to be built on every change to Datalab.
+A [standalone Chrome browser](https://github.com/SeleniumHQ/docker-selenium/tree/master/StandaloneChrome)
+is started inside a docker container provided by selenium, and tests use nodejs bindings for
+selenium to drive a browser session, take screenshots, and execute notebooks. Using the docker
+container reduces cross platform dependencies, provides a stable platform for tests, and reduces
+the overall test time, since no image needs to be built on every change to Datalab.
 
 For UI tests, the [resemblejs package](https://github.com/Huddle/Resemble.js/) is used to compare
 screenshots against saved (golden) images, which is able to tolerate small anti-aliasing
@@ -21,24 +22,30 @@ executed, and tests pass if no errors are produced.
 
 ### TL;DR
 
-Make sure you can install cairo on your system. Check the `.travis.yml` file for more info
-`cd test`
-`npm install-test`
-Or
-`npm test` if you have already installed the dependencies once
+Make sure you can install cairo on your system. Check the `.travis.yml` file for more info.
 
-### More on running tests:
+From the root of your datalab repo, navigate to the `test` directory, then run: `npm install-test`
+
+### Test Setup
 
 Tests were written as a nodejs package, so in order to run them locally, you first do `npm install`
 in order to download all the node dependencies. You only have to do this once to prepare for tests.
-You can then do `npm test` to start the tests. The one dependency is you have to be able to install
-Cairo, which is a resemblejs dependency, on your system. Take a look at the Travis config to see
-what is required on a vanilla VM to build resemblejs.
+Note that this will try to install `cairo`, which is a dependency of `resemblejs`. If you see
+errors during the installation, this is likely what you want to debug. Make sure your system has
+the required packages for cairo installed. For example, for an Ubuntu machine, you can see the
+dependencies in the `.travis.yml` file.
 
-[Mocha JS](https://github.com/mochajs/mocha) is the test runner. UI and notebook tests require the
-Datalab and Selenium docker containers to be running (check `test/run.sh`). If you want to iterate
-on tests, you can manually start these containers as in the run script, then start a test suite
-by calling the `mocha` command directly. For example: `mocha notebook/test.js`.
+### Running Tests
+
+Run `npm test` to start the tests, which use [Mocha JS](https://github.com/mochajs/mocha) as a
+test runner. UI and notebook tests require the Datalab and Selenium docker containers to be
+running (check `test/run.sh`). If you want to iterate on tests, you can manually start these
+containers as in the run script, then start a test suite by calling the `mocha` command directly,
+for example: `mocha notebook/test.js`.
+
+UI tests compare screenshots they take at various points against golden screenshots that are
+saved under `test/ui/golden`. If a UI test fails, it will put a screenshot of the bad view under
+`test/ui/broken`, so you can compare it against its golden counterpart with the same name.
 
 Note that any changes made to source files will not appear automatically for the test runner,
 since it does not use the live reload functionality. You will have to rebuild the image manually
