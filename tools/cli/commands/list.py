@@ -76,7 +76,7 @@ def _filter(args):
     Returns:
       A string suitable for passing to the `gcloud` command
     """
-    base_expr = 'labels.{0}=\'\''.format('datalab')
+    base_expr = 'tags.items=\'{0}\''.format('datalab')
     if args.filter:
         return '({0}) ({1})'.format(base_expr, args.filter)
     else:
@@ -99,4 +99,4 @@ def run(args, gcloud_compute, **unused_kwargs):
         zones.append(args.zone)
     if zones:
         base_cmd.extend(['--zones'] + zones)
-    gcloud_compute(args, base_cmd + ['--filter', filter_expr], api='beta')
+    gcloud_compute(args, base_cmd + ['--filter', filter_expr])
