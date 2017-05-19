@@ -103,13 +103,12 @@ except:
 
 
 def gcloud_compute(
-        args, compute_cmd, api='', stdin=None, stdout=None, stderr=None):
+        args, compute_cmd, stdin=None, stdout=None, stderr=None):
     """Run the given subcommand of `gcloud compute`
 
     Args:
       args: The Namespace instance returned by argparse
       compute_cmd: The subcommand of `gcloud compute` to run
-      api: The optional API version to use (e.g. 'alpha', 'beta', etc)
       stdin: The 'stdin' argument for the subprocess call
       stdout: The 'stdout' argument for the subprocess call
       stderr: The 'stderr' argument for the subprocess call
@@ -118,8 +117,6 @@ def gcloud_compute(
       subprocess.CalledProcessError: If the command dies on its own
     """
     base_cmd = [gcloud_cmd]
-    if api:
-        base_cmd.append(api)
     base_cmd.append('compute')
     if args.project:
         base_cmd.extend(['--project', args.project])
