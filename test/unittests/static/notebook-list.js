@@ -24,7 +24,8 @@ requirejs.config({
   nodeRequire: require,
   map: {
     '*': {
-      util: 'utilMock'
+      // module mocks use relative path to the baseUrl
+      util: '../../../../test/unittests/static/utilMock'
     }
   }
 });
