@@ -76,7 +76,7 @@ test.describe('UI tests', function() {
 
     // navigate to localhost:8081, which is redirected to the tree page
     before(function() {
-      return driver.get('http://localhost:8081')
+      return driver.get('http://localhost:8081/tree/datalab')
         .then(function() {
           driver.wait(until.titleIs('Google Cloud DataLab'), 5000);
         })

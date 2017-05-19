@@ -26,13 +26,14 @@ if [ -z "$TRAVIS" ]; then
   trap cleanup INT EXIT SIGHUP SIGINT SIGTERM
 fi
 
-mkdir -p $HOME/datalab_content
+TESTS_HOME=$HOME/datalab_tests
+mkdir -p $TESTS_HOME
 
 echo Starting Datalab container..
 container_datalab=$(docker run -d \
   --entrypoint="/datalab/run.sh" \
   -p 127.0.0.1:8081:8080 \
-  -v $HOME/datalab_content:/content \
+  -v $TESTS_HOME:/content \
   -e "ENABLE_USAGE_REPORTING=false" \
   datalab)
 

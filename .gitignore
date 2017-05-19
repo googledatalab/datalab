@@ -17,3 +17,5 @@ containers/gateway/Dockerfile
 containers/gateway/content/license.txt
 containers/base/pydatalab
 test/node_modules
+node_modules
+test/ui/broken
