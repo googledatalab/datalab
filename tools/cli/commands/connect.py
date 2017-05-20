@@ -160,7 +160,7 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
     connect_msg = ('Connecting to {0}.\n'
                    'This will create an SSH tunnel '
                    'and may prompt you to create an rsa key pair.')
-    print(connect_msg.format(instance))
+    utils.print_and_flush(connect_msg.format(instance))
 
     datalab_port = args.port
     datalab_address = 'http://localhost:{0}/'.format(str(datalab_port))
@@ -175,7 +175,7 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
           subprocess.CalledProcessError: If the connection dies on its own
         """
         if utils.print_info_messages(args):
-            print('Connecting to {0} via SSH').format(instance)
+            utils.print_and_flush('Connecting to {0} via SSH').format(instance)
 
         cmd = ['ssh']
         if args.zone:
@@ -209,16 +209,16 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
                 return
             webbrowser.open(datalab_address)
         except webbrowser.Error as e:
-            print('Unable to open the webbrowser: ' + str(e))
+            utils.print_and_flush('Unable to open the webbrowser: ' + str(e))
 
     def on_ready():
         """Callback that handles a successful connection."""
-        print('\nThe connection to Datalab is now open and will '
+        utils.print_and_flush('\nThe connection to Datalab is now open and will '
               'remain until this command is killed.')
         if in_cloud_shell:
-            print(web_preview_message.format(datalab_port))
+            utils.print_and_flush(web_preview_message.format(datalab_port))
         else:
-            print('You can connect to Datalab at ' + datalab_address)
+            utils.print_and_flush('You can connect to Datalab at ' + datalab_address)
             if not args.no_launch_browser:
                 maybe_open_browser(datalab_address)
         return
@@ -237,7 +237,7 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         """
         health_url = '{0}_info/'.format(datalab_address)
         healthy = False
-        print('Waiting for Datalab to be reachable at ' + datalab_address)
+        utils.print_and_flush('Waiting for Datalab to be reachable at ' + datalab_address)
         while not cancelled_event.is_set():
             try:
                 health_resp = urllib2.urlopen(health_url)
@@ -267,7 +267,7 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         try:
             create_tunnel()
         except subprocess.CalledProcessError:
-            print('Connection broken')
+            utils.print_and_flush('Connection broken')
         finally:
             cancelled_event.set()
             health_check_thread.join()
@@ -285,10 +285,10 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         status, unused_metadata_items = utils.describe_instance(
             args, gcloud_compute, instance)
         if status != _STATUS_RUNNING:
-            print('Instance {0} is no longer running ({1})'.format(
+            utils.print_and_flush('Instance {0} is no longer running ({1})'.format(
                 instance, status))
             return
-        print('Attempting to reconnect...')
+        utils.print_and_flush('Attempting to reconnect...')
         remaining_reconnects -= 1
         # Don't launch the browser on reconnect...
         args.no_launch_browser = True
@@ -308,7 +308,7 @@ def maybe_start(args, gcloud_compute, instance, status):
     """
     if status != _STATUS_RUNNING:
         if utils.print_info_messages(args):
-            print('Restarting the instance {0} with status {1}'.format(
+            utils.print_and_flush('Restarting the instance {0} with status {1}'.format(
                 instance, status))
         start_cmd = ['instances', 'start']
         if args.zone:
@@ -335,7 +335,7 @@ def run(args, gcloud_compute, email='', in_cloud_shell=False, **unused_kwargs):
         args, gcloud_compute, instance)
     for_user = metadata_items.get('for-user', '')
     if (not args.no_user_checking) and for_user and (for_user != email):
-        print(wrong_user_message.format(for_user, email))
+        utils.print_and_flush(wrong_user_message.format(for_user, email))
         return
 
     maybe_start(args, gcloud_compute, instance, status)
