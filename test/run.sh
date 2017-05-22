@@ -53,4 +53,4 @@ until $(curl --output /dev/null --silent --head --fail http://localhost:4444/wd/
 done
 echo ' Done.'
 
-mocha ui/test.js notebook/test.js
+mocha ui/test.js notebook/test.js unittests/frontend.js

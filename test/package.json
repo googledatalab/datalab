@@ -6,7 +6,8 @@
   "dependencies": {
     "mocha": "^3.2.0",
     "node-resemble": "^2.0.1",
-    "selenium-webdriver": "^3.3.0"
+    "selenium-webdriver": "^3.3.0",
+    "requirejs": "^2.3.3"
   },
   "version": "1.0.0",
   "description": "Tests for Google Cloud Datalab front end scripts",

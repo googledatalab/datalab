@@ -18,6 +18,12 @@ a list of cells to ignore for each notebook, which is useful when specific cells
 intentionally erroneous. Each notebook is then loaded in a browser page, and all its cells are
 executed, and tests pass if no errors are produced.
 
+Unit tests don't actually use the browser to test code, but import and call functionality within
+the different modules directly. Tested code should all be defined as AMD modules that export any
+functionality required by other modules. Functions exported for tests should be exported with an
+underscore prefix. The requirejs library is used to import AMD modules from nodejs directly without
+the need for a browser. This way, required modules can be mocked using requirejs' map config.
+
 ## Running Tests
 
 ### TL;DR
