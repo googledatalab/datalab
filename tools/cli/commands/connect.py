@@ -213,12 +213,13 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
 
     def on_ready():
         """Callback that handles a successful connection."""
-        utils.print_and_flush('\nThe connection to Datalab is now open and will '
-              'remain until this command is killed.')
+        utils.print_and_flush('\nThe connection to Datalab is now open '
+                              'and will remain until this command is killed.')
         if in_cloud_shell:
             utils.print_and_flush(web_preview_message.format(datalab_port))
         else:
-            utils.print_and_flush('You can connect to Datalab at ' + datalab_address)
+            utils.print_and_flush(
+                'You can connect to Datalab at ' + datalab_address)
             if not args.no_launch_browser:
                 maybe_open_browser(datalab_address)
         return
@@ -237,7 +238,8 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         """
         health_url = '{0}_info/'.format(datalab_address)
         healthy = False
-        utils.print_and_flush('Waiting for Datalab to be reachable at ' + datalab_address)
+        utils.print_and_flush(
+            'Waiting for Datalab to be reachable at ' + datalab_address)
         while not cancelled_event.is_set():
             try:
                 health_resp = urllib2.urlopen(health_url)
@@ -285,8 +287,9 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         status, unused_metadata_items = utils.describe_instance(
             args, gcloud_compute, instance)
         if status != _STATUS_RUNNING:
-            utils.print_and_flush('Instance {0} is no longer running ({1})'.format(
-                instance, status))
+            utils.print_and_flush(
+                'Instance {0} is no longer running ({1})'.format(
+                    instance, status))
             return
         utils.print_and_flush('Attempting to reconnect...')
         remaining_reconnects -= 1
@@ -308,8 +311,9 @@ def maybe_start(args, gcloud_compute, instance, status):
     """
     if status != _STATUS_RUNNING:
         if utils.print_info_messages(args):
-            utils.print_and_flush('Restarting the instance {0} with status {1}'.format(
-                instance, status))
+            utils.print_and_flush(
+                'Restarting the instance {0} with status {1}'.format(
+                    instance, status))
         start_cmd = ['instances', 'start']
         if args.zone:
             start_cmd.extend(['--zone', args.zone])

@@ -351,7 +351,8 @@ def create_network(args, gcloud_compute):
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
     if utils.print_info_messages(args):
-        utils.print_and_flush('Creating the network {0}'.format(_DATALAB_NETWORK))
+        utils.print_and_flush(
+            'Creating the network {0}'.format(_DATALAB_NETWORK))
     create_cmd = [
         'networks', 'create', _DATALAB_NETWORK,
         '--description', _DATALAB_NETWORK_DESCRIPTION]
@@ -388,7 +389,8 @@ def create_firewall_rule(args, gcloud_compute):
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
     if utils.print_info_messages(args):
-        utils.print_and_flush('Creating the firewall rule {0}'.format(_DATALAB_FIREWALL_RULE))
+        utils.print_and_flush(
+            'Creating the firewall rule {0}'.format(_DATALAB_FIREWALL_RULE))
     create_cmd = [
         'firewall-rules', 'create', _DATALAB_FIREWALL_RULE,
         '--allow', 'tcp:22',
