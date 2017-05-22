@@ -105,7 +105,7 @@ function handleRequest(request: http.ServerRequest,
 
   var userId = userManager.getUserId(request);
   if (loadedSettings === null) {
-      loadedSettings = settings_.loadUserSettings(userId);
+    loadedSettings = settings_.loadUserSettings(userId);
   }
   // All requests below are logged, while the ones above aren't, to avoid generating noise
   // into the log.
@@ -121,9 +121,9 @@ function handleRequest(request: http.ServerRequest,
 
     response.statusCode = 302;
     if (startup_path_setting in loadedSettings) {
-        response.setHeader('Location', loadedSettings[startup_path_setting])
+      response.setHeader('Location', loadedSettings[startup_path_setting])
     } else {
-        response.setHeader('Location', '/tree/datalab');
+      response.setHeader('Location', '/tree/datalab');
     }
     response.end();
     return;
@@ -153,11 +153,19 @@ function handleRequest(request: http.ServerRequest,
       (path.indexOf('/nbextensions') == 0) ||
       (path.indexOf('/files') == 0) ||
       (path.indexOf('/edit') == 0) ||
+      (path.indexOf('/terminals') == 0) ||
       (path.indexOf('/sessions') == 0)) {
 
     if (path.indexOf('/tree') == 0) {
-        loadedSettings[startup_path_setting] = path
-        settings_.updateUserSetting(userId, startup_path_setting, path, true);
+      const filePath = '/content' + path.substr('/tree'.length);
+      try {
+        if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+          loadedSettings[startup_path_setting] = path
+          settings_.updateUserSetting(userId, startup_path_setting, path, true);
+        }
+      } catch (err) {
+        logging.getLogger().error(err, 'Failed check for file "%s": %s', filePath, err.code);
+      }
     }
     handleJupyterRequest(request, response);
     return;

@@ -14,6 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# This script supports a live mode in which a datalab git-clone directory is
+# mapped to /devroot in this container. When /devroot exists, this script
+# sets things up so that changes are immediately picked up by the noteboook
+# server. For files in the static and templates directories, this means the
+# developer can just modify the files in their datalab source tree and
+# reload the web page to pick up the changes. For typescript
+# files that get compiled into javascript, the developer needs to run the
+# build script for those files, after which the changes will get noticed by
+# the notebook server and it will automatically restart.
+
 USAGE='USAGE:
 
     docker run -it -p "8081:8080" -v "${HOME}:/content" gcr.io/cloud-datalab/datalab:local
@@ -114,5 +124,17 @@ then
   FOREVER_CMD="${FOREVER_CMD} -s"
 fi
 
-echo "Open your browser to http://localhost:8081/ to connect to Datalab."
-${FOREVER_CMD} /datalab/web/app.js
+if [ -d /devroot ]; then
+  # For development purposes, if the user has mapped a /devroot dir, use it.
+  echo "Running notebook server in live mode"
+  export DATALAB_LIVE_STATIC_DIR=/devroot/sources/web/datalab/static
+  export DATALAB_LIVE_TEMPLATES_DIR=/devroot/sources/web/datalab/templates
+  # Use our internal node_modules dir
+  export NODE_PATH="${NODE_PATH}:/datalab/web/node_modules"
+  # Auto-restart when the developer builds from the typescript files.
+  echo ${FOREVER_CMD} --watch --watchDirectory /devroot/build/web/nb /devroot/build/web/nb/app.js
+  ${FOREVER_CMD} --watch --watchDirectory /devroot/build/web/nb /devroot/build/web/nb/app.js
+else
+  echo "Open your browser to http://localhost:8081/ to connect to Datalab."
+  ${FOREVER_CMD} /datalab/web/app.js
+fi

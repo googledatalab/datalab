@@ -91,8 +91,10 @@ var callbackManager: callbacks.CallbackManager = new callbacks.CallbackManager()
 /**
  * Templates
  */
-var templates: common.Map<string> = {
+const templates: common.Map<string> = {
+  // These cached templates can be overridden in sendTemplate
   'tree': fs.readFileSync(path.join(__dirname, 'templates', 'tree.html'), { encoding: 'utf8' }),
+  'terminals': fs.readFileSync(path.join(__dirname, 'templates', 'terminals.html'), { encoding: 'utf8' }),
   'sessions': fs.readFileSync(path.join(__dirname, 'templates', 'sessions.html'), { encoding: 'utf8' }),
   'edit': fs.readFileSync(path.join(__dirname, 'templates', 'edit.html'), { encoding: 'utf8' }),
   'nb': fs.readFileSync(path.join(__dirname, 'templates', 'nb.html'), { encoding: 'utf8' })
@@ -393,16 +395,18 @@ function getBaseTemplateData(request: http.ServerRequest): common.Map<string> {
 }
 
 function sendTemplate(key: string, data: common.Map<string>, response: http.ServerResponse) {
-  var template = templates[key];
+  let template = templates[key];
 
-  // NOTE: Uncomment to use external templates mapped into the container.
-  //       This is only useful when actively developing the templates themselves.
-  // template = fs.readFileSync('/sources/datalab/templates/' + key + '.html', { encoding: 'utf8' });
+  // Set this env var to point to source directory for live updates without restart.
+  const liveTemplatesDir = process.env.DATALAB_LIVE_TEMPLATES_DIR
+  if (liveTemplatesDir) {
+    template = fs.readFileSync(path.join(liveTemplatesDir, key + '.html'), { encoding: 'utf8' });
+  }
 
   // Replace <%name%> placeholders with actual values.
   // TODO: Error handling if template placeholders are out-of-sync with
   //       keys in passed in data object.
-  var htmlContent = template.replace(/\<\%(\w+)\%\>/g, function(match, name) {
+  const htmlContent = template.replace(/\<\%(\w+)\%\>/g, function(match, name) {
     return data[name];
   });
 
@@ -414,8 +418,8 @@ function responseHandler(proxyResponse: http.ClientResponse,
                          request: http.ServerRequest, response: http.ServerResponse) {
   if (appSettings.allowOriginOverrides.length &&
       appSettings.allowOriginOverrides.indexOf(request.headers['origin']) != -1) {
-      proxyResponse.headers['access-control-allow-origin'] = request.headers['origin'];
-      proxyResponse.headers['access-control-allow-credentials'] = 'true';
+    proxyResponse.headers['access-control-allow-origin'] = request.headers['origin'];
+    proxyResponse.headers['access-control-allow-credentials'] = 'true';
   } else if (proxyResponse.headers['access-control-allow-origin'] !== undefined) {
     // Delete the allow-origin = * header that is sent (likely as a result of a workaround
     // notebook configuration to allow server-side websocket connections that are
@@ -430,7 +434,8 @@ function responseHandler(proxyResponse: http.ClientResponse,
   // Set a cookie to provide information about the project and authenticated user to the client.
   // Ensure this happens only for page requests, rather than for API requests.
   var path = url.parse(request.url).pathname;
-  if ((path.indexOf('/tree') == 0) || (path.indexOf('/notebooks') == 0) || (path.indexOf('/edit') == 0)) {
+  if ((path.indexOf('/tree') == 0) || (path.indexOf('/notebooks') == 0) ||
+      (path.indexOf('/edit') == 0) || (path.indexOf('/terminals') == 0)) {
     var templateData: common.Map<string> = getBaseTemplateData(request);
     var page: string = null;
     if (path.indexOf('/tree') == 0) {
@@ -444,6 +449,9 @@ function responseHandler(proxyResponse: http.ClientResponse,
       templateData['fileName'] = path.substr(path.lastIndexOf('/') + 1);
 
       page = 'edit';
+    } else if (path.indexOf('/terminals') == 0) {
+      templateData['terminalId'] = 'terminals/websocket/' + path.substr(path.lastIndexOf('/') + 1);
+      page = 'terminals';
     } else {
       // stripping off the /notebooks/ from the path
       templateData['notebookPath'] = path.substr(11);

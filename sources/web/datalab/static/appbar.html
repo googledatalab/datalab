@@ -12,12 +12,12 @@
     <span class="autosave_status"></span>
   </span>
   <div class="btn-toolbar pull-right right-toolbar">
-    <div class="btn-group">
-      <button id="ungitButton" title="Open ungit on the notebooks repository" class="toolbar-btn">
+    <div id="ungitButton" class="btn-group">
+      <button title="Open ungit on the notebooks repository" class="toolbar-btn">
         <span class="fa fa-code-fork"></span>
       </button>
     </div>
-    <div class="btn-group">
+    <div id="sessionsButton" class="btn-group">
       <a href="/sessions" target="_blank" id="sessionsButton">
         <button title="Running Sessions" class="toolbar-btn">
           <i class="material-icons">playlist_play</i>
@@ -29,7 +29,7 @@
         <i class="material-icons">bookmark</i>
       </button>
     </div>
-    <div class="btn-group">
+    <div id="helpButton" class="btn-group">
       <button class="toolbar-btn" data-toggle="dropdown" title="Help Links">
         <i class="material-icons">help_outline</i>
       </button>
@@ -38,7 +38,7 @@
         <li><a id="keyboardHelpLink" style="display:none" href="#">Keyboard Shortcuts</a></li>
         <li><a id="markdownHelpLink" style="display:none" href="#">Markdown Syntax</a></li>
         <li id="notebookHelpDivider" class="divider" style="display:none"></li>
-        <li><a href="/tree/datalab/docs/Readme.ipynb" target="_blank"><span>Samples and Tutorials</span></a></li>
+        <li><a href="/notebooks/datalab/docs/Readme.ipynb" target="_blank"><span>Samples and Tutorials</span></a></li>
         <li class="divider"></li>
         <li><a href="https://cloud.google.com/bigquery/what-is-bigquery" target="_blank"><span>BigQuery</span></a></li>
         <li><a href="https://cloud.google.com/storage/docs/overview" target="_blank"><span>Cloud Storage</span></a></li>

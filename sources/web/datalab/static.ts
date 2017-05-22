@@ -111,7 +111,15 @@ function sendFile(filePath: string, response: http.ServerResponse,
  * @param response the out-going response associated with the current HTTP request.
  */
 function sendDataLabFile(filePath: string, response: http.ServerResponse) {
-  sendFile(path.join(__dirname, 'static', filePath), response);
+  let live = false
+  let staticDir = path.join(__dirname, 'static')
+  // Set this env var to point to source directory for live updates without restart.
+  const liveStaticDir = process.env.DATALAB_LIVE_STATIC_DIR
+  if (liveStaticDir) {
+    live = true
+    staticDir = liveStaticDir
+  }
+  sendFile(path.join(staticDir, filePath), response, '', live);
 }
 
 /**
@@ -135,8 +143,8 @@ function sendJupyterFile(relativePath: string, response: http.ServerResponse) {
  * Checks whether a requested static file exists in DataLab.
  * @param filePath the relative path of the file.
  */
-function datalabFileExists(filePath: string) {
-    return fs.existsSync(path.join(__dirname, 'static', filePath));
+export function datalabFileExists(filePath: string) {
+  return fs.existsSync(path.join(__dirname, 'static', filePath));
 }
 
 /**
@@ -146,8 +154,8 @@ function datalabFileExists(filePath: string) {
  * @param response the out-going response associated with the current HTTP request.
  */
 function sendUserCustomTheme(userId: string, response: http.ServerResponse): void {
-    var customThemePath = path.join(settings.getUserConfigDir(userId), CUSTOM_THEME_FILE);
-    sendFile(customThemePath, response, DEFAULT_THEME_FILE, true);
+  var customThemePath = path.join(settings.getUserConfigDir(userId), CUSTOM_THEME_FILE);
+  sendFile(customThemePath, response, DEFAULT_THEME_FILE, true);
 }
 
 /**
@@ -158,19 +166,34 @@ function sendUserCustomTheme(userId: string, response: http.ServerResponse): voi
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
   var path = url.parse(request.url).pathname;
 
-  var staticResourcesMap: {[key:string]: string} = {
+  console.log('static request: ' + path);
+  // List of resources that are passed through with the same name.
+  const staticResourcesList: [string] = [
+    'appbar.html',
+    'appbar.js',
+    'util.js',
+    'edit-app.js',
+    'datalab.css',
+    'minitoolbar.js',
+    'notebook-app.js',
+    'notebook-list.js',
+    'reporting.html',
+    'settings.html',
+    'settings.js',
+    'websocket.js',
+  ];
+  // Map of resources where we change the name.
+  const staticResourcesMap: {[key:string]: string} = {
+    'about.txt': 'datalab.txt',
     'favicon.ico': 'datalab.ico',
     'logo.png': 'datalab.png',
-    'about.txt': 'datalab.txt',
-    'reporting.html': 'reporting.html',
-    'datalab.css': 'datalab.css',
-    'appbar.html': 'appbar.html',
-    'settings.html': 'settings.html',
-    'settings.js': 'settings.js'
   };
 
   var subpath = path.substr(path.lastIndexOf('/') + 1);
-  if (subpath in staticResourcesMap) {
+  if (staticResourcesList.indexOf(subpath) >= 0) {
+    sendDataLabFile(subpath, response);
+  }
+  else if (subpath in staticResourcesMap) {
     sendDataLabFile(staticResourcesMap[subpath], response);
   }
   else if (path.indexOf('/codemirror/mode/') > 0) {
@@ -210,10 +233,11 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     }
   }
   else if ((path.indexOf('/static/extensions/') == 0) ||
-           (path.indexOf('/static/require/') == 0)) {
+           (path.indexOf('/static/require/') == 0) ||
+           (path.indexOf('/static/fonts/') == 0)) {
     // Strip off the leading '/static/' to turn path into a relative path within the
     // static directory.
-    sendDataLabFile(path.substr(8), response);
+    sendDataLabFile(path.substr('/static/'.length), response);
   } else {
     // Strip off the leading slash to turn path into a relative file path
     sendJupyterFile(path.substr(1), response);

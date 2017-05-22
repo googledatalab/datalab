@@ -13,7 +13,7 @@
  */
 
 /* Font Imports */
-@import url(https://fonts.googleapis.com/css?family=Source+Code+Pro:400,700|Open+Sans:400,700|Material+Icons);
+@import url('/static/fonts/fonts.css');
 
 * {
   padding: 0px;
@@ -24,7 +24,7 @@
 body {
   font-family: 'Open Sans', Helvetica, sans-serif;
   font-size: 14px;
-  min-width: 720px;
+  min-width: 760px;
 }
 
 /* Layout */
@@ -72,11 +72,11 @@ body {
   height: 100% !important;
 }
 #appContent {
-  position: absolute;
   top: 0px;
   bottom: 0px;
   left: 0px;
   right: 0px;
+  height: 100%;
   -webkit-order: 2;
   order: 2;
   -webkit-flex: 1 1 auto;
@@ -121,9 +121,6 @@ body {
   -webkit-flex: 1 1 auto;
   flex: 1 1 auto;
   overflow: auto;
-}
-#mainContent {
-  height: 100%;
 }
 #mainArea {
   -webkit-order: 1;
@@ -271,6 +268,11 @@ i.material-icons {
   display: none;
 }
 
+/* Hide the python kernel picker dropdown until it's ready for release. */
+#kernel_picker_menu {
+  display: none;
+}
+
 #logo {
   margin-left: 12px;
   flex: 0 0 auto;
@@ -350,6 +352,21 @@ span.autosave_status {
 /* Edit page */
 #texteditor-backdrop {
   padding: 0px;
+}
+
+/* Terminals page */
+.terminal-app #site {
+  background-color: #222;
+}
+.terminal-app #terminado-container {
+  margin: 20px;
+  width: calc(100vw - 40px);
+  height: calc(100% - 40px);
+}
+.terminal-app .terminal, .terminal-app {
+  line-height: 1.1;
+  width: 100%;
+  height: 100%;
 }
 
 /* Cell Customizations */
@@ -582,7 +599,7 @@ div.modal-dialog pre, div.modal-dialog code, #help code, #help pre {
 }
 
 /* Responsive Design */
-@media screen and (max-width: 1080px) {
+@media screen and (max-width: 1220px) {
   span.toolbar-text {
     display: none;
   }

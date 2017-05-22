@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Google Cloud DataLab</title>
+  <link rel="shortcut icon" type="image/x-icon" href="/static/favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="/static/components/codemirror/lib/codemirror.css" />
+  <link rel="stylesheet" href="/static/style/style.min.css" type="text/css" />
+  <link rel="stylesheet" href="/static/style/datalab.css" type="text/css" />
+  <link rel="stylesheet" id="themeStylesheet" href="/static/style/custom.css" type="text/css" />
+  <link rel="stylesheet" href="/static/terminal/css/override.css" type="text/css">
+
+  <script src="/static/components/jquery/jquery.min.js"></script>
+</head>
+<body class="terminal-app"
+  data-base-url="<%baseUrl%>"
+  data-notebook-path="/"
+  data-ws-path="<%terminalId%>"
+  data-feedback-id="<%feedbackId%>"
+  data-version-id="<%versionId%>"
+  data-signed-in="<%isSignedIn%>"
+  data-user-id="<%userId%>"
+  data-account="<%account%>">
+
+  <div id="app">
+    <div id="appBar">
+    </div>
+    <div id="header"></div>
+    <div id="site">
+      <div id="terminado-container"></div>
+    </div>
+    <div style="position:absolute; left:-1000em">
+      <!-- The following elements contain dummy content that is used to calculate
+      the size of the terminal characters. For more context, look at terminal/js/main.js -->
+      <pre id="dummy-screen" class="terminal">
+        0
+        1
+        2
+        3
+        4
+        5
+        6
+        7
+        8
+        9
+        0
+        1
+        2
+        3
+        4
+        5
+        6
+        7
+        8
+        9
+        0
+        1
+        2
+        3
+        </pre>
+      <span id="dummy-screen-rows" style="">01234567890123456789012345678901234567890123456789012345678901234567890123456789012</span>
+    </div>
+  </div>
+  <script src="/static/components/es6-promise/promise.min.js"></script>
+  <script src="/static/components/requirejs/require.js"></script>
+  <script>
+    require.config({
+      baseUrl: '/static/',
+      paths: {
+        'auth/js/main': 'auth/js/main.min',
+        custom : '/custom',
+        nbextensions : '/nbextensions',
+        widgets : '/deprecatedwidgets',
+        kernelspecs : '/kernelspecs',
+        underscore : 'components/underscore/underscore-min',
+        backbone : 'components/backbone/backbone-min',
+        jquery: 'components/jquery/jquery.min',
+        bootstrap: 'components/bootstrap/js/bootstrap.min',
+        bootstraptour: 'components/bootstrap-tour/build/js/bootstrap-tour.min',
+        jqueryui: 'components/jquery-ui/ui/minified/jquery-ui.min',
+        moment: 'components/moment/moment',
+        codemirror: 'components/codemirror',
+        termjs: 'components/term.js/src/term',
+      },
+      shim: {
+        underscore: {
+          exports: '_'
+        },
+        backbone: {
+          deps: ["underscore", "jquery"],
+          exports: "Backbone"
+        },
+        bootstrap: {
+          deps: ["jquery"],
+          exports: "bootstrap"
+        },
+        bootstraptour: {
+          deps: ["bootstrap"],
+          exports: "Tour"
+        },
+        jqueryui: {
+          deps: ["jquery"],
+          exports: "$"
+        }
+      }
+    });
+    require.config({
+       map: {
+         '*': {
+           'contents': 'services/contents',
+         }
+       }
+    });
+    window.datalab = {};
+
+    $("#appBar").load("/static/appbar.html", function() {
+      require(['/static/terminal/js/main.min.js', 'tree/js/main.min']);
+    });
+  </script>
+  <script src="//www.gstatic.com/feedback/api.js" async="true" defer="true"></script>
+</body>
+</html>
+
