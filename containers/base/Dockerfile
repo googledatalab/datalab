@@ -130,17 +130,16 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 # Install IPython related packages with no-deps, to ensure that we don't
 # Overwrite the python 2 version of jupyter with the python 3 version.
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir ipywidgets==6.0.0 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir notebook==4.2.3 && \
+    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir notebook==4.4.1 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir ipykernel==4.5.2 && \
     find /usr/local/lib/python3.4 -type d -name tests | xargs rm -rf && \
 
 # Install python2 version of notebook after the python3 version, so that we
 # default to using python 2.
-# Install notebook after ipywidgets, and keep it pinned to 4.2.3, higher versions may
-# not work well with datalab. For example, kernel gateway doesn't work with 4.3.0 notebook
-# (https://github.com/googledatalab/datalab/issues/1083)
-    pip install -U --force-reinstall --no-deps --no-cache-dir notebook==4.2.3 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir notebook==4.2.3 && \
+# Install notebook after ipywidgets, and keep it pinned to 4.4.1, higher versions may
+# not work well with datalab.
+    pip install -U --force-reinstall --no-deps --no-cache-dir notebook==4.4.1 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir notebook==4.4.1 && \
 
 # Install the Python 2 and Python 3 kernels
     python -m ipykernel install && \
