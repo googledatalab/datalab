@@ -26,13 +26,14 @@ if [ -z "$TRAVIS" ]; then
   trap cleanup INT EXIT SIGHUP SIGINT SIGTERM
 fi
 
-mkdir -p $HOME/datalab_content
+TESTS_HOME=$HOME/datalab_tests
+mkdir -p $TESTS_HOME
 
 echo Starting Datalab container..
 container_datalab=$(docker run -d \
   --entrypoint="/datalab/run.sh" \
   -p 127.0.0.1:8081:8080 \
-  -v $HOME/datalab_content:/content \
+  -v $TESTS_HOME:/content \
   -e "ENABLE_USAGE_REPORTING=false" \
   datalab)
 
@@ -52,4 +53,4 @@ until $(curl --output /dev/null --silent --head --fail http://localhost:4444/wd/
 done
 echo ' Done.'
 
-mocha ui/test.js notebook/test.js
+mocha ui/test.js notebook/test.js unittests/frontend.js
