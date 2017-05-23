@@ -44,7 +44,7 @@ define(['util'], (util) => {
     currentSemver = strToSemver(currentVersion);
     latestSemver = strToSemver(latestVersion.latest);
     lastSemver = strToSemver(latestVersion.last);
-    
+
     // Compare, if current version is greater than or equal to latest, we're done
     if (semverCompare(currentSemver, latestSemver) > -1) {
       return;

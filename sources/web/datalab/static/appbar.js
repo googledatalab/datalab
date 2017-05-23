@@ -32,9 +32,9 @@ define(() => {
 
     xhr(restartUrl, function(){
       // We redirect to signal to the user that the restart did something.
-      // However, we have to delay that a bit to give Datalab time to restart.  
+      // However, we have to delay that a bit to give Datalab time to restart.
       window.setTimeout(redirect, 500);
-    }, "POST");
+    }, {method: 'POST'});
   }
 
   function getVmInfo(callback) {
@@ -72,7 +72,7 @@ define(() => {
     let action = confirm('Stopping this VM will discard any unsaved state. Are you sure?');
     if (action === true) {
       path = window.location.protocol + '//' + window.location.host + '/_stopvm';
-      xhr(path, null, 'POST');
+      xhr(path, null, {method: 'POST'});
     }
   }
 
