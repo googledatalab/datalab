@@ -28,5 +28,5 @@ function setTheme(theme) {
     // Reload the stylesheet by resetting its address with a random (time) version querystring
     sheetAddress = document.getElementById("themeStylesheet").href + "?v=" + Date.now()
     document.getElementById("themeStylesheet").setAttribute('href', sheetAddress);
-  }, "POST");
+  }, {method: 'POST'});
 }

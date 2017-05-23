@@ -29,13 +29,27 @@ function reportEvent(event) {
   window.dataLayer.push(event);
 }
 
-function xhr(url, callback, method) {
-  method = method || "GET";
+// Sends an XMLHttpRequest to the specified URL.
+// Options can contain the following fields:
+//   method: The HTTP method to use; default is 'GET'
+//   errorCallback: A function to call if the XHR completes
+//       with a status other than 200
+function xhr(url, callback, options) {
+  options = options || {};
+  const method = options.method || 'GET';
 
   let request = new XMLHttpRequest();
   request.onreadystatechange = function() {
-    if (request.readyState === 4 && request.status === 200) {
-      callback.call(request);
+    if (request.readyState === 4) {
+      if (request.status === 200) {
+        if (callback) {
+          callback.call(request);
+        }
+      } else {
+        if (options.errorCallback) {
+          options.errorCallback.call(request);
+        }
+      }
     }
   }
   request.open(method, url);
