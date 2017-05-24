@@ -142,7 +142,7 @@ def gcloud_repos(
       KeyboardInterrupt: If the user kills the command
       subprocess.CalledProcessError: If the command dies on its own
     """
-    base_cmd = [gcloud_cmd, 'alpha', 'source', 'repos']
+    base_cmd = [gcloud_cmd, 'source', 'repos']
     if args.project:
         base_cmd.extend(['--project', args.project])
     base_cmd.append('--verbosity={}'.format(args.verbosity))
