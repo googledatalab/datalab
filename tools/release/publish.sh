@@ -69,8 +69,7 @@ gsutil cp gs://${PROJECT_ID}/deploy/config_local.js ./config_local.js
 # Get the latest and previous versions from the config_local. Note that older
 # config files don't have the full semantic version specified, so cannot extract using
 # the "LATEST_SEMVER = " pattern, and instead use "latest: "
-cat ./config_local.js | grep "LATEST_SEMVER = "
-if [[ $? -eq 0 ]]; then
+if [[ `cat ./config_local.js | grep "LATEST_SEMVER = "` -eq 0 ]]; then
   CURRENT_VERSION=`cat ./config_local.js | grep "LATEST_SEMVER = " | cut -d '=' -f 2 | tr -d '" ;'`
   GTM_ACCOUNT=`cat ./config_local.js | grep "GTM_ACCOUNT = " | cut -d '=' -f 2 | tr -d '"; '`
 else
