@@ -130,11 +130,11 @@ def gcloud_compute(
 
 def gcloud_repos(
         args, repos_cmd, stdin=None, stdout=None, stderr=None):
-    """Run the given subcommand of `gcloud alpha source repos`
+    """Run the given subcommand of `gcloud source repos`
 
     Args:
       args: The Namespace instance returned by argparse
-      repos_cmd: The subcommand of `gcloud alpha source repos` to run
+      repos_cmd: The subcommand of `gcloud source repos` to run
       stdin: The 'stdin' argument for the subprocess call
       stdout: The 'stdout' argument for the subprocess call
       stderr: The 'stderr' argument for the subprocess call
@@ -142,7 +142,7 @@ def gcloud_repos(
       KeyboardInterrupt: If the user kills the command
       subprocess.CalledProcessError: If the command dies on its own
     """
-    base_cmd = [gcloud_cmd, 'alpha', 'source', 'repos']
+    base_cmd = [gcloud_cmd, 'source', 'repos']
     if args.project:
         base_cmd.extend(['--project', args.project])
     base_cmd.append('--verbosity={}'.format(args.verbosity))
