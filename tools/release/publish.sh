@@ -69,14 +69,15 @@ gsutil cp gs://${PROJECT_ID}/deploy/config_local.js ./config_local.js
 # Get the latest and previous versions from the config_local. Note that older
 # config files don't have the full semantic version specified, so cannot extract using
 # the "LATEST_SEMVER = " pattern, and instead use "latest: "
-if [[ $(cat ./config_local.js | grep "LATEST_SEMVER = ") ]]; then 
+if [[ $(cat ./config_local.js | grep "LATEST_SEMVER = ") ]]; then
   CURRENT_VERSION=`cat ./config_local.js | grep "LATEST_SEMVER = " | cut -d '=' -f 2 | tr -d '" ;'`
   GTM_ACCOUNT=`cat ./config_local.js | grep "GTM_ACCOUNT = " | cut -d '=' -f 2 | tr -d '"; '`
 else
   CURRENT_VERSION=`cat ./config_local.js | grep "latest: " | cut -d ':' -f 2 | tr -d ', '`
   GTM_ACCOUNT=`cat ./config_local.js | grep "gtmAccount = " | cut -d '=' -f 2 | tr -d "'; "`
 fi
-source version.sh
+CURRENT_DIR=$(dirname "${BASH_SOURCE[0]}")
+source "${CURRENT_DIR}"/version.sh
 
 echo "Filling latest=${DATALAB_VERSION}"
 sed -i -e s/{{DATALAB_VERSION_PLACEHOLDER}}/\"${DATALAB_VERSION}\"/ ./config_local_template.js
