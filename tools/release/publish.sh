@@ -66,17 +66,30 @@ docker tag -f ${DATALAB_IMAGE} gcr.io/${PROJECT_ID}/datalab:latest
 gcloud docker -- push gcr.io/${PROJECT_ID}/datalab:latest
 
 gsutil cp gs://${PROJECT_ID}/deploy/config_local.js ./config_local.js
-OLD_VERSION=`cat ./config_local.js | grep previous | cut -d ':' -f 2`
-CURRENT_VERSION=`cat ./config_local.js | grep latest | cut -d ':' -f 2`
-NEW_VERSION=" ${BUILD},"
+# Get the latest and previous versions from the config_local. Note that older
+# config files don't have the full semantic version specified, so cannot extract using
+# the "LATEST_SEMVER = " pattern, and instead use "latest: "
+cat ./config_local.js | grep "LATEST_SEMVER = "
+if [[ $? -eq 0 ]]; then
+  CURRENT_VERSION=`cat ./config_local.js | grep "LATEST_SEMVER = " | cut -d '=' -f 2 | tr -d '" ;'`
+  GTM_ACCOUNT=`cat ./config_local.js | grep "GTM_ACCOUNT = " | cut -d '=' -f 2 | tr -d '"; '`
+else
+  CURRENT_VERSION=`cat ./config_local.js | grep "latest: " | cut -d ':' -f 2 | tr -d ', '`
+  GTM_ACCOUNT=`cat ./config_local.js | grep "gtmAccount = " | cut -d '=' -f 2 | tr -d "'; "`
+fi
+source version.sh
 
-echo "Replacing latest=${CURRENT_VERSION} with latest=${NEW_VERSION}"
-sed -i -e "s/${CURRENT_VERSION}/${NEW_VERSION}/" ./config_local.js
-echo "Replacing previous=${OLD_VERSION} with previous=${CURRENT_VERSION}"
-sed -i -e "s/${OLD_VERSION}/${CURRENT_VERSION}/" ./config_local.js
+echo "Filling latest=${DATALAB_VERSION}"
+sed -i -e s/{{DATALAB_VERSION_PLACEHOLDER}}/\"${DATALAB_VERSION}\"/ ./config_local_template.js
+echo "Filling latest patch=${DATALAB_VERSION_PATCH}"
+sed -i -e s/{{DATALAB_VERSION_PATCH_PLACEHOLDER}}/\"${DATALAB_VERSION_PATCH}\"/ ./config_local_template.js
+echo "Filling previous=${CURRENT_VERSION}"
+sed -i -e s/{{PREV_SEMVER_PLACEHOLDER}}/\"${CURRENT_VERSION}\"/ ./config_local_template.js
+echo "Filling gtm account=${GTM_ACCOUNT}"
+sed -i -e s/{{GTM_ACCOUNT_PLACEHOLDER}}/\"${GTM_ACCOUNT}\"/ ./config_local_template.js
 
 gsutil cp ./config_local.js gs://${PROJECT_ID}/deploy/config_local_${BUILD}.js
-gsutil cp ./config_local.js gs://${PROJECT_ID}/deploy/config_local.js
+gsutil cp ./config_local_template.js gs://${PROJECT_ID}/deploy/config_local.js
 
 echo "Updating the list of sample notebooks"
 pushd ./
