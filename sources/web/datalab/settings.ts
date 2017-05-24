@@ -223,7 +223,7 @@ function postSettingsHandler(userId: string, request: http.ServerRequest, respon
       formData = querystring.parse(body);
     } else {
       var parsedUrl = url.parse(request.url, true);
-      formData = parsedUrl.query;  
+      formData = parsedUrl.query;
     }
     formHandler(userId, formData, request, response);
   });

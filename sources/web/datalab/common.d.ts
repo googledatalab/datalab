@@ -104,7 +104,7 @@ declare module common {
      * If true, allow HTTP requests via websockets.
      */
     allowHttpOverWebsocket: boolean;
-    
+
     /**
      * Whether to automatically back up user's contents dir to GCS
      */

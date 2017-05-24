@@ -31,7 +31,7 @@ const fileCountLimit = 1000000;
 
 // this is matched by the client javascript to display a message that
 // there are more results than shown. Make sure these are in sync
-const clientResultSize = 20; 
+const clientResultSize = 20;
 
 /**
  * Implements the file search/filter request handling.
@@ -40,7 +40,7 @@ const clientResultSize = 20;
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
   const parsedUrl = url.parse(request.url, true);
-  const pattern = parsedUrl.query['pattern'];  
+  const pattern = parsedUrl.query['pattern'];
   let results: string[] = [];
 
   response.writeHead(200, { 'Content-Type': 'application/json' });
