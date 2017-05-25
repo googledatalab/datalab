@@ -35,30 +35,45 @@ the new image as described below:
 
 ### Manual Release Process
 
-Prior to running the `publish.sh` script, we have to download the main image
-that will be released:
+1. Bump up the hard-coded Datalab version to the next semantic version in the
+[tools/release/version.sh](https://github.com/googledatalab/datalab/blob/master/tools/release/version.sh)
+file, send a PR with the changes and merge.
 
-    docker run -it -p "127.0.0.1:8081:8080" -v "${HOME}:/content" \
-      -e "PROJECT_ID=<PROJECT_ID>" \
-      "gcr.io/cloud-datalab/datalab:local-$(date +%Y%m%d)"
+2. Try the new image before releasing it. You can either try it locally:
+```
+docker run -it -p "127.0.0.1:8081:8080" -v "${HOME}:/content" \
+  -e "PROJECT_ID=<PROJECT_ID>" \
+  "gcr.io/cloud-datalab/datalab:local-$(date +%Y%m%d)"
+```
+Or create a new GCE VM with the image:
+```
+datalab create test-vm-name --image-name gcr.io/cloud-datalab/datalab:local-$(date +%Y%m%d)
+```
 
-... and then run the following notebooks to make sure all of the graphs and
-charts are displayed properly: 
-
-    samples/Conversion Analysis with Google AnalyticsData.ipynb 
-    tutorials/Data/Interactive Charts with Google Charting APIs.ipynb 
+3. Run the following notebooks to make sure all of the graphs and charts are
+displayed properly:
+- [samples/Conversion Analysis with Google Analytics Data.ipynb](http://localhost:8081/notebooks/datalab/docs/samples/Conversion%20Analysis%20with%20Google%20Analytics%20Data.ipynb)
+- [tutorials/Data/Interactive Charts with Google Charting APIs.ipynb](http://localhost:8081/notebooks/datalab/docs/tutorials/Data/Interactive%20Charts%20with%20Google%20Charting%20APIs.ipynb)
 
 Additionally, we need to verify the graphs in the following notebook are
-displayed properly. There is no need to run this one, just verify that the
-parcoords graph looks right.
+displayed properly. There is no need to run them, just verify that the
+graphs look right:
+- [samples/ML Toolbox/Image Classification/Flower/Local End to end.ipynb](http://localhost:8081/notebooks/datalab/docs/samples/ML%20Toolbox/Image%20Classification/Flower/Local%20End%20to%20End.ipynb)
+- [samples/ML Toolbox/Regression/Census/1 Local End to End.ipynb](http://localhost:8081/notebooks/datalab/docs/samples/ML%20Toolbox/Regression/Census/1%20Local%20End%20to%20End.ipynb)
 
-    tutorials/Machine Learning/Iris/7. HyperParameter Tuning.ipynb
+(*You can click these links directly if you're connected to Datalab at localhost://8081*)
 
-Next, go to [the wiki](https://github.com/googledatalab/datalab/wiki/Release-Info)
-and add a new entry for this release.
+4. If everything looks fine, you can now run the
+[publish.sh](https://github.com/googledatalab/datalab/blob/master/tools/release/publish.sh)
+script to release the new image.
 
-The new entry should follow the pattern of the previous ones, and include
-separate sections for new features and for bug fixes. Include links to GitHub
-issues and pull requests where applicable.
+5. Go to the releases page and add a new release entry for this release:
+https://github.com/googledatalab/datalab/releases with a tag that looks like `vX.X.<DATE>`
+(change the version major and minor to match the hard-coded Datalab version). The new release
+entry should follow the pattern of the previous ones, and include separate sections for new
+features and for bug fixes. Include links to GitHub issues and pull requests where applicable.
+
+6. Next, go to [the wiki](https://github.com/googledatalab/datalab/wiki/Release-Info)
+and add a new entry for this release that links to its releases page.
 
 Finally, run the `publish.sh` script to validate and publish the release.
