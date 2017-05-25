@@ -35,7 +35,7 @@ the new image as described below:
 
 ### Manual Release Process
 
-1. Bump up the hard-coded Datalab version to the next semantic version in the
+1. If needed, bump up the hard-coded Datalab version to the next semantic version in the
 [tools/release/version.sh](https://github.com/googledatalab/datalab/blob/master/tools/release/version.sh)
 file, send a PR with the changes and merge.
 
@@ -43,6 +43,7 @@ file, send a PR with the changes and merge.
 ```
 datalab create test-vm-name --image-name gcr.io/cloud-datalab/datalab:local-$(date +%Y%m%d)
 ```
+Make sure that this image has the most recent changes, most importantly the version bump if any.
 
 3. Run the following notebooks to make sure all of the graphs and charts are
 displayed properly:
