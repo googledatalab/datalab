@@ -39,13 +39,7 @@ the new image as described below:
 [tools/release/version.sh](https://github.com/googledatalab/datalab/blob/master/tools/release/version.sh)
 file, send a PR with the changes and merge.
 
-2. Try the new image before releasing it. You can either try it locally:
-```
-docker run -it -p "127.0.0.1:8081:8080" -v "${HOME}:/content" \
-  -e "PROJECT_ID=<PROJECT_ID>" \
-  "gcr.io/cloud-datalab/datalab:local-$(date +%Y%m%d)"
-```
-Or create a new GCE VM with the image:
+2. Try the new image before releasing it. You can create a new GCE VM with the image by doing:
 ```
 datalab create test-vm-name --image-name gcr.io/cloud-datalab/datalab:local-$(date +%Y%m%d)
 ```
@@ -63,17 +57,16 @@ graphs look right:
 
 (*You can click these links directly if you're connected to Datalab at localhost://8081*)
 
-4. If everything looks fine, you can now run the
-[publish.sh](https://github.com/googledatalab/datalab/blob/master/tools/release/publish.sh)
-script to release the new image.
-
-5. Go to the releases page and add a new release entry for this release:
+4. If everything looks fine, go to the releases page and add a new release entry for this release:
 https://github.com/googledatalab/datalab/releases with a tag that looks like `vX.X.<DATE>`
 (change the version major and minor to match the hard-coded Datalab version). The new release
 entry should follow the pattern of the previous ones, and include separate sections for new
 features and for bug fixes. Include links to GitHub issues and pull requests where applicable.
 
-6. Next, go to [the wiki](https://github.com/googledatalab/datalab/wiki/Release-Info)
+5. Next, go to [the wiki](https://github.com/googledatalab/datalab/wiki/Release-Info)
 and add a new entry for this release that links to its releases page.
 
-Finally, run the `publish.sh` script to validate and publish the release.
+6. You can now run the
+[publish.sh](https://github.com/googledatalab/datalab/blob/master/tools/release/publish.sh)
+script to validate and release the new image.
+
