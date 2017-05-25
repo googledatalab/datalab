@@ -78,18 +78,19 @@ else
 fi
 CURRENT_DIR=$(dirname "${BASH_SOURCE[0]}")
 source "${CURRENT_DIR}"/version.sh
+CONFIG_TEMPLATE="${CURRENT_DIR}"/config_local_template.js
 
 echo "Filling latest=${DATALAB_VERSION}"
-sed -i -e s/{{DATALAB_VERSION_PLACEHOLDER}}/\"${DATALAB_VERSION}\"/ ./config_local_template.js
+sed -i -e s/{{DATALAB_VERSION_PLACEHOLDER}}/\"${DATALAB_VERSION}\"/ $CONFIG_TEMPLATE
 echo "Filling latest patch=${DATALAB_VERSION_PATCH}"
-sed -i -e s/{{DATALAB_VERSION_PATCH_PLACEHOLDER}}/\"${DATALAB_VERSION_PATCH}\"/ ./config_local_template.js
+sed -i -e s/{{DATALAB_VERSION_PATCH_PLACEHOLDER}}/\"${DATALAB_VERSION_PATCH}\"/ $CONFIG_TEMPLATE
 echo "Filling previous=${CURRENT_VERSION}"
-sed -i -e s/{{PREV_SEMVER_PLACEHOLDER}}/\"${CURRENT_VERSION}\"/ ./config_local_template.js
+sed -i -e s/{{PREV_SEMVER_PLACEHOLDER}}/\"${CURRENT_VERSION}\"/ $CONFIG_TEMPLATE
 echo "Filling gtm account=${GTM_ACCOUNT}"
-sed -i -e s/{{GTM_ACCOUNT_PLACEHOLDER}}/\"${GTM_ACCOUNT}\"/ ./config_local_template.js
+sed -i -e s/{{GTM_ACCOUNT_PLACEHOLDER}}/\"${GTM_ACCOUNT}\"/ $CONFIG_TEMPLATE
 
 gsutil cp ./config_local.js gs://${PROJECT_ID}/deploy/config_local_${BUILD}.js
-gsutil cp ./config_local_template.js gs://${PROJECT_ID}/deploy/config_local.js
+gsutil cp $CONFIG_TEMPLATE gs://${PROJECT_ID}/deploy/config_local.js
 
 echo "Updating the list of sample notebooks"
 pushd ./
