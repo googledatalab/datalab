@@ -1,5 +1,19 @@
 # Testing Google Cloud DataLab
 
+## Quickstart
+
+From this directory, run this command to do the one-time setup:
+
+    npm install
+
+After that, you can run the tests from this directory with this command:
+
+    npm test
+
+You may need to install cairo first; see the Test Setup section below.
+
+## Overview
+
 This directory contains tests for Datalab. Tests are all written in Javascript, and use a browser
 to run UI automation tests and notebook tests.
 
@@ -13,7 +27,7 @@ For UI tests, the [resemblejs package](https://github.com/Huddle/Resemble.js/) i
 screenshots against saved (golden) images, which is able to tolerate small anti-aliasing
 differences that are sometimes caused by selenium webdrivers.
 
-For notebook tests, a list of notebooks to be tested is included in a spec file, and optionally
+For notebook tests, a list of notebooks to be tested is included in a [spec](notebook/spec.json) file, and optionally
 a list of cells to ignore for each notebook, which is useful when specific cells are flaky or
 intentionally erroneous. Each notebook is then loaded in a browser page, and all its cells are
 executed, and tests pass if no errors are produced.
@@ -22,17 +36,11 @@ Unit tests don't actually use the browser to test code, but import and call func
 the different modules directly. Tested code should all be defined as AMD modules that export any
 functionality required by other modules. Functions exported for tests should be exported with an
 underscore prefix. The requirejs library is used to import AMD modules from nodejs directly without
-the need for a browser. This way, required modules can be mocked using requirejs' map config.
+the need for a browser.
 
-## Running Tests
-
-### TL;DR
+## Setup
 
 Make sure you can install cairo on your system. Check the `.travis.yml` file for more info.
-
-From the root of your datalab repo, navigate to the `test` directory, then run: `npm install-test`
-
-### Test Setup
 
 Tests were written as a nodejs package, so in order to run them locally, you first do `npm install`
 in order to download all the node dependencies. You only have to do this once to prepare for tests.
@@ -41,13 +49,29 @@ errors during the installation, this is likely what you want to debug. Make sure
 the required packages for cairo installed. For example, for an Ubuntu machine, you can see the
 dependencies in the `.travis.yml` file.
 
-### Running Tests
+## Running Tests
 
-Run `npm test` to start the tests, which use [Mocha JS](https://github.com/mochajs/mocha) as a
-test runner. UI and notebook tests require the Datalab and Selenium docker containers to be
-running (check `test/run.sh`). If you want to iterate on tests, you can manually start these
-containers as in the run script, then start a test suite by calling the `mocha` command directly,
-for example: `mocha notebook/test.js`.
+Run `npm test` from this directory to start the tests, which use [Jasmine](https://jasmine.github.io/) as a
+test runner.
+
+The tests are grouped into three sections: notebook, ui, and unit tests.
+You can run just one section using `run.sh` in this directory with one of these commands:
+
+    run.sh --notebook-tests
+    run.sh --ui-tests
+    run.sh --unit-tests
+
+If you run `run.sh` with no arguments, it will run all three sections.
+
+UI and notebook tests require the Datalab and Selenium docker containers to be
+running (as set up in `run.sh`). If you want to iterate on the notebook or ui tests, you can manually start these
+containers as in the run script, then start a test suite by calling the `jasmine` command directly,
+for example: `jasmine --config=notebook/jasmine.json`. Unit tests do not require
+the containers, and are very fast to run: you can run `run.sh -u` to run
+just the unit tests, which should finish in under one second.
+
+If you get errors running the UI tests, you may need to manually delete
+`~/datalab_tests/` and run again.
 
 UI tests compare screenshots they take at various points against golden screenshots that are
 saved under `test/ui/golden`. If a UI test fails, it will put a screenshot of the bad view under

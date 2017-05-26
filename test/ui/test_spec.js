@@ -17,15 +17,15 @@
  * as expected, and validates a subset of interactions
  */
 
-const assert = require('assert');
 const selenium = require('selenium-webdriver'),
       By = selenium.By,
       until = selenium.until;
 const test = require('selenium-webdriver/testing');
 const fs = require('fs');
 const resemble = require('node-resemble');
+require('jasmine2-custom-message');
 
-var driver = null;
+let driver = null;
 
 const suiteTimeout = 60000;  // maximum of one minute for running each suite
 const initTimeout = 10000;   // 10 seconds for initialization time, building the webdriver
@@ -34,34 +34,39 @@ const misMatchThreshold = 0;
 const goldenPathPrefix = 'ui/golden/';
 const brokenPathPrefix = 'ui/broken/';
 
-function screenshotAndCompare(goldenPath, testName) {
-  return driver.takeScreenshot().then(function(shot) {
-    if (!fs.existsSync(goldenPathPrefix + goldenPath)) {
-      fs.writeFileSync(brokenPathPrefix + testName + '.png', shot, 'base64');
-      assert(false, 'Could not find golden: ' + goldenPath);
-    }
-    golden = fs.readFileSync(goldenPathPrefix + goldenPath);
+function screenshotAndCompare(goldenPath, testName, done) {
+  return driver.takeScreenshot()
+      .then(function(shot) {
+        if (!fs.existsSync(goldenPathPrefix + goldenPath)) {
+          fs.writeFileSync(brokenPathPrefix + testName + '.png', shot, 'base64');
+          fail('Could not find golden: ' + goldenPath);
+        }
+        golden = fs.readFileSync(goldenPathPrefix + goldenPath);
 
-    resemble('data:image/png;base64,' + shot).compareTo(golden).onComplete(function(data) {
-      if (!fs.existsSync(brokenPathPrefix)){
-        fs.mkdirSync(brokenPathPrefix);
-      }
-      if (data.misMatchPercentage > misMatchThreshold) {
-        console.log('Image similarity greater than threshold: ', data.misMatchPercentage);
-        fs.writeFileSync(brokenPathPrefix + testName + '.png', shot, 'base64');
-      }
+        resemble('data:image/png;base64,' + shot).compareTo(golden).onComplete(function(data) {
+          if (!fs.existsSync(brokenPathPrefix)){
+            fs.mkdirSync(brokenPathPrefix);
+          }
+          if (data.misMatchPercentage > misMatchThreshold) {
+            console.log('Image similarity greater than threshold: ', data.misMatchPercentage);
+            fs.writeFileSync(brokenPathPrefix + testName + '.png', shot, 'base64');
+          }
 
-      assert(data.misMatchPercentage <= misMatchThreshold,
-             'Images for test ' + testName + ' are different');
-    });
-  });
+          since('Images for test ' + testName + ' are different')
+              .expect(data.misMatchPercentage <= misMatchThreshold).toBe(true);
+        });
+      })
+      .finally(() => {
+        if (done) {
+          done();
+        }
+      });
 }
 
-test.describe('UI tests', function() {
+describe('UI tests', function() {
 
   // build the selenium webdriver
-  before(function() {
-    this.timeout(initTimeout);
+  beforeAll(function() {
     driver = new selenium.Builder()
       .forBrowser('chrome')
       .usingServer('http://localhost:4444/wd/hub')
@@ -69,13 +74,11 @@ test.describe('UI tests', function() {
 
     driver.manage().timeouts().setScriptTimeout(scriptTimeout);
     return driver.manage().window().setSize(1024, 768);
-  });
+  }, initTimeout);
 
-  test.describe('Tree page', function() {
-    this.timeout(suiteTimeout);
-
+  describe('Tree page', function() {
     // navigate to localhost:8081, which is redirected to the tree page
-    before(function() {
+    beforeAll(function(done) {
       return driver.get('http://localhost:8081/tree/datalab')
         .then(function() {
           driver.wait(until.titleIs('Google Cloud DataLab'), 5000);
@@ -88,27 +91,28 @@ test.describe('UI tests', function() {
                 return loaded === true;
               });
           }, 10000);
-        });
+        })
+        .finally(() => done());
     });
 
-    test.it('appears correctly before any actions have been taken', function() {
-      return screenshotAndCompare('body.png', 'body');
+    it('appears correctly before any actions have been taken', function(done) {
+      return screenshotAndCompare('body.png', 'body', done);
     });
 
-    test.it('opens help menu correctly when its button is clicked', function() {
+    it('opens help menu correctly when its button is clicked', function(done) {
       return driver.findElement(By.id('helpButton'))
         .then(function(button) {
           button.click();
         })
-        .then(screenshotAndCompare('bodyWithHelp.png', 'bodyWithHelp'));
+        .then(screenshotAndCompare('bodyWithHelp.png', 'bodyWithHelp', done));
     });
 
-    test.it('appears correctly after closing help menu by clicking the body element', function() {
+    it('appears correctly after closing help menu by clicking the body element', function(done) {
       return driver.findElement(By.tagName('body'))
         .then(function(button) {
           button.click();
         })
-        .then(screenshotAndCompare('body.png', 'body'));
+        .then(screenshotAndCompare('body.png', 'body', done));
     });
 
     // Simulate a list reload by calling the Jupyter function, and waiting
@@ -123,7 +127,7 @@ test.describe('UI tests', function() {
       });
     }
 
-    test.it('shows(hides) extra buttons when a tree item is (un)selected', function() {
+    it('shows(hides) extra buttons when a tree item is (un)selected', function(done) {
       // Reload the notebook list to make sure the tree initialization
       // code isn't executed more than once
       reloadNotebookList();
@@ -135,31 +139,31 @@ test.describe('UI tests', function() {
 
       // Click the item, make sure the UI changes accordingly (extra buttons added)
       listItem.click();
-      return screenshotAndCompare('listItemSelected.png', 'listItemSelected')
+      return screenshotAndCompare('listItemSelected.png', 'listItemSelected', null)
         .then(function() {
           // Now unselect the same item and make sure the extra icons disappear
           listItem.click();
-          return screenshotAndCompare('listItemUnselected.png', 'listItemUnselected');
+          return screenshotAndCompare('listItemUnselected.png', 'listItemUnselected', done);
         });
     });
 
-    test.it('clicks Add Folder and makes sure a new folder is added', function() {
+    it('clicks Add Folder and makes sure a new folder is added', function(done) {
       // Add a new folder
       driver.findElement(By.id('addFolderButton')).click();
       reloadNotebookList();
-      return screenshotAndCompare('folderAdded.png', 'folderAdded');
+      return screenshotAndCompare('folderAdded.png', 'folderAdded', done);
     });
 
-    test.it('clicks Add Notebook and makes sure a new notebook is added', function() {
+    it('clicks Add Notebook and makes sure a new notebook is added', function(done) {
       // Add a new notebook
       driver.findElement(By.id('addNotebookButton')).click();
       reloadNotebookList();
-      return screenshotAndCompare('folderAndNotebookAdded.png', 'folderAndNotebookAdded');
+      return screenshotAndCompare('folderAndNotebookAdded.png', 'folderAndNotebookAdded', done);
     });
 
-  });
+  }, suiteTimeout);
 
-  after(function() {
+  afterAll(function() {
     driver.quit();
   });
 

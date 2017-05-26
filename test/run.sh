@@ -14,17 +14,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-RUN_INTEGRATION_TESTS=1
+RUN_NOTEBOOK=0
+RUN_UI=0
+RUN_UNIT=0
+
 CONTAINER_STARTED=0
 
 HERE=$(dirname $0)
-MOCHA=$HERE/node_modules/mocha/bin/mocha
+JASMINE=$HERE/node_modules/jasmine/bin/jasmine.js
 
 function parseOptions() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      -u|--unit-tests-only)
-        RUN_INTEGRATION_TESTS=0
+      --notebook-tests)
+        RUN_NOTEBOOK=1
+        shift
+        ;;
+      -u|--unit-tests)
+        RUN_UNIT=1
+        shift
+        ;;
+      --ui-tests)
+        RUN_UI=1
         shift
         ;;
       -*)
@@ -37,6 +48,14 @@ function parseOptions() {
         ;;
     esac
   done
+
+  if (( RUN_NOTEBOOK + RUN_UNIT + RUN_UI == 0 )); then
+    # If no parts were specified, run all parts
+    echo Run all test sections
+    RUN_NOTEBOOK=1
+    RUN_UI=1
+    RUN_UNIT=1
+  fi
 }
 
 function cleanup() {
@@ -79,17 +98,19 @@ function startContainers() {
   echo ' Done.'
 }
 
-function runIntegrationTests() {
-  echo Running mocha notebook tests
-  $MOCHA $HERE/notebook/test.js
-  echo Running mocha ui tests
-  $MOCHA $HERE/ui/test.js
+function runNotebookTests() {
+  echo Running jasmine notebook tests
+  $JASMINE --config=$HERE/notebook/jasmine.json
+}
+
+function runUiTests() {
+  echo Running jasmine ui tests
+  $JASMINE --config=$HERE/ui/jasmine.json
 }
 
 function runUnitTests() {
-  echo Running jasmine tests
-  $HERE/node_modules/jasmine/bin/jasmine.js \
-      --config=$HERE/unittests/support/jasmine.json
+  echo Running jasmine unit tests
+  $JASMINE --config=$HERE/unittests/support/jasmine.json
 }
 
 function main() {
@@ -101,13 +122,18 @@ function main() {
     trap cleanup INT EXIT SIGHUP SIGINT SIGTERM
   fi
 
-  # Unit tests are fast, run them all first
+  # Unit tests are fast, run them all first, and always run them
   runUnitTests
 
-  if [[ $RUN_INTEGRATION_TESTS -ne 0 ]]; then
+  if (( RUN_NOTEBOOK + RUN_UI > 0 )); then
     makeTestsHome
     startContainers
-    runIntegrationTests
+    if (( RUN_NOTEBOOK > 0 )); then
+      runNotebookTests
+    fi
+    if (( RUN_UI > 0 )); then
+      runUiTests
+    fi
   fi
 }
 
