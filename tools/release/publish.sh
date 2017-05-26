@@ -94,7 +94,7 @@ if [ "$CURRENT_VERSION" != "$DATALAB_VERSION" ]; then
   echo "Filling gtm account=${GTM_ACCOUNT}"
   sed -i -e s/{{GTM_ACCOUNT_PLACEHOLDER}}/\"${GTM_ACCOUNT}\"/ $CONFIG_TEMPLATE
 
-  gsutil cp ./config_local.js gs://${PROJECT_ID}/deploy/config_local_${BUILD}.js
+  gsutil cp $CONFIG_TEMPLATE gs://${PROJECT_ID}/deploy/config_local_${BUILD}.js
   gsutil cp $CONFIG_TEMPLATE gs://${PROJECT_ID}/deploy/config_local.js
 fi
 
