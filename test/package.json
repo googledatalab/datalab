@@ -4,6 +4,7 @@
     "test": "./run.sh"
   },
   "dependencies": {
+    "jasmine": "^2.6.0",
     "mocha": "^3.2.0",
     "node-resemble": "^2.0.1",
     "selenium-webdriver": "^3.3.0",
