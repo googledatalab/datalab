@@ -88,7 +88,8 @@ function runIntegrationTests() {
 
 function runUnitTests() {
   echo Running jasmine tests
-  $HERE/node_modules/jasmine/bin/jasmine.js
+  $HERE/node_modules/jasmine/bin/jasmine.js \
+      --config=$HERE/unittests/support/jasmine.json
 }
 
 function main() {
@@ -106,9 +107,6 @@ function main() {
   if [[ $RUN_INTEGRATION_TESTS -ne 0 ]]; then
     makeTestsHome
     startContainers
-  fi
-
-  if [[ $RUN_INTEGRATION_TESTS -ne 0 ]]; then
     runIntegrationTests
   fi
 }
