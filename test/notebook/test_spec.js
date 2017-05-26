@@ -36,9 +36,8 @@ function createDriver() {
   return driver;
 }
 
-function releaseDriver(driver, done) {
+function releaseDriver(driver) {
   driver.quit();
-  done();
 }
 
 function testNotebook(driver, path, ignoreList = []) {
@@ -110,12 +109,20 @@ function testNotebook(driver, path, ignoreList = []) {
 
 describe('Notebook tests', function() {
 
+  let driver;
+
+  beforeAll(function() {
+    driver = createDriver();
+  });
+  afterAll(function() {
+    releaseDriver(driver);
+  });
+
   notebooks_config.forEach(function(nb) {
     describe(nb.path, function() {
       it('runs without errors', function(done) {
-        const driver = createDriver();
         return testNotebook(driver, nb.path, nb.ignore)
-            .finally(() => releaseDriver(driver, done));
+            .finally(() => done());
       }, timeOut);
     });
 

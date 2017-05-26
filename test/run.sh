@@ -122,8 +122,10 @@ function main() {
     trap cleanup INT EXIT SIGHUP SIGINT SIGTERM
   fi
 
-  # Unit tests are fast, run them all first, and always run them
-  runUnitTests
+  # Unit tests are fast, run them first
+  if (( RUN_UNIT > 0 )); then
+    runUnitTests
+  fi
 
   if (( RUN_NOTEBOOK + RUN_UI > 0 )); then
     makeTestsHome
