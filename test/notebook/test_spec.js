@@ -15,36 +15,34 @@
 // This is an e2e test suite that runs notebooks in a browser, execute all their cells
 // and make sure no errors were thrown.
 // It reads a spec.json file specifying which notebooks to run, and optionally a list
-// of cell numbers of ignore, which can be useful if specific cells are flaky
+// of cell numbers to ignore, which can be useful if specific cells are flaky
 // or intentionally erroneous.
 
-const assert = require('assert');
 const selenium = require('selenium-webdriver'),
       until = selenium.until;
-const test = require('selenium-webdriver/testing');
 const fs = require('fs');
-
-var driver = null;
+require('jasmine2-custom-message');
 
 const notebooks_config = JSON.parse(fs.readFileSync('notebook/spec.json'))
 const timeOut = 60000;
 
-test.before(function() {
-  this.timeout(timeOut);
-  driver = new selenium.Builder()
+function createDriver() {
+  const driver = new selenium.Builder()
     .forBrowser('chrome')
     .usingServer('http://localhost:4444/wd/hub')
     .build();
 
   driver.manage().window().setSize(1024, 768);
-});
+  return driver;
+}
 
-test.after(function() {
+function releaseDriver(driver) {
   driver.quit();
-});
+}
 
-function testNotebook(path, ignoreList = []) {
+function testNotebook(driver, path, ignoreList = []) {
   const notebookTitle = path.substr(path.lastIndexOf('/') + 1).slice(0, -'.ipynb'.length);
+  let testComplete = false;
   return driver.get('http://localhost:8081/notebooks/' + path)
     .then(driver.wait(until.titleIs(notebookTitle), 5000))
     .then(function() {
@@ -84,8 +82,9 @@ function testNotebook(path, ignoreList = []) {
             if (cell.outputs) {
               cell.outputs.forEach(function(output) {
                 if (ignoreList.indexOf(idx) === -1 && output.output_type === 'stream') {
-                  assert(output.name !== 'stderr',
-                         'Cell #' + idx + ' threw an error: ' + output.text);
+                  since('Cell #' + idx + ' threw an error: ' + output.text)
+                      .expect(output.name).not.toEqual('stderr');
+                  testComplete = true;
                 }
               });
             }
@@ -101,20 +100,31 @@ function testNotebook(path, ignoreList = []) {
             return dirty === false;
           });
       }, 2000));
+    })
+    .finally(function() {
+      since('"expect" for output.name was not executed')
+          .expect(testComplete).toBe(true);
     });
 }
 
-test.describe('Notebook tests', function() {
+describe('Notebook tests', function() {
+
+  let driver;
+
+  beforeAll(function() {
+    driver = createDriver();
+  });
+  afterAll(function() {
+    releaseDriver(driver);
+  });
 
   notebooks_config.forEach(function(nb) {
-
-    test.describe(nb.path, function() {
-      this.timeout(timeOut);
-      test.it('runs without errors', function() {
-        return testNotebook(nb.path, nb.ignore);
-      });
+    describe(nb.path, function() {
+      it('runs without errors', function(done) {
+        return testNotebook(driver, nb.path, nb.ignore)
+            .finally(() => done());
+      }, timeOut);
     });
 
   });
-
 });
