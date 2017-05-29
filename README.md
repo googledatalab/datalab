@@ -87,4 +87,3 @@ The build outputs are packaged in the form of a docker container.
 
 * `/containers/datalab` - the only container for now. This is the container that is used as the
   DataLab AppEngine module.
-

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="generator" content="Polymer Starter Kit">
+    <meta name="viewport"
+          content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+    <title>Google Cloud Datalab</title>
+    <meta name="description" content="Interactive tools and developer experiences
+                                      for Big Data on Google Cloud Platform.">
+
+    <base href="/">
+
+    <link rel="icon" href="images/favicon.ico">
+
+    <script>
+      // Register the base URL
+      const baseUrl = document.querySelector('base').href;
+
+      // Load and register pre-caching Service Worker
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register(baseUrl + 'service-worker.js');
+        });
+      }
+    </script>
+
+    <!-- Load webcomponents-loader.js to load any polyfills needed by browser -->
+    <script src="bower_components/webcomponentsjs/webcomponents-loader.js"></script>
+
+    <!-- Load application shell -->
+    <link rel="import" href="src/datalab-app.html">
+
+    <!-- Add any global styles for body, document, etc. -->
+    <style>
+      body {
+        margin: 0;
+        font-family: 'Roboto', 'Noto', sans-serif;
+        line-height: 1.5;
+        min-height: 100vh;
+        background-color: #eeeeee;
+      }
+    </style>
+  </head>
+  <body>
+    <datalab-app></datalab-app>
+    <noscript>
+      Please enable JavaScript to view this website.
+    </noscript>
+  </body>
+</html>
