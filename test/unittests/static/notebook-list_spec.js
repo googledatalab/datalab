@@ -17,48 +17,46 @@
  * as expected
  */
 
-const assert = require('assert');
 var requirejs = require("requirejs");
 requirejs.config({
   baseUrl: '../sources/web/datalab/static/',
   nodeRequire: require,
-  map: {
-    '*': {
-      // module mocks use relative path to the baseUrl
-      util: '../../../../test/unittests/static/utilMock'
-    }
-  }
 });
+
+const notebookList = requirejs('notebook-list');
+const util = requirejs('util');
 
 describe('Unit tests', function() {
 describe('Notebook list', function() {
 
-  var notebookList = requirejs('notebook-list');
+  beforeEach(function() {
+    spyOn(util.debug, 'log');   // disable debug logging
+  });
 
   it('strToSemver converts a string version into a backward compatible semver array', function() {
     // old clients compatibility
-    assert.deepEqual(notebookList._strToSemver('2017'), [0, 5, 2017]);
+    expect(notebookList._strToSemver('2017')).toEqual([0, 5, 2017]);
 
     // new clients
-    assert.deepEqual(notebookList._strToSemver('1.1.2017'), [1, 1, 2017]);
+    expect(notebookList._strToSemver('1.1.2017')).toEqual([1, 1, 2017]);
 
     // bad version
-    assert.equal(notebookList._strToSemver('1.1.1.2017'), null);
+    expect(notebookList._strToSemver('1.1.1.2017')).toBeNull();
   });
 
   it('semverCompare compares semantic version strings correctly', function() {
-    assert.equal(notebookList._semverCompare([0,0,0], [0,0,1]), -1);
-    assert.equal(notebookList._semverCompare([0,2,0], [1,0,0]), -1);
-    assert.equal(notebookList._semverCompare([2,0,0], [10,0,0]), -1);
+    expect(notebookList._semverCompare([0,0,0], [0,0,1])).toEqual(-1);
+    expect(notebookList._semverCompare([0,2,0], [1,0,0])).toEqual(-1);
+    expect(notebookList._semverCompare([2,0,0], [10,0,0])).toEqual(-1);
 
-    assert.equal(notebookList._semverCompare([10,5,5], [4,2,0]), 1);
-    assert.equal(notebookList._semverCompare([1,2,2], [1,2,1]), 1);
+    expect(notebookList._semverCompare([10,5,5], [4,2,0])).toEqual(1);
+    expect(notebookList._semverCompare([1,2,2], [1,2,1])).toEqual(1);
 
-    assert.equal(notebookList._semverCompare([0,0,1], [0,0,1]), 0);
-    assert.equal(notebookList._semverCompare([2,0,1], [2,0,1]), 0);
-    assert.equal(notebookList._semverCompare([0,3,8], [0,3,8]), 0);
+    expect(notebookList._semverCompare([0,0,1], [0,0,1])).toEqual(0);
+    expect(notebookList._semverCompare([2,0,1], [2,0,1])).toEqual(0);
+    expect(notebookList._semverCompare([0,3,8], [0,3,8])).toEqual(0);
 
-    assert.equal(notebookList._semverCompare([7,0,0], [7,0]), null);
+    expect(notebookList._semverCompare([7,0,0], [7,0])).toBeNull();
   });
 
 });

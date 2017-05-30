@@ -19,11 +19,10 @@
 # Otherwise, it will get the pydatalab by "git clone" from pydatalab repo.
 
 # Create a versioned Dockerfile based on current date and git commit hash
-VERSION=`date +%Y%m%d`
-VERSION_SUBSTITUTION="s/_version_/0.5.$VERSION/"
+source ../../tools/release/version.sh
 
-COMMIT=`git log --pretty=format:'%H' -n 1`
-COMMIT_SUBSTITUTION="s/_commit_/$COMMIT/"
+VERSION_SUBSTITUTION="s/_version_/$DATALAB_VERSION/"
+COMMIT_SUBSTITUTION="s/_commit_/$DATALAB_COMMIT/"
 
 cat Dockerfile.in | sed $VERSION_SUBSTITUTION | sed $COMMIT_SUBSTITUTION > Dockerfile
 

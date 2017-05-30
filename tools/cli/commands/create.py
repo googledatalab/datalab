@@ -487,7 +487,7 @@ def create_repo(args, gcloud_repos, repo_name):
     Args:
       args: The Namespace returned by argparse
       gcloud_repos: Function that can be used for invoking
-        `gcloud alpha source repos`
+        `gcloud source repos`
       repo_name: The name of the repository to create
     Raises:
       subprocess.CalledProcessError: If the `gcloud` command fails
@@ -505,7 +505,7 @@ def ensure_repo_exists(args, gcloud_repos, repo_name):
     Args:
       args: The Namespace returned by argparse
       gcloud_repos: Function that can be used for invoking
-        `gcloud alpha source repos`
+        `gcloud source repos`
       repo_name: The name of the repository to check
     Raises:
       subprocess.CalledProcessError: If the `gcloud` command fails
@@ -532,7 +532,7 @@ def run(args, gcloud_compute, gcloud_repos,
       args: The Namespace instance returned by argparse
       gcloud_compute: Function that can be used to invoke `gcloud compute`
       gcloud_repos: Function that can be used to invoke
-        `gcloud alpha source repos`
+        `gcloud source repos`
       email: The user's email address
       in_cloud_shell: Whether or not the command is being run in the
         Google Cloud Shell

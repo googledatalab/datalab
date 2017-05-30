@@ -66,17 +66,37 @@ docker tag -f ${DATALAB_IMAGE} gcr.io/${PROJECT_ID}/datalab:latest
 gcloud docker -- push gcr.io/${PROJECT_ID}/datalab:latest
 
 gsutil cp gs://${PROJECT_ID}/deploy/config_local.js ./config_local.js
-OLD_VERSION=`cat ./config_local.js | grep previous | cut -d ':' -f 2`
-CURRENT_VERSION=`cat ./config_local.js | grep latest | cut -d ':' -f 2`
-NEW_VERSION=" ${BUILD},"
+# Get the latest and previous versions from the config_local. Note that older
+# config files don't have the full semantic version specified, so cannot extract using
+# the "LATEST_SEMVER = " pattern, and instead use "latest: "
+if [[ $(cat ./config_local.js | grep "LATEST_SEMVER = ") ]]; then
+  CURRENT_VERSION=`cat ./config_local.js | grep "LATEST_SEMVER = " | cut -d '=' -f 2 | tr -d '" ;'`
+  GTM_ACCOUNT=`cat ./config_local.js | grep "GTM_ACCOUNT = " | cut -d '=' -f 2 | tr -d '"; '`
+else
+  CURRENT_VERSION=`cat ./config_local.js | grep "latest: " | cut -d ':' -f 2 | tr -d ', '`
+  GTM_ACCOUNT=`cat ./config_local.js | grep "gtmAccount = " | cut -d '=' -f 2 | tr -d "'; "`
+fi
+CURRENT_DIR=$(dirname "${BASH_SOURCE[0]}")
+source "${CURRENT_DIR}"/version.sh
+CONFIG_TEMPLATE="${CURRENT_DIR}"/config_local_template.js
 
-echo "Replacing latest=${CURRENT_VERSION} with latest=${NEW_VERSION}"
-sed -i -e "s/${CURRENT_VERSION}/${NEW_VERSION}/" ./config_local.js
-echo "Replacing previous=${OLD_VERSION} with previous=${CURRENT_VERSION}"
-sed -i -e "s/${OLD_VERSION}/${CURRENT_VERSION}/" ./config_local.js
+# Only if the current version will be updated, upload the new config_local.js file. We do
+# this for cases where two releases are published on the same day. If the new release's
+# PREVIOUS_SEMVER points to the older release with the same date, this results in a
+# loop for the rollback process.
+if [ "$CURRENT_VERSION" != "$DATALAB_VERSION" ]; then
+  echo "Filling latest=${DATALAB_VERSION}"
+  sed -i -e s/{{DATALAB_VERSION_PLACEHOLDER}}/\"${DATALAB_VERSION}\"/ $CONFIG_TEMPLATE
+  echo "Filling latest patch=${DATALAB_VERSION_PATCH}"
+  sed -i -e s/{{DATALAB_VERSION_PATCH_PLACEHOLDER}}/\"${DATALAB_VERSION_PATCH}\"/ $CONFIG_TEMPLATE
+  echo "Filling previous=${CURRENT_VERSION}"
+  sed -i -e s/{{PREV_SEMVER_PLACEHOLDER}}/\"${CURRENT_VERSION}\"/ $CONFIG_TEMPLATE
+  echo "Filling gtm account=${GTM_ACCOUNT}"
+  sed -i -e s/{{GTM_ACCOUNT_PLACEHOLDER}}/\"${GTM_ACCOUNT}\"/ $CONFIG_TEMPLATE
 
-gsutil cp ./config_local.js gs://${PROJECT_ID}/deploy/config_local_${BUILD}.js
-gsutil cp ./config_local.js gs://${PROJECT_ID}/deploy/config_local.js
+  gsutil cp $CONFIG_TEMPLATE gs://${PROJECT_ID}/deploy/config_local_${BUILD}.js
+  gsutil cp $CONFIG_TEMPLATE gs://${PROJECT_ID}/deploy/config_local.js
+fi
 
 echo "Updating the list of sample notebooks"
 pushd ./

@@ -18,12 +18,13 @@
 # If [path_of_pydatalab_dir] is provided, it will copy the content of that dir into image.
 # Otherwise, it will get the pydatalab by "git clone" from pydatalab repo.
 
-# Create a versioned Dockerfile based on current date and git commit hash
-VERSION=`date +%Y%m%d`
-VERSION_SUBSTITUTION="s/_version_/0.5.$VERSION/"
+HERE=$(dirname $0)
 
-COMMIT=`git log --pretty=format:'%H' -n 1`
-COMMIT_SUBSTITUTION="s/_commit_/$COMMIT/"
+# Create a versioned Dockerfile based on current date and git commit hash
+source $HERE/../../tools/release/version.sh
+
+VERSION_SUBSTITUTION="s/_version_/$DATALAB_VERSION/"
+COMMIT_SUBSTITUTION="s/_commit_/$DATALAB_COMMIT/"
 
 BASE_IMAGE_SUBSTITUTION="s/_base_image_/datalab-base/"
 
