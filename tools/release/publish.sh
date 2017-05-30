@@ -38,10 +38,12 @@ TEST_PROJECT_ID="${TEST_PROJECT_ID:-`gcloud config list -q --format 'value(core.
 BUILD="${BUILD:-$(date +%Y%m%d)}"
 GATEWAY_IMAGE="gcr.io/${PROJECT_ID}/datalab-gateway:${BUILD}"
 DATALAB_IMAGE="gcr.io/${PROJECT_ID}/datalab:local-${BUILD}"
+DATALAB_GPU_IMAGE="gcr.io/${PROJECT_ID}/datalab-gpu:local-${BUILD}"
 
-echo "Pulling the daily gateway and Datalab images: ${GATEWAY_IMAGE}, ${DATALAB_IMAGE}"
+echo "Pulling the daily Datalab images: ${GATEWAY_IMAGE}, ${DATALAB_IMAGE}, ${DATALAB_GPU_IMAGE}"
 gcloud docker -- pull ${GATEWAY_IMAGE}
 gcloud docker -- pull ${DATALAB_IMAGE}
+gcloud docker -- pull ${DATALAB_GPU_IMAGE}
 
 echo "Running the Notebook tests..."
 mkdir -p tests
@@ -64,6 +66,12 @@ docker tag -f ${DATALAB_IMAGE} gcr.io/${PROJECT_ID}/datalab:local
 gcloud docker -- push gcr.io/${PROJECT_ID}/datalab:local
 docker tag -f ${DATALAB_IMAGE} gcr.io/${PROJECT_ID}/datalab:latest
 gcloud docker -- push gcr.io/${PROJECT_ID}/datalab:latest
+
+echo "Releasing the Datalab GPU image: ${DATALAB_GPU_IMAGE}"
+docker tag -f ${DATALAB_GPU_IMAGE} gcr.io/${PROJECT_ID}/datalab-gpu:local
+gcloud docker -- push gcr.io/${PROJECT_ID}/datalab-gpu:local
+docker tag -f ${DATALAB_GPU_IMAGE} gcr.io/${PROJECT_ID}/datalab-gpu:latest
+gcloud docker -- push gcr.io/${PROJECT_ID}/datalab-gpu:latest
 
 gsutil cp gs://${PROJECT_ID}/deploy/config_local.js ./config_local.js
 # Get the latest and previous versions from the config_local. Note that older
