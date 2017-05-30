@@ -234,7 +234,7 @@ define(['base/js/dialog', 'base/js/events'], function(dialog, events) {
     _debugLog('== request to reset idle timeout');
     now = Date.now();
     if ((now - lastIdleTimeoutReset) > 3000) {
-      resetIdleTimeout();
+      _resetIdleTimeout();
       lastIdleTimeoutReset = now;
     }
   }
