@@ -1,4 +1,4 @@
-define(['base/js/dialog', 'base/js/events'], function(dialog, events) {
+define(['base/js/dialog', 'base/js/events', 'util'], function(dialog, events, util) {
   const updateTimeoutInfoInterval = 1000; // Update display every second while the user is watching.
   const updateTimeoutInfoNoDisplayInterval = 5 * 1000; // Keep tabs on timeout info even when not being displayed.
   const queryTimeoutInfoInterval = 10 * 1000; // Only send a query every ten seconds.
@@ -6,21 +6,14 @@ define(['base/js/dialog', 'base/js/events'], function(dialog, events) {
   let timeoutInfo = {};
   let lastUpdateTimeoutTime = 0;
 
-  let showDebugLog = false;   // Set to true in the dev console to get log messages during development.
-  function _debugLog(msg) {
-    if (showDebugLog) {
-      console.log(msg);
-    }
-  }
-
   // Sets event handlers to deal with kernel-busy heartbeats.
   function setupKernelBusyHeartbeat() {
     events.on('kernel_busy.Kernel', function() {
-      _debugLog('== kernel_busy event received');
+      util.debug.log('kernel_busy event received');
       _runBusyTimer();
     });
     events.on('kernel_idle.Kernel', function() {
-      _debugLog('== kernel_idle event received');
+      util.debug.log('kernel_idle event received');
       _clearBusyTimer();
       _maybeResetIdleTimeout();
     });
@@ -29,13 +22,13 @@ define(['base/js/dialog', 'base/js/events'], function(dialog, events) {
   // Sets an event handler to deal with kernel-disconnected events.
   function setupDisconnectHandler() {
     events.on('kernel_connection_failed.Kernel', function() {
-      _debugLog('== Disconnected; timeoutInfo:');
-      _debugLog(timeoutInfo);
-      _alertIfTimedOut();
+      util.debug.log('Disconnected; timeoutInfo:');
+      util.debug.log(timeoutInfo);
+      _alertIfTimedOutAndDisable();
     });
   }
 
-  function _alertIfTimedOut() {
+  function _alertIfTimedOutAndDisable() {
     if (timeoutInfo.enabled && timeoutInfo.idleTimeoutSeconds > 0) {
       const secondsRemaining = Math.floor((timeoutInfo.expirationTime - Date.now()) / 1000);
       if (secondsRemaining <=1 ) {
@@ -49,7 +42,7 @@ define(['base/js/dialog', 'base/js/events'], function(dialog, events) {
 
   // Alerts the user that there was a shutdown due to idle time exceeded.
   function _alertIdleShutdown() {
-    _debugLog('== Idle timeout exceeded');
+    util.debug.log('Idle timeout exceeded');
     const shutdownMsg = ('The datalab server shut down after exceeding the idle timeout of ' +
         _secondsToString(timeoutInfo.idleTimeoutSeconds));
     dialog.modal({
@@ -69,11 +62,11 @@ define(['base/js/dialog', 'base/js/events'], function(dialog, events) {
   // Assumes global timeoutInfo has been set.
   function _updateTimeoutDisplay(dropdown) {
     if (!dropdown) {
-      _debugLog('== updateTimeoutDisplay no dropdown');
+      util.debug.log('updateTimeoutDisplay no dropdown');
       return;
     }
-    _debugLog('== updating timeout display');
-    _debugLog(dropdown);
+    util.debug.log('updating timeout display');
+    util.debug.log(dropdown);
     if (timeoutInfo.enabled) {
       let secondsRemaining = Math.floor((timeoutInfo.expirationTime - Date.now()) / 1000);
       if (secondsRemaining < 0) {
@@ -85,17 +78,17 @@ define(['base/js/dialog', 'base/js/events'], function(dialog, events) {
         'Idle timeout exceeded' :
         'Idle timeout in ' + maybeAbout + _secondsToString(roundedSecondsRemaining);
       dropdown.find('#idleTimeoutDetails').html(details);
-      _debugLog('== show enabled button');
+      util.debug.log('show enabled button');
       dropdown.find('#idleTimeoutEnabledButton').show();
       dropdown.find('#idleTimeoutDisabledButton').hide();
     } else if (!timeoutInfo.idleTimeoutSeconds) {
       // There is no idle timeout interval, so timeout can't be enabled in the
       // UI, so we show nothing at all.
-      _debugLog('== no idleTimeoutSeconds');
+      util.debug.log('no idleTimeoutSeconds');
       dropdown.find('#idleTimeoutEnabledButton').hide();
       dropdown.find('#idleTimeoutDisabledButton').hide();
     } else {
-      _debugLog('== show disabled button');
+      util.debug.log('show disabled button');
       dropdown.find('#idleTimeoutEnabledButton').hide();
       dropdown.find('#idleTimeoutDisabledButton').show();
     }
@@ -119,11 +112,11 @@ define(['base/js/dialog', 'base/js/events'], function(dialog, events) {
   function updateTimeoutInfo(dropdown) {
     const now = Date.now();
     if (now - lastUpdateTimeoutTime > queryTimeoutInfoInterval) {
-      _debugLog('== Querying timeout');
+      util.debug.log('Querying timeout');
       const timeoutInfoUrl = window.location.protocol + "//" + window.location.host + "/_timeout";
       function callback() {
-        _debugLog('== _timeout call response:');
-        _debugLog(this);
+        util.debug.log('_timeout call response:');
+        util.debug.log(this);
         lastUpdateTimeoutTime = Date.now();
         const result = this.response; // 'this' is the XHR
         timeoutInfo = JSON.parse(result) || {};
@@ -132,12 +125,12 @@ define(['base/js/dialog', 'base/js/events'], function(dialog, events) {
         _setUpdateTimeoutInfoTimeout(dropdown);
       }
       function errorHandler() {
-        _debugLog('== xhr error response:');
-        _debugLog(this);
+        util.debug.log('xhr error response:');
+        util.debug.log(this);
         const status = this.status;   // 'this' is the XHR
-        _debugLog('== status=' + status);
+        util.debug.log('status=' + status);
         if (status == 0) {    // We get 0 when we lost our connection to the server.
-          _alertIfTimedOut();
+          _alertIfTimedOutAndDisable();
         }
       }
       const xhrOptions = {
@@ -156,7 +149,7 @@ define(['base/js/dialog', 'base/js/events'], function(dialog, events) {
     const newValue = timeoutInfo.enabled ? "false" : "true";
     const timeoutUrl = window.location.protocol + "//" + window.location.host + "/_timeout?enabled=" + newValue;
     const dropdown = $(this).parent().parent().parent();  // Walk up to the account drop-down.
-    _debugLog('== Changing enabled to ' + newValue);
+    util.debug.log('Changing enabled to ' + newValue);
     updateTimeoutInfo(dropdown);
     xhr(timeoutUrl, () => {
       timeoutInfo.enabled = newValue;   // Display the new value right away.
@@ -224,14 +217,14 @@ define(['base/js/dialog', 'base/js/events'], function(dialog, events) {
   }
 
   function _runBusyTimer() {
-    _debugLog('== runBusyTimer');
+    util.debug.log('runBusyTimer');
     _clearBusyTimer();
     _maybeResetIdleTimeout();
     busyTimer = window.setTimeout(_runBusyTimer, kernelBusyHeartbeatInterval);
   }
 
   function _maybeResetIdleTimeout() {
-    _debugLog('== request to reset idle timeout');
+    util.debug.log('request to reset idle timeout');
     now = Date.now();
     if ((now - lastIdleTimeoutReset) > 3000) {
       _resetIdleTimeout();
@@ -241,12 +234,12 @@ define(['base/js/dialog', 'base/js/events'], function(dialog, events) {
 
   function _resetIdleTimeout() {
     const timeoutUrl = window.location.protocol + "//" + window.location.host + "/_timeout?reset=true";
-    _debugLog('== reset idle timeout');
+    util.debug.log('reset idle timeout');
     xhr(timeoutUrl, null, {method: 'POST'});
   }
 
   function notebookScrolled() {
-    _debugLog('== got scroll event on notebook');
+    util.debug.log('got scroll event on notebook');
     _maybeResetIdleTimeout();
   }
 

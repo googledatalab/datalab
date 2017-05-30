@@ -24,9 +24,9 @@ import userManager = require('./userManager');
 
 const idleCheckIntervalSeconds = 5;    // Seconds to wait between idle checks
 
-let idleTimeoutEnabled = true;  // Allow for explicit disable without clearing other values
-let idleTimeoutSeconds = 0;   // Shutdown after being idle this long; disabled if 0 or NaN
-let lastUserActivity: number;  // The epoch, in seconds, of the last user activity
+let idleTimeoutEnabled = true;  // Allow user to enable and disable the timeout
+let idleTimeoutSeconds = 0;   // Shutdown after being idle this long; turned off if 0 or NaN
+let lastReset: number;  // The epoch, in seconds, since the last timout reset
 let shutdownCommand = '';
 
 export function initAndStart(appSettings: common.Settings) {
@@ -46,13 +46,14 @@ export function init(appSettings: common.Settings) {
     if (!idleTimeoutSeconds) {
       idleTimeoutSeconds = parseInterval(process.env.DATALAB_IDLE_TIMEOUT);
     }
-    logging.getLogger().debug('Idle timeout set to ' + idleTimeoutSeconds + ' seconds');
     if (! (idleTimeoutSeconds > 0)) {
-      logging.getLogger().debug('No idle timeout value, idle timeout is disabled');
+      logging.getLogger().info('No idle timeout value, idle timeout is disabled');
+    } else {
+      logging.getLogger().info('Idle timeout set to ' + idleTimeoutSeconds + ' seconds');
     }
   } else {
     idleTimeoutSeconds = NaN;   // No shutdown command available
-    logging.getLogger().debug('No shutdown command, idle timeout is disabled');
+    logging.getLogger().info('No shutdown command, idle timeout is disabled');
   }
 }
 
@@ -85,15 +86,13 @@ function parseInterval(str: string) {
 }
 
 export function resetBasedOnPath(path: string) {
-  if (shouldResetOnPath(path)) {
+  if (_shouldResetOnPath(path)) {
     reset();
   }
 }
 
-function shouldResetOnPath(path: string) {
-  logging.getLogger().debug('shouldReset sees path=' + path);
+function _shouldResetOnPath(path: string) {
   if (path.indexOf('/_timeout')==0) {
-    logging.getLogger().debug('path ' + path + ' should not reset idle timeout');
     return false;
   } else {
     return true;
@@ -124,17 +123,16 @@ function isHeartbeat(data: any) {
 
 export function reset() {
   logging.getLogger().debug('reset idle timeout');
-  lastUserActivity = nowSeconds();
+  lastReset = _nowSeconds();
 }
 
-function nowSeconds() {
+function _nowSeconds() {
   return Date.now() / 1000;   // seconds since the epoch
 }
 
-function hasTimedOut() {
+function _hasTimedOut() {
   if (isTimeoutEnabled()) {
-    const idleSeconds = nowSeconds() - lastUserActivity;
-    logging.getLogger().debug('idleSeconds=' + Math.ceil(10*idleSeconds)/10 + ', idleTimeoutSeconds=' + idleTimeoutSeconds);
+    const idleSeconds = _nowSeconds() - lastReset;
     return (idleSeconds > idleTimeoutSeconds);
   } else {
     return false;   // disabled
@@ -149,7 +147,7 @@ function isTimeoutEnabled() {
 // Note that 0 can mean either timeout is disabled, or we have timed out; call isTimeoutEnabled
 // to see if timeout is disabled.
 function timeoutSecondsRemaining() {
-  const idleSeconds = nowSeconds() - lastUserActivity;
+  const idleSeconds = _nowSeconds() - lastReset;
   const secondsRemaining = idleTimeoutSeconds - idleSeconds;
   if (secondsRemaining < 0) {
     return 0;
@@ -159,10 +157,10 @@ function timeoutSecondsRemaining() {
 }
 
 function shutdownIfTimedOut() {
-  if (hasTimedOut()) {
+  if (_hasTimedOut()) {
     // TODO - check to see if the kernel is idle; if not, don't try to stop the VM
     try {
-      logging.getLogger().debug('Idle timeout, shutting down with this command: ' + shutdownCommand);
+      logging.getLogger().warn('Idle timeout, shutting down with this command: ' + shutdownCommand);
       childProcess.execSync(shutdownCommand, {env: process.env});
       logging.getLogger().debug('Shutdown command succeeded');
     } catch (err) {
