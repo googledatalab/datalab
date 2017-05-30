@@ -12,7 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM _base_image_
+# We use different base images for GPU vs CPU Dockerfiles, so we expect
+# that the appropriate image is pulled and tagged locally.
+# CPU should use ubuntu:16.04
+# and GPU uses nvidia/cuda:8.0-cudnn5-devel-ubuntu16.04
+FROM datalab-external-base-image
 MAINTAINER Google Cloud DataLab
 
 # Container configuration

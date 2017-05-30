@@ -32,7 +32,10 @@ fi
 
 trap 'rm -rf pydatalab' exit
 
-BASE_IMAGE_SUBSTITUTION="s/_base_image_/ubuntu:16.04/"
-cat Dockerfile.in | sed $BASE_IMAGE_SUBSTITUTION > Dockerfile
+docker pull ubuntu:16.04
+# Docker tag flags changed in an incompatible way between versions.
+# The Datalab Jenkins build still uses the old one, so try it both ways.
+if ! $(docker tag -f ubuntu:16.04 datalab-external-base-image); then
+  docker tag ubuntu:16.04 datalab-external-base-image
+fi
 docker build ${DOCKER_BUILD_ARGS} -t datalab-base .
-rm Dockerfile
