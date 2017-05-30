@@ -43,8 +43,9 @@ fi
 
 GATEWAY_IMAGE="gcr.io/${PROJECT_ID}/datalab-gateway:${PREVIOUS_BUILD}"
 DATALAB_IMAGE="gcr.io/${PROJECT_ID}/datalab:local-${PREVIOUS_BUILD}"
+DATALAB_GPU_IMAGE="gcr.io/${PROJECT_ID}/datalab-gpu:local-${PREVIOUS_BUILD}"
 
-read -p "Proceed to release ${GATEWAY_IMAGE} and ${DATALAB_IMAGE} as latest? [Y/n]: " answer
+read -p "Proceed to release ${GATEWAY_IMAGE}, ${DATALAB_GPU_IMAGE}, and ${DATALAB_IMAGE} as latest? [Y/n]: " answer
 if echo $answer | grep -iq -v '^y'; then
   exit 1
 fi
@@ -63,3 +64,9 @@ gcloud docker -- push gcr.io/${PROJECT_ID}/datalab-gateway:latest
 echo "Releasing the Datalab image: ${DATALAB_IMAGE}"
 docker tag -f ${DATALAB_IMAGE} gcr.io/${PROJECT_ID}/datalab:local
 gcloud docker -- push gcr.io/${PROJECT_ID}/datalab:local
+
+echo "Pulling the rollback GPU images: ${DATALAB_GPU_IMAGE}"
+gcloud docker -- pull ${DATALAB_GPU_IMAGE}
+echo "Releasing the Datalab GPU image: ${DATALAB_GPU_IMAGE}"
+docker tag -f ${DATALAB_GPU_IMAGE} gcr.io/${PROJECT_ID}/datalab-gpu:local
+gcloud docker -- push gcr.io/${PROJECT_ID}/datalab-gpu:local
