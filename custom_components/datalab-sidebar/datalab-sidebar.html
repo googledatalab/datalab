@@ -1,0 +1,47 @@
+<script src="../../bower_components/webcomponentsjs/webcomponents-loader.js"></script>
+<link rel="import" href="../toolbar-button/toolbar-button.html">
+<link rel="import" href="../../bower_components/paper-drawer-panel/paper-drawer-panel.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+
+<dom-module id="datalab-sidebar">
+  <template>
+    <style>
+      paper-drawer-panel {
+        --paper-drawer-panel-left-drawer-container: {
+          background-color: #eee;
+        };
+      }
+      .toolbar-button {
+        width: 100%;
+        padding: 0px;
+        margin: 0px;
+      }
+      .content-panel {
+        padding: 10px;
+        margin: 0px;
+      }
+    </style>
+    <paper-drawer-panel drawer-width="100px">
+      <div slot="drawer">
+        <toolbar-button class="toolbar-button" title="Files" icon="editor:insert-drive-file">
+        </toolbar-button>
+        <toolbar-button class="toolbar-button" title="Data" icon="view-quilt">
+        </toolbar-button>
+        <toolbar-button class="toolbar-button" title="Sessions" icon="av:featured-play-list">
+        </toolbar-button>
+        <toolbar-button class="toolbar-button" title="Ungit" icon="icons:code">
+        </toolbar-button>
+        <toolbar-button class="toolbar-button" title="Terminals" icon="hardware:computer">
+        </toolbar-button>
+      </div>
+      <div slot="main" class="content-panel"> Main panel... </div>
+    </paper-drawer-panel>
+  </template>
+</dom-module>
+
+<script>
+  class SidebarElement extends Polymer.Element {
+    static get is() { return "datalab-sidebar"; }
+  }
+  customElements.define(SidebarElement.is, SidebarElement);
+</script>

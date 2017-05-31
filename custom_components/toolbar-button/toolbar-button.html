@@ -1,0 +1,52 @@
+<script src="../../bower_components/webcomponentsjs/webcomponents-loader.js"></script>
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/iron-icons/editor-icons.html">
+<link rel="import" href="../../bower_components/iron-icons/hardware-icons.html">
+<link rel="import" href="../../bower_components/iron-icons/av-icons.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+
+<dom-module id="toolbar-button">
+  <template>
+    <style>
+      paper-button {
+        width: 100%;
+        padding: 20px;
+        margin: 0px;
+        color: #666;
+
+        --paper-button: {
+          @apply(--layout-vertical);
+          font-family: RobotoDraft, 'Helvetica Neue', Helvetica, Arial;
+          font-size: 12px;
+        };
+      }
+      iron-icon {
+        padding-bottom: 5px;
+      }
+    </style>
+    <paper-button class="toolbar-button">
+      <iron-icon icon={{icon}}></iron-icon>
+      {{title}}
+    </paper-button>
+  </template>
+</dom-module>
+
+<script>
+  class ToolbarButtonElement extends Polymer.Element {
+    static get is() { return "toolbar-button"; }
+    static get properties() {
+      return {
+        title: {
+          type: String,
+          value: "Button"
+        },
+        icon: {
+          type: String,
+          value: ""
+        }
+      }
+    }
+  }
+  customElements.define(ToolbarButtonElement.is, ToolbarButtonElement);
+</script>
+

@@ -1,0 +1,39 @@
+<script src="../../bower_components/webcomponentsjs/webcomponents-loader.js"></script>
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/paper-toolbar/paper-toolbar.html">
+
+<dom-module id="datalab-toolbar">
+  <template>
+    <style>
+      body {
+        margin: 0px;
+        padding: 0px;
+      }
+      paper-toolbar.datalab-toolbar {
+        --paper-toolbar-background: #2196F3;
+        --paper-toolbar-height: 50px;
+        --paper-toolbar-sm-height: 50px;
+      }
+      paper-icon-button.toolbar-button {
+        width: 35px;
+        height: 35px;
+      }
+    </style>
+    <paper-toolbar class="datalab-toolbar">
+      <span slot="top" class="title">Google Cloud Datalab</span>
+      <paper-icon-button slot="top" class="toolbar-button" icon="search"></paper-icon-button>
+      <paper-icon-button slot="top" class="toolbar-button" icon="help"></paper-icon-button>
+      <paper-icon-button slot="top" class="toolbar-button" icon="settings"></paper-icon-button>
+      <paper-icon-button slot="top" class="toolbar-button" icon="more-vert"></paper-icon-button>
+      <paper-icon-button slot="top" class="toolbar-button" icon="expand-less"></paper-icon-button>
+    </paper-toolbar>
+  </template>
+</dom-module>
+
+<script>
+  class ToolbarElement extends Polymer.Element {
+    static get is() { return "datalab-toolbar"; }
+  }
+  customElements.define(ToolbarElement.is, ToolbarElement);
+</script>
