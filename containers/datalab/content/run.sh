@@ -131,6 +131,10 @@ if [ -d /devroot ]; then
   export DATALAB_LIVE_TEMPLATES_DIR=/devroot/sources/web/datalab/templates
   # Use our internal node_modules dir
   export NODE_PATH="${NODE_PATH}:/datalab/web/node_modules"
+  if [ -f /devroot/dev/container.env ]; then
+    echo source /devroot/dev/container.env
+    source /devroot/dev/container.env
+  fi
   # Auto-restart when the developer builds from the typescript files.
   echo ${FOREVER_CMD} --watch --watchDirectory /devroot/build/web/nb /devroot/build/web/nb/app.js
   ${FOREVER_CMD} --watch --watchDirectory /devroot/build/web/nb /devroot/build/web/nb/app.js
