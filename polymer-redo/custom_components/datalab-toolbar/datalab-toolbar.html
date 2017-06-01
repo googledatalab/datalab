@@ -3,7 +3,6 @@
 <link rel="import" href="../../bower_components/app-layout/app-toolbar/app-toolbar.html">
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
-<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
 
 <dom-module id="datalab-toolbar">
   <template>
@@ -31,18 +30,6 @@
       .title {
         font-weight: lighter;
       }
-      .dialog {
-        width: 60%;
-        height: 60%;
-        display: flex;
-        flex-direction: column;
-      }
-      .dialog > hr {
-        width: 80%;
-      }
-      .dialog-content {
-        flex-grow: 1;
-      }
     </style>
 
     <app-header slot="header" fixed shadow>
@@ -61,27 +48,6 @@
       </app-toolbar>
     </app-header>
 
-    <paper-dialog id="help-dialog" class="dialog" with-backdrop>
-      <h2>Help</h2>
-      <hr>
-      <paper-dialog-scrollable class="dialog-content">
-      </paper-dialog-scrollable>
-      <hr>
-      <div>
-        <paper-button dialog-dismiss raised>Close</paper-button>
-      </div>
-    </paper-dialog>
-
-    <paper-dialog id="settings-dialog" class="dialog" with-backdrop>
-      <h2>Settings</h2>
-      <hr>
-      <paper-dialog-scrollable class="dialog-content">
-      </paper-dialog-scrollable>
-      <hr>
-      <div>
-        <paper-button dialog-dismiss raised>Close</paper-button>
-      </div>
-    </paper-dialog>
   </template>
 </dom-module>
 
@@ -91,14 +57,12 @@
     static get is() { return "datalab-toolbar"; }
 
     _helpClicked() {
-      let thisShadowRoot = Polymer.dom(this).getOwnerRoot();
-      let dialog = thisShadowRoot.querySelector('#help-dialog');
+      let dialog = document.querySelector('#help-dialog');
       dialog.open();
     }
 
     _settingsClicked() {
-      let thisShadowRoot = Polymer.dom(this).getOwnerRoot();
-      let dialog = thisShadowRoot.querySelector('#settings-dialog');
+      let dialog = document.querySelector('#settings-dialog');
       dialog.open();
     }
 
