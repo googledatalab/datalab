@@ -21,6 +21,25 @@ import sys
 import tempfile
 
 
+def print_and_flush(msg):
+    """Helper method that immediately prints to stdout.
+
+    This method is different from just calling `print` in the situation
+    that stdout is a file rather than the user's console.
+
+    In that case, the output of `print` will be buffered until
+    `sys.stdout.flush()` is called. This can cause issues when a user is
+    running a command with output directed to a file, as nothing would be
+    written to that file until the program exits.
+
+    Args:
+      msg: The message to print
+    """
+    print(msg)
+    sys.stdout.flush()
+    return
+
+
 class InvalidInstanceException(Exception):
 
     _MESSAGE = (

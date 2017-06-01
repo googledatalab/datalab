@@ -24,6 +24,7 @@ from commands import create, connect, list, stop, delete, utils
 import argparse
 import os
 import subprocess
+import sys
 import traceback
 
 
@@ -243,6 +244,7 @@ def run():
         if utils.print_info_messages(args):
             traceback.print_exc(e)
         print(e)
+    sys.stdout.flush()
 
 
 if __name__ == '__main__':

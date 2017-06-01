@@ -76,7 +76,7 @@ def run(args, gcloud_compute, **unused_kwargs):
     instance = args.instance
     utils.maybe_prompt_for_zone(args, gcloud_compute, instance)
 
-    print('Deleting {0}'.format(instance))
+    utils.print_and_flush('Deleting {0}'.format(instance))
     base_cmd = ['instances', 'delete']
     if args.zone:
         base_cmd.extend(['--zone', args.zone])

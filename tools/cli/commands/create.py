@@ -351,7 +351,8 @@ def create_network(args, gcloud_compute):
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
     if utils.print_info_messages(args):
-        print('Creating the network {0}'.format(_DATALAB_NETWORK))
+        utils.print_and_flush(
+            'Creating the network {0}'.format(_DATALAB_NETWORK))
     create_cmd = [
         'networks', 'create', _DATALAB_NETWORK,
         '--description', _DATALAB_NETWORK_DESCRIPTION]
@@ -388,7 +389,8 @@ def create_firewall_rule(args, gcloud_compute):
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
     if utils.print_info_messages(args):
-        print('Creating the firewall rule {0}'.format(_DATALAB_FIREWALL_RULE))
+        utils.print_and_flush(
+            'Creating the firewall rule {0}'.format(_DATALAB_FIREWALL_RULE))
     create_cmd = [
         'firewall-rules', 'create', _DATALAB_FIREWALL_RULE,
         '--allow', 'tcp:22',
@@ -430,7 +432,7 @@ def create_disk(args, gcloud_compute, disk_name, report_errors):
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
     if utils.print_info_messages(args):
-        print('Creating the disk {0}'.format(disk_name))
+        utils.print_and_flush('Creating the disk {0}'.format(disk_name))
     create_cmd = ['disks', 'create']
     if args.zone:
         create_cmd.extend(['--zone', args.zone])
@@ -493,7 +495,7 @@ def create_repo(args, gcloud_repos, repo_name):
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
     if utils.print_info_messages(args):
-        print('Creating the repository {0}'.format(repo_name))
+        utils.print_and_flush('Creating the repository {0}'.format(repo_name))
 
     create_cmd = ['create', repo_name]
     utils.call_gcloud_quietly(args, gcloud_repos, create_cmd)
@@ -549,7 +551,7 @@ def run(args, gcloud_compute, gcloud_repos,
     if not args.no_create_repository:
         ensure_repo_exists(args, gcloud_repos, _DATALAB_NOTEBOOKS_REPOSITORY)
 
-    print('Creating the instance {0}'.format(instance))
+    utils.print_and_flush('Creating the instance {0}'.format(instance))
     cmd = ['instances', 'create']
     if args.zone:
         cmd.extend(['--zone', args.zone])

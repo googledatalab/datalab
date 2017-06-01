@@ -46,7 +46,7 @@ def run(args, gcloud_compute, **unused_kwargs):
     instance = args.instance
     utils.maybe_prompt_for_zone(args, gcloud_compute, instance)
 
-    print('Stopping {0}'.format(instance))
+    utils.print_and_flush('Stopping {0}'.format(instance))
     base_cmd = ['instances', 'stop']
     if args.zone:
         base_cmd.extend(['--zone', args.zone])
