@@ -3,6 +3,7 @@
 <link rel="import" href="../../bower_components/app-layout/app-toolbar/app-toolbar.html">
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
 
 <dom-module id="datalab-toolbar">
   <template>
@@ -30,6 +31,18 @@
       .title {
         font-weight: lighter;
       }
+      #settings-dialog {
+        width: 60%;
+        height: 60%;
+        display: flex;
+        flex-direction: column;
+      }
+      #settings-dialog > hr {
+        width: 80%;
+      }
+      .settings-dialog-content {
+        flex-grow: 1;
+      }
     </style>
 
     <app-header slot="header" condenses reveals>
@@ -40,18 +53,39 @@
         </div>
         <paper-icon-button class="toolbar-button" icon="search"></paper-icon-button>
         <paper-icon-button class="toolbar-button" icon="help"></paper-icon-button>
-        <paper-icon-button class="toolbar-button" icon="settings"></paper-icon-button>
+        <paper-icon-button class="toolbar-button" icon="settings"
+                           onclick={{_settingsClicked}}></paper-icon-button>
         <paper-icon-button class="toolbar-button" icon="more-vert"></paper-icon-button>
         <paper-icon-button class="toolbar-button" icon="expand-less"></paper-icon-button>
       </app-toolbar>
     </app-header>
+
+    <paper-dialog id="settings-dialog" with-backdrop>
+      <h2>Settings</h2>
+      <hr>
+      <paper-dialog-scrollable class="settings-dialog-content">
+      </paper-dialog-scrollable>
+      <hr>
+      <div>
+        <paper-button dialog-dismiss raised>Close</paper-button>
+      </div>
+    </paper-dialog>
   </template>
 </dom-module>
 
 <script>
   class ToolbarElement extends Polymer.Element {
+
     static get is() { return "datalab-toolbar"; }
+
+    _settingsClicked() {
+      let thisShadowRoot = Polymer.dom(this).getOwnerRoot();
+      let dialog = thisShadowRoot.querySelector('#settings-dialog');
+      dialog.open();
+    }
+
   }
+
   customElements.define(ToolbarElement.is, ToolbarElement);
 
 </script>
