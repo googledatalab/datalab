@@ -1,6 +1,12 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../../custom_components/datalab-sidebar/datalab-sidebar.html">
 <link rel="import" href="../../custom_components/datalab-toolbar/datalab-toolbar.html">
+<link rel="import" href="../../custom_components/datalab-files/datalab-files.html">
+<link rel="import" href="../../custom_components/datalab-data/datalab-data.html">
+<link rel="import" href="../../custom_components/datalab-sessions/datalab-sessions.html">
+<link rel="import" href="../../custom_components/datalab-editor/datalab-editor.html">
+<link rel="import" href="../../custom_components/datalab-terminal/datalab-terminal.html">
 
 <dom-module id="datalab-app">
   <template>
@@ -24,10 +30,16 @@
     <datalab-toolbar></datalab-toolbar>
     <div class="datalab-contents">
       <div class="datalab-sidebar">
-        <datalab-sidebar selected={{page}}></datalab-sidebar>
+        <datalab-sidebar selected=[[page]]></datalab-sidebar>
       </div>
       <div class="datalab-main-content">
-        Hello World
+        <iron-pages selected="{{page}}" attr-for-selected="name" fallback-selection="files">
+          <datalab-files name="files"></datalab-files>
+          <datalab-data name="data"></datalab-data>
+          <datalab-sessions name="sessions"></datalab-sessions>
+          <datalab-editor name="editor"></datalab-editor>
+          <datalab-terminal name="terminal"></datalab-terminal>
+        </iron-pages>
       </div>
     </div>
   </template>
@@ -42,15 +54,18 @@
       return {
         page: {
           type: String,
-          value: "files",
-          observer: '_pageChanged'
+          value: "files"
         }
       }
     }
 
-    _pageChanged() {
+    ready() {
+      super.ready();
+      document.addEventListener('sidebarPageSelected', e => {
+        this.page = e.detail;
+      });
     }
- 
+
   }
   customElements.define(DatalabAppElement.is, DatalabAppElement);
 </script>
