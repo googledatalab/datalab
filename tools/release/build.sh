@@ -37,32 +37,8 @@ DATALAB_IMAGE="gcr.io/${PROJECT_ID}/datalab:local-${LABEL}"
 DATALAB_GPU_IMAGE="gcr.io/${PROJECT_ID}/datalab-gpu:local-${LABEL}"
 CLI_TARBALL="datalab-cli-${LABEL}.tgz"
 
-function install_node() {
-  echo "Installing NodeJS"
-
-  mkdir -p /tools/node
-  wget -nv https://nodejs.org/dist/v6.10.0/node-v6.10.0-linux-x64.tar.gz -O node.tar.gz
-  tar xzf node.tar.gz -C /tools/node --strip-components=1
-  rm node.tar.gz
-  export "PATH=${PATH}:/tools/node/bin"
-}
-
-function install_typescript() {
-  npm -h >/dev/null 2>&1 || install_node
-
-  echo "Installing Typescript"
-  /tools/node/bin/npm install -g typescript
-}
-
-function install_prereqs() {
-  tsc -h >/dev/null 2>&1  || install_typescript
-  rsync -h >/dev/null 2>&1  || apt-get install -y -qq rsync
-  source ./tools/initenv.sh
-}
-
 pushd ./
-cd $(dirname "${BASH_SOURCE[0]}")/../../
-install_prereqs
+cd $(dirname "${BASH_SOURCE[0]}")/../
 
 echo "Building the Datalab server"
 ./sources/build.sh
