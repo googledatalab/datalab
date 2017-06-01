@@ -36,7 +36,9 @@
 
 <script>
   class SidebarElement extends Polymer.Element {
+
     static get is() { return "datalab-sidebar"; }
+
     static get properties() {
       return {
         selected: {
@@ -46,6 +48,7 @@
         }
       }
     }
+
     _selectedChanged() {
       let buttons = this.shadowRoot.querySelectorAll('sidebar-button');
       buttons.forEach(button => {
@@ -56,6 +59,7 @@
         }
       });
     }
+
   }
   customElements.define(SidebarElement.is, SidebarElement);
 </script>
