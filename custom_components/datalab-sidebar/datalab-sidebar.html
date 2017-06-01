@@ -11,11 +11,6 @@
           background-color: #eee;
         };
       }
-      .toolbar-button {
-        width: 100%;
-        padding: 0px;
-        margin: 0px;
-      }
       .content-panel {
         padding: 10px;
         margin: 0px;
@@ -23,15 +18,15 @@
     </style>
     <paper-drawer-panel drawer-width="100px">
       <div slot="drawer">
-        <toolbar-button class="toolbar-button" title="Files" icon="editor:insert-drive-file">
+        <toolbar-button id="files" title="Files" icon="editor:insert-drive-file">
         </toolbar-button>
-        <toolbar-button class="toolbar-button" title="Data" icon="view-quilt">
+        <toolbar-button id="data" title="Data" icon="view-quilt">
         </toolbar-button>
-        <toolbar-button class="toolbar-button" title="Sessions" icon="av:featured-play-list">
+        <toolbar-button id="sessions" title="Sessions" icon="av:featured-play-list">
         </toolbar-button>
-        <toolbar-button class="toolbar-button" title="Ungit" icon="icons:code">
+        <toolbar-button id="ungit" title="Ungit" icon="icons:code">
         </toolbar-button>
-        <toolbar-button class="toolbar-button" title="Terminals" icon="hardware:computer">
+        <toolbar-button id="terminals" title="Terminals" icon="hardware:computer">
         </toolbar-button>
       </div>
       <div slot="main" class="content-panel"> Main panel... </div>
@@ -42,6 +37,25 @@
 <script>
   class SidebarElement extends Polymer.Element {
     static get is() { return "datalab-sidebar"; }
+    static get properties() {
+      return {
+        selected: {
+          type: String,
+          value: "",
+          observer: '_selectedChanged'
+        }
+      }
+    }
+    _selectedChanged() {
+      let buttons = this.shadowRoot.querySelectorAll('toolbar-button');
+      buttons.forEach(button => {
+        if (button.id == this.selected) {
+          button.setAttribute('selected', '');
+        } else {
+          button.removeAttribute('selected');
+        }
+      });
+    }
   }
   customElements.define(SidebarElement.is, SidebarElement);
 </script>

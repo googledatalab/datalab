@@ -20,11 +20,16 @@
           font-size: 12px;
         };
       }
+      paper-button.selected {
+        background-color: #bbb;
+        color: #000;
+        border-radius: 0px;
+      }
       iron-icon {
         padding-bottom: 5px;
       }
     </style>
-    <paper-button class="toolbar-button">
+    <paper-button>
       <iron-icon icon={{icon}}></iron-icon>
       {{title}}
     </paper-button>
@@ -43,8 +48,17 @@
         icon: {
           type: String,
           value: ""
+        },
+        selected: {
+          type: Boolean,
+          value: false,
+          observer: '_selectedChanged'
         }
       }
+    }
+    _selectedChanged(newValue) {
+      let button = this.shadowRoot.querySelector('paper-button');
+      button.toggleClass('selected', newValue);
     }
   }
   customElements.define(ToolbarButtonElement.is, ToolbarButtonElement);
