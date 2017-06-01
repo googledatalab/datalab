@@ -32,7 +32,11 @@
 PROJECT_ID="${PROJECT_ID:-cloud-datalab}"
 
 gsutil cp gs://${PROJECT_ID}/deploy/config_local.js ./config_local.js
-REGEX='previous: ([0-9]+)'
+if [[ $(cat ./config_local.js | grep "PREV_SEMVER = ") ]]; then
+  REGEX='PREV_SEMVER = "(.*)";'
+else
+  REGEX='previous: ([0-9]+)'
+fi
 if [[ $(cat config_local.js) =~ $REGEX ]]; then
   OLD_BUILD=${BASH_REMATCH[1]}
   PREVIOUS_BUILD="${ROLLBACK_BUILD:-$OLD_BUILD}"
