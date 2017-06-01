@@ -16,12 +16,10 @@
 
 import os
 from builtins import input
-import subprocess
 import tempfile
 
 import create
 import connect
-import utils
 
 
 description = ("""`{0} {1}` creates a new Datalab instance running in a Google
@@ -39,7 +37,8 @@ _DATALAB_STARTUP_SCRIPT = create._DATALAB_BASE_STARTUP_SCRIPT + """
 install_cuda() {{
   # Check for CUDA and try to install.
   if ! dpkg-query -W cuda; then
-    curl -O http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/{5}
+    curl -O http://developer.download.nvidia.com/\
+compute/cuda/repos/ubuntu1604/x86_64/{5}
     dpkg -i ./{5}
     apt-get update
     apt-get install cuda -y
@@ -50,7 +49,8 @@ install_nvidia_docker() {{
   # Install normal docker then install nvidia-docker
   if ! dpkg-query -W docker; then
     curl -sSL https://get.docker.com/ | sh
-    curl -L -O https://github.com/NVIDIA/nvidia-docker/releases/download/v1.0.1/nvidia-docker_1.0.1-1_amd64.deb
+    curl -L -O https://github.com/NVIDIA/nvidia-docker/releases/\
+download/v1.0.1/nvidia-docker_1.0.1-1_amd64.deb
     dpkg -i ./nvidia-docker_1.0.1-1_amd64.deb
     apt-get update
     apt-get install nvidia-docker -y
@@ -66,7 +66,8 @@ pull_datalab_image() {{
 start_datalab_docker() {{
   nvidia-docker run --restart always -p '127.0.0.1:8080:8080' \
     -e DATALAB_ENV='GCE' -e DATALAB_DEBUG='true' \
-    -e DATALAB_SETTINGS_OVERRIDES='{{"enableAutoGCSBackups": {2}, "consoleLogLevel": "{3}" }}' \
+    -e DATALAB_SETTINGS_OVERRIDES=\
+'{{"enableAutoGCSBackups": {2}, "consoleLogLevel": "{3}" }}' \
     -e DATALAB_GIT_AUTHOR='{4}' \
     -v "${{MOUNT_DIR}}/content:/content" \
     -v "${{MOUNT_DIR}}/tmp:/tmp" \
@@ -102,7 +103,7 @@ def flags(parser):
     """
     create.flags(parser)
     parser.set_defaults(image_name='gcr.io/cloud-datalab/datalab-gpu:latest')
-    
+
     parser.add_argument(
         '--accelerator-type',
         dest='accelerator_type',
@@ -127,7 +128,6 @@ def flags(parser):
     return
 
 
-
 def run(args, gcloud_beta_compute, gcloud_repos,
         email='', in_cloud_shell=False, **kwargs):
     """Implementation of the `datalab create` subcommand.
@@ -148,8 +148,8 @@ def run(args, gcloud_beta_compute, gcloud_repos,
           'NVidia GPU CUDA Toolkit Drivers: ' + _NVIDIA_PACKAGE)
     resp = input('Do you accept? (y/[n]): ')
     if len(resp) < 1 or (resp[0] != 'y' and resp[0] != 'Y'):
-      print('Installation not accepted; Exiting.')
-      return
+        print('Installation not accepted; Exiting.')
+        return
 
     disk_cfg = create.prepare(args, gcloud_beta_compute, gcloud_repos)
     print('Creating the instance {0}'.format(args.instance))
@@ -170,7 +170,8 @@ def run(args, gcloud_beta_compute, gcloud_repos,
         try:
             startup_script_file.write(_DATALAB_STARTUP_SCRIPT.format(
                 args.image_name, create._DATALAB_NOTEBOOKS_REPOSITORY,
-                enable_backups, console_log_level, escaped_email, _NVIDIA_PACKAGE))
+                enable_backups, console_log_level, escaped_email,
+                _NVIDIA_PACKAGE))
             startup_script_file.close()
             for_user_file.write(user_email)
             for_user_file.close()
@@ -189,8 +190,8 @@ def run(args, gcloud_beta_compute, gcloud_repos,
                 '--image-project', 'ubuntu-os-cloud',
                 '--machine-type', args.machine_type,
                 '--accelerator',
-                'type=' + args.accelerator_type + ',count=' 
-                  + str(args.accelerator_count),
+                'type=' + args.accelerator_type + ',count='
+                + str(args.accelerator_count),
                 '--maintenance-policy', 'TERMINATE', '--restart-on-failure',
                 '--metadata-from-file', metadata_from_file,
                 '--tags', 'datalab',

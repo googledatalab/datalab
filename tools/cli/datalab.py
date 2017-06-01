@@ -137,6 +137,7 @@ def gcloud_compute(
     return subprocess.check_call(
         cmd, stdin=stdin, stdout=stdout, stderr=stderr)
 
+
 def gcloud_beta_compute(
         args, compute_cmd, stdin=None, stdout=None, stderr=None):
     """Run the given subcommand of `gcloud beta compute`
@@ -198,6 +199,7 @@ def get_email_address():
         gcloud_cmd, 'auth', 'list', '--quiet', '--format',
         'value(account)', '--filter', 'status:ACTIVE']).strip()
 
+
 def add_sub_parser(subcommand, command_config, subparsers, prog):
     """Adds a subparser.
 
@@ -242,6 +244,7 @@ def add_sub_parser(subcommand, command_config, subparsers, prog):
             default=None,
             help=_ZONE_HELP)
 
+
 def run():
     """Run the command line tool."""
     prog = 'datalab'
@@ -279,23 +282,23 @@ def run():
         description='Beta commands for datalab.')
     beta_subparsers = beta_parser.add_subparsers(dest='beta_subcommand')
     for subcommand in _BETA_SUBCOMMANDS:
-        add_sub_parser(subcommand, _BETA_SUBCOMMANDS[subcommand], beta_subparsers,
-                       prog)
+        add_sub_parser(subcommand, _BETA_SUBCOMMANDS[subcommand],
+                       beta_subparsers, prog)
 
     args = parser.parse_args()
     try:
         if args.subcommand == 'beta':
-          _BETA_SUBCOMMANDS[args.beta_subcommand]['run'](
-              args, gcloud_beta_compute,
-              gcloud_repos=gcloud_repos,
-              email=get_email_address(),
-              in_cloud_shell=('DEVSHELL_CLIENT_PORT' in os.environ))
+            _BETA_SUBCOMMANDS[args.beta_subcommand]['run'](
+                args, gcloud_beta_compute,
+                gcloud_repos=gcloud_repos,
+                email=get_email_address(),
+                in_cloud_shell=('DEVSHELL_CLIENT_PORT' in os.environ))
         else:
-          _SUBCOMMANDS[args.subcommand]['run'](
-              args, gcloud_compute,
-              gcloud_repos=gcloud_repos,
-              email=get_email_address(),
-              in_cloud_shell=('DEVSHELL_CLIENT_PORT' in os.environ))
+            _SUBCOMMANDS[args.subcommand]['run'](
+                args, gcloud_compute,
+                gcloud_repos=gcloud_repos,
+                email=get_email_address(),
+                in_cloud_shell=('DEVSHELL_CLIENT_PORT' in os.environ))
     except subprocess.CalledProcessError:
         print('A nested call to gcloud failed.')
     except Exception as e:
