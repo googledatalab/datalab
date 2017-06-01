@@ -12,7 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM debian:jessie
+# We use different base images for GPU vs CPU Dockerfiles, so we expect
+# that the appropriate image is pulled and tagged locally.
+# CPU should use ubuntu:16.04
+# and GPU uses nvidia/cuda:8.0-cudnn5-devel-ubuntu16.04
+FROM datalab-external-base-image
 MAINTAINER Google Cloud DataLab
 
 # Container configuration
@@ -34,7 +38,10 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 # Save GPL source packages
     mkdir -p /srcs && \
     cd /srcs && \
-    apt-get source -d wget git python-zmq ca-certificates pkg-config libpng-dev && \
+    # We have to use allow-unauthenticated since Ubuntu can't verify the keys for the source
+    # repos.  We don't care since we only download these sources for licensing reasons and
+    # don't actually use them.
+    apt-get source --allow-unauthenticated -d wget git python-zmq ca-certificates pkg-config libpng-dev && \
     wget --progress=dot:mega https://mirrors.kernel.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.bz2 && \
     cd / && \
 
@@ -168,11 +175,9 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     tools/google-cloud-sdk/bin/gcloud config set component_manager/disable_update_check true && \
     touch /tools/google-cloud-sdk/lib/third_party/google.py && \
 
-# locale
-    DEBIAN_FRONTEND=noninteractive apt-get install -y locales && \
-    sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
-    echo 'LANG="en_US.UTF-8"'>/etc/default/locale && \
-    dpkg-reconfigure --frontend=noninteractive locales && \
+# Set our locale to en_US.UTF-8.
+    apt-get install -y locales && \
+    locale-gen en_US.UTF-8 && \
     update-locale LANG=en_US.UTF-8 && \
 
 # Add some unchanging bits - specifically node modules (that need to be kept in sync
@@ -191,7 +196,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     /tools/node/bin/npm install -g forever && \
 
 # Clean up
-    apt-get purge -y build-essential bzip2 cpp cpp-4.9 python-setuptools pkg-config libfreetype6-dev && \
+    apt-get purge -y build-essential bzip2 cpp pkg-config libfreetype6-dev && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /var/lib/dpkg/info/* && \
