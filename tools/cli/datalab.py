@@ -19,7 +19,7 @@
 This tool is specific to the use case of running in the Google Cloud Platform.
 """
 
-from commands import create, connect, list, stop, delete, utils
+from commands import create, creategpu, connect, list, stop, delete, utils
 
 import argparse
 import os
@@ -64,6 +64,16 @@ _SUBCOMMANDS = {
         'run': delete.run,
         'require-zone': True,
     },
+}
+
+_BETA_SUBCOMMANDS = {
+    'create-gpu': {
+        'help': 'Create and connect to a new Datalab GPU instance',
+        'description': creategpu.description,
+        'flags': creategpu.flags,
+        'run': creategpu.run,
+        'require-zone': True,
+    }
 }
 
 
@@ -127,6 +137,30 @@ def gcloud_compute(
     return subprocess.check_call(
         cmd, stdin=stdin, stdout=stdout, stderr=stderr)
 
+def gcloud_beta_compute(
+        args, compute_cmd, stdin=None, stdout=None, stderr=None):
+    """Run the given subcommand of `gcloud beta compute`
+
+    Args:
+      args: The Namespace instance returned by argparse
+      compute_cmd: The subcommand of `gcloud compute` to run
+      stdin: The 'stdin' argument for the subprocess call
+      stdout: The 'stdout' argument for the subprocess call
+      stderr: The 'stderr' argument for the subprocess call
+    Raises:
+      KeyboardInterrupt: If the user kills the command
+      subprocess.CalledProcessError: If the command dies on its own
+    """
+    base_cmd = [gcloud_cmd, 'beta', 'compute']
+    if args.project:
+        base_cmd.extend(['--project', args.project])
+    if args.quiet:
+        base_cmd.append('--quiet')
+    base_cmd.append('--verbosity={}'.format(args.verbosity))
+    cmd = base_cmd + compute_cmd
+    return subprocess.check_call(
+        cmd, stdin=stdin, stdout=stdout, stderr=stderr)
+
 
 def gcloud_repos(
         args, repos_cmd, stdin=None, stdout=None, stderr=None):
@@ -164,6 +198,49 @@ def get_email_address():
         gcloud_cmd, 'auth', 'list', '--quiet', '--format',
         'value(account)', '--filter', 'status:ACTIVE']).strip()
 
+def add_sub_parser(subcommand, command_config, subparsers, prog):
+    """Adds a subparser.
+
+    Args:
+      subcommand: The subcommand to add.
+      command_config: The subcommand's config.
+      subparsers: The list of subparsers to add to.
+      prog: The program name.
+    """
+    description_template = command_config.get('description')
+    command_description = (
+        description_template.format(prog, subcommand))
+    examples = command_config.get('examples', '').format(prog, subcommand)
+    epilog = 'examples:{0}'.format(examples) if examples else ''
+    subcommand_parser = subparsers.add_parser(
+        subcommand,
+        formatter_class=argparse.RawTextHelpFormatter,
+        description=command_description,
+        epilog=epilog,
+        help=command_config['help'])
+    command_config['flags'](subcommand_parser)
+    subcommand_parser.add_argument(
+        '--project',
+        dest='project',
+        default=None,
+        help=_PROJECT_HELP)
+    subcommand_parser.add_argument(
+        '--quiet',
+        dest='quiet',
+        action='store_true',
+        help='do not issue any interactive prompts')
+    subcommand_parser.add_argument(
+        '--verbosity',
+        dest='verbosity',
+        choices=['debug', 'info', 'warning', 'error', 'critical', 'none'],
+        default='error',
+        help='Override the default output verbosity for this command.')
+    if command_config['require-zone']:
+        subcommand_parser.add_argument(
+            '--zone',
+            dest='zone',
+            default=None,
+            help=_ZONE_HELP)
 
 def run():
     """Run the command line tool."""
@@ -194,49 +271,31 @@ def run():
 
     subparsers = parser.add_subparsers(dest='subcommand')
     for subcommand in _SUBCOMMANDS:
-        command_config = _SUBCOMMANDS[subcommand]
-        description_template = command_config.get('description')
-        command_description = (
-            description_template.format(prog, subcommand))
-        examples = command_config.get('examples', '').format(prog, subcommand)
-        epilog = 'examples:{0}'.format(examples) if examples else ''
-        subcommand_parser = subparsers.add_parser(
-            subcommand,
-            formatter_class=argparse.RawTextHelpFormatter,
-            description=command_description,
-            epilog=epilog,
-            help=command_config['help'])
-        command_config['flags'](subcommand_parser)
-        subcommand_parser.add_argument(
-            '--project',
-            dest='project',
-            default=None,
-            help=_PROJECT_HELP)
-        subcommand_parser.add_argument(
-            '--quiet',
-            dest='quiet',
-            action='store_true',
-            help='do not issue any interactive prompts')
-        subcommand_parser.add_argument(
-            '--verbosity',
-            dest='verbosity',
-            choices=['debug', 'info', 'warning', 'error', 'critical', 'none'],
-            default='error',
-            help='Override the default output verbosity for this command.')
-        if command_config['require-zone']:
-            subcommand_parser.add_argument(
-                '--zone',
-                dest='zone',
-                default=None,
-                help=_ZONE_HELP)
+        add_sub_parser(subcommand, _SUBCOMMANDS[subcommand], subparsers, prog)
+
+    beta_parser = subparsers.add_parser(
+        'beta',
+        formatter_class=argparse.RawTextHelpFormatter,
+        description='Beta commands for datalab.')
+    beta_subparsers = beta_parser.add_subparsers(dest='beta_subcommand')
+    for subcommand in _BETA_SUBCOMMANDS:
+        add_sub_parser(subcommand, _BETA_SUBCOMMANDS[subcommand], beta_subparsers,
+                       prog)
 
     args = parser.parse_args()
     try:
-        _SUBCOMMANDS[args.subcommand]['run'](
-            args, gcloud_compute,
-            gcloud_repos=gcloud_repos,
-            email=get_email_address(),
-            in_cloud_shell=('DEVSHELL_CLIENT_PORT' in os.environ))
+        if args.subcommand == 'beta':
+          _BETA_SUBCOMMANDS[args.beta_subcommand]['run'](
+              args, gcloud_beta_compute,
+              gcloud_repos=gcloud_repos,
+              email=get_email_address(),
+              in_cloud_shell=('DEVSHELL_CLIENT_PORT' in os.environ))
+        else:
+          _SUBCOMMANDS[args.subcommand]['run'](
+              args, gcloud_compute,
+              gcloud_repos=gcloud_repos,
+              email=get_email_address(),
+              in_cloud_shell=('DEVSHELL_CLIENT_PORT' in os.environ))
     except subprocess.CalledProcessError:
         print('A nested call to gcloud failed.')
     except Exception as e:

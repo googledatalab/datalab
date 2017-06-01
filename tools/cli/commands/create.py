@@ -524,6 +524,34 @@ def ensure_repo_exists(args, gcloud_repos, repo_name):
                 raise RepositoryException(repo_name)
 
 
+def prepare(args, gcloud_compute, gcloud_repos):
+    """Run preparation steps for VM creation.
+
+    Args:
+      args: The Namespace instance returned by argparse
+      gcloud_compute: Function that can be used to invoke `gcloud compute`
+      gcloud_repos: Function that can be used to invoke
+        `gcloud source repos`
+    Returns:
+      The disk config
+    Raises:
+      subprocess.CalledProcessError: If a nested `gcloud` calls fails
+    """
+    ensure_network_exists(args, gcloud_compute)
+    ensure_firewall_rule_exists(args, gcloud_compute)
+
+    disk_name = args.disk_name or '{0}-pd'.format(args.instance)
+    ensure_disk_exists(args, gcloud_compute, disk_name)
+    disk_cfg = (
+        'auto-delete=no,boot=no,device-name=datalab-pd,mode=rw,name=' +
+        disk_name)
+
+    if not args.no_create_repository:
+        ensure_repo_exists(args, gcloud_repos, _DATALAB_NOTEBOOKS_REPOSITORY)
+
+    return disk_cfg
+
+
 def run(args, gcloud_compute, gcloud_repos,
         email='', in_cloud_shell=False, **kwargs):
     """Implementation of the `datalab create` subcommand.
@@ -539,23 +567,13 @@ def run(args, gcloud_compute, gcloud_repos,
     Raises:
       subprocess.CalledProcessError: If a nested `gcloud` calls fails
     """
-    ensure_network_exists(args, gcloud_compute)
-    ensure_firewall_rule_exists(args, gcloud_compute)
+    disk_cfg = prepare(args, gcloud_compute, gcloud_repos)
 
-    instance = args.instance
-    disk_name = args.disk_name or '{0}-pd'.format(instance)
-    ensure_disk_exists(args, gcloud_compute, disk_name)
-
-    if not args.no_create_repository:
-        ensure_repo_exists(args, gcloud_repos, _DATALAB_NOTEBOOKS_REPOSITORY)
-
-    print('Creating the instance {0}'.format(instance))
+    print('Creating the instance {0}'.format(args.instance))
     cmd = ['instances', 'create']
     if args.zone:
         cmd.extend(['--zone', args.zone])
-    disk_cfg = (
-        'auto-delete=no,boot=no,device-name=datalab-pd,mode=rw,name=' +
-        disk_name)
+    
     enable_backups = "false" if args.no_backups else "true"
     console_log_level = args.log_level or "warn"
     user_email = args.for_user or email
@@ -602,7 +620,7 @@ def run(args, gcloud_compute, gcloud_repos,
                 '--disk', disk_cfg,
                 '--service-account', service_account,
                 '--scopes', 'cloud-platform',
-                instance])
+                args.instance])
             gcloud_compute(args, cmd)
         finally:
             os.remove(startup_script_file.name)
