@@ -34,6 +34,7 @@ TIMESTAMP=$(date +%Y%m%d)
 LABEL="${LABEL_PREFIX:-}${TIMESTAMP}"
 GATEWAY_IMAGE="gcr.io/${PROJECT_ID}/datalab-gateway:${LABEL}"
 DATALAB_IMAGE="gcr.io/${PROJECT_ID}/datalab:local-${LABEL}"
+DATALAB_GPU_IMAGE="gcr.io/${PROJECT_ID}/datalab-gpu:local-${LABEL}"
 CLI_TARBALL="datalab-cli-${LABEL}.tgz"
 
 function install_node() {
@@ -69,11 +70,10 @@ echo "Building the Datalab server"
 echo "Building the base image"
 cd containers/base
 
-# We do not use the base image's `build.sh` script because we
-# want to make sure that we are not using any cached layers.
-mkdir -p pydatalab
-docker build --no-cache -t datalab-base .
-rm -rf pydatalab
+DOCKER_BUILD_ARGS="--no-cache"
+./build.sh
+echo "Building the base GPU image"
+./build.gpu.sh
 
 echo "Building the gateway image ${GATEWAY_IMAGE}"
 cd ../../containers/gateway
@@ -86,6 +86,12 @@ cd ../../containers/datalab
 ./build.sh
 docker tag -f datalab ${DATALAB_IMAGE}
 gcloud docker -- push ${DATALAB_IMAGE}
+
+echo "Building the Datalab GPU image ${DATALAB_GPU_IMAGE}"
+cd ../../containers/datalab
+./build.gpu.sh
+docker tag -f datalab-gpu ${DATALAB_GPU_IMAGE}
+gcloud docker -- push ${DATALAB_GPU_IMAGE}
 
 cd ../../
 tar -cvzf "/tmp/${CLI_TARBALL}" --transform 's,^tools/cli,datalab,' tools/cli
