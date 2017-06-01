@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 # Copyright 2015 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,10 +15,33 @@
 
 # Builds all components.
 
-if [ -z "$REPO_DIR" ];
-  then echo "REPO_DIR is not set. Please run source \`../tools/initenv.sh\` first";
-  exit 1;
-fi
+function install_node() {
+  echo "Installing NodeJS"
+
+  mkdir -p /tools/node
+  wget -nv https://nodejs.org/dist/v6.10.0/node-v6.10.0-linux-x64.tar.gz -O node.tar.gz
+  tar xzf node.tar.gz -C /tools/node --strip-components=1
+  rm node.tar.gz
+  export "PATH=${PATH}:/tools/node/bin"
+}
+
+function install_typescript() {
+  npm -h >/dev/null 2>&1 || install_node
+
+  echo "Installing Typescript"
+  /tools/node/bin/npm install -g typescript
+}
+
+function install_prereqs() {
+  tsc -h >/dev/null 2>&1  || install_typescript
+  rsync -h >/dev/null 2>&1  || apt-get install -y -qq rsync
+  source ./tools/initenv.sh
+}
+
+pushd ./
+cd $(dirname "${BASH_SOURCE[0]}")/../
+install_prereqs
+popd
 
 SRC_PATHS=(
   "web"
