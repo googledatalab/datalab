@@ -18,15 +18,14 @@
 # If [path_of_pydatalab_dir] is provided, it will copy the content of that dir into image.
 # Otherwise, it will get the pydatalab by "git clone" from pydatalab repo.
 
-HERE=$(dirname $0)
-
 # Create a versioned Dockerfile based on current date and git commit hash
-source $HERE/../../tools/release/version.sh
+VERSION=`date +%Y%m%d`
+VERSION_SUBSTITUTION="s/_version_/0.5.$VERSION/"
 
-VERSION_SUBSTITUTION="s/_version_/$DATALAB_VERSION/"
-COMMIT_SUBSTITUTION="s/_commit_/$DATALAB_COMMIT/"
+COMMIT=`git log --pretty=format:'%H' -n 1`
+COMMIT_SUBSTITUTION="s/_commit_/$COMMIT/"
 
-BASE_IMAGE_SUBSTITUTION="s/_base_image_/datalab-base/"
+BASE_IMAGE_SUBSTITUTION="s/_base_image_/datalab-base-gpu/"
 
 if [ -z "$1" ]; then
   pydatalabPath=''
@@ -51,10 +50,10 @@ rsync -avp ../../build/ build
 cp ../../third_party/license.txt content/license.txt
 
 # Build the base docker image
-../base/build.sh "$pydatalabPath"
+../base/build.gpu.sh "$pydatalabPath"
 
 # Build the docker image
-docker build ${DOCKER_BUILD_ARGS} -t datalab .
+docker build ${DOCKER_BUILD_ARGS} -t datalab-gpu .
 
 # Finally cleanup
 rm -rf build
