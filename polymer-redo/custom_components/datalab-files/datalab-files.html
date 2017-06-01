@@ -1,12 +1,70 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../../bower_components/iron-icons/device-icons.html">
 
 <dom-module id="datalab-files">
   <template>
+
     <style>
+      iron-selector {
+        display: flex;
+      }
+
+      .storage-service-button {
+        width: 100%;
+        padding: 20px 5px 20px 5px;
+        margin: 0px;
+        color: #666;
+        font-weight: normal;
+        display: flex;
+
+        --paper-button: {
+          font-family: RobotoDraft, 'Helvetica Neue', Helvetica, Arial;
+          font-size: 12px;
+        };
+      }
+
+      .storage-service-button > span {
+        width: 60px;
+        padding-left: 10px;
+      }
+
+      .storage-service-button > img {
+        width: 40px;
+        height: 40px;
+      }
+
+      .storage-service-button.iron-selected {
+        background-color: #ddd;
+        color: #000;
+        border-radius: 0px;
+      }
     </style>
-    <div>
-      Files
+
+    <div id="container">
+      <iron-selector attr-for-selected="id" selected={{storageContext}}>
+        <paper-button id="recent" class="storage-service-button">
+          <iron-icon icon="device:access-time"></iron-icon>
+          <span>Recent</span>
+        </paper-button>
+        <paper-button id="drive" class="storage-service-button">
+          <img src="images/drive-logo.svg">
+          <span>Drive</span>
+        </paper-button>
+        <paper-button id="gcs" class="storage-service-button">
+          <img src="images/gcs-logo.svg">
+          <span>Drive</span>
+        </paper-button>
+      </iron-selector>
+      <iron-pages selected="{{storageContext}}" attr-for-selected="id"
+                                                fallback-selection="recent">
+        <div id="recent">Recent</div>
+        <div id="drive">Drive</div>
+        <div id="gcs">GCS</div>
+      </iron-pages>
     </div>
+
   </template>
 </dom-module>
 
@@ -14,6 +72,15 @@
   class FilesElement extends Polymer.Element {
 
     static get is() { return "datalab-files"; }
+
+    static get properties() {
+      return {
+        storageContext: {
+          type: String,
+          value: 'recent'
+        }
+      }
+    }
 
   }
 

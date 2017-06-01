@@ -22,6 +22,7 @@
         padding: 20px;
         margin: 0px;
         color: #666;
+        font-weight: normal;
 
         --paper-button: {
           @apply(--layout-vertical);
@@ -30,7 +31,7 @@
         };
       }
 
-      .sidebar-button.iron-selected {
+      .iron-selected > .sidebar-button {
         background-color: #ddd;
         color: #000;
         border-radius: 0px;
@@ -38,8 +39,8 @@
     </style>
 
     <div class="container">
-        <iron-selector class="container" attr-for-selected="id" selected={{page}}
-                       class="drawer-list" role="navigation">
+      <iron-selector class="container" attr-for-selected="id" selected=[[page]]
+                     class="drawer-list" role="navigation">
         <a href="/files" id="files">
           <paper-button class="sidebar-button">
             <iron-icon icon="editor:insert-drive-file"></iron-icon>
@@ -78,7 +79,18 @@
 
 <script>
   class SidebarElement extends Polymer.Element {
+
     static get is() { return "datalab-sidebar"; }
+
+    static get properties() {
+      return {
+        page: {
+          type: String,
+          value: "files"
+        }
+      }
+    }
+
   }
 
   customElements.define(SidebarElement.is, SidebarElement);

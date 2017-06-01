@@ -18,6 +18,9 @@
         display: flex;
         flex-direction: column;
       }
+      datalab-toolbar {
+        z-index: 2;
+      }
       .datalab-contents {
         display: flex;
         flex-grow: 1;
@@ -42,7 +45,7 @@
       <datalab-toolbar></datalab-toolbar>
       <div class="datalab-contents">
         <div class="datalab-sidebar">
-          <datalab-sidebar selected=[[page]]></datalab-sidebar>
+          <datalab-sidebar page=[[page]]></datalab-sidebar>
         </div>
         <div class="datalab-main-content">
           <iron-pages selected="{{page}}" attr-for-selected="name" fallback-selection="files">
