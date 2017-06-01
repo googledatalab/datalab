@@ -5,31 +5,23 @@
 <dom-module id="datalab-sidebar">
   <template>
     <style>
-      paper-drawer-panel {
-        --paper-drawer-panel-left-drawer-container: {
-          background-color: #eee;
-        };
-      }
-      .content-panel {
-        padding: 10px;
-        margin: 0px;
+      .container {
+        background-color: #eee;
+        height: 100%;
       }
     </style>
-    <paper-drawer-panel drawer-width="100px">
-      <div slot="drawer">
-        <sidebar-button id="files" title="Files" icon="editor:insert-drive-file">
-        </sidebar-button>
-        <sidebar-button id="data" title="Data" icon="view-quilt">
-        </sidebar-button>
-        <sidebar-button id="sessions" title="Sessions" icon="av:featured-play-list">
-        </sidebar-button>
-        <sidebar-button id="ungit" title="Ungit" icon="icons:code">
-        </sidebar-button>
-        <sidebar-button id="terminals" title="Terminals" icon="hardware:computer">
-        </sidebar-button>
-      </div>
-      <div slot="main" class="content-panel"> Main panel... </div>
-    </paper-drawer-panel>
+    <div class="container">
+      <sidebar-button id="files" title="Files" icon="editor:insert-drive-file">
+      </sidebar-button>
+      <sidebar-button id="data" title="Data" icon="view-quilt">
+      </sidebar-button>
+      <sidebar-button id="sessions" title="Sessions" icon="av:featured-play-list">
+      </sidebar-button>
+      <sidebar-button id="ungit" title="Ungit" icon="icons:code">
+      </sidebar-button>
+      <sidebar-button id="terminals" title="Terminals" icon="hardware:computer">
+      </sidebar-button>
+    </div>
   </template>
 </dom-module>
 

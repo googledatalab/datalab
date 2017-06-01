@@ -9,20 +9,26 @@
         margin: 0px;
         padding: 0px;
       }
-      .datalab-toolbar {
+      .datalab-contents {
+        display: flex;
+        height: 100%;
       }
       .datalab-sidebar {
-        position: relative;
+        width: 100px;
+      }
+      .datalab-main-content {
         width: 100%;
-        /* because paper-drawer-panel is an absolute position element */
-        height: calc(100vh - 50px);
+        padding: 20px;
       }
     </style>
-    <div class="datalab-toolbar">
-      <datalab-toolbar></datalab-toolbar>
-    </div>
-    <div class="datalab-sidebar">
-      <datalab-sidebar selected={{page}}></datalab-sidebar>
+    <datalab-toolbar></datalab-toolbar>
+    <div class="datalab-contents">
+      <div class="datalab-sidebar">
+        <datalab-sidebar selected={{page}}></datalab-sidebar>
+      </div>
+      <div class="datalab-main-content">
+        Hello World
+      </div>
     </div>
   </template>
 </dom-module>
