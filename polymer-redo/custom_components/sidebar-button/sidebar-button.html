@@ -29,7 +29,7 @@
         padding-bottom: 5px;
       }
     </style>
-    <paper-button>
+    <paper-button on-click="_clickHandler">
       <iron-icon icon={{icon}}></iron-icon>
       {{title}}
     </paper-button>
@@ -55,6 +55,10 @@
           type: Boolean,
           value: false,
           observer: '_selectedChanged'
+        },
+        onClick: {
+          type: Function,
+          value: undefined
         }
       }
     }
@@ -62,6 +66,16 @@
     _selectedChanged(newValue) {
       let button = this.shadowRoot.querySelector('paper-button');
       button.toggleClass('selected', newValue);
+    }
+
+    _clickHandler() {
+      // dispatch an event to parent element with this button's id
+      let e = new CustomEvent('sidebarButtonClicked', {
+        bubbles: true,
+        composed: true,
+        detail: this.id
+      });
+      this.shadowRoot.ownerDocument.dispatchEvent(e);
     }
 
   }

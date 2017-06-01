@@ -48,7 +48,15 @@
       }
     }
 
+    ready() {
+      super.ready();
+      document.addEventListener('sidebarButtonClicked', e => {
+        this.selected = e.detail;
+      });
+    }
+
     _selectedChanged() {
+      // first, apply css class to selected button, and remove it from all others
       let buttons = this.shadowRoot.querySelectorAll('sidebar-button');
       buttons.forEach(button => {
         if (button.id == this.selected) {
@@ -57,6 +65,14 @@
           button.removeAttribute('selected');
         }
       });
+
+      // then dispatch an event to parent element with the selected page name
+      let e = new CustomEvent('sidebarPageSelected', {
+        bubbles: true,
+        composed: true,
+        detail: this.selected
+      });
+      this.shadowRoot.ownerDocument.dispatchEvent(e);
     }
 
   }
