@@ -69,7 +69,7 @@ echo "Pulling the rollback GPU images: ${DATALAB_GPU_IMAGE}"
 # This will fail and exit if the previous GPU image doesn't exist.
 # This will happen if we try to rollback the first GPU release, and
 # that is fine since there is nothing to rollback to.
-gcloud docker -- pull ${DATALAB_GPU_IMAGE}
+gcloud docker -- pull ${DATALAB_GPU_IMAGE} || exit 0
 echo "Releasing the Datalab GPU image: ${DATALAB_GPU_IMAGE}"
 docker tag -f ${DATALAB_GPU_IMAGE} gcr.io/${PROJECT_ID}/datalab-gpu:local
 gcloud docker -- push gcr.io/${PROJECT_ID}/datalab-gpu:local
