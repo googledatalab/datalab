@@ -151,14 +151,28 @@ describe('UI tests', function() {
       // Add a new folder
       driver.findElement(By.id('addFolderButton')).click();
       reloadNotebookList();
-      return screenshotAndCompare('folderAdded.png', 'folderAdded', done);
+      return screenshotAndCompare('folderAdded.png', 'folderAdded', done)
+        .then(function() {
+          // Cleanup the new folder
+          driver.executeAsyncScript(function() {
+            Jupyter.notebook_list.contents.delete(
+              Jupyter.notebook_list.notebook_path + '/Untitled Folder')
+          });
+        });
     });
 
     it('clicks Add Notebook and makes sure a new notebook is added', function(done) {
       // Add a new notebook
       driver.findElement(By.id('addNotebookButton')).click();
       reloadNotebookList();
-      return screenshotAndCompare('folderAndNotebookAdded.png', 'folderAndNotebookAdded', done);
+      return screenshotAndCompare('folderAndNotebookAdded.png', 'folderAndNotebookAdded', done)
+        .then(function() {
+          // Cleanup the new notebook
+          driver.executeAsyncScript(function() {
+            Jupyter.notebook_list.contents.delete(
+              Jupyter.notebook_list.notebook_path + '/Untitled Notebook.ipynb')
+          });
+        });
     });
 
   }, suiteTimeout);
