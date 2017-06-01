@@ -1,72 +1,85 @@
-<link rel="import" href="../sidebar-button/sidebar-button.html">
+<link rel="import" href="../../bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="../../bower_components/paper-drawer-panel/paper-drawer-panel.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/iron-icons/editor-icons.html">
+<link rel="import" href="../../bower_components/iron-icons/hardware-icons.html">
+<link rel="import" href="../../bower_components/iron-icons/av-icons.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 
 <dom-module id="datalab-sidebar">
   <template>
     <style>
+      a, u {
+        text-decoration: none;
+      }
       .container {
         background-color: #eee;
         height: 100%;
       }
+      .sidebar-button {
+        width: 100%;
+        padding: 20px;
+        margin: 0px;
+        color: #666;
+
+        --paper-button: {
+          @apply(--layout-vertical);
+          font-family: RobotoDraft, 'Helvetica Neue', Helvetica, Arial;
+          font-size: 12px;
+        };
+      }
+
+      .sidebar-button.iron-selected {
+        background-color: #ddd;
+        color: #000;
+        border-radius: 0px;
+      }
     </style>
+
     <div class="container">
-      <sidebar-button id="files" title="Files" icon="editor:insert-drive-file">
-      </sidebar-button>
-      <sidebar-button id="data" title="Data" icon="view-quilt">
-      </sidebar-button>
-      <sidebar-button id="sessions" title="Sessions" icon="av:featured-play-list">
-      </sidebar-button>
-      <sidebar-button id="editor" title="Editor" icon="icons:code">
-      </sidebar-button>
-      <sidebar-button id="terminal" title="Terminal" icon="hardware:computer">
-      </sidebar-button>
+        <iron-selector class="container" attr-for-selected="id" selected={{page}}
+                       class="drawer-list" role="navigation">
+        <a href="/files" id="files">
+          <paper-button class="sidebar-button">
+            <iron-icon icon="editor:insert-drive-file"></iron-icon>
+              Files
+          </paper-button>
+        </a>
+        <a href="/data" id="data">
+          <paper-button class="sidebar-button">
+            <iron-icon icon="view-quilt"></iron-icon>
+              Data
+          </paper-button>
+        </a>
+        <a href="/sessions" id="sessions">
+          <paper-button class="sidebar-button">
+            <iron-icon icon="av:featured-play-list"></iron-icon>
+            Sessions
+          </paper-button>
+        </a>
+        <a href="/editor" id="editor">
+          <paper-button class="sidebar-button">
+            <iron-icon icon="icons:code"></iron-icon>
+            Editor
+          </paper-button>
+        </a>
+        <a href="/terminal" id="terminal">
+          <paper-button class="sidebar-button">
+            <iron-icon icon="hardware:computer"></iron-icon>
+            Terminal
+          </paper-button>
+        </a>
+      </iron-selector>
     </div>
+    
   </template>
 </dom-module>
 
 <script>
   class SidebarElement extends Polymer.Element {
-
     static get is() { return "datalab-sidebar"; }
-
-    static get properties() {
-      return {
-        selected: {
-          type: String,
-          value: "",
-          observer: '_selectedChanged'
-        }
-      }
-    }
-
-    ready() {
-      super.ready();
-      document.addEventListener('sidebarButtonClicked', e => {
-        this.selected = e.detail;
-      });
-    }
-
-    _selectedChanged() {
-      // first, apply css class to selected button, and remove it from all others
-      let buttons = this.shadowRoot.querySelectorAll('sidebar-button');
-      buttons.forEach(button => {
-        if (button.id == this.selected) {
-          button.setAttribute('selected', '');
-        } else {
-          button.removeAttribute('selected');
-        }
-      });
-
-      // then dispatch an event to parent element with the selected page name
-      let e = new CustomEvent('sidebarPageSelected', {
-        bubbles: true,
-        composed: true,
-        detail: this.selected
-      });
-      this.shadowRoot.ownerDocument.dispatchEvent(e);
-    }
-
   }
+
   customElements.define(SidebarElement.is, SidebarElement);
 </script>

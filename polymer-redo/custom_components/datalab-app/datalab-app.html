@@ -1,12 +1,10 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../bower_components/app-route/app-location.html">
+<link rel="import" href="../../bower_components/app-route/app-route.html">
+
 <link rel="import" href="../../custom_components/datalab-sidebar/datalab-sidebar.html">
 <link rel="import" href="../../custom_components/datalab-toolbar/datalab-toolbar.html">
-<link rel="import" href="../../custom_components/datalab-files/datalab-files.html">
-<link rel="import" href="../../custom_components/datalab-data/datalab-data.html">
-<link rel="import" href="../../custom_components/datalab-sessions/datalab-sessions.html">
-<link rel="import" href="../../custom_components/datalab-editor/datalab-editor.html">
-<link rel="import" href="../../custom_components/datalab-terminal/datalab-terminal.html">
 
 <dom-module id="datalab-app">
   <template>
@@ -27,6 +25,14 @@
         padding: 20px;
       }
     </style>
+
+    <app-location route="{{route}}"></app-location>
+    <app-route
+        route="{{route}}"
+        pattern="[[rootPattern]]:page"
+        data="{{routeData}}"
+        tail="{{subroute}}"></app-route>
+
     <datalab-toolbar></datalab-toolbar>
     <div class="datalab-contents">
       <div class="datalab-sidebar">
@@ -54,18 +60,41 @@
       return {
         page: {
           type: String,
-          value: "files"
-        }
+          value: "files",
+          observer: '_pageChanged'
+        },
+        rootPattern: String,
+        routeData: Object,
+        subroute: String,
       }
     }
 
-    ready() {
-      super.ready();
-      document.addEventListener('sidebarPageSelected', e => {
-        this.page = e.detail;
-      });
+    static get observers() {
+      return [
+        // need a complex observer for changes to the routeData object's page property
+        '_routePageChanged(routeData.page)',
+      ];
+    }
+
+    constructor() {
+      super();
+      this.rootPattern = (new URL(this.rootPath)).pathname;
+    }
+
+    _routePageChanged(page) {
+      // default to the files view
+      this.page = page || 'files';
+    }
+
+    _pageChanged(page) {
+      // import page on demand and then load it
+      // build the path using the page name as suffix for directory and file names
+      let subpath = 'datalab-' + page
+      var resolvedPageUrl = this.resolveUrl('../' + subpath + '/' + subpath + '.html');
+      Polymer.importHref(resolvedPageUrl, null, null, true);
     }
 
   }
+
   customElements.define(DatalabAppElement.is, DatalabAppElement);
 </script>
