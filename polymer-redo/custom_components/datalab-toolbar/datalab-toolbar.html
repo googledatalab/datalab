@@ -31,16 +31,16 @@
       .title {
         font-weight: lighter;
       }
-      #settings-dialog {
+      .dialog {
         width: 60%;
         height: 60%;
         display: flex;
         flex-direction: column;
       }
-      #settings-dialog > hr {
+      .dialog > hr {
         width: 80%;
       }
-      .settings-dialog-content {
+      .dialog-content {
         flex-grow: 1;
       }
     </style>
@@ -52,7 +52,8 @@
           <span>Google Cloud Datalab</span>
         </div>
         <paper-icon-button class="toolbar-button" icon="search"></paper-icon-button>
-        <paper-icon-button class="toolbar-button" icon="help"></paper-icon-button>
+        <paper-icon-button class="toolbar-button" icon="help"
+                           onclick={{_helpClicked}}></paper-icon-button>
         <paper-icon-button class="toolbar-button" icon="settings"
                            onclick={{_settingsClicked}}></paper-icon-button>
         <paper-icon-button class="toolbar-button" icon="more-vert"></paper-icon-button>
@@ -60,10 +61,21 @@
       </app-toolbar>
     </app-header>
 
-    <paper-dialog id="settings-dialog" with-backdrop>
+    <paper-dialog id="help-dialog" class="dialog" with-backdrop>
+      <h2>Help</h2>
+      <hr>
+      <paper-dialog-scrollable class="dialog-content">
+      </paper-dialog-scrollable>
+      <hr>
+      <div>
+        <paper-button dialog-dismiss raised>Close</paper-button>
+      </div>
+    </paper-dialog>
+
+    <paper-dialog id="settings-dialog" class="dialog" with-backdrop>
       <h2>Settings</h2>
       <hr>
-      <paper-dialog-scrollable class="settings-dialog-content">
+      <paper-dialog-scrollable class="dialog-content">
       </paper-dialog-scrollable>
       <hr>
       <div>
@@ -77,6 +89,12 @@
   class ToolbarElement extends Polymer.Element {
 
     static get is() { return "datalab-toolbar"; }
+
+    _helpClicked() {
+      let thisShadowRoot = Polymer.dom(this).getOwnerRoot();
+      let dialog = thisShadowRoot.querySelector('#help-dialog');
+      dialog.open();
+    }
 
     _settingsClicked() {
       let thisShadowRoot = Polymer.dom(this).getOwnerRoot();
