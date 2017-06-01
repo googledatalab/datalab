@@ -131,9 +131,9 @@ declare module common {
     numWeeklyBackups: number;
 
     /**
-     * The idle timeout interval in seconds.
+     * The idle timeout interval, such as "2h 30m".
      */
-    idleTimeoutSeconds: number;
+    idleTimeoutInterval: string;
 
     /**
      * The shutdown command to use after an idle timeout.

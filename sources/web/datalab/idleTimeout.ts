@@ -19,6 +19,7 @@ import http = require('http');
 import logging = require('./logging');
 import net = require('net');
 import querystring = require('querystring');
+import settings = require('./settings');
 import url = require('url');
 import userManager = require('./userManager');
 
@@ -36,16 +37,26 @@ export function initAndStart(appSettings: common.Settings) {
 }
 
 export function init(appSettings: common.Settings) {
-  shutdownCommand = appSettings.idleTimeoutShutdownCommand;
+  const userSettings = settings.loadUserSettings(null);
+  shutdownCommand = userSettings.idleTimeoutShutdownCommand;
+  if (!shutdownCommand) {
+    shutdownCommand = appSettings.idleTimeoutShutdownCommand;
+  }
   if (!shutdownCommand) {
     shutdownCommand = process.env.DATALAB_SHUTDOWN_COMMAND;
   }
   if (shutdownCommand) {
-    idleTimeoutSeconds = appSettings.idleTimeoutSeconds;
-    logging.getLogger().debug('idleTimeoutSeconds from settings: ' + idleTimeoutSeconds);
-    if (!idleTimeoutSeconds) {
-      idleTimeoutSeconds = parseInterval(process.env.DATALAB_IDLE_TIMEOUT);
+    let idleTimeoutStr = userSettings.idleTimeoutInterval;
+    logging.getLogger().debug('idleTimeoutStr from user settings: ' + idleTimeoutStr);
+    if (!idleTimeoutStr) {
+      idleTimeoutStr = appSettings.idleTimeoutInterval;
+      logging.getLogger().debug('idleTimeoutStr from app settings: ' + idleTimeoutStr);
     }
+    if (!idleTimeoutStr) {
+      idleTimeoutStr = process.env.DATALAB_IDLE_TIMEOUT;
+      logging.getLogger().debug('idleTimeoutStr from env: ' + idleTimeoutStr);
+    }
+    idleTimeoutSeconds = parseInterval(idleTimeoutStr);
     if (! (idleTimeoutSeconds > 0)) {
       logging.getLogger().info('No idle timeout value, idle timeout is disabled');
     } else {
@@ -60,6 +71,9 @@ export function init(appSettings: common.Settings) {
 // Parse a string like '30s' or '1h 15m 5s' and return seconds.
 // If no input string, or unrecognized stuff, returns NaN.
 function parseInterval(str: string) {
+  if (typeof(str) === 'number') {
+    return <number>str;
+  }
   if (!str) {
     return NaN;
   }
@@ -69,6 +83,7 @@ function parseInterval(str: string) {
     [ /(\d+)\s*(minutes?|m)/, 60 ],
     [ /(\d+)\s*(hours?|h)/, 60 * 60 ],
     [ /(\d+)\s*(days?|d)/, 60 * 60 * 24 ],
+    [ /(\d+)\s*$/, 1 ],
   ];
   regAndMults.forEach(rm => {
     const r : RegExp = rm[0] as RegExp;
