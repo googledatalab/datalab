@@ -1,5 +1,5 @@
 <script src="../../bower_components/webcomponentsjs/webcomponents-loader.js"></script>
-<link rel="import" href="../toolbar-button/toolbar-button.html">
+<link rel="import" href="../sidebar-button/sidebar-button.html">
 <link rel="import" href="../../bower_components/paper-drawer-panel/paper-drawer-panel.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 
@@ -18,16 +18,16 @@
     </style>
     <paper-drawer-panel drawer-width="100px">
       <div slot="drawer">
-        <toolbar-button id="files" title="Files" icon="editor:insert-drive-file">
-        </toolbar-button>
-        <toolbar-button id="data" title="Data" icon="view-quilt">
-        </toolbar-button>
-        <toolbar-button id="sessions" title="Sessions" icon="av:featured-play-list">
-        </toolbar-button>
-        <toolbar-button id="ungit" title="Ungit" icon="icons:code">
-        </toolbar-button>
-        <toolbar-button id="terminals" title="Terminals" icon="hardware:computer">
-        </toolbar-button>
+        <sidebar-button id="files" title="Files" icon="editor:insert-drive-file">
+        </sidebar-button>
+        <sidebar-button id="data" title="Data" icon="view-quilt">
+        </sidebar-button>
+        <sidebar-button id="sessions" title="Sessions" icon="av:featured-play-list">
+        </sidebar-button>
+        <sidebar-button id="ungit" title="Ungit" icon="icons:code">
+        </sidebar-button>
+        <sidebar-button id="terminals" title="Terminals" icon="hardware:computer">
+        </sidebar-button>
       </div>
       <div slot="main" class="content-panel"> Main panel... </div>
     </paper-drawer-panel>
@@ -47,7 +47,7 @@
       }
     }
     _selectedChanged() {
-      let buttons = this.shadowRoot.querySelectorAll('toolbar-button');
+      let buttons = this.shadowRoot.querySelectorAll('sidebar-button');
       buttons.forEach(button => {
         if (button.id == this.selected) {
           button.setAttribute('selected', '');

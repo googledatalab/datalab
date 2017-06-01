@@ -5,7 +5,7 @@
 <link rel="import" href="../../bower_components/iron-icons/av-icons.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 
-<dom-module id="toolbar-button">
+<dom-module id="sidebar-button">
   <template>
     <style>
       paper-button {
@@ -37,8 +37,8 @@
 </dom-module>
 
 <script>
-  class ToolbarButtonElement extends Polymer.Element {
-    static get is() { return "toolbar-button"; }
+  class SidebarButtonElement extends Polymer.Element {
+    static get is() { return "sidebar-button"; }
     static get properties() {
       return {
         title: {
@@ -61,6 +61,6 @@
       button.toggleClass('selected', newValue);
     }
   }
-  customElements.define(ToolbarButtonElement.is, ToolbarButtonElement);
+  customElements.define(SidebarButtonElement.is, SidebarButtonElement);
 </script>
 
