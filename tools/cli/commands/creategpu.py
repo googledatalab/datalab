@@ -34,122 +34,8 @@ created instance. You can disable that behavior by passing in the
 '--no-connect' flag.""")
 
 _NVIDIA_PACKAGE = 'cuda-repo-ubuntu1604_8.0.61-1_amd64.deb'
-_DATALAB_NETWORK = 'datalab-network'
-_DATALAB_NETWORK_DESCRIPTION = 'Network for Google Cloud Datalab instances'
 
-_DATALAB_FIREWALL_RULE = 'datalab-network-allow-ssh'
-_DATALAB_FIREWALL_RULE_DESCRIPTION = 'Allow SSH access to Datalab instances'
-
-_DATALAB_DEFAULT_DISK_SIZE_GB = 200
-_DATALAB_DISK_DESCRIPTION = (
-    'Persistent disk for a Google Cloud Datalab instance')
-
-_DATALAB_NOTEBOOKS_REPOSITORY = 'datalab-notebooks'
-
-_DATALAB_STARTUP_SCRIPT = """#!/bin/bash
-
-PERSISTENT_DISK_DEV="/dev/disk/by-id/google-datalab-pd"
-MOUNT_DIR="/mnt/disks/datalab-pd"
-MOUNT_CMD="mount -o discard,defaults ${{PERSISTENT_DISK_DEV}} ${{MOUNT_DIR}}"
-
-clone_repo() {{
-  echo "Creating the datalab directory"
-  mkdir -p ${{MOUNT_DIR}}/content/datalab
-  echo "Cloning the repo {0}"
-  docker run --rm -v "${{MOUNT_DIR}}/content:/content" \
-    --entrypoint "/bin/bash" {0} \
-    gcloud source repos clone {1} /content/datalab/notebooks
-}}
-
-repo_is_populated() {{
-  cd ${{MOUNT_DIR}}/content/datalab/notebooks
-  git show-ref --quiet
-}}
-
-populate_repo() {{
-  echo "Populating datalab-notebooks repo"
-  docker run --rm -v "${{MOUNT_DIR}}/content:/content" \
-    --workdir=/content/datalab/notebooks \
-    --entrypoint "/bin/bash" {0} -c "\
-        echo '.ipynb_checkpoints' >> .gitignore; \
-        echo '*.pyc' >> .gitignore; \
-        echo '# Project Notebooks' >> README.md; \
-        git add .gitignore README.md; \
-        git -c user.email=nobody -c user.name=Datalab \
-          commit --message='Set up initial notebook repo.'; \
-        git push origin master; \
-    "
-}}
-
-format_disk() {{
-  echo "Formatting the persistent disk"
-  mkfs.ext4 -F \
-    -E lazy_itable_init=0,lazy_journal_init=0,discard \
-    ${{PERSISTENT_DISK_DEV}}
-  ${{MOUNT_CMD}}
-  clone_repo
-  if ! repo_is_populated; then
-    populate_repo
-  fi
-}}
-
-mount_and_prepare_disk() {{
-  echo "Trying to mount the persistent disk"
-  mkdir -p "${{MOUNT_DIR}}"
-  ${{MOUNT_CMD}} || format_disk
-  chmod a+w "${{MOUNT_DIR}}"
-  mkdir -p "${{MOUNT_DIR}}/content"
-
-  old_dir="${{MOUNT_DIR}}/datalab"
-  new_dir="${{MOUNT_DIR}}/content/datalab"
-  if [ -d "${{old_dir}}" ] && [ ! -d "${{new_dir}}" ]; then
-    echo "Moving ${{old_dir}} to ${{new_dir}}"
-    mv "${{old_dir}}" "${{new_dir}}"
-  else
-    echo "Creating ${{new_dir}}"
-    mkdir -p "${{new_dir}}"
-  fi
-}}
-
-configure_swap() {{
-  mem_total_line=`cat /proc/meminfo | grep MemTotal`
-  mem_total_value=`echo "${{mem_total_line}}" | cut -d ':' -f 2`
-  memory_kb=`echo "${{mem_total_value}}" | cut -d 'k' -f 1 | tr -d '[:space:]'`
-  swapfile="${{MOUNT_DIR}}/swapfile"
-
-  # Create the swapfile if it is either missing or not big enough
-  current_size="0"
-  if [ -e "${{swapfile}}" ]; then
-    current_size=`ls -s ${{swapfile}} | cut -d ' ' -f 1`
-  fi
-  if [ "${{memory_kb}}" -gt "${{current_size}}" ]; then
-    echo "Creating a ${{memory_kb}} kilobyte swapfile at ${{swapfile}}"
-    dd if=/dev/zero of="${{swapfile}}" bs=1024 count="${{memory_kb}}"
-  fi
-  chmod 0600 "${{swapfile}}"
-  mkswap "${{swapfile}}"
-
-  # Enable swap
-  sysctl vm.disk_based_swap=1
-  swapon "${{swapfile}}"
-}}
-
-cleanup_tmp() {{
-  tmpdir="${{MOUNT_DIR}}/tmp"
-
-  # First, make sure the temporary directory exists.
-  mkdir -p "${{tmpdir}}"
-
-  # Remove all files from it.
-  #
-  # We do not remove the directory itself, as that could lead to a broken
-  # volume mount if the Docker container has already started).
-  #
-  # We also do not just use `rm -rf ${{tmpdir}}/*`, as that would leave
-  # behind any hidden files.
-  find "${{tmpdir}}/" -mindepth 1 -delete
-}}
-
+_DATALAB_STARTUP_SCRIPT = create._DATALAB_BASE_STARTUP_SCRIPT + """
 install_cuda() {{
   # Check for CUDA and try to install.
   if ! dpkg-query -W cuda; then
@@ -283,8 +169,8 @@ def run(args, gcloud_beta_compute, gcloud_repos,
             tempfile.NamedTemporaryFile(delete=False) as for_user_file:
         try:
             startup_script_file.write(_DATALAB_STARTUP_SCRIPT.format(
-                args.image_name, _DATALAB_NOTEBOOKS_REPOSITORY, enable_backups,
-                console_log_level, escaped_email, _NVIDIA_PACKAGE))
+                args.image_name, create._DATALAB_NOTEBOOKS_REPOSITORY,
+                enable_backups, console_log_level, escaped_email, _NVIDIA_PACKAGE))
             startup_script_file.close()
             for_user_file.write(user_email)
             for_user_file.close()
@@ -298,7 +184,7 @@ def run(args, gcloud_beta_compute, gcloud_repos,
             cmd.extend([
                 '--format=none',
                 '--boot-disk-size=20GB',
-                '--network', _DATALAB_NETWORK,
+                '--network', create._DATALAB_NETWORK,
                 '--image-family', 'ubuntu-1604-lts',
                 '--image-project', 'ubuntu-os-cloud',
                 '--machine-type', args.machine_type,

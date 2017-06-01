@@ -44,7 +44,7 @@ _DATALAB_DISK_DESCRIPTION = (
 
 _DATALAB_NOTEBOOKS_REPOSITORY = 'datalab-notebooks'
 
-_DATALAB_STARTUP_SCRIPT = """#!/bin/bash
+_DATALAB_BASE_STARTUP_SCRIPT = """#!/bin/bash
 
 PERSISTENT_DISK_DEV="/dev/disk/by-id/google-datalab-pd"
 MOUNT_DIR="/mnt/disks/datalab-pd"
@@ -148,6 +148,9 @@ cleanup_tmp() {{
   find "${{tmpdir}}/" -mindepth 1 -delete
 }}
 
+"""
+
+_DATALAB_STARTUP_SCRIPT = _DATALAB_BASE_STARTUP_SCRIPT + """
 mount_and_prepare_disk
 configure_swap
 cleanup_tmp
