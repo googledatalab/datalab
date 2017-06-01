@@ -1,0 +1,50 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../custom_components/datalab-sidebar/datalab-sidebar.html">
+<link rel="import" href="../../custom_components/datalab-toolbar/datalab-toolbar.html">
+
+<dom-module id="datalab-app">
+  <template>
+    <style>
+      body {
+        margin: 0px;
+        padding: 0px;
+      }
+      .datalab-toolbar {
+      }
+      .datalab-sidebar {
+        position: relative;
+        width: 100%;
+        /* because paper-drawer-panel is an absolute position element */
+        height: calc(100vh - 50px);
+      }
+    </style>
+    <div class="datalab-toolbar">
+      <datalab-toolbar></datalab-toolbar>
+    </div>
+    <div class="datalab-sidebar">
+      <datalab-sidebar selected={{page}}></datalab-sidebar>
+    </div>
+  </template>
+</dom-module>
+
+<script>
+  class DatalabAppElement extends Polymer.Element {
+
+    static get is() { return "datalab-app"; }
+
+    static get properties() {
+      return {
+        page: {
+          type: String,
+          value: "files",
+          observer: '_pageChanged'
+        }
+      }
+    }
+
+    _pageChanged() {
+    }
+ 
+  }
+  customElements.define(DatalabAppElement.is, DatalabAppElement);
+</script>
