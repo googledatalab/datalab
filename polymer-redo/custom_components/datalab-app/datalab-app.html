@@ -13,15 +13,20 @@
         margin: 0px;
         padding: 0px;
       }
+      #container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
       .datalab-contents {
         display: flex;
-        height: 100%;
+        flex-grow: 1;
       }
       .datalab-sidebar {
         width: 100px;
       }
       .datalab-main-content {
-        width: 100%;
+        flex-grow: 1;
         padding: 20px;
       }
     </style>
@@ -33,19 +38,21 @@
         data="{{routeData}}"
         tail="{{subroute}}"></app-route>
 
-    <datalab-toolbar></datalab-toolbar>
-    <div class="datalab-contents">
-      <div class="datalab-sidebar">
-        <datalab-sidebar selected=[[page]]></datalab-sidebar>
-      </div>
-      <div class="datalab-main-content">
-        <iron-pages selected="{{page}}" attr-for-selected="name" fallback-selection="files">
-          <datalab-files name="files"></datalab-files>
-          <datalab-data name="data"></datalab-data>
-          <datalab-sessions name="sessions"></datalab-sessions>
-          <datalab-editor name="editor"></datalab-editor>
-          <datalab-terminal name="terminal"></datalab-terminal>
-        </iron-pages>
+    <div id="container">
+      <datalab-toolbar></datalab-toolbar>
+      <div class="datalab-contents">
+        <div class="datalab-sidebar">
+          <datalab-sidebar selected=[[page]]></datalab-sidebar>
+        </div>
+        <div class="datalab-main-content">
+          <iron-pages selected="{{page}}" attr-for-selected="name" fallback-selection="files">
+            <datalab-files name="files"></datalab-files>
+            <datalab-data name="data"></datalab-data>
+            <datalab-sessions name="sessions"></datalab-sessions>
+            <datalab-editor name="editor"></datalab-editor>
+            <datalab-terminal name="terminal"></datalab-terminal>
+          </iron-pages>
+        </div>
       </div>
     </div>
   </template>
