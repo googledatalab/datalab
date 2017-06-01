@@ -28,8 +28,11 @@ require('jasmine2-custom-message');
 let driver = null;
 
 const suiteTimeout = 60000;  // maximum of one minute for running each suite
+const testTimeout = 10000;   // 10 seconds for running each individual test
 const initTimeout = 10000;   // 10 seconds for initialization time, building the webdriver
 const scriptTimeout = 10000; // 10 seconds for running synchronous js scripts in the driver
+jasmine.DEFAULT_TIMEOUT_INTERVAL = testTimeout;
+
 const misMatchThreshold = 0;
 const goldenPathPrefix = 'ui/golden/';
 const brokenPathPrefix = 'ui/broken/';
