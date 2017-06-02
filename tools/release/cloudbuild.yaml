@@ -17,18 +17,18 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['pull', 'nvidia/cuda:8.0-cudnn5-devel-ubuntu16.04']
   id:   'pullNvidiaUbuntu'
-#- name: 'gcr.io/cloud-builders/docker'
-#  args: ['tag', 'nvidia/cuda:8.0-cudnn5-devel-ubuntu16.04', 'datalab-external-base-image']
-#  id:   'tagNvidiaUbuntu'
-#  waitFor: ['buildBase']
-#- name: 'gcr.io/cloud-builders/docker'
-#  args: ['build', '-t', 'datalab-core-gpu', '/workspace/containers/base/']
-#  id:   'buildGpuCore'
-#  waitFor: ['tagNvidiaUbuntu']
-#- name: 'gcr.io/cloud-builders/docker'
-#  args: ['build', '-t', 'datalab-base-gpu', '-f', 'Dockerfile.gpu', '/workspace/containers/base/']
-#  id:   'buildGpuBase'
-#  waitFor: ['buildGpuCore']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['tag', 'nvidia/cuda:8.0-cudnn5-devel-ubuntu16.04', 'datalab-external-base-image']
+  id:   'tagNvidiaUbuntu'
+  waitFor: ['buildBase', 'pullNvidiaUbuntu']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'datalab-core-gpu', '/workspace/containers/base/']
+  id:   'buildGpuCore'
+  waitFor: ['tagNvidiaUbuntu']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'datalab-base-gpu', '-f', 'Dockerfile.gpu', '/workspace/containers/base/']
+  id:   'buildGpuBase'
+  waitFor: ['buildGpuCore']
 
 - name: 'debian'
   args: ['/workspace/containers/datalab/prepare.sh', 'datalab-base', "${REVISION_ID}"]
@@ -42,17 +42,17 @@ steps:
   args: ['/workspace/containers/datalab/cleanup.sh']
   id:   'cleanupDatalab'
   waitFor: ['buildDatalab']
-#- name: 'debian'
-#  args: ['/workspace/containers/datalab/prepare.sh', 'datalab-base-gpu', "${REVISION_ID}"]
-#  id:   'prepareDatalabGPU'
-#  waitFor: ['cleanupDatalab', 'buildGpuCore']
-#- name: 'gcr.io/cloud-builders/docker'
-#  args: ['build', '-t', 'gcr.io/${PROJECT_ID}/datalab-gpu:local-${REVISION_ID}', '/workspace/containers/datalab/']
-#  id:   'buildDatalabGPU'
-#  waitFor: ['prepareDatalabGPU']
+- name: 'debian'
+  args: ['/workspace/containers/datalab/prepare.sh', 'datalab-base-gpu', "${REVISION_ID}"]
+  id:   'prepareDatalabGPU'
+  waitFor: ['cleanupDatalab', 'buildGpuCore']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/${PROJECT_ID}/datalab-gpu:local-${REVISION_ID}', '/workspace/containers/datalab/']
+  id:   'buildDatalabGPU'
+  waitFor: ['prepareDatalabGPU']
 
 images:
   - 'gcr.io/${PROJECT_ID}/datalab:local-${REVISION_ID}'
-#  - 'gcr.io/${PROJECT_ID}/datalab-gpu:local-${REVISION_ID}'
+  - 'gcr.io/${PROJECT_ID}/datalab-gpu:local-${REVISION_ID}'
 
-timeout: '1200s'
+timeout: '1800s'
