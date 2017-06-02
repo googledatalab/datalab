@@ -1,7 +1,32 @@
 {
+  "entrypoint": "index.html",
+  "shell": "custom_components/datalab-app/datalab-app.html",
+  "fragments": [
+    "custom_components/datalab-toolbar/datalab-toolbar.html",
+    "custom_components/datalab-sidebar/datalab-sidebar.html",
+    "custom_components/datalab-files/datalab-files.html",
+    "custom_components/datalab-sessions/datalab-sessions.html"
+  ],
+  "sources": [
+    "images/**/*",
+    "bower.json",
+    "index.css"
+  ],
+  "extraDependencies": [
+    "bower_components/webcomponentsjs/webcomponents-lite.js"
+  ],
   "lint": {
     "rules": [
       "polymer-2"
     ]
-  }
+  },
+  "builds": [{
+    "name": "bundled",
+    "bundle": true,
+    "js": {"minify": true},
+    "css": {"minify": true},
+    "html": {"minify": true}
+  },{
+    "name": "raw"
+  }]
 }
