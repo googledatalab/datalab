@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 # Copyright 2015 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,9 +15,15 @@
 
 # Builds all components.
 
-function install_node() {
-  echo "Installing NodeJS"
+function install_wget() {
+  echo "Installing wget"
+  apt-get install -y -qq wget
+}
 
+function install_node() {
+  wget --version || install_wget
+
+  echo "Installing NodeJS"
   mkdir -p /tools/node
   wget -nv https://nodejs.org/dist/v6.10.0/node-v6.10.0-linux-x64.tar.gz -O node.tar.gz
   tar xzf node.tar.gz -C /tools/node --strip-components=1
@@ -32,16 +38,30 @@ function install_typescript() {
   /tools/node/bin/npm install -g typescript
 }
 
+function install_git() {
+  echo "Updating apt repository"
+  apt-get update -y -qq
+
+  echo "Installing git"
+  apt-get install -y -qq git
+}
+
+function install_rsync() {
+  echo "Installing rsync"
+  apt-get install -y -qq rsync
+}
+
 function install_prereqs() {
+  git version || install_git
+  rsync -h >/dev/null 2>&1 || install_rsync
+
   tsc -h >/dev/null 2>&1  || install_typescript
-  rsync -h >/dev/null 2>&1  || apt-get install -y -qq rsync
   source ./tools/initenv.sh
 }
 
-pushd ./
+pushd $(pwd) >> /dev/null
 cd $(dirname "${BASH_SOURCE[0]}")/../
 install_prereqs
-popd
 
 SRC_PATHS=(
   "web"
@@ -58,8 +78,7 @@ do
   echo "Building $SRC ... " | tee -a $LOG_FILE
 
   SRC_DIR=$REPO_DIR/sources/$SRC
-  pushd $SRC_DIR >> /dev/null
-
+  cd $SRC_DIR
   ./build.sh >> $LOG_FILE 2>&1
 
   if [ "$?" -ne "0" ]; then
@@ -69,9 +88,9 @@ do
   else
     echo "succeeded" | tee -a $LOG_FILE
   fi
-
-  popd >> /dev/null
   echo | tee -a $LOG_FILE
 done
 
 echo "Build completed." | tee -a $LOG_FILE
+
+popd >> /dev/null
