@@ -104,6 +104,7 @@ if [ -n "${vm_project}" ] && [ "${vm_project}" != "no-project-id" ]; then
    export VM_PROJECT="${vm_project}"
    export VM_NAME=$(curl -s "${compute_metadata_url}/instance/hostname" -H "Metadata-Flavor: Google" | cut -d '.' -f 1)
    export VM_ZONE=$(curl -s "${compute_metadata_url}/instance/zone" -H "Metadata-Flavor: Google" | sed 's/.*zones\///')
+   export DATALAB_SHUTDOWN_COMMAND="gcloud compute instances stop ${VM_NAME} --project ${VM_PROJECT} --zone ${VM_ZONE}"
 fi
 
 # Create the notebook notary secret if one does not already exist

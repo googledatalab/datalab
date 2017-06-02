@@ -24,6 +24,7 @@ import crypto = require('crypto');
 import fs = require('fs');
 import http = require('http');
 import httpProxy = require('http-proxy');
+import idleTimeout = require('./idleTimeout');
 import logging = require('./logging');
 import net = require('net');
 import path = require('path');
@@ -340,8 +341,8 @@ export function handleSocket(request: http.ServerRequest, socket: net.Socket, he
     return;
   }
   server.proxy.ws(request, socket, head);
+  idleTimeout.setupResetOnWebSocketRequests(socket);
 }
-
 
 export function handleRequest(request: http.ServerRequest, response: http.ServerResponse) {
   var userId = userManager.getUserId(request);

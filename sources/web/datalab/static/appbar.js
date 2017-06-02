@@ -1,4 +1,4 @@
-define(() => {
+define(['static/idle-timeout'], function(idleTimeout) {
   function toggleSidebar() {
     var d = document.getElementById('sidebarArea');
     d.style.display = (d.style.display == 'none') ? 'block' : 'none';
@@ -104,6 +104,7 @@ define(() => {
     // Prepare sign in/out UI
     $('#accountDropdownButton').on('click', function (event) {
       $(this).parent().toggleClass('open');
+      idleTimeout.updateTimeoutInfo($(this).parent());
       if (window.datalab && window.datalab.session) {
         window.datalab.session.execute("datalab_project_id()", function(error, projectId) {
           if (error === null || error === undefined) {
@@ -179,6 +180,8 @@ define(() => {
 
       $('#navigationButton').show()
     }
+    $('#idleTimeoutEnabledButton').click(idleTimeout.toggleIdleTimeout);
+    $('#idleTimeoutDisabledButton').click(idleTimeout.toggleIdleTimeout);
     $('#aboutButton').click(showAbout);
     $('#settingsButton').click(function() {
       $.get('/static/settings.html', (markup) => {
@@ -192,6 +195,9 @@ define(() => {
     $('#feedbackButton').click(function() {
       window.open('https://groups.google.com/forum/#!newtopic/google-cloud-datalab-feedback');
     });
+
+    // Set up idle-timeout.
+    idleTimeout.setupTimeoutTimer();
   }
 
   return {
