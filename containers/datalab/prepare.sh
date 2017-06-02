@@ -45,7 +45,14 @@ if [ ! -d ../../build/ ]; then
     ../../sources/build.sh
 fi
 
+function install_rsync() {
+  echo "Installing rsync"
+  apt-get update -y -qq
+  apt-get install -y -qq rsync
+}
+
 # Copy build outputs as a dependency of the Dockerfile
+rsync -h >/dev/null 2>&1 || install_rsync
 rsync -avp ../../build/ build
 
 # Copy the license file into the container
