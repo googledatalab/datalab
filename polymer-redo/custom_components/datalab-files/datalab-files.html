@@ -1,9 +1,8 @@
 <link rel="import" href="../../custom_components/shared-styles/shared-styles.html">
 
 <link rel="import" href="../../bower_components/polymer/polymer.html">
-<link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
-<link rel="import" href="../../bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="../../bower_components/iron-icons/device-icons.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
 
 <dom-module id="datalab-files">
   <template>
@@ -13,15 +12,66 @@
         height: var(--toolbar-height);
         width: 100%;
         background-color: var(--app-secondary-color);
+        padding-left: 10px;
+      }
+      .toolbar-button {
+        color: var(--app-primary-color);
+        margin: 4px 12px 4px 12px;
+        font-weight: normal;
+      }
+      .toolbar-button > iron-icon {
+        width: 20px;
+        padding-right: 5px;
+      }
+      #file-picker {
+      }
+      #files-header {
+        height: calc(var(--toolbar-height) - 2px); /* because borders */
+        border-top: 1px solid #d3d3d3;
+        border-bottom: 1px solid #d3d3d3;
+        display: flex;
+        line-height: var(--toolbar-height);
+      }
+      .checkbox-col {
+        flex-basis: 40px;
+      }
+      .name-col {
+        flex-grow: 1;
+      }
+      .status-col {
+        flex-basis: 200px;
       }
     </style>
 
     <div id="toolbar">
+      <paper-button class="toolbar-button">
+        <iron-icon icon="add-box"></iron-icon>
+        <span>Notebook</span>
+      </paper-button>
+      <paper-button class="toolbar-button">
+        <iron-icon icon="add-box"></iron-icon>
+        <span>Folder</span>
+      </paper-button>
+      <paper-button class="toolbar-button">
+        <iron-icon icon="content-copy"></iron-icon>
+        <span>Copy</span>
+      </paper-button>
+      <paper-button class="toolbar-button">
+        <iron-icon icon="file-upload"></iron-icon>
+        <span>Upload</span>
+      </paper-button>
+      <paper-button class="toolbar-button">
+        <iron-icon icon="delete"></iron-icon>
+        <span>Delete</span>
+      </paper-button>
     </div>
-    <div id="container">
-      <div id="sidebar">
+    <div id="file-picker">
+      <div id="files-header">
+        <div class="checkbox-col"></div>
+        <div class="name-col"><strong>Name</strong></div>
+        <div class="status-col"><strong>Status</strong></div>
       </div>
-      <div id="main-content">
+      <div id="files">
       </div>
     </div>
 

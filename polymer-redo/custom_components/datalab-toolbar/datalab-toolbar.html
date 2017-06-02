@@ -13,6 +13,7 @@
       }
       .title {
         font-size: 18px;
+        color: #c8c8c8;
       }
       .title-image {
         width: 40px;
@@ -22,7 +23,6 @@
       app-header {
         background-color: var(--app-primary-color);
         color: #fff;
-        font-family: 'Roboto', 'Noto', sans-serif;
       }
       app-toolbar {
         height: var(--toolbar-height);
@@ -35,11 +35,8 @@
           height: var(--toolbar-button-dimension);
         };
       }
-      .title-google {
-      }
       .title-cloud-datalab {
         font-weight: lighter;
-        color: #C8C8C8;
       }
     </style>
 
@@ -47,7 +44,7 @@
       <app-toolbar>
         <div main-title class="title">
           <img src="images/logo.svg" class="title-image">
-          <span class="title-google">Google</span>
+          <span>Google</span>
           <span class="title-cloud-datalab">Cloud Datalab</span>
         </div>
         <paper-icon-button class="toolbar-button" icon="info"
