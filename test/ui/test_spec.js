@@ -39,7 +39,7 @@ const brokenPathPrefix = 'ui/broken/';
 
 function screenshotAndCompare(goldenPath, testName) {
   return driver.takeScreenshot()
-      .then(function(shot) {
+      .then(shot => {
         if (!fs.existsSync(goldenPathPrefix + goldenPath)) {
           fs.writeFileSync(brokenPathPrefix + testName + '.png', shot, 'base64');
           fail('Could not find golden: ' + goldenPath);
@@ -78,14 +78,12 @@ describe('UI tests', function() {
     // navigate to localhost:8081, which is redirected to the tree page
     beforeAll(function(done) {
       return driver.get('http://localhost:8081/tree/datalab')
-        .then(function() {
-          return driver.wait(until.titleIs('Google Cloud DataLab'), 5000);
-        })
-        .then(function() {
+        .then(() => driver.wait(until.titleIs('Google Cloud DataLab'), 5000))
+        .then(() => {
           // wait for the Datalab page to finish loading
           return driver.wait(function() {
             return driver.executeScript('return window.datalab.loaded')
-              .then(function(loaded) {
+              .then(loaded => {
                 return loaded === true;
               });
           }, 10000);
@@ -94,36 +92,22 @@ describe('UI tests', function() {
     });
 
     it('appears correctly before any actions have been taken', function(done) {
-      screenshotAndCompare('body.png', 'body')
-        .then(function() {
-          return done();
-        });
+      return screenshotAndCompare('body.png', 'body')
+        .then(done);
     });
 
     it('opens help menu correctly when its button is clicked', function(done) {
       return driver.findElement(By.id('helpButton'))
-        .then(function(button) {
-          return button.click();
-        })
-        .then(function() {
-          return screenshotAndCompare('bodyWithHelp.png', 'bodyWithHelp');
-        })
-        .then(function() {
-          return done();
-        });
+        .then(button => button.click())
+        .then(() => screenshotAndCompare('bodyWithHelp.png', 'bodyWithHelp'))
+        .then(done);
     });
 
     it('appears correctly after closing help menu by clicking the body element', function(done) {
       return driver.findElement(By.tagName('body'))
-        .then(function(button) {
-          return button.click();
-        })
-        .then(function() {
-          return screenshotAndCompare('body.png', 'body');
-        })
-        .then(function() {
-          return done();
-        });
+        .then(button => button.click())
+        .then(() => screenshotAndCompare('body.png', 'body'))
+        .then(done);
     });
 
     // Simulate a list reload by calling the Jupyter function, and waiting
@@ -146,33 +130,19 @@ describe('UI tests', function() {
         // Get an item in the file listing. the reason we're not using first
         // is because the first item is not selectable (up dir)
         // Then click the item, make sure the UI changes accordingly (extra buttons added)
-        .then(function() {
-          return driver.findElement(By.xpath(itemXpath)).click();
-        })
-        .then(function() {
-          return screenshotAndCompare('listItemSelected.png', 'listItemSelected');
-        })
+        .then(() => driver.findElement(By.xpath(itemXpath)).click())
+        .then(() => screenshotAndCompare('listItemSelected.png', 'listItemSelected'))
         // Now unselect the same item and make sure the extra icons disappear
-        .then(function() {
-          return driver.findElement(By.xpath(itemXpath)).click();
-        })
-        .then(function() {
-          return screenshotAndCompare('listItemUnselected.png', 'listItemUnselected');
-        })
-        .then(function() {
-          return done();
-        });
+        .then(() => driver.findElement(By.xpath(itemXpath)).click())
+        .then(() => screenshotAndCompare('listItemUnselected.png', 'listItemUnselected'))
+        .then(done);
     });
 
     it('clicks Add Folder and makes sure a new folder is added', function(done) {
       // Add a new folder
       return driver.findElement(By.id('addFolderButton')).click()
-        .then(function() {
-          return reloadNotebookList();
-        })
-        .then(function() {
-          return screenshotAndCompare('folderAdded.png', 'folderAdded');
-        })
+        .then(reloadNotebookList)
+        .then(() => screenshotAndCompare('folderAdded.png', 'folderAdded'))
         // Cleanup the new folder
         .finally(function() {
           return driver.executeScript(
@@ -180,20 +150,14 @@ describe('UI tests', function() {
               "Jupyter.notebook_list.notebook_path + '/Untitled Folder')"
           );
         })
-        .then(function() {
-          return done();
-        });
+        .then(done);
     });
 
     it('clicks Add Notebook and makes sure a new notebook is added', function(done) {
       // Add a new notebook
       return driver.findElement(By.id('addNotebookButton')).click()
-        .then(function() {
-          return reloadNotebookList();
-        })
-        .then(function() {
-          return screenshotAndCompare('notebookAdded.png', 'notebookAdded');
-        })
+        .then(reloadNotebookList)
+        .then(() => screenshotAndCompare('notebookAdded.png', 'notebookAdded'))
         // Cleanup the new notebook
         .finally(function() {
           return driver.executeScript(
@@ -201,9 +165,7 @@ describe('UI tests', function() {
               "Jupyter.notebook_list.notebook_path + '/Untitled Notebook.ipynb')"
           );
         })
-        .then(function() {
-          return done();
-        });
+        .then(done);
     });
 
   }, suiteTimeout);
