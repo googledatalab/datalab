@@ -174,6 +174,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     'util.js',
     'edit-app.js',
     'datalab.css',
+    'idle-timeout.js',
     'minitoolbar.js',
     'notebook-app.js',
     'notebook-list.js',

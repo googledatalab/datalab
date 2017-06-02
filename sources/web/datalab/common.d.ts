@@ -129,6 +129,16 @@ declare module common {
      * Number of weekly GCS backups of the user's content dir to keep
      */
     numWeeklyBackups: number;
+
+    /**
+     * The idle timeout interval, such as "2h 30m".
+     */
+    idleTimeoutInterval: string;
+
+    /**
+     * The shutdown command to use after an idle timeout.
+     */
+    idleTimeoutShutdownCommand: string;
   }
 
   interface Map<T> {

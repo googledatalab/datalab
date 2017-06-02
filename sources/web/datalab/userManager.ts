@@ -57,7 +57,7 @@ export function getUserId(request: http.ServerRequest): string {
  */
 export function getUserDir(userId: string): string {
   var contentDir = path.join(appSettings.datalabRoot, appSettings.contentDir);
-  if (!appSettings.useWorkspace) {
+  if (!appSettings.useWorkspace || !userId) {
     // If the workspace feature is not enabled, then just use the content directory specified
     // in configuration.
     return contentDir;
