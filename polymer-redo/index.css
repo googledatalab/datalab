@@ -10,15 +10,3 @@ datalab-app {
   right: 0;
   min-width: 470px;
 }
-.dialog {
-  width: 60%;
-  height: 60%;
-  display: flex;
-  flex-direction: column;
-}
-.dialog > hr {
-  width: 80%;
-}
-.dialog-content {
-  flex-grow: 1;
-}

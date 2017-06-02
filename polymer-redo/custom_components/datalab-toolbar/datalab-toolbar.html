@@ -4,6 +4,7 @@
 <link rel="import" href="../../bower_components/app-layout/app-toolbar/app-toolbar.html">
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
 
 <dom-module id="datalab-toolbar">
   <template>
@@ -38,6 +39,22 @@
       .title-cloud-datalab {
         font-weight: lighter;
       }
+      .dialog {
+        width: 60%;
+        height: 60%;
+        display: flex;
+        flex-direction: column;
+      }
+      .dialog > hr {
+        width: 90%;
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
+        border-top: 1px solid #eee;
+      }
+      .dialog-content {
+        flex-grow: 1;
+      }
     </style>
 
     <app-header slot="header" fixed shadow>
@@ -55,6 +72,28 @@
       </app-toolbar>
     </app-header>
 
+    <paper-dialog id="info-dialog" class="dialog" with-backdrop>
+      <h2>Info</h2>
+      <hr>
+      <paper-dialog-scrollable class="dialog-content">
+      </paper-dialog-scrollable>
+      <hr>
+      <div>
+        <paper-button dialog-dismiss raised>Close</paper-button>
+      </div>
+    </paper-dialog>
+
+    <paper-dialog id="settings-dialog" class="dialog" with-backdrop>
+      <h2>Settings</h2>
+      <hr>
+      <paper-dialog-scrollable class="dialog-content">
+      </paper-dialog-scrollable>
+      <hr>
+      <div>
+        <paper-button dialog-dismiss raised>Close</paper-button>
+      </div>
+    </paper-dialog>
+
   </template>
 </dom-module>
 
@@ -64,12 +103,14 @@
     static get is() { return "datalab-toolbar"; }
 
     _infoClicked() {
-      let dialog = document.querySelector('#info-dialog');
+      let shadowDom = Polymer.dom(this).getOwnerRoot();
+      let dialog = shadowDom.querySelector('#info-dialog');
       dialog.open();
     }
 
     _settingsClicked() {
-      let dialog = document.querySelector('#settings-dialog');
+      let shadowDom = Polymer.dom(this).getOwnerRoot();
+      let dialog = shadowDom.querySelector('#settings-dialog');
       dialog.open();
     }
 
