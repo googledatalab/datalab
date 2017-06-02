@@ -81,6 +81,7 @@ function startContainers() {
     -e "ENABLE_USAGE_REPORTING=false" \
     datalab)
 
+  docker pull selenium/standalone-chrome > /dev/null
   echo Starting selenium container..
   selenium_container=$(docker run -d -p 4444:4444 --net="host" selenium/standalone-chrome)
 

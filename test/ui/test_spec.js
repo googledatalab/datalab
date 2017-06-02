@@ -28,15 +28,18 @@ require('jasmine2-custom-message');
 let driver = null;
 
 const suiteTimeout = 60000;  // maximum of one minute for running each suite
+const testTimeout = 10000;   // 10 seconds for running each individual test
 const initTimeout = 10000;   // 10 seconds for initialization time, building the webdriver
 const scriptTimeout = 10000; // 10 seconds for running synchronous js scripts in the driver
+jasmine.DEFAULT_TIMEOUT_INTERVAL = testTimeout;
+
 const misMatchThreshold = 0;
 const goldenPathPrefix = 'ui/golden/';
 const brokenPathPrefix = 'ui/broken/';
 
-function screenshotAndCompare(goldenPath, testName, done) {
+function screenshotAndCompare(goldenPath, testName) {
   return driver.takeScreenshot()
-      .then(function(shot) {
+      .then(shot => {
         if (!fs.existsSync(goldenPathPrefix + goldenPath)) {
           fs.writeFileSync(brokenPathPrefix + testName + '.png', shot, 'base64');
           fail('Could not find golden: ' + goldenPath);
@@ -55,11 +58,6 @@ function screenshotAndCompare(goldenPath, testName, done) {
           since('Images for test ' + testName + ' are different')
               .expect(data.misMatchPercentage <= misMatchThreshold).toBe(true);
         });
-      })
-      .finally(() => {
-        if (done) {
-          done();
-        }
       });
 }
 
@@ -80,14 +78,12 @@ describe('UI tests', function() {
     // navigate to localhost:8081, which is redirected to the tree page
     beforeAll(function(done) {
       return driver.get('http://localhost:8081/tree/datalab')
-        .then(function() {
-          driver.wait(until.titleIs('Google Cloud DataLab'), 5000);
-        })
-        .then(function() {
+        .then(() => driver.wait(until.titleIs('Google Cloud DataLab'), 5000))
+        .then(() => {
           // wait for the Datalab page to finish loading
           return driver.wait(function() {
             return driver.executeScript('return window.datalab.loaded')
-              .then(function(loaded) {
+              .then(loaded => {
                 return loaded === true;
               });
           }, 10000);
@@ -96,29 +92,28 @@ describe('UI tests', function() {
     });
 
     it('appears correctly before any actions have been taken', function(done) {
-      return screenshotAndCompare('body.png', 'body', done);
+      return screenshotAndCompare('body.png', 'body')
+        .then(done);
     });
 
     it('opens help menu correctly when its button is clicked', function(done) {
       return driver.findElement(By.id('helpButton'))
-        .then(function(button) {
-          button.click();
-        })
-        .then(screenshotAndCompare('bodyWithHelp.png', 'bodyWithHelp', done));
+        .then(button => button.click())
+        .then(() => screenshotAndCompare('bodyWithHelp.png', 'bodyWithHelp'))
+        .then(done);
     });
 
     it('appears correctly after closing help menu by clicking the body element', function(done) {
       return driver.findElement(By.tagName('body'))
-        .then(function(button) {
-          button.click();
-        })
-        .then(screenshotAndCompare('body.png', 'body', done));
+        .then(button => button.click())
+        .then(() => screenshotAndCompare('body.png', 'body'))
+        .then(done);
     });
 
     // Simulate a list reload by calling the Jupyter function, and waiting
     // on the draw list event to make sure all elements have rendered
     function reloadNotebookList() {
-      driver.executeAsyncScript(function() {
+      return driver.executeAsyncScript(function() {
         const callback = arguments[arguments.length - 1];
         require(['base/js/events'], function(events) {
           events.on('draw_notebook_list.NotebookList', callback);
@@ -128,37 +123,49 @@ describe('UI tests', function() {
     }
 
     it('shows(hides) extra buttons when a tree item is (un)selected', function(done) {
+      let itemXpath = '(//div[@id="notebook_list"]/div[@class="list_item row"])[last()]'
       // Reload the notebook list to make sure the tree initialization
       // code isn't executed more than once
-      reloadNotebookList();
-
-      // Get an item in the file listing. the reason we're not using first
-      // is because the first item is not selectable (up dir)
-      const listItem = driver.findElement(
-        By.xpath('(//div[@id="notebook_list"]/div[@class="list_item row"])[last()]'));
-
-      // Click the item, make sure the UI changes accordingly (extra buttons added)
-      listItem.click();
-      return screenshotAndCompare('listItemSelected.png', 'listItemSelected', null)
-        .then(function() {
-          // Now unselect the same item and make sure the extra icons disappear
-          listItem.click();
-          return screenshotAndCompare('listItemUnselected.png', 'listItemUnselected', done);
-        });
+      return reloadNotebookList()
+        // Get an item in the file listing. the reason we're not using first
+        // is because the first item is not selectable (up dir)
+        // Then click the item, make sure the UI changes accordingly (extra buttons added)
+        .then(() => driver.findElement(By.xpath(itemXpath)).click())
+        .then(() => screenshotAndCompare('listItemSelected.png', 'listItemSelected'))
+        // Now unselect the same item and make sure the extra icons disappear
+        .then(() => driver.findElement(By.xpath(itemXpath)).click())
+        .then(() => screenshotAndCompare('listItemUnselected.png', 'listItemUnselected'))
+        .then(done);
     });
 
     it('clicks Add Folder and makes sure a new folder is added', function(done) {
       // Add a new folder
-      driver.findElement(By.id('addFolderButton')).click();
-      reloadNotebookList();
-      return screenshotAndCompare('folderAdded.png', 'folderAdded', done);
+      return driver.findElement(By.id('addFolderButton')).click()
+        .then(reloadNotebookList)
+        .then(() => screenshotAndCompare('folderAdded.png', 'folderAdded'))
+        // Cleanup the new folder
+        .finally(function() {
+          return driver.executeScript(
+            "Jupyter.notebook_list.contents.delete(" +
+              "Jupyter.notebook_list.notebook_path + '/Untitled Folder')"
+          );
+        })
+        .then(done);
     });
 
     it('clicks Add Notebook and makes sure a new notebook is added', function(done) {
       // Add a new notebook
-      driver.findElement(By.id('addNotebookButton')).click();
-      reloadNotebookList();
-      return screenshotAndCompare('folderAndNotebookAdded.png', 'folderAndNotebookAdded', done);
+      return driver.findElement(By.id('addNotebookButton')).click()
+        .then(reloadNotebookList)
+        .then(() => screenshotAndCompare('notebookAdded.png', 'notebookAdded'))
+        // Cleanup the new notebook
+        .finally(function() {
+          return driver.executeScript(
+            "Jupyter.notebook_list.contents.delete(" +
+              "Jupyter.notebook_list.notebook_path + '/Untitled Notebook.ipynb')"
+          );
+        })
+        .then(done);
     });
 
   }, suiteTimeout);

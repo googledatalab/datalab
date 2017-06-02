@@ -40,7 +40,7 @@ function releaseDriver(driver) {
   driver.quit();
 }
 
-function testNotebook(driver, path, ignoreList = []) {
+function testNotebook(driver, path, ignoreList = [], done) {
   const notebookTitle = path.substr(path.lastIndexOf('/') + 1).slice(0, -'.ipynb'.length);
   let testComplete = false;
   return driver.get('http://localhost:8081/notebooks/' + path)
@@ -84,10 +84,10 @@ function testNotebook(driver, path, ignoreList = []) {
                 if (ignoreList.indexOf(idx) === -1 && output.output_type === 'stream') {
                   since('Cell #' + idx + ' threw an error: ' + output.text)
                       .expect(output.name).not.toEqual('stderr');
-                  testComplete = true;
                 }
               });
             }
+            testComplete = true;
           });
         });
     })
@@ -104,6 +104,7 @@ function testNotebook(driver, path, ignoreList = []) {
     .finally(function() {
       since('"expect" for output.name was not executed')
           .expect(testComplete).toBe(true);
+      done();
     });
 }
 
@@ -121,8 +122,7 @@ describe('Notebook tests', function() {
   notebooks_config.forEach(function(nb) {
     describe(nb.path, function() {
       it('runs without errors', function(done) {
-        return testNotebook(driver, nb.path, nb.ignore)
-            .finally(() => done());
+        return testNotebook(driver, nb.path, nb.ignore, done);
       }, timeOut);
     });
 
