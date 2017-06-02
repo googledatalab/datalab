@@ -1,3 +1,5 @@
+<link rel="import" href="../../custom_components/shared-styles/shared-styles.html">
+
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
 <link rel="import" href="../../bower_components/iron-selector/iron-selector.html">
@@ -6,58 +8,21 @@
 <dom-module id="datalab-files">
   <template>
 
-    <style>
-      #container {
-      }
-      iron-selector {
-        display: flex;
-      }
-      paper-tabs {
-        height: 80px;
-        background-color: #ddd;
-        --paper-tab-ink: {
-          color: red;
-        }
-      }
-      .storage-service-button {
-        display: flex;
-        --paper-button: {
-          font-family: RobotoDraft, 'Helvetica Neue', Helvetica, Arial;
-          font-size: 12px;
-        };
-      }
-      .storage-service-button > span {
-        width: 60px;
-        padding-left: 10px;
-        font-weight: normal;
-      }
-      .storage-service-button > img {
-        width: 40px;
-        height: 40px;
+    <style include="datalab-shared-styles">
+      #toolbar {
+        height: var(--toolbar-height);
+        width: 100%;
+        background-color: var(--app-secondary-color);
       }
     </style>
 
+    <div id="toolbar">
+    </div>
     <div id="container">
-      <paper-tabs attr-for-selected="id" selected={{storageContext}}>
-        <paper-tab id="recent" class="storage-service-button">
-          <iron-icon icon="device:access-time"></iron-icon>
-          <span>Recent</span>
-        </paper-tab>
-        <paper-tab id="drive" class="storage-service-button">
-          <img src="images/drive-logo.svg">
-          <span>Drive</span>
-        </paper-tab>
-        <paper-tab id="gcs" class="storage-service-button">
-          <img src="images/gcs-logo.svg">
-          <span>Cloud Storage</span>
-        </paper-tab>
-      </paper-tabs>
-      <iron-pages selected="{{storageContext}}" attr-for-selected="id"
-                                                fallback-selection="recent">
-        <div id="recent">Recent</div>
-        <div id="drive">Drive</div>
-        <div id="gcs">GCS</div>
-      </iron-pages>
+      <div id="sidebar">
+      </div>
+      <div id="main-content">
+      </div>
     </div>
 
   </template>
@@ -70,10 +35,6 @@
 
     static get properties() {
       return {
-        storageContext: {
-          type: String,
-          value: 'recent'
-        }
       }
     }
 

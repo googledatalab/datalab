@@ -21,7 +21,7 @@
 # manually starting the server.
 
 HERE=$(dirname $0)
-CONTENT=$HOME
+CONTENT=$HOME/datalab_content
 ENTRYPOINT="/datalab/run.sh"
 DEVROOT_DOCKER_OPTION=''
 LIVE_MODE=1

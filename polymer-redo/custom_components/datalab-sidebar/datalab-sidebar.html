@@ -1,37 +1,47 @@
+<link rel="import" href="../../custom_components/shared-styles/shared-styles.html">
+
 <link rel="import" href="../../bower_components/iron-selector/iron-selector.html">
-<link rel="import" href="../../bower_components/paper-drawer-panel/paper-drawer-panel.html">
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../../bower_components/iron-icons/editor-icons.html">
 <link rel="import" href="../../bower_components/iron-icons/hardware-icons.html">
 <link rel="import" href="../../bower_components/iron-icons/av-icons.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
-<link rel="import" href="../../bower_components/paper-button/paper-button.html">
 
 <dom-module id="datalab-sidebar">
   <template>
-    <style>
+    <style include="datalab-shared-styles">
       a, u {
         text-decoration: none;
       }
       .container {
-        background-color: #eee;
+        background-color: var(--app-secondary-color);
         height: 100%;
       }
       .sidebar-button {
+        height: var(--toolbar-height);
         width: 100%;
-        height: 80px;
         margin: 0px;
         color: #666;
         font-weight: normal;
+        border-top: 1px solid transparent;
         --paper-button: {
-          @apply(--layout-vertical);
           font-family: RobotoDraft, 'Helvetica Neue', Helvetica, Arial;
+          --paper-button-ink-color: #ccc;
           font-size: 12px;
         };
       }
+      .sidebar-button > iron-icon {
+        width: 21px;
+        height: 21px;
+        padding: 0px 10px 0px 24px;
+      }
+      .sidebar-button > span {
+        width: 70%;
+      }
       .iron-selected > .sidebar-button {
-        background-color: #ddd;
-        color: #000;
+        background-color: #E8E8E8;
+        border-top: 1px solid #d3d3d3;
+        color: var(--selection-fg-color);
         border-radius: 0px;
       }
     </style>
@@ -39,34 +49,17 @@
     <div class="container">
       <iron-selector class="container" attr-for-selected="id" selected=[[page]]
                      class="drawer-list" role="navigation">
+        <paper-button class="sidebar-button"></paper-button>
         <a href="/files" id="files">
           <paper-button class="sidebar-button">
             <iron-icon icon="editor:insert-drive-file"></iron-icon>
-              Files
-          </paper-button>
-        </a>
-        <a href="/data" id="data">
-          <paper-button class="sidebar-button">
-            <iron-icon icon="view-quilt"></iron-icon>
-              Data
+            <span>Files</span>
           </paper-button>
         </a>
         <a href="/sessions" id="sessions">
           <paper-button class="sidebar-button">
             <iron-icon icon="av:featured-play-list"></iron-icon>
-            Sessions
-          </paper-button>
-        </a>
-        <a href="/editor" id="editor">
-          <paper-button class="sidebar-button">
-            <iron-icon icon="icons:code"></iron-icon>
-            Editor
-          </paper-button>
-        </a>
-        <a href="/terminal" id="terminal">
-          <paper-button class="sidebar-button">
-            <iron-icon icon="hardware:computer"></iron-icon>
-            Terminal
+            <span>Sessions</span>
           </paper-button>
         </a>
       </iron-selector>
