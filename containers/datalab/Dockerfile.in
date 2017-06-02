@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM datalab-base
+FROM _base_image_
 MAINTAINER Google Cloud DataLab
 
 # Add build artifacts

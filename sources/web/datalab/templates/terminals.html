@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="/static/terminal/css/override.css" type="text/css">
 
   <script src="/static/components/jquery/jquery.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
 </head>
 <body class="terminal-app"
   data-base-url="<%baseUrl%>"
@@ -116,7 +117,8 @@
     window.datalab = {};
 
     $("#appBar").load("/static/appbar.html", function() {
-      require(['/static/terminal/js/main.min.js', 'tree/js/main.min']);
+      require(['/static/terminal/js/main.min.js', 'tree/js/main.min',
+               '/static/websocket.js']);
     });
   </script>
   <script src="//www.gstatic.com/feedback/api.js" async="true" defer="true"></script>

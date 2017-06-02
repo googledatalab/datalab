@@ -47,8 +47,9 @@ fi
 
 GATEWAY_IMAGE="gcr.io/${PROJECT_ID}/datalab-gateway:${PREVIOUS_BUILD}"
 DATALAB_IMAGE="gcr.io/${PROJECT_ID}/datalab:local-${PREVIOUS_BUILD}"
+DATALAB_GPU_IMAGE="gcr.io/${PROJECT_ID}/datalab-gpu:local-${PREVIOUS_BUILD}"
 
-read -p "Proceed to release ${GATEWAY_IMAGE} and ${DATALAB_IMAGE} as latest? [Y/n]: " answer
+read -p "Proceed to release ${GATEWAY_IMAGE}, ${DATALAB_GPU_IMAGE}, and ${DATALAB_IMAGE} as latest? [Y/n]: " answer
 if echo $answer | grep -iq -v '^y'; then
   exit 1
 fi
@@ -67,3 +68,12 @@ gcloud docker -- push gcr.io/${PROJECT_ID}/datalab-gateway:latest
 echo "Releasing the Datalab image: ${DATALAB_IMAGE}"
 docker tag -f ${DATALAB_IMAGE} gcr.io/${PROJECT_ID}/datalab:local
 gcloud docker -- push gcr.io/${PROJECT_ID}/datalab:local
+
+echo "Pulling the rollback GPU images: ${DATALAB_GPU_IMAGE}"
+# This will fail and exit if the previous GPU image doesn't exist.
+# This will happen if we try to rollback the first GPU release, and
+# that is fine since there is nothing to rollback to.
+gcloud docker -- pull ${DATALAB_GPU_IMAGE} || exit 0
+echo "Releasing the Datalab GPU image: ${DATALAB_GPU_IMAGE}"
+docker tag -f ${DATALAB_GPU_IMAGE} gcr.io/${PROJECT_ID}/datalab-gpu:local
+gcloud docker -- push gcr.io/${PROJECT_ID}/datalab-gpu:local
