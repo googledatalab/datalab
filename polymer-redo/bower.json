@@ -11,7 +11,8 @@
     "paper-button": "PolymerElements/paper-button#^2.0.0",
     "iron-pages": "PolymerElements/iron-pages#^2.0.0",
     "app-route": "PolymerElements/app-route#^2.0.0",
-    "paper-dialog": "PolymerElements/paper-dialog#^2.0.0"
+    "paper-dialog": "PolymerElements/paper-dialog#^2.0.0",
+    "app-layout": "PolymerElements/app-layout#^2.0.0"
   },
   "devDependencies": {
     "web-component-tester": "Polymer/web-component-tester#^6.0.0",
