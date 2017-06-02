@@ -97,15 +97,13 @@ describe('UI tests', function() {
     });
 
     it('opens help menu correctly when its button is clicked', function(done) {
-      return driver.findElement(By.id('helpButton'))
-        .then(button => button.click())
+      return driver.findElement(By.id('helpButton')).click()
         .then(() => screenshotAndCompare('bodyWithHelp.png', 'bodyWithHelp'))
         .then(done);
     });
 
     it('appears correctly after closing help menu by clicking the body element', function(done) {
-      return driver.findElement(By.tagName('body'))
-        .then(button => button.click())
+      return driver.findElement(By.tagName('body')).click()
         .then(() => screenshotAndCompare('body.png', 'body'))
         .then(done);
     });
@@ -165,6 +163,37 @@ describe('UI tests', function() {
               "Jupyter.notebook_list.notebook_path + '/Untitled Notebook.ipynb')"
           );
         })
+        .then(done);
+    });
+
+    it('Settings page defaults to light theme', function(done) {
+      driver.findElement(By.id('accountDropdownButton')).click()
+        .then(() => screenshotAndCompare('settingsMenu.png', 'settingsMenu', null))
+        .then(() => driver.findElement(By.id('settingsButton')).click())
+        // After clicking on the Settings menu item, wait for the dialog.
+        .then(() => driver.wait(until.elementLocated(By.id('lightThemeRadioOption'))))
+        // Wait for the fade-in to complete.
+        .then(() => driver.sleep(1000))
+        .then(() => screenshotAndCompare('settingsLightTheme.png', 'settingsLightTheme', null))
+        // Close the dialog.
+        .then(() => driver.findElement(By.xpath('//button[@data-dismiss="modal"]')).click())
+        .then(() => driver.sleep(1000))
+        .then(done);
+    });
+
+    it('Settings page can change to dark theme', function(done) {
+      driver.findElement(By.id('accountDropdownButton')).click()
+        .then(() => driver.findElement(By.id('settingsButton')).click())
+        // After clicking on the Settings menu item, wait for the dialog.
+        .then(() => driver.wait(until.elementLocated(By.id('lightThemeRadioOption'))))
+        // Wait for the fade-in to complete.
+        .then(() => driver.sleep(1000))
+        .then(() => driver.findElement(By.id('darkThemeRadioOption')).click())
+        .then(() => screenshotAndCompare('settingsDarkTheme.png', 'settingsDarkTheme', null))
+        .then(() => driver.findElement(By.id('lightThemeRadioOption')).click())
+        // Close the dialog.
+        .then(() => driver.findElement(By.xpath('//button[@data-dismiss="modal"]')).click())
+        .then(() => driver.sleep(1000))
         .then(done);
     });
 
