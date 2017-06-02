@@ -1,5 +1,5 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
-<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
 <link rel="import" href="../../bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="../../bower_components/iron-icons/device-icons.html">
 
@@ -7,56 +7,51 @@
   <template>
 
     <style>
+      #container {
+      }
       iron-selector {
         display: flex;
       }
-
+      paper-tabs {
+        height: 80px;
+        background-color: #ddd;
+        --paper-tab-ink: {
+          color: red;
+        }
+      }
       .storage-service-button {
-        width: 100%;
-        padding: 20px 5px 20px 5px;
-        margin: 0px;
-        color: #666;
-        font-weight: normal;
         display: flex;
-
         --paper-button: {
           font-family: RobotoDraft, 'Helvetica Neue', Helvetica, Arial;
           font-size: 12px;
         };
       }
-
       .storage-service-button > span {
         width: 60px;
         padding-left: 10px;
+        font-weight: normal;
       }
-
       .storage-service-button > img {
         width: 40px;
         height: 40px;
       }
-
-      .storage-service-button.iron-selected {
-        background-color: #ddd;
-        color: #000;
-        border-radius: 0px;
-      }
     </style>
 
     <div id="container">
-      <iron-selector attr-for-selected="id" selected={{storageContext}}>
-        <paper-button id="recent" class="storage-service-button">
+      <paper-tabs attr-for-selected="id" selected={{storageContext}}>
+        <paper-tab id="recent" class="storage-service-button">
           <iron-icon icon="device:access-time"></iron-icon>
           <span>Recent</span>
-        </paper-button>
-        <paper-button id="drive" class="storage-service-button">
+        </paper-tab>
+        <paper-tab id="drive" class="storage-service-button">
           <img src="images/drive-logo.svg">
           <span>Drive</span>
-        </paper-button>
-        <paper-button id="gcs" class="storage-service-button">
+        </paper-tab>
+        <paper-tab id="gcs" class="storage-service-button">
           <img src="images/gcs-logo.svg">
-          <span>Drive</span>
-        </paper-button>
-      </iron-selector>
+          <span>Cloud Storage</span>
+        </paper-tab>
+      </paper-tabs>
       <iron-pages selected="{{storageContext}}" attr-for-selected="id"
                                                 fallback-selection="recent">
         <div id="recent">Recent</div>
