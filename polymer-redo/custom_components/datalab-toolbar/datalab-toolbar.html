@@ -8,7 +8,7 @@
   <template>
     <style>
       :host {
-        --app-primary-color: #2fa4ff;
+        --app-primary-color: #424242;
         --toolbar-button-dimension: 35px;
       }
       .title-image {
@@ -21,13 +21,19 @@
         color: #fff;
         font-family: 'Roboto', 'Noto', sans-serif;
       }
+      app-toolbar {
+        height: 48px;
+      }
       paper-icon-button {
         --paper-icon-button: {
           width: var(--toolbar-button-dimension);
           height: var(--toolbar-button-dimension);
         };
       }
-      .title {
+      .title-google {
+        font-weight: bolder;
+      }
+      .title-cloud-datalab {
         font-weight: lighter;
       }
     </style>
@@ -36,7 +42,8 @@
       <app-toolbar>
         <div main-title class="title">
           <img src="images/logo.svg" class="title-image">
-          <span>Google Cloud Datalab</span>
+          <span class="title-google">Google</span>
+          <span class="title-cloud-datalab">Cloud Datalab</span>
         </div>
         <paper-icon-button class="toolbar-button" icon="search"></paper-icon-button>
         <paper-icon-button class="toolbar-button" icon="help"
