@@ -239,7 +239,7 @@ function uncheckedRequestHandler(request: http.ServerRequest, response: http.Ser
       urlpath.indexOf('/oauthcallback') == 0) {
     // Start or return from auth flow.
     auth.handleAuthFlow(request, response, parsed_url, appSettings);
-  } else if ((urlpath.indexOf('/static') == 0) || (urlpath.indexOf('/custom') == 0)) {
+  } else if ((urlpath.indexOf('/static') == 0) || (urlpath.indexOf('/files') == 0)) {
     // /static and /custom paths for returning static content
     staticHandler(request, response);
   } else {

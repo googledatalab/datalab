@@ -182,6 +182,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     'settings.html',
     'settings.js',
     'websocket.js',
+    'index.css',
   ];
   // Map of resources where we change the name.
   const staticResourcesMap: {[key:string]: string} = {
@@ -208,14 +209,8 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       sendJupyterFile(path, response);
     }
   }
-  else if (path.lastIndexOf('/custom.js') >= 0) {
-    // NOTE: Uncomment to use external content mapped into the container.
-    //       This is only useful when actively developing the content itself.
-    // var text = fs.readFileSync('/sources/datalab/static/datalab.js', { encoding: 'utf8' });
-    // response.writeHead(200, { 'Content-Type': 'text/javascript' });
-    // response.end(text);
-
-    sendDataLabFile('datalab.js', response);
+  else if (path.lastIndexOf('/files') >= 0) {
+    sendDataLabFile('index.html', response);
   }
   else if (path.lastIndexOf('/custom.css') > 0) {
     var userId: string = userManager.getUserId(request);
@@ -235,7 +230,10 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   }
   else if ((path.indexOf('/static/extensions/') == 0) ||
            (path.indexOf('/static/require/') == 0) ||
-           (path.indexOf('/static/fonts/') == 0)) {
+           (path.indexOf('/static/fonts/') == 0) ||
+           (path.indexOf('/static/images/') == 0) ||
+           (path.indexOf('/static/custom_components/') == 0) ||
+           (path.indexOf('/static/bower_components/') == 0)) {
     // Strip off the leading '/static/' to turn path into a relative path within the
     // static directory.
     sendDataLabFile(path.substr('/static/'.length), response);
