@@ -13,19 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Builds the Google Cloud DataLab docker image. Usage:
+# Builds the Google Cloud DataLab GPU docker image. Usage:
 #   build.sh [path_of_pydatalab_dir]
 # If [path_of_pydatalab_dir] is provided, it will copy the content of that dir into image.
 # Otherwise, it will get the pydatalab by "git clone" from pydatalab repo.
 
-# Create a versioned Dockerfile based on current date and git commit hash
-VERSION=`date +%Y%m%d`
-VERSION_SUBSTITUTION="s/_version_/0.5.$VERSION/"
-
-COMMIT=`git log --pretty=format:'%H' -n 1`
-COMMIT_SUBSTITUTION="s/_commit_/$COMMIT/"
-
-BASE_IMAGE_SUBSTITUTION="s/_base_image_/datalab-base-gpu/"
+pushd $(pwd) >> /dev/null
+HERE=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 
 if [ -z "$1" ]; then
   pydatalabPath=''
@@ -33,29 +27,17 @@ else
   pydatalabPath=$(realpath "$1")
 fi
 
-cd $(dirname $0)
-
-cat Dockerfile.in | sed $VERSION_SUBSTITUTION | sed $COMMIT_SUBSTITUTION | sed $BASE_IMAGE_SUBSTITUTION > Dockerfile
-
-# Set up our required environment
-source ../../tools/initenv.sh
-
-# Build the datalab frontend
-../../sources/web/build.sh
-
-# Copy build outputs as a dependency of the Dockerfile
-rsync -avp ../../build/ build
-
-# Copy the license file into the container
-cp ../../third_party/license.txt content/license.txt
-
 # Build the base docker image
-../base/build.gpu.sh "$pydatalabPath"
+cd "${HERE}/../base"
+./build.gpu.sh "$pydatalabPath"
+cd "${HERE}/"
+
+${HERE}/prepare.sh "datalab-base-gpu"
 
 # Build the docker image
 docker build ${DOCKER_BUILD_ARGS} -t datalab-gpu .
 
 # Finally cleanup
-rm -rf build
-rm content/license.txt
-rm Dockerfile
+${HERE}/cleanup.sh
+
+popd >> /dev/null

@@ -13,31 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Builds the Google Cloud DataLab docker image. Usage:
-#   build.sh [path_of_pydatalab_dir]
-# If [path_of_pydatalab_dir] is provided, it will copy the content of that dir into image.
-# Otherwise, it will get the pydatalab by "git clone" from pydatalab repo.
-
 pushd $(pwd) >> /dev/null
 HERE=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
+cd "${HERE}"
 
-if [ -z "$1" ]; then
-  pydatalabPath=''
-else
-  pydatalabPath=$(realpath "$1")
-fi
-
-# Build the base docker image
-cd "${HERE}/../base"
-./build.sh "$pydatalabPath"
-cd "${HERE}/"
-
-${HERE}/prepare.sh "datalab-base"
-
-# Build the docker image
-docker build ${DOCKER_BUILD_ARGS} -t datalab .
-
-# Finally cleanup
-${HERE}/cleanup.sh
-
+rm -rf build
+rm content/license.txt
+rm Dockerfile
 popd >> /dev/null
