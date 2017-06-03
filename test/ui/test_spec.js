@@ -88,7 +88,9 @@ describe('UI tests', function() {
               });
           }, 10000);
         })
-        .finally(() => done());
+        .then(driver.executeScript("window.datalab.vminfo.vm_name='fake_vm_name_for_testing';" +
+              "require(['static/appbar'],appbar=>appbar.setAccountMenuVminfo());"))
+        .finally(done);
     });
 
     it('appears correctly before any actions have been taken', function(done) {
