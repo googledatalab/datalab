@@ -26,7 +26,7 @@ steps:
   id:   'buildGpuCore'
   waitFor: ['tagNvidiaUbuntu']
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'datalab-base-gpu', '-f', 'Dockerfile.gpu', '/workspace/containers/base/']
+  args: ['build', '-t', 'datalab-base-gpu', '-f', '/workspace/containers/base/Dockerfile.gpu', '/workspace/containers/base/']
   id:   'buildGpuBase'
   waitFor: ['buildGpuCore']
 
