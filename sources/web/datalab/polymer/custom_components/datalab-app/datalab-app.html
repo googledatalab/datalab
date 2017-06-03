@@ -5,6 +5,8 @@
 
 <link rel="import" href="../../custom_components/datalab-sidebar/datalab-sidebar.html">
 <link rel="import" href="../../custom_components/datalab-toolbar/datalab-toolbar.html">
+<link rel="import" href="../../custom_components/datalab-files/datalab-files.html">
+<link rel="import" href="../../custom_components/datalab-sessions/datalab-sessions.html">
 
 <dom-module id="datalab-app">
   <template>
@@ -47,10 +49,7 @@
         <div class="datalab-main-content">
           <iron-pages selected="{{page}}" attr-for-selected="name" fallback-selection="files">
             <datalab-files name="files"></datalab-files>
-            <datalab-data name="data"></datalab-data>
             <datalab-sessions name="sessions"></datalab-sessions>
-            <datalab-editor name="editor"></datalab-editor>
-            <datalab-terminal name="terminal"></datalab-terminal>
           </iron-pages>
         </div>
       </div>

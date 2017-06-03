@@ -5,6 +5,7 @@
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
 
 <dom-module id="datalab-toolbar">
   <template>
@@ -17,9 +18,8 @@
         color: #c8c8c8;
       }
       .title-image {
-        width: 40px;
+        height: 30px;
         vertical-align: middle;
-        padding-right: 10px;
       }
       app-header {
         background-color: var(--app-primary-color);
@@ -60,9 +60,7 @@
     <app-header slot="header" fixed shadow>
       <app-toolbar>
         <div main-title class="title">
-          <img src="images/logo.svg" class="title-image">
-          <span>Google</span>
-          <span class="title-cloud-datalab">Cloud Datalab</span>
+          <img src="images/datalab-logo.png" class="title-image">
         </div>
         <paper-icon-button class="toolbar-button" icon="info"
                            onclick={{_infoClicked}}></paper-icon-button>
@@ -75,8 +73,8 @@
     <paper-dialog id="info-dialog" class="dialog" with-backdrop>
       <h2>Info</h2>
       <hr>
-      <paper-dialog-scrollable class="dialog-content">
-      </paper-dialog-scrollable>
+      <div class="dialog-content">
+      </div>
       <hr>
       <div>
         <paper-button dialog-dismiss raised>Close</paper-button>
@@ -86,8 +84,8 @@
     <paper-dialog id="settings-dialog" class="dialog" with-backdrop>
       <h2>Settings</h2>
       <hr>
-      <paper-dialog-scrollable class="dialog-content">
-      </paper-dialog-scrollable>
+      <div class="dialog-content">
+      </div>
       <hr>
       <div>
         <paper-button dialog-dismiss raised>Close</paper-button>

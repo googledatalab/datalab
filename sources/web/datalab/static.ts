@@ -29,6 +29,7 @@ var CONTENT_TYPES: common.Map<string> = {
   '.js': 'text/javascript',
   '.css': 'text/css',
   '.png': 'image/png',
+  '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
   '.txt': 'text/plain',
   '.html': 'text/html'
@@ -209,8 +210,11 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       sendJupyterFile(path, response);
     }
   }
-  else if (path.lastIndexOf('/files') >= 0) {
+  else if (path.lastIndexOf('/files') >= 0 || path.lastIndexOf('/sessions') >= 0) {
     sendDataLabFile('index.html', response);
+  }
+  else if (path.lastIndexOf('/custom.js') >= 0) {
+    sendDataLabFile('datalab.js', response);
   }
   else if (path.lastIndexOf('/custom.css') > 0) {
     var userId: string = userManager.getUserId(request);
@@ -227,8 +231,11 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     } else {
       sendDataLabFile(DEFAULT_THEME_FILE, response);
     }
-  }
-  else if ((path.indexOf('/static/extensions/') == 0) ||
+  } else if ((path.indexOf('/images/') == 0) ||
+           (path.indexOf('/custom_components/') == 0) ||
+           (path.indexOf('/bower_components/') == 0)) {
+    sendDataLabFile(path.substr(1), response);
+  } else if ((path.indexOf('/static/extensions/') == 0) ||
            (path.indexOf('/static/require/') == 0) ||
            (path.indexOf('/static/fonts/') == 0) ||
            (path.indexOf('/static/images/') == 0) ||

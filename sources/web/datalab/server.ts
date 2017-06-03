@@ -239,7 +239,14 @@ function uncheckedRequestHandler(request: http.ServerRequest, response: http.Ser
       urlpath.indexOf('/oauthcallback') == 0) {
     // Start or return from auth flow.
     auth.handleAuthFlow(request, response, parsed_url, appSettings);
-  } else if ((urlpath.indexOf('/static') == 0) || (urlpath.indexOf('/files') == 0)) {
+  } else if (urlpath.indexOf('/static') == 0 || 
+             urlpath.indexOf('/custom_components') == 0 ||
+             urlpath.indexOf('/bower_components') == 0 ||
+             urlpath.indexOf('/images') == 0 ||
+             urlpath.indexOf('/custom.js') == 0 ||
+             urlpath.indexOf('/index') == 0 ||
+             urlpath.indexOf('/files') == 0 ||
+             urlpath.indexOf('/sessions') == 0) {
     // /static and /custom paths for returning static content
     staticHandler(request, response);
   } else {
