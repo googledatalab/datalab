@@ -45,7 +45,7 @@ steps:
 - name: 'debian'
   args: ['/workspace/containers/datalab/prepare.sh', 'datalab-base-gpu', "${REVISION_ID}"]
   id:   'prepareDatalabGPU'
-  waitFor: ['cleanupDatalab', 'buildGpuCore']
+  waitFor: ['cleanupDatalab', 'buildGpuBase']
 - name: 'gcr.io/cloud-builders/docker'
   args: ['build', '-t', 'gcr.io/${PROJECT_ID}/datalab-gpu:local-${REVISION_ID}', '/workspace/containers/datalab/']
   id:   'buildDatalabGPU'
