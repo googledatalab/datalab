@@ -55,4 +55,4 @@ images:
   - 'gcr.io/${PROJECT_ID}/datalab:local-${REVISION_ID}'
   - 'gcr.io/${PROJECT_ID}/datalab-gpu:local-${REVISION_ID}'
 
-timeout: '1800s'
+timeout: '2400s'
