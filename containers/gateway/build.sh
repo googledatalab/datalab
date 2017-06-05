@@ -18,30 +18,26 @@
 # If [path_of_pydatalab_dir] is provided, it will copy the content of that dir into image.
 # Otherwise, it will get the pydatalab by "git clone" from pydatalab repo.
 
-# Create a versioned Dockerfile based on current date and git commit hash
-source ../../tools/release/version.sh
+pushd $(pwd) >> /dev/null
+HERE=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 
-VERSION_SUBSTITUTION="s/_version_/$DATALAB_VERSION/"
-COMMIT_SUBSTITUTION="s/_commit_/$DATALAB_COMMIT/"
-
-cat Dockerfile.in | sed $VERSION_SUBSTITUTION | sed $COMMIT_SUBSTITUTION > Dockerfile
-
-# Copy build outputs as a dependency of the Dockerfile
-rsync -avp ../../build/ build
-
-# Copy the license file into the container
-cp ../../third_party/license.txt content/license.txt
+if [ -z "$1" ]; then
+  pydatalabPath=''
+else
+  pydatalabPath=$(realpath "$1")
+fi
 
 # Build the base docker image
-cd ../base
-./build.sh "$1"
-cd ../gateway
+cd "${HERE}/../base"
+./build.sh "$pydatalabPath"
+cd "${HERE}/"
+
+${HERE}/prepare.sh
 
 # Build the docker image
 docker build ${DOCKER_BUILD_ARGS} -t datalab-gateway .
 
 # Finally cleanup
-rm -rf build
-rm content/license.txt
-rm Dockerfile
+${HERE}/cleanup.sh
 
+popd >> /dev/null

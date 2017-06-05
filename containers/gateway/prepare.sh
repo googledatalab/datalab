@@ -13,31 +13,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Builds the Google Cloud DataLab docker image. Usage:
-#   build.sh [path_of_pydatalab_dir]
+# Prepares the local filesystem to build the Google Cloud DataLab
+# gateway docker image. Note that invocations of this should generally
+# be followed by a `docker build` and then `cleanup.sh`.
+#
+# Usage:
+#   prepare.sh [path_of_pydatalab_dir]
+#   docker build -t datalab-gateway ./
+#   cleanup.sh
+#
 # If [path_of_pydatalab_dir] is provided, it will copy the content of that dir into image.
 # Otherwise, it will get the pydatalab by "git clone" from pydatalab repo.
 
 pushd $(pwd) >> /dev/null
 HERE=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
+cd ${HERE}
 
-if [ -z "$1" ]; then
-  pydatalabPath=''
-else
-  pydatalabPath=$(realpath "$1")
-fi
+# Create a versioned Dockerfile based on current date and git commit hash
+source ../../tools/release/version.sh
 
-# Build the base docker image
-cd "${HERE}/../base"
-./build.sh "$pydatalabPath"
-cd "${HERE}/"
+VERSION_SUBSTITUTION="s/_version_/$DATALAB_VERSION/"
+COMMIT_SUBSTITUTION="s/_commit_/$DATALAB_COMMIT/"
 
-${HERE}/prepare.sh "datalab-base"
+cat Dockerfile.in | sed $VERSION_SUBSTITUTION | sed $COMMIT_SUBSTITUTION > Dockerfile
 
-# Build the docker image
-docker build ${DOCKER_BUILD_ARGS} -t datalab .
-
-# Finally cleanup
-${HERE}/cleanup.sh
+# Copy the license file into the container
+cp ../../third_party/license.txt content/license.txt
 
 popd >> /dev/null
