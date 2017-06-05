@@ -74,7 +74,7 @@ define(['util'], (util) => {
         'eventType': 'datalab',
         'eventName': 'createNotebook',
       }
-      reportEvent(event);
+      util.reportEvent(event);
     }
 
     function addFolder(e) {
@@ -104,7 +104,7 @@ define(['util'], (util) => {
       let settings = {
         type : 'POST',
         dataType: 'json',
-        success: (data, status, xhr) => {
+        success: (data, status, jqXHR) => {
           newWindow.location = prefix + 'terminals/' + encodeURIComponent(data.name);
         },
         error : function(jqXHR, status, error){

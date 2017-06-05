@@ -136,7 +136,7 @@ define(['base/js/dialog', 'base/js/events', 'util'], function(dialog, events, ut
       const xhrOptions = {
         errorCallback: errorHandler
       };
-      xhr(timeoutInfoUrl, callback, xhrOptions);
+      util.xhr(timeoutInfoUrl, callback, xhrOptions);
     } else {
       // Too soon to query, just run the clock locally.
       _updateTimeoutDisplay(dropdown);
@@ -151,7 +151,7 @@ define(['base/js/dialog', 'base/js/events', 'util'], function(dialog, events, ut
     const dropdown = $(this).parent().parent().parent();  // Walk up to the account drop-down.
     util.debug.log('Changing enabled to ' + newValue);
     updateTimeoutInfo(dropdown);
-    xhr(timeoutUrl, () => {
+    util.xhr(timeoutUrl, () => {
       timeoutInfo.enabled = newValue;   // Display the new value right away.
       lastUpdateTimeoutTime = 0;
       updateTimeoutInfo(dropdown);
@@ -235,7 +235,7 @@ define(['base/js/dialog', 'base/js/events', 'util'], function(dialog, events, ut
   function _resetIdleTimeout() {
     const timeoutUrl = window.location.protocol + "//" + window.location.host + "/_timeout?reset=true";
     util.debug.log('reset idle timeout');
-    xhr(timeoutUrl, null, {method: 'POST'});
+    util.xhr(timeoutUrl, null, {method: 'POST'});
   }
 
   function notebookScrolled() {

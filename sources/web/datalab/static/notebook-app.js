@@ -1,4 +1,4 @@
-define(['static/appbar', 'static/minitoolbar', 'static/idle-timeout'], function(appbar, minitoolbar, idleTimeout) {
+define(['static/appbar', 'static/minitoolbar', 'static/idle-timeout', 'util'], function(appbar, minitoolbar, idleTimeout, util) {
   function preLoad(ipy, notebook, events, dialog, utils) {
     // Various RequireJS additions used for notebook functionality
     require.config({
@@ -547,7 +547,7 @@ define(['static/appbar', 'static/minitoolbar', 'static/idle-timeout'], function(
         'eventName': 'exportNotebook',
         'metadata': 'format=html',
       }
-      reportEvent(event);
+      util.reportEvent(event);
 
       navigateAlternate('/nbconvert/html');
     })
@@ -560,7 +560,7 @@ define(['static/appbar', 'static/minitoolbar', 'static/idle-timeout'], function(
         'eventName': 'exportNotebook',
         'metadata': 'format=py',
       }
-      reportEvent(event);
+      util.reportEvent(event);
 
       navigateAlternate('/nbconvert/python');
     })
