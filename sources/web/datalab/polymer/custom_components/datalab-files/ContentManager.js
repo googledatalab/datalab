@@ -27,22 +27,77 @@ function xhr(url, callback, options) {
 
 class ContentManager {
 
-  static apiUrl() {
+  static filesApiUrl() {
     return '/api/contents';
   }
 
+  static sessionsApiUrl() {
+    return '/api/sessions';
+  }
+
+  /**
+   * Returns a list of files at the target path
+   * A file has the following interface: {
+   *   content,
+   *   created,
+   *   format,
+   *   last_modified,
+   *   mimetype,
+   *   name,
+   *   path,
+   *   status,
+   *   type,
+   *   writable
+   * }
+   * Two requests are made to /api/contents and /api/sessions to get this data
+   */
   static listFilesAsync(path) {
-    const listPromise = new Promise((resolve, reject) => {
-      xhr(this.apiUrl() + path,
+    const filesPromise = new Promise((resolve, reject) => {
+      xhr(this.filesApiUrl() + path,
           request => {
-            resolve(request.response);
+            try {
+              let files = JSON.parse(request.response).content;
+              resolve(files);
+            } catch(e) {
+              reject('Received bad format from endpoint: ' + this.filesApiUrl());
+            }
           },
-          error => {
-            reject('Could not contact endpoint: ' + this.apiUrl());
-          }
+          {errorCallback: error => {
+            reject('Could not get list of files at: ' + path);
+          }}
       );
     });
 
-    return listPromise;
+    const sessionsPromise = new Promise((resolve, reject) => {
+      xhr(this.sessionsApiUrl(),
+          request => {
+            try {
+              let sessions = JSON.parse(request.response);
+              resolve(sessions);
+            } catch(e) {
+              reject('Received bad format from endpoint: ' + this.sessionsApiUrl());
+            }
+          },
+          {errorCallback: error => {
+            reject('Error contacting endpoint: ' + this.sessionsApiUrl());
+          }}
+      );
+    });
+
+    // combine the return values of the two requests to supplement the files
+    // array with the status value
+    return Promise.all([filesPromise, sessionsPromise])
+      .then(values => {
+        let files = values[0];
+        const sessions = values[1];
+        let runningPaths = [];
+        sessions.forEach(session => {
+          runningPaths.push(session.notebook.path);
+        });
+        files.forEach(file => {
+          file.status = runningPaths.indexOf(file.path) > -1 ? 'running' : '';
+        });
+        return files;
+      });
   }
 }

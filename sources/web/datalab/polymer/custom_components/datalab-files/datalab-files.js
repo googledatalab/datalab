@@ -4,9 +4,13 @@ class FilesElement extends Polymer.Element {
 
   static get properties() {
     return {
+      basePath: {
+        type: String,
+        value: '/'
+      },
       currentPath: {
         type: String,
-        value: '/',
+        value: '',
         observer: '_currentPathChanged'
       },
       fileList: {
@@ -23,32 +27,57 @@ class FilesElement extends Polymer.Element {
 
   _currentPathChanged(newValue) {
     const self = this;
-    ContentManager.listFilesAsync(this.currentPath)
+    ContentManager.listFilesAsync(this.basePath + this.currentPath)
       .then(list => {
-        try {
-          list = JSON.parse(list);
-          self.fileList = list;
-        } catch(e) {
-          console.log('Could not get list of files');
-        }
+        self.fileList = list;
+      }, error => {
+        console.log('Could not get list of files. Using dummy values');
+        self.fileList = [{
+          'name': 'the first item',
+          'path': 'first path',
+          'status': 'hello'
+        }, {
+          'name': 'the second item',
+          'path': 'second path',
+          'status': 'hello'
+        }, {
+          'name': 'the third item',
+          'path': 'third path',
+          'status': ''
+        }, {
+          'name': 'the forth item',
+          'path': 'forth path',
+          'status': 'hello'
+        }];
       });
   }
 
   _fileListChanged() {
-    // initial undefined value
-    if (!this.fileList.content) {
+    // initial value
+    if (!Array.isArray(this.fileList)) {
       return;
     }
 
     const picker = this._getFileListElement();
     let newList = [];
-    this.fileList.content.forEach(file => {
+    this.fileList.forEach(file => {
       newList.push({
         'name': file.name,
         'status': ''
       });
     });
     picker.rows = newList;
+  }
+
+  ready() {
+    super.ready();
+    this.shadowRoot.querySelector('#files').addEventListener('itemDblClick',
+                                                             this._handleDblClicked.bind(this));
+  }
+
+  _handleDblClicked(e) {
+    let newPath = this.fileList[e.detail.index].path;
+    this.currentPath = newPath;
   }
 
 }

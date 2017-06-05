@@ -1,17 +1,16 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/iron-list/iron-list.html">
 <link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
 
 <dom-module id="item-list">
   <template>
 
     <style include="datalab-shared-styles">
-      #list {
-        height: 100%;
-      }
       .row {
+        user-select: none;
         display: flex;
-        height: 35px;
+        --paper-item-min-height: 35px;
         line-height: 35px;
         cursor: default;
       }
@@ -38,17 +37,15 @@
       }
     </style>
 
-    <iron-list id="list" items="[[rows]]" as="item" selection-enabled>
-      <template>
-        <div class="row" selected$="[[selected]]">
-          <div class="checkbox-col">
-            <paper-checkbox checked="{{selected}}"></paper-checkbox>
-          </div>
-          <div class="name-col">[[item.name]]</div>
-          <div class="status-col">[[item.status]]</div>
+    <template is="dom-repeat" id="list" items="{{rows}}">
+      <paper-item class="row" on-click="_rowClicked" on-dblclick="_rowDblClicked">
+        <div class="checkbox-col">
+          <paper-checkbox checked={{item.selected}} checkedChanged="_rowClicked"></paper-checkbox>
         </div>
-      </template>
-    </iron-list>
+        <div class="name-col">[[item.name]]</div>
+        <div class="status-col">[[item.status]]</div>
+      </paper-item>
+    </template>
 
   </template>
 </dom-module>
@@ -62,25 +59,36 @@
       return {
         rows: {
           type: Array,
-          value: [{
-            'name': 'the first item',
-            'status': 'hello'
-          }, {
-            'name': 'the second item',
-            'status': 'hello'
-          }, {
-            'name': 'the third item',
-            'status': ''
-          }, {
-            'name': 'the forth item',
-            'status': 'hello'
-          }]
+          value: function() {
+            return [];
+          }
         },
         columns: {
           type: Array,
           value: []
         }
       }
+    }
+
+    _rowClicked(e) {
+      const index = this.$.list.indexForElement(e.target);
+      const selected = this.rows[index].selected;
+
+      // if the clicked element is the checkbox, we're done, the checkbox already
+      // toggles selection (see the dom-repeat template)
+      // otherwise, select this element, unselect all others
+      if (e.target.tagName !== 'PAPER-CHECKBOX') {
+        for (let i = 0; i < this.rows.length; ++i) {
+          this.set('rows.' + i + '.selected', false);
+        }
+        this.set('rows.' + index + '.selected', true);
+      }
+    }
+
+    _rowDblClicked(e) {
+      const index = this.$.list.indexForElement(e.target);
+      //const selected = this.rows[index].selected;
+      this.dispatchEvent(new CustomEvent('itemDblClick', {detail: {index: index}}));
     }
 
   }

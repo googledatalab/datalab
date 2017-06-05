@@ -27,6 +27,7 @@
         height: calc(100% - var(--toolbar-height));
       }
       #files-header {
+        user-select: none;
         height: calc(var(--toolbar-height) - 2px); /* because borders */
         border-top: 1px solid #d3d3d3;
         border-bottom: 1px solid #d3d3d3;
@@ -48,7 +49,7 @@
       .status-col {
         flex-basis: 200px;
       }
-      #files {
+      .files-container {
         height: calc(100% - var(--toolbar-height));
       }
     </style>
@@ -81,8 +82,8 @@
         <div class="name-col"><strong>Name</strong></div>
         <div class="status-col"><strong>Status</strong></div>
       </div>
-      <div id="files">
-        <item-list></item-list>
+      <div class="files-container">
+        <item-list id="files"></item-list>
       </div>
     </div>
 
