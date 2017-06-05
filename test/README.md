@@ -54,21 +54,23 @@ dependencies in the `.travis.yml` file.
 Run `npm test` from this directory to start the tests, which use [Jasmine](https://jasmine.github.io/) as a
 test runner.
 
-The tests are grouped into three sections: notebook, ui, and unit tests.
-You can run just one section using `run.sh` in this directory with one of these commands:
+The tests are grouped into four test sections: notebook, ui, client unit,
+and server unit.  You can run just one section using `run.sh`
+in this directory with one of these commands:
 
     run.sh --notebook-tests
     run.sh --ui-tests
-    run.sh --unit-tests
+    run.sh --client-unit-tests
+    run.sh --server-unit-tests
 
-If you run `run.sh` with no arguments, it will run all three sections.
+If you run `run.sh` with no arguments, it will run all four sections.
 
 UI and notebook tests require the Datalab and Selenium docker containers to be
 running (as set up in `run.sh`). If you want to iterate on the notebook or ui tests, you can manually start these
 containers as in the run script, then start a test suite by calling the `jasmine` command directly,
 for example: `jasmine --config=notebook/jasmine.json`. Unit tests do not require
 the containers, and are very fast to run: you can run `run.sh -u` to run
-just the unit tests, which should finish in under one second.
+just the client and server unit tests, which should finish in under one second.
 
 If you get errors running the UI tests, you may need to manually delete
 `~/datalab_tests/` and run again.

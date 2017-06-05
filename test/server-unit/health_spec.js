@@ -1,0 +1,76 @@
+/*
+ * Copyright 2017 Google Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+const httpMocks = require('node-mocks-http');
+const process = require('process');
+
+const BASE = '../../build/web/nb/';
+const health = require(BASE + 'health');
+
+describe('Unit tests', function() {
+describe('health', function() {
+
+  let response;
+  beforeEach(function() {
+    response = httpMocks.createResponse();
+  });
+
+  it('returns a handler', function() {
+    expect(health.createHandler()).not.toBeNull();
+  });
+
+  it('handles health request', function() {
+    const request = httpMocks.createRequest({
+      method: 'GET',
+      url: 'http://foo/_ah/health',
+    });
+    health.createHandler(null)(request, response);
+    expect(response.statusCode).toEqual(200);
+    expect(response._isEndCalled()).toBe(true);
+  });
+
+  it('handles start request', function() {
+    const request = httpMocks.createRequest({
+      method: 'GET',
+      url: 'http://foo/_ah/start',
+    });
+    health.createHandler(null)(request, response);
+    expect(response.statusCode).toEqual(200);
+    expect(response._isEndCalled()).toBe(true);
+  });
+
+  it('handles stop request', function() {
+    spyOn(process, 'exit');
+    const request = httpMocks.createRequest({
+      method: 'GET',
+      url: 'http://foo/_ah/stop',
+    });
+    health.createHandler(null)(request, response);
+    expect(response.statusCode).toEqual(200);
+    expect(response._isEndCalled()).toBe(true);
+    expect(process.exit).toHaveBeenCalled();
+  });
+
+  it('complains about bad request', function() {
+    const request = httpMocks.createRequest({
+      method: 'GET',
+      url: 'http://foo/_ah/bogus',
+    });
+    health.createHandler(null)(request, response);
+    expect(response.statusCode).toEqual(404);
+    expect(response._isEndCalled()).toBe(true);
+  });
+
+});
+});
