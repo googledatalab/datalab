@@ -7,13 +7,19 @@
 
     <style include="datalab-shared-styles">
       #list {
-        padding: 10px 0px 10px 0px;
         height: 100%;
       }
       .row {
         display: flex;
         height: 35px;
         line-height: 35px;
+        cursor: default;
+      }
+      .row:nth-child(even) {
+        background-color: #fafafa;
+      }
+      .row:hover {
+        background-color: var(--app-secondary-color);
       }
       .row[selected] > * {
         color: var(--selection-fg-color);
