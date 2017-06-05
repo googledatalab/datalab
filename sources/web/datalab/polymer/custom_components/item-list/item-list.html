@@ -1,0 +1,85 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-list/iron-list.html">
+<link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
+
+<dom-module id="item-list">
+  <template>
+
+    <style include="datalab-shared-styles">
+      #list {
+        padding: 10px 0px 10px 0px;
+        height: 100%;
+      }
+      .row {
+        display: flex;
+        height: 35px;
+        line-height: 35px;
+      }
+      .row[selected] > * {
+        color: var(--selection-fg-color);
+      }
+      .checkbox-col {
+        flex-basis: 50px;
+        text-align: center;
+        --paper-checkbox-size: 15px;
+        --paper-checkbox-unchecked-color: var(--app-primary-color);
+      }
+      .name-col {
+        flex-grow: 1;
+      }
+      .status-col {
+        flex-basis: 200px;
+      }
+    </style>
+
+    <iron-list id="list" items="[[rows]]" as="item" selection-enabled>
+      <template>
+        <div class="row" selected$="[[selected]]">
+          <div class="checkbox-col">
+            <paper-checkbox checked="{{selected}}"></paper-checkbox>
+          </div>
+          <div class="name-col">[[item.name]]</div>
+          <div class="status-col">[[item.status]]</div>
+        </div>
+      </template>
+    </iron-list>
+
+  </template>
+</dom-module>
+
+<script>
+  class ItemListElement extends Polymer.Element {
+
+    static get is() { return "item-list"; }
+
+    static get properties() {
+      return {
+        rows: {
+          type: Array,
+          value: [{
+            'name': 'the first item',
+            'status': 'hello'
+          }, {
+            'name': 'the second item',
+            'status': 'hello'
+          }, {
+            'name': 'the third item',
+            'status': ''
+          }, {
+            'name': 'the forth item',
+            'status': 'hello'
+          }]
+        },
+        columns: {
+          type: Array,
+          value: []
+        }
+      }
+    }
+
+  }
+
+  customElements.define(ItemListElement.is, ItemListElement);
+</script>
+
+
