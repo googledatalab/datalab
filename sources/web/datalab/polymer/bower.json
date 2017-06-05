@@ -9,6 +9,10 @@
     "iron-pages": "PolymerElements/iron-pages#^2.0.0",
     "app-route": "PolymerElements/app-route#^2.0.0",
     "paper-dialog": "PolymerElements/paper-dialog#^2.0.0",
-    "app-layout": "PolymerElements/app-layout#^2.0.0"
+    "app-layout": "PolymerElements/app-layout#^2.0.0",
+    "paper-item": "PolymerElements/paper-item#^2.0.0",
+    "iron-selector": "PolymerElements/iron-selector#^2.0.0",
+    "paper-checkbox": "PolymerElements/paper-checkbox#^2.0.0",
+    "iron-list": "PolymerElements/iron-list#^2.0.0"
   }
 }

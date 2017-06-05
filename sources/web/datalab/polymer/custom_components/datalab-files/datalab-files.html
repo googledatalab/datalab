@@ -1,4 +1,5 @@
 <link rel="import" href="../../custom_components/shared-styles/shared-styles.html">
+<link rel="import" href="../../custom_components/item-list/item-list.html">
 
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/iron-icons/device-icons.html">
@@ -23,6 +24,7 @@
         padding-right: 5px;
       }
       #file-picker {
+        height: calc(100% - var(--toolbar-height));
       }
       #files-header {
         height: calc(var(--toolbar-height) - 2px); /* because borders */
@@ -31,14 +33,23 @@
         display: flex;
         line-height: var(--toolbar-height);
       }
+      .files-row {
+        display: flex;
+        height: 30px;
+        line-height: 30px;
+      }
       .checkbox-col {
-        flex-basis: 40px;
+        flex-basis: 50px;
+        text-align: center;
       }
       .name-col {
         flex-grow: 1;
       }
       .status-col {
         flex-basis: 200px;
+      }
+      #files {
+        height: calc(100% - 2*var(--toolbar-height));
       }
     </style>
 
@@ -71,12 +82,12 @@
         <div class="status-col"><strong>Status</strong></div>
       </div>
       <div id="files">
+        <item-list></item-list>
       </div>
     </div>
 
   </template>
 </dom-module>
 
-<script src="util.js"></script>
 <script src="ContentManager.js"></script>
 <script src="datalab-files.js"></script>

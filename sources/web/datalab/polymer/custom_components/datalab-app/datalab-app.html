@@ -11,10 +11,6 @@
 <dom-module id="datalab-app">
   <template>
     <style>
-      body {
-        margin: 0px;
-        padding: 0px;
-      }
       #container {
         height: 100%;
         display: flex;
@@ -30,6 +26,10 @@
       .datalab-main-content {
         flex-grow: 1;
         box-shadow: -4px 0px 10px -3px rgba(0, 0, 0, 0.1);
+        height: calc(100% - var(--toolbar-height));
+      }
+      iron-pages {
+        height: 100%;
       }
     </style>
 
