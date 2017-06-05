@@ -1,8 +1,35 @@
 steps:
+
+# Write (and publish) a config_local.js file for this build. This
+# can be done in parallel with the rest of the build.
+- name: 'gcr.io/cloud-builders/gsutil'
+  args: ['cp', 'gs://${PROJECT_ID}/deploy/config_local.js', '/workspace/config_local.js']
+  id:   'pullConfigLocal'
+- name: 'debian'
+  args: ['/workspace/tools/release/generate_config_local.sh',
+         '/workspace/config_local.js',
+         '/workspace/config_local_${REVISION_ID}.js',
+         '${REVISION_ID}']
+  id:   'generateConfigLocal'
+  waitFor: ['pullConfigLocal']
+- name: 'debian'
+  args: ['cat', '/workspace/config_local_${REVISION_ID}.js']
+  id:   'catConfigLocal'
+  waitFor: ['generateConfigLocal']
+- name: 'gcr.io/cloud-builders/gsutil'
+  args: ['cp',
+         '/workspace/config_local_${REVISION_ID}.js',
+         'gs://${PROJECT_ID}/builds/config_local_${REVISION_ID}.js']
+  id:   'pushConfigLocal'
+  waitFor: ['catConfigLocal']
+
+# Build the base images. These are not pushed externally, but rather
+# used the build the final images which are pushed.
+
+## First, we build the non-GPU base image
 - name: 'debian'
   args: ['mkdir', '-p', '/workspace/containers/base/pydatalab']
   id:   'makeDir'
-
 - name: 'gcr.io/cloud-builders/docker'
   args: ['pull', 'ubuntu:16.04']
   id:   'pullUbuntu'
@@ -14,6 +41,8 @@ steps:
   args: ['build', '-t', 'datalab-base', '/workspace/containers/base/']
   id:   'buildBase'
   waitFor: ['makeDir', 'tagUbuntu']
+
+## Second, we build the GPU base image
 - name: 'gcr.io/cloud-builders/docker'
   args: ['pull', 'nvidia/cuda:8.0-cudnn5-devel-ubuntu16.04']
   id:   'pullNvidiaUbuntu'
@@ -30,29 +59,45 @@ steps:
   id:   'buildGpuBase'
   waitFor: ['buildGpuCore']
 
+# Now, build the real images (which we push externally)
+
+## Start with the kernel gateway image...
 - name: 'debian'
-  args: ['/workspace/containers/datalab/prepare.sh', 'datalab-base', "${REVISION_ID}"]
+  args: ['/workspace/containers/gateway/prepare.sh', '${REVISION_ID}']
+  id:   'prepareGateway'
+  waitFor: ['buildBase']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/${PROJECT_ID}/datalab-gateway:commit-${REVISION_ID}', '/workspace/containers/gateway/']
+  id:   'buildGateway'
+  waitFor: ['prepareGateway']
+
+## Then build the non-GPU Datalab image...
+- name: 'debian'
+  args: ['/workspace/containers/datalab/prepare.sh', 'datalab-base', '${REVISION_ID}']
   id:   'prepareDatalab'
   waitFor: ['buildBase']
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'gcr.io/${PROJECT_ID}/datalab:local-${REVISION_ID}', '/workspace/containers/datalab/']
+  args: ['build', '-t', 'gcr.io/${PROJECT_ID}/datalab:commit-${REVISION_ID}', '/workspace/containers/datalab/']
   id:   'buildDatalab'
   waitFor: ['prepareDatalab']
 - name: 'debian'
   args: ['/workspace/containers/datalab/cleanup.sh']
   id:   'cleanupDatalab'
   waitFor: ['buildDatalab']
+
+## And finally, build the GPU Datalab image...
 - name: 'debian'
-  args: ['/workspace/containers/datalab/prepare.sh', 'datalab-base-gpu', "${REVISION_ID}"]
+  args: ['/workspace/containers/datalab/prepare.sh', 'datalab-base-gpu', '${REVISION_ID}']
   id:   'prepareDatalabGPU'
   waitFor: ['cleanupDatalab', 'buildGpuBase']
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'gcr.io/${PROJECT_ID}/datalab-gpu:local-${REVISION_ID}', '/workspace/containers/datalab/']
+  args: ['build', '-t', 'gcr.io/${PROJECT_ID}/datalab-gpu:commit-${REVISION_ID}', '/workspace/containers/datalab/']
   id:   'buildDatalabGPU'
   waitFor: ['prepareDatalabGPU']
 
 images:
-  - 'gcr.io/${PROJECT_ID}/datalab:local-${REVISION_ID}'
-  - 'gcr.io/${PROJECT_ID}/datalab-gpu:local-${REVISION_ID}'
+  - 'gcr.io/${PROJECT_ID}/datalab-gateway:commit-${REVISION_ID}'
+  - 'gcr.io/${PROJECT_ID}/datalab:commit-${REVISION_ID}'
+  - 'gcr.io/${PROJECT_ID}/datalab-gpu:commit-${REVISION_ID}'
 
-timeout: '2400s'
+timeout: '3600s'
