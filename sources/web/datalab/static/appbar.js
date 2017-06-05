@@ -1,4 +1,4 @@
-define(['static/idle-timeout'], function(idleTimeout) {
+define(['static/idle-timeout', 'util'], function(idleTimeout, util) {
   function toggleSidebar() {
     var d = document.getElementById('sidebarArea');
     d.style.display = (d.style.display == 'none') ? 'block' : 'none';
@@ -30,7 +30,7 @@ define(['static/idle-timeout'], function(idleTimeout) {
       window.location = '/';
     }
 
-    xhr(restartUrl, function(){
+    util.xhr(restartUrl, function(){
       // We redirect to signal to the user that the restart did something.
       // However, we have to delay that a bit to give Datalab time to restart.
       window.setTimeout(redirect, 500);
@@ -44,7 +44,7 @@ define(['static/idle-timeout'], function(idleTimeout) {
     }
 
     path = window.location.protocol + '//' + window.location.host + '/_info/vminfo';
-    xhr(path, function() {
+    util.xhr(path, function() {
       try {
         const vminfo = JSON.parse(this.responseText);
         window.datalab.vminfo = vminfo;
@@ -72,7 +72,7 @@ define(['static/idle-timeout'], function(idleTimeout) {
     let action = confirm('Stopping this VM will discard any unsaved state. Are you sure?');
     if (action === true) {
       path = window.location.protocol + '//' + window.location.host + '/_stopvm';
-      xhr(path, null, {method: 'POST'});
+      util.xhr(path, null, {method: 'POST'});
     }
   }
 
