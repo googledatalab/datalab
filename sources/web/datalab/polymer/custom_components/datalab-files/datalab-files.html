@@ -4,6 +4,7 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/iron-icons/device-icons.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 
 <dom-module id="datalab-files">
   <template>
@@ -26,11 +27,19 @@
       #file-picker {
         height: calc(100% - var(--toolbar-height));
       }
+      #files-breadcrumbs {
+        height: calc(var(--toolbar-height) - 2px);
+        border-top: 1px solid #eee;
+        border-bottom: 1px solid #eee;
+        padding-left: 17px;   /* visually align with items in items-list */
+      }
+      #files-breadcrumbs > * {
+        margin: 3px 0px 3px 0px;
+      }
       #files-header {
         user-select: none;
-        height: calc(var(--toolbar-height) - 2px); /* because borders */
-        border-top: 1px solid #d3d3d3;
-        border-bottom: 1px solid #d3d3d3;
+        height: calc(var(--toolbar-height) - 1px); /* because borders */
+        border-bottom: 1px solid #eee;
         display: flex;
         line-height: var(--toolbar-height);
       }
@@ -77,6 +86,12 @@
       </paper-button>
     </div>
     <div id="file-picker">
+      <div id="files-breadcrumbs">
+        <paper-icon-button id="back-nav" icon="chevron-left" on-click="_navBackward">
+        </paper-icon-button>
+        <paper-icon-button id="forward-nav" icon="chevron-right" on-clic="_navForward">
+        </paper-icon-button>
+      </div>
       <div id="files-header">
         <div class="checkbox-col"></div>
         <div class="name-col"><strong>Name</strong></div>

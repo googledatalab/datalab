@@ -13,6 +13,12 @@ class FilesElement extends Polymer.Element {
         value: '',
         observer: '_currentPathChanged'
       },
+      currentCrumbs: {
+        type: Array,
+        value: function() {
+          []
+        }
+      },
       fileList: {
         type: Object,
         value: {},
@@ -27,6 +33,13 @@ class FilesElement extends Polymer.Element {
 
   _currentPathChanged(newValue) {
     const self = this;
+
+    let crumbs = this.currentPath.split('/');
+    if (crumbs[0] === '') {
+      crumbs[0] = 'Home'
+    }
+    this.currentCrumbs = crumbs;
+
     ContentManager.listFilesAsync(this.basePath + this.currentPath)
       .then(list => {
         self.fileList = list;
@@ -78,6 +91,12 @@ class FilesElement extends Polymer.Element {
   _handleDblClicked(e) {
     let newPath = this.fileList[e.detail.index].path;
     this.currentPath = newPath;
+  }
+
+  _navBackward() {
+  }
+
+  _navForward() {
   }
 
 }
