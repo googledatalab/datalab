@@ -46,7 +46,7 @@ define(['static/idle-timeout'], function(idleTimeout) {
     path = window.location.protocol + '//' + window.location.host + '/_info/vminfo';
     xhr(path, function() {
       try {
-        vminfo = JSON.parse(this.responseText);
+        const vminfo = JSON.parse(this.responseText);
         window.datalab.vminfo = vminfo;
         callback(vminfo);
       } catch(e) {
@@ -74,6 +74,16 @@ define(['static/idle-timeout'], function(idleTimeout) {
       path = window.location.protocol + '//' + window.location.host + '/_stopvm';
       xhr(path, null, {method: 'POST'});
     }
+  }
+
+  function setAccountMenuVminfo() {
+    getVmInfo(function(vminfo) {
+      if (vminfo && vminfo.vm_name) {
+        $('#stopVmGroup').show();
+        $('#vmName').text(vminfo.vm_name);
+        $('#stopVmButton').click(stopVm);
+      }
+    });
   }
 
   function initializeAppBar(dialog, saveFn) {
@@ -151,13 +161,7 @@ define(['static/idle-timeout'], function(idleTimeout) {
       });
     }
 
-    getVmInfo(function() {
-      if (vminfo && vminfo.vm_name) {
-        $('#stopVmGroup').show();
-        $('#vmName').text(vminfo.vm_name);
-        $('#stopVmButton').click(stopVm);
-      }
-    });
+    setAccountMenuVminfo();
 
     // If inside a notebook, prepare notebook-specific help link inside the sidebar
     if (document.getElementById('sidebarArea') !== null) {
@@ -203,6 +207,7 @@ define(['static/idle-timeout'], function(idleTimeout) {
   return {
     init: initializeAppBar,
     restartDatalab: restartDatalab,
+    setAccountMenuVminfo: setAccountMenuVminfo,
     showHelp: showHelp,
     toggleSidebar: toggleSidebar,
   };
