@@ -27,7 +27,7 @@ import idleTimeout = require('./idleTimeout');
 import fileSearch = require('./fileSearch');
 import net = require('net');
 import noCacheContent = require('./noCacheContent')
-import path = require('path');
+import path_ = require('path');
 import request = require('request');
 import reverseProxy = require('./reverseProxy');
 import settings_ = require('./settings');
@@ -123,11 +123,16 @@ function handleRequest(request: http.ServerRequest,
     userManager.maybeSetUserIdCookie(request, response);
 
     response.statusCode = 302;
+    var redirectUrl : string;
     if (startup_path_setting in loadedSettings) {
-      response.setHeader('Location', loadedSettings[startup_path_setting])
+      redirectUrl = loadedSettings[startup_path_setting];
     } else {
-      response.setHeader('Location', '/tree/datalab');
+      redirectUrl = '/tree/datalab';
     }
+    if (redirectUrl.indexOf(appSettings.datalabBasePath) != 0) {
+      redirectUrl = path_.join(appSettings.datalabBasePath, redirectUrl);
+    }
+    response.setHeader('Location', redirectUrl);
     response.end();
     return;
   }
