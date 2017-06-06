@@ -38,34 +38,34 @@ class FilesElement extends Polymer.Element {
       _fetching: {
         type: Boolean,
         value: false
+      },
+      _fileListRefreshInterval: {
+        type: Number,
+        value: 10000
       }
     }
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    // refresh the file list periodically
+    setInterval(this._loadFileList.bind(this), this._fileListRefreshInterval);
+  }
+
+  _getNotebookUrlPrefix() {
+    let prefix = location.protocol + '//' + location.host + '/';
+    return prefix + 'notebooks';
   }
 
   _getFileListElement() {
     return this.$.files;
   }
 
-  _currentPathChanged(newValue, oldValue) {
+  _loadFileList() {
     const self = this;
-
-    this._fetching = true;
-
-    // on initialization, push this value to path history
-    if (oldValue === undefined) {
-      this._pushNewPath();
-    }
-
-    let crumbs = this.currentPath.split('/');
-    if (crumbs[0] === '') {
-      crumbs.shift();
-    }
-    this.currentCrumbs = crumbs;
-
-    ContentManager.listFilesAsync(this.basePath + this.currentPath)
+    return ContentManager.listFilesAsync(this.basePath + this.currentPath)
       .then(list => {
         self.fileList = list;
-        this._fetching = false;
       }, error => {
         console.log('Could not get list of files. Using dummy values');
         self.fileList = [{
@@ -89,8 +89,27 @@ class FilesElement extends Polymer.Element {
           'type': 'notebook',
           'status': 'hello'
         }];
+      })
+      .then(() => {
         this._fetching = false;
       });
+  }
+
+  _currentPathChanged(newValue, oldValue) {
+    this._fetching = true;
+
+    // on initialization, push this value to path history
+    if (oldValue === undefined) {
+      this._pushNewPath();
+    }
+
+    let crumbs = this.currentPath.split('/');
+    if (crumbs[0] === '') {
+      crumbs.shift();
+    }
+    this.currentCrumbs = crumbs;
+
+    return this._loadFileList();
   }
 
   _fileListChanged() {
@@ -118,9 +137,13 @@ class FilesElement extends Polymer.Element {
   }
 
   _handleDblClicked(e) {
-    let newPath = this.fileList[e.detail.index].path;
-    this.currentPath = newPath;
-    this._pushNewPath();
+    let clickedItem = this.fileList[e.detail.index];
+    if (clickedItem.type === 'directory') {
+      this.currentPath = clickedItem.path;
+      this._pushNewPath();
+    } else {
+      window.open(this._getNotebookUrlPrefix() + '/' + clickedItem.path, '_blank');
+    }
   }
 
   _crumbClicked(e) {
