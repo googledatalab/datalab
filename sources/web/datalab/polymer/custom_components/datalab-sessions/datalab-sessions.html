@@ -1,12 +1,57 @@
+<link rel="import" href="../../custom_components/shared-styles/shared-styles.html">
+<link rel="import" href="../../custom_components/item-list/item-list.html">
+
 <link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-progress/paper-progress.html">
 
 <dom-module id="datalab-sessions">
   <template>
-    <style>
+
+    <style include="datalab-shared-styles">
+      #toolbar {
+        height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
+        width: 100%;
+        background-color: var(--app-secondary-color);
+        border-bottom: 1px solid #eee;
+      }
+      .toolbar-button {
+        color: var(--app-primary-color);
+        margin: 4px 12px 4px 12px;
+        font-weight: normal;
+        border-radius: 0px;
+      }
+      .toolbar-button > iron-icon {
+        width: 20px;
+        padding-right: 5px;
+      }
+      .sessions-container {
+        /* 1 breadcrumb bar + 1 progress bar */
+        height: calc(100% - var(--toolbar-height) - 1px);
+      }
+      paper-progress {
+        width: 100%;
+        height: 1px;
+        --paper-progress-active-color: var(--selection-fg-color);
+        --paper-progress-container-color: var(--app-secondary-color);
+      }
     </style>
-    <div>
-      Sessions
+
+    <div id="toolbar">
+      <paper-button class="toolbar-button" on-click="_loadSessionsList">
+        <iron-icon icon="refresh"></iron-icon>
+      </paper-button>
+      <paper-button class="toolbar-button">
+        <iron-icon icon="delete"></iron-icon>
+        <span>Shutdown</span>
+      </paper-button>
     </div>
+    <paper-progress id="progressBar" indeterminate disabled={{!_fetching}}></paper-progress>
+    <div class="sessions-container">
+      <item-list id="sessions"></item-list>
+    </div>
+
   </template>
 </dom-module>
 

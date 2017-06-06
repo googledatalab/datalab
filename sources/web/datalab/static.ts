@@ -232,15 +232,14 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       sendDataLabFile(DEFAULT_THEME_FILE, response);
     }
   } else if ((path.indexOf('/images/') == 0) ||
-           (path.indexOf('/custom_components/') == 0) ||
-           (path.indexOf('/bower_components/') == 0)) {
+            (path.indexOf('/modules/') == 0) ||
+            (path.indexOf('/custom_components/') == 0) ||
+            (path.indexOf('/bower_components/') == 0)) {
     sendDataLabFile(path.substr(1), response);
-  } else if ((path.indexOf('/static/extensions/') == 0) ||
+  }
+  else if ((path.indexOf('/static/extensions/') == 0) ||
            (path.indexOf('/static/require/') == 0) ||
-           (path.indexOf('/static/fonts/') == 0) ||
-           (path.indexOf('/static/images/') == 0) ||
-           (path.indexOf('/static/custom_components/') == 0) ||
-           (path.indexOf('/static/bower_components/') == 0)) {
+           (path.indexOf('/static/fonts/') == 0)) {
     // Strip off the leading '/static/' to turn path into a relative path within the
     // static directory.
     sendDataLabFile(path.substr('/static/'.length), response);

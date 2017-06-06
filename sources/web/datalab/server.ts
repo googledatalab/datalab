@@ -242,6 +242,7 @@ function uncheckedRequestHandler(request: http.ServerRequest, response: http.Ser
   } else if (urlpath.indexOf('/static') == 0 || 
              urlpath.indexOf('/custom_components') == 0 ||
              urlpath.indexOf('/bower_components') == 0 ||
+             urlpath.indexOf('/modules') == 0 ||
              urlpath.indexOf('/images') == 0 ||
              urlpath.indexOf('/custom.js') == 0 ||
              urlpath.indexOf('/index') == 0 ||

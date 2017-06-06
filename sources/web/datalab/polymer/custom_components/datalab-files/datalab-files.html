@@ -2,7 +2,6 @@
 <link rel="import" href="../../custom_components/item-list/item-list.html">
 
 <link rel="import" href="../../bower_components/polymer/polymer.html">
-<link rel="import" href="../../bower_components/iron-icons/hardware-icons.html">
 <link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../bower_components/paper-progress/paper-progress.html">
@@ -12,14 +11,16 @@
 
     <style include="datalab-shared-styles">
       #toolbar {
-        height: var(--toolbar-height);
+        height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
         width: 100%;
         background-color: var(--app-secondary-color);
+        border-bottom: 1px solid #eee;
       }
       .toolbar-button {
         color: var(--app-primary-color);
         margin: 4px 12px 4px 12px;
         font-weight: normal;
+        border-radius: 0px;
       }
       .toolbar-button > iron-icon {
         width: 20px;
@@ -28,10 +29,9 @@
       #file-picker {
         height: calc(100% - var(--toolbar-height));
       }
-      #files-nav {
+      #navbar {
         display: flex;
-        height: calc(var(--toolbar-height) - 2px);
-        border-top: 1px solid #eee;
+        height: calc(var(--toolbar-height) - 1px); /* for progress bar */
       }
       .navbar-button {
         min-width: 35px;
@@ -42,7 +42,7 @@
         background-color: #fff;
       }
       .files-container {
-        /* 1 breadcrumb bar + 1 progress bar */
+        /* 1 nav bar + 1 progress bar */
         height: calc(100% - var(--toolbar-height) - 1px);
       }
       .vseparator {
@@ -79,10 +79,10 @@
         content: "";
         position: absolute;
         border: 0 solid #fff;
-        border-width: 23px 12px;
+        border-width: 24px 12px;
       }
       #breadcrumb div a:before {
-        left: -23px;
+        left: -24px;
         border-left-color: transparent;
       }
       #breadcrumb div a:after {
@@ -137,7 +137,7 @@
       </paper-button>
     </div>
     <div id="file-picker">
-      <div id="files-nav">
+      <div id="navbar">
         <paper-button id="backNav" class="navbar-button" on-click="_navBackward">
           <iron-icon icon="chevron-left"></iron-icon>
         </paper-button>
@@ -168,5 +168,4 @@
   </template>
 </dom-module>
 
-<script src="ContentManager.js"></script>
 <script src="datalab-files.js"></script>

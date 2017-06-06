@@ -24,11 +24,11 @@
       .row[selected] > * {
         color: var(--selection-fg-color);
       }
-      #files-header {
+      #header {
         user-select: none;
-        height: var(--toolbar-height);
+        height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
         display: flex;
-        line-height: var(--toolbar-height);
+        line-height: calc(var(--toolbar-height) - 1px);
         border-bottom: 1px solid #eee;
       }
       .checkbox-col {
@@ -51,16 +51,16 @@
       }
     </style>
 
-    <div id="files-header">
+    <div id="header">
       <div class="checkbox-col"></div>
-      <div class="first-col"><strong>Name</strong></div>
-      <div class="second-col"><strong>Status</strong></div>
+      <div class="first-col"><strong>{{columns.0}}</strong></div>
+      <div class="second-col"><strong>{{columns.1}}</strong></div>
     </div>
     <template is="dom-repeat" id="list" items="{{rows}}" as="row">
-      <paper-item class="row" selected$={{item.selected}} on-click="_rowClicked"
+      <paper-item class="row" selected$={{row.selected}} on-click="_rowClicked"
                   on-dblclick="_rowDblClicked">
         <div class="checkbox-col">
-          <paper-checkbox checked={{item.selected}} checkedChanged="_rowClicked">
+          <paper-checkbox checked={{row.selected}} checkedChanged="_rowClicked">
           </paper-checkbox>
         </div>
         <div class="first-col">
