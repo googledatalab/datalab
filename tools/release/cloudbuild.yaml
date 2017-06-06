@@ -23,6 +23,27 @@ steps:
   id:   'pushConfigLocal'
   waitFor: ['catConfigLocal']
 
+# Push a tarball of the CLI
+- name: 'debian'
+  args: ['tar', '-cvzf', '/workspace/datalab_cli_${REVISION_ID}.tgz',
+         '--transform', 's,^tools/cli,datalab,', 'tools/cli']
+  id:   'createTarball'
+- name: 'gcr.io/cloud-builders/gsutil'
+  args: ['cp',
+         '/workspace/datalab_cli_${REVISION_ID}.tgz',
+         'gs://${PROJECT_ID}/builds/datalab_cli_${REVISION_ID}.tgz']
+  id:   'pushTarball'
+  waitFor: ['createTarball']
+
+# Cleanup the temporary files created to push build artifacts to GCS
+- name: 'debian'
+  args: ['rm', '-rf',
+         '/workspace/config_local.js',
+         '/workspace/config_local_${REVISION_ID}.js',
+         '/workspace/datalab_cli_${REVISION_ID}.tgz']
+  id:   'cleanupWorkspace'
+  waitFor: ['pushConfigLocal', 'pushTarball']
+
 # Build the base images. These are not pushed externally, but rather
 # used the build the final images which are pushed.
 
@@ -30,6 +51,7 @@ steps:
 - name: 'debian'
   args: ['mkdir', '-p', '/workspace/containers/base/pydatalab']
   id:   'makeDir'
+  waitFor: ['cleanupWorkspace']
 - name: 'gcr.io/cloud-builders/docker'
   args: ['pull', 'ubuntu:16.04']
   id:   'pullUbuntu'
