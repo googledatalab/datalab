@@ -71,18 +71,22 @@ class FilesElement extends Polymer.Element {
         self.fileList = [{
           'name': 'the first item',
           'path': 'first path',
+          'type': 'directory',
           'status': 'hello'
         }, {
           'name': 'the second item',
           'path': 'second path',
+          'type': 'directory',
           'status': 'hello'
         }, {
           'name': 'the third item',
           'path': 'third path',
+          'type': 'directory',
           'status': ''
         }, {
           'name': 'the forth item',
           'path': 'forth path',
+          'type': 'notebook',
           'status': 'hello'
         }];
         this._fetching = false;
@@ -100,7 +104,8 @@ class FilesElement extends Polymer.Element {
     this.fileList.forEach(file => {
       newList.push({
         'name': file.name,
-        'status': ''
+        'status': file.status,
+        'icon': file.type === 'directory' ? 'folder' : 'editor:insert-drive-file'
       });
     });
     picker.rows = newList;

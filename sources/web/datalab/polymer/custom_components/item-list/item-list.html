@@ -9,6 +9,7 @@
     <style include="datalab-shared-styles">
       .row {
         user-select: none;
+        padding: 0px;
         display: flex;
         --paper-item-min-height: 35px;
         line-height: 35px;
@@ -26,11 +27,17 @@
       .checkbox-col {
         flex-basis: 50px;
         text-align: center;
+      }
+      .checkbox-col > paper-checkbox {
         --paper-checkbox-size: 15px;
-        --paper-checkbox-unchecked-color: var(--app-primary-color);
+        --paper-checkbox-checked-color: var(--selection-fg-color);
       }
       .name-col {
         flex-grow: 1;
+      }
+      .name-col > iron-icon {
+        width: 20px;
+        height: 20px;
       }
       .status-col {
         flex-basis: 200px;
@@ -38,12 +45,18 @@
     </style>
 
     <template is="dom-repeat" id="list" items="{{rows}}">
-      <paper-item class="row" on-click="_rowClicked" on-dblclick="_rowDblClicked">
+      <paper-item class="row" selected$={{item.selected}} on-click="_rowClicked"
+                  on-dblclick="_rowDblClicked">
         <div class="checkbox-col">
           <paper-checkbox checked={{item.selected}} checkedChanged="_rowClicked"></paper-checkbox>
         </div>
-        <div class="name-col">[[item.name]]</div>
-        <div class="status-col">[[item.status]]</div>
+        <div class="name-col">
+          <iron-icon icon={{item.icon}}></iron-icon>
+          [[item.name]]
+        </div>
+        <div class="status-col">
+          [[item.status]]
+        </div>
       </paper-item>
     </template>
 
