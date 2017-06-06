@@ -115,7 +115,8 @@ then
 fi
 
 # Start the ungit server
-ungit --port=8083 --no-launchBrowser --forcedLaunchPath=/content/datalab --ungitVersionCheckOverride 1> /dev/null &
+DATALAB_BASE_PATH=$(echo ${DATALAB_SETTINGS_OVERRIDES} | python -c "import sys,json; print(json.load(sys.stdin).get('datalabBasePath',''))")
+ungit --port=8083 --no-launchBrowser --forcedLaunchPath=/content/datalab --ungitVersionCheckOverride 1 --rootPath="${DATALAB_BASE_PATH}" > /dev/null &
 
 # Start the DataLab server
 FOREVER_CMD="forever --minUptime 1000 --spinSleepTime 1000"

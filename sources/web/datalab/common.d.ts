@@ -62,6 +62,13 @@ declare module common {
     datalabRoot: string;
 
     /**
+     * If provided, use this as a prefix to all URL paths. This is useful
+     * for running a Datalab instance behind a shared proxy with other
+     * servers (including, for running multiple Datalab instances together).
+     */
+    datalabBasePath: string;
+
+    /**
      * Initial port to use when searching for a free Jupyter port.
      */
     nextJupyterPort: number;

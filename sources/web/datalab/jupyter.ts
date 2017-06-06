@@ -139,7 +139,8 @@ function createJupyterServerAtPort(port: number, userId: string, userDir: string
     '--port-retries=0',
     '--notebook-dir="' + server.notebooks + '"',
     '--NotebookNotary.algorithm=sha256',
-    '--NotebookNotary.secret_file=' + secretPath
+    '--NotebookNotary.secret_file=' + secretPath,
+    '--NotebookApp.base_url=' + appSettings.datalabBasePath
   ]);
 
   var notebookEnv: any = process.env;
@@ -159,7 +160,7 @@ function createJupyterServerAtPort(port: number, userId: string, userDir: string
 
   // Create the proxy.
   var proxyOptions: httpProxy.ProxyServerOptions = {
-    target: 'http://localhost:' + port
+    target: 'http://localhost:' + port + appSettings.datalabBasePath
   };
 
   server.proxy = httpProxy.createProxyServer(proxyOptions);

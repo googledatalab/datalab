@@ -273,6 +273,17 @@ function socketHandler(request: http.ServerRequest, socket: net.Socket, head: Bu
   }
 }
 
+function trimBasePath(path: string): string {
+  let pathPrefix = appSettings.datalabBasePath;
+  if (path.indexOf(pathPrefix) == 0) {
+    let newPath = "/" + path.substring(pathPrefix.length);
+    logging.getLogger().info('Trimming base path: ' + path + ' -> ' + newPath);
+    return newPath;
+  } else {
+    return path;
+  }
+}
+
 /**
  * Handles all requests sent to the proxy web server. Some requests are handled within
  * the server, while some are proxied to the Jupyter notebook server.
@@ -280,6 +291,7 @@ function socketHandler(request: http.ServerRequest, socket: net.Socket, head: Bu
  * @param response the out-going HTTP response.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse) {
+  request.url = trimBasePath(request.url);
   idleTimeout.resetBasedOnPath(request.url);
   try {
     uncheckedRequestHandler(request, response);
@@ -315,8 +327,9 @@ export function run(settings: common.Settings): void {
     new wsHttpProxy.WsHttpProxy(server, httpOverWebSocketPath, settings.allowOriginOverrides);
   }
 
-  logging.getLogger().info('Starting DataLab server at http://localhost:%d',
-                           settings.serverPort);
+  logging.getLogger().info('Starting DataLab server at http://localhost:%d/%s',
+                           settings.serverPort,
+                           settings.datalabBasePath);
   backupUtility.startBackup(settings);
   process.on('SIGINT', () => process.exit());
 
