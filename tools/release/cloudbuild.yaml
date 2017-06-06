@@ -25,13 +25,13 @@ steps:
 
 # Push a tarball of the CLI
 - name: 'debian'
-  args: ['tar', '-cvzf', '/workspace/datalab_cli_${REVISION_ID}.tgz',
+  args: ['tar', '-cvzf', '/workspace/datalab-cli-${REVISION_ID}.tgz',
          '--transform', 's,^tools/cli,datalab,', 'tools/cli']
   id:   'createTarball'
 - name: 'gcr.io/cloud-builders/gsutil'
   args: ['cp',
-         '/workspace/datalab_cli_${REVISION_ID}.tgz',
-         'gs://${PROJECT_ID}/builds/datalab_cli_${REVISION_ID}.tgz']
+         '/workspace/datalab-cli-${REVISION_ID}.tgz',
+         'gs://${PROJECT_ID}/builds/datalab-cli-${REVISION_ID}.tgz']
   id:   'pushTarball'
   waitFor: ['createTarball']
 
@@ -40,7 +40,7 @@ steps:
   args: ['rm', '-rf',
          '/workspace/config_local.js',
          '/workspace/config_local_${REVISION_ID}.js',
-         '/workspace/datalab_cli_${REVISION_ID}.tgz']
+         '/workspace/datalab-cli-${REVISION_ID}.tgz']
   id:   'cleanupWorkspace'
   waitFor: ['pushConfigLocal', 'pushTarball']
 
