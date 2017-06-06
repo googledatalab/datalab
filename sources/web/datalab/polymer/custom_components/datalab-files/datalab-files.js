@@ -36,7 +36,7 @@ class FilesElement extends Polymer.Element {
 
     let crumbs = this.currentPath.split('/');
     if (crumbs[0] === '') {
-      crumbs[0] = 'Home'
+      crumbs.shift();
     }
     this.currentCrumbs = crumbs;
 
@@ -91,6 +91,16 @@ class FilesElement extends Polymer.Element {
   _handleDblClicked(e) {
     let newPath = this.fileList[e.detail.index].path;
     this.currentPath = newPath;
+  }
+
+  _crumbClicked(e) {
+    if (e.target.id === 'home-crumb') {
+      this.currentPath = '';
+    } else {
+      let newPath = this.basePath;
+      const clickedCrumb = this.$.breadcrumbsTemplate.indexForElement(e.target);
+      this.currentPath = this.currentCrumbs.slice(0, clickedCrumb + 1).join('/');
+    }
   }
 
   _navBackward() {
