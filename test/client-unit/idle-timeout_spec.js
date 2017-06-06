@@ -19,7 +19,7 @@
 const requirejs = require("requirejs");
 
 // module mocks use relative path to the baseUrl
-const hereMocks = '../../../../test/unittests/static/';
+const hereMocks = '../../../../test/client-unit/';
 
 requirejs.config({
   baseUrl: '../sources/web/datalab/static/',
