@@ -33,12 +33,14 @@
         height: calc(var(--toolbar-height) - 2px);
         border-top: 1px solid #eee;
         border-bottom: 1px solid #eee;
-        padding-left: 17px;   /* visually align with items in items-list */
       }
       .nav-arrow {
-        margin: 5px;
         min-width: 35px;
-        padding: 0px;
+        margin: 0px;
+      }
+      .nav-arrow[disabled] {
+        border-radius: 0px;
+        background-color: #fff;
       }
       #files-header {
         user-select: none;
@@ -71,6 +73,7 @@
         line-height: 48px;
       }
       #breadcrumb {
+        user-select: none;
         list-style: none;
         display: inline-block;
       }
@@ -151,10 +154,10 @@
     </div>
     <div id="file-picker">
       <div id="files-nav">
-        <paper-button id="back-nav" class="nav-arrow" on-click="_navBackward">
+        <paper-button id="backNav" class="nav-arrow" on-click="_navBackward">
           <iron-icon icon="chevron-left"></iron-icon>
         </paper-button>
-        <paper-button id="forward-nav" class="nav-arrow" on-clic="_navForward">
+        <paper-button id="forwardNav" class="nav-arrow" on-click="_navForward">
           <iron-icon icon="chevron-right"></iron-icon>
         </paper-button>
         <div class="vseparator"></div>

@@ -23,6 +23,17 @@ class FilesElement extends Polymer.Element {
         type: Object,
         value: {},
         observer: '_fileListChanged'
+      },
+      _pathHistory: {
+        type: Array,
+        value: function() {
+          return [];
+        }
+      },
+      _pathHistoryIndex: {
+        type: Number,
+        value: -1,
+        observer: '_pathHistoryIndexChanged'
       }
     }
   }
@@ -31,8 +42,13 @@ class FilesElement extends Polymer.Element {
     return this.$.files;
   }
 
-  _currentPathChanged(newValue) {
+  _currentPathChanged(newValue, oldValue) {
     const self = this;
+
+    // on initialization, push this value to path history
+    if (oldValue === undefined) {
+      this._pushNewPath();
+    }
 
     let crumbs = this.currentPath.split('/');
     if (crumbs[0] === '') {
@@ -91,6 +107,7 @@ class FilesElement extends Polymer.Element {
   _handleDblClicked(e) {
     let newPath = this.fileList[e.detail.index].path;
     this.currentPath = newPath;
+    this._pushNewPath();
   }
 
   _crumbClicked(e) {
@@ -101,12 +118,33 @@ class FilesElement extends Polymer.Element {
       const clickedCrumb = this.$.breadcrumbsTemplate.indexForElement(e.target);
       this.currentPath = this.currentCrumbs.slice(0, clickedCrumb + 1).join('/');
     }
+    this._pushNewPath();
+  }
+
+  _pushNewPath() {
+    // purge all items in the array past _pathHistoryIndex
+    this._pathHistory.splice(this._pathHistoryIndex + 1);
+    if (!this._pathHistory.length ||
+        this._pathHistory[this._pathHistory.length - 1] !== this.currentPath) {
+      this._pathHistory.push(this.currentPath);
+      this._pathHistoryIndex = this._pathHistory.length - 1;
+    }
   }
 
   _navBackward() {
+    this._pathHistoryIndex -= 1;
+    this.currentPath = this._pathHistory[this._pathHistoryIndex];
   }
 
   _navForward() {
+    this._pathHistoryIndex += 1;
+    this.currentPath = this._pathHistory[this._pathHistoryIndex];
+  }
+
+  _pathHistoryIndexChanged() {
+    // enable/disable nav buttons
+    this.$.backNav.disabled = this._pathHistoryIndex === 0;
+    this.$.forwardNav.disabled = this._pathHistoryIndex === this._pathHistory.length - 1;
   }
 
 }
