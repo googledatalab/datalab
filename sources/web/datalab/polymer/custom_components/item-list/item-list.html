@@ -24,6 +24,13 @@
       .row[selected] > * {
         color: var(--selection-fg-color);
       }
+      #files-header {
+        user-select: none;
+        height: var(--toolbar-height);
+        display: flex;
+        line-height: var(--toolbar-height);
+        border-bottom: 1px solid #eee;
+      }
       .checkbox-col {
         flex-basis: 50px;
         text-align: center;
@@ -32,30 +39,36 @@
         --paper-checkbox-size: 15px;
         --paper-checkbox-checked-color: var(--selection-fg-color);
       }
-      .name-col {
+      .first-col {
         flex-grow: 1;
       }
-      .name-col > iron-icon {
-        width: 20px;
-        height: 20px;
+      .first-col > iron-icon {
+        width: 17px;
+        height: 17px;
       }
-      .status-col {
+      .second-col {
         flex-basis: 200px;
       }
     </style>
 
-    <template is="dom-repeat" id="list" items="{{rows}}">
+    <div id="files-header">
+      <div class="checkbox-col"></div>
+      <div class="first-col"><strong>Name</strong></div>
+      <div class="second-col"><strong>Status</strong></div>
+    </div>
+    <template is="dom-repeat" id="list" items="{{rows}}" as="row">
       <paper-item class="row" selected$={{item.selected}} on-click="_rowClicked"
                   on-dblclick="_rowDblClicked">
         <div class="checkbox-col">
-          <paper-checkbox checked={{item.selected}} checkedChanged="_rowClicked"></paper-checkbox>
+          <paper-checkbox checked={{item.selected}} checkedChanged="_rowClicked">
+          </paper-checkbox>
         </div>
-        <div class="name-col">
-          <iron-icon icon={{item.icon}}></iron-icon>
-          [[item.name]]
+        <div class="first-col">
+          <iron-icon hidden$={{!row.icon}} icon={{row.icon}}></iron-icon>
+          {{row.firstCol}}
         </div>
-        <div class="status-col">
-          [[item.status]]
+        <div class="second-col">
+          {{row.secondCol}}
         </div>
       </paper-item>
     </template>

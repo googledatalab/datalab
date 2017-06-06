@@ -122,8 +122,8 @@ class FilesElement extends Polymer.Element {
     let newList = [];
     this.fileList.forEach(file => {
       newList.push({
-        'name': file.name,
-        'status': file.status,
+        'firstCol': file.name,
+        'secondCol': file.status,
         'icon': file.type === 'directory' ? 'folder' : 'editor:insert-drive-file'
       });
     });

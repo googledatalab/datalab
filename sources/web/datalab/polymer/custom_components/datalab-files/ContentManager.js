@@ -1,30 +1,3 @@
-// Sends an XMLHttpRequest to the specified URL.
-// Options can contain the following fields:
-//   method: The HTTP method to use; default is 'GET'
-//   errorCallback: A function to call if the XHR completes
-//       with a status other than 200
-function xhr(url, callback, options) {
-  options = options || {};
-  const method = options.method || 'GET';
-
-  const request = new XMLHttpRequest();
-  request.onreadystatechange = function() {
-    if (request.readyState === 4) {
-      if (request.status === 200) {
-        if (callback) {
-          callback(request);
-        }
-      } else {
-        if (options.errorCallback) {
-          options.errorCallback.call(request);
-        }
-      }
-    }
-  }
-  request.open(method, url);
-  request.send();
-}
-
 class ContentManager {
 
   static filesApiUrl() {
@@ -53,7 +26,7 @@ class ContentManager {
    */
   static listFilesAsync(path) {
     const filesPromise = new Promise((resolve, reject) => {
-      xhr(this.filesApiUrl() + path,
+      ContentManager._xhr(this.filesApiUrl() + path,
           request => {
             try {
               let files = JSON.parse(request.response).content;
@@ -69,7 +42,7 @@ class ContentManager {
     });
 
     const sessionsPromise = new Promise((resolve, reject) => {
-      xhr(this.sessionsApiUrl(),
+      ContentManager._xhr(this.sessionsApiUrl(),
           request => {
             try {
               let sessions = JSON.parse(request.response);
@@ -100,4 +73,32 @@ class ContentManager {
         return files;
       });
   }
+
+  // Sends an XMLHttpRequest to the specified URL.
+  // Options can contain the following fields:
+  //   method: The HTTP method to use; default is 'GET'
+  //   errorCallback: A function to call if the XHR completes
+  //       with a status other than 200
+  static _xhr(url, callback, options) {
+    options = options || {};
+    const method = options.method || 'GET';
+
+    const request = new XMLHttpRequest();
+    request.onreadystatechange = function() {
+      if (request.readyState === 4) {
+        if (request.status === 200) {
+          if (callback) {
+            callback(request);
+          }
+        } else {
+          if (options.errorCallback) {
+            options.errorCallback.call(request);
+          }
+        }
+      }
+    }
+    request.open(method, url);
+    request.send();
+  }
+
 }

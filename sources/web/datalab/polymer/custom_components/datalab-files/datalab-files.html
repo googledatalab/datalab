@@ -32,39 +32,18 @@
         display: flex;
         height: calc(var(--toolbar-height) - 2px);
         border-top: 1px solid #eee;
-        border-bottom: 1px solid #eee;
       }
-      .nav-arrow {
+      .navbar-button {
         min-width: 35px;
         margin: 0px;
-      }
-      .nav-arrow[disabled] {
         border-radius: 0px;
+      }
+      .navbar-button[disabled] {
         background-color: #fff;
       }
-      #files-header {
-        user-select: none;
-        height: var(--toolbar-height);
-        display: flex;
-        line-height: var(--toolbar-height);
-      }
-      .files-row {
-        display: flex;
-        height: 30px;
-        line-height: 30px;
-      }
-      .checkbox-col {
-        flex-basis: 50px;
-        text-align: center;
-      }
-      .name-col {
-        flex-grow: 1;
-      }
-      .status-col {
-        flex-basis: 200px;
-      }
       .files-container {
-        height: calc(100% - 2*var(--toolbar-height) - 1px); /* 2 borders + 1 progress bar */
+        /* 1 breadcrumb bar + 1 progress bar */
+        height: calc(100% - var(--toolbar-height) - 1px);
       }
       .vseparator {
         display: inline;
@@ -131,6 +110,7 @@
         width: 100%;
         height: 1px;
         --paper-progress-active-color: var(--selection-fg-color);
+        --paper-progress-container-color: var(--app-secondary-color);
       }
     </style>
 
@@ -158,13 +138,13 @@
     </div>
     <div id="file-picker">
       <div id="files-nav">
-        <paper-button id="backNav" class="nav-arrow" on-click="_navBackward">
+        <paper-button id="backNav" class="navbar-button" on-click="_navBackward">
           <iron-icon icon="chevron-left"></iron-icon>
         </paper-button>
-        <paper-button id="forwardNav" class="nav-arrow" on-click="_navForward">
+        <paper-button id="forwardNav" class="navbar-button" on-click="_navForward">
           <iron-icon icon="chevron-right"></iron-icon>
         </paper-button>
-        <paper-button class="nav-arrow" on-click="_loadFileList">
+        <paper-button class="navbar-button" on-click="_loadFileList">
           <iron-icon icon="refresh"></iron-icon>
         </paper-button>
         <div class="vseparator"></div>
@@ -178,11 +158,6 @@
             </div>
           </template>
         </div>
-      </div>
-      <div id="files-header">
-        <div class="checkbox-col"></div>
-        <div class="name-col"><strong>Name</strong></div>
-        <div class="status-col"><strong>Status</strong></div>
       </div>
       <paper-progress id="progressBar" indeterminate disabled={{!_fetching}}></paper-progress>
       <div class="files-container">
