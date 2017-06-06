@@ -111,14 +111,14 @@ describe('UI tests', function() {
     });
 
     // Simulate a list reload by calling the Jupyter function, and waiting
-    // on the draw list event to make sure all elements have rendered
+    // on the draw list event to make sure all elements have rendered.
     function reloadNotebookList() {
       return driver.executeAsyncScript(function() {
         const callback = arguments[arguments.length - 1];
         require(['base/js/events'], function(events) {
           events.on('draw_notebook_list.NotebookList', callback);
+          Jupyter.notebook_list.load_list();
         });
-        Jupyter.notebook_list.load_list()
       });
     }
 
