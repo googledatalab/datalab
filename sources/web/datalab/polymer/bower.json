@@ -13,6 +13,7 @@
     "paper-item": "PolymerElements/paper-item#^2.0.0",
     "iron-selector": "PolymerElements/iron-selector#^2.0.0",
     "paper-checkbox": "PolymerElements/paper-checkbox#^2.0.0",
-    "iron-list": "PolymerElements/iron-list#^2.0.0"
+    "iron-list": "PolymerElements/iron-list#^2.0.0",
+    "paper-progress": "PolymerElements/paper-progress#^2.0.0"
   }
 }

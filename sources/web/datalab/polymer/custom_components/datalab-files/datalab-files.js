@@ -34,6 +34,10 @@ class FilesElement extends Polymer.Element {
         type: Number,
         value: -1,
         observer: '_pathHistoryIndexChanged'
+      },
+      _fetching: {
+        type: Boolean,
+        value: false
       }
     }
   }
@@ -44,6 +48,8 @@ class FilesElement extends Polymer.Element {
 
   _currentPathChanged(newValue, oldValue) {
     const self = this;
+
+    this._fetching = true;
 
     // on initialization, push this value to path history
     if (oldValue === undefined) {
@@ -59,6 +65,7 @@ class FilesElement extends Polymer.Element {
     ContentManager.listFilesAsync(this.basePath + this.currentPath)
       .then(list => {
         self.fileList = list;
+        this._fetching = false;
       }, error => {
         console.log('Could not get list of files. Using dummy values');
         self.fileList = [{
@@ -78,6 +85,7 @@ class FilesElement extends Polymer.Element {
           'path': 'forth path',
           'status': 'hello'
         }];
+        this._fetching = false;
       });
   }
 
