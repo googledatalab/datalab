@@ -18,7 +18,7 @@
 # be followed by a `docker build` and then `cleanup.sh`.
 #
 # Usage:
-#   prepare.sh [path_of_pydatalab_dir]
+#   prepare.sh
 #   docker build -t datalab-gateway ./
 #   cleanup.sh
 #
@@ -30,6 +30,7 @@ HERE=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 cd ${HERE}
 
 # Create a versioned Dockerfile based on current date and git commit hash
+export REVISION_ID="${1:-}"
 source ../../tools/release/version.sh
 
 VERSION_SUBSTITUTION="s/_version_/$DATALAB_VERSION/"
