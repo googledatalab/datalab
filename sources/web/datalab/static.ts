@@ -167,6 +167,27 @@ function sendUserCustomTheme(userId: string, response: http.ServerResponse): voi
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
   var path = url.parse(request.url).pathname;
 
+  // -------------------------------- start of experimental UI resources
+  const experimentalUiEnabled = process.env.DATALAB_EXPERIMENTAL_UI;
+  if (experimentalUiEnabled && (
+      path.indexOf('/files') === 0 ||
+      path.indexOf('/sessions') === 0 ||
+      path.indexOf('/bower_components') === 0 ||
+      path.indexOf('/custom_components') === 0 ||
+      path.indexOf('/images') === 0 ||
+      path.indexOf('/index.css') === 0 ||
+      path.indexOf('/modules') === 0
+      )) {
+    if (path === '/files' || path === '/sessions') {
+      path = '/index.html';
+    }
+    path = 'experimental' + path;
+    console.log('sending experimental file: ' + path);
+    sendDataLabFile(path, response);
+    return;
+  }
+  // -------------------------------- end of experimental resources
+
   console.log('static request: ' + path);
   // List of resources that are passed through with the same name.
   const staticResourcesList: [string] = [
@@ -209,9 +230,6 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       path = path.substr(1).replace('static/codemirror', 'static/components/codemirror');
       sendJupyterFile(path, response);
     }
-  }
-  else if (path.lastIndexOf('/files') >= 0 || path.lastIndexOf('/sessions') >= 0) {
-    sendDataLabFile('index.html', response);
   }
   else if (path.lastIndexOf('/custom.js') >= 0) {
     sendDataLabFile('datalab.js', response);

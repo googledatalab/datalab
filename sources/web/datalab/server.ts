@@ -235,19 +235,24 @@ function handleRequest(request: http.ServerRequest,
 function uncheckedRequestHandler(request: http.ServerRequest, response: http.ServerResponse) {
   var parsed_url = url.parse(request.url, true);
   var urlpath = parsed_url.pathname;
+  const experimentalUiEnabled = process.env.DATALAB_EXPERIMENTAL_UI;
   if (urlpath.indexOf('/signin') == 0 || urlpath.indexOf('/signout') == 0 ||
       urlpath.indexOf('/oauthcallback') == 0) {
     // Start or return from auth flow.
     auth.handleAuthFlow(request, response, parsed_url, appSettings);
-  } else if (urlpath.indexOf('/static') == 0 || 
-             urlpath.indexOf('/custom_components') == 0 ||
-             urlpath.indexOf('/bower_components') == 0 ||
-             urlpath.indexOf('/modules') == 0 ||
-             urlpath.indexOf('/images') == 0 ||
-             urlpath.indexOf('/custom.js') == 0 ||
-             urlpath.indexOf('/index') == 0 ||
-             urlpath.indexOf('/files') == 0 ||
-             urlpath.indexOf('/sessions') == 0) {
+  } else if (experimentalUiEnabled && (
+             urlpath.indexOf('/files') === 0 ||
+             urlpath.indexOf('/sessions') === 0 ||
+             urlpath.indexOf('/bower_components') === 0 ||
+             urlpath.indexOf('/custom_components') === 0 ||
+             urlpath.indexOf('/images') === 0 ||
+             urlpath.indexOf('/index.css') === 0 ||
+             urlpath.indexOf('/modules') === 0
+    )) {
+    // experimental resources
+    console.log('experimental path hit: ' + urlpath);
+    staticHandler(request, response);
+  } else if ((urlpath.indexOf('/static') == 0) || (urlpath.indexOf('/custom') == 0)) {
     // /static and /custom paths for returning static content
     staticHandler(request, response);
   } else {

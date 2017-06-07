@@ -34,12 +34,16 @@ tsc --module commonjs --noImplicitAny \
     --outDir $WEB_DIR \
     ./datalab/*.ts
 
+# Experimental UI build step
 cd datalab/polymer
+bower install
 polymer build
+rsync -avpq ./build/experimental/ ../static/experimental
 cd ../..
+# End experimental UI build step
 
-rsync -avp ./datalab/config/ $WEB_DIR/config
-rsync -avp ./datalab/polymer/build/raw/ datalab/static
-rsync -avp ./datalab/static/ $WEB_DIR/static
-rsync -avp ./datalab/templates/ $WEB_DIR/templates
-rsync -avp ./datalab/package.json $WEB_DIR/package.json
+rsync -avpq ./datalab/config/ $WEB_DIR/config
+rsync -avpq ./datalab/static/ $WEB_DIR/static
+rsync -avpq ./datalab/polymer/build/experimental/ $WEB_DIR/static/experimental
+rsync -avpq ./datalab/templates/ $WEB_DIR/templates
+rsync -avpq ./datalab/package.json $WEB_DIR/package.json
