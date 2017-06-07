@@ -116,7 +116,7 @@ fi
 
 # Parse the settings overrides to get the (potentially overridden) value
 # of the `datalabBasePath` setting.
-DATALAB_BASE_PATH=$(echo ${DATALAB_SETTINGS_OVERRIDES} | python -c "import sys,json; print(json.load(sys.stdin).get('datalabBasePath',''))")
+DATALAB_BASE_PATH=$(echo ${DATALAB_SETTINGS_OVERRIDES:-"{}"} | python -c "import sys,json; print(json.load(sys.stdin).get('datalabBasePath',''))")
 
 # Start the ungit server
 ungit --port=8083 --no-launchBrowser --forcedLaunchPath=/content/datalab --ungitVersionCheckOverride 1 --rootPath="${DATALAB_BASE_PATH}" > /dev/null &
