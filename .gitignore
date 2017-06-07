@@ -19,4 +19,5 @@ containers/base/pydatalab
 node_modules/
 bower_components/
 test/ui/broken
+experimental/
 
