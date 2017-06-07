@@ -20,6 +20,7 @@
 import http = require('http');
 import jupyter = require('./jupyter');
 import logging = require('./logging');
+import path_ = require('path');
 import socketio = require('socket.io');
 import url = require('url');
 import util = require('util');
@@ -165,10 +166,11 @@ function socketHandler(socket: SocketIO.Socket) {
 
 export function init(settings: common.Settings): void {
   var io = socketio(String(settings.socketioPort), {
+    path: path_.join(settings.datalabBasePath, '/socket.io'),
     transports: [ 'polling' ],
     allowUpgrades: false
   });
 
-  io.of('/session')
+  io.of(path_.join(settings.datalabBasePath, '/session'))
     .on('connection', socketHandler);
 }
