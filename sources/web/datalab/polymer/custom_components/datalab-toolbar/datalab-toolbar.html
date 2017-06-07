@@ -63,14 +63,15 @@
           <img src="images/datalab-logo.png" class="title-image">
         </div>
         <paper-icon-button class="toolbar-button" icon="info"
-                           onclick={{_infoClicked}}></paper-icon-button>
+                           on-click="_infoClicked"></paper-icon-button>
         <paper-icon-button class="toolbar-button" icon="settings"
-                           onclick={{_settingsClicked}}></paper-icon-button>
-        <paper-icon-button class="toolbar-button" icon="account-circle"></paper-icon-button>
+                           on-click="_settingsClicked"></paper-icon-button>
+        <paper-icon-button class="toolbar-button" icon="account-circle">
+        </paper-icon-button>
       </app-toolbar>
     </app-header>
 
-    <paper-dialog id="info-dialog" class="dialog" with-backdrop>
+    <paper-dialog id="infoDialog" class="dialog" with-backdrop>
       <h2>Info</h2>
       <hr>
       <div class="dialog-content">
@@ -81,7 +82,7 @@
       </div>
     </paper-dialog>
 
-    <paper-dialog id="settings-dialog" class="dialog" with-backdrop>
+    <paper-dialog id="settingsDialog" class="dialog" with-backdrop>
       <h2>Settings</h2>
       <hr>
       <div class="dialog-content">
@@ -95,25 +96,4 @@
   </template>
 </dom-module>
 
-<script>
-  class ToolbarElement extends Polymer.Element {
-
-    static get is() { return "datalab-toolbar"; }
-
-    _infoClicked() {
-      let shadowDom = Polymer.dom(this).getOwnerRoot();
-      let dialog = shadowDom.querySelector('#info-dialog');
-      dialog.open();
-    }
-
-    _settingsClicked() {
-      let shadowDom = Polymer.dom(this).getOwnerRoot();
-      let dialog = shadowDom.querySelector('#settings-dialog');
-      dialog.open();
-    }
-
-  }
-
-  customElements.define(ToolbarElement.is, ToolbarElement);
-
-</script>
+<script src="datalab-toolbar.js"></script>
