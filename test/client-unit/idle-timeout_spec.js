@@ -32,9 +32,6 @@ requirejs.config({
   },
 });
 
-// mock the window object
-window = {};
-
 const idleTimeout = requirejs('idle-timeout');
 
 describe('Unit tests', function() {

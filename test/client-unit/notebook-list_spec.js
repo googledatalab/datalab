@@ -23,9 +23,6 @@ requirejs.config({
   nodeRequire: require,
 });
 
-// mock the window object
-window = {};
-
 const notebookList = requirejs('notebook-list');
 const util = requirejs('util');
 

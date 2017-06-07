@@ -1,11 +1,7 @@
 define(() => {
-
-  window.datalab = window.datalab || {};
-  window.datalab.debug = false;
-
   const debug = {
     log: function() {
-      if (window.datalab.debug) {
+      if (window.location.search.indexOf('debug=true') > -1) {
         console.log.apply(console, arguments);
       }
     },
