@@ -21,7 +21,7 @@
 # manually starting the server.
 
 HERE=$(dirname $0)
-CONTENT=$HOME/datalab_content
+CONTENT=$HOME
 ENTRYPOINT="/datalab/run.sh"
 DEVROOT_DOCKER_OPTION=''
 LIVE_MODE=1
@@ -69,5 +69,6 @@ docker run -it --entrypoint=$ENTRYPOINT \
   -e "PROJECT_ID=$PROJECT_ID" \
   -e "DATALAB_ENV=local" \
   -e "DATALAB_DEBUG=true" \
+  -e "DATALAB_EXPERIMENTAL_UI=true" \
   -e 'DATALAB_SETTINGS_OVERRIDES={"consoleLogLevel": "debug" }' \
   datalab
