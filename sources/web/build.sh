@@ -37,6 +37,7 @@ tsc --module commonjs --noImplicitAny \
 # Experimental UI build step
 cd datalab/polymer
 bower install
+tsc
 polymer build
 rsync -avpq ./build/experimental/ ../static/experimental
 cd ../..

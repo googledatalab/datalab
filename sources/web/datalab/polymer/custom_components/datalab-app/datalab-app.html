@@ -33,10 +33,11 @@
       }
     </style>
 
+    <!--Router-->
     <app-location route="{{route}}"></app-location>
     <app-route
         route="{{route}}"
-        pattern="[[rootPattern]]:page"
+        pattern="{{rootPattern}}:page"
         data="{{routeData}}"
         tail="{{subroute}}"></app-route>
 
@@ -44,7 +45,7 @@
       <datalab-toolbar></datalab-toolbar>
       <div class="datalab-contents">
         <div class="datalab-sidebar">
-          <datalab-sidebar page=[[page]]></datalab-sidebar>
+          <datalab-sidebar page={{page}}></datalab-sidebar>
         </div>
         <div class="datalab-main-content">
           <iron-pages selected="{{page}}" attr-for-selected="name" fallback-selection="files">
@@ -58,50 +59,4 @@
   </template>
 </dom-module>
 
-<script>
-  class DatalabAppElement extends Polymer.Element {
-
-    static get is() { return "datalab-app"; }
-
-    static get properties() {
-      return {
-        page: {
-          type: String,
-          value: "files",
-          observer: '_pageChanged'
-        },
-        rootPattern: String,
-        routeData: Object,
-        subroute: String,
-      }
-    }
-
-    static get observers() {
-      return [
-        // need a complex observer for changes to the routeData object's page property
-        '_routePageChanged(routeData.page)',
-      ];
-    }
-
-    constructor() {
-      super();
-      this.rootPattern = (new URL(this.rootPath)).pathname;
-    }
-
-    _routePageChanged(page) {
-      // default to the files view
-      this.page = page || 'files';
-    }
-
-    _pageChanged(page) {
-      // import page on demand and then load it
-      // build the path using the page name as suffix for directory and file names
-      let subpath = 'datalab-' + page
-      var resolvedPageUrl = this.resolveUrl('../' + subpath + '/' + subpath + '.html');
-      Polymer.importHref(resolvedPageUrl, null, null, true);
-    }
-
-  }
-
-  customElements.define(DatalabAppElement.is, DatalabAppElement);
-</script>
+<script src="datalab-app.js">

@@ -6,6 +6,17 @@
   <template>
 
     <style include="datalab-shared-styles">
+      #header {
+        user-select: none;
+        height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
+        display: flex;
+        line-height: calc(var(--toolbar-height) - 1px);
+        border-bottom: 1px solid #eee;
+      }
+      #list-container {
+        overflow: auto;
+        height: calc(100% - var(--toolbar-height));
+      }
       .row {
         user-select: none;
         padding: 0px;
@@ -22,13 +33,6 @@
       }
       .row[selected] > * {
         color: var(--selection-fg-color);
-      }
-      #header {
-        user-select: none;
-        height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
-        display: flex;
-        line-height: calc(var(--toolbar-height) - 1px);
-        border-bottom: 1px solid #eee;
       }
       .checkbox-col {
         flex-basis: 50px;
@@ -55,22 +59,24 @@
       <div class="first-col"><strong>{{columns.0}}</strong></div>
       <div class="second-col"><strong>{{columns.1}}</strong></div>
     </div>
-    <template is="dom-repeat" id="list" items="{{rows}}" as="row">
-      <paper-item class="row" selected$={{row.selected}} on-click="_rowClicked"
-                  on-dblclick="_rowDblClicked">
-        <div class="checkbox-col">
-          <paper-checkbox checked={{row.selected}} checkedChanged="_rowClicked">
-          </paper-checkbox>
-        </div>
-        <div class="first-col">
-          <iron-icon hidden$={{!row.icon}} icon={{row.icon}}></iron-icon>
-          {{row.firstCol}}
-        </div>
-        <div class="second-col">
-          {{row.secondCol}}
-        </div>
-      </paper-item>
-    </template>
+    <div id="list-container">
+      <template is="dom-repeat" id="list" items="{{rows}}" as="row">
+        <paper-item class="row" selected$={{row.selected}} on-click="_rowClicked"
+                    on-dblclick="_rowDblClicked">
+          <div class="checkbox-col">
+            <paper-checkbox checked={{row.selected}} checkedChanged="_rowClicked">
+            </paper-checkbox>
+          </div>
+          <div class="first-col">
+            <iron-icon hidden$={{!row.icon}} icon={{row.icon}}></iron-icon>
+            {{row.firstCol}}
+          </div>
+          <div class="second-col">
+            {{row.secondCol}}
+          </div>
+        </paper-item>
+      </template>
+    </div>
 
   </template>
 </dom-module>

@@ -1,7 +1,3 @@
-interface Window {
-  readonly customElements: CustomElementRegistry;
-}
-
 interface CustomElementRegistry {
   define(name: string, constructor: Function, options?: ElementDefinitionOptions): void;
   get(name: string): any;
@@ -18,6 +14,8 @@ declare module Polymer {
     $: any;
     $$: any;
     root: HTMLElement;
+    rootPath: string;
+    importPath: string;
     shadyRoot: HTMLElement;
     style: CSSStyleDeclaration;
     customStyle: {
@@ -43,7 +41,6 @@ declare module Polymer {
     getContentChildren(slctr: string): any;
     getNativePrototype(tag: string): any;
     getPropertyInfo(property: string): any;
-    importHref(href: string, onload?: Function, onerror?: Function, optAsync?: boolean): any;
     instanceTemplate(template: any): any;
     isDebouncerActive(jobName: string): any;
     linkPaths(to: string, from: string): void;
@@ -60,7 +57,7 @@ declare module Polymer {
     pop(path: string): any;
     push(path: string, value: any): any;
     reflectPropertyToAttribute(name: string): void;
-    resolveUrl(url: string): any;
+    resolveUrl(url: string, base?: string): any;
     scopeSubtree(container: Element, shouldObserve: boolean): void;
     serialize(value: string): any;
     serializeValueToAttribute(value: any, attribute: string, node: Element): void;
@@ -75,7 +72,7 @@ declare module Polymer {
     unlinkPaths(path: string): void;
     unlisten(node: Element, eventName: string, methodName: string): void;
     unshift(path: string, value: any): any;
-    updateStyles(): void;
+    updateStyles(properties?: Object): void;
     properties?: Object;
     listeners?: Object;
     behaviors?: Object[];
@@ -88,6 +85,11 @@ declare module Polymer {
     attributeChanged?(attrName: string, oldVal: any, newVal: any): void;
     prototype?: Object;
   }
+
+  function importHref(href: string,
+                      onload?: Function,
+                      onerror?: Function,
+                      optAsync?: boolean): any;
 
   interface FireOptions {
     node?: HTMLElement | Polymer.Element;

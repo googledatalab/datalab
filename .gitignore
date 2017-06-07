@@ -20,4 +20,4 @@ node_modules/
 bower_components/
 test/ui/broken
 experimental/
-
+sources/web/datalab/polymer/**/*.js
