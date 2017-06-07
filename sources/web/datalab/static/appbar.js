@@ -98,7 +98,7 @@ define(['static/idle-timeout', 'util'], function(idleTimeout, util) {
         '<h5><b>More Information</b></h5>' +
         '<i class="material-icons">open_in_new</i><a href="https://cloud.google.com" target="_blank"> Product information</a><br />' +
         '<i class="material-icons">open_in_new</i><a href="https://github.com/googledatalab/datalab" target="_blank"> Project on GitHub</a><br />' +
-        '<i class="material-icons">open_in_new</i><a href="/static/about.txt" target="_blank"> License and software information</a><br />' +
+        '<i class="material-icons">open_in_new</i><a href="' + util.datalabLink('/static/about.txt') + '" target="_blank"> License and software information</a><br />' +
         '<i class="material-icons">open_in_new</i><a href="https://cloud.google.com/terms/" target="_blank"> Terms of Service</a><br />' +
         '<i class="material-icons">open_in_new</i><a href="http://www.google.com/intl/en/policies/" target="_blank"> Privacy Policy</a><br />' +
         '<i class="material-icons">open_in_new</i><a href="javascript:require([\'appbar\'],appbar=>appbar.restartDatalab())"> Restart Server</a><br />';
@@ -186,7 +186,7 @@ define(['static/idle-timeout', 'util'], function(idleTimeout, util) {
     $('#idleTimeoutDisabledButton').click(idleTimeout.toggleIdleTimeout);
     $('#aboutButton').click(showAbout);
     $('#settingsButton').click(function() {
-      $.get('/static/settings.html', (markup) => {
+      $.get(util.datalabLink('/static/settings.html'), (markup) => {
         dialog.modal({
           title: 'Settings',
           body: $(markup),
