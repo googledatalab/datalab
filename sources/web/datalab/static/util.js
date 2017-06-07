@@ -1,7 +1,14 @@
 define(() => {
+
+  window.datalab = window.datalab || {};
+  window.datalab.debug = false;
+
   const debug = {
-    enabled: true,
-    log: function() { console.log.apply(console, arguments); },
+    log: function() {
+      if (window.datalab.debug) {
+        console.log.apply(console, arguments);
+      }
+    },
   };
 
   function reportEvent(event) {
