@@ -62,6 +62,7 @@ define(['base/js/dialog', 'base/js/events', 'util'], function(dialog, events, ut
   // Assumes global timeoutInfo has been set.
   function _updateTimeoutDisplay(dropdown) {
     if (!dropdown) {
+      util.debug.log('updateTimeoutDisplay no dropdown');
       return;
     }
     util.debug.log('updating timeout display');
@@ -111,8 +112,11 @@ define(['base/js/dialog', 'base/js/events', 'util'], function(dialog, events, ut
   function updateTimeoutInfo(dropdown) {
     const now = Date.now();
     if (now - lastUpdateTimeoutTime > queryTimeoutInfoInterval) {
+      util.debug.log('Querying timeout');
       const timeoutInfoUrl = window.location.protocol + "//" + window.location.host + "/_timeout";
       function callback() {
+        util.debug.log('_timeout call response:');		
+        util.debug.log(this);		
         lastUpdateTimeoutTime = Date.now();
         const result = this.response; // 'this' is the XHR
         timeoutInfo = JSON.parse(result) || {};

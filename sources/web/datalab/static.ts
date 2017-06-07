@@ -220,7 +220,6 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     'settings.html',
     'settings.js',
     'websocket.js',
-    'index.css',
   ];
   // Map of resources where we change the name.
   const staticResourcesMap: {[key:string]: string} = {

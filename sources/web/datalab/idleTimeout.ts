@@ -38,7 +38,7 @@ export function initAndStart(appSettings: common.Settings) {
 
 export function init(appSettings: common.Settings) {
   const userSettings = settings.loadUserSettings(null);
-  shutdownCommand = userSettings['idleTimeoutShutdownCommand'];
+  shutdownCommand = userSettings.idleTimeoutShutdownCommand;
   if (!shutdownCommand) {
     shutdownCommand = appSettings.idleTimeoutShutdownCommand;
   }
@@ -46,7 +46,7 @@ export function init(appSettings: common.Settings) {
     shutdownCommand = process.env.DATALAB_SHUTDOWN_COMMAND;
   }
   if (shutdownCommand) {
-    let idleTimeoutStr = userSettings['idleTimeoutInterval'];
+    let idleTimeoutStr = userSettings.idleTimeoutInterval;
     logging.getLogger().debug('idleTimeoutStr from user settings: ' + idleTimeoutStr);
     if (!idleTimeoutStr) {
       idleTimeoutStr = appSettings.idleTimeoutInterval;
