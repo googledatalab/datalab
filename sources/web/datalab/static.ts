@@ -160,6 +160,24 @@ function sendUserCustomTheme(userId: string, response: http.ServerResponse): voi
 }
 
 /**
+ * Returns true if this path should return an experimental UI resource
+ * @param path the incoming request path
+ */
+export function isExperimentalResource(path: string) {
+  const experimentalUiEnabled = process.env.DATALAB_EXPERIMENTAL_UI;
+  return experimentalUiEnabled && (
+      path.indexOf('/files') === 0 ||
+      path.indexOf('/sessions') === 0 ||
+      path.indexOf('/bower_components') === 0 ||
+      path.indexOf('/custom_components') === 0 ||
+      path.indexOf('/images') === 0 ||
+      path.indexOf('/index.css') === 0 ||
+      path.indexOf('/modules') === 0 ||
+      path === '/'
+  );
+}
+
+/**
  * Implements static file handling.
  * @param request the incoming file request.
  * @param response the outgoing file response.
@@ -168,16 +186,14 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   var path = url.parse(request.url).pathname;
 
   // -------------------------------- start of experimental UI resources
-  const experimentalUiEnabled = process.env.DATALAB_EXPERIMENTAL_UI;
-  if (experimentalUiEnabled && (
-      path.indexOf('/files') === 0 ||
-      path.indexOf('/sessions') === 0 ||
-      path.indexOf('/bower_components') === 0 ||
-      path.indexOf('/custom_components') === 0 ||
-      path.indexOf('/images') === 0 ||
-      path.indexOf('/index.css') === 0 ||
-      path.indexOf('/modules') === 0
-      )) {
+  if (isExperimentalResource(path)) {
+    console.log('Serving experimental UI resource: ' + path);
+    if (path === '/') {
+      response.statusCode = 302;
+      response.setHeader('Location', '/files');
+      response.end();
+      return;
+    }
     if (path === '/files' || path === '/sessions') {
       path = '/index.html';
     }
