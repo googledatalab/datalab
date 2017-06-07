@@ -220,7 +220,7 @@ define(['static/appbar', 'static/minitoolbar', 'static/idle-timeout', 'util'], f
       }
 
       function isSample() {
-        var path = window.location.pathname;
+        var path = util.datalabSubPath(window.location.pathname);
         var lastSepPos = path.lastIndexOf('/');
         return lastSepPos >= 23 &&
             path.substring(lastSepPos-23, lastSepPos) == '/datalab/docs/notebooks';
@@ -242,7 +242,7 @@ define(['static/appbar', 'static/minitoolbar', 'static/idle-timeout', 'util'], f
         var w = window.open('', IPython._target);
         var parent = utils.url_path_split(this.notebook_path)[0];
         if (isSample()) {
-          var path = window.location.pathname;
+          var path = util.datalabSubPath(window.location.pathname);
           var lastSepPos = path.lastIndexOf('/');
           // Strip off leading /notebooks/ and trailing sample path to get datalab
           // path, then add /notebooks.

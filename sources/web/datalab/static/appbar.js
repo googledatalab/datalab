@@ -24,10 +24,10 @@ define(['static/idle-timeout', 'util'], function(idleTimeout, util) {
   $('#help').html(markup);
 
   function restartDatalab() {
-    var restartUrl = window.location.protocol + "//" + window.location.host + "/_restart";
+    var restartUrl = util.datalabLink("/_restart");
 
     function redirect() {
-      window.location = '/';
+      window.location = util.datalabLink('/');
     }
 
     util.xhr(restartUrl, function(){
@@ -43,7 +43,7 @@ define(['static/idle-timeout', 'util'], function(idleTimeout, util) {
       return;
     }
 
-    path = window.location.protocol + '//' + window.location.host + '/_info/vminfo';
+    path = util.datalabLink('/_info/vminfo');
     util.xhr(path, function() {
       try {
         const vminfo = JSON.parse(this.responseText);
@@ -71,7 +71,7 @@ define(['static/idle-timeout', 'util'], function(idleTimeout, util) {
   function stopVm() {
     let action = confirm('Stopping this VM will discard any unsaved state. Are you sure?');
     if (action === true) {
-      path = window.location.protocol + '//' + window.location.host + '/_stopvm';
+      path = util.datalabLink('/_stopvm');
       util.xhr(path, null, {method: 'POST'});
     }
   }
@@ -146,18 +146,16 @@ define(['static/idle-timeout', 'util'], function(idleTimeout, util) {
       }
       $('#signInButton').click(function() {
         saveFn();
-        window.location = '/signin?referer=' + encodeURIComponent(window.location);
+        window.location = util.datalabLink('/signin?referer=' + encodeURIComponent(window.location));
       });
       $('#signOutButton').click(function() {
         saveFn();
-        window.location = '/signout?referer=' + encodeURIComponent(window.location);
+        window.location = util.datalabLink('/signout?referer=' + encodeURIComponent(window.location));
       });
       $('#ungitButton').click(function() {
         // Always open at the root of the notebooks repository
         const path = '/content/datalab/notebooks';
-        const prefix = window.location.protocol + '//' + window.location.host;
-
-        window.open(prefix + '/_proxy/8083/#/repository?path=' + path);
+        window.open(util.datalabLink('/_proxy/8083/#/repository?path=' + path));
       });
     }
 

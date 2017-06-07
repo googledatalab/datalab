@@ -46,9 +46,30 @@ define(() => {
     request.send();
   }
 
+  // Generate an absolute link to a path on this same Datalab instance.
+  function datalabLink(fullPath) {
+    var basePath = document.body.getAttribute('data-base-url');
+    if (fullPath.indexOf('/') == 0) {
+      fullPath = basePath + fullPath.slice(1);
+    }
+    return window.location.protocol + '//' + window.location.host + fullPath;
+  }
+
+  // Return the portion of the given full path that is
+  // relative to the Datalab base path.
+  function datalabSubPath(fullPath) {
+    var basePath = document.body.getAttribute('data-base-url');
+    if (fullPath.indexOf(basePath) == 0) {
+      return '/' + fullPath.slice(basePath.length);
+    }
+    return fullPath;
+  }
+
   return {
     debug,
     reportEvent,
     xhr,
+    datalabLink,
+    datalabSubPath,
   };
 });

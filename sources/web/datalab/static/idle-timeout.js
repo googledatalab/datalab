@@ -113,7 +113,7 @@ define(['base/js/dialog', 'base/js/events', 'util'], function(dialog, events, ut
     const now = Date.now();
     if (now - lastUpdateTimeoutTime > queryTimeoutInfoInterval) {
       util.debug.log('Querying timeout');
-      const timeoutInfoUrl = window.location.protocol + "//" + window.location.host + "/_timeout";
+      const timeoutInfoUrl = util.datalabLink("/_timeout");
       function callback() {
         util.debug.log('_timeout call response:');
         util.debug.log(this);
@@ -147,7 +147,7 @@ define(['base/js/dialog', 'base/js/events', 'util'], function(dialog, events, ut
   // Sends a message to the server to enable or disable the timout.
   function toggleIdleTimeout() {
     const newValue = timeoutInfo.enabled ? "false" : "true";
-    const timeoutUrl = window.location.protocol + "//" + window.location.host + "/_timeout?enabled=" + newValue;
+    const timeoutUrl = util.datalabLink("/_timeout?enabled=" + newValue);
     const dropdown = $(this).parent().parent().parent();  // Walk up to the account drop-down.
     util.debug.log('Changing enabled to ' + newValue);
     updateTimeoutInfo(dropdown);
@@ -233,7 +233,7 @@ define(['base/js/dialog', 'base/js/events', 'util'], function(dialog, events, ut
   }
 
   function _resetIdleTimeout() {
-    const timeoutUrl = window.location.protocol + "//" + window.location.host + "/_timeout?reset=true";
+    const timeoutUrl = util.datalabLink("/_timeout?reset=true");
     util.debug.log('reset idle timeout');
     util.xhr(timeoutUrl, null, {method: 'POST'});
   }
