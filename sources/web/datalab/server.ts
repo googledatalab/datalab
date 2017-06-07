@@ -283,7 +283,6 @@ function trimBasePath(path: string): string {
   let pathPrefix = appSettings.datalabBasePath;
   if (path.indexOf(pathPrefix) == 0) {
     let newPath = "/" + path.substring(pathPrefix.length);
-    logging.getLogger().info('Trimming base path: ' + path + ' -> ' + newPath);
     return newPath;
   } else {
     return path;
