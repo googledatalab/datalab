@@ -272,6 +272,7 @@ function stopVmHandler(request: http.ServerRequest, response: http.ServerRespons
 }
 
 function socketHandler(request: http.ServerRequest, socket: net.Socket, head: Buffer) {
+  request.url = trimBasePath(request.url);
   // Avoid proxying websocket requests on this path, as it's handled locally rather than by Jupyter.
   if (request.url != httpOverWebSocketPath) {
     jupyter.handleSocket(request, socket, head);
