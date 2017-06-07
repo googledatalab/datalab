@@ -380,8 +380,7 @@ function getBaseTemplateData(request: http.ServerRequest): common.Map<string> {
     userId: userId,
     configUrl: appSettings.configUrl,
     knownTutorialsUrl: appSettings.knownTutorialsUrl,
-    baseUrl: '/',
-    basePath: appSettings.datalabBasePath,
+    baseUrl: appSettings.datalabBasePath,
     reportingEnabled: reportingEnabled
   };
   var signedIn = auth.isSignedIn();
