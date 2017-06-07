@@ -32,6 +32,10 @@ cd "${HERE}/../base"
 ./build.sh "$pydatalabPath"
 cd "${HERE}/"
 
+# Clean the build directory before building the image, so that the
+# prepare.sh script rebuilds web sources
+BUILD_DIR=../../build
+rm -rf $BUILD_DIR
 ${HERE}/prepare.sh "datalab-base"
 
 # Build the docker image
