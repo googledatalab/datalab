@@ -21,7 +21,7 @@
 # manually starting the server.
 
 HERE=$(dirname $0)
-CONTENT=$HOME/datalab_home
+CONTENT=$HOME
 ENTRYPOINT="/datalab/run.sh"
 DEVROOT_DOCKER_OPTION=''
 LIVE_MODE=1
@@ -64,7 +64,7 @@ fi
 
 docker run -it --entrypoint=$ENTRYPOINT \
   -p 127.0.0.1:8081:8080 \
-  -v "$CONTENT:/content" \
+  -v "$CONTENT/datalab:/content/datalab" \
   ${DEVROOT_DOCKER_OPTION} \
   -e "PROJECT_ID=$PROJECT_ID" \
   -e "DATALAB_ENV=local" \
