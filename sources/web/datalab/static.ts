@@ -169,7 +169,7 @@ export function isExperimentalResource(path: string) {
       path.indexOf('/files') === 0 ||
       path.indexOf('/sessions') === 0 ||
       path.indexOf('/bower_components') === 0 ||
-      path.indexOf('/custom_components') === 0 ||
+      path.indexOf('/components') === 0 ||
       path.indexOf('/images') === 0 ||
       path.indexOf('/index.css') === 0 ||
       path.indexOf('/modules') === 0 ||
@@ -266,7 +266,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     }
   } else if ((path.indexOf('/images/') == 0) ||
             (path.indexOf('/modules/') == 0) ||
-            (path.indexOf('/custom_components/') == 0) ||
+            (path.indexOf('/components/') == 0) ||
             (path.indexOf('/bower_components/') == 0)) {
     sendDataLabFile(path.substr(1), response);
   }

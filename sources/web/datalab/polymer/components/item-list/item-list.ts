@@ -40,7 +40,8 @@ class ItemListElement extends Polymer.Element {
         type: Array,
         value: function(): Array<Object> {
           return [];
-        }
+        },
+        observer: '_rowsChanged'
       },
       columns: {
         type: Array,
@@ -49,6 +50,10 @@ class ItemListElement extends Polymer.Element {
         }
       }
     }
+  }
+
+  _rowsChanged() {
+    debugger;
   }
 
   /**

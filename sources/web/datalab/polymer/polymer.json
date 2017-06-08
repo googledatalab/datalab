@@ -1,11 +1,11 @@
 {
   "entrypoint": "index.html",
-  "shell": "custom_components/datalab-app/datalab-app.html",
+  "shell": "components/datalab-app/datalab-app.html",
   "fragments": [
-    "custom_components/datalab-toolbar/datalab-toolbar.html",
-    "custom_components/datalab-sidebar/datalab-sidebar.html",
-    "custom_components/datalab-files/datalab-files.html",
-    "custom_components/datalab-sessions/datalab-sessions.html"
+    "components/datalab-toolbar/datalab-toolbar.html",
+    "components/datalab-sidebar/datalab-sidebar.html",
+    "components/datalab-files/datalab-files.html",
+    "components/datalab-sessions/datalab-sessions.html"
   ],
   "sources": [
     "modules/**/*",
