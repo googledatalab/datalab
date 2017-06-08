@@ -45,7 +45,7 @@
       var projectHash = document.body.getAttribute('data-project-hash');
       var event = {
         'event': 'concordEvent',
-        'pagePath': '/virtual/datalab/openDirectory',
+        'pagePath': '<%baseUrl%>virtual/datalab/openDirectory',
         'eventType': 'datalab',
         'eventName': 'openDirectory',
         'projectNumber': projectHash,
@@ -141,10 +141,10 @@
       baseUrl: '<%baseUrl%>static/',
       paths: {
         'auth/js/main': 'auth/js/main.min',
-        custom : '/custom',
-        nbextensions : '/nbextensions',
-        widgets : '/deprecatedwidgets',
-        kernelspecs : '/kernelspecs',
+        custom : '<%baseUrl%>custom',
+        nbextensions : '<%baseUrl%>nbextensions',
+        widgets : '<%baseUrl%>deprecatedwidgets',
+        kernelspecs : '<%baseUrl%>kernelspecs',
         underscore : 'components/underscore/underscore-min',
         backbone : 'components/backbone/backbone-min',
         jquery: 'components/jquery/jquery.min',

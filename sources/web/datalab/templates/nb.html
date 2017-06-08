@@ -57,7 +57,7 @@
 
       var event = {
         'event': 'concordEvent',
-        'pagePath': '/virtual/datalab/openNotebook',
+        'pagePath': '<%baseUrl%>virtual/datalab/openNotebook',
         'eventType': 'datalab',
         'eventName': 'openNotebook',
         'projectNumber': projectHash,
@@ -227,10 +227,10 @@
       baseUrl: '<%baseUrl%>static/',
       paths: {
         'auth/js/main': 'auth/js/main.min',
-        custom : '/custom',
-        nbextensions : '/nbextensions',
-        widgets : '/deprecatedwidgets',
-        kernelspecs : '/kernelspecs',
+        custom : '<%baseUrl%>custom',
+        nbextensions : '<%baseUrl%>nbextensions',
+        widgets : '<%baseUrl%>deprecatedwidgets',
+        kernelspecs : '<%baseUrl%>kernelspecs',
         underscore : 'components/underscore/underscore-min',
         backbone : 'components/backbone/backbone-min',
         jquery: 'components/jquery/jquery.min',
