@@ -35,15 +35,6 @@ steps:
   id:   'pushTarball'
   waitFor: ['createTarball']
 
-# Cleanup the temporary files created to push build artifacts to GCS
-- name: 'debian'
-  args: ['rm', '-rf',
-         '/workspace/config_local.js',
-         '/workspace/config_local_${REVISION_ID}.js',
-         '/workspace/datalab-cli-${REVISION_ID}.tgz']
-  id:   'cleanupWorkspace'
-  waitFor: ['pushConfigLocal', 'pushTarball']
-
 # Build the base images. These are not pushed externally, but rather
 # used the build the final images which are pushed.
 
@@ -134,8 +125,17 @@ steps:
   args: ['cp',
          '/workspace/config_local_${REVISION_ID}.js',
          'gs://${PROJECT_ID}/builds/config_local_latest-master-build.js']
-  id:   'pushConfigLocal'
+  id:   'pushConfigLocalStatic'
   waitFor: ['pushConfigLocal', 'buildDatalab', 'buildDatalabGPU', 'buildGateway']
+
+# Cleanup the temporary files created to push build artifacts to GCS
+- name: 'debian'
+  args: ['rm', '-rf',
+         '/workspace/config_local.js',
+         '/workspace/config_local_${REVISION_ID}.js',
+         '/workspace/datalab-cli-${REVISION_ID}.tgz']
+  id:   'cleanupWorkspace'
+  waitFor: ['pushConfigLocal', 'pushTarball', 'pushConfigLocalStatic']
 
 images:
   - 'gcr.io/${PROJECT_ID}/datalab-gateway:commit-${REVISION_ID}'
