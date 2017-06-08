@@ -1,7 +1,10 @@
 define(() => {
   const debug = {
-    enabled: true,
-    log: function() { console.log.apply(console, arguments); },
+    log: function() {
+      if (window.location.search.indexOf('debug=true') > -1) {
+        console.log.apply(console, arguments);
+      }
+    },
   };
 
   function reportEvent(event) {
