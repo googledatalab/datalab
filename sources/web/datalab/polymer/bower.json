@@ -1,5 +1,5 @@
 {
-  "name": "polymer-datalab",
+  "name": "datalab",
   "main": "index.html",
   "dependencies": {
     "polymer": "Polymer/polymer#^2.0.0",

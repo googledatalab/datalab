@@ -27,7 +27,7 @@ import idleTimeout = require('./idleTimeout');
 import fileSearch = require('./fileSearch');
 import net = require('net');
 import noCacheContent = require('./noCacheContent')
-import path = require('path');
+import path_ = require('path');
 import request = require('request');
 import reverseProxy = require('./reverseProxy');
 import settings_ = require('./settings');
@@ -123,11 +123,16 @@ function handleRequest(request: http.ServerRequest,
     userManager.maybeSetUserIdCookie(request, response);
 
     response.statusCode = 302;
+    var redirectUrl : string;
     if (startup_path_setting in loadedSettings) {
-      response.setHeader('Location', loadedSettings[startup_path_setting])
+      redirectUrl = loadedSettings[startup_path_setting];
     } else {
-      response.setHeader('Location', '/tree/datalab');
+      redirectUrl = '/tree/datalab';
     }
+    if (redirectUrl.indexOf(appSettings.datalabBasePath) != 0) {
+      redirectUrl = path_.join(appSettings.datalabBasePath, redirectUrl);
+    }
+    response.setHeader('Location', redirectUrl);
     response.end();
     return;
   }
@@ -223,6 +228,16 @@ function handleRequest(request: http.ServerRequest,
 }
 
 /**
+ * Returns true iff the supplied path should be handled by the static handler
+ */
+function isStaticResource(urlpath: string) {
+  // /static and /custom paths for returning static content
+  return urlpath.indexOf('/custom') == 0 ||
+         urlpath.indexOf('/static') == 0 ||
+         static_.isExperimentalResource(urlpath);
+}
+
+/**
  * Base logic for handling all requests sent to the proxy web server. Some
  * requests are handled within the server, while some are proxied to the
  * Jupyter notebook server.
@@ -239,10 +254,7 @@ function uncheckedRequestHandler(request: http.ServerRequest, response: http.Ser
       urlpath.indexOf('/oauthcallback') == 0) {
     // Start or return from auth flow.
     auth.handleAuthFlow(request, response, parsed_url, appSettings);
-  } else if (urlpath.indexOf('/static') == 0 ||
-             urlpath.indexOf('/custom') == 0 ||
-             static_.isExperimentalResource(urlpath)) {
-    // /static and /custom paths for returning static content
+  } else if (isStaticResource(urlpath)) {
     staticHandler(request, response);
   } else {
     handleRequest(request, response, urlpath);
@@ -269,9 +281,20 @@ function stopVmHandler(request: http.ServerRequest, response: http.ServerRespons
 }
 
 function socketHandler(request: http.ServerRequest, socket: net.Socket, head: Buffer) {
+  request.url = trimBasePath(request.url);
   // Avoid proxying websocket requests on this path, as it's handled locally rather than by Jupyter.
   if (request.url != httpOverWebSocketPath) {
     jupyter.handleSocket(request, socket, head);
+  }
+}
+
+function trimBasePath(path: string): string {
+  let pathPrefix = appSettings.datalabBasePath;
+  if (path.indexOf(pathPrefix) == 0) {
+    let newPath = "/" + path.substring(pathPrefix.length);
+    return newPath;
+  } else {
+    return path;
   }
 }
 
@@ -282,6 +305,7 @@ function socketHandler(request: http.ServerRequest, socket: net.Socket, head: Bu
  * @param response the out-going HTTP response.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse) {
+  request.url = trimBasePath(request.url);
   idleTimeout.resetBasedOnPath(request.url);
   try {
     uncheckedRequestHandler(request, response);
@@ -317,8 +341,9 @@ export function run(settings: common.Settings): void {
     new wsHttpProxy.WsHttpProxy(server, httpOverWebSocketPath, settings.allowOriginOverrides);
   }
 
-  logging.getLogger().info('Starting DataLab server at http://localhost:%d',
-                           settings.serverPort);
+  logging.getLogger().info('Starting DataLab server at http://localhost:%d%s',
+                           settings.serverPort,
+                           settings.datalabBasePath);
   backupUtility.startBackup(settings);
   process.on('SIGINT', () => process.exit());
 
