@@ -18,7 +18,7 @@
         height: 100%;
       }
       .sidebar-button {
-        height: var(--toolbar-height);
+        height: calc(var(--toolbar-height) - 1px);
         width: 100%;
         margin: 0px;
         color: #666;
@@ -47,9 +47,10 @@
     </style>
 
     <div class="container">
+      <!--place holder div to align with the toolbar-->
+      <div class="sidebar-button"></div>
       <iron-selector class="container" attr-for-selected="id" selected={{page}}
                      class="drawer-list" role="navigation">
-        <paper-button class="sidebar-button"></paper-button>
         <a href="/files" id="files">
           <paper-button class="sidebar-button">
             <iron-icon icon="editor:insert-drive-file"></iron-icon>
@@ -68,21 +69,4 @@
   </template>
 </dom-module>
 
-<script>
-  class SidebarElement extends Polymer.Element {
-
-    static get is() { return "datalab-sidebar"; }
-
-    static get properties() {
-      return {
-        page: {
-          type: String,
-          value: "files"
-        }
-      }
-    }
-
-  }
-
-  customElements.define(SidebarElement.is, SidebarElement);
-</script>
+<script src="datalab-sidebar.js"></script>
