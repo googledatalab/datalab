@@ -140,7 +140,7 @@ function createJupyterServerAtPort(port: number, userId: string, userDir: string
     '--notebook-dir="' + server.notebooks + '"',
     '--NotebookNotary.algorithm=sha256',
     '--NotebookNotary.secret_file=' + secretPath,
-    '--NotebookApp.base_url=' + appSettings.datalabBasePath
+    '--NotebookApp.base_url=' + appSettings.datalabBasePath,
   ]);
 
   var notebookEnv: any = process.env;

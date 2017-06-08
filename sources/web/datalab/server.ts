@@ -332,7 +332,7 @@ export function run(settings: common.Settings): void {
     new wsHttpProxy.WsHttpProxy(server, httpOverWebSocketPath, settings.allowOriginOverrides);
   }
 
-  logging.getLogger().info('Starting DataLab server at http://localhost:%d/%s',
+  logging.getLogger().info('Starting DataLab server at http://localhost:%d%s',
                            settings.serverPort,
                            settings.datalabBasePath);
   backupUtility.startBackup(settings);

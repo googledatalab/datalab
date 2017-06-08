@@ -166,11 +166,11 @@ function socketHandler(socket: SocketIO.Socket) {
 
 export function init(settings: common.Settings): void {
   var io = socketio(String(settings.socketioPort), {
-    path: path_.join(settings.datalabBasePath, '/socket.io'),
+    path: path_.join(settings.datalabBasePath, 'socket.io'),
     transports: [ 'polling' ],
     allowUpgrades: false
   });
 
-  io.of(path_.join(settings.datalabBasePath, '/session'))
+  io.of(path_.join(settings.datalabBasePath, 'session'))
     .on('connection', socketHandler);
 }
