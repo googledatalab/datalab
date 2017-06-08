@@ -16,22 +16,33 @@
 
 RUN_NOTEBOOK=0
 RUN_UI=0
-RUN_UNIT=0
+RUN_CLIENT_UNIT=0
+RUN_SERVER_UNIT=0
 
 CONTAINER_STARTED=0
 
 HERE=$(dirname $0)
 JASMINE=$HERE/node_modules/jasmine/bin/jasmine.js
+JASMINE_NODE=$HERE/node_modules/jasmine-node/bin/jasmine-node
 
 function parseOptions() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
+      --client-unit-tests)
+        RUN_CLIENT_UNIT=1
+        shift
+        ;;
       --notebook-tests)
         RUN_NOTEBOOK=1
         shift
         ;;
+      --server-unit-tests)
+        RUN_SERVER_UNIT=1
+        shift
+        ;;
       -u|--unit-tests)
-        RUN_UNIT=1
+        RUN_CLIENT_UNIT=1
+        RUN_SERVER_UNIT=1
         shift
         ;;
       --ui-tests)
@@ -49,12 +60,13 @@ function parseOptions() {
     esac
   done
 
-  if (( RUN_NOTEBOOK + RUN_UNIT + RUN_UI == 0 )); then
+  if (( RUN_CLIENT_UNIT + RUN_SERVER_UNIT + RUN_NOTEBOOK + RUN_UI == 0 )); then
     # If no parts were specified, run all parts
     echo Run all test sections
+    RUN_CLIENT_UNIT=1
+    RUN_SERVER_UNIT=1
     RUN_NOTEBOOK=1
     RUN_UI=1
-    RUN_UNIT=1
   fi
 }
 
@@ -100,18 +112,23 @@ function startContainers() {
 }
 
 function runNotebookTests() {
-  echo Running jasmine notebook tests
+  echo Running notebook integration tests
   $JASMINE --config=$HERE/notebook/jasmine.json
 }
 
 function runUiTests() {
-  echo Running jasmine ui tests
+  echo Running ui integration tests
   $JASMINE --config=$HERE/ui/jasmine.json
 }
 
-function runUnitTests() {
-  echo Running jasmine unit tests
-  $JASMINE --config=$HERE/unittests/support/jasmine.json
+function runClientUnitTests() {
+  echo Running client unit tests
+  $JASMINE --config=$HERE/client-unit/jasmine.json
+}
+
+function runServerUnitTests() {
+  echo Running server unit tests
+  $JASMINE_NODE $HERE/server-unit/
 }
 
 function main() {
@@ -124,8 +141,11 @@ function main() {
   fi
 
   # Unit tests are fast, run them first
-  if (( RUN_UNIT > 0 )); then
-    runUnitTests
+  if (( RUN_CLIENT_UNIT > 0 )); then
+    runClientUnitTests
+  fi
+  if (( RUN_SERVER_UNIT > 0 )); then
+    runServerUnitTests
   fi
 
   if (( RUN_NOTEBOOK + RUN_UI > 0 )); then

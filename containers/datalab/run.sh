@@ -64,7 +64,7 @@ fi
 
 docker run -it --entrypoint=$ENTRYPOINT \
   -p 127.0.0.1:8081:8080 \
-  -v "$CONTENT:/content" \
+  -v "$CONTENT/datalab:/content/datalab" \
   ${DEVROOT_DOCKER_OPTION} \
   -e "PROJECT_ID=$PROJECT_ID" \
   -e "DATALAB_ENV=local" \

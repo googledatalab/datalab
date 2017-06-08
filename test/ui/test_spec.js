@@ -88,7 +88,9 @@ describe('UI tests', function() {
               });
           }, 10000);
         })
-        .finally(() => done());
+        .then(driver.executeScript("window.datalab.vminfo.vm_name='fake_vm_name_for_testing';" +
+              "require(['static/appbar'],appbar=>appbar.setAccountMenuVminfo());"))
+        .finally(done);
     });
 
     it('appears correctly before any actions have been taken', function(done) {
@@ -97,28 +99,26 @@ describe('UI tests', function() {
     });
 
     it('opens help menu correctly when its button is clicked', function(done) {
-      return driver.findElement(By.id('helpButton'))
-        .then(button => button.click())
-        .then(() => screenshotAndCompare('bodyWithHelp.png', 'bodyWithHelp'))
+      return driver.findElement(By.id('helpButton')).click()
+        .then(screenshotAndCompare('bodyWithHelp.png', 'bodyWithHelp'))
         .then(done);
     });
 
     it('appears correctly after closing help menu by clicking the body element', function(done) {
-      return driver.findElement(By.tagName('body'))
-        .then(button => button.click())
-        .then(() => screenshotAndCompare('body.png', 'body'))
+      return driver.findElement(By.tagName('body')).click()
+        .then(screenshotAndCompare('body.png', 'body'))
         .then(done);
     });
 
     // Simulate a list reload by calling the Jupyter function, and waiting
-    // on the draw list event to make sure all elements have rendered
+    // on the draw list event to make sure all elements have rendered.
     function reloadNotebookList() {
       return driver.executeAsyncScript(function() {
         const callback = arguments[arguments.length - 1];
         require(['base/js/events'], function(events) {
           events.on('draw_notebook_list.NotebookList', callback);
+          Jupyter.notebook_list.load_list();
         });
-        Jupyter.notebook_list.load_list()
       });
     }
 
@@ -130,11 +130,11 @@ describe('UI tests', function() {
         // Get an item in the file listing. the reason we're not using first
         // is because the first item is not selectable (up dir)
         // Then click the item, make sure the UI changes accordingly (extra buttons added)
-        .then(() => driver.findElement(By.xpath(itemXpath)).click())
-        .then(() => screenshotAndCompare('listItemSelected.png', 'listItemSelected'))
+        .then(driver.findElement(By.xpath(itemXpath)).click())
+        .then(screenshotAndCompare('listItemSelected.png', 'listItemSelected'))
         // Now unselect the same item and make sure the extra icons disappear
-        .then(() => driver.findElement(By.xpath(itemXpath)).click())
-        .then(() => screenshotAndCompare('listItemUnselected.png', 'listItemUnselected'))
+        .then(driver.findElement(By.xpath(itemXpath)).click())
+        .then(screenshotAndCompare('listItemUnselected.png', 'listItemUnselected'))
         .then(done);
     });
 
@@ -142,7 +142,7 @@ describe('UI tests', function() {
       // Add a new folder
       return driver.findElement(By.id('addFolderButton')).click()
         .then(reloadNotebookList)
-        .then(() => screenshotAndCompare('folderAdded.png', 'folderAdded'))
+        .then(screenshotAndCompare('folderAdded.png', 'folderAdded'))
         // Cleanup the new folder
         .finally(function() {
           return driver.executeScript(
@@ -150,6 +150,7 @@ describe('UI tests', function() {
               "Jupyter.notebook_list.notebook_path + '/Untitled Folder')"
           );
         })
+        .then(reloadNotebookList)
         .then(done);
     });
 
@@ -157,7 +158,7 @@ describe('UI tests', function() {
       // Add a new notebook
       return driver.findElement(By.id('addNotebookButton')).click()
         .then(reloadNotebookList)
-        .then(() => screenshotAndCompare('notebookAdded.png', 'notebookAdded'))
+        .then(screenshotAndCompare('notebookAdded.png', 'notebookAdded'))
         // Cleanup the new notebook
         .finally(function() {
           return driver.executeScript(
@@ -165,6 +166,41 @@ describe('UI tests', function() {
               "Jupyter.notebook_list.notebook_path + '/Untitled Notebook.ipynb')"
           );
         })
+        .then(reloadNotebookList)
+        .then(done);
+    });
+
+    it('Settings page defaults to light theme', function(done) {
+      driver.findElement(By.id('accountDropdownButton')).click()
+        .then(screenshotAndCompare('settingsMenu.png', 'settingsMenu'))
+        .then(driver.findElement(By.id('settingsButton')).click())
+        // After clicking on the Settings menu item, wait for the dialog.
+        .then(driver.wait(until.elementLocated(By.id('lightThemeRadioOption'))))
+        // Wait for the fade-in to complete.
+        .then(driver.sleep(1000))
+        .then(screenshotAndCompare('settingsLightTheme.png', 'settingsLightTheme'))
+        // Close the dialog.
+        .then(driver.findElement(By.xpath('//button[@data-dismiss="modal"]')).click())
+        .then(driver.sleep(1000))
+        // Make sure the dialog has closed correctly
+        .then(() => screenshotAndCompare('body.png', 'bodyAfterCloseSettingsLight'))
+        .then(done);
+    });
+
+    it('Settings page can change to dark theme', function(done) {
+      driver.findElement(By.id('accountDropdownButton')).click()
+        .then(driver.findElement(By.id('settingsButton')).click())
+        // After clicking on the Settings menu item, wait for the dialog.
+        .then(driver.wait(until.elementLocated(By.id('lightThemeRadioOption'))))
+        // Wait for the fade-in to complete.
+        .then(driver.sleep(1000))
+        .then(driver.findElement(By.id('darkThemeRadioOption')).click())
+        .then(screenshotAndCompare('settingsDarkTheme.png', 'settingsDarkTheme'))
+        .then(driver.findElement(By.id('lightThemeRadioOption')).click())
+        // Close the dialog.
+        .then(driver.findElement(By.xpath('//button[@data-dismiss="modal"]')).click())
+        .then(driver.sleep(1000))
+        .then(screenshotAndCompare('body.png', 'bodyAfterCloseSettingsDark'))
         .then(done);
     });
 
