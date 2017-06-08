@@ -87,6 +87,19 @@ define(['static/idle-timeout', 'util'], function(idleTimeout, util) {
   }
 
   function initializeAppBar(dialog, saveFn) {
+    // Display the logo
+    document.getElementById('logoImg').src = util.datalabLink('/static/logo.png');
+    document.getElementById('logoImg').style.display = '';
+
+    // Initialize some of the links whose targets need to be relative to the base path
+    $('#homeLink').click(function(e) {
+      saveFn();
+      window.location = util.datalabLink('/tree');
+    });
+    $('#samplesLink').click(function(e) {
+      saveFn();
+      window.location = util.datalabLink('/notebooks/datalab/docs/Readme.ipynb');
+    });
 
     function showAbout() {
       var version = document.body.getAttribute('data-version-id');
@@ -156,6 +169,9 @@ define(['static/idle-timeout', 'util'], function(idleTimeout, util) {
         // Always open at the root of the notebooks repository
         const path = '/content/datalab/notebooks';
         window.open(util.datalabLink('/_proxy/8083/#/repository?path=' + path));
+      });
+      $('#sessionsButton').click(function() {
+        window.open(util.datalabLink('/sessions'));
       });
     }
 
