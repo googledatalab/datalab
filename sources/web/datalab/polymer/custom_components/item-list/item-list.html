@@ -81,50 +81,5 @@
   </template>
 </dom-module>
 
-<script>
-  class ItemListElement extends Polymer.Element {
-
-    static get is() { return "item-list"; }
-
-    static get properties() {
-      return {
-        rows: {
-          type: Array,
-          value: function() {
-            return [];
-          }
-        },
-        columns: {
-          type: Array,
-          value: []
-        }
-      }
-    }
-
-    _rowClicked(e) {
-      const index = this.$.list.indexForElement(e.target);
-      const selected = this.rows[index].selected;
-
-      // if the clicked element is the checkbox, we're done, the checkbox already
-      // toggles selection (see the dom-repeat template)
-      // otherwise, select this element, unselect all others
-      if (e.target.tagName !== 'PAPER-CHECKBOX') {
-        for (let i = 0; i < this.rows.length; ++i) {
-          this.set('rows.' + i + '.selected', false);
-        }
-        this.set('rows.' + index + '.selected', true);
-      }
-    }
-
-    _rowDblClicked(e) {
-      const index = this.$.list.indexForElement(e.target);
-      //const selected = this.rows[index].selected;
-      this.dispatchEvent(new CustomEvent('itemDblClick', {detail: {index: index}}));
-    }
-
-  }
-
-  customElements.define(ItemListElement.is, ItemListElement);
-</script>
-
+<script src="item-list.js"></script>
 
