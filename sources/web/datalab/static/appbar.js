@@ -97,8 +97,7 @@ define(['static/idle-timeout', 'util'], function(idleTimeout, util) {
       window.location = util.datalabLink('/tree');
     });
     $('#samplesLink').click(function(e) {
-      saveFn();
-      window.location = util.datalabLink('/notebooks/datalab/docs/Readme.ipynb');
+      window.open(util.datalabLink('/notebooks/datalab/docs/Readme.ipynb'));
     });
 
     function showAbout() {
