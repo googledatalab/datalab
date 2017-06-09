@@ -235,12 +235,10 @@ function handleRequest(request: http.ServerRequest,
 function uncheckedRequestHandler(request: http.ServerRequest, response: http.ServerResponse) {
   var parsed_url = url.parse(request.url, true);
   var urlpath = parsed_url.pathname;
-  const experimentalUiEnabled = process.env.DATALAB_EXPERIMENTAL_UI;
   if (urlpath.indexOf('/signin') == 0 || urlpath.indexOf('/signout') == 0 ||
       urlpath.indexOf('/oauthcallback') == 0) {
     // Start or return from auth flow.
     auth.handleAuthFlow(request, response, parsed_url, appSettings);
-    staticHandler(request, response);
   } else if (urlpath.indexOf('/static') == 0 ||
              urlpath.indexOf('/custom') == 0 ||
              static_.isExperimentalResource(urlpath)) {

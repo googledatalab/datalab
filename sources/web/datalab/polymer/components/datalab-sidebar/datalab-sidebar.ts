@@ -1,5 +1,3 @@
-/// <reference path='../../../../../../third_party/externs/ts/polymer/polymer.d.ts' />
-
 /**
  * Sidebar element for Datalab.
  * This element puts a side bar on the left side that contains links to

@@ -2,9 +2,17 @@
   "compilerOptions": {
     "target": "es6",
     "noImplicitReturns": true,
-    "noImplicitAny": true
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noEmitOnError": true,
+    "strictNullChecks": true,
+    "module": "commonjs",
+    "removeComments": true
   },
   "include": [
-    "**/*.ts"
+    "**/*.ts",
+    "../../../../third_party/externs/ts/polymer/polymer.d.ts"
   ]
 }

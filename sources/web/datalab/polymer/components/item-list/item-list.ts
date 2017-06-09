@@ -1,13 +1,20 @@
-/// <reference path='../../../../../../third_party/externs/ts/polymer/polymer.d.ts' />
-
 /**
  * Interface representing a row in the item list
  */
-interface row {
+interface ItemListRow {
   firstCol: string,
   secondCol: string,
   icon: string,
   selected: boolean
+}
+
+/**
+ * CustomEvent that gets dispatched when an item is double clicked
+ */
+class DoubleClickEvent extends CustomEvent {
+  detail: {
+    index: number
+  }
 }
 
 /**
@@ -25,7 +32,7 @@ class ItemListElement extends Polymer.Element {
   /**
    * list of data rows, each implementing the row interface
    */
-  public rows: Array<row>;
+  public rows: Array<ItemListRow>;
 
   /**
    * list of string data columns names
@@ -53,7 +60,6 @@ class ItemListElement extends Polymer.Element {
   }
 
   _rowsChanged() {
-    debugger;
   }
 
   /**
@@ -63,7 +69,6 @@ class ItemListElement extends Polymer.Element {
   _rowClicked(e: MouseEvent) {
     const target = <HTMLDivElement>e.target;
     const index = this.$.list.indexForElement(target);
-    const selected = this.rows[index].selected;
 
     // if the clicked element is the checkbox, we're done, the checkbox already
     // toggles selection (see the dom-repeat template)
@@ -81,7 +86,8 @@ class ItemListElement extends Polymer.Element {
    */
   _rowDblClicked(e: MouseEvent) {
     const index = this.$.list.indexForElement(e.target);
-    this.dispatchEvent(new CustomEvent('itemDblClick', {detail: {index: index}}));
+    const ev = new DoubleClickEvent('itemDblClick', { detail: {index: index} });
+    this.dispatchEvent(ev);
   }
 
 }

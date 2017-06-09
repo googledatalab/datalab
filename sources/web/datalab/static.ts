@@ -247,6 +247,12 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     }
   }
   else if (path.lastIndexOf('/custom.js') >= 0) {
+    // NOTE: Uncomment to use external content mapped into the container.
+    //       This is only useful when actively developing the content itself.
+    // var text = fs.readFileSync('/sources/datalab/static/datalab.js', { encoding: 'utf8' });
+    // response.writeHead(200, { 'Content-Type': 'text/javascript' });
+    // response.end(text);
+
     sendDataLabFile('datalab.js', response);
   }
   else if (path.lastIndexOf('/custom.css') > 0) {
@@ -264,11 +270,6 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     } else {
       sendDataLabFile(DEFAULT_THEME_FILE, response);
     }
-  } else if ((path.indexOf('/images/') == 0) ||
-            (path.indexOf('/modules/') == 0) ||
-            (path.indexOf('/components/') == 0) ||
-            (path.indexOf('/bower_components/') == 0)) {
-    sendDataLabFile(path.substr(1), response);
   }
   else if ((path.indexOf('/static/extensions/') == 0) ||
            (path.indexOf('/static/require/') == 0) ||

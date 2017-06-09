@@ -91,15 +91,17 @@ declare module Polymer {
     unlisten(node: Element, eventName: string, methodName: string): void;
     unshift(path: string, value: any): any;
     updateStyles(properties?: Object): void;
+    shadowRoot: ShadowRoot;
     properties?: Object;
     listeners?: Object;
     behaviors?: Object[];
     observers?: String[];
     factoryImpl?(...args: any[]): void;
-    ready?(): void;
-    created?(): void;
-    attached?(): void;
-    detached?(): void;
+    ready(): void;
+    created(): void;
+    attached(): void;
+    detached(): void;
+    connectedCallback(): void;
     attributeChanged?(attrName: string, oldVal: any, newVal: any): void;
     prototype?: Object;
   }
