@@ -29,6 +29,7 @@ var CONTENT_TYPES: common.Map<string> = {
   '.js': 'text/javascript',
   '.css': 'text/css',
   '.png': 'image/png',
+  '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
   '.txt': 'text/plain',
   '.html': 'text/html'
@@ -159,14 +160,51 @@ function sendUserCustomTheme(userId: string, response: http.ServerResponse): voi
 }
 
 /**
+ * Returns true if this path should return an experimental UI resource
+ * @param path the incoming request path
+ */
+export function isExperimentalResource(pathname: string) {
+  const experimentalUiEnabled = process.env.DATALAB_EXPERIMENTAL_UI;
+  return experimentalUiEnabled === 'true' && (
+      pathname.indexOf('/files') === 0 ||
+      pathname.indexOf('/sessions') === 0 ||
+      pathname.indexOf('/bower_components') === 0 ||
+      pathname.indexOf('/components') === 0 ||
+      pathname.indexOf('/images') === 0 ||
+      pathname.indexOf('/index.css') === 0 ||
+      pathname.indexOf('/modules') === 0 ||
+      pathname === '/'
+  );
+}
+
+/**
  * Implements static file handling.
  * @param request the incoming file request.
  * @param response the outgoing file response.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
-  var path = url.parse(request.url).pathname;
+  var pathname = url.parse(request.url).pathname;
 
-  console.log('static request: ' + path);
+  // -------------------------------- start of experimental UI resources
+  if (isExperimentalResource(pathname)) {
+    logging.getLogger().debug('Serving experimental UI resource: ' + pathname);
+    if (pathname === '/') {
+      response.statusCode = 302;
+      response.setHeader('Location', path.join(appSettings.datalabBasePath, 'files'));
+      response.end();
+      return;
+    }
+    if (pathname === '/files' || pathname === '/sessions') {
+      pathname = '/index.html';
+    }
+    pathname = 'experimental' + pathname;
+    console.log('sending experimental file: ' + pathname);
+    sendDataLabFile(pathname, response);
+    return;
+  }
+  // -------------------------------- end of experimental resources
+
+  console.log('static request: ' + pathname);
   // List of resources that are passed through with the same name.
   const staticResourcesList: [string] = [
     'appbar.html',
@@ -190,25 +228,25 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     'logo.png': 'datalab.png',
   };
 
-  var subpath = path.substr(path.lastIndexOf('/') + 1);
+  var subpath = pathname.substr(pathname.lastIndexOf('/') + 1);
   if (staticResourcesList.indexOf(subpath) >= 0) {
     sendDataLabFile(subpath, response);
   }
   else if (subpath in staticResourcesMap) {
     sendDataLabFile(staticResourcesMap[subpath], response);
   }
-  else if (path.indexOf('/codemirror/mode/') > 0) {
-    var split = path.lastIndexOf('/');
-    var newPath = 'codemirror/mode/' + path.substring(split + 1);
+  else if (pathname.indexOf('/codemirror/mode/') > 0) {
+    var split = pathname.lastIndexOf('/');
+    var newPath = 'codemirror/mode/' + pathname.substring(split + 1);
     if (datalabFileExists(newPath)) {
       sendDataLabFile(newPath, response);
     } else {
       // load codemirror modes from proper path
-      path = path.substr(1).replace('static/codemirror', 'static/components/codemirror');
-      sendJupyterFile(path, response);
+      pathname = pathname.substr(1).replace('static/codemirror', 'static/components/codemirror');
+      sendJupyterFile(pathname, response);
     }
   }
-  else if (path.lastIndexOf('/custom.js') >= 0) {
+  else if (pathname.lastIndexOf('/custom.js') >= 0) {
     // NOTE: Uncomment to use external content mapped into the container.
     //       This is only useful when actively developing the content itself.
     // var text = fs.readFileSync('/sources/datalab/static/datalab.js', { encoding: 'utf8' });
@@ -217,7 +255,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
 
     sendDataLabFile('datalab.js', response);
   }
-  else if (path.lastIndexOf('/custom.css') > 0) {
+  else if (pathname.lastIndexOf('/custom.css') > 0) {
     var userId: string = userManager.getUserId(request);
     var userSettings: common.Map<string> = settings.loadUserSettings(userId);
     if ('theme' in userSettings) {
@@ -233,15 +271,15 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       sendDataLabFile(DEFAULT_THEME_FILE, response);
     }
   }
-  else if ((path.indexOf('/static/extensions/') == 0) ||
-           (path.indexOf('/static/require/') == 0) ||
-           (path.indexOf('/static/fonts/') == 0)) {
-    // Strip off the leading '/static/' to turn path into a relative path within the
+  else if ((pathname.indexOf('/static/extensions/') == 0) ||
+           (pathname.indexOf('/static/require/') == 0) ||
+           (pathname.indexOf('/static/fonts/') == 0)) {
+    // Strip off the leading '/static/' to turn pathname into a relative path within the
     // static directory.
-    sendDataLabFile(path.substr('/static/'.length), response);
+    sendDataLabFile(pathname.substr('/static/'.length), response);
   } else {
-    // Strip off the leading slash to turn path into a relative file path
-    sendJupyterFile(path.substr(1), response);
+    // Strip off the leading slash to turn pathname into a relative file path
+    sendJupyterFile(pathname.substr(1), response);
   }
 }
 

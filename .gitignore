@@ -16,6 +16,8 @@ containers/datalab/content/license.txt
 containers/gateway/Dockerfile
 containers/gateway/content/license.txt
 containers/base/pydatalab
-test/node_modules
-node_modules
+node_modules/
+bower_components/
 test/ui/broken
+experimental/
+sources/web/datalab/polymer/**/*.js
