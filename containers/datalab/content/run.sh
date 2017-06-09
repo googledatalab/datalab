@@ -114,8 +114,12 @@ then
   openssl rand -base64 128 > /content/datalab/.config/notary_secret
 fi
 
+# Parse the settings overrides to get the (potentially overridden) value
+# of the `datalabBasePath` setting.
+DATALAB_BASE_PATH=$(echo ${DATALAB_SETTINGS_OVERRIDES:-"{}"} | python -c "import sys,json; print(json.load(sys.stdin).get('datalabBasePath',''))")
+
 # Start the ungit server
-ungit --port=8083 --no-launchBrowser --forcedLaunchPath=/content/datalab --ungitVersionCheckOverride 1> /dev/null &
+ungit --port=8083 --no-launchBrowser --forcedLaunchPath=/content/datalab --ungitVersionCheckOverride 1 --rootPath="${DATALAB_BASE_PATH}" > /dev/null &
 
 # Start the DataLab server
 FOREVER_CMD="forever --minUptime 1000 --spinSleepTime 1000"

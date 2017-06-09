@@ -3,11 +3,11 @@ define(['static/appbar', 'static/minitoolbar', 'static/idle-timeout', 'util'], f
     // Various RequireJS additions used for notebook functionality
     require.config({
       paths: {
-        extensions: '/static/extensions',
+        extensions: 'extensions',
         d3: '//cdnjs.cloudflare.com/ajax/libs/d3/3.4.13/d3',
-        element: '/static/require/element',
-        style: '/static/require/style',
-        visualization: '/static/require/visualization',
+        element: 'require/element',
+        style: 'require/style',
+        visualization: 'require/visualization',
         jquery: '//ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min',
         plotly: 'https://cdn.plot.ly/plotly-1.5.1.min.js?noext'
       },
@@ -220,7 +220,7 @@ define(['static/appbar', 'static/minitoolbar', 'static/idle-timeout', 'util'], f
       }
 
       function isSample() {
-        var path = window.location.pathname;
+        var path = util.datalabSubPath(window.location.pathname);
         var lastSepPos = path.lastIndexOf('/');
         return lastSepPos >= 23 &&
             path.substring(lastSepPos-23, lastSepPos) == '/datalab/docs/notebooks';
@@ -242,7 +242,7 @@ define(['static/appbar', 'static/minitoolbar', 'static/idle-timeout', 'util'], f
         var w = window.open('', IPython._target);
         var parent = utils.url_path_split(this.notebook_path)[0];
         if (isSample()) {
-          var path = window.location.pathname;
+          var path = util.datalabSubPath(window.location.pathname);
           var lastSepPos = path.lastIndexOf('/');
           // Strip off leading /notebooks/ and trailing sample path to get datalab
           // path, then add /notebooks.

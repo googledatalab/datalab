@@ -99,26 +99,25 @@ define(['util'], (util) => {
 
     function addTerminal(e) {
       let newWindow = window.open(undefined, IPython._target);
-      let prefix = location.protocol + '//' + location.host + '/';
-      let addTerminalUrl = prefix + 'api/terminals';
+      let addTerminalUrl = util.datalabLink('/api/terminals');
       let settings = {
         type : 'POST',
         dataType: 'json',
         success: (data, status, jqXHR) => {
-          newWindow.location = prefix + 'terminals/' + encodeURIComponent(data.name);
+          newWindow.location = util.datalabLink('/terminals/' + encodeURIComponent(data.name));
         },
         error : function(jqXHR, status, error){
           newWindow.close();
           util.debug.log(jqXHR, status, error);
         },
       };
+      util.debug.log('Sending terminal request to ' + addTerminalUrl);
       $.ajax(addTerminalUrl, settings);
     }
 
     function openEditor(e) {
-      prefix = location.protocol + '//' + location.host + "/edit/";
       Jupyter.notebook_list.selected.forEach(notebook => {
-        window.open(prefix + notebook.path, '_blank');
+        window.open(util.datalabLink('/edit/' + notebook.path), '_blank');
       });
     }
 
@@ -138,7 +137,8 @@ define(['util'], (util) => {
     document.getElementById('editorButton').addEventListener('click', openEditor, false);
 
     (function buildBreadcrumbContent() {
-      var path = location.pathname;
+      var path = util.datalabSubPath(location.pathname);
+      util.debug.log('Building breadcrumbs off of ' + path);
 
       // Strip off leading /tree and trailing / if present
       if (path.indexOf('/tree') == 0) {
@@ -182,7 +182,7 @@ define(['util'], (util) => {
 
     })();
 
-    fileSearchPath = location.protocol + '//' + location.host + '/_filesearch?';
+    fileSearchPath = util.datalabLink('/_filesearch?');
 
     searchDiv = $('#tree-filter');
     $.getJSON(fileSearchPath, (result) => {
@@ -218,9 +218,9 @@ define(['util'], (util) => {
           select: (e, selected) => {
             var path = selected.item.value;
             if (path.endsWith('.ipynb')) {
-              window.open(location.protocol + "//" + location.host + "/notebooks/" + path);
+              window.open(util.datalabLink("/notebooks/" + path));
             } else {
-              window.open(location.protocol + "//" + location.host + "/edit/" + path);
+              window.open(util.datlabLink("/edit/" + path));
             }
           },
           delay: 500,

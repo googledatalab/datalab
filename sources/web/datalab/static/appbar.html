@@ -5,7 +5,7 @@
 </head>
 <body>
   <span id="logo" class="nav navbar-brand pull-left">
-    <a href="/tree"><img src="/static/logo.png" alt="Google Cloud DataLab" /></a>
+    <a id="homeLink"><img id="logoImg" alt="Google Cloud DataLab" style="display:none" /></a>
   </span>
   <span id="save_widget" class="pull-left save_widget">
     <button class="toolbar-btn" title="Rename notebook"><span id="notebook_name" class="filename"></span></button>
@@ -18,11 +18,9 @@
       </button>
     </div>
     <div id="sessionsButton" class="btn-group">
-      <a href="/sessions" target="_blank" id="sessionsButton">
-        <button title="Running Sessions" class="toolbar-btn">
-          <i class="material-icons">playlist_play</i>
-        </button>
-      </a>
+      <button title="Running Sessions" class="toolbar-btn">
+        <i class="material-icons">playlist_play</i>
+      </button>
     </div>
     <div id="navigationButton" class="btn-group" style="display:none;">
       <button title="Navigation" class="toolbar-btn">
@@ -38,7 +36,7 @@
         <li><a id="keyboardHelpLink" style="display:none" href="#">Keyboard Shortcuts</a></li>
         <li><a id="markdownHelpLink" style="display:none" href="#">Markdown Syntax</a></li>
         <li id="notebookHelpDivider" class="divider" style="display:none"></li>
-        <li><a href="/notebooks/datalab/docs/Readme.ipynb" target="_blank"><span>Samples and Tutorials</span></a></li>
+        <li><a id="samplesLink" target="_blank"><span>Samples and Tutorials</span></a></li>
         <li class="divider"></li>
         <li><a href="https://cloud.google.com/bigquery/what-is-bigquery" target="_blank"><span>BigQuery</span></a></li>
         <li><a href="https://cloud.google.com/storage/docs/overview" target="_blank"><span>Cloud Storage</span></a></li>

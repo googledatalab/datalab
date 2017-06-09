@@ -17,7 +17,7 @@ define(['util'], (util) => {
       this._url = url;
       this.readyState = WebSocketShim.CLOSED;
 
-      var socketUri = location.protocol + '//' + location.host + '/session';
+      var socketUri = util.datalabLink('/session');
       var socketOptions = {
         upgrade: false,
         multiplex: false

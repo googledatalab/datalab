@@ -27,7 +27,7 @@ import idleTimeout = require('./idleTimeout');
 import fileSearch = require('./fileSearch');
 import net = require('net');
 import noCacheContent = require('./noCacheContent')
-import path = require('path');
+import path_ = require('path');
 import request = require('request');
 import reverseProxy = require('./reverseProxy');
 import settings_ = require('./settings');
@@ -123,11 +123,16 @@ function handleRequest(request: http.ServerRequest,
     userManager.maybeSetUserIdCookie(request, response);
 
     response.statusCode = 302;
+    var redirectUrl : string;
     if (startup_path_setting in loadedSettings) {
-      response.setHeader('Location', loadedSettings[startup_path_setting])
+      redirectUrl = loadedSettings[startup_path_setting];
     } else {
-      response.setHeader('Location', '/tree/datalab');
+      redirectUrl = '/tree/datalab';
     }
+    if (redirectUrl.indexOf(appSettings.datalabBasePath) != 0) {
+      redirectUrl = path_.join(appSettings.datalabBasePath, redirectUrl);
+    }
+    response.setHeader('Location', redirectUrl);
     response.end();
     return;
   }
@@ -269,9 +274,20 @@ function stopVmHandler(request: http.ServerRequest, response: http.ServerRespons
 }
 
 function socketHandler(request: http.ServerRequest, socket: net.Socket, head: Buffer) {
+  request.url = trimBasePath(request.url);
   // Avoid proxying websocket requests on this path, as it's handled locally rather than by Jupyter.
   if (request.url != httpOverWebSocketPath) {
     jupyter.handleSocket(request, socket, head);
+  }
+}
+
+function trimBasePath(path: string): string {
+  let pathPrefix = appSettings.datalabBasePath;
+  if (path.indexOf(pathPrefix) == 0) {
+    let newPath = "/" + path.substring(pathPrefix.length);
+    return newPath;
+  } else {
+    return path;
   }
 }
 
@@ -282,6 +298,7 @@ function socketHandler(request: http.ServerRequest, socket: net.Socket, head: Bu
  * @param response the out-going HTTP response.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse) {
+  request.url = trimBasePath(request.url);
   idleTimeout.resetBasedOnPath(request.url);
   try {
     uncheckedRequestHandler(request, response);
@@ -317,8 +334,9 @@ export function run(settings: common.Settings): void {
     new wsHttpProxy.WsHttpProxy(server, httpOverWebSocketPath, settings.allowOriginOverrides);
   }
 
-  logging.getLogger().info('Starting DataLab server at http://localhost:%d',
-                           settings.serverPort);
+  logging.getLogger().info('Starting DataLab server at http://localhost:%d%s',
+                           settings.serverPort,
+                           settings.datalabBasePath);
   backupUtility.startBackup(settings);
   process.on('SIGINT', () => process.exit());
 
