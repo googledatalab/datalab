@@ -2,14 +2,8 @@
   "entrypoint": "index.html",
   "shell": "components/datalab-app/datalab-app.html",
   "fragments": [
-    "components/datalab-toolbar/datalab-toolbar.html",
-    "components/datalab-sidebar/datalab-sidebar.html",
-    "components/datalab-files/datalab-files.html",
-    "components/datalab-sessions/datalab-sessions.html"
   ],
   "sources": [
-    "modules/**/*.js",
-    "images/**/*",
     "bower.json",
     "index.css"
   ],

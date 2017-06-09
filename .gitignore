@@ -11,7 +11,6 @@ staging
 *.swo
 *.ipynb.yaml
 *.log
-*.d.ts
 containers/datalab/Dockerfile
 containers/datalab/content/license.txt
 containers/gateway/Dockerfile

@@ -1,12 +1,24 @@
+/*
+ * Copyright 2017 Google Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 /**
  * Shell element for Datalab.
  * It contains a <datalab-toolbar> element at the top, a <datalab-sidebar>
  * element beneath that to the left, and a paged view to switch between
- * different pages. It holds references to <datalab-files> and
- * <datalab-sessions>, and uses a local router element to switch between
- * these according to the current page location
- * All pages referenced by this element should be named following the
- * convention `datalab-element/datalab-element.html`
+ * different pages. It will hold references to the different page elements,
+ * and uses a local router element to switch between these according to the
+ * current page location
  */
 class DatalabAppElement extends Polymer.Element {
 
@@ -41,8 +53,7 @@ class DatalabAppElement extends Polymer.Element {
     return {
       page: {
         type: String,
-        value: 'files',
-        observer: '_pageChanged'
+        value: 'files'
       },
       rootPattern: String,
       routeData: Object,
@@ -66,19 +77,7 @@ class DatalabAppElement extends Polymer.Element {
     this.page = page || 'files';
   }
 
-  /**
-   * on changes to the page property, resolve the new page's uri, and
-   * tell Polymer to load it.
-   * we do this to lazy load pages as the user clicks them for performance
-   */
-  _pageChanged(page: string) {
-    // build the path using the page name as suffix for directory
-    // and file names
-    let subpath = 'datalab-' + page
-    var resolvedPageUrl = this.resolveUrl('../' + subpath + '/' + subpath + '.html');
-    Polymer.importHref(resolvedPageUrl, undefined, undefined, true);
-  }
-
 }
 
 customElements.define(DatalabAppElement.is, DatalabAppElement);
+
