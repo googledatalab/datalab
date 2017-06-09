@@ -15,11 +15,18 @@
 """Methods for implementing the `datalab beta creategpu` command."""
 
 import os
-from builtins import input
 import tempfile
 
 import create
 import connect
+
+try:
+    # If we are running in Python 2, builtins is available in 'future'.
+    from builtins import input as read_input
+except:
+    # We don't want to require the installation of future, so fallback
+    # to using raw_input from Py2.
+    read_input = raw_input
 
 
 description = ("""`{0} {1}` creates a new Datalab instance running in a Google
@@ -146,7 +153,7 @@ def run(args, gcloud_beta_compute, gcloud_repos,
     print('By accepting below, you will download and install the '
           'following third-party software onto your managed GCE instances: '
           'NVidia GPU CUDA Toolkit Drivers: ' + _NVIDIA_PACKAGE)
-    resp = input('Do you accept? (y/[n]): ')
+    resp = read_input('Do you accept? (y/[n]): ')
     if len(resp) < 1 or (resp[0] != 'y' and resp[0] != 'Y'):
         print('Installation not accepted; Exiting.')
         return
