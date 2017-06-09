@@ -165,7 +165,7 @@ function sendUserCustomTheme(userId: string, response: http.ServerResponse): voi
  */
 export function isExperimentalResource(pathname: string) {
   const experimentalUiEnabled = process.env.DATALAB_EXPERIMENTAL_UI;
-  return experimentalUiEnabled && (
+  return experimentalUiEnabled === 'true' && (
       pathname.indexOf('/files') === 0 ||
       pathname.indexOf('/sessions') === 0 ||
       pathname.indexOf('/bower_components') === 0 ||
@@ -187,10 +187,10 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
 
   // -------------------------------- start of experimental UI resources
   if (isExperimentalResource(pathname)) {
-    console.log('Serving experimental UI resource: ' + pathname);
+    logging.getLogger().debug('Serving experimental UI resource: ' + pathname);
     if (pathname === '/') {
       response.statusCode = 302;
-      response.setHeader('Location', path.join(appSettings.datalabBasePath, '/files'));
+      response.setHeader('Location', path.join(appSettings.datalabBasePath, 'files'));
       response.end();
       return;
     }
