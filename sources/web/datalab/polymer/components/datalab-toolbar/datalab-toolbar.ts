@@ -1,5 +1,3 @@
-/// <reference path='../../../../../../third_party/externs/ts/polymer/polymer.d.ts' />
-
 /**
  * Toolbar element for Datalab.
  * This element is a horizontal bar that goes at the top of the page, and

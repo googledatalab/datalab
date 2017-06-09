@@ -1,5 +1,3 @@
-/// <reference path='../../../../../../third_party/externs/ts/polymer/polymer.d.ts' />
-
 /**
  * Shell element for Datalab.
  * It contains a <datalab-toolbar> element at the top, a <datalab-sidebar>
@@ -78,7 +76,7 @@ class DatalabAppElement extends Polymer.Element {
     // and file names
     let subpath = 'datalab-' + page
     var resolvedPageUrl = this.resolveUrl('../' + subpath + '/' + subpath + '.html');
-    Polymer.importHref(resolvedPageUrl, null, null, true);
+    Polymer.importHref(resolvedPageUrl, undefined, undefined, true);
   }
 
 }

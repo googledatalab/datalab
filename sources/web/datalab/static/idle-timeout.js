@@ -115,8 +115,8 @@ define(['base/js/dialog', 'base/js/events', 'util'], function(dialog, events, ut
       util.debug.log('Querying timeout');
       const timeoutInfoUrl = window.location.protocol + "//" + window.location.host + "/_timeout";
       function callback() {
-        util.debug.log('_timeout call response:');		
-        util.debug.log(this);		
+        util.debug.log('_timeout call response:');
+        util.debug.log(this);
         lastUpdateTimeoutTime = Date.now();
         const result = this.response; // 'this' is the XHR
         timeoutInfo = JSON.parse(result) || {};

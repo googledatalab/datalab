@@ -29,11 +29,6 @@ WEB_DIR=$BUILD_DIR/web/nb
 
 mkdir -p $WEB_DIR
 
-# Compile the nodejs server
-tsc --module commonjs --noImplicitAny \
-    --outDir $WEB_DIR \
-    ./datalab/*.ts
-
 # Experimental UI build step
 cd datalab/polymer
 bower install
@@ -42,6 +37,11 @@ polymer build
 rsync -avpq ./build/experimental/ ../static/experimental
 cd ../..
 # End experimental UI build step
+
+# Compile the nodejs server
+tsc --module commonjs --noImplicitAny \
+    --outDir $WEB_DIR \
+    ./datalab/*.ts
 
 rsync -avpq ./datalab/config/ $WEB_DIR/config
 rsync -avpq ./datalab/static/ $WEB_DIR/static
