@@ -72,6 +72,14 @@ export function loadSettings(): common.Settings {
         (<any>settings)[key] = overrides[key];
       }
     }
+
+    // Normalize the base path to include "/" characters.
+    if (settings.datalabBasePath.indexOf("/") != 0) {
+      settings.datalabBasePath = "/" + settings.datalabBasePath;
+    }
+    if (settings.datalabBasePath.lastIndexOf("/") != settings.datalabBasePath.length - 1) {
+      settings.datalabBasePath = settings.datalabBasePath + "/";
+    }
     return settings;
   }
   catch (e) {

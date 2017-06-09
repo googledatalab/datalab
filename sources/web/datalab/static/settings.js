@@ -1,6 +1,6 @@
 define(['util'], (util) => {
   function getSettingKeyAddress(setting) {
-    return window.location.protocol + "//" + window.location.host + "/_settings?key=" + setting;
+    return util.datalabLink("/_settings?key=" + setting);
   }
 
   function init() {

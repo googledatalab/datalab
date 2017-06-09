@@ -24,10 +24,10 @@ define(['static/idle-timeout', 'util'], function(idleTimeout, util) {
   $('#help').html(markup);
 
   function restartDatalab() {
-    var restartUrl = window.location.protocol + "//" + window.location.host + "/_restart";
+    var restartUrl = util.datalabLink("/_restart");
 
     function redirect() {
-      window.location = '/';
+      window.location = util.datalabLink('/');
     }
 
     util.xhr(restartUrl, function(){
@@ -43,7 +43,7 @@ define(['static/idle-timeout', 'util'], function(idleTimeout, util) {
       return;
     }
 
-    path = window.location.protocol + '//' + window.location.host + '/_info/vminfo';
+    path = util.datalabLink('/_info/vminfo');
     util.xhr(path, function() {
       try {
         const vminfo = JSON.parse(this.responseText);
@@ -71,7 +71,7 @@ define(['static/idle-timeout', 'util'], function(idleTimeout, util) {
   function stopVm() {
     let action = confirm('Stopping this VM will discard any unsaved state. Are you sure?');
     if (action === true) {
-      path = window.location.protocol + '//' + window.location.host + '/_stopvm';
+      path = util.datalabLink('/_stopvm');
       util.xhr(path, null, {method: 'POST'});
     }
   }
@@ -87,6 +87,18 @@ define(['static/idle-timeout', 'util'], function(idleTimeout, util) {
   }
 
   function initializeAppBar(dialog, saveFn) {
+    // Display the logo
+    document.getElementById('logoImg').src = util.datalabLink('/static/logo.png');
+    document.getElementById('logoImg').style.display = '';
+
+    // Initialize some of the links whose targets need to be relative to the base path
+    $('#homeLink').click(function(e) {
+      saveFn();
+      window.location = util.datalabLink('/tree');
+    });
+    $('#samplesLink').click(function(e) {
+      window.open(util.datalabLink('/notebooks/datalab/docs/Readme.ipynb'));
+    });
 
     function showAbout() {
       var version = document.body.getAttribute('data-version-id');
@@ -98,7 +110,7 @@ define(['static/idle-timeout', 'util'], function(idleTimeout, util) {
         '<h5><b>More Information</b></h5>' +
         '<i class="material-icons">open_in_new</i><a href="https://cloud.google.com" target="_blank"> Product information</a><br />' +
         '<i class="material-icons">open_in_new</i><a href="https://github.com/googledatalab/datalab" target="_blank"> Project on GitHub</a><br />' +
-        '<i class="material-icons">open_in_new</i><a href="/static/about.txt" target="_blank"> License and software information</a><br />' +
+        '<i class="material-icons">open_in_new</i><a href="' + util.datalabLink('/static/about.txt') + '" target="_blank"> License and software information</a><br />' +
         '<i class="material-icons">open_in_new</i><a href="https://cloud.google.com/terms/" target="_blank"> Terms of Service</a><br />' +
         '<i class="material-icons">open_in_new</i><a href="http://www.google.com/intl/en/policies/" target="_blank"> Privacy Policy</a><br />' +
         '<i class="material-icons">open_in_new</i><a href="javascript:require([\'appbar\'],appbar=>appbar.restartDatalab())"> Restart Server</a><br />';
@@ -146,18 +158,19 @@ define(['static/idle-timeout', 'util'], function(idleTimeout, util) {
       }
       $('#signInButton').click(function() {
         saveFn();
-        window.location = '/signin?referer=' + encodeURIComponent(window.location);
+        window.location = util.datalabLink('/signin?referer=' + encodeURIComponent(window.location));
       });
       $('#signOutButton').click(function() {
         saveFn();
-        window.location = '/signout?referer=' + encodeURIComponent(window.location);
+        window.location = util.datalabLink('/signout?referer=' + encodeURIComponent(window.location));
       });
       $('#ungitButton').click(function() {
         // Always open at the root of the notebooks repository
         const path = '/content/datalab/notebooks';
-        const prefix = window.location.protocol + '//' + window.location.host;
-
-        window.open(prefix + '/_proxy/8083/#/repository?path=' + path);
+        window.open(util.datalabLink('/_proxy/8083/#/repository?path=' + path));
+      });
+      $('#sessionsButton').click(function() {
+        window.open(util.datalabLink('/sessions'));
       });
     }
 
@@ -188,7 +201,7 @@ define(['static/idle-timeout', 'util'], function(idleTimeout, util) {
     $('#idleTimeoutDisabledButton').click(idleTimeout.toggleIdleTimeout);
     $('#aboutButton').click(showAbout);
     $('#settingsButton').click(function() {
-      $.get('/static/settings.html', (markup) => {
+      $.get(util.datalabLink('/static/settings.html'), (markup) => {
         dialog.modal({
           title: 'Settings',
           body: $(markup),

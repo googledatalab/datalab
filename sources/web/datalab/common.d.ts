@@ -56,10 +56,20 @@ declare module common {
     jupyterArgs: string[];
 
     /**
-     * If provided, use this as a prefix to all paths created from
-     * these settings. Useful for testing outside a Docker container.
+     * If provided, use this as a prefix to all file paths opened on the
+     * server side. Useful for testing outside a Docker container.
      */
     datalabRoot: string;
+
+    /**
+     * If provided, use this as a prefix to all URL paths. This is useful
+     * for running a Datalab instance behind a shared proxy with other
+     * servers (including, for running multiple Datalab instances together).
+     *
+     * The specified value does not need to include leading or trailing
+     * slashes. Those will automatically be added if ommitted.
+     */
+    datalabBasePath: string;
 
     /**
      * Initial port to use when searching for a free Jupyter port.

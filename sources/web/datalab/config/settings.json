@@ -12,6 +12,7 @@
   "nextJupyterPort": 9000,
   "socketioPort": 8084,
   "datalabRoot": "",
+  "datalabBasePath": "",
   "contentDir": "/content",
   "useWorkspace": false,
   "supportUserOverride": false,

@@ -21,6 +21,7 @@ import http = require('http');
 import httpProxy = require('http-proxy');
 import logging = require('./logging');
 
+var appSettings: common.Settings;
 var proxy: httpProxy.ProxyServer = httpProxy.createProxyServer(null);
 var regex: any = new RegExp('\/_proxy\/([0-9]+)($|\/)');
 var socketioPort: string = '';
@@ -60,14 +61,17 @@ export function getRequestPort(request: http.ServerRequest, path: string): strin
 export function handleRequest(request: http.ServerRequest,
                               response: http.ServerResponse,
                               port: String) {
-  request.url = request.url.replace(regex, '/');
-  proxy.web(request, response, { target: 'http://localhost:' + port });
+  request.url = request.url.replace(regex, '');
+  proxy.web(request, response, {
+    target: 'http://localhost:' + port + appSettings.datalabBasePath
+  });
 }
 
 /**
  * Initialize the handler.
  */
 export function init(settings: common.Settings) {
+  appSettings = settings;
   socketioPort = String(settings.socketioPort);
   proxy.on('error', errorHandler);
 }
