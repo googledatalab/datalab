@@ -20,11 +20,20 @@
 # command prompt, which is useful for tinkering within the container before
 # manually starting the server.
 
+# Use the --pydatalab option to run the container with the specified pydatalab
+# dir mounted on /content/pydatalab in the container in order to speed up the
+# development cycle in cases where you need to test your pydatalab code in
+# datalab. Then, when you run that container in live mode (the default in
+# development), it will uninstall the standard pydatalab and install the live
+# one. After making changes to your pydatalab code, compile it, then restart
+# the container to pick up the changes.
+
 HERE=$(dirname $0)
 CONTENT=$HOME
 ENTRYPOINT="/datalab/run.sh"
 DEVROOT_DOCKER_OPTION=''
 LIVE_MODE=1
+PYDATALAB=''
 
 function realpath() {
   perl -MCwd -e 'print Cwd::realpath($ARGV[0]),qq<\n>' $1
@@ -43,9 +52,17 @@ while [ $# -gt 0 ]; do
   case "$1" in
     shell)
       ENTRYPOINT="/bin/bash"
+      shift
       ;;
     --no-live)
       LIVE_MODE=0
+      shift
+      ;;
+    --pydatalab)
+      PYDATALAB=$(realpath "$2")
+      PYDATALAB_MOUNT_OPT="-v $PYDATALAB:/content/pydatalab"
+      shift
+      shift
       ;;
     -*) echo "Unrecognized option '$1'"
       exit 1
@@ -53,9 +70,9 @@ while [ $# -gt 0 ]; do
     *)
       # For any other non-option argument, assume it is the content root.
       CONTENT="$1"
+      shift
       ;;
   esac
-  shift
 done
 
 if [[ $LIVE_MODE == 1 ]]; then
@@ -65,6 +82,7 @@ fi
 docker run -it --entrypoint=$ENTRYPOINT \
   -p 127.0.0.1:8081:8080 \
   -v "$CONTENT/datalab:/content/datalab" \
+  $PYDATALAB_MOUNT_OPT \
   ${DEVROOT_DOCKER_OPTION} \
   -e "PROJECT_ID=$PROJECT_ID" \
   -e "DATALAB_ENV=local" \
