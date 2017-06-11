@@ -1,6 +1,12 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../../bower_components/app-route/app-location.html">
 <link rel="import" href="../../bower_components/app-route/app-route.html">
+
+<link rel="import" href="../../components/datalab-sidebar/datalab-sidebar.html">
+<link rel="import" href="../../components/datalab-toolbar/datalab-toolbar.html">
+<link rel="import" href="../../components/datalab-files/datalab-files.html">
+<link rel="import" href="../../components/datalab-sessions/datalab-sessions.html">
 
 <dom-module id="datalab-app">
   <template>
@@ -10,22 +16,18 @@
         display: flex;
         flex-direction: column;
       }
-      .toolbar {
-        height: 48px;
-          background-color: #eee;
-      }
-      .contents {
+      .datalab-contents {
         display: flex;
         flex-grow: 1;
       }
-      .sidebar {
+      .datalab-sidebar {
         width: 200px;
-        background-color: #ddd;
       }
-      .main-content {
+      .datalab-main-content {
         flex-grow: 1;
         box-shadow: -4px 0px 10px -3px rgba(0, 0, 0, 0.1);
         height: calc(100% - var(--toolbar-height));
+        width: calc(100% - 200px);
       }
       iron-pages {
         height: 100%;
@@ -40,14 +42,16 @@
         data="{{routeData}}"></app-route>
 
     <div id="container">
-      <div class="toolbar"></div>
-      <div class="contents">
-        <div class="sidebar">
+      <datalab-toolbar></datalab-toolbar>
+      <div class="datalab-contents">
+        <div class="datalab-sidebar">
+          <datalab-sidebar page={{page}}></datalab-sidebar>
         </div>
-        <div class="main-content">
-          <div name="files">
-            Files page
-          </div>
+        <div class="datalab-main-content">
+          <iron-pages selected="{{page}}" attr-for-selected="name" fallback-selection="files">
+            <datalab-files name="files"></datalab-files>
+            <datalab-sessions name="sessions"></datalab-sessions>
+          </iron-pages>
         </div>
       </div>
     </div>

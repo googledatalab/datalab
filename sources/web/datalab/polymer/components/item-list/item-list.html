@@ -1,0 +1,85 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+
+<dom-module id="item-list">
+  <template>
+
+    <style include="datalab-shared-styles">
+      #header {
+        user-select: none;
+        height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
+        display: flex;
+        line-height: calc(var(--toolbar-height) - 1px);
+        border-bottom: 1px solid #eee;
+      }
+      #list-container {
+        overflow: auto;
+        height: calc(100% - var(--toolbar-height));
+      }
+      .row {
+        user-select: none;
+        padding: 0px;
+        display: flex;
+        --paper-item-min-height: 35px;
+        line-height: 35px;
+        cursor: default;
+      }
+      .row:nth-child(even) {
+        background-color: #fafafa;
+      }
+      .row:hover {
+        background-color: var(--app-secondary-color);
+      }
+      .row[selected] > * {
+        color: var(--selection-fg-color);
+      }
+      .checkbox-col {
+        flex-basis: 50px;
+        text-align: center;
+      }
+      .checkbox-col > paper-checkbox {
+        --paper-checkbox-size: 15px;
+        --paper-checkbox-checked-color: var(--selection-fg-color);
+      }
+      .first-col {
+        flex-grow: 1;
+      }
+      .first-col > iron-icon {
+        width: 17px;
+        height: 17px;
+      }
+      .second-col {
+        flex-basis: 200px;
+      }
+    </style>
+
+    <div id="header">
+      <div class="checkbox-col"></div>
+      <div class="first-col"><strong>{{columns.0}}</strong></div>
+      <div class="second-col"><strong>{{columns.1}}</strong></div>
+    </div>
+    <div id="list-container">
+      <template is="dom-repeat" id="list" items="{{rows}}" as="row">
+        <paper-item class="row" selected$={{row.selected}} on-click="_rowClicked"
+                    on-dblclick="_rowDblClicked">
+          <div class="checkbox-col">
+            <paper-checkbox checked={{row.selected}} checkedChanged="_rowClicked">
+            </paper-checkbox>
+          </div>
+          <div class="first-col">
+            <iron-icon hidden$={{!row.icon}} icon={{row.icon}}></iron-icon>
+            {{row.firstCol}}
+          </div>
+          <div class="second-col">
+            {{row.secondCol}}
+          </div>
+        </paper-item>
+      </template>
+    </div>
+
+  </template>
+</dom-module>
+
+<script src="item-list.js"></script>
+

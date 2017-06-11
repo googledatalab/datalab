@@ -16,9 +16,11 @@
  * Shell element for Datalab.
  * It contains a <datalab-toolbar> element at the top, a <datalab-sidebar>
  * element beneath that to the left, and a paged view to switch between
- * different pages. It will hold references to the different page elements,
- * and uses a local router element to switch between these according to the
- * current page location
+ * different pages. It holds references to <datalab-files> and
+ * <datalab-sessions>, and uses a local router element to switch between
+ * these according to the current page location
+ * All pages referenced by this element should be named following the
+ * convention `datalab-element/datalab-element.html`
  */
 class DatalabAppElement extends Polymer.Element {
 
@@ -53,7 +55,8 @@ class DatalabAppElement extends Polymer.Element {
     return {
       page: {
         type: String,
-        value: 'files'
+        value: 'files',
+        observer: '_pageChanged'
       },
       rootPattern: String,
       routeData: Object,
@@ -75,6 +78,19 @@ class DatalabAppElement extends Polymer.Element {
   _routePageChanged(page: string) {
     // default to the files view
     this.page = page || 'files';
+  }
+
+  /**
+   * on changes to the page property, resolve the new page's uri, and
+   * tell Polymer to load it.
+   * we do this to lazy load pages as the user clicks them for performance
+   */
+  _pageChanged(page: string) {
+    // build the path using the page name as suffix for directory
+    // and file names
+    let subpath = 'datalab-' + page
+    var resolvedPageUrl = this.resolveUrl('../' + subpath + '/' + subpath + '.html');
+    Polymer.importHref(resolvedPageUrl, undefined, undefined, true);
   }
 
 }

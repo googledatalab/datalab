@@ -1,0 +1,99 @@
+<link rel="import" href="../../components/shared-styles/shared-styles.html">
+
+<link rel="import" href="../../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+
+<dom-module id="datalab-toolbar">
+  <template>
+    <style include="datalab-shared-styles">
+      :host {
+        --toolbar-button-dimension: 35px;
+      }
+      .title {
+        font-size: 18px;
+        color: #c8c8c8;
+      }
+      .title-image {
+        height: 30px;
+        vertical-align: middle;
+      }
+      app-header {
+        background-color: var(--app-primary-color);
+        color: #fff;
+      }
+      app-toolbar {
+        height: var(--toolbar-height);
+        padding-right: 6px;
+      }
+      .toolbar-button {
+        margin-right: 16px;
+        --paper-icon-button: {
+          width: var(--toolbar-button-dimension);
+          height: var(--toolbar-button-dimension);
+        };
+      }
+      .title-cloud-datalab {
+        font-weight: lighter;
+      }
+      .dialog {
+        width: 60%;
+        height: 60%;
+        display: flex;
+        flex-direction: column;
+      }
+      .dialog > hr {
+        width: 90%;
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
+        border-top: 1px solid #eee;
+      }
+      .dialog-content {
+        flex-grow: 1;
+      }
+    </style>
+
+    <app-header slot="header" fixed shadow>
+      <app-toolbar>
+        <div main-title class="title">
+          <img src="images/datalab-logo.png" class="title-image">
+        </div>
+        <paper-icon-button class="toolbar-button" icon="info"
+                           on-click="_infoClicked"></paper-icon-button>
+        <paper-icon-button class="toolbar-button" icon="settings"
+                           on-click="_settingsClicked"></paper-icon-button>
+        <paper-icon-button class="toolbar-button" icon="account-circle">
+        </paper-icon-button>
+      </app-toolbar>
+    </app-header>
+
+    <paper-dialog id="infoDialog" class="dialog" with-backdrop>
+      <h2>Info</h2>
+      <hr>
+      <div class="dialog-content">
+      </div>
+      <hr>
+      <div>
+        <paper-button dialog-dismiss raised>Close</paper-button>
+      </div>
+    </paper-dialog>
+
+    <paper-dialog id="settingsDialog" class="dialog" with-backdrop>
+      <h2>Settings</h2>
+      <hr>
+      <div class="dialog-content">
+      </div>
+      <hr>
+      <div>
+        <paper-button dialog-dismiss raised>Close</paper-button>
+      </div>
+    </paper-dialog>
+
+  </template>
+</dom-module>
+
+<script src="datalab-toolbar.js"></script>
