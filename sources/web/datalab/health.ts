@@ -51,6 +51,6 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
  * @param settings configuration settings for the application.
  * @returns the request handler to handle health requests.
  */
-export function createHandler(settings: common.Settings): http.RequestHandler {
+export function createHandler(settings: common.AppSettings): http.RequestHandler {
   return requestHandler;
 }

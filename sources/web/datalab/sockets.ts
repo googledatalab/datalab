@@ -164,7 +164,7 @@ function socketHandler(socket: SocketIO.Socket) {
   });
 }
 
-export function init(settings: common.Settings): void {
+export function init(settings: common.AppSettings): void {
   var io = socketio(String(settings.socketioPort), {
     path: path_.join(settings.datalabBasePath, 'socket.io'),
     transports: [ 'polling' ],

@@ -24,7 +24,7 @@ import settings = require('./settings');
 import url = require('url');
 import userManager = require('./userManager');
 
-var appSettings: common.Settings;
+var appSettings: common.AppSettings;
 var CONTENT_TYPES: common.Map<string> = {
   '.js': 'text/javascript',
   '.css': 'text/css',
@@ -288,7 +288,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
  * @param settings configuration settings for the application.
  * @returns the request handler to handle static requests.
  */
-export function createHandler(settings: common.Settings): http.RequestHandler {
+export function createHandler(settings: common.AppSettings): http.RequestHandler {
   appSettings = settings;
   return requestHandler;
 }

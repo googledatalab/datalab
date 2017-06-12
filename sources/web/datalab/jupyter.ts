@@ -104,7 +104,7 @@ const templates: common.Map<string> = {
 /**
  * The application settings instance.
  */
-var appSettings: common.Settings;
+var appSettings: common.AppSettings;
 
 function pipeOutput(stream: NodeJS.ReadableStream, port: number, error: boolean) {
   stream.setEncoding('utf8');
@@ -308,7 +308,7 @@ export function startForUser(userId: string, cb: common.Callback0) {
 /**
  * Initializes the Jupyter server manager.
  */
-export function init(settings: common.Settings): void {
+export function init(settings: common.AppSettings): void {
   appSettings = settings;
 
   killAllJupyterServers();
