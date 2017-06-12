@@ -1,0 +1,35 @@
+<link rel="import" href="../../components/shared-styles/shared-styles.html">
+
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+
+<dom-module id="details-pane">
+  <template>
+    <style include="datalab-shared-styles">
+      #details-pane-content {
+        display: flex;
+      }
+      .content {
+        padding: 10px;
+        margin: 0px;
+      }
+    </style>
+    <div hidden$="{{!item.name}}">
+      <div id="details-pane-content">
+        <iron-icon class="content" icon="{{icon}}"></iron-icon>
+        <h2 class="content">{{item.name}}</h2>
+      </div>
+      <hr/>
+      <div class="content">
+        <strong>Created:</strong>
+        {{item.created}}
+      </div>
+      <div class="content">
+        <strong>Modified:</strong>
+        {{item.last_modified}}
+      </div>
+    </div>
+  </template>
+</dom-module>
+
+<script src="details-pane.js"></script>

@@ -97,4 +97,3 @@ class DatalabAppElement extends Polymer.Element {
 }
 
 customElements.define(DatalabAppElement.is, DatalabAppElement);
-
