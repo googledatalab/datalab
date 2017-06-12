@@ -12,16 +12,9 @@
  * the License.
  */
 
-body {
-  margin: 0px;
-  padding: 0px;
-  height: 100%;
+class SessionsElement extends Polymer.Element {
+  static get is() { return "datalab-sessions"; }
 }
-datalab-app {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  min-width: 470px;
-}
+
+customElements.define(SessionsElement.is, SessionsElement);
+

@@ -12,16 +12,29 @@
  * the License.
  */
 
-body {
-  margin: 0px;
-  padding: 0px;
-  height: 100%;
+/**
+ * Sidebar element for Datalab.
+ * This element puts a side bar on the left side that contains links to
+ * different pages, and exposes a two-way bound 'page' property.
+ */
+class SidebarElement extends Polymer.Element {
+
+  /**
+   * The currently selected page name
+   */
+  public page: string;
+
+  static get is() { return "datalab-sidebar"; }
+
+  static get properties() {
+    return {
+      page: {
+        type: String,
+        value: "files",
+      }
+    }
+  }
+
 }
-datalab-app {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  min-width: 470px;
-}
+
+customElements.define(SidebarElement.is, SidebarElement);
