@@ -63,7 +63,7 @@ export function logJupyterOutput(text: string, error: boolean): void {
 /**
  * Initializes loggers used within the application.
  */
-export function initializeLoggers(settings: common.Settings): void {
+export function initializeLoggers(settings: common.AppSettings): void {
   // Ensure the directory containing logs exists (as bunyan doesn't create the directory itself).
   var logFilePath = path.join(settings.datalabRoot, settings.logFilePath);
   mkdirp.sync(path.dirname(logFilePath));

@@ -22,7 +22,7 @@ import server = require('./server');
  * Load the configuration settings, and then start the server, which
  * runs indefinitely, listening to and processing incoming HTTP requests.
  */
-var appSettings = settings.loadSettings();
+var appSettings = settings.loadAppSettings();
 if (appSettings != null) {
   logging.initializeLoggers(appSettings);
   server.run(appSettings);
