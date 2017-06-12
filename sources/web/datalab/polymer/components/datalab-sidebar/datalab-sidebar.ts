@@ -15,7 +15,7 @@
 /**
  * Sidebar element for Datalab.
  * This element puts a side bar on the left side that contains links to
- * different pages, and exposes a two-way bound 'page' property
+ * different pages, and exposes a two-way bound 'page' property.
  */
 class SidebarElement extends Polymer.Element {
 

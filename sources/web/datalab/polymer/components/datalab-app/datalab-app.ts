@@ -31,21 +31,21 @@ class DatalabAppElement extends Polymer.Element {
 
   /**
    * Pattern for extracting current pathname component. This is matched
-   * against current location to extract the page name
+   * against current location to extract the page name.
    */
   public rootPattern: string;
 
   /**
    * Current matching result from the window.location against the
    * root pattern. This gets re-evaluated every time the current page
-   * changes, and can be used to get the current active page's name
+   * changes, and can be used to get the current active page's name.
    */
   public routeData: Object;
 
   constructor() {
     super();
 
-    // Sets the pattern once to be the current document pathname
+    // Set the pattern once to be the current document pathname.
     this.rootPattern = (new URL(this.rootPath)).pathname;
   }
 
@@ -66,14 +66,14 @@ class DatalabAppElement extends Polymer.Element {
   static get observers() {
     return [
       // We need a complex observer for changes to the routeData
-      // object's page property
+      // object's page property.
       '_routePageChanged(routeData.page)',
     ];
   }
 
   /**
    * On changes to the current route, explicitly sets the page property
-   * so it can be used by other elements
+   * so it can be used by other elements.
    */
   _routePageChanged(page: string) {
     // Defaults to the files view
@@ -84,11 +84,11 @@ class DatalabAppElement extends Polymer.Element {
    * On changes to the page property, resolves the new page's uri, and
    * tells Polymer to load it.
    * We do this to lazy load pages as the user clicks them instead of letting
-   * the browser pre-load all the pages on the first request
+   * the browser pre-load all the pages on the first request.
    */
   _pageChanged(page: string) {
-    // Builds the path using the page name as suffix for directory
-    // and file names
+    // Build the path using the page name as suffix for directory
+    // and file names.
     const subpath = 'datalab-' + page
     const resolvedPageUrl = this.resolveUrl('../' + subpath + '/' + subpath + '.html');
     Polymer.importHref(resolvedPageUrl, undefined, undefined, true);
