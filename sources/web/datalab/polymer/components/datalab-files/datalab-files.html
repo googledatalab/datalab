@@ -1,5 +1,6 @@
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
 <link rel="import" href="../../components/item-list/item-list.html">
+<link rel="import" href="../../components/details-pane/details-pane.html">
 
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
@@ -40,10 +41,20 @@
       }
       .navbar-button[disabled] {
         background-color: #fff;
+        color: var(--app-primary-color);
       }
       .files-container {
         /* 1 nav bar + 1 progress bar */
         height: calc(100% - var(--toolbar-height) - 1px);
+        display: flex;
+      }
+      #files {
+        flex-grow: 1;
+      }
+      #detailsPane {
+        width: var(--details-pane-width);
+        background-color: var(--app-secondary-color);
+        box-shadow: inset 4px 0px 10px -3px rgba(0, 0, 0, 0.1);
       }
       .vseparator {
         display: inline;
@@ -54,6 +65,7 @@
         user-select: none;
         list-style: none;
         display: inline-block;
+        flex-grow: 1;
       }
       #breadcrumb div {
         float: left;
@@ -158,10 +170,16 @@
             </div>
           </template>
         </div>
+        <paper-button id="toggleDetails" class="navbar-button" on-click="_toggleDetailsPane">
+          <iron-icon icon="visibility"></iron-icon>
+        </paper-button>
       </div>
       <paper-progress id="progressBar" indeterminate disabled={{!_fetching}}></paper-progress>
       <div class="files-container">
         <item-list id="files"></item-list>
+        <div id="detailsPane">
+          <details-pane></details-pane>
+        </div>
       </div>
     </div>
 

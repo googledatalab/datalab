@@ -205,6 +205,10 @@ class FilesElement extends Polymer.Element {
     this.$.forwardNav.disabled = this._pathHistoryIndex === this._pathHistory.length - 1;
   }
 
+  _toggleDetailsPane() {
+    this.$.detailsPane.hidden = !this.$.detailsPane.hidden
+  }
+
 }
 
 customElements.define(FilesElement.is, FilesElement);
