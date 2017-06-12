@@ -24,18 +24,32 @@ function install_node() {
   wget --version || install_wget
 
   echo "Installing NodeJS"
-  mkdir -p /tools/node
+  mkdir -p ./tools/node
   wget -nv https://nodejs.org/dist/v6.10.0/node-v6.10.0-linux-x64.tar.gz -O node.tar.gz
-  tar xzf node.tar.gz -C /tools/node --strip-components=1
+  tar xzf node.tar.gz -C ./tools/node --strip-components=1
   rm node.tar.gz
-  export "PATH=${PATH}:/tools/node/bin"
+  export "PATH=${PATH}:${PWD}/tools/node/bin"
+}
+
+function install_bower() {
+  npm -v >/dev/null 2>&1 || install_node
+
+  echo "Installing Bower"
+  npm install -g bower
+}
+
+function install_polyer_cli() {
+  npm -v >/dev/null 2>&1 || install_node
+
+  echo "Installing Polymer CLI"
+  npm install -g polymer-cli
 }
 
 function install_typescript() {
-  npm -h >/dev/null 2>&1 || install_node
+  npm -v >/dev/null 2>&1 || install_node
 
   echo "Installing Typescript"
-  /tools/node/bin/npm install -g typescript
+  npm install -g typescript
 }
 
 function install_git() {
@@ -56,6 +70,8 @@ function install_prereqs() {
   rsync -h >/dev/null 2>&1 || install_rsync
 
   tsc -h >/dev/null 2>&1  || install_typescript
+  bower -h >/dev/null 2>&1  || install_bower
+  polymer -h >/dev/null 2>&1  || install_polyer_cli
   source ./tools/initenv.sh
 }
 

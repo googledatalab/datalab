@@ -24,7 +24,6 @@ cache:
   - node_modules
 
 before_install:
-- npm install -s -q -g typescript bower polymer-cli --depth 0
 - pip install -U pip
 - pip install flake8
 
