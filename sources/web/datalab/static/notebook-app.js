@@ -1,4 +1,4 @@
-define(['static/appbar', 'static/minitoolbar', 'static/idle-timeout', 'util'], function(appbar, minitoolbar, idleTimeout, util) {
+define(['appbar', 'minitoolbar', 'idle-timeout', 'util'], function(appbar, minitoolbar, idleTimeout, util) {
   function preLoad(ipy, notebook, events, dialog, utils) {
     // Various RequireJS additions used for notebook functionality
     require.config({
