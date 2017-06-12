@@ -9,6 +9,14 @@ class DetailsPaneElement extends Polymer.Element {
 
   static get properties() {
     return {
+      item: {
+        type: Object,
+        value: {}
+      },
+      icon: {
+        type: String,
+        value: ''
+      }
     }
   }
 
