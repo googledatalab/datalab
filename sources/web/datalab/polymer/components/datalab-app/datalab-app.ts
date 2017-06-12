@@ -16,34 +16,36 @@
  * Shell element for Datalab.
  * It contains a <datalab-toolbar> element at the top, a <datalab-sidebar>
  * element beneath that to the left, and a paged view to switch between
- * different pages. It will hold references to the different page elements,
- * and uses a local router element to switch between these according to the
- * current page location
+ * different pages. It holds references to <datalab-files> and
+ * <datalab-sessions>, and uses a local router element to switch between
+ * these according to the current page location.
+ * All pages referenced by this element should be named following the
+ * convention `datalab-element/datalab-element.html`.
  */
 class DatalabAppElement extends Polymer.Element {
 
   /**
-   * current displayed page name
+   * Current displayed page name
    */
   public page: string;
 
   /**
-   * pattern for extracting current pathname component. This is matched
-   * against current location to extract the page name
+   * Pattern for extracting current pathname component. This is matched
+   * against current location to extract the page name.
    */
   public rootPattern: string;
 
   /**
-   * current matching result from the window.location against the
+   * Current matching result from the window.location against the
    * root pattern. This gets re-evaluated every time the current page
-   * changes, and can be used to get the current active page's name
+   * changes, and can be used to get the current active page's name.
    */
   public routeData: Object;
 
   constructor() {
     super();
 
-    // set the pattern once to be the current document pathname
+    // Set the pattern once to be the current document pathname.
     this.rootPattern = (new URL(this.rootPath)).pathname;
   }
 
@@ -53,7 +55,8 @@ class DatalabAppElement extends Polymer.Element {
     return {
       page: {
         type: String,
-        value: 'files'
+        value: 'files',
+        observer: '_pageChanged',
       },
       rootPattern: String,
       routeData: Object,
@@ -62,19 +65,33 @@ class DatalabAppElement extends Polymer.Element {
 
   static get observers() {
     return [
-      // need a complex observer for changes to the routeData
-      // object's page property
+      // We need a complex observer for changes to the routeData
+      // object's page property.
       '_routePageChanged(routeData.page)',
     ];
   }
 
   /**
-   * on changes to the current route, explicitly set the page property
-   * so it can be used by other elements
+   * On changes to the current route, explicitly sets the page property
+   * so it can be used by other elements.
    */
   _routePageChanged(page: string) {
-    // default to the files view
+    // Defaults to the files view
     this.page = page || 'files';
+  }
+
+  /**
+   * On changes to the page property, resolves the new page's uri, and
+   * tells Polymer to load it.
+   * We do this to lazy load pages as the user clicks them instead of letting
+   * the browser pre-load all the pages on the first request.
+   */
+  _pageChanged(page: string) {
+    // Build the path using the page name as suffix for directory
+    // and file names.
+    const subpath = 'datalab-' + page
+    const resolvedPageUrl = this.resolveUrl('../' + subpath + '/' + subpath + '.html');
+    Polymer.importHref(resolvedPageUrl, undefined, undefined, true);
   }
 
 }
