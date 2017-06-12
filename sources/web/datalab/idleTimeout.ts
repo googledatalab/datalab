@@ -23,7 +23,7 @@ import settings = require('./settings');
 import url = require('url');
 import userManager = require('./userManager');
 
-const idleCheckIntervalSeconds = 5;    // Seconds to wait between idle checks
+const idleCheckIntervalSeconds = 10;    // Seconds to wait between idle checks
 
 let idleTimeoutEnabled = true;  // Allow user to enable and disable the timeout
 let idleTimeoutSeconds = 0;   // Shutdown after being idle this long; turned off if 0 or NaN
