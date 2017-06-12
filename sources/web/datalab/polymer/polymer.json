@@ -8,9 +8,7 @@
     "components/datalab-sessions/datalab-sessions.html"
   ],
   "sources": [
-    "modules/**/*.js",
     "images/**/*",
-    "bower.json",
     "index.css"
   ],
   "extraDependencies": [

@@ -1,7 +1,7 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
-<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../../bower_components/app-route/app-location.html">
 <link rel="import" href="../../bower_components/app-route/app-route.html">
+<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
 
 <link rel="import" href="../../components/datalab-sidebar/datalab-sidebar.html">
 <link rel="import" href="../../components/datalab-toolbar/datalab-toolbar.html">
@@ -10,7 +10,7 @@
 
 <dom-module id="datalab-app">
   <template>
-    <style>
+    <style include="datalab-shared-styles">
       #container {
         height: 100%;
         display: flex;
@@ -18,16 +18,15 @@
       }
       .datalab-contents {
         display: flex;
-        flex-grow: 1;
+        height: calc(100% - var(--toolbar-height));
       }
       .datalab-sidebar {
-        width: 200px;
+        flex-basis: var(--sidebar-width);
       }
       .datalab-main-content {
         flex-grow: 1;
         box-shadow: -4px 0px 10px -3px rgba(0, 0, 0, 0.1);
-        height: calc(100% - var(--toolbar-height));
-        width: calc(100% - 200px);
+        width: calc(100% - var(--sidebar-width));
       }
       iron-pages {
         height: 100%;

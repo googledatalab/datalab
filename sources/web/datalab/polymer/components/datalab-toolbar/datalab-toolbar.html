@@ -55,22 +55,41 @@
       .dialog-content {
         flex-grow: 1;
       }
+      .account-dropdown {
+        position: absolute;
+        right: 0px;
+        top: var(--toolbar-height);
+        margin: 0px;
+        min-width: 160px;
+        max-width: 300px;
+        box-shadow: -3px 3px 10px -3px rgba(0, 0, 0, 0.3);
+        z-index: 3;
+      }
     </style>
 
     <app-header slot="header" fixed shadow>
       <app-toolbar>
         <div main-title class="title">
+          <!--TODO: @yebrahim replace this with SVG version of the logo-->
           <img src="images/datalab-logo.png" class="title-image">
         </div>
         <paper-icon-button class="toolbar-button" icon="info"
                            on-click="_infoClicked"></paper-icon-button>
         <paper-icon-button class="toolbar-button" icon="settings"
                            on-click="_settingsClicked"></paper-icon-button>
-        <paper-icon-button class="toolbar-button" icon="account-circle">
+        <paper-icon-button class="toolbar-button" icon="account-circle"
+                           on-click="_accountIconClicked">
         </paper-icon-button>
       </app-toolbar>
     </app-header>
 
+    <!--Account dropdown dialog. This always shows at the top left corner
+    below the toolbar-->
+    <paper-dialog id="accountDropdown" class="account-dropdown">
+      <div>Account menu contents</div>
+    </paper-dialog>
+
+    <!--Info dialog. This shows centered in the middle of the window-->
     <paper-dialog id="infoDialog" class="dialog" with-backdrop>
       <h2>Info</h2>
       <hr>
@@ -82,6 +101,7 @@
       </div>
     </paper-dialog>
 
+    <!--Settings dialog. This shows centered in the middle of the window-->
     <paper-dialog id="settingsDialog" class="dialog" with-backdrop>
       <h2>Settings</h2>
       <hr>

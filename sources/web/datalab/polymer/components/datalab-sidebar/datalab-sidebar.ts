@@ -5,6 +5,11 @@
  */
 class SidebarElement extends Polymer.Element {
 
+  /**
+   * The currently selected page name
+   */
+  public page: string;
+
   static get is() { return "datalab-sidebar"; }
 
   static get properties() {

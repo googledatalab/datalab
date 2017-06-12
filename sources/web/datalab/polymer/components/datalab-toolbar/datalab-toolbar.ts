@@ -9,6 +9,13 @@ class ToolbarElement extends Polymer.Element {
   static get is() { return "datalab-toolbar"; }
 
   /**
+   * When account menu icon is clicked, toggle account menu visibility
+   */
+  _accountIconClicked() {
+    this.$.accountDropdown.toggle();
+  }
+
+  /**
    * Open the info dialog
    */
   _infoClicked() {

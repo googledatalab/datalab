@@ -83,13 +83,14 @@ class DatalabAppElement extends Polymer.Element {
   /**
    * on changes to the page property, resolve the new page's uri, and
    * tell Polymer to load it.
-   * we do this to lazy load pages as the user clicks them for performance
+   * we do this to lazy load pages as the user clicks them instead of letting
+   * the browser pre-load all the pages on the first request
    */
   _pageChanged(page: string) {
     // build the path using the page name as suffix for directory
     // and file names
-    let subpath = 'datalab-' + page
-    var resolvedPageUrl = this.resolveUrl('../' + subpath + '/' + subpath + '.html');
+    const subpath = 'datalab-' + page
+    const resolvedPageUrl = this.resolveUrl('../' + subpath + '/' + subpath + '.html');
     Polymer.importHref(resolvedPageUrl, undefined, undefined, true);
   }
 
