@@ -1,0 +1,58 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/app-route/app-location.html">
+<link rel="import" href="../../bower_components/app-route/app-route.html">
+
+<dom-module id="datalab-app">
+  <template>
+    <style>
+      #container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+      .toolbar {
+        height: 48px;
+          background-color: #eee;
+      }
+      .contents {
+        display: flex;
+        flex-grow: 1;
+      }
+      .sidebar {
+        width: 200px;
+        background-color: #ddd;
+      }
+      .main-content {
+        flex-grow: 1;
+        box-shadow: -4px 0px 10px -3px rgba(0, 0, 0, 0.1);
+        height: calc(100% - var(--toolbar-height));
+      }
+      iron-pages {
+        height: 100%;
+      }
+    </style>
+
+    <!--Router-->
+    <app-location route="{{route}}"></app-location>
+    <app-route
+        route="{{route}}"
+        pattern="{{rootPattern}}:page"
+        data="{{routeData}}"></app-route>
+
+    <div id="container">
+      <div class="toolbar"></div>
+      <div class="contents">
+        <div class="sidebar">
+        </div>
+        <div class="main-content">
+          <div name="files">
+            Files page
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </template>
+</dom-module>
+
+<script src="datalab-app.js"></script>

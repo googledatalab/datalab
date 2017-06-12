@@ -1,0 +1,21 @@
+{
+  "entrypoint": "index.html",
+  "shell": "components/datalab-app/datalab-app.html",
+  "fragments": [
+  ],
+  "sources": [
+    "bower.json",
+    "index.css"
+  ],
+  "extraDependencies": [
+    "bower_components/webcomponentsjs/webcomponents-lite.js"
+  ],
+  "lint": {
+    "rules": [
+      "polymer-2"
+    ]
+  },
+  "builds": [{
+    "name": "experimental"
+  }]
+}

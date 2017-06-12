@@ -87,5 +87,6 @@ docker run -it --entrypoint=$ENTRYPOINT \
   -e "PROJECT_ID=$PROJECT_ID" \
   -e "DATALAB_ENV=local" \
   -e "DATALAB_DEBUG=true" \
+  -e "DATALAB_EXPERIMENTAL_UI=false" \
   -e 'DATALAB_SETTINGS_OVERRIDES={"consoleLogLevel": "debug" }' \
   datalab
