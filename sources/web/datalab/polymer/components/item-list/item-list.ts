@@ -9,9 +9,9 @@ interface ItemListRow {
 }
 
 /**
- * CustomEvent that gets dispatched when an item is double clicked
+ * CustomEvent that gets dispatched when an item is clicked
  */
-class DoubleClickEvent extends CustomEvent {
+class ItemClickEvent extends CustomEvent {
   detail: {
     index: number
   }
@@ -79,6 +79,8 @@ class ItemListElement extends Polymer.Element {
       }
       this.set('rows.' + index + '.selected', true);
     }
+    const ev = new ItemClickEvent('itemSelectionChanged', { detail: {index: index} });
+    this.dispatchEvent(ev);
   }
 
   /**
@@ -86,7 +88,7 @@ class ItemListElement extends Polymer.Element {
    */
   _rowDblClicked(e: MouseEvent) {
     const index = this.$.list.indexForElement(e.target);
-    const ev = new DoubleClickEvent('itemDblClick', { detail: {index: index} });
+    const ev = new ItemClickEvent('itemDblClick', { detail: {index: index} });
     this.dispatchEvent(ev);
   }
 

@@ -55,6 +55,7 @@
         width: var(--details-pane-width);
         background-color: var(--app-secondary-color);
         box-shadow: inset 4px 0px 10px -3px rgba(0, 0, 0, 0.1);
+        padding: 10px;
       }
       .vseparator {
         display: inline;
@@ -177,8 +178,7 @@
       <paper-progress id="progressBar" indeterminate disabled={{!_fetching}}></paper-progress>
       <div class="files-container">
         <item-list id="files"></item-list>
-        <div id="detailsPane">
-          <details-pane></details-pane>
+        <details-pane id="detailsPane"></details-pane>
         </div>
       </div>
     </div>
