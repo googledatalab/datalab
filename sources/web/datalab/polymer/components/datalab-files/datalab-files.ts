@@ -168,21 +168,8 @@ class FilesElement extends Polymer.Element {
     super.ready();
     const filesElement = this.shadowRoot.querySelector('#files')
     if (filesElement) {
-      filesElement.addEventListener('itemSelectionChanged',
-                                    this._handleItemSelected.bind(this));
       filesElement.addEventListener('itemDblClick',
                                     this._handleDblClicked.bind(this));
-    }
-  }
-
-  _handleItemSelected(e: ItemClickEvent) {
-    const index = e.detail.index;
-    const listItem = this.$.files.rows[index];
-    if (listItem.selected) {
-      this.$.detailsPane.item = this.fileList[index];
-      this.$.detailsPane.icon = listItem.icon;
-    } else {
-      this.$.detailsPane.item = {};
     }
   }
 
