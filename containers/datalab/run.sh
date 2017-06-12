@@ -59,6 +59,10 @@ while [ $# -gt 0 ]; do
       shift
       ;;
     --pydatalab)
+      if [ $# -lt 2 ]; then
+        echo "--pydatalab requires an argument"
+        exit 1
+      fi
       PYDATALAB=$(realpath "$2")
       PYDATALAB_MOUNT_OPT="-v $PYDATALAB:/content/pydatalab"
       shift
