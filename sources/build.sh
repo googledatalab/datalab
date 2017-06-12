@@ -32,22 +32,16 @@ function install_node() {
 }
 
 function install_bower() {
-  npm -v >/dev/null 2>&1 || install_node
-
   echo "Installing Bower"
   npm install -g bower
 }
 
 function install_polyer_cli() {
-  npm -v >/dev/null 2>&1 || install_node
-
   echo "Installing Polymer CLI"
   npm install -g polymer-cli
 }
 
 function install_typescript() {
-  npm -v >/dev/null 2>&1 || install_node
-
   echo "Installing Typescript"
   npm install -g typescript
 }
@@ -69,6 +63,8 @@ function install_prereqs() {
   git version || install_git
   rsync -h >/dev/null 2>&1 || install_rsync
 
+  # Use -v instead of -h to test npm installation, since -h returns non-zero
+  npm -v >/dev/null 2>&1 || install_node
   tsc -h >/dev/null 2>&1  || install_typescript
   bower -h >/dev/null 2>&1  || install_bower
   polymer -h >/dev/null 2>&1  || install_polyer_cli
