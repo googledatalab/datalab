@@ -406,6 +406,11 @@ class FilesElement extends Polymer.Element {
       return Promise.resolve(null);
     }
   }
+
+  _toggleDetailsPane() {
+    this.$.detailsPane.hidden = !this.$.detailsPane.hidden
+  }
+
 }
 
 customElements.define(FilesElement.is, FilesElement);
