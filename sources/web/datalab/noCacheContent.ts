@@ -20,12 +20,12 @@ import fs = require('fs');
 import http = require('http');
 import path = require('path');
 
-var appSettings: common.Settings;
+var appSettings: common.AppSettings;
 
 /**
  * Initializes settings for the noCacheContent handler.
  */
-export function init(settings: common.Settings): void {
+export function init(settings: common.AppSettings): void {
   appSettings = settings;
 }
 

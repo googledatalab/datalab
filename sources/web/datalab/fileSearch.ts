@@ -23,7 +23,7 @@ import path = require('path');
 import logging = require('./logging');
 import chokidar = require('chokidar');
 
-let appSettings: common.Settings;
+let appSettings: common.AppSettings;
 let fileIndex: string[] = [];
 let indexReady: boolean = false;
 let tooManyFiles: boolean = false;
@@ -129,7 +129,7 @@ function filter(pattern: string, data: string[]): string[] {
  * Creates the file search/filter request handler.
  * @returns the request handler to handle search requests.
  */
-export function createHandler(settings: common.Settings): http.RequestHandler {
+export function createHandler(settings: common.AppSettings): http.RequestHandler {
   appSettings = settings;
   if (appSettings.enableFilesystemIndex) {
     indexFiles();

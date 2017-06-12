@@ -54,6 +54,19 @@ check_tmp_directory() {
     echo "The /tmp directory is writable"
 }
 
+# Reinstall the parts of pydatalab from /content/pydatalab, which is where it gets live-mounted.
+function reinstall_pydatalab() {
+  PYDATALAB=/content/pydatalab
+  echo "Reinstalling pydatalab from ${PYDATALAB}"
+  pip install --force-reinstall --no-cache-dir ${PYDATALAB}
+  pip install --force-reinstall ${PYDATALAB}/solutionbox/image_classification/.
+  pip install --force-reinstall ${PYDATALAB}/solutionbox/structured_data/.
+  pip3 install --force-reinstall --no-cache-dir ${PYDATALAB}
+  pip3 install --force-reinstall ${PYDATALAB}/solutionbox/image_classification/.
+  pip3 install --force-reinstall ${PYDATALAB}/solutionbox/structured_data/.
+  echo "Done reinstalling pydatalab"
+}
+
 source /datalab/setup-env.sh
 
 if [ "${ENABLE_USAGE_REPORTING}" = "true" ]
@@ -136,6 +149,9 @@ if [ -d /devroot ]; then
   export DATALAB_LIVE_TEMPLATES_DIR=/devroot/sources/web/datalab/templates
   # Use our internal node_modules dir
   export NODE_PATH="${NODE_PATH}:/datalab/web/node_modules"
+  if [ -d /content/pydatalab ]; then
+    reinstall_pydatalab
+  fi
   # Auto-restart when the developer builds from the typescript files.
   echo ${FOREVER_CMD} --watch --watchDirectory /devroot/build/web/nb /devroot/build/web/nb/app.js
   ${FOREVER_CMD} --watch --watchDirectory /devroot/build/web/nb /devroot/build/web/nb/app.js

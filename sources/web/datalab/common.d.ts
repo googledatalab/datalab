@@ -14,7 +14,7 @@
 
 declare module common {
 
-  interface Settings {
+  interface AppSettings {
 
     /**
      * Whether or not to write log statements to stderr
