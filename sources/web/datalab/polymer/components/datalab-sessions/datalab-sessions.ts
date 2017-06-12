@@ -60,7 +60,9 @@ class SessionsElement extends Polymer.Element {
     // load session list initially
     this._loadSessionsList();
 
-    // refresh the session list periodically
+    // Refresh the session list periodically.
+    // TODO: [yebrahim] Start periodic refresh when the window is in focus, and
+    // the sessions page is open, and stop it on blur to minimize unnecessary traffic
     setInterval(this._loadSessionsList.bind(this), this._sessionListRefreshInterval);
   }
 
@@ -94,6 +96,8 @@ class SessionsElement extends Polymer.Element {
       .then(list => {
         self.sessionList = list;
       }, () => {
+        // TODO: [yebrahim] Add dummy data here when debugging is enabled to allow for
+        // fast UI iteration using `polymer serve`.
         console.log('Error getting list of sessions.');
       })
       .then(() => {

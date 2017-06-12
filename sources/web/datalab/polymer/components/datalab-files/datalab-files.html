@@ -12,13 +12,13 @@ or implied. See the License for the specific language governing permissions and 
 the License.
 -->
 
-<link rel="import" href="../../components/shared-styles/shared-styles.html">
 <link rel="import" href="../../components/item-list/item-list.html">
+<link rel="import" href="../../components/shared-styles/shared-styles.html">
 
-<link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../bower_components/paper-progress/paper-progress.html">
+<link rel="import" href="../../bower_components/polymer/polymer.html">
 
 <dom-module id="datalab-files">
   <template>
@@ -134,6 +134,7 @@ the License.
       }
     </style>
 
+    <!--Toolbar with buttons such as +Notebook, +Folder... etc-->
     <div id="toolbar">
       <paper-button class="toolbar-button">
         <iron-icon icon="add-box"></iron-icon>
@@ -156,7 +157,9 @@ the License.
         <span>Delete</span>
       </paper-button>
     </div>
+
     <div id="file-picker">
+      <!--Navigation bar with back/forward buttons, refresh, and breadcrumbs-->
       <div id="navbar">
         <paper-button id="backNav" class="navbar-button" on-click="_navBackward">
           <iron-icon icon="chevron-left"></iron-icon>
@@ -169,17 +172,22 @@ the License.
         </paper-button>
         <div class="vseparator"></div>
         <div id="breadcrumb">
+          <!--Always show a '/' crumb for home-->
           <div>
             <a id="home-crumb" href="#" on-click="_crumbClicked">/</a>
           </div>
-          <template id="breadcrumbsTemplate" is="dom-repeat" items={{currentCrumbs}}>
+          <template id="breadcrumbsTemplate" is="dom-repeat" items={{_currentCrumbs}}>
             <div>
               <a href="#" on-click="_crumbClicked">{{item}}</a>
             </div>
           </template>
         </div>
       </div>
+
+      <!--Thin progress bar that shows until files are loaded-->
       <paper-progress id="progressBar" indeterminate disabled={{!_fetching}}></paper-progress>
+
+      <!--File listing-->
       <div class="files-container">
         <item-list id="files"></item-list>
       </div>

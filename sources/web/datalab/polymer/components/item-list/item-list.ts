@@ -23,7 +23,7 @@ interface ItemListRow {
 }
 
 /**
- * CustomEvent that gets dispatched when an item is clicked
+ * CustomEvent that gets dispatched when an item is clicked or double clicked
  */
 class ItemClickEvent extends CustomEvent {
   detail: {
@@ -62,7 +62,6 @@ class ItemListElement extends Polymer.Element {
         value: function(): Array<Object> {
           return [];
         },
-        observer: '_rowsChanged'
       },
       columns: {
         type: Array,
@@ -71,9 +70,6 @@ class ItemListElement extends Polymer.Element {
         }
       }
     }
-  }
-
-  _rowsChanged() {
   }
 
   /**
