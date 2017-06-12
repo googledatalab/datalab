@@ -74,12 +74,12 @@ define([
   'base/js/events',
   'base/js/utils',
   'base/js/security',
-  'static/appbar',
-  'static/edit-app',
-  'static/notebook-app',
-  'static/notebook-list',
-  'static/minitoolbar',
-  'static/websocket',
+  'appbar',
+  'edit-app',
+  'notebook-app',
+  'notebook-list',
+  'minitoolbar',
+  'websocket',
   'base/js/dialog'
 ], function(ipy, events, utils, security, appbar, editapp,
             notebookapp, notebooklist, minitoolbar, websocket, dialog) {

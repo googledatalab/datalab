@@ -1,4 +1,4 @@
-define(['static/idle-timeout', 'util'], function(idleTimeout, util) {
+define(['idle-timeout', 'util'], function(idleTimeout, util) {
   function toggleSidebar() {
     var d = document.getElementById('sidebarArea');
     d.style.display = (d.style.display == 'none') ? 'block' : 'none';
