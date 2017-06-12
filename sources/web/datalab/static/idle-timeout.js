@@ -1,7 +1,11 @@
 define(['base/js/dialog', 'base/js/events', 'util'], function(dialog, events, util) {
   const updateTimeoutInfoInterval = 1000; // Update display every second while the user is watching.
-  const updateTimeoutInfoNoDisplayInterval = 5 * 1000; // Keep tabs on timeout info even when not being displayed.
-  const queryTimeoutInfoInterval = 10 * 1000; // Only send a query every ten seconds.
+  const updateTimeoutInfoNoDisplayInterval = 60 * 1000; // Keep tabs on timeout info even when not being displayed.
+  const queryTimeoutInfoInterval = 10 * 1000; // Send a query every ten seconds while the user is watching.
+  const queryTimeoutInfoNoDisplayInterval = 30 * 1000; // Send a query less often when not being displayed.
+  const kernelBusyHeartbeatInterval = 20 * 1000;  // When the kernel is busy, send heartbeat every 20 seconds.
+  const minResetInterval = 5 * 1000;  // Don't send a reset request more often than this.
+
   let timeoutInfoTimeout;     // Result of setTimeout for calling updateTimeoutInfo
   let timeoutInfo = {};
   let lastUpdateTimeoutTime = 0;
@@ -110,8 +114,10 @@ define(['base/js/dialog', 'base/js/events', 'util'], function(dialog, events, ut
   // or just updates the display if not enough time has passed to call the
   // service again.
   function updateTimeoutInfo(dropdown) {
+    const interval = (dropdown && dropdown.hasClass('open')) ?
+        queryTimeoutInfoInterval : queryTimeoutInfoNoDisplayInterval;
     const now = Date.now();
-    if (now - lastUpdateTimeoutTime > queryTimeoutInfoInterval) {
+    if (now - lastUpdateTimeoutTime > interval) {
       util.debug.log('Querying timeout');
       const timeoutInfoUrl = util.datalabLink("/_timeout");
       function callback() {
@@ -205,7 +211,6 @@ define(['base/js/dialog', 'base/js/events', 'util'], function(dialog, events, ut
 
   // Set up our mechanism to keep the idle timer reset
   // while our kernel is busy.
-  const kernelBusyHeartbeatInterval = 5 * 1000;
   let lastIdleTimeoutReset = 0;
   let busyTimer;
 
@@ -226,7 +231,7 @@ define(['base/js/dialog', 'base/js/events', 'util'], function(dialog, events, ut
   function _maybeResetIdleTimeout() {
     util.debug.log('request to reset idle timeout');
     now = Date.now();
-    if ((now - lastIdleTimeoutReset) > 3000) {
+    if ((now - lastIdleTimeoutReset) > minResetInterval) {
       _resetIdleTimeout();
       lastIdleTimeoutReset = now;
     }
@@ -246,7 +251,7 @@ define(['base/js/dialog', 'base/js/events', 'util'], function(dialog, events, ut
   return {
     notebookScrolled,
     setupDisconnectHandler,
-    setupKernelBusyHeartbeat: setupKernelBusyHeartbeat,
+    setupKernelBusyHeartbeat,
     setupTimeoutTimer,
     toggleIdleTimeout,
     updateTimeoutInfo,
