@@ -33,7 +33,7 @@ let clientId = '32555940559.apps.googleusercontent.com';
 let clientSecret = 'ZmssLNjJy2998hD4CTg2ejr2';
 
 // The application settings instance.
-var appSettings: common.Settings;
+var appSettings: common.AppSettings;
 
 let scopes = [
   'https://www.googleapis.com/auth/userinfo.email',
@@ -277,7 +277,7 @@ export function handleAuthFlow(request: http.ServerRequest, response: http.Serve
   redirect(response, referer);
 }
 
-export function init(settings: common.Settings) {
+export function init(settings: common.AppSettings) {
   appSettings = settings;
   if (fs.existsSync(appCredFile())) {
     var tokensContent:string = fs.readFileSync(appCredFile(), 'utf8');

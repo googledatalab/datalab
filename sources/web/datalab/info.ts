@@ -22,7 +22,7 @@ import url = require('url');
 /**
  * The application settings instance.
  */
-var appSettings: common.Settings;
+var appSettings: common.AppSettings;
 
 function stringifyMap(map: {[index: string]: string}): string {
   var textBuilder: string[] = [];
@@ -89,7 +89,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
  * @param settings configuration settings for the application.
  * @returns the request handler to handle information requests.
  */
-export function createHandler(settings: common.Settings): http.RequestHandler {
+export function createHandler(settings: common.AppSettings): http.RequestHandler {
   appSettings = settings;
   return requestHandler;
 }
