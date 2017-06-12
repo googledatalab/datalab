@@ -21,7 +21,7 @@ import http = require('http');
 import httpProxy = require('http-proxy');
 import logging = require('./logging');
 
-var appSettings: common.Settings;
+var appSettings: common.AppSettings;
 var proxy: httpProxy.ProxyServer = httpProxy.createProxyServer(null);
 var regex: any = new RegExp('\/_proxy\/([0-9]+)($|\/)');
 var socketioPort: string = '';
@@ -70,7 +70,7 @@ export function handleRequest(request: http.ServerRequest,
 /**
  * Initialize the handler.
  */
-export function init(settings: common.Settings) {
+export function init(settings: common.AppSettings) {
   appSettings = settings;
   socketioPort = String(settings.socketioPort);
   proxy.on('error', errorHandler);

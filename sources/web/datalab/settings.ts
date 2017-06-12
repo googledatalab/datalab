@@ -38,12 +38,12 @@ interface Metadata {
  * On first run, this generates any dynamic settings and merges them into the settings result.
  * @returns the settings object for the application to use.
  */
-export function loadSettings(): common.Settings {
+export function loadAppSettings(): common.AppSettings {
   var settingsPath = path.join(__dirname, 'config', SETTINGS_FILE);
   var metadataPath = path.join(__dirname, 'config', METADATA_FILE);
 
   if (!fs.existsSync(settingsPath)) {
-    console.log('Settings file %s not found.', settingsPath);
+    console.log('App settings file %s not found.', settingsPath);
     return null;
   }
 
@@ -59,7 +59,7 @@ export function loadSettings(): common.Settings {
       metadata = <Metadata>JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
     }
 
-    var settings = <common.Settings>JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    var settings = <common.AppSettings>JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
     settings.versionId = process.env['DATALAB_VERSION'] || '';
     if (process.env['DATALAB_CONFIG_URL']) {
       settings.configUrl = process.env['DATALAB_CONFIG_URL'];
@@ -107,7 +107,7 @@ export function getUserConfigDir(userId: string): string {
 export function loadUserSettings(userId: string): common.Map<string> {
   var settingsPath = path.join(getUserConfigDir(userId), SETTINGS_FILE);
   if (!fs.existsSync(settingsPath)) {
-    console.log('Settings file %s not found.', settingsPath);
+    console.log('User settings file %s not found.', settingsPath);
     return {};
   }
 

@@ -50,7 +50,7 @@ var timeoutHandler: http.RequestHandler;
 /**
  * The application settings instance.
  */
-var appSettings: common.Settings;
+var appSettings: common.AppSettings;
 var loadedSettings: common.Map<string> = null;
 var startup_path_setting = 'startuppath'
 
@@ -318,7 +318,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
  * Runs the proxy web server.
  * @param settings the configuration settings to use.
  */
-export function run(settings: common.Settings): void {
+export function run(settings: common.AppSettings): void {
   appSettings = settings;
   userManager.init(settings);
   jupyter.init(settings);

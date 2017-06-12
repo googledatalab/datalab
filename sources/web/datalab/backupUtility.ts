@@ -20,7 +20,7 @@ import logging = require('./logging');
 import path = require('path');
 import fs = require('fs');
 
-var appSettings: common.Settings;
+var appSettings: common.AppSettings;
 var backupIntervalVar: number = null;
 var backupLogPath: string = '';
 
@@ -64,7 +64,7 @@ function runBackup(tag: string, callback: Function) {
  * every hour, day, and week. Compare against the last time each backup
  * ran to catch up if we missed any backups (e.g. because Datalab wasn't running)
  */
-export function startBackup(settings: common.Settings) {
+export function startBackup(settings: common.AppSettings) {
   appSettings = settings;
   backupLogPath = path.join(appSettings.datalabRoot, '/datalab/.backup_history');
 

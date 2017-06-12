@@ -25,9 +25,9 @@ import url = require('url');
 /**
  * The application settings instance.
  */
-var appSettings: common.Settings;
+var appSettings: common.AppSettings;
 
-export function init(settings: common.Settings): void {
+export function init(settings: common.AppSettings): void {
   appSettings = settings;
 }
 

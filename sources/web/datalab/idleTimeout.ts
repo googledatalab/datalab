@@ -30,13 +30,13 @@ let idleTimeoutSeconds = 0;   // Shutdown after being idle this long; turned off
 let lastReset: number;  // The epoch, in seconds, since the last timout reset
 let shutdownCommand = '';
 
-export function initAndStart(appSettings: common.Settings) {
+export function initAndStart(appSettings: common.AppSettings) {
   init(appSettings);
   reset();
   startChecker();
 }
 
-export function init(appSettings: common.Settings) {
+export function init(appSettings: common.AppSettings) {
   const userSettings = settings.loadUserSettings(null);
   shutdownCommand = userSettings.idleTimeoutShutdownCommand;
   if (!shutdownCommand) {
