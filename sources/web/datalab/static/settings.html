@@ -4,13 +4,21 @@
   <meta charset="utf-8">
 </head>
 <body>
-  Theme:
   <div>
+    Theme:
     <div class="radio">
       <label><input type="radio" id="lightThemeRadioOption" checked="">Light Theme</label>
     </div>
     <div class="radio">
       <label><input type="radio" id="darkThemeRadioOption" checked="">Dark Theme</label>
+    </div>
+  </div>
+  <div>
+    Auto-shutdown idle timeout interval (0 to disable):
+    <div>
+      <label><input type="text" id="idleTimeoutIntervalTextBox"></label>
+      <button id="idleTimeoutUpdateButton" class="btn btn-default btn-sm" disabled>Update</button>
+      <label id="idleTimeoutErrorLabel"></label>
     </div>
   </div>
   <script>require(['settings'], settings => settings.init())</script>

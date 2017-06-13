@@ -45,5 +45,5 @@
     "--MultiKernelManager.default_kernel_name=\"python2\"",
     "--ip=\"127.0.0.1\""
   ],
-  "idleTimeoutInterval": ""
+  "idleTimeoutInterval": "90m"
 }
