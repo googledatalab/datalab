@@ -27,7 +27,7 @@ the License.
       :host {
         --toolbar-button-dimension: 35px;
       }
-      .title {
+      .toolbar-title {
         font-size: 18px;
         color: #c8c8c8;
       }
@@ -83,15 +83,15 @@ the License.
 
     <app-header slot="header" fixed shadow>
       <app-toolbar>
-        <div main-title class="title">
+        <div id="title" main-title class="toolbar-title">
           <!--TODO: @yebrahim replace this with SVG version of the logo-->
-          <img src="images/datalab-logo.png" class="title-image">
+          <img src="/images/datalab-logo.png" class="title-image">
         </div>
-        <paper-icon-button class="toolbar-button" icon="info"
+        <paper-icon-button id="infoButton" class="toolbar-button" icon="info"
                            on-click="_infoClicked"></paper-icon-button>
-        <paper-icon-button class="toolbar-button" icon="settings"
+        <paper-icon-button id="settingsButton" class="toolbar-button" icon="settings"
                            on-click="_settingsClicked"></paper-icon-button>
-        <paper-icon-button class="toolbar-button" icon="account-circle"
+        <paper-icon-button id="accountButton" class="toolbar-button" icon="account-circle"
                            on-click="_accountIconClicked">
         </paper-icon-button>
       </app-toolbar>

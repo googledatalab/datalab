@@ -12,24 +12,22 @@ or implied. See the License for the specific language governing permissions and 
 the License.
 -->
 
-<!doctype html>
-<html lang="en">
+<html>
   <head>
     <meta charset="utf-8">
-    <meta name="viewport"
-          content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
 
-    <title>Google Cloud Datalab</title>
-    <link rel="shortcut icon" href="/images/favicon.ico">
-
-    <script>
-      var exports = {};
-    </script>
-    <script src="bower_components/webcomponentsjs/webcomponents-loader.js"></script>
-    <link rel="import" href="components/datalab-app/datalab-app.html">
-    <link rel="stylesheet" href="index.css">
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../web-component-tester/browser.js"></script>
   </head>
   <body>
-    <datalab-app></datalab-app>
+    <script>
+      // Load and run all tests (.html, .js). Keep element tests in HTML files so we
+      // can use fixtures, and keep all other tests in javascript files
+      WCT.loadSuites([
+        'toolbar-test.html',
+        'toolbar-test.html?dom=shadow'
+      ]);
+    </script>
   </body>
 </html>
