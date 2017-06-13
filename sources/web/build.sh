@@ -31,7 +31,7 @@ mkdir -p $WEB_DIR
 
 # Experimental UI build step
 cd datalab/polymer
-bower install
+bower --allow-root install
 tsc
 polymer build
 rsync -avpq ./build/experimental/ ../static/experimental
