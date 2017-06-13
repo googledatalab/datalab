@@ -22,11 +22,7 @@
  */
 class SessionsElement extends Polymer.Element {
 
-  /**
-   * The list of sessions being displayed
-   */
-  public sessionList: Array<Session>;
-
+  private _sessionList: Array<Session>;
   private _fetching: boolean;
   private _sessionListRefreshInterval: number;
 
@@ -34,12 +30,11 @@ class SessionsElement extends Polymer.Element {
 
   static get properties() {
     return {
-      sessionList: {
+      _sessionList: {
         type: Array,
         value: function() {
           return [];
         },
-        observer: '_sessionListChanged'
       },
       _fetching: {
         type: Boolean,
@@ -52,49 +47,64 @@ class SessionsElement extends Polymer.Element {
     }
   }
 
-  connectedCallback() {
-    super.connectedCallback();
-    const listElement = this._getSessionListElement();
-    listElement.columns = ['Session Path', 'Status'];
+  /**
+   * Called when when the element's local DOM is ready and initialized We use it
+   * to initialize element state.
+   */
+  ready() {
+    super.ready();
+
+    this.$.sessions.columns = ['Session Path', 'Status'];
 
     // load session list initially
-    this._loadSessionsList();
+    this._fetchSessionList();
 
     // Refresh the session list periodically.
     // TODO: [yebrahim] Start periodic refresh when the window is in focus, and
     // the sessions page is open, and stop it on blur to minimize unnecessary traffic
-    setInterval(this._loadSessionsList.bind(this), this._sessionListRefreshInterval);
+    setInterval(this._fetchSessionList.bind(this), this._sessionListRefreshInterval);
   }
 
-  _getSessionListElement() {
-    return this.$.sessions;
-  }
-
-  _sessionListChanged() {
+  /**
+   * Creates a new ItemListRow object for each entry in the session list, and sends
+   * the created list to the item-list to render.
+   */
+  _drawSessionList() {
     // initial value
-    if (!Array.isArray(this.sessionList)) {
+    if (!Array.isArray(this._sessionList)) {
       return;
     }
 
-    const listElement = this._getSessionListElement();
-    let newList: Array<ItemListRow> = [];
-    this.sessionList.forEach(session => {
-      newList.push({
+    this.$.sessions.rows = this._sessionList.map(session => {
+      return {
         firstCol: session.notebook.path,
         secondCol: 'running',
         icon: 'editor:insert-drive-file',
         selected: false
-      });
+      };
     });
-    listElement.rows = newList;
   }
 
-  _loadSessionsList() {
+  /**
+   * Calls the ApiManager to get the list of sessions at the current path, and
+   * updates the _sessionList property.
+   */
+  _fetchSessionList() {
     const self = this;
     self._fetching = true;
     return ApiManager.listSessionsAsync()
-      .then(list => {
-        self.sessionList = list;
+      .then(newList => {
+        // Only refresh the list if there are any changes. This helps keep
+        // the item list's selections intact most of the time
+        // TODO: [yebrahim] Try to diff the two lists and only inject the
+        // differences in the DOM instead of refreshing the entire list if
+        // one item changes. This is tricky because we don't have unique
+        // ids for the items. Using paths might work for files, but is not
+        // a clean solution.
+        if (JSON.stringify(this._sessionList) !== JSON.stringify(newList)) {
+          self._sessionList = newList;
+          this._drawSessionList();
+        }
       }, () => {
         // TODO: [yebrahim] Add dummy data here when debugging is enabled to allow for
         // fast UI iteration using `polymer serve`.

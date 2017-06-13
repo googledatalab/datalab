@@ -33,6 +33,7 @@ the License.
         color: var(--app-primary-color);
         margin: 4px 12px 4px 12px;
         font-weight: normal;
+        min-width: 35px;
         border-radius: 0px;
       }
       .toolbar-button > iron-icon {
@@ -51,8 +52,10 @@ the License.
       }
     </style>
 
+    <!--Toolbar with shutdown button-->
+    <!--TODO: [yebrahim] Make the shutdown button do stuff-->
     <div id="toolbar">
-      <paper-button class="toolbar-button" on-click="_loadSessionsList">
+      <paper-button class="toolbar-button" on-click="_fetchSessionList">
         <iron-icon icon="refresh"></iron-icon>
       </paper-button>
       <paper-button class="toolbar-button">
@@ -60,7 +63,12 @@ the License.
         <span>Shutdown</span>
       </paper-button>
     </div>
-    <paper-progress id="progressBar" indeterminate disabled={{!_fetching}}></paper-progress>
+
+    <!--Thin progress bar that shows until sessions are loaded-->
+    <paper-progress id="progressBar" indeterminate disabled={{!_fetching}}>
+    </paper-progress>
+
+    <!--Session listing-->
     <div class="sessions-container">
       <item-list id="sessions"></item-list>
     </div>

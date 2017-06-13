@@ -54,7 +54,6 @@ the License.
       }
       .navbar-button[disabled] {
         background-color: #fff;
-        color: var(--app-primary-color);
       }
       .files-container {
         /* 1 nav bar + 1 progress bar */
@@ -135,6 +134,7 @@ the License.
     </style>
 
     <!--Toolbar with buttons such as +Notebook, +Folder... etc-->
+    <!--TODO: [yebrahim] Make these buttons do stuff-->
     <div id="toolbar">
       <paper-button class="toolbar-button">
         <iron-icon icon="add-box"></iron-icon>
@@ -167,7 +167,7 @@ the License.
         <paper-button id="forwardNav" class="navbar-button" on-click="_navForward">
           <iron-icon icon="chevron-right"></iron-icon>
         </paper-button>
-        <paper-button class="navbar-button" on-click="_loadFileList">
+        <paper-button class="navbar-button" on-click="_fetchFileList">
           <iron-icon icon="refresh"></iron-icon>
         </paper-button>
         <div class="vseparator"></div>

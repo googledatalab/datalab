@@ -38,7 +38,7 @@ class ItemClickEvent extends CustomEvent {
  * name, and a selected property. The items are displayed in a table
  * form. Clicking an item selects it and unselects all other items.
  * Clicking the checkbox next to an item allows for multi-selection.
- * Double clicking an item fires a 'itemDblClick' event with this
+ * Double clicking an item fires a 'itemDoubleClick' event with this
  * item's index
  */
 class ItemListElement extends Polymer.Element {
@@ -96,9 +96,9 @@ class ItemListElement extends Polymer.Element {
   /**
    * on row double click, fire an event with the clicked item's index
    */
-  _rowDblClicked(e: MouseEvent) {
+  _rowDoubleClicked(e: MouseEvent) {
     const index = this.$.list.indexForElement(e.target);
-    const ev = new ItemClickEvent('itemDblClick', { detail: {index: index} });
+    const ev = new ItemClickEvent('itemDoubleClick', { detail: {index: index} });
     this.dispatchEvent(ev);
   }
 

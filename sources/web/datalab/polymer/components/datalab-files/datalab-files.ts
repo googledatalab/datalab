@@ -20,8 +20,9 @@
  * Contains an item-list element to display files, a toolbar to interact with these files,
  * a progress bar that appears while loading the file list, and a navigation bar with
  * breadcrumbs.
- * Navigation is done locally to this element, and it does not modify the address bar. This
- * allows for navigation to be persistent if the view is changed away from the files element.
+ * Navigation is done locally to this element, and it does not modify the client's location.
+ * This allows for navigation to be persistent if the view is changed away from the files
+ * element.
  */
 class FilesElement extends Polymer.Element {
 
@@ -90,19 +91,23 @@ class FilesElement extends Polymer.Element {
   }
 
   /**
-   * Called when when the component is attached to the DOM, and we use it
+   * Called when when the element's local DOM is ready and initialized We use it
    * to initialize element state.
    */
   ready() {
     super.ready();
 
+    // TODO: [yebrahim] The current path should be fetched from the server
+    // on initialization, in order to get the last saved user path
+
     const filesElement = this.shadowRoot.querySelector('#files')
     if (filesElement) {
-      filesElement.addEventListener('itemDblClick',
-                                    this._handleDblClicked.bind(this));
+      filesElement.addEventListener('itemDoubleClick',
+                                    this._handleDoubleClicked.bind(this));
     }
 
     this.$.files.columns = ['Name', 'Status'];
+
     // Refresh the file list periodically.
     // TODO: [yebrahim] Start periodic refresh when the window is in focus, and
     // the files page is open, and stop it on blur to minimize unnecessary traffic
@@ -131,10 +136,11 @@ class FilesElement extends Polymer.Element {
       .then(newList => {
         // Only refresh the list if there are any changes. This helps keep
         // the item list's selections intact most of the time
-        // TODO: [yebrahim] Try to only inject mutations in the DOM instead
-        // of refreshing the entire list if one item changes. This is tricky
-        // because we don't have unique ids for the items. Using paths might
-        // work for files, but is not a clean solution.
+        // TODO: [yebrahim] Try to diff the two lists and only inject the
+        // differences in the DOM instead of refreshing the entire list if
+        // one item changes. This is tricky because we don't have unique
+        // ids for the items. Using paths might work for files, but is not
+        // a clean solution.
         if (JSON.stringify(this._fileList) !== JSON.stringify(newList)) {
           this._fileList = newList;
           this._drawFileList();
@@ -183,7 +189,7 @@ class FilesElement extends Polymer.Element {
    * If the clicked item is a directory, pushes it onto the nav stack, otherwise
    * opens it in a new notebook or editor session.
    */
-  _handleDblClicked(e: ItemClickEvent) {
+  _handleDoubleClicked(e: ItemClickEvent) {
     let clickedItem = this._fileList[e.detail.index];
     if (clickedItem.type === 'directory') {
       this.currentPath = clickedItem.path;

@@ -1,5 +1,25 @@
+/*
+ * Copyright 2017 Google Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 /**
- * Represents a file object as returned from Jupyter's files API
+ * This file contains a collection of functions that call the Jupyter server APIs, and are
+ * wrapped in the ApiManager class. It also defines a set of interfaces to interact with
+ * these APIs to help with type checking.
+ */
+
+/**
+ * Represents a file object as returned from Jupyter's files API.
  */
 interface JupyterFile {
   content: string,
@@ -14,14 +34,14 @@ interface JupyterFile {
 }
 
 /**
- * Represents an augmented version of a file obect that contains extra metadata
+ * Represents an augmented version of a file obect that contains extra metadata.
  */
 interface ApiFile extends JupyterFile {
   status: string
 }
 
 /**
- * Represents a session object as returned from Jupyter's sessions API
+ * Represents a session object as returned from Jupyter's sessions API.
  */
 interface Session {
   id: string,
@@ -34,10 +54,10 @@ interface Session {
   }
 }
 
-/** Options for _xhr call, can contain the following fields:
- *  method: The HTTP method to use; default is 'GET'
- *  errorCallback: A function to call if the XHR completes
- *    with a status other than 200
+/** Options for _xhr call, contains the following optional fields:
+ *  - method: The HTTP method to use; default is 'GET'.
+ *  - errorCallback: A function to call if the XHR completes
+ *      with a status other than 200.
  */
 interface XhrOptions {
   method?: string,
@@ -45,7 +65,7 @@ interface XhrOptions {
 }
 
 /**
- * Handles different API calls to the backend notebooks server and Jupyter instance
+ * Handles different API calls to the backend notebooks server and Jupyter instance.
  */
 class ApiManager {
 
@@ -88,7 +108,7 @@ class ApiManager {
 
   /**
    * Returns a list of files at the target path, each implementing the ApiFile interface.
-   * Two requests are made to /api/contents and /api/sessions to get this data
+   * Two requests are made to /api/contents and /api/sessions to get this data.
    */
   static listFilesAsync(path: string): Promise<Array<ApiFile>> {
     const filesPromise: Promise<Array<JupyterFile>> = new Promise((resolve, reject) => {
@@ -111,8 +131,8 @@ class ApiManager {
 
     const sessionsPromise: Promise<Array<Session>> = ApiManager.listSessionsAsync();
 
-    // combine the return values of the two requests to supplement the files
-    // array with the status value
+    // Combine the return values of the two requests to supplement the files
+    // array with the status value.
     return Promise.all([filesPromise, sessionsPromise])
       .then(values => {
         let files = values[0];
@@ -128,7 +148,9 @@ class ApiManager {
       });
   }
 
-  // Sends an XMLHttpRequest to the specified URL.
+  /**
+   * Sends an XMLHttpRequest to the specified URL
+   */
   static _xhr(url: string, callback: Function, options: XhrOptions) {
     options = options || {};
     const method = options.method || 'GET';
