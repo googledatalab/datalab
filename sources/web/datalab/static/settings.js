@@ -25,7 +25,7 @@ define(['idle-timeout', 'util'], (idleTimeout, util) => {
     // Load the actual settings and populate the dialog
     util.xhr(getSettingsAddress(), function() {
       const settings = JSON.parse(this.responseText);
-      lightThemeRadioOption.checked = settings.theme === "light";
+      lightThemeRadioOption.checked = (settings.theme === "light") || !settings.theme;
       darkThemeRadioOption.checked = settings.theme === "dark";
       idleTimeoutTextBox.value = settings.idleTimeoutInterval;
     });
