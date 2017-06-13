@@ -6,7 +6,6 @@
   "dependencies": {
     "jasmine": "^2.6.0",
     "jasmine2-custom-message": "^0.8.2",
-    "jasmine-node": "^1.14.5",
     "node-mocks-http": "^1.6.2",
     "node-resemble": "^2.0.1",
     "selenium-webdriver": "^3.3.0",

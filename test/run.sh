@@ -23,7 +23,6 @@ CONTAINER_STARTED=0
 
 HERE=$(dirname $0)
 JASMINE=$HERE/node_modules/jasmine/bin/jasmine.js
-JASMINE_NODE=$HERE/node_modules/jasmine-node/bin/jasmine-node
 
 function parseOptions() {
   while [[ $# -gt 0 ]]; do
@@ -111,6 +110,11 @@ function startContainers() {
   echo ' Done.'
 }
 
+function installNodeModulesInBuild() {
+  echo "Running 'npm install' in build dir"
+  (cd ${HERE}/../build/web/nb && npm install)
+}
+
 function runNotebookTests() {
   echo Running notebook integration tests
   $JASMINE --config=$HERE/notebook/jasmine.json
@@ -128,7 +132,7 @@ function runClientUnitTests() {
 
 function runServerUnitTests() {
   echo Running server unit tests
-  $JASMINE_NODE $HERE/server-unit/
+  $JASMINE --config=$HERE/server-unit/jasmine.json
 }
 
 function main() {
@@ -145,6 +149,7 @@ function main() {
     runClientUnitTests
   fi
   if (( RUN_SERVER_UNIT > 0 )); then
+    installNodeModulesInBuild
     runServerUnitTests
   fi
 
