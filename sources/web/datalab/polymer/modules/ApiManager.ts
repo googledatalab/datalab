@@ -61,7 +61,9 @@ interface Session {
  */
 interface XhrOptions {
   method?: string,
-  errorCallback?: Function
+  errorCallback?: Function,
+  postParameters?: string,
+  successCode?: number,
 }
 
 /**
@@ -72,34 +74,30 @@ class ApiManager {
   /**
    * URL for querying files
    */
-  static filesApiUrl() {
-    return '/api/contents';
-  }
+  static readonly contentApiUrl = '/api/contents';
 
   /**
    * URL for querying sessions
    */
-  static sessionsApiUrl() {
-    return '/api/sessions';
-  }
+  static readonly sessionsApiUrl = '/api/sessions';
 
   /**
    * Returns a list of currently running sessions, each implementing the Session interface
    */
   static listSessionsAsync(): Promise<Array<Session>> {
     return new Promise((resolve, reject) => {
-      ApiManager._xhr(this.sessionsApiUrl(),
+      ApiManager._xhr(this.sessionsApiUrl,
           (request: XMLHttpRequest) => {
             try {
               let sessions = JSON.parse(request.response);
               resolve(sessions);
             } catch(e) {
-              reject('Received bad format from endpoint: ' + this.sessionsApiUrl());
+              reject('Received bad format from endpoint: ' + this.sessionsApiUrl);
             }
           },
           {
             errorCallback: () => {
-              reject('Error contacting endpoint: ' + this.sessionsApiUrl());
+              reject('Error contacting endpoint: ' + this.sessionsApiUrl);
             }
           }
       );
@@ -112,13 +110,13 @@ class ApiManager {
    */
   static listFilesAsync(path: string): Promise<Array<ApiFile>> {
     const filesPromise: Promise<Array<JupyterFile>> = new Promise((resolve, reject) => {
-      ApiManager._xhr(this.filesApiUrl() + path,
+      ApiManager._xhr(this.contentApiUrl + path,
           (request: XMLHttpRequest) => {
             try {
               let files = JSON.parse(request.response).content;
               resolve(files);
             } catch(e) {
-              reject('Received bad format from endpoint: ' + this.filesApiUrl());
+              reject('Received bad format from endpoint: ' + this.contentApiUrl);
             }
           },
           {
@@ -148,17 +146,60 @@ class ApiManager {
       });
   }
 
+  static createNewNotebook() {
+    return new Promise((resolve, reject) => {
+      ApiManager._xhr(ApiManager.contentApiUrl,
+          (request: XMLHttpRequest) => {
+            const newNotebook = JSON.parse(request.responseText);
+            resolve(newNotebook);
+          },
+          {
+            method: 'POST',
+            postParameters: JSON.stringify({
+              type: 'notebook',
+              ext: 'ipynb'
+            }),
+            errorCallback: (e: object) => {
+              console.log(e);
+              reject();
+            },
+            successCode: 201,
+          });
+    });
+  }
+
+  static renameItem(oldPath: string, newPath: string) {
+    return new Promise((resolve, reject) => {
+      ApiManager._xhr(ApiManager.contentApiUrl + '/' + oldPath,
+          () => {
+            resolve();
+          },
+          {
+            method: 'PATCH',
+            postParameters: JSON.stringify({
+              path: newPath
+            }),
+            errorCallback: (e: object) => {
+              console.log(e);
+              reject();
+            },
+          });
+    });
+  }
+
   /**
    * Sends an XMLHttpRequest to the specified URL
    */
   static _xhr(url: string, callback: Function, options: XhrOptions) {
     options = options || {};
     const method = options.method || 'GET';
+    const params = options.postParameters;
+    const successCode = options.successCode || 200;
 
     const request = new XMLHttpRequest();
     request.onreadystatechange = function() {
       if (request.readyState === 4) {
-        if (request.status === 200) {
+        if (request.status === successCode) {
           if (callback) {
             callback(request);
           }
@@ -170,7 +211,7 @@ class ApiManager {
       }
     }
     request.open(method, url);
-    request.send();
+    request.send(params);
   }
 
 }

@@ -14,6 +14,7 @@
 
 /// <reference path="../../modules/ApiManager.ts" />
 /// <reference path="../item-list/item-list.ts" />
+/// <reference path="../input-dialog/input-dialog.ts" />
 
 /**
  * File listing element for Datalab.
@@ -258,6 +259,36 @@ class FilesElement extends Polymer.Element {
     this.$.forwardNav.disabled = this._pathHistoryIndex === this._pathHistory.length - 1;
   }
 
+  /**
+   * Calls the ApiManager to create a new notebook, then fetches the updated
+   * list of files to redraw the list
+   */
+  _createNotebook() {
+    let createModal = <InputDialogElement>document.createElement('input-dialog');
+    document.body.appendChild(createModal);
+
+    createModal.title = 'New Notebook';
+    createModal.okTitle = 'Create';
+    createModal.withInput = true;
+    createModal.inputLabel = 'Notebook Name';
+
+    return ApiManager.createNewNotebook()
+      .then((notebook: JupyterFile) => {
+        return createModal.openAndWaitAsync((closeResult: DialogCloseResult) => {
+          document.body.removeChild(createModal);
+          if (closeResult.confirmed) {
+            return ApiManager.renameItem(notebook.name, closeResult.userInput)
+              .then(this._fetchFileList.bind(this));
+          } else {
+            return null;
+          }
+        });
+      });
+  }
+
+  _renameItem(oldPath: string, newPath: string) {
+    ApiManager.renameItem(oldPath, newPath);
+  }
 }
 
 customElements.define(FilesElement.is, FilesElement);
