@@ -24,11 +24,11 @@ function install_node() {
   wget --version || install_wget
 
   echo "Installing NodeJS"
-  mkdir -p ./tools/node
+  mkdir -p /tools/node
   wget -nv https://nodejs.org/dist/v6.10.0/node-v6.10.0-linux-x64.tar.gz -O node.tar.gz
-  tar xzf node.tar.gz -C ./tools/node --strip-components=1
+  tar xzf node.tar.gz -C /tools/node --strip-components=1
   rm node.tar.gz
-  export "PATH=${PATH}:${PWD}/tools/node/bin"
+  export "PATH=${PATH}:/tools/node/bin"
 }
 
 function install_bower() {
