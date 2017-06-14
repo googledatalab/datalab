@@ -68,11 +68,12 @@ export function setIdleTimeoutInterval(idleTimeoutStr: string) {
   const { seconds, errorMessage } = parseAndValidateInterval(idleTimeoutStr);
   if (errorMessage) {
     logging.getLogger().error('For idleTimeoutInterval "' + idleTimeoutStr + '": ' + errorMessage);
-  } else if (! (idleTimeoutSeconds > 0)) {
+    // Don't change idleTimeoutSeconds
+  } else if (! (seconds > 0)) {
     logging.getLogger().info('No idle timeout value, idle timeout is disabled');
-    idleTimeoutSeconds = seconds;
+    idleTimeoutSeconds = 0;
   } else {
-    logging.getLogger().info('Idle timeout set to ' + idleTimeoutSeconds + ' seconds');
+    logging.getLogger().info('Idle timeout set to ' + seconds + ' seconds');
     idleTimeoutSeconds = seconds;
   }
 }
@@ -107,7 +108,7 @@ export function parseAndValidateInterval(str: string) {
     return { seconds: NaN, errorMessage: 'Invalid format' };
   }
   if (total > 0 && total < idleTimeoutMinSeconds) {
-    const message = total + ' is smaller than minimum of ' + idleTimeoutMinSeconds;
+    const message = total + ' is smaller than minimum of ' + idleTimeoutMinSeconds + ' seconds';
     return { seconds: total, errorMessage: message };
   };
   return { seconds: total, errorMessage: null };

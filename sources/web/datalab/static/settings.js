@@ -41,11 +41,13 @@ define(['idle-timeout', 'util'], (idleTimeout, util) => {
 
     idleTimeoutTextBox.onkeyup = function() {
       const newValue = idleTimeoutTextBox.value;
-      setIdleTimeout(newValue, idleTimeoutUpdateButton, idleTimeoutErrorLabel, true);
+      const dryRun = true;
+      setIdleTimeout(newValue, idleTimeoutUpdateButton, idleTimeoutErrorLabel, dryRun);
     };
     idleTimeoutUpdateButton.onclick = function() {
       const newValue = idleTimeoutTextBox.value;
-      setIdleTimeout(newValue, idleTimeoutUpdateButton, false);
+      const dryRun = false;
+      setIdleTimeout(newValue, idleTimeoutUpdateButton, idleTimeoutErrorLabel, dryRun);
     };
   }
 
@@ -64,7 +66,7 @@ define(['idle-timeout', 'util'], (idleTimeout, util) => {
       button.disabled = false;
       idleTimeout.updateTimeoutInfo();
       if (!dryRun) {
-        closeDialog();
+        errorLabel.innerText = 'Idle timeout updated to ' + interval;
       }
     };
     const onError = function() {
@@ -78,11 +80,6 @@ define(['idle-timeout', 'util'], (idleTimeout, util) => {
       errorCallback: onError,
     };
     util.xhr(xhrUrl, onOk, xhrOptions);
-  }
-
-  function closeDialog() {
-    // Simulate a click on the Close button to close the dialog
-    document.getElementsByClassName('modal-footer')[0].getElementsByTagName('button')[0].click();
   }
 
   return {
