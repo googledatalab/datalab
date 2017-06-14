@@ -12,14 +12,69 @@ or implied. See the License for the specific language governing permissions and 
 the License.
 -->
 
+<link rel="import" href="../../components/shared-styles/shared-styles.html">
+<link rel="import" href="../../components/item-list/item-list.html">
+
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-progress/paper-progress.html">
+
 <dom-module id="datalab-sessions">
   <template>
 
-    <style>
+    <style include="datalab-shared-styles">
+      #toolbar {
+        height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
+        width: 100%;
+        background-color: var(--app-secondary-color);
+      }
+      .toolbar-button {
+        color: var(--app-primary-color);
+        margin: 4px 12px 4px 12px;
+        font-weight: normal;
+        min-width: 35px;
+        border-radius: 0px;
+      }
+      .toolbar-button > iron-icon {
+        width: 20px;
+        padding-right: 5px;
+      }
+      .sessions-container {
+        /* 1 breadcrumb bar + 1 progress bar */
+        height: calc(100% - var(--toolbar-height) - 1px);
+      }
+      paper-progress {
+        width: 100%;
+        height: 1px;
+        --paper-progress-active-color: var(--selection-fg-color);
+        --paper-progress-container-color: #eee;
+      }
     </style>
 
-    <div>Sessions</div>
+    <!--Toolbar with shutdown button-->
+    <!--TODO: [yebrahim] Make the shutdown button do stuff-->
+    <div id="toolbar">
+      <paper-button class="toolbar-button" on-click="_fetchSessionList">
+        <iron-icon icon="refresh"></iron-icon>
+      </paper-button>
+      <paper-button class="toolbar-button">
+        <iron-icon icon="delete"></iron-icon>
+        <span>Shutdown</span>
+      </paper-button>
+    </div>
+
+    <!--Thin progress bar that shows until sessions are loaded-->
+    <paper-progress id="progressBar" indeterminate disabled={{!_fetching}}>
+    </paper-progress>
+
+    <!--Session listing-->
+    <div class="sessions-container">
+      <item-list id="sessions"></item-list>
+    </div>
 
   </template>
 </dom-module>
+
 <script src="datalab-sessions.js"></script>
+
