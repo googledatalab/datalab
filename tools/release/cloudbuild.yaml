@@ -3,7 +3,7 @@ steps:
 # Write (and publish) a config_local.js file for this build. This
 # can be done in parallel with the rest of the build.
 - name: 'gcr.io/cloud-builders/gsutil'
-  args: ['cp', 'gs://${PROJECT_ID}/deploy/config_local.js', '/workspace/config_local.js']
+  args: ['cp', 'gs://cloud-datalab/deploy/config_local.js', '/workspace/config_local.js']
   id:   'pullConfigLocal'
 - name: 'debian'
   args: ['/workspace/tools/release/generate_config_local.sh',
