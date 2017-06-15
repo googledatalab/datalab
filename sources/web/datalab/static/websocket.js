@@ -1,6 +1,9 @@
 define(['util'], (util) => {
 
   function shouldShimWebsockets() {
+    if (appSettings.shimWebsockets) {
+      return true;
+    }
     return location.host.toLowerCase().substr(-12) === '.appspot.com';
   }
 
