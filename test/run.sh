@@ -90,6 +90,7 @@ function startContainers() {
     -p 127.0.0.1:8081:8080 \
     -v $TESTS_HOME:/content \
     -e "ENABLE_USAGE_REPORTING=false" \
+    -e "DATALAB_SHUTDOWN_COMMAND=echo" \
     datalab)
 
   docker pull selenium/standalone-chrome > /dev/null

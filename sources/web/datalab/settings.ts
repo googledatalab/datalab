@@ -24,10 +24,12 @@ import path = require('path');
 import querystring = require('querystring');
 import url = require('url');
 import util = require('util');
+import idleTimeout = require('./idleTimeout');
 import userManager = require('./userManager');
 
 var SETTINGS_FILE = 'settings.json';
 var METADATA_FILE = 'metadata.json';
+const IDLE_TIMEOUT_KEY = 'idleTimeoutInterval';
 
 interface Metadata {
   instanceId: string;
@@ -198,10 +200,10 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
  * @param response the outgoing http response.
  */
 function getSettingsHandler(userId: string, request: http.ServerRequest, response: http.ServerResponse): void {
-  var userSettings = loadUserSettings(userId);
-  var parsedUrl = url.parse(request.url, true);
+  const userSettings = loadUserSettings(userId);
+  const parsedUrl = url.parse(request.url, true);
   if ('key' in parsedUrl.query) {
-    var key = parsedUrl.query['key'];
+    const key = parsedUrl.query['key'];
     if (key in userSettings) {
       response.writeHead(200, { 'Content-Type': 'application/json' });
       response.end(JSON.stringify(userSettings[key]));
@@ -211,8 +213,13 @@ function getSettingsHandler(userId: string, request: http.ServerRequest, respons
     }
     return;
   } else {
+    const visibleSettings = JSON.parse(JSON.stringify(userSettings));
+    if (visibleSettings[IDLE_TIMEOUT_KEY] === undefined) {
+      const appSettings = loadAppSettings();
+      visibleSettings[IDLE_TIMEOUT_KEY] = appSettings[IDLE_TIMEOUT_KEY];
+    }
     response.writeHead(200, { 'Content-Type': 'application/json' });
-    response.end(JSON.stringify(userSettings));
+    response.end(JSON.stringify(visibleSettings));
     return;
   }
 }
@@ -251,6 +258,22 @@ function formHandler(userId: string, formData: any, request: http.ServerRequest,
   }
   var key = formData['key'];
   var value = formData['value'];
+  if (key == IDLE_TIMEOUT_KEY) {
+    if (value) {
+      const { seconds, errorMessage } = idleTimeout.parseAndValidateInterval(value);
+      if (errorMessage) {
+        response.writeHead(400, { 'Content-Type': 'text/plain' });
+        response.end(errorMessage);
+        return;
+      }
+    }
+  }
+  // If dryRun was set, we don't actually update anything.
+  if ('dryRun' in formData) {
+    response.writeHead(200, { 'Content-Type': 'text/plain' });
+    response.end('dryRun');
+    return;
+  }
   if (updateUserSetting(userId, key, value)) {
     if ('redirect' in formData) {
       response.writeHead(302, { 'Location': formData['redirect'] });
@@ -261,6 +284,9 @@ function formHandler(userId: string, formData: any, request: http.ServerRequest,
     response.writeHead(500, { 'Content-Type': 'text/plain' });
   }
   response.end();
+  if (key == IDLE_TIMEOUT_KEY) {
+    idleTimeout.setIdleTimeoutInterval(value);
+  }
   return;
 }
 
