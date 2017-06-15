@@ -13,6 +13,7 @@
   "socketioPort": 8084,
   "datalabRoot": "",
   "datalabBasePath": "",
+  "shimWebsockets": false,
   "contentDir": "/content",
   "useWorkspace": false,
   "supportUserOverride": false,
