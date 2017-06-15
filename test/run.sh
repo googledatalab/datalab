@@ -82,6 +82,17 @@ function makeTestsHome() {
   mkdir -p $TESTS_HOME
 }
 
+# Delete the files using the same container context as they were created.
+function cleanTestsHome() {
+  echo "Deleting old content from ${TESTS_HOME}.."
+  docker run \
+    --entrypoint="/bin/bash" \
+    -p 127.0.0.1:8081:8080 \
+    -v $TESTS_HOME:/content \
+    datalab \
+    -c "rm -rf /content/*"
+}
+
 function startContainers() {
   CONTAINER_STARTED=1
   echo Starting Datalab container..
@@ -156,6 +167,7 @@ function main() {
 
   if (( RUN_NOTEBOOK + RUN_UI > 0 )); then
     makeTestsHome
+    cleanTestsHome
     startContainers
     if (( RUN_NOTEBOOK > 0 )); then
       runNotebookTests
