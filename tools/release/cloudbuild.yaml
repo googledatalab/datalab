@@ -3,7 +3,7 @@ steps:
 # Write (and publish) a config_local.js file for this build. This
 # can be done in parallel with the rest of the build.
 - name: 'gcr.io/cloud-builders/gsutil'
-  args: ['cp', 'gs://${PROJECT_ID}/deploy/config_local.js', '/workspace/config_local.js']
+  args: ['cp', 'gs://cloud-datalab/deploy/config_local.js', '/workspace/config_local.js']
   id:   'pullConfigLocal'
 - name: 'debian'
   args: ['/workspace/tools/release/generate_config_local.sh',
@@ -107,7 +107,7 @@ steps:
   id:   'cleanupDatalab'
   waitFor: ['buildDatalab']
 
-## And finally, build the GPU Datalab image...
+## Next, build the GPU Datalab image...
 - name: 'debian'
   args: ['/workspace/containers/datalab/prepare.sh', 'datalab-base-gpu', '${REVISION_ID}']
   id:   'prepareDatalabGPU'
@@ -120,14 +120,33 @@ steps:
 ## Tag all of the images as "commit-latest-master-build" so that other processes
 ## can easily pick up the latest one.
 - name: gcr.io/cloud-builders/docker
-  args: ['tag', 'gcr.io/cloud-datalab/datalab:commit-${REVISION_ID}', 'gcr.io/cloud-datalab/datalab:commit-latest-master-build']
+  args: ['tag', 'gcr.io/${PROJECT_ID}/datalab:commit-${REVISION_ID}', 'gcr.io/${PROJECT_ID}/datalab:commit-latest-master-build']
   waitFor: ['buildDatalab']
+  id: 'tagDatalabMasterBuild'
 - name: gcr.io/cloud-builders/docker
-  args: ['tag', 'gcr.io/cloud-datalab/datalab-gpu:commit-${REVISION_ID}', 'gcr.io/cloud-datalab/datalab-gpu:commit-latest-master-build']
+  args: ['tag', 'gcr.io/${PROJECT_ID}/datalab-gpu:commit-${REVISION_ID}', 'gcr.io/${PROJECT_ID}/datalab-gpu:commit-latest-master-build']
   waitFor: ['buildDatalabGPU']
+  id: 'tagDatalabGpuMasterBuild'
 - name: gcr.io/cloud-builders/docker
-  args: ['tag', 'gcr.io/cloud-datalab/datalab-gateway:commit-${REVISION_ID}', 'gcr.io/cloud-datalab/datalab-gateway:commit-latest-master-build']
+  args: ['tag', 'gcr.io/${PROJECT_ID}/datalab-gateway:commit-${REVISION_ID}', 'gcr.io/${PROJECT_ID}/datalab-gateway:commit-latest-master-build']
   waitFor: ['buildGateway']
+
+## Create the "preview" versions of the `datalab` and `datalab-gpu` images
+- name: gcr.io/cloud-builders/docker
+  args: ['tag', 'gcr.io/${PROJECT_ID}/datalab:commit-latest-master-build', 'datalab']
+  waitFor: [ 'tagDatalabMasterBuild' ]
+  id: 'tagDatalab'
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/${PROJECT_ID}/datalab-preview', '-f', '/workspace/containers/datalab/Dockerfile-preview', '/workspace/containers/datalab/']
+  id:   'buildDatalabPreview'
+  waitFor: ['tagDatalab']
+- name: gcr.io/cloud-builders/docker
+  args: ['tag', 'gcr.io/${PROJECT_ID}/datalab:commit-latest-master-build', 'datalab']
+  waitFor: [ 'tagDatalabGpuMasterBuild', 'buildDatalabPreview' ]
+  id: 'tagDatalabGpu'
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/${PROJECT_ID}/datalab-gpu-preview', '-f', '/workspace/containers/datalab/Dockerfile-preview', '/workspace/containers/datalab/']
+  waitFor: ['tagDatalabGpu']
 
 ## Tag the config local file with latest-master-build as well.
 - name: 'gcr.io/cloud-builders/gsutil'
@@ -144,5 +163,7 @@ images:
   - 'gcr.io/${PROJECT_ID}/datalab-gateway:commit-latest-master-build'
   - 'gcr.io/${PROJECT_ID}/datalab:commit-latest-master-build'
   - 'gcr.io/${PROJECT_ID}/datalab-gpu:commit-latest-master-build'
+  - 'gcr.io/${PROJECT_ID}/datalab-preview'
+  - 'gcr.io/${PROJECT_ID}/datalab-gpu-preview'
 
 timeout: '3600s'
