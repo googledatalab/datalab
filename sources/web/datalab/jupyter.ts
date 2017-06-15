@@ -381,7 +381,8 @@ function getBaseTemplateData(request: http.ServerRequest): common.Map<string> {
     configUrl: appSettings.configUrl,
     knownTutorialsUrl: appSettings.knownTutorialsUrl,
     baseUrl: appSettings.datalabBasePath,
-    reportingEnabled: reportingEnabled
+    reportingEnabled: reportingEnabled,
+    proxyWebSockets: appSettings.proxyWebSockets,
   };
   var signedIn = auth.isSignedIn();
   templateData['isSignedIn'] = signedIn.toString();

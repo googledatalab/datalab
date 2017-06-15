@@ -1,6 +1,9 @@
 define(['util'], (util) => {
 
   function shouldShimWebsockets() {
+    if (document.body.getAttribute('data-proxy-web-sockets') == 'true') {
+      return true;
+    }
     return location.host.toLowerCase().substr(-12) === '.appspot.com';
   }
 
