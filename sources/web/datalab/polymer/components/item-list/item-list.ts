@@ -19,7 +19,8 @@ interface ItemListRow {
   firstCol: string,
   secondCol: string,
   icon: string,
-  selected: boolean
+  selected: boolean,
+  editing?: boolean,
 }
 
 /**
@@ -38,20 +39,27 @@ class ItemClickEvent extends CustomEvent {
  * name, and a selected property. The items are displayed in a table
  * form. Clicking an item selects it and unselects all other items.
  * Clicking the checkbox next to an item allows for multi-selection.
- * Double clicking an item fires a 'itemDoubleClick' event with this
- * item's index
+ * Double clicking an item fires an 'ItemClickEvent' event with this
+ * item's index.
  */
 class ItemListElement extends Polymer.Element {
 
   /**
-   * list of data rows, each implementing the row interface
+   * List of data rows, each implementing the row interface
    */
   public rows: Array<ItemListRow>;
 
   /**
-   * list of string data columns names
+   * List of string data columns names
    */
   public columns: Array<string>;
+
+  /**
+   * List of currently selected elements. This list keeps the actual HTML
+   * elements, which can then be used to get their indices, whereas the
+   * opposite is not directly possible.
+   */
+  public selectedElements: Array<HTMLElement>;
 
   static get is() { return "item-list"; }
 
@@ -60,7 +68,7 @@ class ItemListElement extends Polymer.Element {
       rows: {
         type: Array,
         value: function(): Array<Object> {
-          return [];
+          return [{}];
         },
       },
       columns: {
@@ -68,33 +76,106 @@ class ItemListElement extends Polymer.Element {
         value: function(): Array<string> {
           return [];
         }
+      },
+      selectedElements: {
+        type: Array,
+        value: function(): Array<Object> {
+          return [];
+        }
       }
     }
   }
 
+  ready() {
+    super.ready();
+    this.rows = [{
+      firstCol: 'hello world',
+      secondCol: 'second',
+      icon:'folder',
+      selected: false,
+      editing: false,
+    }, {
+      firstCol: 'hello world',
+      secondCol: 'second',
+      icon:'folder',
+      selected: false,
+      editing: false,
+    }];
+  }
+
   /**
-   * on row click, check the click target, if it's the checkbox, add it to
-   * the selected rows, otherwise select it only
+   * Edits the currently selected item, this only works if exactly one item
+   * is selected.
+   * This method finds the item's element, marks it as being edited, which
+   * shows the input fields, selects its contents, and hides the column title
+   */
+  editSelectedItem() {
+    if (this.selectedElements.length === 1) {
+      const element = this.selectedElements[0];
+      const i = this.$.list.indexForElement(element);
+
+      this.set('rows.' + i + '.editing', true);
+      const input = element.querySelector('input');
+      if (input)
+        input.select();
+    }
+  }
+
+  blurred() {
+    debugger;
+  }
+
+  /**
+   * On row click, checks the click target, if it's the checkbox, adds it to
+   * the selected rows, otherwise selects it only.
+   * This method also maintains the selectedElements list
    */
   _rowClicked(e: MouseEvent) {
     const target = <HTMLDivElement>e.target;
     const index = this.$.list.indexForElement(target);
+    const rowElement = this._getRowElementFromChild(target);
 
-    // if the clicked element is the checkbox, we're done, the checkbox already
-    // toggles selection (see the dom-repeat template)
-    // otherwise, select this element, unselect all others
+    // If the clicked element is the checkbox, we're done, the checkbox already
+    // toggles selection.
+    // Otherwise, select this element, unselect all others.
     if (target.tagName !== 'PAPER-CHECKBOX') {
       for (let i = 0; i < this.rows.length; ++i) {
         this.set('rows.' + i + '.selected', false);
       }
       this.set('rows.' + index + '.selected', true);
+      if (rowElement)
+        this.selectedElements = [rowElement];
+    } else {
+      if (this.rows[index].selected === false) {
+        if (rowElement) {
+          const i = this.selectedElements.indexOf(rowElement);
+          if (i > -1) {
+            this.selectedElements.splice(i, 1);
+          }
+        }
+      } else {
+        if (rowElement)
+          this.selectedElements.push(rowElement);
+      }
     }
     const ev = new ItemClickEvent('itemSelectionChanged', { detail: {index: index} });
     this.dispatchEvent(ev);
   }
 
   /**
-   * on row double click, fire an event with the clicked item's index
+   * Given an element inside a row in the list, finds the parent row element
+   */
+  _getRowElementFromChild(childElement: HTMLElement) {
+    while (childElement.tagName !== 'PAPER-ITEM' && !childElement.classList.contains('row'))
+      if (childElement.parentElement)
+        childElement = childElement.parentElement;
+      else
+        return null;
+    return childElement;
+  }
+
+  /**
+   * On row double click, fires an event with the clicked item's index.
    */
   _rowDoubleClicked(e: MouseEvent) {
     const index = this.$.list.indexForElement(e.target);

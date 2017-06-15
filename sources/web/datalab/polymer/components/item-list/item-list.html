@@ -15,6 +15,7 @@ the License.
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
 <link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
 
 <dom-module id="item-list">
   <template>
@@ -66,6 +67,10 @@ the License.
       .second-col {
         flex-basis: 200px;
       }
+      .title {
+        padding-left: 5px;
+        line-height: 26px;
+      }
     </style>
 
     <!--Header row-->
@@ -74,6 +79,8 @@ the License.
       <div class="first-col"><strong>{{columns.0}}</strong></div>
       <div class="second-col"><strong>{{columns.1}}</strong></div>
     </div>
+
+            <paper-input class="title" on-blur="{{blurred}}"></paper-input>
 
     <!--Item list-->
     <div id="list-container">
@@ -85,8 +92,9 @@ the License.
             </paper-checkbox>
           </div>
           <div class="first-col">
-            <iron-icon hidden$={{!row.icon}} icon={{row.icon}}></iron-icon>
-            {{row.firstCol}}
+            <iron-icon hidden$="{{!row.icon}}" icon={{row.icon}}></iron-icon>
+            <span class="title" hidden$="{{row.editing}}">{{row.firstCol}}</span>
+            <input class="title" value="{{row.firstCol}}" hidden$="{{!row.editing}}" />
           </div>
           <div class="second-col">
             {{row.secondCol}}

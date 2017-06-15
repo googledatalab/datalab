@@ -11,9 +11,10 @@
     "paper-checkbox": "PolymerElements/paper-checkbox#^2.0.0",
     "paper-dialog": "PolymerElements/paper-dialog#^2.0.0",
     "paper-icon-button": "PolymerElements/paper-icon-button#^2.0.0",
-    "paper-input": "PolymerElements/paper-input#^2.0.1",
     "paper-item": "PolymerElements/paper-item#^2.0.0",
     "paper-progress": "PolymerElements/paper-progress#^2.0.0",
-    "polymer": "Polymer/polymer#^2.0.0"
+    "polymer": "Polymer/polymer#^2.0.1",
+    "iron-a11y-keys": "PolymerElements/iron-a11y-keys#^2.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^1.0.0-rc.9"
   }
 }

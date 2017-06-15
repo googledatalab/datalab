@@ -13,6 +13,7 @@
  */
 
 /// <reference path="../../modules/ApiManager.ts" />
+/// <reference path="../../modules/Utils.ts" />
 /// <reference path="../item-list/item-list.ts" />
 /// <reference path="../input-dialog/input-dialog.ts" />
 
@@ -264,25 +265,25 @@ class FilesElement extends Polymer.Element {
    * list of files to redraw the list
    */
   _createNotebook() {
-    let createModal = <InputDialogElement>document.createElement('input-dialog');
-    document.body.appendChild(createModal);
 
-    createModal.title = 'New Notebook';
-    createModal.okTitle = 'Create';
-    createModal.withInput = true;
-    createModal.inputLabel = 'Notebook Name';
+    // First, open a dialog to let the user specify a name for the notebook.
+    const inputOptions: DialogOptions = {
+      title: 'New Notebook', 
+      withInput: true,
+      inputLabel: 'Notebook Name',
+      okTitle: 'Create',
+    };
 
-    return ApiManager.createNewNotebook()
-      .then((notebook: JupyterFile) => {
-        return createModal.openAndWaitAsync((closeResult: DialogCloseResult) => {
-          document.body.removeChild(createModal);
-          if (closeResult.confirmed) {
-            return ApiManager.renameItem(notebook.name, closeResult.userInput)
-              .then(this._fetchFileList.bind(this));
-          } else {
-            return null;
-          }
-        });
+    Utils.getUserInputAsync(inputOptions)
+      .then((closeResult: DialogCloseResult) => {
+        // Only if the dialog has been confirmed with some user input, rename the
+        // newly created file. Then if that is successful, reload the file list
+        if (!closeResult.canceled && closeResult.userInput) {
+          ApiManager.createNewNotebook()
+            .then((notebook: JupyterFile) =>
+                  ApiManager.renameItem(notebook.name, closeResult.userInput + '.ipynb'))
+            .then(this._fetchFileList.bind(this));
+        }
       });
   }
 

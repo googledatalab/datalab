@@ -12,9 +12,10 @@ or implied. See the License for the specific language governing permissions and 
 the License.
 -->
 
-<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-a11y-keys/iron-a11y-keys.html">
 <link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/polymer/polymer.html">
 
 <dom-module id="input-dialog">
   <template>
@@ -32,6 +33,8 @@ the License.
     <paper-dialog id="theDialog" class="dialog" modal on-iron-overlay-closed="_dialogClosed">
       <h2><div id="title">{{title}}</div></h2>
       <div id="body">{{body}}</div>
+      <iron-a11y-keys id="a11y" target="[[_inputTarget]]" keys="enter"
+                      on-keys-pressed="_onEnter"></iron-a11y-keys>
       <paper-input id="inputBox" hidden$="{{!withInput}}" label="{{inputLabel}}"
                                                           no-label-float autofocus>
       </paper-input>

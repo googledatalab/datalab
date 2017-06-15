@@ -12,12 +12,6 @@
  * the License.
  */
 
-interface DialogCloseResult {
-  confirmed: boolean,
-  canceled: boolean
-  userInput: string,
-}
-
 class InputDialogElement extends Polymer.Element {
 
   public title: string;
@@ -28,6 +22,7 @@ class InputDialogElement extends Polymer.Element {
   public cancelTitle: string;
 
   private _closeCallback: Function;
+  private _inputTarget: object;
 
   static get is() { return "input-dialog"; }
 
@@ -57,7 +52,15 @@ class InputDialogElement extends Polymer.Element {
         type: String,
         value: 'Cancel'
       },
+      _inputTarget: {
+        type: Object,
+      },
     }
+  }
+
+  ready() {
+    super.ready();
+    this._inputTarget = this.$.inputBox;
   }
 
   open() {
@@ -79,6 +82,10 @@ class InputDialogElement extends Polymer.Element {
         userInput: this.withInput ? this.$.inputBox.value : undefined,
       });
     }
+  }
+
+  _onEnter() {
+    this.$.theDialog.close();
   }
 
 }
