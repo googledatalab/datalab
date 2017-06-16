@@ -17,6 +17,7 @@ interface DialogOptions {
   body?: string,
   withInput?: boolean,
   inputLabel?: string,
+  inputValue?: string,
   okTitle?: string,
   cancelTitle?: string,
 }
@@ -39,6 +40,8 @@ class Utils {
       createModal.withInput = dialogOptions.withInput;
     if (dialogOptions.inputLabel)
       createModal.inputLabel = dialogOptions.inputLabel;
+    if (dialogOptions.inputValue)
+      createModal.inputValue = dialogOptions.inputValue;
     if (dialogOptions.okTitle)
       createModal.okTitle = dialogOptions.okTitle;
     if (dialogOptions.cancelTitle)

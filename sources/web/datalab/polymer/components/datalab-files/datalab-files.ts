@@ -109,6 +109,13 @@ class FilesElement extends Polymer.Element {
     }
 
     this.$.files.columns = ['Name', 'Status'];
+    this.$.files.rows = [{
+      name: 'hello world',
+      type: 'notebook',
+    }, {
+      name: 'hello world2',
+      type: 'notebook',
+    }];
 
     // Refresh the file list periodically.
     // TODO: [yebrahim] Start periodic refresh when the window is in focus, and
@@ -287,8 +294,31 @@ class FilesElement extends Polymer.Element {
       });
   }
 
-  _renameItem(oldPath: string, newPath: string) {
-    ApiManager.renameItem(oldPath, newPath);
+  _renameSelectedItem() {
+
+    const selectedIndices = this.$.files.getSelectedIndices();
+    if (selectedIndices.length === 1) {
+      const i = selectedIndices[0];
+      const selectedObject = this._fileList[i];
+
+      // First, open a dialog to let the user specify a name for the selected item.
+      const inputOptions: DialogOptions = {
+        title: 'Rename ' + selectedObject.type.toString(), 
+        withInput: true,
+        inputLabel: 'New name',
+        inputValue: selectedObject.name,
+        okTitle: 'Rename',
+      };
+
+      Utils.getUserInputAsync(inputOptions)
+        .then((closeResult: DialogCloseResult) => {
+          // Only if the dialog has been confirmed with some user input, rename the
+          // selected item. Then if that is successful, reload the file list
+          if (!closeResult.canceled && closeResult.userInput) {
+            ApiManager.renameItem(selectedObject.name, closeResult.userInput);
+          }
+        });
+    }
   }
 }
 

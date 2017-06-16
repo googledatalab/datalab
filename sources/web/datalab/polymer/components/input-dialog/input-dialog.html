@@ -32,11 +32,11 @@ the License.
     </style>
     <paper-dialog id="theDialog" class="dialog" modal on-iron-overlay-closed="_dialogClosed">
       <h2><div id="title">{{title}}</div></h2>
-      <div id="body">{{body}}</div>
-      <iron-a11y-keys id="a11y" target="[[_inputTarget]]" keys="enter"
+      <div id="body" hidden$="{{!body}}">{{body}}</div>
+      <iron-a11y-keys id="a11y" target="[[_inputTarget]]" keys="enter" hidden
                       on-keys-pressed="_onEnter"></iron-a11y-keys>
       <paper-input id="inputBox" hidden$="{{!withInput}}" label="{{inputLabel}}"
-                                                          no-label-float autofocus>
+                   value="{{inputValue}}" no-label-float autofocus>
       </paper-input>
       <hr />
       <div class="buttons">

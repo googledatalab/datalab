@@ -18,6 +18,7 @@ class InputDialogElement extends Polymer.Element {
   public body: string;
   public withInput: boolean;
   public inputLabel: string;
+  public inputValue: string;
   public okTitle: string;
   public cancelTitle: string;
 
@@ -44,6 +45,10 @@ class InputDialogElement extends Polymer.Element {
         type: String,
         value: '',
       },
+      inputValue: {
+        type: String,
+        value: '',
+      },
       okTitle: {
         type: String,
         value: 'Ok',
@@ -65,6 +70,12 @@ class InputDialogElement extends Polymer.Element {
 
   open() {
     this.$.theDialog.open();
+    if (this.withInput && this.inputValue) {
+      const inputElement = this.$.inputBox.$.nativeInput;
+      inputElement.focus();
+      inputElement.selectionStart = 0;
+      inputElement.selectionEnd = this.inputValue.lastIndexOf('.');
+    }
   }
 
   openAndWaitAsync(callback: Function) {

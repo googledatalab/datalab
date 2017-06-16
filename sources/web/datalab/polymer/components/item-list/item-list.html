@@ -15,7 +15,6 @@ the License.
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
 <link rel="import" href="../../bower_components/paper-item/paper-item.html">
-<link rel="import" href="../../bower_components/paper-input/paper-input.html">
 
 <dom-module id="item-list">
   <template>
@@ -80,8 +79,6 @@ the License.
       <div class="second-col"><strong>{{columns.1}}</strong></div>
     </div>
 
-            <paper-input class="title" on-blur="{{blurred}}"></paper-input>
-
     <!--Item list-->
     <div id="list-container">
       <template is="dom-repeat" id="list" items="{{rows}}" as="row">
@@ -93,8 +90,7 @@ the License.
           </div>
           <div class="first-col">
             <iron-icon hidden$="{{!row.icon}}" icon={{row.icon}}></iron-icon>
-            <span class="title" hidden$="{{row.editing}}">{{row.firstCol}}</span>
-            <input class="title" value="{{row.firstCol}}" hidden$="{{!row.editing}}" />
+            <span>{{row.firstCol}}</span>
           </div>
           <div class="second-col">
             {{row.secondCol}}

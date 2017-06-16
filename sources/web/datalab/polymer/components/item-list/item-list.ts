@@ -20,7 +20,6 @@ interface ItemListRow {
   secondCol: string,
   icon: string,
   selected: boolean,
-  editing?: boolean,
 }
 
 /**
@@ -54,12 +53,7 @@ class ItemListElement extends Polymer.Element {
    */
   public columns: Array<string>;
 
-  /**
-   * List of currently selected elements. This list keeps the actual HTML
-   * elements, which can then be used to get their indices, whereas the
-   * opposite is not directly possible.
-   */
-  public selectedElements: Array<HTMLElement>;
+  private _selectedElements: Array<HTMLElement>;
 
   static get is() { return "item-list"; }
 
@@ -77,7 +71,7 @@ class ItemListElement extends Polymer.Element {
           return [];
         }
       },
-      selectedElements: {
+      _selectedElements: {
         type: Array,
         value: function(): Array<Object> {
           return [];
@@ -86,49 +80,28 @@ class ItemListElement extends Polymer.Element {
     }
   }
 
-  ready() {
-    super.ready();
-    this.rows = [{
-      firstCol: 'hello world',
-      secondCol: 'second',
-      icon:'folder',
-      selected: false,
-      editing: false,
-    }, {
-      firstCol: 'hello world',
-      secondCol: 'second',
-      icon:'folder',
-      selected: false,
-      editing: false,
-    }];
+  /**
+   * Returns list of currently selected elements. This list keeps the actual
+   * HTML elements, which can then be used to get their indices, whereas the
+   * opposite is not directly possible.
+   */
+  getSelectedElements() {
+    return this._selectedElements;
   }
 
   /**
-   * Edits the currently selected item, this only works if exactly one item
-   * is selected.
-   * This method finds the item's element, marks it as being edited, which
-   * shows the input fields, selects its contents, and hides the column title
+   * Returns list of indices for the currently selected elements.
    */
-  editSelectedItem() {
-    if (this.selectedElements.length === 1) {
-      const element = this.selectedElements[0];
-      const i = this.$.list.indexForElement(element);
-
-      this.set('rows.' + i + '.editing', true);
-      const input = element.querySelector('input');
-      if (input)
-        input.select();
-    }
-  }
-
-  blurred() {
-    debugger;
+  getSelectedIndices() {
+    return this._selectedElements.map(element => {
+      return this.$.list.indexForElement(element);
+    });
   }
 
   /**
    * On row click, checks the click target, if it's the checkbox, adds it to
    * the selected rows, otherwise selects it only.
-   * This method also maintains the selectedElements list
+   * This method also maintains the _selectedElements list
    */
   _rowClicked(e: MouseEvent) {
     const target = <HTMLDivElement>e.target;
@@ -144,18 +117,18 @@ class ItemListElement extends Polymer.Element {
       }
       this.set('rows.' + index + '.selected', true);
       if (rowElement)
-        this.selectedElements = [rowElement];
+        this._selectedElements = [rowElement];
     } else {
       if (this.rows[index].selected === false) {
         if (rowElement) {
-          const i = this.selectedElements.indexOf(rowElement);
+          const i = this._selectedElements.indexOf(rowElement);
           if (i > -1) {
-            this.selectedElements.splice(i, 1);
+            this._selectedElements.splice(i, 1);
           }
         }
       } else {
         if (rowElement)
-          this.selectedElements.push(rowElement);
+          this._selectedElements.push(rowElement);
       }
     }
     const ev = new ItemClickEvent('itemSelectionChanged', { detail: {index: index} });
@@ -186,4 +159,3 @@ class ItemListElement extends Polymer.Element {
 }
 
 customElements.define(ItemListElement.is, ItemListElement);
-
