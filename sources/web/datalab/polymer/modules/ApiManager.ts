@@ -107,7 +107,8 @@ class ApiManager {
   /**
    * Returns a list of files at the target path, each implementing the ApiFile interface.
    * Two requests are made to /api/contents and /api/sessions to get this data.
-   */
+   * @param path current path to list files under
+   */ 
   static listFilesAsync(path: string): Promise<Array<ApiFile>> {
     const filesPromise: Promise<Array<JupyterFile>> = new Promise((resolve, reject) => {
       ApiManager._xhr(this.contentApiUrl + path,
@@ -146,6 +147,10 @@ class ApiManager {
       });
   }
 
+  /**
+   * Create a new notebook or directory.
+   * @param type string type of the created item, can be 'notebook' or 'directory'
+   */
   static createNewItem(type: string) {
     return new Promise((resolve, reject) => {
       ApiManager._xhr(ApiManager.contentApiUrl,
@@ -168,6 +173,11 @@ class ApiManager {
     });
   }
 
+  /**
+   * Rename an item
+   * @param oldPath source path of the existing item
+   * @param newPath destination path of the renamed item
+   */
   static renameItem(oldPath: string, newPath: string) {
     return new Promise((resolve, reject) => {
       ApiManager._xhr(ApiManager.contentApiUrl + '/' + oldPath,
@@ -187,6 +197,10 @@ class ApiManager {
     });
   }
 
+  /**
+   * Delete an item
+   * @param path item path to delete
+   */
   static deleteItem(path: string) {
     return new Promise((resolve, reject) => {
       ApiManager._xhr(ApiManager.contentApiUrl + '/' + path,

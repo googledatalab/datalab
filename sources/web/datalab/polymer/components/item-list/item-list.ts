@@ -39,7 +39,8 @@ class ItemClickEvent extends CustomEvent {
  * form. Clicking an item selects it and unselects all other items.
  * Clicking the checkbox next to an item allows for multi-selection.
  * Double clicking an item fires an 'ItemClickEvent' event with this
- * item's index.
+ * item's index. Similarly, selection fires an 'ItemClickEvent' with
+ * the most recent clicked item's index.
  */
 class ItemListElement extends Polymer.Element {
 
@@ -62,8 +63,9 @@ class ItemListElement extends Polymer.Element {
       rows: {
         type: Array,
         value: function(): Array<Object> {
-          return [{}];
+          return [];
         },
+        observer: '_rowsChanged',
       },
       columns: {
         type: Array,
@@ -99,6 +101,13 @@ class ItemListElement extends Polymer.Element {
   }
 
   /**
+   * When the list of rows is refreshed, no items should be selected.
+   */
+  _rowsChanged() {
+    this._selectedElements = [];
+  }
+
+  /**
    * On row click, checks the click target, if it's the checkbox, adds it to
    * the selected rows, otherwise selects it only.
    * This method also maintains the _selectedElements list
@@ -116,10 +125,13 @@ class ItemListElement extends Polymer.Element {
         this.set('rows.' + i + '.selected', false);
       }
       this.set('rows.' + index + '.selected', true);
+
+      // This is now the only selected element.
       if (rowElement)
         this._selectedElements = [rowElement];
     } else {
       if (this.rows[index].selected === false) {
+        // Remove this element from the selected elements list if it's being unselected
         if (rowElement) {
           const i = this._selectedElements.indexOf(rowElement);
           if (i > -1) {
@@ -127,6 +139,7 @@ class ItemListElement extends Polymer.Element {
           }
         }
       } else {
+        // Add this element to the selected elements list if it's being selected,
         if (rowElement)
           this._selectedElements.push(rowElement);
       }
@@ -136,7 +149,7 @@ class ItemListElement extends Polymer.Element {
   }
 
   /**
-   * Given an element inside a row in the list, finds the parent row element
+   * Given an element inside a row in the list, finds the parent row element.
    */
   _getRowElementFromChild(childElement: HTMLElement) {
     while (childElement.tagName !== 'PAPER-ITEM' && !childElement.classList.contains('row'))

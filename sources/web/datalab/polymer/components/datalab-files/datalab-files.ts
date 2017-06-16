@@ -109,13 +109,6 @@ class FilesElement extends Polymer.Element {
     }
 
     this.$.files.columns = ['Name', 'Status'];
-    this.$.files.rows = [{
-      name: 'hello world',
-      type: 'notebook',
-    }, {
-      name: 'hello world2',
-      type: 'notebook',
-    }];
 
     // Refresh the file list periodically.
     // TODO: [yebrahim] Start periodic refresh when the window is in focus, and
@@ -276,7 +269,13 @@ class FilesElement extends Polymer.Element {
   }
 
   /**
-   * Creates an input modal to get the user input, then Calls the ApiManager to
+   * The Jupyter contents API does not provide a way to create a new item with a specific
+   * name, it only creates new untitled files or directories in provided path (see
+   * https://github.com/jupyter/notebook/blob/master/notebook/services/contents/manager.py#L311).
+   * In order to offer a better experience, we create an untitled item in the current path,
+   * then rename it to whatever the user specified.
+   * 
+   * This method creates an input modal to get the user input, then calls the ApiManager to
    * create a new notebook/directory at the current path, and fetches the updated list
    * of files to redraw.
    */
@@ -300,9 +299,19 @@ class FilesElement extends Polymer.Element {
           if (type === 'notebook' && !newName.endsWith('.ipynb')) {
             newName += '.ipynb';
           }
+          let notebookPlaceholderName = '';
           return ApiManager.createNewItem(type)
-            .then((notebook: JupyterFile) => ApiManager.renameItem(notebook.name, newName))
-            .then(this._fetchFileList.bind(this));
+            .then((notebook: JupyterFile) => {
+              notebookPlaceholderName = notebook.path;
+              return ApiManager.renameItem(notebookPlaceholderName, newName);
+            })
+            .then(this._fetchFileList.bind(this), (e: number) => {
+              if (e === 409) {
+                console.log('Error! An item with this name already exists.');
+              }
+              // If the rename fails, remove the temporary item
+              return ApiManager.deleteItem(notebookPlaceholderName);
+            });
         } else {
           return Promise.resolve(null);
         }
@@ -331,15 +340,14 @@ class FilesElement extends Polymer.Element {
       };
 
       // Only if the dialog has been confirmed with some user input, rename the
-      // selected item. Then if that is successful, reload the file list, and
-      // re-select the renamed item
+      // selected item. Then if that is successful, and reload the file list.
       return Utils.getUserInputAsync(inputOptions)
         .then((closeResult: DialogCloseResult) => {
           if (closeResult.confirmed && closeResult.userInput) {
             let newName = this.currentPath + '/' + closeResult.userInput;
             return ApiManager.renameItem(selectedObject.path, newName)
-              .then(() => this._fetchFileList())
-              .then(() => this.$.files.set('rows.' + i + '.selected', true));
+              .then(() => this._fetchFileList());
+              // TODO: [yebrahim] Re-select the renamed item after refresh
           } else {
             return Promise.resolve(null);
           }

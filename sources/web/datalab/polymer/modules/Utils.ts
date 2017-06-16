@@ -12,6 +12,9 @@
  * the License.
  */
 
+/**
+ * Options for opening a dialog.
+ */
 interface DialogOptions {
   title: string,
   bodyHtml?: string,
@@ -22,13 +25,27 @@ interface DialogOptions {
   cancelTitle?: string,
 }
 
+/**
+ * Dialog close context, includes whether the dialog was confirmed, and any
+ * user input given.
+ */
 interface DialogCloseResult {
   confirmed: boolean
   userInput: string,
 }
 
+/**
+ * Class provides helper methods for various operations.
+ */
 class Utils {
 
+  /**
+   * Opens a dialog with the specified options. It uses the Datalab custom element
+   * <input-dialog>, attaches a new instance to the current document, opens it
+   * and waits until it closes. It returns a promise that can be waited on for
+   * dialog close.
+   * @param dialogOptions options for configuring the dialog
+   */
   static getUserInputAsync(dialogOptions: DialogOptions) {
     let createModal = <InputDialogElement>document.createElement('input-dialog');
     document.body.appendChild(createModal);
