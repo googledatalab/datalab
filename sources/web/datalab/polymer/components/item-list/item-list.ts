@@ -62,22 +62,16 @@ class ItemListElement extends Polymer.Element {
     return {
       rows: {
         type: Array,
-        value: function(): Array<Object> {
-          return [];
-        },
+        value: () => [],
         observer: '_rowsChanged',
       },
       columns: {
         type: Array,
-        value: function(): Array<string> {
-          return [];
-        }
+        value: () => [],
       },
       _selectedElements: {
         type: Array,
-        value: function(): Array<Object> {
-          return [];
-        }
+        value: () => [],
       }
     }
   }
@@ -101,7 +95,8 @@ class ItemListElement extends Polymer.Element {
   }
 
   /**
-   * When the list of rows is refreshed, no items should be selected.
+   * Clears the list of selected elements. No items should be selected when the
+   * list of rows is refreshed.
    */
   _rowsChanged() {
     this._selectedElements = [];
@@ -110,7 +105,7 @@ class ItemListElement extends Polymer.Element {
   /**
    * On row click, checks the click target, if it's the checkbox, adds it to
    * the selected rows, otherwise selects it only.
-   * This method also maintains the _selectedElements list
+   * This method also maintains the _selectedElements list.
    */
   _rowClicked(e: MouseEvent) {
     const target = <HTMLDivElement>e.target;
@@ -151,12 +146,14 @@ class ItemListElement extends Polymer.Element {
   /**
    * Given an element inside a row in the list, finds the parent row element.
    */
-  _getRowElementFromChild(childElement: HTMLElement) {
-    while (childElement.tagName !== 'PAPER-ITEM' && !childElement.classList.contains('row'))
-      if (childElement.parentElement)
-        childElement = childElement.parentElement;
+  _getRowElementFromChild(childElement: HTMLElement): HTMLElement {
+    let currentElement = childElement;
+    while (currentElement.tagName !== 'PAPER-ITEM' && !currentElement.classList.contains('row'))
+      if (currentElement.parentElement)
+        currentElement = currentElement.parentElement;
       else
-        return null;
+        // This should not happen
+        throw new Error('Could not find parent row element for: ' + childElement.tagName);
     return childElement;
   }
 

@@ -62,21 +62,15 @@ class FilesElement extends Polymer.Element {
       },
       _currentCrumbs: {
         type: Array,
-        value: function(): Array<string> {
-          return [];
-        },
+        value: () => [],
       },
       _fileList: {
         type: Array,
-        value: function(): Array<ApiFile> {
-          return [];
-        },
+        value: () => [],
       },
       _pathHistory: {
         type: Array,
-        value: function(): Array<string> {
-          return [];
-        },
+        value: () => [],
       },
       _pathHistoryIndex: {
         type: Number,
@@ -263,11 +257,11 @@ class FilesElement extends Polymer.Element {
   }
 
   _createNewNotebook() {
-    this._createNewItem('notebook');
+    return this._createNewItem('notebook');
   }
 
   _createNewDirectory() {
-    this._createNewItem('directory');
+    return this._createNewItem('directory');
   }
 
   /**
@@ -288,7 +282,7 @@ class FilesElement extends Polymer.Element {
       title: 'New ' + type, 
       withInput: true,
       inputLabel: 'Name',
-      okTitle: 'Create',
+      okLabel: 'Create',
     };
 
     return Utils.getUserInputAsync(inputOptions)
@@ -301,19 +295,8 @@ class FilesElement extends Polymer.Element {
           if (type === 'notebook' && !newName.endsWith('.ipynb')) {
             newName += '.ipynb';
           }
-          let notebookPlaceholderName = '';
-          return ApiManager.createNewItem(type)
-            .then((notebook: JupyterFile) => {
-              notebookPlaceholderName = notebook.path;
-              return ApiManager.renameItem(notebookPlaceholderName, newName);
-            })
-            .then(this._fetchFileList.bind(this), (e: number) => {
-              if (e === 409) {
-                console.log('Error! An item with this name already exists.');
-              }
-              // If the rename fails, remove the temporary item
-              return ApiManager.deleteItem(notebookPlaceholderName);
-            });
+          return ApiManager.createNewItem(type, newName)
+            .then(() => this._fetchFileList());
         } else {
           return Promise.resolve(null);
         }
@@ -338,7 +321,7 @@ class FilesElement extends Polymer.Element {
         withInput: true,
         inputLabel: 'New name',
         inputValue: selectedObject.name,
-        okTitle: 'Rename',
+        okLabel: 'Rename',
       };
 
       // Only if the dialog has been confirmed with some user input, rename the
@@ -397,7 +380,7 @@ class FilesElement extends Polymer.Element {
       const inputOptions: DialogOptions = {
         title: title,
         bodyHtml: bodyHtml,
-        okTitle: 'Delete',
+        okLabel: 'Delete',
       };
 
       // Only if the dialog has been confirmed, call the ApiManager to delete each

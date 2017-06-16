@@ -41,7 +41,7 @@ class InputDialogElement extends Polymer.Element {
   public withInput: boolean;
 
   /**
-   * If an input field is included, a label that shows up inside it input is given
+   * If an input is included, a string that shows up inside it before user input
    */
   public inputLabel: string;
 
@@ -53,12 +53,12 @@ class InputDialogElement extends Polymer.Element {
   /**
    * String for confirm button
    */
-  public okTitle: string;
+  public okLabel: string;
 
   /**
    * String for cancel button
    */
-  public cancelTitle: string;
+  public cancelLabel: string;
 
   private _closeCallback: Function;
 
@@ -86,11 +86,11 @@ class InputDialogElement extends Polymer.Element {
         type: String,
         value: '',
       },
-      okTitle: {
+      okLabel: {
         type: String,
         value: 'Ok',
       },
-      cancelTitle: {
+      cancelLabel: {
         type: String,
         value: 'Cancel'
       },

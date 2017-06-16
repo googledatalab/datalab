@@ -33,7 +33,7 @@ the License.
         border-top: 1px solid #eee;
       }
       #title {
-        font-size: 20px;
+        font-size: 16px;
         text-align: center;
       }
       .confirm {
@@ -51,9 +51,9 @@ the License.
       <hr />
       <div class="buttons">
         <paper-button id="okButton" on-click="_confirmClose" class="confirm" >
-          {{okTitle}}
+          {{okLabel}}
         </paper-button>
-        <paper-button on-click="_cancelClose">{{cancelTitle}}</paper-button>
+        <paper-button on-click="_cancelClose">{{cancelLabel}}</paper-button>
       </div>
     </paper-dialog>
   </template>

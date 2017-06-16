@@ -21,8 +21,8 @@ interface DialogOptions {
   withInput?: boolean,
   inputLabel?: string,
   inputValue?: string,
-  okTitle?: string,
-  cancelTitle?: string,
+  okLabel?: string,
+  cancelLabel?: string,
 }
 
 /**
@@ -58,10 +58,10 @@ class Utils {
       createModal.inputLabel = dialogOptions.inputLabel;
     if (dialogOptions.inputValue)
       createModal.inputValue = dialogOptions.inputValue;
-    if (dialogOptions.okTitle)
-      createModal.okTitle = dialogOptions.okTitle;
-    if (dialogOptions.cancelTitle)
-      createModal.cancelTitle = dialogOptions.cancelTitle;
+    if (dialogOptions.okLabel)
+      createModal.okLabel = dialogOptions.okLabel;
+    if (dialogOptions.cancelLabel)
+      createModal.cancelLabel = dialogOptions.cancelLabel;
 
     // Open the dialog
     return new Promise(resolve => {
