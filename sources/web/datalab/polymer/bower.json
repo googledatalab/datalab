@@ -14,5 +14,8 @@
     "paper-item": "PolymerElements/paper-item#^2.0.0",
     "paper-progress": "PolymerElements/paper-progress#^2.0.0",
     "polymer": "Polymer/polymer#^2.0.0"
+  },
+  "devDependencies": {
+    "web-component-tester": "^6.0.0"
   }
 }
