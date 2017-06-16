@@ -294,6 +294,11 @@ class FilesElement extends Polymer.Element {
       });
   }
 
+  /**
+   * Creates an input modal to get the user input, then calls the ApiManager to
+   * rename the currently selected item. This only works if exactly one item is
+   * selected.
+   */
   _renameSelectedItem() {
 
     const selectedIndices = this.$.files.getSelectedIndices();
@@ -301,7 +306,7 @@ class FilesElement extends Polymer.Element {
       const i = selectedIndices[0];
       const selectedObject = this._fileList[i];
 
-      // First, open a dialog to let the user specify a name for the selected item.
+      // Open a dialog to let the user specify the new name for the selected item.
       const inputOptions: DialogOptions = {
         title: 'Rename ' + selectedObject.type.toString(), 
         withInput: true,
@@ -310,17 +315,19 @@ class FilesElement extends Polymer.Element {
         okTitle: 'Rename',
       };
 
+      // Only if the dialog has been confirmed with some user input, rename the
+      // selected item. Then if that is successful, reload the file list, and
+      // re-select the renamed item
       Utils.getUserInputAsync(inputOptions)
         .then((closeResult: DialogCloseResult) => {
-          // Only if the dialog has been confirmed with some user input, rename the
-          // selected item. Then if that is successful, reload the file list
           if (!closeResult.canceled && closeResult.userInput) {
             ApiManager.renameItem(selectedObject.name, closeResult.userInput);
           }
-        });
+        })
+        .then(() => this._fetchFileList())
+        .then(() => this.$.files.set('rows.' + i + '.selected', true));
     }
   }
 }
 
 customElements.define(FilesElement.is, FilesElement);
-

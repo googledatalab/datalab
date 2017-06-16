@@ -69,13 +69,16 @@ class InputDialogElement extends Polymer.Element {
   }
 
   open() {
-    this.$.theDialog.open();
+    const self = this;
     if (this.withInput && this.inputValue) {
-      const inputElement = this.$.inputBox.$.nativeInput;
-      inputElement.focus();
-      inputElement.selectionStart = 0;
-      inputElement.selectionEnd = this.inputValue.lastIndexOf('.');
+      this.$.theDialog.addEventListener('iron-overlay-opened', function() {
+        const inputElement = self.$.inputBox.$.nativeInput;
+        inputElement.focus();
+        inputElement.selectionStart = 0;
+        inputElement.selectionEnd = self.inputValue.lastIndexOf('.');
+      });
     }
+    this.$.theDialog.open();
   }
 
   openAndWaitAsync(callback: Function) {
