@@ -290,19 +290,21 @@ class FilesElement extends Polymer.Element {
       okTitle: 'Create',
     };
 
-    Utils.getUserInputAsync(inputOptions)
+    return Utils.getUserInputAsync(inputOptions)
       .then((closeResult: DialogCloseResult) => {
         // Only if the dialog has been confirmed with some user input, rename the
         // newly created file. Then if that is successful, reload the file list
-        if (!closeResult.canceled && closeResult.userInput) {
+        if (closeResult.confirmed && closeResult.userInput) {
           let newName = closeResult.userInput;
           // Make sure the name ends with .ipynb for notebooks for convenience
           if (type === 'notebook' && !newName.endsWith('.ipynb')) {
             newName += '.ipynb';
           }
-          ApiManager.createNewItem(type)
+          return ApiManager.createNewItem(type)
             .then((notebook: JupyterFile) => ApiManager.renameItem(notebook.name, newName))
             .then(this._fetchFileList.bind(this));
+        } else {
+          return Promise.resolve(null);
         }
       });
   }
@@ -331,14 +333,75 @@ class FilesElement extends Polymer.Element {
       // Only if the dialog has been confirmed with some user input, rename the
       // selected item. Then if that is successful, reload the file list, and
       // re-select the renamed item
-      Utils.getUserInputAsync(inputOptions)
+      return Utils.getUserInputAsync(inputOptions)
         .then((closeResult: DialogCloseResult) => {
-          if (!closeResult.canceled && closeResult.userInput) {
-            ApiManager.renameItem(selectedObject.name, closeResult.userInput);
+          if (closeResult.confirmed && closeResult.userInput) {
+            return ApiManager.renameItem(selectedObject.name, closeResult.userInput)
+              .then(() => this._fetchFileList())
+              .then(() => this.$.files.set('rows.' + i + '.selected', true));
+          } else {
+            return Promise.resolve(null);
           }
         })
-        .then(() => this._fetchFileList())
-        .then(() => this.$.files.set('rows.' + i + '.selected', true));
+    } else {
+      return Promise.resolve(null);
+    }
+  }
+
+  /**
+   * Creates an input modal to get the user confirmation with a list of the items
+   * to be deleted, then calls the ApiManager for each of these items to delete,
+   * then refreshes the file list.
+   */
+  _deleteSelectedItems() {
+
+    const selectedIndices = this.$.files.getSelectedIndices();
+    if (selectedIndices.length) {
+      // Build friendly title and body messages that adapt to the number of items.
+      const num = selectedIndices.length;
+      let title = 'Deleting ';
+
+      // Title
+      if (num === 1) {
+        const i = selectedIndices[0];
+        const selectedObject = this._fileList[i];
+        title += selectedObject.type.toString();
+      } else {
+        title += num + ' items';
+      }
+
+      // Body
+      let itemList = '<ul>\n';
+      selectedIndices.forEach((i: number) => {
+        itemList += '<li>' + this._fileList[i].name + '</li>\n';
+      });
+      itemList += '</ul>'
+      const bodyHtml = '<div>Are you sure you want to delete:</div>' + itemList;
+
+      // Open a dialog to let the user confirm deleting the list of selected items.
+      const inputOptions: DialogOptions = {
+        title: title,
+        bodyHtml: bodyHtml,
+        okTitle: 'Delete',
+      };
+
+      // Only if the dialog has been confirmed, call the ApiManager to delete each
+      // of the selected items, and wait for all promises to finish. Then if that
+      // is successful, reload the file list.
+      return Utils.getUserInputAsync(inputOptions)
+        .then((closeResult: DialogCloseResult) => {
+          if (closeResult.confirmed) {
+            let deletePromises = selectedIndices.map((i: number) => {
+              return ApiManager.deleteItem(this._fileList[i].path);
+            });
+            return Promise.all(deletePromises)
+              .then(() => this._fetchFileList());
+          } else {
+            return Promise.resolve(null);
+          }
+        });
+    } else {
+      return Promise.resolve(null);
     }
   }
 }

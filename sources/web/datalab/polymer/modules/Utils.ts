@@ -14,7 +14,7 @@
 
 interface DialogOptions {
   title: string,
-  body?: string,
+  bodyHtml?: string,
   withInput?: boolean,
   inputLabel?: string,
   inputValue?: string,
@@ -23,7 +23,7 @@ interface DialogOptions {
 }
 
 interface DialogCloseResult {
-  canceled: boolean
+  confirmed: boolean
   userInput: string,
 }
 
@@ -34,8 +34,8 @@ class Utils {
     document.body.appendChild(createModal);
 
     createModal.title = dialogOptions.title;
-    if (dialogOptions.body)
-      createModal.body = dialogOptions.body;
+    if (dialogOptions.bodyHtml)
+      createModal.bodyHtml = dialogOptions.bodyHtml;
     if (dialogOptions.withInput !== undefined)
       createModal.withInput = dialogOptions.withInput;
     if (dialogOptions.inputLabel)

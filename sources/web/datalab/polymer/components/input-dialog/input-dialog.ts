@@ -15,7 +15,7 @@
 class InputDialogElement extends Polymer.Element {
 
   public title: string;
-  public body: string;
+  public bodyHtml: string;
   public withInput: boolean;
   public inputLabel: string;
   public inputValue: string;
@@ -23,7 +23,7 @@ class InputDialogElement extends Polymer.Element {
   public cancelTitle: string;
 
   private _closeCallback: Function;
-  private _inputTarget: object;
+  private _enterKeyTarget: object;
 
   static get is() { return "input-dialog"; }
 
@@ -33,7 +33,7 @@ class InputDialogElement extends Polymer.Element {
         type: String,
         value: '',
       },
-      body: {
+      bodyHtml: {
         type: String,
         value: '',
       },
@@ -57,19 +57,26 @@ class InputDialogElement extends Polymer.Element {
         type: String,
         value: 'Cancel'
       },
-      _inputTarget: {
+      _enterKeyTarget: {
         type: Object,
       },
     }
   }
 
-  ready() {
-    super.ready();
-    this._inputTarget = this.$.inputBox;
-  }
-
   open() {
     const self = this;
+    // Bind the Enter key listener to the input field if it's visible,
+    // otherwise to the ok button.
+    if (this.withInput) {
+      this._enterKeyTarget = this.$.inputBox;
+      this.$.inputBox.setAttribute('autofocus', '');
+    } else {
+      this._enterKeyTarget = this.$.okButton;
+      this.$.okButton.setAttribute('autofocus', '');
+    }
+    if (this.bodyHtml) {
+      this.$.body.innerHTML = this.bodyHtml;
+    }
     if (this.withInput && this.inputValue) {
       this.$.theDialog.addEventListener('iron-overlay-opened', function() {
         const inputElement = self.$.inputBox.$.nativeInput;
@@ -78,6 +85,9 @@ class InputDialogElement extends Polymer.Element {
         inputElement.selectionEnd = self.inputValue.lastIndexOf('.');
       });
     }
+    this.$.theDialog.addEventListener('iron-overlay-closed', function() {
+      self._cancelClose();
+    });
     this.$.theDialog.open();
   }
 
@@ -88,18 +98,21 @@ class InputDialogElement extends Polymer.Element {
     this.open();
   }
 
-  _dialogClosed() {
-    if (this._closeCallback) {
+  _confirmClose() {
+    this._dialogClosed(true);
+  }
+
+  _cancelClose() {
+    this._dialogClosed(false);
+  }
+
+  _dialogClosed(confirmed: boolean) {
+    if (this.$.theDialog.opened && this._closeCallback) {
       this._closeCallback({
-        confirmed: this.$.theDialog.closingReason.confirmed,
-        canceled: this.$.theDialog.closingReason.canceled,
+        confirmed: confirmed,
         userInput: this.withInput ? this.$.inputBox.value : undefined,
       });
     }
-  }
-
-  _onEnter() {
-    this.$.theDialog.close();
   }
 
 }

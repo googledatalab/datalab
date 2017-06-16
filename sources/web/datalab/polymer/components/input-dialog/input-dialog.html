@@ -19,7 +19,7 @@ the License.
 
 <dom-module id="input-dialog">
   <template>
-    <style>
+    <style include="datalab-shared-styles">
       #theDialog {
         width: 300px;
       }
@@ -29,19 +29,26 @@ the License.
         border-bottom: none;
         border-top: 1px solid #eee;
       }
+      .confirm {
+        background-color: var(--app-secondary-color);
+        font-weight: bold;
+      }
     </style>
-    <paper-dialog id="theDialog" class="dialog" modal on-iron-overlay-closed="_dialogClosed">
+    <paper-dialog id="theDialog" class="dialog" with-backdrop>
       <h2><div id="title">{{title}}</div></h2>
-      <div id="body" hidden$="{{!body}}">{{body}}</div>
-      <iron-a11y-keys id="a11y" target="[[_inputTarget]]" keys="enter" hidden
-                      on-keys-pressed="_onEnter"></iron-a11y-keys>
+      <!--Body value is bound in javascript because it needs to bind to innerHTML-->
+      <div id="body" hidden$="{{!bodyHtml}}"></div>
+      <iron-a11y-keys id="a11y" keys="enter" hidden on-keys-pressed="_confirmClose">
+      </iron-a11y-keys>
       <paper-input id="inputBox" hidden$="{{!withInput}}" label="{{inputLabel}}"
-                   value="{{inputValue}}" no-label-float autofocus>
+                   value="{{inputValue}}" no-label-float>
       </paper-input>
       <hr />
       <div class="buttons">
-        <paper-button dialog-confirm>{{okTitle}}</paper-button>
-        <paper-button dialog-dismiss>{{cancelTitle}}</paper-button>
+        <paper-button id="okButton" on-click="_confirmClose" class="confirm" >
+          {{okTitle}}
+        </paper-button>
+        <paper-button on-click="_cancelClose">{{cancelTitle}}</paper-button>
       </div>
     </paper-dialog>
   </template>

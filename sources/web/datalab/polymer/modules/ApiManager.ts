@@ -57,7 +57,7 @@ interface Session {
 /** Options for _xhr call, contains the following optional fields:
  *  - method: The HTTP method to use; default is 'GET'.
  *  - errorCallback: A function to call if the XHR completes
- *      with a status other than 200.
+ *      with a status other than 2xx.
  */
 interface XhrOptions {
   method?: string,
@@ -96,8 +96,8 @@ class ApiManager {
             }
           },
           {
-            errorCallback: () => {
-              reject('Error contacting endpoint: ' + this.sessionsApiUrl);
+            errorCallback: (request: XMLHttpRequest) => {
+              reject('Error listing sessions: ' + request.statusText);
             }
           }
       );
@@ -120,8 +120,8 @@ class ApiManager {
             }
           },
           {
-            errorCallback: () => {
-              reject('Could not get list of files at: ' + path);
+            errorCallback: (request: XMLHttpRequest) => {
+              reject('Error listing files: ' + request.statusText);
             }
           }
       );
@@ -155,15 +155,15 @@ class ApiManager {
           },
           {
             method: 'POST',
+            successCode: 201,
             postParameters: JSON.stringify({
               type: type,
               ext: 'ipynb'
             }),
-            errorCallback: (e: object) => {
-              console.log(e);
-              reject();
+            errorCallback: (request: XMLHttpRequest) => {
+              console.log('Error creating item: ' + request.statusText);
+              reject(request.status);
             },
-            successCode: 201,
           });
     });
   }
@@ -179,9 +179,26 @@ class ApiManager {
             postParameters: JSON.stringify({
               path: newPath
             }),
-            errorCallback: (e: object) => {
-              console.log(e);
-              reject();
+            errorCallback: (request: XMLHttpRequest) => {
+              console.log('Error renaming item: ' + request.statusText);
+              reject(request.status);
+            },
+          });
+    });
+  }
+
+  static deleteItem(path: string) {
+    return new Promise((resolve, reject) => {
+      ApiManager._xhr(ApiManager.contentApiUrl + '/' + path,
+          () => {
+            resolve();
+          },
+          {
+            method: 'DELETE',
+            successCode: 204,
+            errorCallback: (request: XMLHttpRequest) => {
+              console.log('Error deleting item: ' + request.statusText);
+              reject(request.status);
             },
           });
     });
@@ -205,7 +222,7 @@ class ApiManager {
           }
         } else {
           if (options.errorCallback) {
-            options.errorCallback.call(request);
+            options.errorCallback(request);
           }
         }
       }
@@ -215,4 +232,3 @@ class ApiManager {
   }
 
 }
-
