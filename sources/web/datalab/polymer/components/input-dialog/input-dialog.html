@@ -21,12 +21,20 @@ the License.
     <style include="datalab-shared-styles">
       #theDialog {
         width: 300px;
+        /*Disable input underline animation*/
+        --paper-input-container-underline-focus: {
+          display: none;
+        };
       }
       hr {
         border-left: none;
         border-right: none;
         border-bottom: none;
         border-top: 1px solid #eee;
+      }
+      #title {
+        font-size: 20px;
+        text-align: center;
       }
       .confirm {
         background-color: var(--app-secondary-color);
@@ -37,7 +45,7 @@ the License.
       <h2><div id="title">{{title}}</div></h2>
       <!--Body value is bound in javascript because it needs to bind to innerHTML-->
       <div id="body" hidden$="{{!bodyHtml}}"></div>
-      <paper-input id="inputBox" hidden$="{{!withInput}}" label="{{inputLabel}}"
+      <paper-input id="inputBox" hidden$="{{!withInput}}" label="{{inputLabel}}" spellcheck=false
                    value="{{inputValue}}" on-keydown="_checkEnter" no-label-float>
       </paper-input>
       <hr />

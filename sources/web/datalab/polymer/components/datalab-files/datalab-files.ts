@@ -45,6 +45,8 @@ class FilesElement extends Polymer.Element {
   private _fileListRefreshInterval: number;
   private _currentCrumbs: Array<string>;
 
+  static readonly _deleteListLimit = 10;
+
   static get is() { return "datalab-files"; }
 
   static get properties() {
@@ -368,7 +370,7 @@ class FilesElement extends Polymer.Element {
     if (selectedIndices.length) {
       // Build friendly title and body messages that adapt to the number of items.
       const num = selectedIndices.length;
-      let title = 'Deleting ';
+      let title = 'Delete ';
 
       // Title
       if (num === 1) {
@@ -381,9 +383,13 @@ class FilesElement extends Polymer.Element {
 
       // Body
       let itemList = '<ul>\n';
-      selectedIndices.forEach((i: number) => {
-        itemList += '<li>' + this._fileList[i].name + '</li>\n';
+      selectedIndices.forEach((fileIdx: number, i: number) => {
+        if (i < FilesElement._deleteListLimit)
+          itemList += '<li>' + this._fileList[fileIdx].name + '</li>\n';
       });
+      if (num > FilesElement._deleteListLimit) {
+        itemList += '+ ' + (num - FilesElement._deleteListLimit) + ' more.';
+      }
       itemList += '</ul>'
       const bodyHtml = '<div>Are you sure you want to delete:</div>' + itemList;
 
