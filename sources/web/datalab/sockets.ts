@@ -171,6 +171,6 @@ export function init(settings: common.AppSettings): void {
     allowUpgrades: false
   });
 
-  io.of(path_.join(settings.datalabBasePath, 'session'))
+  io.of('/session')
     .on('connection', socketHandler);
 }
