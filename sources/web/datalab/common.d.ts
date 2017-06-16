@@ -72,6 +72,11 @@ declare module common {
     datalabBasePath: string;
 
     /**
+     * If true, use proxy-able web sockets.
+     */
+    proxyWebSockets: string;
+
+    /**
      * Initial port to use when searching for a free Jupyter port.
      */
     nextJupyterPort: number;

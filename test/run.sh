@@ -23,7 +23,6 @@ CONTAINER_STARTED=0
 
 HERE=$(dirname $0)
 JASMINE=$HERE/node_modules/jasmine/bin/jasmine.js
-JASMINE_NODE=$HERE/node_modules/jasmine-node/bin/jasmine-node
 
 function parseOptions() {
   while [[ $# -gt 0 ]]; do
@@ -83,6 +82,17 @@ function makeTestsHome() {
   mkdir -p $TESTS_HOME
 }
 
+# Delete the files using the same container context as they were created.
+function cleanTestsHome() {
+  echo "Deleting old content from ${TESTS_HOME}.."
+  docker run \
+    --entrypoint="/bin/bash" \
+    -p 127.0.0.1:8081:8080 \
+    -v $TESTS_HOME:/content \
+    datalab \
+    -c "rm -rf /content/*"
+}
+
 function startContainers() {
   CONTAINER_STARTED=1
   echo Starting Datalab container..
@@ -91,6 +101,7 @@ function startContainers() {
     -p 127.0.0.1:8081:8080 \
     -v $TESTS_HOME:/content \
     -e "ENABLE_USAGE_REPORTING=false" \
+    -e "DATALAB_SHUTDOWN_COMMAND=echo" \
     datalab)
 
   docker pull selenium/standalone-chrome > /dev/null
@@ -111,6 +122,11 @@ function startContainers() {
   echo ' Done.'
 }
 
+function installNodeModulesInBuild() {
+  echo "Running 'npm install' in build dir"
+  (cd ${HERE}/../build/web/nb && npm install)
+}
+
 function runNotebookTests() {
   echo Running notebook integration tests
   $JASMINE --config=$HERE/notebook/jasmine.json
@@ -128,7 +144,7 @@ function runClientUnitTests() {
 
 function runServerUnitTests() {
   echo Running server unit tests
-  $JASMINE_NODE $HERE/server-unit/
+  $JASMINE --config=$HERE/server-unit/jasmine.json
 }
 
 function main() {
@@ -145,11 +161,13 @@ function main() {
     runClientUnitTests
   fi
   if (( RUN_SERVER_UNIT > 0 )); then
+    installNodeModulesInBuild
     runServerUnitTests
   fi
 
   if (( RUN_NOTEBOOK + RUN_UI > 0 )); then
     makeTestsHome
+    cleanTestsHome
     startContainers
     if (( RUN_NOTEBOOK > 0 )); then
       runNotebookTests

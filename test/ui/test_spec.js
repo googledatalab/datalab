@@ -195,6 +195,7 @@ describe('UI tests', function() {
         // Wait for the fade-in to complete.
         .then(driver.sleep(1000))
         .then(driver.findElement(By.id('darkThemeRadioOption')).click())
+        .then(driver.sleep(100))
         .then(screenshotAndCompare('settingsDarkTheme.png', 'settingsDarkTheme'))
         .then(driver.findElement(By.id('lightThemeRadioOption')).click())
         // Close the dialog.

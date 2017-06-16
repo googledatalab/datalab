@@ -16,5 +16,8 @@
     "paper-progress": "PolymerElements/paper-progress#^2.0.0",
     "polymer": "Polymer/polymer#^2.0.1",
     "webcomponentsjs": "webcomponents/webcomponentsjs#^1.0.0-rc.9"
+  },
+  "devDependencies": {
+    "web-component-tester": "^6.0.0"
   }
 }

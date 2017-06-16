@@ -24,6 +24,7 @@ import url = require('url');
 import userManager = require('./userManager');
 
 const idleCheckIntervalSeconds = 10;    // Seconds to wait between idle checks
+const idleTimeoutMinSeconds = 60;   // Don't allow setting a timeout less than one minute
 
 let idleTimeoutEnabled = true;  // Allow user to enable and disable the timeout
 let idleTimeoutSeconds = 0;   // Shutdown after being idle this long; turned off if 0 or NaN
@@ -56,26 +57,35 @@ export function init(appSettings: common.AppSettings) {
       idleTimeoutStr = process.env.DATALAB_IDLE_TIMEOUT;
       logging.getLogger().debug('idleTimeoutStr from env: ' + idleTimeoutStr);
     }
-    idleTimeoutSeconds = parseInterval(idleTimeoutStr);
-    if (! (idleTimeoutSeconds > 0)) {
-      logging.getLogger().info('No idle timeout value, idle timeout is disabled');
-    } else {
-      logging.getLogger().info('Idle timeout set to ' + idleTimeoutSeconds + ' seconds');
-    }
+    setIdleTimeoutInterval(idleTimeoutStr);
   } else {
     idleTimeoutSeconds = NaN;   // No shutdown command available
     logging.getLogger().info('No shutdown command, idle timeout is disabled');
   }
 }
 
-// Parse a string like '30s' or '1h 15m 5s' and return seconds.
+export function setIdleTimeoutInterval(idleTimeoutStr: string) {
+  const { seconds, errorMessage } = parseAndValidateInterval(idleTimeoutStr);
+  if (errorMessage) {
+    logging.getLogger().error('For idleTimeoutInterval "' + idleTimeoutStr + '": ' + errorMessage);
+    // Don't change idleTimeoutSeconds
+  } else if (! (seconds > 0)) {
+    logging.getLogger().info('No idle timeout value, idle timeout is disabled');
+    idleTimeoutSeconds = 0;
+  } else {
+    logging.getLogger().info('Idle timeout set to ' + seconds + ' seconds');
+    idleTimeoutSeconds = seconds;
+  }
+}
+
+// Parses a string like '30s' or '1h 15m 5s' and returns {seconds, errorMessage}.
 // If no input string, or unrecognized stuff, returns NaN.
-function parseInterval(str: string) {
+export function parseAndValidateInterval(str: string) {
   if (typeof(str) === 'number') {
-    return <number>str;
+    return { seconds: <number>str, errorMessage: null };
   }
   if (!str) {
-    return NaN;
+    return { seconds: NaN, errorMessage: 'No input value specified' };
   }
   let total = 0;
   const regAndMults = [
@@ -95,9 +105,13 @@ function parseInterval(str: string) {
   str = str.replace(/\s*/, '');
   if (str) {
     logging.getLogger().debug('garbage left over in interval string: ' + str);
-    return NaN;
+    return { seconds: NaN, errorMessage: 'Invalid format' };
   }
-  return total;
+  if (total > 0 && total < idleTimeoutMinSeconds) {
+    const message = total + ' is smaller than minimum of ' + idleTimeoutMinSeconds + ' seconds';
+    return { seconds: total, errorMessage: message };
+  };
+  return { seconds: total, errorMessage: null };
 }
 
 export function resetBasedOnPath(path: string) {
@@ -130,14 +144,14 @@ export function setupResetOnWebSocketRequests(socket : net.Socket) {
   // other messages on socket: end, message, finish, error
 }
 
-// Return true if the data is a heartbeat message.
+// Returns true if the data is a heartbeat message.
 // The right way to do this would be to decode the message, but I don't know how to do that.
 function isHeartbeat(data: any) {
   return data.length == 6 && data[0] == 0x8a && data[1] == 0x80;
 }
 
 export function reset() {
-  logging.getLogger().debug('reset idle timeout');
+  logging.getLogger().debug('reset idle timeout (' + idleTimeoutSeconds + 's)');
   lastReset = _nowSeconds();
 }
 
