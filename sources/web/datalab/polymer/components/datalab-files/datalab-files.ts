@@ -267,17 +267,26 @@ class FilesElement extends Polymer.Element {
     this.$.forwardNav.disabled = this._pathHistoryIndex === this._pathHistory.length - 1;
   }
 
+  _createNewNotebook() {
+    this._createNewItem('notebook');
+  }
+
+  _createNewDirectory() {
+    this._createNewItem('directory');
+  }
+
   /**
-   * Calls the ApiManager to create a new notebook, then fetches the updated
-   * list of files to redraw the list
+   * Creates an input modal to get the user input, then Calls the ApiManager to
+   * create a new notebook/directory at the current path, and fetches the updated list
+   * of files to redraw.
    */
-  _createNotebook() {
+  _createNewItem(type: string) {
 
     // First, open a dialog to let the user specify a name for the notebook.
     const inputOptions: DialogOptions = {
-      title: 'New Notebook', 
+      title: 'New ' + type, 
       withInput: true,
-      inputLabel: 'Notebook Name',
+      inputLabel: 'Name',
       okTitle: 'Create',
     };
 
@@ -286,9 +295,13 @@ class FilesElement extends Polymer.Element {
         // Only if the dialog has been confirmed with some user input, rename the
         // newly created file. Then if that is successful, reload the file list
         if (!closeResult.canceled && closeResult.userInput) {
-          ApiManager.createNewNotebook()
-            .then((notebook: JupyterFile) =>
-                  ApiManager.renameItem(notebook.name, closeResult.userInput + '.ipynb'))
+          let newName = closeResult.userInput;
+          // Make sure the name ends with .ipynb for notebooks for convenience
+          if (type === 'notebook' && !newName.endsWith('.ipynb')) {
+            newName += '.ipynb';
+          }
+          ApiManager.createNewItem(type)
+            .then((notebook: JupyterFile) => ApiManager.renameItem(notebook.name, newName))
             .then(this._fetchFileList.bind(this));
         }
       });

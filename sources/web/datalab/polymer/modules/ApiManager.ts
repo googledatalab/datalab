@@ -146,7 +146,7 @@ class ApiManager {
       });
   }
 
-  static createNewNotebook() {
+  static createNewItem(type: string) {
     return new Promise((resolve, reject) => {
       ApiManager._xhr(ApiManager.contentApiUrl,
           (request: XMLHttpRequest) => {
@@ -156,7 +156,7 @@ class ApiManager {
           {
             method: 'POST',
             postParameters: JSON.stringify({
-              type: 'notebook',
+              type: type,
               ext: 'ipynb'
             }),
             errorCallback: (e: object) => {

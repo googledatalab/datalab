@@ -139,11 +139,11 @@ the License.
     <!--Toolbar with buttons such as +Notebook, +Folder... etc-->
     <!--TODO: [yebrahim] Make these buttons do stuff-->
     <div id="toolbar">
-      <paper-button class="toolbar-button" on-click="_createNotebook">
+      <paper-button class="toolbar-button" on-click="_createNewNotebook">
         <iron-icon icon="add-box"></iron-icon>
         <span>Notebook</span>
       </paper-button>
-      <paper-button class="toolbar-button">
+      <paper-button class="toolbar-button" on-click="_createNewDirectory">
         <iron-icon icon="add-box"></iron-icon>
         <span>Folder</span>
       </paper-button>
