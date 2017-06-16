@@ -20,8 +20,10 @@ define(['util'], (util) => {
       this._url = url;
       this.readyState = WebSocketShim.CLOSED;
 
-      var socketUri = util.datalabLink('/session');
+      var socketUri = location.protocol + '//' + location.host + '/session';
+      var basePath = document.body.getAttribute('data-base-url');
       var socketOptions = {
+        path: basePath + 'socket.io',
         upgrade: false,
         multiplex: false
       };
