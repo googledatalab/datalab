@@ -295,7 +295,7 @@ class FilesElement extends Polymer.Element {
         // Only if the dialog has been confirmed with some user input, rename the
         // newly created file. Then if that is successful, reload the file list
         if (closeResult.confirmed && closeResult.userInput) {
-          let newName = closeResult.userInput;
+          let newName = this.currentPath + '/' + closeResult.userInput;
           // Make sure the name ends with .ipynb for notebooks for convenience
           if (type === 'notebook' && !newName.endsWith('.ipynb')) {
             newName += '.ipynb';
@@ -336,7 +336,8 @@ class FilesElement extends Polymer.Element {
       return Utils.getUserInputAsync(inputOptions)
         .then((closeResult: DialogCloseResult) => {
           if (closeResult.confirmed && closeResult.userInput) {
-            return ApiManager.renameItem(selectedObject.name, closeResult.userInput)
+            let newName = this.currentPath + '/' + closeResult.userInput;
+            return ApiManager.renameItem(selectedObject.path, newName)
               .then(() => this._fetchFileList())
               .then(() => this.$.files.set('rows.' + i + '.selected', true));
           } else {
