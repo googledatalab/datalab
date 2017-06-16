@@ -12,7 +12,6 @@ or implied. See the License for the specific language governing permissions and 
 the License.
 -->
 
-<link rel="import" href="../../bower_components/iron-a11y-keys/iron-a11y-keys.html">
 <link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../../bower_components/polymer/polymer.html">
@@ -38,10 +37,8 @@ the License.
       <h2><div id="title">{{title}}</div></h2>
       <!--Body value is bound in javascript because it needs to bind to innerHTML-->
       <div id="body" hidden$="{{!bodyHtml}}"></div>
-      <iron-a11y-keys id="a11y" keys="enter" hidden on-keys-pressed="_confirmClose">
-      </iron-a11y-keys>
       <paper-input id="inputBox" hidden$="{{!withInput}}" label="{{inputLabel}}"
-                   value="{{inputValue}}" no-label-float>
+                   value="{{inputValue}}" on-keydown="_checkEnter" no-label-float>
       </paper-input>
       <hr />
       <div class="buttons">

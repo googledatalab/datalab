@@ -23,7 +23,6 @@ class InputDialogElement extends Polymer.Element {
   public cancelTitle: string;
 
   private _closeCallback: Function;
-  private _enterKeyTarget: object;
 
   static get is() { return "input-dialog"; }
 
@@ -57,23 +56,20 @@ class InputDialogElement extends Polymer.Element {
         type: String,
         value: 'Cancel'
       },
-      _enterKeyTarget: {
-        type: Object,
-      },
     }
   }
 
   open() {
     const self = this;
-    // Bind the Enter key listener to the input field if it's visible,
+
+    // Set the focus to the input field if it's visible,
     // otherwise to the ok button.
     if (this.withInput) {
-      this._enterKeyTarget = this.$.inputBox;
       this.$.inputBox.setAttribute('autofocus', '');
     } else {
-      this._enterKeyTarget = this.$.okButton;
       this.$.okButton.setAttribute('autofocus', '');
     }
+
     if (this.bodyHtml) {
       this.$.body.innerHTML = this.bodyHtml;
     }
@@ -113,6 +109,11 @@ class InputDialogElement extends Polymer.Element {
         userInput: this.withInput ? this.$.inputBox.value : undefined,
       });
     }
+  }
+
+  _checkEnter(e: KeyboardEvent) {
+    if (e.keyCode === 13) // Enter
+      this._confirmClose();
   }
 
 }
