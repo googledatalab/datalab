@@ -42,12 +42,11 @@ class Utils {
   /**
    * Opens a dialog with the specified options. It uses the Datalab custom element
    * <input-dialog>, attaches a new instance to the current document, opens it
-   * and waits until it closes. It returns a promise that can be waited on for
-   * dialog close.
+   * and returns a promise that resolves when the dialog is closed.
    * @param dialogOptions options for configuring the dialog
    */
   static getUserInputAsync(dialogOptions: DialogOptions) {
-    let createModal = <InputDialogElement>document.createElement('input-dialog');
+    const createModal = <InputDialogElement>document.createElement('input-dialog');
     document.body.appendChild(createModal);
 
     createModal.title = dialogOptions.title;
