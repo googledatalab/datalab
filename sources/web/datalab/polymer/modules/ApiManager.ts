@@ -19,10 +19,31 @@
  */
 
 /**
+ * Represents a cell in a Jupyter notebook.
+ */
+interface JupyterNotebookCellModel {
+  cell_type: string,
+  execution_count: number,
+  metadata: object,
+  outputs: Array<string>,
+  source: string,
+}
+
+/**
+ * Represents a Jupyter notebook model.
+ */
+interface JupyterNotebookModel {
+  cells: Array<JupyterNotebookCellModel>,
+  metadata: object,
+  nbformat: number,
+  nbformat_minor: number,
+}
+
+/**
  * Represents a file object as returned from Jupyter's files API.
  */
 interface JupyterFile {
-  content: Array<JupyterFile>,
+  content: Array<JupyterFile> | JupyterNotebookModel,
   created: string,
   format: string,
   last_modified: string,
@@ -89,19 +110,27 @@ class ApiManager {
   }
 
   /**
+   * Returns a JupyterFile object representing the file or directory requested
+   * @param path string path to requested file
+   */
+  static getJupyterFile(path: string): Promise<JupyterFile> {
+    return ApiManager._xhrAsync(this.contentApiUrl + '/' + path);
+  }
+
+  /**
    * Returns a list of files at the target path, each implementing the ApiFile interface.
    * Two requests are made to /api/contents and /api/sessions to get this data.
    * @param path current path to list files under
    */ 
   static listFilesAsync(path: string): Promise<Array<ApiFile>> {
 
-    const xhrOptions: XhrOptions = {
-      parameters: JSON.stringify({
-        type: 'directory',
-      }),
-    };
-    const filesPromise: Promise<JupyterFile> =
-      ApiManager._xhrAsync(this.contentApiUrl + path, xhrOptions);
+    const filesPromise = ApiManager.getJupyterFile(path)
+      .then((file: JupyterFile) => {
+        if (file.type !== 'directory') {
+          throw new Error('Can only list files in a directory. Found type: ' + file.type);
+        }
+        return <JupyterFile[]>file.content;
+      })
 
     const sessionsPromise: Promise<Array<Session>> = ApiManager.listSessionsAsync();
 
@@ -109,7 +138,7 @@ class ApiManager {
     // array with the status value.
     return Promise.all([filesPromise, sessionsPromise])
       .then(values => {
-        let files = values[0].content;
+        let files = values[0];
         const sessions = values[1];
         let runningPaths: Array<string> = [];
         sessions.forEach(session => {
