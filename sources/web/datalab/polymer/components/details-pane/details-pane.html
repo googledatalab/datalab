@@ -6,27 +6,46 @@
 <dom-module id="details-pane">
   <template>
     <style include="datalab-shared-styles">
+      #container {
+        padding: 20px;
+      }
       #details-pane-content {
         display: flex;
       }
       .content {
-        padding: 10px;
+        padding: 15px 3px;
         margin: 0px;
       }
+      .icon {
+        height: 30px;
+        width: 30px;
+      }
     </style>
-    <div hidden$="{{!item.name}}">
+    <div id="container" hidden$="{{!file.name}}">
       <div id="details-pane-content">
-        <iron-icon class="content" icon="{{icon}}"></iron-icon>
-        <h2 class="content">{{item.name}}</h2>
+        <iron-icon class="content icon" icon="{{_icon}}"></iron-icon>
+        <h1 class="content">{{file.name}}</h1>
       </div>
       <hr/>
       <div class="content">
-        <strong>Created:</strong>
-        {{item.created}}
-      </div>
-      <div class="content">
-        <strong>Modified:</strong>
-        {{item.last_modified}}
+        <table>
+          <tr>
+            <td>
+              <strong>Created:</strong>
+            </td>
+            <td>
+              {{_created}}
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <strong>Modified:</strong>
+            </td>
+            <td>
+              {{_modified}}
+            </td>
+          </tr>
+        </table>
       </div>
     </div>
   </template>

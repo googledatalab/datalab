@@ -38,6 +38,11 @@ class FilesElement extends Polymer.Element {
    */
   public currentPath: string;
 
+  /**
+   * The currently selected file if exactly one is selected, or null if none is.
+   */
+  public selectedFile: ApiFile | null;
+
   private _pathHistory: Array<string>;
   private _pathHistoryIndex: number;
   private _fetching: boolean;
@@ -59,6 +64,10 @@ class FilesElement extends Polymer.Element {
         type: String,
         value: '',
         observer: '_currentPathChanged',
+      },
+      selectedFile: {
+        type: Object,
+        value: null,
       },
       _currentCrumbs: {
         type: Array,
@@ -102,6 +111,8 @@ class FilesElement extends Polymer.Element {
     if (filesElement) {
       filesElement.addEventListener('itemDoubleClick',
                                     this._handleDoubleClicked.bind(this));
+      filesElement.addEventListener('itemSelectionChanged',
+                                    this._handleSelectionChanged.bind(this));
     }
 
     this.$.files.columns = ['Name', 'Status'];
@@ -196,6 +207,19 @@ class FilesElement extends Polymer.Element {
       window.open(this._getNotebookUrlPrefix() + '/' + clickedItem.path, '_blank');
     } else {
       window.open(this._getEditorUrlPrefix() + '/' + clickedItem.path, '_blank');
+    }
+  }
+
+  /**
+   * Called when the selection changes on the item list. If exactly one file
+   * is selected, sets the selectedFile property to the selected file object.
+   */
+  _handleSelectionChanged() {
+    const selectedItems = this.$.files.getSelectedIndices();
+    if (selectedItems.length === 1) {
+      this.selectedFile = this._fileList[selectedItems[0]];
+    } else {
+      this.selectedFile = null;
     }
   }
 

@@ -26,14 +26,8 @@ the License.
           display: none;
         };
       }
-      hr {
-        border-left: none;
-        border-right: none;
-        border-bottom: none;
-        border-top: 1px solid #eee;
-      }
       #title {
-        font-size: 16px;
+        font-size: 20px;
         text-align: center;
       }
       .confirm {
@@ -48,7 +42,7 @@ the License.
       <paper-input id="inputBox" hidden$="{{!withInput}}" label="{{inputLabel}}" spellcheck=false
                    value="{{inputValue}}" on-keydown="_checkEnter" no-label-float>
       </paper-input>
-      <hr />
+      <div><hr></div>
       <div class="buttons">
         <paper-button id="okButton" on-click="_confirmClose" class="confirm" >
           {{okLabel}}
