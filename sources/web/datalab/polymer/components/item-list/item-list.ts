@@ -128,11 +128,11 @@ class ItemListElement extends Polymer.Element {
         // Remove this element from the selected elements list if it's being unselected
         const i = this._selectedElements.indexOf(rowElement);
         if (i > -1) {
-          this._selectedElements.splice(i, 1);
+          this.splice('_selectedElements', i, 1);
         }
       } else {
         // Add this element to the selected elements list if it's being selected,
-        this._selectedElements.push(rowElement);
+        this.push('_selectedElements', rowElement);
       }
     }
     const ev = new ItemClickEvent('itemSelectionChanged', { detail: {index: index} });
