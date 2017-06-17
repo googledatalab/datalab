@@ -329,7 +329,7 @@ class FilesElement extends Polymer.Element {
       return Utils.getUserInputAsync(inputOptions)
         .then((closeResult: DialogCloseResult) => {
           if (closeResult.confirmed && closeResult.userInput) {
-            let newName = this.currentPath + '/' + closeResult.userInput;
+            const newName = this.currentPath + '/' + closeResult.userInput;
             return ApiManager.renameItem(selectedObject.path, newName)
               .then(() => this._fetchFileList());
               // TODO: [yebrahim] Re-select the renamed item after refresh
@@ -337,8 +337,8 @@ class FilesElement extends Polymer.Element {
             return Promise.resolve(null);
           }
         })
+        // TODO: Handle rename errors properly by showing some message to the user
     } else {
-      // TODO: Handle rename errors properly by showing some message to the user
       return Promise.resolve(null);
     }
   }
@@ -393,14 +393,16 @@ class FilesElement extends Polymer.Element {
             let deletePromises = selectedIndices.map((i: number) => {
               return ApiManager.deleteItem(this._fileList[i].path);
             });
+            // TODO: [yebrahim] If at least one delete completes then a failure happens with
+            // any of the rest, _fetchFileList will never be called.
             return Promise.all(deletePromises)
               .then(() => this._fetchFileList());
           } else {
             return Promise.resolve(null);
           }
         });
+        // TODO: Handle delete errors properly by showing some message to the user
     } else {
-      // TODO: Handle rename errors properly by showing some message to the user
       return Promise.resolve(null);
     }
   }
