@@ -122,21 +122,17 @@ class ItemListElement extends Polymer.Element {
       this.set('rows.' + index + '.selected', true);
 
       // This is now the only selected element.
-      if (rowElement)
-        this._selectedElements = [rowElement];
+      this._selectedElements = [rowElement];
     } else {
       if (this.rows[index].selected === false) {
         // Remove this element from the selected elements list if it's being unselected
-        if (rowElement) {
-          const i = this._selectedElements.indexOf(rowElement);
-          if (i > -1) {
-            this._selectedElements.splice(i, 1);
-          }
+        const i = this._selectedElements.indexOf(rowElement);
+        if (i > -1) {
+          this._selectedElements.splice(i, 1);
         }
       } else {
         // Add this element to the selected elements list if it's being selected,
-        if (rowElement)
-          this._selectedElements.push(rowElement);
+        this._selectedElements.push(rowElement);
       }
     }
     const ev = new ItemClickEvent('itemSelectionChanged', { detail: {index: index} });
@@ -154,7 +150,7 @@ class ItemListElement extends Polymer.Element {
       else
         // This should not happen
         throw new Error('Could not find parent row element for: ' + childElement.tagName);
-    return childElement;
+    return currentElement;
   }
 
   /**
