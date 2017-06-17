@@ -7,9 +7,11 @@
   <template>
     <style include="datalab-shared-styles">
       #container {
-        padding: 20px;
+        padding: 0px 20px;
+        height: 100%;
+        overflow-y: auto;
       }
-      #details-pane-content {
+      #details-pane-title {
         display: flex;
       }
       .content {
@@ -20,9 +22,17 @@
         height: 30px;
         width: 30px;
       }
+      #previewHtml {
+        background-color: #ddd;
+        padding: 0px 10px;
+        margin: 10px 0px;
+        border-radius: 5px;
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
     </style>
     <div id="container" hidden$="{{!file.name}}">
-      <div id="details-pane-content">
+      <div id="details-pane-title">
         <iron-icon class="content icon" icon="{{_icon}}"></iron-icon>
         <h1 class="content">{{file.name}}</h1>
       </div>
@@ -46,9 +56,11 @@
             </td>
           </tr>
         </table>
+        <div id="previewHtml"></div>
       </div>
     </div>
   </template>
 </dom-module>
 
+<script src="showdown.min.js"></script>
 <script src="details-pane.js"></script>

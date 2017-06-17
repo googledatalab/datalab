@@ -18,6 +18,21 @@
  * these APIs to help with type checking.
  */
 
+interface JupyterNotebookCellModel {
+  cell_type: string,
+  execution_count: number,
+  metadata: object,
+  outputs: Array<string>,
+  source: string,
+}
+
+interface JupyterNotebookModel {
+  cells: Array<JupyterNotebookCellModel>,
+  metadata: object,
+  nbformat: number,
+  nbformat_minor: number,
+}
+
 /**
  * Represents a cell in a Jupyter notebook.
  */
@@ -130,7 +145,7 @@ class ApiManager {
           throw new Error('Can only list files in a directory. Found type: ' + file.type);
         }
         return <JupyterFile[]>file.content;
-      })
+      });
 
     const sessionsPromise: Promise<Array<Session>> = ApiManager.listSessionsAsync();
 
@@ -149,6 +164,10 @@ class ApiManager {
         });
         return files;
       });
+  }
+
+  static getJupyterFile(path: string): Promise<JupyterFile> {
+    return ApiManager._xhrAsync(this.contentApiUrl + '/' + path);
   }
 
   /**
