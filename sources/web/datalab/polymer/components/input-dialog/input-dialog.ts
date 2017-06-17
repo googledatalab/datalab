@@ -41,7 +41,7 @@ class InputDialogElement extends Polymer.Element {
   public withInput: boolean;
 
   /**
-   * If an input is included, a string that shows up inside it before user input
+   * Text that shows up inside the input field when it's empty
    */
   public inputLabel: string;
 

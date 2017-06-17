@@ -300,7 +300,7 @@ class FilesElement extends Polymer.Element {
         } else {
           return Promise.resolve(null);
         }
-      });
+      }); // TODO: Handle create errors properly by showing some message to the user
   }
 
   /**
@@ -338,6 +338,7 @@ class FilesElement extends Polymer.Element {
           }
         })
     } else {
+      // TODO: Handle rename errors properly by showing some message to the user
       return Promise.resolve(null);
     }
   }
@@ -399,6 +400,7 @@ class FilesElement extends Polymer.Element {
           }
         });
     } else {
+      // TODO: Handle rename errors properly by showing some message to the user
       return Promise.resolve(null);
     }
   }

@@ -85,10 +85,7 @@ class ApiManager {
    * Returns a list of currently running sessions, each implementing the Session interface
    */
   static listSessionsAsync(): Promise<Array<Session>> {
-    return ApiManager._xhrAsync(this.sessionsApiUrl)
-      .catch((errorStatus: number) => {
-        throw new Error('Error listing sessions: ' + errorStatus);
-      });
+    return ApiManager._xhrAsync(this.sessionsApiUrl);
   }
 
   /**
@@ -104,10 +101,7 @@ class ApiManager {
       }),
     };
     const filesPromise: Promise<JupyterFile> =
-      ApiManager._xhrAsync(this.contentApiUrl + path, xhrOptions)
-        .catch((errorStatus: number) => {
-          throw new Error('Error listing files: ' + errorStatus);
-        });
+      ApiManager._xhrAsync(this.contentApiUrl + path, xhrOptions);
 
     const sessionsPromise: Promise<Array<Session>> = ApiManager.listSessionsAsync();
 
@@ -141,11 +135,7 @@ class ApiManager {
         ext: 'ipynb'
       }),
     };
-    let createPromise = ApiManager._xhrAsync(ApiManager.contentApiUrl, xhrOptions)
-      .catch((errorStatus: number) => {
-        console.log('Error creating item: ' + errorStatus);
-        throw errorStatus;
-      });
+    let createPromise = ApiManager._xhrAsync(ApiManager.contentApiUrl, xhrOptions);
 
     // If a path is provided for naming the new item, request the rename, and
     // delete it if failed.
@@ -156,12 +146,10 @@ class ApiManager {
           notebookPathPlaceholder = notebook.path;
           return ApiManager.renameItem(notebookPathPlaceholder, path);
         })
-        .catch((errorStatus: number) => {
-          if (errorStatus === 409) { // Conflict
-            // If the rename fails, remove the temporary item
-            ApiManager.deleteItem(notebookPathPlaceholder);
-            throw new Error('An item with this name already exists.');
-          }
+        .catch((error: string) => {
+          // If the rename fails, remove the temporary item
+          ApiManager.deleteItem(notebookPathPlaceholder);
+          throw error;
         });
     }
     return createPromise;
@@ -181,11 +169,7 @@ class ApiManager {
       }),
     };
 
-    return ApiManager._xhrAsync(oldPath, xhrOptions)
-      .catch((errorStatus: number) => {
-        console.log('Error renaming item: ' + errorStatus);
-        throw errorStatus;
-      });
+    return ApiManager._xhrAsync(oldPath, xhrOptions);
   }
 
   /**
@@ -199,15 +183,13 @@ class ApiManager {
       successCode: 204,
     };
 
-    return ApiManager._xhrAsync(path, xhrOptions)
-      .catch((errorStatus: number) => {
-          console.log('Error deleting item: ' + errorStatus);
-          throw errorStatus;
-      })
+    return ApiManager._xhrAsync(path, xhrOptions);
   }
 
   /**
-   * Sends an XMLHttpRequest to the specified URL
+   * Sends an XMLHttpRequest to the specified URL, and parses the
+   * the response text. This method returns immediately with a promise
+   * that resolves with the parsed object when the request completes.
    */
   static _xhrAsync(url: string, options?: XhrOptions) {
 
@@ -224,10 +206,10 @@ class ApiManager {
             try {
               resolve(JSON.parse(request.responseText || 'null'));
             } catch (e) {
-              reject('Could not parse response: ' + e);
+              reject(e);
             }
           } else {
-            reject('Request failed with error: ' + JSON.parse(request.responseText));
+            reject(request.responseText);
           }
         }
       };
