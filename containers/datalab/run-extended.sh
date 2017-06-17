@@ -81,7 +81,7 @@ fi
 #  -v $REPO_DIR/sources/web:/sources \
 docker run -it --entrypoint=$ENTRYPOINT \
   -p $PORTMAP \
-  -v "$CONTENT:/content" \
+  -v "$CONTENT/datalab:/content/datalab" \
   -e "PROJECT_ID=$PROJECT_ID" \
   -e "DATALAB_ENV=local" \
   -e "EXPERIMENTAL_KERNEL_GATEWAY_URL=${EXPERIMENTAL_KERNEL_GATEWAY_URL}" \
