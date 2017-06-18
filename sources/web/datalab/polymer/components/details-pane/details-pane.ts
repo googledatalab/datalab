@@ -52,7 +52,10 @@ class DetailsPaneElement extends Polymer.Element {
   }
 
   _fileChanged() {
+    this.$.previewHtml.innerHTML = '';
     if (this.file && this.file.type === 'notebook') {
+      // TODO: Consider caching the rendered HTML for a few minutes or until
+      // the next file list refresh
       ApiManager.getJupyterFile(this.file.path)
         .then((file: JupyterFile) => {
           const cells = (<JupyterNotebookModel>file.content).cells;
@@ -72,8 +75,6 @@ class DetailsPaneElement extends Polymer.Element {
         .catch(() => {
           debugger;
         })
-    } else {
-      this.$.previewHtml.innerHTML = '';
     }
   }
 
