@@ -19,10 +19,31 @@
  */
 
 /**
+ * Represents a cell in a Jupyter notebook.
+ */
+interface JupyterNotebookCellModel {
+  cell_type: string,
+  execution_count: number,
+  metadata: object,
+  outputs: Array<string>,
+  source: string,
+}
+
+/**
+ * Represents a Jupyter notebook model.
+ */
+interface JupyterNotebookModel {
+  cells: Array<JupyterNotebookCellModel>,
+  metadata: object,
+  nbformat: number,
+  nbformat_minor: number,
+}
+
+/**
  * Represents a file object as returned from Jupyter's files API.
  */
 interface JupyterFile {
-  content: string,
+  content: Array<JupyterFile> | JupyterNotebookModel,
   created: string,
   format: string,
   last_modified: string,
@@ -57,11 +78,13 @@ interface Session {
 /** Options for _xhr call, contains the following optional fields:
  *  - method: The HTTP method to use; default is 'GET'.
  *  - errorCallback: A function to call if the XHR completes
- *      with a status other than 200.
+ *      with a status other than 2xx.
  */
 interface XhrOptions {
   method?: string,
-  errorCallback?: Function
+  errorCallback?: Function,
+  parameters?: string,
+  successCode?: number,
 }
 
 /**
@@ -72,62 +95,42 @@ class ApiManager {
   /**
    * URL for querying files
    */
-  static filesApiUrl() {
-    return '/api/contents';
-  }
+  static readonly contentApiUrl = '/api/contents';
 
   /**
    * URL for querying sessions
    */
-  static sessionsApiUrl() {
-    return '/api/sessions';
-  }
+  static readonly sessionsApiUrl = '/api/sessions';
 
   /**
    * Returns a list of currently running sessions, each implementing the Session interface
    */
   static listSessionsAsync(): Promise<Array<Session>> {
-    return new Promise((resolve, reject) => {
-      ApiManager._xhr(this.sessionsApiUrl(),
-          (request: XMLHttpRequest) => {
-            try {
-              let sessions = JSON.parse(request.response);
-              resolve(sessions);
-            } catch(e) {
-              reject('Received bad format from endpoint: ' + this.sessionsApiUrl());
-            }
-          },
-          {
-            errorCallback: () => {
-              reject('Error contacting endpoint: ' + this.sessionsApiUrl());
-            }
-          }
-      );
-    });
+    return ApiManager._xhrAsync(this.sessionsApiUrl);
+  }
+
+  /**
+   * Returns a JupyterFile object representing the file or directory requested
+   * @param path string path to requested file
+   */
+  static getJupyterFile(path: string): Promise<JupyterFile> {
+    return ApiManager._xhrAsync(this.contentApiUrl + '/' + path);
   }
 
   /**
    * Returns a list of files at the target path, each implementing the ApiFile interface.
    * Two requests are made to /api/contents and /api/sessions to get this data.
-   */
+   * @param path current path to list files under
+   */ 
   static listFilesAsync(path: string): Promise<Array<ApiFile>> {
-    const filesPromise: Promise<Array<JupyterFile>> = new Promise((resolve, reject) => {
-      ApiManager._xhr(this.filesApiUrl() + path,
-          (request: XMLHttpRequest) => {
-            try {
-              let files = JSON.parse(request.response).content;
-              resolve(files);
-            } catch(e) {
-              reject('Received bad format from endpoint: ' + this.filesApiUrl());
-            }
-          },
-          {
-            errorCallback: () => {
-              reject('Could not get list of files at: ' + path);
-            }
-          }
-      );
-    });
+
+    const filesPromise = ApiManager.getJupyterFile(path)
+      .then((file: JupyterFile) => {
+        if (file.type !== 'directory') {
+          throw new Error('Can only list files in a directory. Found type: ' + file.type);
+        }
+        return <JupyterFile[]>file.content;
+      })
 
     const sessionsPromise: Promise<Array<Session>> = ApiManager.listSessionsAsync();
 
@@ -141,37 +144,108 @@ class ApiManager {
         sessions.forEach(session => {
           runningPaths.push(session.notebook.path);
         });
-        files.forEach(file => {
-          (<ApiFile>file).status = runningPaths.indexOf(file.path) > -1 ? 'running' : '';
+        files.forEach((file: ApiFile) => {
+          file.status = runningPaths.indexOf(file.path) > -1 ? 'running' : '';
         });
         return files;
       });
   }
 
   /**
-   * Sends an XMLHttpRequest to the specified URL
+   * Create a new notebook or directory.
+   * @param type string type of the created item, can be 'notebook' or 'directory'
    */
-  static _xhr(url: string, callback: Function, options: XhrOptions) {
+  static createNewItem(type: string, path?: string) {
+    const xhrOptions: XhrOptions = {
+      method: 'POST',
+      successCode: 201,
+      parameters: JSON.stringify({
+        type: type,
+        ext: 'ipynb'
+      }),
+    };
+    let createPromise = ApiManager._xhrAsync(ApiManager.contentApiUrl, xhrOptions);
+
+    // If a path is provided for naming the new item, request the rename, and
+    // delete it if failed.
+    if (path) {
+      let notebookPathPlaceholder = '';
+      createPromise = createPromise
+        .then((notebook: JupyterFile) => {
+          notebookPathPlaceholder = notebook.path;
+          return ApiManager.renameItem(notebookPathPlaceholder, path);
+        })
+        .catch((error: string) => {
+          // If the rename fails, remove the temporary item
+          ApiManager.deleteItem(notebookPathPlaceholder);
+          throw error;
+        });
+    }
+    return createPromise;
+  }
+
+  /**
+   * Rename an item
+   * @param oldPath source path of the existing item
+   * @param newPath destination path of the renamed item
+   */
+  static renameItem(oldPath: string, newPath: string) {
+    oldPath = ApiManager.contentApiUrl + '/' + oldPath;
+    const xhrOptions: XhrOptions = {
+      method: 'PATCH',
+      parameters: JSON.stringify({
+        path: newPath
+      }),
+    };
+
+    return ApiManager._xhrAsync(oldPath, xhrOptions);
+  }
+
+  /**
+   * Delete an item
+   * @param path item path to delete
+   */
+  static deleteItem(path: string) {
+    path = ApiManager.contentApiUrl + '/' + path;
+    const xhrOptions: XhrOptions = {
+      method: 'DELETE',
+      successCode: 204,
+    };
+
+    return ApiManager._xhrAsync(path, xhrOptions);
+  }
+
+  /**
+   * Sends an XMLHttpRequest to the specified URL, and parses the
+   * the response text. This method returns immediately with a promise
+   * that resolves with the parsed object when the request completes.
+   */
+  static _xhrAsync(url: string, options?: XhrOptions) {
+
     options = options || {};
     const method = options.method || 'GET';
+    const params = options.parameters;
+    const successCode = options.successCode || 200;
 
-    const request = new XMLHttpRequest();
-    request.onreadystatechange = function() {
-      if (request.readyState === 4) {
-        if (request.status === 200) {
-          if (callback) {
-            callback(request);
-          }
-        } else {
-          if (options.errorCallback) {
-            options.errorCallback.call(request);
+    return new Promise((resolve, reject) => {
+      const request = new XMLHttpRequest();
+      request.onreadystatechange = () => {
+        if (request.readyState === 4) {
+          if (request.status === successCode) {
+            try {
+              resolve(JSON.parse(request.responseText || 'null'));
+            } catch (e) {
+              reject(e);
+            }
+          } else {
+            reject(request.responseText);
           }
         }
-      }
-    }
-    request.open(method, url);
-    request.send();
+      };
+
+      request.open(method, url);
+      request.send(params);
+    });
   }
 
 }
-

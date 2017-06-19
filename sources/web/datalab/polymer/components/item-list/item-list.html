@@ -66,6 +66,10 @@ the License.
       .second-col {
         flex-basis: 200px;
       }
+      .title {
+        padding-left: 5px;
+        line-height: 26px;
+      }
     </style>
 
     <!--Header row-->
@@ -85,8 +89,8 @@ the License.
             </paper-checkbox>
           </div>
           <div class="first-col">
-            <iron-icon hidden$={{!row.icon}} icon={{row.icon}}></iron-icon>
-            {{row.firstCol}}
+            <iron-icon hidden$="{{!row.icon}}" icon={{row.icon}}></iron-icon>
+            <span>{{row.firstCol}}</span>
           </div>
           <div class="second-col">
             {{row.secondCol}}

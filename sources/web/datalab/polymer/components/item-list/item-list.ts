@@ -19,7 +19,7 @@ interface ItemListRow {
   firstCol: string,
   secondCol: string,
   icon: string,
-  selected: boolean
+  selected: boolean,
 }
 
 /**
@@ -38,20 +38,23 @@ class ItemClickEvent extends CustomEvent {
  * name, and a selected property. The items are displayed in a table
  * form. Clicking an item selects it and unselects all other items.
  * Clicking the checkbox next to an item allows for multi-selection.
- * Double clicking an item fires a 'itemDoubleClick' event with this
- * item's index
+ * Double clicking an item fires an 'ItemClickEvent' event with this
+ * item's index. Similarly, selection fires an 'ItemClickEvent' with
+ * the most recent clicked item's index.
  */
 class ItemListElement extends Polymer.Element {
 
   /**
-   * list of data rows, each implementing the row interface
+   * List of data rows, each implementing the row interface
    */
   public rows: Array<ItemListRow>;
 
   /**
-   * list of string data columns names
+   * List of string data columns names
    */
   public columns: Array<string>;
+
+  private _selectedElements: Array<HTMLElement>;
 
   static get is() { return "item-list"; }
 
@@ -59,42 +62,99 @@ class ItemListElement extends Polymer.Element {
     return {
       rows: {
         type: Array,
-        value: function(): Array<Object> {
-          return [];
-        },
+        value: () => [],
+        observer: '_rowsChanged',
       },
       columns: {
         type: Array,
-        value: function(): Array<string> {
-          return [];
-        }
+        value: () => [],
+      },
+      _selectedElements: {
+        type: Array,
+        value: () => [],
       }
     }
   }
 
   /**
-   * on row click, check the click target, if it's the checkbox, add it to
-   * the selected rows, otherwise select it only
+   * Returns list of currently selected elements. This list keeps the actual
+   * HTML elements, which can then be used to get their indices, whereas the
+   * opposite is not directly possible.
+   */
+  getSelectedElements() {
+    return this._selectedElements;
+  }
+
+  /**
+   * Returns list of indices for the currently selected elements.
+   */
+  getSelectedIndices() {
+    return this._selectedElements.map(element => {
+      return this.$.list.indexForElement(element);
+    });
+  }
+
+  /**
+   * Clears the list of selected elements. No items should be selected when the
+   * list of rows is refreshed.
+   */
+  _rowsChanged() {
+    this._selectedElements = [];
+  }
+
+  /**
+   * On row click, checks the click target, if it's the checkbox, adds it to
+   * the selected rows, otherwise selects it only.
+   * This method also maintains the _selectedElements list.
    */
   _rowClicked(e: MouseEvent) {
     const target = <HTMLDivElement>e.target;
     const index = this.$.list.indexForElement(target);
+    const rowElement = this._getRowElementFromChild(target);
 
-    // if the clicked element is the checkbox, we're done, the checkbox already
-    // toggles selection (see the dom-repeat template)
-    // otherwise, select this element, unselect all others
+    // If the clicked element is the checkbox, we're done, the checkbox already
+    // toggles selection.
+    // Otherwise, select this element, unselect all others.
     if (target.tagName !== 'PAPER-CHECKBOX') {
       for (let i = 0; i < this.rows.length; ++i) {
         this.set('rows.' + i + '.selected', false);
       }
       this.set('rows.' + index + '.selected', true);
+
+      // This is now the only selected element.
+      this._selectedElements = [rowElement];
+    } else {
+      if (this.rows[index].selected === false) {
+        // Remove this element from the selected elements list if it's being unselected
+        const i = this._selectedElements.indexOf(rowElement);
+        if (i > -1) {
+          this._selectedElements.splice(i, 1);
+        }
+      } else {
+        // Add this element to the selected elements list if it's being selected,
+        this._selectedElements.push(rowElement);
+      }
     }
     const ev = new ItemClickEvent('itemSelectionChanged', { detail: {index: index} });
     this.dispatchEvent(ev);
   }
 
   /**
-   * on row double click, fire an event with the clicked item's index
+   * Given an element inside a row in the list, finds the parent row element.
+   */
+  _getRowElementFromChild(childElement: HTMLElement): HTMLElement {
+    let currentElement = childElement;
+    while (currentElement.tagName !== 'PAPER-ITEM' && !currentElement.classList.contains('row'))
+      if (currentElement.parentElement)
+        currentElement = currentElement.parentElement;
+      else
+        // This should not happen
+        throw new Error('Could not find parent row element for: ' + childElement.tagName);
+    return currentElement;
+  }
+
+  /**
+   * On row double click, fires an event with the clicked item's index.
    */
   _rowDoubleClicked(e: MouseEvent) {
     const index = this.$.list.indexForElement(e.target);
@@ -105,4 +165,3 @@ class ItemListElement extends Polymer.Element {
 }
 
 customElements.define(ItemListElement.is, ItemListElement);
-
