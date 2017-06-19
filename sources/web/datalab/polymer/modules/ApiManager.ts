@@ -58,7 +58,7 @@ interface JupyterNotebookModel {
  * Represents a file object as returned from Jupyter's files API.
  */
 interface JupyterFile {
-  content: Array<JupyterFile> | JupyterNotebookModel,
+  content: Array<JupyterFile> | JupyterNotebookModel | string,
   created: string,
   format: string,
   last_modified: string,

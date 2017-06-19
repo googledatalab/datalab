@@ -49,6 +49,7 @@ class FilesElement extends Polymer.Element {
   private _fileList: Array<ApiFile>;
   private _fileListRefreshInterval: number;
   private _currentCrumbs: Array<string>;
+  private _detailsPaneEnabled: boolean;
 
   static readonly _deleteListLimit = 10;
 
@@ -93,7 +94,11 @@ class FilesElement extends Polymer.Element {
       _fileListRefreshInterval: {
         type: Number,
         value: 10000,
-      }
+      },
+      _detailsPaneEnabled: {
+        type: Boolean,
+        value: true,
+      },
     }
   }
 
@@ -432,7 +437,7 @@ class FilesElement extends Polymer.Element {
   }
 
   _toggleDetailsPane() {
-    this.$.detailsPane.hidden = !this.$.detailsPane.hidden
+    this._detailsPaneEnabled = !this._detailsPaneEnabled;
   }
 
 }

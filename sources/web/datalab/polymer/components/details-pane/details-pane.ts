@@ -18,7 +18,7 @@
 /**
  * Details pane element for Datalab.
  * This element is designed to be displayed in a side bar that displays more
- * information about a selected file
+ * information about a selected file.
  */
 class DetailsPaneElement extends Polymer.Element {
 
@@ -27,6 +27,12 @@ class DetailsPaneElement extends Polymer.Element {
    */
   public file: ApiFile;
 
+  /**
+   * Whether the pane is actively tracking selected items. This is used to avoid fetching the
+   * selected file's data if the pane is closed by the host element.
+   */
+  public active: boolean;
+
   static get is() { return "details-pane"; }
 
   static get properties() {
@@ -34,7 +40,12 @@ class DetailsPaneElement extends Polymer.Element {
       file: {
         type: Object,
         value: {},
-        observer: '_fileChanged',
+        observer: '_reloadDetails',
+      },
+      active: {
+        type: Boolean,
+        value: true,
+        observer: '_reloadDetails',
       },
       _icon: {
         type: String,
@@ -51,31 +62,50 @@ class DetailsPaneElement extends Polymer.Element {
     }
   }
 
-  _fileChanged() {
+  _reloadDetails() {
+    if (!this.file || !this.active)
+      return;
+
+    // TODO: Consider caching the rendered HTML for a few minutes or until
+    // the next file list refresh
+
     this.$.previewHtml.innerHTML = '';
-    if (this.file && this.file.type === 'notebook') {
-      // TODO: Consider caching the rendered HTML for a few minutes or until
-      // the next file list refresh
+
+    // If this is a notebook, get the first two cells and render them if they're markdown
+    if (this.file.type === 'notebook' || this._isPlainTextFile(this.file)) {
       ApiManager.getJupyterFile(this.file.path)
         .then((file: JupyterFile) => {
-          const cells = (<JupyterNotebookModel>file.content).cells;
-          const firstTwoCells = cells.slice(0, 2);
 
-          let markdownHtml = '';
-          const converter = new showdown.Converter();
-          firstTwoCells.forEach(cell => {
-            if (cell.cell_type === 'markdown') {
-              markdownHtml += converter.makeHtml(cell.source);
+          if (file.type === 'notebook') {
+            const cells = (<JupyterNotebookModel>file.content).cells;
+            const firstTwoCells = cells.slice(0, 2);
+
+            let markdownHtml = '';
+            const converter = new showdown.Converter();
+            firstTwoCells.forEach(cell => {
+              if (cell.cell_type === 'markdown') {
+                markdownHtml += converter.makeHtml(cell.source);
+              }
+            })
+            if (markdownHtml) {
+              this.$.previewHtml.innerHTML = markdownHtml;
             }
-          })
-          if (markdownHtml) {
-            this.$.previewHtml.innerHTML = markdownHtml;
+          } else if (this._isPlainTextFile(file)) {
+            this.$.previewHtml.innerText = '\n' + (<string>file.content).substr(0, 1000) + '\n...\n\n';
           }
         })
         .catch(() => {
           debugger;
         })
     }
+  }
+
+  _isPlainTextFile(file: JupyterFile) {
+    return file &&
+           file.mimetype && (
+             file.mimetype.indexOf('text/') > -1 ||
+             file.mimetype.indexOf('application/') > -1
+           );
   }
 
   _getIcon() {
