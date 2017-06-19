@@ -12,10 +12,12 @@ or implied. See the License for the specific language governing permissions and 
 the License.
 -->
 
+<link rel="import" href="../../components/input-dialog/input-dialog.html">
 <link rel="import" href="../../components/item-list/item-list.html">
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
 
 <link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/iron-icons/editor-icons.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../bower_components/paper-progress/paper-progress.html">
 <link rel="import" href="../../bower_components/polymer/polymer.html">
@@ -136,11 +138,11 @@ the License.
     <!--Toolbar with buttons such as +Notebook, +Folder... etc-->
     <!--TODO: [yebrahim] Make these buttons do stuff-->
     <div id="toolbar">
-      <paper-button class="toolbar-button">
+      <paper-button class="toolbar-button" on-click="_createNewNotebook">
         <iron-icon icon="add-box"></iron-icon>
         <span>Notebook</span>
       </paper-button>
-      <paper-button class="toolbar-button">
+      <paper-button class="toolbar-button" on-click="_createNewDirectory">
         <iron-icon icon="add-box"></iron-icon>
         <span>Folder</span>
       </paper-button>
@@ -152,7 +154,11 @@ the License.
         <iron-icon icon="file-upload"></iron-icon>
         <span>Upload</span>
       </paper-button>
-      <paper-button class="toolbar-button">
+      <paper-button class="toolbar-button" on-click="_renameSelectedItem">
+        <iron-icon icon="editor:border-color"></iron-icon>
+        <span>Rename</span>
+      </paper-button>
+      <paper-button class="toolbar-button" on-click="_deleteSelectedItems">
         <iron-icon icon="delete"></iron-icon>
         <span>Delete</span>
       </paper-button>
@@ -196,5 +202,6 @@ the License.
   </template>
 </dom-module>
 
+<script src="../../modules/Utils.js"></script>
 <script src="../../modules/ApiManager.js"></script>
 <script src="datalab-files.js"></script>

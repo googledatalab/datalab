@@ -32,9 +32,7 @@ class SessionsElement extends Polymer.Element {
     return {
       _sessionList: {
         type: Array,
-        value: function() {
-          return [];
-        },
+        value: () => [],
       },
       _fetching: {
         type: Boolean,
