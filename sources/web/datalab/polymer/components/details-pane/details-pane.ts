@@ -33,6 +33,8 @@ class DetailsPaneElement extends Polymer.Element {
    */
   public active: boolean;
 
+  private _textFilePreviewLimit = 30; // Number of lines to preview from plain text files.
+
   static get is() { return "details-pane"; }
 
   static get properties() {
@@ -62,16 +64,23 @@ class DetailsPaneElement extends Polymer.Element {
     }
   }
 
+  /**
+   * Loads the details of the given file in the details pane. For directories, the name,
+   * icon, and creation and modification dates are shown. For notebooks, the first two
+   * cells are pulled from the file, and any markdown they contain is rendered in the pane.
+   * For now, we also support other plain text files with mime type text/*, and JSON files.
+   * Most of the time, the requests to fetch the selected item's metadata are cached by
+   * the browser, and the details show up immediately.
+   * 
+   * TODO: However, consider adding a spinning animation while this data loads.
+   */
   _reloadDetails() {
     if (!this.file || !this.active)
       return;
 
-    // TODO: Consider caching the rendered HTML for a few minutes or until
-    // the next file list refresh
-
     this.$.previewHtml.innerHTML = '';
 
-    // If this is a notebook, get the first two cells and render them if they're markdown
+    // If this is a notebook, get the first two cells and render any markdown in them.
     if (this.file.type === 'notebook' || this._isPlainTextFile(this.file)) {
       ApiManager.getJupyterFile(this.file.path)
         .then((file: JupyterFile) => {
@@ -91,7 +100,13 @@ class DetailsPaneElement extends Polymer.Element {
               this.$.previewHtml.innerHTML = markdownHtml;
             }
           } else if (this._isPlainTextFile(file)) {
-            this.$.previewHtml.innerText = '\n' + (<string>file.content).substr(0, 1000) + '\n...\n\n';
+            const lines = (<string>file.content).split('\n');
+            this.$.previewHtml.innerText = '\n' +
+                lines.slice(0, this._textFilePreviewLimit).join('\n') +
+                '\n';
+            if (lines.length > this._textFilePreviewLimit) {
+              this.$.previewHtml.innerText += '...\n\n';
+            }
           }
         })
         .catch(() => {
@@ -100,11 +115,15 @@ class DetailsPaneElement extends Polymer.Element {
     }
   }
 
+  /**
+   * Returns true if the contents of this file can be read as plain text.
+   * @param file object for the file whose details to display.
+   */
   _isPlainTextFile(file: JupyterFile) {
     return file &&
            file.mimetype && (
              file.mimetype.indexOf('text/') > -1 ||
-             file.mimetype.indexOf('application/') > -1
+             file.mimetype.indexOf('application/json') > -1
            );
   }
 
@@ -125,4 +144,3 @@ class DetailsPaneElement extends Polymer.Element {
 }
 
 customElements.define(DetailsPaneElement.is, DetailsPaneElement);
-
