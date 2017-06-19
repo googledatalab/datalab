@@ -13,7 +13,9 @@
  */
 
 /// <reference path="../../modules/ApiManager.ts" />
+/// <reference path="../../modules/Utils.ts" />
 /// <reference path="../item-list/item-list.ts" />
+/// <reference path="../input-dialog/input-dialog.ts" />
 
 /**
  * File listing element for Datalab.
@@ -43,6 +45,8 @@ class FilesElement extends Polymer.Element {
   private _fileListRefreshInterval: number;
   private _currentCrumbs: Array<string>;
 
+  static readonly _deleteListLimit = 10;
+
   static get is() { return "datalab-files"; }
 
   static get properties() {
@@ -58,21 +62,15 @@ class FilesElement extends Polymer.Element {
       },
       _currentCrumbs: {
         type: Array,
-        value: function(): Array<string> {
-          return [];
-        },
+        value: () => [],
       },
       _fileList: {
         type: Array,
-        value: function(): Array<ApiFile> {
-          return [];
-        },
+        value: () => [],
       },
       _pathHistory: {
         type: Array,
-        value: function(): Array<string> {
-          return [];
-        },
+        value: () => [],
       },
       _pathHistoryIndex: {
         type: Number,
@@ -258,7 +256,156 @@ class FilesElement extends Polymer.Element {
     this.$.forwardNav.disabled = this._pathHistoryIndex === this._pathHistory.length - 1;
   }
 
+  _createNewNotebook() {
+    return this._createNewItem('notebook');
+  }
+
+  _createNewDirectory() {
+    return this._createNewItem('directory');
+  }
+
+  /**
+   * The Jupyter contents API does not provide a way to create a new item with a specific
+   * name, it only creates new untitled files or directories in provided path (see
+   * https://github.com/jupyter/notebook/blob/master/notebook/services/contents/manager.py#L311).
+   * In order to offer a better experience, we create an untitled item in the current path,
+   * then rename it to whatever the user specified.
+   * 
+   * This method creates an input modal to get the user input, then calls the ApiManager to
+   * create a new notebook/directory at the current path, and fetches the updated list
+   * of files to redraw.
+   */
+  _createNewItem(type: string) {
+
+    // First, open a dialog to let the user specify a name for the notebook.
+    const inputOptions: DialogOptions = {
+      title: 'New ' + type, 
+      withInput: true,
+      inputLabel: 'Name',
+      okLabel: 'Create',
+    };
+
+    return Utils.getUserInputAsync(inputOptions)
+      .then((closeResult: DialogCloseResult) => {
+        // Only if the dialog has been confirmed with some user input, rename the
+        // newly created file. Then if that is successful, reload the file list
+        if (closeResult.confirmed && closeResult.userInput) {
+          let newName = this.currentPath + '/' + closeResult.userInput;
+          // Make sure the name ends with .ipynb for notebooks for convenience
+          if (type === 'notebook' && !newName.endsWith('.ipynb')) {
+            newName += '.ipynb';
+          }
+          return ApiManager.createNewItem(type, newName)
+            .then(() => this._fetchFileList());
+        } else {
+          return Promise.resolve(null);
+        }
+      }); // TODO: Handle create errors properly by showing some message to the user
+  }
+
+  /**
+   * Creates an input modal to get the user input, then calls the ApiManager to
+   * rename the currently selected item. This only works if exactly one item is
+   * selected.
+   */
+  _renameSelectedItem() {
+
+    const selectedIndices = this.$.files.getSelectedIndices();
+    if (selectedIndices.length === 1) {
+      const i = selectedIndices[0];
+      const selectedObject = this._fileList[i];
+
+      // Open a dialog to let the user specify the new name for the selected item.
+      const inputOptions: DialogOptions = {
+        title: 'Rename ' + selectedObject.type.toString(), 
+        withInput: true,
+        inputLabel: 'New name',
+        inputValue: selectedObject.name,
+        okLabel: 'Rename',
+      };
+
+      // Only if the dialog has been confirmed with some user input, rename the
+      // selected item. Then if that is successful, and reload the file list.
+      return Utils.getUserInputAsync(inputOptions)
+        .then((closeResult: DialogCloseResult) => {
+          if (closeResult.confirmed && closeResult.userInput) {
+            const newName = this.currentPath + '/' + closeResult.userInput;
+            return ApiManager.renameItem(selectedObject.path, newName)
+              .then(() => this._fetchFileList());
+              // TODO: [yebrahim] Re-select the renamed item after refresh
+          } else {
+            return Promise.resolve(null);
+          }
+        })
+        // TODO: Handle rename errors properly by showing some message to the user
+    } else {
+      return Promise.resolve(null);
+    }
+  }
+
+  /**
+   * Creates an input modal to get the user confirmation with a list of the items
+   * to be deleted, then calls the ApiManager for each of these items to delete,
+   * then refreshes the file list.
+   */
+  _deleteSelectedItems() {
+
+    const selectedIndices = this.$.files.getSelectedIndices();
+    if (selectedIndices.length) {
+      // Build friendly title and body messages that adapt to the number of items.
+      const num = selectedIndices.length;
+      let title = 'Delete ';
+
+      // Title
+      if (num === 1) {
+        const i = selectedIndices[0];
+        const selectedObject = this._fileList[i];
+        title += selectedObject.type.toString();
+      } else {
+        title += num + ' items';
+      }
+
+      // Body
+      let itemList = '<ul>\n';
+      selectedIndices.forEach((fileIdx: number, i: number) => {
+        if (i < FilesElement._deleteListLimit)
+          itemList += '<li>' + this._fileList[fileIdx].name + '</li>\n';
+      });
+      if (num > FilesElement._deleteListLimit) {
+        itemList += '+ ' + (num - FilesElement._deleteListLimit) + ' more.';
+      }
+      itemList += '</ul>'
+      const bodyHtml = '<div>Are you sure you want to delete:</div>' + itemList;
+
+      // Open a dialog to let the user confirm deleting the list of selected items.
+      const inputOptions: DialogOptions = {
+        title: title,
+        bodyHtml: bodyHtml,
+        okLabel: 'Delete',
+      };
+
+      // Only if the dialog has been confirmed, call the ApiManager to delete each
+      // of the selected items, and wait for all promises to finish. Then if that
+      // is successful, reload the file list.
+      return Utils.getUserInputAsync(inputOptions)
+        .then((closeResult: DialogCloseResult) => {
+          if (closeResult.confirmed) {
+            let deletePromises = selectedIndices.map((i: number) => {
+              return ApiManager.deleteItem(this._fileList[i].path);
+            });
+            // TODO: [yebrahim] If at least one delete completes then a failure happens with
+            // any of the rest, _fetchFileList will never be called.
+            return Promise.all(deletePromises)
+              .then(() => this._fetchFileList());
+          } else {
+            return Promise.resolve(null);
+          }
+        });
+        // TODO: Handle delete errors properly by showing some message to the user
+    } else {
+      return Promise.resolve(null);
+    }
+  }
 }
 
 customElements.define(FilesElement.is, FilesElement);
-

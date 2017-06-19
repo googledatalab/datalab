@@ -1,0 +1,62 @@
+<!--
+Copyright 2017 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License
+is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+or implied. See the License for the specific language governing permissions and limitations under
+the License.
+-->
+
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="input-dialog">
+  <template>
+    <style include="datalab-shared-styles">
+      #theDialog {
+        width: 300px;
+        /*Disable input underline animation*/
+        --paper-input-container-underline-focus: {
+          display: none;
+        };
+      }
+      hr {
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
+        border-top: 1px solid #eee;
+      }
+      #title {
+        font-size: 16px;
+        text-align: center;
+      }
+      .confirm {
+        background-color: var(--app-secondary-color);
+        font-weight: bold;
+      }
+    </style>
+    <paper-dialog id="theDialog" class="dialog" with-backdrop>
+      <h2><div id="title">{{title}}</div></h2>
+      <!--Body value is bound in javascript because it needs to bind to innerHTML-->
+      <div id="body" hidden$="{{!bodyHtml}}"></div>
+      <paper-input id="inputBox" hidden$="{{!withInput}}" label="{{inputLabel}}" spellcheck=false
+                   value="{{inputValue}}" on-keydown="_checkEnter" no-label-float>
+      </paper-input>
+      <hr />
+      <div class="buttons">
+        <paper-button id="okButton" on-click="_confirmClose" class="confirm" >
+          {{okLabel}}
+        </paper-button>
+        <paper-button on-click="_cancelClose">{{cancelLabel}}</paper-button>
+      </div>
+    </paper-dialog>
+  </template>
+</dom-module>
+
+<script src="input-dialog.js"></script>
