@@ -54,6 +54,16 @@ class ItemListElement extends Polymer.Element {
    */
   public columns: Array<string>;
 
+  /**
+   * Whether to hide the header row
+   */
+  public noHeader: boolean;
+
+  /**
+   * Whether to disable item selection
+   */
+  public noSelection: boolean;
+
   private _selectedElements: Array<HTMLElement>;
 
   static get is() { return "item-list"; }
@@ -69,6 +79,14 @@ class ItemListElement extends Polymer.Element {
         type: Array,
         value: () => [],
       },
+      noHeader: {
+        type: Boolean,
+        value: false,
+      },
+      noSelection: {
+        type: Boolean,
+        value: false,
+      },
       _selectedElements: {
         type: Array,
         value: () => [],
@@ -82,14 +100,14 @@ class ItemListElement extends Polymer.Element {
    * opposite is not directly possible.
    */
   getSelectedElements() {
-    return this._selectedElements;
+    return this.noSelection ? null : this._selectedElements;
   }
 
   /**
    * Returns list of indices for the currently selected elements.
    */
   getSelectedIndices() {
-    return this._selectedElements.map(element => {
+    return this.noSelection ? null : this._selectedElements.map(element => {
       return this.$.list.indexForElement(element);
     });
   }
@@ -108,6 +126,9 @@ class ItemListElement extends Polymer.Element {
    * This method also maintains the _selectedElements list.
    */
   _rowClicked(e: MouseEvent) {
+    if (this.noSelection) {
+      return;
+    }
     const target = <HTMLDivElement>e.target;
     const index = this.$.list.indexForElement(target);
     const rowElement = this._getRowElementFromChild(target);

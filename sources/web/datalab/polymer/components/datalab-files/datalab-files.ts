@@ -38,6 +38,11 @@ class FilesElement extends Polymer.Element {
    */
   public currentPath: string;
 
+  /**
+   * Smaller version of this element to be used as a flyout file picker.
+   */
+  public small: boolean;
+
   private _pathHistory: Array<string>;
   private _pathHistoryIndex: number;
   private _fetching: boolean;
@@ -59,6 +64,10 @@ class FilesElement extends Polymer.Element {
         type: String,
         value: '',
         observer: '_currentPathChanged',
+      },
+      small: {
+        type: Boolean,
+        value: false,
       },
       _currentCrumbs: {
         type: Array,
@@ -104,7 +113,7 @@ class FilesElement extends Polymer.Element {
                                     this._handleDoubleClicked.bind(this));
     }
 
-    this.$.files.columns = ['Name', 'Status'];
+    this.$.files.columns = this.small ? ['Name'] : ['Name', 'Status'];
 
     // Refresh the file list periodically.
     // TODO: [yebrahim] Start periodic refresh when the window is in focus, and
@@ -189,6 +198,9 @@ class FilesElement extends Polymer.Element {
    */
   _handleDoubleClicked(e: ItemClickEvent) {
     let clickedItem = this._fileList[e.detail.index];
+    if (this.small && clickedItem.type !== 'directory') {
+      return;
+    }
     if (clickedItem.type === 'directory') {
       this.currentPath = clickedItem.path;
       this._pushNewPath();
@@ -404,6 +416,29 @@ class FilesElement extends Polymer.Element {
       return Promise.resolve(null);
     }
   }
+
+  _copySelectedItem() {
+    const selectedIndices = this.$.files.getSelectedIndices();
+
+    if (selectedIndices.length) {
+      const i = selectedIndices[0];
+      const selectedObject = this._fileList[i];
+
+      const options: DialogOptions = {
+        title: 'Copy Item',
+        okLabel: 'Copy Here',
+      };
+      Utils.pickDirectory(options)
+        .then((closeResult: DialogCloseResult) => {
+          if (closeResult.confirmed) {
+            return ApiManager.copyItem(selectedObject.path, closeResult.userInput);
+          } else {
+            return Promise.resolve(null);
+          }
+        });
+    }
+  }
+
 }
 
 customElements.define(FilesElement.is, FilesElement);

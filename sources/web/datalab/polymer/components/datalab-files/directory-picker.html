@@ -1,0 +1,59 @@
+<!--
+Copyright 2017 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License
+is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+or implied. See the License for the specific language governing permissions and limitations under
+the License.
+-->
+
+<link rel="import" href="datalab-files.html">
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+
+<dom-module id="directory-picker">
+  <template>
+
+    <style include="datalab-shared-styles">
+      #pickerDialog {
+        width: 60%;
+        height: 30%;
+      }
+      paper-dialog {
+        display: flex;
+        flex-direction: column;
+      }
+      .files {
+        margin: 0px;
+        flex-grow: 1;
+      }
+      datalab-files {
+        padding: 0px;
+      }
+      .confirm {
+        background-color: var(--app-secondary-color);
+        font-weight: bold;
+      }
+    </style>
+
+    <paper-dialog id="pickerDialog" with-backdrop>
+      <div class="files">
+        <datalab-files small></datalab-files>
+      </div>
+      <div>
+        <paper-button id="okButton" on-click="_confirmClose" class="confirm" >
+          Copy Here
+        </paper-button>
+        <paper-button on-click="_cancelClose">Cancel</paper-button>
+      </div>
+    </paper-dialog>
+
+  </template>
+</dom-module>
+
+<script src="directory-picker.js"></script>
