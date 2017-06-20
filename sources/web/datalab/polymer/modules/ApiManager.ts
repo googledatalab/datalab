@@ -216,6 +216,35 @@ class ApiManager {
   }
 
   /**
+   * Copy an item from source to destination
+   * @param oldPath source path to copy from
+   * @param newPath destination path to copy to
+   */
+  static copyItem(oldPath: string, newPath: string) {
+    let toDir = newPath.substr(0, newPath.lastIndexOf('/'));
+    toDir = ApiManager.contentApiUrl + '/' + toDir;
+    const xhrOptions: XhrOptions = {
+      method: 'POST',
+      successCode: 201,
+      parameters: JSON.stringify({
+        copy_from: oldPath
+      })
+    };
+    let notebookPathPlaceholder = '';
+
+    return ApiManager._xhrAsync(toDir, xhrOptions)
+      .then((notebook: JupyterFile) => {
+        notebookPathPlaceholder = notebook.path;
+        return ApiManager.renameItem(notebookPathPlaceholder, newPath);
+      })
+      .catch((error: string) => {
+        // If the rename fails, remove the temporary item
+        ApiManager.deleteItem(notebookPathPlaceholder);
+        throw error;
+      });
+  }
+
+  /**
    * Sends an XMLHttpRequest to the specified URL, and parses the
    * the response text. This method returns immediately with a promise
    * that resolves with the parsed object when the request completes.
