@@ -129,7 +129,8 @@ fi
 
 # Parse the settings overrides to get the (potentially overridden) value
 # of the `datalabBasePath` setting.
-DATALAB_BASE_PATH=$(echo ${DATALAB_SETTINGS_OVERRIDES:-"{}"} | python -c "import sys,json; print(json.load(sys.stdin).get('datalabBasePath',''))")
+EMPTY_BRACES="{}"
+DATALAB_BASE_PATH=$(echo ${DATALAB_SETTINGS_OVERRIDES:-$EMPTY_BRACES} | python -c "import sys,json; print(json.load(sys.stdin).get('datalabBasePath',''))")
 
 # Start the ungit server
 ungit --port=8083 --no-launchBrowser --forcedLaunchPath=/content/datalab --ungitVersionCheckOverride 1 --rootPath="${DATALAB_BASE_PATH}" > /dev/null &
@@ -152,6 +153,9 @@ if [ -d /devroot ]; then
   if [ -d /content/pydatalab ]; then
     reinstall_pydatalab
   fi
+  # Prevent (harmless) error message about missing .foreverignore
+  IGNOREFILE=/devroot/build/web/nb/.foreverignore
+  [ -f ${IGNOREFILE} ] || touch ${IGNOREFILE}
   # Auto-restart when the developer builds from the typescript files.
   echo ${FOREVER_CMD} --watch --watchDirectory /devroot/build/web/nb /devroot/build/web/nb/app.js
   ${FOREVER_CMD} --watch --watchDirectory /devroot/build/web/nb /devroot/build/web/nb/app.js
