@@ -13,7 +13,9 @@
  */
 
 /// <reference path="../../modules/ApiManager.ts" />
-/// <reference path="../../../../../../third_party/externs/ts/showdown/showdown.d.ts" />
+
+// Instead of writing a .d.ts file containing this one line.
+declare function marked(markdown: string): string;
 
 /**
  * Details pane element for Datalab.
@@ -90,10 +92,9 @@ class DetailsPaneElement extends Polymer.Element {
             const firstTwoCells = cells.slice(0, 2);
 
             let markdownHtml = '';
-            const converter = new showdown.Converter();
             firstTwoCells.forEach(cell => {
               if (cell.cell_type === 'markdown') {
-                markdownHtml += converter.makeHtml(cell.source);
+                markdownHtml += marked(cell.source);
               }
             })
             if (markdownHtml) {
