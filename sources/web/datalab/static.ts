@@ -228,6 +228,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     'logo.png': 'datalab.png',
   };
 
+  response.setHeader('Cache-Control', 'public, max-age=3600');
   var subpath = pathname.substr(pathname.lastIndexOf('/') + 1);
   if (staticResourcesList.indexOf(subpath) >= 0) {
     sendDataLabFile(subpath, response);
@@ -256,6 +257,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     sendDataLabFile('datalab.js', response);
   }
   else if (pathname.lastIndexOf('/custom.css') > 0) {
+    response.removeHeader('Cache-Control');
     var userId: string = userManager.getUserId(request);
     var userSettings: common.Map<string> = settings.loadUserSettings(userId);
     if ('theme' in userSettings) {
