@@ -27,8 +27,8 @@
  * element.
  * 
  * A mini version of this element can be rendered by specifying the "small" attribute, which
- * removes the toolbar, refresh button, and breadcrumbs, and uses the item-list element
- * with no header and no selection. It also doesn't do anything when a file is double clicked.
+ * removes the toolbar and the refresh button, and uses the item-list element with no header
+ * and no selection. It also doesn't do anything when a file is double clicked.
  * This is meant to be used for browsing only, such as the case for picking files or directories.
  */
 class FilesElement extends Polymer.Element {
@@ -53,6 +53,7 @@ class FilesElement extends Polymer.Element {
   private _fetching: boolean;
   private _fileList: Array<ApiFile>;
   private _fileListRefreshInterval: number;
+  private _fileListRefreshIntervalHandle: number;
   private _currentCrumbs: Array<string>;
 
   static readonly _deleteListLimit = 10;
@@ -124,7 +125,14 @@ class FilesElement extends Polymer.Element {
     // Refresh the file list periodically.
     // TODO: [yebrahim] Start periodic refresh when the window is in focus, and
     // the files page is open, and stop it on blur to minimize unnecessary traffic
-    setInterval(this._fetchFileList.bind(this), this._fileListRefreshInterval);
+    this._fileListRefreshIntervalHandle = setInterval(this._fetchFileList.bind(this),
+                                                      this._fileListRefreshInterval);
+  }
+
+  disconnectedCallback() {
+    // Clean up the refresh interval. This is important if multiple datalab-files elements
+    // are created and destroyed on the document.
+    clearInterval(this._fileListRefreshIntervalHandle);
   }
 
   _getNotebookUrlPrefix() {
