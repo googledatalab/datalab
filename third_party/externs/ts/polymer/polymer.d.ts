@@ -26,6 +26,10 @@ interface ElementDefinitionOptions {
   extends: string;
 }
 
+interface PolymerTemplate {
+  content: HTMLElement;
+}
+
 declare module Polymer {
 
   class Element extends HTMLElement {
@@ -83,6 +87,7 @@ declare module Polymer {
     setScrollDirection(direction: string, node: HTMLElement): void;
     shift(path: string, value: any): any;
     splice(path: string, start: number, deleteCount: number, ...items: any[]): any;
+    static template: PolymerTemplate;
     toggleAttribute(name: string, bool: boolean, node?: HTMLElement): void;
     toggleClass(name: string, bool: boolean, node?: HTMLElement): void;
     transform(transform: string, node?: HTMLElement): void;
@@ -92,6 +97,7 @@ declare module Polymer {
     unshift(path: string, value: any): any;
     updateStyles(properties?: Object): void;
     shadowRoot: ShadowRoot;
+    is: string;
     properties?: Object;
     listeners?: Object;
     behaviors?: Object[];
@@ -104,6 +110,10 @@ declare module Polymer {
     connectedCallback(): void;
     attributeChanged?(attrName: string, oldVal: any, newVal: any): void;
     prototype?: Object;
+  }
+
+  class DomModule {
+    static import(element: string, property: string): PolymerTemplate;
   }
 
   function importHref(href: string,

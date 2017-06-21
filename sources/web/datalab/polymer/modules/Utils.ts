@@ -15,23 +15,19 @@
 /**
  * Options for opening a dialog.
  */
+enum DialogType {
+  input,
+  confirm,
+}
 interface DialogOptions {
   title: string,
+  messageHtml?: string,
   bodyHtml?: string,
-  withInput?: boolean,
   inputLabel?: string,
   inputValue?: string,
   okLabel?: string,
   cancelLabel?: string,
-}
-
-/**
- * Dialog close context, includes whether the dialog was confirmed, and any
- * user input given.
- */
-interface DialogCloseResult {
-  confirmed: boolean
-  userInput: string,
+  big?: boolean,
 }
 
 /**
@@ -41,32 +37,40 @@ class Utils {
 
   /**
    * Opens a dialog with the specified options. It uses the Datalab custom element
-   * <input-dialog>, attaches a new instance to the current document, opens it
-   * and returns a promise that resolves when the dialog is closed.
-   * @param dialogOptions options for configuring the dialog
+   * according to the specified dialog type, attaches a new instance to the current
+   * document, opens it, and returns a promise that resolves when the dialog is closed.
+   * @param type specifies which type of dialog to use
+   * @param dialogOptions specifies different options for opening the dialog
    */
-  static getUserInputAsync(dialogOptions: DialogOptions) {
-    const createModal = <InputDialogElement>document.createElement('input-dialog');
-    document.body.appendChild(createModal);
+  static showDialog(type: DialogType, dialogOptions: DialogOptions) {
+    let dialogElement = '';
+    if (type === DialogType.input) {
+      dialogElement = 'input-dialog';
+    } else if (type === DialogType.confirm) {
+      dialogElement = 'base-dialog';
+    }
+    const dialog = <any>document.createElement(dialogElement);
+    document.body.appendChild(dialog);
 
-    createModal.title = dialogOptions.title;
-    if (dialogOptions.bodyHtml)
-      createModal.bodyHtml = dialogOptions.bodyHtml;
-    if (dialogOptions.withInput !== undefined)
-      createModal.withInput = dialogOptions.withInput;
+    if (dialogOptions.title)
+      dialog.title = dialogOptions.title;
+    if (dialogOptions.messageHtml)
+      dialog.messageHtml = dialogOptions.messageHtml;
     if (dialogOptions.inputLabel)
-      createModal.inputLabel = dialogOptions.inputLabel;
+      dialog.inputLabel = dialogOptions.inputLabel;
     if (dialogOptions.inputValue)
-      createModal.inputValue = dialogOptions.inputValue;
+      dialog.inputValue = dialogOptions.inputValue;
     if (dialogOptions.okLabel)
-      createModal.okLabel = dialogOptions.okLabel;
+      dialog.okLabel = dialogOptions.okLabel;
     if (dialogOptions.cancelLabel)
-      createModal.cancelLabel = dialogOptions.cancelLabel;
+      dialog.cancelLabel = dialogOptions.cancelLabel;
+    if (dialogOptions.big !== undefined)
+      dialog.big = dialogOptions.big;
 
     // Open the dialog
     return new Promise(resolve => {
-      createModal.openAndWaitAsync((closeResult: DialogCloseResult) => {
-        document.body.removeChild(createModal);
+      dialog.openAndWaitAsync((closeResult: InputDialogCloseResult) => {
+        document.body.removeChild(dialog);
         resolve(closeResult);
       });
     });

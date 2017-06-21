@@ -13,32 +13,26 @@
  */
 
 /**
- * Input Dialog element for Datalab.
- * This element is a modal dialog that is configurable to popup a message to the
- * user, or let them input some value, with confirm and cancel buttons. The input
+ * Dialog close context, includes whether the dialog was confirmed, and any
+ * user input given.
+ */
+interface InputDialogCloseResult extends BaseDialogCloseResult {
+  userInput: string,
+}
+
+/**
+ * Input Dialog element for Datalab, extends the Base dialog element.
+ * This element is a modal dialog that presents the user with an input box. The input
  * can optionally start up with a value that is selected. Currently, the modal
  * treats this value as a file name with an extension, and it selects all characters
  * up to the last '.' to make it easy to edit file names.
- * 
- * TODO: [yebrahim] Consider exporting this behavior to the host element to allow
- * for more general use cases.
  */
-class InputDialogElement extends Polymer.Element {
-
-  /**
-   * Title string of the dialog, shows up as <h2>
-   */
-  public title: string;
+class InputDialogElement extends BaseDialogElement {
 
   /**
    * HTML for message in the dialog, will be inserted as innerHTML
    */
   public bodyHtml: string;
-
-  /**
-   * Whether an input field should be included in this dialog
-   */
-  public withInput: boolean;
 
   /**
    * Text that shows up inside the input field when it's empty
@@ -50,33 +44,15 @@ class InputDialogElement extends Polymer.Element {
    */
   public inputValue: string;
 
-  /**
-   * String for confirm button
-   */
-  public okLabel: string;
-
-  /**
-   * String for cancel button
-   */
-  public cancelLabel: string;
-
-  private _closeCallback: Function;
+  private static _memoizedTemplate: {content: HTMLElement};
 
   static get is() { return "input-dialog"; }
 
   static get properties() {
-    return {
-      title: {
-        type: String,
-        value: '',
-      },
+    return Object.assign(super.properties, {
       bodyHtml: {
         type: String,
         value: '',
-      },
-      withInput: {
-        type: Boolean,
-        value: false,
       },
       inputLabel: {
         type: String,
@@ -86,35 +62,15 @@ class InputDialogElement extends Polymer.Element {
         type: String,
         value: '',
       },
-      okLabel: {
-        type: String,
-        value: 'Ok',
-      },
-      cancelLabel: {
-        type: String,
-        value: 'Cancel'
-      },
-    }
+    });
   }
 
   open() {
+    super.open();
     const self = this;
 
-    // Set the focus to the input field if it's visible,
-    // otherwise to the ok button.
-    if (this.withInput) {
-      this.$.inputBox.setAttribute('autofocus', '');
-    } else {
-      this.$.okButton.setAttribute('autofocus', '');
-    }
-
-    // Set the body's inner HTML
-    if (this.bodyHtml) {
-      this.$.body.innerHTML = this.bodyHtml;
-    }
-
     // If an input is included, wait for the dialog to open, then select its text
-    if (this.withInput && this.inputValue) {
+    if (this.inputValue) {
       this.$.theDialog.addEventListener('iron-overlay-opened', function() {
         const inputElement = self.$.inputBox.$.nativeInput;
         inputElement.focus();
@@ -122,48 +78,27 @@ class InputDialogElement extends Polymer.Element {
         inputElement.selectionEnd = self.inputValue.lastIndexOf('.');
       });
     }
-
-    // If the closed event fires then the confirm button hasn't been clicked
-    this.$.theDialog.addEventListener('iron-overlay-closed', function() {
-      self._cancelClose();
-    });
-    this.$.theDialog.open();
   }
 
   /**
-   * Opens the dialog and takes a callback function that will be called when
-   * the dialog is closed with the close options.
+   * This template is calculated once in run time based on the template of  the
+   * super class, then saved in a local variable for memoization.
+   * See https://www.polymer-project.org/2.0/docs/devguide/dom-template#inherited-templates
    */
-  openAndWaitAsync(callback: Function) {
-    if (callback) {
-      this._closeCallback = callback;
+  static get template() {
+    if (!this._memoizedTemplate) {
+      this._memoizedTemplate = Utils.stampInBaseTemplate(this.is, super.is, '#body');
     }
-    this.open();
-  }
-
-  _confirmClose() {
-    this._dialogClosed(true);
-  }
-
-  _cancelClose() {
-    this._dialogClosed(false);
-  }
-
-  _dialogClosed(confirmed: boolean) {
-    if (this.$.theDialog.opened && this._closeCallback) {
-      this._closeCallback({
-        confirmed: confirmed,
-        userInput: this.withInput ? this.$.inputBox.value : undefined,
-      });
-    }
+    return this._memoizedTemplate;
   }
 
   /**
-   * Helper method to listen for Enter key when an input is present
+   * Also send back the user input value in the closing context.
    */
-  _checkEnter(e: KeyboardEvent) {
-    if (e.keyCode === 13) // Enter
-      this._confirmClose();
+  getCloseResult() {
+    return {
+      userInput: this.$.inputBox.value,
+    };
   }
 
 }

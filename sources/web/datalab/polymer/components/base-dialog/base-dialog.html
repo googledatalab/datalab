@@ -1,0 +1,77 @@
+<!--
+Copyright 2017 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License
+is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+or implied. See the License for the specific language governing permissions and limitations under
+the License.
+-->
+
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+
+<dom-module id="base-dialog">
+  <template>
+    <style include="datalab-shared-styles">
+      .dialog-big--true {
+        min-width: 60%;
+        min-height: 60%;
+      }
+      .dialog-big--false {
+        min-width: 300px;
+        min-height: 180px;
+      }
+      #title {
+        font-size: 16px;
+        text-align: center;
+        height: 20px;
+        margin: 0px;
+        padding: 15px; /*Total height: 50px*/
+        background-color: var(--app-secondary-color);
+      }
+      #body {
+        margin: 0px;
+      }
+      hr {
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
+        border-top: 1px solid #eee;
+        margin: 0px;
+      }
+      .buttons {
+        display: flex;
+        justify-content: center;
+        padding: 0px;
+        height: 40px;
+        margin: 15px; /*Total height: 70px*/
+      }
+      .confirm {
+        background-color: var(--app-secondary-color);
+        font-weight: bold;
+      }
+    </style>
+    <paper-dialog id="theDialog" class$="dialog-big--{{big}}" with-backdrop
+                  on-keydown="_checkEnter">
+      <div id="title">{{title}}</div>
+      <!--message value is bound in javascript because it needs to bind to innerHTML-->
+      <div id="message" hidden$="{{!message}}">{{message}}</div>
+      <!--body acts as a place holder for extending elements, their custom
+      markup is inserted here by stamping it from Javascript-->
+      <div id="body"></div>
+      <hr>
+      <div class="buttons">
+        <paper-button id="okButton" on-click="_confirmClose" class="confirm" >
+          {{okLabel}}
+        </paper-button>
+        <paper-button on-click="_cancelClose">{{cancelLabel}}</paper-button>
+      </div>
+    </paper-dialog>
+  </template>
+</dom-module>
+
+<script src="base-dialog.js"></script>
