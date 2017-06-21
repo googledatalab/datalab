@@ -152,8 +152,9 @@ define(['util'], (util) => {
       }
 
       var html = [];
+      var basePath = util.datalabLink('/tree')
       html.push('<ul class="breadcrumb">');
-      html.push('<li><a href="/tree"><i class="material-icons">home</i></a></li>');
+      html.push('<li><a href="' + basePath + '"><i class="material-icons">home</i></a></li>');
 
       var segments = [];
 
@@ -170,7 +171,7 @@ define(['util'], (util) => {
           element = '<li>' + pathPart + '</li>';
         }
         else {
-          element = '<li><a href="/tree/' + segments.join('/') + '">' + pathPart + '</a></li>';
+          element = '<li><a href="' + basePath + '/' + segments.join('/') + '">' + pathPart + '</a></li>';
         }
 
         html.push(element);
