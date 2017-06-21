@@ -100,6 +100,10 @@ function sendFile(filePath: string, response: http.ServerResponse,
       }
     }
     else {
+      if (isDynamic) {
+        response.removeHeader('Cache-Control');
+        response.setHeader('Cache-Control', 'no-cache');
+      }
       response.writeHead(200, { 'Content-Type': contentType });
       response.end(content);
     }
@@ -110,9 +114,10 @@ function sendFile(filePath: string, response: http.ServerResponse,
  * Sends a static file located within the DataLab static directory.
  * @param filePath the relative file path of the static file to send.
  * @param response the out-going response associated with the current HTTP request.
+ * @param isDynamic indication of whether or not the file contents might change.
  */
-function sendDataLabFile(filePath: string, response: http.ServerResponse) {
-  let live = false
+function sendDataLabFile(filePath: string, response: http.ServerResponse, isDynamic: boolean = false) {
+  let live = isDynamic;
   let staticDir = path.join(__dirname, 'static')
   // Set this env var to point to source directory for live updates without restart.
   const liveStaticDir = process.env.DATALAB_LIVE_STATIC_DIR
@@ -228,6 +233,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     'logo.png': 'datalab.png',
   };
 
+  response.setHeader('Cache-Control', 'public, max-age=3600');
   var subpath = pathname.substr(pathname.lastIndexOf('/') + 1);
   if (staticResourcesList.indexOf(subpath) >= 0) {
     sendDataLabFile(subpath, response);
@@ -263,12 +269,12 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       if (theme == 'custom') {
         sendUserCustomTheme(userId, response);
       } else if (theme == 'dark') {
-        sendDataLabFile('dark.css', response);
+        sendDataLabFile('dark.css', response, true);
       } else {
-        sendDataLabFile('light.css', response);
+        sendDataLabFile('light.css', response, true);
       }
     } else {
-      sendDataLabFile(DEFAULT_THEME_FILE, response);
+      sendDataLabFile(DEFAULT_THEME_FILE, response, true);
     }
   }
   else if ((pathname.indexOf('/static/extensions/') == 0) ||
