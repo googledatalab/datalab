@@ -366,9 +366,13 @@ export function handleRequest(request: http.ServerRequest, response: http.Server
 }
 
 function getBaseTemplateData(request: http.ServerRequest): common.Map<string> {
-  var userId: string = userManager.getUserId(request);
-  var reportingEnabled: string = process.env.ENABLE_USAGE_REPORTING;
-  var templateData: common.Map<string> = {
+  const userId: string = userManager.getUserId(request);
+  const reportingEnabled: string = process.env.ENABLE_USAGE_REPORTING;
+  // TODO: Cache the gcloudAccount value so that we are not
+  // calling `gcloud` on every page load.
+  const gcloudAccount : string = auth.getGcloudAccount();
+  const signedIn = auth.isSignedIn(gcloudAccount);
+  let templateData: common.Map<string> = {
     feedbackId: appSettings.feedbackId,
     versionId: appSettings.versionId,
     userId: userId,
@@ -377,12 +381,8 @@ function getBaseTemplateData(request: http.ServerRequest): common.Map<string> {
     baseUrl: appSettings.datalabBasePath,
     reportingEnabled: reportingEnabled,
     proxyWebSockets: appSettings.proxyWebSockets,
+    isSignedIn:  signedIn.toString(),
   };
-  // TODO: Cache the gcloudAccount value so that we are not
-  // calling `gcloud` on every page load.
-  var gcloudAccount : string = auth.getGcloudAccount();
-  var signedIn = auth.isSignedIn(gcloudAccount);
-  templateData['isSignedIn'] = signedIn.toString();
   if (signedIn) {
     templateData['account'] = gcloudAccount;
     if (process.env.PROJECT_NUMBER) {
