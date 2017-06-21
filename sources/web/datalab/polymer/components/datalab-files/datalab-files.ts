@@ -287,6 +287,9 @@ class FilesElement extends Polymer.Element {
   _createNewNotebook() {
     return this._createNewItem('notebook');
   }
+  _createNewFile() {
+    return this._createNewItem('file');
+  }
 
   _createNewDirectory() {
     return this._createNewItem('directory');
