@@ -167,8 +167,7 @@ function persistCredentials(tokens: any): string {
   return saveUserCredFile(tokens);
 }
 
-export function isSignedIn(): boolean {
-  var gcloudAccount:string = getGcloudAccount();
+export function isSignedIn(gcloudAccount: string): boolean {
   return (gcloudAccount != '' && gcloudAccount != 'unknown');
 }
 
@@ -254,7 +253,7 @@ export function handleAuthFlow(request: http.ServerRequest, response: http.Serve
       });
     }
     return;
-  } else if (path.indexOf('/signin') == 0 && !isSignedIn()) {
+  } else if (path.indexOf('/signin') == 0 && !isSignedIn(getGcloudAccount())) {
     // Do auth.
     // TODO(gram): instead of initiating it here we should add a sign in button to our templates so it becomes
     // user-initiated.

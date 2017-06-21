@@ -368,12 +368,6 @@ export function handleRequest(request: http.ServerRequest, response: http.Server
 function getBaseTemplateData(request: http.ServerRequest): common.Map<string> {
   var userId: string = userManager.getUserId(request);
   var reportingEnabled: string = process.env.ENABLE_USAGE_REPORTING;
-  if (reportingEnabled) {
-    var userSettings: common.Map<string> = settings.loadUserSettings(userId);
-    if ('enableUsageReporting' in userSettings && userSettings['enableUsageReporting'] != 'true') {
-      reportingEnabled = 'false';
-    }
-  }
   var templateData: common.Map<string> = {
     feedbackId: appSettings.feedbackId,
     versionId: appSettings.versionId,
@@ -384,10 +378,13 @@ function getBaseTemplateData(request: http.ServerRequest): common.Map<string> {
     reportingEnabled: reportingEnabled,
     proxyWebSockets: appSettings.proxyWebSockets,
   };
-  var signedIn = auth.isSignedIn();
+  // TODO: Cache the gcloudAccount value so that we are not
+  // calling `gcloud` on every page load.
+  var gcloudAccount : string = auth.getGcloudAccount();
+  var signedIn = auth.isSignedIn(gcloudAccount);
   templateData['isSignedIn'] = signedIn.toString();
   if (signedIn) {
-    templateData['account'] = auth.getGcloudAccount();
+    templateData['account'] = gcloudAccount;
     if (process.env.PROJECT_NUMBER) {
       var hash = crypto.createHash('sha256');
       hash.update(process.env.PROJECT_NUMBER);
