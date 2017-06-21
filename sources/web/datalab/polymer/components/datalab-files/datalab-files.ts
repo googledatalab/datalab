@@ -296,7 +296,7 @@ class FilesElement extends Polymer.Element {
       okLabel: 'Create',
     };
 
-    return Utils.showDialog(DialogType.input, inputOptions)
+    return Utils.showDialog(InputDialogElement, inputOptions)
       .then((closeResult: InputDialogCloseResult) => {
         // Only if the dialog has been confirmed with some user input, rename the
         // newly created file. Then if that is successful, reload the file list
@@ -336,7 +336,7 @@ class FilesElement extends Polymer.Element {
 
       // Only if the dialog has been confirmed with some user input, rename the
       // selected item. Then if that is successful, and reload the file list.
-      return Utils.showDialog(DialogType.input, inputOptions)
+      return Utils.showDialog(InputDialogElement, inputOptions)
         .then((closeResult: InputDialogCloseResult) => {
           if (closeResult.confirmed && closeResult.userInput) {
             const newName = this.currentPath + '/' + closeResult.userInput;
@@ -397,7 +397,7 @@ class FilesElement extends Polymer.Element {
       // Only if the dialog has been confirmed, call the ApiManager to delete each
       // of the selected items, and wait for all promises to finish. Then if that
       // is successful, reload the file list.
-      return Utils.showDialog(DialogType.confirm, inputOptions)
+      return Utils.showDialog(BaseDialogElement, inputOptions)
         .then((closeResult: BaseDialogCloseResult) => {
           if (closeResult.confirmed) {
             let deletePromises = selectedIndices.map((i: number) => {
@@ -429,7 +429,7 @@ class FilesElement extends Polymer.Element {
         okLabel: 'Copy Here',
         big: true,
       };
-      Utils.showDialog(DialogType.dirPicker, options)
+      Utils.showDialog(DirectoryPickerDialogElement, options)
         .then((closeResult: DirectoryPickerDialogCloseResult) => {
           if (closeResult.confirmed) {
             const newPath = closeResult.directoryPath;
@@ -454,7 +454,7 @@ class FilesElement extends Polymer.Element {
         okLabel: 'Move Here',
         big: true,
       };
-      Utils.showDialog(DialogType.dirPicker, options)
+      Utils.showDialog(DirectoryPickerDialogElement, options)
         .then((closeResult: DirectoryPickerDialogCloseResult) => {
           if (closeResult.confirmed) {
             const newPath = closeResult.directoryPath;

@@ -12,7 +12,7 @@
  * the License.
  */
 
-/// <reference path="datalab-files.ts" />
+/// <reference path="../datalab-files/datalab-files.ts" />
 
 /**
  * Dialog close context, includes whether the dialog was confirmed, and the user selected
@@ -30,11 +30,11 @@ interface DirectoryPickerDialogCloseResult extends BaseDialogCloseResult {
  * without the ability to select files.
  * The dialog returns the user selected directory path, if any.
  */
-class DirectoryPickerElement extends BaseDialogElement {
+class DirectoryPickerDialogElement extends BaseDialogElement {
 
   private static _memoizedTemplate: PolymerTemplate;
 
-  static get is() { return "directory-picker"; }
+  static get is() { return "directory-picker-dialog"; }
 
   /**
    * This template is calculated once in run time based on the template of  the
@@ -59,4 +59,4 @@ class DirectoryPickerElement extends BaseDialogElement {
 
 }
 
-customElements.define(DirectoryPickerElement.is, DirectoryPickerElement);
+customElements.define(DirectoryPickerDialogElement.is, DirectoryPickerDialogElement);

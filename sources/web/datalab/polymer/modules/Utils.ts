@@ -15,11 +15,6 @@
 /**
  * Options for opening a dialog.
  */
-enum DialogType {
-  confirm,
-  dirPicker,
-  input,
-}
 interface DialogOptions {
   title: string,
   messageHtml?: string,
@@ -43,18 +38,8 @@ class Utils {
    * @param type specifies which type of dialog to use
    * @param dialogOptions specifies different options for opening the dialog
    */
-  static showDialog(type: DialogType, dialogOptions: DialogOptions) {
-    let dialogElement = '';
-    if (type === DialogType.input) {
-      dialogElement = 'input-dialog';
-    } else if (type === DialogType.confirm) {
-      dialogElement = 'base-dialog';
-    } else if (type === DialogType.dirPicker) {
-      dialogElement = 'directory-picker';
-    } else {
-      throw new Error('Unknown dialog type.');
-    }
-    const dialog = <any>document.createElement(dialogElement);
+  static showDialog(dialogType: typeof BaseDialogElement, dialogOptions: DialogOptions) {
+    const dialog = <any>document.createElement(dialogType.is);
     document.body.appendChild(dialog);
 
     if (dialogOptions.title)
