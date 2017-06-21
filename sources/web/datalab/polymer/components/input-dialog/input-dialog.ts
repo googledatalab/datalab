@@ -44,7 +44,7 @@ class InputDialogElement extends BaseDialogElement {
    */
   public inputValue: string;
 
-  private static _memoizedTemplate: {content: HTMLElement};
+  private static _memoizedTemplate: PolymerTemplate;
 
   static get is() { return "input-dialog"; }
 

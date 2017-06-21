@@ -26,7 +26,7 @@ interface ElementDefinitionOptions {
   extends: string;
 }
 
-interface PolymerTemplate {
+interface PolymerTemplate extends Node {
   content: HTMLElement;
 }
 

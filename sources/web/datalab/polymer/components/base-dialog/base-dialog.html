@@ -17,6 +17,10 @@ the License.
 <dom-module id="base-dialog">
   <template>
     <style include="datalab-shared-styles">
+      #theDialog {
+        display: flex;
+        flex-direction: column;
+      }
       .dialog-big--true {
         min-width: 60%;
         min-height: 60%;
@@ -28,13 +32,15 @@ the License.
       #title {
         font-size: 16px;
         text-align: center;
-        height: 20px;
+        flex: 0 0 20px;
         margin: 0px;
         padding: 15px; /*Total height: 50px*/
         background-color: var(--app-secondary-color);
       }
       #body {
         margin: 0px;
+        flex-grow: 1;
+        position: relative;
       }
       hr {
         border-left: none;
@@ -47,7 +53,7 @@ the License.
         display: flex;
         justify-content: center;
         padding: 0px;
-        height: 40px;
+        flex: 0 0 40px;
         margin: 15px; /*Total height: 70px*/
       }
       .confirm {
@@ -59,7 +65,7 @@ the License.
                   on-keydown="_checkEnter">
       <div id="title">{{title}}</div>
       <!--message value is bound in javascript because it needs to bind to innerHTML-->
-      <div id="message" hidden$="{{!message}}">{{message}}</div>
+      <div id="message" hidden$="{{!messageHtml}}">{{messageHtml}}</div>
       <!--body acts as a place holder for extending elements, their custom
       markup is inserted here by stamping it from Javascript-->
       <div id="body"></div>

@@ -16,8 +16,8 @@
  * Options for opening a dialog.
  */
 enum DialogType {
-  input,
   confirm,
+  input,
 }
 interface DialogOptions {
   title: string,
@@ -93,8 +93,10 @@ class Utils {
   static stampInBaseTemplate(subType: string, baseType: string,
                              baseRootElementSelector: string) {
     // Start with the base class's template
-    let stampedTemplate = Polymer.DomModule.import(baseType, 'template');
+    const basetypeTemplate = Polymer.DomModule.import(baseType, 'template');
     const subtypeTemplate = Polymer.DomModule.import(subType, 'template');
+    // Clone the base template; we don't want to change it in-place
+    let stampedTemplate = <PolymerTemplate>basetypeTemplate.cloneNode(true);
 
     // Insert this template's elements in the base class's #body
     const bodyElement = stampedTemplate.content.querySelector(baseRootElementSelector);
