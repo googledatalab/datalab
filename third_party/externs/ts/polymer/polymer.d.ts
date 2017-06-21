@@ -26,11 +26,7 @@ interface ElementDefinitionOptions {
   extends: string;
 }
 
-<<<<<<< HEAD
 interface PolymerTemplate extends Node {
-=======
-interface PolymerTemplate {
->>>>>>> implement input dialog as a subclass of base dialog
   content: HTMLElement;
 }
 
