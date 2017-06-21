@@ -7,6 +7,7 @@
     "iron-icons": "PolymerElements/iron-icons#^2.0.0",
     "iron-pages": "PolymerElements/iron-pages#^2.0.0",
     "iron-selector": "PolymerElements/iron-selector#^2.0.0",
+    "marked": "^0.3.6",
     "paper-button": "PolymerElements/paper-button#^2.0.0",
     "paper-checkbox": "PolymerElements/paper-checkbox#^2.0.0",
     "paper-dialog": "PolymerElements/paper-dialog#^2.0.0",
@@ -15,8 +16,7 @@
     "paper-item": "PolymerElements/paper-item#^2.0.0",
     "paper-progress": "PolymerElements/paper-progress#^2.0.0",
     "polymer": "Polymer/polymer#^2.0.1",
-    "webcomponentsjs": "webcomponents/webcomponentsjs#^1.0.0-rc.9",
-    "marked": "^0.3.6"
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^1.0.0-rc.9"
   },
   "devDependencies": {
     "web-component-tester": "^6.0.0"

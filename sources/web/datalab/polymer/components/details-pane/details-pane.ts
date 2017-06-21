@@ -82,11 +82,11 @@ class DetailsPaneElement extends Polymer.Element {
 
     this.$.previewHtml.innerHTML = '';
 
-    // If this is a notebook, get the first two cells and render any markdown in them.
     if (this.file.type === 'notebook' || this._isPlainTextFile(this.file)) {
       ApiManager.getJupyterFile(this.file.path)
         .then((file: JupyterFile) => {
 
+          // If this is a notebook, get the first two cells and render any markdown in them.
           if (file.type === 'notebook') {
             const cells = (<JupyterNotebookModel>file.content).cells;
             const firstTwoCells = cells.slice(0, 2);
@@ -100,6 +100,7 @@ class DetailsPaneElement extends Polymer.Element {
             if (markdownHtml) {
               this.$.previewHtml.innerHTML = markdownHtml;
             }
+          // If this is a text file, show the first N lines.
           } else if (this._isPlainTextFile(file)) {
             const lines = (<string>file.content).split('\n');
             this.$.previewHtml.innerText = '\n' +
