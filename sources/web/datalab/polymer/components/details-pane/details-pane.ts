@@ -80,8 +80,6 @@ class DetailsPaneElement extends Polymer.Element {
     if (!this.file || !this.active)
       return;
 
-    this.$.previewHtml.innerHTML = '';
-
     if (this.file.type === 'notebook' || this._isPlainTextFile(this.file)) {
       ApiManager.getJupyterFile(this.file.path)
         .then((file: JupyterFile) => {
@@ -97,9 +95,7 @@ class DetailsPaneElement extends Polymer.Element {
                 markdownHtml += marked(cell.source);
               }
             })
-            if (markdownHtml) {
-              this.$.previewHtml.innerHTML = markdownHtml;
-            }
+            this.$.previewHtml.innerHTML = markdownHtml;
           // If this is a text file, show the first N lines.
           } else if (this._isPlainTextFile(file)) {
             const lines = (<string>file.content).split('\n');
@@ -112,8 +108,11 @@ class DetailsPaneElement extends Polymer.Element {
           }
         })
         .catch(() => {
-          debugger;
-        })
+          this.$.previewHtml.innerHTML = '';
+          console.log('Could not get item details.');
+        });
+    } else {
+      this.$.previewHtml.innerHTML = '';
     }
   }
 

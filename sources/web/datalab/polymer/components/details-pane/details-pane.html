@@ -29,9 +29,6 @@ the License.
         height: 100%;
         overflow-y: auto;
       }
-      #details-pane-title {
-        display: flex;
-      }
       .content {
         padding: 15px 3px;
         margin: 0px;
@@ -52,33 +49,8 @@ the License.
     <div class="placeholder" hidden$="{{file}}">
       Select an item to view its details.
     </div>
-    <div id="container" hidden$="{{!file.name}}">
-      <div id="details-pane-title">
-        <iron-icon class="content icon" icon="{{_icon}}"></iron-icon>
-        <h1 class="content">{{file.name}}</h1>
-      </div>
-      <hr/>
-      <div class="content">
-        <table>
-          <tr>
-            <td>
-              <strong>Created:</strong>
-            </td>
-            <td>
-              {{_created}}
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <strong>Modified:</strong>
-            </td>
-            <td>
-              {{_modified}}
-            </td>
-          </tr>
-        </table>
-        <div id="previewHtml"></div>
-      </div>
+    <div id="container" hidden$="{{!file}}">
+      <div id="previewHtml"></div>
     </div>
   </template>
 </dom-module>
