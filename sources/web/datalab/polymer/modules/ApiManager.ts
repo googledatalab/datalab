@@ -216,7 +216,8 @@ class ApiManager {
   }
 
   /**
-   * Copy an item from source to destination
+   * Copy an item from source to destination. Item name collisions at the destination
+   * are handled by Jupyter.
    * @param fromDir source path to copy from
    * @param toPath destination path to copy to
    */

@@ -41,6 +41,9 @@ class ItemClickEvent extends CustomEvent {
  * Double clicking an item fires an 'ItemClickEvent' event with this
  * item's index. Similarly, selection fires an 'ItemClickEvent' with
  * the most recent clicked item's index.
+ * If the "no-header" attribute is specified, the header is hidden.
+ * If the "no-selection" attribute is specified, the checkboxes are
+ * hidden, and clicking items does not select them.
  */
 class ItemListElement extends Polymer.Element {
 
