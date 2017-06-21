@@ -75,5 +75,37 @@ class Utils {
       });
     });
   }
+
+  /**
+   * Utility function that helps with the Polymer inheritance mechanism. It takes the subclass,
+   * the superclass, and an element selector. It loads the templates for the two classes,
+   * and inserts all of the elements from the subclass into the superclass's template, under
+   * the element specified with the CSS selector, then returns the merged template.
+   * 
+   * This allows for a very flexible expansion of the superclass's HTML template, so that we're
+   * not limited by wrapping the extended element, but we can actually inject extra elements
+   * into its template, all while extending all of its javascript and styles.
+   * @param subType class that is extending a superclass
+   * @param baseType the superclass being extended
+   * @param baseRootElementSelector a selector for an element that will be root
+   *                                for the stamped template
+   */
+  static stampInBaseTemplate(subType: string, baseType: string,
+                             baseRootElementSelector: string) {
+    // Start with the base class's template
+    let stampedTemplate = Polymer.DomModule.import(baseType, 'template');
+    const subtypeTemplate = Polymer.DomModule.import(subType, 'template');
+
+    // Insert this template's elements in the base class's #body
+    const bodyElement = stampedTemplate.content.querySelector(baseRootElementSelector);
+    if (bodyElement) {
+      while (subtypeTemplate.content.children.length) {
+        const childNode = <HTMLElement>subtypeTemplate.content.firstElementChild;
+        bodyElement.insertAdjacentElement('beforeend', childNode);
+      }
+    }
+
+    return stampedTemplate;
+  }
  
 }
