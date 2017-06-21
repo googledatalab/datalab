@@ -309,13 +309,12 @@ class FilesElement extends Polymer.Element {
     // First, open a dialog to let the user specify a name for the notebook.
     const inputOptions: DialogOptions = {
       title: 'New ' + type, 
-      withInput: true,
       inputLabel: 'Name',
       okLabel: 'Create',
     };
 
-    return Utils.getUserInputAsync(inputOptions)
-      .then((closeResult: DialogCloseResult) => {
+    return Utils.showDialog(DialogType.input, inputOptions)
+      .then((closeResult: InputDialogCloseResult) => {
         // Only if the dialog has been confirmed with some user input, rename the
         // newly created file. Then if that is successful, reload the file list
         if (closeResult.confirmed && closeResult.userInput) {
@@ -347,7 +346,6 @@ class FilesElement extends Polymer.Element {
       // Open a dialog to let the user specify the new name for the selected item.
       const inputOptions: DialogOptions = {
         title: 'Rename ' + selectedObject.type.toString(), 
-        withInput: true,
         inputLabel: 'New name',
         inputValue: selectedObject.name,
         okLabel: 'Rename',
@@ -355,8 +353,8 @@ class FilesElement extends Polymer.Element {
 
       // Only if the dialog has been confirmed with some user input, rename the
       // selected item. Then if that is successful, and reload the file list.
-      return Utils.getUserInputAsync(inputOptions)
-        .then((closeResult: DialogCloseResult) => {
+      return Utils.showDialog(DialogType.input, inputOptions)
+        .then((closeResult: InputDialogCloseResult) => {
           if (closeResult.confirmed && closeResult.userInput) {
             const newName = this.currentPath + '/' + closeResult.userInput;
             return ApiManager.renameItem(selectedObject.path, newName)
@@ -404,20 +402,20 @@ class FilesElement extends Polymer.Element {
         itemList += '+ ' + (num - FilesElement._deleteListLimit) + ' more.';
       }
       itemList += '</ul>'
-      const bodyHtml = '<div>Are you sure you want to delete:</div>' + itemList;
+      const messageHtml = '<div>Are you sure you want to delete:</div>' + itemList;
 
       // Open a dialog to let the user confirm deleting the list of selected items.
       const inputOptions: DialogOptions = {
         title: title,
-        bodyHtml: bodyHtml,
+        messageHtml: messageHtml,
         okLabel: 'Delete',
       };
 
       // Only if the dialog has been confirmed, call the ApiManager to delete each
       // of the selected items, and wait for all promises to finish. Then if that
       // is successful, reload the file list.
-      return Utils.getUserInputAsync(inputOptions)
-        .then((closeResult: DialogCloseResult) => {
+      return Utils.showDialog(DialogType.confirm, inputOptions)
+        .then((closeResult: BaseDialogCloseResult) => {
           if (closeResult.confirmed) {
             let deletePromises = selectedIndices.map((i: number) => {
               return ApiManager.deleteItem(this._fileList[i].path);

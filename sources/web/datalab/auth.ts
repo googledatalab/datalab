@@ -70,21 +70,52 @@ function base64decodeSegment(str: string) {
   return new Buffer(str, 'base64').toString();
 }
 
-export function getGcloudAccount(): string {
-  // Ask gcloud which account we are using.
-  try {
-    var account = childProcess.execSync(
-      'gcloud auth list --filter=status:ACTIVE --format "value(account)"',
-      {env: process.env});
-    account = account.toString().trim();
-    return account;
-  } catch (err) {
-    logging.getLogger().error(err, 'Failed to get the gcloud account. stderr: %s', err.stderr);
-    return "unknown";
+/**
+ * gcloudAccountCache is a pull-through cache of the `gcloud` active account
+ * that automatically flushes after 60 seconds and is manually flushed after
+ * the user signs out or sets the account.
+ */
+class gcloudAccountCache {
+  _cachedAccount: string = "";
+  _cachedDate: Date = null;
+
+  clear() {
+    this._cachedAccount = "";
+  }
+
+  get(): string {
+    const now = new Date();
+    if (this._cachedAccount !== "") {
+      const elapsedMilliseconds = now.getTime() - this._cachedDate.getTime();
+      if (elapsedMilliseconds > (60 * 1000)) {
+        this._cachedAccount = "";
+      }
+    }
+    if (this._cachedAccount == "") {
+      // Ask gcloud which account we are using.
+      try {
+        var account = childProcess.execSync(
+          'gcloud auth list --filter=status:ACTIVE --format "value(account)"',
+          {env: process.env});
+        this._cachedAccount = account.toString().trim();
+        this._cachedDate = now;
+      } catch (err) {
+        logging.getLogger().error(err, 'Failed to get the gcloud account. stderr: %s', err.stderr);
+        return "unknown";
+      }
+    }
+    return this._cachedAccount;
   }
 }
 
+let accountCache: gcloudAccountCache = new gcloudAccountCache();
+
+export function getGcloudAccount(): string {
+    return accountCache.get();
+}
+
 function setGcloudAccount(email: string) {
+  accountCache.clear();
   // Tell gcloud which account we are using.
   try {
     childProcess.execSync('gcloud config set account ' + email, {env: process.env});
@@ -159,6 +190,7 @@ function saveBotoFile(tokens: any) {
  * Save the tokens in a credentials file that Datalab and gcloud can both use.
  */
 function persistCredentials(tokens: any): string {
+  accountCache.clear();
   if (!fs.existsSync(gcloudDir())) {
     fs.mkdirSync(gcloudDir());
   }
@@ -167,8 +199,7 @@ function persistCredentials(tokens: any): string {
   return saveUserCredFile(tokens);
 }
 
-export function isSignedIn(): boolean {
-  var gcloudAccount:string = getGcloudAccount();
+export function isSignedIn(gcloudAccount: string): boolean {
   return (gcloudAccount != '' && gcloudAccount != 'unknown');
 }
 
@@ -236,6 +267,7 @@ export function handleAuthFlow(request: http.ServerRequest, response: http.Serve
         logging.getLogger().error('Could not delete ' + botoFile() + ': ' + e);
       }
     }
+    accountCache.clear();
   } else if (path.indexOf('/oauthcallback') == 0) {  // Return from auth flow.
     setOauth2Client(request);
     if (query.code) {
@@ -254,7 +286,7 @@ export function handleAuthFlow(request: http.ServerRequest, response: http.Serve
       });
     }
     return;
-  } else if (path.indexOf('/signin') == 0 && !isSignedIn()) {
+  } else if (path.indexOf('/signin') == 0 && !isSignedIn(getGcloudAccount())) {
     // Do auth.
     // TODO(gram): instead of initiating it here we should add a sign in button to our templates so it becomes
     // user-initiated.

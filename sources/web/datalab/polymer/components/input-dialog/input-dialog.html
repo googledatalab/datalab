@@ -12,44 +12,24 @@ or implied. See the License for the specific language governing permissions and 
 the License.
 -->
 
-<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../base-dialog/base-dialog.html">
+
 <link rel="import" href="../../bower_components/paper-input/paper-input.html">
-<link rel="import" href="../../bower_components/polymer/polymer.html">
 
 <dom-module id="input-dialog">
   <template>
-    <style include="datalab-shared-styles">
-      #theDialog {
-        width: 300px;
+    <style>
+      #inputBox {
+        margin: 20px 0px;
         /*Disable input underline animation*/
         --paper-input-container-underline-focus: {
           display: none;
         };
       }
-      #title {
-        font-size: 16px;
-        text-align: center;
-      }
-      .confirm {
-        background-color: var(--app-secondary-color);
-        font-weight: bold;
-      }
     </style>
-    <paper-dialog id="theDialog" class="dialog" with-backdrop>
-      <h2><div id="title">{{title}}</div></h2>
-      <!--Body value is bound in javascript because it needs to bind to innerHTML-->
-      <div id="body" hidden$="{{!bodyHtml}}"></div>
-      <paper-input id="inputBox" hidden$="{{!withInput}}" label="{{inputLabel}}" spellcheck=false
-                   value="{{inputValue}}" on-keydown="_checkEnter" no-label-float>
-      </paper-input>
-      <hr>
-      <div class="buttons">
-        <paper-button id="okButton" on-click="_confirmClose" class="confirm" >
-          {{okLabel}}
-        </paper-button>
-        <paper-button on-click="_cancelClose">{{cancelLabel}}</paper-button>
-      </div>
-    </paper-dialog>
+    <paper-input id="inputBox" label="{{inputLabel}}" spellcheck=false autofocus
+                 value="{{inputValue}}" no-label-float>
+    </paper-input>
   </template>
 </dom-module>
 
