@@ -28,7 +28,6 @@ interface ElementDefinitionOptions {
 
 interface PolymerTemplate extends Node {
   content: HTMLElement;
-  cloneNode(deepCopy: boolean): PolymerTemplate;
 }
 
 declare module Polymer {

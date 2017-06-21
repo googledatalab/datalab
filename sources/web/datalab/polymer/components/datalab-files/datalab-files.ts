@@ -432,7 +432,34 @@ class FilesElement extends Polymer.Element {
       Utils.showDialog(DialogType.dirPicker, options)
         .then((closeResult: DirectoryPickerDialogCloseResult) => {
           if (closeResult.confirmed) {
-            return ApiManager.copyItem(selectedObject.path, closeResult.directoryPath);
+            const newPath = closeResult.directoryPath;
+            return ApiManager.copyItem(selectedObject.path, newPath)
+              .then(() => this._fetchFileList());
+          } else {
+            return Promise.resolve(null);
+          }
+        });
+    }
+  }
+
+  _moveSelectedItem() {
+    const selectedIndices = this.$.files.getSelectedIndices();
+
+    if (selectedIndices.length) {
+      const i = selectedIndices[0];
+      const selectedObject = this._fileList[i];
+
+      const options: DialogOptions = {
+        title: 'Move Item',
+        okLabel: 'Move Here',
+        big: true,
+      };
+      Utils.showDialog(DialogType.dirPicker, options)
+        .then((closeResult: DirectoryPickerDialogCloseResult) => {
+          if (closeResult.confirmed) {
+            const newPath = closeResult.directoryPath;
+            return ApiManager.renameItem(selectedObject.path, newPath + '/' + selectedObject.name)
+              .then(() => this._fetchFileList());
           } else {
             return Promise.resolve(null);
           }

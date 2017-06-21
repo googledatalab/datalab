@@ -220,28 +220,17 @@ class ApiManager {
    * @param fromDir source path to copy from
    * @param toPath destination path to copy to
    */
-  static copyItem(fromDir: string, toPath: string) {
-    let toDir = toPath.substr(0, toPath.lastIndexOf('/'));
-    toDir = ApiManager.contentApiUrl + '/' + toDir;
+  static copyItem(fromPath: string, toPath: string) {
+    toPath = ApiManager.contentApiUrl + '/' + toPath;
     const xhrOptions: XhrOptions = {
       method: 'POST',
       successCode: 201,
       parameters: JSON.stringify({
-        copy_from: fromDir
+        copy_from: fromPath
       })
     };
 
-    let newItemPath = '';
-    return ApiManager._xhrAsync(toDir, xhrOptions)
-      .then((notebook: JupyterFile) => {
-        newItemPath = notebook.path;
-        return ApiManager.renameItem(newItemPath, toPath);
-      })
-      .catch((error: string) => {
-        // If the rename fails, remove the temporary item
-        ApiManager.deleteItem(newItemPath);
-        throw error;
-      });
+    return ApiManager._xhrAsync(toPath, xhrOptions);
   }
 
   /**
