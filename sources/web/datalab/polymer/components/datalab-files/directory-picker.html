@@ -13,21 +13,11 @@ the License.
 -->
 
 <link rel="import" href="datalab-files.html">
-<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
-<link rel="import" href="../../bower_components/paper-button/paper-button.html">
 
 <dom-module id="directory-picker">
   <template>
 
     <style include="datalab-shared-styles">
-      #pickerDialog {
-        width: 60%;
-        height: 30%;
-      }
-      paper-dialog {
-        display: flex;
-        flex-direction: column;
-      }
       .files {
         margin: 0px;
         flex-grow: 1;
@@ -35,24 +25,10 @@ the License.
       datalab-files {
         padding: 0px;
       }
-      .confirm {
-        background-color: var(--app-secondary-color);
-        font-weight: bold;
-      }
     </style>
-
-    <paper-dialog id="pickerDialog" with-backdrop>
-      <div class="files">
-        <datalab-files small></datalab-files>
-      </div>
-      <div>
-        <paper-button id="okButton" on-click="_confirmClose" class="confirm" >
-          Copy Here
-        </paper-button>
-        <paper-button on-click="_cancelClose">Cancel</paper-button>
-      </div>
-    </paper-dialog>
-
+    <div class="files">
+      <datalab-files id="filePicker" small></datalab-files>
+    </div>
   </template>
 </dom-module>
 

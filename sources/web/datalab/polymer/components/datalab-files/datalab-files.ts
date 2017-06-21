@@ -427,11 +427,12 @@ class FilesElement extends Polymer.Element {
       const options: DialogOptions = {
         title: 'Copy Item',
         okLabel: 'Copy Here',
+        big: true,
       };
-      Utils.pickDirectory(options)
-        .then((closeResult: DialogCloseResult) => {
+      Utils.showDialog(DialogType.dirPicker, options)
+        .then((closeResult: DirectoryPickerDialogCloseResult) => {
           if (closeResult.confirmed) {
-            return ApiManager.copyItem(selectedObject.path, closeResult.userInput);
+            return ApiManager.copyItem(selectedObject.path, closeResult.directoryPath);
           } else {
             return Promise.resolve(null);
           }

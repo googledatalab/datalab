@@ -22,12 +22,16 @@ the License.
         flex-direction: column;
       }
       .dialog-big--true {
-        min-width: 60%;
-        min-height: 60%;
+        min-width: 40%;
+        max-width: 40%;
+        min-height: 30%;
+        max-height: 30%;
       }
       .dialog-big--false {
-        min-width: 300px;
+        min-width: 200px;
+        max-width: 300px;
         min-height: 180px;
+        max-height: 300px;
       }
       #title {
         font-size: 16px;
@@ -41,6 +45,14 @@ the License.
         margin: 0px;
         flex-grow: 1;
         position: relative;
+      }
+      #body > * {
+        /*Don't let anything inserted here overflow*/
+        position: absolute;
+        top: 0px;
+        bottom: 0px;
+        left: 0px;
+        right: 0px;
       }
       hr {
         border-left: none;

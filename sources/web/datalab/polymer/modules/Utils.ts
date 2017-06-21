@@ -17,6 +17,7 @@
  */
 enum DialogType {
   confirm,
+  dirPicker,
   input,
 }
 interface DialogOptions {
@@ -48,6 +49,10 @@ class Utils {
       dialogElement = 'input-dialog';
     } else if (type === DialogType.confirm) {
       dialogElement = 'base-dialog';
+    } else if (type === DialogType.dirPicker) {
+      dialogElement = 'directory-picker';
+    } else {
+      throw new Error('Unknown dialog type.');
     }
     const dialog = <any>document.createElement(dialogElement);
     document.body.appendChild(dialog);
