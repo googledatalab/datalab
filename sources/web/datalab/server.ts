@@ -27,7 +27,7 @@ import idleTimeout = require('./idleTimeout');
 import fileSearch = require('./fileSearch');
 import net = require('net');
 import noCacheContent = require('./noCacheContent')
-import path_ = require('path');
+import path = require('path');
 import request = require('request');
 import reverseProxy = require('./reverseProxy');
 import settings_ = require('./settings');
@@ -103,7 +103,7 @@ function handleJupyterRequest(request: http.ServerRequest, response: http.Server
  */
 function handleRequest(request: http.ServerRequest,
                        response: http.ServerResponse,
-                       path: string) {
+                       requestPath: string) {
 
   var userId = userManager.getUserId(request);
   if (loadedSettings === null) {
@@ -119,7 +119,7 @@ function handleRequest(request: http.ServerRequest,
 
   // Landing page redirects to /tree to be able to use the Jupyter file list as
   // the initial page.
-  if (path == '/') {
+  if (requestPath == '/') {
     userManager.maybeSetUserIdCookie(request, response);
 
     response.statusCode = 302;
@@ -130,47 +130,51 @@ function handleRequest(request: http.ServerRequest,
       redirectUrl = '/tree/datalab';
     }
     if (redirectUrl.indexOf(appSettings.datalabBasePath) != 0) {
-      redirectUrl = path_.join(appSettings.datalabBasePath, redirectUrl);
+      redirectUrl = path.join(appSettings.datalabBasePath, redirectUrl);
     }
     response.setHeader('Location', redirectUrl);
     response.end();
     return;
   }
 
-  var targetPort: string = reverseProxy.getRequestPort(request, path);
+  var targetPort: string = reverseProxy.getRequestPort(request, requestPath);
   if (targetPort) {
     reverseProxy.handleRequest(request, response, targetPort);
     return;
   }
 
-  if (path.indexOf('/_nocachecontent/') == 0) {
+  if (requestPath.indexOf('/_nocachecontent/') == 0) {
     if (process.env.KG_URL) {
       reverseProxy.handleRequest(request, response, null);
     }
     else {
-      noCacheContent.handleRequest(path, response);
+      noCacheContent.handleRequest(requestPath, response);
     }
     return;
   }
 
   // Requests proxied to Jupyter
-  if ((path.indexOf('/api') == 0) ||
-      (path.indexOf('/tree') == 0) ||
-      (path.indexOf('/notebooks') == 0) ||
-      (path.indexOf('/nbconvert') == 0) ||
-      (path.indexOf('/nbextensions') == 0) ||
-      (path.indexOf('/files') == 0) ||
-      (path.indexOf('/edit') == 0) ||
-      (path.indexOf('/terminals') == 0) ||
-      (path.indexOf('/sessions') == 0)) {
+  if ((requestPath.indexOf('/api') == 0) ||
+      (requestPath.indexOf('/tree') == 0) ||
+      (requestPath.indexOf('/notebooks') == 0) ||
+      (requestPath.indexOf('/nbconvert') == 0) ||
+      (requestPath.indexOf('/nbextensions') == 0) ||
+      (requestPath.indexOf('/files') == 0) ||
+      (requestPath.indexOf('/edit') == 0) ||
+      (requestPath.indexOf('/terminals') == 0) ||
+      (requestPath.indexOf('/sessions') == 0)) {
 
-    if (path.indexOf('/api/contents') == 0) {
-      const subPath = path.substr('/api/contents'.length);
-      const filePath = path_.join('/content', subPath);
+    if (requestPath.indexOf('/api/contents') == 0) {
+      console.log('--------------------------------------------- analyzing new path: ' + requestPath);
+      const subPath = decodeURIComponent(requestPath.substr('/api/contents'.length));
+      const filePath = path.join('/content', subPath);
       try {
         if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+          console.log('--------------------------------------------- saving new path: ' + subPath);
           loadedSettings[startup_path_setting] = subPath;
           settings_.updateUserSetting(userId, startup_path_setting, subPath, true);
+        } else {
+          console.log('--------------------------------------------- FAILED ON new path: ' + subPath);
         }
       } catch (err) {
         logging.getLogger().error(err, 'Failed check for file "%s": %s', filePath, err.code);
@@ -181,7 +185,7 @@ function handleRequest(request: http.ServerRequest,
   }
 
   // /_info displays information about the server for diagnostics.
-  if (path.indexOf('/_info') == 0) {
+  if (requestPath.indexOf('/_info') == 0) {
     infoHandler(request, response);
     return;
   }
@@ -190,7 +194,7 @@ function handleRequest(request: http.ServerRequest,
   // TODO: This is oh so hacky. If this becomes interesting longer term, turn
   //       this into a real feature, that involves a confirmation prompt, as
   //       well validation to require a POST request.
-  if (path.indexOf('/_restart') == 0) {
+  if (requestPath.indexOf('/_restart') == 0) {
     if ('POST' != request.method) {
       return;
     }
@@ -200,25 +204,25 @@ function handleRequest(request: http.ServerRequest,
     return;
   }
 
-  if (path.indexOf('/_stopvm') == 0) {
+  if (requestPath.indexOf('/_stopvm') == 0) {
     stopVmHandler(request, response);
     return;
   }
 
   // /setting updates a per-user setting.
-  if (path.indexOf('/_setting') == 0) {
+  if (requestPath.indexOf('/_setting') == 0) {
     settingHandler(request, response);
     return;
   }
 
   // file search capability
-  if (path.indexOf('/_filesearch') === 0) {
+  if (requestPath.indexOf('/_filesearch') === 0) {
     fileSearchHandler(request, response);
     return;
   }
 
   // idle timeout management
-  if (path.indexOf('/_timeout') === 0) {
+  if (requestPath.indexOf('/_timeout') === 0) {
     timeoutHandler(request, response);
     return;
   }
@@ -289,13 +293,13 @@ function socketHandler(request: http.ServerRequest, socket: net.Socket, head: Bu
   }
 }
 
-function trimBasePath(path: string): string {
+function trimBasePath(requestPath: string): string {
   let pathPrefix = appSettings.datalabBasePath;
-  if (path.indexOf(pathPrefix) == 0) {
-    let newPath = "/" + path.substring(pathPrefix.length);
+  if (requestPath.indexOf(pathPrefix) == 0) {
+    let newPath = "/" + requestPath.substring(pathPrefix.length);
     return newPath;
   } else {
-    return path;
+    return requestPath;
   }
 }
 
