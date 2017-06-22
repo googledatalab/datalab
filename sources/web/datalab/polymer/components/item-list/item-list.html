@@ -30,10 +30,10 @@ the License.
       #list-container {
         overflow: auto;
       }
-      .list-container-no-header--false {
+      .list-container-hide-header--false {
         height: calc(100% - var(--toolbar-height));
       }
-      .list-container-no-header--true {
+      .list-container-hide-header--true {
         height: 100%;
       }
       .row {
@@ -79,7 +79,7 @@ the License.
 
     <!--Header row-->
     <!--Need this extra div because #header has a display modifier, cannot set hidden-->
-    <div hidden$="{{noHeader}}">
+    <div hidden$="{{hideHeader}}">
       <div id="header">
         <div class="checkbox-col"></div>
         <div class="first-col"><strong>{{columns.0}}</strong></div>
@@ -88,7 +88,7 @@ the License.
     </div>
 
     <!--Item list-->
-    <div id="list-container" class$="list-container-no-header--{{noHeader}}">
+    <div id="list-container" class$="list-container-hide-header--{{hideHeader}}">
       <template is="dom-repeat" id="list" items="{{rows}}" as="row">
         <paper-item class="row" selected$={{row.selected}} on-click="_rowClicked"
                     on-dblclick="_rowDoubleClicked">

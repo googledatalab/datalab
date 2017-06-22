@@ -218,8 +218,8 @@ class ApiManager {
   /**
    * Copies an item from source to destination. Item name collisions at the destination
    * are handled by Jupyter.
-   * @param fromDir source path to copy from
-   * @param toPath destination path to copy to
+   * @param itemPath path to copied item
+   * @param destinationDirectory directory to copy the item into
    */
   static copyItem(itemPath: string, destinationDirectory: string) {
     destinationDirectory = ApiManager.contentApiUrl + '/' + destinationDirectory;

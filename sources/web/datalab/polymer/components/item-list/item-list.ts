@@ -41,7 +41,7 @@ class ItemClickEvent extends CustomEvent {
  * Double clicking an item fires an 'ItemClickEvent' event with this
  * item's index. Similarly, selection fires an 'ItemClickEvent' with
  * the most recent clicked item's index.
- * If the "no-header" attribute is specified, the header is hidden.
+ * If the "hide-header" attribute is specified, the header is hidden.
  * If the "disable-selection" attribute is specified, the checkboxes are
  * hidden, and clicking items does not select them.
  */
@@ -60,7 +60,7 @@ class ItemListElement extends Polymer.Element {
   /**
    * Whether to hide the header row
    */
-  public noHeader: boolean;
+  public hideHeader: boolean;
 
   /**
    * Whether to disable item selection
@@ -82,7 +82,7 @@ class ItemListElement extends Polymer.Element {
         type: Array,
         value: () => [],
       },
-      noHeader: {
+      hideHeader: {
         type: Boolean,
         value: false,
       },
