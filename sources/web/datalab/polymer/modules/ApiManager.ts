@@ -221,17 +221,17 @@ class ApiManager {
    * @param fromDir source path to copy from
    * @param toPath destination path to copy to
    */
-  static copyItem(fromPath: string, toPath: string) {
-    toPath = ApiManager.contentApiUrl + '/' + toPath;
+  static copyItem(itemPath: string, destinationDirectory: string) {
+    destinationDirectory = ApiManager.contentApiUrl + '/' + destinationDirectory;
     const xhrOptions: XhrOptions = {
       method: 'POST',
       successCode: 201,
       parameters: JSON.stringify({
-        copy_from: fromPath
+        copy_from: itemPath
       })
     };
 
-    return ApiManager._xhrAsync(toPath, xhrOptions);
+    return ApiManager._xhrAsync(destinationDirectory, xhrOptions);
   }
 
   /**
