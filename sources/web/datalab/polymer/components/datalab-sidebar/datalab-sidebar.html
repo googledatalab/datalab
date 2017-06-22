@@ -33,8 +33,10 @@ the License.
       }
       .sidebar-button {
         height: calc(var(--toolbar-height) - 1px);
-        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
         margin: 0px;
+        padding: 0px;
         color: #666;
         font-weight: normal;
         border-top: 1px solid transparent;
@@ -44,19 +46,32 @@ the License.
           font-size: 12px;
         };
       }
-      .sidebar-button > iron-icon {
-        width: 21px;
-        height: 21px;
-        padding: 0px 10px 0px 24px;
+      .sidebar-button-container {
+        width: 100%;
+        display: flex;
       }
-      .sidebar-button > span {
-        width: 70%;
+      .sidebar-button-icon {
+        height: 21px;
+        flex: 0 0 60px;
+      }
+      .sidebar-button-title {
+        color: inherit;
+        padding: 2px;
+        overflow: hidden;
+        transition: opacity var(--app-animation-duration);
       }
       .iron-selected > .sidebar-button {
         background-color: #E8E8E8;
         border-top: 1px solid #d3d3d3;
-        color: var(--selection-fg-color);
         border-radius: 0px;
+      }
+      .iron-selected > .sidebar-button > * {
+        color: var(--selection-fg-color);
+      }
+      @media only screen and (max-width: 800px) {
+        .sidebar-button-title {
+          opacity: 0;
+        }
       }
     </style>
 
@@ -67,14 +82,18 @@ the License.
                      class="drawer-list" role="navigation">
         <a href="/files" id="files">
           <paper-button class="sidebar-button">
-            <iron-icon icon="editor:insert-drive-file"></iron-icon>
-            <span>Files</span>
+            <div class="sidebar-button-container">
+              <iron-icon class="sidebar-button-icon" icon="editor:insert-drive-file"></iron-icon>
+              <div class="sidebar-button-title">Files</div>
+            </div>
           </paper-button>
         </a>
         <a href="/sessions" id="sessions">
           <paper-button class="sidebar-button">
-            <iron-icon icon="av:featured-play-list"></iron-icon>
-            <span>Sessions</span>
+            <div class="sidebar-button-container">
+              <iron-icon class="sidebar-button-icon" icon="av:featured-play-list"></iron-icon>
+              <div class="sidebar-button-title">Sessions</div>
+            </div>
           </paper-button>
         </a>
       </iron-selector>
