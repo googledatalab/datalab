@@ -93,6 +93,23 @@ class FilesElement extends Polymer.Element {
    * to initialize element state.
    */
   ready() {
+    // Get the last startup path. Must be called before super.ready() to beat the
+    // currentPath changed event.
+    ApiManager.getUserSettings()
+      .then((settings: UserSettings) => {
+        if (settings.startuppath) {
+          let path = settings.startuppath;
+          // For backward compatibility with the current path format.
+          if (path.startsWith('/tree/')) {
+            path = path.substr('/tree/'.length);
+          }
+          if (path.startsWith(this.basePath)) {
+            path = path.substr(this.basePath.length);
+          }
+          this.currentPath = path;
+        }
+      });
+
     super.ready();
 
     // TODO: [yebrahim] The current path should be fetched from the server

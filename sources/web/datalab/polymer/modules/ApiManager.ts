@@ -55,6 +55,14 @@ interface JupyterFile {
 }
 
 /**
+ * Lists all user settings.
+ */
+interface UserSettings {
+  startuppath: string,
+  theme: string,
+}
+
+/**
  * Represents an augmented version of a file obect that contains extra metadata.
  */
 interface ApiFile extends JupyterFile {
@@ -114,6 +122,9 @@ class ApiManager {
    * @param path string path to requested file
    */
   static getJupyterFile(path: string): Promise<JupyterFile> {
+    if (path.startsWith('/')) {
+      path = path.substr(1);
+    }
     return ApiManager._xhrAsync(this.contentApiUrl + '/' + path);
   }
 
@@ -213,6 +224,13 @@ class ApiManager {
     };
 
     return ApiManager._xhrAsync(path, xhrOptions);
+  }
+
+  /**
+   * Gets the user settings JSON from the server.
+   */
+  static getUserSettings() {
+    return ApiManager._xhrAsync('/_settings');
   }
 
   /**

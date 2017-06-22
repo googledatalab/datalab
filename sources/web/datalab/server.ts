@@ -125,7 +125,7 @@ function handleRequest(request: http.ServerRequest,
     response.statusCode = 302;
     var redirectUrl : string;
     if (startup_path_setting in loadedSettings) {
-      redirectUrl = loadedSettings[startup_path_setting];
+      redirectUrl = '/tree' + loadedSettings[startup_path_setting];
     } else {
       redirectUrl = '/tree/datalab';
     }
@@ -164,12 +164,13 @@ function handleRequest(request: http.ServerRequest,
       (path.indexOf('/terminals') == 0) ||
       (path.indexOf('/sessions') == 0)) {
 
-    if (path.indexOf('/tree') == 0) {
-      const filePath = '/content' + path.substr('/tree'.length);
+    if (path.indexOf('/api/contents') == 0) {
+      const subPath = path.substr('/api/contents'.length);
+      const filePath = path_.join('/content', subPath);
       try {
         if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
-          loadedSettings[startup_path_setting] = path
-          settings_.updateUserSetting(userId, startup_path_setting, path, true);
+          loadedSettings[startup_path_setting] = subPath;
+          settings_.updateUserSetting(userId, startup_path_setting, subPath, true);
         }
       } catch (err) {
         logging.getLogger().error(err, 'Failed check for file "%s": %s', filePath, err.code);
