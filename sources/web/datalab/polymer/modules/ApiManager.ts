@@ -85,6 +85,7 @@ interface XhrOptions {
   errorCallback?: Function,
   parameters?: string,
   successCode?: number,
+  noCache?: boolean,
 }
 
 /**
@@ -106,7 +107,10 @@ class ApiManager {
    * Returns a list of currently running sessions, each implementing the Session interface
    */
   static listSessionsAsync(): Promise<Array<Session>> {
-    return ApiManager._xhrAsync(this.sessionsApiUrl);
+    const xhrOptions: XhrOptions = {
+      noCache: true,
+    };
+    return ApiManager._xhrAsync(this.sessionsApiUrl, xhrOptions);
   }
 
   /**
@@ -114,7 +118,13 @@ class ApiManager {
    * @param path string path to requested file
    */
   static getJupyterFile(path: string): Promise<JupyterFile> {
-    return ApiManager._xhrAsync(this.contentApiUrl + '/' + path);
+    if (path.startsWith('/')) {
+      path = path.substr(1);
+    }
+    const xhrOptions: XhrOptions = {
+      noCache: true,
+    };
+    return ApiManager._xhrAsync(this.contentApiUrl + '/' + path, xhrOptions);
   }
 
   /**
@@ -226,9 +236,10 @@ class ApiManager {
     const method = options.method || 'GET';
     const params = options.parameters;
     const successCode = options.successCode || 200;
+    const request = new XMLHttpRequest();
+    const noCache = options.noCache || false;
 
     return new Promise((resolve, reject) => {
-      const request = new XMLHttpRequest();
       request.onreadystatechange = () => {
         if (request.readyState === 4) {
           if (request.status === successCode) {
@@ -244,6 +255,9 @@ class ApiManager {
       };
 
       request.open(method, url);
+      if (noCache) {
+        request.setRequestHeader('Cache-Control', 'no-cache');
+      }
       request.send(params);
     });
   }
