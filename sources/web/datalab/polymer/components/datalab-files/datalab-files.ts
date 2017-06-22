@@ -115,10 +115,7 @@ class FilesElement extends Polymer.Element {
           this.currentPath = path;
         }
       })
-      .catch(() => {
-        this._fetching = false;
-        console.log('Failed to get the user settings.');
-      })
+      .catch(() => console.log('Failed to get the user settings.'))
       .then(() => {
         this._fetching = false;
         // Refresh the file list periodically.
