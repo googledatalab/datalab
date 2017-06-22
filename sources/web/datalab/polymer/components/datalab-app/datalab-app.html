@@ -38,7 +38,8 @@ the License.
         height: calc(100% - var(--toolbar-height));
       }
       .datalab-sidebar {
-        flex-basis: var(--sidebar-width);
+        width: var(--sidebar-width);
+        transition: width var(--app-animation-duration);
       }
       .datalab-main-content {
         flex-grow: 1;
@@ -47,6 +48,11 @@ the License.
       }
       iron-pages {
         height: 100%;
+      }
+      @media only screen and (max-width: 800px) {
+        .datalab-sidebar {
+          width: 60px;
+        }
       }
     </style>
 
