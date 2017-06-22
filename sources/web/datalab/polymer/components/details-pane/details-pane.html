@@ -14,28 +14,19 @@ the License.
 
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
 
-<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
-<link rel="import" href="../../bower_components/paper-button/paper-button.html">
-
 <dom-module id="details-pane">
   <template>
     <style include="datalab-shared-styles">
-      .placeholder {
-        padding: 15px;
-        text-align: center;
-      }
       #container {
         padding: 0px 20px;
         height: 100%;
         overflow-y: auto;
+        display: flex;
+        flex-direction: column;
       }
       .content {
         padding: 15px 3px;
         margin: 0px;
-      }
-      .icon {
-        min-height: 30px;
-        min-width: 30px;
       }
       #previewHtml {
         background-color: #fff;
@@ -45,12 +36,17 @@ the License.
         overflow-x: hidden;
         box-shadow: 5px 5px 10px -3px rgba(0, 0, 0, 0.1);
       }
+      .placeholder {
+        padding: 15px;
+        text-align: center;
+        color: #777;
+      }
     </style>
-    <div class="placeholder" hidden$="{{file}}">
-      Select one item to view its details.
-    </div>
     <div id="container" hidden$="{{!file}}">
       <div id="previewHtml"></div>
+      <div class="placeholder">
+        {{_message}}
+      </div>
     </div>
   </template>
 </dom-module>

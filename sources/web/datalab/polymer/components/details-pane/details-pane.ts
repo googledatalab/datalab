@@ -35,7 +35,13 @@ class DetailsPaneElement extends Polymer.Element {
    */
   public active: boolean;
 
-  private _textFilePreviewLimit = 30; // Number of lines to preview from plain text files.
+  private _message = ''; // To show in the placeholder field.
+
+  private static _noFileMessage = 'Select an item to view its details.';
+  private static _emptyFileMessage = 'Empty file.';
+  private static _emptyNotebookMessage = 'Empty notebook.';
+  private static _longNotebookMessage = 'Showing markdown from the first two.';
+  private static _longFileMessage = 'Showing the first 30.';
 
   static get is() { return "details-pane"; }
 
@@ -51,34 +57,31 @@ class DetailsPaneElement extends Polymer.Element {
         value: true,
         observer: '_reloadDetails',
       },
-      _icon: {
+      _message: {
         type: String,
-        computed: '_getIcon(file)',
-      },
-      _created: {
-        type: String,
-        computed: '_getCreated(file)',
-      },
-      _modified: {
-        type: String,
-        computed: '_getModified(file)',
+        value: '',
       },
     }
   }
 
+  ready() {
+    this._message = DetailsPaneElement._noFileMessage;
+    super.ready();
+  }
+
   /**
-   * Loads the details of the given file in the details pane. For directories, the name,
-   * icon, and creation and modification dates are shown. For notebooks, the first two
-   * cells are pulled from the file, and any markdown they contain is rendered in the pane.
-   * For now, we also support other plain text files with mime type text/*, and JSON files.
-   * Most of the time, the requests to fetch the selected item's metadata are cached by
-   * the browser, and the details show up immediately.
+   * Loads the details of the given file in the details pane. No preview is shown if the
+   * selected item is a directory. For notebooks, the first two cells are pulled from the file,
+   * and any markdown they contain is rendered in the pane. For now, we also support other
+   * plain text files with mime type text/*, and JSON files.
    * 
-   * TODO: However, consider adding a spinning animation while this data loads.
+   * TODO: Consider adding a spinning animation while this data loads.
    */
   _reloadDetails() {
-    if (!this.file || !this.active)
+    if (!this.file || !this.active) {
+      this._message = DetailsPaneElement._noFileMessage;
       return;
+    }
 
     if (this.file.type === 'notebook' || this._isPlainTextFile(this.file)) {
       ApiManager.getJupyterFile(this.file.path)
@@ -87,32 +90,53 @@ class DetailsPaneElement extends Polymer.Element {
           // If this is a notebook, get the first two cells and render any markdown in them.
           if (file.type === 'notebook') {
             const cells = (<JupyterNotebookModel>file.content).cells;
-            const firstTwoCells = cells.slice(0, 2);
+            if (cells.length === 0) {
+              this.$.previewHtml.innerHTML = '';
+              this._message = DetailsPaneElement._emptyNotebookMessage;
+            } else {
+              const firstTwoCells = cells.slice(0, 2);
 
-            let markdownHtml = '';
-            firstTwoCells.forEach(cell => {
-              if (cell.cell_type === 'markdown') {
-                markdownHtml += marked(cell.source);
+              let markdownHtml = '';
+              firstTwoCells.forEach(cell => {
+                if (cell.cell_type === 'markdown') {
+                  markdownHtml += marked(cell.source);
+                }
+              })
+              this.$.previewHtml.innerHTML = markdownHtml;
+              this._message = ' Notebook with ' + cells.length + ' cells. ';
+              if (cells.length > 2) {
+                this._message += DetailsPaneElement._longNotebookMessage;
               }
-            })
-            this.$.previewHtml.innerHTML = markdownHtml;
+            }
+
           // If this is a text file, show the first N lines.
           } else if (this._isPlainTextFile(file)) {
-            const lines = (<string>file.content).split('\n');
-            this.$.previewHtml.innerText = '\n' +
-                lines.slice(0, this._textFilePreviewLimit).join('\n') +
-                '\n';
-            if (lines.length > this._textFilePreviewLimit) {
-              this.$.previewHtml.innerText += '...\n\n';
+
+            const content = <string>file.content;
+            if (content.trim() === '') {
+              this.$.previewHtml.innerHTML = '';
+              this._message = DetailsPaneElement._emptyFileMessage;
+            } else {
+              const lines = content.split('\n');
+              this._message = 'File with ' + lines.length + ' lines. ';
+              this.$.previewHtml.innerText = '\n' +
+                  lines.slice(0, 30).join('\n') +
+                  '\n';
+              if (lines.length > 30) {
+                this.$.previewHtml.innerText += '...\n\n';
+                this._message += DetailsPaneElement._longFileMessage;
+              }
             }
           }
         })
         .catch(() => {
           this.$.previewHtml.innerHTML = '';
+          this._message = '';
           console.log('Could not get item details.');
         });
     } else {
       this.$.previewHtml.innerHTML = '';
+      this._message = '';
     }
   }
 
@@ -126,20 +150,6 @@ class DetailsPaneElement extends Polymer.Element {
              file.mimetype.indexOf('text/') > -1 ||
              file.mimetype.indexOf('application/json') > -1
            );
-  }
-
-  _getIcon() {
-    if (this.file) {
-      return this.file.type === 'directory' ? 'folder' : 'editor:insert-drive-file';
-    } else {
-      return '';
-    }
-  }
-  _getCreated() {
-    return this.file ? new Date(this.file.created).toLocaleDateString() : '';
-  }
-  _getModified() {
-    return this.file ? new Date(this.file.last_modified).toLocaleDateString() : '';
   }
 
 }
