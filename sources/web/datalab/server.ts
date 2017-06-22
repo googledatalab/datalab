@@ -165,16 +165,13 @@ function handleRequest(request: http.ServerRequest,
       (requestPath.indexOf('/sessions') == 0)) {
 
     if (requestPath.indexOf('/api/contents') == 0) {
-      console.log('--------------------------------------------- analyzing new path: ' + requestPath);
       const subPath = decodeURIComponent(requestPath.substr('/api/contents'.length));
       const filePath = path.join('/content', subPath);
       try {
         if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
-          console.log('--------------------------------------------- saving new path: ' + subPath);
           loadedSettings[startup_path_setting] = subPath;
           settings_.updateUserSetting(userId, startup_path_setting, subPath, true);
         } else {
-          console.log('--------------------------------------------- FAILED ON new path: ' + subPath);
         }
       } catch (err) {
         logging.getLogger().error(err, 'Failed check for file "%s": %s', filePath, err.code);
