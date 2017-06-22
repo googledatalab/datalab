@@ -125,8 +125,8 @@ class FilesElement extends Polymer.Element {
     // Refresh the file list periodically.
     // TODO: [yebrahim] Start periodic refresh when the window is in focus, and
     // the files page is open, and stop it on blur to minimize unnecessary traffic
-    this._fileListRefreshIntervalHandle = setInterval(this._fetchFileList.bind(this),
-                                                      this._fileListRefreshInterval);
+    this._fileListRefreshIntervalHandle =
+        setInterval(this._fetchFileList.bind(this), this._fileListRefreshInterval);
   }
 
   disconnectedCallback() {
@@ -287,6 +287,7 @@ class FilesElement extends Polymer.Element {
   _createNewNotebook() {
     return this._createNewItem('notebook');
   }
+
   _createNewFile() {
     return this._createNewItem('file');
   }
@@ -454,7 +455,7 @@ class FilesElement extends Polymer.Element {
         okLabel: 'Copy Here',
         big: true,
       };
-      Utils.showDialog(DirectoryPickerDialogElement, options)
+      return Utils.showDialog(DirectoryPickerDialogElement, options)
         .then((closeResult: DirectoryPickerDialogCloseResult) => {
           if (closeResult.confirmed) {
             const newPath = closeResult.directoryPath;
@@ -464,6 +465,8 @@ class FilesElement extends Polymer.Element {
             return Promise.resolve(null);
           }
         });
+    } else {
+      return Promise.resolve(null);
     }
   }
 
@@ -485,7 +488,7 @@ class FilesElement extends Polymer.Element {
         okLabel: 'Move Here',
         big: true,
       };
-      Utils.showDialog(DirectoryPickerDialogElement, options)
+      return Utils.showDialog(DirectoryPickerDialogElement, options)
         .then((closeResult: DirectoryPickerDialogCloseResult) => {
           if (closeResult.confirmed) {
             const newPath = closeResult.directoryPath;
@@ -496,6 +499,8 @@ class FilesElement extends Polymer.Element {
             return Promise.resolve(null);
           }
         });
+    } else {
+      return Promise.resolve(null);
     }
   }
 

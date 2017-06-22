@@ -94,14 +94,14 @@ the License.
                     on-dblclick="_rowDoubleClicked">
           <div class="checkbox-col">
             <paper-checkbox checked={{row.selected}} checkedChanged="_rowClicked"
-                            hidden$="{{noSelection}}">
+                            hidden$="{{disableSelection}}">
             </paper-checkbox>
           </div>
           <div class="first-col">
             <iron-icon hidden$="{{!row.icon}}" icon={{row.icon}}></iron-icon>
             <span>{{row.firstCol}}</span>
           </div>
-          <div class="second-col" hidden$="{{noSelection}}">
+          <div class="second-col" hidden$="{{disableSelection}}">
             {{row.secondCol}}
           </div>
         </paper-item>

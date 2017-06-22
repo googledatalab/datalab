@@ -152,7 +152,7 @@ class ApiManager {
   }
 
   /**
-   * Create a new notebook or directory.
+   * Creates a new notebook or directory.
    * @param type string type of the created item, can be 'notebook' or 'directory'
    */
   static createNewItem(type: string, path?: string) {
@@ -185,7 +185,7 @@ class ApiManager {
   }
 
   /**
-   * Rename an item
+   * Renames an item
    * @param oldPath source path of the existing item
    * @param newPath destination path of the renamed item
    */
@@ -202,7 +202,7 @@ class ApiManager {
   }
 
   /**
-   * Delete an item
+   * Deletes an item
    * @param path item path to delete
    */
   static deleteItem(path: string) {
@@ -216,7 +216,7 @@ class ApiManager {
   }
 
   /**
-   * Copy an item from source to destination. Item name collisions at the destination
+   * Copies an item from source to destination. Item name collisions at the destination
    * are handled by Jupyter.
    * @param fromDir source path to copy from
    * @param toPath destination path to copy to
