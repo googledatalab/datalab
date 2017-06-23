@@ -153,6 +153,12 @@ function handleRequest(request: http.ServerRequest,
     return;
   }
 
+  if (requestPath.indexOf('/api/basepath') === 0) {
+    response.statusCode = 200;
+    response.end(appSettings.datalabBasePath);
+    return;
+  }
+
   // Requests proxied to Jupyter
   if ((requestPath.indexOf('/api') == 0) ||
       (requestPath.indexOf('/tree') == 0) ||

@@ -28,6 +28,7 @@ import idleTimeout = require('./idleTimeout');
 import userManager = require('./userManager');
 
 var SETTINGS_FILE = 'settings.json';
+var BASE_PATH_FILE = 'basePath.json';
 var METADATA_FILE = 'metadata.json';
 const IDLE_TIMEOUT_KEY = 'idleTimeoutInterval';
 
@@ -42,6 +43,7 @@ interface Metadata {
  */
 export function loadAppSettings(): common.AppSettings {
   var settingsPath = path.join(__dirname, 'config', SETTINGS_FILE);
+  var basePathFile = path.join(__dirname, 'config', BASE_PATH_FILE);
   var metadataPath = path.join(__dirname, 'config', METADATA_FILE);
 
   if (!fs.existsSync(settingsPath)) {
@@ -65,6 +67,12 @@ export function loadAppSettings(): common.AppSettings {
     settings.versionId = process.env['DATALAB_VERSION'] || '';
     if (process.env['DATALAB_CONFIG_URL']) {
       settings.configUrl = process.env['DATALAB_CONFIG_URL'];
+    }
+    if (!fs.existsSync(basePathFile)) {
+      console.log('Base path setting file not found, falling back to empty path.');
+      settings.datalabBasePath = '';
+    } else {
+      settings.datalabBasePath = JSON.parse(fs.readFileSync(basePathFile, 'utf8'));
     }
     const settingsOverrides = process.env['DATALAB_SETTINGS_OVERRIDES'];
     if (settingsOverrides) {
