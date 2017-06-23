@@ -58,12 +58,12 @@ check_tmp_directory() {
 function reinstall_pydatalab() {
   PYDATALAB=/content/pydatalab
   echo "Reinstalling pydatalab from ${PYDATALAB}"
-  pip install --force-reinstall --no-cache-dir ${PYDATALAB}
-  pip install --force-reinstall ${PYDATALAB}/solutionbox/image_classification/.
-  pip install --force-reinstall ${PYDATALAB}/solutionbox/structured_data/.
-  pip3 install --force-reinstall --no-cache-dir ${PYDATALAB}
-  pip3 install --force-reinstall ${PYDATALAB}/solutionbox/image_classification/.
-  pip3 install --force-reinstall ${PYDATALAB}/solutionbox/structured_data/.
+  pip install --upgrade --no-deps --force-reinstall --no-cache-dir ${PYDATALAB}
+  pip install --upgrade --no-deps --force-reinstall ${PYDATALAB}/solutionbox/image_classification/.
+  pip install --upgrade --no-deps --force-reinstall ${PYDATALAB}/solutionbox/structured_data/.
+  pip3 install --upgrade --no-deps --force-reinstall --no-cache-dir ${PYDATALAB}
+  pip3 install --upgrade --no-deps --force-reinstall ${PYDATALAB}/solutionbox/image_classification/.
+  pip3 install --upgrade --no-deps --force-reinstall ${PYDATALAB}/solutionbox/structured_data/.
   echo "Done reinstalling pydatalab"
 }
 
