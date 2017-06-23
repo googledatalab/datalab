@@ -55,6 +55,14 @@ interface JupyterFile {
 }
 
 /**
+ * Lists all user settings.
+ */
+interface UserSettings {
+  startuppath: string,
+  theme: string,
+}
+
+/**
  * Represents an augmented version of a file obect that contains extra metadata.
  */
 interface ApiFile extends JupyterFile {
@@ -85,6 +93,7 @@ interface XhrOptions {
   errorCallback?: Function,
   parameters?: string,
   successCode?: number,
+  noCache?: boolean,
 }
 
 /**
@@ -106,7 +115,10 @@ class ApiManager {
    * Returns a list of currently running sessions, each implementing the Session interface
    */
   static listSessionsAsync(): Promise<Array<Session>> {
-    return ApiManager._xhrAsync(this.sessionsApiUrl);
+    const xhrOptions: XhrOptions = {
+      noCache: true,
+    };
+    return ApiManager._xhrAsync(this.sessionsApiUrl, xhrOptions);
   }
 
   /**
@@ -114,7 +126,13 @@ class ApiManager {
    * @param path string path to requested file
    */
   static getJupyterFile(path: string): Promise<JupyterFile> {
-    return ApiManager._xhrAsync(this.contentApiUrl + '/' + path);
+    if (path.startsWith('/')) {
+      path = path.substr(1);
+    }
+    const xhrOptions: XhrOptions = {
+      noCache: true,
+    };
+    return ApiManager._xhrAsync(this.contentApiUrl + '/' + path, xhrOptions);
   }
 
   /**
@@ -152,7 +170,7 @@ class ApiManager {
   }
 
   /**
-   * Create a new notebook or directory.
+   * Creates a new notebook or directory.
    * @param type string type of the created item, can be 'notebook' or 'directory'
    */
   static createNewItem(type: string, path?: string) {
@@ -185,7 +203,7 @@ class ApiManager {
   }
 
   /**
-   * Rename an item
+   * Renames an item
    * @param oldPath source path of the existing item
    * @param newPath destination path of the renamed item
    */
@@ -202,7 +220,7 @@ class ApiManager {
   }
 
   /**
-   * Delete an item
+   * Deletes an item
    * @param path item path to delete
    */
   static deleteItem(path: string) {
@@ -216,6 +234,32 @@ class ApiManager {
   }
 
   /**
+   * Gets the user settings JSON from the server.
+   */
+  static getUserSettings() {
+    return ApiManager._xhrAsync('/_settings');
+  }
+
+  /*
+   * Copies an item from source to destination. Item name collisions at the destination
+   * are handled by Jupyter.
+   * @param itemPath path to copied item
+   * @param destinationDirectory directory to copy the item into
+   */
+  static copyItem(itemPath: string, destinationDirectory: string) {
+    destinationDirectory = ApiManager.contentApiUrl + '/' + destinationDirectory;
+    const xhrOptions: XhrOptions = {
+      method: 'POST',
+      successCode: 201,
+      parameters: JSON.stringify({
+        copy_from: itemPath
+      })
+    };
+
+    return ApiManager._xhrAsync(destinationDirectory, xhrOptions);
+  }
+
+  /**
    * Sends an XMLHttpRequest to the specified URL, and parses the
    * the response text. This method returns immediately with a promise
    * that resolves with the parsed object when the request completes.
@@ -226,9 +270,10 @@ class ApiManager {
     const method = options.method || 'GET';
     const params = options.parameters;
     const successCode = options.successCode || 200;
+    const request = new XMLHttpRequest();
+    const noCache = options.noCache || false;
 
     return new Promise((resolve, reject) => {
-      const request = new XMLHttpRequest();
       request.onreadystatechange = () => {
         if (request.readyState === 4) {
           if (request.status === successCode) {
@@ -244,6 +289,9 @@ class ApiManager {
       };
 
       request.open(method, url);
+      if (noCache) {
+        request.setRequestHeader('Cache-Control', 'no-cache');
+      }
       request.send(params);
     });
   }
