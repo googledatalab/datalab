@@ -126,10 +126,38 @@ class FilesElement extends Polymer.Element {
    * to initialize element state.
    */
   ready() {
+    // Must set this to true before calling super.ready(), because the latter will cause
+    // property updates that will cause _fetchFileList to be called first, we don't want
+    // that. We want ready() to be the entry point so it gets the user's last saved path.
+    this._fetching = true;
+
     super.ready();
 
-    // TODO: [yebrahim] The current path should be fetched from the server
-    // on initialization, in order to get the last saved user path
+    // Get the last startup path.
+    ApiManager.getUserSettings()
+      .then((settings: UserSettings) => {
+        if (settings.startuppath) {
+          let path = settings.startuppath;
+          if (path.startsWith(this.basePath)) {
+            path = path.substr(this.basePath.length);
+          }
+          // For backward compatibility with the current path format.
+          if (path.startsWith('/tree/')) {
+            path = path.substr('/tree/'.length);
+          }
+          this.currentPath = path;
+        }
+      })
+      .catch(() => console.log('Failed to get the user settings.'))
+      .then(() => {
+        this._fetching = false;
+        // Refresh the file list periodically.
+        // TODO: [yebrahim] Start periodic refresh when the window is in focus, and
+        // the files page is open, and stop it on blur to minimize unnecessary traffic
+        setInterval(this._fetchFileList.bind(this), this._fileListRefreshInterval);
+        // Now refresh the list for the initialization to complete.
+        this._fetchFileList();
+      });
 
     const filesElement = this.shadowRoot.querySelector('#files')
     if (filesElement) {
@@ -170,6 +198,14 @@ class FilesElement extends Polymer.Element {
    * updates the fileList property.
    */
   _fetchFileList() {
+    // Don't overlap fetch requests. This can happen we can do fetch from three sources:
+    // - Initialization in the ready() event handler.
+    // - Refresh mechanism called by the setInterval().
+    // - User clicking refresh button.
+    if (this._fetching) {
+      return Promise.resolve(null);
+    }
+
     const self = this;
     self._fetching = true;
 

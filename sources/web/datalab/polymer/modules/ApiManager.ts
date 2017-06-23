@@ -55,6 +55,14 @@ interface JupyterFile {
 }
 
 /**
+ * Lists all user settings.
+ */
+interface UserSettings {
+  startuppath: string,
+  theme: string,
+}
+
+/**
  * Represents an augmented version of a file obect that contains extra metadata.
  */
 interface ApiFile extends JupyterFile {
@@ -226,6 +234,13 @@ class ApiManager {
   }
 
   /**
+   * Gets the user settings JSON from the server.
+   */
+  static getUserSettings() {
+    return ApiManager._xhrAsync('/_settings');
+  }
+
+  /*
    * Copies an item from source to destination. Item name collisions at the destination
    * are handled by Jupyter.
    * @param itemPath path to copied item
