@@ -44,6 +44,11 @@ class FilesElement extends Polymer.Element {
   public currentPath: string;
 
   /**
+   * The currently selected file if exactly one is selected, or null if none is.
+   */
+  public selectedFile: ApiFile | null;
+
+  /*
    * Smaller version of this element to be used as a flyout file picker.
    */
   public small: boolean;
@@ -55,6 +60,7 @@ class FilesElement extends Polymer.Element {
   private _fileListRefreshInterval: number;
   private _fileListRefreshIntervalHandle: number;
   private _currentCrumbs: Array<string>;
+  private _isDetailsPaneToggledOn: Boolean;
 
   static readonly _deleteListLimit = 10;
 
@@ -70,6 +76,10 @@ class FilesElement extends Polymer.Element {
         type: String,
         value: '',
         observer: '_currentPathChanged',
+      },
+      selectedFile: {
+        type: Object,
+        value: null,
       },
       small: {
         type: Boolean,
@@ -99,7 +109,15 @@ class FilesElement extends Polymer.Element {
       _fileListRefreshInterval: {
         type: Number,
         value: 10000,
-      }
+      },
+      _isDetailsPaneToggledOn: {
+        type: Boolean,
+        value: true,
+      },
+      _isDetailsPaneEnabled: {
+        type: Boolean,
+        computed: '_getDetailsPaneEnabled(small, _isDetailsPaneToggledOn)',
+      },
     }
   }
 
@@ -145,6 +163,8 @@ class FilesElement extends Polymer.Element {
     if (filesElement) {
       filesElement.addEventListener('itemDoubleClick',
                                     this._handleDoubleClicked.bind(this));
+      filesElement.addEventListener('itemSelectionChanged',
+                                    this._handleSelectionChanged.bind(this));
     }
 
     // For a small file/directory picker, we don't need to show the status.
@@ -260,6 +280,19 @@ class FilesElement extends Polymer.Element {
       window.open(this._getNotebookUrlPrefix() + '/' + clickedItem.path, '_blank');
     } else {
       window.open(this._getEditorUrlPrefix() + '/' + clickedItem.path, '_blank');
+    }
+  }
+
+  /**
+   * Called when the selection changes on the item list. If exactly one file
+   * is selected, sets the selectedFile property to the selected file object.
+   */
+  _handleSelectionChanged() {
+    const selectedItems = this.$.files.getSelectedIndices();
+    if (selectedItems.length === 1) {
+      this.selectedFile = this._fileList[selectedItems[0]];
+    } else {
+      this.selectedFile = null;
     }
   }
 
@@ -471,6 +504,22 @@ class FilesElement extends Polymer.Element {
     } else {
       return Promise.resolve(null);
     }
+  }
+
+  /**
+   * Computes whether the details pane should be enabled. This depends on two values:
+   * whether the element has the small attribute, and whether the user has switched it
+   * off manually.
+   */
+  _getDetailsPaneEnabled(small: boolean, toggledOn: boolean) {
+    return !small && toggledOn;
+  }
+
+  /**
+   * Switches details pane on or off.
+   */
+  _toggleDetailsPane() {
+    this._isDetailsPaneToggledOn = !this._isDetailsPaneToggledOn;
   }
 
   /**
