@@ -211,7 +211,8 @@ the License.
             </div>
           </template>
         </div>
-        <paper-button id="toggleDetails" class="navbar-button" on-click="_toggleDetailsPane">
+        <paper-button id="toggleDetails" class="navbar-button" on-click="_toggleDetailsPane"
+                      hidden$="{{small}}">
           <iron-icon icon="visibility"></iron-icon>
         </paper-button>
       </div>
@@ -223,7 +224,7 @@ the License.
       <div class="files-container">
         <item-list id="files" hide-header$="{{small}}" disable-selection$="{{small}}"></item-list>
         <details-pane id="detailsPane" file="{{selectedFile}}"
-                      hidden="{{!_detailsPaneEnabled}}" active="{{_detailsPaneEnabled}}">
+                      hidden="{{!_isDetailsPaneEnabled}}" active="{{_isDetailsPaneEnabled}}">
         </details-pane>
         </div>
       </div>

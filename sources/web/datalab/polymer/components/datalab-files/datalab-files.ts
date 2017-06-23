@@ -60,7 +60,7 @@ class FilesElement extends Polymer.Element {
   private _fileListRefreshInterval: number;
   private _fileListRefreshIntervalHandle: number;
   private _currentCrumbs: Array<string>;
-  private _detailsPaneEnabled: boolean;
+  private _isDetailsPaneToggledOn: Boolean;
 
   static readonly _deleteListLimit = 10;
 
@@ -110,9 +110,13 @@ class FilesElement extends Polymer.Element {
         type: Number,
         value: 10000,
       },
-      _detailsPaneEnabled: {
+      _isDetailsPaneToggledOn: {
         type: Boolean,
         value: true,
+      },
+      _isDetailsPaneEnabled: {
+        type: Boolean,
+        computed: '_getDetailsPaneEnabled(small, _isDetailsPaneToggledOn)',
       },
     }
   }
@@ -466,8 +470,20 @@ class FilesElement extends Polymer.Element {
     }
   }
 
+  /**
+   * Computes whether the details pane should be enabled. This depends on two values:
+   * whether the element has the small attribute, and whether the user has switched it
+   * off manually.
+   */
+  _getDetailsPaneEnabled(small: boolean, toggledOn: boolean) {
+    return !small && toggledOn;
+  }
+
+  /**
+   * Switches details pane on or off.
+   */
   _toggleDetailsPane() {
-    this._detailsPaneEnabled = !this._detailsPaneEnabled;
+    this._isDetailsPaneToggledOn = !this._isDetailsPaneToggledOn;
   }
 
   /**
