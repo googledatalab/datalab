@@ -162,7 +162,7 @@ class ApiManager {
   }
 
   /**
-   * Create a new notebook or directory.
+   * Creates a new notebook or directory.
    * @param type string type of the created item, can be 'notebook' or 'directory'
    */
   static createNewItem(type: string, path?: string) {
@@ -195,7 +195,7 @@ class ApiManager {
   }
 
   /**
-   * Rename an item
+   * Renames an item
    * @param oldPath source path of the existing item
    * @param newPath destination path of the renamed item
    */
@@ -212,7 +212,7 @@ class ApiManager {
   }
 
   /**
-   * Delete an item
+   * Deletes an item
    * @param path item path to delete
    */
   static deleteItem(path: string) {
@@ -223,6 +223,25 @@ class ApiManager {
     };
 
     return ApiManager._xhrAsync(path, xhrOptions);
+  }
+
+  /**
+   * Copies an item from source to destination. Item name collisions at the destination
+   * are handled by Jupyter.
+   * @param itemPath path to copied item
+   * @param destinationDirectory directory to copy the item into
+   */
+  static copyItem(itemPath: string, destinationDirectory: string) {
+    destinationDirectory = ApiManager.contentApiUrl + '/' + destinationDirectory;
+    const xhrOptions: XhrOptions = {
+      method: 'POST',
+      successCode: 201,
+      parameters: JSON.stringify({
+        copy_from: itemPath
+      })
+    };
+
+    return ApiManager._xhrAsync(destinationDirectory, xhrOptions);
   }
 
   /**

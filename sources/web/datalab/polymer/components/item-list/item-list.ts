@@ -41,6 +41,9 @@ class ItemClickEvent extends CustomEvent {
  * Double clicking an item fires an 'ItemClickEvent' event with this
  * item's index. Similarly, selection fires an 'ItemClickEvent' with
  * the most recent clicked item's index.
+ * If the "hide-header" attribute is specified, the header is hidden.
+ * If the "disable-selection" attribute is specified, the checkboxes are
+ * hidden, and clicking items does not select them.
  */
 class ItemListElement extends Polymer.Element {
 
@@ -53,6 +56,16 @@ class ItemListElement extends Polymer.Element {
    * List of string data columns names
    */
   public columns: Array<string>;
+
+  /**
+   * Whether to hide the header row
+   */
+  public hideHeader: boolean;
+
+  /**
+   * Whether to disable item selection
+   */
+  public disableSelection: boolean;
 
   private _selectedElements: Array<HTMLElement>;
 
@@ -69,6 +82,14 @@ class ItemListElement extends Polymer.Element {
         type: Array,
         value: () => [],
       },
+      hideHeader: {
+        type: Boolean,
+        value: false,
+      },
+      disableSelection: {
+        type: Boolean,
+        value: false,
+      },
       _selectedElements: {
         type: Array,
         value: () => [],
@@ -82,14 +103,14 @@ class ItemListElement extends Polymer.Element {
    * opposite is not directly possible.
    */
   getSelectedElements() {
-    return this._selectedElements;
+    return this.disableSelection ? null : this._selectedElements;
   }
 
   /**
    * Returns list of indices for the currently selected elements.
    */
   getSelectedIndices() {
-    return this._selectedElements.map(element => {
+    return this.disableSelection ? null : this._selectedElements.map(element => {
       return this.$.list.indexForElement(element);
     });
   }
@@ -108,6 +129,9 @@ class ItemListElement extends Polymer.Element {
    * This method also maintains the _selectedElements list.
    */
   _rowClicked(e: MouseEvent) {
+    if (this.disableSelection) {
+      return;
+    }
     const target = <HTMLDivElement>e.target;
     const index = this.$.list.indexForElement(target);
     const rowElement = this._getRowElementFromChild(target);
