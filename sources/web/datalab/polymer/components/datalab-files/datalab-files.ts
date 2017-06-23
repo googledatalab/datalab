@@ -136,7 +136,8 @@ class FilesElement extends Polymer.Element {
         // Refresh the file list periodically.
         // TODO: [yebrahim] Start periodic refresh when the window is in focus, and
         // the files page is open, and stop it on blur to minimize unnecessary traffic
-        setInterval(this._fetchFileList.bind(this), this._fileListRefreshInterval);
+        this._fileListRefreshIntervalHandle =
+            setInterval(this._fetchFileList.bind(this), this._fileListRefreshInterval);
         // Now refresh the list for the initialization to complete.
         this._fetchFileList();
       });
@@ -149,12 +150,6 @@ class FilesElement extends Polymer.Element {
 
     // For a small file/directory picker, we don't need to show the status.
     this.$.files.columns = this.small ? ['Name'] : ['Name', 'Status'];
-
-    // Refresh the file list periodically.
-    // TODO: [yebrahim] Start periodic refresh when the window is in focus, and
-    // the files page is open, and stop it on blur to minimize unnecessary traffic
-    this._fileListRefreshIntervalHandle =
-        setInterval(this._fetchFileList.bind(this), this._fileListRefreshInterval);
   }
 
   disconnectedCallback() {
