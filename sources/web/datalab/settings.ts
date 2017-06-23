@@ -106,12 +106,12 @@ export function getUserConfigDir(userId: string): string {
  * Copies the default user settings into the user's directory.
  */
 function copyDefaultUserSettings(userId: string) {
-  var settingsPath = path.join(getUserConfigDir(userId), SETTINGS_FILE);
+  var userSettingsPath = path.join(getUserConfigDir(userId), USER_SETTINGS_FILE);
   const defaultUserSettingsPath = path.join(__dirname, 'config', USER_SETTINGS_FILE);
-  console.log('WILL COPY FROM: ' + defaultUserSettingsPath + ' TO: ' + settingsPath);
+  console.log('WILL COPY FROM: ' + defaultUserSettingsPath + ' TO: ' + userSettingsPath);
   // Copy the default user settings file into user's directory.
-  fs.createReadStream(defaultUserSettingsPath).pipe(fs.createWriteStream(settingsPath));
-  console.log('COPIED DEFAULT SETTINGS TO: ' + settingsPath);
+  const data = fs.readFileSync(defaultUserSettingsPath);
+  fs.writeFileSync(userSettingsPath, data);
 }
 
 /**
@@ -120,7 +120,7 @@ function copyDefaultUserSettings(userId: string) {
  * @returns the key:value mapping of settings for the user.
  */
 export function loadUserSettings(userId: string): common.UserSettings {
-  var settingsPath = path.join(getUserConfigDir(userId), SETTINGS_FILE);
+  var settingsPath = path.join(getUserConfigDir(userId), USER_SETTINGS_FILE);
   if (!fs.existsSync(settingsPath)) {
     console.log('User settings file %s not found, copying default settings.', settingsPath);
     copyDefaultUserSettings(userId);
@@ -166,7 +166,7 @@ export function updateUserSetting(userId: string, key: string, value: string,
                                   asynchronous: boolean = false): boolean {
   var userDir = userManager.getUserDir(userId);
   var settingsDir =  path.join(userDir, 'datalab', '.config');
-  var settingsPath = path.join(settingsDir, SETTINGS_FILE);
+  var settingsPath = path.join(settingsDir, USER_SETTINGS_FILE);
 
   if (!fs.existsSync(settingsPath)) {
     console.log('User settings file %s not found, copying default settings.', settingsPath);
@@ -203,14 +203,30 @@ export function updateUserSetting(userId: string, key: string, value: string,
  * Implements setting update request handling.
  * @param request the incoming http request.
  * @param response the outgoing http response.
+ * @param requestPath the pathname of the incoming request.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
-  var userId = userManager.getUserId(request);
-  if ('POST' == request.method) {
-    postSettingsHandler(userId, request, response);
+  if (request.url.indexOf('/api/settings') === 0) {
+    appSettingsHandler(request, response);
   } else {
-    getSettingsHandler(userId, request, response);
+    var userId = userManager.getUserId(request);
+    if ('POST' == request.method) {
+      postSettingsHandler(userId, request, response);
+    } else {
+      getSettingsHandler(userId, request, response);
+    }
   }
+}
+
+/**
+ * Handles app settings requests, returns the app settings JSON.
+ * @param request the incoming http request.
+ * @param response the outgoing http response.
+ */
+function appSettingsHandler(request: http.ServerRequest, response: http.ServerResponse): void {
+  const appSettings = loadAppSettings();
+  response.writeHead(200, { 'Content-Type': 'application/json' });
+  response.end(JSON.stringify(appSettings));
 }
 
 /**

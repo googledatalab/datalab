@@ -161,6 +161,11 @@ function handleRequest(request: http.ServerRequest,
     return;
   }
 
+  if (requestPath.indexOf('/api/settings') === 0) {
+    settingHandler(request, response);
+    return;
+  }
+
   // Requests proxied to Jupyter
   if ((requestPath.indexOf('/api') == 0) ||
       (requestPath.indexOf('/tree') == 0) ||
