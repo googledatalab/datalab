@@ -25,6 +25,11 @@
  * Navigation is done locally to this element, and it does not modify the client's location.
  * This allows for navigation to be persistent if the view is changed away from the files
  * element.
+ * 
+ * A mini version of this element can be rendered by specifying the "small" attribute, which
+ * removes the toolbar and the refresh button, and uses the item-list element with no header
+ * and no selection. It also doesn't do anything when a file is double clicked.
+ * This is meant to be used for browsing only, such as the case for picking files or directories.
  */
 class FilesElement extends Polymer.Element {
 
@@ -38,11 +43,17 @@ class FilesElement extends Polymer.Element {
    */
   public currentPath: string;
 
+  /**
+   * Smaller version of this element to be used as a flyout file picker.
+   */
+  public small: boolean;
+
   private _pathHistory: Array<string>;
   private _pathHistoryIndex: number;
   private _fetching: boolean;
   private _fileList: Array<ApiFile>;
   private _fileListRefreshInterval: number;
+  private _fileListRefreshIntervalHandle: number;
   private _currentCrumbs: Array<string>;
 
   static readonly _deleteListLimit = 10;
@@ -59,6 +70,10 @@ class FilesElement extends Polymer.Element {
         type: String,
         value: '',
         observer: '_currentPathChanged',
+      },
+      small: {
+        type: Boolean,
+        value: false,
       },
       _currentCrumbs: {
         type: Array,
@@ -132,7 +147,20 @@ class FilesElement extends Polymer.Element {
                                     this._handleDoubleClicked.bind(this));
     }
 
-    this.$.files.columns = ['Name', 'Status'];
+    // For a small file/directory picker, we don't need to show the status.
+    this.$.files.columns = this.small ? ['Name'] : ['Name', 'Status'];
+
+    // Refresh the file list periodically.
+    // TODO: [yebrahim] Start periodic refresh when the window is in focus, and
+    // the files page is open, and stop it on blur to minimize unnecessary traffic
+    this._fileListRefreshIntervalHandle =
+        setInterval(this._fetchFileList.bind(this), this._fileListRefreshInterval);
+  }
+
+  disconnectedCallback() {
+    // Clean up the refresh interval. This is important if multiple datalab-files elements
+    // are created and destroyed on the document.
+    clearInterval(this._fileListRefreshIntervalHandle);
   }
 
   _getNotebookUrlPrefix() {
@@ -217,9 +245,14 @@ class FilesElement extends Polymer.Element {
    * Called when a double click event is dispatched by the item list element.
    * If the clicked item is a directory, pushes it onto the nav stack, otherwise
    * opens it in a new notebook or editor session.
+   * If this element is in "small" mode, double clicking a file does not have
+   * an effect, a directory will still navigate.
    */
   _handleDoubleClicked(e: ItemClickEvent) {
     let clickedItem = this._fileList[e.detail.index];
+    if (this.small && clickedItem.type !== 'directory') {
+      return;
+    }
     if (clickedItem.type === 'directory') {
       this.currentPath = clickedItem.path;
       this._pushNewPath();
@@ -291,6 +324,10 @@ class FilesElement extends Polymer.Element {
     return this._createNewItem('notebook');
   }
 
+  _createNewFile() {
+    return this._createNewItem('file');
+  }
+
   _createNewDirectory() {
     return this._createNewItem('directory');
   }
@@ -315,7 +352,7 @@ class FilesElement extends Polymer.Element {
       okLabel: 'Create',
     };
 
-    return Utils.showDialog(DialogType.input, inputOptions)
+    return Utils.showDialog(InputDialogElement, inputOptions)
       .then((closeResult: InputDialogCloseResult) => {
         // Only if the dialog has been confirmed with some user input, rename the
         // newly created file. Then if that is successful, reload the file list
@@ -355,7 +392,7 @@ class FilesElement extends Polymer.Element {
 
       // Only if the dialog has been confirmed with some user input, rename the
       // selected item. Then if that is successful, and reload the file list.
-      return Utils.showDialog(DialogType.input, inputOptions)
+      return Utils.showDialog(InputDialogElement, inputOptions)
         .then((closeResult: InputDialogCloseResult) => {
           if (closeResult.confirmed && closeResult.userInput) {
             const newName = this.currentPath + '/' + closeResult.userInput;
@@ -373,7 +410,7 @@ class FilesElement extends Polymer.Element {
   }
 
   /**
-   * Creates an input modal to get the user confirmation with a list of the items
+   * Creates a modal to get the user's confirmation with a list of the items
    * to be deleted, then calls the ApiManager for each of these items to delete,
    * then refreshes the file list.
    */
@@ -416,7 +453,7 @@ class FilesElement extends Polymer.Element {
       // Only if the dialog has been confirmed, call the ApiManager to delete each
       // of the selected items, and wait for all promises to finish. Then if that
       // is successful, reload the file list.
-      return Utils.showDialog(DialogType.confirm, inputOptions)
+      return Utils.showDialog(BaseDialogElement, inputOptions)
         .then((closeResult: BaseDialogCloseResult) => {
           if (closeResult.confirmed) {
             let deletePromises = selectedIndices.map((i: number) => {
@@ -435,6 +472,74 @@ class FilesElement extends Polymer.Element {
       return Promise.resolve(null);
     }
   }
+
+  /**
+   * Creates a directory picker modal to get the user to choose a destination for the
+   * selected item, sends a copy item API call, then refreshes the file list. This only
+   * works if exactly one item is selected.
+   * TODO: Consider allowing multiple items to be copied.
+   */
+  _copySelectedItem() {
+    const selectedIndices = this.$.files.getSelectedIndices();
+
+    if (selectedIndices.length === 1) {
+      const i = selectedIndices[0];
+      const selectedObject = this._fileList[i];
+
+      const options: DialogOptions = {
+        title: 'Copy Item',
+        okLabel: 'Copy Here',
+        big: true,
+      };
+      return Utils.showDialog(DirectoryPickerDialogElement, options)
+        .then((closeResult: DirectoryPickerDialogCloseResult) => {
+          if (closeResult.confirmed) {
+            const newPath = closeResult.directoryPath;
+            return ApiManager.copyItem(selectedObject.path, newPath)
+              .then(() => this._fetchFileList());
+          } else {
+            return Promise.resolve(null);
+          }
+        });
+    } else {
+      return Promise.resolve(null);
+    }
+  }
+
+  /**
+   * Creates a directory picker modal to get the user to choose a destination for the
+   * selected item, sends a rename item API call, then refreshes the file list. This only
+   * works if exactly one item is selected.
+   * TODO: Consider allowing multiple items to be copied.
+   */
+  _moveSelectedItem() {
+    const selectedIndices = this.$.files.getSelectedIndices();
+
+    if (selectedIndices.length === 1) {
+      const i = selectedIndices[0];
+      const selectedObject = this._fileList[i];
+
+      const options: DialogOptions = {
+        title: 'Move Item',
+        okLabel: 'Move Here',
+        big: true,
+      };
+      return Utils.showDialog(DirectoryPickerDialogElement, options)
+        .then((closeResult: DirectoryPickerDialogCloseResult) => {
+          if (closeResult.confirmed) {
+            const newPath = closeResult.directoryPath;
+            // Moving is renaming.
+            return ApiManager.renameItem(selectedObject.path, newPath + '/' + selectedObject.name)
+              .then(() => this._fetchFileList());
+          } else {
+            return Promise.resolve(null);
+          }
+        });
+    } else {
+      return Promise.resolve(null);
+    }
+  }
+
 }
 
 customElements.define(FilesElement.is, FilesElement);

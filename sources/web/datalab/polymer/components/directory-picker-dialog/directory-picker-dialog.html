@@ -12,25 +12,16 @@ or implied. See the License for the specific language governing permissions and 
 the License.
 -->
 
-<link rel="import" href="../base-dialog/base-dialog.html">
+<link rel="import" href="../datalab-files/datalab-files.html">
 
-<link rel="import" href="../../bower_components/paper-input/paper-input.html">
-
-<dom-module id="input-dialog">
+<dom-module id="directory-picker-dialog">
   <template>
-    <style>
-      #inputBox {
-        margin: 20px;
-        /*Disable input underline animation*/
-        --paper-input-container-underline-focus: {
-          display: none;
-        };
-      }
+    <style include="datalab-shared-styles">
     </style>
-    <paper-input id="inputBox" label="{{inputLabel}}" spellcheck=false autofocus
-                 value="{{inputValue}}" no-label-float>
-    </paper-input>
+    <div class="files">
+      <datalab-files id="filePicker" small></datalab-files>
+    </div>
   </template>
 </dom-module>
 
-<script src="input-dialog.js"></script>
+<script src="directory-picker-dialog.js"></script>
