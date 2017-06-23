@@ -15,8 +15,11 @@
 declare module common {
 
   interface UserSettings {
-    startuppath?: string,
-    theme?: string,
+    startuppath: string,
+    theme: string,
+    idleTimeoutShutdownCommand: string,
+    idleTimeoutInterval: string,
+    [index: string]: string,
   }
 
   interface AppSettings {

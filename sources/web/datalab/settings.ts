@@ -28,6 +28,7 @@ import idleTimeout = require('./idleTimeout');
 import userManager = require('./userManager');
 
 var SETTINGS_FILE = 'settings.json';
+var USER_SETTINGS_FILE = 'userSettings.json';
 var METADATA_FILE = 'metadata.json';
 const IDLE_TIMEOUT_KEY = 'idleTimeoutInterval';
 
@@ -102,6 +103,18 @@ export function getUserConfigDir(userId: string): string {
 }
 
 /**
+ * Copies the default user settings into the user's directory.
+ */
+function copyDefaultUserSettings(userId: string) {
+  var settingsPath = path.join(getUserConfigDir(userId), SETTINGS_FILE);
+  const defaultUserSettingsPath = path.join(__dirname, 'config', USER_SETTINGS_FILE);
+  console.log('WILL COPY FROM: ' + defaultUserSettingsPath + ' TO: ' + settingsPath);
+  // Copy the default user settings file into user's directory.
+  fs.createReadStream(defaultUserSettingsPath).pipe(fs.createWriteStream(settingsPath));
+  console.log('COPIED DEFAULT SETTINGS TO: ' + settingsPath);
+}
+
+/**
  * Loads the configuration settings for the user.
  *
  * @returns the key:value mapping of settings for the user.
@@ -109,8 +122,8 @@ export function getUserConfigDir(userId: string): string {
 export function loadUserSettings(userId: string): common.UserSettings {
   var settingsPath = path.join(getUserConfigDir(userId), SETTINGS_FILE);
   if (!fs.existsSync(settingsPath)) {
-    console.log('User settings file %s not found.', settingsPath);
-    return {};
+    console.log('User settings file %s not found, copying default settings.', settingsPath);
+    copyDefaultUserSettings(userId);
   }
 
   try {
@@ -119,7 +132,7 @@ export function loadUserSettings(userId: string): common.UserSettings {
   }
   catch (e) {
     console.log(e);
-    return {};
+    return null;
   }
 }
 
@@ -149,12 +162,18 @@ function ensureDirExists(fullPath: string): boolean {
  * @param value the updated value of the setting.
  * @returns true iff the update was applied.
  */
-export function updateUserSetting(userId: string, key: string, value: string, asynchronous: boolean = false): boolean {
+export function updateUserSetting(userId: string, key: string, value: string,
+                                  asynchronous: boolean = false): boolean {
   var userDir = userManager.getUserDir(userId);
   var settingsDir =  path.join(userDir, 'datalab', '.config');
   var settingsPath = path.join(settingsDir, SETTINGS_FILE);
 
-  var settings: common.UserSettings = {};
+  if (!fs.existsSync(settingsPath)) {
+    console.log('User settings file %s not found, copying default settings.', settingsPath);
+    copyDefaultUserSettings(userId);
+  }
+
+  let settings: common.UserSettings;
   if (fs.existsSync(settingsPath)) {
     try {
       settings = <common.UserSettings>JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
