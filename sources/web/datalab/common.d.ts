@@ -14,6 +14,11 @@
 
 declare module common {
 
+  interface UserSettings {
+    startuppath?: string,
+    theme?: string,
+  }
+
   interface AppSettings {
 
     /**

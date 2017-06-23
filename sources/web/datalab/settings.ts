@@ -106,7 +106,7 @@ export function getUserConfigDir(userId: string): string {
  *
  * @returns the key:value mapping of settings for the user.
  */
-export function loadUserSettings(userId: string): common.Map<string> {
+export function loadUserSettings(userId: string): common.UserSettings {
   var settingsPath = path.join(getUserConfigDir(userId), SETTINGS_FILE);
   if (!fs.existsSync(settingsPath)) {
     console.log('User settings file %s not found.', settingsPath);
@@ -114,7 +114,7 @@ export function loadUserSettings(userId: string): common.Map<string> {
   }
 
   try {
-    var settings = <common.Map<string>>JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    var settings = <common.UserSettings>JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
     return settings;
   }
   catch (e) {
@@ -154,10 +154,10 @@ export function updateUserSetting(userId: string, key: string, value: string, as
   var settingsDir =  path.join(userDir, 'datalab', '.config');
   var settingsPath = path.join(settingsDir, SETTINGS_FILE);
 
-  var settings: common.Map<string> = {};
+  var settings: common.UserSettings = {};
   if (fs.existsSync(settingsPath)) {
     try {
-      settings = <common.Map<string>>JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+      settings = <common.UserSettings>JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
     }
     catch (e) {
       console.log(e);

@@ -264,7 +264,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   }
   else if (pathname.lastIndexOf('/custom.css') > 0) {
     var userId: string = userManager.getUserId(request);
-    var userSettings: common.Map<string> = settings.loadUserSettings(userId);
+    var userSettings: common.UserSettings = settings.loadUserSettings(userId);
     if ('theme' in userSettings) {
       var theme: string = userSettings['theme'];
       if (theme == 'custom') {

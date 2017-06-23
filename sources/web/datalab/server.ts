@@ -51,8 +51,7 @@ var timeoutHandler: http.RequestHandler;
  * The application settings instance.
  */
 var appSettings: common.AppSettings;
-var loadedSettings: common.Map<string> = null;
-var startup_path_setting = 'startuppath'
+var loadedSettings: common.UserSettings = null;
 
 /**
  * If it is the user's first request since the web server restarts,
@@ -178,8 +177,8 @@ function handleRequest(request: http.ServerRequest,
       const filePath = path.join('/content', subPath);
       try {
         if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
-          loadedSettings[startup_path_setting] = subPath;
-          settings_.updateUserSetting(userId, startup_path_setting, subPath, true);
+          loadedSettings.startuppath = subPath;
+          settings_.updateUserSetting(userId, 'startuppath', subPath, true);
         } else {
         }
       } catch (err) {
