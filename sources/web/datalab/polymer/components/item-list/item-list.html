@@ -29,7 +29,12 @@ the License.
       }
       #list-container {
         overflow: auto;
+      }
+      .list-container-hide-header--false {
         height: calc(100% - var(--toolbar-height));
+      }
+      .list-container-hide-header--true {
+        height: 100%;
       }
       .row {
         user-select: none;
@@ -73,26 +78,30 @@ the License.
     </style>
 
     <!--Header row-->
-    <div id="header">
-      <div class="checkbox-col"></div>
-      <div class="first-col"><strong>{{columns.0}}</strong></div>
-      <div class="second-col"><strong>{{columns.1}}</strong></div>
+    <!--Need this extra div because #header has a display modifier, cannot set hidden-->
+    <div hidden$="{{hideHeader}}">
+      <div id="header">
+        <div class="checkbox-col"></div>
+        <div class="first-col"><strong>{{columns.0}}</strong></div>
+        <div class="second-col"><strong>{{columns.1}}</strong></div>
+      </div>
     </div>
 
     <!--Item list-->
-    <div id="list-container">
+    <div id="list-container" class$="list-container-hide-header--{{hideHeader}}">
       <template is="dom-repeat" id="list" items="{{rows}}" as="row">
         <paper-item class="row" selected$={{row.selected}} on-click="_rowClicked"
                     on-dblclick="_rowDoubleClicked">
           <div class="checkbox-col">
-            <paper-checkbox checked={{row.selected}} checkedChanged="_rowClicked">
+            <paper-checkbox checked={{row.selected}} checkedChanged="_rowClicked"
+                            hidden$="{{disableSelection}}">
             </paper-checkbox>
           </div>
           <div class="first-col">
             <iron-icon hidden$="{{!row.icon}}" icon={{row.icon}}></iron-icon>
             <span>{{row.firstCol}}</span>
           </div>
-          <div class="second-col">
+          <div class="second-col" hidden$="{{disableSelection}}">
             {{row.secondCol}}
           </div>
         </paper-item>

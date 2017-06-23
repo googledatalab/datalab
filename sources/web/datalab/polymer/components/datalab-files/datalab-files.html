@@ -16,6 +16,7 @@ the License.
 <link rel="import" href="../../components/base-dialog/base-dialog.html">
 <link rel="import" href="../../components/item-list/item-list.html">
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
+<link rel="import" href="../directory-picker-dialog/directory-picker-dialog.html">
 
 <link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../../bower_components/iron-icons/editor-icons.html">
@@ -26,6 +27,9 @@ the License.
   <template>
 
     <style include="datalab-shared-styles">
+      [hidden] {
+        display: none !important;
+      }
       #toolbar {
         height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
         width: 100%;
@@ -42,8 +46,12 @@ the License.
         width: 20px;
         padding-right: 5px;
       }
-      #file-picker {
+      .file-picker-small--false {
+        /*For regular file picker, leave room for toolbar on top*/
         height: calc(100% - var(--toolbar-height));
+      }
+      .file-picker-small--true {
+        height: 100%; /*For a small picker, there's no toolbar*/
       }
       #navbar {
         display: flex;
@@ -137,18 +145,26 @@ the License.
 
     <!--Toolbar with buttons such as +Notebook, +Folder... etc-->
     <!--TODO: [yebrahim] Make these buttons do stuff-->
-    <div id="toolbar">
+    <div id="toolbar" hidden$="{{small}}">
       <paper-button class="toolbar-button" on-click="_createNewNotebook">
         <iron-icon icon="add-box"></iron-icon>
         <span>Notebook</span>
+      </paper-button>
+      <paper-button class="toolbar-button" on-click="_createNewFile">
+        <iron-icon icon="add-box"></iron-icon>
+        <span>File</span>
       </paper-button>
       <paper-button class="toolbar-button" on-click="_createNewDirectory">
         <iron-icon icon="add-box"></iron-icon>
         <span>Folder</span>
       </paper-button>
-      <paper-button class="toolbar-button">
+      <paper-button class="toolbar-button" on-click="_copySelectedItem">
         <iron-icon icon="content-copy"></iron-icon>
         <span>Copy</span>
+      </paper-button>
+      <paper-button class="toolbar-button" on-click="_moveSelectedItem">
+        <iron-icon icon="redo"></iron-icon>
+        <span>Move</span>
       </paper-button>
       <paper-button class="toolbar-button">
         <iron-icon icon="file-upload"></iron-icon>
@@ -164,7 +180,7 @@ the License.
       </paper-button>
     </div>
 
-    <div id="file-picker">
+    <div id="file-picker" class$="file-picker-small--{{small}}">
       <!--Navigation bar with back/forward buttons, refresh, and breadcrumbs-->
       <div id="navbar">
         <paper-button id="backNav" class="navbar-button" on-click="_navBackward">
@@ -173,7 +189,7 @@ the License.
         <paper-button id="forwardNav" class="navbar-button" on-click="_navForward">
           <iron-icon icon="chevron-right"></iron-icon>
         </paper-button>
-        <paper-button class="navbar-button" on-click="_fetchFileList">
+        <paper-button class="navbar-button" hidden$="{{small}}" on-click="_fetchFileList">
           <iron-icon icon="refresh"></iron-icon>
         </paper-button>
         <div class="vseparator"></div>
@@ -195,7 +211,7 @@ the License.
 
       <!--File listing-->
       <div class="files-container">
-        <item-list id="files"></item-list>
+        <item-list id="files" hide-header$="{{small}}" disable-selection$="{{small}}"></item-list>
       </div>
     </div>
 
