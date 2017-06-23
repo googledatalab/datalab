@@ -43,7 +43,7 @@ interface JupyterNotebookModel {
  * Represents a file object as returned from Jupyter's files API.
  */
 interface JupyterFile {
-  content: Array<JupyterFile> | JupyterNotebookModel,
+  content: Array<JupyterFile> | JupyterNotebookModel | string,
   created: string,
   format: string,
   last_modified: string,
@@ -148,7 +148,7 @@ class ApiManager {
           throw new Error('Can only list files in a directory. Found type: ' + file.type);
         }
         return <JupyterFile[]>file.content;
-      })
+      });
 
     const sessionsPromise: Promise<Array<Session>> = ApiManager.listSessionsAsync();
 
