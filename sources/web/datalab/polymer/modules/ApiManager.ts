@@ -62,6 +62,10 @@ interface UserSettings {
   theme: string,
 }
 
+interface JupyterTerminal {
+  name: string,
+}
+
 /**
  * Represents an augmented version of a file obect that contains extra metadata.
  */
@@ -110,6 +114,11 @@ class ApiManager {
    * URL for querying sessions
    */
   static readonly sessionsApiUrl = '/api/sessions';
+
+  /**
+   * URL for starting terminals
+   */
+  static readonly terminalApiUrl = '/api/terminals';
 
   /**
    * Returns a list of currently running sessions, each implementing the Session interface
@@ -257,6 +266,20 @@ class ApiManager {
     };
 
     return ApiManager._xhrAsync(destinationDirectory, xhrOptions);
+  }
+
+  /**
+   * Initializes a terminal session.
+   */
+  static startTerminal() {
+    const xhrOptions: XhrOptions = {
+      method: 'POST',
+    }
+    return ApiManager._xhrAsync(ApiManager.terminalApiUrl, xhrOptions);
+  }
+
+  static getTerminal() {
+    return ApiManager._xhrAsync(ApiManager.terminalApiUrl);
   }
 
   /**
