@@ -173,6 +173,7 @@ export function isExperimentalResource(pathname: string) {
   return experimentalUiEnabled === 'true' && (
       pathname.indexOf('/files') === 0 ||
       pathname.indexOf('/sessions') === 0 ||
+      pathname.indexOf('/terminal') === 0 ||
       pathname.indexOf('/bower_components') === 0 ||
       pathname.indexOf('/components') === 0 ||
       pathname.indexOf('/images') === 0 ||
@@ -199,7 +200,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       response.end();
       return;
     }
-    if (pathname === '/files' || pathname === '/sessions') {
+    if (pathname === '/files' || pathname === '/sessions' || pathname === '/terminal') {
       pathname = '/index.html';
     }
     pathname = 'experimental' + pathname;
