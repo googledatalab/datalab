@@ -130,7 +130,7 @@ class ApiManager {
     const xhrOptions: XhrOptions = {
       noCache: true,
     };
-    return ApiManager._xhrAsync(this.sessionsApiUrl, xhrOptions);
+    return <Promise<Session[]>>ApiManager._xhrAsync(this.sessionsApiUrl, xhrOptions);
   }
 
   /**
@@ -144,7 +144,7 @@ class ApiManager {
     const xhrOptions: XhrOptions = {
       noCache: true,
     };
-    return ApiManager._xhrAsync(this.contentApiUrl + '/' + path, xhrOptions);
+    return <Promise<JupyterFile>>ApiManager._xhrAsync(this.contentApiUrl + '/' + path, xhrOptions);
   }
 
   /**
@@ -177,7 +177,7 @@ class ApiManager {
         files.forEach((file: ApiFile) => {
           file.status = runningPaths.indexOf(file.path) > -1 ? 'running' : '';
         });
-        return files;
+        return <ApiFile[]>files;
       });
   }
 
