@@ -106,9 +106,9 @@ export function getUserConfigDir(userId: string): string {
  * Copies the default user settings into the user's directory.
  */
 function copyDefaultUserSettings(userId: string) {
-  var userSettingsPath = path.join(getUserConfigDir(userId), USER_SETTINGS_FILE);
+  var userSettingsPath = path.join(getUserConfigDir(userId), SETTINGS_FILE);
   const defaultUserSettingsPath = path.join(__dirname, 'config', USER_SETTINGS_FILE);
-  console.log('WILL COPY FROM: ' + defaultUserSettingsPath + ' TO: ' + userSettingsPath);
+  console.log('Copying default settings: ' + defaultUserSettingsPath + ' to: ' + userSettingsPath);
   // Copy the default user settings file into user's directory.
   const data = fs.readFileSync(defaultUserSettingsPath);
   fs.writeFileSync(userSettingsPath, data);
@@ -120,7 +120,7 @@ function copyDefaultUserSettings(userId: string) {
  * @returns the key:value mapping of settings for the user.
  */
 export function loadUserSettings(userId: string): common.UserSettings {
-  var settingsPath = path.join(getUserConfigDir(userId), USER_SETTINGS_FILE);
+  var settingsPath = path.join(getUserConfigDir(userId), SETTINGS_FILE);
   if (!fs.existsSync(settingsPath)) {
     console.log('User settings file %s not found, copying default settings.', settingsPath);
     copyDefaultUserSettings(userId);
@@ -166,7 +166,7 @@ export function updateUserSetting(userId: string, key: string, value: string,
                                   asynchronous: boolean = false): boolean {
   var userDir = userManager.getUserDir(userId);
   var settingsDir =  path.join(userDir, 'datalab', '.config');
-  var settingsPath = path.join(settingsDir, USER_SETTINGS_FILE);
+  var settingsPath = path.join(settingsDir, SETTINGS_FILE);
 
   if (!fs.existsSync(settingsPath)) {
     console.log('User settings file %s not found, copying default settings.', settingsPath);

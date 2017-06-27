@@ -123,8 +123,8 @@ function handleRequest(request: http.ServerRequest,
 
     response.statusCode = 302;
     var redirectUrl : string;
-    if (startup_path_setting in loadedSettings) {
-      let startuppath = loadedSettings[startup_path_setting];
+    if (loadedSettings.startuppath) {
+      let startuppath = loadedSettings.startuppath;
 
       // For backward compatibility with the old path format, prepend /tree prefix.
       // This code path should only be hit by the old Jupyter-based UI, which expects
