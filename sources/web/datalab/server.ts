@@ -127,7 +127,7 @@ function handleRequest(request: http.ServerRequest,
     if (startup_path_setting in loadedSettings) {
       let startuppath = loadedSettings[startup_path_setting];
 
-      // For backward compatibility with the old path format, trim /tree prefix.
+      // For backward compatibility with the old path format, prepend /tree prefix.
       // This code path should only be hit by the old Jupyter-based UI, which expects
       // a '/' prefix in the startup path, but we don't want to replicate it if it
       // is already saved in the user setting.
