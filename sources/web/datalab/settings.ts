@@ -28,7 +28,7 @@ import idleTimeout = require('./idleTimeout');
 import userManager = require('./userManager');
 
 var SETTINGS_FILE = 'settings.json';
-var USER_SETTINGS_FILE = 'userSettings.json';
+var DEFAULT_USER_SETTINGS_FILE = 'userSettings.json';
 var METADATA_FILE = 'metadata.json';
 const IDLE_TIMEOUT_KEY = 'idleTimeoutInterval';
 
@@ -107,7 +107,7 @@ export function getUserConfigDir(userId: string): string {
  */
 function copyDefaultUserSettings(userId: string) {
   var userSettingsPath = path.join(getUserConfigDir(userId), SETTINGS_FILE);
-  const defaultUserSettingsPath = path.join(__dirname, 'config', USER_SETTINGS_FILE);
+  const defaultUserSettingsPath = path.join(__dirname, 'config', DEFAULT_USER_SETTINGS_FILE);
   console.log('Copying default settings: ' + defaultUserSettingsPath + ' to: ' + userSettingsPath);
   // Copy the default user settings file into user's directory.
   const data = fs.readFileSync(defaultUserSettingsPath);
@@ -203,7 +203,6 @@ export function updateUserSetting(userId: string, key: string, value: string,
  * Implements setting update request handling.
  * @param request the incoming http request.
  * @param response the outgoing http response.
- * @param requestPath the pathname of the incoming request.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
   if (request.url.indexOf('/api/settings') === 0) {
