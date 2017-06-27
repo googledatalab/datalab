@@ -2,12 +2,12 @@
 
 [Google Cloud DataLab](https://cloud.google.com/datalab) provides a productive, interactive, and
 integrated tool to explore, visualize, analyze and transform data, bringing together the power of
-Python, SQL, and the [Google Cloud Platform](https://cloud.google.com) with services such as
+Python, SQL, JavaScript, and the [Google Cloud Platform](https://cloud.google.com) with services such as
 [BigQuery](https://cloud.google.com/bigquery) and [Storage](https://cloud.google.com/storage).
 
 ![Google Cloud Datalab Beta](docs/screenshot.png)
 
-Cloud DataLab builds on the interactive notebooks, and the foundation of [Jupyter](http://jupyter.org)
+Cloud DataLab builds on the interactive notebooks, and the foundation of [Jupyter](https://jupyter.org)
 (formerly IPython) to enable developers, data scientists and data analysts to easily work with
 their data from exploration to developing and deploying data pipelines, all within notebooks.
 
@@ -31,7 +31,7 @@ You can run the docker container locally or in GCE, as described in the
 
 ### Contacting Us
 
-For support or help using Cloud DataLab, please submit questions tagged with `google-cloud-datalab` on [StackOverflow](http://stackoverflow.com/questions/tagged/google-cloud-datalab).
+For support or help using Cloud DataLab, please submit questions tagged with `google-cloud-datalab` on [StackOverflow](https://stackoverflow.com/questions/tagged/google-cloud-datalab).
 
 For any product issues, you can either [submit issues](https://github.com/googledatalab/datalab/issues)
 here on this project page, or you can submit your feedback using the feedback link available
