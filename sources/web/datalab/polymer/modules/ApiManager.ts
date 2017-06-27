@@ -62,6 +62,9 @@ interface UserSettings {
   theme: string,
 }
 
+/**
+ * Represents a Jupyter terminal object.
+ */
 interface JupyterTerminal {
   name: string,
 }
@@ -271,14 +274,17 @@ class ApiManager {
   /**
    * Initializes a terminal session.
    */
-  static startTerminal() {
+  static startTerminalAsync() {
     const xhrOptions: XhrOptions = {
       method: 'POST',
     }
     return ApiManager._xhrAsync(ApiManager.terminalApiUrl, xhrOptions);
   }
 
-  static getTerminal() {
+  /**
+   * Returns a list of active terminal sessions.
+   */
+  static listTerminalsAsync() {
     return ApiManager._xhrAsync(ApiManager.terminalApiUrl);
   }
 

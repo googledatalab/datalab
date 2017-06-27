@@ -12,6 +12,9 @@
  * the License.
  */
 
+/**
+ * Type declaration for xterm.js
+ */
 declare class Terminal {
   constructor(parameters?: object)
   open(element: HTMLElement, focus: boolean): void;
@@ -22,6 +25,15 @@ declare class Terminal {
   on(event: string, handler: Function): void;
 }
 
+/**
+ * Terminal element for Datalab.
+ * This element uses xterm.js for the front end terminal element, and opens a websocket
+ * connection to a Jupyter terminal on the backend. Although Jupyter supports multiple
+ * terminals, this element keeps an instance of exactly one and uses it to make the user's
+ * experience simpler.
+ * If the user closes the terminal session, either by typing 'exit' or ctrl+d, this
+ * element will automatically reset the terminal.
+ */
 class TerminalElement extends Polymer.Element {
 
   private _xterm: Terminal;
@@ -38,15 +50,19 @@ class TerminalElement extends Polymer.Element {
 
     // Will be called after the custom element is done rendering.
     window.addEventListener('WebComponentsReady', function() {
+      // Use the size helper element to get the height and width of a character. This
+      // makes changing the style simpler, instead of hard-coding these values.
       self._charHeight = self.$.sizeHelper.clientHeight;
-      self._charWidth = self.$.sizeHelper.clientWidth / 10;
+      self._charWidth = self.$.sizeHelper.clientWidth / 10; // The element has 10 characters.
 
       self._boundResizeHandler = self._resizeHandler.bind(self);
       window.addEventListener('resize', self._boundResizeHandler, true);
 
-      ApiManager.getTerminal()
+      // Get the first terminal instance by calling the Jupyter API. If none are returned,
+      // start a new one.
+      ApiManager.listTerminalsAsync()
         .then((terminals: [JupyterTerminal]) => {
-          return terminals.length === 0 ? ApiManager.startTerminal() : terminals[0];
+          return terminals.length === 0 ? ApiManager.startTerminalAsync() : terminals[0];
         })
         .then((terminal: JupyterTerminal) => {
           self._initTerminal(terminal.name);
@@ -54,47 +70,68 @@ class TerminalElement extends Polymer.Element {
     });
   }
 
+  /**
+   * Creates the front end terminal element and connects it to the backend Jupyter terminal.
+   * TODO: Consider adding a loading experience while the connection is made.
+   * @param terminalName name of the Jupyter terminal session to be used in websocket connection
+   */
   _initTerminal(terminalName: string) {
+    // Clear any older terminal elements created.
+    this.$.theTerminal.innerHTML = '';
+    this._xterm = new Terminal();
+
+    // First, create the connection to the Jupyter terminal.
     this._wsConnection = new WebSocket('ws://' +
                                         window.location.host +
                                         '/terminals/websocket/' +
                                         terminalName);
+
     this._wsConnection.onopen = () => {
-      this._resizeHandler();
+      // Front-end to Jupyter.
       this._xterm.on('data', (data: MessageEvent) => {
         this._wsConnection.send(JSON.stringify(['stdin', data]));
       });
-    };
 
-    this._wsConnection.onmessage = (event: any) => {
-      const data = JSON.parse(event.data);
-      if (data[0] === 'stdout') {
-        this._xterm.write(data[1]);
-      } else if (data[0] === 'disconnect') {
-        this._initTerminal(terminalName);
-      }
+      // Jupyter to front-end. Intercept disconnect messages to reset the terminal.
+      this._wsConnection.onmessage = (event: any) => {
+        const data = JSON.parse(event.data);
+        if (data[0] === 'stdout') {
+          this._xterm.write(data[1]);
+        } else if (data[0] === 'disconnect') {
+          // TODO: Consider making the reset manual, by adding a toolbar with a button, or a popup
+          // that shows when the 'disconnect' message is sent back.
+          this._initTerminal(terminalName);
+        }
+      };
+
+      // Now, create the front-end terminal.
+      this._xterm.open(this.$.theTerminal, true);
+      this._resizeHandler();
     };
-    this._xterm = new Terminal();
-    this.$.theTerminal.innerHTML = '';
-    this._xterm.open(this.$.theTerminal, true);
-    this._resizeHandler();
   }
 
+  /**
+   * Called when the element is detached from the DOM. Cleans up event listeners.
+   */
   disconnectedCallback() {
     if (this._boundResizeHandler) {
       window.removeEventListener('resize', this._boundResizeHandler);
     }
   }
 
+  /**
+   * On window resize, both front-end and Jupyter terminal instances need to be resized and
+   * kept in sync, otherwise line wrapping issues will happen.
+   */
   _resizeHandler() {
     if (this._xterm) {
       const rows = this.$.theTerminal.clientHeight / this._charHeight;
       const cols = this.$.theTerminal.clientWidth / this._charWidth;
+
       this._xterm.resize(Math.floor(cols), Math.floor(rows));
+
       if (this._wsConnection.readyState === 1) {
-        this._wsConnection.send(JSON.stringify(["set_size", rows, cols,
-                                              this.$.theTerminal.clientHeight,
-                                              this.$.theTerminal.clientWidth]));
+        this._wsConnection.send(JSON.stringify(["set_size", rows, cols]));
       }
     }
   }
