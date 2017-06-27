@@ -91,7 +91,7 @@ do
 
   SRC_DIR=$REPO_DIR/sources/$SRC
   cd $SRC_DIR
-  ./build.sh >> $LOG_FILE 2>&1
+  ./build.sh
 
   if [ "$?" -ne "0" ]; then
     echo "failed" | tee -a $LOG_FILE
