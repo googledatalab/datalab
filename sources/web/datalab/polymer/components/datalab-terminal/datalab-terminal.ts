@@ -26,7 +26,7 @@ class TerminalElement extends Polymer.Element {
 
   private _xterm: Terminal;
   private _wsConnection: WebSocket;
-  private _resizeHandler: EventListenerObject;
+  private _boundResizeHandler: EventListenerObject;
   private _charHeight: number;
   private _charWidth: number;
 
@@ -41,8 +41,8 @@ class TerminalElement extends Polymer.Element {
       self._charHeight = self.$.sizeHelper.clientHeight;
       self._charWidth = self.$.sizeHelper.clientWidth / 10;
 
-      self._resizeHandler = self._renderHandler.bind(self);
-      window.addEventListener('resize', self._resizeHandler, true);
+      self._boundResizeHandler = self._resizeHandler.bind(self);
+      window.addEventListener('resize', self._boundResizeHandler, true);
 
       ApiManager.getTerminal()
         .then((terminals: [JupyterTerminal]) => {
@@ -60,6 +60,7 @@ class TerminalElement extends Polymer.Element {
                                         '/terminals/websocket/' +
                                         terminalName);
     this._wsConnection.onopen = () => {
+      this._resizeHandler();
       this._xterm.on('data', (data: MessageEvent) => {
         this._wsConnection.send(JSON.stringify(['stdin', data]));
       });
@@ -70,30 +71,31 @@ class TerminalElement extends Polymer.Element {
       if (data[0] === 'stdout') {
         this._xterm.write(data[1]);
       } else if (data[0] === 'disconnect') {
-        this._xterm.reset();
         this._initTerminal(terminalName);
       }
     };
     this._xterm = new Terminal();
+    this.$.theTerminal.innerHTML = '';
     this._xterm.open(this.$.theTerminal, true);
-    this._renderHandler();
+    this._resizeHandler();
   }
 
   disconnectedCallback() {
-    if (this._resizeHandler) {
-      window.removeEventListener('resize', this._resizeHandler);
+    if (this._boundResizeHandler) {
+      window.removeEventListener('resize', this._boundResizeHandler);
     }
   }
 
-  _renderHandler() {
+  _resizeHandler() {
     if (this._xterm) {
       const rows = this.$.theTerminal.clientHeight / this._charHeight;
       const cols = this.$.theTerminal.clientWidth / this._charWidth;
       this._xterm.resize(Math.floor(cols), Math.floor(rows));
-      if (this._wsConnection.readyState === 1)
+      if (this._wsConnection.readyState === 1) {
         this._wsConnection.send(JSON.stringify(["set_size", rows, cols,
                                               this.$.theTerminal.clientHeight,
                                               this.$.theTerminal.clientWidth]));
+      }
     }
   }
 }
