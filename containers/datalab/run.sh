@@ -34,6 +34,7 @@ ENTRYPOINT="/datalab/run.sh"
 DEVROOT_DOCKER_OPTION=''
 LIVE_MODE=1
 PYDATALAB=''
+MORE_ENV=''
 
 function realpath() {
   perl -MCwd -e 'print Cwd::realpath($ARGV[0]),qq<\n>' $1
@@ -52,6 +53,11 @@ while [ $# -gt 0 ]; do
   case "$1" in
     shell)
       ENTRYPOINT="/bin/bash"
+      shift
+      ;;
+    -e)
+      MORE_ENV="${MORE_ENV}-e $2 "
+      shift
       shift
       ;;
     --no-live)
@@ -91,6 +97,6 @@ docker run -it --entrypoint=$ENTRYPOINT \
   -e "PROJECT_ID=$PROJECT_ID" \
   -e "DATALAB_ENV=local" \
   -e "DATALAB_DEBUG=true" \
-  -e "DATALAB_EXPERIMENTAL_UI=false" \
   -e 'DATALAB_SETTINGS_OVERRIDES={"consoleLogLevel": "debug" }' \
+  ${MORE_ENV} \
   datalab
