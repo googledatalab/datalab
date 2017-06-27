@@ -46,17 +46,16 @@ class TerminalElement extends Polymer.Element {
 
   ready() {
     super.ready();
-    const self = this;
 
     // Will be called after the custom element is done rendering.
-    window.addEventListener('WebComponentsReady', function() {
+    window.addEventListener('WebComponentsReady', () => {
       // Use the size helper element to get the height and width of a character. This
       // makes changing the style simpler, instead of hard-coding these values.
-      self._charHeight = self.$.sizeHelper.clientHeight;
-      self._charWidth = self.$.sizeHelper.clientWidth / 10; // The element has 10 characters.
+      this._charHeight = this.$.sizeHelper.clientHeight;
+      this._charWidth = this.$.sizeHelper.clientWidth / 10; // The element has 10 characters.
 
-      self._boundResizeHandler = self._resizeHandler.bind(self);
-      window.addEventListener('resize', self._boundResizeHandler, true);
+      this._boundResizeHandler = this._resizeHandler.bind(this);
+      window.addEventListener('resize', this._boundResizeHandler, true);
 
       // Get the first terminal instance by calling the Jupyter API. If none are returned,
       // start a new one.
@@ -65,7 +64,7 @@ class TerminalElement extends Polymer.Element {
           return terminals.length === 0 ? ApiManager.startTerminalAsync() : terminals[0];
         })
         .then((terminal: JupyterTerminal) => {
-          self._initTerminal(terminal.name);
+          this._initTerminal(terminal.name);
         });
     });
   }
@@ -129,10 +128,7 @@ class TerminalElement extends Polymer.Element {
       const cols = this.$.theTerminal.clientWidth / this._charWidth;
 
       this._xterm.resize(Math.floor(cols), Math.floor(rows));
-
-      if (this._wsConnection.readyState === 1) {
-        this._wsConnection.send(JSON.stringify(["set_size", rows, cols]));
-      }
+      this._wsConnection.send(JSON.stringify(["set_size", rows, cols]));
     }
   }
 }
