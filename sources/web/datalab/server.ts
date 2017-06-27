@@ -125,7 +125,16 @@ function handleRequest(request: http.ServerRequest,
     response.statusCode = 302;
     var redirectUrl : string;
     if (startup_path_setting in loadedSettings) {
-      redirectUrl = '/tree' + loadedSettings[startup_path_setting];
+      let startuppath = loadedSettings[startup_path_setting];
+
+      // For backward compatibility with the old path format, prepend /tree prefix.
+      // This code path should only be hit by the old Jupyter-based UI, which expects
+      // a '/' prefix in the startup path, but we don't want to replicate it if it
+      // is already saved in the user setting.
+      if (startuppath.indexOf('/tree') !== 0) {
+        startuppath = '/tree' + startuppath;
+      }
+      redirectUrl = startuppath;
     } else {
       redirectUrl = '/tree/datalab';
     }
