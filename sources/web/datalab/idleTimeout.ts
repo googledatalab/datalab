@@ -31,28 +31,21 @@ let idleTimeoutSeconds = 0;   // Shutdown after being idle this long; turned off
 let lastReset: number;  // The epoch, in seconds, since the last timout reset
 let shutdownCommand = '';
 
-export function initAndStart(appSettings: common.AppSettings) {
-  init(appSettings);
+export function initAndStart() {
+  init();
   reset();
   startChecker();
 }
 
-export function init(appSettings: common.AppSettings) {
+export function init() {
   const userSettings = settings.loadUserSettings(null);
   shutdownCommand = userSettings.idleTimeoutShutdownCommand;
-  if (!shutdownCommand) {
-    shutdownCommand = appSettings.idleTimeoutShutdownCommand;
-  }
   if (!shutdownCommand) {
     shutdownCommand = process.env.DATALAB_SHUTDOWN_COMMAND;
   }
   if (shutdownCommand) {
     let idleTimeoutStr = userSettings.idleTimeoutInterval;
     logging.getLogger().debug('idleTimeoutStr from user settings: ' + idleTimeoutStr);
-    if (!idleTimeoutStr) {
-      idleTimeoutStr = appSettings.idleTimeoutInterval;
-      logging.getLogger().debug('idleTimeoutStr from app settings: ' + idleTimeoutStr);
-    }
     if (!idleTimeoutStr) {
       idleTimeoutStr = process.env.DATALAB_IDLE_TIMEOUT;
       logging.getLogger().debug('idleTimeoutStr from env: ' + idleTimeoutStr);

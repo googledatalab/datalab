@@ -20,6 +20,7 @@ the License.
 <link rel="import" href="../../components/datalab-files/datalab-files.html">
 <link rel="import" href="../../components/datalab-sessions/datalab-sessions.html">
 <link rel="import" href="../../components/datalab-sidebar/datalab-sidebar.html">
+<link rel="import" href="../../components/datalab-terminal/datalab-terminal.html">
 <link rel="import" href="../../components/datalab-toolbar/datalab-toolbar.html">
 
 <dom-module id="datalab-app">
@@ -70,6 +71,7 @@ the License.
           <iron-pages selected="{{page}}" attr-for-selected="name" fallback-selection="files">
             <datalab-files name="files"></datalab-files>
             <datalab-sessions name="sessions"></datalab-sessions>
+            <datalab-terminal name="terminal"></datalab-terminal>
           </iron-pages>
         </div>
       </div>

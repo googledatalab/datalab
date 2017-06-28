@@ -28,7 +28,9 @@ import idleTimeout = require('./idleTimeout');
 import userManager = require('./userManager');
 
 var SETTINGS_FILE = 'settings.json';
+var DEFAULT_USER_SETTINGS_FILE = 'userSettings.json';
 var METADATA_FILE = 'metadata.json';
+var BASE_PATH_FILE = 'basePath.json';
 const IDLE_TIMEOUT_KEY = 'idleTimeoutInterval';
 
 interface Metadata {
@@ -42,6 +44,7 @@ interface Metadata {
  */
 export function loadAppSettings(): common.AppSettings {
   var settingsPath = path.join(__dirname, 'config', SETTINGS_FILE);
+  var basePathFile = path.join(__dirname, 'config', BASE_PATH_FILE);
   var metadataPath = path.join(__dirname, 'config', METADATA_FILE);
 
   if (!fs.existsSync(settingsPath)) {
@@ -61,10 +64,16 @@ export function loadAppSettings(): common.AppSettings {
       metadata = <Metadata>JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
     }
 
-    var settings = <common.AppSettings>JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    const settings = <common.AppSettings>JSON.parse(fs.readFileSync(settingsPath, 'utf8') || '{}');
     settings.versionId = process.env['DATALAB_VERSION'] || '';
     if (process.env['DATALAB_CONFIG_URL']) {
       settings.configUrl = process.env['DATALAB_CONFIG_URL'];
+    }
+    if (!fs.existsSync(basePathFile)) {
+      console.log('Base path setting file not found, falling back to empty path.');
+      settings.datalabBasePath = '';
+    } else {
+      settings.datalabBasePath = JSON.parse(fs.readFileSync(basePathFile, 'utf8'));
     }
     const settingsOverrides = process.env['DATALAB_SETTINGS_OVERRIDES'];
     if (settingsOverrides) {
@@ -102,24 +111,36 @@ export function getUserConfigDir(userId: string): string {
 }
 
 /**
+ * Copies the default user settings into the user's directory.
+ */
+function copyDefaultUserSettings(userId: string) {
+  var userSettingsPath = path.join(getUserConfigDir(userId), SETTINGS_FILE);
+  const defaultUserSettingsPath = path.join(__dirname, 'config', DEFAULT_USER_SETTINGS_FILE);
+  console.log('Copying default settings: ' + defaultUserSettingsPath + ' to: ' + userSettingsPath);
+  // Copy the default user settings file into user's directory.
+  const data = fs.readFileSync(defaultUserSettingsPath);
+  fs.writeFileSync(userSettingsPath, data);
+}
+
+/**
  * Loads the configuration settings for the user.
  *
  * @returns the key:value mapping of settings for the user.
  */
-export function loadUserSettings(userId: string): common.Map<string> {
+export function loadUserSettings(userId: string): common.UserSettings {
   var settingsPath = path.join(getUserConfigDir(userId), SETTINGS_FILE);
   if (!fs.existsSync(settingsPath)) {
-    console.log('User settings file %s not found.', settingsPath);
-    return {};
+    console.log('User settings file %s not found, copying default settings.', settingsPath);
+    copyDefaultUserSettings(userId);
   }
 
   try {
-    var settings = <common.Map<string>>JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    const settings = <common.UserSettings>JSON.parse(fs.readFileSync(settingsPath, 'utf8') || '{}');
     return settings;
   }
   catch (e) {
     console.log(e);
-    return {};
+    return null;
   }
 }
 
@@ -149,15 +170,21 @@ function ensureDirExists(fullPath: string): boolean {
  * @param value the updated value of the setting.
  * @returns true iff the update was applied.
  */
-export function updateUserSetting(userId: string, key: string, value: string, asynchronous: boolean = false): boolean {
+export function updateUserSetting(userId: string, key: string, value: string,
+                                  asynchronous: boolean = false): boolean {
   var userDir = userManager.getUserDir(userId);
   var settingsDir =  path.join(userDir, 'datalab', '.config');
   var settingsPath = path.join(settingsDir, SETTINGS_FILE);
 
-  var settings: common.Map<string> = {};
+  if (!fs.existsSync(settingsPath)) {
+    console.log('User settings file %s not found, copying default settings.', settingsPath);
+    copyDefaultUserSettings(userId);
+  }
+
+  let settings: common.UserSettings;
   if (fs.existsSync(settingsPath)) {
     try {
-      settings = <common.Map<string>>JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+      settings = <common.UserSettings>JSON.parse(fs.readFileSync(settingsPath, 'utf8') || '{}');
     }
     catch (e) {
       console.log(e);
@@ -186,12 +213,27 @@ export function updateUserSetting(userId: string, key: string, value: string, as
  * @param response the outgoing http response.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
-  var userId = userManager.getUserId(request);
-  if ('POST' == request.method) {
-    postSettingsHandler(userId, request, response);
+  if (request.url.indexOf('/api/settings') === 0) {
+    appSettingsHandler(request, response);
   } else {
-    getSettingsHandler(userId, request, response);
+    var userId = userManager.getUserId(request);
+    if ('POST' == request.method) {
+      postSettingsHandler(userId, request, response);
+    } else {
+      getSettingsHandler(userId, request, response);
+    }
   }
+}
+
+/**
+ * Handles app settings requests, returns the app settings JSON.
+ * @param request the incoming http request.
+ * @param response the outgoing http response.
+ */
+function appSettingsHandler(request: http.ServerRequest, response: http.ServerResponse): void {
+  const appSettings = loadAppSettings();
+  response.writeHead(200, { 'Content-Type': 'application/json' });
+  response.end(JSON.stringify(appSettings));
 }
 
 /**
