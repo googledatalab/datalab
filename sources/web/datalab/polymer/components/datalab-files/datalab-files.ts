@@ -239,6 +239,13 @@ class FilesElement extends Polymer.Element {
 
     this._currentCrumbs = this.currentPath.split('/');
 
+    // Splitting a path starting with '/' puts an initial empty element in the array,
+    // which we're not interested in. For example, for /datalab/docs, we only want
+    // ['datalab', 'docs'].
+    if (this._currentCrumbs[0] === '') {
+      this._currentCrumbs.splice(0, 1);
+    }
+
     return this._fetchFileList();
   }
 
