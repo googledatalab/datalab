@@ -211,6 +211,10 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     if (pathname === '/files' || pathname === '/sessions' || pathname === '/terminal') {
       pathname = '/index.html';
     }
+    if (pathname === '/index.css') {
+      var userSettings: common.UserSettings = settings.loadUserSettings(userId);
+      pathname = '/index.' + (userSettings.theme || 'light') + '.css';
+    }
     pathname = 'experimental' + pathname;
     console.log('sending experimental file: ' + pathname);
     sendDataLabFile(pathname, response);
