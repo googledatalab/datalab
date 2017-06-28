@@ -119,12 +119,12 @@ class SessionsElement extends Polymer.Element {
   _shutdownSelectedSessions() {
     const selectedIndices = this.$.sessions.getSelectedIndices();
     if (selectedIndices.length) {
-      let shutdownPromises = selectedIndices.map((i: number) => {
+      const shutdownPromises = selectedIndices.map((i: number) => {
         return ApiManager.shutdownSessionAsync(this._sessionList[i].id);
       });
 
-      // TODO: [yebrahim] If at least one delete completes then a failure happens with
-      // any of the rest, _fetchFileList will never be called.
+      // TODO: [yebrahim] If at least one delete fails, _fetchSessionList will never be called,
+      // even if some other deletes completed.
       return Promise.all(shutdownPromises)
         .then(() => this._fetchSessionList());
         // TODO: Handle delete errors properly by showing some message to the user
