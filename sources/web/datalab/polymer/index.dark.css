@@ -12,14 +12,13 @@
  * the License.
  */
 
-datalab-app {
-  --primary-accent-color: #424242;
-  --primary-bg-color: #fff;
-  --secondary-bg-color: #f3f3f3;
-  --selected-bg-color: #ddd;
+:root {
+  --primary-accent-color: #222;
+  --primary-bg-color: #222;
+  --secondary-bg-color: #2b2b2b;
+  --primary-fg-color: #aaa;
+  --selection-bg-color: #444;
+  --selection-fg-color: #d68600;
   --disabled-bg-color: var(--primary-bg-color);
-
-  --selected-color: #e8e8e8;
-  --app-secondary-color: #f3f3f3;
-  --selection-fg-color: #2979ff;
+  --border-color: #333;
 }

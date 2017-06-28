@@ -37,7 +37,7 @@ the License.
         max-width: 100%;
         margin: 0px;
         padding: 0px;
-        color: #666;
+        color: var(--primary-fg-color);
         font-weight: normal;
         border-top: 1px solid transparent;
         --paper-button: {
@@ -61,8 +61,8 @@ the License.
         transition: opacity var(--app-animation-duration);
       }
       .iron-selected > .sidebar-button {
-        background-color: var(--selected-bg-color);
-        border-top: 1px solid #d3d3d3;
+        background-color: var(--selection-bg-color);
+        border-top: 1px solid var(--border-color);
         border-radius: 0px;
       }
       .iron-selected > .sidebar-button > * {

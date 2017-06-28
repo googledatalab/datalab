@@ -34,16 +34,16 @@ the License.
       div {
         font-family: var(--app-content-font-family);
         font-size: var(--app-content-font-size);
-        color: var(--primary-accent-color);
+        color: var(--primary-fg-color);
       }
       #toolbar {
         height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
         width: 100%;
         background-color: var(--secondary-bg-color);
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid var(--border-color);
       }
       .toolbar-button {
-        color: var(--primary-accent-color);
+        color: var(--primary-fg-color);
         margin: 4px;
         font-weight: normal;
         border-radius: 0px;
@@ -87,7 +87,7 @@ the License.
       }
       .vseparator {
         display: inline;
-        border-left: 1px solid #f4f4f4;
+        border-left: 1px solid var(--border-color);
         line-height: 48px;
       }
       #breadcrumb {
@@ -128,7 +128,7 @@ the License.
       }
       #breadcrumb div a:after {
         left: 100%;
-        border-color: var(--secondary-bg-color);
+        border-color: var(--border-color);
         border-left-color: var(--primary-bg-color);
       }
       #breadcrumb div a:hover {
@@ -151,7 +151,7 @@ the License.
         width: 100%;
         height: 1px;
         --paper-progress-active-color: var(--selection-fg-color);
-        --paper-progress-container-color: var(--app-secondary-color);
+        --paper-progress-container-color: var(--border-color);
       }
     </style>
 
