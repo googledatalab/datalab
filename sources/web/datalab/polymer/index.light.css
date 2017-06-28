@@ -20,5 +20,6 @@
   --selection-bg-color: #e8e8e8;
   --selection-fg-color: #2979ff;
   --disabled-bg-color: var(--primary-bg-color);
+  --disabled-fg-color: #aaa;
   --border-color: #eee;
 }

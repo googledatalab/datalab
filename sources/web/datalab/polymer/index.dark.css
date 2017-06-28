@@ -20,5 +20,6 @@
   --selection-bg-color: #444;
   --selection-fg-color: #d68600;
   --disabled-bg-color: var(--primary-bg-color);
+  --disabled-fg-color: #555;
   --border-color: #333;
 }
