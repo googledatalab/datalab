@@ -29,15 +29,14 @@ the License.
       }
       .toolbar-title {
         font-size: 18px;
-        color: #c8c8c8;
       }
       .title-image {
         height: 30px;
         vertical-align: middle;
       }
       app-header {
-        background-color: var(--app-primary-color);
-        color: #fff;
+        background-color: var(--primary-accent-color);
+        color: var(--primary-fg-color);
       }
       app-toolbar {
         height: var(--toolbar-height);
@@ -54,6 +53,8 @@ the License.
         font-weight: lighter;
       }
       .dialog {
+        background-color: var(--primary-bg-color);
+        color: var(--primary-fg-color);
         width: 60%;
         height: 60%;
         display: flex;
@@ -63,6 +64,8 @@ the License.
         flex-grow: 1;
       }
       .account-dropdown {
+        background-color: var(--primary-bg-color);
+        color: var(--primary-fg-color);
         position: absolute;
         right: 0px;
         top: var(--toolbar-height);
@@ -98,10 +101,8 @@ the License.
 
     <!--Info dialog. This shows centered in the middle of the window-->
     <paper-dialog id="infoDialog" class="dialog" with-backdrop>
-      <h2>Info</h2>
-      <hr>
-      <div class="dialog-content">
-      </div>
+      <div class="dialog-title">Info</div>
+      <div class="dialog-content"></div>
       <hr>
       <div>
         <paper-button dialog-dismiss raised>Close</paper-button>
@@ -110,10 +111,8 @@ the License.
 
     <!--Settings dialog. This shows centered in the middle of the window-->
     <paper-dialog id="settingsDialog" class="dialog" with-backdrop>
-      <h2>Settings</h2>
-      <hr>
-      <div class="dialog-content">
-      </div>
+      <div class="dialog-title">Settings</div>
+      <div class="dialog-content"></div>
       <hr>
       <div>
         <paper-button dialog-dismiss raised>Close</paper-button>

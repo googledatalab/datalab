@@ -23,14 +23,14 @@ the License.
       div {
         font-family: var(--app-content-font-family);
         font-size: var(--app-content-font-size);
-        color: var(--app-primary-color);
+        color: var(--primary-fg-color);
       }
       #header {
         user-select: none;
         height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
         display: flex;
         line-height: calc(var(--toolbar-height) - 1px);
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid var(--border-color);
       }
       #list-container {
         overflow: auto;
@@ -50,10 +50,10 @@ the License.
         cursor: default;
       }
       .row:nth-child(even) {
-        background-color: #fafafa;
+        background-color: var(--secondary-bg-color);
       }
       .row:hover {
-        background-color: var(--app-secondary-color);
+        background-color: var(--selection-bg-color);
       }
       .row[selected] > * {
         color: var(--selection-fg-color);
@@ -64,6 +64,7 @@ the License.
       }
       .checkbox-col > paper-checkbox {
         --paper-checkbox-size: 15px;
+        --paper-checkbox-unchecked-color: var(--primary-fg-color);
         --paper-checkbox-checked-color: var(--selection-fg-color);
       }
       .first-col {
