@@ -63,6 +63,13 @@ interface UserSettings {
 }
 
 /**
+ * Represents a Jupyter terminal object.
+ */
+interface JupyterTerminal {
+  name: string,
+}
+
+/**
  * Represents an augmented version of a file obect that contains extra metadata.
  */
 interface ApiFile extends JupyterFile {
@@ -112,13 +119,18 @@ class ApiManager {
   static readonly sessionsApiUrl = '/api/sessions';
 
   /**
+   * URL for starting terminals
+   */
+  static readonly terminalApiUrl = '/api/terminals';
+
+  /**
    * Returns a list of currently running sessions, each implementing the Session interface
    */
   static listSessionsAsync(): Promise<Array<Session>> {
     const xhrOptions: XhrOptions = {
       noCache: true,
     };
-    return ApiManager._xhrAsync(this.sessionsApiUrl, xhrOptions);
+    return <Promise<Session[]>>ApiManager._xhrAsync(this.sessionsApiUrl, xhrOptions);
   }
 
   /**
@@ -132,7 +144,7 @@ class ApiManager {
     const xhrOptions: XhrOptions = {
       noCache: true,
     };
-    return ApiManager._xhrAsync(this.contentApiUrl + '/' + path, xhrOptions);
+    return <Promise<JupyterFile>>ApiManager._xhrAsync(this.contentApiUrl + '/' + path, xhrOptions);
   }
 
   /**
@@ -165,7 +177,7 @@ class ApiManager {
         files.forEach((file: ApiFile) => {
           file.status = runningPaths.indexOf(file.path) > -1 ? 'running' : '';
         });
-        return files;
+        return <ApiFile[]>files;
       });
   }
 
@@ -257,6 +269,23 @@ class ApiManager {
     };
 
     return ApiManager._xhrAsync(destinationDirectory, xhrOptions);
+  }
+
+  /**
+   * Initializes a terminal session.
+   */
+  static startTerminalAsync() {
+    const xhrOptions: XhrOptions = {
+      method: 'POST',
+    }
+    return ApiManager._xhrAsync(ApiManager.terminalApiUrl, xhrOptions);
+  }
+
+  /**
+   * Returns a list of active terminal sessions.
+   */
+  static listTerminalsAsync() {
+    return ApiManager._xhrAsync(ApiManager.terminalApiUrl);
   }
 
   /**

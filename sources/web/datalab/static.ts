@@ -169,10 +169,14 @@ function sendUserCustomTheme(userId: string, response: http.ServerResponse): voi
  * @param path the incoming request path
  */
 export function isExperimentalResource(pathname: string) {
+  if (pathname.indexOf('/exp/') === 0) {
+    return true;
+  }
   const experimentalUiEnabled = process.env.DATALAB_EXPERIMENTAL_UI;
   return experimentalUiEnabled === 'true' && (
       pathname.indexOf('/files') === 0 ||
       pathname.indexOf('/sessions') === 0 ||
+      pathname.indexOf('/terminal') === 0 ||
       pathname.indexOf('/bower_components') === 0 ||
       pathname.indexOf('/components') === 0 ||
       pathname.indexOf('/images') === 0 ||
@@ -193,13 +197,18 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   // -------------------------------- start of experimental UI resources
   if (isExperimentalResource(pathname)) {
     logging.getLogger().debug('Serving experimental UI resource: ' + pathname);
+    let rootRedirect = 'files';
+    if (pathname.indexOf('/exp/') === 0) {
+      pathname = pathname.substr('/exp'.length);
+      rootRedirect = 'exp/files';
+    }
     if (pathname === '/') {
       response.statusCode = 302;
-      response.setHeader('Location', path.join(appSettings.datalabBasePath, 'files'));
+      response.setHeader('Location', path.join(appSettings.datalabBasePath, rootRedirect));
       response.end();
       return;
     }
-    if (pathname === '/files' || pathname === '/sessions') {
+    if (pathname === '/files' || pathname === '/sessions' || pathname === '/terminal') {
       pathname = '/index.html';
     }
     pathname = 'experimental' + pathname;
@@ -263,7 +272,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   }
   else if (pathname.lastIndexOf('/custom.css') > 0) {
     var userId: string = userManager.getUserId(request);
-    var userSettings: common.Map<string> = settings.loadUserSettings(userId);
+    var userSettings: common.UserSettings = settings.loadUserSettings(userId);
     if ('theme' in userSettings) {
       var theme: string = userSettings['theme'];
       if (theme == 'custom') {

@@ -51,8 +51,7 @@ var timeoutHandler: http.RequestHandler;
  * The application settings instance.
  */
 var appSettings: common.AppSettings;
-var loadedSettings: common.Map<string> = null;
-var startup_path_setting = 'startuppath'
+var loadedSettings: common.UserSettings = null;
 
 /**
  * If it is the user's first request since the web server restarts,
@@ -124,8 +123,17 @@ function handleRequest(request: http.ServerRequest,
 
     response.statusCode = 302;
     var redirectUrl : string;
-    if (startup_path_setting in loadedSettings) {
-      redirectUrl = '/tree' + loadedSettings[startup_path_setting];
+    if (loadedSettings.startuppath) {
+      let startuppath = loadedSettings.startuppath;
+
+      // For backward compatibility with the old path format, prepend /tree prefix.
+      // This code path should only be hit by the old Jupyter-based UI, which expects
+      // a '/' prefix in the startup path, but we don't want to replicate it if it
+      // is already saved in the user setting.
+      if (startuppath.indexOf('/tree') !== 0) {
+        startuppath = '/tree' + startuppath;
+      }
+      redirectUrl = startuppath;
     } else {
       redirectUrl = '/tree/datalab';
     }
@@ -156,6 +164,10 @@ function handleRequest(request: http.ServerRequest,
   if (requestPath.indexOf('/api/basepath') === 0) {
     response.statusCode = 200;
     response.end(appSettings.datalabBasePath);
+  }
+  
+  if (requestPath.indexOf('/api/settings') === 0) {
+    settingHandler(request, response);
     return;
   }
 
@@ -175,8 +187,8 @@ function handleRequest(request: http.ServerRequest,
       const filePath = path.join('/content', subPath);
       try {
         if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
-          loadedSettings[startup_path_setting] = subPath;
-          settings_.updateUserSetting(userId, startup_path_setting, subPath, true);
+          loadedSettings.startuppath = subPath;
+          settings_.updateUserSetting(userId, 'startuppath', subPath, true);
         } else {
         }
       } catch (err) {
@@ -355,7 +367,7 @@ export function run(settings: common.AppSettings): void {
   backupUtility.startBackup(settings);
   process.on('SIGINT', () => process.exit());
 
-  idleTimeout.initAndStart(appSettings);
+  idleTimeout.initAndStart();
   server.listen(settings.serverPort);
 }
 

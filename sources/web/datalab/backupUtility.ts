@@ -39,7 +39,7 @@ function readBackupLog() {
   }
 }
 function writeBackupLog(log_history: Object) {
-  return fs.writeFileSync(backupLogPath, JSON.stringify(log_history), 'utf8');
+  return fs.writeFileSync(backupLogPath, JSON.stringify(log_history), { encoding: 'utf8'});
 }
 
 /**
