@@ -13,8 +13,13 @@
  */
 
 datalab-app {
-  --app-primary-color: #424242;
+  --primary-accent-color: #424242;
+  --primary-bg-color: #fff;
+  --secondary-bg-color: #f3f3f3;
+  --selected-bg-color: #ddd;
+  --disabled-bg-color: var(--primary-bg-color);
+
+  --selected-color: #e8e8e8;
   --app-secondary-color: #f3f3f3;
   --selection-fg-color: #2979ff;
-  --app-bg-color: #fff;
 }
