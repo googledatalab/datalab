@@ -13,13 +13,13 @@
  */
 
 :root {
-  --primary-accent-color: #222;
-  --primary-bg-color: #222;
-  --secondary-bg-color: #2b2b2b;
-  --primary-fg-color: #aaa;
-  --selection-bg-color: #444;
-  --selection-fg-color: #d68600;
+  --border-color: #333;
   --disabled-bg-color: var(--primary-bg-color);
   --disabled-fg-color: #555;
-  --border-color: #333;
+  --primary-accent-color: #222;
+  --primary-bg-color: #222;
+  --primary-fg-color: #aaa;
+  --secondary-bg-color: #2b2b2b;
+  --selection-bg-color: #444;
+  --selection-fg-color: #d68600;
 }
