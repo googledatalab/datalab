@@ -161,6 +161,11 @@ function handleRequest(request: http.ServerRequest,
     return;
   }
 
+  if (requestPath.indexOf('/api/basepath') === 0) {
+    response.statusCode = 200;
+    response.end(appSettings.datalabBasePath);
+  }
+  
   if (requestPath.indexOf('/api/settings') === 0) {
     settingHandler(request, response);
     return;
