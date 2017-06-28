@@ -2,5 +2,5 @@
   "startuppath": "",
   "theme": "light",
   "idleTimeoutShutdownCommand": "",
-  "idleTimeoutInterval": ""
+  "idleTimeoutInterval": "90m"
 }

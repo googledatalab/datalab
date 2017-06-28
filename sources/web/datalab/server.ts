@@ -362,7 +362,7 @@ export function run(settings: common.AppSettings): void {
   backupUtility.startBackup(settings);
   process.on('SIGINT', () => process.exit());
 
-  idleTimeout.initAndStart(appSettings);
+  idleTimeout.initAndStart();
   server.listen(settings.serverPort);
 }
 
