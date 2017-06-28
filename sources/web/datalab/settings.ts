@@ -62,7 +62,7 @@ export function loadAppSettings(): common.AppSettings {
       metadata = <Metadata>JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
     }
 
-    var settings = <common.AppSettings>JSON.parse(fs.readFileSync(settingsPath, 'utf8') || '{}');
+    const settings = <common.AppSettings>JSON.parse(fs.readFileSync(settingsPath, 'utf8') || '{}');
     settings.versionId = process.env['DATALAB_VERSION'] || '';
     if (process.env['DATALAB_CONFIG_URL']) {
       settings.configUrl = process.env['DATALAB_CONFIG_URL'];
@@ -127,7 +127,7 @@ export function loadUserSettings(userId: string): common.UserSettings {
   }
 
   try {
-    var settings = <common.UserSettings>JSON.parse(fs.readFileSync(settingsPath, 'utf8') || '{}');
+    const settings = <common.UserSettings>JSON.parse(fs.readFileSync(settingsPath, 'utf8') || '{}');
     return settings;
   }
   catch (e) {
