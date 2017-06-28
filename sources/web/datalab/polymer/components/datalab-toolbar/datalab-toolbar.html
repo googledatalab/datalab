@@ -24,6 +24,9 @@ the License.
 <dom-module id="datalab-toolbar">
   <template>
     <style include="datalab-shared-styles">
+      [hidden] {
+        display: none !important;
+      }
       :host {
         --toolbar-button-dimension: 35px;
       }
@@ -71,10 +74,34 @@ the License.
         right: 0px;
         top: var(--toolbar-height);
         margin: 0px;
-        min-width: 160px;
+        min-width: 250px;
         max-width: 300px;
         box-shadow: -3px 3px 10px -3px rgba(0, 0, 0, 0.3);
         z-index: 3;
+      }
+      #signInButton {
+        width: 100%;
+        float: none;
+        color: #fff;
+        background-color: #449d44;
+        border-color: #398439;
+      }
+      #signOutButton {
+        width: 100%;
+        float: none;
+        color: #fff;
+        background-color: #d9534f;
+        border-color: #d43f3a;
+      }
+      #userInfoLabel {
+        display: block;
+        padding-bottom: 10px;
+        bottom-margin: 5px;
+      }
+      #projectInfoLabel {
+        display: block;
+        padding-bottom: 10px;
+        bottom-margin: 5px;
       }
     </style>
 
@@ -97,7 +124,20 @@ the License.
     <!--Account dropdown dialog. This always shows at the top left corner
     below the toolbar-->
     <paper-dialog id="accountDropdown" class="account-dropdown">
-      <div>Account menu contents</div>
+      <div>
+        <div id="signInGroup" hidden="{{_signedIn}}">
+          <paper-button id="signInButton" title="Sign In" class="btn btn-success" on-click="_signInClicked">
+            Sign In
+          </paper-button>
+        </div>
+        <div id="signOutGroup" hidden="{{!_signedIn}}">
+          <label id="userInfoLabel">{{_userInfo}}</label>
+          <label id="projectInfoLabel">{{_projectInfo}}</label>
+          <paper-button id="signOutButton" title="Sign Out" class="btn btn-danger" on-click="_signOutClicked">
+            Sign Out
+          </paper-button>
+        </div>
+      </div>
     </paper-dialog>
 
     <!--Info dialog. This shows centered in the middle of the window-->

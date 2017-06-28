@@ -20,7 +20,28 @@
  */
 class ToolbarElement extends Polymer.Element {
 
+  private _projectInfo : string;
+  private _signedIn : boolean;
+  private _userInfo : string;
+
   static get is() { return "datalab-toolbar"; }
+
+  static get properties() {
+    return {
+      _projectInfo: {
+        type: String,
+        value: '',
+      },
+      _signedIn: {
+        type: Boolean,
+        value: false,
+      },
+      _userInfo: {
+        type: String,
+        value: '',
+      },
+    }
+  }
 
   /**
    * When account menu icon is clicked, toggles account menu visibility
@@ -43,6 +64,15 @@ class ToolbarElement extends Polymer.Element {
     this.$.settingsDialog.open();
   }
 
+  _signInClicked() {
+    this._signedIn = true;
+    this._userInfo = 'Not actually signed in';
+    this._projectInfo = 'No project is set';
+  }
+
+  _signOutClicked() {
+    this._signedIn = false;
+  }
 }
 
 customElements.define(ToolbarElement.is, ToolbarElement);
