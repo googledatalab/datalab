@@ -174,6 +174,7 @@ export function isExperimentalResource(pathname: string) {
   }
   const experimentalUiEnabled = process.env.DATALAB_EXPERIMENTAL_UI;
   return experimentalUiEnabled === 'true' && (
+      pathname.indexOf('/data') === 0 ||
       pathname.indexOf('/files') === 0 ||
       pathname.indexOf('/sessions') === 0 ||
       pathname.indexOf('/terminal') === 0 ||
@@ -208,7 +209,10 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       response.end();
       return;
     }
-    if (pathname === '/files' || pathname === '/sessions' || pathname === '/terminal') {
+    if (pathname === '/data' ||
+        pathname === '/files' ||
+        pathname === '/sessions' ||
+        pathname === '/terminal') {
       pathname = '/index.html';
     }
     if (pathname === '/index.css') {

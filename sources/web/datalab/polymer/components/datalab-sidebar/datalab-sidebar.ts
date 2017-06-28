@@ -24,6 +24,8 @@ class SidebarElement extends Polymer.Element {
    */
   public page: string;
 
+  private _showDataTab: boolean;
+
   static get is() { return "datalab-sidebar"; }
 
   static get properties() {
@@ -31,10 +33,18 @@ class SidebarElement extends Polymer.Element {
       page: {
         type: String,
         value: "files",
+      },
+      _showDataTab: {
+        value: false
       }
     }
   }
 
+  ready() {
+    super.ready();
+    //TODO(jimmc): For now, only show the Data screen selection icon when in the Data screen
+    this._showDataTab = location.pathname.endsWith('/data');
+  }
 }
 
 customElements.define(SidebarElement.is, SidebarElement);

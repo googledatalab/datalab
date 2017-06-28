@@ -1,0 +1,135 @@
+<!--
+Copyright 2017 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License
+is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+or implied. See the License for the specific language governing permissions and limitations under
+the License.
+-->
+
+<link rel="import" href="../../components/item-list/item-list.html">
+<link rel="import" href="../../components/shared-styles/shared-styles.html">
+
+<dom-module id="datalab-data">
+  <template>
+    <style include="datalab-shared-styles">
+      :host {
+        --data-style: {
+          font-family: monospace;
+          font-size: 14px;
+        }
+      }
+      div {
+        font-family: var(--app-content-font-family);
+        font-size: var(--app-content-font-size);
+        color: var(--app-primary-color);
+      }
+      div.datasetDrillDown {
+        display: flex;
+        margin: 15px;
+      }
+      .collectionsColumn {
+        width: 33%;
+      }
+      .datasetsColumn {
+        width: 33%;
+      }
+      .filteredColumn {
+        margin: 10px;
+      }
+      detailsColumn {
+        width: 33%;
+      }
+      #toolbar {
+        height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
+        width: 100%;
+        background-color: var(--app-secondary-color);
+        border-bottom: 1px solid #eee;
+      }
+      .toolbar-button {
+        color: var(--app-primary-color);
+        margin: 4px;
+        font-weight: normal;
+        border-radius: 0px;
+      }
+      .toolbar-button > iron-icon {
+        width: 20px;
+        padding-right: 5px;
+      }
+      .collections-container {
+        height: 100%;
+        display: flex;
+      }
+      .datasets-container {
+        height: 100%;
+        display: flex;
+      }
+      #collections {
+        flex-grow: 1;
+      }
+      #datasets {
+        flex-grow: 1;
+      }
+    </style>
+
+    <!--Toolbar with action buttons -->
+    <div id="toolbar">
+      <paper-button class="toolbar-button" on-click="_search">
+        <iron-icon icon="refresh"></iron-icon>
+        <span>Search</span>
+      </paper-button>
+    </div>
+
+    <!-- Multi-column layout: collections (BQ datasets), datasets (BQ tables) -->
+    <div class="datasetDrillDown">
+
+      <!-- Collections (BQ datasets) -->
+      <div class="collectionsColumn filteredColumn">
+        <div>
+          Project:
+            <paper-input id="projectBox" label="Select a project" spellcheck=false autofocus
+                         value="{{projectValue}}" no-label-float>
+            </paper-input>
+        </div>
+        <div>
+          Collections Filter:
+            <paper-input id="collectionsFilterBox" label="Optional filter value" spellcheck=false autofocus
+                         value="{{collectionsFilterValue}}" no-label-float>
+            </paper-input>
+        </div>
+        <!-- list of collections -->
+        <div class='collections-container'>
+          <item-list id="collections" hide-header="true"></item-list>
+        </div>
+      </div>
+
+      <!-- Datasets (BQ tables) -->
+      <div class="datasetsColumn filteredColumn">
+        <div>
+          Datasets Filter:
+            <paper-input id="datasetsFilterBox" label="Optional filter value" spellcheck=false autofocus
+                         value="{{datasetsFilterValue}}" no-label-float>
+            </paper-input>
+        </div>
+        <!-- list of datasets (tables) -->
+        <div class='datasets-container'>
+          <item-list id="datasets" hide-header="true"></item-list>
+        </div>
+      </div>
+
+      <!-- Details pane -->
+      <div class="detailsColumn">
+        <div id="detailsPane"></div>
+      </div>
+
+    </div>
+
+  </template>
+</dom-module>
+
+<script src="datalab-data.js"></script>
