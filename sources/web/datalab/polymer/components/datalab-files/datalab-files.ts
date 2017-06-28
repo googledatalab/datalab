@@ -16,6 +16,7 @@
 /// <reference path="../../modules/Utils.ts" />
 /// <reference path="../item-list/item-list.ts" />
 /// <reference path="../input-dialog/input-dialog.ts" />
+/// <reference path="../../../../datalab/common.d.ts" />
 
 /**
  * File listing element for Datalab.
@@ -135,7 +136,7 @@ class FilesElement extends Polymer.Element {
 
     // Get the last startup path.
     ApiManager.getUserSettings()
-      .then((settings: UserSettings) => {
+      .then((settings: common.UserSettings) => {
         if (settings.startuppath) {
           let path = settings.startuppath;
           if (path.startsWith(this.basePath)) {
