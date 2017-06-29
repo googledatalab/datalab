@@ -12,6 +12,7 @@ or implied. See the License for the specific language governing permissions and 
 the License.
 -->
 
+<link rel="import" href="../../components/auth-panel/auth-panel.html">
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
 
 <link rel="import" href="../../bower_components/app-layout/app-header/app-header.html">
@@ -71,7 +72,8 @@ the License.
         right: 0px;
         top: var(--toolbar-height);
         margin: 0px;
-        min-width: 160px;
+        padding: 10px;
+        min-width: 250px;
         max-width: 300px;
         box-shadow: -3px 3px 10px -3px rgba(0, 0, 0, 0.3);
         z-index: 3;
@@ -94,10 +96,10 @@ the License.
       </app-toolbar>
     </app-header>
 
-    <!--Account dropdown dialog. This always shows at the top left corner
+    <!--Account dropdown dialog. This always shows at the top right corner
     below the toolbar-->
     <paper-dialog id="accountDropdown" class="account-dropdown">
-      <div>Account menu contents</div>
+      <auth-panel></auth-panel>
     </paper-dialog>
 
     <!--Info dialog. This shows centered in the middle of the window-->
