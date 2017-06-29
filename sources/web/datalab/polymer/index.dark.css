@@ -14,7 +14,7 @@
 
 :root {
   --border-color: #333;
-  --disabled-bg-color: var(--primary-bg-color);
+  --disabled-bg-color: var(--secondary-bg-color);
   --disabled-fg-color: #555;
   --primary-accent-color: #222;
   --primary-bg-color: #222;

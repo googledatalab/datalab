@@ -121,6 +121,8 @@ class ItemListElement extends Polymer.Element {
    */
   _rowsChanged() {
     this._selectedElements = [];
+    const ev = new ItemClickEvent('itemSelectionChanged', { detail: {} });
+    this.dispatchEvent(ev);
   }
 
   /**
