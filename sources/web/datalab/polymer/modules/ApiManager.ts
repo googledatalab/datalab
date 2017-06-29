@@ -134,6 +134,17 @@ class ApiManager {
   }
 
   /**
+   * Terminates a running session.
+   */
+  static shutdownSessionAsync(sessionId: string) {
+    const xhrOptions: XhrOptions = {
+      method: 'DELETE',
+      successCode: 204,
+    };
+    return ApiManager._xhrAsync(ApiManager.sessionsApiUrl + '/' + sessionId, xhrOptions);
+  }
+
+  /**
    * Returns a JupyterFile object representing the file or directory requested
    * @param path string path to requested file
    */
