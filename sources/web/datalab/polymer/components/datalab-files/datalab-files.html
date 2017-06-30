@@ -49,6 +49,10 @@ the License.
         width: 20px;
         padding-right: 5px;
       }
+      .toolbar-button[disabled] {
+        color: var(--disabled-fg-color);
+        background-color: var(--secondary-bg-color);
+      }
       .file-picker-small--false {
         /*For regular file picker, leave room for toolbar on top*/
         height: calc(100% - var(--toolbar-height));
@@ -168,23 +172,30 @@ the License.
         <iron-icon icon="add-box"></iron-icon>
         <span>Folder</span>
       </paper-button>
-      <paper-button class="toolbar-button" on-click="_copySelectedItem">
-        <iron-icon icon="content-copy"></iron-icon>
-        <span>Copy</span>
-      </paper-button>
-      <paper-button class="toolbar-button" on-click="_moveSelectedItem">
-        <iron-icon icon="redo"></iron-icon>
-        <span>Move</span>
-      </paper-button>
       <paper-button class="toolbar-button">
         <iron-icon icon="file-upload"></iron-icon>
         <span>Upload</span>
       </paper-button>
-      <paper-button class="toolbar-button" on-click="_renameSelectedItem">
+      <paper-button class="toolbar-button" on-click="_copySelectedItem"
+                    disabled$={{!selectedFile}}>
+        <iron-icon icon="content-copy"></iron-icon>
+        <span>Copy</span>
+      </paper-button>
+      <paper-button class="toolbar-button" on-click="_moveSelectedItem"
+                    disabled$={{!selectedFile}}>
+        <iron-icon icon="redo"></iron-icon>
+        <span>Move</span>
+      </paper-button>
+      <paper-button class="toolbar-button" on-click="_renameSelectedItem"
+                    disabled$={{!selectedFile}}>
         <iron-icon icon="editor:border-color"></iron-icon>
         <span>Rename</span>
       </paper-button>
-      <paper-button class="toolbar-button" on-click="_deleteSelectedItems">
+      <!--TODO: Delete operation supports deleting multiple files, but we'll
+      only enable the button when one file is selected for now, until we get
+      the group moving/copying functionality too-->
+      <paper-button class="toolbar-button" on-click="_deleteSelectedItems"
+                    disabled$={{!selectedFile}}>
         <iron-icon icon="delete"></iron-icon>
         <span>Delete</span>
       </paper-button>
