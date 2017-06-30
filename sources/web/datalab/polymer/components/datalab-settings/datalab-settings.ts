@@ -43,7 +43,6 @@ class SettingsElement extends Polymer.Element {
   ready() {
     super.ready();
 
-    // TODO: add a cache for user/app settings and call it here instead.
     SettingsManager.getUserSettingsAsync(true /*forceRefresh*/)
       .then((settings: common.UserSettings) => {
         this.theme = settings.theme;
