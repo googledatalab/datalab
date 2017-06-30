@@ -156,7 +156,7 @@ class ApiManager {
       method: 'DELETE',
       successCode: 204,
     };
-    return ApiManager._xhrAsync(ApiManager.sessionsApiUrl + '/' + sessionId, xhrOptions);
+    return ApiManager._sendRequestAsync(ApiManager.sessionsApiUrl + '/' + sessionId, xhrOptions);
   }
 
   /**
