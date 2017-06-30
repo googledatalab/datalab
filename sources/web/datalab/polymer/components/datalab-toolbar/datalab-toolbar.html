@@ -12,6 +12,7 @@ or implied. See the License for the specific language governing permissions and 
 the License.
 -->
 
+<link rel="import" href="../../components/auth-panel/auth-panel.html">
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
 
 <link rel="import" href="../../bower_components/app-layout/app-header/app-header.html">
@@ -29,15 +30,14 @@ the License.
       }
       .toolbar-title {
         font-size: 18px;
-        color: #c8c8c8;
       }
       .title-image {
         height: 30px;
         vertical-align: middle;
       }
       app-header {
-        background-color: var(--app-primary-color);
-        color: #fff;
+        background-color: var(--primary-accent-color);
+        color: var(--primary-fg-color);
       }
       app-toolbar {
         height: var(--toolbar-height);
@@ -49,11 +49,14 @@ the License.
           width: var(--toolbar-button-dimension);
           height: var(--toolbar-button-dimension);
         };
+        color: var(--toolbar-fg-color);
       }
       .title-cloud-datalab {
         font-weight: lighter;
       }
       .dialog {
+        background-color: var(--primary-bg-color);
+        color: var(--primary-fg-color);
         width: 60%;
         height: 60%;
         display: flex;
@@ -63,11 +66,14 @@ the License.
         flex-grow: 1;
       }
       .account-dropdown {
+        background-color: var(--primary-bg-color);
+        color: var(--primary-fg-color);
         position: absolute;
         right: 0px;
         top: var(--toolbar-height);
         margin: 0px;
-        min-width: 160px;
+        padding: 10px;
+        min-width: 250px;
         max-width: 300px;
         box-shadow: -3px 3px 10px -3px rgba(0, 0, 0, 0.3);
         z-index: 3;
@@ -90,18 +96,16 @@ the License.
       </app-toolbar>
     </app-header>
 
-    <!--Account dropdown dialog. This always shows at the top left corner
+    <!--Account dropdown dialog. This always shows at the top right corner
     below the toolbar-->
     <paper-dialog id="accountDropdown" class="account-dropdown">
-      <div>Account menu contents</div>
+      <auth-panel></auth-panel>
     </paper-dialog>
 
     <!--Info dialog. This shows centered in the middle of the window-->
     <paper-dialog id="infoDialog" class="dialog" with-backdrop>
-      <h2>Info</h2>
-      <hr>
-      <div class="dialog-content">
-      </div>
+      <div class="dialog-title">Info</div>
+      <div class="dialog-content"></div>
       <hr>
       <div>
         <paper-button dialog-dismiss raised>Close</paper-button>
@@ -110,10 +114,8 @@ the License.
 
     <!--Settings dialog. This shows centered in the middle of the window-->
     <paper-dialog id="settingsDialog" class="dialog" with-backdrop>
-      <h2>Settings</h2>
-      <hr>
-      <div class="dialog-content">
-      </div>
+      <div class="dialog-title">Settings</div>
+      <div class="dialog-content"></div>
       <hr>
       <div>
         <paper-button dialog-dismiss raised>Close</paper-button>

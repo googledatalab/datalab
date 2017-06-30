@@ -28,22 +28,19 @@ the License.
   <template>
 
     <style include="datalab-shared-styles">
-      [hidden] {
-        display: none !important;
-      }
       div {
         font-family: var(--app-content-font-family);
         font-size: var(--app-content-font-size);
-        color: var(--app-primary-color);
+        color: var(--primary-fg-color);
       }
       #toolbar {
         height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
         width: 100%;
-        background-color: var(--app-secondary-color);
-        border-bottom: 1px solid #eee;
+        background-color: var(--secondary-bg-color);
+        border-bottom: 1px solid var(--border-color);
       }
       .toolbar-button {
-        color: var(--app-primary-color);
+        color: var(--primary-fg-color);
         margin: 4px;
         font-weight: normal;
         border-radius: 0px;
@@ -69,7 +66,8 @@ the License.
         border-radius: 0px;
       }
       .navbar-button[disabled] {
-        background-color: #fff;
+        color: var(--disabled-fg-color);
+        background-color: var(--disabled-bg-color);
       }
       .files-container {
         /* 1 nav bar + 1 progress bar */
@@ -82,12 +80,12 @@ the License.
       #detailsPane {
         min-width: var(--details-pane-width);
         max-width: var(--details-pane-width);
-        background-color: var(--app-secondary-color);
+        background-color: var(--secondary-bg-color);
         box-shadow: inset 4px 0px 10px -3px rgba(0, 0, 0, 0.1);
       }
       .vseparator {
         display: inline;
-        border-left: 1px solid #f4f4f4;
+        border-left: 1px solid var(--border-color);
         line-height: 48px;
       }
       #breadcrumb {
@@ -102,7 +100,7 @@ the License.
       }
       #breadcrumb div a {
         display: block;
-        background: #fff;
+        background: var(--primary-bg-color);
         text-decoration: none;
         position: relative;
         line-height: 46px;
@@ -119,7 +117,7 @@ the License.
       #breadcrumb div a:before, #breadcrumb div a:after {
         content: "";
         position: absolute;
-        border: 0 solid #fff;
+        border: 0 solid var(--primary-bg-color);
         border-width: 24px 12px;
       }
       #breadcrumb div a:before {
@@ -128,18 +126,18 @@ the License.
       }
       #breadcrumb div a:after {
         left: 100%;
-        border-color: var(--app-secondary-color);
-        border-left-color: #fff;
+        border-color: var(--border-color);
+        border-left-color: var(--primary-bg-color);
       }
       #breadcrumb div a:hover {
-        background-color: #f2f2f2;
+        background-color: var(--secondary-bg-color);
       }
       #breadcrumb div a:hover:before {
-        border-color: #f2f2f2;
+        border-color: var(--secondary-bg-color);
         border-left-color: transparent;
       }
       #breadcrumb div a:hover:after {
-        border-left-color: #f2f2f2;
+        border-left-color: var(--secondary-bg-color);
       }
       #breadcrumb div:nth-last-child(2) a {
         padding-right: 15px;
@@ -151,7 +149,7 @@ the License.
         width: 100%;
         height: 1px;
         --paper-progress-active-color: var(--selection-fg-color);
-        --paper-progress-container-color: var(--app-secondary-color);
+        --paper-progress-container-color: var(--border-color);
       }
     </style>
 

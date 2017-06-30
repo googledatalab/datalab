@@ -12,16 +12,15 @@
  * the License.
  */
 
-body {
-  margin: 0px;
-  padding: 0px;
-  height: 100%;
-}
-datalab-app {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  min-width: 470px;
+:root {
+  --border-color: #333;
+  --disabled-bg-color: var(--primary-bg-color);
+  --disabled-fg-color: #555;
+  --primary-accent-color: #222;
+  --primary-bg-color: #222;
+  --primary-fg-color: #aaa;
+  --secondary-bg-color: #2b2b2b;
+  --selection-bg-color: #444;
+  --selection-fg-color: #d68600;
+  --toolbar-fg-color: #aaa;
 }

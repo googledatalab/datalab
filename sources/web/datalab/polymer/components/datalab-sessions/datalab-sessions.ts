@@ -113,6 +113,26 @@ class SessionsElement extends Polymer.Element {
       });
   }
 
+  /**
+   * Calls the ApiManager to terminate the selected sessions.
+   */
+  _shutdownSelectedSessions() {
+    const selectedIndices = this.$.sessions.getSelectedIndices();
+    if (selectedIndices.length) {
+      const shutdownPromises = selectedIndices.map((i: number) => {
+        return ApiManager.shutdownSessionAsync(this._sessionList[i].id);
+      });
+
+      // TODO: [yebrahim] If at least one delete fails, _fetchSessionList will never be called,
+      // even if some other deletes completed.
+      return Promise.all(shutdownPromises)
+        .then(() => this._fetchSessionList());
+        // TODO: Handle delete errors properly by showing some message to the user
+    } else {
+      return Promise.resolve(null);
+    }
+  }
+
 }
 
 customElements.define(SessionsElement.is, SessionsElement);

@@ -27,15 +27,15 @@ the License.
       div {
         font-family: var(--app-content-font-family);
         font-size: var(--app-content-font-size);
-        color: var(--app-primary-color);
+        color: var(--primary-fg-color);
       }
       #toolbar {
         height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
         width: 100%;
-        background-color: var(--app-secondary-color);
+        background-color: var(--secondary-bg-color);
       }
       .toolbar-button {
-        color: var(--app-primary-color);
+        color: var(--primary-fg-color);
         margin: 4px 12px 4px 12px;
         font-weight: normal;
         min-width: 35px;
@@ -53,7 +53,7 @@ the License.
         width: 100%;
         height: 1px;
         --paper-progress-active-color: var(--selection-fg-color);
-        --paper-progress-container-color: #eee;
+        --paper-progress-container-color: var(--border-color);
       }
     </style>
 
@@ -63,7 +63,7 @@ the License.
       <paper-button class="toolbar-button" on-click="_fetchSessionList">
         <iron-icon icon="refresh"></iron-icon>
       </paper-button>
-      <paper-button class="toolbar-button">
+      <paper-button class="toolbar-button" on-click="_shutdownSelectedSessions">
         <iron-icon icon="delete"></iron-icon>
         <span>Shutdown</span>
       </paper-button>
