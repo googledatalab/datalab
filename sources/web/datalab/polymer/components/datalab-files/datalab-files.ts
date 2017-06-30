@@ -501,8 +501,8 @@ class FilesElement extends Polymer.Element {
             let deletePromises = selectedIndices.map((i: number) => {
               return ApiManager.deleteItem(this._fileList[i].path);
             });
-            // TODO: [yebrahim] If at least one delete completes then a failure happens with
-            // any of the rest, _fetchFileList will never be called.
+            // TODO: [yebrahim] If at least one delete fails, _fetchFileList will never be called,
+            // even if some other deletes completed.
             return Promise.all(deletePromises)
               .then(() => this._fetchFileList());
           } else {
