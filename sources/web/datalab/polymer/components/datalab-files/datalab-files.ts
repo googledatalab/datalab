@@ -180,12 +180,12 @@ class FilesElement extends Polymer.Element {
   }
 
   _getNotebookUrlPrefix() {
-    let prefix = location.protocol + '//' + location.host + '/';
+    let prefix = location.protocol + '//' + location.host + ApiManager.basepath + '/';
     return prefix + 'notebooks';
   }
 
   _getEditorUrlPrefix() {
-    let prefix = location.protocol + '//' + location.host + '/';
+    let prefix = location.protocol + '//' + location.host + ApiManager.basepath+ '/';
     return prefix + 'edit';
   }
 

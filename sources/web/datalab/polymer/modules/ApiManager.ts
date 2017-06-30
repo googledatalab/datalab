@@ -98,7 +98,7 @@ interface Session {
 interface XhrOptions {
   method?: string,
   errorCallback?: Function,
-  parameters?: string,
+  parameters?: string | FormData,
   successCode?: number,
   noCache?: boolean,
 }
@@ -124,13 +124,33 @@ class ApiManager {
   static readonly terminalApiUrl = '/api/terminals';
 
   /**
+   * URL for retrieving the base path
+   */
+  static readonly basepathApiUrl = '/api/basepath';
+
+  /**
+   * Do we have the basepath yet
+   */
+  static haveBasepath = false;
+
+  /**
+   * URL for starting terminals, undefined until we call basepathApiUrl
+   */
+  static basepath = '';
+
+  /**
+   * XSRF token, if required, undefined until we call basepathApiUrl
+   */
+  static xsrfToken = '';
+
+  /**
    * Returns a list of currently running sessions, each implementing the Session interface
    */
   static listSessionsAsync(): Promise<Array<Session>> {
     const xhrOptions: XhrOptions = {
       noCache: true,
     };
-    return <Promise<Session[]>>ApiManager._xhrAsync(this.sessionsApiUrl, xhrOptions);
+    return <Promise<Session[]>>ApiManager._xhrAsyncBase(this.sessionsApiUrl, xhrOptions);
   }
 
   /**
@@ -144,7 +164,7 @@ class ApiManager {
     const xhrOptions: XhrOptions = {
       noCache: true,
     };
-    return <Promise<JupyterFile>>ApiManager._xhrAsync(this.contentApiUrl + '/' + path, xhrOptions);
+    return <Promise<JupyterFile>>ApiManager._xhrAsyncBase(this.contentApiUrl + '/' + path, xhrOptions);
   }
 
   /**
@@ -194,7 +214,7 @@ class ApiManager {
         ext: 'ipynb'
       }),
     };
-    let createPromise = ApiManager._xhrAsync(ApiManager.contentApiUrl, xhrOptions);
+    let createPromise = ApiManager._xhrAsyncBase(ApiManager.contentApiUrl, xhrOptions);
 
     // If a path is provided for naming the new item, request the rename, and
     // delete it if failed.
@@ -228,7 +248,7 @@ class ApiManager {
       }),
     };
 
-    return ApiManager._xhrAsync(oldPath, xhrOptions);
+    return ApiManager._xhrAsyncBase(oldPath, xhrOptions);
   }
 
   /**
@@ -242,14 +262,14 @@ class ApiManager {
       successCode: 204,
     };
 
-    return ApiManager._xhrAsync(path, xhrOptions);
+    return ApiManager._xhrAsyncBase(path, xhrOptions);
   }
 
   /**
    * Gets the user settings JSON from the server.
    */
   static getUserSettings() {
-    return ApiManager._xhrAsync('/_settings');
+    return ApiManager._xhrAsyncBase('/_settings');
   }
 
   /*
@@ -268,7 +288,7 @@ class ApiManager {
       })
     };
 
-    return ApiManager._xhrAsync(destinationDirectory, xhrOptions);
+    return ApiManager._xhrAsyncBase(destinationDirectory, xhrOptions);
   }
 
   /**
@@ -278,14 +298,68 @@ class ApiManager {
     const xhrOptions: XhrOptions = {
       method: 'POST',
     }
-    return ApiManager._xhrAsync(ApiManager.terminalApiUrl, xhrOptions);
+    return ApiManager._xhrAsyncBase(ApiManager.terminalApiUrl, xhrOptions);
   }
 
   /**
    * Returns a list of active terminal sessions.
    */
   static listTerminalsAsync() {
-    return ApiManager._xhrAsync(ApiManager.terminalApiUrl);
+    return ApiManager._xhrAsyncBase(ApiManager.terminalApiUrl);
+  }
+
+  static getBasePath() {
+    if (ApiManager.haveBasepath) {
+      return Promise.resolve(ApiManager.basepath)
+    } else {
+      return ApiManager._xhrAsyncRaw(ApiManager.basepathApiUrl).then((response:string) => {
+        const xssiPrefix = ')]}\'\n';
+        if (!response.startsWith(xssiPrefix)) {
+          // Response should be pure text.
+          ApiManager.basepath = response.replace(/\/$/, "");
+          ApiManager.haveBasepath = true;
+          return ApiManager.basepath;
+        } else {
+          response = response.substr(xssiPrefix.length);
+          const j = JSON.parse(response);
+          if (j['basepath']) {
+            ApiManager.basepath = j['basepath'].replace(/\/$/, "");
+            ApiManager.haveBasepath = true;
+            return ApiManager.basepath;
+          } else {
+            ApiManager.xsrfToken = j['token'];
+            var formData = new FormData();
+            formData.append("token", ApiManager.xsrfToken);
+            const xhrOptions: XhrOptions = {
+              noCache: true,
+              method: 'POST',
+              parameters: formData,
+            };
+            return ApiManager._xhrAsyncRaw(ApiManager.basepathApiUrl, xhrOptions).then((response:string) => {
+              if (!response.startsWith(xssiPrefix)) {
+                throw new Error("unknown basepath prefix");
+              } else {
+                response = response.substr(xssiPrefix.length);
+                ApiManager.basepath = JSON.parse(response)['basepath'].replace(/\/$/, "");
+                ApiManager.haveBasepath = true;
+                return ApiManager.basepath;
+              }
+            });
+          }
+        }
+        
+      }
+      );
+    }
+  }
+
+  /**
+   * Sends an XMLHttpRequest to the specified URL, adding the required
+   * base path. This method returns immediately with a promise
+   * that resolves with the parsed object when the request completes.
+   */
+  static _xhrAsyncBase(url: string, options?: XhrOptions) {
+    return ApiManager.getBasePath().then((base:string) => {return ApiManager._xhrAsync(base + url, options)});
   }
 
   /**
@@ -294,6 +368,17 @@ class ApiManager {
    * that resolves with the parsed object when the request completes.
    */
   static _xhrAsync(url: string, options?: XhrOptions) {
+    return ApiManager._xhrAsyncRaw(url, options).then((response:string) => {
+      return JSON.parse(response || 'null')
+    })
+  }
+  
+  /**
+   * Sends an XMLHttpRequest to the specified URL, and parses the
+   * the response text. This method returns immediately with a promise
+   * that resolves with the parsed object when the request completes.
+   */
+  static _xhrAsyncRaw(url: string, options?: XhrOptions) {
 
     options = options || {};
     const method = options.method || 'GET';
@@ -307,7 +392,7 @@ class ApiManager {
         if (request.readyState === 4) {
           if (request.status === successCode) {
             try {
-              resolve(JSON.parse(request.responseText || 'null'));
+              resolve(request.responseText);
             } catch (e) {
               reject(e);
             }
