@@ -51,7 +51,7 @@ the License.
       }
       .toolbar-button[disabled] {
         color: var(--disabled-fg-color);
-        background-color: var(--disabled-bg-color);
+        background-color: var(--secondary-bg-color);
       }
       .file-picker-small--false {
         /*For regular file picker, leave room for toolbar on top*/
@@ -191,6 +191,9 @@ the License.
         <iron-icon icon="editor:border-color"></iron-icon>
         <span>Rename</span>
       </paper-button>
+      <!--TODO: Delete operation supports deleting multiple files, but we'll
+      only enable the button when one file is selected for now, until we get
+      the group moving/copying functionality too-->
       <paper-button class="toolbar-button" on-click="_deleteSelectedItems"
                     disabled$={{!selectedFile}}>
         <iron-icon icon="delete"></iron-icon>
