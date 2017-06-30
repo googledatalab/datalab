@@ -41,6 +41,10 @@ the License.
         min-width: 35px;
         border-radius: 0px;
       }
+      .toolbar-button[disabled] {
+        color: var(--disabled-fg-color);
+        background-color: var(--secondary-bg-color);
+      }
       .toolbar-button > iron-icon {
         width: 20px;
         padding-right: 5px;
@@ -66,7 +70,8 @@ the License.
       <paper-button class="toolbar-button" on-click="_fetchSessionList">
         <iron-icon icon="refresh"></iron-icon>
       </paper-button>
-      <paper-button class="toolbar-button" on-click="_shutdownSelectedSessions">
+      <paper-button class="toolbar-button" on-click="_shutdownSelectedSessions"
+                    disabled$={{!selectedSession}}>
         <iron-icon icon="delete"></iron-icon>
         <span>Shutdown</span>
       </paper-button>
