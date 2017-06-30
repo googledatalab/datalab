@@ -60,6 +60,7 @@ interface JupyterFile {
 interface UserSettings {
   startuppath: string,
   theme: string,
+  oauth2ClientId: string,
 }
 
 /**
