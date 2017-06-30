@@ -129,12 +129,7 @@ class ApiManager {
   static readonly basepathApiUrl = '/api/basepath';
 
   /**
-   * URL for starting terminals, undefined until we call basepathApiUrl
-   */
-  static _basepath = '';
-
-  /**
-   * A promise to return _basepath.
+   * A promise to return a basepath.
    */
   static _basepathPromise: Promise<string>;
 
@@ -332,8 +327,7 @@ class ApiManager {
           if (!response.startsWith(xssiPrefix)) {
             // If no xssi prefix is there, the response should be pure text.
             // This will be the case when the basepath is on localhost.
-            ApiManager._basepath = response.replace(/\/$/, "");
-            return ApiManager._basepath;
+            return response.replace(/\/$/, "");
           } else {
             // We did get a response with an xssi prefix, the rest of the
             // response will be JSON, which we can parse after removing the
@@ -343,8 +337,7 @@ class ApiManager {
             if (j['basepath']) {
               // The response includes a basepath.
               // Check to ensure that the basepath doesn't have a trailing slash.
-              ApiManager._basepath = j['basepath'].replace(/\/$/, "");
-              return ApiManager._basepath;
+              return j['basepath'].replace(/\/$/, "");
             } else {
               // The response didn't include the basepath, it should have
               // and xsrf token for us to use to retry our request as a POST.
@@ -367,8 +360,7 @@ class ApiManager {
                     // We sent the token, so we should have a basepath.
                     // Make sure it doesn't have a trailing slash.
                     response = response.substr(xssiPrefix.length);
-                    ApiManager._basepath = JSON.parse(response)['basepath'].replace(/\/$/, "");
-                    return ApiManager._basepath;
+                    return JSON.parse(response)['basepath'].replace(/\/$/, "");
                   }
                 });
             }
