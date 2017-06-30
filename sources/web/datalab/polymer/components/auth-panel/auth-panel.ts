@@ -12,6 +12,8 @@
  * the License.
  */
 
+/// <reference path="../../modules/GapiManager.ts" />
+
 /**
  * Auth sign-in/sign-out panel.
  * This element provides buttons to sign in and out, and display some
@@ -22,6 +24,7 @@ class AuthPanel extends Polymer.Element {
   private _projectInfo : string;
   private _signedIn : boolean;
   private _userInfo : string;
+  private _promptOnSignIn: boolean = false;
 
   static get is() { return "auth-panel"; }
 
@@ -42,14 +45,30 @@ class AuthPanel extends Polymer.Element {
     }
   }
 
+  ready() {
+    super.ready();
+    GapiManager.loadGapi(this._signInChanged.bind(this));
+  }
+
   _signInClicked() {
-    this._signedIn = true;
-    this._userInfo = 'Not actually signed in';
-    this._projectInfo = 'No project is set';
+    GapiManager.signIn(this._promptOnSignIn);
   }
 
   _signOutClicked() {
-    this._signedIn = false;
+    // If the user explicitly signs out, then set a flag so that we ask for
+    // confirmation when he logs back in.
+    this._promptOnSignIn = true;
+    GapiManager.signOut();
+  }
+
+  _signInChanged(signedIn: boolean) {
+    this._signedIn = signedIn;
+    if (signedIn) {
+      this._userInfo = 'Signed in as ' + GapiManager.getSignedInEmail();
+      this._projectInfo = 'No project is set';  // TODO
+    }
+    const ev = new Event('signInOutDone');
+    this.dispatchEvent(ev);
   }
 }
 

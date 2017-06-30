@@ -26,7 +26,7 @@
  * Navigation is done locally to this element, and it does not modify the client's location.
  * This allows for navigation to be persistent if the view is changed away from the files
  * element.
- * 
+ *
  * A mini version of this element can be rendered by specifying the "small" attribute, which
  * removes the toolbar and the refresh button, and uses the item-list element with no header
  * and no selection. It also doesn't do anything when a file is double clicked.

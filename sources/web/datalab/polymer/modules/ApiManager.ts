@@ -18,6 +18,8 @@
  * these APIs to help with type checking.
  */
 
+/// <reference path="../../common.d.ts" />
+
 /**
  * Represents a cell in a Jupyter notebook.
  */
@@ -52,14 +54,6 @@ interface JupyterFile {
   path: string,
   type: string,
   writable: boolean
-}
-
-/**
- * Lists all user settings.
- */
-interface UserSettings {
-  startuppath: string,
-  theme: string,
 }
 
 /**
