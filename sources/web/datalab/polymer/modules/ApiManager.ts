@@ -92,7 +92,7 @@ interface Session {
 interface XhrOptions {
   method?: string,
   errorCallback?: Function,
-  parameters?: string,
+  parameters?: string | FormData,
   successCode?: number,
   noCache?: boolean,
 }
@@ -118,13 +118,28 @@ class ApiManager {
   static readonly terminalApiUrl = '/api/terminals';
 
   /**
+   * URL for retrieving the base path
+   */
+  static readonly basepathApiUrl = '/api/basepath';
+
+  /**
+   * A promise to return a basepath.
+   */
+  static _basepathPromise: Promise<string>;
+
+  /**
+   * XSRF token, if required, undefined until we call basepathApiUrl
+   */
+  static xsrfToken = '';
+
+  /**
    * Returns a list of currently running sessions, each implementing the Session interface
    */
   static listSessionsAsync(): Promise<Array<Session>> {
     const xhrOptions: XhrOptions = {
       noCache: true,
     };
-    return <Promise<Session[]>>ApiManager._xhrAsync(this.sessionsApiUrl, xhrOptions);
+    return <Promise<Session[]>>ApiManager. _sendRequestAsync(this.sessionsApiUrl, xhrOptions);
   }
 
   /**
@@ -135,7 +150,7 @@ class ApiManager {
       method: 'DELETE',
       successCode: 204,
     };
-    return ApiManager._xhrAsync(ApiManager.sessionsApiUrl + '/' + sessionId, xhrOptions);
+    return ApiManager._sendRequestAsync(ApiManager.sessionsApiUrl + '/' + sessionId, xhrOptions);
   }
 
   /**
@@ -149,7 +164,7 @@ class ApiManager {
     const xhrOptions: XhrOptions = {
       noCache: true,
     };
-    return <Promise<JupyterFile>>ApiManager._xhrAsync(this.contentApiUrl + '/' + path, xhrOptions);
+    return <Promise<JupyterFile>>ApiManager. _sendRequestAsync(this.contentApiUrl + '/' + path, xhrOptions);
   }
 
   /**
@@ -199,7 +214,7 @@ class ApiManager {
         ext: 'ipynb'
       }),
     };
-    let createPromise = ApiManager._xhrAsync(ApiManager.contentApiUrl, xhrOptions);
+    let createPromise = ApiManager. _sendRequestAsync(ApiManager.contentApiUrl, xhrOptions);
 
     // If a path is provided for naming the new item, request the rename, and
     // delete it if failed.
@@ -233,7 +248,7 @@ class ApiManager {
       }),
     };
 
-    return ApiManager._xhrAsync(oldPath, xhrOptions);
+    return ApiManager. _sendRequestAsync(oldPath, xhrOptions);
   }
 
   /**
@@ -247,14 +262,14 @@ class ApiManager {
       successCode: 204,
     };
 
-    return ApiManager._xhrAsync(path, xhrOptions);
+    return ApiManager. _sendRequestAsync(path, xhrOptions);
   }
 
   /**
    * Gets the user settings JSON from the server.
    */
   static getUserSettings() {
-    return ApiManager._xhrAsync('/_settings');
+    return ApiManager. _sendRequestAsync('/_settings');
   }
 
   /*
@@ -273,7 +288,7 @@ class ApiManager {
       })
     };
 
-    return ApiManager._xhrAsync(destinationDirectory, xhrOptions);
+    return ApiManager. _sendRequestAsync(destinationDirectory, xhrOptions);
   }
 
   /**
@@ -283,22 +298,98 @@ class ApiManager {
     const xhrOptions: XhrOptions = {
       method: 'POST',
     }
-    return ApiManager._xhrAsync(ApiManager.terminalApiUrl, xhrOptions);
+    return ApiManager. _sendRequestAsync(ApiManager.terminalApiUrl, xhrOptions);
   }
 
   /**
    * Returns a list of active terminal sessions.
    */
   static listTerminalsAsync() {
-    return ApiManager._xhrAsync(ApiManager.terminalApiUrl);
+    return ApiManager. _sendRequestAsync(ApiManager.terminalApiUrl);
+  }
+
+  /**
+   * Returns a Promise that resolves to the base path.
+   */
+  static getBasePath() {
+    if (!ApiManager._basepathPromise) {
+      ApiManager._basepathPromise = ApiManager. _xhrTextAsync(ApiManager.basepathApiUrl)
+        .then((response:string) => {
+          // The server may add the xssiPrefix to the response to prevent.
+          // it being parsed as if it were a javascript file.
+          const xssiPrefix = ')]}\'\n';
+          if (!response.startsWith(xssiPrefix)) {
+            // If no xssi prefix is there, the response should be pure text.
+            // This will be the case when the basepath is on localhost.
+            return response.replace(/\/$/, "");
+          } else {
+            // We did get a response with an xssi prefix, the rest of the
+            // response will be JSON, which we can parse after removing the
+            // prefix.
+            response = response.substr(xssiPrefix.length);
+            const j = JSON.parse(response);
+            if (j['basepath']) {
+              // The response includes a basepath.
+              // Check to ensure that the basepath doesn't have a trailing slash.
+              return j['basepath'].replace(/\/$/, "");
+            } else {
+              // The response didn't include the basepath, it should have
+              // and xsrf token for us to use to retry our request as a POST.
+              ApiManager.xsrfToken = j['token'];
+              var formData = new FormData();
+              // The server expects the xsrfToken as FormData.
+              formData.append("token", ApiManager.xsrfToken);
+              const xhrOptions: XhrOptions = {
+                noCache: true,
+                method: 'POST',
+                parameters: formData,
+              };
+              return ApiManager. _xhrTextAsync(ApiManager.basepathApiUrl, xhrOptions)
+                .then((response:string) => {
+                  if (!response.startsWith(xssiPrefix)) {
+                    // The server didn't give us a basepath, even after we sent
+                    // it the token.  We give up.
+                    throw new Error("unknown basepath prefix");
+                  } else {
+                    // We sent the token, so we should have a basepath.
+                    // Make sure it doesn't have a trailing slash.
+                    response = response.substr(xssiPrefix.length);
+                    return JSON.parse(response)['basepath'].replace(/\/$/, "");
+                  }
+                });
+            }
+          }
+        });
+    }
+    return ApiManager._basepathPromise;
+  }
+
+  /**
+   * Sends an XMLHttpRequest to the specified URL, adding the required
+   * base path. This method returns immediately with a promise
+   * that resolves with the parsed object when the request completes.
+   */
+  static  _sendRequestAsync(url: string, options?: XhrOptions) {
+    return ApiManager.getBasePath()
+      .then((base:string) => ApiManager. _xhrJsonAsync(base + url, options));
   }
 
   /**
    * Sends an XMLHttpRequest to the specified URL, and parses the
+   * the response text as json. This method returns immediately with a promise
+   * that resolves with the parsed object when the request completes.
+   */
+  static _xhrJsonAsync(url: string, options?: XhrOptions) {
+    return ApiManager. _xhrTextAsync(url, options)
+      .then((response:string) => JSON.parse(response || 'null'));
+  }
+  
+  /**
+   * Sends an XMLHttpRequest to the specified URL, and returns the
    * the response text. This method returns immediately with a promise
    * that resolves with the parsed object when the request completes.
    */
-  static _xhrAsync(url: string, options?: XhrOptions) {
+  static _xhrTextAsync(url: string, options?: XhrOptions) {
 
     options = options || {};
     const method = options.method || 'GET';
@@ -312,7 +403,7 @@ class ApiManager {
         if (request.readyState === 4) {
           if (request.status === successCode) {
             try {
-              resolve(JSON.parse(request.responseText || 'null'));
+              resolve(request.responseText);
             } catch (e) {
               reject(e);
             }
