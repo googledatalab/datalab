@@ -13,15 +13,6 @@
  */
 
 /**
- * CustomEvent that gets dispatched when the theme setting is changed by the user.
- */
-class ThemeChangedEvent extends CustomEvent {
-  detail: {
-    theme: string
-  }
-}
-
-/**
  * Settings element for Datalab.
  * This element shows a settings panel for Datalab that contains different user settings,
  * and uses the ApiManager to read and update those settings.
