@@ -26,13 +26,21 @@ class SettingsElement extends Polymer.Element {
    */
   public theme: string;
 
+  /**
+   * Idle timeout interval.
+   */
+  public idleTimeoutInterval: string;
+
   static get is() { return "datalab-settings"; }
 
   static get properties() {
     return {
       theme: {
         type: String,
-      }
+      },
+      idleTimeoutInterval: {
+        type: String,
+      },
     }
   }
 
@@ -46,6 +54,7 @@ class SettingsElement extends Polymer.Element {
     SettingsManager.getUserSettingsAsync(true /*forceRefresh*/)
       .then((settings: common.UserSettings) => {
         this.theme = settings.theme;
+        this.idleTimeoutInterval = settings.idleTimeoutInterval;
       });
   }
 

@@ -14,8 +14,10 @@ the License.
 
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
 
-<link rel="import" href="../../bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../../bower_components/paper-tooltip/paper-tooltip.html">
 
 <dom-module id="datalab-settings">
   <template>
@@ -27,6 +29,28 @@ the License.
         padding: 15px;
         border-bottom: 1px solid var(--border-color);
       }
+      .input-container {
+        display: flex;
+        height: 35px;
+      }
+      .input-container > * {
+        margin-right: 10px;
+      }
+      .input-box {
+        width: 150px;
+        --primary-text-color: var(--primary-fg-color);
+      }
+      .super-info {
+        width: 18px;
+        height: 18px;
+        color: #888;
+        padding: 0px;
+      }
+      #idleTimeoutTooltip {
+        --paper-tooltip: {
+          font-size: 13px;
+        }
+      }
     </style>
 
     <!--Theme-->
@@ -36,6 +60,23 @@ the License.
         <paper-radio-button name="light">Light</paper-radio-button>
         <paper-radio-button name="dark">Dark</paper-radio-button>
       </paper-radio-group>
+    </div>
+
+    <!--Auto Shutdown-->
+    <div class="setting">
+      <div>Auto Shutdown:</div>
+      <div class="input-container">
+        <paper-input class="input-box" spellcheck=false value="{{idleTimeoutInterval}}"
+                    no-label-float></paper-input>
+        <paper-button raised>Update</paper-button>
+        <paper-icon-button class="super-info" icon="help-outline" id="idleTimeoutHelp">
+        </paper-icon-button>
+        <paper-tooltip id="idleTimeoutTooltip" for="idleTimeoutHelp">
+          The VM will shut down after being idle for this long.
+          <br>
+          Example values: 90m, 1h 30m, 2d 12h. Set to 0 to disable.
+        </paper-tooltip>
+      </div>
     </div>
 
   </template>
