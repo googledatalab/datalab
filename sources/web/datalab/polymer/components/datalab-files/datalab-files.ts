@@ -179,13 +179,17 @@ class FilesElement extends Polymer.Element {
     clearInterval(this._fileListRefreshIntervalHandle);
   }
 
-  _getNotebookUrlPrefix() {
-    let prefix = location.protocol + '//' + location.host + '/';
+  async _getNotebookUrlPrefix() {
+    // Notebooks that are stored on the VM requires the basepath.
+    let basepath = await ApiManager.getBasePath();
+    let prefix = location.protocol + '//' + location.host + basepath + '/';
     return prefix + 'notebooks';
   }
 
-  _getEditorUrlPrefix() {
-    let prefix = location.protocol + '//' + location.host + '/';
+  async _getEditorUrlPrefix() {
+    // Notebooks that are stored on the VM requires the basepath.
+    let basepath = await ApiManager.getBasePath();
+    let prefix = location.protocol + '//' + location.host + basepath+ '/';
     return prefix + 'edit';
   }
 
@@ -280,9 +284,11 @@ class FilesElement extends Polymer.Element {
       this.currentPath = clickedItem.path;
       this._pushNewPath();
     } else if (clickedItem.type === 'notebook') {
-      window.open(this._getNotebookUrlPrefix() + '/' + clickedItem.path, '_blank');
+      this._getNotebookUrlPrefix()
+        .then(base => window.open(base + '/' + clickedItem.path, '_blank'));
     } else {
-      window.open(this._getEditorUrlPrefix() + '/' + clickedItem.path, '_blank');
+      this._getEditorUrlPrefix()
+        .then(base => window.open(base + '/' + clickedItem.path, '_blank'));
     }
   }
 
