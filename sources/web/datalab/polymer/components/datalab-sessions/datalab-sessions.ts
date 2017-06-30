@@ -22,6 +22,11 @@
  */
 class SessionsElement extends Polymer.Element {
 
+  /**
+   * The currently selected session if exactly one is selected, or null if none is.
+   */
+  public selectedSession: Session | null;
+
   private _sessionList: Array<Session>;
   private _fetching: boolean;
   private _sessionListRefreshInterval: number;
@@ -30,6 +35,10 @@ class SessionsElement extends Polymer.Element {
 
   static get properties() {
     return {
+      selectedSession: {
+        type: Object,
+        value: null,
+      },
       _sessionList: {
         type: Array,
         value: () => [],
@@ -61,6 +70,12 @@ class SessionsElement extends Polymer.Element {
     // TODO: [yebrahim] Start periodic refresh when the window is in focus, and
     // the sessions page is open, and stop it on blur to minimize unnecessary traffic
     setInterval(this._fetchSessionList.bind(this), this._sessionListRefreshInterval);
+
+    const sessionsElement = this.shadowRoot.querySelector('#sessions')
+    if (sessionsElement) {
+      sessionsElement.addEventListener('itemSelectionChanged',
+                                    this._handleSelectionChanged.bind(this));
+    }
   }
 
   /**
@@ -130,6 +145,19 @@ class SessionsElement extends Polymer.Element {
         // TODO: Handle delete errors properly by showing some message to the user
     } else {
       return Promise.resolve(null);
+    }
+  }
+
+  /**
+   * Called when the selection changes on the item list. If exactly one session
+   * is selected, sets the selectedSession property to the selected session object.
+   */
+  _handleSelectionChanged() {
+    const selectedItems = this.$.sessions.getSelectedIndices();
+    if (selectedItems.length === 1) {
+      this.selectedSession = this._sessionList[selectedItems[0]];
+    } else {
+      this.selectedSession = null;
     }
   }
 
