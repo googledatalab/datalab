@@ -24,6 +24,11 @@ the License.
         --app-content-font-family: 'Roboto', 'Noto', sans-serif;
         --primary-text-color : var(--primary-fg-color);
       }
+      *, *::after, *::before {
+        transition: border-color var(--app-animation-duration),
+                    color var(--app-animation-duration),
+                    background-color var(--app-animation-duration);
+      }
       hr {
         border-left: none;
         border-right: none;

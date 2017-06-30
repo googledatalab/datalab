@@ -20,14 +20,23 @@ the License.
 <dom-module id="datalab-settings">
   <template>
     <style include="datalab-shared-styles">
+      paper-radio-button {
+        --paper-radio-button-checked-color: var(--selection-fg-color);
+      }
+      .setting {
+        padding: 15px;
+        border-bottom: 1px solid var(--border-color);
+      }
     </style>
 
     <!--Theme-->
-    <div>Theme:</div>
-    <paper-radio-group selected="{{theme}}" on-paper-radio-group-changed="_themeChanged">
-      <paper-radio-button name="light">Light</paper-radio-button>
-      <paper-radio-button name="dark">Dark</paper-radio-button>
-    </paper-radio-group>
+    <div class="setting">
+      <div>Theme:</div>
+      <paper-radio-group selected="{{theme}}" on-paper-radio-group-changed="_themeChanged">
+        <paper-radio-button name="light">Light</paper-radio-button>
+        <paper-radio-button name="dark">Dark</paper-radio-button>
+      </paper-radio-group>
+    </div>
 
   </template>
 </dom-module>
