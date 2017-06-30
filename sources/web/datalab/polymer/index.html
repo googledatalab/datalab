@@ -45,6 +45,16 @@ the License.
         min-width: 470px;
       }
     </style>
+    <script>
+      document.addEventListener('ThemeChanged', () => {
+        // Change the style element's href to trigger the browser to reload it.
+        const cssElement = document.querySelector('#themeStylesheet');
+        if (cssElement) {
+          const sheetAddress = cssElement.href + "?v=" + Date.now()
+          cssElement.setAttribute('href', sheetAddress);
+        }
+      });
+    </script>
     <datalab-app></datalab-app>
   </body>
 </html>

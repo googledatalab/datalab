@@ -13,18 +13,11 @@
  */
 
 /**
- * CustomEvent that gets dispatched when the theme setting is changed by the user.
- */
-class ThemeChangedEvent extends CustomEvent {
-  detail: {
-    theme: string
-  }
-}
-
-/**
  * Settings element for Datalab.
  * This element shows a settings panel for Datalab that contains different user settings,
  * and uses the ApiManager to read and update those settings.
+ * On changing the selected theme, this element will trigger an event on the document
+ * element to signal the change, which can be handled by the host.
  */
 class SettingsElement extends Polymer.Element {
 
@@ -43,9 +36,14 @@ class SettingsElement extends Polymer.Element {
     }
   }
 
+  /**
+   * Called when element is attached to DOM. Gets the user settings and sets
+   * the visible ones to element properties.
+   */
   ready() {
     super.ready();
 
+    // TODO: add a cache for user/app settings and call it here instead.
     ApiManager.getUserSettings()
       .then((settings: common.UserSettings) => {
         this.theme = settings.theme;
@@ -54,13 +52,7 @@ class SettingsElement extends Polymer.Element {
 
   _themeChanged() {
     return ApiManager.setUserSetting('theme', this.theme)
-      .then(() => {
-        const cssElement = <HTMLLinkElement>document.querySelector('#themeStylesheet');
-        if (cssElement) {
-          const sheetAddress = cssElement.href + "?v=" + Date.now()
-          cssElement.setAttribute('href', sheetAddress);
-        }
-      });
+      .then(() => document.dispatchEvent(new Event('ThemeChanged')));
   }
 
 }
