@@ -272,6 +272,19 @@ class ApiManager {
     return ApiManager. _sendRequestAsync('/_settings');
   }
 
+  /**
+   * Sets a user setting.
+   * @param setting name of the setting to change.
+   * @param value new setting value.
+   */
+  static setUserSetting(setting: string, value: string) {
+    const xhrOptions: XhrOptions = {
+      method: 'POST',
+    };
+    const requestUrl = '/_settings?key=' + setting + '&value=' + value;
+    return ApiManager._sendRequestAsync(requestUrl, xhrOptions);
+  }
+
   /*
    * Copies an item from source to destination. Item name collisions at the destination
    * are handled by Jupyter.
