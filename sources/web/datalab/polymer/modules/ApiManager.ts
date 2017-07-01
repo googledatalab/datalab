@@ -281,7 +281,8 @@ class ApiManager {
     const xhrOptions: XhrOptions = {
       method: 'POST',
     };
-    return ApiManager._xhrAsync('/_settings?key=' + setting + '&value=' + value, xhrOptions);
+    const requestUrl = '/_settings?key=' + setting + '&value=' + value;
+    return ApiManager._sendRequestAsync(requestUrl, xhrOptions);
   }
 
   /*
