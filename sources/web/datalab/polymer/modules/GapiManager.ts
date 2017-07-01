@@ -33,9 +33,8 @@ class GapiManager {
     // Loading the auth2 library is optional here since `gapi.client.init` function will load
     // it if not already loaded. Loading it upfront can save one network request.
     GapiManager._loadClientId()
-      .then(() => {
-        gapi.load('client:auth2', this._initClient.bind(this, signInChangedCallback));
-      });
+      .then(() => gapi.load('client:auth2', this._initClient.bind(this, signInChangedCallback)))
+      .catch((e: Error) => console.log('Failed to get client ID: ', e));
   }
 
   /**
@@ -98,9 +97,8 @@ class GapiManager {
         if (settings.oauth2ClientId) {
           GapiManager.clientId = settings.oauth2ClientId;
         } else {
-          console.log('No oauth2ClientId found in user settings');
+          throw new Error('No oauth2ClientId found in user settings');
         }
-      })
-      .catch(() => console.log('Failed to get the user settings.'));
+      });
   }
 }
