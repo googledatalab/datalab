@@ -13,6 +13,7 @@ the License.
 -->
 
 <link rel="import" href="../../components/auth-panel/auth-panel.html">
+<link rel="import" href="../../components/datalab-settings/datalab-settings.html">
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
 
 <link rel="import" href="../../bower_components/app-layout/app-header/app-header.html">
@@ -115,7 +116,9 @@ the License.
     <!--Settings dialog. This shows centered in the middle of the window-->
     <paper-dialog id="settingsDialog" class="dialog" with-backdrop>
       <div class="dialog-title">Settings</div>
-      <div class="dialog-content"></div>
+      <div class="dialog-content">
+        <datalab-settings></datalab-settings>
+      </div>
       <hr>
       <div>
         <paper-button dialog-dismiss raised>Close</paper-button>
