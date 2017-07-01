@@ -83,8 +83,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir bs4==0.0.1 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir crcmod==1.7 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir pillow==3.4.1 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir google-cloud-dataflow==0.6.0 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow-transform==0.1.7 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir google-cloud-dataflow==2.0.0 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow==1.0.1 && \
     # Setting protobuf to 3.1.0 to workaround a tensorflow 1.0 issue in tcmalloc
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir protobuf==3.1.0 && \
