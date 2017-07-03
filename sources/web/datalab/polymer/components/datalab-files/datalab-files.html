@@ -21,6 +21,7 @@ the License.
 
 <link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../../bower_components/iron-icons/editor-icons.html">
+<link rel="import" href="../../bower_components/iron-icons/hardware-icons.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../bower_components/paper-progress/paper-progress.html">
 
@@ -39,6 +40,26 @@ the License.
         background-color: var(--secondary-bg-color);
         border-bottom: 1px solid var(--border-color);
       }
+      #altAddToolbarToggle, #fileOpsDropdownToggle {
+        display: none;
+      }
+      #altAddToolbar, #fileOpsDropdown {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        background-color: var(--primary-bg-color);
+        color: var(--primary-fg-color);
+        position: absolute;
+        margin: 0px;
+        padding: 10px;
+        min-width: 150px;
+        box-shadow: -3px 3px 10px -3px rgba(0, 0, 0, 0.3);
+      }
+      #altAddToolbar > *, #fileOpsDropdown > * {
+        padding: 10px 0px;
+        margin: 0px;
+        width: 100%;
+      }
       .toolbar-button {
         color: var(--primary-fg-color);
         margin: 4px;
@@ -48,6 +69,9 @@ the License.
       .toolbar-button > iron-icon {
         width: 20px;
         padding-right: 5px;
+      }
+      .toolbar-button > span {
+        width: 70%;
       }
       .toolbar-button[disabled] {
         color: var(--disabled-fg-color);
@@ -162,18 +186,30 @@ the License.
     <!--Toolbar with buttons such as +Notebook, +Folder... etc-->
     <!--TODO: [yebrahim] Make these buttons do stuff-->
     <div id="toolbar" hidden$="{{small}}">
-      <paper-button class="toolbar-button" on-click="_createNewNotebook">
-        <iron-icon icon="add-box"></iron-icon>
-        <span>Notebook</span>
-      </paper-button>
-      <paper-button class="toolbar-button" on-click="_createNewFile">
-        <iron-icon icon="add-box"></iron-icon>
-        <span>File</span>
-      </paper-button>
-      <paper-button class="toolbar-button" on-click="_createNewDirectory">
-        <iron-icon icon="add-box"></iron-icon>
-        <span>Folder</span>
-      </paper-button>
+      <span>
+        <paper-button id="altAddToolbarToggle" class="toolbar-button"
+                      on-click="_toggleAltAddToolbar">
+          <iron-icon icon="add-box"></iron-icon>
+          <span>New</span>
+          <iron-icon icon="hardware:keyboard-arrow-down"></iron-icon>
+        </paper-button>
+        <paper-dialog id="altAddToolbar">
+        </paper-dialog>
+      </span>
+      <span id="addToolbar">
+        <paper-button class="toolbar-button" on-click="_createNewNotebook">
+          <iron-icon icon="add-box"></iron-icon>
+          <span>Notebook</span>
+        </paper-button>
+        <paper-button class="toolbar-button" on-click="_createNewFile">
+          <iron-icon icon="add-box"></iron-icon>
+          <span>File</span>
+        </paper-button>
+        <paper-button class="toolbar-button" on-click="_createNewDirectory">
+          <iron-icon icon="add-box"></iron-icon>
+          <span>Folder</span>
+        </paper-button>
+      </span>
       <paper-button class="toolbar-button">
         <iron-icon icon="file-upload"></iron-icon>
         <span>Upload</span>
