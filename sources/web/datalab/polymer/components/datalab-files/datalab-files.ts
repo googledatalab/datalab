@@ -176,7 +176,10 @@ class FilesElement extends Polymer.Element {
     this._boundResizeHandler = this._resizeHandler.bind(this);
     window.addEventListener('resize', this._boundResizeHandler, true);
 
-    this._resizeHandler();
+    // Will be called after the custom element is done rendering.
+    window.addEventListener('WebComponentsReady', () => {
+      this._resizeHandler();
+    });
   }
 
   disconnectedCallback() {
@@ -615,15 +618,19 @@ class FilesElement extends Polymer.Element {
   _resizeHandler() {
     const width = this.$.toolbar.clientWidth;
     if (width < 800) {
-      while (this.$.addToolbar.firstChild) {
-        this.$.altAddToolbar.appendChild(this.$.addToolbar.firstChild);
-      }
+      Utils.moveElementChildren(this.$.addToolbar, this.$.altAddToolbar);
       this.$.altAddToolbarToggle.style.display = "inline-flex";
     } else {
-      while (this.$.altAddToolbar.firstChild) {
-        this.$.addToolbar.appendChild(this.$.altAddToolbar.firstChild);
-      }
+      Utils.moveElementChildren(this.$.altAddToolbar, this.$.addToolbar);
       this.$.altAddToolbarToggle.style.display = "none";
+    }
+
+    if (width < 600) {
+      Utils.moveElementChildren(this.$.fileOpsToolbar, this.$.altFileOpsToolbar);
+      this.$.altFileOpsToolbarToggle.style.display = "inline-flex";
+    } else {
+      Utils.moveElementChildren(this.$.altFileOpsToolbar, this.$.fileOpsToolbar);
+      this.$.altFileOpsToolbarToggle.style.display = "none";
     }
   }
 
