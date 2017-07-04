@@ -38,7 +38,6 @@ class TerminalElement extends Polymer.Element {
 
   private _xterm: Terminal;
   private _wsConnection: WebSocket;
-  private _boundResizeHandler: EventListenerObject;
   private _charHeight: number;
   private _charWidth: number;
 
@@ -53,9 +52,6 @@ class TerminalElement extends Polymer.Element {
       // makes changing the style simpler, instead of hard-coding these values.
       this._charHeight = this.$.sizeHelper.clientHeight;
       this._charWidth = this.$.sizeHelper.clientWidth / 10; // The element has 10 characters.
-
-      this._boundResizeHandler = this._resizeHandler.bind(this);
-      window.addEventListener('resize', this._boundResizeHandler, true);
 
       // Get the first terminal instance by calling the Jupyter API. If none are returned,
       // start a new one.
@@ -107,15 +103,6 @@ class TerminalElement extends Polymer.Element {
       this._xterm.open(this.$.theTerminal, true);
       this._resizeHandler();
     };
-  }
-
-  /**
-   * Called when the element is detached from the DOM. Cleans up event listeners.
-   */
-  disconnectedCallback() {
-    if (this._boundResizeHandler) {
-      window.removeEventListener('resize', this._boundResizeHandler);
-    }
   }
 
   /**

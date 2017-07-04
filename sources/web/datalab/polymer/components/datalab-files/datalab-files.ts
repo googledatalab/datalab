@@ -62,7 +62,6 @@ class FilesElement extends Polymer.Element {
   private _fileListRefreshIntervalHandle: number;
   private _currentCrumbs: Array<string>;
   private _isDetailsPaneToggledOn: Boolean;
-  private _boundResizeHandler: EventListenerObject;
 
   static readonly _deleteListLimit = 10;
 
@@ -172,14 +171,6 @@ class FilesElement extends Polymer.Element {
 
     // For a small file/directory picker, we don't need to show the status.
     this.$.files.columns = this.small ? ['Name'] : ['Name', 'Status'];
-
-    this._boundResizeHandler = this._resizeHandler.bind(this);
-    window.addEventListener('resize', this._boundResizeHandler, true);
-
-    // Will be called after the custom element is done rendering.
-    window.addEventListener('WebComponentsReady', () => {
-      this._resizeHandler();
-    });
   }
 
   disconnectedCallback() {
