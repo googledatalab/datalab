@@ -71,7 +71,8 @@ the License.
           <datalab-sidebar page={{page}}></datalab-sidebar>
         </div>
         <div class="datalab-main-content">
-          <iron-pages selected="{{page}}" attr-for-selected="name" fallback-selection="files">
+          <iron-pages id="pages" selected="{{page}}" attr-for-selected="name"
+                      fallback-selection="files">
             <datalab-files name="files"></datalab-files>
             <datalab-sessions name="sessions"></datalab-sessions>
             <datalab-terminal name="terminal"></datalab-terminal>

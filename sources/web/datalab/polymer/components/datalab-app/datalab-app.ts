@@ -92,6 +92,12 @@ class DatalabAppElement extends Polymer.Element {
     const subpath = 'datalab-' + page
     const resolvedPageUrl = this.resolveUrl('../' + subpath + '/' + subpath + '.html');
     Polymer.importHref(resolvedPageUrl, undefined, undefined, true);
+
+    // If the new page has a resize handler, call it.
+    const selectedPage = this.$.pages.selectedItem;
+    if (selectedPage && selectedPage._resizeHandler) {
+      selectedPage._resizeHandler();
+    }
   }
 
 }
