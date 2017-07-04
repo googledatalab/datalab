@@ -71,7 +71,8 @@ the License.
         border-radius: 0px;
       }
       .toolbar-button > iron-icon {
-        width: 20px;
+        min-width: 20px;
+        max-width: 20px;
         padding-right: 5px;
       }
       .toolbar-button > span {
@@ -112,10 +113,15 @@ the License.
         background-color: var(--primary-bg-color);
       }
       #detailsPane {
-        min-width: var(--details-pane-width);
-        max-width: var(--details-pane-width);
         background-color: var(--secondary-bg-color);
         box-shadow: inset 4px 0px 10px -3px rgba(0, 0, 0, 0.1);
+        transition: width var(--app-animation-duration);
+      }
+      .details-pane-enabled--true {
+        width: var(--details-pane-width);
+      }
+      .details-pane-enabled--false {
+        width: 0px;
       }
       .vseparator {
         display: inline;
@@ -296,8 +302,8 @@ the License.
       <!--File listing-->
       <div class="files-container">
         <item-list id="files" hide-header$="{{small}}" disable-selection$="{{small}}"></item-list>
-        <details-pane id="detailsPane" file="{{selectedFile}}"
-                      hidden="{{!_isDetailsPaneEnabled}}" active="{{_isDetailsPaneEnabled}}">
+        <details-pane id="detailsPane" file="{{selectedFile}}" active="{{_isDetailsPaneEnabled}}"
+                      class$="details-pane-enabled--{{_isDetailsPaneEnabled}}">
         </details-pane>
         </div>
       </div>

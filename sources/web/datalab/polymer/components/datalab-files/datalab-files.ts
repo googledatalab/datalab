@@ -606,8 +606,13 @@ class FilesElement extends Polymer.Element {
       this.$.altFileOpsToolbar.toggle();
   }
 
+  /**
+   * Called on window.resize, collapses elements to keep the element usable
+   * on small screens.
+   */
   _resizeHandler() {
     const width = this.$.toolbar.clientWidth;
+    // Collapse the add buttons on the toolbar
     if (width < 800) {
       Utils.moveElementChildren(this.$.addToolbar, this.$.altAddToolbar);
       this.$.altAddToolbarToggle.style.display = "inline-flex";
@@ -617,6 +622,7 @@ class FilesElement extends Polymer.Element {
       this.$.altAddToolbar.close();
     }
 
+    // Collapse the file operations buttons on the toolbar
     if (width < 600) {
       Utils.moveElementChildren(this.$.fileOpsToolbar, this.$.altFileOpsToolbar);
       this.$.altFileOpsToolbarToggle.style.display = "inline-flex";
@@ -624,6 +630,11 @@ class FilesElement extends Polymer.Element {
       Utils.moveElementChildren(this.$.altFileOpsToolbar, this.$.fileOpsToolbar);
       this.$.altFileOpsToolbarToggle.style.display = "none";
       this.$.altFileOpsToolbar.close();
+    }
+
+    // Collapse the details pane
+    if (width < 600) {
+      this._isDetailsPaneToggledOn = false;
     }
   }
 
