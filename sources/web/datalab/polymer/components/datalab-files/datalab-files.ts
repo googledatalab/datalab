@@ -623,6 +623,7 @@ class FilesElement extends Polymer.Element {
     } else {
       Utils.moveElementChildren(this.$.altAddToolbar, this.$.addToolbar);
       this.$.altAddToolbarToggle.style.display = "none";
+      this.$.altAddToolbar.close();
     }
 
     if (width < 600) {
@@ -631,6 +632,7 @@ class FilesElement extends Polymer.Element {
     } else {
       Utils.moveElementChildren(this.$.altFileOpsToolbar, this.$.fileOpsToolbar);
       this.$.altFileOpsToolbarToggle.style.display = "none";
+      this.$.altFileOpsToolbar.close();
     }
   }
 
