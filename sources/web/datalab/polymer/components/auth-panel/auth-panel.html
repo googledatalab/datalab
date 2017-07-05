@@ -1,0 +1,64 @@
+<!--
+Copyright 2017 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License
+is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+or implied. See the License for the specific language governing permissions and limitations under
+the License.
+-->
+
+<link rel="import" href="../../components/shared-styles/shared-styles.html">
+
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+
+<dom-module id="auth-panel">
+  <template>
+    <style include="datalab-shared-styles">
+      #signInButton {
+        color: #fff;
+        background-color: #449d44;
+        border-color: #398439;
+      }
+      #signOutButton {
+        color: #fff;
+        background-color: #d9534f;
+        border-color: #d43f3a;
+      }
+      .signIoButton {
+        width: 100%;
+        float: none;
+        margin: 0;
+      }
+      .infoLabel {
+        display: block;
+        padding-bottom: 10px;
+        bottom-margin: 5px;
+      }
+    </style>
+
+    <div>
+      <div id="signInGroup" hidden="{{_signedIn}}">
+        <paper-button id="signInButton" title="Sign In" class="signIoButton" on-click="_signInClicked">
+          Sign In
+        </paper-button>
+      </div>
+      <div id="signOutGroup" hidden="{{!_signedIn}}">
+        <label id="userInfoLabel" class="infoLabel">{{_userInfo}}</label>
+        <label id="projectInfoLabel" class="infoLabel">{{_projectInfo}}</label>
+        <paper-button id="signOutButton" title="Sign Out" class="signIoButton" on-click="_signOutClicked">
+          Sign Out
+        </paper-button>
+      </div>
+    </div>
+
+  </template>
+</dom-module>
+
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="../../modules/GapiManager.js"></script>
+<script src="auth-panel.js"></script>

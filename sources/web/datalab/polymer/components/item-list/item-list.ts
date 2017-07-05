@@ -103,14 +103,14 @@ class ItemListElement extends Polymer.Element {
    * opposite is not directly possible.
    */
   getSelectedElements() {
-    return this.disableSelection ? null : this._selectedElements;
+    return this.disableSelection ? [] : this._selectedElements;
   }
 
   /**
    * Returns list of indices for the currently selected elements.
    */
   getSelectedIndices() {
-    return this.disableSelection ? null : this._selectedElements.map(element => {
+    return this.disableSelection ? [] : this._selectedElements.map(element => {
       return this.$.list.indexForElement(element);
     });
   }
@@ -121,6 +121,8 @@ class ItemListElement extends Polymer.Element {
    */
   _rowsChanged() {
     this._selectedElements = [];
+    const ev = new ItemClickEvent('itemSelectionChanged', { detail: {} });
+    this.dispatchEvent(ev);
   }
 
   /**

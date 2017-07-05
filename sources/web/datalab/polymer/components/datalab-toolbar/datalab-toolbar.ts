@@ -22,11 +22,23 @@ class ToolbarElement extends Polymer.Element {
 
   static get is() { return "datalab-toolbar"; }
 
+  ready() {
+    super.ready();
+    const authPanel = this.shadowRoot.querySelector('auth-panel')
+    if (authPanel) {
+      authPanel.addEventListener('signInOutDone', this._closeAccountDropdown.bind(this));
+    }
+  }
+
   /**
    * When account menu icon is clicked, toggles account menu visibility
    */
   _accountIconClicked() {
     this.$.accountDropdown.toggle();
+  }
+
+  _closeAccountDropdown() {
+    this.$.accountDropdown.close();
   }
 
   /**
@@ -42,8 +54,6 @@ class ToolbarElement extends Polymer.Element {
   _settingsClicked() {
     this.$.settingsDialog.open();
   }
-
 }
 
 customElements.define(ToolbarElement.is, ToolbarElement);
-

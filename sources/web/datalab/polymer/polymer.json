@@ -10,7 +10,7 @@
   "sources": [
     "modules/**/*.js",
     "images/**/*",
-    "index.css"
+    "index.*.css"
   ],
   "extraDependencies": [
     "bower_components/webcomponentsjs/webcomponents-lite.js"

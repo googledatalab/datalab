@@ -16,22 +16,45 @@ the License.
   <template>
     <style>
       :host {
-        --app-primary-color: #424242;
-        --app-secondary-color: #f3f3f3;
         --toolbar-height: 48px;
         --sidebar-width: 200px;
-        --selection-fg-color: #2979ff;
         --details-pane-width: 350px;
         --app-animation-duration: 0.3s;
         --app-content-font-size: 13px;
         --app-content-font-family: 'Roboto', 'Noto', sans-serif;
+        --primary-text-color : var(--primary-fg-color);
+      }
+      *, *::after, *::before {
+        /* Animate the color changes for when themes are switched. */
+        transition: border-color var(--app-animation-duration),
+                    color var(--app-animation-duration),
+                    background-color var(--app-animation-duration);
       }
       hr {
         border-left: none;
         border-right: none;
         border-bottom: none;
-        border-top: 1px solid rgba(0, 0, 0, 0.1);
-        margin: 5px;
+        border-top: 1px solid var(--primary-fg-color);
+        opacity: 0.1;
+        margin: 0px;
+      }
+      .dialog-title {
+        background-color: var(--secondary-bg-color);
+        border-bottom: 1px solid var(--border-color);
+        font-size: 16px;
+        text-align: center;
+        flex: 0 0 20px;
+        margin: 0px;
+        padding: 15px; /*Total height: 51px*/
+      }
+      a {
+        color: var(--selection-fg-color);
+      }
+      a:visited {
+        color: var(--selection-fg-color);
+      }
+      [hidden] {
+        display: none !important;
       }
     </style>
   </template>

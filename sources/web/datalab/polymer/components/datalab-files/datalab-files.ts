@@ -26,7 +26,7 @@
  * Navigation is done locally to this element, and it does not modify the client's location.
  * This allows for navigation to be persistent if the view is changed away from the files
  * element.
- * 
+ *
  * A mini version of this element can be rendered by specifying the "small" attribute, which
  * removes the toolbar and the refresh button, and uses the item-list element with no header
  * and no selection. It also doesn't do anything when a file is double clicked.
@@ -135,7 +135,7 @@ class FilesElement extends Polymer.Element {
     super.ready();
 
     // Get the last startup path.
-    ApiManager.getUserSettings()
+    SettingsManager.getUserSettingsAsync(true /*forceRefresh*/)
       .then((settings: common.UserSettings) => {
         if (settings.startuppath) {
           let path = settings.startuppath;
@@ -179,13 +179,17 @@ class FilesElement extends Polymer.Element {
     clearInterval(this._fileListRefreshIntervalHandle);
   }
 
-  _getNotebookUrlPrefix() {
-    let prefix = location.protocol + '//' + location.host + '/';
+  async _getNotebookUrlPrefix() {
+    // Notebooks that are stored on the VM requires the basepath.
+    let basepath = await ApiManager.getBasePath();
+    let prefix = location.protocol + '//' + location.host + basepath + '/';
     return prefix + 'notebooks';
   }
 
-  _getEditorUrlPrefix() {
-    let prefix = location.protocol + '//' + location.host + '/';
+  async _getEditorUrlPrefix() {
+    // Notebooks that are stored on the VM requires the basepath.
+    let basepath = await ApiManager.getBasePath();
+    let prefix = location.protocol + '//' + location.host + basepath+ '/';
     return prefix + 'edit';
   }
 
@@ -280,9 +284,11 @@ class FilesElement extends Polymer.Element {
       this.currentPath = clickedItem.path;
       this._pushNewPath();
     } else if (clickedItem.type === 'notebook') {
-      window.open(this._getNotebookUrlPrefix() + '/' + clickedItem.path, '_blank');
+      this._getNotebookUrlPrefix()
+        .then(base => window.open(base + '/' + clickedItem.path, '_blank'));
     } else {
-      window.open(this._getEditorUrlPrefix() + '/' + clickedItem.path, '_blank');
+      this._getEditorUrlPrefix()
+        .then(base => window.open(base + '/' + clickedItem.path, '_blank'));
     }
   }
 
@@ -495,8 +501,8 @@ class FilesElement extends Polymer.Element {
             let deletePromises = selectedIndices.map((i: number) => {
               return ApiManager.deleteItem(this._fileList[i].path);
             });
-            // TODO: [yebrahim] If at least one delete completes then a failure happens with
-            // any of the rest, _fetchFileList will never be called.
+            // TODO: [yebrahim] If at least one delete fails, _fetchFileList will never be called,
+            // even if some other deletes completed.
             return Promise.all(deletePromises)
               .then(() => this._fetchFileList());
           } else {
