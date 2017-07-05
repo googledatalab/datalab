@@ -65,7 +65,7 @@ class SettingsElement extends Polymer.Element {
 
   _idleTimoutIntervalChanged() {
     // TODO: Show success/error status to user
-    return ApiManager.setUserSetting('idleTimeoutInterval', this.idleTimeoutInterval)
+    return SettingsManager.setUserSettingAsync('idleTimeoutInterval', this.idleTimeoutInterval)
       .catch((e: Error) => console.log('Error updating idle timeout interval: ', e));
   }
 
