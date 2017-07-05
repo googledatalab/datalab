@@ -63,6 +63,12 @@ class SettingsElement extends Polymer.Element {
       .then(() => document.dispatchEvent(new Event('ThemeChanged')));
   }
 
+  _idleTimoutIntervalChanged() {
+    // TODO: Show success/error status to user
+    return ApiManager.setUserSetting('idleTimeoutInterval', this.idleTimeoutInterval)
+      .catch((e: Error) => console.log('Error updating idle timeout interval: ', e));
+  }
+
 }
 
 customElements.define(SettingsElement.is, SettingsElement);
