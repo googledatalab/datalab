@@ -15,8 +15,16 @@
 let userSettings: common.UserSettings;
 let appSettings: common.AppSettings;
 
+/**
+ * Handles API calls related to app/user settings, and manages a local cached copy
+ * of the settings to avoid duplicate API calls.
+ */
 class SettingsManager {
 
+  /**
+   * Returns the user settings object, optionally after refreshing it from the backend
+   * @param forceRefresh whether the settings cache should be refreshed before returning
+   */
   static getUserSettingsAsync(forceRefresh?: boolean) {
     if (!userSettings || forceRefresh === true) {
       return SettingsManager._getUserSettingsAsync()
@@ -29,6 +37,10 @@ class SettingsManager {
     }
   }
 
+  /**
+   * Returns the app settings object, optionally after refreshing it from the backend
+   * @param forceRefresh whether the settings cache should be refreshed before returning
+   */
   static getAppSettingsAsync(forceRefresh?: boolean) {
     if (!appSettings || forceRefresh === true) {
       return SettingsManager._getAppSettingsAsync()
@@ -68,6 +80,5 @@ class SettingsManager {
   static _getAppSettingsAsync() {
     return ApiManager.sendRequestAsync(ApiManager.appSettingsUrl);
   }
-
 
 }
