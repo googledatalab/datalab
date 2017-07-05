@@ -53,6 +53,7 @@ class ToolbarElement extends Polymer.Element {
    */
   _settingsClicked() {
     this.$.settingsDialog.open();
+    this.$.settingsElement.loadSettings();
   }
 }
 

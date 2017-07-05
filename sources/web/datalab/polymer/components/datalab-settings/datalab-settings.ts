@@ -31,6 +31,8 @@ class SettingsElement extends Polymer.Element {
    */
   public idleTimeoutInterval: string;
 
+  private _busy: boolean;
+
   static get is() { return "datalab-settings"; }
 
   static get properties() {
@@ -41,6 +43,10 @@ class SettingsElement extends Polymer.Element {
       idleTimeoutInterval: {
         type: String,
       },
+      _busy: {
+        type: Boolean,
+        value: false,
+      },
     }
   }
 
@@ -50,14 +56,28 @@ class SettingsElement extends Polymer.Element {
    */
   ready() {
     super.ready();
+    this.loadSettings();
+  }
 
-    SettingsManager.getUserSettingsAsync(true /*forceRefresh*/)
+  /**
+   * Fetches the settings from the backend and populates the UI.
+   */
+  loadSettings() {
+    this._busy = true;
+    return SettingsManager.getUserSettingsAsync(true /*forceRefresh*/)
       .then((settings: common.UserSettings) => {
         this.theme = settings.theme;
         this.idleTimeoutInterval = settings.idleTimeoutInterval;
-      });
+      })
+      .catch(() => {
+        console.log('Could not get user settings from server.');
+      })
+      .then(() => this._busy = false);
   }
 
+  /**
+   * On changing the theme, an event is fired to allow the host to reload the theme CSS.
+   */
   _themeChanged() {
     return SettingsManager.setUserSettingAsync('theme', this.theme)
       .then(() => document.dispatchEvent(new Event('ThemeChanged')));
@@ -65,8 +85,10 @@ class SettingsElement extends Polymer.Element {
 
   _idleTimoutIntervalChanged() {
     // TODO: Show success/error status to user
+    this._busy = true;
     return SettingsManager.setUserSettingAsync('idleTimeoutInterval', this.idleTimeoutInterval)
-      .catch((e: Error) => console.log('Error updating idle timeout interval: ', e));
+      .catch((e: Error) => console.log('Error updating idle timeout interval: ', e))
+      .then(() => this._busy = false);
   }
 
 }
