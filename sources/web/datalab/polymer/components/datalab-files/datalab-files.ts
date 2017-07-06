@@ -62,6 +62,9 @@ class FilesElement extends Polymer.Element {
   private _fileListRefreshIntervalHandle: number;
   private _currentCrumbs: Array<string>;
   private _isDetailsPaneToggledOn: Boolean;
+  private _addToolbarCollapseThreshold = 800;
+  private _updateToolbarCollapseThreshold = 600;
+  private _detailsPaneCollapseThreshold = 600;
 
   static readonly _deleteListLimit = 10;
 
@@ -602,8 +605,8 @@ class FilesElement extends Polymer.Element {
     this.$.altAddToolbar.toggle();
   }
 
-  _toggleAltFileOpsToolbar() {
-      this.$.altFileOpsToolbar.toggle();
+  _toggleAltUpdateToolbar() {
+    this.$.altUpdateToolbar.toggle();
   }
 
   /**
@@ -613,7 +616,7 @@ class FilesElement extends Polymer.Element {
   _resizeHandler() {
     const width = this.$.toolbar.clientWidth;
     // Collapse the add buttons on the toolbar
-    if (width < 800) {
+    if (width < this._addToolbarCollapseThreshold) {
       Utils.moveElementChildren(this.$.addToolbar, this.$.altAddToolbar);
       this.$.altAddToolbarToggle.style.display = "inline-flex";
     } else {
@@ -623,17 +626,17 @@ class FilesElement extends Polymer.Element {
     }
 
     // Collapse the file operations buttons on the toolbar
-    if (width < 600) {
-      Utils.moveElementChildren(this.$.fileOpsToolbar, this.$.altFileOpsToolbar);
-      this.$.altFileOpsToolbarToggle.style.display = "inline-flex";
+    if (width < this._updateToolbarCollapseThreshold) {
+      Utils.moveElementChildren(this.$.updateToolbar, this.$.altUpdateToolbar);
+      this.$.altUpdateToolbarToggle.style.display = "inline-flex";
     } else {
-      Utils.moveElementChildren(this.$.altFileOpsToolbar, this.$.fileOpsToolbar);
-      this.$.altFileOpsToolbarToggle.style.display = "none";
-      this.$.altFileOpsToolbar.close();
+      Utils.moveElementChildren(this.$.altUpdateToolbar, this.$.updateToolbar);
+      this.$.altUpdateToolbarToggle.style.display = "none";
+      this.$.altUpdateToolbar.close();
     }
 
     // Collapse the details pane
-    if (width < 600) {
+    if (width < this._detailsPaneCollapseThreshold) {
       this._isDetailsPaneToggledOn = false;
     }
   }

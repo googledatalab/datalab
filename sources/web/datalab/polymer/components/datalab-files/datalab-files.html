@@ -40,13 +40,13 @@ the License.
         background-color: var(--secondary-bg-color);
         border-bottom: 1px solid var(--border-color);
       }
-      #altAddToolbarToggle, #altFileOpsToolbarToggle {
+      #altAddToolbarToggle, #altUpdateToolbarToggle {
         display: none;
       }
-      #altAddToolbarContainer, #altFileOpsToolbarContainer {
+      #altAddToolbarContainer, #altUpdateToolbarContainer {
         position: relative;
       }
-      #altAddToolbar, #altFileOpsToolbar {
+      #altAddToolbar, #altUpdateToolbar {
         display: flex;
         flex-direction: column;
         align-items: flex-start;
@@ -59,7 +59,7 @@ the License.
         min-width: 150px;
         box-shadow: -3px 3px 10px -3px rgba(0, 0, 0, 0.3);
       }
-      #altAddToolbar > *, #altFileOpsToolbar > * {
+      #altAddToolbar > *, #altUpdateToolbar > * {
         padding: 10px 0px;
         margin: 0px;
         width: 100%;
@@ -224,8 +224,8 @@ the License.
         </paper-dialog>
       </span>
 
-      <!--Default File Operations toolbar, contains buttons to interact with files/folders-->
-      <span id="fileOpsToolbar">
+      <!--Default Update toolbar, contains buttons to modify files/folders-->
+      <span id="updateToolbar">
         <paper-button class="toolbar-button">
           <iron-icon icon="file-upload"></iron-icon>
           <span>Upload</span>
@@ -255,13 +255,13 @@ the License.
         </paper-button>
       </span>
 
-      <!--Alternative File Operations toolbar, shows up when toolbar is too small-->
-      <span id="altFileOpsToolbarContainer">
-        <paper-button id="altFileOpsToolbarToggle" class="toolbar-button"
-                      on-click="_toggleAltFileOpsToolbar">
+      <!--Alternative Update toolbar, shows up when toolbar is too small-->
+      <span id="altUpdateToolbarContainer">
+        <paper-button id="altUpdateToolbarToggle" class="toolbar-button"
+                      on-click="_toggleAltUpdateToolbar">
           <iron-icon icon="more-horiz"></iron-icon>
         </paper-button>
-        <paper-dialog id="altFileOpsToolbar">
+        <paper-dialog id="altUpdateToolbar">
         </paper-dialog>
       </span>
 
