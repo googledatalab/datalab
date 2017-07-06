@@ -22,18 +22,17 @@ the License.
     <title>Google Cloud Datalab</title>
     <link rel="shortcut icon" href="images/favicon.ico">
 
-    <script src="bower_components/webcomponentsjs/webcomponents-loader.js"></script>
-    <link rel="import" href="components/datalab-app/datalab-app.html">
+    <link rel="import" href="components/datalab-editor/datalab-editor.html">
     <link id="themeStylesheet" rel="stylesheet" href="index.css">
   </head>
   <body>
-    <style is="custom-style">
+    <style>
       body {
         margin: 0px;
         padding: 0px;
         height: 100%;
       }
-      datalab-app {
+      datalab-editor {
         position: absolute;
         top: 0;
         bottom: 0;
@@ -52,6 +51,6 @@ the License.
         }
       });
     </script>
-    <datalab-app></datalab-app>
+    <datalab-editor></datalab-editor>
   </body>
 </html>

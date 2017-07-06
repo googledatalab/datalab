@@ -213,7 +213,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       pathname = '/index.html';
     }
     if (pathname === '/editor') {
-      pathname = '/components/editor/datalab-editor.html';
+      pathname = '/editor.html';
     }
     if (pathname === '/index.css') {
       var userSettings: common.UserSettings = settings.loadUserSettings(userId);

@@ -2,22 +2,24 @@
   "entrypoint": "index.html",
   "shell": "components/datalab-app/datalab-app.html",
   "fragments": [
-    "components/datalab-toolbar/datalab-toolbar.html",
-    "components/datalab-sidebar/datalab-sidebar.html",
+    "components/datalab-editor/datalab-editor.html",
     "components/datalab-files/datalab-files.html",
     "components/datalab-sessions/datalab-sessions.html",
-    "components/editor/datalab-editor.html"
+    "components/datalab-sidebar/datalab-sidebar.html",
+    "components/datalab-toolbar/datalab-toolbar.html"
   ],
   "sources": [
     "modules/**/*.js",
     "images/**/*",
+    "editor.html",
     "index.*.css"
   ],
   "extraDependencies": [
-    "bower_components/webcomponentsjs/webcomponents-lite.js",
+    "bower_components/codemirror/lib/*",
+    "bower_components/codemirror/mode/**",
+    "bower_components/codemirror/theme/*",
     "bower_components/monaco-editor/release/min/vs/**",
-    "bower_components/codemirror/lib/codemirror/*",
-    "bower_components/codemirror/mode/**"
+    "bower_components/webcomponentsjs/webcomponents-lite.js"
   ],
   "lint": {
     "rules": [
