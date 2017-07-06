@@ -423,8 +423,13 @@ class FilesElement extends Polymer.Element {
             reject('Error reading file.');
           }
 
-          // TODO: this will freeze the UI on large files (>20MB). One possible solution
-          // is to slice the file into small chunks and upload each separately, which
+          // TODO: this will freeze the UI on large files (>~20MB on my laptop) until
+          // they're loaded into memory, and very large files (>~100MB) will crash
+          // the browser.
+          // One possible solution is to slice the file into small chunks and upload
+          // each separately, but this requires the backend to support partial
+          // chunk uploads. For Jupyter, this is supported in 5.0.0, see:
+          // https://github.com/jupyter/notebook/pull/2162/files
           reader.readAsDataURL(file);
         });
 
