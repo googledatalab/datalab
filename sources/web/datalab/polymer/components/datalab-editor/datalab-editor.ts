@@ -68,7 +68,7 @@ class DatalabEditorElement extends Polymer.Element {
   }
 
   _getThemeValue(datalabTheme: string) {
-    return datalabTheme === 'dark' ? 'icecoder' : '';
+    return datalabTheme === 'dark' ? 'icecoder' : 'eclipse';
   }
 
 }
