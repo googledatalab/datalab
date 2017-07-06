@@ -1,0 +1,21 @@
+<html>
+  <head>
+    <script src="/bower_components/monaco-editor/release/min/vs/loader.js"></script>
+  </head>
+  <body>
+    <div id="container" style="width:90%; height:90%"></div>
+    <script>
+      require.config({ paths: { 'vs': 'bower_components/monaco-editor/release/min/vs' }});
+      require(['vs/editor/editor.main'], function() {
+        var editor = monaco.editor.create(document.getElementById('container'), {
+          value: [
+            'function x() {',
+            '\tconsole.log("Hello world!");',
+            '}'
+          ].join('\n'),
+          language: 'javascript'
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -5,7 +5,8 @@
     "components/datalab-toolbar/datalab-toolbar.html",
     "components/datalab-sidebar/datalab-sidebar.html",
     "components/datalab-files/datalab-files.html",
-    "components/datalab-sessions/datalab-sessions.html"
+    "components/datalab-sessions/datalab-sessions.html",
+    "components/editor/datalab-editor.html"
   ],
   "sources": [
     "modules/**/*.js",
@@ -13,7 +14,8 @@
     "index.*.css"
   ],
   "extraDependencies": [
-    "bower_components/webcomponentsjs/webcomponents-lite.js"
+    "bower_components/webcomponentsjs/webcomponents-lite.js",
+    "bower_components/monaco-editor/release/min/vs/**"
   ],
   "lint": {
     "rules": [
