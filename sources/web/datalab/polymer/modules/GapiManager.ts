@@ -92,7 +92,7 @@ class GapiManager {
    * This will change once we figure out how we want to do it.
    */
   static _loadClientId() {
-    return ApiManager.getUserSettings()
+    return SettingsManager.getUserSettingsAsync()
       .then((settings: common.UserSettings) => {
         if (settings.oauth2ClientId) {
           GapiManager.clientId = settings.oauth2ClientId;

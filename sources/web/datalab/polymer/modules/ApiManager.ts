@@ -123,6 +123,16 @@ class ApiManager {
   static readonly basepathApiUrl = '/api/basepath';
 
   /**
+   * URL for user settings
+   */
+  static readonly userSettingsUrl = '/_settings';
+
+  /**
+   * URL for app settings
+   */
+  static readonly appSettingsUrl = '/api/settings';
+
+  /**
    * A promise to return a basepath.
    */
   static _basepathPromise: Promise<string>;
@@ -139,7 +149,7 @@ class ApiManager {
     const xhrOptions: XhrOptions = {
       noCache: true,
     };
-    return <Promise<Session[]>>ApiManager. _sendRequestAsync(this.sessionsApiUrl, xhrOptions);
+    return <Promise<Session[]>>ApiManager.sendRequestAsync(this.sessionsApiUrl, xhrOptions);
   }
 
   /**
@@ -150,7 +160,7 @@ class ApiManager {
       method: 'DELETE',
       successCode: 204,
     };
-    return ApiManager._sendRequestAsync(ApiManager.sessionsApiUrl + '/' + sessionId, xhrOptions);
+    return ApiManager.sendRequestAsync(ApiManager.sessionsApiUrl + '/' + sessionId, xhrOptions);
   }
 
   /**
@@ -164,7 +174,7 @@ class ApiManager {
     const xhrOptions: XhrOptions = {
       noCache: true,
     };
-    return <Promise<JupyterFile>>ApiManager. _sendRequestAsync(this.contentApiUrl + '/' + path, xhrOptions);
+    return <Promise<JupyterFile>>ApiManager.sendRequestAsync(this.contentApiUrl + '/' + path, xhrOptions);
   }
 
   /**
@@ -214,7 +224,7 @@ class ApiManager {
         ext: 'ipynb'
       }),
     };
-    let createPromise = ApiManager. _sendRequestAsync(ApiManager.contentApiUrl, xhrOptions);
+    let createPromise = ApiManager.sendRequestAsync(ApiManager.contentApiUrl, xhrOptions);
 
     // If a path is provided for naming the new item, request the rename, and
     // delete it if failed.
@@ -248,7 +258,7 @@ class ApiManager {
       }),
     };
 
-    return ApiManager. _sendRequestAsync(oldPath, xhrOptions);
+    return ApiManager.sendRequestAsync(oldPath, xhrOptions);
   }
 
   /**
@@ -262,27 +272,7 @@ class ApiManager {
       successCode: 204,
     };
 
-    return ApiManager. _sendRequestAsync(path, xhrOptions);
-  }
-
-  /**
-   * Gets the user settings JSON from the server.
-   */
-  static getUserSettings() {
-    return ApiManager. _sendRequestAsync('/_settings');
-  }
-
-  /**
-   * Sets a user setting.
-   * @param setting name of the setting to change.
-   * @param value new setting value.
-   */
-  static setUserSetting(setting: string, value: string) {
-    const xhrOptions: XhrOptions = {
-      method: 'POST',
-    };
-    const requestUrl = '/_settings?key=' + setting + '&value=' + value;
-    return ApiManager._sendRequestAsync(requestUrl, xhrOptions);
+    return ApiManager.sendRequestAsync(path, xhrOptions);
   }
 
   /*
@@ -301,7 +291,7 @@ class ApiManager {
       })
     };
 
-    return ApiManager. _sendRequestAsync(destinationDirectory, xhrOptions);
+    return ApiManager.sendRequestAsync(destinationDirectory, xhrOptions);
   }
 
   /**
@@ -311,14 +301,14 @@ class ApiManager {
     const xhrOptions: XhrOptions = {
       method: 'POST',
     }
-    return ApiManager. _sendRequestAsync(ApiManager.terminalApiUrl, xhrOptions);
+    return ApiManager.sendRequestAsync(ApiManager.terminalApiUrl, xhrOptions);
   }
 
   /**
    * Returns a list of active terminal sessions.
    */
   static listTerminalsAsync() {
-    return ApiManager. _sendRequestAsync(ApiManager.terminalApiUrl);
+    return ApiManager.sendRequestAsync(ApiManager.terminalApiUrl);
   }
 
   /**
@@ -382,7 +372,7 @@ class ApiManager {
    * base path. This method returns immediately with a promise
    * that resolves with the parsed object when the request completes.
    */
-  static  _sendRequestAsync(url: string, options?: XhrOptions) {
+  static sendRequestAsync(url: string, options?: XhrOptions) {
     return ApiManager.getBasePath()
       .then((base:string) => ApiManager. _xhrJsonAsync(base + url, options));
   }
