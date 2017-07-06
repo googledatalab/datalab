@@ -138,7 +138,7 @@ class FilesElement extends Polymer.Element {
     super.ready();
 
     // Get the last startup path.
-    ApiManager.getUserSettings()
+    SettingsManager.getUserSettingsAsync(true /*forceRefresh*/)
       .then((settings: common.UserSettings) => {
         if (settings.startuppath) {
           let path = settings.startuppath;
