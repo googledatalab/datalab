@@ -387,31 +387,53 @@ class FilesElement extends Polymer.Element {
     if (files) {
       for (let i = 0; i < files.length; ++i) {
         const file = files[i];
-        const reader = new FileReader();
-        reader.onload = function() {
-          const itemData = reader.result;
-          const base64Data = btoa(String.fromCharCode(...new Uint8Array(itemData)));
-          const model: JupyterFile = {
-            name: file.name,
-            path: currentPath,
-            type: 'file',
-            format: 'base64',
-            content: base64Data,
-          };
-          uploadPromises.push(ApiManager.saveJupyterFile(model));
-        }
-        reader.onerror = () => {
-          console.log('Error reading file.');
-        }
-        reader.readAsArrayBuffer(file);
+
+        // First, load the file data into memory.
+        const loadPromise = new Promise((resolve, reject) => {
+
+          const reader = new FileReader();
+          reader.onload = function() {
+            const itemData = reader.result;
+            // Serialize the data to base64.
+            let bytes = '';
+            const buf = new Uint8Array(itemData);
+            for (let i = 0; i < buf.byteLength; ++i) {
+              bytes += String.fromCharCode(buf[i]);
+            }
+            const filedata = btoa(bytes);
+
+            const model: JupyterFile = {
+              name: file.name,
+              path: currentPath,
+              type: 'file',
+              format: 'base64',
+              content: filedata,
+            };
+
+            resolve(model);
+          }
+
+          reader.onerror = () => {
+            reject('Error reading file.');
+          }
+
+          reader.readAsArrayBuffer(file);
+        });
+
+        // Now upload the file data to the backend server.
+        const uploadPromise = loadPromise
+          .then((model: JupyterFile) => ApiManager.saveJupyterFile(model));
+        uploadPromises.push(uploadPromise);
       }
 
+      // Wait on all upload requests before declaring success or failure.
       return Promise.all(uploadPromises)
         .then(() => {
           // Reset the input element.
           inputElement.value = '';
           return this._fetchFileList();
         });
+        // TODO: handle upload errors.
     } else {
       return Promise.resolve(null);
     }

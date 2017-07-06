@@ -183,7 +183,7 @@ class ApiManager {
       successCode: 201,
       parameters: JSON.stringify(model),
     };
-    const requestPath = ApiManager.contentApiUrl + model.path + '/' + model.name;
+    const requestPath = ApiManager.contentApiUrl + '/' + model.path + '/' + model.name;
     return ApiManager.sendRequestAsync(requestPath, xhrOptions);
   }
 
