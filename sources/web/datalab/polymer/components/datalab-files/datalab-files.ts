@@ -401,22 +401,18 @@ class FilesElement extends Polymer.Element {
         const loadPromise = new Promise((resolve, reject) => {
 
           const reader = new FileReader();
+
           reader.onload = function() {
-            const itemData = reader.result;
-            // Serialize the data to base64.
-            let bytes = '';
-            const buf = new Uint8Array(itemData);
-            for (let i = 0; i < buf.byteLength; ++i) {
-              bytes += String.fromCharCode(buf[i]);
-            }
-            const filedata = btoa(bytes);
+            let itemData = reader.result;
+            // Extract the base64 data string
+            itemData = itemData.substr(itemData.indexOf(',') + 1);
 
             const model: JupyterFile = {
               name: file.name,
               path: currentPath,
               type: 'file',
               format: 'base64',
-              content: filedata,
+              content: itemData,
             };
 
             resolve(model);
@@ -427,7 +423,9 @@ class FilesElement extends Polymer.Element {
             reject('Error reading file.');
           }
 
-          reader.readAsArrayBuffer(file);
+          // TODO: this will freeze the UI on large files (>20MB). One possible solution
+          // is to slice the file into small chunks and upload each separately, which
+          reader.readAsDataURL(file);
         });
 
         // Now upload the file data to the backend server.
