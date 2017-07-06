@@ -177,6 +177,11 @@ class ApiManager {
     return <Promise<JupyterFile>>ApiManager.sendRequestAsync(this.contentApiUrl + '/' + path, xhrOptions);
   }
 
+  /**
+   * Uploads the given file object to the backend. The file's name, path, format,
+   * and content are required fields.
+   * @param model object containing file information to send to backend
+   */
   static saveJupyterFile(model: JupyterFile) {
     const xhrOptions: XhrOptions = {
       method: 'PUT',

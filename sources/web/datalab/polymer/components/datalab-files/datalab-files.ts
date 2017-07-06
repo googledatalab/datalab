@@ -374,10 +374,19 @@ class FilesElement extends Polymer.Element {
     return this._createNewItem('directory');
   }
 
+  /**
+   * This is the entry point for file upload functionality. This is here to avoid using
+   * the very ugly <input> element for file uploads.
+   */
   _altUpload() {
     this.$.altFileUpload.click();
   }
 
+  /**
+   * Gets called after the user selected one or more files from the upload modal.
+   * For each of the selected files, reads its contents, converts it to base64, then
+   * uses the ApiManager to save it on the backend.
+   */
   _upload() {
     const inputElement = <HTMLInputElement>this.$.altFileUpload;
     const files = inputElement.files;
@@ -413,6 +422,7 @@ class FilesElement extends Polymer.Element {
             resolve(model);
           }
 
+          // TODO: handle file reading errors.
           reader.onerror = () => {
             reject('Error reading file.');
           }
