@@ -4,6 +4,7 @@
   "dependencies": {
     "app-layout": "PolymerElements/app-layout#^2.0.0",
     "app-route": "PolymerElements/app-route#^2.0.0",
+    "codemirror": "^5.27.2",
     "iron-icons": "PolymerElements/iron-icons#^2.0.0",
     "iron-pages": "PolymerElements/iron-pages#^2.0.0",
     "iron-selector": "PolymerElements/iron-selector#^2.0.0",
@@ -20,8 +21,7 @@
     "paper-tooltip": "PolymerElements/paper-tooltip#^2.0.0",
     "polymer": "Polymer/polymer#^2.0.1",
     "webcomponentsjs": "webcomponents/webcomponentsjs#^1.0.0-rc.9",
-    "xterm.js": "^2.7.0",
-    "monaco-editor": "^0.7.1"
+    "xterm.js": "^2.7.0"
   },
   "devDependencies": {
     "web-component-tester": "^6.0.0"

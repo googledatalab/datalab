@@ -1,21 +1,14 @@
 <html>
   <head>
-    <script src="/bower_components/monaco-editor/release/min/vs/loader.js"></script>
+    <script src="/bower_components/codemirror/lib/codemirror.js"></script>
+    <link rel="stylesheet" href="/bower_components/codemirror/lib/codemirror.css">
+    <script src="/bower_components/codemirror/mode/python/python.js"></script>
   </head>
   <body>
     <div id="container" style="width:90%; height:90%"></div>
     <script>
-      require.config({ paths: { 'vs': 'bower_components/monaco-editor/release/min/vs' }});
-      require(['vs/editor/editor.main'], function() {
-        var editor = monaco.editor.create(document.getElementById('container'), {
-          value: [
-            'function x() {',
-            '\tconsole.log("Hello world!");',
-            '}'
-          ].join('\n'),
-          language: 'javascript'
-        });
-      });
+      var mycodemirror = CodeMirror(document.querySelector('#container'),
+        { value: 'some code', mode: 'python', lineNumbers: true });
     </script>
   </body>
 </html>

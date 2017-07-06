@@ -15,7 +15,9 @@
   ],
   "extraDependencies": [
     "bower_components/webcomponentsjs/webcomponents-lite.js",
-    "bower_components/monaco-editor/release/min/vs/**"
+    "bower_components/monaco-editor/release/min/vs/**",
+    "bower_components/codemirror/lib/codemirror/*",
+    "bower_components/codemirror/mode/**"
   ],
   "lint": {
     "rules": [
