@@ -102,6 +102,26 @@ class Utils {
   }
 
   /**
+   * Parses the given querystring and returns a dictionary of keys and values.
+   * @param search querystring part of the url to parse, typically window.location.search
+   */
+  static getSearchParams(search: string) {
+    const paramArray = search.substr(1).split('&');
+    let params: common.Map<string> = {};
+
+    paramArray.forEach((p: string) => {
+      const tokens = p.split('=');
+      const key = tokens[0];
+      const val = decodeURIComponent(tokens[1]);
+      if (key) {
+        params[key] = val;
+      }
+    })
+
+    return params;
+  }
+ 
+  /**
    * Moves all child elements from one element to another.
    * @param from element whose children to move
    * @param to destination elements where children will be moved to
@@ -111,5 +131,4 @@ class Utils {
       to.appendChild(from.firstChild);
     }
   }
- 
 }

@@ -167,9 +167,12 @@ class ApiManager {
    * Returns a JupyterFile object representing the file or directory requested
    * @param path string path to requested file
    */
-  static getJupyterFile(path: string): Promise<JupyterFile> {
+  static getJupyterFile(path: string, asText?: boolean): Promise<JupyterFile> {
     if (path.startsWith('/')) {
       path = path.substr(1);
+    }
+    if (asText === true) {
+      path += '?format=text&type=file';
     }
     const xhrOptions: XhrOptions = {
       noCache: true,

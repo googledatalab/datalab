@@ -44,16 +44,26 @@ class DatalabEditorElement extends Polymer.Element {
 
     SettingsManager.getUserSettingsAsync()
       .then((settings: common.UserSettings) => {
-      if (settings.theme) {
-        this._theme = settings.theme;
-      }
+        if (settings.theme) {
+          this._theme = settings.theme;
+        }
+
+        const params = Utils.getSearchParams(window.location.search);
+        if (params.file) {
+          return ApiManager.getJupyterFile(params.file, true /*asText*/)
+            .then((file: JupyterFile) => file.content);
+        } else {
+          return '';
+        }
+
       })
-      .then(() => {
+      .then((content: string) => {
         this._editor = CodeMirror(this.$.editorContainer,
                                   {
-                                    value: 'some code',
+                                    value: content,
                                     mode: 'python',
                                     lineNumbers: true,
+                                    lineWrapping: true,
                                     theme: this._getThemeValue(this._theme),
                                   });
       });

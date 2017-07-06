@@ -15,6 +15,7 @@
     "index.*.css"
   ],
   "extraDependencies": [
+    "bower_components/codemirror/addon/**",
     "bower_components/codemirror/lib/*",
     "bower_components/codemirror/mode/**",
     "bower_components/codemirror/theme/*",

@@ -233,6 +233,11 @@ the License.
         <!--This is hidden but its functionality is used by the alt upload button above-->
         <input type="file" id="altFileUpload" multiple style="display: none"
                on-change="_upload">
+      <paper-button class="toolbar-button" on-click="_openSelectedInEditor"
+                    disabled$={{!selectedFile}}>
+        <iron-icon icon="editor:short-text"></iron-icon>
+        <span>Edit as Text</span>
+      </paper-button>
         <paper-button class="toolbar-button" on-click="_copySelectedItem"
                       disabled$={{!selectedFile}}>
           <iron-icon icon="content-copy"></iron-icon>

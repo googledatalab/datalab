@@ -184,17 +184,20 @@ class FilesElement extends Polymer.Element {
   }
 
   async _getNotebookUrlPrefix() {
-    // Notebooks that are stored on the VM requires the basepath.
+    // Notebooks that are stored on the VM require the basepath.
     let basepath = await ApiManager.getBasePath();
     let prefix = location.protocol + '//' + location.host + basepath + '/';
     return prefix + 'notebooks';
   }
 
-  async _getEditorUrlPrefix() {
-    // Notebooks that are stored on the VM requires the basepath.
+  async _getEditorUrl(filePath?: string) {
+    // Files that are stored on the VM require the basepath.
     let basepath = await ApiManager.getBasePath();
-    let prefix = location.protocol + '//' + location.host + basepath+ '/';
-    return prefix + 'edit';
+    let url = location.protocol + '//' + location.host + basepath+ '/editor';
+    if (filePath) {
+      url += '?file=' + filePath;
+    }
+    return url;
   }
 
   /**
@@ -289,10 +292,10 @@ class FilesElement extends Polymer.Element {
       this._pushNewPath();
     } else if (clickedItem.type === 'notebook') {
       this._getNotebookUrlPrefix()
-        .then(base => window.open(base + '/' + clickedItem.path, '_blank'));
+        .then(prefix => window.open(prefix + '/' + clickedItem.path, '_blank'));
     } else {
-      this._getEditorUrlPrefix()
-        .then(base => window.open(base + '/' + clickedItem.path, '_blank'));
+      this._getEditorUrl(clickedItem.path)
+        .then(url => window.open(url, '_blank'));
     }
   }
 
@@ -521,6 +524,20 @@ class FilesElement extends Polymer.Element {
           return Promise.resolve(null);
         }
       }); // TODO: Handle create errors properly by showing some message to the user
+  }
+
+  /**
+   * Opens the selected item in the text editor.
+   */
+  _openSelectedInEditor() {
+    const selectedIndices = this.$.files.getSelectedIndices();
+    if (selectedIndices.length === 1) {
+      const i = selectedIndices[0];
+      const selectedObject = this._fileList[i];
+
+      this._getEditorUrl(selectedObject.path)
+        .then(url => window.open(url, '_blank'));
+    }
   }
 
   /**
