@@ -374,6 +374,49 @@ class FilesElement extends Polymer.Element {
     return this._createNewItem('directory');
   }
 
+  _altUpload() {
+    this.$.altFileUpload.click();
+  }
+
+  _upload() {
+    const inputElement = <HTMLInputElement>this.$.altFileUpload;
+    const files = inputElement.files;
+    const currentPath = this.currentPath;
+    const uploadPromises: Promise<any>[] = [];
+
+    if (files) {
+      for (let i = 0; i < files.length; ++i) {
+        const file = files[i];
+        const reader = new FileReader();
+        reader.onload = function() {
+          const itemData = reader.result;
+          const base64Data = btoa(String.fromCharCode(...new Uint8Array(itemData)));
+          const model: JupyterFile = {
+            name: file.name,
+            path: currentPath,
+            type: 'file',
+            format: 'base64',
+            content: base64Data,
+          };
+          uploadPromises.push(ApiManager.saveJupyterFile(model));
+        }
+        reader.onerror = () => {
+          console.log('Error reading file.');
+        }
+        reader.readAsArrayBuffer(file);
+      }
+
+      return Promise.all(uploadPromises)
+        .then(() => {
+          // Reset the input element.
+          inputElement.value = '';
+          return this._fetchFileList();
+        });
+    } else {
+      return Promise.resolve(null);
+    }
+  }
+
   /**
    * The Jupyter contents API does not provide a way to create a new item with a specific
    * name, it only creates new untitled files or directories in provided path (see
