@@ -62,8 +62,8 @@ class FilesElement extends Polymer.Element {
   private _fileListRefreshIntervalHandle: number;
   private _currentCrumbs: Array<string>;
   private _isDetailsPaneToggledOn: Boolean;
-  private _addToolbarCollapseThreshold = 800;
-  private _updateToolbarCollapseThreshold = 600;
+  private _addToolbarCollapseThreshold = 900;
+  private _updateToolbarCollapseThreshold = 720;
   private _detailsPaneCollapseThreshold = 600;
   private _uploadFileSizeWarningLimit = 25 * 1024 * 1024;
 
