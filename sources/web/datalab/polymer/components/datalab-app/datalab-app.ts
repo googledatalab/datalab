@@ -125,6 +125,20 @@ class DatalabAppElement extends Polymer.Element {
     }
   }
 
+  showNotification(message: string, isError?: boolean, sticky?: boolean) {
+    this.$.toast.close();
+    this.$.toast.text = message;
+    this.$.toast.classList = isError ? ['error-toast'] : [];
+    if (sticky) {
+      this.$.toast.duration = 0;
+    }
+    this.$.toast.open();
+  }
+
+  hideNotification() {
+    this.$.toast.close();
+  }
+
 }
 
 customElements.define(DatalabAppElement.is, DatalabAppElement);

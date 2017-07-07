@@ -94,6 +94,7 @@ interface XhrOptions {
   errorCallback?: Function,
   parameters?: string | FormData,
   successCode?: number,
+  failureCodes?: number[],
   noCache?: boolean,
 }
 
@@ -240,6 +241,7 @@ class ApiManager {
     const xhrOptions: XhrOptions = {
       method: 'POST',
       successCode: 201,
+      failureCodes: [409],
       parameters: JSON.stringify({
         type: type,
         ext: 'ipynb'
@@ -274,6 +276,7 @@ class ApiManager {
     oldPath = ApiManager.contentApiUrl + '/' + oldPath;
     const xhrOptions: XhrOptions = {
       method: 'PATCH',
+      failureCodes: [409],
       parameters: JSON.stringify({
         path: newPath
       }),
@@ -307,6 +310,7 @@ class ApiManager {
     const xhrOptions: XhrOptions = {
       method: 'POST',
       successCode: 201,
+      failureCodes: [409],
       parameters: JSON.stringify({
         copy_from: itemPath
       })
@@ -421,17 +425,22 @@ class ApiManager {
     const successCode = options.successCode || 200;
     const request = new XMLHttpRequest();
     const noCache = options.noCache || false;
+    const failureCodes = options.failureCodes;
 
     return new Promise((resolve, reject) => {
       request.onreadystatechange = () => {
         if (request.readyState === 4) {
           if (request.status === successCode) {
+            Utils.connectionSucceeded();
             try {
               resolve(request.responseText);
             } catch (e) {
               reject(e);
             }
           } else {
+            if (!failureCodes || failureCodes.indexOf(request.readyState) > -1) {
+              Utils.connectionFailed();
+            }
             reject(request.responseText);
           }
         }

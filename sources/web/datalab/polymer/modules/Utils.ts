@@ -112,4 +112,14 @@ class Utils {
     }
   }
 
+  static connectionFailed() {
+    const host = <DatalabAppElement>document.querySelector('datalab-app');
+    host.showNotification('Failed to connect to the server.', true /*isError*/, true /*sticky*/);
+  }
+
+  static connectionSucceeded() {
+    const host = <DatalabAppElement>document.querySelector('datalab-app');
+    host.hideNotification();
+  }
+ 
 }
