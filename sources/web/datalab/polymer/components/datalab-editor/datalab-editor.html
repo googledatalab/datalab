@@ -20,8 +20,10 @@ the License.
 
 <dom-module id="datalab-editor">
   <link rel="import" type="css" href="../../bower_components/codemirror/lib/codemirror.css">
-  <link rel="import" type="css" href="../../bower_components/codemirror/theme/icecoder.css">
+  <!--Light theme-->
   <link rel="import" type="css" href="../../bower_components/codemirror/theme/eclipse.css">
+  <!--Dark theme-->
+  <link rel="import" type="css" href="../../bower_components/codemirror/theme/icecoder.css">
   <template>
     <style include="datalab-shared-styles">
       :host {
@@ -72,10 +74,12 @@ the License.
     <datalab-toolbar></datalab-toolbar>
 
     <!--Thin progress bar that shows until the file is loaded-->
-    <paper-progress id="progressBar" indeterminate disabled={{!_fetching}}>
+    <paper-progress id="progressBar" indeterminate disabled={{!_busy}}>
     </paper-progress>
 
+    <!--Toolbar to contain buttons for interacting with the file-->
     <div id="editorToolbar">
+      <!--TODO: Make these buttons do stuff.-->
       <paper-button class="toolbar-button" on-click="">
         <iron-icon icon="save"></iron-icon>
         <span>Save</span>
@@ -95,7 +99,6 @@ the License.
 </dom-module>
 
 <script src="../../bower_components/codemirror/lib/codemirror.js"></script>
-<script src="../../bower_components/codemirror/mode/javascript/javascript.js"></script>
 <script src="../../bower_components/codemirror/mode/python/python.js"></script>
 <script src="../../modules/Utils.js"></script>
 <script src="../../modules/ApiManager.js"></script>

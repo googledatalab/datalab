@@ -13,26 +13,49 @@
  */
 
 /**
- * Type declaration for CodeMirror
+ * Type declarations for CodeMirror
  */
-declare function CodeMirror (element: HTMLElement, options: any): HTMLElement;
+
+interface CodeMirrorOptions {
+  value: string,
+  mode: string,
+  lineNumbers: boolean,
+  lineWrapping: boolean,
+  theme: string,
+}
+
+interface CodeMirrorEditor {
+  setOption(name: string, value: string): void;
+  getOption(name: string): void;
+}
+
+declare function CodeMirror (element: HTMLElement, options: CodeMirrorOptions): CodeMirrorEditor;
 
 /**
- * Shell element for the Datalab Editor.
- * It contains a <datalab-toolbar> element at the top, and a full screen editor
+ * Editor element for Datalab.
+ * Contains a <datalab-toolbar> element at the top, and a full screen editor
  * that uses CodeMirror.
  */
 class DatalabEditorElement extends Polymer.Element {
 
-  private _editor: any;
+  /**
+   * Path of the file to load in the editor.
+   */
+  public filePath: string;
+
+  private _editor: CodeMirrorEditor;
   private _theme: string;
-  private _fetching: boolean;
+  private _busy: boolean;
 
   static get is() { return 'datalab-editor'; }
 
   static get properties() {
     return {
-      _fetching: {
+      filePath: {
+        type: String,
+        value: '',
+      },
+      _busy: {
         type: Boolean,
         value: false
       },
@@ -42,22 +65,33 @@ class DatalabEditorElement extends Polymer.Element {
   ready() {
     super.ready();
 
+    // Get the theme.
     SettingsManager.getUserSettingsAsync()
       .then((settings: common.UserSettings) => {
         if (settings.theme) {
           this._theme = settings.theme;
         }
-
-        const params = Utils.getSearchParams(window.location.search);
-        if (params.file) {
-          return ApiManager.getJupyterFile(params.file, true /*asText*/)
-            .then((file: JupyterFile) => file.content);
+      })
+      // Get the file contents, or empty string if no path is specified.
+      .then(() => {
+        if (this.filePath !== '') {
+          this._busy = true;
+          return ApiManager.getJupyterFile(this.filePath, true /*asText*/)
+            .then((file: JupyterFile) => file.content)
+            .catch((e: Error) => {
+              // TODO: Handle error visibly to the user.
+              console.log('Could not load specified file: ', e);
+              return '';
+            })
         } else {
           return '';
         }
-
       })
+      // Create the codemirror element and load the contents in it.
       .then((content: string) => {
+        // TODO: try to detect the language of the file before creating
+        // the codemirror element. Perhaps use the file extension?
+        // TODO: load the mode dynamically instead of starting out with python.
         this._editor = CodeMirror(this.$.editorContainer,
                                   {
                                     value: content,
@@ -66,22 +100,28 @@ class DatalabEditorElement extends Polymer.Element {
                                     lineWrapping: true,
                                     theme: this._getThemeValue(this._theme),
                                   });
-      });
-
-    document.addEventListener('ThemeChanged', (e: CustomEvent) => {
-      if (e && e.detail) {
-        this._editor.setOption('theme', this._getThemeValue(e.detail));
-      }
-    });
-
-    this._fetching = false;
+      })
+      .catch((e: Error) => console.log('Error loading file: ' + e))
+      .then(() => this._busy = false);
   }
 
+  /**
+   * Changes the editor theme according to the Datalab theme provided.
+   * @param datalabTheme Datalab theme value
+   */
+  setEditorTheme(datalabTheme: string) {
+    this._editor.setOption('theme', this._getThemeValue(datalabTheme));
+  }
+
+  /**
+   * Translates the Datalab theme value (e.g. "light") into one of the
+   * CodeMirror's themes. This theme's stylesheet needs to be loaded in
+   * the element's light DOM.
+   * @param datalabTheme Datalab theme value
+   */
   _getThemeValue(datalabTheme: string) {
     return datalabTheme === 'dark' ? 'icecoder' : 'eclipse';
   }
-
 }
 
 customElements.define(DatalabEditorElement.is, DatalabEditorElement);
-

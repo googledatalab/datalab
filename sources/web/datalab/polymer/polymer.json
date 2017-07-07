@@ -12,6 +12,7 @@
     "modules/**/*.js",
     "images/**/*",
     "editor.html",
+    "editor.js",
     "index.*.css"
   ],
   "extraDependencies": [
