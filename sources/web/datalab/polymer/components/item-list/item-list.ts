@@ -127,6 +127,36 @@ class ItemListElement extends Polymer.Element {
     this.dispatchEvent(ev);
   }
 
+  _selectItem(index: number) {
+    const element = this.$.listContainer.children[index];
+    const i = this._selectedElements.indexOf(element);
+    if (i === -1) {
+      this.push('_selectedElements', element);
+    }
+    this.set('rows.' + i + '.selected', true);
+  }
+
+  _unselectItem(index: number) {
+    const element = this.$.listContainer.children[index];
+    const i = this._selectedElements.indexOf(element);
+    if (i > -1) {
+      this.splice('_selectedElements', i, 1);
+    }
+    this.set('rows.' + i + '.selected', false);
+  }
+
+  _selectAll() {
+    for (let i = 0; i < this.rows.length; ++i) {
+      this._selectItem(i);
+    }
+  }
+
+  _unselectAll() {
+    for (let i = 0; i < this.rows.length; ++i) {
+      this._unselectItem(i);
+    }
+  }
+
   /**
    * On row click, checks the click target, if it's the checkbox, adds it to
    * the selected rows, otherwise selects it only.
@@ -138,47 +168,33 @@ class ItemListElement extends Polymer.Element {
     }
     const target = <HTMLDivElement>e.target;
     const index = this.$.list.indexForElement(target);
-    const rowElement = this._getRowElementFromChild(target);
 
     // If shift key is pressed and we had saved the last selected index, select
     // all items from this index till the last selected.
     if (e.shiftKey && this._lastSelectedIndex !== -1) {
-      this._selectedElements = [];
-      for (let i = 0; i < this.rows.length; ++i) {
-        this.set('rows.' + i + '.selected', false);
-      }
+      this._unselectAll();
       const start = Math.min(this._lastSelectedIndex, index);
       const end = Math.max(this._lastSelectedIndex, index);
       for (let i = start; i <= end; ++i) {
-        this.set('rows.' + i + '.selected', true);
-        this.push('_selectedElements', rowElement);
+        this._selectItem(i);
       }
     } else if (e.ctrlKey) {
       // If ctrl key is pressed, always add this item to the selected list.
-      this.set('rows.' + index + '.selected', true);
-      this.push('_selectedElements', rowElement);
+      this._selectItem(index);
     } else {
       // If the clicked element is the checkbox, we're done, the checkbox already
       // toggles selection.
       // Otherwise, select this element, unselect all others.
       if (target.tagName !== 'PAPER-CHECKBOX') {
-        for (let i = 0; i < this.rows.length; ++i) {
-          this.set('rows.' + i + '.selected', false);
-        }
-        this.set('rows.' + index + '.selected', true);
-
-        // This is now the only selected element.
-        this._selectedElements = [rowElement];
+        this._unselectAll();
+        this._selectItem(index);
       } else {
         if (this.rows[index].selected === false) {
           // Remove this element from the selected elements list if it's being unselected
-          const i = this._selectedElements.indexOf(rowElement);
-          if (i > -1) {
-            this.splice('_selectedElements', i, 1);
-          }
+          this._unselectItem(index);
         } else {
           // Add this element to the selected elements list if it's being selected,
-          this.push('_selectedElements', rowElement);
+          this._selectItem(index);
         }
       }
     }
@@ -186,20 +202,6 @@ class ItemListElement extends Polymer.Element {
     this._lastSelectedIndex = index;
     const ev = new ItemClickEvent('itemSelectionChanged', { detail: {index: index} });
     this.dispatchEvent(ev);
-  }
-
-  /**
-   * Given an element inside a row in the list, finds the parent row element.
-   */
-  _getRowElementFromChild(childElement: HTMLElement): HTMLElement {
-    let currentElement = childElement;
-    while (currentElement.tagName !== 'PAPER-ITEM' && !currentElement.classList.contains('row'))
-      if (currentElement.parentElement)
-        currentElement = currentElement.parentElement;
-      else
-        // This should not happen
-        throw new Error('Could not find parent row element for: ' + childElement.tagName);
-    return currentElement;
   }
 
   /**
