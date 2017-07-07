@@ -38,7 +38,8 @@ class Utils {
    * @param type specifies which type of dialog to use
    * @param dialogOptions specifies different options for opening the dialog
    */
-  static showDialog(dialogType: typeof BaseDialogElement, dialogOptions: DialogOptions) {
+  static showDialog(dialogType: typeof BaseDialogElement, dialogOptions: DialogOptions):
+                                                                  Promise<BaseDialogCloseResult> {
     const dialog = <any>document.createElement(dialogType.is);
     document.body.appendChild(dialog);
 

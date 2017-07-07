@@ -65,6 +65,7 @@ class FilesElement extends Polymer.Element {
   private _addToolbarCollapseThreshold = 800;
   private _updateToolbarCollapseThreshold = 600;
   private _detailsPaneCollapseThreshold = 600;
+  private _uploadFileSizeWarningLimit = 25 * 1024 * 1024;
 
   static readonly _deleteListLimit = 10;
 
@@ -390,66 +391,95 @@ class FilesElement extends Polymer.Element {
    * For each of the selected files, reads its contents, converts it to base64, then
    * uses the ApiManager to save it on the backend.
    */
-  _upload() {
+  async _upload() {
     const inputElement = <HTMLInputElement>this.$.altFileUpload;
     const files = inputElement.files;
     const currentPath = this.currentPath;
     const uploadPromises: Promise<any>[] = [];
 
     if (files) {
+      // Find out if there's at least one large file.
+      let hasLargeFile = false;
       for (let i = 0; i < files.length; ++i) {
-        const file = files[i];
+        if (files[i].size > this._uploadFileSizeWarningLimit) {
+          hasLargeFile = true;
+          break;
+        }
+      }
 
-        // First, load the file data into memory.
-        const loadPromise = new Promise((resolve, reject) => {
+      let proceedWithUpload = true;
+      // If there's at least one large file, show a dialog to confirm the user
+      // wants to continue with the upload.
+      if (hasLargeFile) {
+        let warningMsg = files.length > 1 ? 'Some of the files you selected are '
+                                            : 'The file you selected is ';
+        warningMsg += 'larger than 25MB. You might experience browser freeze or crash';
+        const dialogOptions: DialogOptions = {
+          title: 'Warning: Large File',
+          messageHtml: warningMsg,
+          okLabel: 'Upload Anyway',
+        };
 
-          const reader = new FileReader();
+        const result: BaseDialogCloseResult = 
+          await Utils.showDialog(BaseDialogElement, dialogOptions);
+          proceedWithUpload = result.confirmed === true;
+      }
 
-          reader.onload = function() {
-            let itemData = reader.result;
-            // Extract the base64 data string
-            itemData = itemData.substr(itemData.indexOf(',') + 1);
+      if (proceedWithUpload) {
+        for (let i = 0; i < files.length; ++i) {
+          const file = files[i];
 
-            const model: JupyterFile = {
-              name: file.name,
-              path: currentPath,
-              type: 'file',
-              format: 'base64',
-              content: itemData,
-            };
+          // First, load the file data into memory.
+          const loadPromise = new Promise((resolve, reject) => {
 
-            resolve(model);
-          }
+            const reader = new FileReader();
 
-          // TODO: handle file reading errors.
-          reader.onerror = () => {
-            reject('Error reading file.');
-          }
+            reader.onload = function() {
+              let itemData = reader.result;
+              // Extract the base64 data string
+              itemData = itemData.substr(itemData.indexOf(',') + 1);
 
-          // TODO: this will freeze the UI on large files (>~20MB on my laptop) until
-          // they're loaded into memory, and very large files (>~100MB) will crash
-          // the browser.
-          // One possible solution is to slice the file into small chunks and upload
-          // each separately, but this requires the backend to support partial
-          // chunk uploads. For Jupyter, this is supported in 5.0.0, see:
-          // https://github.com/jupyter/notebook/pull/2162/files
-          reader.readAsDataURL(file);
-        });
+              const model: JupyterFile = {
+                name: file.name,
+                path: currentPath,
+                type: 'file',
+                format: 'base64',
+                content: itemData,
+              };
 
-        // Now upload the file data to the backend server.
-        const uploadPromise = loadPromise
-          .then((model: JupyterFile) => ApiManager.saveJupyterFile(model));
-        uploadPromises.push(uploadPromise);
+              resolve(model);
+            }
+
+            // TODO: handle file reading errors.
+            reader.onerror = () => {
+              reject('Error reading file.');
+            }
+
+            // TODO: this will freeze the UI on large files (>~20MB on my laptop) until
+            // they're loaded into memory, and very large files (>~100MB) will crash
+            // the browser.
+            // One possible solution is to slice the file into small chunks and upload
+            // each separately, but this requires the backend to support partial
+            // chunk uploads. For Jupyter, this is supported in 5.0.0, see:
+            // https://github.com/jupyter/notebook/pull/2162/files
+            reader.readAsDataURL(file);
+          });
+
+          // Now upload the file data to the backend server.
+          const uploadPromise = loadPromise
+            .then((model: JupyterFile) => ApiManager.saveJupyterFile(model));
+          uploadPromises.push(uploadPromise);
+        }
       }
 
       // Wait on all upload requests before declaring success or failure.
       return Promise.all(uploadPromises)
-        .then(() => {
-          // Reset the input element.
-          inputElement.value = '';
-          return this._fetchFileList();
-        });
-        // TODO: handle upload errors.
+      .then(() => {
+        // Reset the input element.
+        inputElement.value = '';
+        return uploadPromises.length ? this._fetchFileList() : null;
+      });
+      // TODO: handle upload errors.
     } else {
       return Promise.resolve(null);
     }
