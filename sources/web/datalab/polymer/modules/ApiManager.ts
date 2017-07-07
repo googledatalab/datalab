@@ -46,14 +46,14 @@ interface JupyterNotebookModel {
  */
 interface JupyterFile {
   content: Array<JupyterFile> | JupyterNotebookModel | string,
-  created: string,
+  created?: string,
   format: string,
-  last_modified: string,
-  mimetype: string,
+  last_modified?: string,
+  mimetype?: string,
   name: string,
   path: string,
   type: string,
-  writable: boolean
+  writable?: boolean
 }
 
 /**
@@ -175,6 +175,21 @@ class ApiManager {
       noCache: true,
     };
     return <Promise<JupyterFile>>ApiManager.sendRequestAsync(this.contentApiUrl + '/' + path, xhrOptions);
+  }
+
+  /**
+   * Uploads the given file object to the backend. The file's name, path, format,
+   * and content are required fields.
+   * @param model object containing file information to send to backend
+   */
+  static saveJupyterFile(model: JupyterFile) {
+    const xhrOptions: XhrOptions = {
+      method: 'PUT',
+      successCode: 201,
+      parameters: JSON.stringify(model),
+    };
+    const requestPath = ApiManager.contentApiUrl + '/' + model.path + '/' + model.name;
+    return ApiManager.sendRequestAsync(requestPath, xhrOptions);
   }
 
   /**
