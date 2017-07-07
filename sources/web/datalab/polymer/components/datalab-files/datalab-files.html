@@ -21,6 +21,7 @@ the License.
 
 <link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../../bower_components/iron-icons/editor-icons.html">
+<link rel="import" href="../../bower_components/iron-icons/hardware-icons.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../bower_components/paper-progress/paper-progress.html">
 
@@ -39,6 +40,30 @@ the License.
         background-color: var(--secondary-bg-color);
         border-bottom: 1px solid var(--border-color);
       }
+      #altAddToolbarToggle, #altUpdateToolbarToggle {
+        display: none;
+      }
+      #altAddToolbarContainer, #altUpdateToolbarContainer {
+        position: relative;
+      }
+      #altAddToolbar, #altUpdateToolbar {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        background-color: var(--secondary-bg-color);
+        color: var(--primary-fg-color);
+        position: absolute;
+        left: 0px;
+        margin: 0px;
+        padding: 10px;
+        min-width: 150px;
+        box-shadow: -3px 3px 10px -3px rgba(0, 0, 0, 0.3);
+      }
+      #altAddToolbar > *, #altUpdateToolbar > * {
+        padding: 10px 0px;
+        margin: 0px;
+        width: 100%;
+      }
       .toolbar-button {
         color: var(--primary-fg-color);
         margin: 4px;
@@ -46,8 +71,12 @@ the License.
         border-radius: 0px;
       }
       .toolbar-button > iron-icon {
-        width: 20px;
+        min-width: 20px;
+        max-width: 20px;
         padding-right: 5px;
+      }
+      .toolbar-button > span {
+        width: 70%;
       }
       .toolbar-button[disabled] {
         color: var(--disabled-fg-color);
@@ -84,10 +113,15 @@ the License.
         background-color: var(--primary-bg-color);
       }
       #detailsPane {
-        min-width: var(--details-pane-width);
-        max-width: var(--details-pane-width);
         background-color: var(--secondary-bg-color);
         box-shadow: inset 4px 0px 10px -3px rgba(0, 0, 0, 0.1);
+        transition: width var(--app-animation-duration);
+      }
+      .details-pane-enabled--true {
+        width: var(--details-pane-width);
+      }
+      .details-pane-enabled--false {
+        width: 0px;
       }
       .vseparator {
         display: inline;
@@ -121,6 +155,7 @@ the License.
         border: none;
       }
       #breadcrumb div a:before, #breadcrumb div a:after {
+        color: var(--primary-bg-color);
         content: "";
         position: absolute;
         border: 0 solid var(--primary-bg-color);
@@ -159,48 +194,77 @@ the License.
       }
     </style>
 
-    <!--Toolbar with buttons such as +Notebook, +Folder... etc-->
-    <!--TODO: [yebrahim] Make these buttons do stuff-->
     <div id="toolbar" hidden$="{{small}}">
-      <paper-button class="toolbar-button" on-click="_createNewNotebook">
-        <iron-icon icon="add-box"></iron-icon>
-        <span>Notebook</span>
-      </paper-button>
-      <paper-button class="toolbar-button" on-click="_createNewFile">
-        <iron-icon icon="add-box"></iron-icon>
-        <span>File</span>
-      </paper-button>
-      <paper-button class="toolbar-button" on-click="_createNewDirectory">
-        <iron-icon icon="add-box"></iron-icon>
-        <span>Folder</span>
-      </paper-button>
-      <paper-button class="toolbar-button">
-        <iron-icon icon="file-upload"></iron-icon>
-        <span>Upload</span>
-      </paper-button>
-      <paper-button class="toolbar-button" on-click="_copySelectedItem"
-                    disabled$={{!selectedFile}}>
-        <iron-icon icon="content-copy"></iron-icon>
-        <span>Copy</span>
-      </paper-button>
-      <paper-button class="toolbar-button" on-click="_moveSelectedItem"
-                    disabled$={{!selectedFile}}>
-        <iron-icon icon="redo"></iron-icon>
-        <span>Move</span>
-      </paper-button>
-      <paper-button class="toolbar-button" on-click="_renameSelectedItem"
-                    disabled$={{!selectedFile}}>
-        <iron-icon icon="editor:border-color"></iron-icon>
-        <span>Rename</span>
-      </paper-button>
-      <!--TODO: Delete operation supports deleting multiple files, but we'll
-      only enable the button when one file is selected for now, until we get
-      the group moving/copying functionality too-->
-      <paper-button class="toolbar-button" on-click="_deleteSelectedItems"
-                    disabled$={{!selectedFile}}>
-        <iron-icon icon="delete"></iron-icon>
-        <span>Delete</span>
-      </paper-button>
+
+      <!--Default Add toolbar, contains Add buttons for notebook, file, and folder-->
+      <span id="addToolbar">
+        <paper-button class="toolbar-button" on-click="_createNewNotebook">
+          <iron-icon icon="add-box"></iron-icon>
+          <span>Notebook</span>
+        </paper-button>
+        <paper-button class="toolbar-button" on-click="_createNewFile">
+          <iron-icon icon="add-box"></iron-icon>
+          <span>File</span>
+        </paper-button>
+        <paper-button class="toolbar-button" on-click="_createNewDirectory">
+          <iron-icon icon="add-box"></iron-icon>
+          <span>Folder</span>
+        </paper-button>
+      </span>
+
+      <!--Alternative Add toolbar, shows up when toolbar is too small-->
+      <span id="altAddToolbarContainer">
+        <paper-button id="altAddToolbarToggle" class="toolbar-button"
+                      on-click="_toggleAltAddToolbar">
+          <iron-icon icon="add-box"></iron-icon>
+          <span>New</span>
+          <iron-icon icon="hardware:keyboard-arrow-down"></iron-icon>
+        </paper-button>
+        <paper-dialog id="altAddToolbar">
+        </paper-dialog>
+      </span>
+
+      <!--Default Update toolbar, contains buttons to modify files/folders-->
+      <span id="updateToolbar">
+        <paper-button class="toolbar-button">
+          <iron-icon icon="file-upload"></iron-icon>
+          <span>Upload</span>
+        </paper-button>
+        <paper-button class="toolbar-button" on-click="_copySelectedItem"
+                      disabled$={{!selectedFile}}>
+          <iron-icon icon="content-copy"></iron-icon>
+          <span>Copy</span>
+        </paper-button>
+        <paper-button class="toolbar-button" on-click="_moveSelectedItem"
+                      disabled$={{!selectedFile}}>
+          <iron-icon icon="redo"></iron-icon>
+          <span>Move</span>
+        </paper-button>
+        <paper-button class="toolbar-button" on-click="_renameSelectedItem"
+                      disabled$={{!selectedFile}}>
+          <iron-icon icon="editor:border-color"></iron-icon>
+          <span>Rename</span>
+        </paper-button>
+        <!--TODO: Delete operation supports deleting multiple files, but we'll
+        only enable the button when one file is selected for now, until we get
+        the group moving/copying functionality too-->
+        <paper-button class="toolbar-button" on-click="_deleteSelectedItems"
+                      disabled$={{!selectedFile}}>
+          <iron-icon icon="delete"></iron-icon>
+          <span>Delete</span>
+        </paper-button>
+      </span>
+
+      <!--Alternative Update toolbar, shows up when toolbar is too small-->
+      <span id="altUpdateToolbarContainer">
+        <paper-button id="altUpdateToolbarToggle" class="toolbar-button"
+                      on-click="_toggleAltUpdateToolbar">
+          <iron-icon icon="more-horiz"></iron-icon>
+        </paper-button>
+        <paper-dialog id="altUpdateToolbar">
+        </paper-dialog>
+      </span>
+
     </div>
 
     <div id="file-picker" class$="file-picker-small--{{small}}">
@@ -239,8 +303,8 @@ the License.
       <!--File listing-->
       <div class="files-container">
         <item-list id="files" hide-header$="{{small}}" disable-selection$="{{small}}"></item-list>
-        <details-pane id="detailsPane" file="{{selectedFile}}"
-                      hidden="{{!_isDetailsPaneEnabled}}" active="{{_isDetailsPaneEnabled}}">
+        <details-pane id="detailsPane" file="{{selectedFile}}" active="{{_isDetailsPaneEnabled}}"
+                      class$="details-pane-enabled--{{_isDetailsPaneEnabled}}">
         </details-pane>
         </div>
       </div>
