@@ -65,6 +65,8 @@ the License.
       }
       .dialog-content {
         flex-grow: 1;
+        margin: 0px;
+        padding: 0px;
       }
       .account-dropdown {
         background-color: var(--primary-bg-color);
@@ -108,7 +110,7 @@ the License.
       <div class="dialog-title">Info</div>
       <div class="dialog-content"></div>
       <hr>
-      <div>
+      <div class="dialog-buttons">
         <paper-button dialog-dismiss raised>Close</paper-button>
       </div>
     </paper-dialog>
@@ -117,10 +119,10 @@ the License.
     <paper-dialog id="settingsDialog" class="dialog" with-backdrop>
       <div class="dialog-title">Settings</div>
       <div class="dialog-content">
-        <datalab-settings></datalab-settings>
+        <datalab-settings id="settingsElement"></datalab-settings>
       </div>
       <hr>
-      <div>
+      <div class="dialog-buttons">
         <paper-button dialog-dismiss raised>Close</paper-button>
       </div>
     </paper-dialog>
