@@ -12,6 +12,7 @@
  * the License.
  */
 
+/// <reference path="../../modules/GapiManager.ts" />
 /// <reference path="../input-dialog/input-dialog.ts" />
 /// <reference path="../item-list/item-list.ts" />
 
@@ -125,6 +126,20 @@ class DataElement extends Polymer.Element {
   /** Reads the user's query values, queries for tables, and updates the results. */
   _search() {
     this._collectionsList = this._generateFakeCollectionsListForTesting();
+    this._debugCallBigQuery();   // For debugging, make some BigQuery calls
+  }
+
+  // Make some calls to the BigQuery API and log the results to the console.
+  _debugCallBigQuery() {
+    const sampleProject = 'bigquery-public-data';
+    const sampleDataset = 'samples';
+    const emptyFilter = '';
+    GapiManager.listBigQueryProjects()
+        .then((response: gapi.client.bigquery.ListProjectsResponse) => console.log('== projects: ', response));
+    GapiManager.listBigQueryDatasets(sampleProject, emptyFilter)
+        .then((response: gapi.client.bigquery.ListDatasetsResponse) => console.log('== datasets: ', response));
+    GapiManager.listBigQueryTables(sampleProject, sampleDataset, emptyFilter)
+        .then((response: gapi.client.bigquery.ListTablesResponse) => console.log('== tables: ', response));
   }
 
   /**

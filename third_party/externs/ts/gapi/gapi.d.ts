@@ -9,12 +9,24 @@ declare module gapi.client {
     scope?: string;
   }): Promise<void>;
 
+  export function load(name: string, version: string): Promise<void>;
+
   interface RequestOptions {
     path: string;
     params?: any;
   }
 
   export function request(args: RequestOptions): Promise<any>;
+
+  interface HttpResponse<T> {
+    body: string;
+    headers: Array<Object>;
+    result: T;
+    status: number;
+    statusText: string;
+  }
+
+  export class HttpRequest<T> extends Promise<HttpResponse<T>> {}
 }
 
 declare module gapi.auth2 {
