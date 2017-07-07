@@ -68,6 +68,7 @@ class ItemListElement extends Polymer.Element {
   public disableSelection: boolean;
 
   private _selectedElements: Array<HTMLElement>;
+  private _lastSelectedIndex: number;
 
   static get is() { return "item-list"; }
 
@@ -121,6 +122,7 @@ class ItemListElement extends Polymer.Element {
    */
   _rowsChanged() {
     this._selectedElements = [];
+    this._lastSelectedIndex = -1;
     const ev = new ItemClickEvent('itemSelectionChanged', { detail: {} });
     this.dispatchEvent(ev);
   }
@@ -138,29 +140,50 @@ class ItemListElement extends Polymer.Element {
     const index = this.$.list.indexForElement(target);
     const rowElement = this._getRowElementFromChild(target);
 
-    // If the clicked element is the checkbox, we're done, the checkbox already
-    // toggles selection.
-    // Otherwise, select this element, unselect all others.
-    if (target.tagName !== 'PAPER-CHECKBOX') {
+    // If shift key is pressed and we had saved the last selected index, select
+    // all items from this index till the last selected.
+    if (e.shiftKey && this._lastSelectedIndex !== -1) {
+      this._selectedElements = [];
       for (let i = 0; i < this.rows.length; ++i) {
         this.set('rows.' + i + '.selected', false);
       }
-      this.set('rows.' + index + '.selected', true);
-
-      // This is now the only selected element.
-      this._selectedElements = [rowElement];
-    } else {
-      if (this.rows[index].selected === false) {
-        // Remove this element from the selected elements list if it's being unselected
-        const i = this._selectedElements.indexOf(rowElement);
-        if (i > -1) {
-          this.splice('_selectedElements', i, 1);
-        }
-      } else {
-        // Add this element to the selected elements list if it's being selected,
+      const start = Math.min(this._lastSelectedIndex, index);
+      const end = Math.max(this._lastSelectedIndex, index);
+      for (let i = start; i <= end; ++i) {
+        this.set('rows.' + i + '.selected', true);
         this.push('_selectedElements', rowElement);
       }
+    } else if (e.ctrlKey) {
+      // If ctrl key is pressed, always add this item to the selected list.
+      this.set('rows.' + index + '.selected', true);
+      this.push('_selectedElements', rowElement);
+    } else {
+      // If the clicked element is the checkbox, we're done, the checkbox already
+      // toggles selection.
+      // Otherwise, select this element, unselect all others.
+      if (target.tagName !== 'PAPER-CHECKBOX') {
+        for (let i = 0; i < this.rows.length; ++i) {
+          this.set('rows.' + i + '.selected', false);
+        }
+        this.set('rows.' + index + '.selected', true);
+
+        // This is now the only selected element.
+        this._selectedElements = [rowElement];
+      } else {
+        if (this.rows[index].selected === false) {
+          // Remove this element from the selected elements list if it's being unselected
+          const i = this._selectedElements.indexOf(rowElement);
+          if (i > -1) {
+            this.splice('_selectedElements', i, 1);
+          }
+        } else {
+          // Add this element to the selected elements list if it's being selected,
+          this.push('_selectedElements', rowElement);
+        }
+      }
     }
+
+    this._lastSelectedIndex = index;
     const ev = new ItemClickEvent('itemSelectionChanged', { detail: {index: index} });
     this.dispatchEvent(ev);
   }
