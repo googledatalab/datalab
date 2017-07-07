@@ -166,6 +166,9 @@ class ApiManager {
   /**
    * Returns a JupyterFile object representing the file or directory requested
    * @param path string path to requested file
+   * @param asText whether the file should be downloaded as plain text. This is
+   *               useful for downloading notebooks, which are by default read
+   *               as JSON, which doesn't preserve formatting.
    */
   static getJupyterFile(path: string, asText?: boolean): Promise<JupyterFile> {
     if (path.startsWith('/')) {
