@@ -625,7 +625,7 @@ class FilesElement extends Polymer.Element {
       this.$.altAddToolbar.close();
     }
 
-    // Collapse the file operations buttons on the toolbar
+    // Collapse the update buttons on the toolbar
     if (width < this._updateToolbarCollapseThreshold) {
       Utils.moveElementChildren(this.$.updateToolbar, this.$.altUpdateToolbar);
       this.$.altUpdateToolbarToggle.style.display = "inline-flex";

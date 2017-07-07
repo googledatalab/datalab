@@ -54,9 +54,7 @@ class DatalabAppElement extends Polymer.Element {
     window.addEventListener('resize', this._boundResizeHandler, true);
 
     // Will be called after the custom element is done rendering.
-    window.addEventListener('WebComponentsReady', () => {
-      this._resizeHandler();
-    });
+    window.addEventListener('WebComponentsReady', this._boundResizeHandler, true);
   }
 
   static get is() { return 'datalab-app'; }
@@ -87,6 +85,7 @@ class DatalabAppElement extends Polymer.Element {
   disconnectedCallback() {
     if (this._boundResizeHandler) {
       window.removeEventListener('resize', this._boundResizeHandler);
+      window.removeEventListener('WebComponentsReady', this._boundResizeHandler);
     }
   }
 
