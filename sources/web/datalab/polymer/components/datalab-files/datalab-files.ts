@@ -62,6 +62,9 @@ class FilesElement extends Polymer.Element {
   private _fileListRefreshIntervalHandle: number;
   private _currentCrumbs: Array<string>;
   private _isDetailsPaneToggledOn: Boolean;
+  private _addToolbarCollapseThreshold = 800;
+  private _updateToolbarCollapseThreshold = 600;
+  private _detailsPaneCollapseThreshold = 600;
 
   static readonly _deleteListLimit = 10;
 
@@ -673,6 +676,46 @@ class FilesElement extends Polymer.Element {
         });
     } else {
       return Promise.resolve(null);
+    }
+  }
+
+  _toggleAltAddToolbar() {
+    this.$.altAddToolbar.toggle();
+  }
+
+  _toggleAltUpdateToolbar() {
+    this.$.altUpdateToolbar.toggle();
+  }
+
+  /**
+   * Called on window.resize, collapses elements to keep the element usable
+   * on small screens.
+   */
+  _resizeHandler() {
+    const width = this.$.toolbar.clientWidth;
+    // Collapse the add buttons on the toolbar
+    if (width < this._addToolbarCollapseThreshold) {
+      Utils.moveElementChildren(this.$.addToolbar, this.$.altAddToolbar);
+      this.$.altAddToolbarToggle.style.display = "inline-flex";
+    } else {
+      Utils.moveElementChildren(this.$.altAddToolbar, this.$.addToolbar);
+      this.$.altAddToolbarToggle.style.display = "none";
+      this.$.altAddToolbar.close();
+    }
+
+    // Collapse the update buttons on the toolbar
+    if (width < this._updateToolbarCollapseThreshold) {
+      Utils.moveElementChildren(this.$.updateToolbar, this.$.altUpdateToolbar);
+      this.$.altUpdateToolbarToggle.style.display = "inline-flex";
+    } else {
+      Utils.moveElementChildren(this.$.altUpdateToolbar, this.$.updateToolbar);
+      this.$.altUpdateToolbarToggle.style.display = "none";
+      this.$.altUpdateToolbar.close();
+    }
+
+    // Collapse the details pane
+    if (width < this._detailsPaneCollapseThreshold) {
+      this._isDetailsPaneToggledOn = false;
     }
   }
 

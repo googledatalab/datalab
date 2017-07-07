@@ -42,11 +42,19 @@ class DatalabAppElement extends Polymer.Element {
    */
   public routeData: Object;
 
+  private _boundResizeHandler: EventListenerObject;
+
   constructor() {
     super();
 
     // Set the pattern once to be the current document pathname.
     this.rootPattern = (new URL(this.rootPath)).pathname;
+
+    this._boundResizeHandler = this._resizeHandler.bind(this);
+    window.addEventListener('resize', this._boundResizeHandler, true);
+
+    // Will be called after the custom element is done rendering.
+    window.addEventListener('WebComponentsReady', this._boundResizeHandler, true);
   }
 
   static get is() { return 'datalab-app'; }
@@ -72,6 +80,16 @@ class DatalabAppElement extends Polymer.Element {
   }
 
   /**
+   * Called when the element is detached from the DOM. Cleans up event listeners.
+   */
+  disconnectedCallback() {
+    if (this._boundResizeHandler) {
+      window.removeEventListener('resize', this._boundResizeHandler);
+      window.removeEventListener('WebComponentsReady', this._boundResizeHandler);
+    }
+  }
+
+  /**
    * On changes to the current route, explicitly sets the page property
    * so it can be used by other elements.
    */
@@ -92,6 +110,19 @@ class DatalabAppElement extends Polymer.Element {
     const subpath = 'datalab-' + page
     const resolvedPageUrl = this.resolveUrl('../' + subpath + '/' + subpath + '.html');
     Polymer.importHref(resolvedPageUrl, undefined, undefined, true);
+
+    // If the new page has a resize handler, call it.
+    this._resizeHandler();
+  }
+
+  /**
+   * If the selected page has a resize handler, calls it.
+   */
+  _resizeHandler() {
+    const selectedPage = this.$.pages.selectedItem;
+    if (selectedPage && selectedPage._resizeHandler) {
+      selectedPage._resizeHandler();
+    }
   }
 
 }

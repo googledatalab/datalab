@@ -99,5 +99,16 @@ class Utils {
 
     return stampedTemplate;
   }
+
+  /**
+   * Moves all child elements from one element to another.
+   * @param from element whose children to move
+   * @param to destination elements where children will be moved to
+   */
+  static moveElementChildren(from: HTMLElement, to: HTMLElement) {
+    while (from.firstChild) {
+      to.appendChild(from.firstChild);
+    }
+  }
  
 }
