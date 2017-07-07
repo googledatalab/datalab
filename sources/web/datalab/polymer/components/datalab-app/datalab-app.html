@@ -15,6 +15,8 @@ the License.
 <link rel="import" href="../../bower_components/app-route/app-location.html">
 <link rel="import" href="../../bower_components/app-route/app-route.html">
 <link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../bower_components/neon-animation/web-animations.html">
 
 <link rel="import" href="../../components/datalab-sidebar/datalab-sidebar.html">
 <link rel="import" href="../../components/datalab-toolbar/datalab-toolbar.html">
@@ -42,6 +44,10 @@ the License.
         flex-grow: 1;
         box-shadow: -4px 0px 10px -3px rgba(0, 0, 0, 0.1);
         width: calc(100% - var(--sidebar-width));
+      }
+      .error-toast {
+        --paper-toast-background-color: #330000;
+        --paper-toast-color: white;
       }
       iron-pages {
         height: 100%;
@@ -77,6 +83,9 @@ the License.
         </div>
       </div>
     </div>
+
+    <paper-toast id="toast2" class="fit-bottom error-toast" duration="0"
+                 text="This toast is red and fits bottom!"></paper-toast>
 
   </template>
 </dom-module>
