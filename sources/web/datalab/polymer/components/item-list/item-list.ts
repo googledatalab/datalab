@@ -67,9 +67,12 @@ class ItemListElement extends Polymer.Element {
    */
   public disableSelection: boolean;
 
-  private selectedElements: Array<HTMLElement>;
-  private _lastSelectedIndex: number;
-  private _isAllSelected: boolean;
+  /**
+   * The list of currently selected indices
+   */
+  public selectedIndices: Array<number>;
+
+  private _lastSelectedIndex: number = -1;
 
   static get is() { return "item-list"; }
 
@@ -78,7 +81,6 @@ class ItemListElement extends Polymer.Element {
       rows: {
         type: Array,
         value: () => [],
-        observer: '_rowsChanged',
       },
       columns: {
         type: Array,
@@ -92,63 +94,51 @@ class ItemListElement extends Polymer.Element {
         type: Boolean,
         value: false,
       },
-      selectedElements: {
+      selectedIndices: {
         type: Array,
         value: () => [],
+        computed: '_computeSelectedIndices(rows.*)',
         notify: true,
       },
       _isAllSelected: {
         type: Boolean,
-        value: false,
+        computed: '_computeIsAllSelected(selectedIndices)',
       },
     }
   }
 
   /**
-   * Returns list of currently selected elements. This list keeps the actual
-   * HTML elements, which can then be used to get their indices, whereas the
-   * opposite is not directly possible.
+   * Returns value for the computed property selectedIndices, which is the list
+   * of indices of the currently selected items.
    */
-  getSelectedElements() {
-    return this.disableSelection ? [] : this.selectedElements;
+  _computeSelectedIndices() {
+    let selected = [];
+    for (let i = 0; i < this.rows.length; ++i) {
+      if (this.rows[i].selected === true) {
+        selected.push(i);
+      }
+    }
+    return selected;
+  }
+
+  _computeIsAllSelected() {
+    return this.selectedIndices.length === this.rows.length;
   }
 
   /**
-   * Returns list of indices for the currently selected elements.
+   * Select an item in the list.
+   * @param index index of item to select
    */
-  getSelectedIndices() {
-    return this.disableSelection ? [] : this.selectedElements.map(element => {
-      return this.$.list.indexForElement(element);
-    });
-  }
-
-  /**
-   * Clears the list of selected elements. No items should be selected when the
-   * list of rows is refreshed.
-   */
-  _rowsChanged() {
-    this.selectedElements = [];
-    this._lastSelectedIndex = -1;
-  }
-
   _selectItem(index: number) {
-    const element = this.$.listContainer.children[index];
-    const i = this.selectedElements.indexOf(element);
-    if (i === -1) {
-      this.push('selectedElements', element);
-    }
     this.set('rows.' + index + '.selected', true);
-    this._isAllSelected = this.selectedElements.length === this.rows.length;
   }
 
+  /**
+   * Unselect an item in the list.
+   * @param index index of item to unselect
+   */
   _unselectItem(index: number) {
-    const element = this.$.listContainer.children[index];
-    const i = this.selectedElements.indexOf(element);
-    if (i > -1) {
-      this.splice('selectedElements', i, 1);
-    }
     this.set('rows.' + index+ '.selected', false);
-    this._isAllSelected = this.selectedElements.length === this.rows.length;
   }
 
   _selectAll() {
@@ -174,7 +164,6 @@ class ItemListElement extends Polymer.Element {
   /**
    * On row click, checks the click target, if it's the checkbox, adds it to
    * the selected rows, otherwise selects it only.
-   * This method also maintains the selectedElements list.
    */
   _rowClicked(e: MouseEvent) {
     if (this.disableSelection) {
