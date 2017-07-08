@@ -169,7 +169,7 @@ class FilesElement extends Polymer.Element {
     if (filesElement) {
       filesElement.addEventListener('itemDoubleClick',
                                     this._handleDoubleClicked.bind(this));
-      filesElement.addEventListener('itemSelectionChanged',
+      filesElement.addEventListener('selected-elements-changed',
                                     this._handleSelectionChanged.bind(this));
     }
 

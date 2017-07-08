@@ -67,7 +67,7 @@ class ItemListElement extends Polymer.Element {
    */
   public disableSelection: boolean;
 
-  private _selectedElements: Array<HTMLElement>;
+  private selectedElements: Array<HTMLElement>;
   private _lastSelectedIndex: number;
   private _isAllSelected: boolean;
 
@@ -92,9 +92,10 @@ class ItemListElement extends Polymer.Element {
         type: Boolean,
         value: false,
       },
-      _selectedElements: {
+      selectedElements: {
         type: Array,
         value: () => [],
+        notify: true,
       },
       _isAllSelected: {
         type: Boolean,
@@ -109,14 +110,14 @@ class ItemListElement extends Polymer.Element {
    * opposite is not directly possible.
    */
   getSelectedElements() {
-    return this.disableSelection ? [] : this._selectedElements;
+    return this.disableSelection ? [] : this.selectedElements;
   }
 
   /**
    * Returns list of indices for the currently selected elements.
    */
   getSelectedIndices() {
-    return this.disableSelection ? [] : this._selectedElements.map(element => {
+    return this.disableSelection ? [] : this.selectedElements.map(element => {
       return this.$.list.indexForElement(element);
     });
   }
@@ -126,30 +127,28 @@ class ItemListElement extends Polymer.Element {
    * list of rows is refreshed.
    */
   _rowsChanged() {
-    this._selectedElements = [];
+    this.selectedElements = [];
     this._lastSelectedIndex = -1;
-    const ev = new ItemClickEvent('itemSelectionChanged', { detail: {} });
-    this.dispatchEvent(ev);
   }
 
   _selectItem(index: number) {
     const element = this.$.listContainer.children[index];
-    const i = this._selectedElements.indexOf(element);
+    const i = this.selectedElements.indexOf(element);
     if (i === -1) {
-      this.push('_selectedElements', element);
+      this.push('selectedElements', element);
     }
     this.set('rows.' + index + '.selected', true);
-    this._isAllSelected = this._selectedElements.length === this.rows.length;
+    this._isAllSelected = this.selectedElements.length === this.rows.length;
   }
 
   _unselectItem(index: number) {
     const element = this.$.listContainer.children[index];
-    const i = this._selectedElements.indexOf(element);
+    const i = this.selectedElements.indexOf(element);
     if (i > -1) {
-      this.splice('_selectedElements', i, 1);
+      this.splice('selectedElements', i, 1);
     }
     this.set('rows.' + index+ '.selected', false);
-    this._isAllSelected = this._selectedElements.length === this.rows.length;
+    this._isAllSelected = this.selectedElements.length === this.rows.length;
   }
 
   _selectAll() {
@@ -175,7 +174,7 @@ class ItemListElement extends Polymer.Element {
   /**
    * On row click, checks the click target, if it's the checkbox, adds it to
    * the selected rows, otherwise selects it only.
-   * This method also maintains the _selectedElements list.
+   * This method also maintains the selectedElements list.
    */
   _rowClicked(e: MouseEvent) {
     if (this.disableSelection) {
@@ -219,8 +218,6 @@ class ItemListElement extends Polymer.Element {
     }
 
     this._lastSelectedIndex = index;
-    const ev = new ItemClickEvent('itemSelectionChanged', { detail: {index: index} });
-    this.dispatchEvent(ev);
   }
 
   /**
