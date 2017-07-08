@@ -174,7 +174,7 @@ class FilesElement extends Polymer.Element {
     }
 
     // For a small file/directory picker, we don't need to show the status.
-    this.$.files.columns = this.small ? ['Name'] : ['Name', 'Status'];
+    (<ItemListElement>this.$.files).columns = this.small ? ['Name'] : ['Name', 'Status'];
   }
 
   disconnectedCallback() {
@@ -262,7 +262,7 @@ class FilesElement extends Polymer.Element {
    * the created list to the item-list to render.
    */
   _drawFileList() {
-    this.$.files.rows = this._fileList.map(file => {
+    (<ItemListElement>this.$.files).rows = this._fileList.map(file => {
       return {
         firstCol: file.name,
         secondCol: file.status,
@@ -301,8 +301,7 @@ class FilesElement extends Polymer.Element {
    * is selected, sets the selectedFile property to the selected file object.
    */
   _handleSelectionChanged() {
-    const list = <ItemListElement>this.$.files;
-    const selectedIndices = list.selectedIndices;
+    const selectedIndices = (<ItemListElement>this.$.files).selectedIndices;
     if (selectedIndices.length === 1) {
       this.selectedFile = this._fileList[selectedIndices[0]];
     } else {
@@ -531,7 +530,7 @@ class FilesElement extends Polymer.Element {
    */
   _renameSelectedItem() {
 
-    const selectedIndices = this.$.files.selectedIndices;
+    const selectedIndices = (<ItemListElement>this.$.files).selectedIndices;
     if (selectedIndices.length === 1) {
       const i = selectedIndices[0];
       const selectedObject = this._fileList[i];
@@ -570,7 +569,7 @@ class FilesElement extends Polymer.Element {
    */
   _deleteSelectedItems() {
 
-    const selectedIndices = this.$.files.selectedIndices;
+    const selectedIndices = (<ItemListElement>this.$.files).selectedIndices;
     if (selectedIndices.length) {
       // Build friendly title and body messages that adapt to the number of items.
       const num = selectedIndices.length;
@@ -650,7 +649,8 @@ class FilesElement extends Polymer.Element {
    * TODO: Consider allowing multiple items to be copied.
    */
   _copySelectedItem() {
-    const selectedIndices = this.$.files.selectedIndices;
+
+    const selectedIndices = (<ItemListElement>this.$.files).selectedIndices;
 
     if (selectedIndices.length === 1) {
       const i = selectedIndices[0];
@@ -683,7 +683,8 @@ class FilesElement extends Polymer.Element {
    * TODO: Consider allowing multiple items to be copied.
    */
   _moveSelectedItem() {
-    const selectedIndices = this.$.files.selectedIndices;
+
+    const selectedIndices = (<ItemListElement>this.$.files).selectedIndices;
 
     if (selectedIndices.length === 1) {
       const i = selectedIndices[0];

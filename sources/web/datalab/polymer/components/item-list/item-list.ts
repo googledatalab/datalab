@@ -33,14 +33,16 @@ class ItemClickEvent extends CustomEvent {
 
 /**
  * Two-column list element.
- * This element takes a list of two column names, and a list of row
- * objects, each containing values for each of the columns, an icon
- * name, and a selected property. The items are displayed in a table
- * form. Clicking an item selects it and unselects all other items.
- * Clicking the checkbox next to an item allows for multi-selection.
- * Double clicking an item fires an 'ItemClickEvent' event with this
- * item's index. Similarly, selection fires an 'ItemClickEvent' with
- * the most recent clicked item's index.
+ * This element takes a list of two column names, and a list of row objects,
+ * each containing values for each of the columns, an icon name, and a selected
+ * property. The items are displayed in a table form. Clicking an item selects
+ * it and unselects all other items. Clicking the checkbox next to an item
+ * allows for multi-selection. Shift and ctrl keys can also be used to select
+ * multiple items.
+ * Double clicking an item fires an 'ItemClickEvent' event with this item's index.
+ * Selecting an item by single clicking it changes the selectedIndices
+ * property. This also notifies the host, which can listen to the
+ * selected-indices-changed event.
  * If the "hide-header" attribute is specified, the header is hidden.
  * If the "disable-selection" attribute is specified, the checkboxes are
  * hidden, and clicking items does not select them.
@@ -112,21 +114,25 @@ class ItemListElement extends Polymer.Element {
    * of indices of the currently selected items.
    */
   _computeSelectedIndices() {
-    let selected = [];
-    for (let i = 0; i < this.rows.length; ++i) {
-      if (this.rows[i].selected === true) {
+    let selected: Array<number> = [];
+    this.rows.forEach((row, i) => {
+      if (row.selected) {
         selected.push(i);
       }
-    }
+    })
     return selected;
   }
 
+  /**
+   * Returns the value for the computed property isAllSelected, which is whether
+   * all items in the list are selected.
+   */
   _computeIsAllSelected() {
     return this.selectedIndices.length === this.rows.length;
   }
 
   /**
-   * Select an item in the list.
+   * Selects an item in the list.
    * @param index index of item to select
    */
   _selectItem(index: number) {
@@ -134,25 +140,34 @@ class ItemListElement extends Polymer.Element {
   }
 
   /**
-   * Unselect an item in the list.
+   * Unselects an item in the list.
    * @param index index of item to unselect
    */
   _unselectItem(index: number) {
     this.set('rows.' + index+ '.selected', false);
   }
 
+  /**
+   * Selects all items in the list.
+   */
   _selectAll() {
-    for (let i = 0; i < this.rows.length; ++i) {
+    this.rows.forEach((_, i) => {
       this._selectItem(i);
-    }
+    });
   }
 
+  /**
+   * Unselects all items in the list.
+   */
   _unselectAll() {
-    for (let i = 0; i < this.rows.length; ++i) {
+    this.rows.forEach((_, i) => {
       this._unselectItem(i);
-    }
+    });
   }
 
+  /**
+   * Called when the select/unselect all checkbox checked value is changed.
+   */
   _selectAllChanged() {
     if (this.$.selectAllCheckbox.checked === true) {
       this._selectAll();
@@ -174,21 +189,26 @@ class ItemListElement extends Polymer.Element {
 
     // If shift key is pressed and we had saved the last selected index, select
     // all items from this index till the last selected.
-    if (e.shiftKey && this._lastSelectedIndex !== -1) {
+    if (e.shiftKey && this._lastSelectedIndex !== -1 && this.selectedIndices.length > 0) {
       this._unselectAll();
       const start = Math.min(this._lastSelectedIndex, index);
       const end = Math.max(this._lastSelectedIndex, index);
       for (let i = start; i <= end; ++i) {
         this._selectItem(i);
       }
-    } else if (e.ctrlKey) {
-      // If ctrl key is pressed, toggle its selection.
+    }
+    
+    // If ctrl key is pressed, toggle its selection.
+    else if (e.ctrlKey) {
       if (this.rows[index].selected === false) {
         this._selectItem(index);
       } else {
         this._unselectItem(index);
       }
-    } else {
+    }
+    
+    // No modifier keys are pressed, proceed normally to select the item.
+    else {
       // If the clicked element is the checkbox, we're done, the checkbox already
       // toggles selection.
       // Otherwise, select this element, unselect all others.
