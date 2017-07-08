@@ -69,6 +69,7 @@ class ItemListElement extends Polymer.Element {
 
   private _selectedElements: Array<HTMLElement>;
   private _lastSelectedIndex: number;
+  private _isAllSelected: boolean;
 
   static get is() { return "item-list"; }
 
@@ -94,7 +95,11 @@ class ItemListElement extends Polymer.Element {
       _selectedElements: {
         type: Array,
         value: () => [],
-      }
+      },
+      _isAllSelected: {
+        type: Boolean,
+        value: false,
+      },
     }
   }
 
@@ -133,7 +138,8 @@ class ItemListElement extends Polymer.Element {
     if (i === -1) {
       this.push('_selectedElements', element);
     }
-    this.set('rows.' + i + '.selected', true);
+    this.set('rows.' + index + '.selected', true);
+    this._isAllSelected = this._selectedElements.length === this.rows.length;
   }
 
   _unselectItem(index: number) {
@@ -142,7 +148,8 @@ class ItemListElement extends Polymer.Element {
     if (i > -1) {
       this.splice('_selectedElements', i, 1);
     }
-    this.set('rows.' + i + '.selected', false);
+    this.set('rows.' + index+ '.selected', false);
+    this._isAllSelected = this._selectedElements.length === this.rows.length;
   }
 
   _selectAll() {
@@ -179,8 +186,12 @@ class ItemListElement extends Polymer.Element {
         this._selectItem(i);
       }
     } else if (e.ctrlKey) {
-      // If ctrl key is pressed, always add this item to the selected list.
-      this._selectItem(index);
+      // If ctrl key is pressed, toggle its selection.
+      if (this.rows[index].selected === false) {
+        this._selectItem(index);
+      } else {
+        this._unselectItem(index);
+      }
     } else {
       // If the clicked element is the checkbox, we're done, the checkbox already
       // toggles selection.

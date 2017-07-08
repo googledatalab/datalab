@@ -87,7 +87,10 @@ the License.
     <!--Need this extra div because #header has a display modifier, cannot set hidden-->
     <div hidden$="{{hideHeader}}">
       <div id="header">
-        <div class="checkbox-col"></div>
+        <div class="checkbox-col">
+          <paper-checkbox checked={{_isAllSelected}} checkedChanged="_selectAllChanged">
+          </paper-checkbox>
+        </div>
         <div class="first-col"><strong>{{columns.0}}</strong></div>
         <div class="second-col"><strong>{{columns.1}}</strong></div>
       </div>
