@@ -164,6 +164,14 @@ class ItemListElement extends Polymer.Element {
     }
   }
 
+  _selectAllChanged() {
+    if (this.$.selectAllCheckbox.checked === true) {
+      this._selectAll();
+    } else {
+      this._unselectAll();
+    }
+  }
+
   /**
    * On row click, checks the click target, if it's the checkbox, adds it to
    * the selected rows, otherwise selects it only.

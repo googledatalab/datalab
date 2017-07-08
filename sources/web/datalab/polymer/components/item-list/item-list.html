@@ -88,7 +88,8 @@ the License.
     <div hidden$="{{hideHeader}}">
       <div id="header">
         <div class="checkbox-col">
-          <paper-checkbox checked={{_isAllSelected}} checkedChanged="_selectAllChanged">
+          <paper-checkbox id="selectAllCheckbox" on-checked-changed="_selectAllChanged"
+                          checked={{_isAllSelected}}>
           </paper-checkbox>
         </div>
         <div class="first-col"><strong>{{columns.0}}</strong></div>
@@ -102,8 +103,7 @@ the License.
         <paper-item class="row" selected$={{row.selected}} on-click="_rowClicked"
                     on-dblclick="_rowDoubleClicked">
           <div class="checkbox-col">
-            <paper-checkbox checked={{row.selected}} checkedChanged="_rowClicked"
-                            hidden$="{{disableSelection}}">
+            <paper-checkbox checked={{row.selected}} hidden$="{{disableSelection}}">
             </paper-checkbox>
           </div>
           <div class="first-col">
