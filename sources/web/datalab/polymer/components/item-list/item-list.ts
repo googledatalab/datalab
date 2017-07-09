@@ -119,7 +119,7 @@ class ItemListElement extends Polymer.Element {
       if (row.selected) {
         selected.push(i);
       }
-    })
+    });
     return selected;
   }
 
@@ -128,7 +128,7 @@ class ItemListElement extends Polymer.Element {
    * all items in the list are selected.
    */
   _computeIsAllSelected() {
-    return this.selectedIndices.length === this.rows.length;
+    return this.rows.length > 0 && this.rows.length === this.selectedIndices.length;
   }
 
   /**
@@ -207,15 +207,12 @@ class ItemListElement extends Polymer.Element {
       }
     }
     
-    // No modifier keys are pressed, proceed normally to select the item.
+    // No modifier keys are pressed, proceed normally to select/unselect the item.
     else {
-      // If the clicked element is the checkbox, we're done, the checkbox already
-      // toggles selection.
+      // If the clicked element is the checkbox, the checkbox already toggles selection in
+      // the UI, so change the item's selection state to match the checkbox's new value.
       // Otherwise, select this element, unselect all others.
-      if (target.tagName !== 'PAPER-CHECKBOX') {
-        this._unselectAll();
-        this._selectItem(index);
-      } else {
+      if (target.tagName === 'PAPER-CHECKBOX') {
         if (this.rows[index].selected === false) {
           // Remove this element from the selected elements list if it's being unselected
           this._unselectItem(index);
@@ -223,9 +220,13 @@ class ItemListElement extends Polymer.Element {
           // Add this element to the selected elements list if it's being selected,
           this._selectItem(index);
         }
+      } else {
+        this._unselectAll();
+        this._selectItem(index);
       }
     }
 
+    // Save this index to enable multi-selection using shift later.
     this._lastSelectedIndex = index;
   }
 
