@@ -208,14 +208,11 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       response.setHeader('Location', path.join(appSettings.datalabBasePath, rootRedirect));
       response.end();
       return;
-    }
-    if (pathname === '/files' || pathname === '/sessions' || pathname === '/terminal') {
+    } else if (pathname === '/files' || pathname === '/sessions' || pathname === '/terminal') {
       pathname = '/index.html';
-    }
-    if (pathname === '/editor') {
+    } else if (pathname === '/editor') {
       pathname = '/editor.html';
-    }
-    if (pathname === '/index.css') {
+    } else if (pathname === '/index.css') {
       var userSettings: common.UserSettings = settings.loadUserSettings(userId);
       pathname = '/index.' + (userSettings.theme || 'light') + '.css';
     }

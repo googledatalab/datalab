@@ -71,34 +71,38 @@ class DatalabEditorElement extends Polymer.Element {
         if (settings.theme) {
           this._theme = settings.theme;
         }
-      })
-      // Get the file contents, or empty string if no path is specified.
-      .then(() => {
+
+        // Get the file contents, or empty string if no path is specified.
         if (this.filePath !== '') {
           this._busy = true;
+          // Passing the asText=true parameter guarantees the returned type is not a directory.
+          // An error is thrown if it is.
           return ApiManager.getJupyterFile(this.filePath, true /*asText*/)
-            .then((file: JupyterFile) => file.content)
             .catch((e: Error) => {
               // TODO: Handle error visibly to the user.
               console.log('Could not load specified file: ', e);
-              return '';
+              return null;
             })
         } else {
-          return '';
+          return null;
         }
       })
       // Create the codemirror element and load the contents in it.
-      .then((content: string) => {
+      .then((file: JupyterFile | null) => {
         // TODO: try to detect the language of the file before creating
         // the codemirror element. Perhaps use the file extension?
         // TODO: load the mode dynamically instead of starting out with python.
+        let content = '';
+        if (file) {
+          content = <string>file.content;
+        }
         this._editor = CodeMirror(this.$.editorContainer,
                                   {
                                     value: content,
                                     mode: 'python',
                                     lineNumbers: true,
                                     lineWrapping: true,
-                                    theme: this._getThemeValue(this._theme),
+                                    theme: this._getCodeMirrorTheme(this._theme),
                                   });
       })
       .catch((e: Error) => console.log('Error loading file: ' + e))
@@ -110,7 +114,7 @@ class DatalabEditorElement extends Polymer.Element {
    * @param datalabTheme Datalab theme value
    */
   setEditorTheme(datalabTheme: string) {
-    this._editor.setOption('theme', this._getThemeValue(datalabTheme));
+    this._editor.setOption('theme', this._getCodeMirrorTheme(datalabTheme));
   }
 
   /**
@@ -119,7 +123,7 @@ class DatalabEditorElement extends Polymer.Element {
    * the element's light DOM.
    * @param datalabTheme Datalab theme value
    */
-  _getThemeValue(datalabTheme: string) {
+  _getCodeMirrorTheme(datalabTheme: string) {
     return datalabTheme === 'dark' ? 'icecoder' : 'eclipse';
   }
 }
