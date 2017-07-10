@@ -43,6 +43,7 @@ class DatalabEditorElement extends Polymer.Element {
    */
   public filePath: string;
 
+  private _file: JupyterFile | null;
   private _editor: CodeMirrorEditor;
   private _theme: string;
   private _busy: boolean;
@@ -54,6 +55,10 @@ class DatalabEditorElement extends Polymer.Element {
       filePath: {
         type: String,
         value: '',
+      },
+      _file: {
+        type: Object,
+        value: null,
       },
       _busy: {
         type: Boolean,
@@ -73,7 +78,7 @@ class DatalabEditorElement extends Polymer.Element {
         }
 
         // Get the file contents, or empty string if no path is specified.
-        if (this.filePath !== '') {
+        if (this.filePath) {
           this._busy = true;
           // Passing the asText=true parameter guarantees the returned type is not a directory.
           // An error is thrown if it is.
@@ -89,12 +94,13 @@ class DatalabEditorElement extends Polymer.Element {
       })
       // Create the codemirror element and load the contents in it.
       .then((file: JupyterFile | null) => {
+        this._file = file;
         // TODO: try to detect the language of the file before creating
         // the codemirror element. Perhaps use the file extension?
         // TODO: load the mode dynamically instead of starting out with python.
         let content = '';
-        if (file) {
-          content = <string>file.content;
+        if (this._file) {
+          content = <string>this._file.content;
         }
         this._editor = CodeMirror(this.$.editorContainer,
                                   {
