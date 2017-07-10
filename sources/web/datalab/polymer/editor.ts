@@ -17,30 +17,26 @@
  * wraps the <datalab-editor> element, and takes a "file" querystring parameter to
  * load it in the editor.
  */
-document.addEventListener('DOMContentLoaded', () => {
+const editorElement = <DatalabEditorElement>document.querySelector('datalab-editor');
 
-  const editorElement = <DatalabEditorElement>document.querySelector('datalab-editor');
-
-  document.addEventListener('ThemeChanged', (e: CustomEvent) => {
-    // Change the style element's href to trigger the browser to reload it.
-    const cssElement = <HTMLLinkElement | null>document.querySelector('#themeStylesheet');
-    if (cssElement) {
-      const sheetAddress = cssElement.href + "?v=" + Date.now()
-      cssElement.setAttribute('href', sheetAddress);
-    }
-
-    // Change the editor's theme.
-    if (editorElement && e && e.detail) {
-      editorElement.setEditorTheme(e.detail);
-    }
-  });
-
-  // Pass the file's path if it's specified in the location.
-  if (editorElement) {
-    const params = Utils.getSearchParams(window.location.search);
-    if (params.file) {
-      editorElement.filePath = params.file;
-    }
+document.addEventListener('ThemeChanged', (e: CustomEvent) => {
+  // Change the style element's href to trigger the browser to reload it.
+  const cssElement = <HTMLLinkElement | null>document.querySelector('#themeStylesheet');
+  if (cssElement) {
+    const sheetAddress = cssElement.href + "?v=" + Date.now()
+    cssElement.setAttribute('href', sheetAddress);
   }
 
+  // Change the editor's theme.
+  if (editorElement && e && e.detail) {
+    editorElement.setEditorTheme(e.detail);
+  }
 });
+
+// Pass the file's path if it's specified in the location.
+if (editorElement) {
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('file')) {
+    editorElement.filePath = <string>params.get('file');
+  }
+}

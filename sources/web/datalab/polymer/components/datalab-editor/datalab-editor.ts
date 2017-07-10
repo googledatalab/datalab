@@ -87,7 +87,7 @@ class DatalabEditorElement extends Polymer.Element {
               // TODO: Handle error visibly to the user.
               console.log('Could not load specified file: ', e);
               return null;
-            })
+            });
         } else {
           return null;
         }
