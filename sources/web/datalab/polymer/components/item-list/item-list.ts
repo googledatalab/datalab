@@ -33,14 +33,16 @@ class ItemClickEvent extends CustomEvent {
 
 /**
  * Two-column list element.
- * This element takes a list of two column names, and a list of row
- * objects, each containing values for each of the columns, an icon
- * name, and a selected property. The items are displayed in a table
- * form. Clicking an item selects it and unselects all other items.
- * Clicking the checkbox next to an item allows for multi-selection.
- * Double clicking an item fires an 'ItemClickEvent' event with this
- * item's index. Similarly, selection fires an 'ItemClickEvent' with
- * the most recent clicked item's index.
+ * This element takes a list of two column names, and a list of row objects,
+ * each containing values for each of the columns, an icon name, and a selected
+ * property. The items are displayed in a table form. Clicking an item selects
+ * it and unselects all other items. Clicking the checkbox next to an item
+ * allows for multi-selection. Shift and ctrl keys can also be used to select
+ * multiple items.
+ * Double clicking an item fires an 'ItemClickEvent' event with this item's index.
+ * Selecting an item by single clicking it changes the selectedIndices
+ * property. This also notifies the host, which can listen to the
+ * selected-indices-changed event.
  * If the "hide-header" attribute is specified, the header is hidden.
  * If the "disable-selection" attribute is specified, the checkboxes are
  * hidden, and clicking items does not select them.
@@ -67,7 +69,12 @@ class ItemListElement extends Polymer.Element {
    */
   public disableSelection: boolean;
 
-  private _selectedElements: Array<HTMLElement>;
+  /**
+   * The list of currently selected indices
+   */
+  public selectedIndices: Array<number>;
+
+  private _lastSelectedIndex: number = -1;
 
   static get is() { return "item-list"; }
 
@@ -76,7 +83,6 @@ class ItemListElement extends Polymer.Element {
       rows: {
         type: Array,
         value: () => [],
-        observer: '_rowsChanged',
       },
       columns: {
         type: Array,
@@ -90,45 +96,89 @@ class ItemListElement extends Polymer.Element {
         type: Boolean,
         value: false,
       },
-      _selectedElements: {
+      selectedIndices: {
         type: Array,
         value: () => [],
-      }
+        computed: '_computeSelectedIndices(rows.*)',
+        notify: true,
+      },
+      _isAllSelected: {
+        type: Boolean,
+        computed: '_computeIsAllSelected(selectedIndices)',
+      },
     }
   }
 
   /**
-   * Returns list of currently selected elements. This list keeps the actual
-   * HTML elements, which can then be used to get their indices, whereas the
-   * opposite is not directly possible.
+   * Returns value for the computed property selectedIndices, which is the list
+   * of indices of the currently selected items.
    */
-  getSelectedElements() {
-    return this.disableSelection ? [] : this._selectedElements;
+  _computeSelectedIndices() {
+    let selected: Array<number> = [];
+    this.rows.forEach((row, i) => {
+      if (row.selected) {
+        selected.push(i);
+      }
+    });
+    return selected;
   }
 
   /**
-   * Returns list of indices for the currently selected elements.
+   * Returns the value for the computed property isAllSelected, which is whether
+   * all items in the list are selected.
    */
-  getSelectedIndices() {
-    return this.disableSelection ? [] : this._selectedElements.map(element => {
-      return this.$.list.indexForElement(element);
+  _computeIsAllSelected() {
+    return this.rows.length > 0 && this.rows.length === this.selectedIndices.length;
+  }
+
+  /**
+   * Selects an item in the list.
+   * @param index index of item to select
+   */
+  _selectItem(index: number) {
+    this.set('rows.' + index + '.selected', true);
+  }
+
+  /**
+   * Unselects an item in the list.
+   * @param index index of item to unselect
+   */
+  _unselectItem(index: number) {
+    this.set('rows.' + index+ '.selected', false);
+  }
+
+  /**
+   * Selects all items in the list.
+   */
+  _selectAll() {
+    this.rows.forEach((_, i) => {
+      this._selectItem(i);
     });
   }
 
   /**
-   * Clears the list of selected elements. No items should be selected when the
-   * list of rows is refreshed.
+   * Unselects all items in the list.
    */
-  _rowsChanged() {
-    this._selectedElements = [];
-    const ev = new ItemClickEvent('itemSelectionChanged', { detail: {} });
-    this.dispatchEvent(ev);
+  _unselectAll() {
+    this.rows.forEach((_, i) => {
+      this._unselectItem(i);
+    });
+  }
+
+  /**
+   * Called when the select/unselect all checkbox checked value is changed.
+   */
+  _selectAllChanged() {
+    if (this.$.selectAllCheckbox.checked === true) {
+      this._selectAll();
+    } else {
+      this._unselectAll();
+    }
   }
 
   /**
    * On row click, checks the click target, if it's the checkbox, adds it to
    * the selected rows, otherwise selects it only.
-   * This method also maintains the _selectedElements list.
    */
   _rowClicked(e: MouseEvent) {
     if (this.disableSelection) {
@@ -136,47 +186,48 @@ class ItemListElement extends Polymer.Element {
     }
     const target = <HTMLDivElement>e.target;
     const index = this.$.list.indexForElement(target);
-    const rowElement = this._getRowElementFromChild(target);
 
-    // If the clicked element is the checkbox, we're done, the checkbox already
-    // toggles selection.
-    // Otherwise, select this element, unselect all others.
-    if (target.tagName !== 'PAPER-CHECKBOX') {
-      for (let i = 0; i < this.rows.length; ++i) {
-        this.set('rows.' + i + '.selected', false);
-      }
-      this.set('rows.' + index + '.selected', true);
-
-      // This is now the only selected element.
-      this._selectedElements = [rowElement];
-    } else {
-      if (this.rows[index].selected === false) {
-        // Remove this element from the selected elements list if it's being unselected
-        const i = this._selectedElements.indexOf(rowElement);
-        if (i > -1) {
-          this.splice('_selectedElements', i, 1);
-        }
-      } else {
-        // Add this element to the selected elements list if it's being selected,
-        this.push('_selectedElements', rowElement);
+    // If shift key is pressed and we had saved the last selected index, select
+    // all items from this index till the last selected.
+    if (e.shiftKey && this._lastSelectedIndex !== -1 && this.selectedIndices.length > 0) {
+      this._unselectAll();
+      const start = Math.min(this._lastSelectedIndex, index);
+      const end = Math.max(this._lastSelectedIndex, index);
+      for (let i = start; i <= end; ++i) {
+        this._selectItem(i);
       }
     }
-    const ev = new ItemClickEvent('itemSelectionChanged', { detail: {index: index} });
-    this.dispatchEvent(ev);
-  }
+    
+    // If ctrl key is pressed, toggle its selection.
+    else if (e.ctrlKey) {
+      if (this.rows[index].selected === false) {
+        this._selectItem(index);
+      } else {
+        this._unselectItem(index);
+      }
+    }
+    
+    // No modifier keys are pressed, proceed normally to select/unselect the item.
+    else {
+      // If the clicked element is the checkbox, the checkbox already toggles selection in
+      // the UI, so change the item's selection state to match the checkbox's new value.
+      // Otherwise, select this element, unselect all others.
+      if (target.tagName === 'PAPER-CHECKBOX') {
+        if (this.rows[index].selected === false) {
+          // Remove this element from the selected elements list if it's being unselected
+          this._unselectItem(index);
+        } else {
+          // Add this element to the selected elements list if it's being selected,
+          this._selectItem(index);
+        }
+      } else {
+        this._unselectAll();
+        this._selectItem(index);
+      }
+    }
 
-  /**
-   * Given an element inside a row in the list, finds the parent row element.
-   */
-  _getRowElementFromChild(childElement: HTMLElement): HTMLElement {
-    let currentElement = childElement;
-    while (currentElement.tagName !== 'PAPER-ITEM' && !currentElement.classList.contains('row'))
-      if (currentElement.parentElement)
-        currentElement = currentElement.parentElement;
-      else
-        // This should not happen
-        throw new Error('Could not find parent row element for: ' + childElement.tagName);
-    return currentElement;
+    // Save this index to enable multi-selection using shift later.
+    this._lastSelectedIndex = index;
   }
 
   /**
