@@ -16,8 +16,8 @@
  * Shell element for Datalab.
  * It contains a <datalab-toolbar> element at the top, a <datalab-sidebar>
  * element beneath that to the left, and a paged view to switch between
- * different pages. It holds references to <datalab-files> and
- * <datalab-sessions>, and uses a local router element to switch between
+ * different pages. It holds references to the different datalab page
+ * elements, and uses a local router element to switch between
  * these according to the current page location.
  * All pages referenced by this element should be named following the
  * convention `datalab-element/datalab-element.html`.

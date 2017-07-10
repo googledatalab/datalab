@@ -45,24 +45,20 @@ class TerminalElement extends Polymer.Element {
 
   ready() {
     super.ready();
+    // Use the size helper element to get the height and width of a character. This
+    // makes changing the style simpler, instead of hard-coding these values.
+    this._charHeight = this.$.sizeHelper.clientHeight;
+    this._charWidth = this.$.sizeHelper.clientWidth / 10; // The element has 10 characters.
 
-    // Will be called after the custom element is done rendering.
-    window.addEventListener('WebComponentsReady', () => {
-      // Use the size helper element to get the height and width of a character. This
-      // makes changing the style simpler, instead of hard-coding these values.
-      this._charHeight = this.$.sizeHelper.clientHeight;
-      this._charWidth = this.$.sizeHelper.clientWidth / 10; // The element has 10 characters.
-
-      // Get the first terminal instance by calling the Jupyter API. If none are returned,
-      // start a new one.
-      ApiManager.listTerminalsAsync()
-        .then((terminals: [JupyterTerminal]) => {
-          return terminals.length === 0 ? ApiManager.startTerminalAsync() : terminals[0];
-        })
-        .then((terminal: JupyterTerminal) => {
-          this._initTerminal(terminal.name);
-        });
-    });
+    // Get the first terminal instance by calling the Jupyter API. If none are returned,
+    // start a new one.
+    ApiManager.listTerminalsAsync()
+      .then((terminals: [JupyterTerminal]) => {
+        return terminals.length === 0 ? ApiManager.startTerminalAsync() : terminals[0];
+      })
+      .then((terminal: JupyterTerminal) => {
+        this._initTerminal(terminal.name);
+      });
   }
 
   /**
