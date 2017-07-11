@@ -31,10 +31,9 @@ class SidebarElement extends Polymer.Element {
       page: {
         type: String,
         value: "files",
-      }
+      },
     }
   }
-
 }
 
 customElements.define(SidebarElement.is, SidebarElement);
