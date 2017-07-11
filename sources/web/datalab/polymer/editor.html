@@ -22,18 +22,17 @@ the License.
     <title>Google Cloud Datalab</title>
     <link rel="shortcut icon" href="images/favicon.ico">
 
-    <script src="bower_components/webcomponentsjs/webcomponents-loader.js"></script>
-    <link rel="import" href="components/datalab-app/datalab-app.html">
+    <link rel="import" href="components/datalab-editor/datalab-editor.html">
     <link id="themeStylesheet" rel="stylesheet" href="index.css">
   </head>
   <body>
-    <style is="custom-style">
+    <style>
       body {
         margin: 0px;
         padding: 0px;
         height: 100%;
       }
-      datalab-app {
+      datalab-editor {
         position: absolute;
         top: 0;
         bottom: 0;
@@ -42,16 +41,9 @@ the License.
         min-width: 470px;
       }
     </style>
-    <script>
-      document.addEventListener('ThemeChanged', () => {
-        // Change the style element's href to trigger the browser to reload it.
-        const cssElement = document.querySelector('#themeStylesheet');
-        if (cssElement) {
-          const sheetAddress = cssElement.href + "?v=" + Date.now()
-          cssElement.setAttribute('href', sheetAddress);
-        }
-      });
-    </script>
-    <datalab-app></datalab-app>
+
+    <datalab-editor></datalab-editor>
+
+    <script src="editor.js"></script>
   </body>
 </html>
