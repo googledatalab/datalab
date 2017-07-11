@@ -178,6 +178,7 @@ export function isExperimentalResource(pathname: string) {
       pathname.indexOf('/files') === 0 ||
       pathname.indexOf('/sessions') === 0 ||
       pathname.indexOf('/terminal') === 0 ||
+      pathname.indexOf('/editor') === 0 ||
       pathname.indexOf('/bower_components') === 0 ||
       pathname.indexOf('/components') === 0 ||
       pathname.indexOf('/images') === 0 ||
@@ -208,14 +209,14 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       response.setHeader('Location', path.join(appSettings.datalabBasePath, rootRedirect));
       response.end();
       return;
-    }
-    if (pathname === '/data' ||
+    } else if (pathname === '/data' ||
         pathname === '/files' ||
         pathname === '/sessions' ||
         pathname === '/terminal') {
       pathname = '/index.html';
-    }
-    if (pathname === '/index.css') {
+    } else if (pathname === '/editor') {
+      pathname = '/editor.html';
+    } else if (pathname === '/index.css') {
       var userSettings: common.UserSettings = settings.loadUserSettings(userId);
       pathname = '/index.' + (userSettings.theme || 'light') + '.css';
     }

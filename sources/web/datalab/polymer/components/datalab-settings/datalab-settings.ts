@@ -80,7 +80,10 @@ class SettingsElement extends Polymer.Element {
    */
   _themeChanged() {
     return SettingsManager.setUserSettingAsync('theme', this.theme)
-      .then(() => document.dispatchEvent(new Event('ThemeChanged')));
+      .then(() => {
+        const e = new CustomEvent('ThemeChanged', {'detail': this.theme})
+        document.dispatchEvent(e);
+      });
   }
 
   _idleTimoutIntervalChanged() {

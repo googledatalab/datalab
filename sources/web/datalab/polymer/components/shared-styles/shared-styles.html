@@ -17,6 +17,7 @@ the License.
     <style>
       :host {
         --toolbar-height: 48px;
+        --progressbar-height: 1px;
         --sidebar-width: 200px;
         --details-pane-width: 350px;
         --app-animation-duration: 0.3s;
@@ -58,6 +59,12 @@ the License.
       }
       [hidden] {
         display: none !important;
+      }
+      .progressbar {
+        width: 100%;
+        height: var(--progressbar-height);
+        --paper-progress-active-color: var(--selection-fg-color);
+        --paper-progress-container-color: var(--border-color);
       }
     </style>
   </template>

@@ -69,6 +69,7 @@ the License.
         margin: 4px;
         font-weight: normal;
         border-radius: 0px;
+        white-space: nowrap;
       }
       .toolbar-button > iron-icon {
         min-width: 20px;
@@ -91,7 +92,7 @@ the License.
       }
       #navbar {
         display: flex;
-        height: calc(var(--toolbar-height) - 1px); /* for progress bar */
+        height: calc(var(--toolbar-height) - var(--progressbar-height)); /* for progress bar */
         background-color: var(--primary-bg-color);
       }
       .navbar-button {
@@ -105,7 +106,7 @@ the License.
       }
       .files-container {
         /* 1 nav bar + 1 progress bar */
-        height: calc(100% - var(--toolbar-height) - 1px);
+        height: calc(100% - var(--toolbar-height) - var(--progressbar-height));
         display: flex;
       }
       #files {
@@ -186,12 +187,6 @@ the License.
       #breadcrumb div:nth-last-child(2) a:after {
         border: none;
       }
-      paper-progress {
-        width: 100%;
-        height: 1px;
-        --paper-progress-active-color: var(--selection-fg-color);
-        --paper-progress-container-color: var(--border-color);
-      }
     </style>
 
     <div id="toolbar" hidden$="{{small}}">
@@ -233,6 +228,11 @@ the License.
         <!--This is hidden but its functionality is used by the alt upload button above-->
         <input type="file" id="altFileUpload" multiple style="display: none"
                on-change="_upload">
+      <paper-button class="toolbar-button" on-click="_openSelectedInEditor"
+                    disabled$={{!selectedFile}}>
+        <iron-icon icon="editor:short-text"></iron-icon>
+        <span>Edit as Text</span>
+      </paper-button>
         <paper-button class="toolbar-button" on-click="_copySelectedItem"
                       disabled$={{!selectedFile}}>
           <iron-icon icon="content-copy"></iron-icon>
@@ -301,7 +301,8 @@ the License.
       </div>
 
       <!--Thin progress bar that shows until files are loaded-->
-      <paper-progress id="progressBar" indeterminate disabled={{!_fetching}}></paper-progress>
+      <paper-progress id="progressBar" class="progressbar" indeterminate disabled={{!_fetching}}>
+      </paper-progress>
 
       <!--File listing-->
       <div class="files-container">

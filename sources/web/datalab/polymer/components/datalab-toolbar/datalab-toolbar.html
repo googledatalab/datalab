@@ -29,6 +29,13 @@ the License.
       :host {
         --toolbar-button-dimension: 35px;
       }
+      .left, .right {
+        flex: 0 0 auto;
+      }
+      .middle {
+        flex: 1 1 auto;
+        overflow: hidden;
+      }
       .toolbar-title {
         font-size: 18px;
       }
@@ -38,9 +45,10 @@ the License.
       }
       app-header {
         background-color: var(--primary-accent-color);
-        color: var(--primary-fg-color);
+        color: var(--toolbar-fg-color);
       }
       app-toolbar {
+        display: flex;
         height: var(--toolbar-height);
         padding-right: 6px;
       }
@@ -85,17 +93,22 @@ the License.
 
     <app-header slot="header" fixed shadow>
       <app-toolbar>
-        <div id="title" main-title class="toolbar-title">
+        <div main-title class="left toolbar-title">
           <!--TODO: @yebrahim replace this with SVG version of the logo-->
           <img src="images/datalab-logo.png" class="title-image">
         </div>
-        <paper-icon-button id="infoButton" class="toolbar-button" icon="info"
-                           on-click="_infoClicked"></paper-icon-button>
-        <paper-icon-button id="settingsButton" class="toolbar-button" icon="settings"
-                           on-click="_settingsClicked"></paper-icon-button>
-        <paper-icon-button id="accountButton" class="toolbar-button" icon="account-circle"
-                           on-click="_accountIconClicked">
-        </paper-icon-button>
+        <div class="middle">
+          <slot name="content"></slot>
+        </div>
+        <div class="right">
+          <paper-icon-button id="infoButton" class="toolbar-button" icon="info"
+                            on-click="_infoClicked"></paper-icon-button>
+          <paper-icon-button id="settingsButton" class="toolbar-button" icon="settings"
+                            on-click="_settingsClicked"></paper-icon-button>
+          <paper-icon-button id="accountButton" class="toolbar-button" icon="account-circle"
+                            on-click="_accountIconClicked">
+          </paper-icon-button>
+        </div>
       </app-toolbar>
     </app-header>
 

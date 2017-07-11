@@ -198,8 +198,8 @@ class ItemListElement extends Polymer.Element {
       }
     }
     
-    // If ctrl key is pressed, toggle its selection.
-    else if (e.ctrlKey) {
+    // If ctrl (or Meta for MacOS) key is pressed, toggle its selection.
+    else if (e.ctrlKey || e.metaKey) {
       if (this.rows[index].selected === false) {
         this._selectItem(index);
       } else {
