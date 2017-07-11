@@ -80,7 +80,8 @@ the License.
       <div class="sidebar-button"></div>
       <iron-selector class="container" attr-for-selected="id" selected={{page}}
                      class="drawer-list" role="navigation">
-        <a href="/data" id="data" hidden$="{{!_showDataTab}}">
+        <!-- uncomment this once we have the data tab working satisfactorily
+        <a href="/data" id="data">
           <paper-button class="sidebar-button">
             <div class="sidebar-button-container">
               <iron-icon class="sidebar-button-icon" icon="av:library-books"></iron-icon>
@@ -88,6 +89,7 @@ the License.
             </div>
           </paper-button>
         </a>
+        -->
         <a href="/files" id="files">
           <paper-button class="sidebar-button">
             <div class="sidebar-button-container">

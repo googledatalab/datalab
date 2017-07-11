@@ -21,7 +21,7 @@ the License.
       :host {
         --data-style: {
           font-family: monospace;
-          font-size: 14px;
+          font-size: var(--app-content-font-size);
         }
       }
       div {
@@ -29,14 +29,14 @@ the License.
         font-size: var(--app-content-font-size);
         color: var(--app-primary-color);
       }
-      div.datasetDrillDown {
+      div.tableDrillDown {
         display: flex;
         margin: 15px;
       }
       .collectionsColumn {
         width: 33%;
       }
-      .datasetsColumn {
+      .tablesColumn {
         width: 33%;
       }
       .filteredColumn {
@@ -49,7 +49,7 @@ the License.
         height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
         width: 100%;
         background-color: var(--app-secondary-color);
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid var(--border-color);
       }
       .toolbar-button {
         color: var(--app-primary-color);
@@ -65,14 +65,14 @@ the License.
         height: 100%;
         display: flex;
       }
-      .datasets-container {
+      .tables-container {
         height: 100%;
         display: flex;
       }
       #collections {
         flex-grow: 1;
       }
-      #datasets {
+      #tables {
         flex-grow: 1;
       }
     </style>
@@ -85,17 +85,11 @@ the License.
       </paper-button>
     </div>
 
-    <!-- Multi-column layout: collections (BQ datasets), datasets (BQ tables) -->
-    <div class="datasetDrillDown">
+    <!-- Multi-column layout: collections (BQ datasets), tables -->
+    <div class="tableDrillDown">
 
       <!-- Collections (BQ datasets) -->
       <div class="collectionsColumn filteredColumn">
-        <div>
-          Project:
-            <paper-input id="projectBox" label="Select a project" spellcheck=false autofocus
-                         value="{{projectValue}}" no-label-float>
-            </paper-input>
-        </div>
         <div>
           Collections Filter:
             <paper-input id="collectionsFilterBox" label="Optional filter value" spellcheck=false autofocus
@@ -108,17 +102,17 @@ the License.
         </div>
       </div>
 
-      <!-- Datasets (BQ tables) -->
-      <div class="datasetsColumn filteredColumn">
+      <!-- Tables -->
+      <div class="tablesColumn filteredColumn">
         <div>
-          Datasets Filter:
-            <paper-input id="datasetsFilterBox" label="Optional filter value" spellcheck=false autofocus
-                         value="{{datasetsFilterValue}}" no-label-float>
+          Tables Filter:
+            <paper-input id="tablesFilterBox" label="Optional filter value" spellcheck=false autofocus
+                         value="{{tablesFilterValue}}" no-label-float>
             </paper-input>
         </div>
-        <!-- list of datasets (tables) -->
-        <div class='datasets-container'>
-          <item-list id="datasets" hide-header="true"></item-list>
+        <!-- list of tables -->
+        <div class='tables-container'>
+          <item-list id="tables" hide-header="true"></item-list>
         </div>
       </div>
 

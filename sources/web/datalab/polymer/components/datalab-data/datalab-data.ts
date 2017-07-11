@@ -18,42 +18,50 @@
 interface Collection {
   name : string;
   status : string;
-  datasets? : Array<Dataset>;
+  tables? : Array<Table>;
 }
 
-interface Dataset {
+interface Table {
   name : string;
   status : string;
 }
 
 /**
  * Data element for Datalab.
- * Contains a form for initial user input, and a list of datasets.
+ * Contains a form for initial user input, and a list of tables.
  */
 class DataElement extends Polymer.Element {
 
-  public projectValue : string;
+  /** The value the user can enter to filter the collections. */
   public collectionsFilterValue : string;
-  public datasetsFilterValue : string;
+
+  /** The value the user can enter to filter the tables. */
+  public tablesFilterValue : string;
 
   private _collectionsList : Array<Collection>;
-  private _datasetsList : Array<Dataset>;
+  private _tablesList : Array<Table>;
 
   static get is() { return "datalab-data"; }
 
   static get properties() {
     return {
-      projectValue: {
-        type: String,
-        value: 'fake-project',
-      },
       collectionsFilterValue: {
         type: String,
         value: 'no-filter',
       },
-      datasetsFilterValue: {
+      tablesFilterValue: {
         type: String,
         value: 'no-filter',
+      },
+      _collectionsList: {
+        type: Array,
+        value: () => [],
+        observer: '_renderCollectionsList',
+      },
+      _tablesList: {
+        type: Array,
+        value: () => [],
+        observer: '_renderTablesList',
       },
     };
   }
@@ -62,7 +70,7 @@ class DataElement extends Polymer.Element {
     super.ready();
 
     this._collectionsList = [];
-    const collectionsElement = this.shadowRoot.querySelector('#collections')
+    const collectionsElement = <ItemListElement>this.$.collections;
     if (collectionsElement) {
       collectionsElement.addEventListener('itemDoubleClick',
                                     this._collectionsDoubleClicked.bind(this));
@@ -70,13 +78,13 @@ class DataElement extends Polymer.Element {
                                     this._collectionsSelectionChanged.bind(this));
     }
 
-    this._datasetsList = [];
-    const datasetsElement = this.shadowRoot.querySelector('#datasets')
-    if (datasetsElement) {
-      datasetsElement.addEventListener('itemDoubleClick',
-                                    this._datasetsDoubleClicked.bind(this));
-      datasetsElement.addEventListener('selected-indices-changed',
-                                    this._datasetsSelectionChanged.bind(this));
+    this._tablesList = [];
+    const tablesElement = <ItemListElement>this.$.tables;
+    if (tablesElement) {
+      tablesElement.addEventListener('itemDoubleClick',
+                                    this._tablesDoubleClicked.bind(this));
+      tablesElement.addEventListener('selected-indices-changed',
+                                    this._tablesSelectionChanged.bind(this));
     }
   }
 
@@ -97,27 +105,26 @@ class DataElement extends Polymer.Element {
     return fakeCollection;
   }
 
-  _generateFakeDatasetsListForTesting() {
-    const datasetsList = [];
+  _generateFakeTablesListForTesting() {
+    const tablesList = [];
     const count = Math.floor(Math.random() * 20);
     for (let i=0; i < count; i++) {
-      datasetsList.push(this._generateFakeDatasetForTesting());
+      tablesList.push(this._generateFakeTableForTesting());
     }
-    return datasetsList;
+    return tablesList;
   }
 
-  _generateFakeDatasetForTesting() {
-    const fakeDataset = {
-      name: 'fakeDataset' + Math.floor(Math.random() * 1000000),
+  _generateFakeTableForTesting() {
+    const fakeTable = {
+      name: 'fakeTable' + Math.floor(Math.random() * 1000000),
       status: 'fake',
     };
-    return fakeDataset;
+    return fakeTable;
   }
 
-  /** Reads the user's query values, queries for datasets, and updates the results. */
+  /** Reads the user's query values, queries for tables, and updates the results. */
   _search() {
     this._collectionsList = this._generateFakeCollectionsListForTesting();
-    this._renderCollectionsList();
   }
 
   /**
@@ -135,25 +142,23 @@ class DataElement extends Polymer.Element {
     });
   }
 
-  _showDatasetsForCollection(collection: Collection) {
+  _showTablesForCollection(collection: Collection) {
     console.log('== collection selected:', collection);
-    if (!collection.datasets) {
-      collection.datasets = this._generateFakeDatasetsListForTesting();
+    if (!collection.tables) {
+      collection.tables = this._generateFakeTablesListForTesting();
     }
-    this._datasetsList = collection.datasets;
-    this._renderDatasetsList();
+    this._tablesList = collection.tables;
   }
 
-  _clearDatasetsList() {
-    this._datasetsList = [];
-    this._renderDatasetsList();
+  _clearTablesList() {
+    this._tablesList = [];
   }
 
-  _showDetailsForDataset(dataset: Dataset) {
-    this.$.detailsPane.innerHTML = 'Selected dataset: ' + dataset.name;
+  _showDetailsForTable(table: Table) {
+    this.$.detailsPane.innerHTML = 'Selected table: ' + table.name;
   }
 
-  _clearDatasetDetails() {
+  _clearTableDetails() {
     this.$.detailsPane.innerHTML = '';
   }
 
@@ -161,11 +166,11 @@ class DataElement extends Polymer.Element {
    * Creates a new ItemListRow object for each entry in the collections list, and sends
    * the created list to the item-list to render.
    */
-  _renderDatasetsList() {
-    this.$.datasets.rows = this._datasetsList.map(dataset => {
+  _renderTablesList() {
+    this.$.tables.rows = this._tablesList.map(table => {
       return {
-        firstCol: dataset.name,
-        secondCol: dataset.status,
+        firstCol: table.name,
+        secondCol: table.status,
         icon: 'file',
         selected: false
       };
@@ -180,30 +185,24 @@ class DataElement extends Polymer.Element {
     console.log('== collection selection changed');
       const selectedIndices = (<ItemListElement>this.$.collections).selectedIndices;
     if (selectedIndices.length == 1) {
-      this._showDatasetsForCollection(this._collectionsList[selectedIndices[0]]);
+      this._showTablesForCollection(this._collectionsList[selectedIndices[0]]);
     } else {
-      this._clearDatasetsList();
+      this._clearTablesList();
     }
   }
 
-  _datasetsDoubleClicked() {
-    console.log('== dataset double-clicked');
+  _tablesDoubleClicked() {
+    console.log('== table double-clicked');
   }
 
-  _datasetsSelectionChanged() {
-    console.log('== dataset selection changed');
-    const selectedIndices = (<ItemListElement>this.$.datasets).selectedIndices;
+  _tablesSelectionChanged() {
+    console.log('== table selection changed');
+    const selectedIndices = (<ItemListElement>this.$.tables).selectedIndices;
     if (selectedIndices.length == 1) {
-      this._showDetailsForDataset(this._datasetsList[selectedIndices[0]]);
+      this._showDetailsForTable(this._tablesList[selectedIndices[0]]);
     } else {
-      this._clearDatasetDetails();
+      this._clearTableDetails();
     }
-  }
-
-  /**
-   * Called when the element is detached from the DOM. Cleans up event listeners.
-   */
-  disconnectedCallback() {
   }
 }
 
