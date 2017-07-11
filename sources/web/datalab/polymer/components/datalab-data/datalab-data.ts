@@ -33,10 +33,10 @@ interface Table {
 class DataElement extends Polymer.Element {
 
   /** The value the user can enter to filter the collections. */
-  public collectionsFilterValue : string;
+  //private _collectionsFilterValue : string;   //TODO(jimmc): uncomment when ready to use
 
   /** The value the user can enter to filter the tables. */
-  public tablesFilterValue : string;
+  //private _tablesFilterValue : string;    //TODO(jimmc): uncomment when ready to use
 
   private _collectionsList : Array<Collection>;
   private _tablesList : Array<Table>;
@@ -45,11 +45,11 @@ class DataElement extends Polymer.Element {
 
   static get properties() {
     return {
-      collectionsFilterValue: {
+      _collectionsFilterValue: {
         type: String,
         value: 'no-filter',
       },
-      tablesFilterValue: {
+      _tablesFilterValue: {
         type: String,
         value: 'no-filter',
       },

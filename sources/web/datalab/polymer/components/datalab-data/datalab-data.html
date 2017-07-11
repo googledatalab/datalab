@@ -80,7 +80,7 @@ the License.
     <!--Toolbar with action buttons -->
     <div id="toolbar">
       <paper-button class="toolbar-button" on-click="_search">
-        <iron-icon icon="refresh"></iron-icon>
+        <iron-icon icon="search"></iron-icon>
         <span>Search</span>
       </paper-button>
     </div>
@@ -93,7 +93,7 @@ the License.
         <div>
           Collections Filter:
             <paper-input id="collectionsFilterBox" label="Optional filter value" spellcheck=false autofocus
-                         value="{{collectionsFilterValue}}" no-label-float>
+                         value="{{_collectionsFilterValue}}" no-label-float>
             </paper-input>
         </div>
         <!-- list of collections -->
@@ -107,7 +107,7 @@ the License.
         <div>
           Tables Filter:
             <paper-input id="tablesFilterBox" label="Optional filter value" spellcheck=false autofocus
-                         value="{{tablesFilterValue}}" no-label-float>
+                         value="{{_tablesFilterValue}}" no-label-float>
             </paper-input>
         </div>
         <!-- list of tables -->
