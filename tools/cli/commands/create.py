@@ -280,6 +280,7 @@ def flags(parser):
         default=_DATALAB_DEFAULT_DISK_SIZE_GB,
         help='size of the persistent disk in GB.')
 
+    """ Broken due to changes to the notebook server, disable until we fix it.
     parser.add_argument(
         '--idle-timeout',
         dest='idle_timeout',
@@ -290,6 +291,7 @@ def flags(parser):
             'You can specify a mix of days, hours, minutes and seconds\n'
             'using those names or d, h, m and s, for example "1h 30m".\n'
             'Specify 0s to disable.'))
+    """
 
     parser.add_argument(
         '--machine-type',
