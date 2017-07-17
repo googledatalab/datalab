@@ -598,7 +598,8 @@ def run(args, gcloud_compute, gcloud_repos,
     service_account = args.service_account or "default"
     # We have to escape the user's email before using it in the YAML template.
     escaped_email = user_email.replace("'", "''")
-    initial_user_settings = '{{"idleTimeoutInterval": "{0}"}}'.format(idle_timeout) if idle_timeout else ''
+    initial_user_settings = '{{"idleTimeoutInterval": "{0}"}}'\
+        .format(idle_timeout) if idle_timeout else ''
     with tempfile.NamedTemporaryFile(delete=False) as startup_script_file, \
             tempfile.NamedTemporaryFile(delete=False) as user_data_file, \
             tempfile.NamedTemporaryFile(delete=False) as manifest_file, \
