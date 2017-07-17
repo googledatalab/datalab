@@ -33,6 +33,13 @@ describe('settings', function() {
       expect(settings.mergeUserSettings(dflt, init)).toBe(expected);
     });
 
+    it('merges empty default settings to unchanged initial settings', function() {
+      const dflt = '';
+      const init = '{"a": 123, "b": "xyz"}';
+      const expected = '{"a":123,"b":"xyz"}';
+      expect(settings.mergeUserSettings(dflt, init)).toBe(expected);
+    });
+
     it('overrides default settings with user initial settings', function() {
       const dflt = '{"a": 123, "b": "xyz"}';
       const init = '{"b": "PQRS"}';

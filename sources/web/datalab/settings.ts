@@ -136,11 +136,7 @@ function copyDefaultUserSettings(userId: string) {
 export function mergeUserSettings(defaultUserSettings: string, initialUserSettings: string): string {
   let parsedDefaultUserSettings;
   try {
-    if (defaultUserSettings) {
-      parsedDefaultUserSettings = JSON.parse(defaultUserSettings)
-    } else {
-      parsedDefaultUserSettings = {};
-    }
+    parsedDefaultUserSettings = JSON.parse(defaultUserSettings || '{}')
   } catch (e) {
     // File is corrupt, or a developer has updated the defaults file with an error
     console.log('Error parsing default user settings:', e);
@@ -152,11 +148,7 @@ export function mergeUserSettings(defaultUserSettings: string, initialUserSettin
 
   let parsedInitialUserSettings;
   try {
-    if (initialUserSettings) {
-      parsedInitialUserSettings = JSON.parse(initialUserSettings)
-    } else {
-      parsedInitialUserSettings = {}
-    }
+    parsedInitialUserSettings = JSON.parse(initialUserSettings || '{}')
   } catch (e) {
     // The user's initial settings are not valid, we will ignore them.
     console.log('Error parsing initial user settings:', e);
