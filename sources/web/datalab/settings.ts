@@ -198,11 +198,6 @@ function ensureDirExists(fullPath: string): boolean {
     return false;
   }
   fs.mkdirSync(fullPath);
-  // mkdirSync doesn't return a status; let's see if it actually worked
-  if (!fs.existsSync(fullPath)) {
-    console.log('Failed to create directory ' + fullPath);
-    return false;
-  }
   return true;
 }
 
@@ -215,45 +210,33 @@ function ensureDirExists(fullPath: string): boolean {
  */
 export function updateUserSetting(userId: string, key: string, value: string,
                                   asynchronous: boolean = false): boolean {
-  var settingsDir = getUserConfigDir(userId);
+  var userDir = userManager.getUserDir(userId);
+  var settingsDir =  path.join(userDir, 'datalab', '.config');
   var settingsPath = path.join(settingsDir, SETTINGS_FILE);
-
-  // Start by ensuring the containing directory exists; if we can't do that,
-  // we can't do anything else.
-  try {
-    if (!ensureDirExists(path.normalize(settingsDir))) {
-      console.log('Can\'t create containing directory for user settings, update not done.');
-      return false;
-    }
-  }
-  catch (e) {
-    console.log('Error creating directory for user settings', e);
-    return false;
-  }
 
   if (!fs.existsSync(settingsPath)) {
     console.log('User settings file %s not found, copying default settings.', settingsPath);
     copyDefaultUserSettings(userId);
   }
-  if (!fs.existsSync(settingsPath)) {
-    console.log('User settings file still doesn\'t exist, update not done.');
-    return false;
-  }
 
   let settings: common.UserSettings;
-  try {
-    settings = <common.UserSettings>JSON.parse(fs.readFileSync(settingsPath, 'utf8') || '{}');
-  }
-  catch (e) {
-    console.log(e);
-    return false;
+  if (fs.existsSync(settingsPath)) {
+    try {
+      settings = <common.UserSettings>JSON.parse(fs.readFileSync(settingsPath, 'utf8') || '{}');
+    }
+    catch (e) {
+      console.log(e);
+      return false;
+    }
   }
   settings[key] = value;
 
   try {
     var settingsString = JSON.stringify(settings);
     var writeFunc = asynchronous ? fs.writeFile : fs.writeFileSync;
-    writeFunc(settingsPath, settingsString);
+    if (ensureDirExists(path.normalize(settingsDir))) {
+      writeFunc(settingsPath, settingsString);
+    }
   }
   catch (e) {
     console.log(e);
