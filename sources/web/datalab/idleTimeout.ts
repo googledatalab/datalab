@@ -45,10 +45,25 @@ export function init() {
   }
   if (shutdownCommand) {
     let idleTimeoutStr = userSettings.idleTimeoutInterval;
-    logging.getLogger().debug('idleTimeoutStr from user settings: ' + idleTimeoutStr);
+    if (idleTimeoutStr === undefined) {
+      logging.getLogger().debug('idleTimeoutStr from user settings is undefined');
+    } else {
+      logging.getLogger().debug('idleTimeoutStr from user settings: ' + idleTimeoutStr);
+    }
     if (!idleTimeoutStr) {
       idleTimeoutStr = process.env.DATALAB_IDLE_TIMEOUT;
-      logging.getLogger().debug('idleTimeoutStr from env: ' + idleTimeoutStr);
+      if (idleTimeoutStr === undefined) {
+        logging.getLogger().debug('idleTimeoutStr from env is undefined');
+      } else {
+        logging.getLogger().debug('idleTimeoutStr from env: ' + idleTimeoutStr);
+      }
+    }
+    // For instances (actually, PDs) created before idle-timeout was implemented,
+    // the user's settings file may not have a value for idleTimeoutInterval.
+    // In this case, we set it to 0s to continue using the the no-idle-timeout
+    // behavior that was in place when that PD was created.
+    if (idleTimeoutStr === undefined) {
+      idleTimeoutStr = '0s';
     }
     setIdleTimeoutInterval(idleTimeoutStr);
   } else {

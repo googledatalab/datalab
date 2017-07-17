@@ -118,8 +118,54 @@ function copyDefaultUserSettings(userId: string) {
   const defaultUserSettingsPath = path.join(__dirname, 'config', DEFAULT_USER_SETTINGS_FILE);
   console.log('Copying default settings: ' + defaultUserSettingsPath + ' to: ' + userSettingsPath);
   // Copy the default user settings file into user's directory.
-  const data = fs.readFileSync(defaultUserSettingsPath);
-  fs.writeFileSync(userSettingsPath, data);
+  const defaultUserSettings = fs.readFileSync(defaultUserSettingsPath, {encoding: 'utf8'});
+  const initialUserSettings = process.env.DATALAB_INITIAL_USER_SETTINGS;
+  const mergedUserSettings : string = initialUserSettings ?
+      mergeUserSettings(defaultUserSettings, initialUserSettings) : defaultUserSettings;
+  fs.writeFileSync(userSettingsPath, mergedUserSettings);
+  // writeFileSync does not return a status; let's see if it wrote a file.
+  if (!fs.existsSync(userSettingsPath)) {
+    console.log('Failed to write new user settings file ' + userSettingsPath);
+  }
+}
+
+/**
+ * Merges two sets of user settings, giving priority to the second.
+ * Exported for testing.
+ */
+export function mergeUserSettings(defaultUserSettings: string, initialUserSettings: string): string {
+  let parsedDefaultUserSettings;
+  try {
+    if (defaultUserSettings) {
+      parsedDefaultUserSettings = JSON.parse(defaultUserSettings)
+    } else {
+      parsedDefaultUserSettings = {};
+    }
+  } catch (e) {
+    // File is corrupt, or a developer has updated the defaults file with an error
+    console.log('Error parsing default user settings:', e);
+    // We can't merge here, and this will probably cause problems down the line, but
+    // this should not happen, so hopefully the developer will see this and fix
+    // the default settings file.
+    return defaultUserSettings;
+  }
+
+  let parsedInitialUserSettings;
+  try {
+    if (initialUserSettings) {
+      parsedInitialUserSettings = JSON.parse(initialUserSettings)
+    } else {
+      parsedInitialUserSettings = {}
+    }
+  } catch (e) {
+    // The user's initial settings are not valid, we will ignore them.
+    console.log('Error parsing initial user settings:', e);
+    return defaultUserSettings;
+  }
+
+  // Override the default settings with the specified initial settings
+  const merged = {...parsedDefaultUserSettings, ...parsedInitialUserSettings};
+  return JSON.stringify(merged);
 }
 
 /**
@@ -160,6 +206,11 @@ function ensureDirExists(fullPath: string): boolean {
     return false;
   }
   fs.mkdirSync(fullPath);
+  // mkdirSync doesn't return a status; let's see if it actually worked
+  if (!fs.existsSync(fullPath)) {
+    console.log('Failed to create directory ' + fullPath);
+    return false;
+  }
   return true;
 }
 
@@ -172,33 +223,45 @@ function ensureDirExists(fullPath: string): boolean {
  */
 export function updateUserSetting(userId: string, key: string, value: string,
                                   asynchronous: boolean = false): boolean {
-  var userDir = userManager.getUserDir(userId);
-  var settingsDir =  path.join(userDir, 'datalab', '.config');
+  var settingsDir = getUserConfigDir(userId);
   var settingsPath = path.join(settingsDir, SETTINGS_FILE);
+
+  // Start by ensuring the containing directory exists; if we can't do that,
+  // we can't do anything else.
+  try {
+    if (!ensureDirExists(path.normalize(settingsDir))) {
+      console.log('Can\'t create containing directory for user settings, update not done.');
+      return false;
+    }
+  }
+  catch (e) {
+    console.log('Error creating directory for user settings', e);
+    return false;
+  }
 
   if (!fs.existsSync(settingsPath)) {
     console.log('User settings file %s not found, copying default settings.', settingsPath);
     copyDefaultUserSettings(userId);
   }
+  if (!fs.existsSync(settingsPath)) {
+    console.log('User settings file still doesn\'t exist, update not done.');
+    return false;
+  }
 
   let settings: common.UserSettings;
-  if (fs.existsSync(settingsPath)) {
-    try {
-      settings = <common.UserSettings>JSON.parse(fs.readFileSync(settingsPath, 'utf8') || '{}');
-    }
-    catch (e) {
-      console.log(e);
-      return false;
-    }
+  try {
+    settings = <common.UserSettings>JSON.parse(fs.readFileSync(settingsPath, 'utf8') || '{}');
+  }
+  catch (e) {
+    console.log(e);
+    return false;
   }
   settings[key] = value;
 
   try {
     var settingsString = JSON.stringify(settings);
     var writeFunc = asynchronous ? fs.writeFile : fs.writeFileSync;
-    if (ensureDirExists(path.normalize(settingsDir))) {
-      writeFunc(settingsPath, settingsString);
-    }
+    writeFunc(settingsPath, settingsString);
   }
   catch (e) {
     console.log(e);
