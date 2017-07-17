@@ -275,7 +275,7 @@ function uncheckedRequestHandler(request: http.ServerRequest, response: http.Ser
       urlpath.indexOf('/oauthcallback') == 0) {
     // Start or return from auth flow.
     auth.handleAuthFlow(request, response, parsed_url, appSettings);
-  } else if (isStaticResource(urlpath)) {
+  } else if (!reverseProxy.isReverseProxyRequest(request) && isStaticResource(urlpath)) {
     staticHandler(request, response);
   } else {
     handleRequest(request, response, urlpath);
