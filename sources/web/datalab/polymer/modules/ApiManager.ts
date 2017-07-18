@@ -144,6 +144,18 @@ class ApiManager {
   static xsrfToken = '';
 
   /**
+   * Current connection status. Set to the last connection status.
+   */
+  static isConnected = true;
+
+  /**
+   * Handlers for connected/disconnected status. These will be called when the
+   * isConnected property changes value.
+   */
+  static connectedHandler: Function;
+  static disconnectedHandler: Function;
+
+  /**
    * Returns a list of currently running sessions, each implementing the Session interface
    */
   static listSessionsAsync(): Promise<Array<Session>> {
@@ -431,16 +443,28 @@ class ApiManager {
       request.onreadystatechange = () => {
         if (request.readyState === 4) {
           if (request.status === successCode) {
-            Utils.connectionSucceeded();
+
+            // If this is the first success after failures, call the connected handler
+            if (!ApiManager.isConnected && ApiManager.connectedHandler) {
+              ApiManager.connectedHandler();
+            }
+            ApiManager.isConnected = true;
+
             try {
               resolve(request.responseText);
             } catch (e) {
               reject(e);
             }
           } else {
+
+            // If this is an unexpected failure, call the disconnected handler
             if (!failureCodes || failureCodes.indexOf(request.readyState) > -1) {
-              Utils.connectionFailed();
+              if (ApiManager.isConnected && ApiManager.disconnectedHandler) {
+                ApiManager.disconnectedHandler();
+              }
+              ApiManager.isConnected = false;
             }
+
             reject(request.responseText);
           }
         }
