@@ -113,3 +113,27 @@ class Utils {
   }
 
 }
+
+/**
+ * A custom even class that signals a notification should be shown with a message,
+ * or hidden. The event can be fired on any element in the DOM tree, and will bubble up.
+ * @param message notification message to show
+ * @param show whether the notification toast should be shown or hidden. Default true.
+ * @param sticky whether the notification should stick around until dismissed. Default false.
+ */
+class NotificationEvent extends CustomEvent {
+  constructor(message: string = '', show: boolean = true, sticky: boolean = false) {
+
+    const eventInit = {
+      bubbles: true,
+      composed: true, // Needed to pierce the shadow DOM boundaries
+      detail: {
+        show: show,
+        sticky: sticky,
+        message: message,
+      },
+    }
+
+    super('notification', eventInit);
+  }
+}

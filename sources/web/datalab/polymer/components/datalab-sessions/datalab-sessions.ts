@@ -118,11 +118,7 @@ class SessionsElement extends Polymer.Element {
           self._sessionList = newList;
           this._drawSessionList();
         }
-      }, () => {
-        // TODO: [yebrahim] Add dummy data here when debugging is enabled to allow for
-        // fast UI iteration using `polymer serve`.
-        console.log('Error getting list of sessions.');
-      })
+      }, () => console.log('Error getting list of sessions.'))
       .then(() => {
         this._fetching = false;
       });

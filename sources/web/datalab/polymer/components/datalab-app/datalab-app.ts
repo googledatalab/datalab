@@ -55,6 +55,22 @@ class DatalabAppElement extends Polymer.Element {
 
     // Will be called after the custom element is done rendering.
     window.addEventListener('WebComponentsReady', this._boundResizeHandler, true);
+
+    ApiManager.disconnectedHandler = () => {
+      this.showNotification('Failed to connect to the server.', true /*sticky*/);
+    }
+    ApiManager.connectedHandler = () => {
+      this.hideNotification();
+    }
+
+    // Handle notification events bubbled up from children.
+    this.addEventListener('notification', (e: NotificationEvent) => {
+      if (e.detail.show) {
+        this.showNotification(e.detail.message, e.detail.sticky);
+      } else {
+        this.hideNotification();
+      }
+    });
   }
 
   static get is() { return 'datalab-app'; }
@@ -122,6 +138,29 @@ class DatalabAppElement extends Polymer.Element {
     const selectedPage = this.$.pages.selectedItem;
     if (selectedPage && selectedPage._resizeHandler) {
       selectedPage._resizeHandler();
+    }
+  }
+
+  /**
+   * Shows a notification toast at the bottom of the page with the given message.
+   * @param message message to show in the notification toast
+   * @param sticky whether the toast should stick around until explicitly dismissed in code
+   */
+  showNotification(message: string, sticky?: boolean) {
+    this.$.notificationToast.close();
+    this.$.notificationToast.text = message;
+    if (sticky) {
+      this.$.notificationToast.duration = 0;
+    }
+    this.$.notificationToast.open();
+  }
+
+  /**
+   * Hides the notification toast if it's open.
+   */
+  hideNotification() {
+    if (this.$.notificationToast.opened) {
+      this.$.notificationToast.close();
     }
   }
 
