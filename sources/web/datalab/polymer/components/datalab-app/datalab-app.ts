@@ -63,6 +63,14 @@ class DatalabAppElement extends Polymer.Element {
       this.hideNotification();
     }
 
+    // Handle notification events bubbled up from children.
+    this.addEventListener('notification', (e: NotificationEvent) => {
+      if (e.detail.show) {
+        this.showNotification(e.detail.message, e.detail.sticky);
+      } else {
+        this.hideNotification();
+      }
+    });
   }
 
   static get is() { return 'datalab-app'; }
