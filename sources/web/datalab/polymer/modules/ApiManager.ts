@@ -152,8 +152,8 @@ class ApiManager {
    * Handlers for connected/disconnected status. These will be called when the
    * isConnected property changes value.
    */
-  static connectedHandler: Function;
-  static disconnectedHandler: Function;
+  static connectedHandler: () => void;
+  static disconnectedHandler: () => void;
 
   /**
    * Returns a list of currently running sessions, each implementing the Session interface
