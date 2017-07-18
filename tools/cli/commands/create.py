@@ -14,6 +14,7 @@
 
 """Methods for implementing the `datalab create` command."""
 
+import json
 import os
 import subprocess
 import tempfile
@@ -197,6 +198,8 @@ spec:
           value: '{{"enableAutoGCSBackups": {1}, "consoleLogLevel": "{2}" }}'
         - name: DATALAB_GIT_AUTHOR
           value: '{3}'
+        - name: DATALAB_INITIAL_USER_SETTINGS
+          value: '{4}'
       volumeMounts:
         - name: content
           mountPath: /content
@@ -275,6 +278,17 @@ def flags(parser):
         dest='disk_size_gb',
         default=_DATALAB_DEFAULT_DISK_SIZE_GB,
         help='size of the persistent disk in GB.')
+
+    parser.add_argument(
+        '--idle-timeout',
+        dest='idle_timeout',
+        default=None,
+        help=(
+            'interval after which an idle Datalab instance will shut down.'
+            '\n\n'
+            'You can specify a mix of days, hours, minutes and seconds\n'
+            'using those names or d, h, m and s, for example "1h 30m".\n'
+            'Specify 0s to disable.'))
 
     parser.add_argument(
         '--machine-type',
@@ -579,11 +593,14 @@ def run(args, gcloud_compute, gcloud_repos,
         cmd.extend(['--zone', args.zone])
 
     enable_backups = "false" if args.no_backups else "true"
+    idle_timeout = args.idle_timeout
     console_log_level = args.log_level or "warn"
     user_email = args.for_user or email
     service_account = args.service_account or "default"
     # We have to escape the user's email before using it in the YAML template.
     escaped_email = user_email.replace("'", "''")
+    initial_user_settings = json.dumps({"idleTimeoutInterval": idle_timeout}) \
+        if idle_timeout else ''
     with tempfile.NamedTemporaryFile(delete=False) as startup_script_file, \
             tempfile.NamedTemporaryFile(delete=False) as user_data_file, \
             tempfile.NamedTemporaryFile(delete=False) as manifest_file, \
@@ -597,7 +614,7 @@ def run(args, gcloud_compute, gcloud_repos,
             manifest_file.write(
                 _DATALAB_CONTAINER_SPEC.format(
                     args.image_name, enable_backups,
-                    console_log_level, escaped_email))
+                    console_log_level, escaped_email, initial_user_settings))
             manifest_file.close()
             for_user_file.write(user_email)
             for_user_file.close()
