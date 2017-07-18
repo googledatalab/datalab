@@ -506,13 +506,17 @@ class FilesElement extends Polymer.Element {
         // Only if the dialog has been confirmed with some user input, rename the
         // newly created file. Then if that is successful, reload the file list
         if (closeResult.confirmed && closeResult.userInput) {
-          let newName = this.currentPath + '/' + closeResult.userInput;
+          let newName = closeResult.userInput;
           // Make sure the name ends with .ipynb for notebooks for convenience
           if (type === 'notebook' && !newName.endsWith('.ipynb')) {
             newName += '.ipynb';
           }
-          return ApiManager.createNewItem(type, newName)
-            .then(() => this._fetchFileList());
+          return ApiManager.createNewItem(type, this.currentPath + '/' + newName)
+            .then(() => this._fetchFileList())
+            .then(() => {
+              // Dispatch a success notification
+              this.dispatchEvent(new NotificationEvent('Created ' + newName+ '.'));
+            });
         } else {
           return Promise.resolve(null);
         }
@@ -560,7 +564,13 @@ class FilesElement extends Polymer.Element {
           if (closeResult.confirmed && closeResult.userInput) {
             const newName = this.currentPath + '/' + closeResult.userInput;
             return ApiManager.renameItem(selectedObject.path, newName)
-              .then(() => this._fetchFileList());
+              .then(() => this._fetchFileList())
+              .then(() => {
+                // Dispatch a success notification
+                const message = 'Renamed ' + selectedObject.name +
+                    ' to ' + closeResult.userInput + '.';
+                this.dispatchEvent(new NotificationEvent(message));
+              });
               // TODO: [yebrahim] Re-select the renamed item after refresh
           } else {
             return Promise.resolve(null);
@@ -625,7 +635,12 @@ class FilesElement extends Polymer.Element {
             // TODO: [yebrahim] If at least one delete fails, _fetchFileList will never be called,
             // even if some other deletes completed.
             return Promise.all(deletePromises)
-              .then(() => this._fetchFileList());
+              .then(() => this._fetchFileList())
+              .then(() => {
+                // Dispatch a success notification
+                const message = 'Deleted ' + num + (num === 1 ? ' file.' : 'files.');
+                this.dispatchEvent(new NotificationEvent(message));
+              });
           } else {
             return Promise.resolve(null);
           }
@@ -674,9 +689,17 @@ class FilesElement extends Polymer.Element {
       return Utils.showDialog(DirectoryPickerDialogElement, options)
         .then((closeResult: DirectoryPickerDialogCloseResult) => {
           if (closeResult.confirmed) {
-            const newPath = closeResult.directoryPath;
+            let newPath = closeResult.directoryPath;
             return ApiManager.copyItem(selectedObject.path, newPath)
-              .then(() => this._fetchFileList());
+              .then((newItem: JupyterFile) => {
+                newPath = newItem.path;
+                return this._fetchFileList();
+              })
+              .then(() => {
+                // Dispatch a success notification
+                const message = 'Copied ' + selectedObject.path + ' to ' + newPath;
+                this.dispatchEvent(new NotificationEvent(message));
+              });
           } else {
             return Promise.resolve(null);
           }
@@ -708,10 +731,18 @@ class FilesElement extends Polymer.Element {
       return Utils.showDialog(DirectoryPickerDialogElement, options)
         .then((closeResult: DirectoryPickerDialogCloseResult) => {
           if (closeResult.confirmed) {
-            const newPath = closeResult.directoryPath;
+            let newPath = closeResult.directoryPath;
             // Moving is renaming.
             return ApiManager.renameItem(selectedObject.path, newPath + '/' + selectedObject.name)
-              .then(() => this._fetchFileList());
+              .then((newItem: JupyterFile) => {
+                newPath = newItem.path;
+                return this._fetchFileList();
+              })
+              .then(() => {
+                // Dispatch a file created notification
+                const message = 'Moved ' + selectedObject.path + ' to ' + newPath;
+                this.dispatchEvent(new NotificationEvent(message));
+              });
           } else {
             return Promise.resolve(null);
           }

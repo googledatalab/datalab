@@ -307,6 +307,7 @@ class ApiManager {
     const xhrOptions: XhrOptions = {
       method: 'DELETE',
       successCode: 204,
+      failureCodes: [400],
     };
 
     return ApiManager.sendRequestAsync(path, xhrOptions);
