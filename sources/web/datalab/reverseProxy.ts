@@ -20,6 +20,7 @@
 import http = require('http');
 import httpProxy = require('http-proxy');
 import logging = require('./logging');
+import url = require('url');
 
 var appSettings: common.AppSettings;
 var proxy: httpProxy.ProxyServer = httpProxy.createProxyServer(null);
@@ -39,6 +40,14 @@ function getPort(url: string) {
     }
   }
   return null;
+}
+
+/**
+ * Returns true iff the request should be served by the reverse proxy.
+ */
+export function isReverseProxyRequest(request: http.ServerRequest) {
+  var urlpath = url.parse(request.url, true).pathname;
+  return !!getRequestPort(request, urlpath);
 }
 
 /**
