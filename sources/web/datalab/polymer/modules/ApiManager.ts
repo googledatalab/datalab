@@ -205,6 +205,7 @@ class ApiManager {
     const xhrOptions: XhrOptions = {
       method: 'PUT',
       successCode: 201,
+      failureCodes: [409],
       parameters: JSON.stringify(model),
     };
     const requestPath = ApiManager.contentApiUrl + '/' + model.path + '/' + model.name;
