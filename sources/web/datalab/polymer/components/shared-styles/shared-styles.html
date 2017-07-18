@@ -39,6 +39,15 @@ the License.
         opacity: 0.1;
         margin: 0px;
       }
+      p {
+        margin: 0px;
+      }
+      .mono {
+        font-family: monospace;
+        white-space: pre-line;
+        background-color: var(--secondary-bg-color);
+        padding: 5px;
+      }
       .dialog-title {
         background-color: var(--secondary-bg-color);
         border-bottom: 1px solid var(--border-color);
@@ -47,6 +56,11 @@ the License.
         flex: 0 0 20px;
         margin: 0px;
         padding: 15px; /*Total height: 51px*/
+      }
+      .dialog-content {
+        flex-grow: 1;
+        margin: 0px;
+        padding: 20px;
       }
       .dialog-buttons {
         direction: rtl;

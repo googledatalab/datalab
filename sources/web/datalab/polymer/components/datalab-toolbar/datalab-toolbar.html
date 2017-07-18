@@ -71,11 +71,6 @@ the License.
         display: flex;
         flex-direction: column;
       }
-      .dialog-content {
-        flex-grow: 1;
-        margin: 0px;
-        padding: 0px;
-      }
       .account-dropdown {
         background-color: var(--primary-bg-color);
         color: var(--primary-fg-color);
@@ -88,6 +83,14 @@ the License.
         max-width: 300px;
         box-shadow: -3px 3px 10px -3px rgba(0, 0, 0, 0.3);
         z-index: 3;
+      }
+      .link-list > div {
+        margin: 5px;
+        width: 250px;
+      }
+      .help-icon {
+        height: 15px;
+        vertical-align: text-top;
       }
     </style>
 
@@ -121,7 +124,48 @@ the License.
     <!--Info dialog. This shows centered in the middle of the window-->
     <paper-dialog id="infoDialog" class="dialog" with-backdrop>
       <div class="dialog-title">Info</div>
-      <div class="dialog-content"></div>
+      <div class="dialog-content">
+        <div class="modal-body">
+          <p>Interactive notebooks, with Python and SQL on Google Cloud Platform.</p>
+          <p>Explore, transform, visualize and process data using BigQuery and Google Cloud Storage.</p>
+
+          <br>
+
+          <div class="mono">Version: {{version}}
+            Based on Jupyter (formerly IPython) 4
+          </div>
+
+          <h3>More Information</h3>
+
+          <div class="link-list">
+            <div><a href="https://cloud.google.com" target="_blank">
+              <iron-icon icon="open-in-new" class="help-icon"></iron-icon>
+              Product information
+            </a></div>
+            <div><a href="https://github.com/googledatalab/datalab" target="_blank">
+              <iron-icon icon="open-in-new" class="help-icon"></iron-icon>
+              Project on GitHub
+            </a></div>
+            <div><a href="http://localhost:8081/static/about.txt" target="_blank">
+              <iron-icon icon="open-in-new" class="help-icon"></iron-icon>
+              License and software information
+            </a></div>
+            <div><a href="https://cloud.google.com/terms/" target="_blank">
+              <iron-icon icon="open-in-new" class="help-icon"></iron-icon>
+              Terms of Service
+            </a></div>
+            <div><a href="http://www.google.com/intl/en/policies/" target="_blank">
+              <iron-icon icon="open-in-new" class="help-icon"></iron-icon>
+              Privacy Policy
+            </a></div>
+            <!-- TODO: Make this button do stuff -->
+            <div><a href="" target="_blank">
+              <iron-icon icon="open-in-new" class="help-icon"></iron-icon>
+              Restart Server
+            </a></div>
+          </div>
+        </div>
+      </div>
       <hr>
       <div class="dialog-buttons">
         <paper-button dialog-dismiss raised>Close</paper-button>

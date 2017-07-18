@@ -20,7 +20,21 @@
  */
 class ToolbarElement extends Polymer.Element {
 
+  /**
+   * The current Datalab version string.
+   */
+  public version: string;
+
   static get is() { return "datalab-toolbar"; }
+
+  static get properties() {
+    return {
+      version: {
+        type: String,
+        value: '',
+      },
+    };
+  }
 
   ready() {
     super.ready();
@@ -28,6 +42,9 @@ class ToolbarElement extends Polymer.Element {
     if (authPanel) {
       authPanel.addEventListener('signInOutDone', this._closeAccountDropdown.bind(this));
     }
+
+    SettingsManager.getAppSettingsAsync()
+      .then((settings: common.AppSettings) => this.version = settings.versionId);
   }
 
   /**
