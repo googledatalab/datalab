@@ -125,18 +125,27 @@ class DatalabAppElement extends Polymer.Element {
     }
   }
 
-  showNotification(message: string, isError?: boolean, sticky?: boolean) {
-    this.$.toast.close();
-    this.$.toast.text = message;
-    this.$.toast.classList = isError ? ['error-toast'] : [];
+  /**
+   * Shows a notification toast at the bottom of the page with the given message.
+   * @param message message to show in the notification toast
+   * @param sticky whether the toast should stick around until explicitly dismissed in code
+   */
+  showNotification(message: string, sticky?: boolean) {
+    this.$.connectionToast.close();
+    this.$.connectionToast.text = message;
     if (sticky) {
-      this.$.toast.duration = 0;
+      this.$.connectionToast.duration = 0;
     }
-    this.$.toast.open();
+    this.$.connectionToast.open();
   }
 
+  /**
+   * Hides the notification toast if it's open.
+   */
   hideNotification() {
-    this.$.toast.close();
+    if (this.$.connectionToast.opened) {
+      this.$.connectionToast.close();
+    }
   }
 
 }

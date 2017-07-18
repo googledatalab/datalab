@@ -112,11 +112,17 @@ class Utils {
     }
   }
 
+  /**
+   * Called when an API call fails, so that a connection error message can be shown.
+   */
   static connectionFailed() {
     const host = <DatalabAppElement>document.querySelector('datalab-app');
-    host.showNotification('Failed to connect to the server.', true /*isError*/, true /*sticky*/);
+    host.showNotification('Failed to connect to the server.', true /*sticky*/);
   }
 
+  /**
+   * Called when an API call succeeds, so that the connection error message can be hidden.
+   */
   static connectionSucceeded() {
     const host = <DatalabAppElement>document.querySelector('datalab-app');
     host.hideNotification();
