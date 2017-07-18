@@ -118,8 +118,46 @@ function copyDefaultUserSettings(userId: string) {
   const defaultUserSettingsPath = path.join(__dirname, 'config', DEFAULT_USER_SETTINGS_FILE);
   console.log('Copying default settings: ' + defaultUserSettingsPath + ' to: ' + userSettingsPath);
   // Copy the default user settings file into user's directory.
-  const data = fs.readFileSync(defaultUserSettingsPath);
-  fs.writeFileSync(userSettingsPath, data);
+  const defaultUserSettings = fs.readFileSync(defaultUserSettingsPath, {encoding: 'utf8'});
+  const initialUserSettings = process.env.DATALAB_INITIAL_USER_SETTINGS;
+  const mergedUserSettings : string = initialUserSettings ?
+      mergeUserSettings(defaultUserSettings, initialUserSettings) : defaultUserSettings;
+  fs.writeFileSync(userSettingsPath, mergedUserSettings);
+  // writeFileSync does not return a status; let's see if it wrote a file.
+  if (!fs.existsSync(userSettingsPath)) {
+    console.log('Failed to write new user settings file ' + userSettingsPath);
+  }
+}
+
+/**
+ * Merges two sets of user settings, giving priority to the second.
+ * Exported for testing.
+ */
+export function mergeUserSettings(defaultUserSettings: string, initialUserSettings: string): string {
+  let parsedDefaultUserSettings;
+  try {
+    parsedDefaultUserSettings = JSON.parse(defaultUserSettings || '{}')
+  } catch (e) {
+    // File is corrupt, or a developer has updated the defaults file with an error
+    console.log('Error parsing default user settings:', e);
+    // We can't merge here, and this will probably cause problems down the line, but
+    // this should not happen, so hopefully the developer will see this and fix
+    // the default settings file.
+    return defaultUserSettings;
+  }
+
+  let parsedInitialUserSettings;
+  try {
+    parsedInitialUserSettings = JSON.parse(initialUserSettings || '{}')
+  } catch (e) {
+    // The user's initial settings are not valid, we will ignore them.
+    console.log('Error parsing initial user settings:', e);
+    return defaultUserSettings;
+  }
+
+  // Override the default settings with the specified initial settings
+  const merged = {...parsedDefaultUserSettings, ...parsedInitialUserSettings};
+  return JSON.stringify(merged);
 }
 
 /**
