@@ -33,6 +33,8 @@ var METADATA_FILE = 'metadata.json';
 var BASE_PATH_FILE = 'basePath.json';
 const IDLE_TIMEOUT_KEY = 'idleTimeoutInterval';
 
+let lastUpdateUserSettingPromise = Promise.resolve(false);
+
 interface Metadata {
   instanceId: string;
 }
@@ -182,7 +184,8 @@ export function loadUserSettings(userId: string): common.UserSettings {
   }
 }
 
-function ensureDirExists(fullPath: string): boolean {
+// Exported for testing
+export function ensureDirExists(fullPath: string): boolean {
   if (path.dirname(fullPath) == fullPath) {
     // This should only happen once we hit the root directory
     return true;
@@ -202,47 +205,56 @@ function ensureDirExists(fullPath: string): boolean {
 }
 
 /**
- * Updates a single configuration setting for the user.
+ * Asynchronously updates the user's settings file with the new value for the given key.
+ * If there is already an asynchronous update in progress, this request is queeud up for
+ * execution after the current update finishes.
  *
  * @param key the name of the setting to update.
  * @param value the updated value of the setting.
- * @returns true iff the update was applied.
+ * @returns Promise that resolves to true if the write succeeded, false if there was no change
+ *     and thus the write was not done, rejects if the file read or write fails.
  */
-export function updateUserSetting(userId: string, key: string, value: string,
-                                  asynchronous: boolean = false): boolean {
-  var userDir = userManager.getUserDir(userId);
-  var settingsDir =  path.join(userDir, 'datalab', '.config');
+export function updateUserSettingAsync(userId: string, key: string, value: string): Promise<boolean> {
+  var settingsDir = this.getUserConfigDir(userId);
   var settingsPath = path.join(settingsDir, SETTINGS_FILE);
 
-  if (!fs.existsSync(settingsPath)) {
-    console.log('User settings file %s not found, copying default settings.', settingsPath);
-    copyDefaultUserSettings(userId);
-  }
+  const doUpdate = () => {
+    if (!fs.existsSync(settingsPath)) {
+      console.log('User settings file %s not found, copying default settings.', settingsPath);
+      this.copyDefaultUserSettings(userId);
+    }
 
-  let settings: common.UserSettings;
-  if (fs.existsSync(settingsPath)) {
+    let settings: common.UserSettings;
+    if (fs.existsSync(settingsPath)) {
+      try {
+        settings = <common.UserSettings>JSON.parse(fs.readFileSync(settingsPath, 'utf8') || '{}');
+      }
+      catch (e) {
+        console.log(e);
+        throw new Error('Failed to read settings');
+      }
+    }
+    if (settings[key] == value) {
+      return false;   // No change was required
+    }
+    settings[key] = value;
+
     try {
-      settings = <common.UserSettings>JSON.parse(fs.readFileSync(settingsPath, 'utf8') || '{}');
+      var settingsString = JSON.stringify(settings);
+      if (this.ensureDirExists(path.normalize(settingsDir))) {
+        fs.writeFileSync(settingsPath, settingsString);
+      }
     }
     catch (e) {
       console.log(e);
-      return false;
+      throw new Error('Failed to write settings');
     }
+    return true;    // File was updated
   }
-  settings[key] = value;
 
-  try {
-    var settingsString = JSON.stringify(settings);
-    var writeFunc = asynchronous ? fs.writeFile : fs.writeFileSync;
-    if (ensureDirExists(path.normalize(settingsDir))) {
-      writeFunc(settingsPath, settingsString);
-    }
-  }
-  catch (e) {
-    console.log(e);
-    return false;
-  }
-  return true;
+  // Execute our update as soon as all the other updates are done being executed.
+  lastUpdateUserSettingPromise = lastUpdateUserSettingPromise.catch().then(doUpdate);
+  return lastUpdateUserSettingPromise;
 }
 
 /**
@@ -354,16 +366,19 @@ function formHandler(userId: string, formData: any, request: http.ServerRequest,
     response.end('dryRun');
     return;
   }
-  if (updateUserSetting(userId, key, value)) {
+
+  updateUserSettingAsync(userId, key, value).then(() => {
     if ('redirect' in formData) {
       response.writeHead(302, { 'Location': formData['redirect'] });
     } else {
       response.writeHead(200, { 'Content-Type': 'text/plain' });
     }
-  } else {
+    response.end();
+  }, (errorMessage) => {
     response.writeHead(500, { 'Content-Type': 'text/plain' });
-  }
-  response.end();
+    response.end();
+  });
+
   if (key == IDLE_TIMEOUT_KEY) {
     idleTimeout.setIdleTimeoutInterval(value);
   }
