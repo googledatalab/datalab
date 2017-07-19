@@ -41,6 +41,7 @@ cd ../..
 # Compile the nodejs server
 tsc --module commonjs --noImplicitAny \
     --outDir $WEB_DIR \
+    --target es6 \
     ./datalab/*.ts
 
 rsync -avpq ./datalab/config/ $WEB_DIR/config
