@@ -174,7 +174,7 @@ class FilesElement extends Polymer.Element {
     }
 
     // For a small file/directory picker, we don't need to show the status.
-    (<ItemListElement> this.$.files).columns = this.small ? ['Name'] : ['Name', 'Status'];
+    (this.$.files as ItemListElement).columns = this.small ? ['Name'] : ['Name', 'Status'];
   }
 
   disconnectedCallback() {
@@ -261,7 +261,7 @@ class FilesElement extends Polymer.Element {
    * the created list to the item-list to render.
    */
   _drawFileList() {
-    (<ItemListElement> this.$.files).rows = this._fileList.map((file) => {
+    (this.$.files as ItemListElement).rows = this._fileList.map((file) => {
       return {
         firstCol: file.name,
         icon: file.type === 'directory' ? 'folder' : 'editor:insert-drive-file',
@@ -300,7 +300,7 @@ class FilesElement extends Polymer.Element {
    * is selected, sets the selectedFile property to the selected file object.
    */
   _handleSelectionChanged() {
-    const selectedIndices = (<ItemListElement> this.$.files).selectedIndices;
+    const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
     if (selectedIndices.length === 1) {
       this.selectedFile = this._fileList[selectedIndices[0]];
     } else {
@@ -312,7 +312,7 @@ class FilesElement extends Polymer.Element {
    * Navigates to the path of the clicked breadcrumb.
    */
   _crumbClicked(e: MouseEvent) {
-    const target = <HTMLDivElement> e.target;
+    const target = e.target as HTMLDivElement;
     // Treat the home crumb differently since it's not part of the dom-repeat
     if (target.id === 'home-crumb') {
       this.currentPath = '';
@@ -391,8 +391,8 @@ class FilesElement extends Polymer.Element {
    * uses the ApiManager to save it on the backend.
    */
   async _upload() {
-    const inputElement = <HTMLInputElement> this.$.altFileUpload;
-    const files = [...<any> inputElement.files];
+    const inputElement = this.$.altFileUpload as HTMLInputElement;
+    const files = [...inputElement.files as any];
     const currentPath = this.currentPath;
     const uploadPromises: Array<Promise<any>> = [];
 
@@ -520,7 +520,7 @@ class FilesElement extends Polymer.Element {
    * Opens the selected item in the text editor.
    */
   _openSelectedInEditor() {
-    const filesElement = <ItemListElement> this.$.files;
+    const filesElement = this.$.files as ItemListElement;
     const selectedIndices = filesElement.selectedIndices;
     if (selectedIndices.length === 1) {
       const i = selectedIndices[0];
@@ -538,7 +538,7 @@ class FilesElement extends Polymer.Element {
    */
   _renameSelectedItem() {
 
-    const selectedIndices = (<ItemListElement> this.$.files).selectedIndices;
+    const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
     if (selectedIndices.length === 1) {
       const i = selectedIndices[0];
       const selectedObject = this._fileList[i];
@@ -577,7 +577,7 @@ class FilesElement extends Polymer.Element {
    */
   _deleteSelectedItems() {
 
-    const selectedIndices = (<ItemListElement> this.$.files).selectedIndices;
+    const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
     if (selectedIndices.length) {
       // Build friendly title and body messages that adapt to the number of items.
       const num = selectedIndices.length;
@@ -659,7 +659,7 @@ class FilesElement extends Polymer.Element {
    */
   _copySelectedItem() {
 
-    const selectedIndices = (<ItemListElement> this.$.files).selectedIndices;
+    const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
 
     if (selectedIndices.length === 1) {
       const i = selectedIndices[0];
@@ -693,7 +693,7 @@ class FilesElement extends Polymer.Element {
    */
   _moveSelectedItem() {
 
-    const selectedIndices = (<ItemListElement> this.$.files).selectedIndices;
+    const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
 
     if (selectedIndices.length === 1) {
       const i = selectedIndices[0];

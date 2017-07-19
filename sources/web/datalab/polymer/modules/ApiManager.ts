@@ -143,6 +143,18 @@ class ApiManager {
   public static readonly appSettingsUrl = '/api/settings';
 
   /**
+   * Current connection status. Set to the last connection status.
+   */
+  public static isConnected = true;
+
+  /**
+   * Handlers for connected/disconnected status. These will be called when the
+   * isConnected property changes value.
+   */
+  public static connectedHandler: () => void;
+  public static disconnectedHandler: () => void;
+
+  /**
    * A promise to return a basepath.
    */
   private static _basepathPromise: Promise<string>;
@@ -153,25 +165,13 @@ class ApiManager {
   private static _xsrfToken = '';
 
   /**
-   * Current connection status. Set to the last connection status.
-   */
-  static isConnected = true;
-
-  /**
-   * Handlers for connected/disconnected status. These will be called when the
-   * isConnected property changes value.
-   */
-  static connectedHandler: () => void;
-  static disconnectedHandler: () => void;
-
-  /**
    * Returns a list of currently running sessions, each implementing the Session interface
    */
   public static listSessionsAsync(): Promise<Session[]> {
     const xhrOptions: XhrOptions = {
       noCache: true,
     };
-    return <Promise<Session[]>> ApiManager.sendRequestAsync(this.sessionsApiUrl, xhrOptions);
+    return ApiManager.sendRequestAsync(this.sessionsApiUrl, xhrOptions) as Promise<Session[]>;
   }
 
   /**
@@ -202,8 +202,8 @@ class ApiManager {
     const xhrOptions: XhrOptions = {
       noCache: true,
     };
-    return <Promise<JupyterFile>> ApiManager.sendRequestAsync(this.contentApiUrl + '/' + path,
-                                                              xhrOptions);
+    return ApiManager.sendRequestAsync(this.contentApiUrl + '/' + path,
+                                       xhrOptions) as Promise<JupyterFile>;
   }
 
   /**
@@ -233,7 +233,7 @@ class ApiManager {
         if (file.type !== 'directory') {
           throw new Error('Can only list files in a directory. Found type: ' + file.type);
         }
-        return <JupyterFile[]> file.content;
+        return file.content as JupyterFile[];
       });
 
     const sessionsPromise: Promise<Session[]> = ApiManager.listSessionsAsync();
@@ -251,7 +251,7 @@ class ApiManager {
         files.forEach((file: ApiFile) => {
           file.status = runningPaths.indexOf(file.path) > -1 ? 'running' : '';
         });
-        return <ApiFile[]> files;
+        return files as ApiFile[];
       });
   }
 
@@ -297,8 +297,8 @@ class ApiManager {
   public static renameItem(oldPath: string, newPath: string) {
     oldPath = ApiManager.contentApiUrl + '/' + oldPath;
     const xhrOptions: XhrOptions = {
-      method: 'PATCH',
       failureCodes: [409],
+      method: 'PATCH',
       parameters: JSON.stringify({
         path: newPath
       }),
@@ -377,7 +377,7 @@ class ApiManager {
             // response will be JSON, which we can parse after removing the
             // prefix.
             response = response.substr(xssiPrefix.length);
-            const j = <XssiResponse> JSON.parse(response);
+            const j = JSON.parse(response) as XssiResponse;
             if (j.basepath) {
               // The response includes a basepath.
               // Check to ensure that the basepath doesn't have a trailing slash.
@@ -404,7 +404,7 @@ class ApiManager {
                     // We sent the token, so we should have a basepath.
                     // Make sure it doesn't have a trailing slash.
                     basePathResponse = basePathResponse.substr(xssiPrefix.length);
-                    const basepath = (<XssiResponse> JSON.parse(basePathResponse)).basepath;
+                    const basepath = (JSON.parse(basePathResponse) as XssiResponse).basepath;
                     return basepath.replace(/\/$/, '');
                   }
                 });

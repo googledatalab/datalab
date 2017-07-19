@@ -24,7 +24,7 @@ class AuthPanel extends Polymer.Element {
   private _projectInfo: string;
   private _signedIn: boolean;
   private _userInfo: string;
-  private _promptOnSignIn: boolean = false;
+  private _promptOnSignIn = false;
 
   static get is() { return 'auth-panel'; }
 

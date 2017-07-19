@@ -184,7 +184,7 @@ class ItemListElement extends Polymer.Element {
     if (this.disableSelection) {
       return;
     }
-    const target = <HTMLDivElement> e.target;
+    const target = e.target as HTMLDivElement;
     const index = this.$.list.indexForElement(target);
 
     // If shift key is pressed and we had saved the last selected index, select

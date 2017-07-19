@@ -100,7 +100,7 @@ class DatalabEditorElement extends Polymer.Element {
         // TODO: load the mode dynamically instead of starting out with python.
         let content = '';
         if (this._file) {
-          content = <string> this._file.content;
+          content = this._file.content as string;
         }
         this._editor = CodeMirror(this.$.editorContainer,
                                   {

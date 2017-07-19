@@ -61,7 +61,7 @@ class SessionsElement extends Polymer.Element {
   ready() {
     super.ready();
 
-    (<ItemListElement> this.$.sessions).columns = ['Session Path', 'Status'];
+    (this.$.sessions as ItemListElement).columns = ['Session Path', 'Status'];
 
     // load session list initially
     this._fetchSessionList();
@@ -88,7 +88,7 @@ class SessionsElement extends Polymer.Element {
       return;
     }
 
-    (<ItemListElement> this.$.sessions).rows = this._sessionList.map((session) => {
+    (this.$.sessions as ItemListElement).rows = this._sessionList.map((session) => {
       return {
         firstCol: session.notebook.path,
         icon: 'editor:insert-drive-file',
@@ -128,7 +128,7 @@ class SessionsElement extends Polymer.Element {
    * Calls the ApiManager to terminate the selected sessions.
    */
   _shutdownSelectedSessions() {
-    const selectedIndices = (<ItemListElement> this.$.sessions).selectedIndices;
+    const selectedIndices = (this.$.sessions as ItemListElement).selectedIndices;
     if (selectedIndices.length) {
       const shutdownPromises = selectedIndices.map((i: number) => {
         return ApiManager.shutdownSessionAsync(this._sessionList[i].id);
@@ -149,7 +149,7 @@ class SessionsElement extends Polymer.Element {
    * is selected, sets the selectedSession property to the selected session object.
    */
   _handleSelectionChanged() {
-    const selectedItems = (<ItemListElement> this.$.sessions).selectedIndices;
+    const selectedItems = (this.$.sessions as ItemListElement).selectedIndices;
     if (selectedItems.length === 1) {
       this.selectedSession = this._sessionList[selectedItems[0]];
     } else {

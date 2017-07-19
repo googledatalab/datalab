@@ -70,7 +70,7 @@ class DataElement extends Polymer.Element {
     super.ready();
 
     this._collectionsList = [];
-    const collectionsElement = <ItemListElement> this.$.collections;
+    const collectionsElement = this.$.collections as ItemListElement;
     if (collectionsElement) {
       collectionsElement.addEventListener('itemDoubleClick',
                                     this._collectionsDoubleClicked.bind(this));
@@ -79,7 +79,7 @@ class DataElement extends Polymer.Element {
     }
 
     this._tablesList = [];
-    const tablesElement = <ItemListElement> this.$.tables;
+    const tablesElement = this.$.tables as ItemListElement;
     if (tablesElement) {
       tablesElement.addEventListener('itemDoubleClick',
                                     this._tablesDoubleClicked.bind(this));
@@ -183,7 +183,7 @@ class DataElement extends Polymer.Element {
 
   _collectionsSelectionChanged() {
     console.log('== collection selection changed');
-    const selectedIndices = (<ItemListElement> this.$.collections).selectedIndices;
+    const selectedIndices = (this.$.collections as ItemListElement).selectedIndices;
     if (selectedIndices.length === 1) {
       this._showTablesForCollection(this._collectionsList[selectedIndices[0]]);
     } else {
@@ -197,7 +197,7 @@ class DataElement extends Polymer.Element {
 
   _tablesSelectionChanged() {
     console.log('== table selection changed');
-    const selectedIndices = (<ItemListElement> this.$.tables).selectedIndices;
+    const selectedIndices = (this.$.tables as ItemListElement).selectedIndices;
     if (selectedIndices.length === 1) {
       this._showDetailsForTable(this._tablesList[selectedIndices[0]]);
     } else {

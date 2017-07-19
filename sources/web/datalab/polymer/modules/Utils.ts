@@ -40,7 +40,7 @@ class Utils {
    */
   public static showDialog(dialogType: typeof BaseDialogElement, dialogOptions: DialogOptions):
                                                                   Promise<BaseDialogCloseResult> {
-    const dialog = <any> document.createElement(dialogType.is);
+    const dialog = document.createElement(dialogType.is) as any;
     document.body.appendChild(dialog);
 
     if (dialogOptions.title) {
@@ -94,13 +94,13 @@ class Utils {
     const basetypeTemplate = Polymer.DomModule.import(baseType, 'template');
     const subtypeTemplate = Polymer.DomModule.import(subType, 'template');
     // Clone the base template; we don't want to change it in-place
-    const stampedTemplate = <PolymerTemplate> basetypeTemplate.cloneNode(true);
+    const stampedTemplate = basetypeTemplate.cloneNode(true) as PolymerTemplate;
 
     // Insert this template's elements in the base class's #body
     const bodyElement = stampedTemplate.content.querySelector(baseRootElementSelector);
     if (bodyElement) {
       while (subtypeTemplate.content.children.length) {
-        const childNode = <HTMLElement> subtypeTemplate.content.firstElementChild;
+        const childNode = subtypeTemplate.content.firstElementChild as HTMLElement;
         bodyElement.insertAdjacentElement('beforeend', childNode);
       }
     }
@@ -129,17 +129,17 @@ class Utils {
  * @param sticky whether the notification should stick around until dismissed. Default false.
  */
 class NotificationEvent extends CustomEvent {
-  constructor(message: string = '', show: boolean = true, sticky: boolean = false) {
+  constructor(message = '', show = true, sticky = false) {
 
     const eventInit = {
       bubbles: true,
       composed: true, // Needed to pierce the shadow DOM boundaries
       detail: {
-        show: show,
-        sticky: sticky,
-        message: message,
+        message,
+        show,
+        sticky,
       },
-    }
+    };
 
     super('notification', eventInit);
   }

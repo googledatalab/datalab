@@ -89,7 +89,7 @@ class DetailsPaneElement extends Polymer.Element {
 
           // If this is a notebook, get the first two cells and render any markdown in them.
           if (file.type === 'notebook') {
-            const cells = (<JupyterNotebookModel> file.content).cells;
+            const cells = (file.content as JupyterNotebookModel).cells;
             if (cells.length === 0) {
               this.$.previewHtml.innerHTML = '';
               this._message = DetailsPaneElement._emptyNotebookMessage;
@@ -112,7 +112,7 @@ class DetailsPaneElement extends Polymer.Element {
           // If this is a text file, show the first N lines.
           } else if (this._isPlainTextFile(file)) {
 
-            const content = <string> file.content;
+            const content = file.content as string;
             if (content.trim() === '') {
               this.$.previewHtml.innerHTML = '';
               this._message = DetailsPaneElement._emptyFileMessage;
