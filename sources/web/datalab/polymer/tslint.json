@@ -1,0 +1,25 @@
+{
+  "defaultSeverity": "error",
+  "extends": ["tslint:recommended"],
+  "rules": {
+    "class-name": true,
+    "curly": true,
+    "eofline": true,
+    "indent": [true, "spaces", 2],
+    "max-line-length": {"options": [100], "severity": "warning"},
+    "member-ordering": [true, {"order": "fields-first"}],
+    "no-arg": true,
+    "no-console": {"severity": "warning"},
+    "no-construct": true,
+    "no-duplicate-variable": true,
+    "no-empty": true,
+    "no-reference": false,
+    "no-trailing-whitespace": true,
+    "no-unused-expression": true,
+    "quotemark": [true, "single"],
+    "semicolon": true,
+    "trailing-comma": true,
+    "typedef": true,
+    "variable-name": [true, "allow-leading-underscore"]
+  }
+}
