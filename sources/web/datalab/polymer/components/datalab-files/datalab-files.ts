@@ -229,11 +229,7 @@ class FilesElement extends Polymer.Element {
           this._fileList = newList;
           this._drawFileList();
         }
-      }, () => {
-        // TODO: [yebrahim] Add dummy data here when debugging is enabled to allow for
-        // fast UI iteration using `polymer serve`.
-        console.log('Error getting list of files.');
-      })
+      }, () => console.log('Error getting list of files.'))
       .then(() => {
         this._fetching = false;
       });

@@ -94,6 +94,7 @@ interface XhrOptions {
   errorCallback?: Function,
   parameters?: string | FormData,
   successCode?: number,
+  failureCodes?: number[],
   noCache?: boolean,
 }
 
@@ -141,6 +142,18 @@ class ApiManager {
    * XSRF token, if required, undefined until we call basepathApiUrl
    */
   static xsrfToken = '';
+
+  /**
+   * Current connection status. Set to the last connection status.
+   */
+  static isConnected = true;
+
+  /**
+   * Handlers for connected/disconnected status. These will be called when the
+   * isConnected property changes value.
+   */
+  static connectedHandler: () => void;
+  static disconnectedHandler: () => void;
 
   /**
    * Returns a list of currently running sessions, each implementing the Session interface
@@ -240,6 +253,7 @@ class ApiManager {
     const xhrOptions: XhrOptions = {
       method: 'POST',
       successCode: 201,
+      failureCodes: [409],
       parameters: JSON.stringify({
         type: type,
         ext: 'ipynb'
@@ -274,6 +288,7 @@ class ApiManager {
     oldPath = ApiManager.contentApiUrl + '/' + oldPath;
     const xhrOptions: XhrOptions = {
       method: 'PATCH',
+      failureCodes: [409],
       parameters: JSON.stringify({
         path: newPath
       }),
@@ -307,6 +322,7 @@ class ApiManager {
     const xhrOptions: XhrOptions = {
       method: 'POST',
       successCode: 201,
+      failureCodes: [409],
       parameters: JSON.stringify({
         copy_from: itemPath
       })
@@ -421,17 +437,34 @@ class ApiManager {
     const successCode = options.successCode || 200;
     const request = new XMLHttpRequest();
     const noCache = options.noCache || false;
+    const failureCodes = options.failureCodes;
 
     return new Promise((resolve, reject) => {
       request.onreadystatechange = () => {
         if (request.readyState === 4) {
           if (request.status === successCode) {
+
+            // If this is the first success after failures, call the connected handler
+            if (!ApiManager.isConnected && ApiManager.connectedHandler) {
+              ApiManager.connectedHandler();
+            }
+            ApiManager.isConnected = true;
+
             try {
               resolve(request.responseText);
             } catch (e) {
               reject(e);
             }
           } else {
+
+            // If this is an unexpected failure, call the disconnected handler
+            if (!failureCodes || failureCodes.indexOf(request.readyState) > -1) {
+              if (ApiManager.isConnected && ApiManager.disconnectedHandler) {
+                ApiManager.disconnectedHandler();
+              }
+              ApiManager.isConnected = false;
+            }
+
             reject(request.responseText);
           }
         }

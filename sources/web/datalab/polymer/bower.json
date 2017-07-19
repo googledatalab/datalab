@@ -18,6 +18,7 @@
     "paper-item": "PolymerElements/paper-item#^2.0.0",
     "paper-progress": "PolymerElements/paper-progress#^2.0.0",
     "paper-radio-group": "PolymerElements/paper-radio-group#^2.0.0",
+    "paper-toast": "PolymerElements/paper-toast#^2.0.0",
     "paper-tooltip": "PolymerElements/paper-tooltip#^2.0.0",
     "polymer": "Polymer/polymer#^2.0.1",
     "webcomponentsjs": "webcomponents/webcomponentsjs#^1.0.0-rc.9",

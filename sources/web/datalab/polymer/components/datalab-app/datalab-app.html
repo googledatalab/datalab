@@ -15,6 +15,7 @@ the License.
 <link rel="import" href="../../bower_components/app-route/app-location.html">
 <link rel="import" href="../../bower_components/app-route/app-route.html">
 <link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
 
 <link rel="import" href="../../components/datalab-sidebar/datalab-sidebar.html">
 <link rel="import" href="../../components/datalab-toolbar/datalab-toolbar.html">
@@ -78,9 +79,12 @@ the License.
       </div>
     </div>
 
+    <paper-toast id="notificationToast"></paper-toast>
+
   </template>
 </dom-module>
 
+<script src="../../modules/Utils.js"></script>
 <script src="../../modules/ApiManager.js"></script>
 <script src="../../modules/SettingsManager.js"></script>
 <script src="datalab-app.js"></script>
