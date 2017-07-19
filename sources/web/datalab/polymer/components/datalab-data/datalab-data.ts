@@ -16,14 +16,14 @@
 /// <reference path="../item-list/item-list.ts" />
 
 interface Collection {
-  name : string;
-  status : string;
-  tables? : Array<Table>;
+  name: string;
+  status: string;
+  tables?: Table[];
 }
 
 interface Table {
-  name : string;
-  status : string;
+  name: string;
+  status: string;
 }
 
 /**
@@ -33,15 +33,15 @@ interface Table {
 class DataElement extends Polymer.Element {
 
   /** The value the user can enter to filter the collections. */
-  //private _collectionsFilterValue : string;   //TODO(jimmc): uncomment when ready to use
+  // private _collectionsFilterValue : string;   //TODO(jimmc): uncomment when ready to use
 
   /** The value the user can enter to filter the tables. */
-  //private _tablesFilterValue : string;    //TODO(jimmc): uncomment when ready to use
+  // private _tablesFilterValue : string;    //TODO(jimmc): uncomment when ready to use
 
-  private _collectionsList : Array<Collection>;
-  private _tablesList : Array<Table>;
+  private _collectionsList: Collection[];
+  private _tablesList: Table[];
 
-  static get is() { return "datalab-data"; }
+  static get is() { return 'datalab-data'; }
 
   static get properties() {
     return {
@@ -49,19 +49,19 @@ class DataElement extends Polymer.Element {
         type: String,
         value: 'no-filter',
       },
+      _collectionsList: {
+        observer: '_renderCollectionsList',
+        type: Array,
+        value: () => [],
+      },
       _tablesFilterValue: {
         type: String,
         value: 'no-filter',
       },
-      _collectionsList: {
-        type: Array,
-        value: () => [],
-        observer: '_renderCollectionsList',
-      },
       _tablesList: {
+        observer: '_renderTablesList',
         type: Array,
         value: () => [],
-        observer: '_renderTablesList',
       },
     };
   }
@@ -70,7 +70,7 @@ class DataElement extends Polymer.Element {
     super.ready();
 
     this._collectionsList = [];
-    const collectionsElement = <ItemListElement>this.$.collections;
+    const collectionsElement = <ItemListElement> this.$.collections;
     if (collectionsElement) {
       collectionsElement.addEventListener('itemDoubleClick',
                                     this._collectionsDoubleClicked.bind(this));
@@ -79,7 +79,7 @@ class DataElement extends Polymer.Element {
     }
 
     this._tablesList = [];
-    const tablesElement = <ItemListElement>this.$.tables;
+    const tablesElement = <ItemListElement> this.$.tables;
     if (tablesElement) {
       tablesElement.addEventListener('itemDoubleClick',
                                     this._tablesDoubleClicked.bind(this));
@@ -91,7 +91,7 @@ class DataElement extends Polymer.Element {
   _generateFakeCollectionsListForTesting() {
     const collectionsList = [];
     const count = Math.floor(Math.random() * 20);
-    for (let i=0; i < count; i++) {
+    for (let i = 0; i < count; i++) {
       collectionsList.push(this._generateFakeCollectionForTesting());
     }
     return collectionsList;
@@ -108,7 +108,7 @@ class DataElement extends Polymer.Element {
   _generateFakeTablesListForTesting() {
     const tablesList = [];
     const count = Math.floor(Math.random() * 20);
-    for (let i=0; i < count; i++) {
+    for (let i = 0; i < count; i++) {
       tablesList.push(this._generateFakeTableForTesting());
     }
     return tablesList;
@@ -132,12 +132,12 @@ class DataElement extends Polymer.Element {
    * the created list to the item-list to render.
    */
   _renderCollectionsList() {
-    this.$.collections.rows = this._collectionsList.map(collection => {
+    this.$.collections.rows = this._collectionsList.map((collection) => {
       return {
         firstCol: collection.name,
-        secondCol: collection.status,
         icon: 'folder',
-        selected: false
+        secondCol: collection.status,
+        selected: false,
       };
     });
   }
@@ -167,12 +167,12 @@ class DataElement extends Polymer.Element {
    * the created list to the item-list to render.
    */
   _renderTablesList() {
-    this.$.tables.rows = this._tablesList.map(table => {
+    this.$.tables.rows = this._tablesList.map((table) => {
       return {
         firstCol: table.name,
-        secondCol: table.status,
         icon: 'file',
-        selected: false
+        secondCol: table.status,
+        selected: false,
       };
     });
   }
@@ -183,8 +183,8 @@ class DataElement extends Polymer.Element {
 
   _collectionsSelectionChanged() {
     console.log('== collection selection changed');
-      const selectedIndices = (<ItemListElement>this.$.collections).selectedIndices;
-    if (selectedIndices.length == 1) {
+    const selectedIndices = (<ItemListElement> this.$.collections).selectedIndices;
+    if (selectedIndices.length === 1) {
       this._showTablesForCollection(this._collectionsList[selectedIndices[0]]);
     } else {
       this._clearTablesList();
@@ -197,8 +197,8 @@ class DataElement extends Polymer.Element {
 
   _tablesSelectionChanged() {
     console.log('== table selection changed');
-    const selectedIndices = (<ItemListElement>this.$.tables).selectedIndices;
-    if (selectedIndices.length == 1) {
+    const selectedIndices = (<ItemListElement> this.$.tables).selectedIndices;
+    if (selectedIndices.length === 1) {
       this._showDetailsForTable(this._tablesList[selectedIndices[0]]);
     } else {
       this._clearTableDetails();

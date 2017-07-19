@@ -40,7 +40,7 @@ class DatalabAppElement extends Polymer.Element {
    * root pattern. This gets re-evaluated every time the current page
    * changes, and can be used to get the current active page's name.
    */
-  public routeData: Object;
+  public routeData: object;
 
   private _boundResizeHandler: EventListenerObject;
 
@@ -78,13 +78,13 @@ class DatalabAppElement extends Polymer.Element {
   static get properties() {
     return {
       page: {
+        observer: '_pageChanged',
         type: String,
         value: 'files',
-        observer: '_pageChanged',
       },
       rootPattern: String,
       routeData: Object,
-    }
+    };
   }
 
   static get observers() {
@@ -123,7 +123,7 @@ class DatalabAppElement extends Polymer.Element {
   _pageChanged(page: string) {
     // Build the path using the page name as suffix for directory
     // and file names.
-    const subpath = 'datalab-' + page
+    const subpath = 'datalab-' + page;
     const resolvedPageUrl = this.resolveUrl('../' + subpath + '/' + subpath + '.html');
     Polymer.importHref(resolvedPageUrl, undefined, undefined, true);
 
@@ -167,4 +167,3 @@ class DatalabAppElement extends Polymer.Element {
 }
 
 customElements.define(DatalabAppElement.is, DatalabAppElement);
-

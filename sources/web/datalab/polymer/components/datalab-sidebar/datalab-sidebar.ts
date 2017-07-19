@@ -24,15 +24,15 @@ class SidebarElement extends Polymer.Element {
    */
   public page: string;
 
-  static get is() { return "datalab-sidebar"; }
+  static get is() { return 'datalab-sidebar'; }
 
   static get properties() {
     return {
       page: {
         type: String,
-        value: "files",
+        value: 'files',
       },
-    }
+    };
   }
 }
 
