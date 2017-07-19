@@ -16,6 +16,7 @@ const fs = require('fs');
 
 const BASE = '../../build/web/nb/';
 const settings = require(BASE + 'settings');
+const userManager = require(BASE + 'userManager');
 
 describe('Unit tests', function() {
 describe('settings', function() {
@@ -52,7 +53,7 @@ describe('settings', function() {
 
   describe('updateUserSettingAsync', function() {
     it('does not write the file if the value is not changed', function(done) {
-      spyOn(settings, 'getUserConfigDir').and.returnValue('/fake/path');
+      spyOn(userManager, 'getUserDir').and.returnValue('/fake/path');
       spyOn(fs, 'existsSync').and.returnValue(true);
       spyOn(fs, 'readFileSync').and.returnValue('{"aKey": "aValue"}');
       const userId = 'fake';
@@ -65,9 +66,9 @@ describe('settings', function() {
     });
 
     it('writes the file if the value is changed', function(done) {
-      spyOn(settings, 'getUserConfigDir').and.returnValue('/fake/path');
-      spyOn(settings, 'ensureDirExists').and.returnValue(true);
+      spyOn(userManager, 'getUserDir').and.returnValue('/fake/path');
       spyOn(fs, 'existsSync').and.returnValue(true);
+      spyOn(fs, 'lstatSync').and.returnValue({isDirectory:()=>true});
       spyOn(fs, 'readFileSync').and.returnValue('{"aKey": "aValue", "bKey": "bValue"}');
       spyOn(fs, 'writeFileSync');
       const expectedUpdatedSettings = '{"aKey":"aValue2","bKey":"bValue"}';
@@ -76,15 +77,15 @@ describe('settings', function() {
       const value = 'aValue2';
       settings.updateUserSettingAsync(userId, key, value).then((status) => {
         expect(status).toBe(true);
-        expect(fs.writeFileSync).toHaveBeenCalledWith('/fake/path/settings.json', expectedUpdatedSettings);
+        expect(fs.writeFileSync).toHaveBeenCalledWith('/fake/path/datalab/.config/settings.json', expectedUpdatedSettings);
         done();
       });
     });
 
     it('queues up multiple calls and executes them in order', function(done) {
-      spyOn(settings, 'getUserConfigDir').and.returnValue('/fake/path');
-      spyOn(settings, 'ensureDirExists').and.returnValue(true);
+      spyOn(userManager, 'getUserDir').and.returnValue('/fake/path');
       spyOn(fs, 'existsSync').and.returnValue(true);
+      spyOn(fs, 'lstatSync').and.returnValue({isDirectory:()=>true});
       spyOn(fs, 'readFileSync').and.callFake((path) => settingsContents);
       spyOn(fs, 'writeFileSync').and.callFake((path, contents) => settingsContents = contents);
       let settingsContents = '{"aKey": "aValue", "bKey": "bValue"}';

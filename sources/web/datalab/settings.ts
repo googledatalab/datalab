@@ -206,7 +206,7 @@ export function ensureDirExists(fullPath: string): boolean {
 
 /**
  * Asynchronously updates the user's settings file with the new value for the given key.
- * If there is already an asynchronous update in progress, this request is queeud up for
+ * If there is already an asynchronous update in progress, this request is queued up for
  * execution after the current update finishes.
  *
  * @param key the name of the setting to update.
@@ -215,13 +215,13 @@ export function ensureDirExists(fullPath: string): boolean {
  *     and thus the write was not done, rejects if the file read or write fails.
  */
 export function updateUserSettingAsync(userId: string, key: string, value: string): Promise<boolean> {
-  var settingsDir = this.getUserConfigDir(userId);
+  var settingsDir = getUserConfigDir(userId);
   var settingsPath = path.join(settingsDir, SETTINGS_FILE);
 
   const doUpdate = () => {
     if (!fs.existsSync(settingsPath)) {
       console.log('User settings file %s not found, copying default settings.', settingsPath);
-      this.copyDefaultUserSettings(userId);
+      copyDefaultUserSettings(userId);
     }
 
     let settings: common.UserSettings;
@@ -241,7 +241,7 @@ export function updateUserSettingAsync(userId: string, key: string, value: strin
 
     try {
       var settingsString = JSON.stringify(settings);
-      if (this.ensureDirExists(path.normalize(settingsDir))) {
+      if (ensureDirExists(path.normalize(settingsDir))) {
         fs.writeFileSync(settingsPath, settingsString);
       }
     }
@@ -374,7 +374,7 @@ function formHandler(userId: string, formData: any, request: http.ServerRequest,
       response.writeHead(200, { 'Content-Type': 'text/plain' });
     }
     response.end();
-  }, (errorMessage) => {
+  }).catch((errorMessage) => {
     response.writeHead(500, { 'Content-Type': 'text/plain' });
     response.end();
   });
