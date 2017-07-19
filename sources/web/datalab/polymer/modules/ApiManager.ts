@@ -261,9 +261,8 @@ class ApiManager {
    */
   public static createNewItem(itemType: string, path?: string) {
     const xhrOptions: XhrOptions = {
-      method: 'POST',
-      successCode: 201,
       failureCodes: [409],
+      method: 'POST',
       parameters: JSON.stringify({
         ext: 'ipynb',
         type: itemType,
@@ -331,9 +330,8 @@ class ApiManager {
   public static copyItem(itemPath: string, destinationDirectory: string) {
     destinationDirectory = ApiManager.contentApiUrl + '/' + destinationDirectory;
     const xhrOptions: XhrOptions = {
-      method: 'POST',
-      successCode: 201,
       failureCodes: [409],
+      method: 'POST',
       parameters: JSON.stringify({
         copy_from: itemPath
       }),

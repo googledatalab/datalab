@@ -58,10 +58,11 @@ class DatalabAppElement extends Polymer.Element {
 
     ApiManager.disconnectedHandler = () => {
       this.showNotification('Failed to connect to the server.', true /*sticky*/);
-    }
+    };
+
     ApiManager.connectedHandler = () => {
       this.hideNotification();
-    }
+    };
 
     // Handle notification events bubbled up from children.
     this.addEventListener('notification', (e: NotificationEvent) => {
