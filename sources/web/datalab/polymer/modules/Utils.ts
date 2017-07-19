@@ -67,7 +67,7 @@ class Utils {
 
     // Open the dialog
     return new Promise((resolve) => {
-      dialog.openAndWaitAsync((closeResult: InputDialogCloseResult) => {
+      dialog.openAndWaitAsync((closeResult: BaseDialogCloseResult) => {
         document.body.removeChild(dialog);
         resolve(closeResult);
       });
