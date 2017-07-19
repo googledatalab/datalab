@@ -27,31 +27,31 @@ class SessionsElement extends Polymer.Element {
    */
   public selectedSession: Session | null;
 
-  private _sessionList: Array<Session>;
+  private _sessionList: Session[];
   private _fetching: boolean;
   private _sessionListRefreshInterval: number;
 
-  static get is() { return "datalab-sessions"; }
+  static get is() { return 'datalab-sessions'; }
 
   static get properties() {
     return {
-      selectedSession: {
-        type: Object,
-        value: null,
+      _fetching: {
+        type: Boolean,
+        value: false
       },
       _sessionList: {
         type: Array,
         value: () => [],
       },
-      _fetching: {
-        type: Boolean,
-        value: false
-      },
       _sessionListRefreshInterval: {
         type: Number,
         value: 10000
-      }
-    }
+      },
+      selectedSession: {
+        type: Object,
+        value: null,
+      },
+    };
   }
 
   /**
@@ -61,7 +61,7 @@ class SessionsElement extends Polymer.Element {
   ready() {
     super.ready();
 
-    (<ItemListElement>this.$.sessions).columns = ['Session Path', 'Status'];
+    (this.$.sessions as ItemListElement).columns = ['Session Path', 'Status'];
 
     // load session list initially
     this._fetchSessionList();
@@ -71,7 +71,7 @@ class SessionsElement extends Polymer.Element {
     // the sessions page is open, and stop it on blur to minimize unnecessary traffic
     setInterval(this._fetchSessionList.bind(this), this._sessionListRefreshInterval);
 
-    const sessionsElement = this.shadowRoot.querySelector('#sessions')
+    const sessionsElement = this.shadowRoot.querySelector('#sessions');
     if (sessionsElement) {
       sessionsElement.addEventListener('selected-indices-changed',
                                     this._handleSelectionChanged.bind(this));
@@ -88,11 +88,11 @@ class SessionsElement extends Polymer.Element {
       return;
     }
 
-    (<ItemListElement>this.$.sessions).rows = this._sessionList.map(session => {
+    (this.$.sessions as ItemListElement).rows = this._sessionList.map((session) => {
       return {
         firstCol: session.notebook.path,
-        secondCol: 'running',
         icon: 'editor:insert-drive-file',
+        secondCol: 'running',
         selected: false
       };
     });
@@ -106,7 +106,7 @@ class SessionsElement extends Polymer.Element {
     const self = this;
     self._fetching = true;
     return ApiManager.listSessionsAsync()
-      .then(newList => {
+      .then((newList) => {
         // Only refresh the list if there are any changes. This helps keep
         // the item list's selections intact most of the time
         // TODO: [yebrahim] Try to diff the two lists and only inject the
@@ -128,7 +128,7 @@ class SessionsElement extends Polymer.Element {
    * Calls the ApiManager to terminate the selected sessions.
    */
   _shutdownSelectedSessions() {
-    const selectedIndices = (<ItemListElement>this.$.sessions).selectedIndices;
+    const selectedIndices = (this.$.sessions as ItemListElement).selectedIndices;
     if (selectedIndices.length) {
       const shutdownPromises = selectedIndices.map((i: number) => {
         return ApiManager.shutdownSessionAsync(this._sessionList[i].id);
@@ -149,7 +149,7 @@ class SessionsElement extends Polymer.Element {
    * is selected, sets the selectedSession property to the selected session object.
    */
   _handleSelectionChanged() {
-    const selectedItems = (<ItemListElement>this.$.sessions).selectedIndices;
+    const selectedItems = (this.$.sessions as ItemListElement).selectedIndices;
     if (selectedItems.length === 1) {
       this.selectedSession = this._sessionList[selectedItems[0]];
     } else {
@@ -160,4 +160,3 @@ class SessionsElement extends Polymer.Element {
 }
 
 customElements.define(SessionsElement.is, SessionsElement);
-

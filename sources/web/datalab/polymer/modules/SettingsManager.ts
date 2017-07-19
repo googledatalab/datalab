@@ -25,7 +25,7 @@ class SettingsManager {
    * Returns the user settings object, optionally after refreshing it from the backend
    * @param forceRefresh whether the settings cache should be refreshed before returning
    */
-  static getUserSettingsAsync(forceRefresh?: boolean) {
+  public static getUserSettingsAsync(forceRefresh?: boolean) {
     if (!userSettings || forceRefresh === true) {
       return SettingsManager._getUserSettingsAsync()
         .then((settings: common.UserSettings) => {
@@ -41,7 +41,7 @@ class SettingsManager {
    * Returns the app settings object, optionally after refreshing it from the backend
    * @param forceRefresh whether the settings cache should be refreshed before returning
    */
-  static getAppSettingsAsync(forceRefresh?: boolean) {
+  public static getAppSettingsAsync(forceRefresh?: boolean) {
     if (!appSettings || forceRefresh === true) {
       return SettingsManager._getAppSettingsAsync()
         .then((settings: common.AppSettings) => {
@@ -58,7 +58,7 @@ class SettingsManager {
    * @param setting name of the setting to change.
    * @param value new setting value.
    */
-  static setUserSettingAsync(setting: string, value: string) {
+  public static setUserSettingAsync(setting: string, value: string) {
     const xhrOptions: XhrOptions = {
       method: 'POST',
     };
@@ -69,15 +69,14 @@ class SettingsManager {
   /**
    * Gets the user settings JSON from the server.
    */
-  static _getUserSettingsAsync() {
+  private static _getUserSettingsAsync() {
     return ApiManager.sendRequestAsync(ApiManager.userSettingsUrl);
   }
-
 
   /**
    * Gets the app settings JSON from the server.
    */
-  static _getAppSettingsAsync() {
+  private static _getAppSettingsAsync() {
     return ApiManager.sendRequestAsync(ApiManager.appSettingsUrl);
   }
 

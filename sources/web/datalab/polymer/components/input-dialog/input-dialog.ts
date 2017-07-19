@@ -17,7 +17,7 @@
  * user input given.
  */
 interface InputDialogCloseResult extends BaseDialogCloseResult {
-  userInput: string,
+  userInput: string;
 }
 
 /**
@@ -28,6 +28,8 @@ interface InputDialogCloseResult extends BaseDialogCloseResult {
  * up to the last '.' to make it easy to edit file names.
  */
 class InputDialogElement extends BaseDialogElement {
+
+  private static _memoizedTemplate: PolymerTemplate;
 
   /**
    * HTML for message in the dialog, will be inserted as innerHTML
@@ -44,9 +46,7 @@ class InputDialogElement extends BaseDialogElement {
    */
   public inputValue: string;
 
-  private static _memoizedTemplate: PolymerTemplate;
-
-  static get is() { return "input-dialog"; }
+  static get is() { return 'input-dialog'; }
 
   static get properties() {
     return Object.assign(super.properties, {
@@ -67,15 +67,14 @@ class InputDialogElement extends BaseDialogElement {
 
   open() {
     super.open();
-    const self = this;
 
     // If an input is included, wait for the dialog to open, then select its text
     if (this.inputValue) {
-      this.$.theDialog.addEventListener('iron-overlay-opened', function() {
-        const inputElement = self.$.inputBox.$.nativeInput;
+      this.$.theDialog.addEventListener('iron-overlay-opened', () => {
+        const inputElement = this.$.inputBox.$.nativeInput;
         inputElement.focus();
         inputElement.selectionStart = 0;
-        inputElement.selectionEnd = self.inputValue.lastIndexOf('.');
+        inputElement.selectionEnd = this.inputValue.lastIndexOf('.');
       });
     }
   }

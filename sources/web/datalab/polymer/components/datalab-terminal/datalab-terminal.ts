@@ -22,7 +22,7 @@ declare class Terminal {
   clear(): void;
   reset(): void;
   resize(cols: number, rows: number): void;
-  on(event: string, handler: Function): void;
+  on(event: string, handler: (args: any) => void): void;
 }
 
 /**
@@ -41,7 +41,7 @@ class TerminalElement extends Polymer.Element {
   private _charHeight: number;
   private _charWidth: number;
 
-  static get is() { return "datalab-terminal"; }
+  static get is() { return 'datalab-terminal'; }
 
   ready() {
     super.ready();
@@ -111,7 +111,7 @@ class TerminalElement extends Polymer.Element {
       const cols = this.$.theTerminal.clientWidth / this._charWidth;
 
       this._xterm.resize(Math.floor(cols), Math.floor(rows));
-      this._wsConnection.send(JSON.stringify(["set_size", rows, cols]));
+      this._wsConnection.send(JSON.stringify(['set_size', rows, cols]));
     }
   }
 }
