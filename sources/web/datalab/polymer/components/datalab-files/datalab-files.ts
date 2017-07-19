@@ -174,7 +174,9 @@ class FilesElement extends Polymer.Element {
     }
 
     // For a small file/directory picker, we don't need to show the status.
-    (<ItemListElement>this.$.files).columns = this.small ? ['Name'] : ['Name', 'Status'];
+    (this.$.files as ItemListElement).columns = this.small ? ['Name'] : ['Name', 'Status'];
+
+    this._resizeHandler();
   }
 
   disconnectedCallback() {
