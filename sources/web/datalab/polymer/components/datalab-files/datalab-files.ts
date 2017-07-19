@@ -399,7 +399,7 @@ class FilesElement extends Polymer.Element {
     const uploadPromises: Array<Promise<any>> = [];
 
     // Find out if there's at least one large file.
-    const hasLargeFile = files.some((file: File) => 
+    const hasLargeFile = files.some((file: File) =>
         file.size > this._uploadFileSizeWarningLimit);
 
     // If there's at least one large file, show a dialog to confirm the user
@@ -414,7 +414,7 @@ class FilesElement extends Polymer.Element {
         title: 'Warning: Large File',
       };
 
-      const result: BaseDialogCloseResult = 
+      const result: BaseDialogCloseResult =
         await Utils.showDialog(BaseDialogElement, dialogOptions);
 
       if (result.confirmed === false) {
@@ -435,7 +435,7 @@ class FilesElement extends Polymer.Element {
         // TODO: handle file reading errors.
         reader.onerror = () => {
           reject(new Error('Error reading file.'));
-        }
+        };
 
         // TODO: this will freeze the UI on large files (>~20MB on my laptop) until
         // they're loaded into memory, and very large files (>~100MB) will crash
@@ -454,11 +454,11 @@ class FilesElement extends Polymer.Element {
           itemData = itemData.substr(itemData.indexOf(',') + 1);
 
           const model: JupyterFile = {
+            content: itemData,
+            format: 'base64',
             name: file.name,
             path: currentPath,
             type: 'file',
-            format: 'base64',
-            content: itemData,
           };
           return ApiManager.saveJupyterFile(model);
         });
@@ -513,7 +513,7 @@ class FilesElement extends Polymer.Element {
             .then(() => this._fetchFileList())
             .then(() => {
               // Dispatch a success notification
-              this.dispatchEvent(new NotificationEvent('Created ' + newName+ '.'));
+              this.dispatchEvent(new NotificationEvent('Created ' + newName + '.'));
             });
         } else {
           return Promise.resolve(null);
