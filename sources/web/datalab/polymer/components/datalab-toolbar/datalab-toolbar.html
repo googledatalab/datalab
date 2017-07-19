@@ -13,6 +13,7 @@ the License.
 -->
 
 <link rel="import" href="../../components/auth-panel/auth-panel.html">
+<link rel="import" href="../../components/datalab-info/datalab-info.html">
 <link rel="import" href="../../components/datalab-settings/datalab-settings.html">
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
 
@@ -71,11 +72,6 @@ the License.
         display: flex;
         flex-direction: column;
       }
-      .dialog-content {
-        flex-grow: 1;
-        margin: 0px;
-        padding: 0px;
-      }
       .account-dropdown {
         background-color: var(--primary-bg-color);
         color: var(--primary-fg-color);
@@ -121,7 +117,9 @@ the License.
     <!--Info dialog. This shows centered in the middle of the window-->
     <paper-dialog id="infoDialog" class="dialog" with-backdrop>
       <div class="dialog-title">Info</div>
-      <div class="dialog-content"></div>
+      <div class="dialog-content">
+        <datalab-info></datalab-info>
+      </div>
       <hr>
       <div class="dialog-buttons">
         <paper-button dialog-dismiss raised>Close</paper-button>
