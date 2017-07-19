@@ -398,6 +398,9 @@ class FilesElement extends Polymer.Element {
     const currentPath = this.currentPath;
     const uploadPromises: Array<Promise<any>> = [];
 
+    // TODO: Check if the file already exists at the current path, otherwise the upload
+    // might still occur (Jupyter overwrites by default).
+
     // Find out if there's at least one large file.
     const hasLargeFile = files.some((file: File) =>
         file.size > this._uploadFileSizeWarningLimit);
@@ -466,17 +469,17 @@ class FilesElement extends Polymer.Element {
     });
 
     // Wait on all upload requests before declaring success or failure.
-    await Promise.all(uploadPromises);
-    // TODO: handle upload errors.
+    return Promise.all(uploadPromises)
+      .catch((e: Error) => Utils.showErrorDialog('Error uploading file', e.message))
+      .then(() => uploadPromises.length ? this._fetchFileList() : null)
+      .then(() => {
+        // Reset the input element.
+        inputElement.value = '';
 
-    // Reset the input element.
-    inputElement.value = '';
-
-    // Dispatch an upload successful notification
-    const message = files.length > 1 ? files.length + ' files' : files[0].name;
-    this.dispatchEvent(new NotificationEvent(message + ' uploaded successfully.'));
-
-    return uploadPromises.length ? this._fetchFileList() : null;
+      // Dispatch an upload successful notification
+      const message = files.length > 1 ? files.length + ' files' : files[0].name;
+      this.dispatchEvent(new NotificationEvent(message + ' uploaded successfully.'));
+      });
   }
 
   /**
@@ -518,7 +521,7 @@ class FilesElement extends Polymer.Element {
         } else {
           return Promise.resolve(null);
         }
-      }); // TODO: Handle create errors properly by showing some message to the user
+      });
   }
 
   /**
@@ -563,19 +566,18 @@ class FilesElement extends Polymer.Element {
           if (closeResult.confirmed && closeResult.userInput) {
             const newName = this.currentPath + '/' + closeResult.userInput;
             return ApiManager.renameItem(selectedObject.path, newName)
-              .then(() => this._fetchFileList())
               .then(() => {
                 // Dispatch a success notification
                 const message = 'Renamed ' + selectedObject.name +
                     ' to ' + closeResult.userInput + '.';
                 this.dispatchEvent(new NotificationEvent(message));
-              });
-              // TODO: [yebrahim] Re-select the renamed item after refresh
+                return this._fetchFileList();
+              })
+              .catch((e: Error) => Utils.showErrorDialog('Error renaming item', e.message));
           } else {
             return Promise.resolve(null);
           }
         });
-        // TODO: Handle rename errors properly by showing some message to the user
     } else {
       return Promise.resolve(null);
     }
@@ -635,17 +637,17 @@ class FilesElement extends Polymer.Element {
             // TODO: [yebrahim] If at least one delete fails, _fetchFileList will never be called,
             // even if some other deletes completed.
             return Promise.all(deletePromises)
-              .then(() => this._fetchFileList())
               .then(() => {
                 // Dispatch a success notification
                 const message = 'Deleted ' + num + (num === 1 ? ' file.' : 'files.');
                 this.dispatchEvent(new NotificationEvent(message));
-              });
+                return this._fetchFileList();
+              })
+              .catch((e: Error) => Utils.showErrorDialog('Error deleting item', e.message));
           } else {
             return Promise.resolve(null);
           }
         });
-        // TODO: Handle delete errors properly by showing some message to the user
     } else {
       return Promise.resolve(null);
     }
@@ -693,13 +695,14 @@ class FilesElement extends Polymer.Element {
             return ApiManager.copyItem(selectedObject.path, newPath)
               .then((newItem: JupyterFile) => {
                 newPath = newItem.path;
-                return this._fetchFileList();
-              })
-              .then(() => {
+
                 // Dispatch a success notification
                 const message = 'Copied ' + selectedObject.path + ' to ' + newPath;
                 this.dispatchEvent(new NotificationEvent(message));
-              });
+
+                return this._fetchFileList();
+              })
+              .catch((e: Error) => Utils.showErrorDialog('Error copying item', e.message));
           } else {
             return Promise.resolve(null);
           }
@@ -713,7 +716,7 @@ class FilesElement extends Polymer.Element {
    * Creates a directory picker modal to get the user to choose a destination for the
    * selected item, sends a rename item API call, then refreshes the file list. This only
    * works if exactly one item is selected.
-   * TODO: Consider allowing multiple items to be copied.
+   * TODO: Consider allowing multiple items to be moved.
    */
   _moveSelectedItem() {
 
@@ -736,13 +739,14 @@ class FilesElement extends Polymer.Element {
             return ApiManager.renameItem(selectedObject.path, newPath + '/' + selectedObject.name)
               .then((newItem: JupyterFile) => {
                 newPath = newItem.path;
-                return this._fetchFileList();
-              })
-              .then(() => {
+
                 // Dispatch a file created notification
                 const message = 'Moved ' + selectedObject.path + ' to ' + newPath;
                 this.dispatchEvent(new NotificationEvent(message));
-              });
+
+                return this._fetchFileList();
+              })
+              .catch((e: Error) => Utils.showErrorDialog('Error moving item', e.message));
           } else {
             return Promise.resolve(null);
           }

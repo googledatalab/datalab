@@ -315,6 +315,7 @@ class ApiManager {
   public static deleteItem(path: string) {
     path = ApiManager.contentApiUrl + '/' + path;
     const xhrOptions: XhrOptions = {
+      failureCodes: [400],
       method: 'DELETE',
       successCode: 204,
       failureCodes: [400],
@@ -478,7 +479,13 @@ class ApiManager {
               ApiManager.isConnected = false;
             }
 
-            reject(request.responseText);
+            // Jupyter returns error messages with schema {"reason": string, "message": string}
+            // TODO: Should not need this when relying on a different content service.
+            let errorMessage = request.responseText;
+            try {
+              errorMessage = JSON.parse(request.responseText).message || errorMessage;
+            } catch (_) {}
+            reject(new Error(errorMessage));
           }
         }
       };

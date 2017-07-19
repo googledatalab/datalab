@@ -51,6 +51,11 @@ class BaseDialogElement extends Polymer.Element {
    */
   public cancelLabel: string;
 
+  /**
+   * Whether this dialog is showing an error
+   */
+  public isError: boolean;
+
   private _closeCallback: (result: BaseDialogCloseResult) => void;
 
   static get is() { return 'base-dialog'; }
@@ -76,6 +81,10 @@ class BaseDialogElement extends Polymer.Element {
       title: {
         type: String,
         value: '',
+      },
+      isError: {
+        type: String,
+        value: false,
       },
     };
   }

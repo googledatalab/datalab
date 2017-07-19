@@ -24,6 +24,7 @@ interface DialogOptions {
   okLabel?: string;
   cancelLabel?: string;
   big?: boolean;
+  isError?: boolean;
 }
 
 /**
@@ -64,6 +65,9 @@ class Utils {
     if (dialogOptions.big !== undefined) {
       dialog.big = dialogOptions.big;
     }
+    if (dialogOptions.isError !== undefined) {
+      dialog.isError = dialogOptions.isError;
+    }
 
     // Open the dialog
     return new Promise((resolve) => {
@@ -72,6 +76,21 @@ class Utils {
         resolve(closeResult);
       });
     });
+  }
+
+  /**
+   * Shows a base dialog with error formatting.
+   * @param title error title
+   * @param messageHtml error message
+   */
+  static showErrorDialog(title: string, messageHtml: string) {
+    const dialogOptions: DialogOptions = {
+      title,
+      messageHtml,
+      isError: true,
+    };
+
+    return this.showDialog(BaseDialogElement, dialogOptions);
   }
 
   /**
