@@ -21,12 +21,12 @@
  */
 class AuthPanel extends Polymer.Element {
 
-  private _projectInfo : string;
-  private _signedIn : boolean;
-  private _userInfo : string;
+  private _projectInfo: string;
+  private _signedIn: boolean;
+  private _userInfo: string;
   private _promptOnSignIn: boolean = false;
 
-  static get is() { return "auth-panel"; }
+  static get is() { return 'auth-panel'; }
 
   static get properties() {
     return {
@@ -42,7 +42,7 @@ class AuthPanel extends Polymer.Element {
         type: String,
         value: '',
       },
-    }
+    };
   }
 
   ready() {

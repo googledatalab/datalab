@@ -19,7 +19,7 @@
  * directory path.
  */
 interface DirectoryPickerDialogCloseResult extends BaseDialogCloseResult {
-  directoryPath: string,
+  directoryPath: string;
 }
 
 /**
@@ -34,7 +34,7 @@ class DirectoryPickerDialogElement extends BaseDialogElement {
 
   private static _memoizedTemplate: PolymerTemplate;
 
-  static get is() { return "directory-picker-dialog"; }
+  static get is() { return 'directory-picker-dialog'; }
 
   /**
    * This template is calculated once in run time based on the template of  the

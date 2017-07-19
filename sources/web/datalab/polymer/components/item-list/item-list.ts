@@ -16,10 +16,10 @@
  * Interface representing a row in the item list
  */
 interface ItemListRow {
-  firstCol: string,
-  secondCol: string,
-  icon: string,
-  selected: boolean,
+  firstCol: string;
+  secondCol: string;
+  icon: string;
+  selected: boolean;
 }
 
 /**
@@ -27,8 +27,8 @@ interface ItemListRow {
  */
 class ItemClickEvent extends CustomEvent {
   detail: {
-    index: number
-  }
+    index: number;
+  };
 }
 
 /**
@@ -52,12 +52,12 @@ class ItemListElement extends Polymer.Element {
   /**
    * List of data rows, each implementing the row interface
    */
-  public rows: Array<ItemListRow>;
+  public rows: ItemListRow[];
 
   /**
    * List of string data columns names
    */
-  public columns: Array<string>;
+  public columns: string[];
 
   /**
    * Whether to hide the header row
@@ -72,41 +72,41 @@ class ItemListElement extends Polymer.Element {
   /**
    * The list of currently selected indices
    */
-  public selectedIndices: Array<number>;
+  public selectedIndices: number[];
 
   private _lastSelectedIndex: number = -1;
 
-  static get is() { return "item-list"; }
+  static get is() { return 'item-list'; }
 
   static get properties() {
     return {
-      rows: {
-        type: Array,
-        value: () => [],
+      _isAllSelected: {
+        computed: '_computeIsAllSelected(selectedIndices)',
+        type: Boolean,
       },
       columns: {
         type: Array,
         value: () => [],
       },
-      hideHeader: {
-        type: Boolean,
-        value: false,
-      },
       disableSelection: {
         type: Boolean,
         value: false,
       },
-      selectedIndices: {
+      hideHeader: {
+        type: Boolean,
+        value: false,
+      },
+      rows: {
         type: Array,
         value: () => [],
+      },
+      selectedIndices: {
         computed: '_computeSelectedIndices(rows.*)',
         notify: true,
+        type: Array,
+        value: () => [],
       },
-      _isAllSelected: {
-        type: Boolean,
-        computed: '_computeIsAllSelected(selectedIndices)',
-      },
-    }
+    };
   }
 
   /**
@@ -114,7 +114,7 @@ class ItemListElement extends Polymer.Element {
    * of indices of the currently selected items.
    */
   _computeSelectedIndices() {
-    let selected: Array<number> = [];
+    const selected: number[] = [];
     this.rows.forEach((row, i) => {
       if (row.selected) {
         selected.push(i);
@@ -144,7 +144,7 @@ class ItemListElement extends Polymer.Element {
    * @param index index of item to unselect
    */
   _unselectItem(index: number) {
-    this.set('rows.' + index+ '.selected', false);
+    this.set('rows.' + index + '.selected', false);
   }
 
   /**
@@ -184,7 +184,7 @@ class ItemListElement extends Polymer.Element {
     if (this.disableSelection) {
       return;
     }
-    const target = <HTMLDivElement>e.target;
+    const target = <HTMLDivElement> e.target;
     const index = this.$.list.indexForElement(target);
 
     // If shift key is pressed and we had saved the last selected index, select
@@ -196,19 +196,17 @@ class ItemListElement extends Polymer.Element {
       for (let i = start; i <= end; ++i) {
         this._selectItem(i);
       }
-    }
-    
-    // If ctrl (or Meta for MacOS) key is pressed, toggle its selection.
-    else if (e.ctrlKey || e.metaKey) {
+    } else if (e.ctrlKey || e.metaKey) {
+      // If ctrl (or Meta for MacOS) key is pressed, toggle its selection.
+
       if (this.rows[index].selected === false) {
         this._selectItem(index);
       } else {
         this._unselectItem(index);
       }
-    }
-    
-    // No modifier keys are pressed, proceed normally to select/unselect the item.
-    else {
+    } else {
+      // No modifier keys are pressed, proceed normally to select/unselect the item.
+
       // If the clicked element is the checkbox, the checkbox already toggles selection in
       // the UI, so change the item's selection state to match the checkbox's new value.
       // Otherwise, select this element, unselect all others.
@@ -235,7 +233,7 @@ class ItemListElement extends Polymer.Element {
    */
   _rowDoubleClicked(e: MouseEvent) {
     const index = this.$.list.indexForElement(e.target);
-    const ev = new ItemClickEvent('itemDoubleClick', { detail: {index: index} });
+    const ev = new ItemClickEvent('itemDoubleClick', { detail: {index} });
     this.dispatchEvent(ev);
   }
 
