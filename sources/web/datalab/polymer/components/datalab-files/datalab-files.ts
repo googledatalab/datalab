@@ -34,6 +34,8 @@
  */
 class FilesElement extends Polymer.Element {
 
+  private static readonly _deleteListLimit = 10;
+
   /**
    * The base path to start navigation from
    */
@@ -54,33 +56,64 @@ class FilesElement extends Polymer.Element {
    */
   public small: boolean;
 
-  private _pathHistory: Array<string>;
+  private _pathHistory: string[];
   private _pathHistoryIndex: number;
   private _fetching: boolean;
-  private _fileList: Array<ApiFile>;
+  private _fileList: ApiFile[];
   private _fileListRefreshInterval: number;
   private _fileListRefreshIntervalHandle: number;
-  private _currentCrumbs: Array<string>;
-  private _isDetailsPaneToggledOn: Boolean;
+  private _currentCrumbs: string[];
+  private _isDetailsPaneToggledOn: boolean;
   private _addToolbarCollapseThreshold = 900;
   private _updateToolbarCollapseThreshold = 720;
   private _detailsPaneCollapseThreshold = 600;
   private _uploadFileSizeWarningLimit = 25 * 1024 * 1024;
 
-  static readonly _deleteListLimit = 10;
-
-  static get is() { return "datalab-files"; }
+  static get is() { return 'datalab-files'; }
 
   static get properties() {
     return {
+      _currentCrumbs: {
+        type: Array,
+        value: () => [],
+      },
+      _fetching: {
+        type: Boolean,
+        value: false,
+      },
+      _fileList: {
+        type: Array,
+        value: () => [],
+      },
+      _fileListRefreshInterval: {
+        type: Number,
+        value: 10000,
+      },
+      _isDetailsPaneEnabled: {
+        computed: '_getDetailsPaneEnabled(small, _isDetailsPaneToggledOn)',
+        type: Boolean,
+      },
+      _isDetailsPaneToggledOn: {
+        type: Boolean,
+        value: true,
+      },
+      _pathHistory: {
+        type: Array,
+        value: () => [],
+      },
+      _pathHistoryIndex: {
+        observer: '_pathHistoryIndexChanged',
+        type: Number,
+        value: -1,
+      },
       basePath: {
         type: String,
         value: '/',
       },
       currentPath: {
+        observer: '_currentPathChanged',
         type: String,
         value: '',
-        observer: '_currentPathChanged',
       },
       selectedFile: {
         type: Object,
@@ -90,40 +123,7 @@ class FilesElement extends Polymer.Element {
         type: Boolean,
         value: false,
       },
-      _currentCrumbs: {
-        type: Array,
-        value: () => [],
-      },
-      _fileList: {
-        type: Array,
-        value: () => [],
-      },
-      _pathHistory: {
-        type: Array,
-        value: () => [],
-      },
-      _pathHistoryIndex: {
-        type: Number,
-        value: -1,
-        observer: '_pathHistoryIndexChanged',
-      },
-      _fetching: {
-        type: Boolean,
-        value: false,
-      },
-      _fileListRefreshInterval: {
-        type: Number,
-        value: 10000,
-      },
-      _isDetailsPaneToggledOn: {
-        type: Boolean,
-        value: true,
-      },
-      _isDetailsPaneEnabled: {
-        type: Boolean,
-        computed: '_getDetailsPaneEnabled(small, _isDetailsPaneToggledOn)',
-      },
-    }
+    };
   }
 
   /**
@@ -165,7 +165,7 @@ class FilesElement extends Polymer.Element {
         this._fetchFileList();
       });
 
-    const filesElement = this.shadowRoot.querySelector('#files')
+    const filesElement = this.shadowRoot.querySelector('#files');
     if (filesElement) {
       filesElement.addEventListener('itemDoubleClick',
                                     this._handleDoubleClicked.bind(this));
@@ -174,7 +174,9 @@ class FilesElement extends Polymer.Element {
     }
 
     // For a small file/directory picker, we don't need to show the status.
-    (<ItemListElement>this.$.files).columns = this.small ? ['Name'] : ['Name', 'Status'];
+    (this.$.files as ItemListElement).columns = this.small ? ['Name'] : ['Name', 'Status'];
+
+    this._resizeHandler();
   }
 
   disconnectedCallback() {
@@ -185,15 +187,15 @@ class FilesElement extends Polymer.Element {
 
   async _getNotebookUrlPrefix() {
     // Notebooks that are stored on the VM require the basepath.
-    let basepath = await ApiManager.getBasePath();
-    let prefix = location.protocol + '//' + location.host + basepath + '/';
+    const basepath = await ApiManager.getBasePath();
+    const prefix = location.protocol + '//' + location.host + basepath + '/';
     return prefix + 'notebooks';
   }
 
   async _getEditorUrl(filePath?: string) {
     // Files that are stored on the VM require the basepath.
-    let basepath = await ApiManager.getBasePath();
-    let url = location.protocol + '//' + location.host + basepath+ '/editor';
+    const basepath = await ApiManager.getBasePath();
+    let url = location.protocol + '//' + location.host + basepath + '/editor';
     if (filePath) {
       url += '?file=' + filePath;
     }
@@ -217,7 +219,7 @@ class FilesElement extends Polymer.Element {
     self._fetching = true;
 
     return ApiManager.listFilesAsync(this.basePath + this.currentPath)
-      .then(newList => {
+      .then((newList) => {
         // Only refresh the list if there are any changes. This helps keep
         // the item list's selections intact most of the time
         // TODO: [yebrahim] Try to diff the two lists and only inject the
@@ -261,11 +263,11 @@ class FilesElement extends Polymer.Element {
    * the created list to the item-list to render.
    */
   _drawFileList() {
-    (<ItemListElement>this.$.files).rows = this._fileList.map(file => {
+    (this.$.files as ItemListElement).rows = this._fileList.map((file) => {
       return {
         firstCol: file.name,
-        secondCol: file.status,
         icon: file.type === 'directory' ? 'folder' : 'editor:insert-drive-file',
+        secondCol: file.status,
         selected: false
       };
     });
@@ -279,7 +281,7 @@ class FilesElement extends Polymer.Element {
    * an effect, a directory will still navigate.
    */
   _handleDoubleClicked(e: ItemClickEvent) {
-    let clickedItem = this._fileList[e.detail.index];
+    const clickedItem = this._fileList[e.detail.index];
     if (this.small && clickedItem.type !== 'directory') {
       return;
     }
@@ -288,10 +290,10 @@ class FilesElement extends Polymer.Element {
       this._pushNewPath();
     } else if (clickedItem.type === 'notebook') {
       this._getNotebookUrlPrefix()
-        .then(prefix => window.open(prefix + '/' + clickedItem.path, '_blank'));
+        .then((prefix) => window.open(prefix + '/' + clickedItem.path, '_blank'));
     } else {
       this._getEditorUrl(clickedItem.path)
-        .then(url => window.open(url, '_blank'));
+        .then((url) => window.open(url, '_blank'));
     }
   }
 
@@ -300,7 +302,7 @@ class FilesElement extends Polymer.Element {
    * is selected, sets the selectedFile property to the selected file object.
    */
   _handleSelectionChanged() {
-    const selectedIndices = (<ItemListElement>this.$.files).selectedIndices;
+    const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
     if (selectedIndices.length === 1) {
       this.selectedFile = this._fileList[selectedIndices[0]];
     } else {
@@ -312,7 +314,7 @@ class FilesElement extends Polymer.Element {
    * Navigates to the path of the clicked breadcrumb.
    */
   _crumbClicked(e: MouseEvent) {
-    const target = <HTMLDivElement>e.target;
+    const target = e.target as HTMLDivElement;
     // Treat the home crumb differently since it's not part of the dom-repeat
     if (target.id === 'home-crumb') {
       this.currentPath = '';
@@ -391,20 +393,15 @@ class FilesElement extends Polymer.Element {
    * uses the ApiManager to save it on the backend.
    */
   async _upload() {
-    const inputElement = <HTMLInputElement>this.$.altFileUpload;
-    const files = inputElement.files;
+    const inputElement = this.$.altFileUpload as HTMLInputElement;
+    const files = [...inputElement.files as any];
     const currentPath = this.currentPath;
-    const uploadPromises: Promise<any>[] = [];
+    const uploadPromises: Array<Promise<any>> = [];
 
     if (files) {
       // Find out if there's at least one large file.
-      let hasLargeFile = false;
-      for (let i = 0; i < files.length; ++i) {
-        if (files[i].size > this._uploadFileSizeWarningLimit) {
-          hasLargeFile = true;
-          break;
-        }
-      }
+      const hasLargeFile = files.some((file: File) =>
+          file.size > this._uploadFileSizeWarningLimit);
 
       let proceedWithUpload = true;
       // If there's at least one large file, show a dialog to confirm the user
@@ -414,45 +411,44 @@ class FilesElement extends Polymer.Element {
                                             : 'The file you selected is ';
         warningMsg += 'larger than 25MB. You might experience browser freeze or crash';
         const dialogOptions: DialogOptions = {
-          title: 'Warning: Large File',
           messageHtml: warningMsg,
           okLabel: 'Upload Anyway',
+          title: 'Warning: Large File',
         };
 
-        const result: BaseDialogCloseResult = 
-          await Utils.showDialog(BaseDialogElement, dialogOptions);
-          proceedWithUpload = result.confirmed === true;
+        const result: BaseDialogCloseResult =
+            await Utils.showDialog(BaseDialogElement, dialogOptions);
+        proceedWithUpload = result.confirmed === true;
       }
 
       if (proceedWithUpload) {
-        for (let i = 0; i < files.length; ++i) {
-          const file = files[i];
+        files.forEach((file: File) => {
 
           // First, load the file data into memory.
           const loadPromise = new Promise((resolve, reject) => {
 
             const reader = new FileReader();
 
-            reader.onload = function() {
+            reader.onload = () => {
               let itemData = reader.result;
               // Extract the base64 data string
               itemData = itemData.substr(itemData.indexOf(',') + 1);
 
               const model: JupyterFile = {
+                content: itemData,
+                format: 'base64',
                 name: file.name,
                 path: currentPath,
                 type: 'file',
-                format: 'base64',
-                content: itemData,
               };
 
               resolve(model);
-            }
+            };
 
             // TODO: handle file reading errors.
             reader.onerror = () => {
               reject('Error reading file.');
-            }
+            };
 
             // TODO: this will freeze the UI on large files (>~20MB on my laptop) until
             // they're loaded into memory, and very large files (>~100MB) will crash
@@ -468,7 +464,7 @@ class FilesElement extends Polymer.Element {
           const uploadPromise = loadPromise
             .then((model: JupyterFile) => ApiManager.saveJupyterFile(model));
           uploadPromises.push(uploadPromise);
-        }
+        });
       }
 
       // Wait on all upload requests before declaring success or failure.
@@ -490,7 +486,7 @@ class FilesElement extends Polymer.Element {
    * https://github.com/jupyter/notebook/blob/master/notebook/services/contents/manager.py#L311).
    * In order to offer a better experience, we create an untitled item in the current path,
    * then rename it to whatever the user specified.
-   * 
+   *
    * This method creates an input modal to get the user input, then calls the ApiManager to
    * create a new notebook/directory at the current path, and fetches the updated list
    * of files to redraw.
@@ -499,9 +495,9 @@ class FilesElement extends Polymer.Element {
 
     // First, open a dialog to let the user specify a name for the notebook.
     const inputOptions: DialogOptions = {
-      title: 'New ' + type, 
       inputLabel: 'Name',
       okLabel: 'Create',
+      title: 'New ' + type,
     };
 
     return Utils.showDialog(InputDialogElement, inputOptions)
@@ -526,13 +522,14 @@ class FilesElement extends Polymer.Element {
    * Opens the selected item in the text editor.
    */
   _openSelectedInEditor() {
-    const selectedIndices = this.$.files.getSelectedIndices();
+    const filesElement = this.$.files as ItemListElement;
+    const selectedIndices = filesElement.selectedIndices;
     if (selectedIndices.length === 1) {
       const i = selectedIndices[0];
       const selectedObject = this._fileList[i];
 
       this._getEditorUrl(selectedObject.path)
-        .then(url => window.open(url, '_blank'));
+        .then((url) => window.open(url, '_blank'));
     }
   }
 
@@ -543,17 +540,17 @@ class FilesElement extends Polymer.Element {
    */
   _renameSelectedItem() {
 
-    const selectedIndices = (<ItemListElement>this.$.files).selectedIndices;
+    const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
     if (selectedIndices.length === 1) {
       const i = selectedIndices[0];
       const selectedObject = this._fileList[i];
 
       // Open a dialog to let the user specify the new name for the selected item.
       const inputOptions: DialogOptions = {
-        title: 'Rename ' + selectedObject.type.toString(), 
         inputLabel: 'New name',
         inputValue: selectedObject.name,
         okLabel: 'Rename',
+        title: 'Rename ' + selectedObject.type.toString(),
       };
 
       // Only if the dialog has been confirmed with some user input, rename the
@@ -568,7 +565,7 @@ class FilesElement extends Polymer.Element {
           } else {
             return Promise.resolve(null);
           }
-        })
+        });
         // TODO: Handle rename errors properly by showing some message to the user
     } else {
       return Promise.resolve(null);
@@ -582,7 +579,7 @@ class FilesElement extends Polymer.Element {
    */
   _deleteSelectedItems() {
 
-    const selectedIndices = (<ItemListElement>this.$.files).selectedIndices;
+    const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
     if (selectedIndices.length) {
       // Build friendly title and body messages that adapt to the number of items.
       const num = selectedIndices.length;
@@ -600,20 +597,21 @@ class FilesElement extends Polymer.Element {
       // Body
       let itemList = '<ul>\n';
       selectedIndices.forEach((fileIdx: number, i: number) => {
-        if (i < FilesElement._deleteListLimit)
+        if (i < FilesElement._deleteListLimit) {
           itemList += '<li>' + this._fileList[fileIdx].name + '</li>\n';
+        }
       });
       if (num > FilesElement._deleteListLimit) {
         itemList += '+ ' + (num - FilesElement._deleteListLimit) + ' more.';
       }
-      itemList += '</ul>'
+      itemList += '</ul>';
       const messageHtml = '<div>Are you sure you want to delete:</div>' + itemList;
 
       // Open a dialog to let the user confirm deleting the list of selected items.
       const inputOptions: DialogOptions = {
-        title: title,
-        messageHtml: messageHtml,
+        messageHtml,
         okLabel: 'Delete',
+        title,
       };
 
       // Only if the dialog has been confirmed, call the ApiManager to delete each
@@ -622,7 +620,7 @@ class FilesElement extends Polymer.Element {
       return Utils.showDialog(BaseDialogElement, inputOptions)
         .then((closeResult: BaseDialogCloseResult) => {
           if (closeResult.confirmed) {
-            let deletePromises = selectedIndices.map((i: number) => {
+            const deletePromises = selectedIndices.map((i: number) => {
               return ApiManager.deleteItem(this._fileList[i].path);
             });
             // TODO: [yebrahim] If at least one delete fails, _fetchFileList will never be called,
@@ -663,16 +661,16 @@ class FilesElement extends Polymer.Element {
    */
   _copySelectedItem() {
 
-    const selectedIndices = (<ItemListElement>this.$.files).selectedIndices;
+    const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
 
     if (selectedIndices.length === 1) {
       const i = selectedIndices[0];
       const selectedObject = this._fileList[i];
 
       const options: DialogOptions = {
-        title: 'Copy Item',
-        okLabel: 'Copy Here',
         big: true,
+        okLabel: 'Copy Here',
+        title: 'Copy Item',
       };
       return Utils.showDialog(DirectoryPickerDialogElement, options)
         .then((closeResult: DirectoryPickerDialogCloseResult) => {
@@ -697,16 +695,16 @@ class FilesElement extends Polymer.Element {
    */
   _moveSelectedItem() {
 
-    const selectedIndices = (<ItemListElement>this.$.files).selectedIndices;
+    const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
 
     if (selectedIndices.length === 1) {
       const i = selectedIndices[0];
       const selectedObject = this._fileList[i];
 
       const options: DialogOptions = {
-        title: 'Move Item',
-        okLabel: 'Move Here',
         big: true,
+        okLabel: 'Move Here',
+        title: 'Move Item',
       };
       return Utils.showDialog(DirectoryPickerDialogElement, options)
         .then((closeResult: DirectoryPickerDialogCloseResult) => {
@@ -741,20 +739,20 @@ class FilesElement extends Polymer.Element {
     // Collapse the add buttons on the toolbar
     if (width < this._addToolbarCollapseThreshold) {
       Utils.moveElementChildren(this.$.addToolbar, this.$.altAddToolbar);
-      this.$.altAddToolbarToggle.style.display = "inline-flex";
+      this.$.altAddToolbarToggle.style.display = 'inline-flex';
     } else {
       Utils.moveElementChildren(this.$.altAddToolbar, this.$.addToolbar);
-      this.$.altAddToolbarToggle.style.display = "none";
+      this.$.altAddToolbarToggle.style.display = 'none';
       this.$.altAddToolbar.close();
     }
 
     // Collapse the update buttons on the toolbar
     if (width < this._updateToolbarCollapseThreshold) {
       Utils.moveElementChildren(this.$.updateToolbar, this.$.altUpdateToolbar);
-      this.$.altUpdateToolbarToggle.style.display = "inline-flex";
+      this.$.altUpdateToolbarToggle.style.display = 'inline-flex';
     } else {
       Utils.moveElementChildren(this.$.altUpdateToolbar, this.$.updateToolbar);
-      this.$.altUpdateToolbarToggle.style.display = "none";
+      this.$.altUpdateToolbarToggle.style.display = 'none';
       this.$.altUpdateToolbar.close();
     }
 

@@ -17,13 +17,13 @@
  * wraps the <datalab-editor> element, and takes a "file" querystring parameter to
  * load it in the editor.
  */
-const editorElement = <DatalabEditorElement>document.querySelector('datalab-editor');
+const editorElement = document.querySelector('datalab-editor') as DatalabEditorElement;
 
 document.addEventListener('ThemeChanged', (e: CustomEvent) => {
   // Change the style element's href to trigger the browser to reload it.
-  const cssElement = <HTMLLinkElement | null>document.querySelector('#themeStylesheet');
+  const cssElement = document.querySelector('#themeStylesheet') as HTMLLinkElement | null;
   if (cssElement) {
-    const sheetAddress = cssElement.href + "?v=" + Date.now()
+    const sheetAddress = cssElement.href + '?v=' + Date.now();
     cssElement.setAttribute('href', sheetAddress);
   }
 
@@ -37,6 +37,6 @@ document.addEventListener('ThemeChanged', (e: CustomEvent) => {
 if (editorElement) {
   const params = new URLSearchParams(window.location.search);
   if (params.has('file')) {
-    editorElement.filePath = <string>params.get('file');
+    editorElement.filePath = params.get('file') as string;
   }
 }

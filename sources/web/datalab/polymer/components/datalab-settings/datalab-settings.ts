@@ -33,21 +33,21 @@ class SettingsElement extends Polymer.Element {
 
   private _busy: boolean;
 
-  static get is() { return "datalab-settings"; }
+  static get is() { return 'datalab-settings'; }
 
   static get properties() {
     return {
-      theme: {
-        type: String,
-      },
-      idleTimeoutInterval: {
-        type: String,
-      },
       _busy: {
         type: Boolean,
         value: false,
       },
-    }
+      idleTimeoutInterval: {
+        type: String,
+      },
+      theme: {
+        type: String,
+      },
+    };
   }
 
   /**
@@ -81,7 +81,7 @@ class SettingsElement extends Polymer.Element {
   _themeChanged() {
     return SettingsManager.setUserSettingAsync('theme', this.theme)
       .then(() => {
-        const e = new CustomEvent('ThemeChanged', {'detail': this.theme})
+        const e = new CustomEvent('ThemeChanged', {detail: this.theme});
         document.dispatchEvent(e);
       });
   }
@@ -97,4 +97,3 @@ class SettingsElement extends Polymer.Element {
 }
 
 customElements.define(SettingsElement.is, SettingsElement);
-
