@@ -17,11 +17,11 @@
  */
 
 interface CodeMirrorOptions {
-  value: string,
-  mode: string,
-  lineNumbers: boolean,
-  lineWrapping: boolean,
-  theme: string,
+  value: string;
+  mode: string;
+  lineNumbers: boolean;
+  lineWrapping: boolean;
+  theme: string;
 }
 
 interface CodeMirrorEditor {
@@ -29,7 +29,7 @@ interface CodeMirrorEditor {
   getOption(name: string): void;
 }
 
-declare function CodeMirror (element: HTMLElement, options: CodeMirrorOptions): CodeMirrorEditor;
+declare function CodeMirror(element: HTMLElement, options: CodeMirrorOptions): CodeMirrorEditor;
 
 /**
  * Editor element for Datalab.
@@ -52,19 +52,19 @@ class DatalabEditorElement extends Polymer.Element {
 
   static get properties() {
     return {
-      filePath: {
-        type: String,
-        value: '',
+      _busy: {
+        type: Boolean,
+        value: false
       },
       _file: {
         type: Object,
         value: null,
       },
-      _busy: {
-        type: Boolean,
-        value: false
+      filePath: {
+        type: String,
+        value: '',
       },
-    }
+    };
   }
 
   ready() {
@@ -100,15 +100,15 @@ class DatalabEditorElement extends Polymer.Element {
         // TODO: load the mode dynamically instead of starting out with python.
         let content = '';
         if (this._file) {
-          content = <string>this._file.content;
+          content = this._file.content as string;
         }
         this._editor = CodeMirror(this.$.editorContainer,
                                   {
-                                    value: content,
-                                    mode: 'python',
                                     lineNumbers: true,
                                     lineWrapping: true,
+                                    mode: 'python',
                                     theme: this._getCodeMirrorTheme(this._theme),
+                                    value: content,
                                   });
       })
       .catch((e: Error) => console.log('Error loading file: ' + e))
