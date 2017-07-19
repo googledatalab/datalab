@@ -175,7 +175,9 @@ export function isExperimentalResource(pathname: string) {
   const experimentalUiEnabled = process.env.DATALAB_EXPERIMENTAL_UI;
   return experimentalUiEnabled === 'true' && (
       pathname.indexOf('/data') === 0 ||
-      pathname === '/files' || // /files/path?download=true is used to download files from Jupyter
+      pathname === '/files' ||
+      // /files/path?download=true is used to download files from Jupyter
+      // TODO: use a different API to download files when we have a content service.
       pathname.indexOf('/sessions') === 0 ||
       pathname.indexOf('/terminal') === 0 ||
       pathname.indexOf('/editor') === 0 ||
