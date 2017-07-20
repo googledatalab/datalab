@@ -465,7 +465,6 @@ class FilesElement extends Polymer.Element {
     // Wait on all upload requests before declaring success or failure.
     try {
       await Promise.all(uploadPromises);
-
       if (uploadPromises.length) {
         // Dispatch a success notification, and refresh the file list
         const message = files.length > 1 ? files.length + ' files' : files[0].name;
