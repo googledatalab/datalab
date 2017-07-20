@@ -398,86 +398,85 @@ class FilesElement extends Polymer.Element {
     const currentPath = this.currentPath;
     const uploadPromises: Array<Promise<any>> = [];
 
-    if (files) {
-      // Find out if there's at least one large file.
-      const hasLargeFile = files.some((file: File) =>
-          file.size > this._uploadFileSizeWarningLimit);
+    // Find out if there's at least one large file.
+    const hasLargeFile = files.some((file: File) =>
+        file.size > this._uploadFileSizeWarningLimit);
 
-      let proceedWithUpload = true;
-      // If there's at least one large file, show a dialog to confirm the user
-      // wants to continue with the upload.
-      if (hasLargeFile) {
-        let warningMsg = files.length > 1 ? 'Some of the files you selected are '
-                                            : 'The file you selected is ';
-        warningMsg += 'larger than 25MB. You might experience browser freeze or crash';
-        const dialogOptions: DialogOptions = {
-          messageHtml: warningMsg,
-          okLabel: 'Upload Anyway',
-          title: 'Warning: Large File',
-        };
+    // If there's at least one large file, show a dialog to confirm the user
+    // wants to continue with the upload.
+    if (hasLargeFile) {
+      let warningMsg = files.length > 1 ? 'Some of the files you selected are '
+                                          : 'The file you selected is ';
+      warningMsg += 'larger than 25MB. You might experience browser freeze or crash.';
+      const dialogOptions: DialogOptions = {
+        messageHtml: warningMsg,
+        okLabel: 'Upload Anyway',
+        title: 'Warning: Large File',
+      };
 
-        const result: BaseDialogCloseResult =
-            await Utils.showDialog(BaseDialogElement, dialogOptions);
-        proceedWithUpload = result.confirmed === true;
-      }
+      const result: BaseDialogCloseResult =
+        await Utils.showDialog(BaseDialogElement, dialogOptions);
 
-      if (proceedWithUpload) {
-        files.forEach((file: File) => {
-
-          // First, load the file data into memory.
-          const loadPromise = new Promise((resolve, reject) => {
-
-            const reader = new FileReader();
-
-            reader.onload = () => {
-              let itemData = reader.result;
-              // Extract the base64 data string
-              itemData = itemData.substr(itemData.indexOf(',') + 1);
-
-              const model: JupyterFile = {
-                content: itemData,
-                format: 'base64',
-                name: file.name,
-                path: currentPath,
-                type: 'file',
-              };
-
-              resolve(model);
-            };
-
-            // TODO: handle file reading errors.
-            reader.onerror = () => {
-              reject('Error reading file.');
-            };
-
-            // TODO: this will freeze the UI on large files (>~20MB on my laptop) until
-            // they're loaded into memory, and very large files (>~100MB) will crash
-            // the browser.
-            // One possible solution is to slice the file into small chunks and upload
-            // each separately, but this requires the backend to support partial
-            // chunk uploads. For Jupyter, this is supported in 5.0.0, see:
-            // https://github.com/jupyter/notebook/pull/2162/files
-            reader.readAsDataURL(file);
-          });
-
-          // Now upload the file data to the backend server.
-          const uploadPromise = loadPromise
-            .then((model: JupyterFile) => ApiManager.saveJupyterFile(model));
-          uploadPromises.push(uploadPromise);
-        });
-      }
-
-      // Wait on all upload requests before declaring success or failure.
-      return Promise.all(uploadPromises)
-      .then(() => {
+      if (result.confirmed === false) {
         // Reset the input element.
         inputElement.value = '';
-        return uploadPromises.length ? this._fetchFileList() : null;
-      });
-      // TODO: handle upload errors.
-    } else {
-      return Promise.resolve(null);
+        return;
+      }
     }
+
+    files.forEach((file: File) => {
+
+      // First, load the file data into memory.
+      const readPromise = new Promise((resolve, reject) => {
+
+        const reader = new FileReader();
+
+        reader.onload = () => resolve(reader.result);
+        // TODO: handle file reading errors.
+        reader.onerror = () => {
+          reject(new Error('Error reading file.'));
+        };
+
+        // TODO: this will freeze the UI on large files (>~20MB on my laptop) until
+        // they're loaded into memory, and very large files (>~100MB) will crash
+        // the browser.
+        // One possible solution is to slice the file into small chunks and upload
+        // each separately, but this requires the backend to support partial
+        // chunk uploads. For Jupyter, this is supported in 5.0.0, see:
+        // https://github.com/jupyter/notebook/pull/2162/files
+        reader.readAsDataURL(file);
+      });
+
+      // Now upload the file data to the backend server.
+      const uploadPromise = readPromise
+        .then((itemData: string) => {
+          // Extract the base64 data string
+          itemData = itemData.substr(itemData.indexOf(',') + 1);
+
+          const model: JupyterFile = {
+            content: itemData,
+            format: 'base64',
+            name: file.name,
+            path: currentPath,
+            type: 'file',
+          };
+          return ApiManager.saveJupyterFile(model);
+        });
+      uploadPromises.push(uploadPromise);
+    });
+
+    // Wait on all upload requests before declaring success or failure.
+    await Promise.all(uploadPromises);
+    // TODO: handle upload errors.
+
+    // Reset the input element.
+    inputElement.value = '';
+
+    // Dispatch an upload successful notification
+    const message = files.length > 1 ? files.length + ' files' : files[0].name;
+    this.dispatchEvent(new NotificationEvent(message + ' uploaded successfully.'));
+
+    return uploadPromises.length ? this._fetchFileList() : null;
   }
 
   /**
@@ -505,13 +504,17 @@ class FilesElement extends Polymer.Element {
         // Only if the dialog has been confirmed with some user input, rename the
         // newly created file. Then if that is successful, reload the file list
         if (closeResult.confirmed && closeResult.userInput) {
-          let newName = this.currentPath + '/' + closeResult.userInput;
+          let newName = closeResult.userInput;
           // Make sure the name ends with .ipynb for notebooks for convenience
           if (type === 'notebook' && !newName.endsWith('.ipynb')) {
             newName += '.ipynb';
           }
-          return ApiManager.createNewItem(type, newName)
-            .then(() => this._fetchFileList());
+          return ApiManager.createNewItem(type, this.currentPath + '/' + newName)
+            .then(() => this._fetchFileList())
+            .then(() => {
+              // Dispatch a success notification
+              this.dispatchEvent(new NotificationEvent('Created ' + newName + '.'));
+            });
         } else {
           return Promise.resolve(null);
         }
@@ -560,7 +563,13 @@ class FilesElement extends Polymer.Element {
           if (closeResult.confirmed && closeResult.userInput) {
             const newName = this.currentPath + '/' + closeResult.userInput;
             return ApiManager.renameItem(selectedObject.path, newName)
-              .then(() => this._fetchFileList());
+              .then(() => this._fetchFileList())
+              .then(() => {
+                // Dispatch a success notification
+                const message = 'Renamed ' + selectedObject.name +
+                    ' to ' + closeResult.userInput + '.';
+                this.dispatchEvent(new NotificationEvent(message));
+              });
               // TODO: [yebrahim] Re-select the renamed item after refresh
           } else {
             return Promise.resolve(null);
@@ -626,7 +635,12 @@ class FilesElement extends Polymer.Element {
             // TODO: [yebrahim] If at least one delete fails, _fetchFileList will never be called,
             // even if some other deletes completed.
             return Promise.all(deletePromises)
-              .then(() => this._fetchFileList());
+              .then(() => this._fetchFileList())
+              .then(() => {
+                // Dispatch a success notification
+                const message = 'Deleted ' + num + (num === 1 ? ' file.' : 'files.');
+                this.dispatchEvent(new NotificationEvent(message));
+              });
           } else {
             return Promise.resolve(null);
           }
@@ -675,9 +689,17 @@ class FilesElement extends Polymer.Element {
       return Utils.showDialog(DirectoryPickerDialogElement, options)
         .then((closeResult: DirectoryPickerDialogCloseResult) => {
           if (closeResult.confirmed) {
-            const newPath = closeResult.directoryPath;
+            let newPath = closeResult.directoryPath;
             return ApiManager.copyItem(selectedObject.path, newPath)
-              .then(() => this._fetchFileList());
+              .then((newItem: JupyterFile) => {
+                newPath = newItem.path;
+                return this._fetchFileList();
+              })
+              .then(() => {
+                // Dispatch a success notification
+                const message = 'Copied ' + selectedObject.path + ' to ' + newPath;
+                this.dispatchEvent(new NotificationEvent(message));
+              });
           } else {
             return Promise.resolve(null);
           }
@@ -709,10 +731,18 @@ class FilesElement extends Polymer.Element {
       return Utils.showDialog(DirectoryPickerDialogElement, options)
         .then((closeResult: DirectoryPickerDialogCloseResult) => {
           if (closeResult.confirmed) {
-            const newPath = closeResult.directoryPath;
+            let newPath = closeResult.directoryPath;
             // Moving is renaming.
             return ApiManager.renameItem(selectedObject.path, newPath + '/' + selectedObject.name)
-              .then(() => this._fetchFileList());
+              .then((newItem: JupyterFile) => {
+                newPath = newItem.path;
+                return this._fetchFileList();
+              })
+              .then(() => {
+                // Dispatch a file created notification
+                const message = 'Moved ' + selectedObject.path + ' to ' + newPath;
+                this.dispatchEvent(new NotificationEvent(message));
+              });
           } else {
             return Promise.resolve(null);
           }
