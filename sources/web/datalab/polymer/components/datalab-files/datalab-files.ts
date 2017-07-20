@@ -60,7 +60,7 @@ class FilesElement extends Polymer.Element {
   private _pathHistoryIndex: number;
   private _fetching: boolean;
   private _fileList: ApiFile[];
-  private _fileListRefreshInterval = 10000;
+  private _fileListRefreshInterval = 60 * 1000;
   private _fileListRefreshIntervalHandle = 0;
   private _currentCrumbs: string[];
   private _isDetailsPaneToggledOn: boolean;
@@ -197,10 +197,6 @@ class FilesElement extends Polymer.Element {
    * updates the fileList property.
    */
   _fetchFileList() {
-    if (!document.hasFocus()) {
-      console.log('out of focus, not refreshing files.');
-      return Promise.resolve(null);
-    }
     // Don't overlap fetch requests. This can happen we can do fetch from three sources:
     // - Initialization in the ready() event handler.
     // - Refresh mechanism called by the setInterval().
@@ -790,7 +786,6 @@ class FilesElement extends Polymer.Element {
    * Starts auto refreshing the file list, and also triggers an immediate refresh.
    */
   _focusHandler() {
-    console.log('files focused!');
     // Refresh the file list periodically.
     if (!this._fileListRefreshIntervalHandle) {
       this._fileListRefreshIntervalHandle =
@@ -804,7 +799,6 @@ class FilesElement extends Polymer.Element {
    * Stops the auto refresh of the file list.
    */
   _blurHandler() {
-    console.log('files blurred!');
     if (this._fileListRefreshIntervalHandle) {
       clearInterval(this._fileListRefreshIntervalHandle);
       this._fileListRefreshIntervalHandle = 0;

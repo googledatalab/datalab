@@ -29,7 +29,7 @@ class SessionsElement extends Polymer.Element {
 
   private _sessionList: Session[];
   private _fetching: boolean;
-  private _sessionListRefreshInterval = 10000;
+  private _sessionListRefreshInterval = 60 * 1000;
   private _sessionListRefreshIntervalHandle = 0;
 
   static get is() { return 'datalab-sessions'; }
@@ -94,10 +94,6 @@ class SessionsElement extends Polymer.Element {
    * updates the _sessionList property.
    */
   _fetchSessionList() {
-    if (!document.hasFocus()) {
-      console.log('out of focus, not refreshing sessions.');
-      return Promise.resolve(null);
-    }
     const self = this;
     self._fetching = true;
     return ApiManager.listSessionsAsync()
@@ -156,7 +152,6 @@ class SessionsElement extends Polymer.Element {
    * Starts auto refreshing the session list, and also triggers an immediate refresh.
    */
   _focusHandler() {
-    console.log('sessions focused');
     // Refresh the session list periodically.
     if (!this._sessionListRefreshIntervalHandle) {
       this._sessionListRefreshIntervalHandle =
@@ -170,7 +165,6 @@ class SessionsElement extends Polymer.Element {
    * Stops the auto refresh of the session list.
    */
   _blurHandler() {
-    console.log('sessions blurred');
     if (this._sessionListRefreshIntervalHandle) {
       clearInterval(this._sessionListRefreshIntervalHandle);
       this._sessionListRefreshIntervalHandle = 0;
