@@ -205,8 +205,10 @@ class FilesElement extends Polymer.Element {
   /**
    * Calls the ApiManager to get the list of files at the current path, and
    * updates the fileList property.
+   * @param throwOnError whether to throw an exception if the refresh fails. This
+   *                     is false by default because throwing is currently not used.
    */
-  _fetchFileList() {
+  _fetchFileList(throwOnError = false) {
     // Don't overlap fetch requests. This can happen we can do fetch from three sources:
     // - Initialization in the ready() event handler.
     // - Refresh mechanism called by the setInterval().
@@ -231,10 +233,13 @@ class FilesElement extends Polymer.Element {
           this._fileList = newList;
           this._drawFileList();
         }
-      }, () => console.log('Error getting list of files.'))
-      .then(() => {
-        this._fetching = false;
-      });
+      })
+      .catch((e: Error) => {
+        if (throwOnError === true) {
+          throw new Error('Error getting list of files: ' + e.message);
+        }
+      })
+      .then(() => this._fetching = false);
   }
 
   /**
@@ -477,10 +482,7 @@ class FilesElement extends Polymer.Element {
         const message = files.length > 1 ? files.length + ' files' : files[0].name;
         this.dispatchEvent(new NotificationEvent(message + ' uploaded successfully.'));
 
-        this._fetchFileList()
-          .catch((_) => {
-            // Don't report errors caused by fetch here
-          });
+        this._fetchFileList();
       }
       // Reset the input element.
       inputElement.value = '';
@@ -524,10 +526,7 @@ class FilesElement extends Polymer.Element {
             .then(() => {
               // Dispatch a success notification, and refresh the file list
               this.dispatchEvent(new NotificationEvent('Created ' + newName + '.'));
-              this._fetchFileList()
-                .catch((_) => {
-                  // Don't report errors caused by fetch here
-                });
+              this._fetchFileList();
             })
             .catch((e: Error) => Utils.showErrorDialog('Error creating item', e.message));
         } else {
@@ -584,10 +583,7 @@ class FilesElement extends Polymer.Element {
                 const message = 'Renamed ' + selectedObject.name +
                     ' to ' + closeResult.userInput + '.';
                 this.dispatchEvent(new NotificationEvent(message));
-                this._fetchFileList()
-                  .catch((_) => {
-                    // Don't report errors caused by fetch here
-                  });
+                this._fetchFileList();
               })
               .catch((e: Error) => Utils.showErrorDialog('Error renaming item', e.message));
           } else {
@@ -657,10 +653,7 @@ class FilesElement extends Polymer.Element {
                 // Dispatch a success notification, and refresh the file list
                 const message = 'Deleted ' + num + (num === 1 ? ' file.' : 'files.');
                 this.dispatchEvent(new NotificationEvent(message));
-                this._fetchFileList()
-                  .catch((_) => {
-                    // Don't report errors caused by fetch here
-                  });
+                this._fetchFileList();
               })
               .catch((e: Error) => Utils.showErrorDialog('Error deleting item', e.message));
           } else {
@@ -715,10 +708,7 @@ class FilesElement extends Polymer.Element {
                 // Dispatch a success notification, and refresh the file list
                 const message = 'Copied ' + selectedObject.path + ' to ' + newItem.path;
                 this.dispatchEvent(new NotificationEvent(message));
-                this._fetchFileList()
-                  .catch((_) => {
-                    // Don't report errors caused by fetch here
-                  });
+                this._fetchFileList();
               })
               .catch((e: Error) => Utils.showErrorDialog('Error copying item', e.message));
           } else {
@@ -759,10 +749,7 @@ class FilesElement extends Polymer.Element {
                 // Dispatch a success notification, and refresh the file list
                 const message = 'Moved ' + selectedObject.path + ' to ' + newItem.path;
                 this.dispatchEvent(new NotificationEvent(message));
-                this._fetchFileList()
-                  .catch((_) => {
-                    // Don't report errors caused by fetch here
-                  });
+                this._fetchFileList();
               })
               .catch((e: Error) => Utils.showErrorDialog('Error moving item', e.message));
           } else {
