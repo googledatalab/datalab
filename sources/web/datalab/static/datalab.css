@@ -270,6 +270,21 @@ i.material-icons {
   display: none;
 }
 
+/* Hide the python kernel picker dropdown until it's ready for release. */
+#kernel_picker_menu {
+  display: none;
+}
+
+/* Hide the Terminal button until it's ready for release. */
+#addTerminalButton {
+  display: none;
+}
+
+/* Hide the Idle Timeout Setting until it's ready for release. */
+#idleTimeoutSettingsSection {
+  display: none;
+}
+
 #logo {
   margin-left: 12px;
   flex: 0 0 auto;
