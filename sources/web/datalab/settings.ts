@@ -235,6 +235,7 @@ export function updateUserSettingAsync(userId: string, key: string, value: strin
       }
     }
     if (settings[key] == value) {
+      console.log('No change to settings for key=' + key + ', value=' + value);
       return false;   // No change was required
     }
     settings[key] = value;
@@ -249,6 +250,7 @@ export function updateUserSettingAsync(userId: string, key: string, value: strin
       console.log(e);
       throw new Error('Failed to write settings');
     }
+    console.log('Updated settings for key=' + key + ', value=' + value);
     return true;    // File was updated
   }
 
