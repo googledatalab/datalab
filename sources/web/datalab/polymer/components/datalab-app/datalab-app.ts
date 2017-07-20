@@ -93,6 +93,14 @@ class DatalabAppElement extends Polymer.Element {
     ];
   }
 
+  ready() {
+    super.ready();
+
+    window.addEventListener('focus', () => this._focusHandler());
+    // TODO: Need to also add a blur event listener that calls the current page's blur
+    // handler, but I cannot get this to work as of now.
+  }
+
   /**
    * Called when the element is detached from the DOM. Cleans up event listeners.
    */
@@ -117,15 +125,40 @@ class DatalabAppElement extends Polymer.Element {
    * We do this to lazy load pages as the user clicks them instead of letting
    * the browser pre-load all the pages on the first request.
    */
-  _pageChanged(page: string) {
+  _pageChanged(newPage: string, oldPage: string) {
     // Build the path using the page name as suffix for directory
     // and file names.
-    const subpath = 'datalab-' + page;
+    const subpath = 'datalab-' + newPage;
     const resolvedPageUrl = this.resolveUrl('../' + subpath + '/' + subpath + '.html');
     Polymer.importHref(resolvedPageUrl, undefined, undefined, true);
 
-    // If the new page has a resize handler, call it.
-    this._resizeHandler();
+    const newElement = this._getPageElement(newPage);
+    const oldElement = this._getPageElement(oldPage);
+
+    // Call proper event handlers on changed pages.
+    // TODO: Explore making all datalab pages extend a custom element that has
+    // these event handlers defined to keep things consistent and get rid of the checks.
+    if (newElement) {
+      if (newElement._focusHandler) {
+        newElement._focusHandler();
+      }
+      if (newElement._resizeHandler) {
+        newElement._resizeHandler();
+      }
+    }
+    if (oldElement && oldElement._blurHandler) {
+      oldElement._blurHandler();
+    }
+
+  }
+
+  /**
+   * Given a page name, returns its HTML element.
+   * @param pageName name of the page whose element to return
+   */
+  _getPageElement(pageName: string) {
+    const elName = 'datalab-' + pageName;
+    return this.$.pages.items.find((element: HTMLElement) => element.localName === elName);
   }
 
   /**
@@ -135,6 +168,16 @@ class DatalabAppElement extends Polymer.Element {
     const selectedPage = this.$.pages.selectedItem;
     if (selectedPage && selectedPage._resizeHandler) {
       selectedPage._resizeHandler();
+    }
+  }
+
+  /**
+   * If the selected page has a focus handler, calls it.
+   */
+  _focusHandler() {
+    const selectedPage = this.$.pages.selectedItem;
+    if (selectedPage && selectedPage._focusHandler) {
+      selectedPage._focusHandler();
     }
   }
 

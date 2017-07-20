@@ -29,7 +29,8 @@ class SessionsElement extends Polymer.Element {
 
   private _sessionList: Session[];
   private _fetching: boolean;
-  private _sessionListRefreshInterval: number;
+  private _sessionListRefreshInterval = 60 * 1000;
+  private _sessionListRefreshIntervalHandle = 0;
 
   static get is() { return 'datalab-sessions'; }
 
@@ -42,10 +43,6 @@ class SessionsElement extends Polymer.Element {
       _sessionList: {
         type: Array,
         value: () => [],
-      },
-      _sessionListRefreshInterval: {
-        type: Number,
-        value: 10000
       },
       selectedSession: {
         type: Object,
@@ -63,19 +60,13 @@ class SessionsElement extends Polymer.Element {
 
     (this.$.sessions as ItemListElement).columns = ['Session Path', 'Status'];
 
-    // load session list initially
-    this._fetchSessionList();
-
-    // Refresh the session list periodically.
-    // TODO: [yebrahim] Start periodic refresh when the window is in focus, and
-    // the sessions page is open, and stop it on blur to minimize unnecessary traffic
-    setInterval(this._fetchSessionList.bind(this), this._sessionListRefreshInterval);
-
     const sessionsElement = this.shadowRoot.querySelector('#sessions');
     if (sessionsElement) {
       sessionsElement.addEventListener('selected-indices-changed',
                                     this._handleSelectionChanged.bind(this));
     }
+
+    this._focusHandler();
   }
 
   /**
@@ -105,11 +96,18 @@ class SessionsElement extends Polymer.Element {
    *                     is false by default because throwing is currently not used.
    */
   _fetchSessionList(throwOnError = false) {
-    const self = this;
-    self._fetching = true;
-    return ApiManager.listSessionsAsync()
+    // Don't overlap fetch requests. This can happen because we set up fetch from several sources:
+    // - Initialization in the ready() event handler.
+    // - Refresh mechanism called by the setInterval().
+    // - User clicking refresh button.
+    // - Sessions page gaining focus.
+    if (this._fetching) {
+      return;
+    }
+    this._fetching = true;
+    ApiManager.listSessionsAsync()
       .then((newList) => {
-        // Only refresh the list if there are any changes. This helps keep
+        // Only refresh the UI list if there are any changes. This helps keep
         // the item list's selections intact most of the time
         // TODO: [yebrahim] Try to diff the two lists and only inject the
         // differences in the DOM instead of refreshing the entire list if
@@ -117,7 +115,7 @@ class SessionsElement extends Polymer.Element {
         // ids for the items. Using paths might work for files, but is not
         // a clean solution.
         if (JSON.stringify(this._sessionList) !== JSON.stringify(newList)) {
-          self._sessionList = newList;
+          this._sessionList = newList;
           this._drawSessionList();
         }
       })
@@ -159,6 +157,34 @@ class SessionsElement extends Polymer.Element {
       this.selectedSession = this._sessionList[selectedItems[0]];
     } else {
       this.selectedSession = null;
+    }
+  }
+
+  /**
+   * Starts auto refreshing the session list, and also triggers an immediate refresh.
+   */
+  _focusHandler() {
+    // Refresh the session list periodically. Note that we don't rely solely on
+    // the interval to keep the list in sync, the refresh also happens when the
+    // sessions page gains focus, which is more useful since the list will
+    // change typically when the user opens a notebook, then switches back to
+    // the sessions page. Killing a session also triggers a refresh.
+    if (!this._sessionListRefreshIntervalHandle) {
+      this._sessionListRefreshIntervalHandle =
+          setInterval(this._fetchSessionList.bind(this), this._sessionListRefreshInterval);
+    }
+    // Now refresh the list once.
+    this._fetchSessionList();
+  }
+
+  /**
+   * Stops the auto refresh of the session list. This happens when the user moves
+   * away from the page.
+   */
+  _blurHandler() {
+    if (this._sessionListRefreshIntervalHandle) {
+      clearInterval(this._sessionListRefreshIntervalHandle);
+      this._sessionListRefreshIntervalHandle = 0;
     }
   }
 
