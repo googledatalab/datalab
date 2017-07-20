@@ -14,6 +14,7 @@
 
 /**
  * Type declarations for CodeMirror
+ * TODO: Get these from DefinitelyTyped
  */
 
 interface CodeMirrorOptions {
@@ -24,7 +25,12 @@ interface CodeMirrorOptions {
   theme: string;
 }
 
+interface CodeMirrorDoc {
+  getValue(): string;
+}
+
 interface CodeMirrorEditor {
+  doc: CodeMirrorDoc;
   setOption(name: string, value: string): void;
   getOption(name: string): void;
 }
@@ -113,6 +119,27 @@ class DatalabEditorElement extends Polymer.Element {
       })
       .catch((e: Error) => console.log('Error loading file: ' + e))
       .then(() => this._busy = false);
+  }
+
+  /**
+   * Saves the currently open file.
+   */
+  _saveAsync() {
+    if (this._file) {
+      const filePath = this._file.path;
+      const dirPath = filePath.substr(0, filePath.lastIndexOf(this._file.name));
+      const model: JupyterFile = {
+        content: this._editor.doc.getValue(),
+        format: this._file.format,
+        mimetype: this._file.mimetype,
+        name: this._file.name,
+        path: dirPath,
+        type: this._file.type,
+      };
+      return ApiManager.saveJupyterFile(model);
+    } else {
+      return Promise.resolve(null);
+    }
   }
 
   /**
