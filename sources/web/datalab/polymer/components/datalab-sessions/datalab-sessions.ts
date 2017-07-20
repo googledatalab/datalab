@@ -102,10 +102,10 @@ class SessionsElement extends Polymer.Element {
     // - User clicking refresh button.
     // - Sessions page gaining focus.
     if (this._fetching) {
-      return Promise.resolve(null);
+      return;
     }
     this._fetching = true;
-    return ApiManager.listSessionsAsync()
+    ApiManager.listSessionsAsync()
       .then((newList) => {
         // Only refresh the UI list if there are any changes. This helps keep
         // the item list's selections intact most of the time

@@ -205,11 +205,11 @@ class FilesElement extends Polymer.Element {
     // - User clicking refresh button.
     // - Files page gaining focus.
     if (this._fetching) {
-      return Promise.resolve(null);
+      return;
     }
     this._fetching = true;
 
-    return ApiManager.listFilesAsync(this.basePath + this.currentPath)
+    ApiManager.listFilesAsync(this.basePath + this.currentPath)
       .then((newList) => {
         // Only refresh the UI list if there are any changes. This helps keep
         // the item list's selections intact most of the time

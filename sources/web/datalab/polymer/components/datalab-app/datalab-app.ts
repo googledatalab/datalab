@@ -175,7 +175,6 @@ class DatalabAppElement extends Polymer.Element {
    * If the selected page has a focus handler, calls it.
    */
   _focusHandler() {
-    console.log('window focused!');
     const selectedPage = this.$.pages.selectedItem;
     if (selectedPage && selectedPage._focusHandler) {
       selectedPage._focusHandler();
