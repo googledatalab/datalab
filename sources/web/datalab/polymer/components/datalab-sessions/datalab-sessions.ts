@@ -29,7 +29,8 @@ class SessionsElement extends Polymer.Element {
 
   private _sessionList: Session[];
   private _fetching: boolean;
-  private _sessionListRefreshInterval: number;
+  private _sessionListRefreshInterval = 10000;
+  private _sessionListRefreshIntervalHandle = 0;
 
   static get is() { return 'datalab-sessions'; }
 
@@ -42,10 +43,6 @@ class SessionsElement extends Polymer.Element {
       _sessionList: {
         type: Array,
         value: () => [],
-      },
-      _sessionListRefreshInterval: {
-        type: Number,
-        value: 10000
       },
       selectedSession: {
         type: Object,
@@ -63,19 +60,13 @@ class SessionsElement extends Polymer.Element {
 
     (this.$.sessions as ItemListElement).columns = ['Session Path', 'Status'];
 
-    // load session list initially
-    this._fetchSessionList();
-
-    // Refresh the session list periodically.
-    // TODO: [yebrahim] Start periodic refresh when the window is in focus, and
-    // the sessions page is open, and stop it on blur to minimize unnecessary traffic
-    setInterval(this._fetchSessionList.bind(this), this._sessionListRefreshInterval);
-
     const sessionsElement = this.shadowRoot.querySelector('#sessions');
     if (sessionsElement) {
       sessionsElement.addEventListener('selected-indices-changed',
                                     this._handleSelectionChanged.bind(this));
     }
+
+    this._focusHandler();
   }
 
   /**
@@ -103,6 +94,10 @@ class SessionsElement extends Polymer.Element {
    * updates the _sessionList property.
    */
   _fetchSessionList() {
+    if (!document.hasFocus()) {
+      console.log('out of focus, not refreshing sessions.');
+      return Promise.resolve(null);
+    }
     const self = this;
     self._fetching = true;
     return ApiManager.listSessionsAsync()
@@ -154,6 +149,31 @@ class SessionsElement extends Polymer.Element {
       this.selectedSession = this._sessionList[selectedItems[0]];
     } else {
       this.selectedSession = null;
+    }
+  }
+
+  /**
+   * Starts auto refreshing the session list, and also triggers an immediate refresh.
+   */
+  _focusHandler() {
+    console.log('sessions focused');
+    // Refresh the session list periodically.
+    if (!this._sessionListRefreshIntervalHandle) {
+      this._sessionListRefreshIntervalHandle =
+          setInterval(this._fetchSessionList.bind(this), this._sessionListRefreshInterval);
+    }
+    // Now refresh the list once.
+    this._fetchSessionList();
+  }
+
+  /**
+   * Stops the auto refresh of the session list.
+   */
+  _blurHandler() {
+    console.log('sessions blurred');
+    if (this._sessionListRefreshIntervalHandle) {
+      clearInterval(this._sessionListRefreshIntervalHandle);
+      this._sessionListRefreshIntervalHandle = 0;
     }
   }
 
