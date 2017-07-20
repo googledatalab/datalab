@@ -315,9 +315,9 @@ class ApiManager {
   public static deleteItem(path: string) {
     path = ApiManager.contentApiUrl + '/' + path;
     const xhrOptions: XhrOptions = {
+      failureCodes: [400],
       method: 'DELETE',
       successCode: 204,
-      failureCodes: [400],
     };
 
     return ApiManager.sendRequestAsync(path, xhrOptions);
