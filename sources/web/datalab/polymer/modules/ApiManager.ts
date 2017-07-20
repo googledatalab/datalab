@@ -318,7 +318,6 @@ class ApiManager {
       failureCodes: [400],
       method: 'DELETE',
       successCode: 204,
-      failureCodes: [400],
     };
 
     return ApiManager.sendRequestAsync(path, xhrOptions);

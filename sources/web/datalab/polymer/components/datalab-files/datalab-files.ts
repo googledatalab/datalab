@@ -469,17 +469,27 @@ class FilesElement extends Polymer.Element {
     });
 
     // Wait on all upload requests before declaring success or failure.
-    return Promise.all(uploadPromises)
-      .catch((e: Error) => Utils.showErrorDialog('Error uploading file', e.message))
-      .then(() => uploadPromises.length ? this._fetchFileList() : null)
-      .then(() => {
-        // Reset the input element.
-        inputElement.value = '';
+    let success: boolean;
+    try {
+      success = true;
+      await Promise.all(uploadPromises);
+    } catch(e) {
+      success = false;
+      Utils.showErrorDialog('Error uploading file', e.message);
+    }
+
+    if (success) {
+      if (uploadPromises.length) {
+        this._fetchFileList();
+      }
+
+      // Reset the input element.
+      inputElement.value = '';
 
       // Dispatch an upload successful notification
       const message = files.length > 1 ? files.length + ' files' : files[0].name;
       this.dispatchEvent(new NotificationEvent(message + ' uploaded successfully.'));
-      });
+    }
   }
 
   /**
@@ -565,15 +575,22 @@ class FilesElement extends Polymer.Element {
         .then((closeResult: InputDialogCloseResult) => {
           if (closeResult.confirmed && closeResult.userInput) {
             const newName = this.currentPath + '/' + closeResult.userInput;
+
+            let success: boolean;
             return ApiManager.renameItem(selectedObject.path, newName)
               .then(() => {
+                success = true;
                 // Dispatch a success notification
                 const message = 'Renamed ' + selectedObject.name +
                     ' to ' + closeResult.userInput + '.';
                 this.dispatchEvent(new NotificationEvent(message));
-                return this._fetchFileList();
               })
-              .catch((e: Error) => Utils.showErrorDialog('Error renaming item', e.message));
+              .catch((e: Error) => {
+                success = false;
+                Utils.showErrorDialog('Error renaming item', e.message);
+              })
+                // Only refresh the file list on success
+              .then(() => success === true ? this._fetchFileList() : null);
           } else {
             return Promise.resolve(null);
           }
@@ -636,14 +653,20 @@ class FilesElement extends Polymer.Element {
             });
             // TODO: [yebrahim] If at least one delete fails, _fetchFileList will never be called,
             // even if some other deletes completed.
+            let success: boolean;
             return Promise.all(deletePromises)
               .then(() => {
+                success = true;
                 // Dispatch a success notification
                 const message = 'Deleted ' + num + (num === 1 ? ' file.' : 'files.');
                 this.dispatchEvent(new NotificationEvent(message));
-                return this._fetchFileList();
               })
-              .catch((e: Error) => Utils.showErrorDialog('Error deleting item', e.message));
+              .catch((e: Error) => {
+                success = false;
+                Utils.showErrorDialog('Error deleting item', e.message);
+              })
+              // Only refresh in case of success
+              .then(() => success === true ? this._fetchFileList() : null);
           } else {
             return Promise.resolve(null);
           }
@@ -692,17 +715,23 @@ class FilesElement extends Polymer.Element {
         .then((closeResult: DirectoryPickerDialogCloseResult) => {
           if (closeResult.confirmed) {
             let newPath = closeResult.directoryPath;
+
+            let success: boolean;
             return ApiManager.copyItem(selectedObject.path, newPath)
               .then((newItem: JupyterFile) => {
+                success = true;
                 newPath = newItem.path;
 
                 // Dispatch a success notification
                 const message = 'Copied ' + selectedObject.path + ' to ' + newPath;
                 this.dispatchEvent(new NotificationEvent(message));
-
-                return this._fetchFileList();
               })
-              .catch((e: Error) => Utils.showErrorDialog('Error copying item', e.message));
+              .catch((e: Error) => {
+                success = false;
+                Utils.showErrorDialog('Error copying item', e.message);
+              })
+              // Only refresh in the case of success
+              .then(() => success === true ? this._fetchFileList() : null);
           } else {
             return Promise.resolve(null);
           }
@@ -736,17 +765,23 @@ class FilesElement extends Polymer.Element {
           if (closeResult.confirmed) {
             let newPath = closeResult.directoryPath;
             // Moving is renaming.
+
+            let success: boolean;
             return ApiManager.renameItem(selectedObject.path, newPath + '/' + selectedObject.name)
               .then((newItem: JupyterFile) => {
+                success = true;
                 newPath = newItem.path;
 
                 // Dispatch a file created notification
                 const message = 'Moved ' + selectedObject.path + ' to ' + newPath;
                 this.dispatchEvent(new NotificationEvent(message));
-
-                return this._fetchFileList();
               })
-              .catch((e: Error) => Utils.showErrorDialog('Error moving item', e.message));
+              .catch((e: Error) => {
+                success = false;
+                Utils.showErrorDialog('Error moving item', e.message);
+              })
+              // Only refresh in the case of success
+              .then(() => success === true ? this._fetchFileList() : null);
           } else {
             return Promise.resolve(null);
           }
