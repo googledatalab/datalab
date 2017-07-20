@@ -101,8 +101,10 @@ class SessionsElement extends Polymer.Element {
   /**
    * Calls the ApiManager to get the list of sessions at the current path, and
    * updates the _sessionList property.
+   * @param throwOnError whether to throw an exception if the refresh fails. This
+   *                     is false by default because throwing is currently not used.
    */
-  _fetchSessionList() {
+  _fetchSessionList(throwOnError = false) {
     const self = this;
     self._fetching = true;
     return ApiManager.listSessionsAsync()
@@ -118,10 +120,13 @@ class SessionsElement extends Polymer.Element {
           self._sessionList = newList;
           this._drawSessionList();
         }
-      }, () => console.log('Error getting list of sessions.'))
-      .then(() => {
-        this._fetching = false;
-      });
+      })
+      .catch((e: Error) => {
+        if (throwOnError === true) {
+          throw new Error('Error getting list of sessions: ' + e.message);
+        }
+      })
+      .then(() => this._fetching = false);
   }
 
   /**
