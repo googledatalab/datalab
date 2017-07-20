@@ -469,26 +469,23 @@ class FilesElement extends Polymer.Element {
     });
 
     // Wait on all upload requests before declaring success or failure.
-    let success: boolean;
     try {
-      success = true;
       await Promise.all(uploadPromises);
-    } catch (e) {
-      success = false;
-      Utils.showErrorDialog('Error uploading file', e.message);
-    }
 
-    if (success) {
       if (uploadPromises.length) {
-        this._fetchFileList();
-      }
+        // Dispatch a success notification, and refresh the file list
+        const message = files.length > 1 ? files.length + ' files' : files[0].name;
+        this.dispatchEvent(new NotificationEvent(message + ' uploaded successfully.'));
 
+        this._fetchFileList()
+          .catch((_) => {
+            // Don't report errors caused by fetch here
+          });
+      }
       // Reset the input element.
       inputElement.value = '';
-
-      // Dispatch an upload successful notification
-      const message = files.length > 1 ? files.length + ' files' : files[0].name;
-      this.dispatchEvent(new NotificationEvent(message + ' uploaded successfully.'));
+    } catch (e) {
+      Utils.showErrorDialog('Error uploading file', e.message);
     }
   }
 
@@ -523,19 +520,16 @@ class FilesElement extends Polymer.Element {
             newName += '.ipynb';
           }
 
-          let success: boolean;
           return ApiManager.createNewItem(type, this.currentPath + '/' + newName)
             .then(() => {
-              success = true;
-              // Dispatch a success notification
+              // Dispatch a success notification, and refresh the file list
               this.dispatchEvent(new NotificationEvent('Created ' + newName + '.'));
+              this._fetchFileList()
+                .catch((_) => {
+                  // Don't report errors caused by fetch here
+                });
             })
-            .catch((e: Error) => {
-              success = false;
-              Utils.showErrorDialog('Error creating item', e.message);
-            })
-            // Only refresh the file list on success
-            .then(() => success === true ? this._fetchFileList() : null);
+            .catch((e: Error) => Utils.showErrorDialog('Error creating item', e.message));
         } else {
           return Promise.resolve(null);
         }
@@ -584,21 +578,18 @@ class FilesElement extends Polymer.Element {
           if (closeResult.confirmed && closeResult.userInput) {
             const newName = this.currentPath + '/' + closeResult.userInput;
 
-            let success: boolean;
             return ApiManager.renameItem(selectedObject.path, newName)
               .then(() => {
-                success = true;
-                // Dispatch a success notification
+                // Dispatch a success notification, and refresh the file list
                 const message = 'Renamed ' + selectedObject.name +
                     ' to ' + closeResult.userInput + '.';
                 this.dispatchEvent(new NotificationEvent(message));
+                this._fetchFileList()
+                  .catch((_) => {
+                    // Don't report errors caused by fetch here
+                  });
               })
-              .catch((e: Error) => {
-                success = false;
-                Utils.showErrorDialog('Error renaming item', e.message);
-              })
-                // Only refresh the file list on success
-              .then(() => success === true ? this._fetchFileList() : null);
+              .catch((e: Error) => Utils.showErrorDialog('Error renaming item', e.message));
           } else {
             return Promise.resolve(null);
           }
@@ -661,20 +652,17 @@ class FilesElement extends Polymer.Element {
             });
             // TODO: [yebrahim] If at least one delete fails, _fetchFileList will never be called,
             // even if some other deletes completed.
-            let success: boolean;
             return Promise.all(deletePromises)
               .then(() => {
-                success = true;
-                // Dispatch a success notification
+                // Dispatch a success notification, and refresh the file list
                 const message = 'Deleted ' + num + (num === 1 ? ' file.' : 'files.');
                 this.dispatchEvent(new NotificationEvent(message));
+                this._fetchFileList()
+                  .catch((_) => {
+                    // Don't report errors caused by fetch here
+                  });
               })
-              .catch((e: Error) => {
-                success = false;
-                Utils.showErrorDialog('Error deleting item', e.message);
-              })
-              // Only refresh in case of success
-              .then(() => success === true ? this._fetchFileList() : null);
+              .catch((e: Error) => Utils.showErrorDialog('Error deleting item', e.message));
           } else {
             return Promise.resolve(null);
           }
@@ -722,24 +710,17 @@ class FilesElement extends Polymer.Element {
       return Utils.showDialog(DirectoryPickerDialogElement, options)
         .then((closeResult: DirectoryPickerDialogCloseResult) => {
           if (closeResult.confirmed) {
-            let newPath = closeResult.directoryPath;
-
-            let success: boolean;
-            return ApiManager.copyItem(selectedObject.path, newPath)
+            return ApiManager.copyItem(selectedObject.path, closeResult.directoryPath)
               .then((newItem: JupyterFile) => {
-                success = true;
-                newPath = newItem.path;
-
-                // Dispatch a success notification
-                const message = 'Copied ' + selectedObject.path + ' to ' + newPath;
+                // Dispatch a success notification, and refresh the file list
+                const message = 'Copied ' + selectedObject.path + ' to ' + newItem.path;
                 this.dispatchEvent(new NotificationEvent(message));
+                this._fetchFileList()
+                  .catch((_) => {
+                    // Don't report errors caused by fetch here
+                  });
               })
-              .catch((e: Error) => {
-                success = false;
-                Utils.showErrorDialog('Error copying item', e.message);
-              })
-              // Only refresh in the case of success
-              .then(() => success === true ? this._fetchFileList() : null);
+              .catch((e: Error) => Utils.showErrorDialog('Error copying item', e.message));
           } else {
             return Promise.resolve(null);
           }
@@ -771,25 +752,19 @@ class FilesElement extends Polymer.Element {
       return Utils.showDialog(DirectoryPickerDialogElement, options)
         .then((closeResult: DirectoryPickerDialogCloseResult) => {
           if (closeResult.confirmed) {
-            let newPath = closeResult.directoryPath;
             // Moving is renaming.
-
-            let success: boolean;
-            return ApiManager.renameItem(selectedObject.path, newPath + '/' + selectedObject.name)
+            return ApiManager.renameItem(selectedObject.path,
+                                         closeResult.directoryPath + '/' + selectedObject.name)
               .then((newItem: JupyterFile) => {
-                success = true;
-                newPath = newItem.path;
-
-                // Dispatch a file created notification
-                const message = 'Moved ' + selectedObject.path + ' to ' + newPath;
+                // Dispatch a success notification, and refresh the file list
+                const message = 'Moved ' + selectedObject.path + ' to ' + newItem.path;
                 this.dispatchEvent(new NotificationEvent(message));
+                this._fetchFileList()
+                  .catch((_) => {
+                    // Don't report errors caused by fetch here
+                  });
               })
-              .catch((e: Error) => {
-                success = false;
-                Utils.showErrorDialog('Error moving item', e.message);
-              })
-              // Only refresh in the case of success
-              .then(() => success === true ? this._fetchFileList() : null);
+              .catch((e: Error) => Utils.showErrorDialog('Error moving item', e.message));
           } else {
             return Promise.resolve(null);
           }
