@@ -473,7 +473,7 @@ class FilesElement extends Polymer.Element {
     try {
       success = true;
       await Promise.all(uploadPromises);
-    } catch(e) {
+    } catch (e) {
       success = false;
       Utils.showErrorDialog('Error uploading file', e.message);
     }

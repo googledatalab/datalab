@@ -483,7 +483,9 @@ class ApiManager {
             let errorMessage = request.responseText;
             try {
               errorMessage = JSON.parse(request.responseText).message || errorMessage;
-            } catch (_) {}
+            } catch (_) {
+              // This is fine, if the error isn't a JSON, return it as is.
+            }
             reject(new Error(errorMessage));
           }
         }

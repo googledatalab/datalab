@@ -70,6 +70,10 @@ class BaseDialogElement extends Polymer.Element {
         type: String,
         value: 'Cancel'
       },
+      isError: {
+        type: String,
+        value: false,
+      },
       messageHtml: {
         type: String,
         value: '',
@@ -81,10 +85,6 @@ class BaseDialogElement extends Polymer.Element {
       title: {
         type: String,
         value: '',
-      },
-      isError: {
-        type: String,
-        value: false,
       },
     };
   }

@@ -85,10 +85,10 @@ class Utils {
    */
   static showErrorDialog(title: string, messageHtml: string) {
     const dialogOptions: DialogOptions = {
-      title,
-      messageHtml,
       isError: true,
+      messageHtml,
       okLabel: 'Close',
+      title,
     };
 
     return this.showDialog(BaseDialogElement, dialogOptions);
