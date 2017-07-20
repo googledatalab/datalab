@@ -12,8 +12,11 @@
  * the License.
  */
 
+const fs = require('fs');
+
 const BASE = '../../build/web/nb/';
 const settings = require(BASE + 'settings');
+const userManager = require(BASE + 'userManager');
 
 describe('Unit tests', function() {
 describe('settings', function() {
@@ -48,5 +51,70 @@ describe('settings', function() {
     });
   });
 
+  describe('updateUserSettingAsync', function() {
+    it('does not write the file if the value is not changed', function(done) {
+      spyOn(userManager, 'getUserDir').and.returnValue('/fake/path');
+      spyOn(fs, 'existsSync').and.returnValue(true);
+      spyOn(fs, 'readFileSync').and.returnValue('{"aKey": "aValue"}');
+      const userId = 'fake';
+      const key = 'aKey';
+      const value = 'aValue';
+      settings.updateUserSettingAsync(userId, key, value).then((status) => {
+        expect(status).toBe(false);
+        done();
+      });
+    });
+
+    it('writes the file if the value is changed', function(done) {
+      spyOn(userManager, 'getUserDir').and.returnValue('/fake/path');
+      spyOn(fs, 'existsSync').and.returnValue(true);
+      spyOn(fs, 'lstatSync').and.returnValue({isDirectory:()=>true});
+      spyOn(fs, 'readFileSync').and.returnValue('{"aKey": "aValue", "bKey": "bValue"}');
+      spyOn(fs, 'writeFileSync');
+      const expectedUpdatedSettings = '{"aKey":"aValue2","bKey":"bValue"}';
+      const userId = 'fake';
+      const key = 'aKey';
+      const value = 'aValue2';
+      settings.updateUserSettingAsync(userId, key, value).then((status) => {
+        expect(status).toBe(true);
+        expect(fs.writeFileSync).toHaveBeenCalledWith('/fake/path/datalab/.config/settings.json', expectedUpdatedSettings);
+        done();
+      });
+    });
+
+    it('queues up multiple calls and executes them in order', function(done) {
+      spyOn(userManager, 'getUserDir').and.returnValue('/fake/path');
+      spyOn(fs, 'existsSync').and.returnValue(true);
+      spyOn(fs, 'lstatSync').and.returnValue({isDirectory:()=>true});
+      spyOn(fs, 'readFileSync').and.callFake((path) => settingsContents);
+      spyOn(fs, 'writeFileSync').and.callFake((path, contents) => settingsContents = contents);
+      let settingsContents = '{"aKey": "aValue", "bKey": "bValue"}';
+      const userId = 'fake';
+      const key = 'aKey';
+      const value = 'aValue2';
+      let count = 0;
+      settings.updateUserSettingAsync(userId, key, 'v1').then((status) => {
+        expect(status).toBe(true);
+        expect(count).toEqual(0);
+        count = count + 1;
+      });
+      settings.updateUserSettingAsync(userId, key, 'v1').then((status) => {
+        expect(status).toBe(false);
+        expect(count).toEqual(1);
+        count = count + 1;
+      });
+      settings.updateUserSettingAsync(userId, key, 'v2').then((status) => {
+        expect(status).toBe(true);
+        expect(count).toEqual(2);
+        count = count + 1;
+      });
+      settings.updateUserSettingAsync(userId, key, 'v2').then((status) => {
+        expect(status).toBe(false);
+        expect(count).toEqual(3);
+        count = count + 1;
+        done();
+      });
+    });
+  });
 });
 });
