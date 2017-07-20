@@ -1,5 +1,5 @@
 {
-  "defaultSeverity": "warning",
+  "defaultSeverity": "error",
   "extends": ["tslint:recommended"],
   "rules": {
     "array-type": [true,
@@ -27,7 +27,7 @@
     "new-parens": true,
     "no-angle-bracket-type-assertion": true,
     "no-arg": true,
-    "no-console": true,
+    "no-console": {"severity": "warning"},
     "no-construct": true,
     "no-debugger": true,
     "no-default-export": true,
