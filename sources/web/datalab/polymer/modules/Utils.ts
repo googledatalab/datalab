@@ -88,6 +88,7 @@ class Utils {
       title,
       messageHtml,
       isError: true,
+      okLabel: 'Close',
     };
 
     return this.showDialog(BaseDialogElement, dialogOptions);

@@ -522,12 +522,20 @@ class FilesElement extends Polymer.Element {
           if (type === 'notebook' && !newName.endsWith('.ipynb')) {
             newName += '.ipynb';
           }
+
+          let success: boolean;
           return ApiManager.createNewItem(type, this.currentPath + '/' + newName)
-            .then(() => this._fetchFileList())
             .then(() => {
+              success = true;
               // Dispatch a success notification
               this.dispatchEvent(new NotificationEvent('Created ' + newName + '.'));
-            });
+            })
+            .catch((e: Error) => {
+              success = false;
+              Utils.showErrorDialog('Error creating item', e.message);
+            })
+            // Only refresh the file list on success
+            .then(() => success === true ? this._fetchFileList() : null);
         } else {
           return Promise.resolve(null);
         }
