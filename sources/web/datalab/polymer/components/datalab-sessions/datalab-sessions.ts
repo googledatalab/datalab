@@ -94,11 +94,18 @@ class SessionsElement extends Polymer.Element {
    * updates the _sessionList property.
    */
   _fetchSessionList() {
-    const self = this;
-    self._fetching = true;
+    // Don't overlap fetch requests. This can happen because we set up fetch from several sources:
+    // - Initialization in the ready() event handler.
+    // - Refresh mechanism called by the setInterval().
+    // - User clicking refresh button.
+    // - Sessions page gaining focus.
+    if (this._fetching) {
+      return Promise.resolve(null);
+    }
+    this._fetching = true;
     return ApiManager.listSessionsAsync()
       .then((newList) => {
-        // Only refresh the list if there are any changes. This helps keep
+        // Only refresh the UI list if there are any changes. This helps keep
         // the item list's selections intact most of the time
         // TODO: [yebrahim] Try to diff the two lists and only inject the
         // differences in the DOM instead of refreshing the entire list if
@@ -106,13 +113,12 @@ class SessionsElement extends Polymer.Element {
         // ids for the items. Using paths might work for files, but is not
         // a clean solution.
         if (JSON.stringify(this._sessionList) !== JSON.stringify(newList)) {
-          self._sessionList = newList;
+          this._sessionList = newList;
           this._drawSessionList();
         }
-      }, () => console.log('Error getting list of sessions.'))
-      .then(() => {
-        this._fetching = false;
-      });
+      })
+      .catch(() => console.log('Error getting list of sessions.'))
+      .then(() => this._fetching = false);
   }
 
   /**
@@ -152,7 +158,11 @@ class SessionsElement extends Polymer.Element {
    * Starts auto refreshing the session list, and also triggers an immediate refresh.
    */
   _focusHandler() {
-    // Refresh the session list periodically.
+    // Refresh the session list periodically. Note that we don't rely solely on
+    // the interval to keep the list in sync, the refresh also happens when the
+    // sessions page gains focus, which is more useful since the list will
+    // change typically when the user opens a notebook, then switches back to
+    // the sessions page. Killing a session also triggers a refresh.
     if (!this._sessionListRefreshIntervalHandle) {
       this._sessionListRefreshIntervalHandle =
           setInterval(this._fetchSessionList.bind(this), this._sessionListRefreshInterval);
@@ -162,7 +172,8 @@ class SessionsElement extends Polymer.Element {
   }
 
   /**
-   * Stops the auto refresh of the session list.
+   * Stops the auto refresh of the session list. This happens when the user moves
+   * away from the page.
    */
   _blurHandler() {
     if (this._sessionListRefreshIntervalHandle) {

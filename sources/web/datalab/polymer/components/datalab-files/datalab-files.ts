@@ -197,20 +197,19 @@ class FilesElement extends Polymer.Element {
    * updates the fileList property.
    */
   _fetchFileList() {
-    // Don't overlap fetch requests. This can happen we can do fetch from three sources:
+    // Don't overlap fetch requests. This can happen because we set up fetch from several sources:
     // - Initialization in the ready() event handler.
     // - Refresh mechanism called by the setInterval().
     // - User clicking refresh button.
+    // - Files page gaining focus.
     if (this._fetching) {
       return Promise.resolve(null);
     }
-
-    const self = this;
-    self._fetching = true;
+    this._fetching = true;
 
     return ApiManager.listFilesAsync(this.basePath + this.currentPath)
       .then((newList) => {
-        // Only refresh the list if there are any changes. This helps keep
+        // Only refresh the UI list if there are any changes. This helps keep
         // the item list's selections intact most of the time
         // TODO: [yebrahim] Try to diff the two lists and only inject the
         // differences in the DOM instead of refreshing the entire list if
@@ -221,10 +220,9 @@ class FilesElement extends Polymer.Element {
           this._fileList = newList;
           this._drawFileList();
         }
-      }, () => console.log('Error getting list of files.'))
-      .then(() => {
-        this._fetching = false;
-      });
+      })
+      .catch((e) => console.log('Error getting list of files: ' + e.message))
+      .then(() => this._fetching = false);
   }
 
   /**
@@ -786,7 +784,9 @@ class FilesElement extends Polymer.Element {
    * Starts auto refreshing the file list, and also triggers an immediate refresh.
    */
   _focusHandler() {
-    // Refresh the file list periodically.
+    // Refresh the file list periodically. Note that we don't rely solely on the
+    // interval to keep the list in sync, the refresh also happens after file
+    // operations, and when the files page gains focus.
     if (!this._fileListRefreshIntervalHandle) {
       this._fileListRefreshIntervalHandle =
           setInterval(this._fetchFileList.bind(this), this._fileListRefreshInterval);
@@ -796,7 +796,8 @@ class FilesElement extends Polymer.Element {
   }
 
   /**
-   * Stops the auto refresh of the file list.
+   * Stops the auto refresh of the file list. This happens when the user moves
+   * away from the page.
    */
   _blurHandler() {
     if (this._fileListRefreshIntervalHandle) {

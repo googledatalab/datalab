@@ -97,6 +97,8 @@ class DatalabAppElement extends Polymer.Element {
     super.ready();
 
     window.addEventListener('focus', () => this._focusHandler());
+    // TODO: Need to also add a blur event listener that calls the current page's blur
+    // handler, but I cannot get this to work as of now.
   }
 
   /**
@@ -133,7 +135,9 @@ class DatalabAppElement extends Polymer.Element {
     const newElement = this._getPageElement(newPage);
     const oldElement = this._getPageElement(oldPage);
 
-    // Call proper event handlers on changed pages
+    // Call proper event handlers on changed pages.
+    // TODO: Explore making all datalab pages extend a custom element that has
+    // these event handlers defined to keep things consistent and get rid of the checks.
     if (newElement) {
       if (newElement._focusHandler) {
         newElement._focusHandler();
