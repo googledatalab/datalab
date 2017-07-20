@@ -179,7 +179,7 @@ function handleRequest(request: http.ServerRequest,
       try {
         if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
           loadedSettings.startuppath = subPath;
-          settings_.updateUserSetting(userId, 'startuppath', subPath, true);
+          settings_.updateUserSettingAsync(userId, 'startuppath', subPath);
         } else {
         }
       } catch (err) {
