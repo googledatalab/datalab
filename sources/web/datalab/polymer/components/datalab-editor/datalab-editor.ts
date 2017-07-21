@@ -125,6 +125,8 @@ class DatalabEditorElement extends Polymer.Element {
    * Saves the currently open file.
    */
   _saveAsync() {
+    // TODO: If the file isn't defined, this means it's a blank editor, we'll need
+    // to save a new file. Open a file picker dialog here to get the file path.
     if (this._file) {
       const filePath = this._file.path;
       const dirPath = filePath.substr(0, filePath.lastIndexOf(this._file.name));
@@ -137,6 +139,7 @@ class DatalabEditorElement extends Polymer.Element {
         type: this._file.type,
       };
       return ApiManager.saveJupyterFile(model);
+      // TODO: Handle save success/failure here.
     } else {
       return Promise.resolve(null);
     }
