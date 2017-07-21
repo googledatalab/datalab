@@ -38,7 +38,7 @@ class GapiManager {
    * @param signInChangedCallback callback to be called when the signed-in state changes
    * @returns a promise that completes when the load is done or has failed
    */
-  public static loadGapi(signInChangedCallback: (signedIn: boolean) => void) {
+   public static loadGapi(signInChangedCallback: (signedIn: boolean) => void): Promise<void> {
     // Loads the gapi client library and the auth2 library together for efficiency.
     // Loading the auth2 library is optional here since `gapi.client.init` function will load
     // it if not already loaded. Loading it upfront can save one network request.
@@ -56,20 +56,20 @@ class GapiManager {
    * appear momentarily before automatically closing. If the doPrompt flag is set, then
    * the user will be prompted as if authorization has not previously been provided.
    */
-  public static signIn(doPrompt: boolean) {
+   public static signIn(doPrompt: boolean): Promise<gapi.auth2.GoogleUser> {
     const rePromptOptions = 'login consent select_account';
     const promptFlags = doPrompt ? rePromptOptions : '';
     const options = {
       prompt: promptFlags,
     };
-    gapi.auth2.getAuthInstance().signIn(options);
+    return gapi.auth2.getAuthInstance().signIn(options);
   }
 
   /**
    * Signs the user out using gapi.
    */
-  public static signOut() {
-    gapi.auth2.getAuthInstance().signOut();
+   public static signOut(): Promise<void> {
+    return gapi.auth2.getAuthInstance().signOut();
   }
 
   /** Returns the signed-in user's email address. */
