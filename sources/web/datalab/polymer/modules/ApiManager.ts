@@ -479,7 +479,15 @@ class ApiManager {
               ApiManager.isConnected = false;
             }
 
-            reject(request.responseText);
+            // Jupyter returns error messages with schema {"reason": string, "message": string}
+            // TODO: Should not need this when relying on a different content service.
+            let errorMessage = request.responseText;
+            try {
+              errorMessage = JSON.parse(request.responseText).message || errorMessage;
+            } catch (_) {
+              // This is fine, if the error isn't a JSON, return it as is.
+            }
+            reject(new Error(errorMessage));
           }
         }
       };
