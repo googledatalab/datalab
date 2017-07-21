@@ -36,12 +36,10 @@ declare namespace gapi.client {
     }
 
     interface ListDatasetsResponse {
-      /*
       kind: string;   // Should always be "bigquery#datasetList"
       etag: string;
       nextPageToken: string;
       datasets: Array<DatasetResource>;
-      */
     }
 
     // https://cloud.google.com/bigquery/docs/reference/rest/v2/projects/list
@@ -51,13 +49,11 @@ declare namespace gapi.client {
     }
 
     interface ListProjectsResponse {
-      /*
       kind: string;   // Should always be "bigquery#projectList"
       etag: string;
       nextPageToken: string;
       projects: Array<ProjectResource>;
       totalItems: number;
-      */
     }
 
     interface ListTablesRequest {

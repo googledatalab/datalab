@@ -11,13 +11,6 @@ declare module gapi.client {
 
   export function load(name: string, version: string): Promise<void>;
 
-  interface RequestOptions {
-    path: string;
-    params?: any;
-  }
-
-  export function request(args: RequestOptions): Promise<any>;
-
   interface HttpResponse<T> {
     body: string;
     headers: Array<Object>;

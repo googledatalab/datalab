@@ -35,6 +35,8 @@ class GapiManager {
 
   /**
    * Loads the gapi module and the auth2 modules.
+   * @param signInChangedCallback callback to be called when the signed-in state changes
+   * @returns a promise that completes when the load is done or has failed
    */
   public static loadGapi(signInChangedCallback: (signedIn: boolean) => void) {
     // Loads the gapi client library and the auth2 library together for efficiency.

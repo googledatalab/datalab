@@ -16,6 +16,8 @@
 /// <reference path="../input-dialog/input-dialog.ts" />
 /// <reference path="../item-list/item-list.ts" />
 
+type HttpResponse<T> = gapi.client.HttpResponse<T>;
+
 interface Collection {
   name: string;
   status: string;
@@ -135,11 +137,11 @@ class DataElement extends Polymer.Element {
     const sampleDataset = 'samples';
     const emptyFilter = '';
     GapiManager.listBigQueryProjects()
-        .then((response: gapi.client.bigquery.ListProjectsResponse) => console.log('== projects: ', response));
+        .then((response: HttpResponse<gapi.client.bigquery.ListProjectsResponse>) => console.log('== projects: ', response));
     GapiManager.listBigQueryDatasets(sampleProject, emptyFilter)
-        .then((response: gapi.client.bigquery.ListDatasetsResponse) => console.log('== datasets: ', response));
+        .then((response: HttpResponse<gapi.client.bigquery.ListDatasetsResponse>) => console.log('== datasets: ', response));
     GapiManager.listBigQueryTables(sampleProject, sampleDataset, emptyFilter)
-        .then((response: gapi.client.bigquery.ListTablesResponse) => console.log('== tables: ', response));
+        .then((response: HttpResponse<gapi.client.bigquery.ListTablesResponse>) => console.log('== tables: ', response));
   }
 
   /**
