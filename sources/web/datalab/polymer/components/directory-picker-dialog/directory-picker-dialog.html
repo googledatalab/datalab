@@ -14,13 +14,45 @@ the License.
 
 <link rel="import" href="../datalab-files/datalab-files.html">
 
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+
 <dom-module id="directory-picker-dialog">
   <template>
+
     <style include="datalab-shared-styles">
+      .container {
+        display: flex;
+        flex-direction: column;
+      }
+      .files {
+        flex: 1 1 auto;
+      }
+      .input {
+        flex: 0 0 auto;
+      }
+      #inputBox {
+        width: 300px;
+        margin: 10px auto;
+        /*Disable input underline animation*/
+        --paper-input-container-underline-focus: {
+          display: none;
+        };
+        --primary-text-color: var(--primary-fg-color);
+      }
     </style>
-    <div class="files">
-      <datalab-files id="filePicker" small></datalab-files>
+
+    <div class="container">
+      <div class="files">
+        <datalab-files id="filePicker" small></datalab-files>
+      </div>
+      <div class="input" hidden$={{!withInput}}>
+        <hr>
+        <paper-input id="inputBox" label="File name" spellcheck=false autofocus
+                    value="{{inputValue}}" no-label-float>
+        </paper-input>
+      </div>
     </div>
+
   </template>
 </dom-module>
 

@@ -20,6 +20,7 @@
  */
 interface DirectoryPickerDialogCloseResult extends BaseDialogCloseResult {
   directoryPath: string;
+  fileName?: string;
 }
 
 /**
@@ -34,7 +35,31 @@ class DirectoryPickerDialogElement extends BaseDialogElement {
 
   private static _memoizedTemplate: PolymerTemplate;
 
+  /**
+   * Initial value of input box.
+   */
+  public inputValue: string;
+
+  /**
+   * Whether to include an input box under the file picker.
+   */
+  public withInput: boolean;
+
   static get is() { return 'directory-picker-dialog'; }
+
+  static get properties() {
+    return {
+      ...super.properties,
+      inputValue: {
+        type: String,
+        value: '',
+      },
+      withInput: {
+        type: Boolean,
+        value: false,
+      },
+    };
+  }
 
   /**
    * This template is calculated once in run time based on the template of  the
@@ -54,6 +79,7 @@ class DirectoryPickerDialogElement extends BaseDialogElement {
   getCloseResult() {
     return {
       directoryPath: this.$.filePicker.currentPath,
+      fileName: this.withInput ? this.$.inputBox.value : undefined,
     };
   }
 
