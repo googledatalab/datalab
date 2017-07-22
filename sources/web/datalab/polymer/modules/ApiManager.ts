@@ -86,17 +86,18 @@ interface Session {
 
 /**
  * Options for _xhr call, contains the following optional fields:
+ *  - failureCodes: List of recoverable failure codes.
  *  - method: The HTTP method to use; default is 'GET'.
- *  - parameters: Set of parameters to pass to the xhr request.
- *  - successCode: Only treat the request as successful if this code is returned.
  *  - noCache: Disable request cache.
+ *  - parameters: Set of parameters to pass to the xhr request.
+ *  - successCodes: Only treat the request as successful if the return code is in this list.
  */
 interface XhrOptions {
-  method?: string;
-  parameters?: string | FormData;
-  successCode?: number;
   failureCodes?: number[];
+  method?: string;
   noCache?: boolean;
+  parameters?: string | FormData;
+  successCodes?: [number];
 }
 
 /**
@@ -180,7 +181,7 @@ class ApiManager {
   public static shutdownSessionAsync(sessionId: string) {
     const xhrOptions: XhrOptions = {
       method: 'DELETE',
-      successCode: 204,
+      successCodes: [204],
     };
     return ApiManager.sendRequestAsync(ApiManager.sessionsApiUrl + '/' + sessionId, xhrOptions);
   }
@@ -216,7 +217,7 @@ class ApiManager {
       failureCodes: [409],
       method: 'PUT',
       parameters: JSON.stringify(model),
-      successCode: 201,
+      successCodes: [200, 201],
     };
     const requestPath = ApiManager.contentApiUrl + '/' + model.path + '/' + model.name;
     return ApiManager.sendRequestAsync(requestPath, xhrOptions);
@@ -268,7 +269,7 @@ class ApiManager {
         ext: 'ipynb',
         type: itemType,
       }),
-      successCode: 201,
+      successCodes: [201],
     };
     let createPromise = ApiManager.sendRequestAsync(ApiManager.contentApiUrl, xhrOptions);
 
@@ -317,7 +318,7 @@ class ApiManager {
     const xhrOptions: XhrOptions = {
       failureCodes: [400],
       method: 'DELETE',
-      successCode: 204,
+      successCodes: [204],
     };
 
     return ApiManager.sendRequestAsync(path, xhrOptions);
@@ -337,7 +338,7 @@ class ApiManager {
       parameters: JSON.stringify({
         copy_from: itemPath
       }),
-      successCode: 201,
+      successCodes: [201],
     };
 
     return ApiManager.sendRequestAsync(destinationDirectory, xhrOptions);
@@ -447,7 +448,7 @@ class ApiManager {
     options = options || {};
     const method = options.method || 'GET';
     const params = options.parameters;
-    const successCode = options.successCode || 200;
+    const successCodes = options.successCodes || [200];
     const request = new XMLHttpRequest();
     const noCache = options.noCache || false;
     const failureCodes = options.failureCodes;
@@ -455,7 +456,7 @@ class ApiManager {
     return new Promise((resolve, reject) => {
       request.onreadystatechange = () => {
         if (request.readyState === 4) {
-          if (request.status === successCode) {
+          if (successCodes.indexOf(request.status) > -1) {
 
             // If this is the first success after failures, call the connected handler
             if (!ApiManager.isConnected && ApiManager.connectedHandler) {
