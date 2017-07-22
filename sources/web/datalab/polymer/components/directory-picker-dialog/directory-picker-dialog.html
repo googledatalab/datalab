@@ -27,10 +27,10 @@ the License.
       .files {
         flex: 1 1 auto;
       }
-      .input {
+      .fileName {
         flex: 0 0 auto;
       }
-      #inputBox {
+      #fileNameBox {
         width: 300px;
         margin: 10px auto;
         /*Disable input underline animation*/
@@ -45,9 +45,9 @@ the License.
       <div class="files">
         <datalab-files id="filePicker" small></datalab-files>
       </div>
-      <div class="input" hidden$={{!withFileName}}>
+      <div class="fileName" hidden$={{!withFileName}}>
         <hr>
-        <paper-input id="inputBox" label="File name" spellcheck=false autofocus
+        <paper-input id="fileNameBox" label="File name" spellcheck=false autofocus
                     value="{{fileName}}" no-label-float>
         </paper-input>
       </div>

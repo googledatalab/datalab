@@ -79,7 +79,7 @@ class DirectoryPickerDialogElement extends BaseDialogElement {
   getCloseResult() {
     return {
       directoryPath: this.$.filePicker.currentPath,
-      fileName: this.withFileName ? this.$.inputBox.value : undefined,
+      fileName: this.withFileName ? this.$.fileNameBox.value : undefined,
     };
   }
 
