@@ -12,6 +12,8 @@
  * the License.
  */
 
+/// <reference path="../datalab-notification/datalab-notification.ts" />
+
 /**
  * Shell element for Datalab.
  * It contains a <datalab-toolbar> element at the top, a <datalab-sidebar>
@@ -54,21 +56,14 @@ class DatalabAppElement extends Polymer.Element {
     window.addEventListener('resize', this._boundResizeHandler, true);
 
     ApiManager.disconnectedHandler = () => {
-      this.showNotification('Failed to connect to the server.', true /*sticky*/);
+      this.dispatchEvent(new NotificationEvent('Failed to connect to the server.',
+                                               true /* show */,
+                                               true /* sticky */));
     };
 
     ApiManager.connectedHandler = () => {
-      this.hideNotification();
+      this.dispatchEvent(new NotificationEvent('', false /* show */));
     };
-
-    // Handle notification events bubbled up from children.
-    this.addEventListener('notification', (e: NotificationEvent) => {
-      if (e.detail.show) {
-        this.showNotification(e.detail.message, e.detail.sticky);
-      } else {
-        this.hideNotification();
-      }
-    });
   }
 
   static get is() { return 'datalab-app'; }
@@ -178,29 +173,6 @@ class DatalabAppElement extends Polymer.Element {
     const selectedPage = this.$.pages.selectedItem;
     if (selectedPage && selectedPage._focusHandler) {
       selectedPage._focusHandler();
-    }
-  }
-
-  /**
-   * Shows a notification toast at the bottom of the page with the given message.
-   * @param message message to show in the notification toast
-   * @param sticky whether the toast should stick around until explicitly dismissed in code
-   */
-  showNotification(message: string, sticky?: boolean) {
-    this.$.notificationToast.close();
-    this.$.notificationToast.text = message;
-    if (sticky) {
-      this.$.notificationToast.duration = 0;
-    }
-    this.$.notificationToast.open();
-  }
-
-  /**
-   * Hides the notification toast if it's open.
-   */
-  hideNotification() {
-    if (this.$.notificationToast.opened) {
-      this.$.notificationToast.close();
     }
   }
 

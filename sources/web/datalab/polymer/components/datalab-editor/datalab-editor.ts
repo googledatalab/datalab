@@ -12,6 +12,8 @@
  * the License.
  */
 
+/// <reference path="../datalab-notification/datalab-notification.ts" />
+
 /**
  * Type declarations for CodeMirror
  * TODO: Get these from DefinitelyTyped
@@ -138,8 +140,9 @@ class DatalabEditorElement extends Polymer.Element {
         path: dirPath,
         type: this._file.type,
       };
-      return ApiManager.saveJupyterFile(model);
-      // TODO: Handle save success/failure here.
+      return ApiManager.saveJupyterFile(model)
+        .then(() => this.dispatchEvent(new NotificationEvent('Saved.')));
+      // TODO: Handle save failure here.
     } else {
       return Promise.resolve(null);
     }
