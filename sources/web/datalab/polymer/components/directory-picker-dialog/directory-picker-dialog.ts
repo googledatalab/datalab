@@ -38,23 +38,23 @@ class DirectoryPickerDialogElement extends BaseDialogElement {
   /**
    * Initial value of input box.
    */
-  public inputValue: string;
+  public fileName: string;
 
   /**
    * Whether to include an input box under the file picker.
    */
-  public withInput: boolean;
+  public withFileName: boolean;
 
   static get is() { return 'directory-picker-dialog'; }
 
   static get properties() {
     return {
       ...super.properties,
-      inputValue: {
+      fileName: {
         type: String,
         value: '',
       },
-      withInput: {
+      withFileName: {
         type: Boolean,
         value: false,
       },
@@ -79,7 +79,7 @@ class DirectoryPickerDialogElement extends BaseDialogElement {
   getCloseResult() {
     return {
       directoryPath: this.$.filePicker.currentPath,
-      fileName: this.withInput ? this.$.inputBox.value : undefined,
+      fileName: this.withFileName ? this.$.inputBox.value : undefined,
     };
   }
 
