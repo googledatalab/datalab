@@ -116,6 +116,10 @@ declare module Polymer {
     static import(element: string, property: string): PolymerTemplate;
   }
 
+  class dom {
+    static flush(): null;
+  }
+
   function importHref(href: string,
                       onload?: Function,
                       onerror?: Function,
