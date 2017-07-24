@@ -21,6 +21,15 @@ interface InputDialogCloseResult extends BaseDialogCloseResult {
 }
 
 /**
+ * Options for opening an input dialog.
+ */
+interface InputDialogOptions extends BaseDialogOptions {
+  bodyHtml?: string;
+  inputLabel?: string;
+  inputValue?: string;
+}
+
+/**
  * Input Dialog element for Datalab, extends the Base dialog element.
  * This element is a modal dialog that presents the user with an input box. The input
  * can optionally start up with a value that is selected. Currently, the modal

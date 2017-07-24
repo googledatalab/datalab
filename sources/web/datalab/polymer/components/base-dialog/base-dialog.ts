@@ -20,6 +20,18 @@ interface BaseDialogCloseResult {
 }
 
 /**
+ * Options for opening a base dialog.
+ */
+interface BaseDialogOptions extends Object {
+  big?: boolean;
+  cancelLabel?: string;
+  isError?: boolean;
+  messageHtml?: string;
+  okLabel?: string;
+  title: string;
+}
+
+/**
  * Base Dialog element for Datalab. This element can be extended to insert custom markup
  * (including other custom elements) inside it. This can be best done by stamping the
  * subclass's element template into the #body element of this class.

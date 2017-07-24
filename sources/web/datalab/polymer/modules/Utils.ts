@@ -13,21 +13,6 @@
  */
 
 /**
- * Options for opening a dialog.
- */
-interface DialogOptions {
-  title: string;
-  messageHtml?: string;
-  bodyHtml?: string;
-  inputLabel?: string;
-  inputValue?: string;
-  okLabel?: string;
-  cancelLabel?: string;
-  big?: boolean;
-  isError?: boolean;
-}
-
-/**
  * Class provides helper methods for various operations.
  */
 class Utils {
@@ -39,35 +24,15 @@ class Utils {
    * @param type specifies which type of dialog to use
    * @param dialogOptions specifies different options for opening the dialog
    */
-  public static showDialog(dialogType: typeof BaseDialogElement, dialogOptions: DialogOptions):
-                                                                  Promise<BaseDialogCloseResult> {
+  public static showDialog(dialogType: typeof BaseDialogElement,
+                           dialogOptions: BaseDialogOptions): Promise<BaseDialogCloseResult> {
     const dialog = document.createElement(dialogType.is) as any;
     document.body.appendChild(dialog);
 
-    if (dialogOptions.title) {
-      dialog.title = dialogOptions.title;
-    }
-    if (dialogOptions.messageHtml) {
-      dialog.messageHtml = dialogOptions.messageHtml;
-    }
-    if (dialogOptions.inputLabel) {
-      dialog.inputLabel = dialogOptions.inputLabel;
-    }
-    if (dialogOptions.inputValue) {
-      dialog.inputValue = dialogOptions.inputValue;
-    }
-    if (dialogOptions.okLabel) {
-      dialog.okLabel = dialogOptions.okLabel;
-    }
-    if (dialogOptions.cancelLabel) {
-      dialog.cancelLabel = dialogOptions.cancelLabel;
-    }
-    if (dialogOptions.big !== undefined) {
-      dialog.big = dialogOptions.big;
-    }
-    if (dialogOptions.isError !== undefined) {
-      dialog.isError = dialogOptions.isError;
-    }
+    // Copy the dialog options fields into the dialog element
+    Object.keys(dialogOptions).forEach((key) => {
+      dialog[key] = (dialogOptions as any)[key];
+    });
 
     // Open the dialog
     return new Promise((resolve) => {
@@ -84,7 +49,7 @@ class Utils {
    * @param messageHtml error message
    */
   static showErrorDialog(title: string, messageHtml: string) {
-    const dialogOptions: DialogOptions = {
+    const dialogOptions: BaseDialogOptions = {
       isError: true,
       messageHtml,
       okLabel: 'Close',

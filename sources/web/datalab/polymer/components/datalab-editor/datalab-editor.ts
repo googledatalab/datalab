@@ -127,21 +127,69 @@ class DatalabEditorElement extends Polymer.Element {
    * Saves the currently open file.
    */
   _saveAsync() {
-    // TODO: If the file isn't defined, this means it's a blank editor, we'll need
+    // If the file isn't defined, this means it's a blank editor, we'll need
     // to save a new file. Open a file picker dialog here to get the file path.
+    if (!this._file) {
+      const options: DirectoryPickerDialogOptions = {
+        big: true,
+        okLabel: 'Save',
+        title: 'New File',
+        withFileName: true,
+      };
+      return Utils.showDialog(DirectoryPickerDialogElement, options)
+        .then((closeResult: DirectoryPickerDialogCloseResult) => {
+          if (closeResult.confirmed) {
+
+            // TODO: Prevent the dialog from closing if the input field is empty
+            if (closeResult.fileName) {
+              // TODO: Check if a file exists with this path, and show a
+              // confirmation dialog before replacing
+              const model: JupyterFile = {
+                content: this._editor.doc.getValue(),
+                created: new Date().toISOString(),
+                format: 'text',
+                last_modified: new Date().toISOString(),
+                mimetype: 'text/plain',
+                name: closeResult.fileName,
+                path: closeResult.directoryPath,
+                type: 'file',
+                writable: true,
+              };
+
+              return ApiManager.saveJupyterFile(model)
+                .then(() => {
+                  this._file = model;
+                  return this.dispatchEvent(new NotificationEvent('Saved.'));
+                });
+            }
+          }
+
+          return Promise.resolve(null);
+        });
+    }
+
+    // If _file is defined, we're saving to an existing file
     if (this._file) {
       const filePath = this._file.path;
       const dirPath = filePath.substr(0, filePath.lastIndexOf(this._file.name));
+
       const model: JupyterFile = {
         content: this._editor.doc.getValue(),
+        created: this._file.created,
         format: this._file.format,
+        last_modified: new Date().toISOString(),
         mimetype: this._file.mimetype,
         name: this._file.name,
         path: dirPath,
         type: this._file.type,
+        writable: this._file.writable,
       };
+
       return ApiManager.saveJupyterFile(model)
-        .then(() => this.dispatchEvent(new NotificationEvent('Saved.')));
+        .then(() => {
+          this._file = model;
+          return this.dispatchEvent(new NotificationEvent('Saved.'));
+        });
       // TODO: Handle save failure here.
     } else {
       return Promise.resolve(null);
