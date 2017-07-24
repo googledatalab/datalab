@@ -11,7 +11,7 @@
     "prebuild": "npm install && bower --allow-root install",
     "build": "npm run transpile && polymer build",
 
-    "test": "tsc && polymer test -p -l chrome"
+    "test": "tsc && polymer test"
   },
   "devDependencies": {
     "@types/chai": "^4.0.1",
