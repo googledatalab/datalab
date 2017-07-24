@@ -50,7 +50,9 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir numpy==1.11.2 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir pandas==0.19.1 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir scipy==0.18.0 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir scikit-learn==0.17.1 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir scikit-learn==0.18.2 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir scikit-image==0.13.0 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir lime==0.1.1.23 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir sympy==0.7.6.1 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir statsmodels==0.6.1 && \
 
@@ -99,7 +101,9 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir numpy==1.11.2 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir pandas==0.19.1 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir scipy==0.18.0 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir scikit-learn==0.17.1 && \
+    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir scikit-learn==0.18.2 && \
+    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir scikit-image==0.13.0 && \
+    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir lime==0.1.1.23 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir sympy==0.7.6.1 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir statsmodels==0.6.1 && \
 
@@ -129,8 +133,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir bs4==0.0.1 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir crcmod==1.7 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir pillow==3.4.1 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow==1.0.1 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir protobuf==3.1.0 && \
+    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow==1.2.0 && \
 # Install IPython related packages with no-deps, to ensure that we don't
 # Overwrite the python 2 version of jupyter with the python 3 version.
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir ipywidgets==6.0.0 && \
