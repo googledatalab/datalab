@@ -16,6 +16,7 @@
   "devDependencies": {
     "@types/chai": "^4.0.1",
     "@types/codemirror": "0.0.42",
-    "@types/mocha": "^2.2.41"
+    "@types/mocha": "^2.2.41",
+    "@types/sinon": "^2.3.3"
   }
 }
