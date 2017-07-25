@@ -168,32 +168,28 @@ class DatalabEditorElement extends Polymer.Element {
           return Promise.resolve(null);
         });
     } else {
-    // If _file is defined, we're saving to an existing file
-      if (this._file) {
-        const filePath = this._file.path;
-        const dirPath = filePath.substr(0, filePath.lastIndexOf(this._file.name));
+      // If _file is defined, we're saving to an existing file
+      const filePath = this._file.path;
+      const dirPath = filePath.substr(0, filePath.lastIndexOf(this._file.name));
 
-        const model: JupyterFile = {
-          content: this._editor.doc.getValue(),
-          created: this._file.created,
-          format: this._file.format,
-          last_modified: new Date().toISOString(),
-          mimetype: this._file.mimetype,
-          name: this._file.name,
-          path: dirPath,
-          type: this._file.type,
-          writable: this._file.writable,
-        };
+      const model: JupyterFile = {
+        content: this._editor.doc.getValue(),
+        created: this._file.created,
+        format: this._file.format,
+        last_modified: new Date().toISOString(),
+        mimetype: this._file.mimetype,
+        name: this._file.name,
+        path: dirPath,
+        type: this._file.type,
+        writable: this._file.writable,
+      };
 
-        return ApiManager.saveJupyterFile(model)
-          .then(() => {
-            this._file = model;
-            return this.dispatchEvent(new NotificationEvent('Saved.'));
-          });
-        // TODO: Handle save failure here.
-      } else {
-        return Promise.resolve(null);
-      }
+      return ApiManager.saveJupyterFile(model)
+        .then(() => {
+          this._file = model;
+          return this.dispatchEvent(new NotificationEvent('Saved.'));
+        });
+      // TODO: Handle save failure here.
     }
   }
 
