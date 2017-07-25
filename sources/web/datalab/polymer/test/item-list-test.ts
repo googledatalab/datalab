@@ -70,7 +70,7 @@ describe('<item-list>', () => {
   }
 
   /**
-   * Rows must be recreated on each test with the fixture, to avoid state leakage
+   * Rows must be recreated on each test with the fixture, to avoid state leakage.
    */
   beforeEach(() => {
     testFixture = fixture('item-list-fixture');
@@ -101,7 +101,7 @@ describe('<item-list>', () => {
   });
 
   it('starts out with all items unselected', () => {
-    assert(!isSelected(0) && !isSelected(1) && !isSelected(2), 'all items should be unselected');
+    assert(JSON.stringify(testFixture.selectedIndices) === '[]', 'all items should be unselected');
   });
 
   it('displays column names in the header row', () => {
@@ -133,6 +133,8 @@ describe('<item-list>', () => {
     assert(!isSelected(0), 'first item should not be selected');
     assert(isSelected(1), 'second item should be selected');
     assert(!isSelected(2), 'third item should not be selected');
+    assert(!isSelected(3), 'fourth item should not be selected');
+    assert(!isSelected(4), 'fifth item should not be selected');
   });
 
   it('returns selected items', () => {
@@ -149,13 +151,15 @@ describe('<item-list>', () => {
 
     assert(JSON.stringify(testFixture.selectedIndices) === '[0,1,2,3,4]',
         'all items should be in the selected indices array');
-    assert(isSelected(0) && isSelected(1) && isSelected(2), 'all items should be selected');
+    assert(isSelected(0) && isSelected(1) && isSelected(2) && isSelected(3) && isSelected(4),
+        'all items should be selected');
 
     c.click();
 
     assert(JSON.stringify(testFixture.selectedIndices) === '[]',
         'no items should be in the selected indices array');
-    assert(!isSelected(0) && !isSelected(1) && !isSelected(2), 'all items should be unselected');
+    assert(!isSelected(0) && !isSelected(1) && !isSelected(2) && !isSelected(3) && !isSelected(4),
+        'all items should be unselected');
   });
 
   it('selects all items if the Select All checkbox is clicked with one item selected', () => {
@@ -163,7 +167,8 @@ describe('<item-list>', () => {
     const c = testFixture.$.header.querySelector('#selectAllCheckbox') as HTMLElement;
     c.click();
 
-    assert(isSelected(0) && isSelected(1) && isSelected(2), 'all items should be selected');
+    assert(JSON.stringify(testFixture.selectedIndices) === '[0,1,2,3,4]',
+        'all items should be selected');
   });
 
   it('checks the Select All checkbox if all items are selected individually', () => {
@@ -220,10 +225,10 @@ describe('<item-list>', () => {
 
     thirdCheckbox.click();
     assert(isSelected(0) && isSelected(2), 'both first and third items should be selected');
-    assert(!isSelected(1), 'second item should not be selected');
+    assert(!isSelected(1) && !isSelected(3) && !isSelected(4), 'the rest should not be selected');
 
     firstCheckbox.click();
-    assert(!isSelected(0) && !isSelected(1) && isSelected(2),
+    assert(!isSelected(0) && !isSelected(1) && isSelected(2) && !isSelected(3) && !isSelected(4),
         'first item should ben unselected after the second click');
   });
 
@@ -237,7 +242,7 @@ describe('<item-list>', () => {
     }));
 
     assert(isSelected(0) && isSelected(2), 'both first and third items should be selected');
-    assert(!isSelected(1), 'second item should not be selected');
+    assert(!isSelected(1) && !isSelected(3) && !isSelected(4), 'the rest should not be selected');
 
     firstRow.dispatchEvent(new MouseEvent('click', {
       ctrlKey: true,
@@ -256,7 +261,8 @@ describe('<item-list>', () => {
       shiftKey: true,
     }));
 
-    assert(isSelected(0) && isSelected(1) && isSelected(2), 'all items should be selected');
+    assert(isSelected(0) && isSelected(1) && isSelected(2), 'items 1 to 3 should be selected');
+    assert(!isSelected(3) && !isSelected(4), 'the rest should be unselected');
   });
 
   it('can do multi-selection with ctrl and shift key combinations', () => {
