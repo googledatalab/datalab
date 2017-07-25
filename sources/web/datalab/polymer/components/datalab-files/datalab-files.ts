@@ -406,7 +406,7 @@ class FilesElement extends Polymer.Element {
       let warningMsg = files.length > 1 ? 'Some of the files you selected are '
                                           : 'The file you selected is ';
       warningMsg += 'larger than 25MB. You might experience browser freeze or crash.';
-      const dialogOptions: DialogOptions = {
+      const dialogOptions: BaseDialogOptions = {
         messageHtml: warningMsg,
         okLabel: 'Upload Anyway',
         title: 'Warning: Large File',
@@ -494,7 +494,7 @@ class FilesElement extends Polymer.Element {
   _createNewItem(type: string) {
 
     // First, open a dialog to let the user specify a name for the notebook.
-    const inputOptions: DialogOptions = {
+    const inputOptions: InputDialogOptions = {
       inputLabel: 'Name',
       okLabel: 'Create',
       title: 'New ' + type,
@@ -552,7 +552,7 @@ class FilesElement extends Polymer.Element {
       const selectedObject = this._fileList[i];
 
       // Open a dialog to let the user specify the new name for the selected item.
-      const inputOptions: DialogOptions = {
+      const inputOptions: InputDialogOptions = {
         inputLabel: 'New name',
         inputValue: selectedObject.name,
         okLabel: 'Rename',
@@ -620,7 +620,7 @@ class FilesElement extends Polymer.Element {
       const messageHtml = '<div>Are you sure you want to delete:</div>' + itemList;
 
       // Open a dialog to let the user confirm deleting the list of selected items.
-      const inputOptions: DialogOptions = {
+      const inputOptions: BaseDialogOptions = {
         messageHtml,
         okLabel: 'Delete',
         title,
@@ -684,10 +684,11 @@ class FilesElement extends Polymer.Element {
       const i = selectedIndices[0];
       const selectedObject = this._fileList[i];
 
-      const options: DialogOptions = {
+      const options: DirectoryPickerDialogOptions = {
         big: true,
         okLabel: 'Copy Here',
         title: 'Copy Item',
+        withFileName: false,
       };
       return Utils.showDialog(DirectoryPickerDialogElement, options)
         .then((closeResult: DirectoryPickerDialogCloseResult) => {
@@ -723,10 +724,11 @@ class FilesElement extends Polymer.Element {
       const i = selectedIndices[0];
       const selectedObject = this._fileList[i];
 
-      const options: DialogOptions = {
+      const options: DirectoryPickerDialogOptions = {
         big: true,
         okLabel: 'Move Here',
         title: 'Move Item',
+        withFileName: false,
       };
       return Utils.showDialog(DirectoryPickerDialogElement, options)
         .then((closeResult: DirectoryPickerDialogCloseResult) => {
