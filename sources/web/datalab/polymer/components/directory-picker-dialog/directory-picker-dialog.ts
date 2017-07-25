@@ -24,6 +24,14 @@ interface DirectoryPickerDialogCloseResult extends BaseDialogCloseResult {
 }
 
 /**
+ * Options for opening a directory picker dialog.
+ */
+interface DirectoryPickerDialogOptions extends BaseDialogOptions {
+  fileName?: string;
+  withFileName: boolean;
+}
+
+/**
  * Directory Picker Dialog element for Datalab, extends the Base dialog element.
  * This element is a modal dialog that presents the user with a file picker that can navigate
  * into directories to select destination path of copying or moving an item. It uses a minimal
