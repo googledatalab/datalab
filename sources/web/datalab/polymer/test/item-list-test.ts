@@ -229,7 +229,7 @@ describe('<item-list>', () => {
 
     firstCheckbox.click();
     assert(!isSelected(0) && !isSelected(1) && isSelected(2) && !isSelected(3) && !isSelected(4),
-        'first item should ben unselected after the second click');
+        'first item should be unselected after the second click');
   });
 
   it('can do multi-selection using the ctrl key', () => {
