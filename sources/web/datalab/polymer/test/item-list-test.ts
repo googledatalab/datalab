@@ -12,12 +12,18 @@
  * the License.
  */
 
-declare function assert(condition: boolean, message?: string): null;
+declare function assert(condition: boolean, message: string): null;
 declare function fixture(element: string): any;
 
 /// <reference path="../node_modules/@types/mocha/index.d.ts" />
 /// <reference path="../node_modules/@types/chai/index.d.ts" />
 /// <reference path="../components/item-list/item-list.ts" />
+
+/*
+ * For all Polymer component testing, be sure to call Polymer's flush() after
+ * any code that will cause shadow dom redistribution, such as observed array
+ * mutation, wich is used by the dom-repeater in this case.
+ */
 
 describe('<item-list>', () => {
   let testFixture: ItemListElement;
@@ -30,10 +36,20 @@ describe('<item-list>', () => {
     const row = getRow(i);
     const box = getCheckbox(i);
     // Check three things: the index is in the selectedIndices array, the row
-    // has the selected attribute, and its checkbox is checked
-    return testFixture.selectedIndices.indexOf(i) > -1
+    // has the selected attribute, and its checkbox is checked. If any of these
+    // is missing then all of them should be false, otherwise we're in an
+    // inconsistent state.
+    if (testFixture.selectedIndices.indexOf(i) > -1
         && row.hasAttribute('selected')
-        && box.checked;
+        && box.checked) {
+      return true;
+    } else if (testFixture.selectedIndices.indexOf(i) === -1
+               && !row.hasAttribute('selected')
+               && !box.checked) {
+      return false;
+    } else {
+      throw new Error('inconsistent state for row ' + i);
+    }
   }
 
   /**
@@ -54,31 +70,25 @@ describe('<item-list>', () => {
   }
 
   /**
-   * Rows must be recreated on each test with the fixture, to avoid state
-   * leakage. Also be sure to call Polymer's flush() after any code that will
-   * cause shadow dom redistribution, such as observed array mutation, wich is
-   * used by the dom-repeater in this case.
+   * Rows must be recreated on each test with the fixture, to avoid state leakage
    */
   beforeEach(() => {
     testFixture = fixture('item-list-fixture');
     const rows: ItemListRow[] = [
       {
-        firstCol: 'first column 1',
-        icon: 'folder',
-        secondCol: 'second column 1',
-        selected: false,
+        firstCol: 'first column 1', icon: 'folder', secondCol: 'second column 1', selected: false,
       },
       {
-        firstCol: 'first column 2',
-        icon: 'folder',
-        secondCol: 'second column 2',
-        selected: false,
+        firstCol: 'first column 2', icon: 'folder', secondCol: 'second column 2', selected: false,
       },
       {
-        firstCol: 'first column 3',
-        icon: 'folder',
-        secondCol: 'second column 3',
-        selected: false,
+        firstCol: 'first column 3', icon: 'folder', secondCol: 'second column 3', selected: false,
+      },
+      {
+        firstCol: 'first column 4', icon: 'folder', secondCol: 'second column 4', selected: false,
+      },
+      {
+        firstCol: 'first column 5', icon: 'folder', secondCol: 'second column 5', selected: false,
       }
     ];
     testFixture.rows = rows;
@@ -87,7 +97,11 @@ describe('<item-list>', () => {
 
   it('displays a row per item in list', () => {
     const children = testFixture.$.listContainer.querySelectorAll('paper-item');
-    assert(children.length === 3, 'three rows should appear');
+    assert(children.length === 5, 'five rows should appear');
+  });
+
+  it('starts out with all items unselected', () => {
+    assert(!isSelected(0) && !isSelected(1) && !isSelected(2), 'all items should be unselected');
   });
 
   it('displays column names in the header row', () => {
@@ -95,11 +109,25 @@ describe('<item-list>', () => {
     Polymer.dom.flush();
 
     // Column 0 is for the checkbox
-    assert(testFixture.$.header.children[1].innerText === 'col1');
-    assert(testFixture.$.header.children[2].innerText === 'col2');
+    assert(testFixture.$.header.children[1].innerText === 'col1',
+        'header should have first column name');
+    assert(testFixture.$.header.children[2].innerText === 'col2',
+        'header should have second column name');
   });
 
-  it('selected items are selected', () => {
+  it('displays column names in the item rows', () => {
+    for (let i = 0; i < 5; ++i) {
+      const row = getRow(i);
+      const firstCol = row.children[1] as HTMLElement;
+      const secondCol = row.children[2] as HTMLElement;
+      const firstColText = 'first column ' + (i + 1);
+      const secondColText = 'second column ' + (i + 1);
+      assert(firstCol.innerText.trim() === firstColText, 'first column should show on item');
+      assert(secondCol.innerText.trim() === secondColText, 'second column should show on item');
+    }
+  });
+
+  it('selects items', () => {
     testFixture._selectItem(1);
 
     assert(!isSelected(0), 'first item should not be selected');
@@ -107,7 +135,7 @@ describe('<item-list>', () => {
     assert(!isSelected(2), 'third item should not be selected');
   });
 
-  it('selected items are returned', () => {
+  it('returns selected items', () => {
     testFixture._selectItem(0);
     testFixture._selectItem(2);
 
@@ -119,16 +147,50 @@ describe('<item-list>', () => {
     const c = testFixture.$.header.querySelector('#selectAllCheckbox') as HTMLElement;
     c.click();
 
-    assert(JSON.stringify(testFixture.selectedIndices) === '[0,1,2]');
+    assert(JSON.stringify(testFixture.selectedIndices) === '[0,1,2,3,4]',
+        'all items should be in the selected indices array');
     assert(isSelected(0) && isSelected(1) && isSelected(2), 'all items should be selected');
 
     c.click();
 
-    assert(JSON.stringify(testFixture.selectedIndices) === '[]');
+    assert(JSON.stringify(testFixture.selectedIndices) === '[]',
+        'no items should be in the selected indices array');
     assert(!isSelected(0) && !isSelected(1) && !isSelected(2), 'all items should be unselected');
   });
 
-  it('clicking an item always selects it', () => {
+  it('selects all items if the Select All checkbox is clicked with one item selected', () => {
+    testFixture._selectItem(1);
+    const c = testFixture.$.header.querySelector('#selectAllCheckbox') as HTMLElement;
+    c.click();
+
+    assert(isSelected(0) && isSelected(1) && isSelected(2), 'all items should be selected');
+  });
+
+  it('checks the Select All checkbox if all items are selected individually', () => {
+    const c = testFixture.$.header.querySelector('#selectAllCheckbox') as any;
+
+    assert(!c.checked, 'Select All checkbox should start out unchecked');
+
+    testFixture._selectItem(0);
+    testFixture._selectItem(1);
+    testFixture._selectItem(2);
+    testFixture._selectItem(3);
+    testFixture._selectItem(4);
+
+    assert(c.checked, 'Select All checkbox should become checked');
+  });
+
+  it('unchecks the Select All checkbox if one item becomes unchecked', () => {
+    const c = testFixture.$.header.querySelector('#selectAllCheckbox') as any;
+
+    testFixture._selectAll();
+    assert(c.checked, 'Select All checkbox should be checked');
+
+    testFixture._unselectItem(1);
+    assert(!c.checked, 'Select All checkbox should become unchecked after unselecting an item');
+  });
+
+  it('selects the clicked item', () => {
     const firstRow = getRow(0);
     firstRow.click();
 
@@ -146,7 +208,7 @@ describe('<item-list>', () => {
     firstRow.click();
     secondRow.click();
 
-    assert(isSelected(1), 'only the second item should still be selected');
+    assert(!isSelected(0) && isSelected(1), 'only the second item should still be selected');
   });
 
   it('can do multi-selection using the checkboxes', () => {
@@ -159,6 +221,10 @@ describe('<item-list>', () => {
     thirdCheckbox.click();
     assert(isSelected(0) && isSelected(2), 'both first and third items should be selected');
     assert(!isSelected(1), 'second item should not be selected');
+
+    firstCheckbox.click();
+    assert(!isSelected(0) && !isSelected(1) && isSelected(2),
+        'first item should ben unselected after the second click');
   });
 
   it('can do multi-selection using the ctrl key', () => {
@@ -178,6 +244,7 @@ describe('<item-list>', () => {
     }));
 
     assert(!isSelected(0), 'first row should be unselected on ctrl click');
+    assert(isSelected(2), 'third item should still be selected');
   });
 
   it('can do multi-selection using the shift key', () => {
@@ -192,11 +259,28 @@ describe('<item-list>', () => {
     assert(isSelected(0) && isSelected(1) && isSelected(2), 'all items should be selected');
   });
 
+  it('can do multi-selection with ctrl and shift key combinations', () => {
+    const firstRow = getRow(0);
+    const thirdRow = getRow(2);
+    const fifthRow = getRow(4);
+
+    thirdRow.click();
+    firstRow.dispatchEvent(new MouseEvent('click', {
+      ctrlKey: true,
+    }));
+    fifthRow.dispatchEvent(new MouseEvent('click', {
+      shiftKey: true,
+    }));
+
+    assert(JSON.stringify(testFixture.selectedIndices) === '[0,1,2,3,4]',
+        'all rows 1 to 5 should be selected');
+  });
+
   it('hides the header when no-header property is used', () => {
-    assert(testFixture.$.header.offsetHeight !== 0);
+    assert(testFixture.$.header.offsetHeight !== 0, 'the header row should be visible');
 
     testFixture.hideHeader = true;
-    assert(testFixture.$.header.offsetHeight === 0);
+    assert(testFixture.$.header.offsetHeight === 0, 'the header row should be hidden');
   });
 
   it('prevents item selection when disable-selection property is used', () => {
