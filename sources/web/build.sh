@@ -31,10 +31,7 @@ mkdir -p $WEB_DIR
 
 # Experimental UI build step
 cd datalab/polymer
-bower --allow-root install
-tslint *.ts components/**/*.ts modules/*.ts
-tsc
-polymer build
+npm run build
 rsync -avpq ./build/experimental/ ../static/experimental
 cd ../..
 # End experimental UI build step
