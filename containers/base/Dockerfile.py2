@@ -43,7 +43,9 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir numpy==1.11.2 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir pandas==0.19.1 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir scipy==0.18.0 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir scikit-learn==0.17.1 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir scikit-learn==0.18.2 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir scikit-image==0.13.0 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir lime==0.1.1.23 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir sympy==0.7.6.1 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir statsmodels==0.6.1 && \
 
