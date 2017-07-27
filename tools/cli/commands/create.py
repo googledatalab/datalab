@@ -190,7 +190,10 @@ write_files:
        --env=HOME=/content \
        --env=DATALAB_ENV=GCE \
        --env=DATALAB_DEBUG=true \
-       --env='DATALAB_SETTINGS_OVERRIDES={{"enableAutoGCSBackups": {1}, "consoleLogLevel": "{2}" }}' \
+       --env='DATALAB_SETTINGS_OVERRIDES={{ \
+            "enableAutoGCSBackups": {1}, \
+            "consoleLogLevel": "{2}" \
+       }}' \
        --env='DATALAB_GIT_AUTHOR={3}' \
        --env='DATALAB_INITIAL_USER_SETTINGS={4}' \
        {0}
