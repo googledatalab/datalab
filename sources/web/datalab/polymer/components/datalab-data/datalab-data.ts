@@ -71,6 +71,8 @@ class DataElement extends Polymer.Element {
 
   /** Sends the user's query to the search API, renders results as they get returned. */
   _search() {
+    // TODO - clearing the resultsList may cause unnecessary refreshes, clean this up
+    //   when we figure out how we actually want to handle the search call.
     this._resultsList = [];
     this._sendQuery(this._searchValue, this._handleQueryResults.bind(this));
   }
@@ -80,6 +82,8 @@ class DataElement extends Polymer.Element {
   }
 
   _handleQueryResults(partialResults: Result[]) {
+    // TODO - add something to make sure the partialResults are for the right query,
+    //   so that late results don't accidentally get added to the next query results.
     this._resultsList = this._resultsList.concat(partialResults);
   }
 

@@ -69,6 +69,7 @@ the License.
         width: 100%;
       }
       #detailsPane {
+        /* TODO - Add box-shadow and other styling once we put some real content here. */
       }
       .details-pane-enabled--true {
         width: 400px;
@@ -90,6 +91,9 @@ the License.
       <div class="resultsColumn">
         <!-- Input box to enter search terms -->
         <div id="search-div">
+          <!-- TODO - could use value-changed event on paper-input to call _search
+               on every keystroke, with a delay so it fires only after the user has stopped
+               typing for a moment. -->
           <iron-a11y-keys id="searchKeys" keys="enter" on-keys-pressed="_search"></iron-a11y-keys>
           <paper-input id="searchBox" label="Search for data" spellcheck=false autofocus
                                       value="{{_searchValue}}" no-label-float>
