@@ -61,6 +61,10 @@ declare namespace gapi.client {
     }
 
     interface ListTablesResponse {
+      kind: string;   // Should always be "bigquery#tableList"
+      etag: string;
+      nextPageToken: string;
+      tables: Array<TableResource>;
     }
 
     interface ProjectReference {
@@ -75,7 +79,17 @@ declare namespace gapi.client {
       friendlyName: string;
     }
 
+    interface TableReference {
+      datasetId: string;
+      projectId: string;
+      tableId: string;
+    }
+
     interface TableResource {
+      kind: string;   // Should always be "bigquery#table"
+      id: string;
+      tableReference: TableReference;
+      type: string;   // "TABLE"
     }
   }
 }

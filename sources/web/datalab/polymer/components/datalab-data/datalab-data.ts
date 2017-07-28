@@ -18,53 +18,37 @@
 
 type HttpResponse<T> = gapi.client.HttpResponse<T>;
 
-interface Collection {
+interface Result {
   name: string;
-  status: string;
-  tables?: Table[];
-}
-
-interface Table {
-  name: string;
-  status: string;
+  type: string;
 }
 
 /**
  * Data element for Datalab.
- * Contains a form for initial user input, and a list of tables.
+ * Contains a form for initial user input, and a list of results.
  */
 class DataElement extends Polymer.Element {
 
-  /** The value the user can enter to filter the collections. */
-  // private _collectionsFilterValue : string;   //TODO(jimmc): uncomment when ready to use
-
-  /** The value the user can enter to filter the tables. */
-  // private _tablesFilterValue : string;    //TODO(jimmc): uncomment when ready to use
-
-  private _collectionsList: Collection[];
-  private _tablesList: Table[];
+  private _isDetailsPaneToggledOn: boolean;
+  private _resultsList: Result[];
+  private _searchValue: string;
 
   static get is() { return 'datalab-data'; }
 
   static get properties() {
     return {
-      _collectionsFilterValue: {
-        type: String,
-        value: 'no-filter',
+      _isDetailsPaneToggledOn: {
+        type: Boolean,
+        value: true,
       },
-      _collectionsList: {
-        observer: '_renderCollectionsList',
+      _resultsList: {
+        observer: '_renderResultsList',
         type: Array,
         value: () => [],
       },
-      _tablesFilterValue: {
+      _searchValue: {
         type: String,
-        value: 'no-filter',
-      },
-      _tablesList: {
-        observer: '_renderTablesList',
-        type: Array,
-        value: () => [],
+        value: '',
       },
     };
   }
@@ -72,154 +56,136 @@ class DataElement extends Polymer.Element {
   ready() {
     super.ready();
 
-    this._collectionsList = [];
-    const collectionsElement = this.$.collections as ItemListElement;
-    if (collectionsElement) {
-      collectionsElement.addEventListener('itemDoubleClick',
-                                    this._collectionsDoubleClicked.bind(this));
-      collectionsElement.addEventListener('selected-indices-changed',
-                                    this._collectionsSelectionChanged.bind(this));
+    this._resultsList = [];
+    const resultsElement = this.$.results as ItemListElement;
+    if (resultsElement) {
+      resultsElement.addEventListener('itemDoubleClick',
+                                    this._resultsDoubleClicked.bind(this));
+      resultsElement.addEventListener('selected-indices-changed',
+                                    this._resultsSelectionChanged.bind(this));
     }
 
-    this._tablesList = [];
-    const tablesElement = this.$.tables as ItemListElement;
-    if (tablesElement) {
-      tablesElement.addEventListener('itemDoubleClick',
-                                    this._tablesDoubleClicked.bind(this));
-      tablesElement.addEventListener('selected-indices-changed',
-                                    this._tablesSelectionChanged.bind(this));
-    }
+    (this.$.results as ItemListElement).columns = ['Name', 'Type'];
+    this.$.searchKeys.target = this.$.searchBox;
   }
 
-  _generateFakeCollectionsListForTesting() {
-    const collectionsList = [];
-    const count = Math.floor(Math.random() * 20);
-    for (let i = 0; i < count; i++) {
-      collectionsList.push(this._generateFakeCollectionForTesting());
-    }
-    return collectionsList;
-  }
-
-  _generateFakeCollectionForTesting() {
-    const fakeCollection = {
-      name: 'fakeCollection' + Math.floor(Math.random() * 1000000),
-      status: 'fake',
-    };
-    return fakeCollection;
-  }
-
-  _generateFakeTablesListForTesting() {
-    const tablesList = [];
-    const count = Math.floor(Math.random() * 20);
-    for (let i = 0; i < count; i++) {
-      tablesList.push(this._generateFakeTableForTesting());
-    }
-    return tablesList;
-  }
-
-  _generateFakeTableForTesting() {
-    const fakeTable = {
-      name: 'fakeTable' + Math.floor(Math.random() * 1000000),
-      status: 'fake',
-    };
-    return fakeTable;
-  }
-
-  /** Reads the user's query values, queries for tables, and updates the results. */
+  /** Sends the user's query to the search API, renders results as they get returned. */
   _search() {
-    this._collectionsList = this._generateFakeCollectionsListForTesting();
-    this._debugCallBigQuery();   // For debugging, make some BigQuery calls
+    // TODO - clearing the resultsList may cause unnecessary refreshes, clean this up
+    //   when we figure out how we actually want to handle the search call.
+    this._resultsList = [];
+    this._sendQuery(this._searchValue, this._handleQueryResults.bind(this));
   }
 
-  // Make some calls to the BigQuery API and log the results to the console.
-  _debugCallBigQuery() {
+  _sendQuery(searchValue: string, resultHandler: (partialResults: Result[]) => void) {
+    this._callBigQuery(searchValue, resultHandler);
+  }
+
+  _handleQueryResults(partialResults: Result[]) {
+    // TODO - add something to make sure the partialResults are for the right query,
+    //   so that late results don't accidentally get added to the next query results.
+    this._resultsList = this._resultsList.concat(partialResults);
+  }
+
+  // Make some calls to the BigQuery API and pass the results to the resultHandler
+  _callBigQuery(searchValue: string, resultHandler: (partialResults: Result[]) => void) {
     const sampleProject = 'bigquery-public-data';
-    const sampleDataset = 'samples';
-    const emptyFilter = '';
     GapiManager.listBigQueryProjects()
-        .then((response: HttpResponse<gapi.client.bigquery.ListProjectsResponse>) => console.log('== projects: ', response));
-    GapiManager.listBigQueryDatasets(sampleProject, emptyFilter)
-        .then((response: HttpResponse<gapi.client.bigquery.ListDatasetsResponse>) => console.log('== datasets: ', response));
-    GapiManager.listBigQueryTables(sampleProject, sampleDataset, emptyFilter)
-        .then((response: HttpResponse<gapi.client.bigquery.ListTablesResponse>) => console.log('== tables: ', response));
+        .then((response: HttpResponse<gapi.client.bigquery.ListProjectsResponse>) => {
+          console.log('== projects: ', response);
+          const projectResults: Result[] = response.result.projects.map(this._bqProjectToResult.bind(this)) as Result[];
+          resultHandler(projectResults);
+        });
+    // The filter arg when querying for datasets must be of the form labels.<name>[:<value>],
+    // see https://cloud.google.com/bigquery/docs/reference/rest/v2/datasets/list
+    GapiManager.listBigQueryDatasets(sampleProject, searchValue /* label filter */)
+        .then((response: HttpResponse<gapi.client.bigquery.ListDatasetsResponse>) => {
+          console.log('== datasets: ', response);
+          const datasetResults: Result[] = response.result.datasets.map(this._bqDatasetToResult.bind(this)) as Result[];
+          resultHandler(datasetResults);
+        });
+    GapiManager.listBigQueryTables(sampleProject, searchValue /* datasetId */)
+        .then((response: HttpResponse<gapi.client.bigquery.ListTablesResponse>) => {
+          console.log('== tables: ', response);
+          const tableResults: Result[] = response.result.tables.map(this._bqTableToResult.bind(this)) as Result[];
+          resultHandler(tableResults);
+        });
+  }
+
+  _bqProjectToResult(bqProject: gapi.client.bigquery.ProjectResource): Result {
+    return {
+      name: bqProject.id,
+      type: 'project',
+    } as Result;
+  }
+
+  _bqDatasetToResult(bqDataset: gapi.client.bigquery.DatasetResource): Result {
+    return {
+      name: bqDataset.id,
+      type: 'dataset',
+    } as Result;
+  }
+
+  _bqTableToResult(bqTable: gapi.client.bigquery.TableResource): Result {
+    return {
+      name: bqTable.id,
+      type: 'table',
+    } as Result;
   }
 
   /**
-   * Creates a new ItemListRow object for each entry in the collections list, and sends
+   * Creates a new ItemListRow object for each entry in the results list, and sends
    * the created list to the item-list to render.
    */
-  _renderCollectionsList() {
-    this.$.collections.rows = this._collectionsList.map((collection) => {
+  _renderResultsList() {
+    this.$.results.rows = this._resultsList.map((result) => {
       return {
-        firstCol: collection.name,
-        icon: 'folder',
-        secondCol: collection.status,
+        firstCol: result.name,
+        icon: this._typeToIcon(result.type),
+        secondCol: result.type,
         selected: false,
       };
     });
   }
 
-  _showTablesForCollection(collection: Collection) {
-    console.log('== collection selected:', collection);
-    if (!collection.tables) {
-      collection.tables = this._generateFakeTablesListForTesting();
-    }
-    this._tablesList = collection.tables;
+  _typeToIcon(type: string): string {
+    const typeMap: {[key: string]: string; } = {
+      dataset: 'folder',
+      project: 'view-quilt',
+      table: 'list',
+    };
+    return typeMap[type] || 'folder';
   }
 
-  _clearTablesList() {
-    this._tablesList = [];
+  _showDetailsForResult(result: Result) {
+    this.$.detailsPane.innerHTML =
+        'Selection: <b>' + result.name + '</b><br>' +
+        'Type: <b>' + result.type + '</b>';
   }
 
-  _showDetailsForTable(table: Table) {
-    this.$.detailsPane.innerHTML = 'Selected table: ' + table.name;
-  }
-
-  _clearTableDetails() {
+  _clearDetails() {
     this.$.detailsPane.innerHTML = '';
   }
 
+  _resultsDoubleClicked() {
+    console.log('== result double-clicked');
+  }
+
+  _resultsSelectionChanged() {
+    console.log('== result selection changed');
+    const selectedIndices = (this.$.results as ItemListElement).selectedIndices;
+    if (selectedIndices.length === 1) {
+      this._showDetailsForResult(this._resultsList[selectedIndices[0]]);
+    } else {
+      this._clearDetails();
+    }
+  }
+
   /**
-   * Creates a new ItemListRow object for each entry in the collections list, and sends
-   * the created list to the item-list to render.
+   * Switches details pane on or off.
    */
-  _renderTablesList() {
-    this.$.tables.rows = this._tablesList.map((table) => {
-      return {
-        firstCol: table.name,
-        icon: 'file',
-        secondCol: table.status,
-        selected: false,
-      };
-    });
-  }
-
-  _collectionsDoubleClicked() {
-    console.log('== collection double-clicked');
-  }
-
-  _collectionsSelectionChanged() {
-    console.log('== collection selection changed');
-    const selectedIndices = (this.$.collections as ItemListElement).selectedIndices;
-    if (selectedIndices.length === 1) {
-      this._showTablesForCollection(this._collectionsList[selectedIndices[0]]);
-    } else {
-      this._clearTablesList();
-    }
-  }
-
-  _tablesDoubleClicked() {
-    console.log('== table double-clicked');
-  }
-
-  _tablesSelectionChanged() {
-    console.log('== table selection changed');
-    const selectedIndices = (this.$.tables as ItemListElement).selectedIndices;
-    if (selectedIndices.length === 1) {
-      this._showDetailsForTable(this._tablesList[selectedIndices[0]]);
-    } else {
-      this._clearTableDetails();
-    }
+  _toggleDetailsPane() {
+    this._isDetailsPaneToggledOn = !this._isDetailsPaneToggledOn;
   }
 }
 

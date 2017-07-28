@@ -82,7 +82,11 @@ class GapiManager {
     return GapiManager._loadBigQuery().then(() => gapi.client.bigquery.projects.list());
   }
 
-  /** Gets the list of BigQuery datasets in the specified project, returns a Promise. */
+  /** Gets the list of BigQuery datasets in the specified project, returns a Promise.
+   * @param projectId
+   * @param filter A label filter of the form label.<name>[:<value>], as described in
+   *     https://cloud.google.com/bigquery/docs/reference/rest/v2/datasets/list
+   */
   public static listBigQueryDatasets(projectId: string, filter: string): gapi.client.HttpRequest<gapi.client.bigquery.ListDatasetsResponse> {
     const request = {
       filter,
@@ -92,10 +96,9 @@ class GapiManager {
   }
 
   /** Gets the list of BigQuery tables in the specified project and dataset, returns a Promise. */
-  public static listBigQueryTables(projectId: string, datasetId: string, filter: string): gapi.client.HttpRequest<gapi.client.bigquery.ListTablesResponse> {
+  public static listBigQueryTables(projectId: string, datasetId: string): gapi.client.HttpRequest<gapi.client.bigquery.ListTablesResponse> {
     const request = {
       datasetId,
-      filter,
       projectId,
     };
     return GapiManager._loadBigQuery().then(() => gapi.client.bigquery.tables.list(request));

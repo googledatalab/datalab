@@ -15,6 +15,11 @@ the License.
 <link rel="import" href="../../components/item-list/item-list.html">
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
 
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/iron-a11y-keys/iron-a11y-keys.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+
 <dom-module id="datalab-data">
   <template>
     <style include="datalab-shared-styles">
@@ -29,25 +34,10 @@ the License.
         font-size: var(--app-content-font-size);
         color: var(--app-primary-color);
       }
-      div.tableDrillDown {
-        display: flex;
-        margin: 15px;
-      }
-      .collectionsColumn {
-        width: 33%;
-      }
-      .tablesColumn {
-        width: 33%;
-      }
-      .filteredColumn {
-        margin: 10px;
-      }
-      detailsColumn {
-        width: 33%;
-      }
       #toolbar {
         height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
         width: 100%;
+        display: flex;
         background-color: var(--app-secondary-color);
         border-bottom: 1px solid var(--border-color);
       }
@@ -61,64 +51,65 @@ the License.
         width: 20px;
         padding-right: 5px;
       }
-      .collections-container {
+      .toolbar-spacer {
+        flex-grow: 1;
+      }
+      #data-container {
+        display: flex;
+        margin: 15px;
+      }
+      .resultsColumn {
+        flex-grow: 1;
+      }
+      .results-container {
         height: 100%;
         display: flex;
       }
-      .tables-container {
-        height: 100%;
-        display: flex;
+      #results {
+        width: 100%;
       }
-      #collections {
-        flex-grow: 1;
+      #detailsPane {
+        /* TODO - Add box-shadow and other styling once we put some real content here. */
       }
-      #tables {
-        flex-grow: 1;
+      .details-pane-enabled--true {
+        width: 400px;
+      }
+      .details-pane-enabled--false {
+        width: 0px;
       }
     </style>
 
     <!--Toolbar with action buttons -->
     <div id="toolbar">
-      <paper-button class="toolbar-button" on-click="_search">
-        <iron-icon icon="search"></iron-icon>
-        <span>Search</span>
+      <div class="toolbar-spacer"></div>
+      <paper-button id="toggleDetails" class="navbar-button" on-click="_toggleDetailsPane">
+        <iron-icon icon="visibility"></iron-icon>
       </paper-button>
     </div>
 
-    <!-- Multi-column layout: collections (BQ datasets), tables -->
-    <div class="tableDrillDown">
+    <div id="data-container">
+      <div class="resultsColumn">
+        <!-- Input box to enter search terms -->
+        <div id="search-div">
+          <!-- TODO - could use value-changed event on paper-input to call _search
+               on every keystroke, with a delay so it fires only after the user has stopped
+               typing for a moment. -->
+          <iron-a11y-keys id="searchKeys" keys="enter" on-keys-pressed="_search"></iron-a11y-keys>
+          <paper-input id="searchBox" label="Search for data" spellcheck=false autofocus
+                                      value="{{_searchValue}}" no-label-float>
+          <iron-icon icon="search" slot="prefix" on-click="_search"></iron-icon>
+          </paper-input>
+        </div>
 
-      <!-- Collections (BQ datasets) -->
-      <div class="collectionsColumn filteredColumn">
-        <div>
-          Collections Filter:
-            <paper-input id="collectionsFilterBox" label="Optional filter value" spellcheck=false autofocus
-                         value="{{_collectionsFilterValue}}" no-label-float>
-            </paper-input>
-        </div>
-        <!-- list of collections -->
-        <div class='collections-container'>
-          <item-list id="collections" hide-header="true"></item-list>
-        </div>
-      </div>
-
-      <!-- Tables -->
-      <div class="tablesColumn filteredColumn">
-        <div>
-          Tables Filter:
-            <paper-input id="tablesFilterBox" label="Optional filter value" spellcheck=false autofocus
-                         value="{{_tablesFilterValue}}" no-label-float>
-            </paper-input>
-        </div>
-        <!-- list of tables -->
-        <div class='tables-container'>
-          <item-list id="tables" hide-header="true"></item-list>
+        <!-- List of results -->
+        <div class='results-container'>
+          <item-list id="results"></item-list>
         </div>
       </div>
 
       <!-- Details pane -->
-      <div class="detailsColumn">
-        <div id="detailsPane"></div>
+      <div id="detailsPane" class$="details-pane-enabled--{{_isDetailsPaneToggledOn}}">
+        <div id="detailsContents"></div>
       </div>
 
     </div>
