@@ -12,9 +12,6 @@
  * the License.
  */
 
-declare function assert(condition: boolean, message?: string): null;
-declare function fixture(element: string): any;
-
 /// <reference path="../node_modules/@types/mocha/index.d.ts" />
 /// <reference path="../node_modules/@types/chai/index.d.ts" />
 /// <reference path="../node_modules/@types/sinon/index.d.ts" />
@@ -22,6 +19,8 @@ declare function fixture(element: string): any;
 
 describe('<datalab-files>', () => {
   let testFixture: FilesElement;
+  const startuppath = 'testpath';
+  const basepath = 'basepath';
 
   before(() => {
     SettingsManager.getUserSettingsAsync = (forceRefresh: boolean) => {
@@ -30,19 +29,35 @@ describe('<datalab-files>', () => {
         idleTimeoutInterval: '',
         idleTimeoutShutdownCommand: '',
         oauth2ClientId: '',
-        startuppath: 'testpath',
+        startuppath,
         theme: 'light',
       };
       return Promise.resolve(mockSettings);
     };
+    ApiManager.getBasePath = () => {
+      return Promise.resolve(basepath);
+    };
+    ApiManager.listFilesAsync = (path: string) => {
+      assert(path === basepath + '/' + startuppath,
+          'listFilesAsync should be called with the base path and startup path');
+      const files: ApiFile[] = [
+        {content: '', format: '', name: 'file1', path: '/', type: 'folder', status: ''},
+        {content: '', format: '', name: 'file2', path: '/', type: 'folder', status: ''},
+        {content: '', format: '', name: 'file3', path: '/', type: 'folder', status: ''},
+      ];
+      return Promise.resolve(files);
+    };
   });
 
-  beforeEach(() => {
+  beforeEach((done: () => any) => {
     testFixture = fixture('files-fixture');
+    testFixture.ready()
+      .then(() => done());
   });
 
   it('displays list of files correctly', () => {
     Polymer.dom.flush();
+    assert(testFixture.fileList.length === 3, 'should have three files');
     debugger;
   });
 });

@@ -33,7 +33,7 @@
  * and no selection. It also doesn't do anything when a file is double clicked.
  * This is meant to be used for browsing only, such as the case for picking files or directories.
  */
-class FilesElement extends Polymer.Element {
+class FilesElement extends BaseElement {
 
   private static readonly _deleteListLimit = 10;
 
@@ -57,10 +57,13 @@ class FilesElement extends Polymer.Element {
    */
   public small: boolean;
 
+  public loadPromise: Promise<any>;
+
+  public fileList: ApiFile[];
+
   private _pathHistory: string[];
   private _pathHistoryIndex: number;
   private _fetching: boolean;
-  private _fileList: ApiFile[];
   private _fileListRefreshInterval = 60 * 1000;
   private _fileListRefreshIntervalHandle = 0;
   private _currentCrumbs: string[];
@@ -81,10 +84,6 @@ class FilesElement extends Polymer.Element {
       _fetching: {
         type: Boolean,
         value: false,
-      },
-      _fileList: {
-        type: Array,
-        value: () => [],
       },
       _isDetailsPaneEnabled: {
         computed: '_getDetailsPaneEnabled(small, _isDetailsPaneToggledOn)',
@@ -112,6 +111,10 @@ class FilesElement extends Polymer.Element {
         type: String,
         value: '',
       },
+      fileList: {
+        type: Array,
+        value: () => [],
+      },
       selectedFile: {
         type: Object,
         value: null,
@@ -127,16 +130,12 @@ class FilesElement extends Polymer.Element {
    * Called when when the element's local DOM is ready and initialized We use it
    * to initialize element state.
    */
-  ready() {
-    // Must set this to true before calling super.ready(), because the latter will cause
-    // property updates that will cause _fetchFileList to be called first, we don't want
-    // that. We want ready() to be the entry point so it gets the user's last saved path.
+  _init() {
     this._fetching = true;
-
-    super.ready();
-
-    // Get the last startup path.
-    SettingsManager.getUserSettingsAsync(true /*forceRefresh*/)
+    return ApiManager.getBasePath()
+      .then((basepath: string) => this.basePath = basepath)
+      // Get the last startup path.
+      .then(() => SettingsManager.getUserSettingsAsync(true /*forceRefresh*/))
       .then((settings: common.UserSettings) => {
         if (settings.startuppath) {
           let path = settings.startuppath;
@@ -152,22 +151,23 @@ class FilesElement extends Polymer.Element {
       })
       .catch(() => console.log('Failed to get the user settings.'))
       .then(() => {
-        this._fetching = false;
-
         this._resizeHandler();
         this._focusHandler();
+
+        const filesElement = this.shadowRoot.querySelector('#files');
+        if (filesElement) {
+          filesElement.addEventListener('itemDoubleClick',
+                                        this._handleDoubleClicked.bind(this));
+          filesElement.addEventListener('selected-indices-changed',
+                                        this._handleSelectionChanged.bind(this));
+        }
+
+        // For a small file/directory picker, we don't need to show the status.
+        (this.$.files as ItemListElement).columns = this.small ? ['Name'] : ['Name', 'Status'];
+
+        this._fetching = true;
+        return this._fetchFileList();
       });
-
-    const filesElement = this.shadowRoot.querySelector('#files');
-    if (filesElement) {
-      filesElement.addEventListener('itemDoubleClick',
-                                    this._handleDoubleClicked.bind(this));
-      filesElement.addEventListener('selected-indices-changed',
-                                    this._handleSelectionChanged.bind(this));
-    }
-
-    // For a small file/directory picker, we don't need to show the status.
-    (this.$.files as ItemListElement).columns = this.small ? ['Name'] : ['Name', 'Status'];
   }
 
   disconnectedCallback() {
@@ -199,18 +199,21 @@ class FilesElement extends Polymer.Element {
    * @param throwOnError whether to throw an exception if the refresh fails. This
    *                     is false by default because throwing is currently not used.
    */
-  _fetchFileList(throwOnError = false) {
+  _fetchFileList(throwOnError = false): Promise<void> {
     // Don't overlap fetch requests. This can happen because we set up fetch from several sources:
     // - Initialization in the ready() event handler.
     // - Refresh mechanism called by the setInterval().
     // - User clicking refresh button.
     // - Files page gaining focus.
     if (this._fetching) {
-      return;
+      return Promise.resolve();
     }
-    this._fetching = true;
 
-    ApiManager.listFilesAsync(this.basePath + this.currentPath)
+    return this.ready()
+      .then(() => {
+        this._fetching = true;
+        return ApiManager.listFilesAsync(this.basePath + '/' + this.currentPath);
+      })
       .then((newList) => {
         // Only refresh the UI list if there are any changes. This helps keep
         // the item list's selections intact most of the time
@@ -219,8 +222,8 @@ class FilesElement extends Polymer.Element {
         // one item changes. This is tricky because we don't have unique
         // ids for the items. Using paths might work for files, but is not
         // a clean solution.
-        if (JSON.stringify(this._fileList) !== JSON.stringify(newList)) {
-          this._fileList = newList;
+        if (JSON.stringify(this.fileList) !== JSON.stringify(newList)) {
+          this.fileList = newList;
           this._drawFileList();
         }
       })
@@ -229,7 +232,9 @@ class FilesElement extends Polymer.Element {
           throw new Error('Error getting list of files: ' + e.message);
         }
       })
-      .then(() => this._fetching = false);
+      .then(() => {
+        this._fetching = false;
+      });
   }
 
   /**
@@ -258,7 +263,7 @@ class FilesElement extends Polymer.Element {
    * the created list to the item-list to render.
    */
   _drawFileList() {
-    (this.$.files as ItemListElement).rows = this._fileList.map((file) => {
+    (this.$.files as ItemListElement).rows = this.fileList.map((file) => {
       return {
         firstCol: file.name,
         icon: file.type === 'directory' ? 'folder' : 'editor:insert-drive-file',
@@ -276,7 +281,7 @@ class FilesElement extends Polymer.Element {
    * an effect, a directory will still navigate.
    */
   _handleDoubleClicked(e: ItemClickEvent) {
-    const clickedItem = this._fileList[e.detail.index];
+    const clickedItem = this.fileList[e.detail.index];
     if (this.small && clickedItem.type !== 'directory') {
       return;
     }
@@ -299,7 +304,7 @@ class FilesElement extends Polymer.Element {
   _handleSelectionChanged() {
     const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
     if (selectedIndices.length === 1) {
-      this.selectedFile = this._fileList[selectedIndices[0]];
+      this.selectedFile = this.fileList[selectedIndices[0]];
     } else {
       this.selectedFile = null;
     }
@@ -532,7 +537,7 @@ class FilesElement extends Polymer.Element {
     const selectedIndices = filesElement.selectedIndices;
     if (selectedIndices.length === 1) {
       const i = selectedIndices[0];
-      const selectedObject = this._fileList[i];
+      const selectedObject = this.fileList[i];
 
       this._getEditorUrl(selectedObject.path)
         .then((url) => window.open(url, '_blank'));
@@ -549,7 +554,7 @@ class FilesElement extends Polymer.Element {
     const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
     if (selectedIndices.length === 1) {
       const i = selectedIndices[0];
-      const selectedObject = this._fileList[i];
+      const selectedObject = this.fileList[i];
 
       // Open a dialog to let the user specify the new name for the selected item.
       const inputOptions: InputDialogOptions = {
@@ -600,7 +605,7 @@ class FilesElement extends Polymer.Element {
       // Title
       if (num === 1) {
         const i = selectedIndices[0];
-        const selectedObject = this._fileList[i];
+        const selectedObject = this.fileList[i];
         title += selectedObject.type.toString();
       } else {
         title += num + ' items';
@@ -610,7 +615,7 @@ class FilesElement extends Polymer.Element {
       let itemList = '<ul>\n';
       selectedIndices.forEach((fileIdx: number, i: number) => {
         if (i < FilesElement._deleteListLimit) {
-          itemList += '<li>' + this._fileList[fileIdx].name + '</li>\n';
+          itemList += '<li>' + this.fileList[fileIdx].name + '</li>\n';
         }
       });
       if (num > FilesElement._deleteListLimit) {
@@ -633,7 +638,7 @@ class FilesElement extends Polymer.Element {
         .then((closeResult: BaseDialogCloseResult) => {
           if (closeResult.confirmed) {
             const deletePromises = selectedIndices.map((i: number) => {
-              return ApiManager.deleteItem(this._fileList[i].path);
+              return ApiManager.deleteItem(this.fileList[i].path);
             });
             // TODO: [yebrahim] If at least one delete fails, _fetchFileList will never be called,
             // even if some other deletes completed.
@@ -682,7 +687,7 @@ class FilesElement extends Polymer.Element {
 
     if (selectedIndices.length === 1) {
       const i = selectedIndices[0];
-      const selectedObject = this._fileList[i];
+      const selectedObject = this.fileList[i];
 
       const options: DirectoryPickerDialogOptions = {
         big: true,
@@ -722,7 +727,7 @@ class FilesElement extends Polymer.Element {
 
     if (selectedIndices.length === 1) {
       const i = selectedIndices[0];
-      const selectedObject = this._fileList[i];
+      const selectedObject = this.fileList[i];
 
       const options: DirectoryPickerDialogOptions = {
         big: true,
