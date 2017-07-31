@@ -10,7 +10,7 @@ declare namespace gapi.client {
 
     const tables: {
       list: (request?: ListTablesRequest) => HttpRequest<ListTablesResponse>;
-      get: (request?: GetTableRequest) => HttpRequest<BigqueryTable>;
+      get: (request?: GetTableRequest) => HttpRequest<Table>;
     }
 
     interface DatasetReference {
@@ -74,7 +74,7 @@ declare namespace gapi.client {
       tables: Array<TableResource>;
     }
 
-    interface BigqueryTable {
+    interface Table {
       creationTime: string;
       etag: string;
       id: string;

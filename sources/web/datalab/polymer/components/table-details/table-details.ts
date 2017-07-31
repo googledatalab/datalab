@@ -24,7 +24,7 @@ class TableDetailsElement extends Polymer.Element {
    */
   public tableId: string;
 
-  private _table: gapi.client.bigquery.BigqueryTable | null;
+  private _table: gapi.client.bigquery.Table | null;
   private _busy = false;
   private readonly DEFAULT_MODE = 'NULLABLE';
 
@@ -72,17 +72,18 @@ class TableDetailsElement extends Polymer.Element {
       const datasetId = matches[2];
       const tableId = matches[3];
 
-      GapiManager.getTableDetails(projectId, datasetId, tableId)
-        .then((result) => {
-          this._table = JSON.parse(result.body) as gapi.client.bigquery.BigqueryTable;
-        }, (error) => console.log('Failed to get table details: ' + error.body))
+      GapiManager.getBigqueryTableDetails(projectId, datasetId, tableId)
+        .then((response: HttpResponse<gapi.client.bigquery.Table>) => {
+          this._table = JSON.parse(response.body);
+        }, (errorResponse) =>
+            console.error('Failed to get table details: ' + errorResponse.body))
         .then(() => this._busy = false);
     } else {
       this._table = null;
     }
   }
 
-  _computeCreationTime(table: gapi.client.bigquery.BigqueryTable | null) {
+  _computeCreationTime(table: gapi.client.bigquery.Table | null) {
     if (table) {
       return new Date(parseInt(table.creationTime, 10)).toLocaleString();
     } else {
@@ -90,7 +91,7 @@ class TableDetailsElement extends Polymer.Element {
     }
   }
 
-  _computeLastModifiedTime(table: gapi.client.bigquery.BigqueryTable | null) {
+  _computeLastModifiedTime(table: gapi.client.bigquery.Table | null) {
     if (table) {
       return new Date(parseInt(table.lastModifiedTime, 10)).toLocaleString();
     } else {
@@ -98,15 +99,15 @@ class TableDetailsElement extends Polymer.Element {
     }
   }
 
-  _computeNumRows(table: gapi.client.bigquery.BigqueryTable | null) {
+  _computeNumRows(table: gapi.client.bigquery.Table | null) {
     return table ? parseInt(table.numRows, 10).toLocaleString() : '';
   }
 
-  _computeLongTermTableSize(table: gapi.client.bigquery.BigqueryTable | null) {
+  _computeLongTermTableSize(table: gapi.client.bigquery.Table | null) {
     return table ? this._bytesToReadableSize(table.numLongTermBytes) : '';
   }
 
-  _computeTableSize(table: gapi.client.bigquery.BigqueryTable | null) {
+  _computeTableSize(table: gapi.client.bigquery.Table | null) {
     return table ? this._bytesToReadableSize(table.numBytes) : '';
   }
 
@@ -117,14 +118,14 @@ class TableDetailsElement extends Polymer.Element {
   _bytesToReadableSize(bytesStr: string) {
     const kilo = 1024;
     const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-    let bytes = parseInt(bytesStr, 10);
+    let bytesLeft = parseInt(bytesStr, 10);
     let level = 0;
 
-    while (bytes >= kilo) {
-      bytes /= kilo;
+    while (bytesLeft >= kilo) {
+      bytesLeft /= kilo;
       ++level;
     }
-    return bytes.toFixed(2) + ' ' + units[level];
+    return bytesLeft.toFixed(2) + ' ' + units[level];
   }
 
   _formatMode(mode: string) {

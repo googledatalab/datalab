@@ -107,8 +107,8 @@ class GapiManager {
   /**
    * Fetches table details from BigQuery
    */
-  public static getTableDetails(projectId: string, datasetId: string, tableId: string):
-      gapi.client.HttpRequest<gapi.client.bigquery.BigqueryTable> {
+  public static getBigqueryTableDetails(projectId: string, datasetId: string, tableId: string):
+      gapi.client.HttpRequest<gapi.client.bigquery.Table> {
     const request = {
       datasetId,
       projectId,
