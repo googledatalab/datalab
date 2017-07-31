@@ -35,58 +35,30 @@ the License.
         font-size: var(--app-content-font-size);
         color: var(--app-primary-color);
       }
-      #toolbar {
-        height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
-        width: 100%;
-        display: flex;
-        background-color: var(--app-secondary-color);
-        border-bottom: 1px solid var(--border-color);
-      }
-      .toolbar-button {
-        color: var(--app-primary-color);
-        margin: 4px;
-        font-weight: normal;
-        border-radius: 0px;
-      }
-      .toolbar-button > iron-icon {
-        width: 20px;
-        padding-right: 5px;
-      }
-      .toolbar-spacer {
-        flex-grow: 1;
-      }
       #data-container {
         display: flex;
-        margin: 15px;
+        height: 100%;
       }
       .resultsColumn {
+        margin: 15px;
         flex-grow: 1;
       }
+      #search-div {
+        height: var(--toolbar-height);
+      }
       .results-container {
-        height: 100%;
+        height: calc(100% - var(--toolbar-height));
         display: flex;
       }
       #results {
         width: 100%;
       }
       #detailsPane {
-        /* TODO - Add box-shadow and other styling once we put some real content here. */
-      }
-      .details-pane-enabled--true {
-        width: 400px;
-      }
-      .details-pane-enabled--false {
-        width: 0px;
+        background-color: var(--secondary-bg-color);
+        box-shadow: inset 4px 0px 10px -3px rgba(0, 0, 0, 0.1);
+        width: var(--details-pane-width);
       }
     </style>
-
-    <!--Toolbar with action buttons -->
-    <div id="toolbar">
-      <div class="toolbar-spacer"></div>
-      <paper-button id="toggleDetails" class="navbar-button" on-click="_toggleDetailsPane">
-        <iron-icon icon="visibility"></iron-icon>
-      </paper-button>
-    </div>
 
     <div id="data-container">
       <div class="resultsColumn">
@@ -109,7 +81,7 @@ the License.
       </div>
 
       <!-- Details pane -->
-      <div id="detailsPane" class$="details-pane-enabled--{{_isDetailsPaneToggledOn}}">
+      <div id="detailsPane">
         <table-details id="details"></table-details>
       </div>
 

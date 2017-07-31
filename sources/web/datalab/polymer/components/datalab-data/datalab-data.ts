@@ -29,7 +29,6 @@ interface Result {
  */
 class DataElement extends Polymer.Element {
 
-  private _isDetailsPaneToggledOn: boolean;
   private _resultsList: Result[];
   private _searchValue: string;
 
@@ -37,10 +36,6 @@ class DataElement extends Polymer.Element {
 
   static get properties() {
     return {
-      _isDetailsPaneToggledOn: {
-        type: Boolean,
-        value: true,
-      },
       _resultsList: {
         observer: '_renderResultsList',
         type: Array,
@@ -90,13 +85,13 @@ class DataElement extends Polymer.Element {
 
   // Make some calls to the BigQuery API and pass the results to the resultHandler
   _callBigQuery(searchValue: string, resultHandler: (partialResults: Result[]) => void) {
-    const sampleProject = 'yelsayed-project1';
-    // GapiManager.listBigQueryProjects()
-    //     .then((response: HttpResponse<gapi.client.bigquery.ListProjectsResponse>) => {
-    //       console.log('== projects: ', response);
-    //       const projectResults: Result[] = response.result.projects.map(this._bqProjectToResult.bind(this)) as Result[];
-    //       resultHandler(projectResults);
-    //     });
+    const sampleProject = 'bigquery-public-data';
+    GapiManager.listBigQueryProjects()
+        .then((response: HttpResponse<gapi.client.bigquery.ListProjectsResponse>) => {
+          console.log('== projects: ', response);
+          const projectResults: Result[] = response.result.projects.map(this._bqProjectToResult.bind(this)) as Result[];
+          resultHandler(projectResults);
+        });
     // The filter arg when querying for datasets must be of the form labels.<name>[:<value>],
     // see https://cloud.google.com/bigquery/docs/reference/rest/v2/datasets/list
     GapiManager.listBigQueryDatasets(sampleProject, searchValue /* label filter */)
@@ -105,7 +100,7 @@ class DataElement extends Polymer.Element {
           const datasetResults: Result[] = response.result.datasets.map(this._bqDatasetToResult.bind(this)) as Result[];
           resultHandler(datasetResults);
         });
-    GapiManager.listBigQueryTables(sampleProject, 'mydataset' /* datasetId */)
+    GapiManager.listBigQueryTables(sampleProject, searchValue /* datasetId */)
         .then((response: HttpResponse<gapi.client.bigquery.ListTablesResponse>) => {
           console.log('== tables: ', response);
           const tableResults: Result[] = response.result.tables.map(this._bqTableToResult.bind(this)) as Result[];
@@ -158,21 +153,6 @@ class DataElement extends Polymer.Element {
     return typeMap[type] || 'folder';
   }
 
-  _showDetailsForTable(table: string) {
-    const matches = table.match(/^(.*):(.*)\.(.*)$/);
-    if (matches && matches.length === 4) { // The whole string is matched as first result
-      const projectId = matches[1];
-      const datasetId = matches[2];
-      const tableId = matches[3];
-
-      GapiManager.getTableDetails(projectId, datasetId, tableId)
-        .then((result) => {
-          (this.$.details as TableDetailsElement).table =
-              JSON.parse(result.body) as gapi.client.bigquery.BigqueryTable;
-        });
-    }
-  }
-
   _resultsDoubleClicked() {
     console.log('== result double-clicked');
   }
@@ -183,18 +163,11 @@ class DataElement extends Polymer.Element {
     if (selectedIndices.length === 1) {
       const selectedItem = this._resultsList[selectedIndices[0]];
       if (selectedItem.type === 'table') {
-        this._showDetailsForTable(selectedItem.name);
+        (this.$.details as TableDetailsElement).tableId = selectedItem.name;
       }
     } else {
-      (this.$.details as TableDetailsElement).table = null;
+      (this.$.details as TableDetailsElement).tableId = '';
     }
-  }
-
-  /**
-   * Switches details pane on or off.
-   */
-  _toggleDetailsPane() {
-    this._isDetailsPaneToggledOn = !this._isDetailsPaneToggledOn;
   }
 }
 

@@ -14,46 +14,101 @@ the License.
 
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
 
+<link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
+
 <dom-module id="table-details">
   <template>
     <style include="datalab-shared-styles">
+      #placeholder {
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      paper-spinner {
+        --paper-spinner-stroke-width: 2px;
+      }
       #container {
         padding: 0px 20px;
         height: 100%;
         overflow-y: auto;
+        color: var(--primary-fg-color);
       }
       .strong {
         font-weight: bold;
       }
+      table {
+        border-spacing: 1px;
+        border-left: 0px solid transparent;
+        padding: 0 0 4px 0;
+        width: 100%;
+      }
+      td.field {
+        padding: 10px;
+        background-color: #eee;
+        font-weight: bold;
+      }
+      td.value {
+        padding: 10px;
+        background-color: #fff;
+      }
+      .separator {
+        margin: 20px 0px;
+      }
     </style>
-    <div id="container" hidden$="{{!table}}">
-      <h3>Table Details: {{table.tableReference.tableId}}</h3>
-      <span class="strong">Project: </span><span>{{table.tableReference.projectId}}</span>
+    <div id="placeholder" hidden$={{_table}}>
+      <paper-spinner active hidden$={{!_busy}}></paper-spinner>
+    </div>
+    <div id="container" hidden$={{!_table}}>
+      <h3>Table Details: {{_table.tableReference.tableId}}</h3>
+      <span class="strong">Project: </span><span>{{_table.tableReference.projectId}}</span>
       <br>
-      <span class="strong">Dataset: </span><span>{{table.tableReference.datasetId}}</span>
+      <br>
+      <span class="strong">Dataset: </span><span>{{_table.tableReference.datasetId}}</span>
+      <br>
       <br>
       <table>
         <tr>
-          <td>Table Size</td>
-          <td>{{table.numBytes}}</td>
+          <td class="field">Table Size</td>
+          <td class="value">{{tableSize}}</td>
         </tr>
         <tr>
-          <td>Long Term Storage Size</td>
-          <td>{{table.numLongTermBytes}}</td>
+          <td class="field">Long Term Storage Size</td>
+          <td class="value">{{longTermTableSize}}</td>
         </tr>
         <tr>
-          <td>Number of Rows</td>
-          <td>{{table.numRows}}</td>
+          <td class="field">Number of Rows</td>
+          <td class="value">{{numRows}}</td>
         </tr>
         <tr>
-          <td>Creation Time</td>
-          <td>{{table.creationTime}}</td>
+          <td class="field">Creation Time</td>
+          <td class="value">{{creationTime}}</td>
         </tr>
         <tr>
-          <td>Last Modified</td>
-          <td>{{table.lastModifiedTime}}</td>
+          <td class="field">Last Modified</td>
+          <td class="value">{{lastModifiedTime}}</td>
+        </tr>
+        <tr>
+          <td class="field">Data Location</td>
+          <td class="value">{{_table.location}}</td>
         </tr>
       </table>
+
+      <hr class="separator">
+
+      <div class="strong">Schema</div>
+      <br>
+
+      <table>
+        <template is="dom-repeat" items={{_table.schema.fields}} as="column">
+          <tr>
+            <td class="field">{{column.name}}</td>
+            <td class="value">{{column.type}}</td>
+            <td class="value">{{_formatMode(column.mode)}}</td>
+          </tr>
+        </template>
+      </table>
+
     </div>
   </template>
 </dom-module>
