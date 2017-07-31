@@ -104,6 +104,20 @@ class GapiManager {
     return GapiManager._loadBigQuery().then(() => gapi.client.bigquery.tables.list(request));
   }
 
+  /**
+   * Fetches table details from BigQuery
+   */
+  // TODO: fix return type
+  public static getTableDetails(projectId: string, datasetId: string, tableId: string):
+      gapi.client.HttpRequest<gapi.client.bigquery.BigqueryTable> {
+    const request = {
+      datasetId,
+      projectId,
+      tableId,
+    };
+    return GapiManager._loadBigQuery().then(() => gapi.client.bigquery.tables.get(request));
+  }
+
   private static _initClient(signInChangedCallback: (signedIn: boolean) => void) {
     // Initialize the client with API key and People API, and initialize OAuth with an
     // OAuth 2.0 client ID and scopes (space delimited string) to request access.

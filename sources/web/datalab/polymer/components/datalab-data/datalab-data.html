@@ -14,6 +14,7 @@ the License.
 
 <link rel="import" href="../../components/item-list/item-list.html">
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
+<link rel="import" href="../../components/table-details/table-details.html">
 
 <link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../../bower_components/iron-a11y-keys/iron-a11y-keys.html">
@@ -109,7 +110,7 @@ the License.
 
       <!-- Details pane -->
       <div id="detailsPane" class$="details-pane-enabled--{{_isDetailsPaneToggledOn}}">
-        <div id="detailsContents"></div>
+        <table-details id="details"></table-details>
       </div>
 
     </div>

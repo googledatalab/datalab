@@ -1,0 +1,61 @@
+<!--
+Copyright 2017 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License
+is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+or implied. See the License for the specific language governing permissions and limitations under
+the License.
+-->
+
+<link rel="import" href="../../components/shared-styles/shared-styles.html">
+
+<dom-module id="table-details">
+  <template>
+    <style include="datalab-shared-styles">
+      #container {
+        padding: 0px 20px;
+        height: 100%;
+        overflow-y: auto;
+      }
+      .strong {
+        font-weight: bold;
+      }
+    </style>
+    <div id="container" hidden$="{{!table}}">
+      <h3>Table Details: {{table.tableReference.tableId}}</h3>
+      <span class="strong">Project: </span><span>{{table.tableReference.projectId}}</span>
+      <br>
+      <span class="strong">Dataset: </span><span>{{table.tableReference.datasetId}}</span>
+      <br>
+      <table>
+        <tr>
+          <td>Table Size</td>
+          <td>{{table.numBytes}}</td>
+        </tr>
+        <tr>
+          <td>Long Term Storage Size</td>
+          <td>{{table.numLongTermBytes}}</td>
+        </tr>
+        <tr>
+          <td>Number of Rows</td>
+          <td>{{table.numRows}}</td>
+        </tr>
+        <tr>
+          <td>Creation Time</td>
+          <td>{{table.creationTime}}</td>
+        </tr>
+        <tr>
+          <td>Last Modified</td>
+          <td>{{table.lastModifiedTime}}</td>
+        </tr>
+      </table>
+    </div>
+  </template>
+</dom-module>
+
+<script src="table-details.js"></script>
