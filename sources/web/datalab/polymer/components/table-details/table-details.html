@@ -39,7 +39,6 @@ the License.
       }
       table {
         border-spacing: 1px;
-        border-left: 0px solid transparent;
         padding: 0 0 4px 0;
         width: 100%;
       }
@@ -100,6 +99,7 @@ the License.
       <br>
 
       <table>
+        <!--TODO: Flatten out the fields list-->
         <template is="dom-repeat" items={{_table.schema.fields}} as="column">
           <tr>
             <td class="field">{{column.name}}</td>
