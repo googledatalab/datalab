@@ -33,6 +33,7 @@ class TableDetailsElement extends Polymer.Element {
   static get properties() {
     return {
       _table: {
+        notify: true, // For unit tests
         type: Object,
         value: null,
       },
