@@ -26,14 +26,28 @@ class SettingsElement extends Polymer.Element {
    */
   public theme: string;
 
-  static get is() { return "datalab-settings"; }
+  /**
+   * Idle timeout interval.
+   */
+  public idleTimeoutInterval: string;
+
+  private _busy: boolean;
+
+  static get is() { return 'datalab-settings'; }
 
   static get properties() {
     return {
+      _busy: {
+        type: Boolean,
+        value: false,
+      },
+      idleTimeoutInterval: {
+        type: String,
+      },
       theme: {
         type: String,
-      }
-    }
+      },
+    };
   }
 
   /**
@@ -42,20 +56,44 @@ class SettingsElement extends Polymer.Element {
    */
   ready() {
     super.ready();
+    this.loadSettings();
+  }
 
-    // TODO: add a cache for user/app settings and call it here instead.
-    SettingsManager.getUserSettingsAsync(true /*forceRefresh*/)
+  /**
+   * Fetches the settings from the backend and populates the UI.
+   */
+  loadSettings() {
+    this._busy = true;
+    return SettingsManager.getUserSettingsAsync(true /*forceRefresh*/)
       .then((settings: common.UserSettings) => {
         this.theme = settings.theme;
+        this.idleTimeoutInterval = settings.idleTimeoutInterval;
+      })
+      .catch(() => {
+        console.log('Could not get user settings from server.');
+      })
+      .then(() => this._busy = false);
+  }
+
+  /**
+   * On changing the theme, an event is fired to allow the host to reload the theme CSS.
+   */
+  _themeChanged() {
+    return SettingsManager.setUserSettingAsync('theme', this.theme)
+      .then(() => {
+        const e = new CustomEvent('ThemeChanged', {detail: this.theme});
+        document.dispatchEvent(e);
       });
   }
 
-  _themeChanged() {
-    return SettingsManager.setUserSettingAsync('theme', this.theme)
-      .then(() => document.dispatchEvent(new Event('ThemeChanged')));
+  _idleTimoutIntervalChanged() {
+    // TODO: Show success/error status to user
+    this._busy = true;
+    return SettingsManager.setUserSettingAsync('idleTimeoutInterval', this.idleTimeoutInterval)
+      .catch((e: Error) => console.log('Error updating idle timeout interval: ', e))
+      .then(() => this._busy = false);
   }
 
 }
 
 customElements.define(SettingsElement.is, SettingsElement);
-

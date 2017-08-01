@@ -24,12 +24,16 @@ the License.
         flex-direction: column;
       }
       .dialog-big--true {
-        width: 40%;
-        height: 40%;
+        width: 60%;
+        height: 60%;
       }
       .dialog-big--false {
         min-width: 300px;
         min-height: 200px;
+      }
+      .error-title--true {
+        color: #fff;
+        background-color: #ff7777;
       }
       #body {
         margin: 0px;
@@ -59,7 +63,7 @@ the License.
     </style>
     <paper-dialog id="theDialog" class$="dialog-big--{{big}}" with-backdrop
                   on-keydown="_checkEnter">
-      <div class="dialog-title">{{title}}</div>
+      <div class$="dialog-title error-title--{{isError}}">{{title}}</div>
       <!--message value is bound in javascript because it needs to bind to innerHTML-->
       <div id="message" hidden$="{{!messageHtml}}">{{messageHtml}}</div>
       <!--body acts as a place holder for extending elements, their custom
@@ -70,7 +74,9 @@ the License.
         <paper-button id="okButton" on-click="_confirmClose" class="confirm" >
           {{okLabel}}
         </paper-button>
-        <paper-button on-click="_cancelClose">{{cancelLabel}}</paper-button>
+        <paper-button hidden$={{isError}} on-click="_cancelClose">
+          {{cancelLabel}}
+        </paper-button>
       </div>
     </paper-dialog>
   </template>

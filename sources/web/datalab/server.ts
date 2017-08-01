@@ -109,10 +109,6 @@ function handleRequest(request: http.ServerRequest,
     loadedSettings = settings_.loadUserSettings(userId);
   }
 
-  // All requests below are logged, while the ones above aren't, to avoid generating noise
-  // into the log.
-  logging.logRequest(request, response);
-
   // If Jupyter is not initialized, do it as early as possible after authentication.
   startInitializationForUser(request);
 
@@ -142,12 +138,6 @@ function handleRequest(request: http.ServerRequest,
     }
     response.setHeader('Location', redirectUrl);
     response.end();
-    return;
-  }
-
-  var targetPort: string = reverseProxy.getRequestPort(request, requestPath);
-  if (targetPort) {
-    reverseProxy.handleRequest(request, response, targetPort);
     return;
   }
 
@@ -189,7 +179,7 @@ function handleRequest(request: http.ServerRequest,
       try {
         if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
           loadedSettings.startuppath = subPath;
-          settings_.updateUserSetting(userId, 'startuppath', subPath, true);
+          settings_.updateUserSettingAsync(userId, 'startuppath', subPath);
         } else {
         }
       } catch (err) {
@@ -271,10 +261,17 @@ function isStaticResource(urlpath: string) {
 function uncheckedRequestHandler(request: http.ServerRequest, response: http.ServerResponse) {
   var parsed_url = url.parse(request.url, true);
   var urlpath = parsed_url.pathname;
+
+  logging.logRequest(request, response);
+
+  var reverseProxyPort: string = reverseProxy.getRequestPort(request, urlpath);
+
   if (urlpath.indexOf('/signin') == 0 || urlpath.indexOf('/signout') == 0 ||
       urlpath.indexOf('/oauthcallback') == 0) {
     // Start or return from auth flow.
     auth.handleAuthFlow(request, response, parsed_url, appSettings);
+  } else if (reverseProxyPort) {
+    reverseProxy.handleRequest(request, response, reverseProxyPort);
   } else if (isStaticResource(urlpath)) {
     staticHandler(request, response);
   } else {

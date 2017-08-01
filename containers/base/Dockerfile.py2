@@ -43,7 +43,9 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir numpy==1.11.2 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir pandas==0.19.1 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir scipy==0.18.0 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir scikit-learn==0.17.1 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir scikit-learn==0.18.2 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir scikit-image==0.13.0 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir lime==0.1.1.23 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir sympy==0.7.6.1 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir statsmodels==0.6.1 && \
 
@@ -132,9 +134,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     cd /
 
 # Install TensorFlow
-# Setting protobuf to 3.1.0 to workaround a tensorflow 1.0 issue in tcmalloc
-RUN pip install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow==1.0 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir protobuf==3.1.0
+RUN pip install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow==1.2.0 &&
 
 ADD config/ipython.py /etc/ipython/ipython_config.py
 ADD config/nbconvert.py /etc/jupyter/jupyter_notebook_config.py

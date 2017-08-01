@@ -12,7 +12,8 @@ or implied. See the License for the specific language governing permissions and 
 the License.
 -->
 
-<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-icons/editor-icons.html">
+<link rel="import" href="../../bower_components/iron-icons/hardware-icons.html">
 <link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
 <link rel="import" href="../../bower_components/paper-item/paper-item.html">
 
@@ -32,13 +33,13 @@ the License.
         line-height: calc(var(--toolbar-height) - 1px);
         border-bottom: 1px solid var(--border-color);
       }
-      #list-container {
+      #listContainer {
         overflow: auto;
       }
-      .list-container-hide-header--false {
+      .listContainer-hide-header--false {
         height: calc(100% - var(--toolbar-height));
       }
-      .list-container-hide-header--true {
+      .listContainer-hide-header--true {
         height: 100%;
       }
       .row {
@@ -87,20 +88,23 @@ the License.
     <!--Need this extra div because #header has a display modifier, cannot set hidden-->
     <div hidden$="{{hideHeader}}">
       <div id="header">
-        <div class="checkbox-col"></div>
+        <div class="checkbox-col">
+          <paper-checkbox id="selectAllCheckbox" on-checked-changed="_selectAllChanged"
+                          checked={{_isAllSelected}}>
+          </paper-checkbox>
+        </div>
         <div class="first-col"><strong>{{columns.0}}</strong></div>
         <div class="second-col"><strong>{{columns.1}}</strong></div>
       </div>
     </div>
 
     <!--Item list-->
-    <div id="list-container" class$="list-container-hide-header--{{hideHeader}}">
+    <div id="listContainer" class$="listContainer-hide-header--{{hideHeader}}">
       <template is="dom-repeat" id="list" items="{{rows}}" as="row">
         <paper-item class="row" selected$={{row.selected}} on-click="_rowClicked"
                     on-dblclick="_rowDoubleClicked">
           <div class="checkbox-col">
-            <paper-checkbox checked={{row.selected}} checkedChanged="_rowClicked"
-                            hidden$="{{disableSelection}}">
+            <paper-checkbox checked={{row.selected}} hidden$="{{disableSelection}}">
             </paper-checkbox>
           </div>
           <div class="first-col">

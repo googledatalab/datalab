@@ -174,9 +174,13 @@ export function isExperimentalResource(pathname: string) {
   }
   const experimentalUiEnabled = process.env.DATALAB_EXPERIMENTAL_UI;
   return experimentalUiEnabled === 'true' && (
-      pathname.indexOf('/files') === 0 ||
+      pathname.indexOf('/data') === 0 ||
+      pathname === '/files' ||
+      // /files/path?download=true is used to download files from Jupyter
+      // TODO: use a different API to download files when we have a content service.
       pathname.indexOf('/sessions') === 0 ||
       pathname.indexOf('/terminal') === 0 ||
+      pathname.indexOf('/editor') === 0 ||
       pathname.indexOf('/bower_components') === 0 ||
       pathname.indexOf('/components') === 0 ||
       pathname.indexOf('/images') === 0 ||
@@ -207,11 +211,14 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       response.setHeader('Location', path.join(appSettings.datalabBasePath, rootRedirect));
       response.end();
       return;
-    }
-    if (pathname === '/files' || pathname === '/sessions' || pathname === '/terminal') {
+    } else if (pathname === '/data' ||
+        pathname === '/files' ||
+        pathname === '/sessions' ||
+        pathname === '/terminal') {
       pathname = '/index.html';
-    }
-    if (pathname === '/index.css') {
+    } else if (pathname === '/editor') {
+      pathname = '/editor.html';
+    } else if (pathname === '/index.css') {
       var userSettings: common.UserSettings = settings.loadUserSettings(userId);
       pathname = '/index.' + (userSettings.theme || 'light') + '.css';
     }

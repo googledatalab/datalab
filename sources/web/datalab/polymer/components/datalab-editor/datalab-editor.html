@@ -1,0 +1,125 @@
+<!--
+Copyright 2017 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License
+is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+or implied. See the License for the specific language governing permissions and limitations under
+the License.
+-->
+
+<link rel="import" href="../../bower_components/iron-icons/editor-icons.html">
+<link rel="import" href="../../bower_components/paper-progress/paper-progress.html">
+
+<link rel="import" href="../../components/datalab-notification/datalab-notification.html">
+<link rel="import" href="../../components/datalab-toolbar/datalab-toolbar.html">
+<link rel="import" href="../../components/directory-picker-dialog/directory-picker-dialog.html">
+<link rel="import" href="../../components/shared-styles/shared-styles.html">
+
+<dom-module id="datalab-editor">
+  <link rel="import" type="css" href="../../bower_components/codemirror/lib/codemirror.css">
+  <!--Light theme-->
+  <link rel="import" type="css" href="../../bower_components/codemirror/theme/eclipse.css">
+  <!--Dark theme-->
+  <link rel="import" type="css" href="../../bower_components/codemirror/theme/icecoder.css">
+  <template>
+    <style include="datalab-shared-styles">
+      :host {
+        background-color: var(--primary-bg-color);
+        height: 100%;
+      }
+      #editorContainer {
+        height: calc(100% - 2 * var(--toolbar-height) - var(--progressbar-height));
+      }
+      div.CodeMirror {
+        height: 100%;
+        font-size: 14px;
+        line-height: 18px;
+      }
+      #editorToolbar {
+        display: flex;
+        height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
+        width: 100%;
+        background-color: var(--secondary-bg-color);
+        font-family: var(--app-content-font-family);
+        font-size: var(--app-content-font-size);
+        color: var(--primary-fg-color);
+        border-bottom: 1px solid var(--border-color);
+      }
+      .file-name {
+        padding: 7px 0px 0px 15px;
+        font-family: var(--app-content-font-family);
+        font-size: 16px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      .toolbar-button {
+        color: var(--primary-fg-color);
+        margin: 0px 4px;
+        font-weight: normal;
+        min-width: 35px;
+        border-radius: 0px;
+      }
+      .toolbar-button[disabled] {
+        color: var(--disabled-fg-color);
+        background-color: var(--secondary-bg-color);
+      }
+      .toolbar-button > iron-icon {
+        width: 20px;
+        padding-right: 5px;
+      }
+      #filePathTooltip {
+        --paper-tooltip: {
+          font-size: 13px;
+        }
+      }
+    </style>
+
+    <datalab-toolbar>
+      <span slot="content" id="file-name" class="file-name">
+        {{_file.name}}
+      </span>
+    </datalab-toolbar>
+
+    <paper-tooltip id="filePathTooltip" for="file-name">
+      {{_file.path}}
+    </paper-tooltip>
+
+    <!--Thin progress bar that shows until the file is loaded-->
+    <paper-progress id="progressBar" class="progressbar" indeterminate disabled={{!_busy}}>
+    </paper-progress>
+
+    <!--Toolbar to contain buttons for interacting with the file-->
+    <div id="editorToolbar">
+      <!--TODO: Make these buttons do stuff.-->
+      <paper-button class="toolbar-button" on-click="_saveAsync">
+        <iron-icon icon="save"></iron-icon>
+        <span>Save</span>
+      </paper-button>
+      <paper-button class="toolbar-button" on-click="">
+        <iron-icon icon="editor:border-color"></iron-icon>
+        <span>Rename</span>
+      </paper-button>
+      <paper-button class="toolbar-button" on-click="">
+        <iron-icon icon="file-download"></iron-icon>
+        <span>Download</span>
+      </paper-button>
+    </div>
+    <div id="editorContainer"></div>
+
+    <datalab-notification></datalab-notification>
+
+  </template>
+</dom-module>
+
+<script src="../../bower_components/codemirror/lib/codemirror.js"></script>
+<script src="../../bower_components/codemirror/mode/python/python.js"></script>
+<script src="../../modules/ApiManager.js"></script>
+<script src="../../modules/SettingsManager.js"></script>
+<script src="../../modules/Utils.js"></script>
+<script src="datalab-editor.js"></script>

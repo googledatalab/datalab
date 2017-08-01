@@ -22,7 +22,7 @@ declare class Terminal {
   clear(): void;
   reset(): void;
   resize(cols: number, rows: number): void;
-  on(event: string, handler: Function): void;
+  on(event: string, handler: (args: any) => void): void;
 }
 
 /**
@@ -38,35 +38,27 @@ class TerminalElement extends Polymer.Element {
 
   private _xterm: Terminal;
   private _wsConnection: WebSocket;
-  private _boundResizeHandler: EventListenerObject;
   private _charHeight: number;
   private _charWidth: number;
 
-  static get is() { return "datalab-terminal"; }
+  static get is() { return 'datalab-terminal'; }
 
   ready() {
     super.ready();
+    // Use the size helper element to get the height and width of a character. This
+    // makes changing the style simpler, instead of hard-coding these values.
+    this._charHeight = this.$.sizeHelper.clientHeight;
+    this._charWidth = this.$.sizeHelper.clientWidth / 10; // The element has 10 characters.
 
-    // Will be called after the custom element is done rendering.
-    window.addEventListener('WebComponentsReady', () => {
-      // Use the size helper element to get the height and width of a character. This
-      // makes changing the style simpler, instead of hard-coding these values.
-      this._charHeight = this.$.sizeHelper.clientHeight;
-      this._charWidth = this.$.sizeHelper.clientWidth / 10; // The element has 10 characters.
-
-      this._boundResizeHandler = this._resizeHandler.bind(this);
-      window.addEventListener('resize', this._boundResizeHandler, true);
-
-      // Get the first terminal instance by calling the Jupyter API. If none are returned,
-      // start a new one.
-      ApiManager.listTerminalsAsync()
-        .then((terminals: [JupyterTerminal]) => {
-          return terminals.length === 0 ? ApiManager.startTerminalAsync() : terminals[0];
-        })
-        .then((terminal: JupyterTerminal) => {
-          this._initTerminal(terminal.name);
-        });
-    });
+    // Get the first terminal instance by calling the Jupyter API. If none are returned,
+    // start a new one.
+    ApiManager.listTerminalsAsync()
+      .then((terminals: [JupyterTerminal]) => {
+        return terminals.length === 0 ? ApiManager.startTerminalAsync() : terminals[0];
+      })
+      .then((terminal: JupyterTerminal) => {
+        this._initTerminal(terminal.name);
+      });
   }
 
   /**
@@ -110,15 +102,6 @@ class TerminalElement extends Polymer.Element {
   }
 
   /**
-   * Called when the element is detached from the DOM. Cleans up event listeners.
-   */
-  disconnectedCallback() {
-    if (this._boundResizeHandler) {
-      window.removeEventListener('resize', this._boundResizeHandler);
-    }
-  }
-
-  /**
    * On window resize, both front-end and Jupyter terminal instances need to be resized and
    * kept in sync, otherwise line wrapping issues will happen.
    */
@@ -128,7 +111,7 @@ class TerminalElement extends Polymer.Element {
       const cols = this.$.theTerminal.clientWidth / this._charWidth;
 
       this._xterm.resize(Math.floor(cols), Math.floor(rows));
-      this._wsConnection.send(JSON.stringify(["set_size", rows, cols]));
+      this._wsConnection.send(JSON.stringify(['set_size', rows, cols]));
     }
   }
 }
