@@ -90,6 +90,7 @@ declare namespace gapi.client {
       numRows: string;
       schema: {
         fields: [{
+          mode?: string;
           name: string;
           type: string;
         }]

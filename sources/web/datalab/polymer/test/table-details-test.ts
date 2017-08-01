@@ -29,7 +29,7 @@ declare function fixture(element: string): any;
 describe('<table-details>', () => {
   let testFixture: TableDetailsElement;
 
-  const mockTable: gapi.client.bigquery.BigqueryTable = {
+  const mockTable: gapi.client.bigquery.Table = {
     creationTime: '1501541271001',
     etag: 'testEtag',
     id: 'pid:did.tid',
@@ -45,8 +45,12 @@ describe('<table-details>', () => {
     numRows: '1234567890',
     schema: {
       fields: [{
+        mode: 'mode1',
         name: 'field1',
         type: 'value1',
+      }, {
+        name: 'field2',
+        type: 'value2',
       }],
     },
     selfLink: 'testLink',
@@ -62,12 +66,12 @@ describe('<table-details>', () => {
    * Rows must be recreated on each test with the fixture, to avoid state leakage.
    */
   beforeEach(() => {
-    GapiManager.getTableDetails = (pid, did, tid) => {
+    GapiManager.getBigqueryTableDetails = (pid, did, tid) => {
       assert(!!pid && !!did && !!tid,
           'getTableDetails should be called with project, dataset, and table');
 
       const request = {
-        body: mockTable,
+        result: mockTable,
       };
       return Promise.resolve(request) as any;
     };
@@ -84,12 +88,45 @@ describe('<table-details>', () => {
         'spinner should be hidden if no table is loading');
   });
 
-  it('loads the table given its id and gets its details', () => {
-    testFixture.tableId = 'pid:did.tid';
-    Polymer.dom.flush();
+  it('loads the table given its id and gets its details', (done: () => null) => {
+    testFixture.addEventListener('_table-changed', () => {
+      Polymer.dom.flush();
 
-    debugger;
-    assert((testFixture as any)._table === mockTable, 'element should have fetched table info');
+      assert(JSON.stringify((testFixture as any)._table) === JSON.stringify(mockTable),
+          'element should have fetched table info');
+
+      assert(testFixture.$.tableId.innerText === mockTable.tableReference.tableId,
+            'table id should be parsed');
+      assert(testFixture.$.projectId.innerText === mockTable.tableReference.projectId,
+            'project id should be parsed');
+      assert(testFixture.$.datasetId.innerText === mockTable.tableReference.datasetId,
+            'dataset id should be parsed');
+      assert(testFixture.$.tableSize.innerText === '1023.00 KB', 'should see readable table size');
+      assert(testFixture.$.longTermTableSize.innerText === '50.00 MB',
+          'should see readable long term table size');
+      assert(testFixture.$.numRows.innerText === '1,234,567,890',
+          'should see comma-separated number of rows');
+      assert(testFixture.$.creationTime.innerText === '7/31/2017, 3:47:51 PM',
+          'should parse timestamp into readable text');
+      assert(testFixture.$.lastModifiedTime.innerText === '7/31/2017, 3:47:51 PM',
+          'should parse timestamp into readable text');
+      assert(testFixture.$.location.innerText === mockTable.location, 'should see location');
+
+      assert(testFixture.$.schema.rows.length === mockTable.schema.fields.length,
+          'unexpected number of schema rows');
+
+      const rows = testFixture.$.schema.rows;
+      mockTable.schema.fields.forEach((field, i) => {
+        assert(rows[i].children[0].innerText === field.name, 'field name not matching');
+        assert(rows[i].children[1].innerText === field.type, 'field type not matching');
+        assert(rows[i].children[2].innerText === (field.mode || 'NULLABLE'),
+            'field mode not matching');
+      });
+
+      done();
+    });
+
+    testFixture.tableId = 'pid:did.tid';
   });
 
 });

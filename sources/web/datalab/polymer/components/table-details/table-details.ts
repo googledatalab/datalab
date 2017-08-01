@@ -17,7 +17,7 @@
  * This element is designed to be displayed in a side bar that displays more
  * information about a selected BigQuery table.
  */
-class TableDetailsElement extends BaseElement {
+class TableDetailsElement extends Polymer.Element {
 
   /**
    * Id for table whose details to show.
@@ -33,6 +33,7 @@ class TableDetailsElement extends BaseElement {
   static get properties() {
     return {
       _table: {
+        notify: true, // For unit tests
         type: Object,
         value: null,
       },
