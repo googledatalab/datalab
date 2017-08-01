@@ -74,7 +74,7 @@ class TableDetailsElement extends Polymer.Element {
 
       GapiManager.getBigqueryTableDetails(projectId, datasetId, tableId)
         .then((response: HttpResponse<gapi.client.bigquery.Table>) => {
-          this._table = JSON.parse(response.body);
+          this._table = response.result;
         }, (errorResponse) =>
             console.error('Failed to get table details: ' + errorResponse.body))
         .then(() => this._busy = false);
