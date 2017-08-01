@@ -71,10 +71,11 @@ class AuthPanel extends Polymer.Element {
         .then((email: string) => {
           this._userInfo = 'Signed in as ' + email;
           this._projectInfo = 'No project is set';  // TODO
+
+          const ev = new Event('signInOutDone');
+          this.dispatchEvent(ev);
         });
     }
-    const ev = new Event('signInOutDone');
-    this.dispatchEvent(ev);
   }
 }
 

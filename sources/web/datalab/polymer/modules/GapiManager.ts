@@ -54,7 +54,7 @@ class GapiManager {
           .then(() => gapi.load('client:auth2', resolve))
           .catch((e: Error) => {
             if (e instanceof MissingClientIdError) {
-              console.log(e.message);
+              console.error(e.message);
             }
             reject(e);
           });
@@ -91,20 +91,25 @@ class GapiManager {
       .then(() => gapi.auth2.getAuthInstance().signOut());
   }
 
-  /** Returns the signed-in user's email address. */
+  /**
+   * Returns a promise that resolves to the signed-in user's email address.
+   */
   public static getSignedInEmail(): Promise<string> {
     return this.loadGapi()
       .then(() => gapi.auth2.getAuthInstance().currentUser.get().getBasicProfile().getEmail());
   }
 
-  /** Gets the list of BigQuery projects, returns a Promise. */
+  /**
+   * Gets the list of BigQuery projects, returns a Promise.
+   */
   public static listBigQueryProjects():
       gapi.client.HttpRequest<gapi.client.bigquery.ListProjectsResponse> {
     return this._loadBigQuery()
       .then(() => gapi.client.bigquery.projects.list());
   }
 
-  /** Gets the list of BigQuery datasets in the specified project, returns a Promise.
+  /**
+   * Gets the list of BigQuery datasets in the specified project, returns a Promise.
    * @param projectId
    * @param filter A label filter of the form label.<name>[:<value>], as described in
    *     https://cloud.google.com/bigquery/docs/reference/rest/v2/datasets/list
@@ -147,20 +152,20 @@ class GapiManager {
       .then(() => gapi.client.bigquery.tables.get(request));
   }
 
+  /**
+   * Observes changes to the sign in status, and calls the provided callback
+   * with the changes.
+   */
   public static listenForSignInChanges(signInChangedCallback: (signedIn: boolean) => void):
       Promise<void> {
     return this.loadGapi()
       .then(() => {
-        // If auth status is already know, initialize the callback now
-        if (gapi && gapi.auth2) {
-          const signedIn = gapi.auth2.getAuthInstance().isSignedIn.get();
-          signInChangedCallback(signedIn);
-        }
+        // Initialize the callback now
+        signInChangedCallback(gapi.auth2.getAuthInstance().isSignedIn.get());
 
         // Listen for auth changes
         gapi.auth2.getAuthInstance().isSignedIn.listen(() => {
-          const signedIn = gapi.auth2.getAuthInstance().isSignedIn.get();
-          signInChangedCallback(signedIn);
+          signInChangedCallback(gapi.auth2.getAuthInstance().isSignedIn.get());
         });
       });
   }
