@@ -16,6 +16,9 @@
  * Table details pane element for Datalab.
  * This element is designed to be displayed in a side bar that displays more
  * information about a selected BigQuery table.
+ * The element flattens out the given table's schema in order to simplify the
+ * way they are presented. This is not necessarily the best experience, and we
+ * might want to revisit this.
  */
 class TableDetailsElement extends Polymer.Element {
 
@@ -52,6 +55,10 @@ class TableDetailsElement extends Polymer.Element {
       numRows: {
         computed: '_computeNumRows(_table)',
         type: String,
+      },
+      schemaFields: {
+        computed: '_computeSchemaFields(_table)',
+        type: Array,
       },
       tableId: {
         observer: '_tableIdChanged',
@@ -106,6 +113,31 @@ class TableDetailsElement extends Polymer.Element {
 
   _computeLongTermTableSize(table: gapi.client.bigquery.Table | null) {
     return table ? this._bytesToReadableSize(table.numLongTermBytes) : '';
+  }
+
+  _flattenFields(fields: gapi.client.bigquery.Field[]) {
+    const flatFields: gapi.client.bigquery.Field[] = [];
+    fields.forEach((field) => {
+
+      // First push the record field itself
+      flatFields.push(field);
+
+      // Then flatten it and push its children
+      if (field.type === 'RECORD' && field.fields) {
+        // Make sure we copy the flattened nested fields before modifying their
+        // name to prepend the parent field name
+        const nestedFields = [...this._flattenFields(field.fields)];
+        nestedFields.forEach((f) => {
+          f.name = field.name + '.' + f.name;
+          flatFields.push(f);
+        });
+      }
+    });
+    return flatFields;
+  }
+
+  _computeSchemaFields(table: gapi.client.bigquery.Table | null) {
+    return table ? this._flattenFields(table.schema.fields) : [];
   }
 
   _computeTableSize(table: gapi.client.bigquery.Table | null) {

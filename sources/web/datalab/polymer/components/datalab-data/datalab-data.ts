@@ -104,7 +104,7 @@ class DataElement extends Polymer.Element {
           resultHandler(datasetResults);
         })
         .catch(() => {
-          // TODO: handle errors getting projects
+          // TODO: handle errors getting datasets
         });
     GapiManager.listBigQueryTables(sampleProject, searchValue /* datasetId */)
         .then((response: HttpResponse<gapi.client.bigquery.ListTablesResponse>) => {
@@ -113,7 +113,7 @@ class DataElement extends Polymer.Element {
           resultHandler(tableResults);
         })
         .catch(() => {
-          // TODO: handle errors getting projects
+          // TODO: handle errors getting tables
         });
   }
 
