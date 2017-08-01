@@ -17,7 +17,7 @@
  * This element is designed to be displayed in a side bar that displays more
  * information about a selected BigQuery table.
  */
-class TableDetailsElement extends Polymer.Element {
+class TableDetailsElement extends BaseElement {
 
   /**
    * Id for table whose details to show.
