@@ -17,6 +17,10 @@
 /// <reference path="../../../../../third_party/externs/ts/gapi/gapi.d.ts" />
 /// <reference path="../../common.d.ts" />
 
+class MissingClientIdError extends Error {
+  message = 'No oauth2ClientId found in user settings';
+}
+
 /**
  * This file contains a collection of functions that interact with gapi.
  */
@@ -32,20 +36,33 @@ class GapiManager {
       'https://www.googleapis.com/auth/bigquery';
 
   private static _clientId = '';   // Gets set by _loadClientId()
+  private static _loadPromise: Promise<void>;
 
   /**
-   * Loads the gapi module and the auth2 modules.
+   * Loads the gapi module and the auth2 modules. This can be called multiple
+   * times, and it will only load the gapi module once.
    * @param signInChangedCallback callback to be called when the signed-in state changes
    * @returns a promise that completes when the load is done or has failed
    */
-   public static loadGapi(signInChangedCallback: (signedIn: boolean) => void): Promise<void> {
+   public static loadGapi(): Promise<void> {
     // Loads the gapi client library and the auth2 library together for efficiency.
     // Loading the auth2 library is optional here since `gapi.client.init` function will load
     // it if not already loaded. Loading it upfront can save one network request.
-    console.log('== loading gapi');
-    return GapiManager._loadClientId()
-      .then(() => gapi.load('client:auth2', this._initClient.bind(this, signInChangedCallback)))
-      .catch((e: Error) => console.log('Failed to get client ID: ', e));
+    if (!this._loadPromise) {
+      this._loadPromise = new Promise((resolve, reject) => {
+        return this._loadClientId()
+          .then(() => gapi.load('client:auth2', resolve))
+          .catch((e: Error) => {
+            if (e instanceof MissingClientIdError) {
+              console.log(e.message);
+            }
+            reject(e);
+          });
+      })
+      .then(() => this._initClient());
+    }
+
+    return this._loadPromise;
   }
 
   /**
@@ -62,24 +79,29 @@ class GapiManager {
     const options = {
       prompt: promptFlags,
     };
-    return gapi.auth2.getAuthInstance().signIn(options);
+    return this.loadGapi()
+      .then(() => gapi.auth2.getAuthInstance().signIn(options));
   }
 
   /**
    * Signs the user out using gapi.
    */
    public static signOut(): Promise<void> {
-    return gapi.auth2.getAuthInstance().signOut();
+    return this.loadGapi()
+      .then(() => gapi.auth2.getAuthInstance().signOut());
   }
 
   /** Returns the signed-in user's email address. */
-  public static getSignedInEmail() {
-    return gapi.auth2.getAuthInstance().currentUser.get().getBasicProfile().getEmail();
+  public static getSignedInEmail(): Promise<string> {
+    return this.loadGapi()
+      .then(() => gapi.auth2.getAuthInstance().currentUser.get().getBasicProfile().getEmail());
   }
 
   /** Gets the list of BigQuery projects, returns a Promise. */
-  public static listBigQueryProjects(): gapi.client.HttpRequest<gapi.client.bigquery.ListProjectsResponse> {
-    return GapiManager._loadBigQuery().then(() => gapi.client.bigquery.projects.list());
+  public static listBigQueryProjects():
+      gapi.client.HttpRequest<gapi.client.bigquery.ListProjectsResponse> {
+    return this._loadBigQuery()
+      .then(() => gapi.client.bigquery.projects.list());
   }
 
   /** Gets the list of BigQuery datasets in the specified project, returns a Promise.
@@ -87,21 +109,28 @@ class GapiManager {
    * @param filter A label filter of the form label.<name>[:<value>], as described in
    *     https://cloud.google.com/bigquery/docs/reference/rest/v2/datasets/list
    */
-  public static listBigQueryDatasets(projectId: string, filter: string): gapi.client.HttpRequest<gapi.client.bigquery.ListDatasetsResponse> {
+  public static listBigQueryDatasets(projectId: string, filter: string):
+      gapi.client.HttpRequest<gapi.client.bigquery.ListDatasetsResponse> {
     const request = {
       filter,
       projectId,
     };
-    return GapiManager._loadBigQuery().then(() => gapi.client.bigquery.datasets.list(request));
+    return GapiManager._loadBigQuery()
+      .then(() => gapi.client.bigquery.datasets.list(request));
   }
 
-  /** Gets the list of BigQuery tables in the specified project and dataset, returns a Promise. */
-  public static listBigQueryTables(projectId: string, datasetId: string): gapi.client.HttpRequest<gapi.client.bigquery.ListTablesResponse> {
+  /**
+   * Gets the list of BigQuery tables in the specified project and dataset,
+   * returns a Promise.
+   */
+  public static listBigQueryTables(projectId: string, datasetId: string):
+      gapi.client.HttpRequest<gapi.client.bigquery.ListTablesResponse> {
     const request = {
       datasetId,
       projectId,
     };
-    return GapiManager._loadBigQuery().then(() => gapi.client.bigquery.tables.list(request));
+    return GapiManager._loadBigQuery()
+      .then(() => gapi.client.bigquery.tables.list(request));
   }
 
   /**
@@ -114,50 +143,61 @@ class GapiManager {
       projectId,
       tableId,
     };
-    return GapiManager._loadBigQuery().then(() => gapi.client.bigquery.tables.get(request));
+    return GapiManager._loadBigQuery()
+      .then(() => gapi.client.bigquery.tables.get(request));
   }
 
-  private static _initClient(signInChangedCallback: (signedIn: boolean) => void) {
-    // Initialize the client with API key and People API, and initialize OAuth with an
-    // OAuth 2.0 client ID and scopes (space delimited string) to request access.
-    gapi.client.init({
+  public static listenForSignInChanges(signInChangedCallback: (signedIn: boolean) => void):
+      Promise<void> {
+    return this.loadGapi()
+      .then(() => {
+        // If auth status is already know, initialize the callback now
+        if (gapi && gapi.auth2) {
+          const signedIn = gapi.auth2.getAuthInstance().isSignedIn.get();
+          signInChangedCallback(signedIn);
+        }
+
+        // Listen for auth changes
+        gapi.auth2.getAuthInstance().isSignedIn.listen(() => {
+          const signedIn = gapi.auth2.getAuthInstance().isSignedIn.get();
+          signInChangedCallback(signedIn);
+        });
+      });
+  }
+
+  /*
+  * Initialize the client with API key and People API, and initialize OAuth with an
+  * OAuth 2.0 client ID and scopes (space delimited string) to request access.
+  */
+  private static _initClient(): Promise<void> {
+    return gapi.client.init({
       clientId: GapiManager._clientId,
       discoveryDocs: GapiManager.DISCOVERYDOCS,
       scope: GapiManager.SCOPES,
     })
-    .then(() => {
-      // Listen for auth changes
-      gapi.auth2.getAuthInstance().isSignedIn.listen(() =>
-          this._signInChanged(signInChangedCallback));
-      // Initialize with current signed-in state
-      this._signInChanged(signInChangedCallback);
-      console.log('== gapi loaded and listening for auth');
-    }, (errorReason) => {
-      console.log('Error in gapi auth: ' + errorReason.result.error.message);
+    // .init does not return a catch-able promise
+    .then(null, (errorReason: any) => {
+      throw new Error('Error in gapi auth: ' + errorReason.result.error.message);
     });
-  }
-
-  private static _signInChanged(signInChangedCallback: (signedIn: boolean) => void) {
-    const signedIn = gapi.auth2.getAuthInstance().isSignedIn.get();
-    signInChangedCallback(signedIn);
   }
 
   /**
    * Loads the oauth2 client id from the user settings.
    * This will change once we figure out how we want to do it.
    */
-  private static _loadClientId() {
+  private static _loadClientId(): Promise<void> {
     return SettingsManager.getUserSettingsAsync()
       .then((settings: common.UserSettings) => {
         if (settings.oauth2ClientId) {
           GapiManager._clientId = settings.oauth2ClientId;
         } else {
-          throw new Error('No oauth2ClientId found in user settings');
+          throw new MissingClientIdError();
         }
       });
   }
 
   private static _loadBigQuery(): Promise<void> {
-    return gapi.client.load('bigquery', 'v2');
+    return this.loadGapi()
+      .then(() => gapi.client.load('bigquery', 'v2'));
   }
 }

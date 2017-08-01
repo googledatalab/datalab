@@ -74,26 +74,32 @@ declare namespace gapi.client {
       tables: Array<TableResource>;
     }
 
+    interface Field {
+      description?: string;
+      fields?: Field[];
+      mode: string;
+      name: string;
+      type: string;
+    }
+
     interface Table {
       creationTime: string;
+      description?: string;
       etag: string;
       id: string;
       kind: string;   // Should always be "bigquery#tableList"
       labels: [{
         name: string;
         value: string;
-      }]
+      }];
       lastModifiedTime: string;
       location: string;
       numBytes: string;
       numLongTermBytes: string;
       numRows: string;
       schema: {
-        fields: [{
-          name: string;
-          type: string;
-        }]
-      }
+        fields: Field[];
+      };
       selfLink: string;
       tableReference: {
         projectId: string;
