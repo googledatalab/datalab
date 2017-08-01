@@ -38,7 +38,7 @@ describe('<table-details>', () => {
       name: 'label1',
       value: 'label1val',
     }],
-    lastModifiedTime: '1501541271001',
+    lastModifiedTime: '1501607994768',
     location: 'testLocation',
     numBytes: (1024 * 1023).toString(),
     numLongTermBytes: (1024 * 1024 * 50).toString(),
@@ -70,10 +70,10 @@ describe('<table-details>', () => {
       assert(!!pid && !!did && !!tid,
           'getTableDetails should be called with project, dataset, and table');
 
-      const request = {
+      const response = {
         result: mockTable,
       };
-      return Promise.resolve(request) as any;
+      return Promise.resolve(response) as gapi.client.HttpRequest<gapi.client.bigquery.Table>;
     };
 
     testFixture = fixture('table-details-fixture');
@@ -108,7 +108,7 @@ describe('<table-details>', () => {
           'should see comma-separated number of rows');
       assert(testFixture.$.creationTime.innerText === '7/31/2017, 3:47:51 PM',
           'should parse timestamp into readable text');
-      assert(testFixture.$.lastModifiedTime.innerText === '7/31/2017, 3:47:51 PM',
+      assert(testFixture.$.lastModifiedTime.innerText === '8/1/2017, 10:19:54 AM',
           'should parse timestamp into readable text');
       assert(testFixture.$.location.innerText === mockTable.location, 'should see location');
 
