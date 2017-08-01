@@ -29,7 +29,6 @@ interface Result {
  */
 class DataElement extends Polymer.Element {
 
-  private _isDetailsPaneToggledOn: boolean;
   private _resultsList: Result[];
   private _searchValue: string;
 
@@ -37,16 +36,13 @@ class DataElement extends Polymer.Element {
 
   static get properties() {
     return {
-      _isDetailsPaneToggledOn: {
-        type: Boolean,
-        value: true,
-      },
       _resultsList: {
         observer: '_renderResultsList',
         type: Array,
         value: () => [],
       },
       _searchValue: {
+        observer: '_search',
         type: String,
         value: '',
       },
@@ -157,16 +153,6 @@ class DataElement extends Polymer.Element {
     return typeMap[type] || 'folder';
   }
 
-  _showDetailsForResult(result: Result) {
-    this.$.detailsPane.innerHTML =
-        'Selection: <b>' + result.name + '</b><br>' +
-        'Type: <b>' + result.type + '</b>';
-  }
-
-  _clearDetails() {
-    this.$.detailsPane.innerHTML = '';
-  }
-
   _resultsDoubleClicked() {
     console.log('== result double-clicked');
   }
@@ -175,17 +161,13 @@ class DataElement extends Polymer.Element {
     console.log('== result selection changed');
     const selectedIndices = (this.$.results as ItemListElement).selectedIndices;
     if (selectedIndices.length === 1) {
-      this._showDetailsForResult(this._resultsList[selectedIndices[0]]);
+      const selectedItem = this._resultsList[selectedIndices[0]];
+      if (selectedItem.type === 'table') {
+        (this.$.details as TableDetailsElement).tableId = selectedItem.name;
+      }
     } else {
-      this._clearDetails();
+      (this.$.details as TableDetailsElement).tableId = '';
     }
-  }
-
-  /**
-   * Switches details pane on or off.
-   */
-  _toggleDetailsPane() {
-    this._isDetailsPaneToggledOn = !this._isDetailsPaneToggledOn;
   }
 }
 

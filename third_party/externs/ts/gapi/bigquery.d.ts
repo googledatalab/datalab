@@ -10,6 +10,7 @@ declare namespace gapi.client {
 
     const tables: {
       list: (request?: ListTablesRequest) => HttpRequest<ListTablesResponse>;
+      get: (request?: GetTableRequest) => HttpRequest<Table>;
     }
 
     interface DatasetReference {
@@ -60,11 +61,46 @@ declare namespace gapi.client {
       projectId: string;
     }
 
+    interface GetTableRequest {
+      datasetId: string;
+      projectId: string;
+      tableId: string;
+    }
+
     interface ListTablesResponse {
       kind: string;   // Should always be "bigquery#tableList"
       etag: string;
       nextPageToken: string;
       tables: Array<TableResource>;
+    }
+
+    interface Table {
+      creationTime: string;
+      etag: string;
+      id: string;
+      kind: string;   // Should always be "bigquery#tableList"
+      labels: [{
+        name: string;
+        value: string;
+      }]
+      lastModifiedTime: string;
+      location: string;
+      numBytes: string;
+      numLongTermBytes: string;
+      numRows: string;
+      schema: {
+        fields: [{
+          name: string;
+          type: string;
+        }]
+      }
+      selfLink: string;
+      tableReference: {
+        projectId: string;
+        datasetId: string;
+        tableId: string;
+      }
+      type: string;
     }
 
     interface ProjectReference {
