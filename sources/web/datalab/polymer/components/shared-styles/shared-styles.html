@@ -17,11 +17,13 @@ the License.
     <style>
       :host {
         --toolbar-height: 48px;
+        --progressbar-height: 1px;
         --sidebar-width: 200px;
         --details-pane-width: 350px;
         --app-animation-duration: 0.3s;
         --app-content-font-size: 13px;
         --app-content-font-family: 'Roboto', 'Noto', sans-serif;
+        --primary-text-color : var(--primary-fg-color);
       }
       hr {
         border-left: none;
@@ -30,6 +32,15 @@ the License.
         border-top: 1px solid var(--primary-fg-color);
         opacity: 0.1;
         margin: 0px;
+      }
+      p {
+        margin: 0px;
+      }
+      .mono {
+        font-family: monospace;
+        white-space: pre-line;
+        background-color: var(--secondary-bg-color);
+        padding: 5px;
       }
       .dialog-title {
         background-color: var(--secondary-bg-color);
@@ -40,11 +51,28 @@ the License.
         margin: 0px;
         padding: 15px; /*Total height: 51px*/
       }
+      .dialog-content {
+        flex-grow: 1;
+        margin: 0px;
+        padding: 20px;
+      }
+      .dialog-buttons {
+        direction: rtl;
+      }
       a {
         color: var(--selection-fg-color);
       }
       a:visited {
         color: var(--selection-fg-color);
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .progressbar {
+        width: 100%;
+        height: var(--progressbar-height);
+        --paper-progress-active-color: var(--selection-fg-color);
+        --paper-progress-container-color: var(--border-color);
       }
     </style>
   </template>

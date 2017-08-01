@@ -12,6 +12,9 @@ or implied. See the License for the specific language governing permissions and 
 the License.
 -->
 
+<link rel="import" href="../../components/auth-panel/auth-panel.html">
+<link rel="import" href="../../components/datalab-info/datalab-info.html">
+<link rel="import" href="../../components/datalab-settings/datalab-settings.html">
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
 
 <link rel="import" href="../../bower_components/app-layout/app-header/app-header.html">
@@ -27,6 +30,13 @@ the License.
       :host {
         --toolbar-button-dimension: 35px;
       }
+      .left, .right {
+        flex: 0 0 auto;
+      }
+      .middle {
+        flex: 1 1 auto;
+        overflow: hidden;
+      }
       .toolbar-title {
         font-size: 18px;
       }
@@ -36,9 +46,10 @@ the License.
       }
       app-header {
         background-color: var(--primary-accent-color);
-        color: var(--primary-fg-color);
+        color: var(--toolbar-fg-color);
       }
       app-toolbar {
+        display: flex;
         height: var(--toolbar-height);
         padding-right: 6px;
       }
@@ -48,6 +59,7 @@ the License.
           width: var(--toolbar-button-dimension);
           height: var(--toolbar-button-dimension);
         };
+        color: var(--toolbar-fg-color);
       }
       .title-cloud-datalab {
         font-weight: lighter;
@@ -60,9 +72,6 @@ the License.
         display: flex;
         flex-direction: column;
       }
-      .dialog-content {
-        flex-grow: 1;
-      }
       .account-dropdown {
         background-color: var(--primary-bg-color);
         color: var(--primary-fg-color);
@@ -70,7 +79,8 @@ the License.
         right: 0px;
         top: var(--toolbar-height);
         margin: 0px;
-        min-width: 160px;
+        padding: 10px;
+        min-width: 250px;
         max-width: 300px;
         box-shadow: -3px 3px 10px -3px rgba(0, 0, 0, 0.3);
         z-index: 3;
@@ -79,32 +89,39 @@ the License.
 
     <app-header slot="header" fixed shadow>
       <app-toolbar>
-        <div id="title" main-title class="toolbar-title">
+        <div main-title class="left toolbar-title">
           <!--TODO: @yebrahim replace this with SVG version of the logo-->
           <img src="images/datalab-logo.png" class="title-image">
         </div>
-        <paper-icon-button id="infoButton" class="toolbar-button" icon="info"
-                           on-click="_infoClicked"></paper-icon-button>
-        <paper-icon-button id="settingsButton" class="toolbar-button" icon="settings"
-                           on-click="_settingsClicked"></paper-icon-button>
-        <paper-icon-button id="accountButton" class="toolbar-button" icon="account-circle"
-                           on-click="_accountIconClicked">
-        </paper-icon-button>
+        <div class="middle">
+          <slot name="content"></slot>
+        </div>
+        <div class="right">
+          <paper-icon-button id="infoButton" class="toolbar-button" icon="info"
+                            on-click="_infoClicked"></paper-icon-button>
+          <paper-icon-button id="settingsButton" class="toolbar-button" icon="settings"
+                            on-click="_settingsClicked"></paper-icon-button>
+          <paper-icon-button id="accountButton" class="toolbar-button" icon="account-circle"
+                            on-click="_accountIconClicked">
+          </paper-icon-button>
+        </div>
       </app-toolbar>
     </app-header>
 
-    <!--Account dropdown dialog. This always shows at the top left corner
+    <!--Account dropdown dialog. This always shows at the top right corner
     below the toolbar-->
     <paper-dialog id="accountDropdown" class="account-dropdown">
-      <div>Account menu contents</div>
+      <auth-panel></auth-panel>
     </paper-dialog>
 
     <!--Info dialog. This shows centered in the middle of the window-->
     <paper-dialog id="infoDialog" class="dialog" with-backdrop>
       <div class="dialog-title">Info</div>
-      <div class="dialog-content"></div>
+      <div class="dialog-content">
+        <datalab-info></datalab-info>
+      </div>
       <hr>
-      <div>
+      <div class="dialog-buttons">
         <paper-button dialog-dismiss raised>Close</paper-button>
       </div>
     </paper-dialog>
@@ -112,9 +129,11 @@ the License.
     <!--Settings dialog. This shows centered in the middle of the window-->
     <paper-dialog id="settingsDialog" class="dialog" with-backdrop>
       <div class="dialog-title">Settings</div>
-      <div class="dialog-content"></div>
+      <div class="dialog-content">
+        <datalab-settings id="settingsElement"></datalab-settings>
+      </div>
       <hr>
-      <div>
+      <div class="dialog-buttons">
         <paper-button dialog-dismiss raised>Close</paper-button>
       </div>
     </paper-dialog>

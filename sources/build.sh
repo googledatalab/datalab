@@ -46,6 +46,11 @@ function install_typescript() {
   npm install -g typescript
 }
 
+function install_tslint() {
+  echo "Installing tslint"
+  npm install -g tslint
+}
+
 function install_git() {
   echo "Updating apt repository"
   apt-get update -y -qq
@@ -66,6 +71,7 @@ function install_prereqs() {
   # Use -v instead of -h to test npm installation, since -h returns non-zero
   npm -v >/dev/null 2>&1 || install_node
   tsc -h >/dev/null 2>&1  || install_typescript
+  tslint -h >/dev/null 2>&1  || install_tslint
   bower -h >/dev/null 2>&1  || install_bower
   polymer -h >/dev/null 2>&1  || install_polyer_cli
   source ./tools/initenv.sh

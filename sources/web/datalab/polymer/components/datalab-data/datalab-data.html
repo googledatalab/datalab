@@ -1,0 +1,120 @@
+<!--
+Copyright 2017 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License
+is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+or implied. See the License for the specific language governing permissions and limitations under
+the License.
+-->
+
+<link rel="import" href="../../components/item-list/item-list.html">
+<link rel="import" href="../../components/shared-styles/shared-styles.html">
+
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/iron-a11y-keys/iron-a11y-keys.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+
+<dom-module id="datalab-data">
+  <template>
+    <style include="datalab-shared-styles">
+      :host {
+        --data-style: {
+          font-family: monospace;
+          font-size: var(--app-content-font-size);
+        }
+      }
+      div {
+        font-family: var(--app-content-font-family);
+        font-size: var(--app-content-font-size);
+        color: var(--app-primary-color);
+      }
+      #toolbar {
+        height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
+        width: 100%;
+        display: flex;
+        background-color: var(--app-secondary-color);
+        border-bottom: 1px solid var(--border-color);
+      }
+      .toolbar-button {
+        color: var(--app-primary-color);
+        margin: 4px;
+        font-weight: normal;
+        border-radius: 0px;
+      }
+      .toolbar-button > iron-icon {
+        width: 20px;
+        padding-right: 5px;
+      }
+      .toolbar-spacer {
+        flex-grow: 1;
+      }
+      #data-container {
+        display: flex;
+        margin: 15px;
+      }
+      .resultsColumn {
+        flex-grow: 1;
+      }
+      .results-container {
+        height: 100%;
+        display: flex;
+      }
+      #results {
+        width: 100%;
+      }
+      #detailsPane {
+        /* TODO - Add box-shadow and other styling once we put some real content here. */
+      }
+      .details-pane-enabled--true {
+        width: 400px;
+      }
+      .details-pane-enabled--false {
+        width: 0px;
+      }
+    </style>
+
+    <!--Toolbar with action buttons -->
+    <div id="toolbar">
+      <div class="toolbar-spacer"></div>
+      <paper-button id="toggleDetails" class="navbar-button" on-click="_toggleDetailsPane">
+        <iron-icon icon="visibility"></iron-icon>
+      </paper-button>
+    </div>
+
+    <div id="data-container">
+      <div class="resultsColumn">
+        <!-- Input box to enter search terms -->
+        <div id="search-div">
+          <!-- TODO - could use value-changed event on paper-input to call _search
+               on every keystroke, with a delay so it fires only after the user has stopped
+               typing for a moment. -->
+          <iron-a11y-keys id="searchKeys" keys="enter" on-keys-pressed="_search"></iron-a11y-keys>
+          <paper-input id="searchBox" label="Search for data" spellcheck=false autofocus
+                                      value="{{_searchValue}}" no-label-float>
+          <iron-icon icon="search" slot="prefix" on-click="_search"></iron-icon>
+          </paper-input>
+        </div>
+
+        <!-- List of results -->
+        <div class='results-container'>
+          <item-list id="results"></item-list>
+        </div>
+      </div>
+
+      <!-- Details pane -->
+      <div id="detailsPane" class$="details-pane-enabled--{{_isDetailsPaneToggledOn}}">
+        <div id="detailsContents"></div>
+      </div>
+
+    </div>
+
+  </template>
+</dom-module>
+
+<script src="datalab-data.js"></script>

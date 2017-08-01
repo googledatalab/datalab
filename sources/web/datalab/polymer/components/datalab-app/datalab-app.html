@@ -15,12 +15,9 @@ the License.
 <link rel="import" href="../../bower_components/app-route/app-location.html">
 <link rel="import" href="../../bower_components/app-route/app-route.html">
 <link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
-<link rel="import" href="../../bower_components/polymer/polymer.html">
 
-<link rel="import" href="../../components/datalab-files/datalab-files.html">
-<link rel="import" href="../../components/datalab-sessions/datalab-sessions.html">
+<link rel="import" href="../../components/datalab-notification/datalab-notification.html">
 <link rel="import" href="../../components/datalab-sidebar/datalab-sidebar.html">
-<link rel="import" href="../../components/datalab-terminal/datalab-terminal.html">
 <link rel="import" href="../../components/datalab-toolbar/datalab-toolbar.html">
 
 <dom-module id="datalab-app">
@@ -50,7 +47,7 @@ the License.
       iron-pages {
         height: 100%;
       }
-      @media only screen and (max-width: 970px) {
+      @media only screen and (max-width: 800px) {
         .datalab-sidebar {
           width: 60px;
         }
@@ -71,7 +68,9 @@ the License.
           <datalab-sidebar page={{page}}></datalab-sidebar>
         </div>
         <div class="datalab-main-content">
-          <iron-pages selected="{{page}}" attr-for-selected="name" fallback-selection="files">
+          <iron-pages id="pages" selected="{{page}}" attr-for-selected="name"
+                      fallback-selection="files">
+            <datalab-data name="data"></datalab-data>
             <datalab-files name="files"></datalab-files>
             <datalab-sessions name="sessions"></datalab-sessions>
             <datalab-terminal name="terminal"></datalab-terminal>
@@ -80,7 +79,12 @@ the License.
       </div>
     </div>
 
+    <datalab-notification></datalab-notification>
+
   </template>
 </dom-module>
 
+<script src="../../modules/Utils.js"></script>
+<script src="../../modules/ApiManager.js"></script>
+<script src="../../modules/SettingsManager.js"></script>
 <script src="datalab-app.js"></script>

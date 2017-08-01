@@ -1,0 +1,20 @@
+{
+  "name": "datalab-frontend",
+  "main": "index.html",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "pretranspile": "tslint *.ts components/**/*.ts module/*.ts",
+    "transpile": "tsc",
+
+    "prebuild": "npm install && bower --allow-root install",
+    "build": "npm run transpile && polymer build",
+
+    "test": "tsc && polymer test"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.0.1",
+    "@types/mocha": "^2.2.41"
+  }
+}

@@ -19,6 +19,7 @@ declare module common {
     theme: string,
     idleTimeoutShutdownCommand: string,
     idleTimeoutInterval: string,
+    oauth2ClientId: string,
     [index: string]: string,
   }
 

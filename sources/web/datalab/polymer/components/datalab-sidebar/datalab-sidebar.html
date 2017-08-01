@@ -68,7 +68,7 @@ the License.
       .iron-selected > .sidebar-button > * {
         color: var(--selection-fg-color);
       }
-      @media only screen and (max-width: 970px) {
+      @media only screen and (max-width: 800px) {
         .sidebar-button-title {
           opacity: 0;
         }
@@ -80,6 +80,16 @@ the License.
       <div class="sidebar-button"></div>
       <iron-selector class="container" attr-for-selected="id" selected={{page}}
                      class="drawer-list" role="navigation">
+        <!-- uncomment this once we have the data tab working satisfactorily
+        <a href="/data" id="data">
+          <paper-button class="sidebar-button">
+            <div class="sidebar-button-container">
+              <iron-icon class="sidebar-button-icon" icon="av:library-books"></iron-icon>
+              <div class="sidebar-button-title">Data</div>
+            </div>
+          </paper-button>
+        </a>
+        -->
         <a href="/files" id="files">
           <paper-button class="sidebar-button">
             <div class="sidebar-button-container">
