@@ -108,6 +108,7 @@ declare module Polymer {
     attached(): void;
     detached(): void;
     connectedCallback(): void;
+    disconnectedCallback(): void;
     attributeChanged?(attrName: string, oldVal: any, newVal: any): void;
     prototype?: Object;
   }

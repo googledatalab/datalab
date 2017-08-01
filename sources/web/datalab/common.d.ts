@@ -165,6 +165,13 @@ declare module common {
     idleTimeoutShutdownCommand: string;
   }
 
+  interface TimeoutInfo {
+    enabled: boolean;
+    expirationTime: number;
+    secondsRemaining: number;
+    idleTimeoutSeconds: number;
+  }
+
   interface Map<T> {
     [index: string]: T;
   }
