@@ -77,7 +77,7 @@ declare namespace gapi.client {
     interface Field {
       description?: string;
       fields?: Field[];
-      mode: string;
+      mode?: string;
       name: string;
       type: string;
     }
