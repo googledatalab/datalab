@@ -19,6 +19,7 @@ the License.
 <link rel="import" href="../../components/datalab-notification/datalab-notification.html">
 <link rel="import" href="../../components/datalab-sidebar/datalab-sidebar.html">
 <link rel="import" href="../../components/datalab-toolbar/datalab-toolbar.html">
+<link rel="import" href="../../components/resizable-divider/resizable-divider.html">
 
 <dom-module id="datalab-app">
   <template>
@@ -68,13 +69,14 @@ the License.
           <datalab-sidebar page={{page}}></datalab-sidebar>
         </div>
         <div class="datalab-main-content">
-          <iron-pages id="pages" selected="{{page}}" attr-for-selected="name"
+          <!--<iron-pages id="pages" selected="{{page}}" attr-for-selected="name"
                       fallback-selection="files">
             <datalab-data name="data"></datalab-data>
             <datalab-files name="files"></datalab-files>
             <datalab-sessions name="sessions"></datalab-sessions>
             <datalab-terminal name="terminal"></datalab-terminal>
-          </iron-pages>
+          </iron-pages>-->
+          <resizable-divider></resizable-divider>
         </div>
       </div>
     </div>

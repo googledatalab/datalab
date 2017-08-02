@@ -1,0 +1,62 @@
+<!--
+Copyright 2017 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License
+is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+or implied. See the License for the specific language governing permissions and limitations under
+the License.
+-->
+
+<dom-module id="resizable-divider">
+  <template>
+
+    <style include="datalab-shared-styles">
+      :host {
+        --divider-width: 4px;
+      }
+      #container {
+        height: 100%;
+        width: 100%;
+        display: flex;
+      }
+      .pane, #divider {
+        overflow: hidden;
+        width: calc(50% - var(--divider-width));
+        user-select: none;
+      }
+      #divider {
+        cursor: col-resize;
+        width: calc(2 * var(--divider-width));
+        user-select: none;
+        box-shadow: inset 0px 0px 5px 1px #ccc;
+        z-index: 1;
+      }
+      #divider.active {
+        box-shadow: inset 0px 0px 5px 2px #ccc;
+        user-select: none;
+      }
+    </style>
+
+    <div id="container">
+
+      <div id="p1" class="pane">
+        Pane1
+      </div>
+
+      <div id="divider" on-mousedown="{{_mouseDownHandler}}"></div>
+
+      <div id="p2" class="pane">
+        Pane2
+      </div>
+
+    </div>
+
+  </template>
+</dom-module>
+
+<script src="resizable-divider.js"></script>
