@@ -14,7 +14,7 @@ the License.
 
 <link rel="import" href="../../components/item-list/item-list.html">
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
-<link rel="import" href="../../components/table-details/table-details.html">
+<link rel="import" href="../../components/table-preview/table-preview.html">
 
 <link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../../bower_components/iron-a11y-keys/iron-a11y-keys.html">
@@ -53,10 +53,10 @@ the License.
       #results {
         width: 100%;
       }
-      #detailsPane {
+      #previewPane {
         background-color: var(--secondary-bg-color);
         box-shadow: inset 4px 0px 10px -3px rgba(0, 0, 0, 0.1);
-        width: var(--details-pane-width);
+        width: var(--preview-pane-width);
       }
     </style>
 
@@ -81,8 +81,8 @@ the License.
       </div>
 
       <!-- Details pane -->
-      <div id="detailsPane">
-        <table-details id="details"></table-details>
+      <div id="previewPane">
+        <table-preview id="preview"></table-preview>
       </div>
 
     </div>
