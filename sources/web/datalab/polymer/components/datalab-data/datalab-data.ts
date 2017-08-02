@@ -42,7 +42,6 @@ class DataElement extends Polymer.Element {
         value: () => [],
       },
       _searchValue: {
-        observer: '_search',
         type: String,
         value: '',
       },
@@ -65,7 +64,10 @@ class DataElement extends Polymer.Element {
     this.$.searchKeys.target = this.$.searchBox;
   }
 
-  /** Sends the user's query to the search API, renders results as they get returned. */
+  /**
+   * Sends the user's query to the search API, renders results as they get
+   * returned.
+   */
   _search() {
     // TODO - clearing the resultsList may cause unnecessary refreshes, clean this up
     //   when we figure out how we actually want to handle the search call.
