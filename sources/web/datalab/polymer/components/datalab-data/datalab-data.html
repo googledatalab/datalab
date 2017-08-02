@@ -44,12 +44,12 @@ the License.
         flex-grow: 1;
       }
       #search-div {
-        display: flex;
         height: var(--toolbar-height);
       }
-      #search-button {
-        height: 40px;
-        margin-left: 10px;
+      #searchBox {
+        margin: 0 auto;
+        width: 70%;
+        max-width: 300px;
       }
       .results-container {
         height: calc(100% - var(--toolbar-height));
@@ -73,10 +73,6 @@ the License.
           <paper-input id="searchBox" label="Search for data" spellcheck=false autofocus
                                       value="{{_searchValue}}" no-label-float>
           </paper-input>
-          <paper-button id="search-button" raised on-click="_search">
-            <iron-icon icon="search"></iron-icon>
-            Search
-          </paper-button>
         </div>
 
         <!-- List of results -->
