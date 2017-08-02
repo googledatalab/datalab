@@ -25,8 +25,7 @@ class Utils {
    * @param dialogOptions specifies different options for opening the dialog
    */
   public static async showDialog(dialogType: typeof BaseDialogElement,
-                                 dialogOptions: BaseDialogOptions):
-                                   Promise<BaseDialogCloseResult> {
+                                 dialogOptions: BaseDialogOptions) {
     const dialog = document.createElement(dialogType.is) as any;
     document.body.appendChild(dialog);
 

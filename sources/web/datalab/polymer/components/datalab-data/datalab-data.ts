@@ -85,28 +85,28 @@ class DataElement extends Polymer.Element {
 
   // Make some calls to the BigQuery API and pass the results to the resultHandler
   _callBigQuery(searchValue: string, resultHandler: (partialResults: Result[]) => void) {
-    // const sampleProject = 'bigquery-public-data';
-    // GapiManager.listBigQueryProjects()
-    //     .then((response: HttpResponse<gapi.client.bigquery.ListProjectsResponse>) => {
-    //       console.log('== projects: ', response);
-    //       const projectResults: Result[] = response.result.projects.map(this._bqProjectToResult.bind(this)) as Result[];
-    //       resultHandler(projectResults);
-    //     })
-    //     .catch(() => {
-    //       // TODO: handle errors getting projects
-    //     });
-    // // The filter arg when querying for datasets must be of the form labels.<name>[:<value>],
-    // // see https://cloud.google.com/bigquery/docs/reference/rest/v2/datasets/list
-    // GapiManager.listBigQueryDatasets(sampleProject, searchValue /* label filter */)
-    //     .then((response: HttpResponse<gapi.client.bigquery.ListDatasetsResponse>) => {
-    //       console.log('== datasets: ', response);
-    //       const datasetResults: Result[] = response.result.datasets.map(this._bqDatasetToResult.bind(this)) as Result[];
-    //       resultHandler(datasetResults);
-    //     })
-    //     .catch(() => {
-    //       // TODO: handle errors getting projects
-    //     });
-    GapiManager.listBigQueryTables('yelsayed-project1', searchValue /* datasetId */)
+    const sampleProject = 'bigquery-public-data';
+    GapiManager.listBigQueryProjects()
+        .then((response: HttpResponse<gapi.client.bigquery.ListProjectsResponse>) => {
+          console.log('== projects: ', response);
+          const projectResults: Result[] = response.result.projects.map(this._bqProjectToResult.bind(this)) as Result[];
+          resultHandler(projectResults);
+        })
+        .catch(() => {
+          // TODO: handle errors getting projects
+        });
+    // The filter arg when querying for datasets must be of the form labels.<name>[:<value>],
+    // see https://cloud.google.com/bigquery/docs/reference/rest/v2/datasets/list
+    GapiManager.listBigQueryDatasets(sampleProject, searchValue /* label filter */)
+        .then((response: HttpResponse<gapi.client.bigquery.ListDatasetsResponse>) => {
+          console.log('== datasets: ', response);
+          const datasetResults: Result[] = response.result.datasets.map(this._bqDatasetToResult.bind(this)) as Result[];
+          resultHandler(datasetResults);
+        })
+        .catch(() => {
+          // TODO: handle errors getting projects
+        });
+    GapiManager.listBigQueryTables(sampleProject, searchValue /* datasetId */)
         .then((response: HttpResponse<gapi.client.bigquery.ListTablesResponse>) => {
           console.log('== tables: ', response);
           const tableResults: Result[] = response.result.tables.map(this._bqTableToResult.bind(this)) as Result[];
