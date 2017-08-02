@@ -19,9 +19,14 @@
 class ResizableDividerElement extends Polymer.Element {
 
   /**
-   * Minimum pane width in pixels.
+   * Minimum pane width in pixels. Defaults to 50(px);
    */
   public minimumWidthPx: number;
+
+  /**
+   * Initial position of the divider in percentage. Defaults to 50(%);
+   */
+  public initDividerPosition: number;
 
   private _boundMouseDownHandler: EventListenerOrEventListenerObject;
   private _boundMouseupHandler: EventListenerOrEventListenerObject;
@@ -32,6 +37,10 @@ class ResizableDividerElement extends Polymer.Element {
 
   static get properties() {
     return {
+      initDividerPosition: {
+        type: Number,
+        value: 50,
+      },
       minimumWidthPx: {
         type: Number,
         value: 50,
@@ -44,25 +53,26 @@ class ResizableDividerElement extends Polymer.Element {
 
     this._boundMouseDownHandler = this._mouseDownHandler.bind(this);
     this._boundMouseupHandler = this._mouseUpHandler.bind(this);
-    this._boundMouseMoveHandler = this._resizePanes.bind(this);
+    this._boundMouseMoveHandler = this._mouseMoveHandler.bind(this);
 
-    this.$.divider.addEventListener('mousedown', this._boundMouseDownHandler);
+    const divider = this.$.divider as HTMLDivElement;
+    const container = this.$.container as HTMLDivElement;
+
+    divider.addEventListener('mousedown', this._boundMouseDownHandler);
+
+    // Initialize the divider position. We need to calculate this initial
+    // position relative to the container element.
+    const containerRect = container.getBoundingClientRect();
+    const pos = containerRect.left + (containerRect.width * this.initDividerPosition / 100);
+    this._resizePanes(pos);
   }
 
-  _mouseDownHandler(event: MouseEvent) {
+  _mouseDownHandler() {
     document.addEventListener('mousemove', this._boundMouseMoveHandler, true);
     document.addEventListener('mouseup', this._boundMouseupHandler, true);
 
-    // style the handle while dragging
+    // Style the divider while dragging
     this.$.divider.classList.add('active');
-
-    // (stop panes from receiving mouse events and inteferring with the drag
-    // works great for the iframe, not for CodeMirror
-    this.$.p1.style.pointerEvents = 'none';
-    this.$.p2.style.pointerEvents = 'none';
-
-    // resize the pane and a neighour
-    this._resizePanes(event);
   }
 
   _mouseUpHandler() {
@@ -71,23 +81,23 @@ class ResizableDividerElement extends Polymer.Element {
 
     // stop styling the handle as active because dragging is done
     this.$.divider.classList.remove('active');
+  }
 
-    // let the panes have mouse events again
-    this.$.p1.style.pointerEvents = 'initial';
-    this.$.p2.style.pointerEvents = 'initial';
+  _mouseMoveHandler(event: MouseEvent) {
+    this._resizePanes(event.clientX);
   }
 
   /**
-   * Resize 2 panes on either side of the handle
+   * Calculates and sets the new widths of the two panes.
    */
-  _resizePanes(event: MouseEvent) {
+  _resizePanes(newPos: number) {
     const container = this.$.container as HTMLDivElement;
     const p1 = this.$.p1 as HTMLDivElement;
     const p2 = this.$.p2 as HTMLDivElement;
     const containerRect = container.getBoundingClientRect();
 
-    const newP1Width = event.clientX - containerRect.left - this._dividerWidth;
-    const newP2Width = containerRect.right - event.clientX - this._dividerWidth;
+    const newP1Width = newPos - containerRect.left - this._dividerWidth;
+    const newP2Width = containerRect.right - newPos - this._dividerWidth;
 
     // Stop if either pane is getting too small
     if (newP1Width < this.minimumWidthPx || newP2Width < this.minimumWidthPx) {
