@@ -115,6 +115,8 @@ class TablePreviewElement extends Polymer.Element {
     return table ? this._bytesToReadableSize(table.numLongTermBytes) : '';
   }
 
+  // TODO: Consider adding expanders and nested tables to make the schema viewer
+  // narrower
   _flattenFields(fields: gapi.client.bigquery.Field[]) {
     const flatFields: gapi.client.bigquery.Field[] = [];
     fields.forEach((field) => {
