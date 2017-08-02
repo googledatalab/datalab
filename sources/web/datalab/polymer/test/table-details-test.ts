@@ -153,11 +153,12 @@ describe('<table-details>', () => {
       assert(rows[1].children[0].innerText === f2.name, 'record field name not matching');
       assert(rows[1].children[1].innerText === f2.type, 'record field type not matching');
 
-      const nestedFields = f2.fields as gapi.client.bigquery.Field[];
-      assert(rows[2].children[0].innerText === f2.name + '.' + nestedFields[0].name,
-          'nested field name should contain parent and nested field names');
-      assert(rows[2].children[1].innerText === nestedFields[0].type,
-          'nested field type not matching');
+      if (f2.fields) { // For transpiler to rule out undefined
+        assert(rows[2].children[0].innerText === f2.name + '.' + f2.fields[0].name,
+            'nested field name should contain parent and nested field names');
+        assert(rows[2].children[1].innerText === f2.fields[0].type,
+            'nested field type not matching');
+      }
 
       done();
     });
