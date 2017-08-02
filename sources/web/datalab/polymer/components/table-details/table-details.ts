@@ -125,11 +125,13 @@ class TableDetailsElement extends Polymer.Element {
       // Then flatten it and push its children
       if (field.type === 'RECORD' && field.fields) {
         // Make sure we copy the flattened nested fields before modifying their
-        // name to prepend the parent field name
+        // name to prepend the parent field name. This way the original name in
+        // the schema object does not change.
         const nestedFields = [...this._flattenFields(field.fields)];
         nestedFields.forEach((f) => {
-          f.name = field.name + '.' + f.name;
-          flatFields.push(f);
+          const flat = {...f};
+          flat.name = field.name + '.' + f.name;
+          flatFields.push(flat);
         });
       }
     });
