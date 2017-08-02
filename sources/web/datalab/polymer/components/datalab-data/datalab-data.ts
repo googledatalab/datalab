@@ -91,6 +91,9 @@ class DataElement extends Polymer.Element {
           console.log('== projects: ', response);
           const projectResults: Result[] = response.result.projects.map(this._bqProjectToResult.bind(this)) as Result[];
           resultHandler(projectResults);
+        })
+        .catch(() => {
+          // TODO: handle errors getting projects
         });
     // The filter arg when querying for datasets must be of the form labels.<name>[:<value>],
     // see https://cloud.google.com/bigquery/docs/reference/rest/v2/datasets/list
@@ -99,12 +102,18 @@ class DataElement extends Polymer.Element {
           console.log('== datasets: ', response);
           const datasetResults: Result[] = response.result.datasets.map(this._bqDatasetToResult.bind(this)) as Result[];
           resultHandler(datasetResults);
+        })
+        .catch(() => {
+          // TODO: handle errors getting projects
         });
     GapiManager.listBigQueryTables(sampleProject, searchValue /* datasetId */)
         .then((response: HttpResponse<gapi.client.bigquery.ListTablesResponse>) => {
           console.log('== tables: ', response);
           const tableResults: Result[] = response.result.tables.map(this._bqTableToResult.bind(this)) as Result[];
           resultHandler(tableResults);
+        })
+        .catch(() => {
+          // TODO: handle errors getting projects
         });
   }
 
@@ -158,7 +167,6 @@ class DataElement extends Polymer.Element {
   }
 
   _resultsSelectionChanged() {
-    console.log('== result selection changed');
     const selectedIndices = (this.$.results as ItemListElement).selectedIndices;
     if (selectedIndices.length === 1) {
       const selectedItem = this._resultsList[selectedIndices[0]];
