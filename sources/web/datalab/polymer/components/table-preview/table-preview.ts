@@ -13,17 +13,17 @@
  */
 
 /**
- * Table details pane element for Datalab.
+ * Table preview pane element for Datalab.
  * This element is designed to be displayed in a side bar that displays more
  * information about a selected BigQuery table.
  * The element flattens out the given table's schema in order to simplify the
  * way they are presented. This is not necessarily the best experience, and we
  * might want to revisit this.
  */
-class TableDetailsElement extends Polymer.Element {
+class TablePreviewElement extends Polymer.Element {
 
   /**
-   * Id for table whose details to show.
+   * Id for table whose preview to show.
    */
   public tableId: string;
 
@@ -31,7 +31,7 @@ class TableDetailsElement extends Polymer.Element {
   private _busy = false;
   private readonly DEFAULT_MODE = 'NULLABLE';
 
-  static get is() { return 'table-details'; }
+  static get is() { return 'table-preview'; }
 
   static get properties() {
     return {
@@ -169,4 +169,4 @@ class TableDetailsElement extends Polymer.Element {
 
 }
 
-customElements.define(TableDetailsElement.is, TableDetailsElement);
+customElements.define(TablePreviewElement.is, TablePreviewElement);

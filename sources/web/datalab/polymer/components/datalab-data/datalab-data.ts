@@ -175,10 +175,10 @@ class DataElement extends Polymer.Element {
     if (selectedIndices.length === 1) {
       const selectedItem = this._resultsList[selectedIndices[0]];
       if (selectedItem.type === 'table') {
-        (this.$.details as TableDetailsElement).tableId = selectedItem.name;
+        (this.$.preview as TablePreviewElement).tableId = selectedItem.name;
       }
     } else {
-      (this.$.details as TableDetailsElement).tableId = '';
+      (this.$.preview as TablePreviewElement).tableId = '';
     }
   }
 }

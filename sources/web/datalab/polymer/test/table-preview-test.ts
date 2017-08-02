@@ -17,7 +17,7 @@ declare function fixture(element: string): any;
 
 /// <reference path="../node_modules/@types/mocha/index.d.ts" />
 /// <reference path="../node_modules/@types/chai/index.d.ts" />
-/// <reference path="../components/table-details/table-details.ts" />
+/// <reference path="../components/table-preview/table-preview.ts" />
 /// <reference path="../../../../../third_party/externs/ts/gapi/gapi.d.ts" />
 
 /*
@@ -26,8 +26,8 @@ declare function fixture(element: string): any;
  * mutation, wich is used by the dom-repeater in this case.
  */
 
-describe('<table-details>', () => {
-  let testFixture: TableDetailsElement;
+describe('<table-preview>', () => {
+  let testFixture: TablePreviewElement;
 
   const mockTable: gapi.client.bigquery.Table = {
     creationTime: '1501541271001',
@@ -76,7 +76,7 @@ describe('<table-details>', () => {
       return Promise.resolve(response) as gapi.client.HttpRequest<gapi.client.bigquery.Table>;
     };
 
-    testFixture = fixture('table-details-fixture');
+    testFixture = fixture('table-preview-fixture');
     testFixture.tableId = '';
     Polymer.dom.flush();
   });
