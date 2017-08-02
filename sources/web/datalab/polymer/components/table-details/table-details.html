@@ -76,7 +76,7 @@ the License.
       <div hidden$={{!_table.description}}>
         <div class="strong">Description</div>
         <br>
-        <div class="italic">{{_table.description}}</div>
+        <div class="description">{{_table.description}}</div>
         <br>
       </div>
       <table>
@@ -104,6 +104,7 @@ the License.
           <td class="field">Data Location</td>
           <td id="location" class="value">{{_table.location}}</td>
         </tr>
+        <!--TODO: Consider showing the table's label somewhere-->
       </table>
 
       <hr class="separator">
@@ -117,6 +118,7 @@ the License.
             <td class="field">{{field.name}}</td>
             <td class="value">{{field.type}}</td>
             <td class="value">{{_formatMode(field.mode)}}</td>
+            <!--TODO: Consider showing the field's description somehow-->
           </tr>
         </template>
       </table>

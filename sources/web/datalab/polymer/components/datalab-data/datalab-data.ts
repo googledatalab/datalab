@@ -31,6 +31,8 @@ class DataElement extends Polymer.Element {
 
   private _resultsList: Result[];
   private _searchValue: string;
+  private _searchInputDelayTimeout: number;
+  private readonly _searchInputDelay = 500;
 
   static get is() { return 'datalab-data'; }
 
@@ -65,12 +67,25 @@ class DataElement extends Polymer.Element {
     this.$.searchKeys.target = this.$.searchBox;
   }
 
-  /** Sends the user's query to the search API, renders results as they get returned. */
+  /**
+   * Sends the user's query to the search API, renders results as they get
+   * returned.
+   */
   _search() {
-    // TODO - clearing the resultsList may cause unnecessary refreshes, clean this up
-    //   when we figure out how we actually want to handle the search call.
-    this._resultsList = [];
-    this._sendQuery(this._searchValue, this._handleQueryResults.bind(this));
+    // Introduce a small delay into the user's search input to avoid firing API
+    // requests on every key stroke if the user is typing reasonably fast.
+    if (this._searchInputDelayTimeout) {
+      clearInterval(this._searchInputDelayTimeout);
+      this._searchInputDelayTimeout = 0;
+    }
+
+    this._searchInputDelayTimeout = setTimeout(() => {
+      // TODO - clearing the resultsList may cause unnecessary refreshes, clean
+      // this up when we figure out how we actually want to handle the search
+      // call.
+      this._resultsList = [];
+      this._sendQuery(this._searchValue, this._handleQueryResults.bind(this));
+    }, this._searchInputDelay);
   }
 
   _sendQuery(searchValue: string, resultHandler: (partialResults: Result[]) => void) {
