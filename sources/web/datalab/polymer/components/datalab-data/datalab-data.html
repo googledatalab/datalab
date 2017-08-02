@@ -35,6 +35,10 @@ the License.
         font-size: var(--app-content-font-size);
         color: var(--primary-fg-color);
       }
+      resizable-divider {
+        width: 100%;
+        height: 100%;
+      }
       #data-container {
         display: flex;
         height: 100%;
@@ -82,25 +86,34 @@ the License.
     </style>
 
     <div id="data-container">
-      <div class="resultsColumn">
-        <!-- Input box to enter search terms -->
-        <div id="search-div">
-          <iron-a11y-keys id="searchKeys" keys="enter" on-keys-pressed="_search"></iron-a11y-keys>
-          <iron-icon icon="search" id="search-icon"></iron-icon>
-          <input id="searchBox" placeholder="Search for data, then press Enter"
-                 value="{{_searchValue::input}}"></input>
+
+      <resizable-divider init-divider-position="70" minimum-width-px="200">
+
+        <div class="resultsColumn" slot="left">
+          <!-- Input box to enter search terms -->
+          <div id="search-div">
+            <!-- TODO - could use value-changed event on paper-input to call _search
+                on every keystroke, with a delay so it fires only after the user has stopped
+                typing for a moment. -->
+            <iron-a11y-keys id="searchKeys" keys="enter" on-keys-pressed="_search"></iron-a11y-keys>
+            <paper-input id="searchBox" label="Search for data" spellcheck=false autofocus
+                                        value="{{_searchValue}}" no-label-float>
+            <iron-icon icon="search" slot="prefix" on-click="_search"></iron-icon>
+            </paper-input>
+          </div>
+
+          <!-- List of results -->
+          <div class='results-container'>
+            <item-list id="results"></item-list>
+          </div>
         </div>
 
-        <!-- List of results -->
-        <div class='results-container'>
-          <item-list id="results"></item-list>
+        <!-- Preview pane -->
+        <div id="previewPane" slot="right">
+          <table-preview id="preview"></table-preview>
         </div>
-      </div>
 
-      <!-- Details pane -->
-      <div id="previewPane">
-        <table-preview id="preview"></table-preview>
-      </div>
+      </resizable-divider>
 
     </div>
 
