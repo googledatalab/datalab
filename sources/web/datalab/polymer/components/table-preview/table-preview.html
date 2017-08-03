@@ -45,6 +45,10 @@ the License.
       .strong {
         font-weight: bold;
       }
+      .description {
+        font-style: italic;
+        overflow-wrap: break-word;
+      }
       table {
         border-spacing: 1px;
         padding: 0 0 4px 0;
@@ -81,6 +85,12 @@ the License.
       <span id="datasetId">{{_table.tableReference.datasetId}}</span>
       <br>
       <br>
+      <div hidden$={{!_table.description}}>
+        <div class="strong">Description</div>
+        <br>
+        <div class="description">{{_table.description}}</div>
+        <br>
+      </div>
       <table>
         <tr>
           <td class="field">Table Size</td>
@@ -106,6 +116,7 @@ the License.
           <td class="field">Data Location</td>
           <td id="location" class="value">{{_table.location}}</td>
         </tr>
+        <!--TODO: Consider showing the table's label somewhere-->
       </table>
 
       <hr class="separator">
@@ -114,12 +125,12 @@ the License.
       <br>
 
       <table id="schema">
-        <!--TODO: Flatten out the fields list-->
-        <template is="dom-repeat" items={{_table.schema.fields}} as="column">
+        <template is="dom-repeat" items={{schemaFields}} as="field">
           <tr>
-            <td class="field">{{column.name}}</td>
-            <td class="value">{{column.type}}</td>
-            <td class="value">{{_formatMode(column.mode)}}</td>
+            <td class="field">{{field.name}}</td>
+            <td class="value">{{field.type}}</td>
+            <td class="value">{{_formatMode(field.mode)}}</td>
+            <!--TODO: Consider showing the field's description somehow-->
           </tr>
         </template>
       </table>
