@@ -26,7 +26,7 @@ class ResizableDividerElement extends Polymer.Element {
   /**
    * Initial position of the divider in percentage. Defaults to 50(%);
    */
-  public initDividerPosition: number;
+  public initialDividerPosition: number;
 
   private _boundMouseDownHandler: EventListenerOrEventListenerObject;
   private _boundMouseupHandler: EventListenerOrEventListenerObject;
@@ -35,7 +35,7 @@ class ResizableDividerElement extends Polymer.Element {
 
   static get properties() {
     return {
-      initDividerPosition: {
+      initialDividerPosition: {
         type: Number,
         value: 50,
       },
@@ -61,7 +61,7 @@ class ResizableDividerElement extends Polymer.Element {
     // Initialize the divider position. We need to calculate this initial
     // position relative to the container element.
     const containerRect = container.getBoundingClientRect();
-    const pos = containerRect.left + (containerRect.width * this.initDividerPosition / 100);
+    const pos = containerRect.left + (containerRect.width * this.initialDividerPosition / 100);
     this._resizePanes(pos);
   }
 

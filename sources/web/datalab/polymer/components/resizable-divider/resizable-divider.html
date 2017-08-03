@@ -19,7 +19,7 @@ the License.
 
     <style include="datalab-shared-styles">
       :host {
-        --divider-width: 5px;
+        --divider-half-width: 5px;
       }
       #container {
         height: 100%;
@@ -50,9 +50,9 @@ the License.
         position: absolute;
         top: 0px;
         bottom: 0px;
-        left: calc(50% - var(--divider-width));
-        right: calc(50% + var(--divider-width));
-        width: calc(2 * var(--divider-width));
+        left: calc(50% - var(--divider-half-width));
+        right: calc(50% + var(--divider-half-width));
+        width: calc(2 * var(--divider-half-width));
       }
       #divider.active {
         user-select: none;
