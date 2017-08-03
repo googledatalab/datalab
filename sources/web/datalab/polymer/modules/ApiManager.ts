@@ -430,7 +430,7 @@ class ApiManager {
    */
   public static sendRequestAsync(url: string, options?: XhrOptions) {
     return ApiManager.getBasePath()
-      .then((base: string) => ApiManager. _xhrJsonAsync(base + url, options));
+      .then((base: string) => ApiManager._xhrJsonAsync(base + url, options));
   }
 
   /**
@@ -440,7 +440,7 @@ class ApiManager {
    */
   public static sendTextRequestAsync(url: string, options?: XhrOptions): Promise<string> {
     return ApiManager.getBasePath()
-      .then((base: string) => ApiManager. _xhrTextAsync(base + url, options));
+      .then((base: string) => ApiManager._xhrTextAsync(base + url, options));
   }
 
   /**

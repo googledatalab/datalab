@@ -20,16 +20,13 @@ the License.
 <dom-module id="timeout-panel">
   <template>
     <style include="datalab-shared-styles">
-      #timeoutLabel {
-        color: #fff;
-        background-color: #449d44;
-        border-color: #398439;
-      }
     </style>
 
     <div id="timeoutControls" hidden={{!_timeoutControlsEnabled}}>
-      <iron-icon id="timeoutEnabledIcon" icon="image:timer" hidden="{{!_timeoutEnabled}}" on-click="_disableTimeout"></iron-icon>
-      <iron-icon id="timeoutDisabledIcon" icon="image:timer-off" hidden="{{_timeoutEnabled}}" on-click="_enableTimeout"></iron-icon>
+      <iron-icon id="timeoutEnabledIcon" icon="image:timer"
+          hidden="{{!_timeoutEnabled}}" on-click="_disableTimeout"></iron-icon>
+      <iron-icon id="timeoutDisabledIcon" icon="image:timer-off"
+          hidden="{{_timeoutEnabled}}" on-click="_enableTimeout"></iron-icon>
       <span id="timeoutText">{{_timeoutText}}</span>
     </div>
 

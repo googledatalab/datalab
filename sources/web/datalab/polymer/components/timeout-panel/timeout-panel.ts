@@ -28,6 +28,11 @@
 class TimeoutPanel extends Polymer.Element {
 
   private static _displayInterval = 1000;  // Update display every second
+  private static _hoursPerDay = 24;
+  private static _minutesPerHour = 60;
+  private static _secondsPerMinute = 60;
+  private static _secondsPerHour = TimeoutPanel._secondsPerMinute * TimeoutPanel._minutesPerHour;
+  private static _secondsPerDay = TimeoutPanel._secondsPerHour * TimeoutPanel._hoursPerDay;
   private static _queryIntervalWhenEnabled = 15 * 1000;  // How often to query when timeout is enabled
   private static _queryIntervalWhenDisabled = 60 * 1000;  // How often to query when timeout is disabled
 
@@ -69,19 +74,16 @@ class TimeoutPanel extends Polymer.Element {
   }
 
   _disableTimeout(): Promise<void> {
-    console.log('== disabling timeout');
     return TimeoutManager.setTimeoutEnabled(false)
         .then(() => this._updateTimeoutInfo());
   }
 
   _enableTimeout(): Promise<void> {
-    console.log('== enabling timeout');
     return TimeoutManager.setTimeoutEnabled(true)
         .then(() => this._updateTimeoutInfo());
   }
 
   private _updateTimeoutInfo(): Promise<void> {
-    console.log('== updateTimeoutInfo');
     this._lastQueryTime = Date.now();
     return TimeoutManager.getTimeout()
         .then((timeoutInfo) => {
@@ -92,7 +94,6 @@ class TimeoutPanel extends Polymer.Element {
 
   private _updateTimeoutDisplay(): void {
     const timeoutInfo = this._timeoutInfo;
-    // console.log('== updateTimeoutDisplay:', timeoutInfo);
     this._timeoutControlsEnabled = this._isOpen && (timeoutInfo.secondsRemaining > 0);
     this._timeoutEnabled = timeoutInfo.enabled;
     if (this._timeoutEnabled) {
@@ -116,28 +117,34 @@ class TimeoutPanel extends Polymer.Element {
   // We use rounding instead of truncating so that the user will generally see
   // the number they specified, such as "3h", rather than something like "2h 50m".
   private _roundToApproximateTime(seconds: number): number {
-    if (seconds <= 120) {
+    if (seconds <= 2 * TimeoutPanel._secondsPerMinute) {
       return seconds;  // No rounding when less than 2 minutes.
     }
-    const minutes = Math.round(seconds / 60);
+    const minutes = Math.round(seconds / TimeoutPanel._secondsPerMinute);
     if (minutes <= 20) {
-      return minutes * 60; // Round to nearest minute when under 20.5 minutes.
+      // Round to nearest minute when under 20.5 minutes.
+      return minutes * TimeoutPanel._secondsPerMinute;
     }
     if (minutes <= 60) {
-      return Math.round(minutes / 5) * 5 * 60; // Nearest 5 minutes when under 1.5 hour.
+      // Round to nearest 5 minutes when under 1.5 hour.
+      return Math.round(minutes / 5) * 5 * TimeoutPanel._secondsPerMinute;
     }
-    const hours = Math.round(minutes / 60);
+    const hours = Math.round(minutes / TimeoutPanel._secondsPerMinute);
     if (hours <= 2) {
-      return Math.round(minutes / 10) * 10 * 60; // Nearest 10 minutes when under 2.5 hours.
+      // Round to nearest 10 minutes when under 2.5 hours.
+      return Math.round(minutes / 10) * 10 * TimeoutPanel._secondsPerMinute;
     }
     if (hours <= 5) {
-      return Math.round(minutes / 30) * 30 * 60; // Nearest half hour when under 5.5 hours.
+      // Round to nearest half hour when under 5.5 hours.
+      return Math.round(minutes / 30) * 30 * TimeoutPanel._secondsPerMinute;
     }
-    const days = Math.round(hours / 24);
+    const days = Math.round(hours / TimeoutPanel._hoursPerDay);
     if (days <= 3) {
-      return hours * 60 * 60; // Nearest hour when under 3.5 days.
+      // Round to nearest hour when under 3.5 days.
+      return hours * TimeoutPanel._secondsPerHour;
     }
-    return days * 24 * 60 * 60;     // Nearest day when 3.5 days or more.
+    // Round to nearest day when 3.5 days or more.
+    return days * TimeoutPanel._secondsPerDay;
   }
 
   // Converts a number of seconds into a string that include m, h, and d units.
@@ -145,21 +152,21 @@ class TimeoutPanel extends Polymer.Element {
     let s = '';         // build a string
     let t = seconds;    // number of seconds left to convert
     let sep = '';       // separator, gets set to space once s is not null
-    if (t > 86400) {
-      const days = Math.floor(t / 86400);
-      t = t % 86400;
+    if (t > TimeoutPanel._secondsPerDay) {
+      const days = Math.floor(t / TimeoutPanel._secondsPerDay);
+      t = t % TimeoutPanel._secondsPerDay;
       s = s + sep + days + 'd';
       sep = ' ';
     }
-    if (t > 3600) {
-      const hours = Math.floor(t / 3600);
-      t = t % 3600;
+    if (t > TimeoutPanel._secondsPerHour) {
+      const hours = Math.floor(t / TimeoutPanel._secondsPerHour);
+      t = t % TimeoutPanel._secondsPerHour;
       s = s + sep + hours + 'h';
       sep = ' ';
     }
-    if (t > 60) {
-      const minutes = Math.floor(t / 60);
-      t = t % 60;
+    if (t > TimeoutPanel._secondsPerMinute) {
+      const minutes = Math.floor(t / TimeoutPanel._secondsPerMinute);
+      t = t % TimeoutPanel._secondsPerMinute;
       s = s + sep + minutes + 'm';
       sep = ' ';
     }
