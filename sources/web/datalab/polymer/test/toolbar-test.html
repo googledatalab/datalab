@@ -32,46 +32,7 @@ the License.
       </template>
     </test-fixture>
 
-    <script>
-      suite('<datalab-toolbar>', function() {
-        var testToolbar;
-        setup(function() {
-          testToolbar = fixture('toolbar-fixture');
-        });
-        test('opens and closes account menu', function() {
-          testToolbar.$.accountButton.click();
-          assert.isTrue(testToolbar.$.accountDropdown.opened);
-
-          // Click the account button again to make sure it also closes the dropdown.
-          testToolbar.$.accountButton.click();
-          assert.isFalse(testToolbar.$.accountDropdown.opened);
-        });
-        test('opens and closes info dialog', function(done) {
-          testToolbar.$.infoButton.click();
-          assert.isTrue(testToolbar.$.infoDialog.opened);
-
-          // Click the info button again to make sure it also closes the dialog.
-          // Dialogs use animations, so give it a small wait
-          setTimeout(() => {
-            testToolbar.$.infoButton.click();
-            assert.isFalse(testToolbar.$.infoDialog.opened);
-            done();
-          }, 10);
-        });
-        test('opens and closes settings dialog', function(done) {
-          testToolbar.$.settingsButton.click();
-          assert.isTrue(testToolbar.$.settingsDialog.opened);
-
-          // Click the settings button again to make sure it also closes the dialog.
-          // Dialogs use animations, so give it a small wait
-          setTimeout(() => {
-            testToolbar.$.settingsButton.click();
-            assert.isFalse(testToolbar.$.settingsDialog.opened);
-            done();
-          }, 10);
-        });
-      });
-    </script>
+    <script src="toolbar-test.js"></script>
 
   </body>
 </html>
