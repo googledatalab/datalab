@@ -12,6 +12,8 @@ or implied. See the License for the specific language governing permissions and 
 the License.
 -->
 
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
 <dom-module id="resizable-divider">
   <template>
 
@@ -30,15 +32,18 @@ the License.
         width: 50%;
         user-select: none;
       }
-      /*
+      /**
        * Slotted elements should fill the content slots, and be border-boxed so
-       * they can add padding
+       * they can add padding.
        */
       ::slotted(*) {
         width: 100%;
         height: 100%;
         box-sizing: border-box;
       }
+      /**
+      * Consider applying a style rule that can be passed to this element.
+      */
       #divider {
         cursor: col-resize;
         user-select: none;
