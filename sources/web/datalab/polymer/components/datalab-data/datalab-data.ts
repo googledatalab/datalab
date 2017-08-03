@@ -42,7 +42,6 @@ class DataElement extends Polymer.Element {
         value: () => [],
       },
       _searchValue: {
-        observer: '_search',
         type: String,
         value: '',
       },

@@ -93,7 +93,7 @@ class TablePreviewElement extends Polymer.Element {
 
   _computeCreationTime(table: gapi.client.bigquery.Table | null) {
     if (table) {
-      return new Date(parseInt(table.creationTime, 10)).toLocaleString();
+      return new Date(parseInt(table.creationTime, 10)).toUTCString();
     } else {
       return '';
     }
@@ -101,7 +101,7 @@ class TablePreviewElement extends Polymer.Element {
 
   _computeLastModifiedTime(table: gapi.client.bigquery.Table | null) {
     if (table) {
-      return new Date(parseInt(table.lastModifiedTime, 10)).toLocaleString();
+      return new Date(parseInt(table.lastModifiedTime, 10)).toUTCString();
     } else {
       return '';
     }

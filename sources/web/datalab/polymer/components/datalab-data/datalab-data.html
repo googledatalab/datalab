@@ -33,7 +33,7 @@ the License.
       div {
         font-family: var(--app-content-font-family);
         font-size: var(--app-content-font-size);
-        color: var(--app-primary-color);
+        color: var(--primary-fg-color);
       }
       #data-container {
         display: flex;
@@ -44,7 +44,28 @@ the License.
         flex-grow: 1;
       }
       #search-div {
+        position: relative;
         height: var(--toolbar-height);
+      }
+      #search-icon {
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        color: var(--primary-fg-color);
+      }
+      #searchBox {
+        border: 1px solid #ccc;
+        border-radius: 2px;
+        height: 25px;
+        width: 70%;
+        min-width: 230px;
+        max-width: 400px;
+        padding: 5px 15px;
+        transition: box-shadow 300ms;
+        text-indent: 25px;
+      }
+      #searchBox:hover {
+        box-shadow: 0px 0px 5px 0px #ccc;
       }
       .results-container {
         height: calc(100% - var(--toolbar-height));
@@ -64,14 +85,10 @@ the License.
       <div class="resultsColumn">
         <!-- Input box to enter search terms -->
         <div id="search-div">
-          <!-- TODO - could use value-changed event on paper-input to call _search
-               on every keystroke, with a delay so it fires only after the user has stopped
-               typing for a moment. -->
           <iron-a11y-keys id="searchKeys" keys="enter" on-keys-pressed="_search"></iron-a11y-keys>
-          <paper-input id="searchBox" label="Search for data" spellcheck=false autofocus
-                                      value="{{_searchValue}}" no-label-float>
-          <iron-icon icon="search" slot="prefix" on-click="_search"></iron-icon>
-          </paper-input>
+          <iron-icon icon="search" id="search-icon"></iron-icon>
+          <input id="searchBox" placeholder="Search for data, then press Enter"
+                 value="{{_searchValue::input}}"></input>
         </div>
 
         <!-- List of results -->
