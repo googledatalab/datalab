@@ -106,9 +106,9 @@ describe('<table-preview>', () => {
           'should see readable long term table size');
       assert(testFixture.$.numRows.innerText === '1,234,567,890',
           'should see comma-separated number of rows');
-      assert(testFixture.$.creationTime.innerText === '7/31/2017, 3:47:51 PM',
+      assert(testFixture.$.creationTime.innerText === 'Mon, 31 Jul 2017 22:47:51 GMT',
           'should parse timestamp into readable text');
-      assert(testFixture.$.lastModifiedTime.innerText === '8/1/2017, 10:19:54 AM',
+      assert(testFixture.$.lastModifiedTime.innerText === 'Tue, 01 Aug 2017 17:19:54 GMT',
           'should parse timestamp into readable text');
       assert(testFixture.$.location.innerText === mockTable.location, 'should see location');
 
@@ -125,6 +125,45 @@ describe('<table-preview>', () => {
 
       done();
     });
+
+    testFixture.tableId = 'pid:did.tid';
+  });
+
+  it('flattens out the provided table\'s schema if it has nested columns', (done: () => null) => {
+    const f1: gapi.client.bigquery.Field = {
+      name: 'testRegular',
+      type: 'INTEGER',
+    };
+    const f2: gapi.client.bigquery.Field = {
+      fields: [{
+        name: 'nestedLevel1',
+        type: 'nestedLevel1Type',
+      }],
+      name: 'testRecord',
+      type: 'RECORD',
+    };
+
+    testFixture.addEventListener('_table-changed', () => {
+      Polymer.dom.flush();
+
+      const rows = testFixture.$.schema.rows;
+      assert(rows[0].children[0].innerText === f1.name, 'regular field name not matching');
+      assert(rows[0].children[1].innerText === f1.type, 'regular field type not matching');
+
+      assert(rows[1].children[0].innerText === f2.name, 'record field name not matching');
+      assert(rows[1].children[1].innerText === f2.type, 'record field type not matching');
+
+      if (f2.fields) { // For transpiler to rule out undefined
+        assert(rows[2].children[0].innerText === f2.name + '.' + f2.fields[0].name,
+            'nested field name should contain parent and nested field names');
+        assert(rows[2].children[1].innerText === f2.fields[0].type,
+            'nested field type not matching');
+      }
+
+      done();
+    });
+
+    mockTable.schema.fields = [f1, f2];
 
     testFixture.tableId = 'pid:did.tid';
   });

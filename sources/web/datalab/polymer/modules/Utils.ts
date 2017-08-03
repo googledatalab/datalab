@@ -24,8 +24,8 @@ class Utils {
    * @param type specifies which type of dialog to use
    * @param dialogOptions specifies different options for opening the dialog
    */
-  public static showDialog(dialogType: typeof BaseDialogElement,
-                           dialogOptions: BaseDialogOptions): Promise<BaseDialogCloseResult> {
+  public static async showDialog(dialogType: typeof BaseDialogElement,
+                                 dialogOptions: BaseDialogOptions) {
     const dialog = document.createElement(dialogType.is) as any;
     document.body.appendChild(dialog);
 
@@ -40,7 +40,7 @@ class Utils {
         document.body.removeChild(dialog);
         resolve(closeResult);
       });
-    });
+    }) as Promise<BaseDialogCloseResult>;
   }
 
   /**
@@ -48,7 +48,7 @@ class Utils {
    * @param title error title
    * @param messageHtml error message
    */
-  static showErrorDialog(title: string, messageHtml: string) {
+  public static async showErrorDialog(title: string, messageHtml: string) {
     const dialogOptions: BaseDialogOptions = {
       isError: true,
       messageHtml,

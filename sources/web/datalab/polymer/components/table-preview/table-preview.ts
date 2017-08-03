@@ -16,6 +16,9 @@
  * Table preview pane element for Datalab.
  * This element is designed to be displayed in a side bar that displays more
  * information about a selected BigQuery table.
+ * The element flattens out the given table's schema in order to simplify the
+ * way they are presented. This is not necessarily the best experience, and we
+ * might want to revisit this.
  */
 class TablePreviewElement extends Polymer.Element {
 
@@ -53,6 +56,10 @@ class TablePreviewElement extends Polymer.Element {
         computed: '_computeNumRows(_table)',
         type: String,
       },
+      schemaFields: {
+        computed: '_computeSchemaFields(_table)',
+        type: Array,
+      },
       tableId: {
         observer: '_tableIdChanged',
         type: String,
@@ -86,7 +93,7 @@ class TablePreviewElement extends Polymer.Element {
 
   _computeCreationTime(table: gapi.client.bigquery.Table | null) {
     if (table) {
-      return new Date(parseInt(table.creationTime, 10)).toLocaleString();
+      return new Date(parseInt(table.creationTime, 10)).toUTCString();
     } else {
       return '';
     }
@@ -94,7 +101,7 @@ class TablePreviewElement extends Polymer.Element {
 
   _computeLastModifiedTime(table: gapi.client.bigquery.Table | null) {
     if (table) {
-      return new Date(parseInt(table.lastModifiedTime, 10)).toLocaleString();
+      return new Date(parseInt(table.lastModifiedTime, 10)).toUTCString();
     } else {
       return '';
     }
@@ -106,6 +113,35 @@ class TablePreviewElement extends Polymer.Element {
 
   _computeLongTermTableSize(table: gapi.client.bigquery.Table | null) {
     return table ? this._bytesToReadableSize(table.numLongTermBytes) : '';
+  }
+
+  // TODO: Consider adding expanders and nested tables to make the schema viewer
+  // narrower
+  _flattenFields(fields: gapi.client.bigquery.Field[]) {
+    const flatFields: gapi.client.bigquery.Field[] = [];
+    fields.forEach((field) => {
+
+      // First push the record field itself
+      flatFields.push(field);
+
+      // Then flatten it and push its children
+      if (field.type === 'RECORD' && field.fields) {
+        // Make sure we copy the flattened nested fields before modifying their
+        // name to prepend the parent field name. This way the original name in
+        // the schema object does not change.
+        const nestedFields = [...this._flattenFields(field.fields)];
+        nestedFields.forEach((f) => {
+          const flat = {...f};
+          flat.name = field.name + '.' + f.name;
+          flatFields.push(flat);
+        });
+      }
+    });
+    return flatFields;
+  }
+
+  _computeSchemaFields(table: gapi.client.bigquery.Table | null) {
+    return table ? this._flattenFields(table.schema.fields) : [];
   }
 
   _computeTableSize(table: gapi.client.bigquery.Table | null) {
@@ -131,6 +167,30 @@ class TablePreviewElement extends Polymer.Element {
 
   _formatMode(mode: string) {
     return mode || this.DEFAULT_MODE;
+  }
+
+  /**
+   * Opens the current table in the table schema template notebook.
+   */
+  async _openInNotebook() {
+
+    if (this._table) {
+      const tableName = this._table.id.replace(':', '.'); // Standard BigQuery table name
+      const template = new TableSchemaTemplate(tableName);
+
+      try {
+        const model = await TemplateManager.newNotebookFromTemplate(template);
+
+        if (model) {
+          const newFile = await ApiManager.saveJupyterFile(model) as JupyterFile;
+          const basePath = await ApiManager.getBasePath();
+          const prefix = location.protocol + '//' + location.host + basePath + '/';
+          window.open(prefix + 'notebooks' + '/' + newFile.path, '_blank');
+        }
+      } catch (e) {
+        Utils.showErrorDialog('Error', e.message);
+      }
+    }
   }
 
 }

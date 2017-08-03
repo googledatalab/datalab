@@ -38,3 +38,6 @@ script:
 - npm install -s -q --depth 0
 - npm test
 - for i in `ls ui/broken/`; do echo ui/broken/$i; base64 ui/broken/$i; echo \"-----\"; done
+- cd ../sources/web/datalab/polymer/test
+- export DISPLAY=:99.0
+- npm test
