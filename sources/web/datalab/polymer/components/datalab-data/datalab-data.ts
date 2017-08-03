@@ -65,10 +65,14 @@ class DataElement extends Polymer.Element {
     this.$.searchKeys.target = this.$.searchBox;
   }
 
-  /** Sends the user's query to the search API, renders results as they get returned. */
+  /**
+   * Sends the user's query to the search API, renders results as they get
+   * returned.
+   */
   _search() {
-    // TODO - clearing the resultsList may cause unnecessary refreshes, clean this up
-    //   when we figure out how we actually want to handle the search call.
+    // TODO - clearing the resultsList may cause unnecessary refreshes, clean
+    // this up when we figure out how we actually want to handle the search
+    // call.
     this._resultsList = [];
     this._sendQuery(this._searchValue, this._handleQueryResults.bind(this));
   }
@@ -104,7 +108,7 @@ class DataElement extends Polymer.Element {
           resultHandler(datasetResults);
         })
         .catch(() => {
-          // TODO: handle errors getting projects
+          // TODO: handle errors getting datasets
         });
     GapiManager.listBigQueryTables(sampleProject, searchValue /* datasetId */)
         .then((response: HttpResponse<gapi.client.bigquery.ListTablesResponse>) => {
@@ -113,7 +117,7 @@ class DataElement extends Polymer.Element {
           resultHandler(tableResults);
         })
         .catch(() => {
-          // TODO: handle errors getting projects
+          // TODO: handle errors getting tables
         });
   }
 
