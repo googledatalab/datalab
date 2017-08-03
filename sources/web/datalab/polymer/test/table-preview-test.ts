@@ -129,4 +129,43 @@ describe('<table-preview>', () => {
     testFixture.tableId = 'pid:did.tid';
   });
 
+  it('flattens out the provided table\'s schema if it has nested columns', (done: () => null) => {
+    const f1: gapi.client.bigquery.Field = {
+      name: 'testRegular',
+      type: 'INTEGER',
+    };
+    const f2: gapi.client.bigquery.Field = {
+      fields: [{
+        name: 'nestedLevel1',
+        type: 'nestedLevel1Type',
+      }],
+      name: 'testRecord',
+      type: 'RECORD',
+    };
+
+    testFixture.addEventListener('_table-changed', () => {
+      Polymer.dom.flush();
+
+      const rows = testFixture.$.schema.rows;
+      assert(rows[0].children[0].innerText === f1.name, 'regular field name not matching');
+      assert(rows[0].children[1].innerText === f1.type, 'regular field type not matching');
+
+      assert(rows[1].children[0].innerText === f2.name, 'record field name not matching');
+      assert(rows[1].children[1].innerText === f2.type, 'record field type not matching');
+
+      if (f2.fields) { // For transpiler to rule out undefined
+        assert(rows[2].children[0].innerText === f2.name + '.' + f2.fields[0].name,
+            'nested field name should contain parent and nested field names');
+        assert(rows[2].children[1].innerText === f2.fields[0].type,
+            'nested field type not matching');
+      }
+
+      done();
+    });
+
+    mockTable.schema.fields = [f1, f2];
+
+    testFixture.tableId = 'pid:did.tid';
+  });
+
 });
