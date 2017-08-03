@@ -106,9 +106,9 @@ describe('<table-preview>', () => {
           'should see readable long term table size');
       assert(testFixture.$.numRows.innerText === '1,234,567,890',
           'should see comma-separated number of rows');
-      assert(testFixture.$.creationTime.innerText === '7/31/2017, 3:47:51 PM',
+      assert(testFixture.$.creationTime.innerText === 'Mon, 31 Jul 2017 22:47:51 GMT',
           'should parse timestamp into readable text');
-      assert(testFixture.$.lastModifiedTime.innerText === '8/1/2017, 10:19:54 AM',
+      assert(testFixture.$.lastModifiedTime.innerText === 'Tue, 01 Aug 2017 17:19:54 GMT',
           'should parse timestamp into readable text');
       assert(testFixture.$.location.innerText === mockTable.location, 'should see location');
 
