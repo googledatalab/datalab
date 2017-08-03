@@ -17,27 +17,30 @@ the License.
 
     <style include="datalab-shared-styles">
       :host {
-        --divider-width: 4px;
+        --divider-width: 5px;
       }
       #container {
         height: 100%;
         width: 100%;
         display: flex;
+        position: relative;
       }
-      .pane, #divider {
+      .pane {
         overflow: auto;
-        width: calc(50% - var(--divider-width));
+        width: 50%;
         user-select: none;
       }
       #divider {
         cursor: col-resize;
-        width: calc(2 * var(--divider-width));
         user-select: none;
-        box-shadow: inset 0px 0px 5px 1px #ccc;
-        z-index: 1;
+        position: absolute;
+        top: 0px;
+        bottom: 0px;
+        left: calc(50% - var(--divider-width));
+        right: calc(50% + var(--divider-width));
+        width: calc(2 * var(--divider-width));
       }
       #divider.active {
-        box-shadow: inset 0px 0px 5px 2px #ccc;
         user-select: none;
       }
     </style>

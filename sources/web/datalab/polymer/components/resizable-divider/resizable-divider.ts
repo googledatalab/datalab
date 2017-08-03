@@ -31,8 +31,6 @@ class ResizableDividerElement extends Polymer.Element {
   private _boundMouseDownHandler: EventListenerOrEventListenerObject;
   private _boundMouseupHandler: EventListenerOrEventListenerObject;
   private _boundMouseMoveHandler: EventListenerOrEventListenerObject;
-  private _dividerWidth = 4; // This matches the css variable --divider-width
-
   static get is() { return 'resizable-divider'; }
 
   static get properties() {
@@ -92,12 +90,14 @@ class ResizableDividerElement extends Polymer.Element {
    */
   _resizePanes(newPos: number) {
     const container = this.$.container as HTMLDivElement;
+    const divider = this.$.divider as HTMLDivElement;
     const p1 = this.$.p1 as HTMLDivElement;
     const p2 = this.$.p2 as HTMLDivElement;
+
     const containerRect = container.getBoundingClientRect();
 
-    const newP1Width = newPos - containerRect.left - this._dividerWidth;
-    const newP2Width = containerRect.right - newPos - this._dividerWidth;
+    const newP1Width = newPos - containerRect.left;
+    const newP2Width = containerRect.right - newPos;
 
     // Stop if either pane is getting too small
     if (newP1Width < this.minimumWidthPx || newP2Width < this.minimumWidthPx) {
@@ -106,6 +106,7 @@ class ResizableDividerElement extends Polymer.Element {
 
     p1.style.width = newP1Width / containerRect.width * 100 + '%';
     p2.style.width = newP2Width / containerRect.width * 100 + '%';
+    divider.style.left = p1.style.width;
   }
 
 }
