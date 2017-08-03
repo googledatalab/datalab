@@ -140,10 +140,10 @@ class TablePreviewElement extends Polymer.Element {
 
     if (this._table) {
       const tableName = this._table.id.replace(':', '.'); // Standard BigQuery table name
-      const t = new TableSchemaTemplate(tableName);
+      const template = new TableSchemaTemplate(tableName);
 
       try {
-        const model = await TemplateManager.newNotebookFromTemplate(t);
+        const model = await TemplateManager.newNotebookFromTemplate(template);
 
         if (model) {
           const newFile = await ApiManager.saveJupyterFile(model) as JupyterFile;
