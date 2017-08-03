@@ -169,6 +169,30 @@ class TablePreviewElement extends Polymer.Element {
     return mode || this.DEFAULT_MODE;
   }
 
+  /**
+   * Opens the current table in the table schema template notebook.
+   */
+  async _openInNotebook() {
+
+    if (this._table) {
+      const tableName = this._table.id.replace(':', '.'); // Standard BigQuery table name
+      const template = new TableSchemaTemplate(tableName);
+
+      try {
+        const model = await TemplateManager.newNotebookFromTemplate(template);
+
+        if (model) {
+          const newFile = await ApiManager.saveJupyterFile(model) as JupyterFile;
+          const basePath = await ApiManager.getBasePath();
+          const prefix = location.protocol + '//' + location.host + basePath + '/';
+          window.open(prefix + 'notebooks' + '/' + newFile.path, '_blank');
+        }
+      } catch (e) {
+        Utils.showErrorDialog('Error', e.message);
+      }
+    }
+  }
+
 }
 
 customElements.define(TablePreviewElement.is, TablePreviewElement);
