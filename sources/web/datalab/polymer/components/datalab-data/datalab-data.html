@@ -44,7 +44,7 @@ the License.
         height: 100%;
       }
       .resultsColumn {
-        margin: 15px;
+        padding: 15px;
         flex-grow: 1;
       }
       #search-div {
@@ -81,7 +81,6 @@ the License.
       #previewPane {
         background-color: var(--secondary-bg-color);
         box-shadow: inset 4px 0px 10px -3px rgba(0, 0, 0, 0.1);
-        width: var(--preview-pane-width);
       }
     </style>
 
@@ -95,9 +94,8 @@ the License.
             <iron-a11y-keys id="searchKeys" keys="enter" on-keys-pressed="_search"></iron-a11y-keys>
             <iron-icon icon="search" id="search-icon"></iron-icon>
             <input id="searchBox" placeholder="Search for data, then press Enter"
-                 value="{{_searchValue::input}}"></input>
+                value="{{_searchValue::input}}">
           </div>
-
           <!-- List of results -->
           <div class='results-container'>
             <item-list id="results"></item-list>
