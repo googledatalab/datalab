@@ -30,6 +30,10 @@ the License.
         width: 50%;
         user-select: none;
       }
+      /*
+       * Slotted elements should fill the content slots, and be border-boxed so
+       * they can add padding
+       */
       ::slotted(*) {
         width: 100%;
         height: 100%;
@@ -47,6 +51,7 @@ the License.
       }
       #divider.active {
         user-select: none;
+        background-color: var(--selection-bg-color);
       }
     </style>
 
