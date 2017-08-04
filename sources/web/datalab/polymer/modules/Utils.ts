@@ -104,4 +104,11 @@ class Utils {
     }
   }
 
+  /**
+   * Given a string type for an item, return the name of the icon to use.
+   */
+  public static getItemIconString(type: string) {
+    return type === 'directory' ? 'folder' : 'editor:insert-drive-file';
+  }
+
 }

@@ -12,15 +12,16 @@
  * the License.
  */
 
-/// <reference path="../node_modules/@types/mocha/index.d.ts" />
-/// <reference path="../node_modules/@types/chai/index.d.ts" />
-/// <reference path="../node_modules/@types/sinon/index.d.ts" />
-/// <reference path="../components/datalab-files/datalab-files.ts" />
-
 describe('<datalab-files>', () => {
   let testFixture: FilesElement;
   const startuppath = 'testpath';
   const basepath = 'basepath';
+
+  const mockFiles: ApiFile[] = [
+    {content: '', format: '', name: 'file1', path: '/', type: 'directory', status: ''},
+    {content: '', format: '', name: 'file2', path: '/', type: 'directory', status: ''},
+    {content: '', format: '', name: 'file3', path: '/', type: 'directory', status: ''},
+  ];
 
   before(() => {
     SettingsManager.getUserSettingsAsync = (forceRefresh: boolean) => {
@@ -40,24 +41,44 @@ describe('<datalab-files>', () => {
     ApiManager.listFilesAsync = (path: string) => {
       assert(path === basepath + '/' + startuppath,
           'listFilesAsync should be called with the base path and startup path');
-      const files: ApiFile[] = [
-        {content: '', format: '', name: 'file1', path: '/', type: 'folder', status: ''},
-        {content: '', format: '', name: 'file2', path: '/', type: 'folder', status: ''},
-        {content: '', format: '', name: 'file3', path: '/', type: 'folder', status: ''},
-      ];
-      return Promise.resolve(files);
+      return Promise.resolve(mockFiles);
     };
   });
 
   beforeEach((done: () => any) => {
     testFixture = fixture('files-fixture');
     testFixture.ready()
-      .then(() => done());
+      .then(() => {
+        Polymer.dom.flush();
+        done();
+      });
+  });
+
+  it('gets the base path correctly', () => {
+    assert(testFixture.basePath === basepath, 'incorrect base path');
+  });
+
+  it('gets the startup path correctly', () => {
+    assert(testFixture.currentPath === startuppath, 'incorrect startup path');
   });
 
   it('displays list of files correctly', () => {
-    Polymer.dom.flush();
-    assert(testFixture.fileList.length === 3, 'should have three files');
-    debugger;
+    const files: ItemListElement = testFixture.$.files;
+    assert(files.rows.length === 3, 'should have three files');
+
+    mockFiles.forEach((file: ApiFile, i: number) => {
+      assert(files.rows[i].firstCol === file.name,
+          'mock file ' + i + 'name not shown in first column');
+      assert(files.rows[i].icon === Utils.getItemIconString(file.type),
+          'mock file ' + i + ' type not shown as icon');
+    });
+  });
+
+  it('starts up with no files selected, and no files running', () => {
+    const files: ItemListElement = testFixture.$.files;
+    files.rows.forEach((row: ItemListRow, i: number) => {
+      assert(row.secondCol === '', 'file ' + i + 'should have an empty status');
+      assert(!row.selected, 'file ' + i + ' should not be selected');
+    });
   });
 });

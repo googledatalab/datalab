@@ -12,10 +12,6 @@
  * the License.
  */
 
-/// <reference path="../node_modules/@types/mocha/index.d.ts" />
-/// <reference path="../node_modules/@types/chai/index.d.ts" />
-/// <reference path="../components/item-list/item-list.ts" />
-
 /*
  * For all Polymer component testing, be sure to call Polymer's flush() after
  * any code that will cause shadow dom redistribution, such as observed array

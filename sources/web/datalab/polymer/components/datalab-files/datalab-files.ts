@@ -33,9 +33,14 @@
  * and no selection. It also doesn't do anything when a file is double clicked.
  * This is meant to be used for browsing only, such as the case for picking files or directories.
  */
-class FilesElement extends BaseElement {
+class FilesElement extends Polymer.Element {
 
   private static readonly _deleteListLimit = 10;
+
+  /**
+   * Promise that gets resolved when the element finished initialization.
+   */
+  public readyPromise: Promise<void>;
 
   /**
    * The base path to start navigation from
@@ -57,13 +62,10 @@ class FilesElement extends BaseElement {
    */
   public small: boolean;
 
-  public loadPromise: Promise<any>;
-
-  public fileList: ApiFile[];
-
   private _pathHistory: string[];
   private _pathHistoryIndex: number;
   private _fetching: boolean;
+  private _fileList: ApiFile[];
   private _fileListRefreshInterval = 60 * 1000;
   private _fileListRefreshIntervalHandle = 0;
   private _currentCrumbs: string[];
@@ -84,6 +86,10 @@ class FilesElement extends BaseElement {
       _fetching: {
         type: Boolean,
         value: false,
+      },
+      _fileList: {
+        type: Array,
+        value: () => [],
       },
       _isDetailsPaneEnabled: {
         computed: '_getDetailsPaneEnabled(small, _isDetailsPaneToggledOn)',
@@ -111,10 +117,6 @@ class FilesElement extends BaseElement {
         type: String,
         value: '',
       },
-      fileList: {
-        type: Array,
-        value: () => [],
-      },
       selectedFile: {
         type: Object,
         value: null,
@@ -130,44 +132,57 @@ class FilesElement extends BaseElement {
    * Called when when the element's local DOM is ready and initialized We use it
    * to initialize element state.
    */
-  _init() {
+  async ready() {
+    // Must set this to true before calling super.ready(), because the latter will cause
+    // property updates that will cause _fetchFileList to be called first, we don't want
+    // that. We want ready() to be the entry point so it gets the user's last saved path.
     this._fetching = true;
-    return ApiManager.getBasePath()
-      .then((basepath: string) => this.basePath = basepath)
+    super.ready();
+    this._fetching = false;
+
+    this.basePath = await ApiManager.getBasePath();
+
+    // Using a ready promise might be common enough a need that we should
+    // consider adding it to a super class, maybe DatalabElement. For now it's
+    // only needed here in this element.
+    if (!this.readyPromise) {
       // Get the last startup path.
-      .then(() => SettingsManager.getUserSettingsAsync(true /*forceRefresh*/))
-      .then((settings: common.UserSettings) => {
-        if (settings.startuppath) {
-          let path = settings.startuppath;
-          if (path.startsWith(this.basePath)) {
-            path = path.substr(this.basePath.length);
+      this.readyPromise = SettingsManager.getUserSettingsAsync(true /*forceRefresh*/)
+        .then((settings: common.UserSettings) => {
+          if (settings.startuppath) {
+            let path = settings.startuppath;
+            if (path.startsWith(this.basePath)) {
+              path = path.substr(this.basePath.length);
+            }
+            // For backward compatibility with the current path format.
+            if (path.startsWith('/tree/')) {
+              path = path.substr('/tree/'.length);
+            }
+            this.currentPath = path;
           }
-          // For backward compatibility with the current path format.
-          if (path.startsWith('/tree/')) {
-            path = path.substr('/tree/'.length);
+        })
+        .catch(() => console.error('Failed to get the user settings.'))
+        .then(() => {
+
+          this._resizeHandler();
+          this._focusHandler();
+
+          const filesElement = this.shadowRoot.querySelector('#files');
+          if (filesElement) {
+            filesElement.addEventListener('itemDoubleClick',
+                                          this._handleDoubleClicked.bind(this));
+            filesElement.addEventListener('selected-indices-changed',
+                                          this._handleSelectionChanged.bind(this));
           }
-          this.currentPath = path;
-        }
-      })
-      .catch(() => console.log('Failed to get the user settings.'))
-      .then(() => {
-        this._resizeHandler();
-        this._focusHandler();
 
-        const filesElement = this.shadowRoot.querySelector('#files');
-        if (filesElement) {
-          filesElement.addEventListener('itemDoubleClick',
-                                        this._handleDoubleClicked.bind(this));
-          filesElement.addEventListener('selected-indices-changed',
-                                        this._handleSelectionChanged.bind(this));
-        }
+          // For a small file/directory picker, we don't need to show the status.
+          (this.$.files as ItemListElement).columns = this.small ? ['Name'] : ['Name', 'Status'];
 
-        // For a small file/directory picker, we don't need to show the status.
-        (this.$.files as ItemListElement).columns = this.small ? ['Name'] : ['Name', 'Status'];
+          return this._fetchFileList();
+        });
+    }
 
-        this._fetching = true;
-        return this._fetchFileList();
-      });
+    return this.readyPromise;
   }
 
   disconnectedCallback() {
@@ -195,11 +210,11 @@ class FilesElement extends BaseElement {
 
   /**
    * Calls the ApiManager to get the list of files at the current path, and
-   * updates the fileList property.
+   * updates the _fileList property.
    * @param throwOnError whether to throw an exception if the refresh fails. This
    *                     is false by default because throwing is currently not used.
    */
-  _fetchFileList(throwOnError = false): Promise<void> {
+  _fetchFileList(throwOnError = false): Promise<any> {
     // Don't overlap fetch requests. This can happen because we set up fetch from several sources:
     // - Initialization in the ready() event handler.
     // - Refresh mechanism called by the setInterval().
@@ -209,11 +224,9 @@ class FilesElement extends BaseElement {
       return Promise.resolve();
     }
 
-    return this.ready()
-      .then(() => {
-        this._fetching = true;
-        return ApiManager.listFilesAsync(this.basePath + '/' + this.currentPath);
-      })
+    this._fetching = true;
+
+    return ApiManager.listFilesAsync(this.basePath + '/' + this.currentPath)
       .then((newList) => {
         // Only refresh the UI list if there are any changes. This helps keep
         // the item list's selections intact most of the time
@@ -222,8 +235,8 @@ class FilesElement extends BaseElement {
         // one item changes. This is tricky because we don't have unique
         // ids for the items. Using paths might work for files, but is not
         // a clean solution.
-        if (JSON.stringify(this.fileList) !== JSON.stringify(newList)) {
-          this.fileList = newList;
+        if (JSON.stringify(this._fileList) !== JSON.stringify(newList)) {
+          this._fileList = newList;
           this._drawFileList();
         }
       })
@@ -232,9 +245,7 @@ class FilesElement extends BaseElement {
           throw new Error('Error getting list of files: ' + e.message);
         }
       })
-      .then(() => {
-        this._fetching = false;
-      });
+      .then(() => this._fetching = false);
   }
 
   /**
@@ -263,10 +274,10 @@ class FilesElement extends BaseElement {
    * the created list to the item-list to render.
    */
   _drawFileList() {
-    (this.$.files as ItemListElement).rows = this.fileList.map((file) => {
+    (this.$.files as ItemListElement).rows = this._fileList.map((file) => {
       return {
         firstCol: file.name,
-        icon: file.type === 'directory' ? 'folder' : 'editor:insert-drive-file',
+        icon: Utils.getItemIconString(file.type),
         secondCol: file.status,
         selected: false
       };
@@ -281,7 +292,7 @@ class FilesElement extends BaseElement {
    * an effect, a directory will still navigate.
    */
   _handleDoubleClicked(e: ItemClickEvent) {
-    const clickedItem = this.fileList[e.detail.index];
+    const clickedItem = this._fileList[e.detail.index];
     if (this.small && clickedItem.type !== 'directory') {
       return;
     }
@@ -304,7 +315,7 @@ class FilesElement extends BaseElement {
   _handleSelectionChanged() {
     const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
     if (selectedIndices.length === 1) {
-      this.selectedFile = this.fileList[selectedIndices[0]];
+      this.selectedFile = this._fileList[selectedIndices[0]];
     } else {
       this.selectedFile = null;
     }
@@ -537,7 +548,7 @@ class FilesElement extends BaseElement {
     const selectedIndices = filesElement.selectedIndices;
     if (selectedIndices.length === 1) {
       const i = selectedIndices[0];
-      const selectedObject = this.fileList[i];
+      const selectedObject = this._fileList[i];
 
       this._getEditorUrl(selectedObject.path)
         .then((url) => window.open(url, '_blank'));
@@ -554,7 +565,7 @@ class FilesElement extends BaseElement {
     const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
     if (selectedIndices.length === 1) {
       const i = selectedIndices[0];
-      const selectedObject = this.fileList[i];
+      const selectedObject = this._fileList[i];
 
       // Open a dialog to let the user specify the new name for the selected item.
       const inputOptions: InputDialogOptions = {
@@ -605,7 +616,7 @@ class FilesElement extends BaseElement {
       // Title
       if (num === 1) {
         const i = selectedIndices[0];
-        const selectedObject = this.fileList[i];
+        const selectedObject = this._fileList[i];
         title += selectedObject.type.toString();
       } else {
         title += num + ' items';
@@ -615,7 +626,7 @@ class FilesElement extends BaseElement {
       let itemList = '<ul>\n';
       selectedIndices.forEach((fileIdx: number, i: number) => {
         if (i < FilesElement._deleteListLimit) {
-          itemList += '<li>' + this.fileList[fileIdx].name + '</li>\n';
+          itemList += '<li>' + this._fileList[fileIdx].name + '</li>\n';
         }
       });
       if (num > FilesElement._deleteListLimit) {
@@ -638,7 +649,7 @@ class FilesElement extends BaseElement {
         .then((closeResult: BaseDialogCloseResult) => {
           if (closeResult.confirmed) {
             const deletePromises = selectedIndices.map((i: number) => {
-              return ApiManager.deleteItem(this.fileList[i].path);
+              return ApiManager.deleteItem(this._fileList[i].path);
             });
             // TODO: [yebrahim] If at least one delete fails, _fetchFileList will never be called,
             // even if some other deletes completed.
@@ -687,7 +698,7 @@ class FilesElement extends BaseElement {
 
     if (selectedIndices.length === 1) {
       const i = selectedIndices[0];
-      const selectedObject = this.fileList[i];
+      const selectedObject = this._fileList[i];
 
       const options: DirectoryPickerDialogOptions = {
         big: true,
@@ -727,7 +738,7 @@ class FilesElement extends BaseElement {
 
     if (selectedIndices.length === 1) {
       const i = selectedIndices[0];
-      const selectedObject = this.fileList[i];
+      const selectedObject = this._fileList[i];
 
       const options: DirectoryPickerDialogOptions = {
         big: true,

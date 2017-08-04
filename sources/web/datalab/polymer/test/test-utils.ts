@@ -12,5 +12,8 @@
  * the License.
  */
 
-declare function assert(condition: boolean, message?: string): null;
+/// <reference path="../node_modules/@types/mocha/index.d.ts" />
+/// <reference path="../node_modules/@types/chai/index.d.ts" />
+
+declare function assert(condition: boolean, message: string): null;
 declare function fixture(element: string): any;
