@@ -19,19 +19,42 @@ the License.
 
     <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
     <script src="../../web-component-tester/browser.js"></script>
-    <script src="test-utils.js"></script>
+
+    <link rel="import" href="../components/resizable-divider/resizable-divider.html">
   </head>
   <body>
-    <script>
-      // Load and run all tests (.html, .js). Keep element tests in HTML files so we
-      // can use fixtures, and keep all other tests in javascript files
-      WCT.loadSuites([
-        'files-test.html',
-        'item-list-test.html',
-        'resizable-divider-test.html',
-        'table-preview-test.html',
-        'toolbar-test.html',
-      ]);
-    </script>
+
+    <style>
+      #container {
+        height: 800px;
+        width: 400px;
+      }
+      #left-pane, #right-pane {
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <div id="container">
+      <test-fixture id="resizable-divider-fixture">
+        <template>
+            <resizable-divider>
+              <div slot="left">
+                <div id="left-pane">
+                  left pane
+                </div>
+              </div>
+              <div slot="right">
+                <div id="right-pane">
+                  right pane
+                </div>
+              </div>
+            </resizable-divider>
+        </template>
+      </test-fixture>
+    </div>
+
+    <script src="resizable-divider-test.js"></script>
+
   </body>
 </html>
