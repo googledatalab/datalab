@@ -144,6 +144,11 @@ class ApiManager {
   public static readonly appSettingsUrl = '/api/settings';
 
   /**
+   * URL for timeout info
+   */
+  public static readonly timeoutUrl = '/_timeout';
+
+  /**
    * Current connection status. Set to the last connection status.
    */
   public static isConnected = true;
@@ -420,12 +425,22 @@ class ApiManager {
 
   /**
    * Sends an XMLHttpRequest to the specified URL, adding the required
-   * base path. This method returns immediately with a promise
-   * that resolves with the parsed object when the request completes.
+   * base path, and expecting a JSON response. This method returns immediately
+   * with a promise that resolves with the parsed object when the request completes.
    */
   public static sendRequestAsync(url: string, options?: XhrOptions) {
     return ApiManager.getBasePath()
-      .then((base: string) => ApiManager. _xhrJsonAsync(base + url, options));
+      .then((base: string) => ApiManager._xhrJsonAsync(base + url, options));
+  }
+
+  /**
+   * Sends an XMLHttpRequest to the specified URL, adding the required
+   * base path, and expecting a text response. This method returns immediately
+   * with a promise that resolves with the returned text when the request completes.
+   */
+  public static sendTextRequestAsync(url: string, options?: XhrOptions): Promise<string> {
+    return ApiManager.getBasePath()
+      .then((base: string) => ApiManager._xhrTextAsync(base + url, options));
   }
 
   /**
@@ -441,9 +456,9 @@ class ApiManager {
   /**
    * Sends an XMLHttpRequest to the specified URL, and returns the
    * the response text. This method returns immediately with a promise
-   * that resolves with the parsed object when the request completes.
+   * that resolves with the response text when the request completes.
    */
-  private static _xhrTextAsync(url: string, options?: XhrOptions) {
+  private static _xhrTextAsync(url: string, options?: XhrOptions): Promise<string> {
 
     options = options || {};
     const method = options.method || 'GET';
