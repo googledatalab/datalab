@@ -15,7 +15,6 @@
 describe('<datalab-files>', () => {
   let testFixture: FilesElement;
   const startuppath = 'testpath';
-  const basepath = 'basepath';
 
   const mockFiles: ApiFile[] = [
     {content: '', format: '', name: 'file1', path: '/', type: 'directory', status: ''},
@@ -36,11 +35,10 @@ describe('<datalab-files>', () => {
       return Promise.resolve(mockSettings);
     };
     ApiManager.getBasePath = () => {
-      return Promise.resolve(basepath);
+      return Promise.resolve('');
     };
     ApiManager.listFilesAsync = (path: string) => {
-      assert(path === basepath + '/' + startuppath,
-          'listFilesAsync should be called with the base path and startup path');
+      assert(path === startuppath, 'listFilesAsync should be called with the startup path');
       return Promise.resolve(mockFiles);
     };
   });
@@ -52,10 +50,6 @@ describe('<datalab-files>', () => {
         Polymer.dom.flush();
         done();
       });
-  });
-
-  it('gets the base path correctly', () => {
-    assert(testFixture.basePath === basepath, 'incorrect base path');
   });
 
   it('gets the startup path correctly', () => {

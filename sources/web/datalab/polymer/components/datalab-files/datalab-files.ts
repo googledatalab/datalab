@@ -43,11 +43,6 @@ class FilesElement extends Polymer.Element {
   public readyPromise: Promise<void>;
 
   /**
-   * The base path to start navigation from
-   */
-  public basePath: string;
-
-  /**
    * The current navigation path
    */
   public currentPath: string;
@@ -108,10 +103,6 @@ class FilesElement extends Polymer.Element {
         type: Number,
         value: -1,
       },
-      basePath: {
-        type: String,
-        value: '/',
-      },
       currentPath: {
         observer: '_currentPathChanged',
         type: String,
@@ -137,23 +128,18 @@ class FilesElement extends Polymer.Element {
     // property updates that will cause _fetchFileList to be called first, we don't want
     // that. We want ready() to be the entry point so it gets the user's last saved path.
     this._fetching = true;
+
     super.ready();
-    this._fetching = false;
 
-    this.basePath = await ApiManager.getBasePath();
-
-    // Using a ready promise might be common enough a need that we should
-    // consider adding it to a super class, maybe DatalabElement. For now it's
-    // only needed here in this element.
+    // TODO: Using a ready promise might be common enough a need that we should
+    // consider adding it to a super class, maybe DatalabElement. For now, this
+    // is the only element that needs it.
     if (!this.readyPromise) {
       // Get the last startup path.
       this.readyPromise = SettingsManager.getUserSettingsAsync(true /*forceRefresh*/)
         .then((settings: common.UserSettings) => {
           if (settings.startuppath) {
             let path = settings.startuppath;
-            if (path.startsWith(this.basePath)) {
-              path = path.substr(this.basePath.length);
-            }
             // For backward compatibility with the current path format.
             if (path.startsWith('/tree/')) {
               path = path.substr('/tree/'.length);
@@ -178,6 +164,7 @@ class FilesElement extends Polymer.Element {
           // For a small file/directory picker, we don't need to show the status.
           (this.$.files as ItemListElement).columns = this.small ? ['Name'] : ['Name', 'Status'];
 
+          this._fetching = false;
           return this._fetchFileList();
         });
     }
@@ -226,7 +213,7 @@ class FilesElement extends Polymer.Element {
 
     this._fetching = true;
 
-    return ApiManager.listFilesAsync(this.basePath + '/' + this.currentPath)
+    return ApiManager.listFilesAsync(this.currentPath)
       .then((newList) => {
         // Only refresh the UI list if there are any changes. This helps keep
         // the item list's selections intact most of the time
