@@ -7,11 +7,11 @@ Python, SQL, JavaScript, and the [Google Cloud Platform](https://cloud.google.co
 
 ![Google Cloud Datalab Beta](docs/screenshot.png)
 
-DataLab builds on the interactive notebooks, and the foundation of [Jupyter](https://jupyter.org)
+Cloud DataLab builds on the interactive notebooks, and the foundation of [Jupyter](https://jupyter.org)
 (formerly IPython) to enable developers, data scientists and data analysts to easily work with
 their data from exploration to developing and deploying data pipelines, all within notebooks.
 
-DataLab deeply integrates into Google Cloud Platform to allow users to extract insights and harness
+Cloud DataLab deeply integrates into Google Cloud Platform to allow users to extract insights and harness
 the full value of their data. It provides a secure environment for members of a cloud project
 to effortlessly access data and resources accessible from the project, and to share notebooks via
 git.
@@ -21,9 +21,9 @@ You can see an example of the notebooks by browsing through the
 which are themselves written in the form of notebooks.
 
 
-## Using DataLab and Getting Started
+## Using Cloud DataLab and Getting Started
 
-DataLab is packaged as a docker container which contains Jupyter/IPython, and a variety of python
+Cloud DataLab is packaged as a docker container which contains Jupyter/IPython, and a variety of python
 libraries such as numpy, pandas, scikit-learn and matplotlib, in a ready-to-use form.
 
 You can run the docker container locally or in GCE, as described in the
@@ -31,14 +31,14 @@ You can run the docker container locally or in GCE, as described in the
 
 ### Contacting Us
 
-For support or help using DataLab, please submit questions tagged with `google-cloud-datalab` on [StackOverflow](https://stackoverflow.com/questions/tagged/google-cloud-datalab).
+For support or help using Cloud DataLab, please submit questions tagged with `google-cloud-datalab` on [StackOverflow](https://stackoverflow.com/questions/tagged/google-cloud-datalab).
 
 For any product issues, you can either [submit issues](https://github.com/googledatalab/datalab/issues)
 here on this project page, or you can submit your feedback using the feedback link available
 within the product.
 
 
-## Developing DataLab
+## Developing Cloud DataLab
 
 ### Building and Running
 
