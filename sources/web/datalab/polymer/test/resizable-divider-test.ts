@@ -61,8 +61,8 @@ describe('<resizable-divider>', () => {
     assert(!!left, 'left pane should exist under the divider element');
     assert(!!right, 'right pane should exist under the divider element');
 
-    assert(left.innerText === 'left pane', 'left pane\'s contents should appear in first slot');
-    assert(right.innerText === 'right pane', 'right pane\'s contents should appear in second slot');
+    assert(left.innerText === 'left pane', 'left pane\'s contents should appear in left slot');
+    assert(right.innerText === 'right pane', 'right pane\'s contents should appear in right slot');
   });
 
   it('shows left pane to the left of the right pane, and divider in between', () => {

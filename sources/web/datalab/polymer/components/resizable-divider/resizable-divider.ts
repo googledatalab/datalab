@@ -91,22 +91,22 @@ class ResizableDividerElement extends Polymer.Element {
   _resizePanes(newPos: number) {
     const container = this.$.container as HTMLDivElement;
     const divider = this.$.divider as HTMLDivElement;
-    const p1 = this.$.p1 as HTMLDivElement;
-    const p2 = this.$.p2 as HTMLDivElement;
+    const leftPane = this.$.leftPane as HTMLDivElement;
+    const rightPane = this.$.rightPane as HTMLDivElement;
 
     const containerRect = container.getBoundingClientRect();
 
-    const newP1Width = newPos - containerRect.left;
-    const newP2Width = containerRect.right - newPos;
+    const newLeftPaneWidth = newPos - containerRect.left;
+    const newRightPaneWidth = containerRect.right - newPos;
 
     // Stop if either pane is getting too small
-    if (newP1Width < this.minimumWidthPx || newP2Width < this.minimumWidthPx) {
+    if (newLeftPaneWidth < this.minimumWidthPx || newRightPaneWidth < this.minimumWidthPx) {
       return;
     }
 
-    p1.style.width = newP1Width / containerRect.width * 100 + '%';
-    p2.style.width = newP2Width / containerRect.width * 100 + '%';
-    divider.style.left = p1.style.width;
+    leftPane.style.width = newLeftPaneWidth / containerRect.width * 100 + '%';
+    rightPane.style.width = newRightPaneWidth / containerRect.width * 100 + '%';
+    divider.style.left = leftPane.style.width;
   }
 
 }
