@@ -29,7 +29,6 @@ interface Result {
  */
 class DataElement extends Polymer.Element {
 
-  private _isDetailsPaneToggledOn: boolean;
   private _resultsList: Result[];
   private _searchValue: string;
 
@@ -37,10 +36,6 @@ class DataElement extends Polymer.Element {
 
   static get properties() {
     return {
-      _isDetailsPaneToggledOn: {
-        type: Boolean,
-        value: true,
-      },
       _resultsList: {
         observer: '_renderResultsList',
         type: Array,
@@ -69,10 +64,14 @@ class DataElement extends Polymer.Element {
     this.$.searchKeys.target = this.$.searchBox;
   }
 
-  /** Sends the user's query to the search API, renders results as they get returned. */
+  /**
+   * Sends the user's query to the search API, renders results as they get
+   * returned.
+   */
   _search() {
-    // TODO - clearing the resultsList may cause unnecessary refreshes, clean this up
-    //   when we figure out how we actually want to handle the search call.
+    // TODO - clearing the resultsList may cause unnecessary refreshes, clean
+    // this up when we figure out how we actually want to handle the search
+    // call.
     this._resultsList = [];
     this._sendQuery(this._searchValue, this._handleQueryResults.bind(this));
   }
@@ -95,6 +94,9 @@ class DataElement extends Polymer.Element {
           console.log('== projects: ', response);
           const projectResults: Result[] = response.result.projects.map(this._bqProjectToResult.bind(this)) as Result[];
           resultHandler(projectResults);
+        })
+        .catch(() => {
+          // TODO: handle errors getting projects
         });
     // The filter arg when querying for datasets must be of the form labels.<name>[:<value>],
     // see https://cloud.google.com/bigquery/docs/reference/rest/v2/datasets/list
@@ -103,12 +105,18 @@ class DataElement extends Polymer.Element {
           console.log('== datasets: ', response);
           const datasetResults: Result[] = response.result.datasets.map(this._bqDatasetToResult.bind(this)) as Result[];
           resultHandler(datasetResults);
+        })
+        .catch(() => {
+          // TODO: handle errors getting datasets
         });
     GapiManager.listBigQueryTables(sampleProject, searchValue /* datasetId */)
         .then((response: HttpResponse<gapi.client.bigquery.ListTablesResponse>) => {
           console.log('== tables: ', response);
           const tableResults: Result[] = response.result.tables.map(this._bqTableToResult.bind(this)) as Result[];
           resultHandler(tableResults);
+        })
+        .catch(() => {
+          // TODO: handle errors getting tables
         });
   }
 
@@ -157,35 +165,20 @@ class DataElement extends Polymer.Element {
     return typeMap[type] || 'folder';
   }
 
-  _showDetailsForResult(result: Result) {
-    this.$.detailsPane.innerHTML =
-        'Selection: <b>' + result.name + '</b><br>' +
-        'Type: <b>' + result.type + '</b>';
-  }
-
-  _clearDetails() {
-    this.$.detailsPane.innerHTML = '';
-  }
-
   _resultsDoubleClicked() {
     console.log('== result double-clicked');
   }
 
   _resultsSelectionChanged() {
-    console.log('== result selection changed');
     const selectedIndices = (this.$.results as ItemListElement).selectedIndices;
     if (selectedIndices.length === 1) {
-      this._showDetailsForResult(this._resultsList[selectedIndices[0]]);
+      const selectedItem = this._resultsList[selectedIndices[0]];
+      if (selectedItem.type === 'table') {
+        (this.$.preview as TablePreviewElement).tableId = selectedItem.name;
+      }
     } else {
-      this._clearDetails();
+      (this.$.preview as TablePreviewElement).tableId = '';
     }
-  }
-
-  /**
-   * Switches details pane on or off.
-   */
-  _toggleDetailsPane() {
-    this._isDetailsPaneToggledOn = !this._isDetailsPaneToggledOn;
   }
 }
 

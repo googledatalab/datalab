@@ -14,6 +14,7 @@ the License.
 
 <link rel="import" href="../../components/item-list/item-list.html">
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
+<link rel="import" href="../../components/table-preview/table-preview.html">
 
 <link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../../bower_components/iron-a11y-keys/iron-a11y-keys.html">
@@ -32,85 +33,82 @@ the License.
       div {
         font-family: var(--app-content-font-family);
         font-size: var(--app-content-font-size);
-        color: var(--app-primary-color);
+        color: var(--primary-fg-color);
       }
-      #toolbar {
-        height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
+      resizable-divider {
         width: 100%;
-        display: flex;
-        background-color: var(--app-secondary-color);
-        border-bottom: 1px solid var(--border-color);
-      }
-      .toolbar-button {
-        color: var(--app-primary-color);
-        margin: 4px;
-        font-weight: normal;
-        border-radius: 0px;
-      }
-      .toolbar-button > iron-icon {
-        width: 20px;
-        padding-right: 5px;
-      }
-      .toolbar-spacer {
-        flex-grow: 1;
+        height: 100%;
       }
       #data-container {
         display: flex;
-        margin: 15px;
+        height: 100%;
       }
       .resultsColumn {
+        padding: 15px;
         flex-grow: 1;
       }
+      #search-div {
+        position: relative;
+        height: var(--toolbar-height);
+      }
+      #search-icon {
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        color: var(--primary-fg-color);
+      }
+      #searchBox {
+        border: 1px solid var(--border-color);
+        background-color: var(--primary-bg-color);
+        border-radius: 2px;
+        height: 25px;
+        width: 70%;
+        min-width: 230px;
+        max-width: 400px;
+        padding: 5px 15px;
+        transition: box-shadow 300ms;
+        text-indent: 25px;
+      }
+      #searchBox:hover {
+        box-shadow: 0px 0px 5px 0px #ccc;
+      }
       .results-container {
-        height: 100%;
+        height: calc(100% - var(--toolbar-height));
         display: flex;
       }
       #results {
         width: 100%;
       }
-      #detailsPane {
-        /* TODO - Add box-shadow and other styling once we put some real content here. */
-      }
-      .details-pane-enabled--true {
-        width: 400px;
-      }
-      .details-pane-enabled--false {
-        width: 0px;
+      #previewPane {
+        background-color: var(--secondary-bg-color);
+        box-shadow: inset 4px 0px 10px -3px rgba(0, 0, 0, 0.1);
       }
     </style>
 
-    <!--Toolbar with action buttons -->
-    <div id="toolbar">
-      <div class="toolbar-spacer"></div>
-      <paper-button id="toggleDetails" class="navbar-button" on-click="_toggleDetailsPane">
-        <iron-icon icon="visibility"></iron-icon>
-      </paper-button>
-    </div>
-
     <div id="data-container">
-      <div class="resultsColumn">
-        <!-- Input box to enter search terms -->
-        <div id="search-div">
-          <!-- TODO - could use value-changed event on paper-input to call _search
-               on every keystroke, with a delay so it fires only after the user has stopped
-               typing for a moment. -->
-          <iron-a11y-keys id="searchKeys" keys="enter" on-keys-pressed="_search"></iron-a11y-keys>
-          <paper-input id="searchBox" label="Search for data" spellcheck=false autofocus
-                                      value="{{_searchValue}}" no-label-float>
-          <iron-icon icon="search" slot="prefix" on-click="_search"></iron-icon>
-          </paper-input>
+
+      <resizable-divider initial-divider-position="70" minimum-width-px="200">
+
+        <div class="resultsColumn" slot="left">
+          <!-- Input box to enter search terms -->
+          <div id="search-div">
+            <iron-a11y-keys id="searchKeys" keys="enter" on-keys-pressed="_search"></iron-a11y-keys>
+            <iron-icon icon="search" id="search-icon"></iron-icon>
+            <input id="searchBox" placeholder="Search for data, then press Enter"
+                value="{{_searchValue::input}}">
+          </div>
+          <!-- List of results -->
+          <div class='results-container'>
+            <item-list id="results"></item-list>
+          </div>
         </div>
 
-        <!-- List of results -->
-        <div class='results-container'>
-          <item-list id="results"></item-list>
+        <!-- Preview pane -->
+        <div id="previewPane" slot="right">
+          <table-preview id="preview"></table-preview>
         </div>
-      </div>
 
-      <!-- Details pane -->
-      <div id="detailsPane" class$="details-pane-enabled--{{_isDetailsPaneToggledOn}}">
-        <div id="detailsContents"></div>
-      </div>
+      </resizable-divider>
 
     </div>
 
