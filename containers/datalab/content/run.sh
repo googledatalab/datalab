@@ -24,9 +24,12 @@
 # build script for those files, after which the changes will get noticed by
 # the notebook server and it will automatically restart.
 
+[ -n "${EXTERNAL_PORT}" ] || EXTERNAL_PORT=8081
 USAGE='USAGE:
 
-    docker run -it -p "8081:8080" -v "${HOME}:/content" gcr.io/cloud-datalab/datalab:local
+    docker run -it -p "EXTERNAL_PORT:8080" -v "${HOME}:/content" gcr.io/cloud-datalab/datalab:local
+
+where EXTERNAL_PORT can be 8080, 8081 etc.
 '
 
 GATEWAY_DEPRECATED_MSG='Running Datalab against a kernel gateway is no longer supported.
@@ -160,6 +163,6 @@ if [ -d /devroot ]; then
   echo ${FOREVER_CMD} --watch --watchDirectory /devroot/build/web/nb /devroot/build/web/nb/app.js
   ${FOREVER_CMD} --watch --watchDirectory /devroot/build/web/nb /devroot/build/web/nb/app.js
 else
-  echo "Open your browser to http://localhost:8081/ to connect to Datalab."
+  echo "Open your browser to http://localhost:${EXTERNAL_PORT}/ to connect to Datalab."
   ${FOREVER_CMD} /datalab/web/app.js
 fi
