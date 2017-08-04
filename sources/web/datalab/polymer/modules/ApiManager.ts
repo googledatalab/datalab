@@ -193,7 +193,7 @@ class ApiManager {
    *               useful for downloading notebooks, which are by default read
    *               as JSON, which doesn't preserve formatting.
    */
-  public static getJupyterFile(path: string, asText?: boolean): Promise<JupyterFile> {
+  public static async getJupyterFile(path: string, asText?: boolean): Promise<JupyterFile> {
     if (path.startsWith('/')) {
       path = path.substr(1);
     }
@@ -212,7 +212,7 @@ class ApiManager {
    * and content are required fields.
    * @param model object containing file information to send to backend
    */
-  public static saveJupyterFile(model: JupyterFile) {
+  public static async saveJupyterFile(model: JupyterFile) {
     const xhrOptions: XhrOptions = {
       failureCodes: [409],
       method: 'PUT',

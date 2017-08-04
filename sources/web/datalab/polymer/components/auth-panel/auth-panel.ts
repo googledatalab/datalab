@@ -47,7 +47,10 @@ class AuthPanel extends Polymer.Element {
 
   ready() {
     super.ready();
-    GapiManager.loadGapi(this._signInChanged.bind(this));
+    GapiManager.listenForSignInChanges(this._signInChanged.bind(this))
+      .catch(() => {
+        // TODO: handle errors authenticating
+      });
   }
 
   _signInClicked() {
@@ -64,11 +67,15 @@ class AuthPanel extends Polymer.Element {
   _signInChanged(signedIn: boolean) {
     this._signedIn = signedIn;
     if (signedIn) {
-      this._userInfo = 'Signed in as ' + GapiManager.getSignedInEmail();
-      this._projectInfo = 'No project is set';  // TODO
+      GapiManager.getSignedInEmail()
+        .then((email: string) => {
+          this._userInfo = 'Signed in as ' + email;
+          this._projectInfo = 'No project is set';  // TODO
+
+          const ev = new Event('signInOutDone');
+          this.dispatchEvent(ev);
+        });
     }
-    const ev = new Event('signInOutDone');
-    this.dispatchEvent(ev);
   }
 }
 

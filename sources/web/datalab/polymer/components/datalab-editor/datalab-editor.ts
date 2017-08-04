@@ -13,31 +13,7 @@
  */
 
 /// <reference path="../datalab-notification/datalab-notification.ts" />
-
-/**
- * Type declarations for CodeMirror
- * TODO: Get these from DefinitelyTyped
- */
-
-interface CodeMirrorOptions {
-  value: string;
-  mode: string;
-  lineNumbers: boolean;
-  lineWrapping: boolean;
-  theme: string;
-}
-
-interface CodeMirrorDoc {
-  getValue(): string;
-}
-
-interface CodeMirrorEditor {
-  doc: CodeMirrorDoc;
-  setOption(name: string, value: string): void;
-  getOption(name: string): void;
-}
-
-declare function CodeMirror(element: HTMLElement, options: CodeMirrorOptions): CodeMirrorEditor;
+/// <reference path="../../node_modules/@types/codemirror/index.d.ts" />
 
 /**
  * Editor element for Datalab.
@@ -52,7 +28,7 @@ class DatalabEditorElement extends Polymer.Element {
   public filePath: string;
 
   private _file: JupyterFile | null;
-  private _editor: CodeMirrorEditor;
+  private _editor: CodeMirror.Editor;
   private _theme: string;
   private _busy: boolean;
 
@@ -92,8 +68,7 @@ class DatalabEditorElement extends Polymer.Element {
           // An error is thrown if it is.
           return ApiManager.getJupyterFile(this.filePath, true /*asText*/)
             .catch((e: Error) => {
-              // TODO: Handle error visibly to the user.
-              console.log('Could not load specified file: ', e);
+              Utils.showErrorDialog('Error', e.message);
               return null;
             });
         } else {
@@ -145,7 +120,7 @@ class DatalabEditorElement extends Polymer.Element {
               // TODO: Check if a file exists with this path, and show a
               // confirmation dialog before replacing
               const model: JupyterFile = {
-                content: this._editor.doc.getValue(),
+                content: this._editor.getDoc().getValue(),
                 created: new Date().toISOString(),
                 format: 'text',
                 last_modified: new Date().toISOString(),
@@ -160,8 +135,8 @@ class DatalabEditorElement extends Polymer.Element {
                 .then(() => {
                   this._file = model;
                   return this.dispatchEvent(new NotificationEvent('Saved.'));
-                });
-                // TODO: Handle save failure here.
+                })
+                .catch((e: Error) => Utils.showErrorDialog('Error', e.message));
             }
           }
 
@@ -173,7 +148,7 @@ class DatalabEditorElement extends Polymer.Element {
       const dirPath = filePath.substr(0, filePath.lastIndexOf(this._file.name));
 
       const model: JupyterFile = {
-        content: this._editor.doc.getValue(),
+        content: this._editor.getDoc().getValue(),
         created: this._file.created,
         format: this._file.format,
         last_modified: new Date().toISOString(),
@@ -188,8 +163,8 @@ class DatalabEditorElement extends Polymer.Element {
         .then(() => {
           this._file = model;
           return this.dispatchEvent(new NotificationEvent('Saved.'));
-        });
-      // TODO: Handle save failure here.
+        })
+        .catch((e: Error) => Utils.showErrorDialog('Error', e.message));
     }
   }
 
