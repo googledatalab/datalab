@@ -16,6 +16,7 @@
   --border-color: #eee;
   --disabled-bg-color: var(--primary-bg-color);
   --disabled-fg-color: #aaa;
+  --error-color: #f00;
   --primary-accent-color: #424242;
   --primary-bg-color: #fff;
   --primary-fg-color: #444;

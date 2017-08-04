@@ -32,12 +32,22 @@ class SettingsElement extends Polymer.Element {
   public idleTimeoutInterval: string;
 
   private _busy: boolean;
+  private _idleTimeoutUpdateStatus: string;
+  private _updateError: boolean;
 
   static get is() { return 'datalab-settings'; }
 
   static get properties() {
     return {
       _busy: {
+        type: Boolean,
+        value: false,
+      },
+      _idleTimeoutUpdateStatus: {
+        type: String,
+        value: '',
+      },
+      _updateError: {
         type: Boolean,
         value: false,
       },
@@ -64,6 +74,8 @@ class SettingsElement extends Polymer.Element {
    */
   loadSettings() {
     this._busy = true;
+    this._idleTimeoutUpdateStatus = '';
+    this._updateError = false;
     return SettingsManager.getUserSettingsAsync(true /*forceRefresh*/)
       .then((settings: common.UserSettings) => {
         this.theme = settings.theme;
@@ -89,8 +101,14 @@ class SettingsElement extends Polymer.Element {
   _idleTimoutIntervalChanged() {
     // TODO: Show success/error status to user
     this._busy = true;
+    this._idleTimeoutUpdateStatus = '';
+    this._updateError = false;
     return SettingsManager.setUserSettingAsync('idleTimeoutInterval', this.idleTimeoutInterval)
-      .catch((e: Error) => console.log('Error updating idle timeout interval: ', e))
+      .then(() => this._idleTimeoutUpdateStatus = 'Idle timeout updated')
+      .catch((e: Error) => {
+        this._idleTimeoutUpdateStatus = 'Update failed: ' + e.message;
+        this._updateError = true;
+      })
       .then(() => this._busy = false);
   }
 
