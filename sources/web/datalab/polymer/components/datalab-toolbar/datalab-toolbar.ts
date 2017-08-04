@@ -35,10 +35,12 @@ class ToolbarElement extends Polymer.Element {
    */
   _accountIconClicked() {
     this.$.accountDropdown.toggle();
+    this.$.accountTimeoutPanel.onOpenChange(this.$.accountDropdown.opened);
   }
 
   _closeAccountDropdown() {
     this.$.accountDropdown.close();
+    this.$.accountTimeoutPanel.onOpenChange(false);
   }
 
   /**
