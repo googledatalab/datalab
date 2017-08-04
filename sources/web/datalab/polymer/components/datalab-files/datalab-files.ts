@@ -61,6 +61,7 @@ class FilesElement extends Polymer.Element {
   private _pathHistoryIndex: number;
   private _fetching: boolean;
   private _fileList: ApiFile[];
+  private _fileListFetchPromise: Promise<any>;
   private _fileListRefreshInterval = 60 * 1000;
   private _fileListRefreshIntervalHandle = 0;
   private _currentCrumbs: string[];
@@ -208,12 +209,12 @@ class FilesElement extends Polymer.Element {
     // - User clicking refresh button.
     // - Files page gaining focus.
     if (this._fetching) {
-      return Promise.resolve();
+      return this._fileListFetchPromise;
     }
 
     this._fetching = true;
 
-    return ApiManager.listFilesAsync(this.currentPath)
+    this._fileListFetchPromise = ApiManager.listFilesAsync(this.currentPath)
       .then((newList) => {
         // Only refresh the UI list if there are any changes. This helps keep
         // the item list's selections intact most of the time
@@ -233,6 +234,8 @@ class FilesElement extends Polymer.Element {
         }
       })
       .then(() => this._fetching = false);
+
+    return this._fileListFetchPromise;
   }
 
   /**
