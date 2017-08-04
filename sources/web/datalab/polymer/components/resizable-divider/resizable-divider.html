@@ -1,0 +1,80 @@
+<!--
+Copyright 2017 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License
+is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+or implied. See the License for the specific language governing permissions and limitations under
+the License.
+-->
+
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="resizable-divider">
+  <template>
+
+    <style include="datalab-shared-styles">
+      :host {
+        --divider-half-width: 5px;
+      }
+      #container {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        position: relative;
+      }
+      .pane {
+        overflow: auto;
+        width: 50%;
+        user-select: none;
+      }
+      /**
+       * Slotted elements should fill the content slots, and be border-boxed so
+       * they can add padding.
+       */
+      ::slotted(*) {
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+      }
+      /**
+      * Consider applying a style rule that can be passed to this element.
+      */
+      #divider {
+        cursor: col-resize;
+        user-select: none;
+        position: absolute;
+        top: 0px;
+        bottom: 0px;
+        left: calc(50% - var(--divider-half-width));
+        right: calc(50% + var(--divider-half-width));
+        width: calc(2 * var(--divider-half-width));
+      }
+      #divider.active {
+        user-select: none;
+        background-color: var(--selection-bg-color);
+      }
+    </style>
+
+    <div id="container">
+
+      <div id="leftPane" class="pane">
+        <slot name="left"></slot>
+      </div>
+
+      <div id="divider" on-mousedown="{{_mouseDownHandler}}"></div>
+
+      <div id="rightPane" class="pane">
+        <slot name="right"></slot>
+      </div>
+
+    </div>
+
+  </template>
+</dom-module>
+
+<script src="resizable-divider.js"></script>
