@@ -25,6 +25,7 @@ import querystring = require('querystring');
 import url = require('url');
 import util = require('util');
 import idleTimeout = require('./idleTimeout');
+import logging = require('./logging');
 import userManager = require('./userManager');
 
 var SETTINGS_FILE = 'settings.json';
@@ -50,7 +51,7 @@ export function loadAppSettings(): common.AppSettings {
   var metadataPath = path.join(__dirname, 'config', METADATA_FILE);
 
   if (!fs.existsSync(settingsPath)) {
-    console.log('App settings file %s not found.', settingsPath);
+    _log('App settings file %s not found.', settingsPath);
     return null;
   }
 
@@ -72,7 +73,7 @@ export function loadAppSettings(): common.AppSettings {
       settings.configUrl = process.env['DATALAB_CONFIG_URL'];
     }
     if (!fs.existsSync(basePathFile)) {
-      console.log('Base path setting file not found, falling back to empty path.');
+      _log('Base path setting file not found, falling back to empty path.');
       settings.datalabBasePath = '';
     } else {
       settings.datalabBasePath = JSON.parse(fs.readFileSync(basePathFile, 'utf8'));
@@ -96,7 +97,7 @@ export function loadAppSettings(): common.AppSettings {
     return settings;
   }
   catch (e) {
-    console.log(e);
+    _log(e);
     return null;
   }
 }
@@ -118,7 +119,7 @@ export function getUserConfigDir(userId: string): string {
 function copyDefaultUserSettings(userId: string) {
   var userSettingsPath = path.join(getUserConfigDir(userId), SETTINGS_FILE);
   const defaultUserSettingsPath = path.join(__dirname, 'config', DEFAULT_USER_SETTINGS_FILE);
-  console.log('Copying default settings: ' + defaultUserSettingsPath + ' to: ' + userSettingsPath);
+  _log('Copying default settings: ' + defaultUserSettingsPath + ' to: ' + userSettingsPath);
   // Copy the default user settings file into user's directory.
   const defaultUserSettings = fs.readFileSync(defaultUserSettingsPath, {encoding: 'utf8'});
   const initialUserSettings = process.env.DATALAB_INITIAL_USER_SETTINGS;
@@ -127,7 +128,7 @@ function copyDefaultUserSettings(userId: string) {
   fs.writeFileSync(userSettingsPath, mergedUserSettings);
   // writeFileSync does not return a status; let's see if it wrote a file.
   if (!fs.existsSync(userSettingsPath)) {
-    console.log('Failed to write new user settings file ' + userSettingsPath);
+    _log('Failed to write new user settings file ' + userSettingsPath);
   }
 }
 
@@ -141,7 +142,7 @@ export function mergeUserSettings(defaultUserSettings: string, initialUserSettin
     parsedDefaultUserSettings = JSON.parse(defaultUserSettings || '{}')
   } catch (e) {
     // File is corrupt, or a developer has updated the defaults file with an error
-    console.log('Error parsing default user settings:', e);
+    _log('Error parsing default user settings:', e);
     // We can't merge here, and this will probably cause problems down the line, but
     // this should not happen, so hopefully the developer will see this and fix
     // the default settings file.
@@ -153,7 +154,7 @@ export function mergeUserSettings(defaultUserSettings: string, initialUserSettin
     parsedInitialUserSettings = JSON.parse(initialUserSettings || '{}')
   } catch (e) {
     // The user's initial settings are not valid, we will ignore them.
-    console.log('Error parsing initial user settings:', e);
+    _log('Error parsing initial user settings:', e);
     return defaultUserSettings;
   }
 
@@ -170,7 +171,7 @@ export function mergeUserSettings(defaultUserSettings: string, initialUserSettin
 export function loadUserSettings(userId: string): common.UserSettings {
   var settingsPath = path.join(getUserConfigDir(userId), SETTINGS_FILE);
   if (!fs.existsSync(settingsPath)) {
-    console.log('User settings file %s not found, copying default settings.', settingsPath);
+    _log('User settings file %s not found, copying default settings.', settingsPath);
     copyDefaultUserSettings(userId);
   }
 
@@ -179,7 +180,7 @@ export function loadUserSettings(userId: string): common.UserSettings {
     return settings;
   }
   catch (e) {
-    console.log(e);
+    _log(e);
     return null;
   }
 }
@@ -192,7 +193,7 @@ export function ensureDirExists(fullPath: string): boolean {
   }
   if (fs.existsSync(fullPath)) {
     if (!fs.lstatSync(fullPath).isDirectory()) {
-      console.log('Path ' + fullPath + ' is not a directory');
+      _log('Path ' + fullPath + ' is not a directory');
       return false;
     }
     return true;
@@ -220,7 +221,7 @@ export function updateUserSettingAsync(userId: string, key: string, value: strin
 
   const doUpdate = () => {
     if (!fs.existsSync(settingsPath)) {
-      console.log('User settings file %s not found, copying default settings.', settingsPath);
+      _log('User settings file %s not found, copying default settings.', settingsPath);
       copyDefaultUserSettings(userId);
     }
 
@@ -230,12 +231,12 @@ export function updateUserSettingAsync(userId: string, key: string, value: strin
         settings = <common.UserSettings>JSON.parse(fs.readFileSync(settingsPath, 'utf8') || '{}');
       }
       catch (e) {
-        console.log(e);
+        _log(e);
         throw new Error('Failed to read settings');
       }
     }
     if (settings[key] == value) {
-      console.log('No change to settings for key=' + key + ', value=' + value);
+      _log('No change to settings for key=%s, value=%s', key, value);
       return false;   // No change was required
     }
     settings[key] = value;
@@ -247,10 +248,10 @@ export function updateUserSettingAsync(userId: string, key: string, value: strin
       }
     }
     catch (e) {
-      console.log(e);
+      _log(e);
       throw new Error('Failed to write settings');
     }
-    console.log('Updated settings for key=' + key + ', value=' + value);
+    _log('Updated settings for key=' + key + ', value=' + value);
     return true;    // File was updated
   }
 
@@ -393,4 +394,18 @@ function formHandler(userId: string, formData: any, request: http.ServerRequest,
  */
 export function createHandler(): http.RequestHandler {
   return requestHandler;
+}
+
+/**
+ * Logs a debug message if the logger has been initialized,
+ * else logs to console.log.
+ */
+function _log(...args: Object[]) {
+  const logger = logging.getLogger();
+  if (logger) {
+    const msg = util.format.apply(util.format, args);
+    logger.debug(msg);
+  } else {
+    console.log.apply(console, args);
+  }
 }
