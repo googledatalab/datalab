@@ -170,8 +170,11 @@ class SessionsElement extends Polymer.Element {
     // change typically when the user opens a notebook, then switches back to
     // the sessions page. Killing a session also triggers a refresh.
     if (!this._sessionListRefreshIntervalHandle) {
-      this._sessionListRefreshIntervalHandle =
-          setInterval(this._fetchSessionList.bind(this), this._sessionListRefreshInterval);
+      this._sessionListRefreshIntervalHandle = setInterval(() => {
+        if (document.hasFocus()) {
+          this._fetchSessionList();
+        }
+      }, this._sessionListRefreshInterval);
     }
     // Now refresh the list once.
     this._fetchSessionList();

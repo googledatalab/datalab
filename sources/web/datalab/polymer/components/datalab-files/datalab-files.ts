@@ -806,8 +806,11 @@ class FilesElement extends Polymer.Element {
     // interval to keep the list in sync, the refresh also happens after file
     // operations, and when the files page gains focus.
     if (!this._fileListRefreshIntervalHandle) {
-      this._fileListRefreshIntervalHandle =
-          setInterval(this._fetchFileList.bind(this), this._fileListRefreshInterval);
+      this._fileListRefreshIntervalHandle = setInterval(() => {
+        if (document.hasFocus()) {
+          this._fetchFileList();
+        }
+      }, this._fileListRefreshInterval);
     }
     // Now refresh the list once.
     this._fetchFileList();
