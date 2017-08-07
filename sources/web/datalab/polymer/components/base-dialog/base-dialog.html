@@ -20,20 +20,6 @@ the License.
       :host {
         display: block;
       }
-      #theDialog {
-        display: flex;
-        flex-direction: column;
-        background-color: var(--primary-bg-color);
-        color: var(--primary-fg-color);
-      }
-      .dialog-big--true {
-        width: 60%;
-        height: 60%;
-      }
-      .dialog-big--false {
-        min-width: 300px;
-        min-height: 200px;
-      }
       .error-title--true {
         color: #fff;
         background-color: #ff7777;
@@ -48,7 +34,7 @@ the License.
         font-weight: bold;
       }
     </style>
-    <paper-dialog id="theDialog" class$="dialog-big--{{big}}" with-backdrop
+    <paper-dialog id="theDialog" class$="{{_sizeCssClass}} dialog" with-backdrop
                   on-keydown="_checkEnter">
       <div class$="dialog-title error-title--{{isError}}">{{title}}</div>
       <div class="dialog-content">

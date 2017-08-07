@@ -42,6 +42,20 @@ the License.
         background-color: var(--secondary-bg-color);
         padding: 5px;
       }
+      .dialog {
+        background-color: var(--primary-bg-color);
+        color: var(--primary-fg-color);
+        display: flex;
+        flex-direction: column;
+      }
+      .dialog.small {
+        min-width: 300px;
+        min-height: 200px;
+      }
+      .dialog.big {
+        width: 60%;
+        height: 60%;
+      }
       .dialog-title {
         flex: 0 0 auto;
         margin: 0px;
