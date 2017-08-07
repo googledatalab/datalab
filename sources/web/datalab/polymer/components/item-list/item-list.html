@@ -21,26 +21,27 @@ the License.
   <template>
 
     <style include="datalab-shared-styles">
+      :host {
+        display: flex;
+        flex-direction: column;
+      }
       div {
         font-family: var(--app-content-font-family);
         font-size: var(--app-content-font-size);
         color: var(--primary-fg-color);
       }
+      #header-container {
+        flex: 0 0 var(--toolbar-height);
+      }
       #header {
         user-select: none;
-        height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
         display: flex;
         line-height: calc(var(--toolbar-height) - 1px);
         border-bottom: 1px solid var(--border-color);
       }
       #listContainer {
+        flex: 1 1 auto;
         overflow: auto;
-      }
-      .listContainer-hide-header--false {
-        height: calc(100% - var(--toolbar-height));
-      }
-      .listContainer-hide-header--true {
-        height: 100%;
       }
       .row {
         user-select: none;
@@ -86,7 +87,7 @@ the License.
 
     <!--Header row-->
     <!--Need this extra div because #header has a display modifier, cannot set hidden-->
-    <div hidden$="{{hideHeader}}">
+    <div class="header-container" hidden$="{{hideHeader}}">
       <div id="header">
         <div class="checkbox-col">
           <paper-checkbox id="selectAllCheckbox" on-checked-changed="_selectAllChanged"
@@ -99,7 +100,7 @@ the License.
     </div>
 
     <!--Item list-->
-    <div id="listContainer" class$="listContainer-hide-header--{{hideHeader}}">
+    <div id="listContainer">
       <template is="dom-repeat" id="list" items="{{rows}}" as="row">
         <paper-item class="row" selected$={{row.selected}} on-click="_rowClicked"
                     on-dblclick="_rowDoubleClicked">
@@ -122,4 +123,3 @@ the License.
 </dom-module>
 
 <script src="item-list.js"></script>
-

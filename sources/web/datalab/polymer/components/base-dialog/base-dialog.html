@@ -17,7 +17,12 @@ the License.
 <dom-module id="base-dialog">
   <template>
     <style include="datalab-shared-styles">
+      :host {
+        display: block;
+      }
       #theDialog {
+        display: flex;
+        flex-direction: column;
         background-color: var(--primary-bg-color);
         color: var(--primary-fg-color);
       }
@@ -34,7 +39,9 @@ the License.
         background-color: #ff7777;
       }
       #body {
-        height: 100%;
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
       }
       .confirm {
         background-color: var(--secondary-bg-color);

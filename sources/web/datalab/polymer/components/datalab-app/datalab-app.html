@@ -48,6 +48,9 @@ the License.
       iron-pages {
         height: 100%;
       }
+      .page {
+        height: 100%;
+      }
       @media only screen and (max-width: 800px) {
         .datalab-sidebar {
           width: 60px;
@@ -71,10 +74,10 @@ the License.
         <div class="datalab-main-content">
           <iron-pages id="pages" selected="{{page}}" attr-for-selected="name"
                       fallback-selection="files">
-            <datalab-data name="data"></datalab-data>
-            <datalab-files name="files"></datalab-files>
-            <datalab-sessions name="sessions"></datalab-sessions>
-            <datalab-terminal name="terminal"></datalab-terminal>
+            <datalab-data class="page" name="data"></datalab-data>
+            <datalab-files class="page" name="files"></datalab-files>
+            <datalab-sessions class="page" name="sessions"></datalab-sessions>
+            <datalab-terminal class="page" name="terminal"></datalab-terminal>
           </iron-pages>
         </div>
       </div>

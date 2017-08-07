@@ -29,13 +29,17 @@ the License.
   <template>
 
     <style include="datalab-shared-styles">
+      :host {
+        display: flex;
+        flex-direction: column;
+      }
       div {
         font-family: var(--app-content-font-family);
         font-size: var(--app-content-font-size);
         color: var(--primary-fg-color);
       }
       #toolbar {
-        height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
+        flex: 0 0 var(--toolbar-height);
         width: 100%;
         background-color: var(--secondary-bg-color);
         border-bottom: 1px solid var(--border-color);
@@ -83,16 +87,14 @@ the License.
         color: var(--disabled-fg-color);
         background-color: var(--secondary-bg-color);
       }
-      .file-picker-small--false {
-        /*For regular file picker, leave room for toolbar on top*/
-        height: calc(100% - var(--toolbar-height));
-      }
-      .file-picker-small--true {
-        height: 100%; /*For a small picker, there's no toolbar*/
+      #file-picker {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
       }
       #navbar {
         display: flex;
-        height: calc(var(--toolbar-height) - var(--progressbar-height)); /* for progress bar */
+        flex: 0 0 var(--toolbar-height);
         background-color: var(--primary-bg-color);
       }
       .navbar-button {
@@ -105,12 +107,11 @@ the License.
         background-color: var(--disabled-bg-color);
       }
       .files-container {
-        /* 1 nav bar + 1 progress bar */
-        height: calc(100% - var(--toolbar-height) - var(--progressbar-height));
         display: flex;
+        flex: 1 1 auto;
       }
       #files {
-        flex-grow: 1;
+        flex: 1 1 auto;
         background-color: var(--primary-bg-color);
       }
       #detailsPane {
@@ -270,7 +271,7 @@ the License.
 
     </div>
 
-    <div id="file-picker" class$="file-picker-small--{{small}}">
+    <div id="file-picker">
       <!--Navigation bar with back/forward buttons, refresh, and breadcrumbs-->
       <div id="navbar">
         <paper-button id="backNav" class="navbar-button" on-click="_navBackward">

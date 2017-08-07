@@ -20,12 +20,7 @@ the License.
   <template>
 
     <style include="datalab-shared-styles">
-      .container {
-        display: flex;
-        flex-direction: column;
-      }
-      .files {
-        height: 100%;
+      #filePicker {
         flex: 1 1 auto;
       }
       .fileName {
@@ -42,16 +37,12 @@ the License.
       }
     </style>
 
-    <div class="container">
-      <div class="files">
-        <datalab-files id="filePicker" small></datalab-files>
-      </div>
-      <div class="fileName" hidden$={{!withFileName}}>
-        <hr>
-        <paper-input id="fileNameBox" label="File name" spellcheck=false autofocus
-                    value="{{fileName}}" no-label-float>
-        </paper-input>
-      </div>
+    <datalab-files id="filePicker" small></datalab-files>
+    <div class="fileName" hidden$={{!withFileName}}>
+      <hr>
+      <paper-input id="fileNameBox" label="File name" spellcheck=false autofocus
+                  value="{{fileName}}" no-label-float>
+      </paper-input>
     </div>
 
   </template>
