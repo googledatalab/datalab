@@ -38,9 +38,9 @@ class FilesElement extends Polymer.Element {
   private static readonly _deleteListLimit = 10;
 
   /**
-   * The base path to start navigation from
+   * Promise that gets resolved when the element finished initialization.
    */
-  public basePath: string;
+  public readyPromise: Promise<void>;
 
   /**
    * The current navigation path
@@ -61,6 +61,7 @@ class FilesElement extends Polymer.Element {
   private _pathHistoryIndex: number;
   private _fetching: boolean;
   private _fileList: ApiFile[];
+  private _fileListFetchPromise: Promise<any>;
   private _fileListRefreshInterval = 60 * 1000;
   private _fileListRefreshIntervalHandle = 0;
   private _currentCrumbs: string[];
@@ -103,10 +104,6 @@ class FilesElement extends Polymer.Element {
         type: Number,
         value: -1,
       },
-      basePath: {
-        type: String,
-        value: '/',
-      },
       currentPath: {
         observer: '_currentPathChanged',
         type: String,
@@ -127,7 +124,7 @@ class FilesElement extends Polymer.Element {
    * Called when when the element's local DOM is ready and initialized We use it
    * to initialize element state.
    */
-  ready() {
+  async ready() {
     // Must set this to true before calling super.ready(), because the latter will cause
     // property updates that will cause _fetchFileList to be called first, we don't want
     // that. We want ready() to be the entry point so it gets the user's last saved path.
@@ -135,39 +132,45 @@ class FilesElement extends Polymer.Element {
 
     super.ready();
 
-    // Get the last startup path.
-    SettingsManager.getUserSettingsAsync(true /*forceRefresh*/)
-      .then((settings: common.UserSettings) => {
-        if (settings.startuppath) {
-          let path = settings.startuppath;
-          if (path.startsWith(this.basePath)) {
-            path = path.substr(this.basePath.length);
+    // TODO: Using a ready promise might be common enough a need that we should
+    // consider adding it to a super class, maybe DatalabElement. For now, this
+    // is the only element that needs it.
+    if (!this.readyPromise) {
+      // Get the last startup path.
+      this.readyPromise = SettingsManager.getUserSettingsAsync(true /*forceRefresh*/)
+        .then((settings: common.UserSettings) => {
+          if (settings.startuppath) {
+            let path = settings.startuppath;
+            // For backward compatibility with the current path format.
+            if (path.startsWith('/tree/')) {
+              path = path.substr('/tree/'.length);
+            }
+            this.currentPath = path;
           }
-          // For backward compatibility with the current path format.
-          if (path.startsWith('/tree/')) {
-            path = path.substr('/tree/'.length);
+        })
+        .catch(() => console.error('Failed to get the user settings.'))
+        .then(() => {
+
+          this._resizeHandler();
+          this._focusHandler();
+
+          const filesElement = this.shadowRoot.querySelector('#files');
+          if (filesElement) {
+            filesElement.addEventListener('itemDoubleClick',
+                                          this._handleDoubleClicked.bind(this));
+            filesElement.addEventListener('selected-indices-changed',
+                                          this._handleSelectionChanged.bind(this));
           }
-          this.currentPath = path;
-        }
-      })
-      .catch(() => console.log('Failed to get the user settings.'))
-      .then(() => {
-        this._fetching = false;
 
-        this._resizeHandler();
-        this._focusHandler();
-      });
+          // For a small file/directory picker, we don't need to show the status.
+          (this.$.files as ItemListElement).columns = this.small ? ['Name'] : ['Name', 'Status'];
 
-    const filesElement = this.shadowRoot.querySelector('#files');
-    if (filesElement) {
-      filesElement.addEventListener('itemDoubleClick',
-                                    this._handleDoubleClicked.bind(this));
-      filesElement.addEventListener('selected-indices-changed',
-                                    this._handleSelectionChanged.bind(this));
+          this._fetching = false;
+          return this._fetchFileList();
+        });
     }
 
-    // For a small file/directory picker, we don't need to show the status.
-    (this.$.files as ItemListElement).columns = this.small ? ['Name'] : ['Name', 'Status'];
+    return this.readyPromise;
   }
 
   disconnectedCallback() {
@@ -195,22 +198,23 @@ class FilesElement extends Polymer.Element {
 
   /**
    * Calls the ApiManager to get the list of files at the current path, and
-   * updates the fileList property.
+   * updates the _fileList property.
    * @param throwOnError whether to throw an exception if the refresh fails. This
    *                     is false by default because throwing is currently not used.
    */
-  _fetchFileList(throwOnError = false) {
+  _fetchFileList(throwOnError = false): Promise<any> {
     // Don't overlap fetch requests. This can happen because we set up fetch from several sources:
     // - Initialization in the ready() event handler.
     // - Refresh mechanism called by the setInterval().
     // - User clicking refresh button.
     // - Files page gaining focus.
     if (this._fetching) {
-      return;
+      return this._fileListFetchPromise;
     }
+
     this._fetching = true;
 
-    ApiManager.listFilesAsync(this.basePath + this.currentPath)
+    this._fileListFetchPromise = ApiManager.listFilesAsync(this.currentPath)
       .then((newList) => {
         // Only refresh the UI list if there are any changes. This helps keep
         // the item list's selections intact most of the time
@@ -230,6 +234,8 @@ class FilesElement extends Polymer.Element {
         }
       })
       .then(() => this._fetching = false);
+
+    return this._fileListFetchPromise;
   }
 
   /**
@@ -261,7 +267,7 @@ class FilesElement extends Polymer.Element {
     (this.$.files as ItemListElement).rows = this._fileList.map((file) => {
       return {
         firstCol: file.name,
-        icon: file.type === 'directory' ? 'folder' : 'editor:insert-drive-file',
+        icon: Utils.getItemIconString(file.type),
         secondCol: file.status,
         selected: false
       };
