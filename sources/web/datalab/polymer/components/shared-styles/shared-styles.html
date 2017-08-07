@@ -43,21 +43,28 @@ the License.
         padding: 5px;
       }
       .dialog-title {
+        margin: 0px;
+        padding: 15px;
+        height: 20px; /*Total height: 51px*/
         background-color: var(--secondary-bg-color);
         border-bottom: 1px solid var(--border-color);
         font-size: 16px;
         text-align: center;
-        flex: 0 0 20px;
-        margin: 0px;
-        padding: 15px; /*Total height: 51px*/
       }
       .dialog-content {
-        flex-grow: 1;
         margin: 0px;
-        padding: 20px;
+        padding: 15px;
+        height: calc(100% - 51px - 81px - 30px);
+        overflow: auto;
       }
-      .dialog-buttons {
+      .dialog-footer {
+        margin: 0px;
+        padding: 15px;
+        height: 40px; /*Total height: 70px*/
         direction: rtl;
+        display: flex;
+        justify-content: center;
+        color: var(--primary-fg-color);
       }
       a {
         color: var(--selection-fg-color);
