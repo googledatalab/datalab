@@ -32,18 +32,20 @@ the License.
         display: flex;
         flex-direction: column;
       }
+      datalab-toolbar {
+        flex: 0 0 var(--toolbar-height);
+      }
       .datalab-contents {
         display: flex;
-        height: calc(100% - var(--toolbar-height));
+        flex: 1 1 auto;
       }
       .datalab-sidebar {
-        width: var(--sidebar-width);
+        flex: 0 0 var(--sidebar-width);
         transition: width var(--app-animation-duration);
       }
       .datalab-main-content {
-        flex-grow: 1;
+        flex: 1 1 auto;
         box-shadow: -4px 0px 10px -3px rgba(0, 0, 0, 0.1);
-        width: calc(100% - var(--sidebar-width));
       }
       iron-pages {
         height: 100%;
@@ -68,9 +70,7 @@ the License.
     <div id="container">
       <datalab-toolbar></datalab-toolbar>
       <div class="datalab-contents">
-        <div class="datalab-sidebar">
-          <datalab-sidebar page={{page}}></datalab-sidebar>
-        </div>
+        <datalab-sidebar class="datalab-sidebar" page={{page}}></datalab-sidebar>
         <div class="datalab-main-content">
           <iron-pages id="pages" selected="{{page}}" attr-for-selected="name"
                       fallback-selection="files">
