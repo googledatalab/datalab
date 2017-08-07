@@ -74,7 +74,7 @@ class ItemListElement extends Polymer.Element {
    */
   public selectedIndices: number[];
 
-  private _lastSelectedIndex: number = -1;
+  private _lastSelectedIndex = -1;
 
   static get is() { return 'item-list'; }
 
