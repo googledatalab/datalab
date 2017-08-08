@@ -23,13 +23,17 @@ the License.
   <template>
 
     <style include="datalab-shared-styles">
+      :host {
+        display: flex;
+        flex-direction: column;
+      }
       div {
         font-family: var(--app-content-font-family);
         font-size: var(--app-content-font-size);
         color: var(--primary-fg-color);
       }
       #toolbar {
-        height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
+        flex: 0 0 var(--toolbar-height);
         width: 100%;
         background-color: var(--secondary-bg-color);
       }
@@ -49,10 +53,14 @@ the License.
         padding-right: 5px;
       }
       .sessions-container {
-        /* 1 breadcrumb bar + 1 progress bar */
-        height: calc(100% - var(--toolbar-height) - var(--progressbar-height));
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
       }
       #sessions {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
         background-color: var(--primary-bg-color);
       }
     </style>

@@ -74,6 +74,10 @@ class BaseDialogElement extends Polymer.Element {
 
   static get properties() {
     return {
+      _sizeCssClass: {
+        computed: '_computeSizeCssClass(big)',
+        type: String,
+      },
       big: {
         type: Boolean,
         value: false,
@@ -129,6 +133,10 @@ class BaseDialogElement extends Polymer.Element {
    */
   getCloseResult() {
     return {};
+  }
+
+  _computeSizeCssClass(big: boolean) {
+    return big ? 'big' : 'small';
   }
 
   _confirmClose() {
