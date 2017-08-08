@@ -87,7 +87,7 @@ the License.
     </datalab-toolbar>
 
     <paper-tooltip id="filePathTooltip" for="file-name">
-      {{_file.path}}
+      {{filePath}}
     </paper-tooltip>
 
     <!--Thin progress bar that shows until the file is loaded-->
@@ -101,11 +101,11 @@ the License.
         <iron-icon icon="save"></iron-icon>
         <span>Save</span>
       </paper-button>
-      <paper-button class="toolbar-button" on-click="">
+      <paper-button class="toolbar-button" on-click="_renameAsync">
         <iron-icon icon="editor:border-color"></iron-icon>
         <span>Rename</span>
       </paper-button>
-      <paper-button class="toolbar-button" on-click="">
+      <paper-button class="toolbar-button" on-click="_downloadAsync">
         <iron-icon icon="file-download"></iron-icon>
         <span>Download</span>
       </paper-button>

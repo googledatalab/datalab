@@ -45,6 +45,7 @@ class DatalabEditorElement extends Polymer.Element {
         value: null,
       },
       filePath: {
+        notify: true,
         type: String,
         value: '',
       },
@@ -60,42 +61,48 @@ class DatalabEditorElement extends Polymer.Element {
         if (settings.theme) {
           this._theme = settings.theme;
         }
+      })
+      .catch(() => console.error('Could not load user settings.'))
+      // Now load the file
+      .then(() => this._loadFile());
+  }
 
-        // Get the file contents, or empty string if no path is specified.
-        if (this.filePath) {
-          this._busy = true;
-          // Passing the asText=true parameter guarantees the returned type is not a directory.
-          // An error is thrown if it is.
-          return ApiManager.getJupyterFile(this.filePath, true /*asText*/)
-            .catch((e: Error) => {
-              Utils.showErrorDialog('Error', e.message);
-              return null;
-            });
-        } else {
+  /**
+   * Loads the file if one is specified in the filePath property.
+   */
+  async _loadFile() {
+    let content = '';
+
+    if (this.filePath) {
+      // Get the file contents
+      this._busy = true;
+      // Passing the asText=true parameter guarantees the returned type is not a directory.
+      // An error is thrown if it is.
+      this._file = await ApiManager.getJupyterFile(this.filePath, true /*asText*/)
+        .catch((e: Error) => {
+          Utils.showErrorDialog('Error', e.message);
+          this._busy = false;
           return null;
-        }
-      })
-      // Create the codemirror element and load the contents in it.
-      .then((file: JupyterFile | null) => {
-        this._file = file;
-        // TODO: try to detect the language of the file before creating
-        // the codemirror element. Perhaps use the file extension?
-        // TODO: load the mode dynamically instead of starting out with python.
-        let content = '';
-        if (this._file) {
-          content = this._file.content as string;
-        }
-        this._editor = CodeMirror(this.$.editorContainer,
-                                  {
-                                    lineNumbers: true,
-                                    lineWrapping: true,
-                                    mode: 'python',
-                                    theme: this._getCodeMirrorTheme(this._theme),
-                                    value: content,
-                                  });
-      })
-      .catch((e: Error) => console.log('Error loading file: ' + e))
-      .then(() => this._busy = false);
+        }) as JupyterFile;
+
+      this._busy = false;
+      content = this._file.content as string;
+    }
+
+    // Create the codemirror element and fill it with the file content.
+    // TODO: try to detect the language of the file before creating
+    // the codemirror element. Perhaps use the file extension?
+    // TODO: load the mode dynamically instead of starting out with python.
+    const editorConfig: CodeMirror.EditorConfiguration = {
+      autofocus: true,
+      lineNumbers: true,
+      lineWrapping: true,
+      mode: 'python',
+      theme: this._getCodeMirrorTheme(this._theme),
+      value: content,
+    };
+
+    this._editor = CodeMirror(this.$.editorContainer, editorConfig);
   }
 
   /**
@@ -131,12 +138,7 @@ class DatalabEditorElement extends Polymer.Element {
                 writable: true,
               };
 
-              return ApiManager.saveJupyterFile(model)
-                .then(() => {
-                  this._file = model;
-                  return this.dispatchEvent(new NotificationEvent('Saved.'));
-                })
-                .catch((e: Error) => Utils.showErrorDialog('Error', e.message));
+              return this._saveToJupyterAsync(model);
             }
           }
 
@@ -144,8 +146,7 @@ class DatalabEditorElement extends Polymer.Element {
         });
     } else {
       // If _file is defined, we're saving to an existing file
-      const filePath = this._file.path;
-      const dirPath = filePath.substr(0, filePath.lastIndexOf(this._file.name));
+      const dirPath = this._getDirNameFromPath(this._file.path);
 
       const model: JupyterFile = {
         content: this._editor.getDoc().getValue(),
@@ -159,12 +160,74 @@ class DatalabEditorElement extends Polymer.Element {
         writable: this._file.writable,
       };
 
-      return ApiManager.saveJupyterFile(model)
-        .then(() => {
-          this._file = model;
-          return this.dispatchEvent(new NotificationEvent('Saved.'));
-        })
-        .catch((e: Error) => Utils.showErrorDialog('Error', e.message));
+      return this._saveToJupyterAsync(model);
+    }
+  }
+
+  /**
+   * Returns the directory containing a file given its full path.
+   */
+  _getDirNameFromPath(path: string) {
+    const tokens = path.split('/');
+    tokens.pop();
+    return tokens.join('/');
+  }
+
+  /**
+   * Saves the given file model to Jupyter, and fetches the save result to keep
+   * the client's _file object up to date.
+   */
+  _saveToJupyterAsync(model: JupyterFile) {
+    return ApiManager.saveJupyterFile(model)
+      .then((savedModel: JupyterFile) => {
+        this._file = model;
+        // Get the path and name from the saved model. The path is returned
+        // without the file name from Jupyter
+        this._file.name = savedModel.name;
+        this._file.path = savedModel.path;
+        this.filePath = this._file.path;
+        return this.dispatchEvent(new NotificationEvent('Saved.'));
+      })
+      .catch((e: Error) => Utils.showErrorDialog('Error', e.message));
+  }
+
+  /**
+   * Rename the currently open file.
+   */
+  _renameAsync() {
+    // If the open file isn't saved, save it instead
+    if (!this._file) {
+      return this._saveAsync();
+    } else {
+      const options: InputDialogOptions = {
+        inputLabel: 'New file name',
+        inputValue: this._file.name,
+        okLabel: 'Rename',
+        title: 'Rename File',
+      };
+      return Utils.showDialog(InputDialogElement, options)
+        .then((closeResult: InputDialogCloseResult) => {
+          if (closeResult.confirmed) {
+
+            // TODO: Prevent the dialog from closing if the input field is empty
+            if (closeResult.userInput) {
+              const file = this._file as JupyterFile;
+              const oldPath = file.path;
+              const newPath = this._getDirNameFromPath(file.path) + '/' + closeResult.userInput;
+              return ApiManager.renameItem(oldPath, newPath)
+                .then((savedModel: JupyterFile) => {
+                  this.dispatchEvent(
+                      new NotificationEvent('Renamed ' + oldPath + ' to ' + newPath));
+                  file.name = savedModel.name;
+                  file.path = savedModel.path;
+                  this.filePath = file.path;
+                })
+                .catch((e: Error) => Utils.showErrorDialog('Error', e.message));
+            }
+          }
+
+          return Promise.resolve();
+        });
     }
   }
 
