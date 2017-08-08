@@ -19,22 +19,10 @@ the License.
 
     <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
     <script src="../../web-component-tester/browser.js"></script>
-    <script src="test-utils.js"></script>
+
+    <script src="../modules/SettingsManager.js"></script>
   </head>
   <body>
-    <script>
-      // Load and run all tests (.html, .js). Keep element tests in HTML files so we
-      // can use fixtures, and keep all other tests in javascript files
-      WCT.loadSuites([
-        'SettingsManager-test.html',
-        'TimeoutManager-test.html',
-        'datalab-files-test.html',
-        'datalab-toolbar-test.html',
-        'item-list-test.html',
-        'resizable-divider-test.html',
-        'table-preview-test.html',
-        'timeout-panel-test.html',
-      ]);
-    </script>
+    <script src="SettingsManager-test.js"></script>
   </body>
 </html>

@@ -18,8 +18,12 @@
 /// <reference path="../../common.d.ts" />
 
 class MissingClientIdError extends Error {
-  message = 'No oauth2ClientId found in user settings';
+  message = 'No oauth2ClientId found in user or config settings';
 }
+
+interface Window {
+  datalab: { [key: string]: string }
+};
 
 /**
  * This file contains a collection of functions that interact with gapi.
@@ -187,14 +191,43 @@ class GapiManager {
   }
 
   /**
-   * Loads the oauth2 client id from the user settings.
-   * This will change once we figure out how we want to do it.
+   * Loads the oauth2 client id. Looks first in the user settings,
+   * then in the config-local file.
    */
   private static _loadClientId(): Promise<void> {
+    return GapiManager._loadClientIdFromUserSettings()
+      .then((clientId) => {
+        if (clientId) {
+          GapiManager._clientId = clientId;
+          return;   // Make ts compiler happy
+        } else {
+          return GapiManager._loadClientIdFromConfigFile()
+            .then((clientId) => {
+              GapiManager._clientId = clientId;
+            });
+        }
+      });
+  }
+
+  /**
+   * Loads the oauth2 client id from the user settings.
+   */
+  private static _loadClientIdFromUserSettings(): Promise<string> {
     return SettingsManager.getUserSettingsAsync()
       .then((settings: common.UserSettings) => {
-        if (settings.oauth2ClientId) {
-          GapiManager._clientId = settings.oauth2ClientId;
+        return settings.oauth2ClientId;
+      });
+  }
+
+  /**
+   * Loads the oauth2 client id from the config-local file.
+   */
+  private static _loadClientIdFromConfigFile(): Promise<string> {
+    return SettingsManager.loadConfigToWindowDatalab()
+      .catch()  // We will detect errors below when we see if the clientId exists
+      .then(() => {
+        if (window.datalab && window.datalab.oauth2ClientId) {
+          return window.datalab.oauth2ClientId;
         } else {
           throw new MissingClientIdError();
         }

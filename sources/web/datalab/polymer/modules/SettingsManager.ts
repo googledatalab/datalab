@@ -12,6 +12,10 @@
  * the License.
  */
 
+interface Window {
+  datalab: { [key: string]: string }
+};
+
 let userSettings: common.UserSettings;
 let appSettings: common.AppSettings;
 
@@ -64,6 +68,40 @@ class SettingsManager {
     };
     const requestUrl = ApiManager.userSettingsUrl + '?key=' + setting + '&value=' + value;
     return ApiManager.sendRequestAsync(requestUrl, xhrOptions);
+  }
+
+  /**
+   * Loads and executes the config file as specifed in appSettings.configUrl.
+   * This sets values on window.datalab. Resolves immediately if window.datalab is already set.
+   */
+  public static loadConfigToWindowDatalab():Promise<void> {
+    if (window.datalab) {
+      return Promise.resolve(); // Already loaded
+    }
+    if (window.datalab === undefined) {
+      window.datalab = {};
+    }
+    return SettingsManager.getAppSettingsAsync()
+      .then((settings: common.AppSettings) => {
+        if (settings.configUrl) {
+          return new Promise((resolve, reject) => {
+            const configScript = document.createElement('script');
+            configScript.src = settings.configUrl;
+            configScript.onload = () => {
+              resolve();
+            };
+            configScript.onerror = () => {
+              reject(new Error('Failed to load config file ' + settings.configUrl));
+            };
+            if (!document.body.getAttribute('data-version-id')) {
+              document.body.setAttribute('data-version-id', '');
+            }
+            document.head.appendChild(configScript);
+          }) as Promise<void>;
+        } else {
+          throw new MissingClientIdError();
+        }
+      });
   }
 
   /**
