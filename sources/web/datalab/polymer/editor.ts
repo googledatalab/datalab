@@ -33,10 +33,19 @@ document.addEventListener('ThemeChanged', (e: CustomEvent) => {
   }
 });
 
-// Pass the file's path if it's specified in the location.
 if (editorElement) {
+  // Pass the file's path if it's specified in the location.
   const params = new URLSearchParams(window.location.search);
   if (params.has('file')) {
     editorElement.filePath = params.get('file') as string;
   }
+
+  // Listen for rename events coming from the editor element, and match the url
+  // querystring
+  editorElement.addEventListener('file-path-changed', (e: CustomEvent) => {
+    params.set('file', e.detail.value);
+    const url = location.protocol + '//' + location.host + location.pathname +
+                '?' + decodeURIComponent(params.toString());
+    window.history.replaceState({}, '', url);
+  });
 }
