@@ -66,14 +66,6 @@ the License.
       .title-cloud-datalab {
         font-weight: lighter;
       }
-      .dialog {
-        background-color: var(--primary-bg-color);
-        color: var(--primary-fg-color);
-        width: 60%;
-        height: 60%;
-        display: flex;
-        flex-direction: column;
-      }
       .account-dropdown {
         background-color: var(--primary-bg-color);
         color: var(--primary-fg-color);
@@ -118,7 +110,7 @@ the License.
     </paper-dialog>
 
     <!--Info dialog. This shows centered in the middle of the window-->
-    <paper-dialog id="infoDialog" class="dialog" with-backdrop>
+    <paper-dialog id="infoDialog" class="big dialog" with-backdrop>
       <div class="dialog-title">Info</div>
       <div class="dialog-content">
         <datalab-info></datalab-info>
@@ -130,7 +122,7 @@ the License.
     </paper-dialog>
 
     <!--Settings dialog. This shows centered in the middle of the window-->
-    <paper-dialog id="settingsDialog" class="dialog" with-backdrop>
+    <paper-dialog id="settingsDialog" class="big dialog" with-backdrop>
       <div class="dialog-title">Settings</div>
       <div class="dialog-content">
         <datalab-settings id="settingsElement"></datalab-settings>

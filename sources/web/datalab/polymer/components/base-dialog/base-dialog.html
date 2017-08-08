@@ -17,60 +17,35 @@ the License.
 <dom-module id="base-dialog">
   <template>
     <style include="datalab-shared-styles">
-      #theDialog {
-        background-color: var(--primary-bg-color);
-        color: var(--primary-fg-color);
-        display: flex;
-        flex-direction: column;
-      }
-      .dialog-big--true {
-        width: 60%;
-        height: 60%;
-      }
-      .dialog-big--false {
-        min-width: 300px;
-        min-height: 200px;
+      :host {
+        display: block;
       }
       .error-title--true {
         color: #fff;
         background-color: #ff7777;
       }
       #body {
-        margin: 0px;
-        flex-grow: 1;
-        position: relative;
-      }
-      #body > * {
-        /*Don't let anything inserted here overflow*/
-        position: absolute;
-        top: 0px;
-        bottom: 0px;
-        left: 0px;
-        right: 0px;
-      }
-      .buttons {
         display: flex;
-        justify-content: center;
-        padding: 0px;
-        flex: 0 0 40px;
-        margin: 15px; /*Total height: 70px*/
-        color: var(--primary-fg-color);
+        flex-direction: column;
+        flex: 1 1 auto;
       }
       .confirm {
         background-color: var(--secondary-bg-color);
         font-weight: bold;
       }
     </style>
-    <paper-dialog id="theDialog" class$="dialog-big--{{big}}" with-backdrop
+    <paper-dialog id="theDialog" class$="{{_sizeCssClass}} dialog" with-backdrop
                   on-keydown="_checkEnter">
       <div class$="dialog-title error-title--{{isError}}">{{title}}</div>
-      <!--message value is bound in javascript because it needs to bind to innerHTML-->
-      <div id="message" hidden$="{{!messageHtml}}">{{messageHtml}}</div>
-      <!--body acts as a place holder for extending elements, their custom
-      markup is inserted here by stamping it from Javascript-->
-      <div id="body"></div>
+      <div class="dialog-content">
+        <!--message value is bound in javascript because it needs to bind to innerHTML-->
+        <div id="message" hidden$="{{!messageHtml}}">{{messageHtml}}</div>
+        <!--body acts as a place holder for extending elements, their custom
+        markup is inserted here by stamping it from Javascript-->
+        <div id="body"></div>
+      </div>
       <hr>
-      <div class="buttons">
+      <div class="dialog-footer">
         <paper-button id="okButton" on-click="_confirmClose" class="confirm" >
           {{okLabel}}
         </paper-button>

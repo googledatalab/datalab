@@ -32,20 +32,25 @@ the License.
         display: flex;
         flex-direction: column;
       }
+      datalab-toolbar {
+        flex: 0 0 var(--toolbar-height);
+      }
       .datalab-contents {
         display: flex;
-        height: calc(100% - var(--toolbar-height));
+        flex: 1 1 auto;
       }
       .datalab-sidebar {
-        width: var(--sidebar-width);
+        flex: 0 0 var(--sidebar-width);
         transition: width var(--app-animation-duration);
       }
       .datalab-main-content {
-        flex-grow: 1;
+        flex: 1 1 auto;
         box-shadow: -4px 0px 10px -3px rgba(0, 0, 0, 0.1);
-        width: calc(100% - var(--sidebar-width));
       }
       iron-pages {
+        height: 100%;
+      }
+      .page {
         height: 100%;
       }
       @media only screen and (max-width: 800px) {
@@ -65,16 +70,14 @@ the License.
     <div id="container">
       <datalab-toolbar></datalab-toolbar>
       <div class="datalab-contents">
-        <div class="datalab-sidebar">
-          <datalab-sidebar page={{page}}></datalab-sidebar>
-        </div>
+        <datalab-sidebar class="datalab-sidebar" page={{page}}></datalab-sidebar>
         <div class="datalab-main-content">
           <iron-pages id="pages" selected="{{page}}" attr-for-selected="name"
                       fallback-selection="files">
-            <datalab-data name="data"></datalab-data>
-            <datalab-files name="files"></datalab-files>
-            <datalab-sessions name="sessions"></datalab-sessions>
-            <datalab-terminal name="terminal"></datalab-terminal>
+            <datalab-data class="page" name="data"></datalab-data>
+            <datalab-files class="page" name="files"></datalab-files>
+            <datalab-sessions class="page" name="sessions"></datalab-sessions>
+            <datalab-terminal class="page" name="terminal"></datalab-terminal>
           </iron-pages>
         </div>
       </div>
