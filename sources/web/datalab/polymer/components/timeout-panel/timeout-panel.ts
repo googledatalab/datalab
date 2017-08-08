@@ -17,9 +17,6 @@
 
 // TODO: look through datalab/static/idle-timeout.js for additional features to port to here.
 
-// TODO: we need to make on-blur work on our tabs so that we stop sending API calls such as
-// /api/sessions when a tab is not visible, as that prevents idle timeout.
-
 /**
  * Idle timeout panel.
  * This element provides a timeout icon and a timeout status string.

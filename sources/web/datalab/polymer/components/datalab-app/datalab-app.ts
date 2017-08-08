@@ -92,8 +92,6 @@ class DatalabAppElement extends Polymer.Element {
     super.ready();
 
     window.addEventListener('focus', () => this._focusHandler());
-    // TODO: Need to also add a blur event listener that calls the current page's blur
-    // handler, but I cannot get this to work as of now.
   }
 
   /**
