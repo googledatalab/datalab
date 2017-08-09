@@ -19,7 +19,7 @@
 // environment
 class ApiManagerFactory {
 
-  private static _apiManager: ApiManager;
+  private static _apiManager: IApiManager;
 
   public static getInstance() {
     if (!ApiManagerFactory._apiManager) {
