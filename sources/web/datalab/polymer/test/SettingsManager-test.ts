@@ -54,12 +54,15 @@ describe('SettingsManager', () => {
       SettingsManager.getAppSettingsAsync = (_?: boolean) => {
         return Promise.resolve(fakeAppSettings as common.AppSettings);
       };
-      document.head.appendChild = (element: HTMLScriptElement) => {
-        assert(element.src.endsWith('/fake/config/url/path'),
-            'script element should have the expected src');
-        documentHeadCalled = true;
-        const fakeEvent = document.createEvent("Event");
-        element.onload(fakeEvent); // Resolve our promise
+      document.head.appendChild = <T extends Node>(element: T) => {
+        if (element instanceof HTMLScriptElement) {
+          const script = element as HTMLScriptElement;
+          assert(script.src.endsWith('/fake/config/url/path'),
+              'script element should have the expected src');
+          documentHeadCalled = true;
+          const fakeEvent = document.createEvent("Event");
+          script.onload(fakeEvent); // Resolve our promise
+        }
         return element;
       };
       assert(window.datalab === undefined, 'window.datalab should not be defined');
