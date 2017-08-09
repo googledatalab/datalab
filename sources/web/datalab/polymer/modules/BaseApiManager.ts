@@ -77,21 +77,11 @@ class BaseApiManager implements IApiManager {
   }
 
   /**
-   * Sends an XMLHttpRequest to the specified URL, and parses the
-   * the response text as json. This method returns immediately with a promise
-   * that resolves with the parsed object when the request completes.
-   */
-  private _xhrJsonAsync(url: string, options?: XhrOptions) {
-    return this._xhrTextAsync(url, options)
-      .then((response: string) => JSON.parse(response || 'null'));
-  }
-
-  /**
    * Sends an XMLHttpRequest to the specified URL, and returns the
    * the response text. This method returns immediately with a promise
    * that resolves with the response text when the request completes.
    */
-  private _xhrTextAsync(url: string, options?: XhrOptions): Promise<string> {
+  protected _xhrTextAsync(url: string, options?: XhrOptions): Promise<string> {
 
     options = options || {};
     const method = options.method || 'GET';
@@ -148,4 +138,13 @@ class BaseApiManager implements IApiManager {
     });
   }
 
+  /**
+   * Sends an XMLHttpRequest to the specified URL, and parses the
+   * the response text as json. This method returns immediately with a promise
+   * that resolves with the parsed object when the request completes.
+   */
+  private _xhrJsonAsync(url: string, options?: XhrOptions) {
+    return this._xhrTextAsync(url, options)
+      .then((response: string) => JSON.parse(response || 'null'));
+  }
 }
