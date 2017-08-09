@@ -192,9 +192,7 @@ class GapiManager {
    */
   private static _loadClientId(): Promise<void> {
     return GapiManager._loadClientIdFromUserSettings()
-      .then((clientId) => {
-        return clientId || GapiManager._loadClientIdFromConfigFile();
-      })
+      .then((clientId) => clientId || GapiManager._loadClientIdFromConfigFile())
       .then((clientId) => {
         if (!clientId) {
           throw new MissingClientIdError();
