@@ -12,12 +12,15 @@
  * the License.
  */
 
-interface Window {
-  datalab: { [key: string]: string }
-};
+/// <reference path="../../common.d.ts" />
 
 let userSettings: common.UserSettings;
 let appSettings: common.AppSettings;
+
+class MissingConfigUrlError extends Error {
+  message = 'No configUrl value in appSettings';
+}
+
 
 /**
  * Handles API calls related to app/user settings, and manages a local cached copy
@@ -74,7 +77,7 @@ class SettingsManager {
    * Loads and executes the config file as specifed in appSettings.configUrl.
    * This sets values on window.datalab. Resolves immediately if window.datalab is already set.
    */
-  public static loadConfigToWindowDatalab():Promise<void> {
+  public static loadConfigToWindowDatalab(): Promise<void> {
     if (window.datalab) {
       return Promise.resolve(); // Already loaded
     }
@@ -93,13 +96,16 @@ class SettingsManager {
             configScript.onerror = () => {
               reject(new Error('Failed to load config file ' + settings.configUrl));
             };
+            // The config file we are loading reading the following body
+            // attribute and calls split on it, so we need to set that attribute
+            // to a string to avoid a runtime error when loading that file.
             if (!document.body.getAttribute('data-version-id')) {
               document.body.setAttribute('data-version-id', '');
             }
             document.head.appendChild(configScript);
           }) as Promise<void>;
         } else {
-          throw new MissingClientIdError();
+          throw new MissingConfigUrlError();
         }
       });
   }

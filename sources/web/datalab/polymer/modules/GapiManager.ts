@@ -21,10 +21,6 @@ class MissingClientIdError extends Error {
   message = 'No oauth2ClientId found in user or config settings';
 }
 
-interface Window {
-  datalab: { [key: string]: string }
-};
-
 /**
  * This file contains a collection of functions that interact with gapi.
  */
@@ -197,15 +193,13 @@ class GapiManager {
   private static _loadClientId(): Promise<void> {
     return GapiManager._loadClientIdFromUserSettings()
       .then((clientId) => {
-        if (clientId) {
-          GapiManager._clientId = clientId;
-          return;   // Make ts compiler happy
-        } else {
-          return GapiManager._loadClientIdFromConfigFile()
-            .then((clientId) => {
-              GapiManager._clientId = clientId;
-            });
+        return clientId || GapiManager._loadClientIdFromConfigFile();
+      })
+      .then((clientId) => {
+        if (!clientId) {
+          throw new MissingClientIdError();
         }
+        GapiManager._clientId = clientId;
       });
   }
 
@@ -216,6 +210,9 @@ class GapiManager {
     return SettingsManager.getUserSettingsAsync()
       .then((settings: common.UserSettings) => {
         return settings.oauth2ClientId;
+      })
+      .catch(() => {
+        return '';
       });
   }
 
@@ -229,7 +226,7 @@ class GapiManager {
         if (window.datalab && window.datalab.oauth2ClientId) {
           return window.datalab.oauth2ClientId;
         } else {
-          throw new MissingClientIdError();
+          return '';
         }
       });
   }

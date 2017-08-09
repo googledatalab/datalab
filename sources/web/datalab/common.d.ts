@@ -184,3 +184,7 @@ declare module common {
     (e: Error): void;
   }
 }
+
+interface Window {
+  datalab: { [key: string]: string }
+}

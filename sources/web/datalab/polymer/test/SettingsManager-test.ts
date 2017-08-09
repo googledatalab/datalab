@@ -28,17 +28,15 @@ describe('SettingsManager', () => {
 
     it('resolves immediately if window.datalab is already set', async () => {
       window.datalab = { foo: 'bar' };
-      SettingsManager.getAppSettingsAsync = (forceRefresh?: boolean) => {
-        forceRefresh; // Make compiler happy
+      SettingsManager.getAppSettingsAsync = (_?: boolean) => {
         return Promise.reject(new Error('should not be loading settings'));
       };
       await SettingsManager.loadConfigToWindowDatalab();
     });
 
     it('rejects the promise if there is no configUrl field', (done: () => void) => {
-      SettingsManager.getAppSettingsAsync = (forceRefresh?: boolean) => {
-        forceRefresh; // Make compiler happy
-        return Promise.resolve({});
+      SettingsManager.getAppSettingsAsync = (_?: boolean) => {
+        return Promise.resolve({} as common.AppSettings);
       };
       SettingsManager.loadConfigToWindowDatalab()
         .then(() => {
@@ -53,15 +51,16 @@ describe('SettingsManager', () => {
       const fakeAppSettings = {
         configUrl: '/fake/config/url/path'
       };
-      SettingsManager.getAppSettingsAsync = (forceRefresh?: boolean) => {
-        forceRefresh; // Make compiler happy
-        return Promise.resolve(fakeAppSettings);
+      SettingsManager.getAppSettingsAsync = (_?: boolean) => {
+        return Promise.resolve(fakeAppSettings as common.AppSettings);
       };
       document.head.appendChild = (element: HTMLScriptElement) => {
-        assert(element.src.endsWith('/fake/config/url/path'), 'script element should have the expected src');
+        assert(element.src.endsWith('/fake/config/url/path'),
+            'script element should have the expected src');
         documentHeadCalled = true;
         const fakeEvent = document.createEvent("Event");
         element.onload(fakeEvent); // Resolve our promise
+        return element;
       };
       assert(window.datalab === undefined, 'window.datalab should not be defined');
       SettingsManager.loadConfigToWindowDatalab()
