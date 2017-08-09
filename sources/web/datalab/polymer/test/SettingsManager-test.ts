@@ -28,14 +28,16 @@ describe('SettingsManager', () => {
 
     it('resolves immediately if window.datalab is already set', async () => {
       window.datalab = { foo: 'bar' };
-      SettingsManager.getAppSettingsAsync = () => {
+      SettingsManager.getAppSettingsAsync = (forceRefresh?: boolean) => {
+        forceRefresh; // Make compiler happy
         return Promise.reject(new Error('should not be loading settings'));
       };
       await SettingsManager.loadConfigToWindowDatalab();
     });
 
     it('rejects the promise if there is no configUrl field', (done: () => void) => {
-      SettingsManager.getAppSettingsAsync = () => {
+      SettingsManager.getAppSettingsAsync = (forceRefresh?: boolean) => {
+        forceRefresh; // Make compiler happy
         return Promise.resolve({});
       };
       SettingsManager.loadConfigToWindowDatalab()
@@ -51,7 +53,8 @@ describe('SettingsManager', () => {
       const fakeAppSettings = {
         configUrl: '/fake/config/url/path'
       };
-      SettingsManager.getAppSettingsAsync = () => {
+      SettingsManager.getAppSettingsAsync = (forceRefresh?: boolean) => {
+        forceRefresh; // Make compiler happy
         return Promise.resolve(fakeAppSettings);
       };
       document.head.appendChild = (element: HTMLScriptElement) => {
