@@ -14,21 +14,32 @@
 
 class JupyterApiManager extends BaseApiManager {
 
-  /**
-   * URL for retrieving the base path
-   */
-  private readonly _basepathApiUrl = '/api/basepath';
-
   private _basepathPromise: Promise<string>;
 
   public getBasePath(): Promise<string> {
     if (!this._basepathPromise) {
-      this._basepathPromise = this._xhrTextAsync(this._basepathApiUrl)
+      this._basepathPromise = this._xhrTextAsync(this.getServiceUrl(ServiceId.BASE_PATH))
+        .then((basepath: string) => basepath.replace(/\/$/, ''))
         .catch((e) => {
           console.error('Could not get base path: ' + e.message);
           return '';
         });
     }
     return this._basepathPromise;
+  }
+
+  public getServiceUrl(serviceId: ServiceId): string {
+    switch (serviceId) {
+      case ServiceId.APP_SETTINGS:
+        return '/api/settings';
+      case ServiceId.BASE_PATH:
+        return '/api/basepath';
+      case ServiceId.TIMEOUT:
+        return '/_timeout';
+      case ServiceId.USER_SETTINGS:
+        return '/_settings';
+      default:
+        throw new Error('Unknown service id: ' + serviceId);
+    }
   }
 }

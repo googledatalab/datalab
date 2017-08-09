@@ -80,4 +80,8 @@ class DaasApiManager extends BaseApiManager {
     }
     return this._basepathPromise;
   }
+
+  public getServiceUrl(_: ServiceId): string {
+    throw new Error('Not implemented');
+  }
 }

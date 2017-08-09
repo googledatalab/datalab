@@ -13,6 +13,16 @@
  */
 
 /**
+ * A list of services offered by backends.
+ */
+enum ServiceId {
+  BASE_PATH,
+  USER_SETTINGS,
+  APP_SETTINGS,
+  TIMEOUT,
+}
+
+/**
  * An abstraction for sending xhr requests to the backend service, including
  * getting the basepath for all upcoming requests
  */
@@ -45,7 +55,7 @@ interface IApiManager {
    * base path, and expecting a JSON response. This method returns immediately
    * with a promise that resolves with the parsed object when the request completes.
    */
-  sendRequestAsync(url: string, options?: XhrOptions): Promise<string>;
+  sendRequestAsync(url: string, options?: XhrOptions): Promise<any>;
 
   /**
    * Sends an XMLHttpRequest to the specified URL, adding the required
@@ -53,18 +63,23 @@ interface IApiManager {
    * with a promise that resolves with the returned text when the request completes.
    */
   sendTextRequestAsync(url: string, options?: XhrOptions): Promise<string>;
+
+  /**
+   * Returns the relative path for the given service name.
+   */
+  getServiceUrl(serviceId: ServiceId): string;
 }
 
-class BaseApiManager implements IApiManager {
+abstract class BaseApiManager implements IApiManager {
 
   public isConnected = true;
 
   public connectedHandler: () => void;
   public disconnectedHandler: () => void;
 
-  public getBasePath(): Promise<string> {
-    throw new Error('Not implemented');
-  }
+  public abstract getBasePath(): Promise<string>;
+
+  public abstract getServiceUrl(_: ServiceId): string;
 
   public sendRequestAsync(url: string, options?: XhrOptions) {
     return this.getBasePath()
