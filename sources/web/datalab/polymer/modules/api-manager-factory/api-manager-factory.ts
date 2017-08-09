@@ -13,6 +13,20 @@
  */
 
 /**
+ * Dependency custom element for ApiManager
+ */
+const API_MANAGER_ELEMENT = {
+  daas: {
+    path: 'not/implemented',
+    type: undefined,
+  },
+  jupyter: {
+    path: 'modules/jupyter-api-manager/jupyter-api-manager.html',
+    type: JupyterApiManager
+  },
+};
+
+/**
  * Maintains and gets the static ApiManager singleton.
  */
 // TODO: Find a better way to switch the ApiManager instance based on the
@@ -23,9 +37,16 @@ class ApiManagerFactory {
 
   public static getInstance() {
     if (!ApiManagerFactory._apiManager) {
-      ApiManagerFactory._apiManager = new JupyterApiManager();
+      const backendType = ApiManagerFactory._getBackendType();
+
+      Polymer.importHref(backendType.path, undefined, undefined, true);
+      ApiManagerFactory._apiManager = new backendType.type();
     }
 
     return ApiManagerFactory._apiManager;
+  }
+
+  private static _getBackendType() {
+    return API_MANAGER_ELEMENT.jupyter;
   }
 }
