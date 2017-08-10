@@ -12,11 +12,6 @@
  * the License.
  */
 
-declare function assert(condition: boolean, message: string): null;
-declare function fixture(element: string): any;
-
-/// <reference path="../node_modules/@types/mocha/index.d.ts" />
-/// <reference path="../node_modules/@types/chai/index.d.ts" />
 /// <reference path="../components/timeout-panel/timeout-panel.ts" />
 
 /*
