@@ -124,7 +124,8 @@ class FilesElement extends Polymer.Element {
   constructor() {
     super();
 
-    // TODO: Should choose the FileManager instance dynamically here
+    // TODO: Should choose the FileManager instance dynamically here based on
+    // the data source specified for this datalab-files instance
     this._fileManager = FileManagerFactory.getInstance();
     this._apiManager = ApiManagerFactory.getInstance();
   }
@@ -277,7 +278,7 @@ class FilesElement extends Polymer.Element {
       const row: ItemListRow = {
         firstCol: file.name,
         icon: Utils.getItemIconString(file.type),
-        secondCol: file.status ? file.status.toString() : '',
+        secondCol: file.status,
         selected: false
       };
       return row;
@@ -379,15 +380,15 @@ class FilesElement extends Polymer.Element {
   }
 
   _createNewNotebook() {
-    return this._createNewItem(DatalabFileType.NOTEBOOK, 'Notebook');
+    return this._createNewItem(DatalabFileType.NOTEBOOK);
   }
 
   _createNewFile() {
-    return this._createNewItem(DatalabFileType.FILE, 'File');
+    return this._createNewItem(DatalabFileType.FILE);
   }
 
   _createNewDirectory() {
-    return this._createNewItem(DatalabFileType.DIRECTORY, 'Directory');
+    return this._createNewItem(DatalabFileType.DIRECTORY);
   }
 
   /**
@@ -472,6 +473,7 @@ class FilesElement extends Polymer.Element {
             format: 'base64',
             name: file.name,
             path: currentPath,
+            status: DatalabFileStatus.IDLE,
             type: DatalabFileType.FILE,
           };
           return this._fileManager.save(model);
@@ -507,13 +509,13 @@ class FilesElement extends Polymer.Element {
    * create a new notebook/directory at the current path, and fetches the updated list
    * of files to redraw.
    */
-  _createNewItem(itemType: DatalabFileType, dialogTitle: string) {
+  _createNewItem(itemType: DatalabFileType) {
 
     // First, open a dialog to let the user specify a name for the notebook.
     const inputOptions: InputDialogOptions = {
       inputLabel: 'Name',
       okLabel: 'Create',
-      title: 'New ' + dialogTitle,
+      title: 'New ' + itemType,
     };
 
     return Utils.showDialog(InputDialogElement, inputOptions)

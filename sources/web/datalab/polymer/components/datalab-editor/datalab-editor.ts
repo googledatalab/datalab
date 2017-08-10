@@ -27,11 +27,11 @@ class DatalabEditorElement extends Polymer.Element {
    */
   public filePath: string;
 
-  private _fileManager: FileManager;
-  private _file: DatalabFile | null;
-  private _editor: CodeMirror.Editor;
-  private _theme: string;
   private _busy: boolean;
+  private _editor: CodeMirror.Editor;
+  private _file: DatalabFile | null;
+  private _fileManager: FileManager;
+  private _theme: string;
 
   static get is() { return 'datalab-editor'; }
 
@@ -56,8 +56,9 @@ class DatalabEditorElement extends Polymer.Element {
   async ready() {
     super.ready();
 
-    // TODO: This should be changeable based on the source of the file
-    this._fileManager = new JupyterFileManager();
+    // TODO: This should get the FileManager instance that corresponds to the
+    // origin of the file opened in the editor
+    this._fileManager = FileManagerFactory.getInstance();
 
     // Get the theme.
     const settings = await SettingsManager.getUserSettingsAsync()
@@ -131,6 +132,7 @@ class DatalabEditorElement extends Polymer.Element {
                 mimetype: 'text/plain',
                 name: closeResult.fileName,
                 path: closeResult.directoryPath,
+                status: DatalabFileStatus.IDLE,
                 type: DatalabFileType.FILE,
                 writable: true,
               };
@@ -153,6 +155,7 @@ class DatalabEditorElement extends Polymer.Element {
         mimetype: this._file.mimetype,
         name: this._file.name,
         path: dirPath,
+        status: DatalabFileStatus.IDLE,
         type: this._file.type,
         writable: this._file.writable,
       };

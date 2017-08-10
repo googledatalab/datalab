@@ -91,7 +91,6 @@ class JupyterFileManager implements FileManager {
           runningPaths.push(session.notebook.path);
         });
         files.forEach((file: DatalabFile) => {
-          this._jupyterFileToDatalabFile(file);
           if (runningPaths.indexOf(file.path) > -1) {
             file.status = DatalabFileStatus.RUNNING;
           }
@@ -111,7 +110,7 @@ class JupyterFileManager implements FileManager {
       method: 'POST',
       parameters: JSON.stringify({
         ext: 'ipynb',
-        type: this._datalabTypeToJupyterType(itemType),
+        type: itemType,
       }),
       successCodes: [201],
     };
@@ -190,29 +189,5 @@ class JupyterFileManager implements FileManager {
     };
 
     return apiManager.sendRequestAsync(destinationDirectory, xhrOptions);
-  }
-
-  private _datalabTypeToJupyterType(itemType: DatalabFileType): string {
-    switch (itemType) {
-      case DatalabFileType.DIRECTORY:
-        return 'folder';
-      case DatalabFileType.FILE:
-        return 'file';
-      case DatalabFileType.NOTEBOOK:
-        return 'file';
-      default:
-        throw new Error('Jupyter does not handle file type: ' + itemType);
-    }
-  }
-
-  private _jupyterFileToDatalabFile(file: any) {
-    if (file.type === 'directory') {
-      file.type = DatalabFileType.DIRECTORY;
-    } else if (file.type === 'notebook') {
-      file.type = DatalabFileType.NOTEBOOK;
-    } else {
-      file.type = DatalabFileType.FILE;
-    }
-    file.status = DatalabFileStatus.IDLE;
   }
 }
