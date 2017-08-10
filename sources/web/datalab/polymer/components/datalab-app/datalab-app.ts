@@ -123,8 +123,9 @@ class DatalabAppElement extends Polymer.Element {
   _pageChanged(newPage: string, oldPage: string) {
     // Build the path using the page name as suffix for directory
     // and file names.
-    const subpath = 'datalab-' + newPage;
-    const resolvedPageUrl = this.resolveUrl('../' + subpath + '/' + subpath + '.html');
+    const el = this.$.pages.querySelector('[name=' + newPage + ']') as HTMLElement;
+    const elName = el.tagName.toLowerCase();
+    const resolvedPageUrl = this.resolveUrl('../' + elName + '/' + elName + '.html');
     Polymer.importHref(resolvedPageUrl, undefined, undefined, true);
 
     const newElement = this._getPageElement(newPage);
