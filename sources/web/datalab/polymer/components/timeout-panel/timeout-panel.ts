@@ -12,8 +12,6 @@
  * the License.
  */
 
-/// <reference path="../../modules/GapiManager.ts" />
-
 // TODO: look through datalab/static/idle-timeout.js for additional features to port to here.
 
 /**
