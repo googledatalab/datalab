@@ -25,7 +25,7 @@ describe('<table-preview>', () => {
 
   beforeEach(() => {
     GapiManager.listenForSignInChanges = () => Promise.resolve();
-    ApiManager.getBasePath = () => {
+    ApiManagerFactory.getInstance().getBasePath = () => {
       return Promise.resolve('testbase');
     };
 

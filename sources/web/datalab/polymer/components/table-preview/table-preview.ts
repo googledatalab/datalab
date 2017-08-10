@@ -27,6 +27,8 @@ class TablePreviewElement extends Polymer.Element {
    */
   public tableId: string;
 
+  private _apiManager: ApiManager;
+  private _fileManager: FileManager;
   private _table: gapi.client.bigquery.Table | null;
   private _busy = false;
   private readonly DEFAULT_MODE = 'NULLABLE';
@@ -70,6 +72,13 @@ class TablePreviewElement extends Polymer.Element {
         type: String,
       },
     };
+  }
+
+  constructor() {
+    super();
+
+    this._apiManager = ApiManagerFactory.getInstance();
+    this._fileManager = FileManagerFactory.getInstance();
   }
 
   _tableIdChanged() {
@@ -182,8 +191,8 @@ class TablePreviewElement extends Polymer.Element {
         const model = await TemplateManager.newNotebookFromTemplate(template);
 
         if (model) {
-          const newFile = await ApiManager.saveJupyterFile(model) as JupyterFile;
-          const basePath = await ApiManager.getBasePath();
+          const newFile = await this._fileManager.save(model) as DatalabFile;
+          const basePath = await this._apiManager.getBasePath();
           const prefix = location.protocol + '//' + location.host + basePath + '/';
           window.open(prefix + 'notebooks' + '/' + newFile.path, '_blank');
         }

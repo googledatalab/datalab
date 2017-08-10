@@ -12,8 +12,6 @@
  * the License.
  */
 
-/// <reference path="ApiManager.ts" />
-
 const PLACEHOLDER_PREFIX = '#$';
 
 interface TemplateParameter {
@@ -48,9 +46,9 @@ class NotebookTemplate {
    * Substitutes all placeholders in the given notebook's cells with their
    * values.
    */
-  public populatePlaceholders(notebook: JupyterNotebookModel) {
+  public populatePlaceholders(notebook: Notebook) {
 
-    notebook.cells.forEach((cell: JupyterNotebookCellModel) => {
+    notebook.cells.forEach((cell: NotebookCell) => {
       this.parameters.forEach((parameter: TemplateParameter) => {
         const placeholder = PLACEHOLDER_PREFIX + parameter.placeholder;
         const escapedPlaceholder = NotebookTemplate._regexEscapeAll(placeholder);
@@ -105,14 +103,14 @@ class TemplateManager {
 
     if (closeResult.confirmed && closeResult.fileName) {
       const path = TemplateManager._templatePrefix + template.path;
-      const file = await ApiManager.getJupyterFile(path);
+      const file = await FileManagerFactory.getInstance().get(path);
 
       file.name = closeResult.fileName;
       if (!file.name.endsWith('.ipynb')) {
         file.name += '.ipynb';
       }
       file.path = closeResult.directoryPath;
-      template.populatePlaceholders(file.content as JupyterNotebookModel);
+      template.populatePlaceholders(file.content as Notebook);
 
       return file;
     } else {
