@@ -32,7 +32,7 @@
  * and no selection. It also doesn't do anything when a file is double clicked.
  * This is meant to be used for browsing only, such as the case for picking files or directories.
  */
-class FilesElement extends Polymer.Element {
+class FileBrowserElement extends Polymer.Element {
 
   private static readonly _deleteListLimit = 10;
 
@@ -72,7 +72,7 @@ class FilesElement extends Polymer.Element {
   private _updateToolbarCollapseThreshold = 720;
   private _uploadFileSizeWarningLimit = 25 * 1024 * 1024;
 
-  static get is() { return 'datalab-files'; }
+  static get is() { return 'file-browser'; }
 
   static get properties() {
     return {
@@ -125,7 +125,7 @@ class FilesElement extends Polymer.Element {
     super();
 
     // TODO: Should choose the FileManager instance dynamically here based on
-    // the data source specified for this datalab-files instance
+    // the data source specified for this file-browser instance
     this._fileManager = FileManagerFactory.getInstance();
     this._apiManager = ApiManagerFactory.getInstance();
   }
@@ -184,7 +184,7 @@ class FilesElement extends Polymer.Element {
   }
 
   disconnectedCallback() {
-    // Clean up the refresh interval. This is important if multiple datalab-files elements
+    // Clean up the refresh interval. This is important if multiple file-browser elements
     // are created and destroyed on the document.
     clearInterval(this._fileListRefreshIntervalHandle);
   }
@@ -627,12 +627,12 @@ class FilesElement extends Polymer.Element {
       // Body
       let itemList = '<ul>\n';
       selectedIndices.forEach((fileIdx: number, i: number) => {
-        if (i < FilesElement._deleteListLimit) {
+        if (i < FileBrowserElement._deleteListLimit) {
           itemList += '<li>' + this._fileList[fileIdx].name + '</li>\n';
         }
       });
-      if (num > FilesElement._deleteListLimit) {
-        itemList += '+ ' + (num - FilesElement._deleteListLimit) + ' more.';
+      if (num > FileBrowserElement._deleteListLimit) {
+        itemList += '+ ' + (num - FileBrowserElement._deleteListLimit) + ' more.';
       }
       itemList += '</ul>';
       const messageHtml = '<div>Are you sure you want to delete:</div>' + itemList;
@@ -842,4 +842,4 @@ class FilesElement extends Polymer.Element {
 
 }
 
-customElements.define(FilesElement.is, FilesElement);
+customElements.define(FileBrowserElement.is, FileBrowserElement);

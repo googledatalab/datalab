@@ -12,7 +12,7 @@
  * the License.
  */
 
-/// <reference path="../datalab-files/datalab-files.ts" />
+/// <reference path="../file-browser/file-browser.ts" />
 
 /**
  * Dialog close context, includes whether the dialog was confirmed, and the user selected
@@ -35,7 +35,7 @@ interface DirectoryPickerDialogOptions extends BaseDialogOptions {
  * Directory Picker Dialog element for Datalab, extends the Base dialog element.
  * This element is a modal dialog that presents the user with a file picker that can navigate
  * into directories to select destination path of copying or moving an item. It uses a minimal
- * version of the datalab-files element, which shows the file picker without the toolbar, and
+ * version of the file-browser element, which shows the file picker without the toolbar, and
  * without the ability to select files.
  * The dialog returns the user selected directory path, if any.
  */
