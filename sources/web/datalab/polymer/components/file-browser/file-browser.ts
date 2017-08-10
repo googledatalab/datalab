@@ -47,6 +47,16 @@ class FileBrowserElement extends Polymer.Element {
   public currentPath: string;
 
   /**
+   * The type of FileManager we want to use for this file-browser.
+   */
+  public fileManagerType: string;   // default is in code below
+
+  /**
+   * True makes the toolbar never visible.
+   */
+  public hideToolbar: boolean;
+
+  /**
    * The currently selected file if exactly one is selected, or null if none is.
    */
   public selectedFile: DatalabFile | null;
@@ -110,6 +120,14 @@ class FileBrowserElement extends Polymer.Element {
         type: String,
         value: '',
       },
+      fileManagerType: {
+        type: String,
+        value: '',
+      },
+      hideToolbar: {
+        type: Boolean,
+        value: false,
+      },
       selectedFile: {
         type: Object,
         value: null,
@@ -124,9 +142,6 @@ class FileBrowserElement extends Polymer.Element {
   constructor() {
     super();
 
-    // TODO: Should choose the FileManager instance dynamically here based on
-    // the data source specified for this file-browser instance
-    this._fileManager = FileManagerFactory.getInstance();
     this._apiManager = ApiManagerFactory.getInstance();
   }
 
@@ -142,42 +157,26 @@ class FileBrowserElement extends Polymer.Element {
 
     super.ready();
 
+    if (!this.fileManagerType) {
+      this.fileManagerType = 'jupyter';
+    }
+    switch (this.fileManagerType) {
+      case 'bigquery':
+        this._fileManager =
+            FileManagerFactory.getInstanceForType(FileManagerType.BIG_QUERY);
+        break;
+      default:
+      case 'jupyter':
+        this._fileManager = FileManagerFactory.getInstance();
+        break;
+    }
+
     // TODO: Using a ready promise might be common enough a need that we should
     // consider adding it to a super class, maybe DatalabElement. For now, this
     // is the only element that needs it.
     if (!this.readyPromise) {
-      // Get the last startup path.
-      this.readyPromise = SettingsManager.getUserSettingsAsync(true /*forceRefresh*/)
-        .then((settings: common.UserSettings) => {
-          if (settings.startuppath) {
-            let path = settings.startuppath;
-            // For backward compatibility with the current path format.
-            if (path.startsWith('/tree/')) {
-              path = path.substr('/tree/'.length);
-            }
-            this.currentPath = path;
-          }
-        })
-        .catch(() => console.error('Failed to get the user settings.'))
-        .then(() => {
-
-          this._resizeHandler();
-          this._focusHandler();
-
-          const filesElement = this.shadowRoot.querySelector('#files');
-          if (filesElement) {
-            filesElement.addEventListener('itemDoubleClick',
-                                          this._handleDoubleClicked.bind(this));
-            filesElement.addEventListener('selected-indices-changed',
-                                          this._handleSelectionChanged.bind(this));
-          }
-
-          // For a small file/directory picker, we don't need to show the status.
-          (this.$.files as ItemListElement).columns = this.small ? ['Name'] : ['Name', 'Status'];
-
-          this._fetching = false;
-          return this._fetchFileList();
-        });
+      this.readyPromise = this._loadStartupPath()
+          .then(() => this._finishLoadingFiles());
     }
 
     return this.readyPromise;
@@ -241,6 +240,8 @@ class FileBrowserElement extends Polymer.Element {
       .catch((e: Error) => {
         if (throwOnError === true) {
           throw new Error('Error getting list of files: ' + e.message);
+        } else {
+          console.log('Error getting list of files:', e);
         }
       })
       .then(() => this._fetching = false);
@@ -838,6 +839,45 @@ class FileBrowserElement extends Polymer.Element {
       clearInterval(this._fileListRefreshIntervalHandle);
       this._fileListRefreshIntervalHandle = 0;
     }
+  }
+
+  private _loadStartupPath() {
+    if (this.fileManagerType === 'jupyter') {
+      return SettingsManager.getUserSettingsAsync(true /*forceRefresh*/)
+        .then((settings: common.UserSettings) => {
+          if (settings.startuppath) {
+            let path = settings.startuppath;
+            // For backward compatibility with the current path format.
+            if (path.startsWith('/tree/')) {
+              path = path.substr('/tree/'.length);
+            }
+            this.currentPath = path;
+          }
+        })
+        .catch(() => console.error('Failed to get the user settings.'));
+    } else {
+      this.currentPath = '/';
+      return Promise.resolve();
+    }
+  }
+
+  private _finishLoadingFiles() {
+    this._resizeHandler();
+    this._focusHandler();
+
+    const filesElement = this.shadowRoot.querySelector('#files');
+    if (filesElement) {
+      filesElement.addEventListener('itemDoubleClick',
+                                    this._handleDoubleClicked.bind(this));
+      filesElement.addEventListener('selected-indices-changed',
+                                    this._handleSelectionChanged.bind(this));
+    }
+
+    // For a small file/directory picker, we don't need to show the status.
+    (this.$.files as ItemListElement).columns = this.small ? ['Name'] : ['Name', 'Status'];
+
+    this._fetching = false;
+    return this._fetchFileList();
   }
 
 }

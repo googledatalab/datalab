@@ -16,10 +16,21 @@
  * Dependency custom element for ApiManager
  */
 const FILE_MANAGER_ELEMENT = {
+  bigquery: {
+    name: 'bigquery',
+    path: 'modules/bigquery-file-manager/bigquery-file-manager.html',
+    type: BigQueryFileManager,
+  },
   jupyter: {
+    name: 'jupyter',
     path: 'modules/jupyter-file-manager/jupyter-file-manager.html',
     type: JupyterFileManager,
   },
+};
+
+enum FileManagerType {
+  BIG_QUERY,  // bigquery
+  JUPYTER,    // jupyter
 };
 
 /**
@@ -29,21 +40,30 @@ const FILE_MANAGER_ELEMENT = {
 // environment
 class FileManagerFactory {
 
-  private static _fileManager: FileManager;
+  private static _fileManagers: { [fileManagerType: string] : FileManager } = {};
 
+  /** Get the default FileManager. */
   public static getInstance() {
-    if (!FileManagerFactory._fileManager) {
-      const backendType = FileManagerFactory._getBackendType();
-
-      Polymer.importHref(backendType.path, undefined, undefined, true);
-      FileManagerFactory._fileManager = new backendType.type();
-    }
-
-    return FileManagerFactory._fileManager;
+    return FileManagerFactory.getInstanceForType(FileManagerType.JUPYTER);
   }
 
-  private static _getBackendType() {
-    return FILE_MANAGER_ELEMENT.jupyter;
+  public static getInstanceForType(fileManagerType: FileManagerType) {
+    const backendType = FileManagerFactory._getBackendType(fileManagerType);
+    if (!FileManagerFactory._fileManagers[backendType.name]) {
+
+      Polymer.importHref(backendType.path, undefined, undefined, true);
+      FileManagerFactory._fileManagers[fileManagerType] = new backendType.type();
+    }
+
+    return FileManagerFactory._fileManagers[fileManagerType];
+  }
+
+  private static _getBackendType(fileManagerType: FileManagerType) {
+    switch (fileManagerType) {
+      case FileManagerType.BIG_QUERY: return FILE_MANAGER_ELEMENT.bigquery;
+      case FileManagerType.JUPYTER: return FILE_MANAGER_ELEMENT.jupyter;
+      default: throw new Error('Unknown FileManagerType');
+    }
   }
 }
 
