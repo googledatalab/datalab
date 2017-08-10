@@ -71,21 +71,21 @@ interface FileManager {
    *               useful for downloading notebooks, which are by default read
    *               as JSON, which doesn't preserve formatting.
    */
-  getFile(path: string, asText?: boolean): Promise<DatalabFile>;
+  get(path: string, asText?: boolean): Promise<DatalabFile>;
 
   /**
    * Uploads the given file object to the backend. The file's name, path, format,
    * and content are required fields.
    * @param model object containing file information to send to backend
    */
-  saveFile(file: DatalabFile): Promise<DatalabFile>;
+  save(file: DatalabFile): Promise<DatalabFile>;
 
   /**
    * Returns a list of files at the target path, each implementing the ApiFile interface.
    * Two requests are made to /api/contents and /api/sessions to get this data.
    * @param path current path to list files under
    */
-  listFiles(path: string): Promise<DatalabFile[]>;
+  list(path: string): Promise<DatalabFile[]>;
 
   /**
    * Creates a new Datalab item
@@ -104,7 +104,7 @@ interface FileManager {
    * Deletes an item
    * @param path item path to delete
    */
-  deleteItem(path: string): Promise<boolean>;
+  delete(path: string): Promise<boolean>;
 
   /*
    * Copies an item from source to destination. Item name collisions at the
@@ -112,5 +112,5 @@ interface FileManager {
    * @param itemPath path to item to copy
    * @param destinationDirectory directory to copy the item into
    */
-  copyItem(itemPath: string, destinationDirectory: string): Promise<DatalabFile>;
+  copy(path: string, destinationDirectory: string): Promise<DatalabFile>;
 }

@@ -17,8 +17,8 @@
  */
 const API_MANAGER_ELEMENT = {
   daas: {
-    path: 'not/implemented',
-    type: undefined,
+    path: 'modules/daas-api-manager/daas-api-manager.html',
+    type: DaasApiManager,
   },
   jupyter: {
     path: 'modules/jupyter-api-manager/jupyter-api-manager.html',
