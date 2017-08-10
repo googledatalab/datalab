@@ -12,7 +12,6 @@
  * the License.
  */
 
-/// <reference path="../../modules/GapiManager.ts" />
 /// <reference path="../input-dialog/input-dialog.ts" />
 /// <reference path="../item-list/item-list.ts" />
 

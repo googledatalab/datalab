@@ -4,7 +4,7 @@
   "fragments": [
     "components/datalab-data/datalab-data.html",
     "components/datalab-editor/datalab-editor.html",
-    "components/datalab-files/datalab-files.html",
+    "components/file-browser/file-browser.html",
     "components/datalab-sessions/datalab-sessions.html",
     "components/datalab-sidebar/datalab-sidebar.html",
     "components/datalab-terminal/datalab-terminal.html",

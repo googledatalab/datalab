@@ -12,9 +12,9 @@
  * the License.
  */
 
-/// <reference path="../../../../../third_party/externs/ts/gapi/bigquery.d.ts" />
-/// <reference path="../../../../../third_party/externs/ts/gapi/gapi.d.ts" />
-/// <reference path="../../common.d.ts" />
+/// <reference path="../../../../../../third_party/externs/ts/gapi/bigquery.d.ts" />
+/// <reference path="../../../../../../third_party/externs/ts/gapi/gapi.d.ts" />
+/// <reference path="../../../common.d.ts" />
 
 class MissingClientIdError extends Error {
   message = 'No oauth2ClientId found in user or config settings';

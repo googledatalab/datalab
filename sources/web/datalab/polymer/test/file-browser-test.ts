@@ -12,8 +12,8 @@
  * the License.
  */
 
-describe('<datalab-files>', () => {
-  let testFixture: FilesElement;
+describe('<file-browser>', () => {
+  let testFixture: FileBrowserElement;
   const startuppath = 'testpath';
 
   const mockFiles: DatalabFile[] = [
@@ -24,7 +24,7 @@ describe('<datalab-files>', () => {
 
   before(() => {
     SettingsManager.getUserSettingsAsync = (forceRefresh: boolean) => {
-      assert(forceRefresh === true, 'datalab-files should refresh settings on load');
+      assert(forceRefresh === true, 'file-browser should refresh settings on load');
       const mockSettings: common.UserSettings = {
         idleTimeoutInterval: '',
         idleTimeoutShutdownCommand: '',
