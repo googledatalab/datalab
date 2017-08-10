@@ -31,6 +31,9 @@ the License.
         background-color: var(--secondary-bg-color);
         height: 100%;
       }
+      .button-placeholder {
+        height: var(--toolbar-height);
+      }
       .sidebar-button {
         height: calc(var(--toolbar-height) - 1px);
         min-width: 100%;
@@ -56,9 +59,9 @@ the License.
       }
       .sidebar-button-title {
         color: inherit;
-        padding: 2px;
         overflow: hidden;
-        transition: opacity var(--app-animation-duration);
+        width: 100%;
+        transition: width var(--app-animation-duration);
       }
       .iron-selected > .sidebar-button {
         background-color: var(--selection-bg-color);
@@ -70,14 +73,14 @@ the License.
       }
       @media only screen and (max-width: 800px) {
         .sidebar-button-title {
-          opacity: 0;
+          width: 0px;
         }
       }
     </style>
 
     <div class="container">
       <!--place holder div to align with the toolbar-->
-      <div class="sidebar-button"></div>
+      <div class="button-placeholder"></div>
       <iron-selector class="container" attr-for-selected="id" selected={{page}}
                      class="drawer-list" role="navigation">
         <div hidden$="{{!_showDataTab}}">
