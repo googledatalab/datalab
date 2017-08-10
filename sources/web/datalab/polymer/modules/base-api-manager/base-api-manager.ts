@@ -16,10 +16,12 @@
  * A list of services offered by backends.
  */
 enum ServiceId {
-  BASE_PATH,
-  USER_SETTINGS,
   APP_SETTINGS,
+  BASE_PATH,
+  SESSIONS,
+  TERMINALS,
   TIMEOUT,
+  USER_SETTINGS,
 }
 
 /**

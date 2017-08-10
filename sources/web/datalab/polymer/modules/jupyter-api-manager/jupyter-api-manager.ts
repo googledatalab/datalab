@@ -34,6 +34,10 @@ class JupyterApiManager extends BaseApiManager {
         return '/api/settings';
       case ServiceId.BASE_PATH:
         return '/api/basepath';
+      case ServiceId.SESSIONS:
+        return '/api/sessions';
+      case ServiceId.TERMINALS:
+        return '/api/terminals';
       case ServiceId.TIMEOUT:
         return '/_timeout';
       case ServiceId.USER_SETTINGS:

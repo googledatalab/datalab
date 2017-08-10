@@ -52,9 +52,9 @@ class TerminalElement extends Polymer.Element {
 
     // Get the first terminal instance by calling the Jupyter API. If none are returned,
     // start a new one.
-    ApiManager.listTerminalsAsync()
+    TerminalManager.listTerminalsAsync()
       .then((terminals: [JupyterTerminal]) => {
-        return terminals.length === 0 ? ApiManager.startTerminalAsync() : terminals[0];
+        return terminals.length === 0 ? TerminalManager.startTerminalAsync() : terminals[0];
       })
       .then((terminal: JupyterTerminal) => {
         this._initTerminal(terminal.name);
