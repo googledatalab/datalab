@@ -47,6 +47,11 @@ enum DatalabFileType {
   NOTEBOOK,
 }
 
+enum DatalabFileStatus {
+  IDLE,
+  RUNNING,
+}
+
 /**
  * Represents a file object as returned from the FileManager calls.
  */
@@ -58,7 +63,7 @@ interface DatalabFile {
   mimetype?: string;
   name: string;
   path: string;
-  status: string;
+  status?: DatalabFileStatus;
   type: DatalabFileType;
   writable?: boolean;
 }
@@ -76,13 +81,14 @@ interface FileManager {
   /**
    * Uploads the given file object to the backend. The file's name, path, format,
    * and content are required fields.
-   * @param model object containing file information to send to backend
+   * @param file object containing file information to send to backend
    */
   save(file: DatalabFile): Promise<DatalabFile>;
 
   /**
-   * Returns a list of files at the target path, each implementing the ApiFile interface.
-   * Two requests are made to /api/contents and /api/sessions to get this data.
+   * Returns a list of files at the target path, each implementing the
+   * DatalabFile interface. Two requests are made to /api/contents and
+   * /api/sessions to get this data.
    * @param path current path to list files under
    */
   list(path: string): Promise<DatalabFile[]>;
@@ -109,7 +115,7 @@ interface FileManager {
   /*
    * Copies an item from source to destination. Item name collisions at the
    * destination are handled by backend.
-   * @param itemPath path to item to copy
+   * @param path path to item to copy
    * @param destinationDirectory directory to copy the item into
    */
   copy(path: string, destinationDirectory: string): Promise<DatalabFile>;

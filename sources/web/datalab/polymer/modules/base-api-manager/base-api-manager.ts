@@ -13,11 +13,28 @@
  */
 
 /**
+ * Options for _xhr call, contains the following optional fields:
+ *  - failureCodes: List of recoverable failure codes.
+ *  - method: The HTTP method to use; default is 'GET'.
+ *  - noCache: Disable request cache.
+ *  - parameters: Set of parameters to pass to the xhr request.
+ *  - successCodes: Only treat the request as successful if the return code is in this list.
+ */
+interface XhrOptions {
+  failureCodes?: number[];
+  method?: string;
+  noCache?: boolean;
+  parameters?: string | FormData;
+  successCodes?: [number];
+}
+
+/**
  * A list of services offered by backends.
  */
 enum ServiceId {
   APP_SETTINGS,
   BASE_PATH,
+  CONTENT,
   SESSIONS,
   TERMINALS,
   TIMEOUT,
@@ -31,7 +48,7 @@ enum ServiceId {
 // TODO: Rename to ApiManager once we refactor the current ApiManager, and
 // remove next line
 // tslint:disable-next-line:interface-name
-interface IApiManager {
+interface ApiManager {
 
   /**
    * Current connection status. Set to the last connection status.
@@ -72,7 +89,7 @@ interface IApiManager {
   getServiceUrl(serviceId: ServiceId): string;
 }
 
-abstract class BaseApiManager implements IApiManager {
+abstract class BaseApiManager implements ApiManager {
 
   public isConnected = true;
 

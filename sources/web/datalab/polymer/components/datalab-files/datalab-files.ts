@@ -12,7 +12,6 @@
  * the License.
  */
 
-/// <reference path="../../modules/ApiManager.ts" />
 /// <reference path="../../modules/Utils.ts" />
 /// <reference path="../item-list/item-list.ts" />
 /// <reference path="../input-dialog/input-dialog.ts" />
@@ -50,25 +49,27 @@ class FilesElement extends Polymer.Element {
   /**
    * The currently selected file if exactly one is selected, or null if none is.
    */
-  public selectedFile: ApiFile | null;
+  public selectedFile: DatalabFile | null;
 
   /*
    * Smaller version of this element to be used as a flyout file picker.
    */
   public small: boolean;
 
-  private _pathHistory: string[];
-  private _pathHistoryIndex: number;
+  private _addToolbarCollapseThreshold = 900;
+  private _apiManager: ApiManager;
+  private _currentCrumbs: string[];
+  private _detailsPaneCollapseThreshold = 600;
   private _fetching: boolean;
-  private _fileList: ApiFile[];
+  private _fileList: DatalabFile[];
   private _fileListFetchPromise: Promise<any>;
   private _fileListRefreshInterval = 60 * 1000;
   private _fileListRefreshIntervalHandle = 0;
-  private _currentCrumbs: string[];
+  private _fileManager: FileManager;
   private _isDetailsPaneToggledOn: boolean;
-  private _addToolbarCollapseThreshold = 900;
+  private _pathHistory: string[];
+  private _pathHistoryIndex: number;
   private _updateToolbarCollapseThreshold = 720;
-  private _detailsPaneCollapseThreshold = 600;
   private _uploadFileSizeWarningLimit = 25 * 1024 * 1024;
 
   static get is() { return 'datalab-files'; }
@@ -118,6 +119,14 @@ class FilesElement extends Polymer.Element {
         value: false,
       },
     };
+  }
+
+  constructor() {
+    super();
+
+    // TODO: Should choose the FileManager instance dynamically here
+    this._fileManager = FileManagerFactory.getInstance();
+    this._apiManager = ApiManagerFactory.getInstance();
   }
 
   /**
@@ -181,14 +190,14 @@ class FilesElement extends Polymer.Element {
 
   async _getNotebookUrlPrefix() {
     // Notebooks that are stored on the VM require the basepath.
-    const basepath = await ApiManager.getBasePath();
+    const basepath = await this._apiManager.getBasePath();
     const prefix = location.protocol + '//' + location.host + basepath + '/';
     return prefix + 'notebooks';
   }
 
   async _getEditorUrl(filePath?: string) {
     // Files that are stored on the VM require the basepath.
-    const basepath = await ApiManager.getBasePath();
+    const basepath = await this._apiManager.getBasePath();
     let url = location.protocol + '//' + location.host + basepath + '/editor';
     if (filePath) {
       url += '?file=' + filePath;
@@ -197,7 +206,7 @@ class FilesElement extends Polymer.Element {
   }
 
   /**
-   * Calls the ApiManager to get the list of files at the current path, and
+   * Calls the FileManager to get the list of files at the current path, and
    * updates the _fileList property.
    * @param throwOnError whether to throw an exception if the refresh fails. This
    *                     is false by default because throwing is currently not used.
@@ -214,7 +223,7 @@ class FilesElement extends Polymer.Element {
 
     this._fetching = true;
 
-    this._fileListFetchPromise = ApiManager.listFilesAsync(this.currentPath)
+    this._fileListFetchPromise = this._fileManager.list(this.currentPath)
       .then((newList) => {
         // Only refresh the UI list if there are any changes. This helps keep
         // the item list's selections intact most of the time
@@ -265,12 +274,13 @@ class FilesElement extends Polymer.Element {
    */
   _drawFileList() {
     (this.$.files as ItemListElement).rows = this._fileList.map((file) => {
-      return {
+      const row: ItemListRow = {
         firstCol: file.name,
         icon: Utils.getItemIconString(file.type),
-        secondCol: file.status,
+        secondCol: file.status ? file.status.toString() : '',
         selected: false
       };
+      return row;
     });
   }
 
@@ -283,13 +293,13 @@ class FilesElement extends Polymer.Element {
    */
   _handleDoubleClicked(e: ItemClickEvent) {
     const clickedItem = this._fileList[e.detail.index];
-    if (this.small && clickedItem.type !== 'directory') {
+    if (this.small && clickedItem.type !== DatalabFileType.DIRECTORY) {
       return;
     }
-    if (clickedItem.type === 'directory') {
+    if (clickedItem.type === DatalabFileType.DIRECTORY) {
       this.currentPath = clickedItem.path;
       this._pushNewPath();
-    } else if (clickedItem.type === 'notebook') {
+    } else if (clickedItem.type === DatalabFileType.NOTEBOOK) {
       this._getNotebookUrlPrefix()
         .then((prefix) => window.open(prefix + '/' + clickedItem.path, '_blank'));
     } else {
@@ -369,15 +379,15 @@ class FilesElement extends Polymer.Element {
   }
 
   _createNewNotebook() {
-    return this._createNewItem('notebook');
+    return this._createNewItem(DatalabFileType.NOTEBOOK, 'Notebook');
   }
 
   _createNewFile() {
-    return this._createNewItem('file');
+    return this._createNewItem(DatalabFileType.FILE, 'File');
   }
 
   _createNewDirectory() {
-    return this._createNewItem('directory');
+    return this._createNewItem(DatalabFileType.DIRECTORY, 'Directory');
   }
 
   /**
@@ -391,7 +401,7 @@ class FilesElement extends Polymer.Element {
   /**
    * Gets called after the user selected one or more files from the upload modal.
    * For each of the selected files, reads its contents, converts it to base64, then
-   * uses the ApiManager to save it on the backend.
+   * uses the FileManager to save it on the backend.
    */
   async _upload() {
     const inputElement = this.$.altFileUpload as HTMLInputElement;
@@ -457,14 +467,14 @@ class FilesElement extends Polymer.Element {
           // Extract the base64 data string
           itemData = itemData.substr(itemData.indexOf(',') + 1);
 
-          const model: JupyterFile = {
+          const model: DatalabFile = {
             content: itemData,
             format: 'base64',
             name: file.name,
             path: currentPath,
-            type: 'file',
+            type: DatalabFileType.FILE,
           };
-          return ApiManager.saveJupyterFile(model);
+          return this._fileManager.save(model);
         });
       uploadPromises.push(uploadPromise);
     });
@@ -497,13 +507,13 @@ class FilesElement extends Polymer.Element {
    * create a new notebook/directory at the current path, and fetches the updated list
    * of files to redraw.
    */
-  _createNewItem(type: string) {
+  _createNewItem(itemType: DatalabFileType, dialogTitle: string) {
 
     // First, open a dialog to let the user specify a name for the notebook.
     const inputOptions: InputDialogOptions = {
       inputLabel: 'Name',
       okLabel: 'Create',
-      title: 'New ' + type,
+      title: 'New ' + dialogTitle,
     };
 
     return Utils.showDialog(InputDialogElement, inputOptions)
@@ -513,11 +523,11 @@ class FilesElement extends Polymer.Element {
         if (closeResult.confirmed && closeResult.userInput) {
           let newName = closeResult.userInput;
           // Make sure the name ends with .ipynb for notebooks for convenience
-          if (type === 'notebook' && !newName.endsWith('.ipynb')) {
+          if (itemType === DatalabFileType.NOTEBOOK && !newName.endsWith('.ipynb')) {
             newName += '.ipynb';
           }
 
-          return ApiManager.createNewItem(type, this.currentPath + '/' + newName)
+          return this._fileManager.create(itemType, this.currentPath + '/' + newName)
             .then(() => {
               // Dispatch a success notification, and refresh the file list
               this.dispatchEvent(new NotificationEvent('Created ' + newName + '.'));
@@ -572,7 +582,7 @@ class FilesElement extends Polymer.Element {
           if (closeResult.confirmed && closeResult.userInput) {
             const newName = this.currentPath + '/' + closeResult.userInput;
 
-            return ApiManager.renameItem(selectedObject.path, newName)
+            return this._fileManager.rename(selectedObject.path, newName)
               .then(() => {
                 // Dispatch a success notification, and refresh the file list
                 const message = 'Renamed ' + selectedObject.name +
@@ -639,7 +649,7 @@ class FilesElement extends Polymer.Element {
         .then((closeResult: BaseDialogCloseResult) => {
           if (closeResult.confirmed) {
             const deletePromises = selectedIndices.map((i: number) => {
-              return ApiManager.deleteItem(this._fileList[i].path);
+              return this._fileManager.delete(this._fileList[i].path);
             });
             // TODO: [yebrahim] If at least one delete fails, _fetchFileList will never be called,
             // even if some other deletes completed.
@@ -699,8 +709,8 @@ class FilesElement extends Polymer.Element {
       return Utils.showDialog(DirectoryPickerDialogElement, options)
         .then((closeResult: DirectoryPickerDialogCloseResult) => {
           if (closeResult.confirmed) {
-            return ApiManager.copyItem(selectedObject.path, closeResult.directoryPath)
-              .then((newItem: JupyterFile) => {
+            return this._fileManager.copy(selectedObject.path, closeResult.directoryPath)
+              .then((newItem: DatalabFile) => {
                 // Dispatch a success notification, and refresh the file list
                 const message = 'Copied ' + selectedObject.path + ' to ' + newItem.path;
                 this.dispatchEvent(new NotificationEvent(message));
@@ -740,9 +750,9 @@ class FilesElement extends Polymer.Element {
         .then((closeResult: DirectoryPickerDialogCloseResult) => {
           if (closeResult.confirmed) {
             // Moving is renaming.
-            return ApiManager.renameItem(selectedObject.path,
+            return this._fileManager.rename(selectedObject.path,
                                          closeResult.directoryPath + '/' + selectedObject.name)
-              .then((newItem: JupyterFile) => {
+              .then((newItem: DatalabFile) => {
                 // Dispatch a success notification, and refresh the file list
                 const message = 'Moved ' + selectedObject.path + ' to ' + newItem.path;
                 this.dispatchEvent(new NotificationEvent(message));

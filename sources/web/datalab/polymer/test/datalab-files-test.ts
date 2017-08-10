@@ -16,10 +16,10 @@ describe('<datalab-files>', () => {
   let testFixture: FilesElement;
   const startuppath = 'testpath';
 
-  const mockFiles: ApiFile[] = [
-    {content: '', format: '', name: 'file1', path: '/', type: 'directory', status: ''},
-    {content: '', format: '', name: 'file2', path: '/', type: 'directory', status: ''},
-    {content: '', format: '', name: 'file3', path: '/', type: 'directory', status: ''},
+  const mockFiles: DatalabFile[] = [
+    {content: '', format: '', name: 'file1', path: '/', type: DatalabFileType.DIRECTORY, status: DatalabFileStatus.IDLE},
+    {content: '', format: '', name: 'file2', path: '/', type: DatalabFileType.DIRECTORY, status: DatalabFileStatus.IDLE},
+    {content: '', format: '', name: 'file3', path: '/', type: DatalabFileType.DIRECTORY, status: DatalabFileStatus.IDLE},
   ];
 
   before(() => {
@@ -34,10 +34,10 @@ describe('<datalab-files>', () => {
       };
       return Promise.resolve(mockSettings);
     };
-    ApiManager.getBasePath = () => {
+    ApiManagerFactory.getInstance().getBasePath = () => {
       return Promise.resolve('');
     };
-    ApiManager.listFilesAsync = (path: string) => {
+    FileManagerFactory.getInstance().list = (path: string) => {
       assert(path === startuppath, 'listFilesAsync should be called with the startup path');
       return Promise.resolve(mockFiles);
     };
@@ -60,7 +60,7 @@ describe('<datalab-files>', () => {
     const files: ItemListElement = testFixture.$.files;
     assert(files.rows.length === 3, 'should have three files');
 
-    mockFiles.forEach((file: ApiFile, i: number) => {
+    mockFiles.forEach((file: DatalabFile, i: number) => {
       assert(files.rows[i].firstCol === file.name,
           'mock file ' + i + 'name not shown in first column');
       assert(files.rows[i].icon === Utils.getItemIconString(file.type),
