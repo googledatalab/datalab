@@ -100,17 +100,6 @@ class JupyterFileManager implements FileManager {
       });
   }
 
-  _jupyterFileToDatalabFile(file: any) {
-    if (file.type === 'directory') {
-      file.type = DatalabFileType.DIRECTORY;
-    } else if (file.type === 'notebook') {
-      file.type = DatalabFileType.NOTEBOOK;
-    } else {
-      file.type = DatalabFileType.FILE;
-    }
-    file.status = DatalabFileStatus.IDLE;
-  }
-
   /**
    * Creates a new notebook or directory.
    * @param itemType type of the created item, can be 'notebook' or 'directory'
@@ -216,4 +205,14 @@ class JupyterFileManager implements FileManager {
     }
   }
 
+  private _jupyterFileToDatalabFile(file: any) {
+    if (file.type === 'directory') {
+      file.type = DatalabFileType.DIRECTORY;
+    } else if (file.type === 'notebook') {
+      file.type = DatalabFileType.NOTEBOOK;
+    } else {
+      file.type = DatalabFileType.FILE;
+    }
+    file.status = DatalabFileStatus.IDLE;
+  }
 }
