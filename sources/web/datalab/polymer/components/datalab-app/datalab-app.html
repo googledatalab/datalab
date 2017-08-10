@@ -42,7 +42,7 @@ the License.
       }
       .datalab-sidebar {
         flex: 0 0 var(--sidebar-width);
-        transition: width var(--app-animation-duration);
+        transition: flex-basis var(--app-animation-duration);
       }
       .datalab-main-content {
         flex: 1 1 auto;
@@ -56,7 +56,7 @@ the License.
       }
       @media only screen and (max-width: 800px) {
         .datalab-sidebar {
-          width: 60px;
+          flex-basis: var(--collapsed-sidebar-width);
         }
       }
     </style>
