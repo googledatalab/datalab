@@ -12,7 +12,6 @@
  * the License.
  */
 
-/// <reference path="./ApiManager.ts" />
 /// <reference path="../../../../../third_party/externs/ts/gapi/bigquery.d.ts" />
 /// <reference path="../../../../../third_party/externs/ts/gapi/gapi.d.ts" />
 /// <reference path="../../common.d.ts" />

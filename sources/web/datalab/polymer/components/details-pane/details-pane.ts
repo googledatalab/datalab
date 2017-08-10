@@ -12,8 +12,6 @@
  * the License.
  */
 
-/// <reference path="../../modules/ApiManager.ts" />
-
 // Instead of writing a .d.ts file containing this one line.
 declare function marked(markdown: string): string;
 
@@ -33,7 +31,7 @@ class DetailsPaneElement extends Polymer.Element {
   /**
    * File whose details to show.
    */
-  public file: ApiFile;
+  public file: DatalabFile;
 
   /**
    * Whether the pane is actively tracking selected items. This is used to avoid fetching the
@@ -41,6 +39,7 @@ class DetailsPaneElement extends Polymer.Element {
    */
   public active: boolean;
 
+  private _fileManager: FileManager;
   private _message = ''; // To show in the placeholder field.
 
   static get is() { return 'details-pane'; }
@@ -64,6 +63,12 @@ class DetailsPaneElement extends Polymer.Element {
     };
   }
 
+  constructor() {
+    super();
+
+    this._fileManager = FileManagerFactory.getInstance();
+  }
+
   ready() {
     this._message = DetailsPaneElement._noFileMessage;
     super.ready();
@@ -83,13 +88,13 @@ class DetailsPaneElement extends Polymer.Element {
       return;
     }
 
-    if (this.file.type === 'notebook' || this._isPlainTextFile(this.file)) {
-      ApiManager.getJupyterFile(this.file.path)
-        .then((file: JupyterFile) => {
+    if (this.file.type === DatalabFileType.NOTEBOOK || this._isPlainTextFile(this.file)) {
+      this._fileManager.get(this.file.path)
+        .then((file: DatalabFile) => {
 
           // If this is a notebook, get the first two cells and render any markdown in them.
-          if (file.type === 'notebook') {
-            const cells = (file.content as JupyterNotebookModel).cells;
+          if (file.type === DatalabFileType.NOTEBOOK) {
+            const cells = (file.content as Notebook).cells;
             if (cells.length === 0) {
               this.$.previewHtml.innerHTML = '';
               this._message = DetailsPaneElement._emptyNotebookMessage;
@@ -144,7 +149,7 @@ class DetailsPaneElement extends Polymer.Element {
    * Returns true if the contents of this file can be read as plain text.
    * @param file object for the file whose details to display.
    */
-  _isPlainTextFile(file: JupyterFile) {
+  _isPlainTextFile(file: DatalabFile) {
     return file &&
            file.mimetype && (
              file.mimetype.indexOf('text/') > -1 ||

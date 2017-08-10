@@ -15,38 +15,35 @@
 /**
  * Dependency custom element for ApiManager
  */
-const API_MANAGER_ELEMENT = {
-  daas: {
-    path: 'modules/daas-api-manager/daas-api-manager.html',
-    type: DaasApiManager,
-  },
+const FILE_MANAGER_ELEMENT = {
   jupyter: {
-    path: 'modules/jupyter-api-manager/jupyter-api-manager.html',
-    type: JupyterApiManager
+    path: 'modules/jupyter-file-manager/jupyter-file-manager.html',
+    type: JupyterFileManager,
   },
 };
 
 /**
- * Maintains and gets the static ApiManager singleton.
+ * Maintains and gets the static FileManager singleton.
  */
-// TODO: Find a better way to switch the ApiManager instance based on the
+// TODO: Find a better way to switch the FileManager instance based on the
 // environment
-class ApiManagerFactory {
+class FileManagerFactory {
 
-  private static _apiManager: ApiManager;
+  private static _fileManager: FileManager;
 
   public static getInstance() {
-    if (!ApiManagerFactory._apiManager) {
-      const backendType = ApiManagerFactory._getBackendType();
+    if (!FileManagerFactory._fileManager) {
+      const backendType = FileManagerFactory._getBackendType();
 
       Polymer.importHref(backendType.path, undefined, undefined, true);
-      ApiManagerFactory._apiManager = new backendType.type();
+      FileManagerFactory._fileManager = new backendType.type();
     }
 
-    return ApiManagerFactory._apiManager;
+    return FileManagerFactory._fileManager;
   }
 
   private static _getBackendType() {
-    return API_MANAGER_ELEMENT.jupyter;
+    return FILE_MANAGER_ELEMENT.jupyter;
   }
 }
+

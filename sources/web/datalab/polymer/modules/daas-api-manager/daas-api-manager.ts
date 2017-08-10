@@ -12,6 +12,14 @@
  * the License.
  */
 
+/**
+ * XHR response for XSSI attacks after the magic prefix.
+ */
+interface XssiResponse {
+  basepath: string;
+  token: string;
+}
+
 // DaaS is Datalab as a Service
 class DaasApiManager extends BaseApiManager {
 
