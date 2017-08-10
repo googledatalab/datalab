@@ -42,14 +42,14 @@ interface Notebook {
 }
 
 enum DatalabFileType {
-  DIRECTORY = 'directory',
-  FILE = 'file',
-  NOTEBOOK = 'notebook',
+  DIRECTORY,
+  FILE,
+  NOTEBOOK,
 }
 
 enum DatalabFileStatus {
-  IDLE = '',
-  RUNNING = 'Running',
+  IDLE,
+  RUNNING,
 }
 
 /**

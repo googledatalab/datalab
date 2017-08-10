@@ -90,10 +90,13 @@ class JupyterFileManager implements FileManager {
         sessions.forEach((session: Session) => {
           runningPaths.push(session.notebook.path);
         });
-        files.forEach((file: DatalabFile) => {
+        files.forEach((file: any) => {
           if (runningPaths.indexOf(file.path) > -1) {
             file.status = DatalabFileStatus.RUNNING;
+          } else {
+            file.status = DatalabFileStatus.IDLE;
           }
+          file.type = this._jupyterTypeToDatalabType(file.type);
         });
         return files as DatalabFile[];
       });
@@ -189,5 +192,18 @@ class JupyterFileManager implements FileManager {
     };
 
     return apiManager.sendRequestAsync(destinationDirectory, xhrOptions);
+  }
+
+  private _jupyterTypeToDatalabType(type: string) {
+    switch (type) {
+      case 'directory':
+        return DatalabFileType.DIRECTORY;
+      case 'notebook':
+        return DatalabFileType.NOTEBOOK;
+      case 'file':
+        return DatalabFileType.FILE;
+      default:
+        throw new Error('Unknown jupyter file type: ' + type);
+    }
   }
 }

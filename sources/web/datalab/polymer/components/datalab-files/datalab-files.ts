@@ -131,8 +131,8 @@ class FilesElement extends Polymer.Element {
   }
 
   /**
-   * Called when when the element's local DOM is ready and initialized We use it
-   * to initialize element state.
+   * Called when the element's local DOM is ready and initialized We use it to
+   * initialize element state.
    */
   async ready() {
     // Must set this to true before calling super.ready(), because the latter will cause
@@ -278,7 +278,7 @@ class FilesElement extends Polymer.Element {
       const row: ItemListRow = {
         firstCol: file.name,
         icon: Utils.getItemIconString(file.type),
-        secondCol: file.status,
+        secondCol: Utils.getFileStatusString(file.status),
         selected: false
       };
       return row;
@@ -515,7 +515,7 @@ class FilesElement extends Polymer.Element {
     const inputOptions: InputDialogOptions = {
       inputLabel: 'Name',
       okLabel: 'Create',
-      title: 'New ' + itemType,
+      title: 'New ' + Utils.getFileTypeString(itemType),
     };
 
     return Utils.showDialog(InputDialogElement, inputOptions)
