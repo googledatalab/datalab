@@ -83,16 +83,14 @@ the License.
       <div class="button-placeholder"></div>
       <iron-selector class="container" attr-for-selected="id" selected={{page}}
                      class="drawer-list" role="navigation">
-        <div hidden$="{{!_showDataTab}}">
-          <a href="{{_uiroot}}/data" id="data">
-            <paper-button class="sidebar-button">
-              <div class="sidebar-button-container">
-                <iron-icon class="sidebar-button-icon" icon="av:library-books"></iron-icon>
-                <div class="sidebar-button-title">Data</div>
-              </div>
-            </paper-button>
-          </a>
-        </div>
+        <a href="{{_uiroot}}/data" id="data" hidden$="{{!_showDataTab}}">
+          <paper-button class="sidebar-button">
+            <div class="sidebar-button-container">
+              <iron-icon class="sidebar-button-icon" icon="av:library-books"></iron-icon>
+              <div class="sidebar-button-title">Data</div>
+            </div>
+          </paper-button>
+        </a>
         <a href="{{_uiroot}}/files" id="files">
           <paper-button class="sidebar-button">
             <div class="sidebar-button-container">

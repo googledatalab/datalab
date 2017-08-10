@@ -24,6 +24,7 @@ class SidebarElement extends Polymer.Element {
    */
   public page: string;
 
+  // TODO - remove _showDataTab once the Data tab is ready to be visible
   private _showDataTab = false;
   private _uiroot: string;
 
