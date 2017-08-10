@@ -12,7 +12,6 @@
  * the License.
  */
 
-/// <reference path="../../modules/ApiManager.ts" />
 /// <reference path="../item-list/item-list.ts" />
 
 /**
@@ -90,7 +89,7 @@ class SessionsElement extends Polymer.Element {
   }
 
   /**
-   * Calls the ApiManager to get the list of sessions at the current path, and
+   * Calls the SessionManager to get the list of sessions at the current path, and
    * updates the _sessionList property.
    * @param throwOnError whether to throw an exception if the refresh fails. This
    *                     is false by default because throwing is currently not used.
@@ -105,7 +104,7 @@ class SessionsElement extends Polymer.Element {
       return;
     }
     this._fetching = true;
-    ApiManager.listSessionsAsync()
+    SessionManager.listSessionsAsync()
       .then((newList) => {
         // Only refresh the UI list if there are any changes. This helps keep
         // the item list's selections intact most of the time
@@ -128,13 +127,13 @@ class SessionsElement extends Polymer.Element {
   }
 
   /**
-   * Calls the ApiManager to terminate the selected sessions.
+   * Calls the SessionManager to terminate the selected sessions.
    */
   _shutdownSelectedSessions() {
     const selectedIndices = (this.$.sessions as ItemListElement).selectedIndices;
     if (selectedIndices.length) {
       const shutdownPromises = selectedIndices.map((i: number) => {
-        return ApiManager.shutdownSessionAsync(this._sessionList[i].id);
+        return SessionManager.shutdownSessionAsync(this._sessionList[i].id);
       });
 
       // TODO: [yebrahim] If at least one delete fails, _fetchSessionList will never be called,

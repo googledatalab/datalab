@@ -171,27 +171,6 @@ class ApiManager {
   private static _xsrfToken = '';
 
   /**
-   * Returns a list of currently running sessions, each implementing the Session interface
-   */
-  public static listSessionsAsync(): Promise<Session[]> {
-    const xhrOptions: XhrOptions = {
-      noCache: true,
-    };
-    return ApiManager.sendRequestAsync(this.sessionsApiUrl, xhrOptions) as Promise<Session[]>;
-  }
-
-  /**
-   * Terminates a running session.
-   */
-  public static shutdownSessionAsync(sessionId: string) {
-    const xhrOptions: XhrOptions = {
-      method: 'DELETE',
-      successCodes: [204],
-    };
-    return ApiManager.sendRequestAsync(ApiManager.sessionsApiUrl + '/' + sessionId, xhrOptions);
-  }
-
-  /**
    * Returns a JupyterFile object representing the file or directory requested
    * @param path string path to requested file
    * @param asText whether the file should be downloaded as plain text. This is
@@ -243,7 +222,7 @@ class ApiManager {
         return file.content as JupyterFile[];
       });
 
-    const sessionsPromise: Promise<Session[]> = ApiManager.listSessionsAsync();
+    const sessionsPromise: Promise<Session[]> = SessionManager.listSessionsAsync();
 
     // Combine the return values of the two requests to supplement the files
     // array with the status value.
@@ -347,23 +326,6 @@ class ApiManager {
     };
 
     return ApiManager.sendRequestAsync(destinationDirectory, xhrOptions);
-  }
-
-  /**
-   * Initializes a terminal session.
-   */
-  public static startTerminalAsync() {
-    const xhrOptions: XhrOptions = {
-      method: 'POST',
-    };
-    return ApiManager.sendRequestAsync(ApiManager.terminalApiUrl, xhrOptions);
-  }
-
-  /**
-   * Returns a list of active terminal sessions.
-   */
-  public static listTerminalsAsync() {
-    return ApiManager.sendRequestAsync(ApiManager.terminalApiUrl);
   }
 
   /**

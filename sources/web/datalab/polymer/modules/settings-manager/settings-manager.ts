@@ -12,7 +12,7 @@
  * the License.
  */
 
-/// <reference path="../../common.d.ts" />
+/// <reference path="../../../common.d.ts" />
 
 let userSettings: common.UserSettings;
 let appSettings: common.AppSettings;
@@ -20,7 +20,6 @@ let appSettings: common.AppSettings;
 class MissingConfigUrlError extends Error {
   message = 'No configUrl value in appSettings';
 }
-
 
 /**
  * Handles API calls related to app/user settings, and manages a local cached copy
@@ -69,8 +68,10 @@ class SettingsManager {
     const xhrOptions: XhrOptions = {
       method: 'POST',
     };
-    const requestUrl = ApiManager.userSettingsUrl + '?key=' + setting + '&value=' + value;
-    return ApiManager.sendRequestAsync(requestUrl, xhrOptions);
+    const apiManager = ApiManagerFactory.getInstance();
+    const requestUrl = apiManager.getServiceUrl(ServiceId.USER_SETTINGS) +
+        '?key=' + setting + '&value=' + value;
+    return apiManager.sendRequestAsync(requestUrl, xhrOptions);
   }
 
   /**
@@ -114,14 +115,16 @@ class SettingsManager {
    * Gets the user settings JSON from the server.
    */
   private static _getUserSettingsAsync() {
-    return ApiManager.sendRequestAsync(ApiManager.userSettingsUrl);
+    const apiManager = ApiManagerFactory.getInstance();
+    return apiManager.sendRequestAsync(apiManager.getServiceUrl(ServiceId.USER_SETTINGS));
   }
 
   /**
    * Gets the app settings JSON from the server.
    */
   private static _getAppSettingsAsync() {
-    return ApiManager.sendRequestAsync(ApiManager.appSettingsUrl);
-  }
+    const apiManager = ApiManagerFactory.getInstance();
+    return apiManager.sendRequestAsync(apiManager.getServiceUrl(ServiceId.APP_SETTINGS));
+}
 
 }

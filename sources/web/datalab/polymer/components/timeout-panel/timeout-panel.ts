@@ -13,7 +13,6 @@
  */
 
 /// <reference path="../../modules/GapiManager.ts" />
-/// <reference path="../../modules/TimeoutManager.ts" />
 
 // TODO: look through datalab/static/idle-timeout.js for additional features to port to here.
 
