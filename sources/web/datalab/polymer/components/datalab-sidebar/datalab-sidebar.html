@@ -83,8 +83,7 @@ the License.
       <div class="button-placeholder"></div>
       <iron-selector class="container" attr-for-selected="id" selected={{page}}
                      class="drawer-list" role="navigation">
-        <!-- uncomment this once we have the data tab working satisfactorily
-        <a href="/data" id="data">
+        <a href="{{_uiroot}}/data" id="data" hidden$="{{!_showDataTab}}">
           <paper-button class="sidebar-button">
             <div class="sidebar-button-container">
               <iron-icon class="sidebar-button-icon" icon="av:library-books"></iron-icon>
@@ -92,8 +91,7 @@ the License.
             </div>
           </paper-button>
         </a>
-        -->
-        <a href="/files" id="files">
+        <a href="{{_uiroot}}/files" id="files">
           <paper-button class="sidebar-button">
             <div class="sidebar-button-container">
               <iron-icon class="sidebar-button-icon" icon="editor:insert-drive-file"></iron-icon>
@@ -101,7 +99,7 @@ the License.
             </div>
           </paper-button>
         </a>
-        <a href="/sessions" id="sessions">
+        <a href="{{_uiroot}}/sessions" id="sessions">
           <paper-button class="sidebar-button">
             <div class="sidebar-button-container">
               <iron-icon class="sidebar-button-icon" icon="list"></iron-icon>
@@ -109,7 +107,7 @@ the License.
             </div>
           </paper-button>
         </a>
-        <a href="/terminal" id="terminal">
+        <a href="{{_uiroot}}/terminal" id="terminal">
           <paper-button class="sidebar-button">
             <div class="sidebar-button-container">
               <iron-icon class="sidebar-button-icon" icon="av:featured-play-list"></iron-icon>
