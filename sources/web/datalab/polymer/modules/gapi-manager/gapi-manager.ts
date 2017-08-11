@@ -13,29 +13,43 @@
  */
 
 /// <reference path="../../../../../../third_party/externs/ts/gapi/bigquery.d.ts" />
-/// <reference path="../../../../../../third_party/externs/ts/gapi/gapi.d.ts" />
-/// <reference path="../../../common.d.ts" />
 
 class MissingClientIdError extends Error {
   message = 'No oauth2ClientId found in user or config settings';
 }
+
+enum GapiScope {
+  BIGQUERY,
+  DRIVE,
+  GCS,
+}
+
+const currentScopeNames: GapiScope[] = [];
+const currentScopes: string[] = ['profile', 'email'];
 
 /**
  * This file contains a collection of functions that interact with gapi.
  */
 class GapiManager {
 
-  public static DISCOVERYDOCS = [
-    'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest',
-    'https://www.googleapis.com/discovery/v1/apis/bigquery/v2/rest'
-  ];
-  public static SCOPES =
-      'https://www.googleapis.com/auth/drive.metadata.readonly ' +
-      'https://www.googleapis.com/auth/devstorage.full_control ' +
-      'https://www.googleapis.com/auth/bigquery';
-
   private static _clientId = '';   // Gets set by _loadClientId()
   private static _loadPromise: Promise<void>;
+
+  /**
+   * Request a new scope to be granted.
+   */
+  public static async grantScope(scope: GapiScope): Promise<any> {
+    await this.loadGapi();
+    if (currentScopeNames.indexOf(scope) === -1) {
+      return new Promise((resolve, reject) => {
+        const options = new gapi.auth2.SigninOptionsBuilder();
+        options.setScope(this._getScopeString(scope));
+        gapi.auth2.getAuthInstance().signIn(options)
+          .then(() => resolve(), () => reject());
+      });
+    }
+    return Promise.resolve();
+  }
 
   /**
    * Loads the gapi module and the auth2 modules. This can be called multiple
@@ -102,7 +116,7 @@ class GapiManager {
    * Gets the list of BigQuery projects, returns a Promise.
    */
   public static listBigQueryProjects():
-      gapi.client.HttpRequest<gapi.client.bigquery.ListProjectsResponse> {
+      Promise<gapi.client.HttpRequestFulfilled<gapi.client.bigquery.ListProjectsResponse>> {
     return this._loadBigQuery()
       .then(() => gapi.client.bigquery.projects.list());
   }
@@ -114,7 +128,7 @@ class GapiManager {
    *     https://cloud.google.com/bigquery/docs/reference/rest/v2/datasets/list
    */
   public static listBigQueryDatasets(projectId: string, filter: string):
-      gapi.client.HttpRequest<gapi.client.bigquery.ListDatasetsResponse> {
+      Promise<gapi.client.HttpRequestFulfilled<gapi.client.bigquery.ListDatasetsResponse>> {
     const request = {
       filter,
       projectId,
@@ -128,7 +142,7 @@ class GapiManager {
    * returns a Promise.
    */
   public static listBigQueryTables(projectId: string, datasetId: string):
-      gapi.client.HttpRequest<gapi.client.bigquery.ListTablesResponse> {
+      Promise<gapi.client.HttpRequestFulfilled<gapi.client.bigquery.ListTablesResponse>> {
     const request = {
       datasetId,
       projectId,
@@ -141,7 +155,7 @@ class GapiManager {
    * Fetches table details from BigQuery
    */
   public static getBigqueryTableDetails(projectId: string, datasetId: string, tableId: string):
-      gapi.client.HttpRequest<gapi.client.bigquery.Table> {
+      Promise<gapi.client.HttpRequestFulfilled<gapi.client.bigquery.Table>> {
     const request = {
       datasetId,
       projectId,
@@ -174,13 +188,13 @@ class GapiManager {
   * OAuth 2.0 client ID and scopes (space delimited string) to request access.
   */
   private static _initClient(): Promise<void> {
-    return gapi.client.init({
-      clientId: GapiManager._clientId,
-      discoveryDocs: GapiManager.DISCOVERYDOCS,
-      scope: GapiManager.SCOPES,
+    return gapi.auth2.init({
+      client_id: GapiManager._clientId,
+      fetch_basic_profile: true,
+      scope: currentScopes.join(' '),
     })
     // .init does not return a catch-able promise
-    .then(null, (errorReason: any) => {
+    .then(() => null, (errorReason: any) => {
       throw new Error('Error in gapi auth: ' + errorReason.result.error.message);
     });
   }
@@ -231,5 +245,18 @@ class GapiManager {
   private static _loadBigQuery(): Promise<void> {
     return this.loadGapi()
       .then(() => gapi.client.load('bigquery', 'v2'));
+  }
+
+  private static _getScopeString(scope: GapiScope): string {
+    switch (scope) {
+      case GapiScope.BIGQUERY:
+        return 'https://www.googleapis.com/auth/bigquery';
+      case GapiScope.DRIVE:
+          return 'https://www.googleapis.com/auth/drive.metadata.readonly ';
+      case GapiScope.GCS:
+          return 'https://www.googleapis.com/auth/devstorage.full_control';
+      default:
+        throw new Error('Unknown gapi scope: ' + scope);
+    }
   }
 }
