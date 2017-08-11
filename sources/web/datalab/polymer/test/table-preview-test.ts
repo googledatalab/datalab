@@ -12,8 +12,6 @@
  * the License.
  */
 
-/// <reference path="../../../../../third_party/externs/ts/gapi/gapi.d.ts" />
-
 /*
  * For all Polymer component testing, be sure to call Polymer's flush() after
  * any code that will cause shadow dom redistribution, such as observed array
@@ -67,7 +65,8 @@ describe('<table-preview>', () => {
       const response = {
         result: mockTable,
       };
-      return Promise.resolve(response) as gapi.client.HttpRequest<gapi.client.bigquery.Table>;
+      return Promise.resolve(response) as
+          Promise<gapi.client.HttpRequestFulfilled<gapi.client.bigquery.Table>>;
     };
 
     testFixture = fixture('table-preview-fixture');

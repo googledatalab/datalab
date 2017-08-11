@@ -15,7 +15,7 @@
 /// <reference path="../input-dialog/input-dialog.ts" />
 /// <reference path="../item-list/item-list.ts" />
 
-type HttpResponse<T> = gapi.client.HttpResponse<T>;
+type HttpResponse<T> = gapi.client.HttpRequestFulfilled<T>;
 
 interface Result {
   name: string;
@@ -61,6 +61,8 @@ class DataElement extends Polymer.Element {
 
     (this.$.results as ItemListElement).columns = ['Name', 'Type'];
     this.$.searchKeys.target = this.$.searchBox;
+
+    GapiManager.grantScope(GapiScopes.BIGQUERY);
   }
 
   /**
