@@ -61,6 +61,8 @@ class DataElement extends Polymer.Element {
 
     (this.$.results as ItemListElement).columns = ['Name', 'Type'];
     this.$.searchKeys.target = this.$.searchBox;
+
+    GapiManager.grantScope(GapiScopes.BIGQUERY);
   }
 
   /**

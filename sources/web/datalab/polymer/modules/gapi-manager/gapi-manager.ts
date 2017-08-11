@@ -18,14 +18,13 @@ class MissingClientIdError extends Error {
   message = 'No oauth2ClientId found in user or config settings';
 }
 
-enum GapiScope {
+enum GapiScopes {
   BIGQUERY,
   DRIVE,
   GCS,
 }
 
-const currentScopeNames: GapiScope[] = [];
-const currentScopes: string[] = ['profile', 'email'];
+const initialScopeString = 'profile email';
 
 /**
  * This file contains a collection of functions that interact with gapi.
@@ -38,14 +37,17 @@ class GapiManager {
   /**
    * Request a new scope to be granted.
    */
-  public static async grantScope(scope: GapiScope): Promise<any> {
+  public static async grantScope(scope: GapiScopes): Promise<any> {
     await this.loadGapi();
-    if (currentScopeNames.indexOf(scope) === -1) {
+    const currentUser = gapi.auth2.getAuthInstance().currentUser.get();
+    if (!currentUser.hasGrantedScopes(this._getScopeString(scope))) {
       return new Promise((resolve, reject) => {
         const options = new gapi.auth2.SigninOptionsBuilder();
         options.setScope(this._getScopeString(scope));
         gapi.auth2.getAuthInstance().signIn(options)
-          .then(() => resolve(), () => reject());
+          .then(() => {
+            resolve();
+          }, () => reject());
       });
     }
     return Promise.resolve();
@@ -191,11 +193,11 @@ class GapiManager {
     return gapi.auth2.init({
       client_id: GapiManager._clientId,
       fetch_basic_profile: true,
-      scope: currentScopes.join(' '),
+      scope: initialScopeString,
     })
     // .init does not return a catch-able promise
     .then(() => null, (errorReason: any) => {
-      throw new Error('Error in gapi auth: ' + errorReason.result.error.message);
+      throw new Error('Error in gapi auth: ' + errorReason.details);
     });
   }
 
@@ -247,13 +249,13 @@ class GapiManager {
       .then(() => gapi.client.load('bigquery', 'v2'));
   }
 
-  private static _getScopeString(scope: GapiScope): string {
+  private static _getScopeString(scope: GapiScopes): string {
     switch (scope) {
-      case GapiScope.BIGQUERY:
+      case GapiScopes.BIGQUERY:
         return 'https://www.googleapis.com/auth/bigquery';
-      case GapiScope.DRIVE:
+      case GapiScopes.DRIVE:
           return 'https://www.googleapis.com/auth/drive.metadata.readonly ';
-      case GapiScope.GCS:
+      case GapiScopes.GCS:
           return 'https://www.googleapis.com/auth/devstorage.full_control';
       default:
         throw new Error('Unknown gapi scope: ' + scope);
