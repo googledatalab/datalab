@@ -68,7 +68,6 @@ class FileBrowserElement extends Polymer.Element {
 
   private _addToolbarCollapseThreshold = 900;
   private _apiManager: ApiManager;
-  private _currentCrumbs: string[];
   private _detailsPaneCollapseThreshold = 600;
   private _fetching: boolean;
   private _fileList: DatalabFile[];
@@ -86,10 +85,6 @@ class FileBrowserElement extends Polymer.Element {
 
   static get properties() {
     return {
-      _currentCrumbs: {
-        type: Array,
-        value: () => [],
-      },
       _fetching: {
         type: Boolean,
         value: false,
@@ -161,6 +156,15 @@ class FileBrowserElement extends Polymer.Element {
       this._fileManager = FileManagerFactory.getInstanceForType(
           FileManagerFactory.fileManagerNameToType(this.fileManagerType));
     }
+
+    this.$.breadCrumbs.addEventListener('crumbClicked', (e: CustomEvent) => {
+      const index = e.detail.index;
+      const pathTokens = this._splitCurrentPath();
+      this.currentPath = pathTokens.slice(0, index + 1).join('/');
+    });
+    this.$.breadCrumbs.addEventListener('rootClicked', () => {
+      this.currentPath = '';
+    });
 
     // TODO: Using a ready promise might be common enough a need that we should
     // consider adding it to a super class, maybe DatalabElement. For now, this
@@ -249,16 +253,21 @@ class FileBrowserElement extends Polymer.Element {
       this._pushNewPath();
     }
 
-    this._currentCrumbs = this.currentPath.split('/');
+    this.$.breadCrumbs.crumbs = this._splitCurrentPath();
+
+    return this._fetchFileList();
+  }
+
+  _splitCurrentPath() {
+    const pathTokens = this.currentPath.split('/');
 
     // Splitting a path starting with '/' puts an initial empty element in the array,
     // which we're not interested in. For example, for /datalab/docs, we only want
     // ['datalab', 'docs'].
-    if (this._currentCrumbs[0] === '') {
-      this._currentCrumbs.splice(0, 1);
+    if (pathTokens[0] === '') {
+      pathTokens.splice(0, 1);
     }
-
-    return this._fetchFileList();
+    return pathTokens;
   }
 
   /**
@@ -312,21 +321,6 @@ class FileBrowserElement extends Polymer.Element {
     } else {
       this.selectedFile = null;
     }
-  }
-
-  /**
-   * Navigates to the path of the clicked breadcrumb.
-   */
-  _crumbClicked(e: MouseEvent) {
-    const target = e.target as HTMLDivElement;
-    // Treat the home crumb differently since it's not part of the dom-repeat
-    if (target.id === 'home-crumb') {
-      this.currentPath = '';
-    } else {
-      const clickedCrumb = this.$.breadcrumbsTemplate.indexForElement(e.target);
-      this.currentPath = this._currentCrumbs.slice(0, clickedCrumb + 1).join('/');
-    }
-    this._pushNewPath();
   }
 
   /**

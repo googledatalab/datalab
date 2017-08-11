@@ -135,7 +135,7 @@ the License.
         border-left: 1px solid var(--border-color);
         line-height: 48px;
       }
-      bread-crumbs {
+      #breadCrumbs {
         flex: 1 1 auto;
       }
     </style>
@@ -234,7 +234,7 @@ the License.
           <iron-icon icon="refresh"></iron-icon>
         </paper-button>
         <div class="vseparator"></div>
-        <bread-crumbs crumbs={{_currentCrumbs}}></bread-crumbs>
+        <bread-crumbs id="breadCrumbs" crumbs={{_currentCrumbs}}></bread-crumbs>
         <paper-button id="toggleDetails" class="navbar-button" on-click="_toggleDetailsPane"
                       hidden$="{{small}}">
           <iron-icon icon="visibility"></iron-icon>

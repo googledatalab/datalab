@@ -21,15 +21,22 @@ class BreadCrumbsElement extends Polymer.Element {
   static get properties() {
     return {
       crumbs: {
-        observer: '_crumbsChanged',
         type: Array,
         value: [],
       },
     };
   }
 
-  _crumbsChanged() {
-    //
+  _crumbClicked(e: MouseEvent) {
+    const index = this.$.breadcrumbsTemplate.indexForElement(e.target);
+    if (index !== null) {
+      const ev = new ItemClickEvent('crumbClicked', { detail: {index} });
+      this.dispatchEvent(ev);
+    }
+  }
+
+  _rootClicked() {
+    this.dispatchEvent(new ItemClickEvent('rootClicked'));
   }
 
 }
