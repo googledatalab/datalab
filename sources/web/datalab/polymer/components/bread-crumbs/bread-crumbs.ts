@@ -16,15 +16,67 @@ class BreadCrumbsElement extends Polymer.Element {
 
   public crumbs: string[];
 
+  private _visibleCrumbs: string[];
+
   static get is() { return 'bread-crumbs'; }
 
   static get properties() {
     return {
+      _visibleCrumbs: {
+        type: Array,
+        value: [],
+      },
       crumbs: {
+        observer: '_crumbsChanged',
         type: Array,
         value: [],
       },
     };
+  }
+
+  ready() {
+    super.ready();
+
+    window.addEventListener('resize', () => this._resizeHandler());
+  }
+
+  _crumbsChanged() {
+    this._visibleCrumbs = this.crumbs;
+    this._resizeHandler();
+  }
+
+  _resizeHandler() {
+    const container = this.$.breadcrumb as HTMLDivElement;
+    const maxWidth = container.offsetWidth - 30;
+
+    const children = container.querySelectorAll('div.crumb') as NodeListOf<HTMLDivElement>;
+
+    // Find the index of the last breadcrumb we can fit, starting from the right
+    // We must fit at least the right-most child, so this is the starting point
+    let lastVisibleChild = children.length - 1;
+    let runningWidth = children[children.length - 1].offsetWidth;
+    for (let i = children.length - 2; i >= 0; --i) {
+      const child = children[i];
+      if (runningWidth + child.offsetWidth < maxWidth) {
+        runningWidth += child.offsetWidth;
+        child.classList.remove('hidden');
+        lastVisibleChild = i;
+      } else {
+        break;
+      }
+    }
+
+    // If there are crumbs that we hid, show the ellipsis crumb
+    if (lastVisibleChild < children.length - 1) {
+      this.$.ellipsisCrumb.classList.remove('hidden');
+    } else {
+      this.$.ellipsisCrumb.classList.add('hidden');
+    }
+
+    // Hide all breadcrumbs to the left of the last visible index
+    for (let i = 0; i < lastVisibleChild; ++i) {
+      children[i].classList.add('hidden');
+    }
   }
 
   _crumbClicked(e: MouseEvent) {

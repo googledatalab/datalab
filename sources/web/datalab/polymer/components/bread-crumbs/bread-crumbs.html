@@ -20,15 +20,19 @@ the License.
     <style include="datalab-shared-styles">
       #breadcrumb {
         user-select: none;
-        list-style: none;
-        display: inline-block;
-        flex-grow: 1;
+        margin-left: 15px;
       }
-      #breadcrumb div {
+      #ellipsisCrumb {
+        width: 30px;
+      }
+      #breadcrumb div.crumb {
         float: left;
-        height: 100%;
       }
-      #breadcrumb div a {
+      #breadcrumb div.hidden {
+        position: absolute;
+        visibility: hidden;
+      }
+      #breadcrumb div.crumb a {
         display: block;
         background-color: var(--primary-bg-color);
         text-decoration: none;
@@ -38,53 +42,56 @@ the License.
         height: 100%;
         color: var(--selection-fg-color);
       }
-      #breadcrumb div:first-child a {
+      #breadcrumb div.crumb:first-child a {
         padding-left: 15px;
       }
-      #breadcrumb div:first-child a:before {
+      #breadcrumb div.crumb:first-child a:before {
         border: none;
       }
-      #breadcrumb div a:before, #breadcrumb div a:after {
+      #breadcrumb div.crumb a:before, #breadcrumb div.crumb a:after {
         color: var(--primary-bg-color);
         content: "";
         position: absolute;
         border: 0 solid var(--primary-bg-color);
         border-width: 24px 12px;
       }
-      #breadcrumb div a:before {
+      #breadcrumb div.crumb a:before {
         left: -24px;
         border-left-color: transparent;
       }
-      #breadcrumb div a:after {
+      #breadcrumb div.crumb a:after {
         left: 100%;
         border-color: var(--border-color);
         border-left-color: var(--primary-bg-color);
       }
-      #breadcrumb div a:hover {
+      #breadcrumb div.crumb a:hover {
         background-color: var(--secondary-bg-color);
       }
-      #breadcrumb div a:hover:before {
+      #breadcrumb div.crumb a:hover:before {
         border-color: var(--secondary-bg-color);
         border-left-color: transparent;
       }
-      #breadcrumb div a:hover:after {
+      #breadcrumb div.crumb a:hover:after {
         border-left-color: var(--secondary-bg-color);
       }
-      #breadcrumb div:nth-last-child(2) a {
+      #breadcrumb div.crumb:nth-last-child(2) a {
         padding-right: 15px;
       }
-      #breadcrumb div:nth-last-child(2) a:after {
+      #breadcrumb div.crumb:nth-last-child(2) a:after {
         border: none;
       }
     </style>
 
     <div id="breadcrumb">
       <!--Always show a '/' crumb for home-->
-      <div>
+      <div class="crumb">
         <a id="home-crumb" href="#" on-click="_rootClicked">/</a>
       </div>
-      <template id="breadcrumbsTemplate" is="dom-repeat" items={{crumbs}}>
-        <div>
+      <div id="ellipsisCrumb" class="hidden">
+        <a href="#" on-click="_ellipsisClicked">/</a>
+      </div>
+      <template id="breadcrumbsTemplate" is="dom-repeat" items={{_visibleCrumbs}}>
+        <div class="crumb">
           <a href="#" on-click="_crumbClicked">{{item}}</a>
         </div>
       </template>
