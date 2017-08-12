@@ -248,8 +248,8 @@ class FileBrowserElement extends Polymer.Element {
    * Updates the breadcrumbs array and calls _fetchFileList.
    */
   _currentPathChanged(_: string, oldValue: string) {
-    // On initialization, push the current path to path history
-    if (oldValue === undefined) {
+    // Except on initialization, push the current path to path history
+    if (oldValue !== undefined) {
       this._pushNewPath();
     }
 
@@ -300,7 +300,6 @@ class FileBrowserElement extends Polymer.Element {
     }
     if (clickedItem.type === DatalabFileType.DIRECTORY) {
       this.currentPath = clickedItem.path;
-      this._pushNewPath();
     } else if (clickedItem.type === DatalabFileType.NOTEBOOK) {
       this._getNotebookUrlPrefix()
         .then((prefix) => window.open(prefix + '/' + clickedItem.path, '_blank'));

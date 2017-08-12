@@ -20,10 +20,13 @@ the License.
     <style include="datalab-shared-styles">
       #breadcrumb {
         user-select: none;
-        margin-left: 15px;
       }
-      #ellipsisCrumb {
-        width: 30px;
+      #homeCrumb, #ellipsisCrumb {
+        width: 55px;
+      }
+      #ellipsisCrumb a {
+        font-weight: bolder;
+        box-shadow: inset 10px 0px 7px -8px var(--selection-bg-color);
       }
       #breadcrumb div.crumb {
         float: left;
@@ -37,16 +40,16 @@ the License.
         background-color: var(--primary-bg-color);
         text-decoration: none;
         position: relative;
-        line-height: 46px;
+        line-height: 48px;
         margin-right: 25px;
         height: 100%;
         color: var(--selection-fg-color);
       }
-      #breadcrumb div.crumb:first-child a {
-        padding-left: 15px;
+      #breadcrumb div.crumb:first-child a, #ellipsisCrumb a {
+        padding-left: 15px !important;
       }
-      #breadcrumb div.crumb:first-child a:before {
-        border: none;
+      #breadcrumb div.crumb:first-child a:before, #ellipsisCrumb a:before {
+        border: none !important;
       }
       #breadcrumb div.crumb a:before, #breadcrumb div.crumb a:after {
         color: var(--primary-bg-color);
@@ -76,6 +79,7 @@ the License.
       }
       #breadcrumb div.crumb:nth-last-child(2) a {
         padding-right: 15px;
+        margin-right: 0px;
       }
       #breadcrumb div.crumb:nth-last-child(2) a:after {
         border: none;
@@ -84,15 +88,15 @@ the License.
 
     <div id="breadcrumb">
       <!--Always show a '/' crumb for home-->
-      <div class="crumb">
-        <a id="home-crumb" href="#" on-click="_rootClicked">/</a>
+      <div class="crumb" id="homeCrumb">
+        <a href="#" on-click="_rootClicked">/</a>
       </div>
-      <div id="ellipsisCrumb" class="hidden">
-        <a href="#" on-click="_ellipsisClicked">/</a>
+      <div id="ellipsisCrumb" class="crumb hidden" on-click="_ellipsisClicked">
+        <a href="#">...</a>
       </div>
       <template id="breadcrumbsTemplate" is="dom-repeat" items={{_visibleCrumbs}}>
-        <div class="crumb">
-          <a href="#" on-click="_crumbClicked">{{item}}</a>
+        <div class="crumb part" on-click="_crumbClicked">
+          <a href="#">{{item}}</a>
         </div>
       </template>
     </div>
