@@ -45,10 +45,10 @@ the License.
         height: 100%;
         color: var(--selection-fg-color);
       }
-      #breadcrumb div.crumb:first-child a, #ellipsisCrumb a {
+      #homeCrumb a, #ellipsisCrumb a {
         padding-left: 15px !important;
       }
-      #breadcrumb div.crumb:first-child a:before, #ellipsisCrumb a:before {
+      #homeCrumb a:before, #ellipsisCrumb a:before {
         border: none !important;
       }
       #breadcrumb div.crumb a:before, #breadcrumb div.crumb a:after {
@@ -81,18 +81,21 @@ the License.
         padding-right: 15px;
         margin-right: 0px;
       }
+      #breadcrumb div.crumb:nth-last-child(2) a:hover {
+        border-right: 1px solid var(--border-color);
+      }
       #breadcrumb div.crumb:nth-last-child(2) a:after {
         border: none;
       }
     </style>
 
     <div id="breadcrumb">
+      <div id="ellipsisCrumb" class="crumb hidden" on-click="_ellipsisClicked">
+        <a href="#">...</a>
+      </div>
       <!--Always show a '/' crumb for home-->
       <div class="crumb" id="homeCrumb">
         <a href="#" on-click="_rootClicked">/</a>
-      </div>
-      <div id="ellipsisCrumb" class="crumb hidden" on-click="_ellipsisClicked">
-        <a href="#">...</a>
       </div>
       <template id="breadcrumbsTemplate" is="dom-repeat" items={{_visibleCrumbs}}>
         <div class="crumb part" on-click="_crumbClicked">

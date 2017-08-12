@@ -248,6 +248,10 @@ class FileBrowserElement extends Polymer.Element {
    * Updates the breadcrumbs array and calls _fetchFileList.
    */
   _currentPathChanged(_: string, oldValue: string) {
+    // Ignore inital '/'
+    if (this.currentPath.startsWith('/')) {
+      this.currentPath = this.currentPath.substr(1);
+    }
     // Except on initialization, push the current path to path history
     if (oldValue !== undefined) {
       this._pushNewPath();
