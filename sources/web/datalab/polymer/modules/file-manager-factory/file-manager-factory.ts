@@ -29,8 +29,8 @@ const FILE_MANAGER_ELEMENT = {
 };
 
 enum FileManagerType {
-  BIG_QUERY,  // bigquery
-  JUPYTER,    // jupyter
+  BIG_QUERY,
+  JUPYTER,
 };
 
 /**
@@ -47,11 +47,18 @@ class FileManagerFactory {
     return FileManagerFactory.getInstanceForType(FileManagerType.JUPYTER);
   }
 
+  public static fileManagerNameToType(name: string): FileManagerType {
+    switch (name) {
+      case 'bigquery': return FileManagerType.BIG_QUERY;
+      case 'jupyter': return FileManagerType.JUPYTER;
+      default: throw new Error('unknown FileManagerType name ' + name);
+    }
+  }
+
   public static getInstanceForType(fileManagerType: FileManagerType) {
     const backendType = FileManagerFactory._getBackendType(fileManagerType);
     if (!FileManagerFactory._fileManagers[backendType.name]) {
 
-      Polymer.importHref(backendType.path, undefined, undefined, true);
       FileManagerFactory._fileManagers[fileManagerType] = new backendType.type();
     }
 

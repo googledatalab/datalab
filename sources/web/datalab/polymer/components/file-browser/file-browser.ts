@@ -139,15 +139,8 @@ class FileBrowserElement extends Polymer.Element {
     };
   }
 
-  constructor() {
-    super();
-
-    this._apiManager = ApiManagerFactory.getInstance();
-  }
-
   /**
-   * Called when the element's local DOM is ready and initialized We use it to
-   * initialize element state.
+   * Called when the element's local DOM is ready and initialized.
    */
   async ready() {
     // Must set this to true before calling super.ready(), because the latter will cause
@@ -157,18 +150,16 @@ class FileBrowserElement extends Polymer.Element {
 
     super.ready();
 
+    this._apiManager = ApiManagerFactory.getInstance();
+
     if (!this.fileManagerType) {
+      // TODO - This element should nto have to set a default file manager type, but
+      // it is currently required to know that we should load the startuppath.
       this.fileManagerType = 'jupyter';
-    }
-    switch (this.fileManagerType) {
-      case 'bigquery':
-        this._fileManager =
-            FileManagerFactory.getInstanceForType(FileManagerType.BIG_QUERY);
-        break;
-      default:
-      case 'jupyter':
-        this._fileManager = FileManagerFactory.getInstance();
-        break;
+      this._fileManager = FileManagerFactory.getInstance();
+    } else {
+      this._fileManager = FileManagerFactory.getInstanceForType(
+          FileManagerFactory.fileManagerNameToType(this.fileManagerType));
     }
 
     // TODO: Using a ready promise might be common enough a need that we should
@@ -842,6 +833,8 @@ class FileBrowserElement extends Polymer.Element {
   }
 
   private _loadStartupPath() {
+    // TODO - move this to SettingsManager and make it able to store startuppaths
+    // for multiple file managers.
     if (this.fileManagerType === 'jupyter') {
       return SettingsManager.getUserSettingsAsync(true /*forceRefresh*/)
         .then((settings: common.UserSettings) => {

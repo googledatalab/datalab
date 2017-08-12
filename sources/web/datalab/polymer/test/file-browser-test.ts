@@ -39,11 +39,13 @@ describe('<file-browser>', () => {
     };
     const mockFileManager = {
       list: (path: string) => {
+        console.log('== path is', path, ', startuppath is ', startuppath)
         assert(path === startuppath, 'listFilesAsync should be called with the startup path');
         return Promise.resolve(mockFiles);
       },
     } as FileManager;
     FileManagerFactory.getInstance = () => { return mockFileManager; }
+    FileManagerFactory.getInstanceForType = (_) => { return mockFileManager; }
   });
 
   beforeEach((done: () => any) => {

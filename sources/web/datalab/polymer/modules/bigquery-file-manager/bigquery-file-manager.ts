@@ -24,35 +24,21 @@ class BigQueryMethodNotYetImplemented extends Error {
  */
 class BigQueryFileManager implements FileManager {
 
-  /**
-   * Returns a DatalabFile object representing the file or directory requested
-   * @param path string path to requested file
-   * @param asText whether the file should be downloaded as plain text. This is
-   *               useful for downloading notebooks, which are by default read
-   *               as JSON, which doesn't preserve formatting.
-   */
-  public async get(path: string, asText?: boolean): Promise<DatalabFile> {
-    path; asText; // Make compiler happy until we implement this function.
+  public async get(_path: string, _asText?: boolean): Promise<DatalabFile> {
     throw new BigQueryMethodNotYetImplemented('get');
   }
 
-  /**
-   * Uploads the given file object to the backend. The file's name, path, format,
-   * and content are required fields.
-   * @param model object containing file information to send to backend
-   */
-  public async save(file: DatalabFile): Promise<DatalabFile> {
-    file; // Make compiler happy until we implement this function.
+  public async save(_file: DatalabFile): Promise<DatalabFile> {
     throw new BigQueryMethodNotYetImplemented('save');
   }
 
-  /**
-   * Returns a list of files at the target path, each implementing the
-   * DatalabFile interface. Two requests are made to /api/contents and
-   * /api/sessions to get this data.
-   * @param path current path to list files under
-   */
   public list(path: string): Promise<DatalabFile[]> {
+    // BigQuery does not allow slashes in the names of projects,
+    // datasets, or tables, so we use them as separator characters
+    // to keep consistent with POSIX file hierarchies.
+    // We also filter out blank entries, which "collapses" consecutive
+    // slashes. It also means both '' and '/' turn into an empty
+    // array of pathParts and are thus interpreted as the root.
     const pathParts = path.split('/').filter((part) => !!part);
     if (pathParts.length === 0) {
       return this._listProjects();
@@ -66,42 +52,19 @@ class BigQueryFileManager implements FileManager {
     throw new BigQueryMethodNotYetImplemented('listing datasets');
   }
 
-  /**
-   * Creates a new notebook or directory.
-   * @param itemType type of the created item, can be 'notebook' or 'directory'
-   */
-  public create(itemType: DatalabFileType, path?: string): Promise<DatalabFile> {
-    itemType; path; // Make compiler happy until we implement this function.
+  public create(_itemType: DatalabFileType, _path?: string): Promise<DatalabFile> {
     throw new BigQueryMethodNotYetImplemented('create');
   }
 
-  /**
-   * Renames an item
-   * @param oldPath source path of the existing item
-   * @param newPath destination path of the renamed item
-   */
-  public rename(oldPath: string, newPath: string): Promise<DatalabFile> {
-    oldPath; newPath; // Make compiler happy until we implement this function.
+  public rename(_oldPath: string, _newPath: string): Promise<DatalabFile> {
     throw new BigQueryMethodNotYetImplemented('rename');
   }
 
-  /**
-   * Deletes an item
-   * @param path item path to delete
-   */
-  public delete(path: string): Promise<boolean> {
-    path; // Make compiler happy until we implement this function.
+  public delete(_path: string): Promise<boolean> {
     throw new BigQueryMethodNotYetImplemented('delete');
   }
 
-  /*
-   * Copies an item from source to destination. Item name collisions at the destination
-   * are handled by BigQuery.
-   * @param path path to copied item
-   * @param destinationDirectory directory to copy the item into
-   */
-  public copy(path: string, destinationDirectory: string): Promise<DatalabFile> {
-    path; destinationDirectory; // Make compiler happy until we implement this function.
+  public copy(_path: string, _destinationDirectory: string): Promise<DatalabFile> {
     throw new BigQueryMethodNotYetImplemented('copy');
   }
 

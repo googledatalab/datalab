@@ -22,14 +22,6 @@ class DataBrowserElement extends Polymer.Element {
 
   static get is() { return 'data-browser'; }
 
-  static get properties() {
-    return {
-    };
-  }
-
-  ready() {
-    super.ready();
-  }
 }
 
 customElements.define(DataBrowserElement.is, DataBrowserElement);
