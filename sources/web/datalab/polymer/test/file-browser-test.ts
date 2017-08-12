@@ -37,10 +37,13 @@ describe('<file-browser>', () => {
     ApiManagerFactory.getInstance().getBasePath = () => {
       return Promise.resolve('');
     };
-    FileManagerFactory.getInstance().list = (path: string) => {
-      assert(path === startuppath, 'listFilesAsync should be called with the startup path');
-      return Promise.resolve(mockFiles);
-    };
+    const mockFileManager = {
+      list: (path: string) => {
+        assert(path === startuppath, 'listFilesAsync should be called with the startup path');
+        return Promise.resolve(mockFiles);
+      },
+    } as FileManager;
+    FileManagerFactory.getInstance = () => { return mockFileManager; }
   });
 
   beforeEach((done: () => any) => {
