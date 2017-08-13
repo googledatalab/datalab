@@ -12,6 +12,16 @@
  * the License.
  */
 
+ /**
+  * Breadcrumb element for Datalab. It takes an array of strings that are
+  * displayed as a horizontal list of links representing a POSIX-like path. A
+  * root link is always displayed at the beginning of the list. Clicking a link
+  * dispatches a 'crumbClicked' custom event that contains the index of the
+  * clicked item. Overflowing links will be hidden from the left side, and an
+  * ellipsis link appears when this is the case. Clicking the ellipsis
+  * dispatches the custom event with the index before the last visible item.
+  * Clicking the root link dispatches a 'rootClicked' custom event.
+  */
 class BreadCrumbsElement extends Polymer.Element {
 
   public crumbs: string[];
@@ -55,17 +65,15 @@ class BreadCrumbsElement extends Polymer.Element {
 
     // Find the index of the last breadcrumb we can fit, starting from the right
     // We must fit at least the right-most child, so this is the starting point.
-    // Always show that first child.
     this.lastVisibleIndex = children.length - 1;
     children[this.lastVisibleIndex].classList.remove('hidden');
     let runningWidth = children[this.lastVisibleIndex].offsetWidth;
 
     for (let i = this.lastVisibleIndex - 1; i >= 0; --i) {
-      const child = children[i];
-      if (runningWidth + child.offsetWidth < maxWidth) {
-        runningWidth += child.offsetWidth;
-        child.classList.remove('hidden');
+      if (runningWidth + children[i].offsetWidth < maxWidth) {
         this.lastVisibleIndex = i;
+        children[this.lastVisibleIndex].classList.remove('hidden');
+        runningWidth += children[this.lastVisibleIndex].offsetWidth;
       } else {
         break;
       }

@@ -30,7 +30,7 @@ the License.
       }
       #breadcrumb div.crumb {
         float: left;
-        max-width: calc(100% - 55px); /* Stretch as much as we can uptill the ellipsis div */
+        max-width: calc(100% - 55px); /* Stretch as much as we can until the ellipsis div */
       }
       #breadcrumb div.hidden {
         position: absolute;
@@ -100,6 +100,7 @@ the License.
         <a href="#">...</a>
       </div>
       <!--Always show a '/' crumb for home-->
+      <!-- TODO: Consider making this crumb customizable -->
       <div class="crumb" id="homeCrumb">
         <a href="#" on-click="_rootClicked">/</a>
       </div>
