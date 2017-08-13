@@ -30,13 +30,14 @@ the License.
       }
       #breadcrumb div.crumb {
         float: left;
+        max-width: calc(100% - 55px); /* Stretch as much as we can uptill the ellipsis div */
       }
       #breadcrumb div.hidden {
         position: absolute;
         visibility: hidden;
       }
       #breadcrumb div.crumb a {
-        display: block;
+        display: flex;
         background-color: var(--primary-bg-color);
         text-decoration: none;
         position: relative;
@@ -44,6 +45,11 @@ the License.
         margin-right: 25px;
         height: 100%;
         color: var(--selection-fg-color);
+      }
+      #breadcrumb div.crumb a div {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
       #homeCrumb a, #ellipsisCrumb a {
         padding-left: 15px !important;
@@ -99,7 +105,7 @@ the License.
       </div>
       <template id="breadcrumbsTemplate" is="dom-repeat" items={{crumbs}}>
         <div class="crumb part" on-click="_crumbClicked">
-          <a href="#">{{item}}</a>
+          <a href="#"><div>{{item}}</div></a>
         </div>
       </template>
     </div>

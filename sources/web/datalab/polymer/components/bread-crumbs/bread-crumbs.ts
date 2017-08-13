@@ -56,11 +56,11 @@ class BreadCrumbsElement extends Polymer.Element {
     // Find the index of the last breadcrumb we can fit, starting from the right
     // We must fit at least the right-most child, so this is the starting point.
     // Always show that first child.
-    children[0].classList.remove('hidden');
     this.lastVisibleIndex = children.length - 1;
-    let runningWidth = children[children.length - 1].offsetWidth;
+    children[this.lastVisibleIndex].classList.remove('hidden');
+    let runningWidth = children[this.lastVisibleIndex].offsetWidth;
 
-    for (let i = children.length - 2; i >= 0; --i) {
+    for (let i = this.lastVisibleIndex - 1; i >= 0; --i) {
       const child = children[i];
       if (runningWidth + child.offsetWidth < maxWidth) {
         runningWidth += child.offsetWidth;
