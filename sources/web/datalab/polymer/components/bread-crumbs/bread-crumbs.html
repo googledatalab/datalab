@@ -97,7 +97,7 @@ the License.
       <div class="crumb" id="homeCrumb">
         <a href="#" on-click="_rootClicked">/</a>
       </div>
-      <template id="breadcrumbsTemplate" is="dom-repeat" items={{_visibleCrumbs}}>
+      <template id="breadcrumbsTemplate" is="dom-repeat" items={{crumbs}}>
         <div class="crumb part" on-click="_crumbClicked">
           <a href="#">{{item}}</a>
         </div>

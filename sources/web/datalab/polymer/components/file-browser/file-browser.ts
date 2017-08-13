@@ -161,9 +161,11 @@ class FileBrowserElement extends Polymer.Element {
       const index = e.detail.index;
       const pathTokens = this._splitCurrentPath();
       this.currentPath = pathTokens.slice(0, index + 1).join('/');
+      this._pushNewPath();
     });
     this.$.breadCrumbs.addEventListener('rootClicked', () => {
       this.currentPath = '';
+      this._pushNewPath();
     });
 
     // TODO: Using a ready promise might be common enough a need that we should
@@ -247,14 +249,10 @@ class FileBrowserElement extends Polymer.Element {
   /**
    * Updates the breadcrumbs array and calls _fetchFileList.
    */
-  _currentPathChanged(_: string, oldValue: string) {
+  _currentPathChanged() {
     // Ignore inital '/'
     if (this.currentPath.startsWith('/')) {
       this.currentPath = this.currentPath.substr(1);
-    }
-    // Except on initialization, push the current path to path history
-    if (oldValue !== undefined) {
-      this._pushNewPath();
     }
 
     this.$.breadCrumbs.crumbs = this._splitCurrentPath();
@@ -304,6 +302,7 @@ class FileBrowserElement extends Polymer.Element {
     }
     if (clickedItem.type === DatalabFileType.DIRECTORY) {
       this.currentPath = clickedItem.path;
+      this._pushNewPath();
     } else if (clickedItem.type === DatalabFileType.NOTEBOOK) {
       this._getNotebookUrlPrefix()
         .then((prefix) => window.open(prefix + '/' + clickedItem.path, '_blank'));
@@ -867,7 +866,8 @@ class FileBrowserElement extends Polymer.Element {
     (this.$.files as ItemListElement).columns = this.small ? ['Name'] : ['Name', 'Status'];
 
     this._fetching = false;
-    return this._fetchFileList();
+    return this._fetchFileList()
+      .then(() => this._pushNewPath());
   }
 
 }
