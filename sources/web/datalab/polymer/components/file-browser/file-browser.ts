@@ -168,7 +168,7 @@ class FileBrowserElement extends Polymer.Element {
           FileManagerFactory.fileManagerNameToType(this.fileManagerType));
     }
 
-    this.$.breadCrumbs.addEventListener('crumbClicked', (e: CustomEvent) => {
+    this.$.breadCrumbs.addEventListener('crumbClicked', (e: ItemClickEvent) => {
       const index = e.detail.index;
       const pathTokens = this._splitCurrentPath();
       this.currentPath = pathTokens.slice(0, index + 1).join('/');
