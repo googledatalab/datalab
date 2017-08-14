@@ -24,9 +24,19 @@
   */
 class BreadCrumbsElement extends Polymer.Element {
 
+  /**
+   * Array of path parts to display as breadcrumbs.
+   */
   public crumbs: string[];
 
-  private lastVisibleIndex: number;
+  /**
+   * Index of the last path link that was fit in the breadcrumbs bar.
+   */
+  public lastVisibleIndex: number;
+
+  // Length of the first crumb, which is either the home crumb (/), or ellipsis
+  // crumb (...).
+  private readonly _ellipsisCrumbWidth = 55;
 
   static get is() { return 'bread-crumbs'; }
 
@@ -55,7 +65,7 @@ class BreadCrumbsElement extends Polymer.Element {
     Polymer.dom.flush();
 
     const container = this.$.breadcrumb as HTMLDivElement;
-    const maxWidth = container.offsetWidth - 55;
+    const maxWidth = container.offsetWidth - this._ellipsisCrumbWidth;
 
     const children = container.querySelectorAll('div.part') as NodeListOf<HTMLDivElement>;
 
@@ -69,14 +79,13 @@ class BreadCrumbsElement extends Polymer.Element {
     children[this.lastVisibleIndex].classList.remove('hidden');
     let runningWidth = children[this.lastVisibleIndex].offsetWidth;
 
-    for (let i = this.lastVisibleIndex - 1; i >= 0; --i) {
-      if (runningWidth + children[i].offsetWidth < maxWidth) {
-        this.lastVisibleIndex = i;
-        children[this.lastVisibleIndex].classList.remove('hidden');
-        runningWidth += children[this.lastVisibleIndex].offsetWidth;
-      } else {
-        break;
-      }
+    // Stop when we find the first element that we cannot fit.
+    for (let i = this.lastVisibleIndex - 1;
+         i >= 0 && runningWidth + children[i].offsetWidth < maxWidth;
+         --i) {
+      this.lastVisibleIndex = i;
+      children[this.lastVisibleIndex].classList.remove('hidden');
+      runningWidth += children[this.lastVisibleIndex].offsetWidth;
     }
 
     // Hide all breadcrumbs to the left of the last visible index

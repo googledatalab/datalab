@@ -145,6 +145,17 @@ class FileBrowserElement extends Polymer.Element {
 
     super.ready();
 
+    this.$.breadCrumbs.addEventListener('crumbClicked', (e: ItemClickEvent) => {
+      const index = e.detail.index;
+      const pathTokens = this._splitCurrentPath();
+      this.currentPath = pathTokens.slice(0, index + 1).join('/');
+      this._pushNewPath();
+    });
+    this.$.breadCrumbs.addEventListener('rootClicked', () => {
+      this.currentPath = '';
+      this._pushNewPath();
+    });
+
     this._apiManager = ApiManagerFactory.getInstance();
 
     if (!this.fileManagerType) {
@@ -261,14 +272,10 @@ class FileBrowserElement extends Polymer.Element {
   }
 
   _splitCurrentPath() {
-    const pathTokens = this.currentPath.split('/');
-
-    // Splitting a path starting with '/' puts an initial empty element in the array,
-    // which we're not interested in. For example, for /datalab/docs, we only want
-    // ['datalab', 'docs'].
-    if (pathTokens[0] === '') {
-      pathTokens.splice(0, 1);
-    }
+    // When splitting the path, we're not interested in empty elements in the
+    // array that might result from an initial '/', or a double '//'. For
+    // example, for /datalab/docs, we only want ['datalab', 'docs'].
+    const pathTokens = this.currentPath.split('/').filter((p) => !!p);
     return pathTokens;
   }
 
