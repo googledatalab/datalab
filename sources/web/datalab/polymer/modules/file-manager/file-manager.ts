@@ -212,3 +212,9 @@ interface FileManager {
    */
   getEditorUrl(file: DatalabFileId): Promise<string>;
 }
+
+class UnsupportedFunction extends Error {
+  constructor(className: string, apiName: string) {
+    super(className + ' does not support function: ' + apiName);
+  }
+}

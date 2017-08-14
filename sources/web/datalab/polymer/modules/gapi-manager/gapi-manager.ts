@@ -13,6 +13,7 @@
  */
 
 /// <reference path="../../../../../../third_party/externs/ts/gapi/bigquery.d.ts" />
+/// <reference path="../../../../../../third_party/externs/ts/gapi/drive.d.ts" />
 
 class MissingClientIdError extends Error {
   message = 'No oauth2ClientId found in user or config settings';
@@ -172,6 +173,20 @@ class GapiManager {
       .then(() => gapi.client.bigquery.tables.get(request));
   }
 
+  public static getDriveFiles(query?: string): Promise<gapi.client.drive.File[]> {
+    return this._loadDrive()
+      .then(() => gapi.client.drive.files.list({
+        fields: 'nextPageToken, files(id, name, mimeType, modifiedTime)',
+        pageSize: 30,
+        q: query,
+      }))
+      .then((response: HttpResponse<gapi.client.drive.ListFilesResponse>) => {
+        return response.result.files;
+      }, (response: HttpResponse<{error: Error}>) => {
+        throw response.result.error;
+      });
+  }
+
   /**
    * Observes changes to the sign in status, and calls the provided callback
    * with the changes.
@@ -253,6 +268,11 @@ class GapiManager {
     return this.loadGapi()
       .then(() => gapi.client.load('bigquery', 'v2'))
       .then(() => GapiManager.grantScope(GapiScopes.BIGQUERY));
+  }
+
+  private static _loadDrive(): Promise<void> {
+    return this.loadGapi()
+      .then(() => gapi.client.load('drive', 'v3'));
   }
 
   private static _getScopeString(scope: GapiScopes): string {
