@@ -134,10 +134,7 @@ define(['util'], (util) => {
 
     document.getElementById('addNotebookButton').addEventListener('click', addNotebook, false);
     document.getElementById('addFolderButton').addEventListener('click', addFolder, false);
-    const terminalButton = document.getElementById('addTerminalButton');
-    if (terminalButton) {
-      terminalButton.addEventListener('click', addTerminal, false);
-    }
+    document.getElementById('addTerminalButton').addEventListener('click', addTerminal, false);
     document.getElementById('editorButton').addEventListener('click', openEditor, false);
 
     (function buildBreadcrumbContent() {
