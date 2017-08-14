@@ -68,7 +68,6 @@ class FileBrowserElement extends Polymer.Element {
 
   private _addToolbarCollapseThreshold = 900;
   private _apiManager: ApiManager;
-  private _currentCrumbs: string[];
   private _detailsPaneCollapseThreshold = 600;
   private _fetching: boolean;
   private _fileList: DatalabFile[];
@@ -86,10 +85,6 @@ class FileBrowserElement extends Polymer.Element {
 
   static get properties() {
     return {
-      _currentCrumbs: {
-        type: Array,
-        value: () => [],
-      },
       _fetching: {
         type: Boolean,
         value: false,
@@ -150,6 +145,17 @@ class FileBrowserElement extends Polymer.Element {
 
     super.ready();
 
+    this.$.breadCrumbs.addEventListener('crumbClicked', (e: ItemClickEvent) => {
+      const index = e.detail.index;
+      const pathTokens = this._splitCurrentPath();
+      this.currentPath = pathTokens.slice(0, index + 1).join('/');
+      this._pushNewPath();
+    });
+    this.$.breadCrumbs.addEventListener('rootClicked', () => {
+      this.currentPath = '';
+      this._pushNewPath();
+    });
+
     this._apiManager = ApiManagerFactory.getInstance();
 
     if (!this.fileManagerType) {
@@ -161,6 +167,17 @@ class FileBrowserElement extends Polymer.Element {
       this._fileManager = FileManagerFactory.getInstanceForType(
           FileManagerFactory.fileManagerNameToType(this.fileManagerType));
     }
+
+    this.$.breadCrumbs.addEventListener('crumbClicked', (e: ItemClickEvent) => {
+      const index = e.detail.index;
+      const pathTokens = this._splitCurrentPath();
+      this.currentPath = pathTokens.slice(0, index + 1).join('/');
+      this._pushNewPath();
+    });
+    this.$.breadCrumbs.addEventListener('rootClicked', () => {
+      this.currentPath = '';
+      this._pushNewPath();
+    });
 
     // TODO: Using a ready promise might be common enough a need that we should
     // consider adding it to a super class, maybe DatalabElement. For now, this
@@ -243,22 +260,23 @@ class FileBrowserElement extends Polymer.Element {
   /**
    * Updates the breadcrumbs array and calls _fetchFileList.
    */
-  _currentPathChanged(_: string, oldValue: string) {
-    // On initialization, push the current path to path history
-    if (oldValue === undefined) {
-      this._pushNewPath();
+  _currentPathChanged() {
+    // Ignore inital '/'
+    if (this.currentPath.startsWith('/')) {
+      this.currentPath = this.currentPath.substr(1);
     }
 
-    this._currentCrumbs = this.currentPath.split('/');
-
-    // Splitting a path starting with '/' puts an initial empty element in the array,
-    // which we're not interested in. For example, for /datalab/docs, we only want
-    // ['datalab', 'docs'].
-    if (this._currentCrumbs[0] === '') {
-      this._currentCrumbs.splice(0, 1);
-    }
+    this.$.breadCrumbs.crumbs = this._splitCurrentPath();
 
     return this._fetchFileList();
+  }
+
+  _splitCurrentPath() {
+    // When splitting the path, we're not interested in empty elements in the
+    // array that might result from an initial '/', or a double '//'. For
+    // example, for /datalab/docs, we only want ['datalab', 'docs'].
+    const pathTokens = this.currentPath.split('/').filter((p) => !!p);
+    return pathTokens;
   }
 
   /**
@@ -312,21 +330,6 @@ class FileBrowserElement extends Polymer.Element {
     } else {
       this.selectedFile = null;
     }
-  }
-
-  /**
-   * Navigates to the path of the clicked breadcrumb.
-   */
-  _crumbClicked(e: MouseEvent) {
-    const target = e.target as HTMLDivElement;
-    // Treat the home crumb differently since it's not part of the dom-repeat
-    if (target.id === 'home-crumb') {
-      this.currentPath = '';
-    } else {
-      const clickedCrumb = this.$.breadcrumbsTemplate.indexForElement(e.target);
-      this.currentPath = this._currentCrumbs.slice(0, clickedCrumb + 1).join('/');
-    }
-    this._pushNewPath();
   }
 
   /**
@@ -870,7 +873,8 @@ class FileBrowserElement extends Polymer.Element {
     (this.$.files as ItemListElement).columns = this.small ? ['Name'] : ['Name', 'Status'];
 
     this._fetching = false;
-    return this._fetchFileList();
+    return this._fetchFileList()
+      .then(() => this._pushNewPath());
   }
 
 }

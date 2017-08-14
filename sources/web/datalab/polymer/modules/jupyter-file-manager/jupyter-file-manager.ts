@@ -113,7 +113,7 @@ class JupyterFileManager implements FileManager {
       method: 'POST',
       parameters: JSON.stringify({
         ext: 'ipynb',
-        type: itemType,
+        type: this._datalabTypeToJupyterType(itemType),
       }),
       successCodes: [201],
     };
@@ -192,6 +192,19 @@ class JupyterFileManager implements FileManager {
     };
 
     return apiManager.sendRequestAsync(destinationDirectory, xhrOptions);
+  }
+
+  private _datalabTypeToJupyterType(type: DatalabFileType) {
+    switch (type) {
+      case DatalabFileType.DIRECTORY:
+        return 'directory';
+      case DatalabFileType.NOTEBOOK:
+        return 'notebook';
+      case DatalabFileType.FILE:
+        return 'file';
+      default:
+        throw new Error('Unknown file type: ' + type);
+    }
   }
 
   private _jupyterTypeToDatalabType(type: string) {
