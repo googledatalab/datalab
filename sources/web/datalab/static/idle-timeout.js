@@ -53,6 +53,7 @@ define(['base/js/dialog', 'base/js/events', 'util'], function(dialog, events, ut
       title: 'Idle timeout exceeded',
       body: shutdownMsg,
       buttons: { 'Close': {} },
+      keyboard_manager: IPython.keyboard_manager,
     });
     timeoutInfo.enabled = false;  // Don't show this message more than once.
   }
