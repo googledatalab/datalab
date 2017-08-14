@@ -119,8 +119,11 @@ class GapiManager {
    */
   public static listBigQueryProjects():
       Promise<gapi.client.HttpRequestFulfilled<gapi.client.bigquery.ListProjectsResponse>> {
+    const request = {
+      maxResults: 1000,
+    };
     return this._loadBigQuery()
-      .then(() => gapi.client.bigquery.projects.list());
+      .then(() => gapi.client.bigquery.projects.list(request));
   }
 
   /**
@@ -133,6 +136,7 @@ class GapiManager {
       Promise<gapi.client.HttpRequestFulfilled<gapi.client.bigquery.ListDatasetsResponse>> {
     const request = {
       filter,
+      maxResults: 1000,
       projectId,
     };
     return GapiManager._loadBigQuery()
@@ -147,6 +151,7 @@ class GapiManager {
       Promise<gapi.client.HttpRequestFulfilled<gapi.client.bigquery.ListTablesResponse>> {
     const request = {
       datasetId,
+      maxResults: 1000,
       projectId,
     };
     return GapiManager._loadBigQuery()
@@ -246,7 +251,8 @@ class GapiManager {
 
   private static _loadBigQuery(): Promise<void> {
     return this.loadGapi()
-      .then(() => gapi.client.load('bigquery', 'v2'));
+      .then(() => gapi.client.load('bigquery', 'v2'))
+      .then(() => GapiManager.grantScope(GapiScopes.BIGQUERY));
   }
 
   private static _getScopeString(scope: GapiScopes): string {

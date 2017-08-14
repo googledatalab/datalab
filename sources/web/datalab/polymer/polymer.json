@@ -2,13 +2,14 @@
   "entrypoint": "index.html",
   "shell": "components/datalab-app/datalab-app.html",
   "fragments": [
+    "components/data-browser/data-browser.html",
     "components/datalab-data/datalab-data.html",
     "components/datalab-editor/datalab-editor.html",
-    "components/file-browser/file-browser.html",
     "components/datalab-sessions/datalab-sessions.html",
     "components/datalab-sidebar/datalab-sidebar.html",
     "components/datalab-terminal/datalab-terminal.html",
-    "components/datalab-toolbar/datalab-toolbar.html"
+    "components/datalab-toolbar/datalab-toolbar.html",
+    "components/file-browser/file-browser.html"
   ],
   "sources": [
     "modules/**/*.js",

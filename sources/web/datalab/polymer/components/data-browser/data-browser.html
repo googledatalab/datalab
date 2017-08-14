@@ -12,7 +12,20 @@ or implied. See the License for the specific language governing permissions and 
 the License.
 -->
 
-<link rel="import" href="../bigquery-file-manager/bigquery-file-manager.html">
-<link rel="import" href="../jupyter-file-manager/jupyter-file-manager.html">
+<link rel="import" href="../../components/file-browser/file-browser.html">
 
-<script src="file-manager-factory.js"></script>
+<dom-module id="data-browser">
+  <template>
+    <style include="datalab-shared-styles">
+    </style>
+
+    <div id="data-container">
+
+      <file-browser file-manager-type='bigquery' hide-toolbar></file-browser>
+
+    </div>
+
+  </template>
+</dom-module>
+
+<script src="data-browser.js"></script>
