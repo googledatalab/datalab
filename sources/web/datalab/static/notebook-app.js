@@ -80,13 +80,21 @@ define(['appbar', 'minitoolbar', 'idle-timeout', 'util'], function(appbar, minit
           Jupyter.notebook.undelete_cell.bind(Jupyter.notebook))
     });
 
+    datalab.set_kernel = (newKernel) => {
+      const currentKernal = Jupyter.notebook.kernel.name;
+      if (newKernel !== currentKernal) {
+        $('#currentKernelName').text('...');
+        Jupyter.kernelselector.set_kernel(newKernel);
+      }
+    };
+
     events.on('kernel_connected.Kernel', function() {
       $('#currentKernelName').text(Jupyter.kernelselector.current_selection);
       $('#kernelSelectorDropdown').empty();
       Object.keys(Jupyter.kernelselector.kernelspecs).forEach(function(kernel) {
         $('#kernelSelectorDropdown').append(`
           <li>
-            <a href="#" onclick="Jupyter.kernelselector.set_kernel('` + kernel + `')">
+            <a href="#" onclick="datalab.set_kernel('` + kernel + `')">
               ` + kernel + `
             </a>
           </li>
