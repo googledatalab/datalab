@@ -53,30 +53,23 @@ enum DatalabFileStatus {
 }
 
 /**
- * Represents a file object as returned from the FileManager calls.
+ * Represents a file object that can be displayed in the file browser.
  */
-interface DatalabFile {
-  content: DatalabFile[] | Notebook | string;
-  created?: string;
-  format: string;
-  last_modified?: string;
-  mimetype?: string;
+class DatalabFile {
   name: string;
-  path: string;
-  status: DatalabFileStatus;
-  type: DatalabFileType;
-  writable?: boolean;
+  // type: DatalabFileType;
+  icon: string;
 }
 
 interface FileManager {
   /**
    * Returns a DatalabFile object representing the file or directory requested
-   * @param path string path to requested file
+   * @param file object containing information of the request file.
    * @param asText whether the file should be downloaded as plain text. This is
    *               useful for downloading notebooks, which are by default read
    *               as JSON, which doesn't preserve formatting.
    */
-  get(path: string, asText?: boolean): Promise<DatalabFile>;
+  get(file: DatalabFile, asText?: boolean): Promise<DatalabFile>;
 
   /**
    * Uploads the given file object to the backend. The file's name, path, format,
@@ -89,34 +82,35 @@ interface FileManager {
    * Returns a list of files at the target path, each implementing the
    * DatalabFile interface. Two requests are made to /api/contents and
    * /api/sessions to get this data.
-   * @param path current path to list files under
+   * @param container file whose children to list.
    */
-  list(path: string): Promise<DatalabFile[]>;
+  list(container: DatalabFile): Promise<DatalabFile[]>;
 
   /**
    * Creates a new Datalab item
-   * @param itemType type of the created item
+   * @param fileType type of the created item
    */
-  create(itemType: DatalabFileType, path?: string): Promise<DatalabFile>;
+  create(fileType: DatalabFileType, container: DatalabFile, name: string): Promise<DatalabFile>;
 
   /**
    * Renames an item
-   * @param oldPath source path of the existing item
-   * @param newPath destination path of the renamed item
+   * @param oldFile source path of the existing item
+   * @param name new name for the item.
+   * @param newContainer destination path of the renamed item
    */
-  rename(oldPath: string, newPath: string): Promise<DatalabFile>;
+  rename(oldFile: DatalabFile, name: string, newContainer?: DatalabFile): Promise<DatalabFile>;
 
   /**
    * Deletes an item
-   * @param path item path to delete
+   * @param file item path to delete
    */
-  delete(path: string): Promise<boolean>;
+  delete(file: DatalabFile): Promise<boolean>;
 
   /*
-   * Copies an item from source to destination. Item name collisions at the
-   * destination are handled by backend.
-   * @param path path to item to copy
+   * Copies an item from source to destination. If an item with the same name
+   * exists in the destination, a unique suffix is added.
+   * @param file item to copy
    * @param destinationDirectory directory to copy the item into
    */
-  copy(path: string, destinationDirectory: string): Promise<DatalabFile>;
+  copy(file: DatalabFile, destinationDirectory: DatalabFile): Promise<DatalabFile>;
 }

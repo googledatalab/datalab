@@ -31,7 +31,7 @@ const FILE_MANAGER_ELEMENT = {
 enum FileManagerType {
   BIG_QUERY,
   JUPYTER,
-};
+}
 
 /**
  * Maintains and gets the static FileManager singleton.
@@ -40,7 +40,7 @@ enum FileManagerType {
 // environment
 class FileManagerFactory {
 
-  private static _fileManagers: { [fileManagerType: string] : FileManager } = {};
+  private static _fileManagers: { [fileManagerType: string]: FileManager } = {};
 
   /** Get the default FileManager. */
   public static getInstance() {
@@ -73,4 +73,3 @@ class FileManagerFactory {
     }
   }
 }
-

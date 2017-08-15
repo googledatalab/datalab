@@ -18,28 +18,33 @@ class BigQueryMethodNotYetImplemented extends Error {
   }
 }
 
+class BigQueryFile {
+  path: string;
+}
+
 /**
  * A file manager that wraps the BigQuery API so that we can browse BQ projects,
  * datasets, and tables like a filesystem.
  */
 class BigQueryFileManager implements FileManager {
 
-  public async get(_path: string, _asText?: boolean): Promise<DatalabFile> {
+  public get(_file: DatalabFile, _asText?: boolean): Promise<DatalabFile> {
     throw new BigQueryMethodNotYetImplemented('get');
   }
 
-  public async save(_file: DatalabFile): Promise<DatalabFile> {
+  public save(_file: DatalabFile): Promise<DatalabFile> {
     throw new BigQueryMethodNotYetImplemented('save');
   }
 
-  public list(path: string): Promise<DatalabFile[]> {
+  public list(container: DatalabFile): Promise<DatalabFile[]> {
+    const bqContainer = this._castDatalabFileToBigQueryFile(container);
     // BigQuery does not allow slashes in the names of projects,
     // datasets, or tables, so we use them as separator characters
     // to keep consistent with POSIX file hierarchies.
     // We also filter out blank entries, which "collapses" consecutive
     // slashes. It also means both '' and '/' turn into an empty
     // array of pathParts and are thus interpreted as the root.
-    const pathParts = path.split('/').filter((part) => !!part);
+    const pathParts = bqContainer.path.split('/').filter((part) => !!part);
     if (pathParts.length === 0) {
       return this._listProjects();
     }
@@ -52,19 +57,21 @@ class BigQueryFileManager implements FileManager {
     throw new BigQueryMethodNotYetImplemented('listing datasets');
   }
 
-  public create(_itemType: DatalabFileType, _path?: string): Promise<DatalabFile> {
+  public create(_fileType: DatalabFileType, _container: DatalabFile, _name: string):
+      Promise<DatalabFile> {
     throw new BigQueryMethodNotYetImplemented('create');
   }
 
-  public rename(_oldPath: string, _newPath: string): Promise<DatalabFile> {
+  public rename(_oldFile: DatalabFile, _name: string, _newContainer?: DatalabFile):
+      Promise<DatalabFile> {
     throw new BigQueryMethodNotYetImplemented('rename');
   }
 
-  public delete(_path: string): Promise<boolean> {
+  public delete(_file: DatalabFile): Promise<boolean> {
     throw new BigQueryMethodNotYetImplemented('delete');
   }
 
-  public copy(_path: string, _destinationDirectory: string): Promise<DatalabFile> {
+  public copy(_file: DatalabFile, _destinationDirectory: DatalabFile): Promise<DatalabFile> {
     throw new BigQueryMethodNotYetImplemented('copy');
   }
 
@@ -105,7 +112,7 @@ class BigQueryFileManager implements FileManager {
       status: DatalabFileStatus.IDLE,
       type: DatalabFileType.DIRECTORY,
     } as DatalabFile;
-  };
+  }
 
   private _bqDatasetToDatalabFile(bqDataset: gapi.client.bigquery.DatasetResource): DatalabFile {
     return {
@@ -114,7 +121,7 @@ class BigQueryFileManager implements FileManager {
       status: DatalabFileStatus.IDLE,
       type: DatalabFileType.DIRECTORY,
     } as DatalabFile;
-  };
+  }
 
   private _bqTableToDatalabFile(bqTable: gapi.client.bigquery.TableResource): DatalabFile {
     return {
@@ -124,5 +131,15 @@ class BigQueryFileManager implements FileManager {
       status: DatalabFileStatus.IDLE,
       type: DatalabFileType.FILE,
     } as DatalabFile;
-  };
+  }
+
+  private _castDatalabFileToBigQueryFile(file: DatalabFile): BigQueryFile {
+    const bqFile = file as BigQueryFile;
+    for (const k in BigQueryFile) {
+      if (!(k in bqFile)) {
+        throw new Error('Property ' + k + ' not found in file');
+      }
+    }
+    return bqFile;
+  }
 }

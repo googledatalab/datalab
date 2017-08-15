@@ -122,19 +122,4 @@ class Utils {
         throw new Error('Unknown file status: ' + status);
     }
   }
-
-  // TODO: Consider moving to a dedicated strings module
-  public static getFileTypeString(type: DatalabFileType) {
-    switch (type) {
-      case DatalabFileType.DIRECTORY:
-        return 'directory';
-      case DatalabFileType.FILE:
-        return 'file';
-      case DatalabFileType.NOTEBOOK:
-        return 'notebok';
-      default:
-        throw new Error('Unknown file type: ' + type);
-    }
-  }
-
 }
