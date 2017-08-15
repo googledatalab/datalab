@@ -168,17 +168,6 @@ class FileBrowserElement extends Polymer.Element {
           FileManagerFactory.fileManagerNameToType(this.fileManagerType));
     }
 
-    this.$.breadCrumbs.addEventListener('crumbClicked', (e: ItemClickEvent) => {
-      const index = e.detail.index;
-      const pathTokens = this._splitCurrentPath();
-      this.currentPath = pathTokens.slice(0, index + 1).join('/');
-      this._pushNewPath();
-    });
-    this.$.breadCrumbs.addEventListener('rootClicked', () => {
-      this.currentPath = '';
-      this._pushNewPath();
-    });
-
     // TODO: Using a ready promise might be common enough a need that we should
     // consider adding it to a super class, maybe DatalabElement. For now, this
     // is the only element that needs it.
