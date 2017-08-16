@@ -91,31 +91,31 @@ class TemplateManager {
 
   public static async newNotebookFromTemplate(template: NotebookTemplate) {
 
-    // const options: DirectoryPickerDialogOptions = {
-    //   big: true,
-    //   okLabel: 'Save Here',
-    //   title: 'New Notebook',
-    //   withFileName: true,
-    // };
+    const options: DirectoryPickerDialogOptions = {
+      big: true,
+      okLabel: 'Save Here',
+      title: 'New Notebook',
+      withFileName: true,
+    };
 
-    // const closeResult = await Utils.showDialog(DirectoryPickerDialogElement, options) as
-    //     DirectoryPickerDialogCloseResult;
+    const closeResult = await Utils.showDialog(DirectoryPickerDialogElement, options) as
+        DirectoryPickerDialogCloseResult;
 
-    // if (closeResult.confirmed && closeResult.fileName) {
-      const templateContent = await
-          FileManagerFactory.getInstanceForType(template.fileId.source).getContent(template.fileId);
+    if (closeResult.confirmed && closeResult.fileName) {
+      const fileManager = FileManagerFactory.getInstanceForType(template.fileId.source);
+      const templateContent = await fileManager.getContent(template.fileId);
+      const templateFile = await fileManager.get(template.fileId);
 
-      // file.name = closeResult.fileName;
-      // if (!file.name.endsWith('.ipynb')) {
-      //   file.name += '.ipynb';
-      // }
-      // file.path = closeResult.directoryPath;
+      templateFile.name = closeResult.fileName;
+      if (!templateFile.name.endsWith('.ipynb')) {
+        templateFile.name += '.ipynb';
+      }
+      templateFile.id = closeResult.selectedDirectory.id;
       template.populatePlaceholders(templateContent as NotebookContent);
-      return template;
-    //   return file;
-    // } else {
-    //   return null;
-    // }
+      return fileManager.saveText(templateFile, JSON.stringify(templateContent));
+    } else {
+      return null;
+    }
 
   }
 

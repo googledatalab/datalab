@@ -140,7 +140,7 @@ class JupyterFileManager implements FileManager {
       successCodes: [200, 201],
     };
     const requestPath =
-        apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + file.path + '/' + file.name;
+        apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + file.id.path;
     return apiManager.sendRequestAsync(requestPath, xhrOptions);
   }
 
