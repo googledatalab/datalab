@@ -417,13 +417,20 @@ class FileBrowserElement extends Polymer.Element {
           // Extract the base64 data string
           itemData = itemData.substr(itemData.indexOf(',') + 1);
 
-          const model = new JupyterFile();
-          model.format = 'base64';
-          model.name = file.name;
-          model.path = (this.currentFile as JupyterFile).path;
-          model.status = DatalabFileStatus.IDLE;
-          model.type = DatalabFileType.FILE;
-          return this._fileManager.saveText(model, itemData);
+          return this._fileManager.create(DatalabFileType.FILE, this.currentFile.id, file.name)
+            .then((newFile: JupyterFile) => {
+              newFile.format = 'base64';
+              newFile.name = file.name;
+              newFile.path = (this.currentFile as JupyterFile).path;
+              newFile.status = DatalabFileStatus.IDLE;
+              return newFile;
+            })
+            .then((newFile) => this._fileManager.saveText(newFile, itemData))
+            .catch((e) => {
+              // Reset the input element on errors
+              inputElement.value = '';
+              throw e;
+            });
         });
       uploadPromises.push(uploadPromise);
     });
