@@ -14,12 +14,12 @@
 
 describe('<file-browser>', () => {
   let testFixture: FileBrowserElement;
-  const startuppath = 'testpath';
+  const startuppath = new DatalabFileId('testpath', FileManagerType.JUPYTER);
 
   const mockFiles: DatalabFile[] = [
-    {content: '', format: '', name: 'file1', path: '/', type: DatalabFileType.DIRECTORY, status: DatalabFileStatus.IDLE},
-    {content: '', format: '', name: 'file2', path: '/', type: DatalabFileType.DIRECTORY, status: DatalabFileStatus.IDLE},
-    {content: '', format: '', name: 'file3', path: '/', type: DatalabFileType.DIRECTORY, status: DatalabFileStatus.IDLE},
+    {icon: '', id: new DatalabFileId('', FileManagerType.JUPYTER), name: 'file1', type: DatalabFileType.DIRECTORY, status: DatalabFileStatus.IDLE},
+    {icon: '', id: new DatalabFileId('', FileManagerType.JUPYTER), name: 'file2', type: DatalabFileType.DIRECTORY, status: DatalabFileStatus.IDLE},
+    {icon: '', id: new DatalabFileId('', FileManagerType.JUPYTER), name: 'file3', type: DatalabFileType.DIRECTORY, status: DatalabFileStatus.IDLE},
   ];
 
   before(() => {
@@ -29,7 +29,7 @@ describe('<file-browser>', () => {
         idleTimeoutInterval: '',
         idleTimeoutShutdownCommand: '',
         oauth2ClientId: '',
-        startuppath,
+        startuppath: startuppath.toQueryString(),
         theme: 'light',
       };
       return Promise.resolve(mockSettings);
@@ -38,14 +38,13 @@ describe('<file-browser>', () => {
       return Promise.resolve('');
     };
     const mockFileManager = {
-      list: (path: string) => {
-        console.log('== path is', path, ', startuppath is ', startuppath)
-        assert(path === startuppath, 'listFilesAsync should be called with the startup path');
+      list: (id: DatalabFileId) => {
+        assert(id === startuppath, 'listFilesAsync should be called with the startup path');
         return Promise.resolve(mockFiles);
       },
     } as FileManager;
-    FileManagerFactory.getInstance = () => { return mockFileManager; }
-    FileManagerFactory.getInstanceForType = (_) => { return mockFileManager; }
+    FileManagerFactory.getInstance = () => mockFileManager;
+    FileManagerFactory.getInstanceForType = (_) => mockFileManager;
   });
 
   beforeEach((done: () => any) => {
@@ -58,7 +57,7 @@ describe('<file-browser>', () => {
   });
 
   it('gets the startup path correctly', () => {
-    assert(testFixture.currentPath === startuppath, 'incorrect startup path');
+    assert(testFixture.currentDirectory.id === startuppath, 'incorrect startup path');
   });
 
   it('displays list of files correctly', () => {

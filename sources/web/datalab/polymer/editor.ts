@@ -37,7 +37,7 @@ if (editorElement) {
   // Pass the file's path if it's specified in the location.
   const params = new URLSearchParams(window.location.search);
   if (params.has('file')) {
-    editorElement.filePath = params.get('file') as string;
+    editorElement.fileId = DatalabFileId.fromQueryString(params.get('file') as string);
   }
 
   // Listen for rename events coming from the editor element, and match the url

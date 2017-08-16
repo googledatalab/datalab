@@ -19,13 +19,11 @@
  */
 
 class JupyterFile extends DatalabFile {
-  content: DatalabFile[] | Notebook | string;
   created?: string;
   format: string;
   lastModified?: string;
   mimetype?: string;
   path: string;
-  type: string;
   writable?: boolean;
 }
 
@@ -34,62 +32,94 @@ class JupyterFile extends DatalabFile {
  */
 class JupyterFileManager implements FileManager {
 
-  /**
-   * Returns a DatalabFile object representing the file or directory requested
-   * @param path string path to requested file
-   * @param asText whether the file should be downloaded as plain text. This is
-   *               useful for downloading notebooks, which are by default read
-   *               as JSON, which doesn't preserve formatting.
-   */
-  public async get(file: DatalabFile, asText?: boolean): Promise<DatalabFile> {
-    const jupyterFile = this._castDatalabFileToJupyterFile(file);
+  private static _toUpstreamType(file: JupyterFile, content: string) {
+    const jupyterFile = {
+      content,
+      created: file.created,
+      format: file.format,
+      last_modified: file.lastModified,
+      mimetype: file.mimetype,
+      name: file.name,
+      path: file.path,
+      type: '',
+    };
+    switch (file.type) {
+      case DatalabFileType.DIRECTORY:
+        jupyterFile.type = 'directory';
+        break;
+      case DatalabFileType.FILE:
+        jupyterFile.type = 'file';
+        break;
+      case DatalabFileType.NOTEBOOK:
+        jupyterFile.type = 'notebook';
+        break;
+      default:
+        throw new Error('Unknown jupyter file type: ' + file.type);
+    }
+
+    return jupyterFile;
+  }
+
+  public async get(fileId: DatalabFileId) {
     const apiManager = ApiManagerFactory.getInstance();
-    if (jupyterFile.path.startsWith('/')) {
-      jupyterFile.path = jupyterFile.path.substr(1);
-    }
-    if (asText === true) {
-      jupyterFile.path += '?format=text&type=file';
-    }
     const xhrOptions: XhrOptions = {
       noCache: true,
     };
     return apiManager.sendRequestAsync(
-        apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + jupyterFile.path, xhrOptions);
+        apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + fileId.path, xhrOptions);
   }
 
-  /**
-   * Uploads the given file object to the backend. The file's name, path, format,
-   * and content are required fields.
-   * @param model object containing file information to send to backend
-   */
-  public async save(file: DatalabFile) {
-    const jupyterFile = this._castDatalabFileToJupyterFile(file);
+  public async getContent(fileId: DatalabFileId, asText?: boolean): Promise<DatalabFileContent> {
     const apiManager = ApiManagerFactory.getInstance();
+    if (fileId.path.startsWith('/')) {
+      fileId.path = fileId.path.substr(1);
+    }
+    if (asText === true) {
+      fileId.path += '?format=text&type=file';
+    }
+    const xhrOptions: XhrOptions = {
+      noCache: true,
+    };
+    const upstreamFile = await apiManager.sendRequestAsync(
+        apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + fileId.path, xhrOptions);
+    switch (upstreamFile.type) {
+      case 'directory':
+        return new DirectoryContent(upstreamFile.content);
+      case 'file':
+        return new TextContent(upstreamFile.content);
+      case 'notebook':
+        return new NotebookContent(upstreamFile.content.cells, upstreamFile.content.metadata,
+            upstreamFile.content.nbformat, upstreamFile.content.nbformat_minor);
+      default:
+        throw new Error('Unknown Jupyter file type: ' + upstreamFile.type);
+    }
+  }
+
+  public async getRootFile() {
+    return this.get(new DatalabFileId('/', FileManagerType.JUPYTER));
+  }
+
+  public async saveText(file: JupyterFile, content: string) {
+    const apiManager = ApiManagerFactory.getInstance();
+    const upstreamFile = JupyterFileManager._toUpstreamType(file, content);
     const xhrOptions: XhrOptions = {
       failureCodes: [409],
       method: 'PUT',
-      parameters: JSON.stringify(jupyterFile),
+      parameters: JSON.stringify(upstreamFile),
       successCodes: [200, 201],
     };
     const requestPath =
-        apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + jupyterFile.path + '/' + file.name;
+        apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + file.path + '/' + file.name;
     return apiManager.sendRequestAsync(requestPath, xhrOptions);
   }
 
-  /**
-   * Returns a list of files at the target path, each implementing the
-   * DatalabFile interface. Two requests are made to /api/contents and
-   * /api/sessions to get this data.
-   * @param path current path to list files under
-   */
-  public list(container: DatalabFile): Promise<DatalabFile[]> {
-    const jupyterContainer = this._castDatalabFileToJupyterFile(container);
-    const filesPromise = this.get(jupyterContainer)
-      .then((file: JupyterFile) => {
+  public list(containerId: DatalabFileId): Promise<DatalabFile[]> {
+    const filesPromise = this.get(containerId)
+      .then((file: any) => {
         if (file.type !== 'directory') {
           throw new Error('Can only list files in a directory. Found type: ' + file.type);
         }
-        return file.content as DatalabFile[];
+        return file.content as JupyterFile[];
       });
 
     const sessionsPromise: Promise<Session[]> = SessionManager.listSessionsAsync();
@@ -104,26 +134,25 @@ class JupyterFileManager implements FileManager {
         sessions.forEach((session: Session) => {
           runningPaths.push(session.notebook.path);
         });
-        files.forEach((file: any) => {
+        files.forEach((file: JupyterFile) => {
           if (runningPaths.indexOf(file.path) > -1) {
             file.status = DatalabFileStatus.RUNNING;
           } else {
             file.status = DatalabFileStatus.IDLE;
           }
-          file.type = this._jupyterTypeToDatalabType(file.type);
         });
         return files as DatalabFile[];
       });
   }
 
-  public create(fileType: DatalabFileType, container?: DatalabFile, name?: string) {
+  public create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string) {
     const apiManager = ApiManagerFactory.getInstance();
     const xhrOptions: XhrOptions = {
       failureCodes: [409],
       method: 'POST',
       parameters: JSON.stringify({
         ext: 'ipynb',
-        type: this._datalabTypeToJupyterType(fileType),
+        type: fileType,
       }),
       successCodes: [201],
     };
@@ -132,13 +161,12 @@ class JupyterFileManager implements FileManager {
 
     // If a path is provided for naming the new item, request the rename, and
     // delete it if failed.
-    if (container && name) {
-      const jupyterContainer = this._castDatalabFileToJupyterFile(container);
-      let notebookPlaceholder: JupyterFile;
+    if (containerId && name) {
+      let notebookPlaceholder: DatalabFileId;
       createPromise = createPromise
         .then((notebook: JupyterFile) => {
-          notebookPlaceholder = notebook;
-          return this.rename(notebookPlaceholder, jupyterContainer.path + '/' + name);
+          notebookPlaceholder = notebook.id as DatalabFileId;
+          return this.rename(notebookPlaceholder, containerId.path + '/' + name);
         })
         .catch((error: string) => {
           // If the rename fails, remove the temporary item
@@ -149,20 +177,11 @@ class JupyterFileManager implements FileManager {
     return createPromise;
   }
 
-  /**
-   * Renames an item
-   * @param oldPath source path of the existing item
-   * @param newPath destination path of the renamed item
-   */
-  public rename(oldFile: DatalabFile, name: string, newContainer?: DatalabFile) {
-    const jupyterOldFile = this._castDatalabFileToJupyterFile(oldFile);
+  public rename(oldFileId: DatalabFileId, newName: string, newContainerId?: DatalabFileId) {
     const apiManager = ApiManagerFactory.getInstance();
-    const oldPath = apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + jupyterOldFile.path;
-    let newPath = jupyterOldFile.path + '/' + name;
-    if (newContainer) {
-      const jupyterNewContainer = this._castDatalabFileToJupyterFile(newContainer);
-      newPath = jupyterNewContainer.path + '/' + name;
-    }
+    const oldPath = apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + oldFileId.path;
+    let newPath = newContainerId ? newContainerId.path : oldFileId.path;
+    newPath += '/' + newName;
     const xhrOptions: XhrOptions = {
       failureCodes: [409],
       method: 'PATCH',
@@ -174,10 +193,9 @@ class JupyterFileManager implements FileManager {
     return apiManager.sendRequestAsync(oldPath, xhrOptions);
   }
 
-  public delete(file: DatalabFile) {
-    const jupyterfile = this._castDatalabFileToJupyterFile(file);
+  public delete(fileId: DatalabFileId) {
     const apiManager = ApiManagerFactory.getInstance();
-    const path = apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + jupyterfile.path;
+    const path = apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + fileId.path;
     const xhrOptions: XhrOptions = {
       failureCodes: [400],
       method: 'DELETE',
@@ -187,55 +205,32 @@ class JupyterFileManager implements FileManager {
     return apiManager.sendRequestAsync(path, xhrOptions);
   }
 
-  public copy(file: DatalabFile, destinationDirectory: DatalabFile) {
-    const jupyterfile = this._castDatalabFileToJupyterFile(file);
-    const jupyterDestination = this._castDatalabFileToJupyterFile(destinationDirectory);
+  public copy(fileId: DatalabFileId, destinationDirectoryId: DatalabFileId) {
     const apiManager = ApiManagerFactory.getInstance();
     const xhrOptions: XhrOptions = {
       failureCodes: [409],
       method: 'POST',
       parameters: JSON.stringify({
-        copy_from: jupyterfile.path,
+        copy_from: fileId.path,
       }),
       successCodes: [201],
     };
 
-    return apiManager.sendRequestAsync(jupyterDestination.path, xhrOptions);
+    return apiManager.sendRequestAsync(destinationDirectoryId.path, xhrOptions);
   }
 
-  private _datalabTypeToJupyterType(type: DatalabFileType) {
-    switch (type) {
-      case DatalabFileType.DIRECTORY:
-        return 'directory';
-      case DatalabFileType.NOTEBOOK:
-        return 'notebook';
-      case DatalabFileType.FILE:
-        return 'file';
-      default:
-        throw new Error('Unknown file type: ' + type);
-    }
+  public async getNotebookUrl(fileId: DatalabFileId) {
+    // Notebooks that are stored on the VM require the basepath.
+    const apiManager = ApiManagerFactory.getInstance();
+    const basepath = await apiManager.getBasePath();
+    return location.protocol + '//' + location.host + basepath + '/notebooks/' + fileId.path;
   }
 
-  private _jupyterTypeToDatalabType(type: string) {
-    switch (type) {
-      case 'directory':
-        return DatalabFileType.DIRECTORY;
-      case 'notebook':
-        return DatalabFileType.NOTEBOOK;
-      case 'file':
-        return DatalabFileType.FILE;
-      default:
-        throw new Error('Unknown jupyter file type: ' + type);
-    }
-  }
-
-  private _castDatalabFileToJupyterFile(file: DatalabFile): JupyterFile {
-    const jupyterFile = file as JupyterFile;
-    for (const k in JupyterFile) {
-      if (!(k in jupyterFile)) {
-        throw new Error('Property ' + k + ' not found in file');
-      }
-    }
-    return jupyterFile;
+  public async getEditorUrl(fileId: DatalabFileId) {
+    // Files that are stored on the VM require the basepath.
+    const apiManager = ApiManagerFactory.getInstance();
+    const basepath = await apiManager.getBasePath();
+    return location.protocol + '//' + location.host + basepath + '/editor?file=' +
+        fileId.toQueryString();
   }
 }

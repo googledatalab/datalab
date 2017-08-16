@@ -19,7 +19,7 @@
  * directory path.
  */
 interface DirectoryPickerDialogCloseResult extends BaseDialogCloseResult {
-  directoryPath: string;
+  selectedDirectory: DatalabFile;
   fileName?: string;
 }
 

@@ -20,6 +20,8 @@
 
 /// <reference path="../../../common.d.ts" />
 
+// TODO: Go over docstrings
+
 /**
  * Represents a cell in a notebook.
  */
@@ -31,20 +33,10 @@ interface NotebookCell {
   source: string;
 }
 
-/**
- * Represents a notebook model.
- */
-interface Notebook {
-  cells: NotebookCell[];
-  metadata: object;
-  nbformat: number;
-  nbformat_minor: number;
-}
-
 enum DatalabFileType {
-  DIRECTORY,
-  FILE,
-  NOTEBOOK,
+  DIRECTORY = 'directory',
+  FILE = 'file',
+  NOTEBOOK = 'notebook',
 }
 
 enum DatalabFileStatus {
@@ -52,16 +44,93 @@ enum DatalabFileStatus {
   RUNNING,
 }
 
+class DatalabFileId {
+  private static _delim = '';
+
+  path: string;
+  source: FileManagerType;
+
+  constructor(path: string, source: FileManagerType) {
+    this.path = path;
+    this.source = source;
+  }
+
+  public static fromQueryString(querystring: string) {
+    const tokens = querystring.split(DatalabFileId._delim);
+    return new DatalabFileId(tokens[1], FileManagerFactory.fileManagerNameToType(tokens[0]));
+  }
+
+  public toQueryString() {
+    return FileManagerFactory.fileManagerTypetoString(this.source) + DatalabFileId._delim +
+        this.path;
+  }
+
+}
+
+abstract class DatalabFileContent {
+  public abstract getEditorText(): string;
+}
+
+class NotebookContent extends DatalabFileContent {
+  public cells: NotebookCell[];
+  metadata: object;
+  nbformat: number;
+  nbformatMinor: number;
+
+  constructor(cells: NotebookCell[], metadata: object, nbformat: number, nbformatMinor: number) {
+    super();
+    this.cells = cells;
+    this.metadata = metadata;
+    this.nbformat = nbformat;
+    this.nbformatMinor = nbformatMinor;
+  }
+
+  public getEditorText() {
+    return JSON.stringify(this.cells);
+  }
+}
+
+class DirectoryContent extends DatalabFileContent {
+  files: DatalabFile[];
+
+  constructor(files: DatalabFile[]) {
+    super();
+    this.files = files;
+  }
+
+  public getEditorText() {
+    return JSON.stringify(this.files);
+  }
+}
+
+class TextContent extends DatalabFileContent {
+  text: string;
+
+  constructor(text: string) {
+    super();
+    this.text = text;
+  }
+
+  public getEditorText() {
+    return this.text;
+  }
+}
+
 /**
  * Represents a file object that can be displayed in the file browser.
  */
-class DatalabFile {
+abstract class DatalabFile {
   name: string;
-  // type: DatalabFileType;
+  type: DatalabFileType;
   icon: string;
+  status?: DatalabFileStatus;
+  id: DatalabFileId;
 }
 
 interface FileManager {
+  // TODO: Consider supporting getting both the file and content objects with
+  // one call.
+
   /**
    * Returns a DatalabFile object representing the file or directory requested
    * @param file object containing information of the request file.
@@ -69,28 +138,44 @@ interface FileManager {
    *               useful for downloading notebooks, which are by default read
    *               as JSON, which doesn't preserve formatting.
    */
-  get(file: DatalabFile, asText?: boolean): Promise<DatalabFile>;
+  get(fileId: DatalabFileId): Promise<DatalabFile>;
+
+  /**
+   * Returns a DatalabFile object representing the file or directory requested
+   * @param file object containing information of the request file.
+   * @param asText whether the file should be downloaded as plain text. This is
+   *               useful for downloading notebooks, which are by default read
+   *               as JSON, which doesn't preserve formatting.
+   */
+  getContent(fileId: DatalabFileId, asText?: boolean): Promise<DatalabFileContent>;
+
+  /**
+   * Returns a DatalabFile object for the root directory.
+   */
+  getRootFile(): Promise<DatalabFile>;
 
   /**
    * Uploads the given file object to the backend. The file's name, path, format,
    * and content are required fields.
    * @param file object containing file information to send to backend
    */
-  save(file: DatalabFile): Promise<DatalabFile>;
+  saveText(file: DatalabFile, content: string): Promise<DatalabFile>;
 
   /**
    * Returns a list of files at the target path, each implementing the
    * DatalabFile interface. Two requests are made to /api/contents and
    * /api/sessions to get this data.
-   * @param container file whose children to list.
+   * @param container file id whose children to list.
    */
-  list(container: DatalabFile): Promise<DatalabFile[]>;
+  list(containerId: DatalabFileId): Promise<DatalabFile[]>;
 
   /**
    * Creates a new Datalab item
    * @param fileType type of the created item
+   * @param container id for the container
+   * @param name name for the created item
    */
-  create(fileType: DatalabFileType, container: DatalabFile, name: string): Promise<DatalabFile>;
+  create(fileType: DatalabFileType, container?: DatalabFileId, name?: string): Promise<DatalabFile>;
 
   /**
    * Renames an item
@@ -98,13 +183,13 @@ interface FileManager {
    * @param name new name for the item.
    * @param newContainer destination path of the renamed item
    */
-  rename(oldFile: DatalabFile, name: string, newContainer?: DatalabFile): Promise<DatalabFile>;
+  rename(oldFile: DatalabFileId, name: string, newContainer?: DatalabFileId): Promise<DatalabFile>;
 
   /**
    * Deletes an item
    * @param file item path to delete
    */
-  delete(file: DatalabFile): Promise<boolean>;
+  delete(file: DatalabFileId): Promise<boolean>;
 
   /*
    * Copies an item from source to destination. If an item with the same name
@@ -112,5 +197,17 @@ interface FileManager {
    * @param file item to copy
    * @param destinationDirectory directory to copy the item into
    */
-  copy(file: DatalabFile, destinationDirectory: DatalabFile): Promise<DatalabFile>;
+  copy(file: DatalabFileId, destinationDirectory: DatalabFileId): Promise<DatalabFile>;
+
+  /**
+   * Returns the url to open the given file in the notebook editor.
+   * @param file file object to open in the notebook editor.
+   */
+  getNotebookUrl(file: DatalabFileId): Promise<string>;
+
+  /**
+   * Returns the url to open the given file in the text editor.
+   * @param file file object to open in the text editor.
+   */
+  getEditorUrl(file: DatalabFileId): Promise<string>;
 }

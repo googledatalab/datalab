@@ -51,7 +51,15 @@ class FileManagerFactory {
     switch (name) {
       case 'bigquery': return FileManagerType.BIG_QUERY;
       case 'jupyter': return FileManagerType.JUPYTER;
-      default: throw new Error('unknown FileManagerType name ' + name);
+      default: throw new Error('Unknown FileManagerType name ' + name);
+    }
+  }
+
+  public static fileManagerTypetoString(type: FileManagerType) {
+    switch (type) {
+      case FileManagerType.BIG_QUERY: return 'bigquery';
+      case FileManagerType.JUPYTER: return 'jupyter';
+      default: throw new Error('Unknown FileManager type: ' + type);
     }
   }
 

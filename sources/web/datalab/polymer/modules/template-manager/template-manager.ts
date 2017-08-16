@@ -24,14 +24,14 @@ interface TemplateParameter {
  * list of its required parameters.
  */
 class NotebookTemplate {
-  // Path to the template file on disk
-  path: string;
+  // File id of the template file
+  fileId: DatalabFileId;
 
   // List of parameters required by the template
   parameters: TemplateParameter[];
 
-  constructor(path: string, parameters: TemplateParameter[]) {
-    this.path = path;
+  constructor(fileId: DatalabFileId, parameters: TemplateParameter[]) {
+    this.fileId = fileId;
     this.parameters = parameters;
   }
 
@@ -46,7 +46,7 @@ class NotebookTemplate {
    * Substitutes all placeholders in the given notebook's cells with their
    * values.
    */
-  public populatePlaceholders(notebook: Notebook) {
+  public populatePlaceholders(notebook: NotebookContent) {
 
     notebook.cells.forEach((cell: NotebookCell) => {
       this.parameters.forEach((parameter: TemplateParameter) => {
@@ -71,7 +71,9 @@ class TableSchemaTemplate extends NotebookTemplate {
       value: tableName,
     }];
 
-    super('tableSchema.ipynb', parameters);
+    const templateId = new DatalabFileId('datalab/templates/tableSchema.ipynb',
+        FileManagerType.JUPYTER);
+    super(templateId, parameters);
   }
 }
 
@@ -87,35 +89,33 @@ class TableSchemaTemplate extends NotebookTemplate {
  */
 class TemplateManager {
 
-  private static _templatePrefix = 'datalab/templates/';
-
   public static async newNotebookFromTemplate(template: NotebookTemplate) {
 
-    const options: DirectoryPickerDialogOptions = {
-      big: true,
-      okLabel: 'Save Here',
-      title: 'New Notebook',
-      withFileName: true,
-    };
+    // const options: DirectoryPickerDialogOptions = {
+    //   big: true,
+    //   okLabel: 'Save Here',
+    //   title: 'New Notebook',
+    //   withFileName: true,
+    // };
 
-    const closeResult = await Utils.showDialog(DirectoryPickerDialogElement, options) as
-        DirectoryPickerDialogCloseResult;
+    // const closeResult = await Utils.showDialog(DirectoryPickerDialogElement, options) as
+    //     DirectoryPickerDialogCloseResult;
 
-    if (closeResult.confirmed && closeResult.fileName) {
-      const path = TemplateManager._templatePrefix + template.path;
-      const file = await FileManagerFactory.getInstance().get(path);
+    // if (closeResult.confirmed && closeResult.fileName) {
+      const templateContent = await
+          FileManagerFactory.getInstanceForType(template.fileId.source).getContent(template.fileId);
 
-      file.name = closeResult.fileName;
-      if (!file.name.endsWith('.ipynb')) {
-        file.name += '.ipynb';
-      }
-      file.path = closeResult.directoryPath;
-      template.populatePlaceholders(file.content as Notebook);
-
-      return file;
-    } else {
-      return null;
-    }
+      // file.name = closeResult.fileName;
+      // if (!file.name.endsWith('.ipynb')) {
+      //   file.name += '.ipynb';
+      // }
+      // file.path = closeResult.directoryPath;
+      template.populatePlaceholders(templateContent as NotebookContent);
+      return template;
+    //   return file;
+    // } else {
+    //   return null;
+    // }
 
   }
 

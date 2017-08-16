@@ -42,9 +42,14 @@ class FileBrowserElement extends Polymer.Element {
   public readyPromise: Promise<void>;
 
   /**
-   * The current navigation path
+   * The current listing directory
    */
-  public currentPath: string;
+  public currentDirectory: DatalabFile;
+
+  /**
+   * The list of files leading to the current directory
+   */
+  public currentPath: DatalabFile[];
 
   /**
    * The type of FileManager we want to use for this file-browser.
@@ -68,6 +73,7 @@ class FileBrowserElement extends Polymer.Element {
 
   private _addToolbarCollapseThreshold = 900;
   private _apiManager: ApiManager;
+  private _currentFile: DatalabFile;
   private _detailsPaneCollapseThreshold = 600;
   private _fetching: boolean;
   private _fileList: DatalabFile[];
@@ -76,7 +82,7 @@ class FileBrowserElement extends Polymer.Element {
   private _fileListRefreshIntervalHandle = 0;
   private _fileManager: FileManager;
   private _isDetailsPaneToggledOn: boolean;
-  private _pathHistory: string[];
+  private _pathHistory: DatalabFile[];
   private _pathHistoryIndex: number;
   private _updateToolbarCollapseThreshold = 720;
   private _uploadFileSizeWarningLimit = 25 * 1024 * 1024;
@@ -85,6 +91,10 @@ class FileBrowserElement extends Polymer.Element {
 
   static get properties() {
     return {
+      _currentFile: {
+        computed: '_computeCurrentFile(currentPath)',
+        type: Object,
+      },
       _fetching: {
         type: Boolean,
         value: false,
@@ -147,12 +157,11 @@ class FileBrowserElement extends Polymer.Element {
 
     this.$.breadCrumbs.addEventListener('crumbClicked', (e: ItemClickEvent) => {
       const index = e.detail.index;
-      const pathTokens = this._splitCurrentPath();
-      this.currentPath = pathTokens.slice(0, index + 1).join('/');
+      this.currentPath.splice(index + 1, this.currentPath.length - index - 1);
       this._pushNewPath();
     });
     this.$.breadCrumbs.addEventListener('rootClicked', () => {
-      this.currentPath = '';
+      this.currentPath = [this.currentPath[0]];
       this._pushNewPath();
     });
 
@@ -167,17 +176,6 @@ class FileBrowserElement extends Polymer.Element {
       this._fileManager = FileManagerFactory.getInstanceForType(
           FileManagerFactory.fileManagerNameToType(this.fileManagerType));
     }
-
-    this.$.breadCrumbs.addEventListener('crumbClicked', (e: ItemClickEvent) => {
-      const index = e.detail.index;
-      const pathTokens = this._splitCurrentPath();
-      this.currentPath = pathTokens.slice(0, index + 1).join('/');
-      this._pushNewPath();
-    });
-    this.$.breadCrumbs.addEventListener('rootClicked', () => {
-      this.currentPath = '';
-      this._pushNewPath();
-    });
 
     // TODO: Using a ready promise might be common enough a need that we should
     // consider adding it to a super class, maybe DatalabElement. For now, this
@@ -196,21 +194,11 @@ class FileBrowserElement extends Polymer.Element {
     clearInterval(this._fileListRefreshIntervalHandle);
   }
 
-  async _getNotebookUrlPrefix() {
-    // Notebooks that are stored on the VM require the basepath.
-    const basepath = await this._apiManager.getBasePath();
-    const prefix = location.protocol + '//' + location.host + basepath + '/';
-    return prefix + 'notebooks';
-  }
-
-  async _getEditorUrl(filePath?: string) {
-    // Files that are stored on the VM require the basepath.
-    const basepath = await this._apiManager.getBasePath();
-    let url = location.protocol + '//' + location.host + basepath + '/editor';
-    if (filePath) {
-      url += '?file=' + filePath;
+  _computeCurrentFile(currentPath: DatalabFile[]) {
+    if (currentPath.length < 1) {
+      throw new Error('Current path array should never be empty');
     }
-    return url;
+    this._currentFile = currentPath[currentPath.length - 1];
   }
 
   /**
@@ -231,7 +219,7 @@ class FileBrowserElement extends Polymer.Element {
 
     this._fetching = true;
 
-    this._fileListFetchPromise = this._fileManager.list(this.currentPath)
+    this._fileListFetchPromise = this._fileManager.list(this._currentFile.id)
       .then((newList) => {
         // Only refresh the UI list if there are any changes. This helps keep
         // the item list's selections intact most of the time
@@ -261,22 +249,8 @@ class FileBrowserElement extends Polymer.Element {
    * Updates the breadcrumbs array and calls _fetchFileList.
    */
   _currentPathChanged() {
-    // Ignore inital '/'
-    if (this.currentPath.startsWith('/')) {
-      this.currentPath = this.currentPath.substr(1);
-    }
-
-    this.$.breadCrumbs.crumbs = this._splitCurrentPath();
-
+    this.$.breadCrumbs.crumbs = this.currentPath.map((p) => p.name);
     return this._fetchFileList();
-  }
-
-  _splitCurrentPath() {
-    // When splitting the path, we're not interested in empty elements in the
-    // array that might result from an initial '/', or a double '//'. For
-    // example, for /datalab/docs, we only want ['datalab', 'docs'].
-    const pathTokens = this.currentPath.split('/').filter((p) => !!p);
-    return pathTokens;
   }
 
   /**
@@ -287,7 +261,7 @@ class FileBrowserElement extends Polymer.Element {
     (this.$.files as ItemListElement).rows = this._fileList.map((file) => {
       const row: ItemListRow = {
         firstCol: file.name,
-        icon: Utils.getItemIconString(file.type),
+        icon: file.icon,
         secondCol: Utils.getFileStatusString(file.status),
         selected: false
       };
@@ -308,13 +282,13 @@ class FileBrowserElement extends Polymer.Element {
       return;
     }
     if (clickedItem.type === DatalabFileType.DIRECTORY) {
-      this.currentPath = clickedItem.path;
+      this.currentPath.push(clickedItem);
       this._pushNewPath();
     } else if (clickedItem.type === DatalabFileType.NOTEBOOK) {
-      this._getNotebookUrlPrefix()
-        .then((prefix) => window.open(prefix + '/' + clickedItem.path, '_blank'));
+      this._fileManager.getNotebookUrl(clickedItem.id)
+        .then((url) => window.open(url, '_blank'));
     } else {
-      this._getEditorUrl(clickedItem.path)
+      this._fileManager.getEditorUrl(clickedItem.id)
         .then((url) => window.open(url, '_blank'));
     }
   }
@@ -343,8 +317,8 @@ class FileBrowserElement extends Polymer.Element {
     this._pathHistory.splice(this._pathHistoryIndex + 1);
     // Only push the new path if it's not equal to the top-most path on the stack
     if (!this._pathHistory.length ||
-        this._pathHistory[this._pathHistory.length - 1] !== this.currentPath) {
-      this._pathHistory.push(this.currentPath);
+        this._pathHistory[this._pathHistory.length - 1] !== this._currentFile) {
+      this._pathHistory.push(this._currentFile);
       this._pathHistoryIndex = this._pathHistory.length - 1;
     }
   }
@@ -354,7 +328,6 @@ class FileBrowserElement extends Polymer.Element {
    */
   _navBackward() {
     this._pathHistoryIndex -= 1;
-    this.currentPath = this._pathHistory[this._pathHistoryIndex];
   }
 
   /**
@@ -362,7 +335,6 @@ class FileBrowserElement extends Polymer.Element {
    */
   _navForward() {
     this._pathHistoryIndex += 1;
-    this.currentPath = this._pathHistory[this._pathHistoryIndex];
   }
 
   /**
@@ -370,6 +342,7 @@ class FileBrowserElement extends Polymer.Element {
    * the current history index value.
    */
   _pathHistoryIndexChanged() {
+    this.currentPath = this._pathHistory.slice(0, this._pathHistoryIndex + 1);
     this.$.backNav.disabled = this._pathHistoryIndex === 0;
     this.$.forwardNav.disabled = this._pathHistoryIndex === this._pathHistory.length - 1;
   }
@@ -400,9 +373,12 @@ class FileBrowserElement extends Polymer.Element {
    * uses the FileManager to save it on the backend.
    */
   async _upload() {
+    // TODO: Explore enabling this feature for non-jupyter file managers
+    if (this.fileManagerType !== 'jupyter') {
+      return;
+    }
     const inputElement = this.$.altFileUpload as HTMLInputElement;
     const files = [...inputElement.files as any];
-    const currentPath = this.currentPath;
     const uploadPromises: Array<Promise<any>> = [];
 
     // TODO: Check if the file already exists at the current path, otherwise the upload
@@ -463,15 +439,13 @@ class FileBrowserElement extends Polymer.Element {
           // Extract the base64 data string
           itemData = itemData.substr(itemData.indexOf(',') + 1);
 
-          const model: DatalabFile = {
-            content: itemData,
-            format: 'base64',
-            name: file.name,
-            path: currentPath,
-            status: DatalabFileStatus.IDLE,
-            type: DatalabFileType.FILE,
-          };
-          return this._fileManager.save(model);
+          const model = new JupyterFile();
+          model.format = 'base64';
+          model.name = file.name;
+          model.path = (this._currentFile as JupyterFile).path;
+          model.status = DatalabFileStatus.IDLE;
+          model.type = DatalabFileType.FILE;
+          return this._fileManager.saveText(model, itemData);
         });
       uploadPromises.push(uploadPromise);
     });
@@ -524,7 +498,7 @@ class FileBrowserElement extends Polymer.Element {
             newName += '.ipynb';
           }
 
-          return this._fileManager.create(itemType, this.currentPath + '/' + newName)
+          return this._fileManager.create(itemType, this._currentFile.id, newName)
             .then(() => {
               // Dispatch a success notification, and refresh the file list
               this.dispatchEvent(new NotificationEvent('Created ' + newName + '.'));
@@ -547,7 +521,7 @@ class FileBrowserElement extends Polymer.Element {
       const i = selectedIndices[0];
       const selectedObject = this._fileList[i];
 
-      this._getEditorUrl(selectedObject.path)
+      this._fileManager.getEditorUrl(selectedObject.id)
         .then((url) => window.open(url, '_blank'));
     }
   }
@@ -579,7 +553,7 @@ class FileBrowserElement extends Polymer.Element {
           if (closeResult.confirmed && closeResult.userInput) {
             const newName = this.currentPath + '/' + closeResult.userInput;
 
-            return this._fileManager.rename(selectedObject.path, newName)
+            return this._fileManager.rename(selectedObject.id, newName)
               .then(() => {
                 // Dispatch a success notification, and refresh the file list
                 const message = 'Renamed ' + selectedObject.name +
@@ -646,7 +620,7 @@ class FileBrowserElement extends Polymer.Element {
         .then((closeResult: BaseDialogCloseResult) => {
           if (closeResult.confirmed) {
             const deletePromises = selectedIndices.map((i: number) => {
-              return this._fileManager.delete(this._fileList[i].path);
+              return this._fileManager.delete(this._fileList[i].id);
             });
             // TODO: [yebrahim] If at least one delete fails, _fetchFileList will never be called,
             // even if some other deletes completed.
@@ -706,10 +680,10 @@ class FileBrowserElement extends Polymer.Element {
       return Utils.showDialog(DirectoryPickerDialogElement, options)
         .then((closeResult: DirectoryPickerDialogCloseResult) => {
           if (closeResult.confirmed) {
-            return this._fileManager.copy(selectedObject.path, closeResult.directoryPath)
-              .then((newItem: DatalabFile) => {
+            return this._fileManager.copy(selectedObject.id, closeResult.selectedDirectory.id)
+              .then(() => {
                 // Dispatch a success notification, and refresh the file list
-                const message = 'Copied ' + selectedObject.path + ' to ' + newItem.path;
+                const message = 'Copied item.';
                 this.dispatchEvent(new NotificationEvent(message));
                 this._fetchFileList();
               })
@@ -747,11 +721,11 @@ class FileBrowserElement extends Polymer.Element {
         .then((closeResult: DirectoryPickerDialogCloseResult) => {
           if (closeResult.confirmed) {
             // Moving is renaming.
-            return this._fileManager.rename(selectedObject.path,
-                                         closeResult.directoryPath + '/' + selectedObject.name)
-              .then((newItem: DatalabFile) => {
+            return this._fileManager.rename(selectedObject.id, selectedObject.name,
+                                            closeResult.selectedDirectory.id)
+              .then(() => {
                 // Dispatch a success notification, and refresh the file list
-                const message = 'Moved ' + selectedObject.path + ' to ' + newItem.path;
+                const message = 'Moved item.';
                 this.dispatchEvent(new NotificationEvent(message));
                 this._fetchFileList();
               })
@@ -835,7 +809,7 @@ class FileBrowserElement extends Polymer.Element {
     }
   }
 
-  private _loadStartupPath() {
+  private async _loadStartupPath() {
     // TODO - move this to SettingsManager and make it able to store startuppaths
     // for multiple file managers.
     if (this.fileManagerType === 'jupyter') {
@@ -847,12 +821,17 @@ class FileBrowserElement extends Polymer.Element {
             if (path.startsWith('/tree/')) {
               path = path.substr('/tree/'.length);
             }
-            this.currentPath = path;
+            this.currentPath = path.split('/').filter((p) => !!p).map((p) => {
+              const f = new JupyterFile();
+              f.path = p;
+              return f;
+            });
           }
         })
         .catch(() => console.error('Failed to get the user settings.'));
     } else {
-      this.currentPath = '/';
+      const root = await this._fileManager.getRootFile();
+      this.currentPath = [root];
       return Promise.resolve();
     }
   }

@@ -23,13 +23,14 @@
 class DatalabEditorElement extends Polymer.Element {
 
   /**
-   * Path of the file to load in the editor.
+   * FileId object for the file to load in the editor.
    */
-  public filePath: string;
+  public fileId: DatalabFileId;
 
   private _busy: boolean;
   private _editor: CodeMirror.Editor;
   private _file: DatalabFile | null;
+  private _fileContent: DatalabFileContent | null;
   private _fileManager: FileManager;
   private _theme: string;
 
@@ -45,9 +46,13 @@ class DatalabEditorElement extends Polymer.Element {
         type: Object,
         value: null,
       },
-      filePath: {
+      _fileContent: {
+        type: Object,
+        value: null,
+      },
+      fileId: {
         notify: true,
-        type: String,
+        type: Object,
         value: '',
       },
     };
@@ -58,7 +63,7 @@ class DatalabEditorElement extends Polymer.Element {
 
     // TODO: This should get the FileManager instance that corresponds to the
     // origin of the file opened in the editor
-    this._fileManager = FileManagerFactory.getInstance();
+    this._fileManager = FileManagerFactory.getInstanceForType(this.fileId.source);
 
     // Get the theme.
     const settings = await SettingsManager.getUserSettingsAsync()
@@ -70,11 +75,16 @@ class DatalabEditorElement extends Polymer.Element {
 
     // Get the file contents, or empty string if no path is specified
     let content = '';
-    if (this.filePath) {
+    if (this.fileId) {
       this._busy = true;
       // Passing the asText=true parameter guarantees the returned type is not a directory.
       // An error is thrown if it is.
-      this._file = await this._fileManager.get(this.filePath, true /*asText*/)
+      this._file = await this._fileManager.get(this.fileId)
+        .catch((e: Error) => {
+          Utils.showErrorDialog('Error', e.message);
+          return null;
+        });
+      this._fileContent = await this._fileManager.getContent(this.fileId, true /*asText*/)
         .catch((e: Error) => {
           Utils.showErrorDialog('Error', e.message);
           return null;
@@ -82,8 +92,8 @@ class DatalabEditorElement extends Polymer.Element {
 
       this._busy = false;
 
-      if (this._file) {
-        content = this._file.content as string;
+      if (this._fileContent) {
+        content = this._fileContent.getEditorText();
       }
     }
 
@@ -109,59 +119,75 @@ class DatalabEditorElement extends Polymer.Element {
   _saveAsync() {
     // If the file isn't defined, this means it's a blank editor, we'll need
     // to save a new file. Open a file picker dialog here to get the file path.
-    if (!this._file) {
-      const options: DirectoryPickerDialogOptions = {
-        big: true,
-        okLabel: 'Save',
-        title: 'New File',
-        withFileName: true,
-      };
-      return Utils.showDialog(DirectoryPickerDialogElement, options)
-        .then((closeResult: DirectoryPickerDialogCloseResult) => {
-          if (closeResult.confirmed) {
+    // if (!this._file) {
+    //   const options: DirectoryPickerDialogOptions = {
+    //     big: true,
+    //     okLabel: 'Save',
+    //     title: 'New File',
+    //     withFileName: true,
+    //   };
+    //   return Utils.showDialog(DirectoryPickerDialogElement, options)
+    //     .then((closeResult: DirectoryPickerDialogCloseResult) => {
+    //       if (closeResult.confirmed) {
 
-            // TODO: Prevent the dialog from closing if the input field is empty
-            if (closeResult.fileName) {
-              // TODO: Check if a file exists with this path, and show a
-              // confirmation dialog before replacing
-              const model: DatalabFile = {
-                content: this._editor.getDoc().getValue(),
-                created: new Date().toISOString(),
-                format: 'text',
-                last_modified: new Date().toISOString(),
-                mimetype: 'text/plain',
-                name: closeResult.fileName,
-                path: closeResult.directoryPath,
-                status: DatalabFileStatus.IDLE,
-                type: DatalabFileType.FILE,
-                writable: true,
-              };
+    //         // TODO: Prevent the dialog from closing if the input field is empty
+    //         if (closeResult.fileName) {
+    //           // TODO: Check if a file exists with this path, and show a
+    //           // confirmation dialog before replacing
+    //           const model: DatalabFile = {
+    //             content: this._editor.getDoc().getValue(),
+    //             created: new Date().toISOString(),
+    //             format: 'text',
+    //             last_modified: new Date().toISOString(),
+    //             mimetype: 'text/plain',
+    //             name: closeResult.fileName,
+    //             path: closeResult.directoryPath,
+    //             status: DatalabFileStatus.IDLE,
+    //             type: DatalabFileType.FILE,
+    //             writable: true,
+    //           };
 
-              return this._saveToJupyterAsync(model);
-            }
-          }
+    //           return this._saveToJupyterAsync(model);
+    //         }
+    //       }
 
-          return Promise.resolve(null);
-        });
-    } else {
-      // If _file is defined, we're saving to an existing file
-      const dirPath = this._getDirNameFromPath(this._file.path);
+    //       return Promise.resolve(null);
+    //     });
+    // } else {
+    //   // If _file is defined, we're saving to an existing file
+    //   const dirPath = this._getDirNameFromPath(this._file.path);
 
-      const model: DatalabFile = {
-        content: this._editor.getDoc().getValue(),
-        created: this._file.created,
-        format: this._file.format,
-        last_modified: new Date().toISOString(),
-        mimetype: this._file.mimetype,
-        name: this._file.name,
-        path: dirPath,
-        status: DatalabFileStatus.IDLE,
-        type: this._file.type,
-        writable: this._file.writable,
-      };
+    //   // We can only save text files.
+    //   let content = '';
+    //   if (this._file.type === DatalabFileType.FILE) {
+    //     content = this._editor.getDoc().getValue();
+    //   } else if (this._file.type === DatalabFileType.NOTEBOOK) {
+    //     content = this._editor.getDoc().getValue();
+    //     try {
+    //       JSON.parse(content);
+    //     } catch (e) {
+    //       Utils.showErrorDialog('Invalid JSON', 'Error parsing JSON, cannot save notebook.');
+    //       return;
+    //     }
+    //   } else {
+    //     Utils.showErrorDialog('Error Saving', 'Cannot save edits to directories.');
+    //   }
 
-      return this._saveToJupyterAsync(model);
-    }
+    //   const model = {
+    //     content,
+    //     created: this._file.created,
+    //     format: this._file.format,
+    //     last_modified: new Date().toISOString(),
+    //     mimetype: this._file.mimetype,
+    //     name: this._file.name,
+    //     path: dirPath,
+    //     status: DatalabFileStatus.IDLE,
+    //     type: this._file.type,
+    //     writable: this._file.writable,
+    //   };
+
+    //   return this._saveToJupyterAsync(model);
+    // }
   }
 
   /**
@@ -177,55 +203,51 @@ class DatalabEditorElement extends Polymer.Element {
    * Saves the given file model to Jupyter, and fetches the save result to keep
    * the client's _file object up to date.
    */
-  _saveToJupyterAsync(model: DatalabFile) {
-    return this._fileManager.save(model)
-      .then((savedModel: DatalabFile) => {
-        this._file = model;
-        // Get the path and name from the saved model. The path is returned
-        // without the file name from Jupyter
-        this.set('_file.name', savedModel.name);
-        this.set('_file.path', savedModel.path);
-        this.set('filePath', savedModel.path);
-        this.filePath = this._file.path;
-        return this.dispatchEvent(new NotificationEvent('Saved.'));
-      })
-      .catch((e: Error) => Utils.showErrorDialog('Error', e.message));
-  }
+  // _saveToJupyterAsync(model: DatalabFile) {
+  //   return this._fileManager.save(model)
+  //     .then((savedModel: DatalabFile) => {
+  //       this._file = model;
+  //       // Get the path and name from the saved model. The path is returned
+  //       // without the file name from Jupyter
+  //       this.set('_file.name', savedModel.name);
+  //       this.set('_file.path', savedModel.path);
+  //       this.set('filePath', savedModel.path);
+  //       this.filePath = this._file.path;
+  //       return this.dispatchEvent(new NotificationEvent('Saved.'));
+  //     })
+  //     .catch((e: Error) => Utils.showErrorDialog('Error', e.message));
+  // }
 
   /**
    * Rename the currently open file.
    */
   async _renameAsync() {
     // If the open file isn't saved, save it instead
-    if (!this._file) {
-      this._saveAsync();
-    } else {
-      const options: InputDialogOptions = {
-        inputLabel: 'New file name',
-        inputValue: this._file.name,
-        okLabel: 'Rename',
-        title: 'Rename File',
-      };
+    // if (!this._file) {
+    //   this._saveAsync();
+    // } else {
+    //   const options: InputDialogOptions = {
+    //     inputLabel: 'New file name',
+    //     inputValue: this._file.name,
+    //     okLabel: 'Rename',
+    //     title: 'Rename File',
+    //   };
 
-      const closeResult =
-          await Utils.showDialog(InputDialogElement, options) as InputDialogCloseResult;
+    //   const closeResult =
+    //       await Utils.showDialog(InputDialogElement, options) as InputDialogCloseResult;
 
-      // TODO: Prevent the dialog from closing if the input field is empty
-      if (closeResult.confirmed && closeResult.userInput) {
-        const file = this._file as DatalabFile;
-        const oldPath = file.path;
-        const newPath = this._getDirNameFromPath(file.path) + '/' + closeResult.userInput;
-
-        this._fileManager.rename(oldPath, newPath)
-          .then((savedModel) => {
-            this.dispatchEvent(new NotificationEvent('Renamed ' + oldPath + ' to ' + newPath));
-            this.set('_file.name', savedModel.name);
-            this.set('_file.path', savedModel.path);
-            this.set('filePath', savedModel.path);
-          })
-          .catch((e: Error) => Utils.showErrorDialog('Error', e.message));
-      }
-    }
+    //   // TODO: Prevent the dialog from closing if the input field is empty
+    //   if (closeResult.confirmed && closeResult.userInput) {
+    //     this._fileManager.rename(this.fileId, closeResult.userInput)
+    //       .then((savedModel) => {
+    //         this.dispatchEvent(new NotificationEvent('Renamed to ' + closeResult.userInput));
+    //         this.set('_file.name', savedModel.name);
+    //         this.set('_file.path', savedModel.path);
+    //         this.set('filePath', savedModel.path);
+    //       })
+    //       .catch((e: Error) => Utils.showErrorDialog('Error', e.message));
+    //   }
+    // }
   }
 
   /**
