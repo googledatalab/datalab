@@ -85,6 +85,11 @@ class JupyterFileManager implements FileManager {
     return jupyterFile;
   }
 
+  private static _getParentDir(path: string) {
+    const end = path.indexOf('/') > -1 ? path.lastIndexOf('/') : 0;
+    return path.substr(0, end);
+  }
+
   public async get(fileId: DatalabFileId) {
     const apiManager = ApiManagerFactory.getInstance();
     const xhrOptions: XhrOptions = {
@@ -206,7 +211,8 @@ class JupyterFileManager implements FileManager {
   public rename(oldFileId: DatalabFileId, newName: string, newContainerId?: DatalabFileId) {
     const apiManager = ApiManagerFactory.getInstance();
     const oldPath = apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + oldFileId.path;
-    let newPath = newContainerId ? newContainerId.path : oldFileId.path;
+    let newPath = newContainerId ?
+        newContainerId.path : JupyterFileManager._getParentDir(oldFileId.path);
     newPath += '/' + newName;
     const xhrOptions: XhrOptions = {
       failureCodes: [409],
