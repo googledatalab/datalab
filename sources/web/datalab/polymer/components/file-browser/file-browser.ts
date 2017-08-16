@@ -92,8 +92,8 @@ class FileBrowserElement extends Polymer.Element {
   static get properties() {
     return {
       _currentFile: {
-        computed: '_computeCurrentFile(currentPath)',
         type: Object,
+        value: null,
       },
       _fetching: {
         type: Boolean,
@@ -194,13 +194,6 @@ class FileBrowserElement extends Polymer.Element {
     clearInterval(this._fileListRefreshIntervalHandle);
   }
 
-  _computeCurrentFile(currentPath: DatalabFile[]) {
-    if (currentPath.length < 1) {
-      throw new Error('Current path array should never be empty');
-    }
-    this._currentFile = currentPath[currentPath.length - 1];
-  }
-
   /**
    * Calls the FileManager to get the list of files at the current path, and
    * updates the _fileList property.
@@ -250,7 +243,8 @@ class FileBrowserElement extends Polymer.Element {
    */
   _currentPathChanged() {
     this.$.breadCrumbs.crumbs = this.currentPath.map((p) => p.name);
-    return this._fetchFileList();
+    this._currentFile = this.currentPath[this.currentPath.length - 1];
+    return this.currentPath.length ? this._fetchFileList() : null;
   }
 
   /**
@@ -824,6 +818,7 @@ class FileBrowserElement extends Polymer.Element {
             this.currentPath = path.split('/').filter((p) => !!p).map((p) => {
               const f = new JupyterFile();
               f.path = p;
+              f.id = new DatalabFileId(p, FileManagerType.JUPYTER);
               return f;
             });
           }
