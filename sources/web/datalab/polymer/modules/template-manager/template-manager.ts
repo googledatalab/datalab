@@ -71,6 +71,7 @@ class TableSchemaTemplate extends NotebookTemplate {
       value: tableName,
     }];
 
+    // TODO: The actual template files should live somewhere more static.
     const templateId = new DatalabFileId('datalab/templates/tableSchema.ipynb',
         FileManagerType.JUPYTER);
     super(templateId, parameters);

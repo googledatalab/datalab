@@ -22,11 +22,13 @@ declare function marked(markdown: string): string;
  */
 class DetailsPaneElement extends Polymer.Element {
 
+  private static _maxLinesInTextSummary = 30;
   private static _noFileMessage = 'Select an item to view its details.';
   private static _emptyFileMessage = 'Empty file.';
   private static _emptyNotebookMessage = 'Empty notebook.';
   private static _longNotebookMessage = 'Showing markdown from the first two.';
-  private static _longFileMessage = 'Showing the first 30.';
+  private static _longFileMessage = 'Showing the first ' +
+      DetailsPaneElement._maxLinesInTextSummary + '.';
 
   /**
    * File whose details to show.
@@ -123,9 +125,9 @@ class DetailsPaneElement extends Polymer.Element {
               const lines = content.text.split('\n');
               this._message = 'File with ' + lines.length + ' lines. ';
               this.$.previewHtml.innerText = '\n' +
-                  lines.slice(0, 30).join('\n') +
+                  lines.slice(0, DetailsPaneElement._maxLinesInTextSummary).join('\n') +
                   '\n';
-              if (lines.length > 30) {
+              if (lines.length > DetailsPaneElement._maxLinesInTextSummary) {
                 this.$.previewHtml.innerText += '...\n\n';
                 this._message += DetailsPaneElement._longFileMessage;
               }

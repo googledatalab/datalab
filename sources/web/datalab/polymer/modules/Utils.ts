@@ -112,14 +112,12 @@ class Utils {
   }
 
   // TODO: Consider moving to a dedicated strings module
-  public static getFileStatusString(status: DatalabFileStatus | undefined) {
+  public static getFileStatusString(status: DatalabFileStatus) {
     switch (status) {
       case DatalabFileStatus.IDLE:
         return '';
       case DatalabFileStatus.RUNNING:
         return 'Running';
-      case undefined:
-        return '';
       default:
         throw new Error('Unknown file status: ' + status);
     }

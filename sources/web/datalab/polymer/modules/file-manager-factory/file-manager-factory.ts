@@ -55,6 +55,7 @@ class FileManagerFactory {
     }
   }
 
+  // Consider moving this to a strings module
   public static fileManagerTypetoString(type: FileManagerType) {
     switch (type) {
       case FileManagerType.BIG_QUERY: return 'bigquery';

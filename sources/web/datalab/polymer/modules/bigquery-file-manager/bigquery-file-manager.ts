@@ -129,7 +129,6 @@ class BigQueryFileManager implements FileManager {
       icon: '',
       id: new DatalabFileId(path, FileManagerType.BIG_QUERY),
       name: bqProject.projectReference.projectId,
-      path,
       status: DatalabFileStatus.IDLE,
       type: DatalabFileType.DIRECTORY,
     } as DatalabFile;
@@ -141,7 +140,6 @@ class BigQueryFileManager implements FileManager {
       icon: '',
       id: new DatalabFileId(path, FileManagerType.BIG_QUERY),
       name: bqDataset.datasetReference.datasetId,
-      path,
       status: DatalabFileStatus.IDLE,
       type: DatalabFileType.DIRECTORY,
     } as DatalabFile;
@@ -154,7 +152,6 @@ class BigQueryFileManager implements FileManager {
       icon: '',
       id: new DatalabFileId(path, FileManagerType.BIG_QUERY),
       name: bqTable.tableReference.tableId,
-      path,
       status: DatalabFileStatus.IDLE,
       type: DatalabFileType.FILE,
     } as DatalabFile;

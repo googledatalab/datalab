@@ -30,7 +30,6 @@ class DatalabEditorElement extends Polymer.Element {
   private _busy: boolean;
   private _editor: CodeMirror.Editor;
   private _file: DatalabFile | null;
-  private _fileContent: DatalabFileContent | null;
   private _fileManager: FileManager;
   private _theme: string;
 
@@ -43,10 +42,6 @@ class DatalabEditorElement extends Polymer.Element {
         value: false
       },
       _file: {
-        type: Object,
-        value: null,
-      },
-      _fileContent: {
         type: Object,
         value: null,
       },
@@ -79,8 +74,8 @@ class DatalabEditorElement extends Polymer.Element {
 
         // Get the file object and its contents
         this._file = await this._fileManager.get(this.fileId);
-        this._fileContent = await this._fileManager.getContent(this.fileId, true /*asText*/);
-        content = this._fileContent.getEditorText();
+        content =
+            (await this._fileManager.getContent(this.fileId, true /*asText*/)).getEditorText();
       } catch (e) {
         Utils.showErrorDialog('Error loading file', e.message);
         this.fileId = null;
@@ -88,7 +83,9 @@ class DatalabEditorElement extends Polymer.Element {
 
       this._busy = false;
     } else {
-      // TODO: Make this more flexible instead of assuming the default destination is jupyter.
+      // TODO: Make this more flexible instead of assuming the default
+      // destination is jupyter. If there's no fileId specified (blank editor),
+      // we should ask the user on save about the file destination.
       this._fileManager = FileManagerFactory.getInstanceForType(FileManagerType.JUPYTER);
     }
 
@@ -140,14 +137,10 @@ class DatalabEditorElement extends Polymer.Element {
       }
     } else {
       // If _file is defined, we're saving to an existing file
-
-      // We can only save text files.
-      let content = '';
       if (this._file.type === DatalabFileType.DIRECTORY) {
+        // We can only save text files.
         Utils.showErrorDialog('Error Saving', 'Cannot save edits to directories.');
         return;
-      } else {
-        content = this._editor.getDoc().getValue();
       }
     }
     if (this._file) {

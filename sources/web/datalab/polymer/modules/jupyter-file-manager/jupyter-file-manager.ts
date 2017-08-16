@@ -32,6 +32,10 @@ class JupyterFile extends DatalabFile {
  */
 class JupyterFileManager implements FileManager {
 
+  /**
+   * Converts the given JupyterFile into the type understood by the Jupyter
+   * backend.
+   */
   private static _toUpstreamObject(file: JupyterFile, content: any) {
     const jupyterFile = {
       content,
@@ -78,6 +82,9 @@ class JupyterFileManager implements FileManager {
     }
   }
 
+  /**
+   * Converts an object fetched from the Jupyter backend into a JupyterFile.
+   */
   private static _upstreamFileToJupyterFile(file: any) {
     const jupyterFile = new JupyterFile();
     jupyterFile.created = file.created;

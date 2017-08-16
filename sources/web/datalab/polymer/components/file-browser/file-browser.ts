@@ -149,8 +149,7 @@ class FileBrowserElement extends Polymer.Element {
     super.ready();
 
     this.$.breadCrumbs.addEventListener('crumbClicked', (e: ItemClickEvent) => {
-      const index = e.detail.index;
-      this._pathHistoryIndex = index;
+      this._pathHistoryIndex = e.detail.index;
     });
     this.$.breadCrumbs.addEventListener('rootClicked', () => {
       this._pathHistoryIndex = 0;
@@ -242,7 +241,7 @@ class FileBrowserElement extends Polymer.Element {
       const row: ItemListRow = {
         firstCol: file.name,
         icon: file.icon,
-        secondCol: Utils.getFileStatusString(file.status),
+        secondCol: Utils.getFileStatusString(file.status || DatalabFileStatus.IDLE),
         selected: false
       };
       return row;
@@ -256,29 +255,29 @@ class FileBrowserElement extends Polymer.Element {
    * If this element is in "small" mode, double clicking a file does not have
    * an effect, a directory will still navigate.
    */
-  _handleDoubleClicked(e: ItemClickEvent) {
+  async _handleDoubleClicked(e: ItemClickEvent) {
     const clickedItem = this._fileList[e.detail.index];
     if (this.small && clickedItem.type !== DatalabFileType.DIRECTORY) {
       return;
     }
     if (clickedItem.type === DatalabFileType.DIRECTORY) {
-      // First, remove all items in the array past _pathHistoryIndex. These are only
-      // there to allow for forward navigation after going back, but they have no
-      // effect when a new path is explicitly added by opening a directory or clicking
-      // on a breadcrumb.
+      // First, remove all items in the array past _pathHistoryIndex. These are
+      // only there to allow for forward navigation after going back, but they
+      // should be purged when adding a new directory, this effectively starts a
+      // new branch in the navigation tree, and prunes the old one.
       this._pathHistory.splice(this._pathHistoryIndex + 1);
-      // Only push the new path if it's not equal to the top-most path on the stack
+      // Only push the new file if it's not already on top of the stack.
       if (!this._pathHistory.length ||
           this._pathHistory[this._pathHistory.length - 1].id !== clickedItem.id) {
         this._pathHistory.push(clickedItem);
         this._pathHistoryIndex = this._pathHistory.length - 1;
       }
     } else if (clickedItem.type === DatalabFileType.NOTEBOOK) {
-      this._fileManager.getNotebookUrl(clickedItem.id)
-        .then((url) => window.open(url, '_blank'));
+      const url = await this._fileManager.getNotebookUrl(clickedItem.id);
+      window.open(url, '_blank');
     } else {
-      this._fileManager.getEditorUrl(clickedItem.id)
-        .then((url) => window.open(url, '_blank'));
+      const url = await this._fileManager.getEditorUrl(clickedItem.id);
+      window.open(url, '_blank');
     }
   }
 
@@ -299,14 +298,14 @@ class FileBrowserElement extends Polymer.Element {
    * Goes back one step in history.
    */
   _navBackward() {
-    this._pathHistoryIndex -= 1;
+    this._pathHistoryIndex = Math.max(this._pathHistoryIndex - 1, 0);
   }
 
   /**
    * Goes forward one step in history.
    */
   _navForward() {
-    this._pathHistoryIndex += 1;
+    this._pathHistoryIndex = Math.min(this._pathHistoryIndex + 1, this._pathHistory.length - 1);
   }
 
   /**
@@ -317,11 +316,12 @@ class FileBrowserElement extends Polymer.Element {
     this.$.backNav.disabled = this._pathHistoryIndex === 0;
     this.$.forwardNav.disabled = this._pathHistoryIndex === this._pathHistory.length - 1;
 
-    // Ignore the root file, slice until the current history index.
+    // Ignore the root file since that's shown by the crumbs element anyway,
+    // slice up till the current history index.
     this.$.breadCrumbs.crumbs =
         this._pathHistory.slice(1, this._pathHistoryIndex + 1).map((p) => p.name);
-    this.currentFile = this._pathHistory[this._pathHistoryIndex];
 
+    this.currentFile = this._pathHistory[this._pathHistoryIndex];
     this._fetchFileList();
   }
 
