@@ -167,7 +167,8 @@ class JupyterFileManager implements FileManager {
     };
     const requestPath =
         apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + file.id.path;
-    return apiManager.sendRequestAsync(requestPath, xhrOptions);
+    return apiManager.sendRequestAsync(requestPath, xhrOptions)
+      .then((savedFile: any) => JupyterFileManager._upstreamFileToJupyterFile(savedFile));
   }
 
   public list(containerId: DatalabFileId): Promise<DatalabFile[]> {

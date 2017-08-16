@@ -75,18 +75,19 @@ class NotebookContent extends DatalabFileContent {
   public cells: NotebookCell[];
   metadata: object;
   nbformat: number;
-  nbformatMinor: number;
+  // tslint:disable-next-line:variable-name
+  nbformat_minor: number;
 
   constructor(cells: NotebookCell[], metadata: object, nbformat: number, nbformatMinor: number) {
     super();
     this.cells = cells;
     this.metadata = metadata;
     this.nbformat = nbformat;
-    this.nbformatMinor = nbformatMinor;
+    this.nbformat_minor = nbformatMinor;
   }
 
   public getEditorText() {
-    return JSON.stringify(this.cells);
+    return JSON.stringify(this);
   }
 }
 

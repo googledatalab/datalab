@@ -104,19 +104,23 @@ class TemplateManager {
     if (closeResult.confirmed && closeResult.fileName) {
       const fileManager = FileManagerFactory.getInstanceForType(template.fileId.source);
       const templateContent = await fileManager.getContent(template.fileId);
+      if (!(templateContent instanceof NotebookContent)) {
+        throw new Error('Template file is not a notebook.');
+      }
       const templateFile = await fileManager.get(template.fileId);
 
       templateFile.name = closeResult.fileName;
       if (!templateFile.name.endsWith('.ipynb')) {
         templateFile.name += '.ipynb';
       }
-      templateFile.id = closeResult.selectedDirectory.id;
-      template.populatePlaceholders(templateContent as NotebookContent);
-      return fileManager.saveText(templateFile, JSON.stringify(templateContent));
+      template.populatePlaceholders(templateContent);
+
+      const newFile = await
+          fileManager.create(DatalabFileType.NOTEBOOK, closeResult.selectedDirectory.id,
+              templateFile.name);
+      return fileManager.saveText(newFile, templateContent.getEditorText());
     } else {
       return null;
     }
-
   }
-
 }

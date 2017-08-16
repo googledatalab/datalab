@@ -191,9 +191,8 @@ class TablePreviewElement extends Polymer.Element {
         const notebook = await TemplateManager.newNotebookFromTemplate(template);
 
         if (notebook) {
-          const basePath = await this._apiManager.getBasePath();
-          const prefix = location.protocol + '//' + location.host + basePath + '/';
-          window.open(prefix + 'notebooks' + '/' + notebook.id.toQueryString(), '_blank');
+          FileManagerFactory.getInstanceForType(notebook.id.source).getNotebookUrl(notebook.id)
+            .then((url) => window.open(url, '_blank'));
         }
       } catch (e) {
         Utils.showErrorDialog('Error', e.message);
