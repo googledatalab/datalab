@@ -44,7 +44,7 @@ class FileBrowserElement extends Polymer.Element {
   /**
    * The current listing directory
    */
-  public currentDirectory: DatalabFile;
+  public currentFile: DatalabFile;
 
   /**
    * The type of FileManager we want to use for this file-browser.
@@ -68,7 +68,6 @@ class FileBrowserElement extends Polymer.Element {
 
   private _addToolbarCollapseThreshold = 900;
   private _apiManager: ApiManager;
-  private _currentFile: DatalabFile;
   private _detailsPaneCollapseThreshold = 600;
   private _fetching: boolean;
   private _fileList: DatalabFile[];
@@ -86,10 +85,6 @@ class FileBrowserElement extends Polymer.Element {
 
   static get properties() {
     return {
-      _currentFile: {
-        type: Object,
-        value: null,
-      },
       _fetching: {
         type: Boolean,
         value: false,
@@ -118,6 +113,10 @@ class FileBrowserElement extends Polymer.Element {
         observer: '_pathHistoryIndexChanged',
         type: Number,
         value: -1,
+      },
+      currentFile: {
+        type: Object,
+        value: null,
       },
       fileManagerType: {
         type: String,
@@ -208,7 +207,7 @@ class FileBrowserElement extends Polymer.Element {
 
     this._fetching = true;
 
-    this._fileListFetchPromise = this._fileManager.list(this._currentFile.id)
+    this._fileListFetchPromise = this._fileManager.list(this.currentFile.id)
       .then((newList) => {
         // Only refresh the UI list if there are any changes. This helps keep
         // the item list's selections intact most of the time
@@ -321,7 +320,7 @@ class FileBrowserElement extends Polymer.Element {
     // Ignore the root file, slice until the current history index.
     this.$.breadCrumbs.crumbs =
         this._pathHistory.slice(1, this._pathHistoryIndex + 1).map((p) => p.name);
-    this._currentFile = this._pathHistory[this._pathHistoryIndex];
+    this.currentFile = this._pathHistory[this._pathHistoryIndex];
 
     this._fetchFileList();
   }
@@ -421,7 +420,7 @@ class FileBrowserElement extends Polymer.Element {
           const model = new JupyterFile();
           model.format = 'base64';
           model.name = file.name;
-          model.path = (this._currentFile as JupyterFile).path;
+          model.path = (this.currentFile as JupyterFile).path;
           model.status = DatalabFileStatus.IDLE;
           model.type = DatalabFileType.FILE;
           return this._fileManager.saveText(model, itemData);
@@ -477,7 +476,7 @@ class FileBrowserElement extends Polymer.Element {
             newName += '.ipynb';
           }
 
-          return this._fileManager.create(itemType, this._currentFile.id, newName)
+          return this._fileManager.create(itemType, this.currentFile.id, newName)
             .then(() => {
               // Dispatch a success notification, and refresh the file list
               this.dispatchEvent(new NotificationEvent('Created ' + newName + '.'));

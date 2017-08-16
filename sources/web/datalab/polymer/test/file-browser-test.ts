@@ -57,7 +57,7 @@ describe('<file-browser>', () => {
   });
 
   it('gets the startup path correctly', () => {
-    assert(testFixture.currentDirectory.id === startuppath, 'incorrect startup path');
+    assert(testFixture.currentFile.id === startuppath, 'incorrect startup path');
   });
 
   it('displays list of files correctly', () => {

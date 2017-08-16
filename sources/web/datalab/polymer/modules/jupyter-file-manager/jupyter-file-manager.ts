@@ -239,6 +239,7 @@ class JupyterFileManager implements FileManager {
 
   public copy(fileId: DatalabFileId, destinationDirectoryId: DatalabFileId) {
     const apiManager = ApiManagerFactory.getInstance();
+    const path = apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + destinationDirectoryId.path;
     const xhrOptions: XhrOptions = {
       failureCodes: [409],
       method: 'POST',
@@ -248,7 +249,7 @@ class JupyterFileManager implements FileManager {
       successCodes: [201],
     };
 
-    return apiManager.sendRequestAsync(destinationDirectoryId.path, xhrOptions);
+    return apiManager.sendRequestAsync(path, xhrOptions);
   }
 
   public async getNotebookUrl(fileId: DatalabFileId) {
