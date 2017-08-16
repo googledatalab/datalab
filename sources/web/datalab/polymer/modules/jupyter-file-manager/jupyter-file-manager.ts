@@ -32,7 +32,7 @@ class JupyterFile extends DatalabFile {
  */
 class JupyterFileManager implements FileManager {
 
-  private static _toUpstreamType(file: JupyterFile, content: string) {
+  private static _toUpstreamObject(file: JupyterFile, content: any) {
     const jupyterFile = {
       content,
       created: file.created,
@@ -41,7 +41,7 @@ class JupyterFileManager implements FileManager {
       mimetype: file.mimetype,
       name: file.name,
       path: file.path,
-      type: '',
+      type: this._datalabTypeToUpstreamType(file.type),
     };
     switch (file.type) {
       case DatalabFileType.DIRECTORY:
@@ -69,6 +69,15 @@ class JupyterFileManager implements FileManager {
     }
   }
 
+  private static _datalabTypeToUpstreamType(type: DatalabFileType) {
+    switch (type) {
+      case DatalabFileType.DIRECTORY: return 'directory';
+      case DatalabFileType.FILE: return 'file';
+      case DatalabFileType.NOTEBOOK: return 'notebook';
+      default: throw new Error('Unknown upstream file type: ' + type);
+    }
+  }
+
   private static _upstreamFileToJupyterFile(file: any) {
     const jupyterFile = new JupyterFile();
     jupyterFile.created = file.created;
@@ -76,7 +85,7 @@ class JupyterFileManager implements FileManager {
     jupyterFile.type = JupyterFileManager._upstreamTypeToDatalabType(file.type);
     jupyterFile.icon = Utils.getItemIconString(jupyterFile.type);
     jupyterFile.id = new DatalabFileId(file.path, FileManagerType.JUPYTER);
-    jupyterFile.lastModified = file.lastModified;
+    jupyterFile.lastModified = file.last_modified;
     jupyterFile.mimetype = file.mimetype;
     jupyterFile.name = file.name;
     jupyterFile.path = file.path;
@@ -132,7 +141,24 @@ class JupyterFileManager implements FileManager {
 
   public async saveText(file: JupyterFile, content: string) {
     const apiManager = ApiManagerFactory.getInstance();
-    const upstreamFile = JupyterFileManager._toUpstreamType(file, content);
+    if (!file.mimetype) {
+      file.mimetype = 'plain/text';
+    }
+    if (!file.format) {
+      file.format = 'text';
+    }
+    file.lastModified = new Date().toISOString();
+    let parsedContent: any = content;
+    if (file.type === DatalabFileType.NOTEBOOK) {
+      try {
+        parsedContent = JSON.parse(content);
+      } catch (e) {
+        Utils.showErrorDialog('Invalid JSON', 'Error parsing JSON, cannot save notebook.');
+        throw e;
+      }
+    }
+
+    const upstreamFile = JupyterFileManager._toUpstreamObject(file, parsedContent);
     const xhrOptions: XhrOptions = {
       failureCodes: [409],
       method: 'PUT',
@@ -178,17 +204,28 @@ class JupyterFileManager implements FileManager {
 
   public create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string) {
     const apiManager = ApiManagerFactory.getInstance();
+    const jupyterFile = new JupyterFile();
+    jupyterFile.created = new Date().toISOString();
+    jupyterFile.format = 'text';
+    jupyterFile.lastModified = jupyterFile.created;
+    jupyterFile.mimetype = 'text/plain';
+    jupyterFile.name = name || 'New item';
+    jupyterFile.path = containerId ? containerId.path : '';
+    jupyterFile.type = fileType;
+    jupyterFile.writable = true;
+    const upstreamFile = JupyterFileManager._toUpstreamObject(jupyterFile, '');
     const xhrOptions: XhrOptions = {
       failureCodes: [409],
       method: 'POST',
       parameters: JSON.stringify({
         ext: 'ipynb',
-        type: fileType,
+        ...upstreamFile,
       }),
       successCodes: [201],
     };
     let createPromise = apiManager.sendRequestAsync(apiManager.getServiceUrl(ServiceId.CONTENT),
-        xhrOptions);
+        xhrOptions)
+      .then((file) => JupyterFileManager._upstreamFileToJupyterFile(file));
 
     // If a path is provided for naming the new item, request the rename, and
     // delete it if failed.
@@ -222,7 +259,8 @@ class JupyterFileManager implements FileManager {
       }),
     };
 
-    return apiManager.sendRequestAsync(oldPath, xhrOptions);
+    return apiManager.sendRequestAsync(oldPath, xhrOptions)
+      .then((file) => JupyterFileManager._upstreamFileToJupyterFile(file));
   }
 
   public delete(fileId: DatalabFileId) {

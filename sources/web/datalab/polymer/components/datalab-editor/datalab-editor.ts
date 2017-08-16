@@ -69,37 +69,40 @@ class DatalabEditorElement extends Polymer.Element {
       this._theme = settings.theme;
     }
 
-    // Get the file contents, or empty string if no path is specified
+    // Get the file contents, or empty string if no path is specified or the
+    // file could not be found.
     let content = '';
     if (this.fileId) {
-      // TODO: This should get the FileManager instance that corresponds to the
-      // origin of the file opened in the editor
       this._fileManager = FileManagerFactory.getInstanceForType(this.fileId.source);
 
       this._busy = true;
-      // Passing the asText=true parameter guarantees the returned type is not a directory.
-      // An error is thrown if it is.
+      // Get the file object and its contents
       this._file = await this._fileManager.get(this.fileId)
         .catch((e: Error) => {
           Utils.showErrorDialog('Error', e.message);
           return null;
         });
-      this._fileContent = await this._fileManager.getContent(this.fileId, true /*asText*/)
-        .catch((e: Error) => {
-          Utils.showErrorDialog('Error', e.message);
-          return null;
-        });
+      if (this._file) {
+        this._fileContent = await this._fileManager.getContent(this.fileId, true /*asText*/)
+          .catch((e: Error) => {
+            Utils.showErrorDialog('Error', e.message);
+            return null;
+          });
+      }
 
       this._busy = false;
 
       if (this._fileContent) {
         content = this._fileContent.getEditorText();
       }
+    } else {
+      // TODO: Make this more flexible instead of assuming the default destination is jupyter.
+      this._fileManager = FileManagerFactory.getInstanceForType(FileManagerType.JUPYTER);
     }
 
     // Create the codemirror element and fill it with the file content.
     // TODO: try to detect the language of the file before creating
-    // the codemirror element. Perhaps use the file extension?
+    //       the codemirror element. Perhaps use the file extension?
     // TODO: load the mode dynamically instead of starting out with python.
     const editorConfig: CodeMirror.EditorConfiguration = {
       autofocus: true,
@@ -116,78 +119,48 @@ class DatalabEditorElement extends Polymer.Element {
   /**
    * Saves the currently open file.
    */
-  _saveAsync() {
+  async _saveAsync() {
     // If the file isn't defined, this means it's a blank editor, we'll need
     // to save a new file. Open a file picker dialog here to get the file path.
-    // if (!this._file) {
-    //   const options: DirectoryPickerDialogOptions = {
-    //     big: true,
-    //     okLabel: 'Save',
-    //     title: 'New File',
-    //     withFileName: true,
-    //   };
-    //   return Utils.showDialog(DirectoryPickerDialogElement, options)
-    //     .then((closeResult: DirectoryPickerDialogCloseResult) => {
-    //       if (closeResult.confirmed) {
+    if (!this._file) {
+      const options: DirectoryPickerDialogOptions = {
+        big: true,
+        okLabel: 'Save',
+        title: 'New File',
+        withFileName: true,
+      };
+      const closeResult = await Utils.showDialog(DirectoryPickerDialogElement, options) as
+          DirectoryPickerDialogCloseResult;
 
-    //         // TODO: Prevent the dialog from closing if the input field is empty
-    //         if (closeResult.fileName) {
-    //           // TODO: Check if a file exists with this path, and show a
-    //           // confirmation dialog before replacing
-    //           const model: DatalabFile = {
-    //             content: this._editor.getDoc().getValue(),
-    //             created: new Date().toISOString(),
-    //             format: 'text',
-    //             last_modified: new Date().toISOString(),
-    //             mimetype: 'text/plain',
-    //             name: closeResult.fileName,
-    //             path: closeResult.directoryPath,
-    //             status: DatalabFileStatus.IDLE,
-    //             type: DatalabFileType.FILE,
-    //             writable: true,
-    //           };
+      if (closeResult.confirmed) {
+        // TODO: Prevent the dialog from closing if the input field is empty
+        if (closeResult.fileName) {
+          try {
+            this._file = await this._fileManager.create(DatalabFileType.FILE,
+                closeResult.selectedDirectory.id, closeResult.fileName);
+          } catch (e) {
+            Utils.showErrorDialog('Error saving file', 'A file with the name ' +
+                closeResult.fileName + ' already exists in this directory.');
+            throw e;
+          }
+        }
+      }
+    } else {
+      // If _file is defined, we're saving to an existing file
 
-    //           return this._saveToJupyterAsync(model);
-    //         }
-    //       }
-
-    //       return Promise.resolve(null);
-    //     });
-    // } else {
-    //   // If _file is defined, we're saving to an existing file
-    //   const dirPath = this._getDirNameFromPath(this._file.path);
-
-    //   // We can only save text files.
-    //   let content = '';
-    //   if (this._file.type === DatalabFileType.FILE) {
-    //     content = this._editor.getDoc().getValue();
-    //   } else if (this._file.type === DatalabFileType.NOTEBOOK) {
-    //     content = this._editor.getDoc().getValue();
-    //     try {
-    //       JSON.parse(content);
-    //     } catch (e) {
-    //       Utils.showErrorDialog('Invalid JSON', 'Error parsing JSON, cannot save notebook.');
-    //       return;
-    //     }
-    //   } else {
-    //     Utils.showErrorDialog('Error Saving', 'Cannot save edits to directories.');
-    //   }
-
-    //   const model = {
-    //     content,
-    //     created: this._file.created,
-    //     format: this._file.format,
-    //     last_modified: new Date().toISOString(),
-    //     mimetype: this._file.mimetype,
-    //     name: this._file.name,
-    //     path: dirPath,
-    //     status: DatalabFileStatus.IDLE,
-    //     type: this._file.type,
-    //     writable: this._file.writable,
-    //   };
-
-    //   return this._saveToJupyterAsync(model);
-    // }
+      // We can only save text files.
+      let content = '';
+      if (this._file.type === DatalabFileType.DIRECTORY) {
+        Utils.showErrorDialog('Error Saving', 'Cannot save edits to directories.');
+        return;
+      } else {
+        content = this._editor.getDoc().getValue();
+      }
+    }
+    if (this._file) {
+      await this._fileManager.saveText(this._file, this._editor.getDoc().getValue());
+      await this.dispatchEvent(new NotificationEvent('Saved.'));
+    }
   }
 
   /**
@@ -198,25 +171,6 @@ class DatalabEditorElement extends Polymer.Element {
     tokens.pop();
     return tokens.join('/');
   }
-
-  /**
-   * Saves the given file model to Jupyter, and fetches the save result to keep
-   * the client's _file object up to date.
-   */
-  // _saveToJupyterAsync(model: DatalabFile) {
-  //   return this._fileManager.save(model)
-  //     .then((savedModel: DatalabFile) => {
-  //       this._file = model;
-  //       // Get the path and name from the saved model. The path is returned
-  //       // without the file name from Jupyter
-  //       this.set('_file.name', savedModel.name);
-  //       this.set('_file.path', savedModel.path);
-  //       this.set('filePath', savedModel.path);
-  //       this.filePath = this._file.path;
-  //       return this.dispatchEvent(new NotificationEvent('Saved.'));
-  //     })
-  //     .catch((e: Error) => Utils.showErrorDialog('Error', e.message));
-  // }
 
   /**
    * Rename the currently open file.

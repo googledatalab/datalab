@@ -34,9 +34,9 @@ interface NotebookCell {
 }
 
 enum DatalabFileType {
-  DIRECTORY = 'directory',
-  FILE = 'file',
-  NOTEBOOK = 'notebook',
+  DIRECTORY,
+  FILE,
+  NOTEBOOK,
 }
 
 enum DatalabFileStatus {

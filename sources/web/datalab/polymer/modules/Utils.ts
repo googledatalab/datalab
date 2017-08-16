@@ -133,7 +133,7 @@ class Utils {
       case DatalabFileType.FILE:
         return 'file';
       case DatalabFileType.NOTEBOOK:
-        return 'notebok';
+        return 'notebook';
       default:
         throw new Error('Unknown file type: ' + type);
     }
