@@ -25,7 +25,7 @@ class DatalabEditorElement extends Polymer.Element {
   /**
    * FileId object for the file to load in the editor.
    */
-  public fileId: DatalabFileId;
+  public fileId: DatalabFileId | null;
 
   private _busy: boolean;
   private _editor: CodeMirror.Editor;
@@ -73,28 +73,20 @@ class DatalabEditorElement extends Polymer.Element {
     // file could not be found.
     let content = '';
     if (this.fileId) {
-      this._fileManager = FileManagerFactory.getInstanceForType(this.fileId.source);
-
       this._busy = true;
-      // Get the file object and its contents
-      this._file = await this._fileManager.get(this.fileId)
-        .catch((e: Error) => {
-          Utils.showErrorDialog('Error', e.message);
-          return null;
-        });
-      if (this._file) {
-        this._fileContent = await this._fileManager.getContent(this.fileId, true /*asText*/)
-          .catch((e: Error) => {
-            Utils.showErrorDialog('Error', e.message);
-            return null;
-          });
+      try {
+        this._fileManager = FileManagerFactory.getInstanceForType(this.fileId.source);
+
+        // Get the file object and its contents
+        this._file = await this._fileManager.get(this.fileId);
+        this._fileContent = await this._fileManager.getContent(this.fileId, true /*asText*/);
+        content = this._fileContent.getEditorText();
+      } catch (e) {
+        Utils.showErrorDialog('Error loading file', e.message);
+        this.fileId = null;
       }
 
       this._busy = false;
-
-      if (this._fileContent) {
-        content = this._fileContent.getEditorText();
-      }
     } else {
       // TODO: Make this more flexible instead of assuming the default destination is jupyter.
       this._fileManager = FileManagerFactory.getInstanceForType(FileManagerType.JUPYTER);
@@ -138,6 +130,7 @@ class DatalabEditorElement extends Polymer.Element {
           try {
             this._file = await this._fileManager.create(DatalabFileType.FILE,
                 closeResult.selectedDirectory.id, closeResult.fileName);
+            this.fileId = this._file.id;
           } catch (e) {
             Utils.showErrorDialog('Error saving file', 'A file with the name ' +
                 closeResult.fileName + ' already exists in this directory.');
@@ -177,31 +170,30 @@ class DatalabEditorElement extends Polymer.Element {
    */
   async _renameAsync() {
     // If the open file isn't saved, save it instead
-    // if (!this._file) {
-    //   this._saveAsync();
-    // } else {
-    //   const options: InputDialogOptions = {
-    //     inputLabel: 'New file name',
-    //     inputValue: this._file.name,
-    //     okLabel: 'Rename',
-    //     title: 'Rename File',
-    //   };
+    if (!this._file) {
+      this._saveAsync();
+    } else {
+      const options: InputDialogOptions = {
+        inputLabel: 'New file name',
+        inputValue: this._file.name,
+        okLabel: 'Rename',
+        title: 'Rename File',
+      };
 
-    //   const closeResult =
-    //       await Utils.showDialog(InputDialogElement, options) as InputDialogCloseResult;
+      const closeResult =
+          await Utils.showDialog(InputDialogElement, options) as InputDialogCloseResult;
 
-    //   // TODO: Prevent the dialog from closing if the input field is empty
-    //   if (closeResult.confirmed && closeResult.userInput) {
-    //     this._fileManager.rename(this.fileId, closeResult.userInput)
-    //       .then((savedModel) => {
-    //         this.dispatchEvent(new NotificationEvent('Renamed to ' + closeResult.userInput));
-    //         this.set('_file.name', savedModel.name);
-    //         this.set('_file.path', savedModel.path);
-    //         this.set('filePath', savedModel.path);
-    //       })
-    //       .catch((e: Error) => Utils.showErrorDialog('Error', e.message));
-    //   }
-    // }
+      // TODO: Prevent the dialog from closing if the input field is empty
+      if (closeResult.confirmed && closeResult.userInput) {
+        this._fileManager.rename(this.fileId as DatalabFileId, closeResult.userInput)
+          .then((_savedModel) => {
+            this._file = _savedModel;
+            this.fileId = this._file.id;
+            this.dispatchEvent(new NotificationEvent('Renamed to ' + closeResult.userInput));
+          })
+          .catch((e: Error) => Utils.showErrorDialog('Error', e.message));
+      }
+    }
   }
 
   /**
