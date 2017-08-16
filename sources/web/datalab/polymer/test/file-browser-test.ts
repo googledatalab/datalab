@@ -12,14 +12,73 @@
  * the License.
  */
 
+class MockFileManager implements FileManager {
+  public get(_fileId: DatalabFileId): Promise<DatalabFile> {
+    throw new BigQueryMethodNotYetImplemented('get');
+  }
+  public getContent(_fileId: DatalabFileId, _asText?: boolean): Promise<DatalabFileContent> {
+    throw new BigQueryMethodNotYetImplemented('getContent');
+  }
+  public async getRootFile() {
+    const file: DatalabFile = {
+      icon: '/',
+      id: new DatalabFileId('/', FileManagerType.JUPYTER),
+      name: 'root',
+      type: DatalabFileType.DIRECTORY,
+    };
+    return file;
+  }
+  public saveText(_file: DatalabFile, _content: string): Promise<DatalabFile> {
+    throw new BigQueryMethodNotYetImplemented('save');
+  }
+  public list(_containerId: BigQueryFileId): Promise<DatalabFile[]> {
+    throw new BigQueryMethodNotYetImplemented('listing datasets');
+  }
+  public create(_fileType: DatalabFileType, _containerId: DatalabFileId, _name: string):
+      Promise<DatalabFile> {
+    throw new BigQueryMethodNotYetImplemented('create');
+  }
+  public rename(_oldFileId: DatalabFileId, _name: string, _newContainerId?: DatalabFileId):
+      Promise<DatalabFile> {
+    throw new BigQueryMethodNotYetImplemented('rename');
+  }
+  public delete(_fileId: DatalabFileId): Promise<boolean> {
+    throw new BigQueryMethodNotYetImplemented('delete');
+  }
+  public copy(_fileId: DatalabFileId, _destinationDirectoryId: DatalabFileId): Promise<DatalabFile> {
+    throw new BigQueryMethodNotYetImplemented('copy');
+  }
+  public getNotebookUrl(_fileId: DatalabFileId): Promise<string> {
+    throw new BigQueryMethodNotYetImplemented('getNotebookUrl');
+  }
+  public getEditorUrl(_fileId: DatalabFileId): Promise<string> {
+    throw new BigQueryMethodNotYetImplemented('getEditorUrl');
+  }
+}
+
 describe('<file-browser>', () => {
   let testFixture: FileBrowserElement;
   const startuppath = new DatalabFileId('testpath', FileManagerType.JUPYTER);
 
-  const mockFiles: DatalabFile[] = [
-    {icon: '', id: new DatalabFileId('', FileManagerType.JUPYTER), name: 'file1', type: DatalabFileType.DIRECTORY, status: DatalabFileStatus.IDLE},
-    {icon: '', id: new DatalabFileId('', FileManagerType.JUPYTER), name: 'file2', type: DatalabFileType.DIRECTORY, status: DatalabFileStatus.IDLE},
-    {icon: '', id: new DatalabFileId('', FileManagerType.JUPYTER), name: 'file3', type: DatalabFileType.DIRECTORY, status: DatalabFileStatus.IDLE},
+  const mockFiles: DatalabFile[] = [{
+      icon: '',
+      id: new DatalabFileId('', FileManagerType.JUPYTER),
+      name: 'file1',
+      status: DatalabFileStatus.IDLE,
+      type: DatalabFileType.DIRECTORY,
+    }, {
+      icon: '',
+      id: new DatalabFileId('', FileManagerType.JUPYTER),
+      name: 'file2',
+      status: DatalabFileStatus.IDLE,
+      type: DatalabFileType.DIRECTORY,
+    }, {
+      icon: '',
+      id: new DatalabFileId('', FileManagerType.JUPYTER),
+      name: 'file3',
+      status: DatalabFileStatus.RUNNING,
+      type: DatalabFileType.DIRECTORY,
+    }
   ];
 
   before(() => {
@@ -29,7 +88,7 @@ describe('<file-browser>', () => {
         idleTimeoutInterval: '',
         idleTimeoutShutdownCommand: '',
         oauth2ClientId: '',
-        startuppath: startuppath.toQueryString(),
+        startuppath: startuppath.path,
         theme: 'light',
       };
       return Promise.resolve(mockSettings);
@@ -37,12 +96,10 @@ describe('<file-browser>', () => {
     ApiManagerFactory.getInstance().getBasePath = () => {
       return Promise.resolve('');
     };
-    const mockFileManager = {
-      list: (id: DatalabFileId) => {
-        assert(id === startuppath, 'listFilesAsync should be called with the startup path');
-        return Promise.resolve(mockFiles);
-      },
-    } as FileManager;
+    const mockFileManager = new MockFileManager();
+    mockFileManager.list = () => {
+      return Promise.resolve(mockFiles);
+    };
     FileManagerFactory.getInstance = () => mockFileManager;
     FileManagerFactory.getInstanceForType = (_) => mockFileManager;
   });
@@ -57,7 +114,8 @@ describe('<file-browser>', () => {
   });
 
   it('gets the startup path correctly', () => {
-    assert(testFixture.currentFile.id === startuppath, 'incorrect startup path');
+    assert(JSON.stringify(testFixture.currentFile.id) === JSON.stringify(startuppath),
+        'incorrect startup path');
   });
 
   it('displays list of files correctly', () => {
@@ -67,15 +125,15 @@ describe('<file-browser>', () => {
     mockFiles.forEach((file: DatalabFile, i: number) => {
       assert(files.rows[i].firstCol === file.name,
           'mock file ' + i + 'name not shown in first column');
-      assert(files.rows[i].icon === Utils.getItemIconString(file.type),
-          'mock file ' + i + ' type not shown as icon');
+      assert(files.rows[i].icon === file.icon, 'mock file ' + i + ' type not shown as icon');
     });
   });
 
   it('starts up with no files selected, and no files running', () => {
     const files: ItemListElement = testFixture.$.files;
     files.rows.forEach((row: ItemListRow, i: number) => {
-      assert(row.secondCol === '', 'file ' + i + 'should have an empty status');
+      assert(row.secondCol === Utils.getFileStatusString(mockFiles[i].status as DatalabFileStatus),
+          'file ' + i + 'should have an empty status');
       assert(!row.selected, 'file ' + i + ' should not be selected');
     });
   });
