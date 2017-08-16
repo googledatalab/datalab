@@ -318,8 +318,9 @@ class FileBrowserElement extends Polymer.Element {
     this.$.backNav.disabled = this._pathHistoryIndex === 0;
     this.$.forwardNav.disabled = this._pathHistoryIndex === this._pathHistory.length - 1;
 
+    // Ignore the root file, slice until the current history index.
     this.$.breadCrumbs.crumbs =
-        this._pathHistory.slice(0, this._pathHistoryIndex + 1).map((p) => p.name);
+        this._pathHistory.slice(1, this._pathHistoryIndex + 1).map((p) => p.name);
     this._currentFile = this._pathHistory[this._pathHistoryIndex];
 
     this._fetchFileList();
@@ -789,31 +790,29 @@ class FileBrowserElement extends Polymer.Element {
     // TODO - move this to SettingsManager and make it able to store startuppaths
     // for multiple file managers.
     if (this.fileManagerType === 'jupyter') {
-      return SettingsManager.getUserSettingsAsync(true /*forceRefresh*/)
-        .then((settings: common.UserSettings) => {
-          if (settings.startuppath) {
-            let path = settings.startuppath;
-            // For backward compatibility with the current path format.
-            if (path.startsWith('/tree/')) {
-              path = path.substr('/tree/'.length);
-            }
-            const tokens = path.split('/').filter((p) => !!p);
-            this._pathHistory = tokens.map((token, i) => {
-              const f = new JupyterFile();
-              f.path = tokens.slice(0, i + 1).join('/');
-              f.name = token;
-              f.id = new DatalabFileId(f.path, FileManagerType.JUPYTER);
-              return f;
-            });
-            this._pathHistoryIndex = this._pathHistory.length - 1;
-          }
-        })
-        .catch(() => console.error('Failed to get the user settings.'));
+      const settings = await SettingsManager.getUserSettingsAsync(true /*forceRefresh*/);
+      if (settings.startuppath) {
+        let path = settings.startuppath;
+        // For backward compatibility with the current path format.
+        if (path.startsWith('/tree/')) {
+          path = path.substr('/tree/'.length);
+        }
+        const tokens = path.split('/').filter((p) => !!p);
+        this._pathHistory = tokens.map((token, i) => {
+          const f = new JupyterFile();
+          f.path = tokens.slice(0, i + 1).join('/');
+          f.name = token;
+          f.id = new DatalabFileId(f.path, FileManagerType.JUPYTER);
+          return f;
+        });
+      }
     } else {
-      const root = await this._fileManager.getRootFile();
-      this._pathHistory = [root];
-      return Promise.resolve();
+      this._pathHistory = [];
     }
+    // Always add the root file to the beginning.
+    const root = await this._fileManager.getRootFile();
+    this._pathHistory.unshift(root);
+    this._pathHistoryIndex = this._pathHistory.length - 1;
   }
 
   private _finishLoadingFiles() {

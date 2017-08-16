@@ -69,13 +69,30 @@ class JupyterFileManager implements FileManager {
     }
   }
 
+  private static _upstreamFileToJupyterFile(file: any) {
+    const jupyterFile = new JupyterFile();
+    jupyterFile.created = file.created;
+    jupyterFile.format = file.format;
+    jupyterFile.type = JupyterFileManager._upstreamTypeToDatalabType(file.type);
+    jupyterFile.icon = Utils.getItemIconString(jupyterFile.type);
+    jupyterFile.id = new DatalabFileId(file.path, FileManagerType.JUPYTER);
+    jupyterFile.lastModified = file.lastModified;
+    jupyterFile.mimetype = file.mimetype;
+    jupyterFile.name = file.name;
+    jupyterFile.path = file.path;
+    jupyterFile.status = DatalabFileStatus.IDLE;
+    jupyterFile.writable = file.writable;
+    return jupyterFile;
+  }
+
   public async get(fileId: DatalabFileId) {
     const apiManager = ApiManagerFactory.getInstance();
     const xhrOptions: XhrOptions = {
       noCache: true,
     };
     return apiManager.sendRequestAsync(
-        apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + fileId.path, xhrOptions);
+        apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + fileId.path, xhrOptions)
+      .then((file: any) => JupyterFileManager._upstreamFileToJupyterFile(file));
   }
 
   public async getContent(fileId: DatalabFileId, asText?: boolean): Promise<DatalabFileContent> {
@@ -123,12 +140,13 @@ class JupyterFileManager implements FileManager {
   }
 
   public list(containerId: DatalabFileId): Promise<DatalabFile[]> {
-    const filesPromise = this.get(containerId)
-      .then((file: any) => {
-        if (file.type !== 'directory') {
-          throw new Error('Can only list files in a directory. Found type: ' + file.type);
+    const filesPromise = this.getContent(containerId)
+      .then((content: DatalabFileContent) => {
+        if (content instanceof DirectoryContent) {
+          return content.files;
+        } else {
+          throw new Error('Can only list files in a directory. Found type: ' + typeof(content));
         }
-        return file.content as JupyterFile[];
       });
 
     const sessionsPromise: Promise<Session[]> = SessionManager.listSessionsAsync();
@@ -145,19 +163,9 @@ class JupyterFileManager implements FileManager {
           runningPaths.push(session.notebook.path);
         });
         return files.map((file: any) => {
-          const jupyterFile = new JupyterFile();
-          jupyterFile.created = file.created;
-          jupyterFile.format = file.format;
-          jupyterFile.type = JupyterFileManager._upstreamTypeToDatalabType(file.type);
-          jupyterFile.icon = Utils.getItemIconString(jupyterFile.type);
-          jupyterFile.id = new DatalabFileId(file.path, FileManagerType.JUPYTER);
-          jupyterFile.lastModified = file.lastModified;
-          jupyterFile.mimetype = file.mimetype;
-          jupyterFile.name = file.name;
-          jupyterFile.path = file.path;
+          const jupyterFile = JupyterFileManager._upstreamFileToJupyterFile(file);
           jupyterFile.status = runningPaths.indexOf(jupyterFile.path) > -1 ?
               DatalabFileStatus.RUNNING : DatalabFileStatus.IDLE;
-          jupyterFile.writable = file.writable;
           return jupyterFile;
         });
       });
@@ -183,7 +191,7 @@ class JupyterFileManager implements FileManager {
       let notebookPlaceholder: DatalabFileId;
       createPromise = createPromise
         .then((notebook: JupyterFile) => {
-          notebookPlaceholder = notebook.id as DatalabFileId;
+          notebookPlaceholder = new DatalabFileId(notebook.path, FileManagerType.JUPYTER);
           return this.rename(notebookPlaceholder, containerId.path + '/' + name);
         })
         .catch((error: string) => {
