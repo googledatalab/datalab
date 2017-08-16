@@ -61,10 +61,6 @@ class DatalabEditorElement extends Polymer.Element {
   async ready() {
     super.ready();
 
-    // TODO: This should get the FileManager instance that corresponds to the
-    // origin of the file opened in the editor
-    this._fileManager = FileManagerFactory.getInstanceForType(this.fileId.source);
-
     // Get the theme.
     const settings = await SettingsManager.getUserSettingsAsync()
       .catch(() => console.error('Could not load user settings.'));
@@ -76,6 +72,10 @@ class DatalabEditorElement extends Polymer.Element {
     // Get the file contents, or empty string if no path is specified
     let content = '';
     if (this.fileId) {
+      // TODO: This should get the FileManager instance that corresponds to the
+      // origin of the file opened in the editor
+      this._fileManager = FileManagerFactory.getInstanceForType(this.fileId.source);
+
       this._busy = true;
       // Passing the asText=true parameter guarantees the returned type is not a directory.
       // An error is thrown if it is.
