@@ -45,7 +45,7 @@ enum DatalabFileStatus {
 }
 
 class DatalabFileId {
-  private static _delim = '';
+  private static _delim = ':';
 
   path: string;
   source: FileManagerType;

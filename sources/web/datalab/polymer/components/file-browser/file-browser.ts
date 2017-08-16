@@ -47,11 +47,6 @@ class FileBrowserElement extends Polymer.Element {
   public currentDirectory: DatalabFile;
 
   /**
-   * The list of files leading to the current directory
-   */
-  public currentPath: DatalabFile[];
-
-  /**
    * The type of FileManager we want to use for this file-browser.
    */
   public fileManagerType: string;   // default is in code below
@@ -124,11 +119,6 @@ class FileBrowserElement extends Polymer.Element {
         type: Number,
         value: -1,
       },
-      currentPath: {
-        observer: '_currentPathChanged',
-        type: String,
-        value: '',
-      },
       fileManagerType: {
         type: String,
         value: '',
@@ -161,12 +151,10 @@ class FileBrowserElement extends Polymer.Element {
 
     this.$.breadCrumbs.addEventListener('crumbClicked', (e: ItemClickEvent) => {
       const index = e.detail.index;
-      this.currentPath.splice(index + 1, this.currentPath.length - index - 1);
-      this._pushNewPath();
+      this._pathHistoryIndex = index;
     });
     this.$.breadCrumbs.addEventListener('rootClicked', () => {
-      this.currentPath = [this.currentPath[0]];
-      this._pushNewPath();
+      this._pathHistoryIndex = 0;
     });
 
     this._apiManager = ApiManagerFactory.getInstance();
@@ -247,15 +235,6 @@ class FileBrowserElement extends Polymer.Element {
   }
 
   /**
-   * Updates the breadcrumbs array and calls _fetchFileList.
-   */
-  _currentPathChanged() {
-    this.$.breadCrumbs.crumbs = this.currentPath.map((p) => p.name);
-    this._currentFile = this.currentPath[this.currentPath.length - 1];
-    return this.currentPath.length ? this._fetchFileList() : null;
-  }
-
-  /**
    * Creates a new ItemListRow object for each entry in the file list, and sends
    * the created list to the item-list to render.
    */
@@ -284,8 +263,17 @@ class FileBrowserElement extends Polymer.Element {
       return;
     }
     if (clickedItem.type === DatalabFileType.DIRECTORY) {
-      this.currentPath.push(clickedItem);
-      this._pushNewPath();
+      // First, remove all items in the array past _pathHistoryIndex. These are only
+      // there to allow for forward navigation after going back, but they have no
+      // effect when a new path is explicitly added by opening a directory or clicking
+      // on a breadcrumb.
+      this._pathHistory.splice(this._pathHistoryIndex + 1);
+      // Only push the new path if it's not equal to the top-most path on the stack
+      if (!this._pathHistory.length ||
+          this._pathHistory[this._pathHistory.length - 1].id !== clickedItem.id) {
+        this._pathHistory.push(clickedItem);
+        this._pathHistoryIndex = this._pathHistory.length - 1;
+      }
     } else if (clickedItem.type === DatalabFileType.NOTEBOOK) {
       this._fileManager.getNotebookUrl(clickedItem.id)
         .then((url) => window.open(url, '_blank'));
@@ -309,23 +297,6 @@ class FileBrowserElement extends Polymer.Element {
   }
 
   /**
-   * Pushes a new navigation path on the stack and updates the index.
-   */
-  _pushNewPath() {
-    // First, remove all items in the array past _pathHistoryIndex. These are only
-    // there to allow for forward navigation after going back, but they have no
-    // effect when a new path is explicitly added by opening a directory or clicking
-    // on a breadcrumb.
-    this._pathHistory.splice(this._pathHistoryIndex + 1);
-    // Only push the new path if it's not equal to the top-most path on the stack
-    if (!this._pathHistory.length ||
-        this._pathHistory[this._pathHistory.length - 1] !== this._currentFile) {
-      this._pathHistory.push(this._currentFile);
-      this._pathHistoryIndex = this._pathHistory.length - 1;
-    }
-  }
-
-  /**
    * Goes back one step in history.
    */
   _navBackward() {
@@ -344,9 +315,14 @@ class FileBrowserElement extends Polymer.Element {
    * the current history index value.
    */
   _pathHistoryIndexChanged() {
-    this.currentPath = this._pathHistory.slice(0, this._pathHistoryIndex + 1);
     this.$.backNav.disabled = this._pathHistoryIndex === 0;
     this.$.forwardNav.disabled = this._pathHistoryIndex === this._pathHistory.length - 1;
+
+    this.$.breadCrumbs.crumbs =
+        this._pathHistory.slice(0, this._pathHistoryIndex + 1).map((p) => p.name);
+    this._currentFile = this._pathHistory[this._pathHistoryIndex];
+
+    this._fetchFileList();
   }
 
   _createNewNotebook() {
@@ -553,9 +529,7 @@ class FileBrowserElement extends Polymer.Element {
       return Utils.showDialog(InputDialogElement, inputOptions)
         .then((closeResult: InputDialogCloseResult) => {
           if (closeResult.confirmed && closeResult.userInput) {
-            const newName = this.currentPath + '/' + closeResult.userInput;
-
-            return this._fileManager.rename(selectedObject.id, newName)
+            return this._fileManager.rename(selectedObject.id, closeResult.userInput)
               .then(() => {
                 // Dispatch a success notification, and refresh the file list
                 const message = 'Renamed ' + selectedObject.name +
@@ -824,18 +798,20 @@ class FileBrowserElement extends Polymer.Element {
               path = path.substr('/tree/'.length);
             }
             const tokens = path.split('/').filter((p) => !!p);
-            this.currentPath = tokens.map((_, i) => {
+            this._pathHistory = tokens.map((token, i) => {
               const f = new JupyterFile();
               f.path = tokens.slice(0, i + 1).join('/');
+              f.name = token;
               f.id = new DatalabFileId(f.path, FileManagerType.JUPYTER);
               return f;
             });
+            this._pathHistoryIndex = this._pathHistory.length - 1;
           }
         })
         .catch(() => console.error('Failed to get the user settings.'));
     } else {
       const root = await this._fileManager.getRootFile();
-      this.currentPath = [root];
+      this._pathHistory = [root];
       return Promise.resolve();
     }
   }
@@ -856,8 +832,7 @@ class FileBrowserElement extends Polymer.Element {
     (this.$.files as ItemListElement).columns = this.small ? ['Name'] : ['Name', 'Status'];
 
     this._fetching = false;
-    return this._fetchFileList()
-      .then(() => this._pushNewPath());
+    return this._fetchFileList();
   }
 
 }

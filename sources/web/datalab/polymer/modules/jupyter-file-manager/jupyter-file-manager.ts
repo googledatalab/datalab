@@ -60,6 +60,15 @@ class JupyterFileManager implements FileManager {
     return jupyterFile;
   }
 
+  private static _upstreamTypeToDatalabType(type: string) {
+    switch (type) {
+      case 'directory': return DatalabFileType.DIRECTORY;
+      case 'file': return DatalabFileType.FILE;
+      case 'notebook': return DatalabFileType.NOTEBOOK;
+      default: throw new Error('Unknown upstream file type: ' + type);
+    }
+  }
+
   public async get(fileId: DatalabFileId) {
     const apiManager = ApiManagerFactory.getInstance();
     const xhrOptions: XhrOptions = {
@@ -131,17 +140,26 @@ class JupyterFileManager implements FileManager {
         const files = values[0];
         const sessions = values[1];
         const runningPaths: string[] = [];
+        // TODO: Generalize checking the file status by looking up its file id.
         sessions.forEach((session: Session) => {
           runningPaths.push(session.notebook.path);
         });
-        files.forEach((file: JupyterFile) => {
-          if (runningPaths.indexOf(file.path) > -1) {
-            file.status = DatalabFileStatus.RUNNING;
-          } else {
-            file.status = DatalabFileStatus.IDLE;
-          }
+        return files.map((file: any) => {
+          const jupyterFile = new JupyterFile();
+          jupyterFile.created = file.created;
+          jupyterFile.format = file.format;
+          jupyterFile.type = JupyterFileManager._upstreamTypeToDatalabType(file.type);
+          jupyterFile.icon = Utils.getItemIconString(jupyterFile.type);
+          jupyterFile.id = new DatalabFileId(file.path, FileManagerType.JUPYTER);
+          jupyterFile.lastModified = file.lastModified;
+          jupyterFile.mimetype = file.mimetype;
+          jupyterFile.name = file.name;
+          jupyterFile.path = file.path;
+          jupyterFile.status = runningPaths.indexOf(jupyterFile.path) > -1 ?
+              DatalabFileStatus.RUNNING : DatalabFileStatus.IDLE;
+          jupyterFile.writable = file.writable;
+          return jupyterFile;
         });
-        return files as DatalabFile[];
       });
   }
 
