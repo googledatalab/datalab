@@ -141,7 +141,7 @@ the License.
       }
     </style>
 
-    <div id="toolbar" hidden$="{{small}} || {{hideToolbar}}">
+    <div id="toolbar" hidden$={{_isToolbarHidden}}>
 
       <!--Default Add toolbar, contains Add buttons for notebook, file, and folder-->
       <span id="addToolbar">

@@ -111,6 +111,10 @@ class FileBrowserElement extends Polymer.Element {
         type: Boolean,
         value: true,
       },
+      _isToolbarHidden: {
+        computed: '_computeIsToolbarHidden(small, hideToolbar)',
+        type: Boolean,
+      },
       _pathHistory: {
         type: Array,
         value: () => [],
@@ -192,6 +196,10 @@ class FileBrowserElement extends Polymer.Element {
     // Clean up the refresh interval. This is important if multiple file-browser elements
     // are created and destroyed on the document.
     clearInterval(this._fileListRefreshIntervalHandle);
+  }
+
+  _computeIsToolbarHidden(small: boolean, hideToolbar: boolean) {
+    return small || hideToolbar;
   }
 
   /**
@@ -815,10 +823,11 @@ class FileBrowserElement extends Polymer.Element {
             if (path.startsWith('/tree/')) {
               path = path.substr('/tree/'.length);
             }
-            this.currentPath = path.split('/').filter((p) => !!p).map((p) => {
+            const tokens = path.split('/').filter((p) => !!p);
+            this.currentPath = tokens.map((_, i) => {
               const f = new JupyterFile();
-              f.path = p;
-              f.id = new DatalabFileId(p, FileManagerType.JUPYTER);
+              f.path = tokens.slice(0, i + 1).join('/');
+              f.id = new DatalabFileId(f.path, FileManagerType.JUPYTER);
               return f;
             });
           }
