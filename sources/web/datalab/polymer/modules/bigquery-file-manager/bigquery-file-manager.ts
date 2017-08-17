@@ -25,11 +25,11 @@ class BigQueryFileManager implements FileManager {
     if (fileId.path === '/') {
       return Promise.resolve(this._bqRootDatalabFile());
     }
-    throw new UnsupportedMethod('get', BigQueryFileManager);
+    throw new UnsupportedMethod('get', this);
   }
 
-  public getContent(_fileId: DatalabFileId, _asText?: boolean): Promise<DatalabContent> {
-    throw new UnsupportedMethod('getContent', BigQueryFileManager);
+  public getContent(_fileId: DatalabFileId, _asText?: boolean): Promise<DatalabFileContent> {
+    throw new UnsupportedMethod('getContent', this);
   }
 
   public async getRootFile() {
@@ -37,7 +37,7 @@ class BigQueryFileManager implements FileManager {
   }
 
   public saveText(_file: DatalabFile, _content: string): Promise<DatalabFile> {
-    throw new UnsupportedMethod('saveText', BigQueryFileManager);
+    throw new UnsupportedMethod('saveText', this);
   }
 
   public list(containerId: DatalabFileId): Promise<DatalabFile[]> {
@@ -57,33 +57,33 @@ class BigQueryFileManager implements FileManager {
     if (pathParts.length === 2) {
       return this._listTables(pathParts[0], pathParts[1]);
     }
-    throw new UnsupportedMethod('listing datasets', BigQueryFileManager);
+    throw new UnsupportedMethod('listing datasets', this);
   }
 
   public create(_fileType: DatalabFileType, _containerId: DatalabFileId, _name: string):
       Promise<DatalabFile> {
-    throw new UnsupportedMethod('create', BigQueryFileManager);
+    throw new UnsupportedMethod('create', this);
   }
 
   public rename(_oldFileId: DatalabFileId, _name: string, _newContainerId?: DatalabFileId):
       Promise<DatalabFile> {
-    throw new UnsupportedMethod('rename', BigQueryFileManager);
+    throw new UnsupportedMethod('rename', this);
   }
 
   public delete(_fileId: DatalabFileId): Promise<boolean> {
-    throw new UnsupportedMethod('delete', BigQueryFileManager);
+    throw new UnsupportedMethod('delete', this);
   }
 
   public copy(_fileId: DatalabFileId, _destinationDirectoryId: DatalabFileId): Promise<DatalabFile> {
-    throw new UnsupportedMethod('copy', BigQueryFileManager);
+    throw new UnsupportedMethod('copy', this);
   }
 
   public getNotebookUrl(_fileId: DatalabFileId): Promise<string> {
-    throw new UnsupportedMethod('getNotebookUrl', BigQueryFileManager);
+    throw new UnsupportedMethod('getNotebookUrl', this);
   }
 
   public getEditorUrl(_fileId: DatalabFileId): Promise<string> {
-    throw new UnsupportedMethod('getEditorUrl', BigQueryFileManager);
+    throw new UnsupportedMethod('getEditorUrl', this);
   }
 
   private _listProjects(): Promise<DatalabFile[]> {

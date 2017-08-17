@@ -46,23 +46,25 @@ class DriveFileManager implements FileManager {
     return datalabFile;
   }
   public async get(_fileId: DatalabFileId): Promise<DatalabFile> {
-    throw new UnsupportedMethod('get', this.constructor.name);
+    throw new UnsupportedMethod('get', this);
   }
 
   public async getContent(_fileId: DatalabFileId, _asText?: boolean): Promise<DatalabFileContent> {
-    throw new UnsupportedMethod('getContent', this.constructor.name);
+    throw new UnsupportedMethod('getContent', this);
   }
 
   public async getRootFile(): Promise<DatalabFile> {
+    await this._loadPromise;
     const upstreamFile = await GapiManager.drive.getRoot();
     return DriveFileManager._upstreamToDriveFile(upstreamFile);
   }
 
   public async saveText(_file: DatalabFile): Promise<DatalabFile> {
-    throw new UnsupportedMethod('getRootFile', this.constructor.name);
+    throw new UnsupportedMethod('getRootFile', this);
   }
 
   public async list(fileId: DatalabFileId): Promise<DatalabFile[]> {
+    await this._loadPromise;
     const queryPredicates = [
       '"' + fileId.path + '" in parents',
       'trashed = false',
@@ -106,26 +108,26 @@ class DriveFileManager implements FileManager {
   }
 
   public create(_fileType: DatalabFileType, _containerId?: DatalabFileId, _name?: string): Promise<DatalabFile> {
-    throw new UnsupportedMethod('create', this.constructor.name);
+    throw new UnsupportedMethod('create', this);
   }
 
   public rename(_oldFileId: DatalabFileId, _newName: string, _newContainerId?: DatalabFileId): Promise<DatalabFile> {
-    throw new UnsupportedMethod('rename', this.constructor.name);
+    throw new UnsupportedMethod('rename', this);
   }
 
   public delete(_fileId: DatalabFileId): Promise<boolean> {
-    throw new UnsupportedMethod('delete', this.constructor.name);
+    throw new UnsupportedMethod('delete', this);
   }
 
   public copy(_file: DatalabFileId, _destinationDirectoryId: DatalabFileId): Promise<DatalabFile> {
-    throw new UnsupportedMethod('copy', this.constructor.name);
+    throw new UnsupportedMethod('copy', this);
   }
 
   public getEditorUrl(): Promise<string> {
-    throw new UnsupportedMethod('getEditorUrl', this.constructor.name);
+    throw new UnsupportedMethod('getEditorUrl', this);
   }
 
   public getNotebookUrl(): Promise<string> {
-    throw new UnsupportedMethod('getNotebookUrl', this.constructor.name);
+    throw new UnsupportedMethod('getNotebookUrl', this);
   }
 }

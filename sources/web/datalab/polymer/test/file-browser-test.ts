@@ -14,10 +14,10 @@
 
 class MockFileManager implements FileManager {
   public get(_fileId: DatalabFileId): Promise<DatalabFile> {
-    throw new UnsupportedMethod('get', MockFileManager);
+    throw new UnsupportedMethod('get', this);
   }
-  public getContent(_fileId: DatalabFileId, _asText?: boolean): Promise<DatalabContent> {
-    throw new UnsupportedMethod('getContent', MockFileManager);
+  public getContent(_fileId: DatalabFileId, _asText?: boolean): Promise<DatalabFileContent> {
+    throw new UnsupportedMethod('getContent', this);
   }
   public async getRootFile() {
     const file: DatalabFile = {
@@ -29,30 +29,30 @@ class MockFileManager implements FileManager {
     return file;
   }
   public saveText(_file: DatalabFile, _content: string): Promise<DatalabFile> {
-    throw new UnsupportedMethod('saveText', MockFileManager);
+    throw new UnsupportedMethod('saveText', this);
   }
   public list(_containerId: DatalabFileId): Promise<DatalabFile[]> {
-    throw new UnsupportedMethod('list', MockFileManager);
+    throw new UnsupportedMethod('list', this);
   }
   public create(_fileType: DatalabFileType, _containerId: DatalabFileId, _name: string):
       Promise<DatalabFile> {
-    throw new UnsupportedMethod('create', MockFileManager);
+    throw new UnsupportedMethod('create', this);
   }
   public rename(_oldFileId: DatalabFileId, _name: string, _newContainerId?: DatalabFileId):
       Promise<DatalabFile> {
-    throw new UnsupportedMethod('rename', MockFileManager);
+    throw new UnsupportedMethod('rename', this);
   }
   public delete(_fileId: DatalabFileId): Promise<boolean> {
-    throw new UnsupportedMethod('delete', MockFileManager);
+    throw new UnsupportedMethod('delete', this);
   }
   public copy(_fileId: DatalabFileId, _destinationDirectoryId: DatalabFileId): Promise<DatalabFile> {
-    throw new UnsupportedMethod('copy', MockFileManager);
+    throw new UnsupportedMethod('copy', this);
   }
   public getNotebookUrl(_fileId: DatalabFileId): Promise<string> {
-    throw new UnsupportedMethod('getNotebookUrl', MockFileManager);
+    throw new UnsupportedMethod('getNotebookUrl', this);
   }
   public getEditorUrl(_fileId: DatalabFileId): Promise<string> {
-    throw new UnsupportedMethod('getEditorUrl', MockFileManager);
+    throw new UnsupportedMethod('getEditorUrl', this);
   }
 }
 
