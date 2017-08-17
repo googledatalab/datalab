@@ -93,7 +93,7 @@ class BigQueryFileManager implements FileManager {
         return projects.map(
             this._bqProjectToDatalabFile.bind(this)) as DatalabFile[];
       })
-      .catch((e) => { console.error(e); throw e; });
+      .catch((e) => { Utils.log.error(e); throw e; });
   }
 
   private _listDatasets(projectId: string): Promise<DatalabFile[]> {
@@ -103,7 +103,7 @@ class BigQueryFileManager implements FileManager {
         return datasets.map(
             this._bqDatasetToDatalabFile.bind(this)) as DatalabFile[];
       })
-      .catch((e) => { console.error(e); throw e; });
+      .catch((e) => { Utils.log.error(e); throw e; });
   }
 
   private _listTables(projectId: string, datasetId: string): Promise<DatalabFile[]> {
@@ -113,7 +113,7 @@ class BigQueryFileManager implements FileManager {
         return tables.map(
             this._bqTableToDatalabFile.bind(this)) as DatalabFile[];
       })
-      .catch((e) => { console.error(e); throw e; });
+      .catch((e) => { Utils.log.error(e); throw e; });
   }
 
   private _bqProjectToDatalabFile(bqProject: gapi.client.bigquery.ProjectResource): DatalabFile {

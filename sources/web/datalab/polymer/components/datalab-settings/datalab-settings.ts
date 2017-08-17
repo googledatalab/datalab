@@ -82,7 +82,7 @@ class SettingsElement extends Polymer.Element {
         this.idleTimeoutInterval = settings.idleTimeoutInterval;
       })
       .catch(() => {
-        console.log('Could not get user settings from server.');
+        Utils.log.error('Could not get user settings from server.');
       })
       .then(() => this._busy = false);
   }
