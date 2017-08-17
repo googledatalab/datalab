@@ -71,11 +71,11 @@ class DatalabFileId {
 
 }
 
-abstract class DatalabFileContent {
+abstract class DatalabContent {
   public abstract getEditorText(): string;
 }
 
-class NotebookContent extends DatalabFileContent {
+class NotebookContent extends DatalabContent {
   public cells: NotebookCell[];
   metadata: object;
   nbformat: number;
@@ -95,7 +95,7 @@ class NotebookContent extends DatalabFileContent {
   }
 }
 
-class DirectoryContent extends DatalabFileContent {
+class DirectoryContent extends DatalabContent {
   files: DatalabFile[];
 
   constructor(files: DatalabFile[]) {
@@ -108,7 +108,7 @@ class DirectoryContent extends DatalabFileContent {
   }
 }
 
-class TextContent extends DatalabFileContent {
+class TextContent extends DatalabContent {
   text: string;
 
   constructor(text: string) {
@@ -149,7 +149,7 @@ interface FileManager {
    *               useful for downloading notebooks, which are by default read
    *               as JSON, which doesn't preserve formatting.
    */
-  getContent(fileId: DatalabFileId, asText?: boolean): Promise<DatalabFileContent>;
+  getContent(fileId: DatalabFileId, asText?: boolean): Promise<DatalabContent>;
 
   /**
    * Returns a DatalabFile object for the root directory.

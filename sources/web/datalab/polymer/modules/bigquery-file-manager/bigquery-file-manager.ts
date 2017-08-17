@@ -28,7 +28,7 @@ class BigQueryFileManager implements FileManager {
     throw new UnsupportedMethod('get', BigQueryFileManager);
   }
 
-  public getContent(_fileId: DatalabFileId, _asText?: boolean): Promise<DatalabFileContent> {
+  public getContent(_fileId: DatalabFileId, _asText?: boolean): Promise<DatalabContent> {
     throw new UnsupportedMethod('getContent', BigQueryFileManager);
   }
 
