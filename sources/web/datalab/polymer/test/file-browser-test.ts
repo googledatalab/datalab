@@ -14,10 +14,10 @@
 
 class MockFileManager implements FileManager {
   public get(_fileId: DatalabFileId): Promise<DatalabFile> {
-    throw new BigQueryMethodNotYetImplemented('get');
+    throw new UnsupportedMethod('get', MockFileManager);
   }
   public getContent(_fileId: DatalabFileId, _asText?: boolean): Promise<DatalabFileContent> {
-    throw new BigQueryMethodNotYetImplemented('getContent');
+    throw new UnsupportedMethod('getContent', MockFileManager);
   }
   public async getRootFile() {
     const file: DatalabFile = {
@@ -29,30 +29,30 @@ class MockFileManager implements FileManager {
     return file;
   }
   public saveText(_file: DatalabFile, _content: string): Promise<DatalabFile> {
-    throw new BigQueryMethodNotYetImplemented('save');
+    throw new UnsupportedMethod('saveText', MockFileManager);
   }
   public list(_containerId: BigQueryFileId): Promise<DatalabFile[]> {
-    throw new BigQueryMethodNotYetImplemented('listing datasets');
+    throw new UnsupportedMethod('list', MockFileManager);
   }
   public create(_fileType: DatalabFileType, _containerId: DatalabFileId, _name: string):
       Promise<DatalabFile> {
-    throw new BigQueryMethodNotYetImplemented('create');
+    throw new UnsupportedMethod('create', MockFileManager);
   }
   public rename(_oldFileId: DatalabFileId, _name: string, _newContainerId?: DatalabFileId):
       Promise<DatalabFile> {
-    throw new BigQueryMethodNotYetImplemented('rename');
+    throw new UnsupportedMethod('rename', MockFileManager);
   }
   public delete(_fileId: DatalabFileId): Promise<boolean> {
-    throw new BigQueryMethodNotYetImplemented('delete');
+    throw new UnsupportedMethod('delete', MockFileManager);
   }
   public copy(_fileId: DatalabFileId, _destinationDirectoryId: DatalabFileId): Promise<DatalabFile> {
-    throw new BigQueryMethodNotYetImplemented('copy');
+    throw new UnsupportedMethod('copy', MockFileManager);
   }
   public getNotebookUrl(_fileId: DatalabFileId): Promise<string> {
-    throw new BigQueryMethodNotYetImplemented('getNotebookUrl');
+    throw new UnsupportedMethod('getNotebookUrl', MockFileManager);
   }
   public getEditorUrl(_fileId: DatalabFileId): Promise<string> {
-    throw new BigQueryMethodNotYetImplemented('getEditorUrl');
+    throw new UnsupportedMethod('getEditorUrl', MockFileManager);
   }
 }
 

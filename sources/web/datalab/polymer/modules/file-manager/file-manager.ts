@@ -58,6 +58,9 @@ class DatalabFileId {
 
   public static fromQueryString(querystring: string) {
     const tokens = querystring.split(DatalabFileId._delim);
+    if (tokens.length !== 2) {
+      throw new Error('Invalid format for file id: ' + querystring);
+    }
     return new DatalabFileId(tokens[1], FileManagerFactory.fileManagerNameToType(tokens[0]));
   }
 

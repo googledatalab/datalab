@@ -12,17 +12,10 @@
  * the License.
  */
 
-class BigQueryMethodNotYetImplemented extends Error {
-  constructor(apiFunctionName: string) {
-    super('BigQuery method ' + apiFunctionName + ' is not implemented');
-  }
-}
-
 class BigQueryFile extends DatalabFile {
 }
 
 class BigQueryFileId extends DatalabFileId {
-  path: string;
 }
 
 /**
@@ -32,11 +25,11 @@ class BigQueryFileId extends DatalabFileId {
 class BigQueryFileManager implements FileManager {
 
   public get(_fileId: DatalabFileId): Promise<DatalabFile> {
-    throw new BigQueryMethodNotYetImplemented('get');
+    throw new UnsupportedMethod('get', BigQueryFileManager);
   }
 
   public getContent(_fileId: DatalabFileId, _asText?: boolean): Promise<DatalabFileContent> {
-    throw new BigQueryMethodNotYetImplemented('getContent');
+    throw new UnsupportedMethod('getContent', BigQueryFileManager);
   }
 
   public async getRootFile() {
@@ -44,7 +37,7 @@ class BigQueryFileManager implements FileManager {
   }
 
   public saveText(_file: DatalabFile, _content: string): Promise<DatalabFile> {
-    throw new BigQueryMethodNotYetImplemented('save');
+    throw new UnsupportedMethod('saveText', BigQueryFileManager);
   }
 
   public list(containerId: BigQueryFileId): Promise<DatalabFile[]> {
@@ -64,33 +57,33 @@ class BigQueryFileManager implements FileManager {
     if (pathParts.length === 2) {
       return this._listTables(pathParts[0], pathParts[1]);
     }
-    throw new BigQueryMethodNotYetImplemented('listing datasets');
+    throw new UnsupportedMethod('listing datasets', BigQueryFileManager);
   }
 
   public create(_fileType: DatalabFileType, _containerId: DatalabFileId, _name: string):
       Promise<DatalabFile> {
-    throw new BigQueryMethodNotYetImplemented('create');
+    throw new UnsupportedMethod('create', BigQueryFileManager);
   }
 
   public rename(_oldFileId: DatalabFileId, _name: string, _newContainerId?: DatalabFileId):
       Promise<DatalabFile> {
-    throw new BigQueryMethodNotYetImplemented('rename');
+    throw new UnsupportedMethod('rename', BigQueryFileManager);
   }
 
   public delete(_fileId: DatalabFileId): Promise<boolean> {
-    throw new BigQueryMethodNotYetImplemented('delete');
+    throw new UnsupportedMethod('delete', BigQueryFileManager);
   }
 
   public copy(_fileId: DatalabFileId, _destinationDirectoryId: DatalabFileId): Promise<DatalabFile> {
-    throw new BigQueryMethodNotYetImplemented('copy');
+    throw new UnsupportedMethod('copy', BigQueryFileManager);
   }
 
   public getNotebookUrl(_fileId: DatalabFileId): Promise<string> {
-    throw new BigQueryMethodNotYetImplemented('getNotebookUrl');
+    throw new UnsupportedMethod('getNotebookUrl', BigQueryFileManager);
   }
 
   public getEditorUrl(_fileId: DatalabFileId): Promise<string> {
-    throw new BigQueryMethodNotYetImplemented('getEditorUrl');
+    throw new UnsupportedMethod('getEditorUrl', BigQueryFileManager);
   }
 
   private _listProjects(): Promise<DatalabFile[]> {

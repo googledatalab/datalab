@@ -136,4 +136,11 @@ class Utils {
         throw new Error('Unknown file type: ' + type);
     }
   }
+
+}
+
+class UnsupportedMethod extends Error {
+  constructor(methodName: string, objectType: any) {
+    super('Method ' + methodName + ' is not supported on type: ' + objectType.name);
+  }
 }
