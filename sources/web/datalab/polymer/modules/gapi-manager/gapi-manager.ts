@@ -43,11 +43,12 @@ class GapiManager {
         .then((response) => JSON.parse(response.body));
     }
 
-    public static getFiles(fileFields: string[], queryPredicates: string[]):
+    public static getFiles(fileFields: string[], queryPredicates: string[], orderBy?: string[]):
         Promise<gapi.client.drive.File[]> {
       return this._load()
         .then(() => gapi.client.drive.files.list({
           fields: 'nextPageToken, files(' + fileFields.join(',') + ')',
+          orderBy: orderBy ? orderBy.join(',') : '',
           pageSize: 30,
           q: queryPredicates.join(' and '),
         }))

@@ -78,7 +78,13 @@ class DriveFileManager implements FileManager {
       'name',
       'parents',
     ];
-    const upstreamFiles = await GapiManager.drive.getFiles(fileFields, queryPredicates);
+    const orderModifiers = [
+      'folder',
+      'modifiedTime',
+      'name',
+    ];
+    const upstreamFiles =
+        await GapiManager.drive.getFiles(fileFields, queryPredicates, orderModifiers);
     // TODO: Check which files are running from the SessionsManager and modify
     // their status accordingly.
     return upstreamFiles.map((file) => DriveFileManager._upstreamToDriveFile(file));
