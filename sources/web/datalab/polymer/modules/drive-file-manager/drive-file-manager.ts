@@ -49,7 +49,7 @@ class DriveFileManager implements FileManager {
     throw new UnsupportedMethod('get', this);
   }
 
-  public async getContent(_fileId: DatalabFileId, _asText?: boolean): Promise<DatalabFileContent> {
+  public async getContent(_fileId: DatalabFileId, _asText?: boolean): Promise<DatalabContent> {
     throw new UnsupportedMethod('getContent', this);
   }
 

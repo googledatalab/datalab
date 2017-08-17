@@ -16,7 +16,7 @@ class MockFileManager implements FileManager {
   public get(_fileId: DatalabFileId): Promise<DatalabFile> {
     throw new UnsupportedMethod('get', this);
   }
-  public getContent(_fileId: DatalabFileId, _asText?: boolean): Promise<DatalabFileContent> {
+  public getContent(_fileId: DatalabFileId, _asText?: boolean): Promise<DatalabContent> {
     throw new UnsupportedMethod('getContent', this);
   }
   public async getRootFile() {
