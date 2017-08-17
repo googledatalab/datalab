@@ -116,7 +116,7 @@ class JupyterFileManager implements FileManager {
       .then((file: any) => JupyterFileManager._upstreamFileToJupyterFile(file));
   }
 
-  public async getContent(fileId: DatalabFileId, asText?: boolean): Promise<DatalabFileContent> {
+  public async getContent(fileId: DatalabFileId, asText?: boolean): Promise<DatalabContent> {
     const apiManager = ApiManagerFactory.getInstance();
     if (fileId.path.startsWith('/')) {
       fileId.path = fileId.path.substr(1);
@@ -180,7 +180,7 @@ class JupyterFileManager implements FileManager {
 
   public list(containerId: DatalabFileId): Promise<DatalabFile[]> {
     const filesPromise = this.getContent(containerId)
-      .then((content: DatalabFileContent) => {
+      .then((content: DatalabContent) => {
         if (content instanceof DirectoryContent) {
           return content.files;
         } else {

@@ -92,7 +92,7 @@ class DetailsPaneElement extends Polymer.Element {
 
     if (this.file.type === DatalabFileType.NOTEBOOK || this._isPlainTextFile(this.file)) {
       this._fileManager.getContent(this.file.id)
-        .then((content: DatalabFileContent) => {
+        .then((content: DatalabContent) => {
 
           // If this is a notebook, get the first two cells and render any markdown in them.
           if (content instanceof NotebookContent) {
