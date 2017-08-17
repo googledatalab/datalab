@@ -22,13 +22,12 @@ declare function marked(markdown: string): string;
  */
 class DetailsPaneElement extends Polymer.Element {
 
-  private static _maxLinesInTextSummary = 30;
   private static _noFileMessage = 'Select an item to view its details.';
-  private static _emptyFileMessage = 'Empty file.';
-  private static _emptyNotebookMessage = 'Empty notebook.';
-  private static _longNotebookMessage = 'Showing markdown from the first two.';
-  private static _longFileMessage = 'Showing the first ' +
-      DetailsPaneElement._maxLinesInTextSummary + '.';
+
+  /**
+   * Currently displayed preview pane.
+   */
+  public preview: string;
 
   /**
    * File whose details to show.
@@ -41,7 +40,6 @@ class DetailsPaneElement extends Polymer.Element {
    */
   public active: boolean;
 
-  private _fileManager: FileManager;
   private _message = ''; // To show in the placeholder field.
 
   static get is() { return 'details-pane'; }
@@ -62,13 +60,11 @@ class DetailsPaneElement extends Polymer.Element {
         type: Object,
         value: {},
       },
+      preview: {
+        type: String,
+        value: '',
+      },
     };
-  }
-
-  constructor() {
-    super();
-
-    this._fileManager = FileManagerFactory.getInstance();
   }
 
   ready() {
@@ -77,10 +73,7 @@ class DetailsPaneElement extends Polymer.Element {
   }
 
   /**
-   * Loads the details of the given file in the details pane. No preview is shown if the
-   * selected item is a directory. For notebooks, the first two cells are pulled from the file,
-   * and any markdown they contain is rendered in the pane. For now, we also support other
-   * plain text files with mime type text/*, and JSON files.
+   * Shows a preview of the selected file for known file types.
    *
    * TODO: Consider adding a spinning animation while this data loads.
    */
@@ -89,78 +82,16 @@ class DetailsPaneElement extends Polymer.Element {
       this._message = DetailsPaneElement._noFileMessage;
       return;
     }
+    this._message = '';
 
-    if (this.file.type === DatalabFileType.NOTEBOOK || this._isPlainTextFile(this.file)) {
-      this._fileManager.getContent(this.file.id)
-        .then((content: DatalabContent) => {
+    this.preview = this.file.getPreviewName();
 
-          // If this is a notebook, get the first two cells and render any markdown in them.
-          if (content instanceof NotebookContent) {
-            if (content.cells.length === 0) {
-              this.$.previewHtml.innerHTML = '';
-              this._message = DetailsPaneElement._emptyNotebookMessage;
-            } else {
-              const firstTwoCells = content.cells.slice(0, 2);
-
-              let markdownHtml = '';
-              firstTwoCells.forEach((cell) => {
-                if (cell.cell_type === 'markdown') {
-                  markdownHtml += marked(cell.source);
-                }
-              });
-              this.$.previewHtml.innerHTML = markdownHtml;
-              this._message = ' Notebook with ' + content.cells.length + ' cells. ';
-              if (content.cells.length > 2) {
-                this._message += DetailsPaneElement._longNotebookMessage;
-              }
-            }
-
-          // If this is a text file, show the first N lines.
-          } else if (content instanceof TextContent) {
-
-            if (content.text.trim() === '') {
-              this.$.previewHtml.innerHTML = '';
-              this._message = DetailsPaneElement._emptyFileMessage;
-            } else {
-              const lines = content.text.split('\n');
-              this._message = 'File with ' + lines.length + ' lines. ';
-              this.$.previewHtml.innerText = '\n' +
-                  lines.slice(0, DetailsPaneElement._maxLinesInTextSummary).join('\n') +
-                  '\n';
-              if (lines.length > DetailsPaneElement._maxLinesInTextSummary) {
-                this.$.previewHtml.innerText += '...\n\n';
-                this._message += DetailsPaneElement._longFileMessage;
-              }
-            }
-          }
-        })
-        .catch(() => {
-          this.$.previewHtml.innerHTML = '';
-          this._message = '';
-          Utils.log.error('Could not get item details.');
-        });
-    } else {
-      this.$.previewHtml.innerHTML = '';
-      this._message = '';
+    if (this.preview) {
+      const elName = this.preview + '-preview';
+      const pageUrl = this.resolveUrl('../' + elName + '/' + elName + '.html');
+      Polymer.importHref(pageUrl, undefined, undefined, true);
     }
   }
-
-  /**
-   * Returns true if the contents of this file can be read as plain text.
-   * @param file object for the file whose details to display.
-   */
-  _isPlainTextFile(file: DatalabFile) {
-    if (file instanceof JupyterFile) {
-      return file &&
-            file.mimetype && (
-              file.mimetype.indexOf('text/') > -1 ||
-              file.mimetype.indexOf('application/json') > -1
-            );
-    } else {
-      return false;
-    }
-  }
-
 }
 
 customElements.define(DetailsPaneElement.is, DetailsPaneElement);

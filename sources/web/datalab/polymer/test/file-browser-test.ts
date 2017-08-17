@@ -25,7 +25,7 @@ class MockFileManager implements FileManager {
       id: new DatalabFileId('/', FileManagerType.JUPYTER),
       name: 'root',
       type: DatalabFileType.DIRECTORY,
-    };
+    } as DatalabFile;
     return file;
   }
   public saveText(_file: DatalabFile, _content: string): Promise<DatalabFile> {
@@ -66,19 +66,21 @@ describe('<file-browser>', () => {
       name: 'file1',
       status: DatalabFileStatus.IDLE,
       type: DatalabFileType.DIRECTORY,
-    }, {
+    } as DatalabFile,
+    {
       icon: '',
       id: new DatalabFileId('', FileManagerType.JUPYTER),
       name: 'file2',
       status: DatalabFileStatus.IDLE,
       type: DatalabFileType.DIRECTORY,
-    }, {
+    } as DatalabFile,
+    {
       icon: '',
       id: new DatalabFileId('', FileManagerType.JUPYTER),
       name: 'file3',
       status: DatalabFileStatus.RUNNING,
       type: DatalabFileType.DIRECTORY,
-    }
+    } as DatalabFile,
   ];
 
   before(() => {

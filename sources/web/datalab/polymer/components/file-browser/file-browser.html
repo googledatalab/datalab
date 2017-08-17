@@ -17,6 +17,7 @@ the License.
 <link rel="import" href="../../components/details-pane/details-pane.html">
 <link rel="import" href="../../components/input-dialog/input-dialog.html">
 <link rel="import" href="../../components/item-list/item-list.html">
+<link rel="import" href="../../components/resizable-divider/resizable-divider.html">
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
 <link rel="import" href="../../modules/api-manager-factory/api-manager-factory.html">
 <link rel="import" href="../../modules/file-manager-factory/file-manager-factory.html">
@@ -42,6 +43,10 @@ the License.
         font-family: var(--app-content-font-family);
         font-size: var(--app-content-font-size);
         color: var(--primary-fg-color);
+      }
+      resizable-divider {
+        width: 100%;
+        height: 100%;
       }
       #toolbar {
         flex: 0 0 var(--toolbar-height);
@@ -252,7 +257,6 @@ the License.
         <details-pane id="detailsPane" file="{{selectedFile}}" active="{{_isDetailsPaneEnabled}}"
                       class$="details-pane-enabled--{{_isDetailsPaneEnabled}}">
         </details-pane>
-        </div>
       </div>
     </div>
 

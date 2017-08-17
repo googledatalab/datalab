@@ -12,37 +12,30 @@ or implied. See the License for the specific language governing permissions and 
 the License.
 -->
 
-<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
-
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
 <link rel="import" href="../../modules/file-manager-factory/file-manager-factory.html">
 
-<dom-module id="details-pane">
+<dom-module id="notebook-preview">
   <template>
     <style include="datalab-shared-styles">
-      #container {
-        height: 100%;
+      #previewHtml {
+        background-color: var(--primary-bg-color);
+        padding: 10px;
+        margin: 10px;
         overflow-y: auto;
-        display: flex;
-        flex-direction: column;
+        overflow-x: hidden;
+        box-shadow: 5px 5px 10px -3px rgba(0, 0, 0, 0.1);
       }
-      .placeholder {
+      .message {
         padding: 15px;
         text-align: center;
         color: #777;
       }
     </style>
-    <div id="container" hidden$="{{!file}}">
-      <iron-pages id="preview" selected="{{preview}}" attr-for-selected="name">
-        <notebook-preview class="preview" name="notebook" file="{{file}}" active="{{active}}"></notebook-preview>
-        <table-preview class="preview" name="table" file="{{file}}" active="{{active}}"></table-preview>
-        <text-preview class="preview" name="text" file="{{file}}" active="{{active}}"></text-preview>
-      </iron-pages>
-      <div class="placeholder">
-        {{_message}}
-      </div>
-    </div>
+    <div id="previewHtml"></div>
+    <div class="message">{{_message}}</div>
   </template>
 </dom-module>
 
-<script src="details-pane.js"></script>
+<script src="../../bower_components/marked/lib/marked.js"></script>
+<script src="notebook-preview.js"></script>
