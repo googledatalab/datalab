@@ -34,18 +34,28 @@ document.addEventListener('ThemeChanged', (e: CustomEvent) => {
 });
 
 if (editorElement) {
-  // Pass the file's path if it's specified in the location.
-  const params = new URLSearchParams(window.location.search);
-  if (params.has('file')) {
-    editorElement.filePath = params.get('file') as string;
-  }
-
-  // Listen for rename events coming from the editor element, and match the url
-  // querystring
-  editorElement.addEventListener('file-path-changed', (e: CustomEvent) => {
-    params.set('file', e.detail.value);
+  // Listen for file id change events coming from the editor element, and match
+  // the url querystring
+  editorElement.addEventListener('file-id-changed', (e: CustomEvent) => {
+    const newId = e.detail.value as DatalabFileId;
+    if (newId) {
+      params.set('file', newId ? newId.toQueryString() : '');
+    } else {
+      params.delete('file');
+    }
     const url = location.protocol + '//' + location.host + location.pathname +
                 '?' + decodeURIComponent(params.toString());
     window.history.replaceState({}, '', url);
   });
+
+  // Pass the file's path if it's specified in the location.
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('file')) {
+    try {
+      editorElement.fileId = DatalabFileId.fromQueryString(params.get('file') as string);
+    } catch (e) {
+      Utils.showErrorDialog('Error loading file', e.message);
+      editorElement.fileId = null;
+    }
+  }
 }

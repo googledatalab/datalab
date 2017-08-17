@@ -24,14 +24,14 @@ interface TemplateParameter {
  * list of its required parameters.
  */
 class NotebookTemplate {
-  // Path to the template file on disk
-  path: string;
+  // File id of the template file
+  fileId: DatalabFileId;
 
   // List of parameters required by the template
   parameters: TemplateParameter[];
 
-  constructor(path: string, parameters: TemplateParameter[]) {
-    this.path = path;
+  constructor(fileId: DatalabFileId, parameters: TemplateParameter[]) {
+    this.fileId = fileId;
     this.parameters = parameters;
   }
 
@@ -46,7 +46,7 @@ class NotebookTemplate {
    * Substitutes all placeholders in the given notebook's cells with their
    * values.
    */
-  public populatePlaceholders(notebook: Notebook) {
+  public populatePlaceholders(notebook: NotebookContent) {
 
     notebook.cells.forEach((cell: NotebookCell) => {
       this.parameters.forEach((parameter: TemplateParameter) => {
@@ -71,7 +71,10 @@ class TableSchemaTemplate extends NotebookTemplate {
       value: tableName,
     }];
 
-    super('tableSchema.ipynb', parameters);
+    // TODO: The actual template files should live somewhere more static.
+    const templateId = new DatalabFileId('datalab/templates/tableSchema.ipynb',
+        FileManagerType.JUPYTER);
+    super(templateId, parameters);
   }
 }
 
@@ -87,8 +90,6 @@ class TableSchemaTemplate extends NotebookTemplate {
  */
 class TemplateManager {
 
-  private static _templatePrefix = 'datalab/templates/';
-
   public static async newNotebookFromTemplate(template: NotebookTemplate) {
 
     const options: DirectoryPickerDialogOptions = {
@@ -102,21 +103,25 @@ class TemplateManager {
         DirectoryPickerDialogCloseResult;
 
     if (closeResult.confirmed && closeResult.fileName) {
-      const path = TemplateManager._templatePrefix + template.path;
-      const file = await FileManagerFactory.getInstance().get(path);
-
-      file.name = closeResult.fileName;
-      if (!file.name.endsWith('.ipynb')) {
-        file.name += '.ipynb';
+      const fileManager = FileManagerFactory.getInstanceForType(template.fileId.source);
+      const templateContent = await fileManager.getContent(template.fileId);
+      if (!(templateContent instanceof NotebookContent)) {
+        throw new Error('Template file is not a notebook.');
       }
-      file.path = closeResult.directoryPath;
-      template.populatePlaceholders(file.content as Notebook);
+      const templateFile = await fileManager.get(template.fileId);
 
-      return file;
+      templateFile.name = closeResult.fileName;
+      if (!templateFile.name.endsWith('.ipynb')) {
+        templateFile.name += '.ipynb';
+      }
+      template.populatePlaceholders(templateContent);
+
+      const newFile = await
+          fileManager.create(DatalabFileType.NOTEBOOK, closeResult.selectedDirectory.id,
+              templateFile.name);
+      return fileManager.saveText(newFile, templateContent.getEditorText());
     } else {
       return null;
     }
-
   }
-
 }

@@ -31,7 +31,7 @@ const FILE_MANAGER_ELEMENT = {
 enum FileManagerType {
   BIG_QUERY,
   JUPYTER,
-};
+}
 
 /**
  * Maintains and gets the static FileManager singleton.
@@ -40,7 +40,7 @@ enum FileManagerType {
 // environment
 class FileManagerFactory {
 
-  private static _fileManagers: { [fileManagerType: string] : FileManager } = {};
+  private static _fileManagers: { [fileManagerType: string]: FileManager } = {};
 
   /** Get the default FileManager. */
   public static getInstance() {
@@ -51,7 +51,16 @@ class FileManagerFactory {
     switch (name) {
       case 'bigquery': return FileManagerType.BIG_QUERY;
       case 'jupyter': return FileManagerType.JUPYTER;
-      default: throw new Error('unknown FileManagerType name ' + name);
+      default: throw new Error('Unknown FileManagerType name ' + name);
+    }
+  }
+
+  // Consider moving this to a strings module
+  public static fileManagerTypetoString(type: FileManagerType) {
+    switch (type) {
+      case FileManagerType.BIG_QUERY: return 'bigquery';
+      case FileManagerType.JUPYTER: return 'jupyter';
+      default: throw new Error('Unknown FileManager type: ' + type);
     }
   }
 
@@ -73,4 +82,3 @@ class FileManagerFactory {
     }
   }
 }
-

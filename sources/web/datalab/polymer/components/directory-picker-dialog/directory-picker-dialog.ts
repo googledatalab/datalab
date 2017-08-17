@@ -19,7 +19,7 @@
  * directory path.
  */
 interface DirectoryPickerDialogCloseResult extends BaseDialogCloseResult {
-  directoryPath: string;
+  selectedDirectory: DatalabFile;
   fileName?: string;
 }
 
@@ -85,9 +85,10 @@ class DirectoryPickerDialogElement extends BaseDialogElement {
    * Also send back the user selected path in the closing context.
    */
   getCloseResult() {
+    const picker: FileBrowserElement = this.$.filePicker;
     return {
-      directoryPath: this.$.filePicker.currentPath,
       fileName: this.withFileName ? this.$.fileNameBox.value : undefined,
+      selectedDirectory: picker.currentFile,
     };
   }
 

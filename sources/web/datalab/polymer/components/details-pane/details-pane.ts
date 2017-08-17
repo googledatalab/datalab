@@ -22,11 +22,13 @@ declare function marked(markdown: string): string;
  */
 class DetailsPaneElement extends Polymer.Element {
 
+  private static _maxLinesInTextSummary = 30;
   private static _noFileMessage = 'Select an item to view its details.';
   private static _emptyFileMessage = 'Empty file.';
   private static _emptyNotebookMessage = 'Empty notebook.';
   private static _longNotebookMessage = 'Showing markdown from the first two.';
-  private static _longFileMessage = 'Showing the first 30.';
+  private static _longFileMessage = 'Showing the first ' +
+      DetailsPaneElement._maxLinesInTextSummary + '.';
 
   /**
    * File whose details to show.
@@ -89,17 +91,16 @@ class DetailsPaneElement extends Polymer.Element {
     }
 
     if (this.file.type === DatalabFileType.NOTEBOOK || this._isPlainTextFile(this.file)) {
-      this._fileManager.get(this.file.path)
-        .then((file: DatalabFile) => {
+      this._fileManager.getContent(this.file.id)
+        .then((content: DatalabFileContent) => {
 
           // If this is a notebook, get the first two cells and render any markdown in them.
-          if (file.type === DatalabFileType.NOTEBOOK) {
-            const cells = (file.content as Notebook).cells;
-            if (cells.length === 0) {
+          if (content instanceof NotebookContent) {
+            if (content.cells.length === 0) {
               this.$.previewHtml.innerHTML = '';
               this._message = DetailsPaneElement._emptyNotebookMessage;
             } else {
-              const firstTwoCells = cells.slice(0, 2);
+              const firstTwoCells = content.cells.slice(0, 2);
 
               let markdownHtml = '';
               firstTwoCells.forEach((cell) => {
@@ -108,26 +109,25 @@ class DetailsPaneElement extends Polymer.Element {
                 }
               });
               this.$.previewHtml.innerHTML = markdownHtml;
-              this._message = ' Notebook with ' + cells.length + ' cells. ';
-              if (cells.length > 2) {
+              this._message = ' Notebook with ' + content.cells.length + ' cells. ';
+              if (content.cells.length > 2) {
                 this._message += DetailsPaneElement._longNotebookMessage;
               }
             }
 
           // If this is a text file, show the first N lines.
-          } else if (this._isPlainTextFile(file)) {
+          } else if (content instanceof TextContent) {
 
-            const content = file.content as string;
-            if (content.trim() === '') {
+            if (content.text.trim() === '') {
               this.$.previewHtml.innerHTML = '';
               this._message = DetailsPaneElement._emptyFileMessage;
             } else {
-              const lines = content.split('\n');
+              const lines = content.text.split('\n');
               this._message = 'File with ' + lines.length + ' lines. ';
               this.$.previewHtml.innerText = '\n' +
-                  lines.slice(0, 30).join('\n') +
+                  lines.slice(0, DetailsPaneElement._maxLinesInTextSummary).join('\n') +
                   '\n';
-              if (lines.length > 30) {
+              if (lines.length > DetailsPaneElement._maxLinesInTextSummary) {
                 this.$.previewHtml.innerText += '...\n\n';
                 this._message += DetailsPaneElement._longFileMessage;
               }
@@ -150,11 +150,15 @@ class DetailsPaneElement extends Polymer.Element {
    * @param file object for the file whose details to display.
    */
   _isPlainTextFile(file: DatalabFile) {
-    return file &&
-           file.mimetype && (
-             file.mimetype.indexOf('text/') > -1 ||
-             file.mimetype.indexOf('application/json') > -1
-           );
+    if (file instanceof JupyterFile) {
+      return file &&
+            file.mimetype && (
+              file.mimetype.indexOf('text/') > -1 ||
+              file.mimetype.indexOf('application/json') > -1
+            );
+    } else {
+      return false;
+    }
   }
 
 }

@@ -31,16 +31,6 @@ interface NotebookCell {
   source: string;
 }
 
-/**
- * Represents a notebook model.
- */
-interface Notebook {
-  cells: NotebookCell[];
-  metadata: object;
-  nbformat: number;
-  nbformat_minor: number;
-}
-
 enum DatalabFileType {
   DIRECTORY,
   FILE,
@@ -53,70 +43,172 @@ enum DatalabFileStatus {
 }
 
 /**
- * Represents a file object as returned from the FileManager calls.
+ * Unique identifier for a file object.
  */
-interface DatalabFile {
-  content: DatalabFile[] | Notebook | string;
-  created?: string;
-  format: string;
-  last_modified?: string;
-  mimetype?: string;
-  name: string;
+class DatalabFileId {
+  private static _delim = ':';
+
   path: string;
-  status: DatalabFileStatus;
+  source: FileManagerType;
+
+  constructor(path: string, source: FileManagerType) {
+    this.path = path;
+    this.source = source;
+  }
+
+  public static fromQueryString(querystring: string) {
+    const tokens = querystring.split(DatalabFileId._delim);
+    if (tokens.length !== 2) {
+      throw new Error('Invalid format for file id: ' + querystring);
+    }
+    return new DatalabFileId(tokens[1], FileManagerFactory.fileManagerNameToType(tokens[0]));
+  }
+
+  public toQueryString() {
+    return FileManagerFactory.fileManagerTypetoString(this.source) + DatalabFileId._delim +
+        this.path;
+  }
+
+}
+
+abstract class DatalabFileContent {
+  public abstract getEditorText(): string;
+}
+
+class NotebookContent extends DatalabFileContent {
+  public cells: NotebookCell[];
+  metadata: object;
+  nbformat: number;
+  // tslint:disable-next-line:variable-name
+  nbformat_minor: number;
+
+  constructor(cells: NotebookCell[], metadata: object, nbformat: number, nbformatMinor: number) {
+    super();
+    this.cells = cells;
+    this.metadata = metadata;
+    this.nbformat = nbformat;
+    this.nbformat_minor = nbformatMinor;
+  }
+
+  public getEditorText() {
+    return JSON.stringify(this);
+  }
+}
+
+class DirectoryContent extends DatalabFileContent {
+  files: DatalabFile[];
+
+  constructor(files: DatalabFile[]) {
+    super();
+    this.files = files;
+  }
+
+  public getEditorText() {
+    return JSON.stringify(this.files);
+  }
+}
+
+class TextContent extends DatalabFileContent {
+  text: string;
+
+  constructor(text: string) {
+    super();
+    this.text = text;
+  }
+
+  public getEditorText() {
+    return this.text;
+  }
+}
+
+/**
+ * Represents a file object that can be displayed in the file browser.
+ */
+abstract class DatalabFile {
+  icon: string;
+  id: DatalabFileId;
+  name: string;
+  status?: DatalabFileStatus;
   type: DatalabFileType;
-  writable?: boolean;
 }
 
 interface FileManager {
+  // TODO: Consider supporting getting both the file and content objects with
+  // one call.
+
   /**
    * Returns a DatalabFile object representing the file or directory requested
-   * @param path string path to requested file
+   * @param fileId id of the requested file.
+   */
+  get(fileId: DatalabFileId): Promise<DatalabFile>;
+
+  /**
+   * Returns the content of the file with the specified id.
+   * @param fileId id of the requested file.
    * @param asText whether the file should be downloaded as plain text. This is
    *               useful for downloading notebooks, which are by default read
    *               as JSON, which doesn't preserve formatting.
    */
-  get(path: string, asText?: boolean): Promise<DatalabFile>;
+  getContent(fileId: DatalabFileId, asText?: boolean): Promise<DatalabFileContent>;
 
   /**
-   * Uploads the given file object to the backend. The file's name, path, format,
-   * and content are required fields.
-   * @param file object containing file information to send to backend
+   * Returns a DatalabFile object for the root directory.
    */
-  save(file: DatalabFile): Promise<DatalabFile>;
+  getRootFile(): Promise<DatalabFile>;
 
   /**
-   * Returns a list of files at the target path, each implementing the
-   * DatalabFile interface. Two requests are made to /api/contents and
-   * /api/sessions to get this data.
-   * @param path current path to list files under
+   * Saves the given string as a file's content.
+   * @param file object containing information about the destination file to
+   *             save to.
+   * @param content string to be saved in the file
    */
-  list(path: string): Promise<DatalabFile[]>;
+  saveText(file: DatalabFile, content: string): Promise<DatalabFile>;
+
+  /**
+   * Returns a list of file objects that are children of the given container file id.
+   * @param containerId file id whose children to list.
+   */
+  list(containerId: DatalabFileId): Promise<DatalabFile[]>;
 
   /**
    * Creates a new Datalab item
-   * @param itemType type of the created item
+   * @param fileType type of the created item
+   * @param containerId id for the container
+   * @param name name for the created item. Default is 'New item'.
    */
-  create(itemType: DatalabFileType, path?: string): Promise<DatalabFile>;
+  create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string): Promise<DatalabFile>;
 
   /**
    * Renames an item
-   * @param oldPath source path of the existing item
-   * @param newPath destination path of the renamed item
+   * @param oldFileId source path of the existing item
+   * @param newName new name for the item.
+   * @param newContainerId id of the destination path of the renamed item
    */
-  rename(oldPath: string, newPath: string): Promise<DatalabFile>;
+  rename(oldFileId: DatalabFileId, newName: string, newContainerId?: DatalabFileId): Promise<DatalabFile>;
 
   /**
    * Deletes an item
-   * @param path item path to delete
+   * @param fileId id for the item to delete
    */
-  delete(path: string): Promise<boolean>;
+  delete(fileId: DatalabFileId): Promise<boolean>;
 
   /*
-   * Copies an item from source to destination. Item name collisions at the
-   * destination are handled by backend.
-   * @param path path to item to copy
-   * @param destinationDirectory directory to copy the item into
+   * Copies an item from source to destination. If an item with the same name
+   * exists in the destination, a unique suffix is added.
+   * @param fileId item to copy
+   * @param destinationDirectoryId id of the directory to copy the item into
    */
-  copy(path: string, destinationDirectory: string): Promise<DatalabFile>;
+  copy(file: DatalabFileId, destinationDirectoryId: DatalabFileId): Promise<DatalabFile>;
+
+  /**
+   * Returns the url to open the given file in the notebook editor.
+   * @param fileId id for the file to open in the notebook editor.
+   */
+  getNotebookUrl(file: DatalabFileId): Promise<string>;
+
+  /**
+   * Returns the url to open the given file in the text editor.
+   * @param fileId id for the file to open in the text editor.
+   */
+  getEditorUrl(file: DatalabFileId): Promise<string>;
 }

@@ -188,13 +188,11 @@ class TablePreviewElement extends Polymer.Element {
       const template = new TableSchemaTemplate(tableName);
 
       try {
-        const model = await TemplateManager.newNotebookFromTemplate(template);
+        const notebook = await TemplateManager.newNotebookFromTemplate(template);
 
-        if (model) {
-          const newFile = await this._fileManager.save(model) as DatalabFile;
-          const basePath = await this._apiManager.getBasePath();
-          const prefix = location.protocol + '//' + location.host + basePath + '/';
-          window.open(prefix + 'notebooks' + '/' + newFile.path, '_blank');
+        if (notebook) {
+          FileManagerFactory.getInstanceForType(notebook.id.source).getNotebookUrl(notebook.id)
+            .then((url) => window.open(url, '_blank'));
         }
       } catch (e) {
         Utils.showErrorDialog('Error', e.message);

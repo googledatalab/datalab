@@ -23,9 +23,9 @@
 class DatalabEditorElement extends Polymer.Element {
 
   /**
-   * Path of the file to load in the editor.
+   * FileId object for the file to load in the editor.
    */
-  public filePath: string;
+  public fileId: DatalabFileId | null;
 
   private _busy: boolean;
   private _editor: CodeMirror.Editor;
@@ -45,9 +45,9 @@ class DatalabEditorElement extends Polymer.Element {
         type: Object,
         value: null,
       },
-      filePath: {
+      fileId: {
         notify: true,
-        type: String,
+        type: Object,
         value: '',
       },
     };
@@ -55,10 +55,6 @@ class DatalabEditorElement extends Polymer.Element {
 
   async ready() {
     super.ready();
-
-    // TODO: This should get the FileManager instance that corresponds to the
-    // origin of the file opened in the editor
-    this._fileManager = FileManagerFactory.getInstance();
 
     // Get the theme.
     const settings = await SettingsManager.getUserSettingsAsync()
@@ -68,28 +64,34 @@ class DatalabEditorElement extends Polymer.Element {
       this._theme = settings.theme;
     }
 
-    // Get the file contents, or empty string if no path is specified
+    // Get the file contents, or empty string if no path is specified or the
+    // file could not be found.
     let content = '';
-    if (this.filePath) {
+    if (this.fileId) {
       this._busy = true;
-      // Passing the asText=true parameter guarantees the returned type is not a directory.
-      // An error is thrown if it is.
-      this._file = await this._fileManager.get(this.filePath, true /*asText*/)
-        .catch((e: Error) => {
-          Utils.showErrorDialog('Error', e.message);
-          return null;
-        });
+      try {
+        this._fileManager = FileManagerFactory.getInstanceForType(this.fileId.source);
+
+        // Get the file object and its contents
+        this._file = await this._fileManager.get(this.fileId);
+        content =
+            (await this._fileManager.getContent(this.fileId, true /*asText*/)).getEditorText();
+      } catch (e) {
+        Utils.showErrorDialog('Error loading file', e.message);
+        this.fileId = null;
+      }
 
       this._busy = false;
-
-      if (this._file) {
-        content = this._file.content as string;
-      }
+    } else {
+      // TODO: Make this more flexible instead of assuming the default
+      // destination is jupyter. If there's no fileId specified (blank editor),
+      // we should ask the user on save about the file destination.
+      this._fileManager = FileManagerFactory.getInstanceForType(FileManagerType.JUPYTER);
     }
 
     // Create the codemirror element and fill it with the file content.
     // TODO: try to detect the language of the file before creating
-    // the codemirror element. Perhaps use the file extension?
+    //       the codemirror element. Perhaps use the file extension?
     // TODO: load the mode dynamically instead of starting out with python.
     const editorConfig: CodeMirror.EditorConfiguration = {
       autofocus: true,
@@ -106,7 +108,7 @@ class DatalabEditorElement extends Polymer.Element {
   /**
    * Saves the currently open file.
    */
-  _saveAsync() {
+  async _saveAsync() {
     // If the file isn't defined, this means it's a blank editor, we'll need
     // to save a new file. Open a file picker dialog here to get the file path.
     if (!this._file) {
@@ -116,51 +118,34 @@ class DatalabEditorElement extends Polymer.Element {
         title: 'New File',
         withFileName: true,
       };
-      return Utils.showDialog(DirectoryPickerDialogElement, options)
-        .then((closeResult: DirectoryPickerDialogCloseResult) => {
-          if (closeResult.confirmed) {
+      const closeResult = await Utils.showDialog(DirectoryPickerDialogElement, options) as
+          DirectoryPickerDialogCloseResult;
 
-            // TODO: Prevent the dialog from closing if the input field is empty
-            if (closeResult.fileName) {
-              // TODO: Check if a file exists with this path, and show a
-              // confirmation dialog before replacing
-              const model: DatalabFile = {
-                content: this._editor.getDoc().getValue(),
-                created: new Date().toISOString(),
-                format: 'text',
-                last_modified: new Date().toISOString(),
-                mimetype: 'text/plain',
-                name: closeResult.fileName,
-                path: closeResult.directoryPath,
-                status: DatalabFileStatus.IDLE,
-                type: DatalabFileType.FILE,
-                writable: true,
-              };
-
-              return this._saveToJupyterAsync(model);
-            }
+      if (closeResult.confirmed) {
+        // TODO: Prevent the dialog from closing if the input field is empty
+        if (closeResult.fileName) {
+          try {
+            this._file = await this._fileManager.create(DatalabFileType.FILE,
+                closeResult.selectedDirectory.id, closeResult.fileName);
+            this.fileId = this._file.id;
+          } catch (e) {
+            Utils.showErrorDialog('Error saving file', 'A file with the name ' +
+                closeResult.fileName + ' already exists in this directory.');
+            throw e;
           }
-
-          return Promise.resolve(null);
-        });
+        }
+      }
     } else {
       // If _file is defined, we're saving to an existing file
-      const dirPath = this._getDirNameFromPath(this._file.path);
-
-      const model: DatalabFile = {
-        content: this._editor.getDoc().getValue(),
-        created: this._file.created,
-        format: this._file.format,
-        last_modified: new Date().toISOString(),
-        mimetype: this._file.mimetype,
-        name: this._file.name,
-        path: dirPath,
-        status: DatalabFileStatus.IDLE,
-        type: this._file.type,
-        writable: this._file.writable,
-      };
-
-      return this._saveToJupyterAsync(model);
+      if (this._file.type === DatalabFileType.DIRECTORY) {
+        // We can only save text files.
+        Utils.showErrorDialog('Error Saving', 'Cannot save edits to directories.');
+        return;
+      }
+    }
+    if (this._file) {
+      await this._fileManager.saveText(this._file, this._editor.getDoc().getValue());
+      await this.dispatchEvent(new NotificationEvent('Saved.'));
     }
   }
 
@@ -171,25 +156,6 @@ class DatalabEditorElement extends Polymer.Element {
     const tokens = path.split('/');
     tokens.pop();
     return tokens.join('/');
-  }
-
-  /**
-   * Saves the given file model to Jupyter, and fetches the save result to keep
-   * the client's _file object up to date.
-   */
-  _saveToJupyterAsync(model: DatalabFile) {
-    return this._fileManager.save(model)
-      .then((savedModel: DatalabFile) => {
-        this._file = model;
-        // Get the path and name from the saved model. The path is returned
-        // without the file name from Jupyter
-        this.set('_file.name', savedModel.name);
-        this.set('_file.path', savedModel.path);
-        this.set('filePath', savedModel.path);
-        this.filePath = this._file.path;
-        return this.dispatchEvent(new NotificationEvent('Saved.'));
-      })
-      .catch((e: Error) => Utils.showErrorDialog('Error', e.message));
   }
 
   /**
@@ -212,16 +178,11 @@ class DatalabEditorElement extends Polymer.Element {
 
       // TODO: Prevent the dialog from closing if the input field is empty
       if (closeResult.confirmed && closeResult.userInput) {
-        const file = this._file as DatalabFile;
-        const oldPath = file.path;
-        const newPath = this._getDirNameFromPath(file.path) + '/' + closeResult.userInput;
-
-        this._fileManager.rename(oldPath, newPath)
-          .then((savedModel) => {
-            this.dispatchEvent(new NotificationEvent('Renamed ' + oldPath + ' to ' + newPath));
-            this.set('_file.name', savedModel.name);
-            this.set('_file.path', savedModel.path);
-            this.set('filePath', savedModel.path);
+        this._fileManager.rename(this.fileId as DatalabFileId, closeResult.userInput)
+          .then((_savedModel) => {
+            this._file = _savedModel;
+            this.fileId = this._file.id;
+            this.dispatchEvent(new NotificationEvent('Renamed to ' + closeResult.userInput));
           })
           .catch((e: Error) => Utils.showErrorDialog('Error', e.message));
       }
