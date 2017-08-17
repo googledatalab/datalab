@@ -12,8 +12,6 @@
  * the License.
  */
 
-/// <reference path="../../modules/ApiManager.ts" />
-
 // Instead of writing a .d.ts file containing this one line.
 declare function marked(markdown: string): string;
 
@@ -24,10 +22,16 @@ declare function marked(markdown: string): string;
  */
 class DetailsPaneElement extends Polymer.Element {
 
+  private static _noFileMessage = 'Select an item to view its details.';
+  private static _emptyFileMessage = 'Empty file.';
+  private static _emptyNotebookMessage = 'Empty notebook.';
+  private static _longNotebookMessage = 'Showing markdown from the first two.';
+  private static _longFileMessage = 'Showing the first 30.';
+
   /**
    * File whose details to show.
    */
-  public file: ApiFile;
+  public file: DatalabFile;
 
   /**
    * Whether the pane is actively tracking selected items. This is used to avoid fetching the
@@ -35,33 +39,34 @@ class DetailsPaneElement extends Polymer.Element {
    */
   public active: boolean;
 
+  private _fileManager: FileManager;
   private _message = ''; // To show in the placeholder field.
 
-  private static _noFileMessage = 'Select an item to view its details.';
-  private static _emptyFileMessage = 'Empty file.';
-  private static _emptyNotebookMessage = 'Empty notebook.';
-  private static _longNotebookMessage = 'Showing markdown from the first two.';
-  private static _longFileMessage = 'Showing the first 30.';
-
-  static get is() { return "details-pane"; }
+  static get is() { return 'details-pane'; }
 
   static get properties() {
     return {
-      file: {
-        type: Object,
-        value: {},
-        observer: '_reloadDetails',
-      },
-      active: {
-        type: Boolean,
-        value: true,
-        observer: '_reloadDetails',
-      },
       _message: {
         type: String,
         value: '',
       },
-    }
+      active: {
+        observer: '_reloadDetails',
+        type: Boolean,
+        value: true,
+      },
+      file: {
+        observer: '_reloadDetails',
+        type: Object,
+        value: {},
+      },
+    };
+  }
+
+  constructor() {
+    super();
+
+    this._fileManager = FileManagerFactory.getInstance();
   }
 
   ready() {
@@ -74,7 +79,7 @@ class DetailsPaneElement extends Polymer.Element {
    * selected item is a directory. For notebooks, the first two cells are pulled from the file,
    * and any markdown they contain is rendered in the pane. For now, we also support other
    * plain text files with mime type text/*, and JSON files.
-   * 
+   *
    * TODO: Consider adding a spinning animation while this data loads.
    */
   _reloadDetails() {
@@ -83,13 +88,13 @@ class DetailsPaneElement extends Polymer.Element {
       return;
     }
 
-    if (this.file.type === 'notebook' || this._isPlainTextFile(this.file)) {
-      ApiManager.getJupyterFile(this.file.path)
-        .then((file: JupyterFile) => {
+    if (this.file.type === DatalabFileType.NOTEBOOK || this._isPlainTextFile(this.file)) {
+      this._fileManager.get(this.file.path)
+        .then((file: DatalabFile) => {
 
           // If this is a notebook, get the first two cells and render any markdown in them.
-          if (file.type === 'notebook') {
-            const cells = (<JupyterNotebookModel>file.content).cells;
+          if (file.type === DatalabFileType.NOTEBOOK) {
+            const cells = (file.content as Notebook).cells;
             if (cells.length === 0) {
               this.$.previewHtml.innerHTML = '';
               this._message = DetailsPaneElement._emptyNotebookMessage;
@@ -97,11 +102,11 @@ class DetailsPaneElement extends Polymer.Element {
               const firstTwoCells = cells.slice(0, 2);
 
               let markdownHtml = '';
-              firstTwoCells.forEach(cell => {
+              firstTwoCells.forEach((cell) => {
                 if (cell.cell_type === 'markdown') {
                   markdownHtml += marked(cell.source);
                 }
-              })
+              });
               this.$.previewHtml.innerHTML = markdownHtml;
               this._message = ' Notebook with ' + cells.length + ' cells. ';
               if (cells.length > 2) {
@@ -112,7 +117,7 @@ class DetailsPaneElement extends Polymer.Element {
           // If this is a text file, show the first N lines.
           } else if (this._isPlainTextFile(file)) {
 
-            const content = <string>file.content;
+            const content = file.content as string;
             if (content.trim() === '') {
               this.$.previewHtml.innerHTML = '';
               this._message = DetailsPaneElement._emptyFileMessage;
@@ -144,7 +149,7 @@ class DetailsPaneElement extends Polymer.Element {
    * Returns true if the contents of this file can be read as plain text.
    * @param file object for the file whose details to display.
    */
-  _isPlainTextFile(file: JupyterFile) {
+  _isPlainTextFile(file: DatalabFile) {
     return file &&
            file.mimetype && (
              file.mimetype.indexOf('text/') > -1 ||

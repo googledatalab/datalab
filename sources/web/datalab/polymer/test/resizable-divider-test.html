@@ -1,0 +1,60 @@
+<!--
+Copyright 2017 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License
+is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+or implied. See the License for the specific language governing permissions and limitations under
+the License.
+-->
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../web-component-tester/browser.js"></script>
+
+    <link rel="import" href="../components/resizable-divider/resizable-divider.html">
+  </head>
+  <body>
+
+    <style>
+      #container {
+        height: 800px;
+        width: 400px;
+      }
+      #left-pane, #right-pane {
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <div id="container">
+      <test-fixture id="resizable-divider-fixture">
+        <template>
+            <resizable-divider>
+              <div slot="left">
+                <div id="left-pane">
+                  left pane
+                </div>
+              </div>
+              <div slot="right">
+                <div id="right-pane">
+                  right pane
+                </div>
+              </div>
+            </resizable-divider>
+        </template>
+      </test-fixture>
+    </div>
+
+    <script src="resizable-divider-test.js"></script>
+
+  </body>
+</html>

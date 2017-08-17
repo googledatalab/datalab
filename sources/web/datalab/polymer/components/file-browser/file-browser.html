@@ -1,0 +1,262 @@
+<!--
+Copyright 2017 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License
+is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+or implied. See the License for the specific language governing permissions and limitations under
+the License.
+-->
+
+<link rel="import" href="../../components/base-dialog/base-dialog.html">
+<link rel="import" href="../../components/bread-crumbs/bread-crumbs.html">
+<link rel="import" href="../../components/details-pane/details-pane.html">
+<link rel="import" href="../../components/input-dialog/input-dialog.html">
+<link rel="import" href="../../components/item-list/item-list.html">
+<link rel="import" href="../../components/shared-styles/shared-styles.html">
+<link rel="import" href="../../modules/api-manager-factory/api-manager-factory.html">
+<link rel="import" href="../../modules/file-manager-factory/file-manager-factory.html">
+<link rel="import" href="../../modules/session-manager/session-manager.html">
+<link rel="import" href="../../modules/settings-manager/settings-manager.html">
+<link rel="import" href="../directory-picker-dialog/directory-picker-dialog.html">
+
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/iron-icons/editor-icons.html">
+<link rel="import" href="../../bower_components/iron-icons/hardware-icons.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-progress/paper-progress.html">
+
+<dom-module id="file-browser">
+  <template>
+
+    <style include="datalab-shared-styles">
+      :host {
+        display: flex;
+        flex-direction: column;
+      }
+      div {
+        font-family: var(--app-content-font-family);
+        font-size: var(--app-content-font-size);
+        color: var(--primary-fg-color);
+      }
+      #toolbar {
+        flex: 0 0 var(--toolbar-height);
+        width: 100%;
+        background-color: var(--secondary-bg-color);
+        border-bottom: 1px solid var(--border-color);
+      }
+      #altAddToolbarToggle, #altUpdateToolbarToggle {
+        display: none;
+      }
+      #altAddToolbarContainer, #altUpdateToolbarContainer {
+        position: relative;
+      }
+      #altAddToolbar, #altUpdateToolbar {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        background-color: var(--secondary-bg-color);
+        color: var(--primary-fg-color);
+        position: absolute;
+        left: 0px;
+        margin: 0px;
+        padding: 10px;
+        min-width: 150px;
+        box-shadow: -3px 3px 10px -3px rgba(0, 0, 0, 0.3);
+      }
+      #altAddToolbar > *, #altUpdateToolbar > * {
+        padding: 10px 0px;
+        margin: 0px;
+        width: 100%;
+      }
+      .toolbar-button {
+        color: var(--primary-fg-color);
+        margin: 4px;
+        font-weight: normal;
+        border-radius: 0px;
+        white-space: nowrap;
+      }
+      .toolbar-button > iron-icon {
+        min-width: 20px;
+        max-width: 20px;
+        padding-right: 5px;
+      }
+      .toolbar-button > span {
+        width: 70%;
+      }
+      .toolbar-button[disabled] {
+        color: var(--disabled-fg-color);
+        background-color: var(--secondary-bg-color);
+      }
+      #file-picker {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+      }
+      #navbar {
+        display: flex;
+        flex: 0 0 var(--toolbar-height);
+        background-color: var(--primary-bg-color);
+      }
+      .navbar-button {
+        min-width: 35px;
+        margin: 0px;
+        border-radius: 0px;
+        flex: 0 0 auto;
+      }
+      .navbar-button[disabled] {
+        color: var(--disabled-fg-color);
+        background-color: var(--disabled-bg-color);
+      }
+      .files-container {
+        display: flex;
+        flex: 1 1 auto;
+      }
+      #files {
+        flex: 1 1 auto;
+        background-color: var(--primary-bg-color);
+      }
+      #detailsPane {
+        background-color: var(--secondary-bg-color);
+        box-shadow: inset 4px 0px 10px -3px rgba(0, 0, 0, 0.1);
+        transition: width var(--app-animation-duration);
+      }
+      .details-pane-enabled--true {
+        width: var(--preview-pane-width);
+      }
+      .details-pane-enabled--false {
+        width: 0px;
+      }
+      .vseparator {
+        display: inline;
+        border-left: 1px solid var(--border-color);
+        line-height: 48px;
+      }
+      #breadCrumbs {
+        flex: 1 1 auto;
+      }
+    </style>
+
+    <div id="toolbar" hidden$="{{small}} || {{hideToolbar}}">
+
+      <!--Default Add toolbar, contains Add buttons for notebook, file, and folder-->
+      <span id="addToolbar">
+        <paper-button class="toolbar-button" on-click="_createNewNotebook">
+          <iron-icon icon="add-box"></iron-icon>
+          <span>Notebook</span>
+        </paper-button>
+        <paper-button class="toolbar-button" on-click="_createNewFile">
+          <iron-icon icon="add-box"></iron-icon>
+          <span>File</span>
+        </paper-button>
+        <paper-button class="toolbar-button" on-click="_createNewDirectory">
+          <iron-icon icon="add-box"></iron-icon>
+          <span>Folder</span>
+        </paper-button>
+      </span>
+
+      <!--Alternative Add toolbar, shows up when toolbar is too small-->
+      <span id="altAddToolbarContainer">
+        <paper-button id="altAddToolbarToggle" class="toolbar-button"
+                      on-click="_toggleAltAddToolbar">
+          <iron-icon icon="add-box"></iron-icon>
+          <span>New</span>
+          <iron-icon icon="hardware:keyboard-arrow-down"></iron-icon>
+        </paper-button>
+        <paper-dialog id="altAddToolbar">
+        </paper-dialog>
+      </span>
+
+      <!--Default Update toolbar, contains buttons to modify files/folders-->
+      <span id="updateToolbar">
+        <paper-button class="toolbar-button" on-click="_altUpload">
+          <iron-icon icon="file-upload"></iron-icon>
+          <span>Upload</span>
+        </paper-button>
+        <!--This is hidden but its functionality is used by the alt upload button above-->
+        <input type="file" id="altFileUpload" multiple style="display: none"
+               on-change="_upload">
+      <paper-button class="toolbar-button" on-click="_openSelectedInEditor"
+                    disabled$={{!selectedFile}}>
+        <iron-icon icon="editor:short-text"></iron-icon>
+        <span>Edit as Text</span>
+      </paper-button>
+        <paper-button class="toolbar-button" on-click="_copySelectedItem"
+                      disabled$={{!selectedFile}}>
+          <iron-icon icon="content-copy"></iron-icon>
+          <span>Copy</span>
+        </paper-button>
+        <paper-button class="toolbar-button" on-click="_moveSelectedItem"
+                      disabled$={{!selectedFile}}>
+          <iron-icon icon="redo"></iron-icon>
+          <span>Move</span>
+        </paper-button>
+        <paper-button class="toolbar-button" on-click="_renameSelectedItem"
+                      disabled$={{!selectedFile}}>
+          <iron-icon icon="editor:border-color"></iron-icon>
+          <span>Rename</span>
+        </paper-button>
+        <!--TODO: Delete operation supports deleting multiple files, but we'll
+        only enable the button when one file is selected for now, until we get
+        the group moving/copying functionality too-->
+        <paper-button class="toolbar-button" on-click="_deleteSelectedItems"
+                      disabled$={{!selectedFile}}>
+          <iron-icon icon="delete"></iron-icon>
+          <span>Delete</span>
+        </paper-button>
+      </span>
+
+      <!--Alternative Update toolbar, shows up when toolbar is too small-->
+      <span id="altUpdateToolbarContainer">
+        <paper-button id="altUpdateToolbarToggle" class="toolbar-button"
+                      on-click="_toggleAltUpdateToolbar">
+          <iron-icon icon="more-horiz"></iron-icon>
+        </paper-button>
+        <paper-dialog id="altUpdateToolbar">
+        </paper-dialog>
+      </span>
+
+    </div>
+
+    <div id="file-picker">
+      <!--Navigation bar with back/forward buttons, refresh, and breadcrumbs-->
+      <div id="navbar">
+        <paper-button id="backNav" class="navbar-button" on-click="_navBackward">
+          <iron-icon icon="chevron-left"></iron-icon>
+        </paper-button>
+        <paper-button id="forwardNav" class="navbar-button" on-click="_navForward">
+          <iron-icon icon="chevron-right"></iron-icon>
+        </paper-button>
+        <paper-button class="navbar-button" hidden$="{{small}}" on-click="_fetchFileList">
+          <iron-icon icon="refresh"></iron-icon>
+        </paper-button>
+        <div class="vseparator"></div>
+        <bread-crumbs id="breadCrumbs"></bread-crumbs>
+        <paper-button id="toggleDetails" class="navbar-button" on-click="_toggleDetailsPane"
+                      hidden$="{{small}}">
+          <iron-icon icon="visibility"></iron-icon>
+        </paper-button>
+      </div>
+
+      <!--Thin progress bar that shows until files are loaded-->
+      <paper-progress id="progressBar" class="progressbar" indeterminate disabled={{!_fetching}}>
+      </paper-progress>
+
+      <!--File listing-->
+      <div class="files-container">
+        <item-list id="files" hide-header$="{{small}}" disable-selection$="{{small}}"></item-list>
+        <details-pane id="detailsPane" file="{{selectedFile}}" active="{{_isDetailsPaneEnabled}}"
+                      class$="details-pane-enabled--{{_isDetailsPaneEnabled}}">
+        </details-pane>
+        </div>
+      </div>
+    </div>
+
+  </template>
+</dom-module>
+
+<script src="file-browser.js"></script>

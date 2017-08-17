@@ -14,6 +14,15 @@
 
 declare module common {
 
+  interface UserSettings {
+    startuppath: string,
+    theme: string,
+    idleTimeoutShutdownCommand: string,
+    idleTimeoutInterval: string,
+    oauth2ClientId: string,
+    [index: string]: string,
+  }
+
   interface AppSettings {
 
     /**
@@ -156,6 +165,13 @@ declare module common {
     idleTimeoutShutdownCommand: string;
   }
 
+  interface TimeoutInfo {
+    enabled: boolean;
+    expirationTime: number;
+    secondsRemaining: number;
+    idleTimeoutSeconds: number;
+  }
+
   interface Map<T> {
     [index: string]: T;
   }
@@ -167,4 +183,8 @@ declare module common {
   interface Callback0 {
     (e: Error): void;
   }
+}
+
+interface Window {
+  datalab: { [key: string]: string }
 }

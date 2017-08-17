@@ -118,7 +118,8 @@ define(['idle-timeout', 'util'], function(idleTimeout, util) {
       var dialogOptions = {
         title: 'About Google Cloud Datalab',
         body: $(dialogContent),
-        buttons: { 'OK': {} }
+        buttons: { 'OK': {} },
+        keyboard_manager: IPython.keyboard_manager,
       };
       dialog.modal(dialogOptions);
     }
@@ -205,7 +206,8 @@ define(['idle-timeout', 'util'], function(idleTimeout, util) {
         dialog.modal({
           title: 'Settings',
           body: $(markup),
-          buttons: { Close: {} }
+          buttons: { Close: {} },
+          keyboard_manager: IPython.keyboard_manager,
         });
       });
     });

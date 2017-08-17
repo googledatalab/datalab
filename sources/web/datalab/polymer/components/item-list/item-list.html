@@ -12,7 +12,8 @@ or implied. See the License for the specific language governing permissions and 
 the License.
 -->
 
-<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-icons/editor-icons.html">
+<link rel="import" href="../../bower_components/iron-icons/hardware-icons.html">
 <link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
 <link rel="import" href="../../bower_components/paper-item/paper-item.html">
 
@@ -20,21 +21,27 @@ the License.
   <template>
 
     <style include="datalab-shared-styles">
+      :host {
+        display: flex;
+        flex-direction: column;
+      }
+      div {
+        font-family: var(--app-content-font-family);
+        font-size: var(--app-content-font-size);
+        color: var(--primary-fg-color);
+      }
+      #header-container {
+        flex: 0 0 var(--toolbar-height);
+      }
       #header {
         user-select: none;
-        height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
         display: flex;
         line-height: calc(var(--toolbar-height) - 1px);
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid var(--border-color);
       }
-      #list-container {
+      #listContainer {
+        flex: 1 1 auto;
         overflow: auto;
-      }
-      .list-container-hide-header--false {
-        height: calc(100% - var(--toolbar-height));
-      }
-      .list-container-hide-header--true {
-        height: 100%;
       }
       .row {
         user-select: none;
@@ -45,20 +52,21 @@ the License.
         cursor: default;
       }
       .row:nth-child(even) {
-        background-color: #fafafa;
+        background-color: var(--secondary-bg-color);
       }
       .row:hover {
-        background-color: var(--app-secondary-color);
+        background-color: var(--selection-bg-color);
       }
       .row[selected] > * {
         color: var(--selection-fg-color);
       }
       .checkbox-col {
-        flex-basis: 50px;
+        flex: 0 0 50px;
         text-align: center;
       }
       .checkbox-col > paper-checkbox {
         --paper-checkbox-size: 15px;
+        --paper-checkbox-unchecked-color: var(--primary-fg-color);
         --paper-checkbox-checked-color: var(--selection-fg-color);
       }
       .first-col {
@@ -79,22 +87,25 @@ the License.
 
     <!--Header row-->
     <!--Need this extra div because #header has a display modifier, cannot set hidden-->
-    <div hidden$="{{hideHeader}}">
+    <div class="header-container" hidden$="{{hideHeader}}">
       <div id="header">
-        <div class="checkbox-col"></div>
+        <div class="checkbox-col">
+          <paper-checkbox id="selectAllCheckbox" on-checked-changed="_selectAllChanged"
+                          checked={{_isAllSelected}}>
+          </paper-checkbox>
+        </div>
         <div class="first-col"><strong>{{columns.0}}</strong></div>
         <div class="second-col"><strong>{{columns.1}}</strong></div>
       </div>
     </div>
 
     <!--Item list-->
-    <div id="list-container" class$="list-container-hide-header--{{hideHeader}}">
+    <div id="listContainer">
       <template is="dom-repeat" id="list" items="{{rows}}" as="row">
         <paper-item class="row" selected$={{row.selected}} on-click="_rowClicked"
                     on-dblclick="_rowDoubleClicked">
           <div class="checkbox-col">
-            <paper-checkbox checked={{row.selected}} checkedChanged="_rowClicked"
-                            hidden$="{{disableSelection}}">
+            <paper-checkbox checked={{row.selected}} hidden$="{{disableSelection}}">
             </paper-checkbox>
           </div>
           <div class="first-col">
@@ -112,4 +123,3 @@ the License.
 </dom-module>
 
 <script src="item-list.js"></script>
-

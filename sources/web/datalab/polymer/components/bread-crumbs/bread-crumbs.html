@@ -1,0 +1,117 @@
+<!--
+Copyright 2017 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License
+is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+or implied. See the License for the specific language governing permissions and limitations under
+the License.
+-->
+
+<link rel="import" href="../../components/shared-styles/shared-styles.html">
+
+<dom-module id="bread-crumbs">
+  <template>
+
+    <style include="datalab-shared-styles">
+      #breadcrumb {
+        user-select: none;
+      }
+      #homeCrumb, #ellipsisCrumb {
+        width: 55px;
+      }
+      #ellipsisCrumb a {
+        font-weight: bolder;
+        box-shadow: inset 10px 0px 7px -8px var(--selection-bg-color);
+      }
+      #breadcrumb div.crumb {
+        float: left;
+        max-width: calc(100% - 55px); /* Stretch as much as we can until the ellipsis div */
+      }
+      #breadcrumb div.hidden {
+        position: absolute;
+        visibility: hidden;
+      }
+      #breadcrumb div.crumb a {
+        display: flex;
+        background-color: var(--primary-bg-color);
+        text-decoration: none;
+        position: relative;
+        line-height: 48px;
+        margin-right: 25px;
+        height: 100%;
+        color: var(--selection-fg-color);
+      }
+      #breadcrumb div.crumb a div {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      #homeCrumb a, #ellipsisCrumb a {
+        padding-left: 15px !important;
+      }
+      #homeCrumb a:before, #ellipsisCrumb a:before {
+        border: none !important;
+      }
+      #breadcrumb div.crumb a:before, #breadcrumb div.crumb a:after {
+        color: var(--primary-bg-color);
+        content: "";
+        position: absolute;
+        border: 0 solid var(--primary-bg-color);
+        border-width: 24px 12px;
+      }
+      #breadcrumb div.crumb a:before {
+        left: -24px;
+        border-left-color: transparent;
+      }
+      #breadcrumb div.crumb a:after {
+        left: 100%;
+        border-color: var(--border-color);
+        border-left-color: var(--primary-bg-color);
+      }
+      #breadcrumb div.crumb a:hover {
+        background-color: var(--secondary-bg-color);
+      }
+      #breadcrumb div.crumb a:hover:before {
+        border-color: var(--secondary-bg-color);
+        border-left-color: transparent;
+      }
+      #breadcrumb div.crumb a:hover:after {
+        border-left-color: var(--secondary-bg-color);
+      }
+      #breadcrumb div.crumb:nth-last-child(2) a {
+        padding-right: 15px;
+        margin-right: 0px;
+      }
+      #breadcrumb div.crumb:nth-last-child(2) a:hover {
+        border-right: 1px solid var(--border-color);
+      }
+      #breadcrumb div.crumb:nth-last-child(2) a:after {
+        border: none;
+      }
+    </style>
+
+    <div id="breadcrumb">
+      <div id="ellipsisCrumb" class="crumb hidden" on-click="_ellipsisClicked">
+        <a href="#">...</a>
+      </div>
+      <!--Always show a '/' crumb for home-->
+      <!-- TODO: Consider making this crumb customizable -->
+      <div class="crumb" id="homeCrumb">
+        <a href="#" on-click="_rootClicked">/</a>
+      </div>
+      <template id="breadcrumbsTemplate" is="dom-repeat" items={{crumbs}}>
+        <div class="crumb part" on-click="_crumbClicked">
+          <a href="#"><div>{{item}}</div></a>
+        </div>
+      </template>
+    </div>
+
+  </template>
+</dom-module>
+
+<script src="bread-crumbs.js"></script>

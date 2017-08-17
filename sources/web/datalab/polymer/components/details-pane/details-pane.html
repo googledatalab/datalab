@@ -13,25 +13,21 @@ the License.
 -->
 
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
+<link rel="import" href="../../modules/file-manager-factory/file-manager-factory.html">
 
 <dom-module id="details-pane">
   <template>
     <style include="datalab-shared-styles">
       #container {
-        padding: 0px 20px;
         height: 100%;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
       }
-      .content {
-        padding: 15px 3px;
-        margin: 0px;
-      }
       #previewHtml {
-        background-color: #fff;
-        padding: 0px 10px;
-        margin: 10px 0px;
+        background-color: var(--primary-bg-color);
+        padding: 10px;
+        margin: 10px;
         overflow-y: auto;
         overflow-x: hidden;
         box-shadow: 5px 5px 10px -3px rgba(0, 0, 0, 0.1);

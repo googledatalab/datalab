@@ -34,6 +34,8 @@ ENTRYPOINT="/datalab/run.sh"
 DEVROOT_DOCKER_OPTION=''
 LIVE_MODE=1
 PYDATALAB=''
+MORE_ENV=''
+CONSOLE_LOG_LEVEL='debug'
 
 function realpath() {
   perl -MCwd -e 'print Cwd::realpath($ARGV[0]),qq<\n>' $1
@@ -52,6 +54,18 @@ while [ $# -gt 0 ]; do
   case "$1" in
     shell)
       ENTRYPOINT="/bin/bash"
+      shift
+      ;;
+    -e)
+      MORE_ENV="${MORE_ENV}-e $2 "
+      shift
+      shift
+      ;;
+    --log-level)
+      # Log levels: trace(10), debug(20), info(30), warn(40), error(50), fatal(60)
+      # See https://github.com/trentm/node-bunyan#levels
+      CONSOLE_LOG_LEVEL="$2"
+      shift
       shift
       ;;
     --no-live)
@@ -91,6 +105,6 @@ docker run -it --entrypoint=$ENTRYPOINT \
   -e "PROJECT_ID=$PROJECT_ID" \
   -e "DATALAB_ENV=local" \
   -e "DATALAB_DEBUG=true" \
-  -e "DATALAB_EXPERIMENTAL_UI=false" \
-  -e 'DATALAB_SETTINGS_OVERRIDES={"consoleLogLevel": "debug" }' \
+  -e "DATALAB_SETTINGS_OVERRIDES={\"consoleLogLevel\": \"${CONSOLE_LOG_LEVEL}\" }" \
+  ${MORE_ENV} \
   datalab

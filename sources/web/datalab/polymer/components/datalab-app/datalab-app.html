@@ -15,40 +15,48 @@ the License.
 <link rel="import" href="../../bower_components/app-route/app-location.html">
 <link rel="import" href="../../bower_components/app-route/app-route.html">
 <link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
-<link rel="import" href="../../bower_components/polymer/polymer.html">
 
-<link rel="import" href="../../components/datalab-files/datalab-files.html">
-<link rel="import" href="../../components/datalab-sessions/datalab-sessions.html">
+<link rel="import" href="../../components/datalab-notification/datalab-notification.html">
 <link rel="import" href="../../components/datalab-sidebar/datalab-sidebar.html">
 <link rel="import" href="../../components/datalab-toolbar/datalab-toolbar.html">
+<link rel="import" href="../../components/resizable-divider/resizable-divider.html">
+<link rel="import" href="../../modules/api-manager-factory/api-manager-factory.html">
 
 <dom-module id="datalab-app">
   <template>
     <style include="datalab-shared-styles">
+      :host {
+        background-color: var(--primary-bg-color);
+      }
       #container {
         height: 100%;
         display: flex;
         flex-direction: column;
       }
+      datalab-toolbar {
+        flex: 0 0 var(--toolbar-height);
+      }
       .datalab-contents {
         display: flex;
-        height: calc(100% - var(--toolbar-height));
+        flex: 1 1 auto;
       }
       .datalab-sidebar {
-        width: var(--sidebar-width);
-        transition: width var(--app-animation-duration);
+        flex: 0 0 var(--sidebar-width);
+        transition: flex-basis var(--app-animation-duration);
       }
       .datalab-main-content {
-        flex-grow: 1;
+        flex: 1 1 auto;
         box-shadow: -4px 0px 10px -3px rgba(0, 0, 0, 0.1);
-        width: calc(100% - var(--sidebar-width));
       }
       iron-pages {
         height: 100%;
       }
-      @media only screen and (max-width: 970px) {
+      .page {
+        height: 100%;
+      }
+      @media only screen and (max-width: 800px) {
         .datalab-sidebar {
-          width: 60px;
+          flex-basis: var(--collapsed-sidebar-width);
         }
       }
     </style>
@@ -63,19 +71,24 @@ the License.
     <div id="container">
       <datalab-toolbar></datalab-toolbar>
       <div class="datalab-contents">
-        <div class="datalab-sidebar">
-          <datalab-sidebar page={{page}}></datalab-sidebar>
-        </div>
+        <datalab-sidebar class="datalab-sidebar" page={{page}}></datalab-sidebar>
         <div class="datalab-main-content">
-          <iron-pages selected="{{page}}" attr-for-selected="name" fallback-selection="files">
-            <datalab-files name="files"></datalab-files>
-            <datalab-sessions name="sessions"></datalab-sessions>
+          <iron-pages id="pages" selected="{{page}}" attr-for-selected="name"
+                      fallback-selection="files">
+            <data-browser class="page" name="data2"></data-browser>
+            <datalab-data class="page" name="data"></datalab-data>
+            <file-browser class="page" name="files"></file-browser>
+            <datalab-sessions class="page" name="sessions"></datalab-sessions>
+            <datalab-terminal class="page" name="terminal"></datalab-terminal>
           </iron-pages>
         </div>
       </div>
     </div>
 
+    <datalab-notification></datalab-notification>
+
   </template>
 </dom-module>
 
+<script src="../../modules/Utils.js"></script>
 <script src="datalab-app.js"></script>

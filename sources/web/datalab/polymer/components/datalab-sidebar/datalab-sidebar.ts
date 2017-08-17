@@ -24,17 +24,48 @@ class SidebarElement extends Polymer.Element {
    */
   public page: string;
 
-  static get is() { return "datalab-sidebar"; }
+  private _dataTabId: string;
+  // TODO - remove _showDataTab once the Data tab is ready to be visible
+  private _showDataTab = false;
+  private _uiroot: string;
+
+  static get is() { return 'datalab-sidebar'; }
 
   static get properties() {
     return {
+      _dataTabId: {
+        type: String,
+        value: 'data',
+      },
+      _showDataTab: {
+        type: Boolean,
+        value: false,
+      },
+      _uiroot: {
+        type: String,
+        value: '',
+      },
       page: {
         type: String,
-        value: "files",
-      }
-    }
+        value: 'files',
+      },
+    };
   }
 
+  public ready() {
+    super.ready();
+    if (location.pathname.startsWith('/exp/')) {
+      this._uiroot = '/exp';
+    }
+    if (location.pathname.startsWith('/exp/data') ||
+        location.pathname.startsWith('/data')) {
+      this._showDataTab = true;
+    }
+    if (location.pathname.startsWith('/exp/data2') ||
+        location.pathname.startsWith('/data2')) {
+      this._dataTabId = 'data2';
+    }
+  }
 }
 
 customElements.define(SidebarElement.is, SidebarElement);

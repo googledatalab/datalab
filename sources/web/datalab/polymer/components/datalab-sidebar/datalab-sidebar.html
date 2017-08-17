@@ -28,8 +28,11 @@ the License.
         text-decoration: none;
       }
       .container {
-        background-color: var(--app-secondary-color);
+        background-color: var(--secondary-bg-color);
         height: 100%;
+      }
+      .button-placeholder {
+        height: var(--toolbar-height);
       }
       .sidebar-button {
         height: calc(var(--toolbar-height) - 1px);
@@ -37,7 +40,7 @@ the License.
         max-width: 100%;
         margin: 0px;
         padding: 0px;
-        color: #666;
+        color: var(--primary-fg-color);
         font-weight: normal;
         border-top: 1px solid transparent;
         --paper-button: {
@@ -56,31 +59,39 @@ the License.
       }
       .sidebar-button-title {
         color: inherit;
-        padding: 2px;
         overflow: hidden;
-        transition: opacity var(--app-animation-duration);
+        width: 100%;
+        transition: width var(--app-animation-duration);
       }
       .iron-selected > .sidebar-button {
-        background-color: #E8E8E8;
-        border-top: 1px solid #d3d3d3;
+        background-color: var(--selection-bg-color);
+        border-top: 1px solid var(--border-color);
         border-radius: 0px;
       }
       .iron-selected > .sidebar-button > * {
         color: var(--selection-fg-color);
       }
-      @media only screen and (max-width: 970px) {
+      @media only screen and (max-width: 800px) {
         .sidebar-button-title {
-          opacity: 0;
+          width: 0px;
         }
       }
     </style>
 
     <div class="container">
       <!--place holder div to align with the toolbar-->
-      <div class="sidebar-button"></div>
+      <div class="button-placeholder"></div>
       <iron-selector class="container" attr-for-selected="id" selected={{page}}
                      class="drawer-list" role="navigation">
-        <a href="/files" id="files">
+        <a href="{{_uiroot}}/{{_dataTabId}}" id="{{_dataTabId}}" hidden$="{{!_showDataTab}}">
+          <paper-button class="sidebar-button">
+            <div class="sidebar-button-container">
+              <iron-icon class="sidebar-button-icon" icon="av:library-books"></iron-icon>
+              <div class="sidebar-button-title">Data</div>
+            </div>
+          </paper-button>
+        </a>
+        <a href="{{_uiroot}}/files" id="files">
           <paper-button class="sidebar-button">
             <div class="sidebar-button-container">
               <iron-icon class="sidebar-button-icon" icon="editor:insert-drive-file"></iron-icon>
@@ -88,11 +99,19 @@ the License.
             </div>
           </paper-button>
         </a>
-        <a href="/sessions" id="sessions">
+        <a href="{{_uiroot}}/sessions" id="sessions">
+          <paper-button class="sidebar-button">
+            <div class="sidebar-button-container">
+              <iron-icon class="sidebar-button-icon" icon="list"></iron-icon>
+              <div class="sidebar-button-title">Sessions</div>
+            </div>
+          </paper-button>
+        </a>
+        <a href="{{_uiroot}}/terminal" id="terminal">
           <paper-button class="sidebar-button">
             <div class="sidebar-button-container">
               <iron-icon class="sidebar-button-icon" icon="av:featured-play-list"></iron-icon>
-              <div class="sidebar-button-title">Sessions</div>
+              <div class="sidebar-button-title">Terminal</div>
             </div>
           </paper-button>
         </a>

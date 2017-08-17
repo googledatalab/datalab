@@ -14,6 +14,7 @@
 
 """Methods for implementing the `datalab create` command."""
 
+import json
 import os
 import subprocess
 import tempfile
@@ -21,8 +22,6 @@ import tempfile
 import connect
 import utils
 
-
-defaultIdleTimeout = '0s'   # Default for now is disabled
 
 description = ("""`{0} {1}` creates a new Datalab instances running in a Google
 Compute Engine VM.
@@ -160,76 +159,75 @@ cleanup_tmp
 journalctl -u google-startup-scripts --no-pager > /var/log/startupscript.log
 """
 
-_DATALAB_CONTAINER_MANIFEST_URL = (
-    'http://metadata.google.internal/' +
-    'computeMetadata/v1/instance/attributes/google-container-manifest')
-
 _DATALAB_CLOUD_CONFIG = """
 #cloud-config
+
+users:
+- name: datalab
+  uid: 2000
+  groups: docker
+- name: logger
+  uid: 2001
+  groups: docker
+
+write_files:
+- path: /etc/systemd/system/datalab.service
+  permissions: 0644
+  owner: root
+  content: |
+    [Unit]
+    Description=datalab docker container
+    Requires=network-online.target
+    After=network-online.target
+
+    [Service]
+    Environment="HOME=/home/datalab"
+    ExecStart=/usr/bin/docker run --rm -u 0 \
+       --name=datalab \
+       -p 127.0.0.1:8080:8080 \
+       -v /mnt/disks/datalab-pd/content:/content \
+       -v /mnt/disks/datalab-pd/tmp:/tmp \
+       --env=HOME=/content \
+       --env=DATALAB_ENV=GCE \
+       --env=DATALAB_DEBUG=true \
+       --env='DATALAB_SETTINGS_OVERRIDES={{ \
+            "enableAutoGCSBackups": {1}, \
+            "consoleLogLevel": "{2}" \
+       }}' \
+       --env='DATALAB_GIT_AUTHOR={3}' \
+       --env='DATALAB_INITIAL_USER_SETTINGS={4}' \
+       {0}
+    Restart=always
+    RestartSec=1
+
+- path: /etc/systemd/system/logger.service
+  permissions: 0644
+  owner: root
+  content: |
+    [Unit]
+    Description=logging docker container
+    Requires=network-online.target
+    After=network-online.target
+
+    [Service]
+    Environment="HOME=/home/logger"
+    ExecStartPre=/usr/share/google/dockercfg_update.sh
+    ExecStartPre=-/usr/bin/docker rm -fv logger
+    ExecStart=/usr/bin/docker run --rm -u 0 \
+       --name=logger \
+       -v /var/log:/var/log \
+       -v /var/lib/docker/containers:/var/lib/docker/containers \
+       --env='FLUENTD_ARGS=-q' \
+       gcr.io/google_containers/fluentd-gcp:1.18
+    Restart=always
+    RestartSec=1
 
 runcmd:
 - ['while', '[', '!', '-e', '/mnt/disks/datalab-pd/tmp', ']', ';',
    'do', 'sleep', '1', ';', 'done']
-- ['curl', '-X', 'GET', '-H', 'Metadata-Flavor: Google','{0}',
-   '-o', '/tmp/podspec.yaml']
-- ['kubelet', '--pod-manifest-path', '/tmp/podspec.yaml']
-""".format(_DATALAB_CONTAINER_MANIFEST_URL)
-
-_DATALAB_CONTAINER_SPEC = """
-apiVersion: v1
-kind: Pod
-metadata:
-  name: 'datalab-server'
-spec:
-  containers:
-    - name: datalab
-      image: {0}
-      command: ['/datalab/run.sh']
-      imagePullPolicy: IfNotPresent
-      ports:
-        - containerPort: 8080
-          hostPort: 8080
-          hostIP: 127.0.0.1
-      env:
-        - name: DATALAB_ENV
-          value: GCE
-        - name: DATALAB_DEBUG
-          value: 'true'
-        - name: DATALAB_SETTINGS_OVERRIDES
-          value: '{{"enableAutoGCSBackups": {1}, "consoleLogLevel": "{2}" }}'
-        - name: DATALAB_GIT_AUTHOR
-          value: '{3}'
-        - name: DATALAB_IDLE_TIMEOUT
-          value: '{4}'
-      volumeMounts:
-        - name: content
-          mountPath: /content
-        - name: tmp
-          mountPath: /tmp
-    - name: logger
-      image: gcr.io/google_containers/fluentd-gcp:1.18
-      env:
-        - name: FLUENTD_ARGS
-          value: -q
-      volumeMounts:
-        - name: varlog
-          mountPath: /var/log
-        - name: varlibdockercontainers
-          mountPath: /var/lib/docker/containers
-          readOnly: true
-  volumes:
-    - name: content
-      hostPath:
-        path: /mnt/disks/datalab-pd/content
-    - name: tmp
-      hostPath:
-        path: /mnt/disks/datalab-pd/tmp
-    - name: varlog
-      hostPath:
-        path: /var/log
-    - name: varlibdockercontainers
-      hostPath:
-        path: /var/lib/docker/containers
+- systemctl daemon-reload
+- systemctl start datalab.service
+- systemctl start logger.service
 """
 
 
@@ -283,7 +281,7 @@ def flags(parser):
     parser.add_argument(
         '--idle-timeout',
         dest='idle_timeout',
-        default=defaultIdleTimeout,
+        default=None,
         help=(
             'interval after which an idle Datalab instance will shut down.'
             '\n\n'
@@ -530,7 +528,7 @@ def ensure_repo_exists(args, gcloud_repos, repo_name):
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
     list_cmd = ['list', '--quiet',
-                '--filter', 'name:{}'.format(repo_name),
+                '--filter', 'name:*/repos/{}'.format(repo_name),
                 '--format', 'value(name)']
     with tempfile.TemporaryFile() as tf:
         gcloud_repos(args, list_cmd, stdout=tf)
@@ -594,39 +592,35 @@ def run(args, gcloud_compute, gcloud_repos,
         cmd.extend(['--zone', args.zone])
 
     enable_backups = "false" if args.no_backups else "true"
+    idle_timeout = args.idle_timeout
     console_log_level = args.log_level or "warn"
-    idle_timeout = args.idle_timeout or defaultIdleTimeout
     user_email = args.for_user or email
     service_account = args.service_account or "default"
     # We have to escape the user's email before using it in the YAML template.
     escaped_email = user_email.replace("'", "''")
+    initial_user_settings = json.dumps({"idleTimeoutInterval": idle_timeout}) \
+        if idle_timeout else ''
     with tempfile.NamedTemporaryFile(delete=False) as startup_script_file, \
             tempfile.NamedTemporaryFile(delete=False) as user_data_file, \
-            tempfile.NamedTemporaryFile(delete=False) as manifest_file, \
             tempfile.NamedTemporaryFile(delete=False) as for_user_file:
         try:
             startup_script_file.write(_DATALAB_STARTUP_SCRIPT.format(
                 args.image_name, _DATALAB_NOTEBOOKS_REPOSITORY))
             startup_script_file.close()
-            user_data_file.write(_DATALAB_CLOUD_CONFIG)
-            user_data_file.close()
-            manifest_file.write(
-                _DATALAB_CONTAINER_SPEC.format(
+            user_data_file.write(_DATALAB_CLOUD_CONFIG.format(
                     args.image_name, enable_backups,
-                    console_log_level, escaped_email, idle_timeout))
-            manifest_file.close()
+                    console_log_level, escaped_email, initial_user_settings))
+            user_data_file.close()
             for_user_file.write(user_email)
             for_user_file.close()
             metadata_template = (
                 'startup-script={0},' +
                 'user-data={1},' +
-                'google-container-manifest={2},' +
-                'for-user={3}')
+                'for-user={2}')
             metadata_from_file = (
                 metadata_template.format(
                     startup_script_file.name,
                     user_data_file.name,
-                    manifest_file.name,
                     for_user_file.name))
             cmd.extend([
                 '--format=none',
@@ -645,7 +639,6 @@ def run(args, gcloud_compute, gcloud_repos,
         finally:
             os.remove(startup_script_file.name)
             os.remove(user_data_file.name)
-            os.remove(manifest_file.name)
             os.remove(for_user_file.name)
 
     if (not args.no_connect) and (not args.for_user):

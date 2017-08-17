@@ -84,6 +84,10 @@ def call_gcloud_quietly(args, gcloud_surface, cmd, report_errors=True):
                 print(stdout.read())
                 sys.stderr.write(stderr.read())
             raise
+        stderr.seek(0)
+        gcloud_stderr = stderr.read()
+        if 'WARNING' in gcloud_stderr:
+            sys.stderr.write(gcloud_stderr)
     return
 
 

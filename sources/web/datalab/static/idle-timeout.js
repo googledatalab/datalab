@@ -48,11 +48,14 @@ define(['base/js/dialog', 'base/js/events', 'util'], function(dialog, events, ut
   function _alertIdleShutdown() {
     util.debug.log('Idle timeout exceeded');
     const shutdownMsg = ('The datalab server shut down after exceeding the idle timeout of ' +
-        _secondsToString(timeoutInfo.idleTimeoutSeconds));
+        _secondsToString(timeoutInfo.idleTimeoutSeconds) +
+        '.\nUse the "datalab connect" command to restart it and reconnect.' +
+        '\nNotebooks are auto-saved periodically to a persistent disk and are available after reconnecting.');
     dialog.modal({
       title: 'Idle timeout exceeded',
       body: shutdownMsg,
       buttons: { 'Close': {} },
+      keyboard_manager: IPython.keyboard_manager,
     });
     timeoutInfo.enabled = false;  // Don't show this message more than once.
   }

@@ -17,72 +17,44 @@ the License.
 <dom-module id="base-dialog">
   <template>
     <style include="datalab-shared-styles">
-      #theDialog {
-        display: flex;
-        flex-direction: column;
+      :host {
+        display: block;
       }
-      .dialog-big--true {
-        width: 40%;
-        height: 40%;
+      .error-title--true {
+        color: #fff;
+        background-color: #ff7777;
       }
-      .dialog-big--false {
-        min-width: 300px;
-        min-height: 200px;
-      }
-      #title {
-        font-size: 16px;
-        text-align: center;
-        flex: 0 0 20px;
-        margin: 0px;
-        padding: 15px; /*Total height: 50px*/
-        background-color: var(--app-secondary-color);
+      #message {
+        padding: 20px;
       }
       #body {
-        margin: 0px;
-        flex-grow: 1;
-        position: relative;
-      }
-      #body > * {
-        /*Don't let anything inserted here overflow*/
-        position: absolute;
-        top: 0px;
-        bottom: 0px;
-        left: 0px;
-        right: 0px;
-      }
-      hr {
-        border-left: none;
-        border-right: none;
-        border-bottom: none;
-        border-top: 1px solid #eee;
-        margin: 0px;
-      }
-      .buttons {
         display: flex;
-        justify-content: center;
-        padding: 0px;
-        flex: 0 0 40px;
-        margin: 15px; /*Total height: 70px*/
+        flex-direction: column;
+        flex: 1 1 auto;
       }
       .confirm {
-        background-color: var(--app-secondary-color);
+        background-color: var(--secondary-bg-color);
         font-weight: bold;
       }
     </style>
-    <paper-dialog id="theDialog" class$="dialog-big--{{big}}" with-backdrop
+    <paper-dialog id="theDialog" class$="{{_sizeCssClass}} dialog" with-backdrop
                   on-keydown="_checkEnter">
-      <div id="title">{{title}}</div>
-      <!--message value is bound in javascript because it needs to bind to innerHTML-->
-      <div id="message" hidden$="{{!messageHtml}}">{{messageHtml}}</div>
-      <!--body acts as a place holder for extending elements, their custom
-      markup is inserted here by stamping it from Javascript-->
-      <div id="body"></div>
+      <div class$="dialog-title error-title--{{isError}}">{{title}}</div>
+      <div class="dialog-content">
+        <!--message value is bound in javascript because it needs to bind to innerHTML-->
+        <div id="message" hidden$="{{!messageHtml}}">{{messageHtml}}</div>
+        <!--body acts as a place holder for extending elements, their custom
+        markup is inserted here by stamping it from Javascript-->
+        <div id="body"></div>
+      </div>
       <hr>
-      <div class="buttons">
+      <div class="dialog-footer">
         <paper-button id="okButton" on-click="_confirmClose" class="confirm" >
           {{okLabel}}
         </paper-button>
-        <paper-button on-click="_cancelClose">{{cancelLabel}}</paper-button>
+        <paper-button hidden$={{isError}} on-click="_cancelClose">
+          {{cancelLabel}}
+        </paper-button>
       </div>
     </paper-dialog>
   </template>

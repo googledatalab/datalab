@@ -90,7 +90,7 @@ function cleanTestsHome() {
     -p 127.0.0.1:8081:8080 \
     -v $TESTS_HOME:/content \
     datalab \
-    -c "rm -rf /content/*"
+    -c "rm -rf /content/* && sleep 1"
 }
 
 function startContainers() {

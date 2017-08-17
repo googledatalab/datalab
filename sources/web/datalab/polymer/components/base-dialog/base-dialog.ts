@@ -16,7 +16,19 @@
  * Dialog close context, includes whether the dialog was confirmed.
  */
 interface BaseDialogCloseResult {
-  confirmed: boolean,
+  confirmed: boolean;
+}
+
+/**
+ * Options for opening a base dialog.
+ */
+interface BaseDialogOptions extends Object {
+  big?: boolean;
+  cancelLabel?: string;
+  isError?: boolean;
+  messageHtml?: string;
+  okLabel?: string;
+  title: string;
 }
 
 /**
@@ -51,47 +63,56 @@ class BaseDialogElement extends Polymer.Element {
    */
   public cancelLabel: string;
 
+  /**
+   * Whether this dialog is showing an error
+   */
+  public isError: boolean;
+
   private _closeCallback: (result: BaseDialogCloseResult) => void;
 
-  static get is() { return "base-dialog"; }
+  static get is() { return 'base-dialog'; }
 
   static get properties() {
     return {
-      title: {
+      _sizeCssClass: {
+        computed: '_computeSizeCssClass(big)',
         type: String,
-        value: '',
-      },
-      messageHtml: {
-        type: String,
-        value: '',
       },
       big: {
         type: Boolean,
         value: false,
       },
-      okLabel: {
-        type: String,
-        value: 'Ok',
-      },
       cancelLabel: {
         type: String,
         value: 'Cancel'
       },
-    }
+      isError: {
+        type: String,
+        value: false,
+      },
+      messageHtml: {
+        type: String,
+        value: '',
+      },
+      okLabel: {
+        type: String,
+        value: 'Ok',
+      },
+      title: {
+        type: String,
+        value: '',
+      },
+    };
   }
 
   open() {
-    const self = this;
-
     // Set the message's inner HTML
     if (this.messageHtml) {
       this.$.message.innerHTML = this.messageHtml;
     }
 
     // If the closed event fires then the confirm button hasn't been clicked
-    this.$.theDialog.addEventListener('iron-overlay-closed', function() {
-      self._cancelClose();
-    });
+    this.$.theDialog.addEventListener('iron-overlay-closed', () => this._cancelClose());
     this.$.theDialog.open();
   }
 
@@ -114,6 +135,10 @@ class BaseDialogElement extends Polymer.Element {
     return {};
   }
 
+  _computeSizeCssClass(big: boolean) {
+    return big ? 'big' : 'small';
+  }
+
   _confirmClose() {
     this._dialogClosed(true);
   }
@@ -125,7 +150,7 @@ class BaseDialogElement extends Polymer.Element {
   _dialogClosed(confirmed: boolean) {
     if (this._closeCallback) {
       this._closeCallback(Object.assign({
-        confirmed: confirmed,
+        confirmed,
       }, this.getCloseResult()));
     }
     this.$.theDialog.close();
@@ -135,8 +160,9 @@ class BaseDialogElement extends Polymer.Element {
    * Helper method to listen for Enter key when an input is present
    */
   _checkEnter(e: KeyboardEvent) {
-    if (e.keyCode === 13) // Enter
+    if (e.keyCode === 13) { // Enter
       this._confirmClose();
+    }
   }
 
 }

@@ -169,10 +169,19 @@ function sendUserCustomTheme(userId: string, response: http.ServerResponse): voi
  * @param path the incoming request path
  */
 export function isExperimentalResource(pathname: string) {
+  if (pathname.indexOf('/exp/') === 0) {
+    return true;
+  }
   const experimentalUiEnabled = process.env.DATALAB_EXPERIMENTAL_UI;
   return experimentalUiEnabled === 'true' && (
-      pathname.indexOf('/files') === 0 ||
+      pathname.indexOf('/data') === 0 ||
+      pathname.indexOf('/data2') === 0 ||
+      pathname === '/files' ||
+      // /files/path?download=true is used to download files from Jupyter
+      // TODO: use a different API to download files when we have a content service.
       pathname.indexOf('/sessions') === 0 ||
+      pathname.indexOf('/terminal') === 0 ||
+      pathname.indexOf('/editor') === 0 ||
       pathname.indexOf('/bower_components') === 0 ||
       pathname.indexOf('/components') === 0 ||
       pathname.indexOf('/images') === 0 ||
@@ -193,14 +202,27 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   // -------------------------------- start of experimental UI resources
   if (isExperimentalResource(pathname)) {
     logging.getLogger().debug('Serving experimental UI resource: ' + pathname);
+    let rootRedirect = 'files';
+    if (pathname.indexOf('/exp/') === 0) {
+      pathname = pathname.substr('/exp'.length);
+      rootRedirect = 'exp/files';
+    }
     if (pathname === '/') {
       response.statusCode = 302;
-      response.setHeader('Location', path.join(appSettings.datalabBasePath, 'files'));
+      response.setHeader('Location', path.join(appSettings.datalabBasePath, rootRedirect));
       response.end();
       return;
-    }
-    if (pathname === '/files' || pathname === '/sessions') {
+    } else if (pathname === '/data' ||
+        pathname === '/data2' ||
+        pathname === '/files' ||
+        pathname === '/sessions' ||
+        pathname === '/terminal') {
       pathname = '/index.html';
+    } else if (pathname === '/editor') {
+      pathname = '/editor.html';
+    } else if (pathname === '/index.css') {
+      var userSettings: common.UserSettings = settings.loadUserSettings(userId);
+      pathname = '/index.' + (userSettings.theme || 'light') + '.css';
     }
     pathname = 'experimental' + pathname;
     console.log('sending experimental file: ' + pathname);
@@ -263,7 +285,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   }
   else if (pathname.lastIndexOf('/custom.css') > 0) {
     var userId: string = userManager.getUserId(request);
-    var userSettings: common.Map<string> = settings.loadUserSettings(userId);
+    var userSettings: common.UserSettings = settings.loadUserSettings(userId);
     if ('theme' in userSettings) {
       var theme: string = userSettings['theme'];
       if (theme == 'custom') {

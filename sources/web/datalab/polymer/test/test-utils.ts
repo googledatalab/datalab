@@ -12,16 +12,8 @@
  * the License.
  */
 
-body {
-  margin: 0px;
-  padding: 0px;
-  height: 100%;
-}
-datalab-app {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  min-width: 470px;
-}
+/// <reference path="../node_modules/@types/mocha/index.d.ts" />
+/// <reference path="../node_modules/@types/chai/index.d.ts" />
+
+declare function assert(condition: boolean, message: string): null;
+declare function fixture(element: string): any;

@@ -24,38 +24,46 @@ import url = require('url');
 import userManager = require('./userManager');
 
 const idleCheckIntervalSeconds = 10;    // Seconds to wait between idle checks
-const idleTimeoutMinSeconds = 60;   // Don't allow setting a timeout less than one minute
+const idleTimeoutMinSeconds = 300;   // Don't allow setting a timeout less than 5 minutes
 
 let idleTimeoutEnabled = true;  // Allow user to enable and disable the timeout
 let idleTimeoutSeconds = 0;   // Shutdown after being idle this long; turned off if 0 or NaN
 let lastReset: number;  // The epoch, in seconds, since the last timout reset
 let shutdownCommand = '';
 
-export function initAndStart(appSettings: common.AppSettings) {
-  init(appSettings);
+export function initAndStart() {
+  init();
   reset();
   startChecker();
 }
 
-export function init(appSettings: common.AppSettings) {
+export function init() {
   const userSettings = settings.loadUserSettings(null);
   shutdownCommand = userSettings.idleTimeoutShutdownCommand;
-  if (!shutdownCommand) {
-    shutdownCommand = appSettings.idleTimeoutShutdownCommand;
-  }
   if (!shutdownCommand) {
     shutdownCommand = process.env.DATALAB_SHUTDOWN_COMMAND;
   }
   if (shutdownCommand) {
     let idleTimeoutStr = userSettings.idleTimeoutInterval;
-    logging.getLogger().debug('idleTimeoutStr from user settings: ' + idleTimeoutStr);
-    if (!idleTimeoutStr) {
-      idleTimeoutStr = appSettings.idleTimeoutInterval;
-      logging.getLogger().debug('idleTimeoutStr from app settings: ' + idleTimeoutStr);
+    if (idleTimeoutStr === undefined) {
+      logging.getLogger().debug('idleTimeoutStr from user settings is undefined');
+    } else {
+      logging.getLogger().debug('idleTimeoutStr from user settings: ' + idleTimeoutStr);
     }
     if (!idleTimeoutStr) {
       idleTimeoutStr = process.env.DATALAB_IDLE_TIMEOUT;
-      logging.getLogger().debug('idleTimeoutStr from env: ' + idleTimeoutStr);
+      if (idleTimeoutStr === undefined) {
+        logging.getLogger().debug('idleTimeoutStr from env is undefined');
+      } else {
+        logging.getLogger().debug('idleTimeoutStr from env: ' + idleTimeoutStr);
+      }
+    }
+    // For instances (actually, PDs) created before idle-timeout was implemented,
+    // the user's settings file may not have a value for idleTimeoutInterval.
+    // In this case, we set it to 0s to continue using the the no-idle-timeout
+    // behavior that was in place when that PD was created.
+    if (idleTimeoutStr === undefined) {
+      idleTimeoutStr = '0s';
     }
     setIdleTimeoutInterval(idleTimeoutStr);
   } else {

@@ -12,21 +12,30 @@
  * the License.
  */
 
-/// <reference path="../datalab-files/datalab-files.ts" />
+/// <reference path="../file-browser/file-browser.ts" />
 
 /**
  * Dialog close context, includes whether the dialog was confirmed, and the user selected
  * directory path.
  */
 interface DirectoryPickerDialogCloseResult extends BaseDialogCloseResult {
-  directoryPath: string,
+  directoryPath: string;
+  fileName?: string;
+}
+
+/**
+ * Options for opening a directory picker dialog.
+ */
+interface DirectoryPickerDialogOptions extends BaseDialogOptions {
+  fileName?: string;
+  withFileName: boolean;
 }
 
 /**
  * Directory Picker Dialog element for Datalab, extends the Base dialog element.
  * This element is a modal dialog that presents the user with a file picker that can navigate
  * into directories to select destination path of copying or moving an item. It uses a minimal
- * version of the datalab-files element, which shows the file picker without the toolbar, and
+ * version of the file-browser element, which shows the file picker without the toolbar, and
  * without the ability to select files.
  * The dialog returns the user selected directory path, if any.
  */
@@ -34,7 +43,31 @@ class DirectoryPickerDialogElement extends BaseDialogElement {
 
   private static _memoizedTemplate: PolymerTemplate;
 
-  static get is() { return "directory-picker-dialog"; }
+  /**
+   * Initial value of input box.
+   */
+  public fileName: string;
+
+  /**
+   * Whether to include an input box under the file picker.
+   */
+  public withFileName: boolean;
+
+  static get is() { return 'directory-picker-dialog'; }
+
+  static get properties() {
+    return {
+      ...super.properties,
+      fileName: {
+        type: String,
+        value: '',
+      },
+      withFileName: {
+        type: Boolean,
+        value: false,
+      },
+    };
+  }
 
   /**
    * This template is calculated once in run time based on the template of  the
@@ -54,6 +87,7 @@ class DirectoryPickerDialogElement extends BaseDialogElement {
   getCloseResult() {
     return {
       directoryPath: this.$.filePicker.currentPath,
+      fileName: this.withFileName ? this.$.fileNameBox.value : undefined,
     };
   }
 

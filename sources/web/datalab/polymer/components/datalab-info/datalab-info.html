@@ -1,0 +1,72 @@
+<!--
+Copyright 2017 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License
+is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+or implied. See the License for the specific language governing permissions and limitations under
+the License.
+-->
+
+<link rel="import" href="../../modules/settings-manager/settings-manager.html">
+
+<dom-module id="datalab-info">
+  <template>
+    <style include="datalab-shared-styles">
+      .link-list > div {
+        margin: 5px;
+        width: 250px;
+      }
+      .help-icon {
+        height: 15px;
+        vertical-align: text-top;
+      }
+    </style>
+
+    <p>Interactive notebooks, with Python and SQL on Google Cloud Platform.</p>
+    <p>Explore, transform, visualize and process data using BigQuery and Google Cloud Storage.</p>
+
+    <br>
+
+    <div class="mono">Version: {{version}}
+      Based on Jupyter (formerly IPython) 4
+    </div>
+
+    <h3>More Information</h3>
+
+    <div class="link-list">
+      <div><a href="https://cloud.google.com" target="_blank">
+        <iron-icon icon="open-in-new" class="help-icon"></iron-icon>
+        Product information
+      </a></div>
+      <div><a href="https://github.com/googledatalab/datalab" target="_blank">
+        <iron-icon icon="open-in-new" class="help-icon"></iron-icon>
+        Project on GitHub
+      </a></div>
+      <div><a href="http://localhost:8081/static/about.txt" target="_blank">
+        <iron-icon icon="open-in-new" class="help-icon"></iron-icon>
+        License and software information
+      </a></div>
+      <div><a href="https://cloud.google.com/terms/" target="_blank">
+        <iron-icon icon="open-in-new" class="help-icon"></iron-icon>
+        Terms of Service
+      </a></div>
+      <div><a href="http://www.google.com/intl/en/policies/" target="_blank">
+        <iron-icon icon="open-in-new" class="help-icon"></iron-icon>
+        Privacy Policy
+      </a></div>
+      <!-- TODO: Explore adding restart Server button here -->
+      <!--<div><a href="" target="_blank">
+        <iron-icon icon="open-in-new" class="help-icon"></iron-icon>
+        Restart Server
+      </a></div>-->
+    </div>
+
+  </template>
+</dom-module>
+
+<script src="datalab-info.js"></script>

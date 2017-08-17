@@ -25,11 +25,16 @@ import querystring = require('querystring');
 import url = require('url');
 import util = require('util');
 import idleTimeout = require('./idleTimeout');
+import logging = require('./logging');
 import userManager = require('./userManager');
 
 var SETTINGS_FILE = 'settings.json';
+var DEFAULT_USER_SETTINGS_FILE = 'userSettings.json';
 var METADATA_FILE = 'metadata.json';
+var BASE_PATH_FILE = 'basePath.json';
 const IDLE_TIMEOUT_KEY = 'idleTimeoutInterval';
+
+let lastUpdateUserSettingPromise = Promise.resolve(false);
 
 interface Metadata {
   instanceId: string;
@@ -42,10 +47,11 @@ interface Metadata {
  */
 export function loadAppSettings(): common.AppSettings {
   var settingsPath = path.join(__dirname, 'config', SETTINGS_FILE);
+  var basePathFile = path.join(__dirname, 'config', BASE_PATH_FILE);
   var metadataPath = path.join(__dirname, 'config', METADATA_FILE);
 
   if (!fs.existsSync(settingsPath)) {
-    console.log('App settings file %s not found.', settingsPath);
+    _log('App settings file %s not found.', settingsPath);
     return null;
   }
 
@@ -61,10 +67,16 @@ export function loadAppSettings(): common.AppSettings {
       metadata = <Metadata>JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
     }
 
-    var settings = <common.AppSettings>JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    const settings = <common.AppSettings>JSON.parse(fs.readFileSync(settingsPath, 'utf8') || '{}');
     settings.versionId = process.env['DATALAB_VERSION'] || '';
     if (process.env['DATALAB_CONFIG_URL']) {
       settings.configUrl = process.env['DATALAB_CONFIG_URL'];
+    }
+    if (!fs.existsSync(basePathFile)) {
+      _log('Base path setting file not found, falling back to empty path.');
+      settings.datalabBasePath = '';
+    } else {
+      settings.datalabBasePath = JSON.parse(fs.readFileSync(basePathFile, 'utf8'));
     }
     const settingsOverrides = process.env['DATALAB_SETTINGS_OVERRIDES'];
     if (settingsOverrides) {
@@ -85,7 +97,7 @@ export function loadAppSettings(): common.AppSettings {
     return settings;
   }
   catch (e) {
-    console.log(e);
+    _log(e);
     return null;
   }
 }
@@ -102,35 +114,86 @@ export function getUserConfigDir(userId: string): string {
 }
 
 /**
+ * Copies the default user settings into the user's directory.
+ */
+function copyDefaultUserSettings(userId: string) {
+  var userSettingsPath = path.join(getUserConfigDir(userId), SETTINGS_FILE);
+  const defaultUserSettingsPath = path.join(__dirname, 'config', DEFAULT_USER_SETTINGS_FILE);
+  _log('Copying default settings: ' + defaultUserSettingsPath + ' to: ' + userSettingsPath);
+  // Copy the default user settings file into user's directory.
+  const defaultUserSettings = fs.readFileSync(defaultUserSettingsPath, {encoding: 'utf8'});
+  const initialUserSettings = process.env.DATALAB_INITIAL_USER_SETTINGS;
+  const mergedUserSettings : string = initialUserSettings ?
+      mergeUserSettings(defaultUserSettings, initialUserSettings) : defaultUserSettings;
+  fs.writeFileSync(userSettingsPath, mergedUserSettings);
+  // writeFileSync does not return a status; let's see if it wrote a file.
+  if (!fs.existsSync(userSettingsPath)) {
+    _log('Failed to write new user settings file ' + userSettingsPath);
+  }
+}
+
+/**
+ * Merges two sets of user settings, giving priority to the second.
+ * Exported for testing.
+ */
+export function mergeUserSettings(defaultUserSettings: string, initialUserSettings: string): string {
+  let parsedDefaultUserSettings;
+  try {
+    parsedDefaultUserSettings = JSON.parse(defaultUserSettings || '{}')
+  } catch (e) {
+    // File is corrupt, or a developer has updated the defaults file with an error
+    _log('Error parsing default user settings:', e);
+    // We can't merge here, and this will probably cause problems down the line, but
+    // this should not happen, so hopefully the developer will see this and fix
+    // the default settings file.
+    return defaultUserSettings;
+  }
+
+  let parsedInitialUserSettings;
+  try {
+    parsedInitialUserSettings = JSON.parse(initialUserSettings || '{}')
+  } catch (e) {
+    // The user's initial settings are not valid, we will ignore them.
+    _log('Error parsing initial user settings:', e);
+    return defaultUserSettings;
+  }
+
+  // Override the default settings with the specified initial settings
+  const merged = {...parsedDefaultUserSettings, ...parsedInitialUserSettings};
+  return JSON.stringify(merged);
+}
+
+/**
  * Loads the configuration settings for the user.
  *
  * @returns the key:value mapping of settings for the user.
  */
-export function loadUserSettings(userId: string): common.Map<string> {
+export function loadUserSettings(userId: string): common.UserSettings {
   var settingsPath = path.join(getUserConfigDir(userId), SETTINGS_FILE);
   if (!fs.existsSync(settingsPath)) {
-    console.log('User settings file %s not found.', settingsPath);
-    return {};
+    _log('User settings file %s not found, copying default settings.', settingsPath);
+    copyDefaultUserSettings(userId);
   }
 
   try {
-    var settings = <common.Map<string>>JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    const settings = <common.UserSettings>JSON.parse(fs.readFileSync(settingsPath, 'utf8') || '{}');
     return settings;
   }
   catch (e) {
-    console.log(e);
-    return {};
+    _log(e);
+    return null;
   }
 }
 
-function ensureDirExists(fullPath: string): boolean {
+// Exported for testing
+export function ensureDirExists(fullPath: string): boolean {
   if (path.dirname(fullPath) == fullPath) {
     // This should only happen once we hit the root directory
     return true;
   }
   if (fs.existsSync(fullPath)) {
     if (!fs.lstatSync(fullPath).isDirectory()) {
-      console.log('Path ' + fullPath + ' is not a directory');
+      _log('Path ' + fullPath + ' is not a directory');
       return false;
     }
     return true;
@@ -143,41 +206,58 @@ function ensureDirExists(fullPath: string): boolean {
 }
 
 /**
- * Updates a single configuration setting for the user.
+ * Asynchronously updates the user's settings file with the new value for the given key.
+ * If there is already an asynchronous update in progress, this request is queued up for
+ * execution after the current update finishes.
  *
  * @param key the name of the setting to update.
  * @param value the updated value of the setting.
- * @returns true iff the update was applied.
+ * @returns Promise that resolves to true if the write succeeded, false if there was no change
+ *     and thus the write was not done, rejects if the file read or write fails.
  */
-export function updateUserSetting(userId: string, key: string, value: string, asynchronous: boolean = false): boolean {
-  var userDir = userManager.getUserDir(userId);
-  var settingsDir =  path.join(userDir, 'datalab', '.config');
+export function updateUserSettingAsync(userId: string, key: string, value: string): Promise<boolean> {
+  var settingsDir = getUserConfigDir(userId);
   var settingsPath = path.join(settingsDir, SETTINGS_FILE);
 
-  var settings: common.Map<string> = {};
-  if (fs.existsSync(settingsPath)) {
+  const doUpdate = () => {
+    if (!fs.existsSync(settingsPath)) {
+      _log('User settings file %s not found, copying default settings.', settingsPath);
+      copyDefaultUserSettings(userId);
+    }
+
+    let settings: common.UserSettings;
+    if (fs.existsSync(settingsPath)) {
+      try {
+        settings = <common.UserSettings>JSON.parse(fs.readFileSync(settingsPath, 'utf8') || '{}');
+      }
+      catch (e) {
+        _log(e);
+        throw new Error('Failed to read settings');
+      }
+    }
+    if (settings[key] == value) {
+      _log('No change to settings for key=%s, value=%s', key, value);
+      return false;   // No change was required
+    }
+    settings[key] = value;
+
     try {
-      settings = <common.Map<string>>JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+      var settingsString = JSON.stringify(settings);
+      if (ensureDirExists(path.normalize(settingsDir))) {
+        fs.writeFileSync(settingsPath, settingsString);
+      }
     }
     catch (e) {
-      console.log(e);
-      return false;
+      _log(e);
+      throw new Error('Failed to write settings');
     }
+    _log('Updated settings for key=' + key + ', value=' + value);
+    return true;    // File was updated
   }
-  settings[key] = value;
 
-  try {
-    var settingsString = JSON.stringify(settings);
-    var writeFunc = asynchronous ? fs.writeFile : fs.writeFileSync;
-    if (ensureDirExists(path.normalize(settingsDir))) {
-      writeFunc(settingsPath, settingsString);
-    }
-  }
-  catch (e) {
-    console.log(e);
-    return false;
-  }
-  return true;
+  // Execute our update as soon as all the other updates are done being executed.
+  lastUpdateUserSettingPromise = lastUpdateUserSettingPromise.catch().then(doUpdate);
+  return lastUpdateUserSettingPromise;
 }
 
 /**
@@ -186,12 +266,27 @@ export function updateUserSetting(userId: string, key: string, value: string, as
  * @param response the outgoing http response.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
-  var userId = userManager.getUserId(request);
-  if ('POST' == request.method) {
-    postSettingsHandler(userId, request, response);
+  if (request.url.indexOf('/api/settings') === 0) {
+    appSettingsHandler(request, response);
   } else {
-    getSettingsHandler(userId, request, response);
+    var userId = userManager.getUserId(request);
+    if ('POST' == request.method) {
+      postSettingsHandler(userId, request, response);
+    } else {
+      getSettingsHandler(userId, request, response);
+    }
   }
+}
+
+/**
+ * Handles app settings requests, returns the app settings JSON.
+ * @param request the incoming http request.
+ * @param response the outgoing http response.
+ */
+function appSettingsHandler(request: http.ServerRequest, response: http.ServerResponse): void {
+  const appSettings = loadAppSettings();
+  response.writeHead(200, { 'Content-Type': 'application/json' });
+  response.end(JSON.stringify(appSettings));
 }
 
 /**
@@ -274,16 +369,19 @@ function formHandler(userId: string, formData: any, request: http.ServerRequest,
     response.end('dryRun');
     return;
   }
-  if (updateUserSetting(userId, key, value)) {
+
+  updateUserSettingAsync(userId, key, value).then(() => {
     if ('redirect' in formData) {
       response.writeHead(302, { 'Location': formData['redirect'] });
     } else {
       response.writeHead(200, { 'Content-Type': 'text/plain' });
     }
-  } else {
+    response.end();
+  }).catch((errorMessage) => {
     response.writeHead(500, { 'Content-Type': 'text/plain' });
-  }
-  response.end();
+    response.end();
+  });
+
   if (key == IDLE_TIMEOUT_KEY) {
     idleTimeout.setIdleTimeoutInterval(value);
   }
@@ -296,4 +394,18 @@ function formHandler(userId: string, formData: any, request: http.ServerRequest,
  */
 export function createHandler(): http.RequestHandler {
   return requestHandler;
+}
+
+/**
+ * Logs a debug message if the logger has been initialized,
+ * else logs to console.log.
+ */
+function _log(...args: Object[]) {
+  const logger = logging.getLogger();
+  if (logger) {
+    const msg = util.format.apply(util.format, args);
+    logger.debug(msg);
+  } else {
+    console.log.apply(console, args);
+  }
 }

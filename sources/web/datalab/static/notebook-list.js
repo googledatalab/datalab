@@ -91,7 +91,8 @@ define(['util'], (util) => {
                       .text(e.message || e)),
               buttons: {
                 OK: { 'class': 'btn-primary' }
-              }
+              },
+              keyboard_manager: IPython.keyboard_manager,
           });
         });
       e.target.blur();

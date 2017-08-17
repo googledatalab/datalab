@@ -108,12 +108,17 @@ declare module Polymer {
     attached(): void;
     detached(): void;
     connectedCallback(): void;
+    disconnectedCallback(): void;
     attributeChanged?(attrName: string, oldVal: any, newVal: any): void;
     prototype?: Object;
   }
 
   class DomModule {
     static import(element: string, property: string): PolymerTemplate;
+  }
+
+  class dom {
+    static flush(): null;
   }
 
   function importHref(href: string,

@@ -16,25 +16,87 @@ the License.
   <template>
     <style>
       :host {
-        --app-primary-color: #424242;
-        --app-secondary-color: #f3f3f3;
-        --toolbar-height: 48px;
-        --sidebar-width: 200px;
-        --selection-fg-color: #2979ff;
-        --details-pane-width: 350px;
         --app-animation-duration: 0.3s;
-      }
-      div {
-        font-family: 'Roboto', 'Noto', sans-serif;
-        font-size: 13px;
-        color: var(--app-primary-color);
+        --app-content-font-family: 'Roboto', 'Noto', sans-serif;
+        --app-content-font-size: 13px;
+        --collapsed-sidebar-width: 65px;
+        --preview-pane-width: 350px;
+        --primary-text-color : var(--primary-fg-color);
+        --progressbar-height: 1px;
+        --sidebar-width: 200px;
+        --toolbar-height: 48px;
       }
       hr {
         border-left: none;
         border-right: none;
         border-bottom: none;
-        border-top: 1px solid rgba(0, 0, 0, 0.1);
-        margin: 5px;
+        border-top: 1px solid var(--primary-fg-color);
+        opacity: 0.1;
+        margin: 0px;
+      }
+      p {
+        margin: 0px;
+      }
+      .mono {
+        font-family: monospace;
+        white-space: pre-line;
+        background-color: var(--secondary-bg-color);
+        padding: 5px;
+      }
+      .dialog {
+        background-color: var(--primary-bg-color);
+        color: var(--primary-fg-color);
+        display: flex;
+        flex-direction: column;
+      }
+      .dialog.small {
+        min-width: 300px;
+        min-height: 200px;
+      }
+      .dialog.big {
+        width: 60%;
+        height: 60%;
+      }
+      .dialog-title {
+        flex: 0 0 auto;
+        margin: 0px;
+        padding: 15px;
+        background-color: var(--secondary-bg-color);
+        border-bottom: 1px solid var(--border-color);
+        font-size: 16px;
+        text-align: center;
+      }
+      .dialog-content {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        margin: 0px;
+        padding: 0px;
+        overflow: auto;
+      }
+      .dialog-footer {
+        flex: 0 0 auto;
+        margin: 0px;
+        padding: 15px;
+        direction: rtl;
+        display: flex;
+        justify-content: center;
+        color: var(--primary-fg-color);
+      }
+      a {
+        color: var(--selection-fg-color);
+      }
+      a:visited {
+        color: var(--selection-fg-color);
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .progressbar {
+        width: 100%;
+        height: var(--progressbar-height);
+        --paper-progress-active-color: var(--selection-fg-color);
+        --paper-progress-container-color: var(--border-color);
       }
     </style>
   </template>
