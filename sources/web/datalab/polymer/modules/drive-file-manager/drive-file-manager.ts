@@ -54,7 +54,7 @@ class DriveFileManager implements FileManager {
   }
 
   public async getRootFile(): Promise<DatalabFile> {
-    const upstreamFile = await GapiManager.getDriveRootId();
+    const upstreamFile = await GapiManager.drive.getRoot();
     return DriveFileManager._upstreamToDriveFile(upstreamFile);
   }
 
@@ -76,7 +76,7 @@ class DriveFileManager implements FileManager {
       'name',
       'parents',
     ];
-    const filesPromise = GapiManager.getDriveFiles(fileFields, queryPredicates);
+    const filesPromise = GapiManager.drive.getFiles(fileFields, queryPredicates);
 
     const sessionsPromise: Promise<Session[]> = SessionManager.listSessionsAsync();
 

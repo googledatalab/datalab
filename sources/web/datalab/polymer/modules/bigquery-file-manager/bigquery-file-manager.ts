@@ -87,7 +87,7 @@ class BigQueryFileManager implements FileManager {
   }
 
   private _listProjects(): Promise<DatalabFile[]> {
-    return GapiManager.listBigQueryProjects()
+    return GapiManager.bigquery.listProjects()
       .then((response: HttpResponse<gapi.client.bigquery.ListProjectsResponse>) => {
         const projects = response.result.projects || [];
         return projects.map(
@@ -97,7 +97,7 @@ class BigQueryFileManager implements FileManager {
   }
 
   private _listDatasets(projectId: string): Promise<DatalabFile[]> {
-    return GapiManager.listBigQueryDatasets(projectId, '')
+    return GapiManager.bigquery.listDatasets(projectId, '')
       .then((response: HttpResponse<gapi.client.bigquery.ListDatasetsResponse>) => {
         const datasets = response.result.datasets || [];
         return datasets.map(
@@ -107,7 +107,7 @@ class BigQueryFileManager implements FileManager {
   }
 
   private _listTables(projectId: string, datasetId: string): Promise<DatalabFile[]> {
-    return GapiManager.listBigQueryTables(projectId, datasetId)
+    return GapiManager.bigquery.listTables(projectId, datasetId)
       .then((response: HttpResponse<gapi.client.bigquery.ListTablesResponse>) => {
         const tables = response.result.tables || [];
         return tables.map(

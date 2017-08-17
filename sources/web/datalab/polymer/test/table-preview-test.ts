@@ -58,7 +58,7 @@ describe('<table-preview>', () => {
    * Rows must be recreated on each test with the fixture, to avoid state leakage.
    */
   beforeEach(() => {
-    GapiManager.getBigqueryTableDetails = (pid, did, tid) => {
+    GapiManager.bigquery.getTableDetails = (pid, did, tid) => {
       assert(!!pid && !!did && !!tid,
           'getTableDetails should be called with project, dataset, and table');
 
