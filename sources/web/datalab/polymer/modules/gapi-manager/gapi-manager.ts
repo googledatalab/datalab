@@ -173,12 +173,22 @@ class GapiManager {
       .then(() => gapi.client.bigquery.tables.get(request));
   }
 
-  public static getDriveFiles(query?: string): Promise<gapi.client.drive.File[]> {
+  public static getDriveRootId(): Promise<gapi.client.drive.File> {
+    const request: gapi.client.drive.GetFileRequest = {
+      fileId: 'root',
+    };
+    return this._loadDrive()
+      .then(() => gapi.client.drive.files.get(request))
+      .then((response) => JSON.parse(response.body));
+  }
+
+  public static getDriveFiles(fileFields: string[], queryPredicates: string[]):
+      Promise<gapi.client.drive.File[]> {
     return this._loadDrive()
       .then(() => gapi.client.drive.files.list({
-        fields: 'nextPageToken, files(id, name, mimeType, modifiedTime)',
+        fields: 'nextPageToken, files(' + fileFields.join(',') + ')',
         pageSize: 30,
-        q: query,
+        q: queryPredicates.join(' and '),
       }))
       .then((response: HttpResponse<gapi.client.drive.ListFilesResponse>) => {
         return response.result.files;
@@ -280,7 +290,7 @@ class GapiManager {
       case GapiScopes.BIGQUERY:
         return 'https://www.googleapis.com/auth/bigquery';
       case GapiScopes.DRIVE:
-          return 'https://www.googleapis.com/auth/drive.metadata.readonly ';
+          return 'https://www.googleapis.com/auth/drive.metadata.readonly';
       case GapiScopes.GCS:
           return 'https://www.googleapis.com/auth/devstorage.full_control';
       default:

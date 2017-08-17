@@ -17,10 +17,15 @@
  * wrapped in the ApiManager class.
  */
 
+class DriveFile extends DatalabFile {
+}
+
 /**
  * An Google Drive specific file manager.
  */
 class DriveFileManager implements FileManager {
+
+  private static readonly _directoryMimeType = 'application/vnd.google-apps.folder';
 
   private _loadPromise: Promise<any>;
 
@@ -28,39 +33,50 @@ class DriveFileManager implements FileManager {
     this._loadPromise = GapiManager.grantScope(GapiScopes.DRIVE);
   }
 
-  public async get(path: string, asText?: boolean): Promise<DatalabFile> {
-    const apiManager = ApiManagerFactory.getInstance();
-    if (path.startsWith('/')) {
-      path = path.substr(1);
-    }
-    if (asText === true) {
-      path += '?format=text&type=file';
-    }
-    const xhrOptions: XhrOptions = {
-      noCache: true,
+  private static _upstreamToDriveFile(file: gapi.client.drive.File) {
+    const datalabFile: DriveFile = {
+      icon: file.iconLink,
+      id: new DatalabFileId(file.id, FileManagerType.DRIVE),
+      name: file.name,
+      status: DatalabFileStatus.IDLE,
+      type: file.mimeType === DriveFileManager._directoryMimeType ?
+                              DatalabFileType.DIRECTORY :
+                              DatalabFileType.FILE,
     };
-    return apiManager.sendRequestAsync(apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + path,
-                                       xhrOptions) as Promise<DatalabFile>;
+    return datalabFile;
+  }
+  public async get(_fileId: DatalabFileId): Promise<DatalabFile> {
+    throw new UnsupportedMethod('get', this.constructor.name);
   }
 
-  public async save(file: DatalabFile) {
-    const apiManager = ApiManagerFactory.getInstance();
-    const xhrOptions: XhrOptions = {
-      failureCodes: [409],
-      method: 'PUT',
-      parameters: JSON.stringify(file),
-      successCodes: [200, 201],
-    };
-    const requestPath =
-        apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + file.path + '/' + file.name;
-    return apiManager.sendRequestAsync(requestPath, xhrOptions);
+  public async getContent(_fileId: DatalabFileId, _asText?: boolean): Promise<DatalabFileContent> {
+    throw new UnsupportedMethod('getContent', this.constructor.name);
   }
 
-  public async list(path: string): Promise<DatalabFile[]> {
-    if (!path) {
-      path = 'root';
-    }
-    const filesPromise = GapiManager.getDriveFiles(path + 'in parents');
+  public async getRootFile(): Promise<DatalabFile> {
+    const upstreamFile = await GapiManager.getDriveRootId();
+    return DriveFileManager._upstreamToDriveFile(upstreamFile);
+  }
+
+  public async saveText(_file: DatalabFile): Promise<DatalabFile> {
+    throw new UnsupportedMethod('getRootFile', this.constructor.name);
+  }
+
+  public async list(fileId: DatalabFileId): Promise<DatalabFile[]> {
+    const queryPredicates = [
+      '"' + fileId.path + '" in parents',
+      'trashed = false',
+    ];
+    const fileFields = [
+      'createdTime',
+      'iconLink',
+      'id',
+      'mimeType',
+      'modifiedTime',
+      'name',
+      'parents',
+    ];
+    const filesPromise = GapiManager.getDriveFiles(fileFields, queryPredicates);
 
     const sessionsPromise: Promise<Session[]> = SessionManager.listSessionsAsync();
 
@@ -76,7 +92,7 @@ class DriveFileManager implements FileManager {
         });
         const datalabFiles: DatalabFile[] = [];
         files.forEach((file: any) => {
-          const datalabFile = this._driveFileToDatalabFile(file);
+          const datalabFile = DriveFileManager._upstreamToDriveFile(file);
           if (runningPaths.indexOf(file.path) > -1) {
             datalabFile.status = DatalabFileStatus.RUNNING;
           } else {
@@ -86,96 +102,30 @@ class DriveFileManager implements FileManager {
         });
         return datalabFiles;
       });
+
   }
 
-  public create(itemType: DatalabFileType, path?: string) {
-    const apiManager = ApiManagerFactory.getInstance();
-    const xhrOptions: XhrOptions = {
-      failureCodes: [409],
-      method: 'POST',
-      parameters: JSON.stringify({
-        ext: 'ipynb',
-        type: itemType,
-      }),
-      successCodes: [201],
-    };
-    let createPromise = apiManager.sendRequestAsync(apiManager.getServiceUrl(ServiceId.CONTENT),
-        xhrOptions);
-
-    // If a path is provided for naming the new item, request the rename, and
-    // delete it if failed.
-    if (path) {
-      let notebookPathPlaceholder = '';
-      createPromise = createPromise
-        .then((notebook: DatalabFile) => {
-          notebookPathPlaceholder = notebook.path;
-          return this.rename(notebookPathPlaceholder, path);
-        })
-        .catch((error: string) => {
-          // If the rename fails, remove the temporary item
-          this.delete(notebookPathPlaceholder);
-          throw error;
-        });
-    }
-    return createPromise;
+  public create(_fileType: DatalabFileType, _containerId?: DatalabFileId, _name?: string): Promise<DatalabFile> {
+    throw new UnsupportedMethod('create', this.constructor.name);
   }
 
-  public rename(oldPath: string, newPath: string) {
-    const apiManager = ApiManagerFactory.getInstance();
-    oldPath = apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + oldPath;
-    const xhrOptions: XhrOptions = {
-      failureCodes: [409],
-      method: 'PATCH',
-      parameters: JSON.stringify({
-        path: newPath
-      }),
-    };
-
-    return apiManager.sendRequestAsync(oldPath, xhrOptions);
+  public rename(_oldFileId: DatalabFileId, _newName: string, _newContainerId?: DatalabFileId): Promise<DatalabFile> {
+    throw new UnsupportedMethod('rename', this.constructor.name);
   }
 
-  public delete(path: string) {
-    const apiManager = ApiManagerFactory.getInstance();
-    path = apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + path;
-    const xhrOptions: XhrOptions = {
-      failureCodes: [400],
-      method: 'DELETE',
-      successCodes: [204],
-    };
-
-    return apiManager.sendRequestAsync(path, xhrOptions);
+  public delete(_fileId: DatalabFileId): Promise<boolean> {
+    throw new UnsupportedMethod('delete', this.constructor.name);
   }
 
-  public copy(itemPath: string, destinationDirectory: string) {
-    const apiManager = ApiManagerFactory.getInstance();
-    destinationDirectory = apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + destinationDirectory;
-    const xhrOptions: XhrOptions = {
-      failureCodes: [409],
-      method: 'POST',
-      parameters: JSON.stringify({
-        copy_from: itemPath
-      }),
-      successCodes: [201],
-    };
-
-    return apiManager.sendRequestAsync(destinationDirectory, xhrOptions);
+  public copy(_file: DatalabFileId, _destinationDirectoryId: DatalabFileId): Promise<DatalabFile> {
+    throw new UnsupportedMethod('copy', this.constructor.name);
   }
 
-  private _driveFileToDatalabFile(file: gapi.client.drive.File) {
-    const datalabFile: DatalabFile = {
-      content: '',
-      created: '',
-      format: '',
-      last_modified: file.modifiedTime.toISOString(),
-      mimetype: file.mimeType,
-      name: file.name,
-      path: file.parents ? file.parents[0] : '',
-      status: DatalabFileStatus.IDLE,
-      type: file.mimeType === 'application/vnd.google-apps.folder' ?
-                              DatalabFileType.DIRECTORY :
-                              DatalabFileType.FILE,
-      writable: true,
-    };
-    return datalabFile;
+  public getEditorUrl(): Promise<string> {
+    throw new UnsupportedMethod('getEditorUrl', this.constructor.name);
+  }
+
+  public getNotebookUrl(): Promise<string> {
+    throw new UnsupportedMethod('getNotebookUrl', this.constructor.name);
   }
 }

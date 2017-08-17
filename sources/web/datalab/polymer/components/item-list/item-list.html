@@ -73,6 +73,7 @@ the License.
         flex-grow: 1;
       }
       .first-col > iron-icon {
+        padding-right: 10px;
         width: 17px;
         height: 17px;
       }
@@ -109,7 +110,7 @@ the License.
             </paper-checkbox>
           </div>
           <div class="first-col">
-            <iron-icon hidden$="{{!row.icon}}" icon={{row.icon}}></iron-icon>
+            <iron-icon icon="{{row.icon}}" src="{{row.src}}"></iron-icon>
             <span>{{row.firstCol}}</span>
           </div>
           <div class="second-col" hidden$="{{disableSelection}}">

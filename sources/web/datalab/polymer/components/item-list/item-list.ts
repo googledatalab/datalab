@@ -13,13 +13,33 @@
  */
 
 /**
- * Interface representing a row in the item list
+ * Object representing a row in the item list
  */
-interface ItemListRow {
-  firstCol: string;
-  secondCol: string;
-  icon: string;
-  selected: boolean;
+class ItemListRow {
+  public firstCol: string;
+  public secondCol: string;
+  public selected: boolean;
+
+  private _icon: string;
+
+  constructor(firstCol: string, secondCol: string, icon: string, selected?: boolean) {
+    this.firstCol = firstCol;
+    this.secondCol = secondCol;
+    this.selected = selected || false;
+    this._icon = icon;
+  }
+
+  /**
+   * If the given icon is a link, its src attribute should be set to that link,
+   * and the icon attribute should be empty. If instead it's an icon name,
+   * these two attributes should be reversed.
+   */
+  get icon() { return this._hasLinkIcon() ? '' : this._icon; }
+  get src() { return this._hasLinkIcon() ? this._icon : ''; }
+
+  private _hasLinkIcon() {
+    return this._icon.startsWith('http://') || this._icon.startsWith('https://');
+  }
 }
 
 /**
@@ -236,7 +256,6 @@ class ItemListElement extends Polymer.Element {
     const ev = new ItemClickEvent('itemDoubleClick', { detail: {index} });
     this.dispatchEvent(ev);
   }
-
 }
 
 customElements.define(ItemListElement.is, ItemListElement);

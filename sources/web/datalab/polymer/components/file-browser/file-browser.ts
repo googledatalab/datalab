@@ -238,13 +238,8 @@ class FileBrowserElement extends Polymer.Element {
    */
   _drawFileList() {
     (this.$.files as ItemListElement).rows = this._fileList.map((file) => {
-      const row: ItemListRow = {
-        firstCol: file.name,
-        icon: file.icon,
-        secondCol: Utils.getFileStatusString(file.status || DatalabFileStatus.IDLE),
-        selected: false
-      };
-      return row;
+      return new ItemListRow(
+        file.name, Utils.getFileStatusString(file.status || DatalabFileStatus.IDLE) , file.icon);
     });
   }
 
