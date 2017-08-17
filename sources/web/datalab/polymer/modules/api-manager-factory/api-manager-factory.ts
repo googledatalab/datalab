@@ -17,11 +17,9 @@
  */
 const API_MANAGER_ELEMENT = {
   daas: {
-    path: 'modules/daas-api-manager/daas-api-manager.html',
     type: DaasApiManager,
   },
   jupyter: {
-    path: 'modules/jupyter-api-manager/jupyter-api-manager.html',
     type: JupyterApiManager
   },
 };
@@ -38,8 +36,7 @@ class ApiManagerFactory {
   public static getInstance() {
     if (!ApiManagerFactory._apiManager) {
       const backendType = ApiManagerFactory._getBackendType();
-
-      Polymer.importHref(backendType.path, undefined, undefined, true);
+      // TODO: Consider loading the api manager elements dynamically on demand
       ApiManagerFactory._apiManager = new backendType.type();
     }
 
