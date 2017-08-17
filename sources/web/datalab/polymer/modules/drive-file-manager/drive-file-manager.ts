@@ -78,33 +78,10 @@ class DriveFileManager implements FileManager {
       'name',
       'parents',
     ];
-    const filesPromise = GapiManager.drive.getFiles(fileFields, queryPredicates);
-
-    const sessionsPromise: Promise<Session[]> = SessionManager.listSessionsAsync();
-
-    // Combine the return values of the two requests to supplement the files
-    // array with the status value.
-    return Promise.all([filesPromise, sessionsPromise])
-      .then((values) => {
-        const files = values[0];
-        const sessions = values[1];
-        const runningPaths: string[] = [];
-        sessions.forEach((session: Session) => {
-          runningPaths.push(session.notebook.path);
-        });
-        const datalabFiles: DatalabFile[] = [];
-        files.forEach((file: any) => {
-          const datalabFile = DriveFileManager._upstreamToDriveFile(file);
-          if (runningPaths.indexOf(file.path) > -1) {
-            datalabFile.status = DatalabFileStatus.RUNNING;
-          } else {
-            datalabFile.status = DatalabFileStatus.IDLE;
-          }
-          datalabFiles.push(datalabFile);
-        });
-        return datalabFiles;
-      });
-
+    const upstreamFiles = await GapiManager.drive.getFiles(fileFields, queryPredicates);
+    // TODO: Check which files are running from the SessionsManager and modify
+    // their status accordingly.
+    return upstreamFiles.map((file) => DriveFileManager._upstreamToDriveFile(file));
   }
 
   public create(_fileType: DatalabFileType, _containerId?: DatalabFileId, _name?: string): Promise<DatalabFile> {
