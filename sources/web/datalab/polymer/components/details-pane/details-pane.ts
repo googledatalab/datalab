@@ -137,7 +137,7 @@ class DetailsPaneElement extends Polymer.Element {
         .catch(() => {
           this.$.previewHtml.innerHTML = '';
           this._message = '';
-          console.log('Could not get item details.');
+          Utils.log.error('Could not get item details.');
         });
     } else {
       this.$.previewHtml.innerHTML = '';

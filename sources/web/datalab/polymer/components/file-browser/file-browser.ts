@@ -224,7 +224,7 @@ class FileBrowserElement extends Polymer.Element {
         if (throwOnError === true) {
           throw new Error('Error getting list of files: ' + e.message);
         } else {
-          console.log('Error getting list of files:', e);
+          Utils.log.error('Error getting list of files:', e);
         }
       })
       .then(() => this._fetching = false);

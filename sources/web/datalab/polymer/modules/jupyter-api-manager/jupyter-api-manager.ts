@@ -21,7 +21,7 @@ class JupyterApiManager extends BaseApiManager {
       this._basepathPromise = this._xhrTextAsync(this.getServiceUrl(ServiceId.BASE_PATH))
         .then((basepath: string) => basepath.replace(/\/$/, ''))
         .catch((e) => {
-          console.error('Could not get base path: ' + e.message);
+          Utils.log.error('Could not get base path: ' + e.message);
           return '';
         });
     }

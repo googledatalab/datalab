@@ -93,7 +93,7 @@ class TablePreviewElement extends Polymer.Element {
         .then((response: HttpResponse<gapi.client.bigquery.Table>) => {
           this._table = response.result;
         }, (errorResponse: any) =>
-            console.error('Failed to get table details: ' + errorResponse.body))
+            Utils.log.error('Failed to get table details: ' + errorResponse.body))
         .then(() => this._busy = false);
     } else {
       this._table = null;

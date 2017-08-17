@@ -92,7 +92,7 @@ class DataElement extends Polymer.Element {
     const sampleProject = 'bigquery-public-data';
     GapiManager.listBigQueryProjects()
         .then((response: HttpResponse<gapi.client.bigquery.ListProjectsResponse>) => {
-          console.log('== projects: ', response);
+          Utils.log.verbose('== projects: ', response);
           const projectResults: Result[] = response.result.projects.map(this._bqProjectToResult.bind(this)) as Result[];
           resultHandler(projectResults);
         })
@@ -103,7 +103,7 @@ class DataElement extends Polymer.Element {
     // see https://cloud.google.com/bigquery/docs/reference/rest/v2/datasets/list
     GapiManager.listBigQueryDatasets(sampleProject, searchValue /* label filter */)
         .then((response: HttpResponse<gapi.client.bigquery.ListDatasetsResponse>) => {
-          console.log('== datasets: ', response);
+          Utils.log.verbose('== datasets: ', response);
           const datasetResults: Result[] = response.result.datasets.map(this._bqDatasetToResult.bind(this)) as Result[];
           resultHandler(datasetResults);
         })
@@ -112,7 +112,7 @@ class DataElement extends Polymer.Element {
         });
     GapiManager.listBigQueryTables(sampleProject, searchValue /* datasetId */)
         .then((response: HttpResponse<gapi.client.bigquery.ListTablesResponse>) => {
-          console.log('== tables: ', response);
+          Utils.log.verbose('== tables: ', response);
           const tableResults: Result[] = response.result.tables.map(this._bqTableToResult.bind(this)) as Result[];
           resultHandler(tableResults);
         })
@@ -167,7 +167,7 @@ class DataElement extends Polymer.Element {
   }
 
   _resultsDoubleClicked() {
-    console.log('== result double-clicked');
+    Utils.log.verbose('== result double-clicked');
   }
 
   _resultsSelectionChanged() {

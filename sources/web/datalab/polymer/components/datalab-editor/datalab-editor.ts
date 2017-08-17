@@ -58,7 +58,7 @@ class DatalabEditorElement extends Polymer.Element {
 
     // Get the theme.
     const settings = await SettingsManager.getUserSettingsAsync()
-      .catch(() => console.error('Could not load user settings.'));
+      .catch(() => Utils.log.error('Could not load user settings.'));
 
     if (settings && settings.theme) {
       this._theme = settings.theme;

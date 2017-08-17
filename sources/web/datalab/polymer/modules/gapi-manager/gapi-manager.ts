@@ -69,7 +69,7 @@ class GapiManager {
           .then(() => gapi.load('client:auth2', resolve))
           .catch((e: Error) => {
             if (e instanceof MissingClientIdError) {
-              console.error(e.message);
+              Utils.log.error(e.message);
             }
             reject(e);
           });

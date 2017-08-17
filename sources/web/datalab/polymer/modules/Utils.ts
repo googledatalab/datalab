@@ -17,6 +17,17 @@
  */
 class Utils {
 
+  public static log = class {
+    public static verbose(...args: any[]) {
+      // tslint:disable-next-line:no-console
+      console.log(args.join(' '));
+    }
+    public static error(...args: any[]) {
+      // tslint:disable-next-line:no-console
+      console.error(args.join(' '));
+    }
+  };
+
   /**
    * Opens a dialog with the specified options. It uses the Datalab custom element
    * according to the specified dialog type, attaches a new instance to the current
@@ -136,7 +147,6 @@ class Utils {
         throw new Error('Unknown file type: ' + type);
     }
   }
-
 }
 
 class UnsupportedMethod extends Error {
