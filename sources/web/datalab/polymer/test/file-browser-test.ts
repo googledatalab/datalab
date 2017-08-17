@@ -31,7 +31,7 @@ class MockFileManager implements FileManager {
   public saveText(_file: DatalabFile, _content: string): Promise<DatalabFile> {
     throw new UnsupportedMethod('saveText', MockFileManager);
   }
-  public list(_containerId: BigQueryFileId): Promise<DatalabFile[]> {
+  public list(_containerId: DatalabFileId): Promise<DatalabFile[]> {
     throw new UnsupportedMethod('list', MockFileManager);
   }
   public create(_fileType: DatalabFileType, _containerId: DatalabFileId, _name: string):

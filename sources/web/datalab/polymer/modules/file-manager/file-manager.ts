@@ -13,7 +13,7 @@
  */
 
 /**
- * This file contains a collection of functions that call the Jupyter server APIs, and are
+ * This file contains a collection of functions that call the FileManager APIs, and are
  * wrapped in the ApiManager class. It also defines a set of interfaces to interact with
  * these APIs to help with type checking.
  */
