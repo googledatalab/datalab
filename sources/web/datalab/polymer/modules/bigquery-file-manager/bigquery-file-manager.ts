@@ -15,16 +15,16 @@
 class BigQueryFile extends DatalabFile {
 }
 
-class BigQueryFileId extends DatalabFileId {
-}
-
 /**
  * A file manager that wraps the BigQuery API so that we can browse BQ projects,
  * datasets, and tables like a filesystem.
  */
 class BigQueryFileManager implements FileManager {
 
-  public get(_fileId: DatalabFileId): Promise<DatalabFile> {
+  public get(fileId: DatalabFileId): Promise<DatalabFile> {
+    if (fileId.path === '/') {
+      return Promise.resolve(this._bqRootDatalabFile());
+    }
     throw new UnsupportedMethod('get', BigQueryFileManager);
   }
 
@@ -40,7 +40,7 @@ class BigQueryFileManager implements FileManager {
     throw new UnsupportedMethod('saveText', BigQueryFileManager);
   }
 
-  public list(containerId: BigQueryFileId): Promise<DatalabFile[]> {
+  public list(containerId: DatalabFileId): Promise<DatalabFile[]> {
     // BigQuery does not allow slashes in the names of projects,
     // datasets, or tables, so we use them as separator characters
     // to keep consistent with POSIX file hierarchies.
@@ -116,10 +116,21 @@ class BigQueryFileManager implements FileManager {
       .catch((e) => { Utils.log.error(e); throw e; });
   }
 
+  private _bqRootDatalabFile(): DatalabFile {
+    const path = '/';
+    return {
+      icon: '',
+      id: new DatalabFileId(path, FileManagerType.BIG_QUERY),
+      name: '/',
+      status: DatalabFileStatus.IDLE,
+      type: DatalabFileType.FILE,
+    } as DatalabFile;
+  }
+
   private _bqProjectToDatalabFile(bqProject: gapi.client.bigquery.ProjectResource): DatalabFile {
     const path = bqProject.projectReference.projectId;
     return {
-      icon: '',
+      icon: 'datalab-icons:bq-project',
       id: new DatalabFileId(path, FileManagerType.BIG_QUERY),
       name: bqProject.projectReference.projectId,
       status: DatalabFileStatus.IDLE,
@@ -130,7 +141,7 @@ class BigQueryFileManager implements FileManager {
   private _bqDatasetToDatalabFile(bqDataset: gapi.client.bigquery.DatasetResource): DatalabFile {
     const path = bqDataset.datasetReference.projectId + '/' + bqDataset.datasetReference.datasetId;
     return {
-      icon: '',
+      icon: 'folder',   // TODO(jimmc) - make a custom icon
       id: new DatalabFileId(path, FileManagerType.BIG_QUERY),
       name: bqDataset.datasetReference.datasetId,
       status: DatalabFileStatus.IDLE,
@@ -142,7 +153,7 @@ class BigQueryFileManager implements FileManager {
     const path = bqTable.tableReference.projectId + '/' +
           bqTable.tableReference.datasetId + '/' + bqTable.tableReference.tableId;
     return {
-      icon: '',
+      icon: 'list',   // TODO(jimmc) - make a custom icon
       id: new DatalabFileId(path, FileManagerType.BIG_QUERY),
       name: bqTable.tableReference.tableId,
       status: DatalabFileStatus.IDLE,
