@@ -68,14 +68,14 @@ class FileBrowserElement extends Polymer.Element {
 
   private _addToolbarCollapseThreshold = 900;
   private _apiManager: ApiManager;
-  private _detailsPaneCollapseThreshold = 600;
+  private _previewPaneCollapseThreshold = 600;
   private _fetching: boolean;
   private _fileList: DatalabFile[];
   private _fileListFetchPromise: Promise<any>;
   private _fileListRefreshInterval = 60 * 1000;
   private _fileListRefreshIntervalHandle = 0;
   private _fileManager: FileManager;
-  private _isDetailsPaneToggledOn: boolean;
+  private _isPreviewPaneToggledOn: boolean;
   private _pathHistory: DatalabFile[];
   private _pathHistoryIndex: number;
   private _updateToolbarCollapseThreshold = 720;
@@ -93,11 +93,11 @@ class FileBrowserElement extends Polymer.Element {
         type: Array,
         value: () => [],
       },
-      _isDetailsPaneEnabled: {
-        computed: '_getDetailsPaneEnabled(small, _isDetailsPaneToggledOn)',
+      _isPreviewPaneEnabled: {
+        computed: '_getPreviewPaneEnabled(small, _isPreviewPaneToggledOn)',
         type: Boolean,
       },
-      _isDetailsPaneToggledOn: {
+      _isPreviewPaneToggledOn: {
         type: Boolean,
         value: true,
       },
@@ -625,19 +625,19 @@ class FileBrowserElement extends Polymer.Element {
   }
 
   /**
-   * Computes whether the details pane should be enabled. This depends on two values:
+   * Computes whether the preview pane should be enabled. This depends on two values:
    * whether the element has the small attribute, and whether the user has switched it
    * off manually.
    */
-  _getDetailsPaneEnabled(small: boolean, toggledOn: boolean) {
+  _getPreviewPaneEnabled(small: boolean, toggledOn: boolean) {
     return !small && toggledOn;
   }
 
   /**
-   * Switches details pane on or off.
+   * Switches preview pane on or off.
    */
-  _toggleDetailsPane() {
-    this._isDetailsPaneToggledOn = !this._isDetailsPaneToggledOn;
+  _togglePreviewPane() {
+    this._isPreviewPaneToggledOn = !this._isPreviewPaneToggledOn;
   }
 
   /**
@@ -756,9 +756,9 @@ class FileBrowserElement extends Polymer.Element {
       this.$.altUpdateToolbar.close();
     }
 
-    // Collapse the details pane
-    if (width < this._detailsPaneCollapseThreshold) {
-      this._isDetailsPaneToggledOn = false;
+    // Collapse the preview pane
+    if (width < this._previewPaneCollapseThreshold) {
+      this._isPreviewPaneToggledOn = false;
     }
   }
 

@@ -16,13 +16,11 @@
 declare function marked(markdown: string): string;
 
 /**
- * Details pane element for Datalab.
+ * Preview pane element for Datalab.
  * This element is designed to be displayed in a side bar that displays more
  * information about a selected file.
  */
-class DetailsPaneElement extends Polymer.Element {
-
-  private static _noFileMessage = 'Select an item to view its details.';
+class PreviewPaneElement extends Polymer.Element {
 
   /**
    * Currently displayed preview pane.
@@ -30,7 +28,7 @@ class DetailsPaneElement extends Polymer.Element {
   public preview: string;
 
   /**
-   * File whose details to show.
+   * File whose preview to show.
    */
   public file: DatalabFile;
 
@@ -40,23 +38,17 @@ class DetailsPaneElement extends Polymer.Element {
    */
   public active: boolean;
 
-  private _message = ''; // To show in the placeholder field.
-
-  static get is() { return 'details-pane'; }
+  static get is() { return 'preview-pane'; }
 
   static get properties() {
     return {
-      _message: {
-        type: String,
-        value: '',
-      },
       active: {
-        observer: '_reloadDetails',
+        observer: '_reloadPreview',
         type: Boolean,
         value: true,
       },
       file: {
-        observer: '_reloadDetails',
+        observer: '_reloadPreview',
         type: Object,
         value: {},
       },
@@ -67,22 +59,15 @@ class DetailsPaneElement extends Polymer.Element {
     };
   }
 
-  ready() {
-    this._message = DetailsPaneElement._noFileMessage;
-    super.ready();
-  }
-
   /**
    * Shows a preview of the selected file for known file types.
    *
    * TODO: Consider adding a spinning animation while this data loads.
    */
-  _reloadDetails() {
+  _reloadPreview() {
     if (!this.file || !this.active) {
-      this._message = DetailsPaneElement._noFileMessage;
       return;
     }
-    this._message = '';
 
     this.preview = this.file.getPreviewName();
 
@@ -94,4 +79,4 @@ class DetailsPaneElement extends Polymer.Element {
   }
 }
 
-customElements.define(DetailsPaneElement.is, DetailsPaneElement);
+customElements.define(PreviewPaneElement.is, PreviewPaneElement);

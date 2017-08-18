@@ -15,17 +15,21 @@
 // Instead of writing a .d.ts file containing this one line.
 declare function marked(markdown: string): string;
 
+// TODO(jimmc) - consider creating a common superclass, such as item-preview,
+// for notebook-preview and the other preview classes, to contain common
+// elements such as message and active.
+
 /**
  * Notebook preview element for Datalab.
  */
 class NotebookPreviewElement extends Polymer.Element {
 
-  private static _noFileMessage = 'Select an item to view its details.';
+  private static _noFileMessage = 'Select an item to view a preview.';
   private static _emptyNotebookMessage = 'Empty notebook.';
   private static _longNotebookMessage = 'Showing markdown from the first two.';
 
   /**
-   * File whose details to show.
+   * File whose preview to show.
    */
   public file: DatalabFile;
 
@@ -46,12 +50,12 @@ class NotebookPreviewElement extends Polymer.Element {
         value: '',
       },
       active: {
-        observer: '_reloadDetails',
+        observer: '_reloadPreview',
         type: Boolean,
         value: true,
       },
       file: {
-        observer: '_reloadDetails',
+        observer: '_reloadPreview',
         type: Object,
         value: {},
       },
@@ -59,55 +63,52 @@ class NotebookPreviewElement extends Polymer.Element {
   }
 
   /**
-   * Loads the details of the given file in the details pane. No preview is shown if the
+   * Loads the preview of the given file in the preview pane. No preview is shown if the
    * selected item is a directory. For notebooks, the first two cells are pulled from the file,
    * and any markdown they contain is rendered in the pane. For now, we also support other
    * plain text files with mime type text/*, and JSON files.
    *
    * TODO: Consider adding a spinning animation while this data loads.
    */
-  _reloadDetails() {
-    if (!this.file || !this.active) {
+  _reloadPreview() {
+    if (!this.file || !this.active ||
+        this.file.type !== DatalabFileType.NOTEBOOK) {
+      this.$.previewHtml.innerHTML = '';
       this._message = NotebookPreviewElement._noFileMessage;
       return;
     }
 
-    if (this.file.type === DatalabFileType.NOTEBOOK) {
-      const fileManager = FileManagerFactory.getInstanceForType(this.file.id.source);
-      fileManager.getContent(this.file.id)
-        .then((content: DatalabContent) => {
+    const fileManager = FileManagerFactory.getInstanceForType(this.file.id.source);
+    fileManager.getContent(this.file.id)
+      .then((content: DatalabContent) => {
 
-          // If this is a notebook, get the first two cells and render any markdown in them.
-          if (content instanceof NotebookContent) {
-            if (content.cells.length === 0) {
-              this.$.previewHtml.innerHTML = '';
-              this._message = NotebookPreviewElement._emptyNotebookMessage;
-            } else {
-              const firstTwoCells = content.cells.slice(0, 2);
+        // If this is a notebook, get the first two cells and render any markdown in them.
+        if (content instanceof NotebookContent) {
+          if (content.cells.length === 0) {
+            this.$.previewHtml.innerHTML = '';
+            this._message = NotebookPreviewElement._emptyNotebookMessage;
+          } else {
+            const firstTwoCells = content.cells.slice(0, 2);
 
-              let markdownHtml = '';
-              firstTwoCells.forEach((cell) => {
-                if (cell.cell_type === 'markdown') {
-                  markdownHtml += marked(cell.source);
-                }
-              });
-              this.$.previewHtml.innerHTML = markdownHtml;
-              this._message = ' Notebook with ' + content.cells.length + ' cells. ';
-              if (content.cells.length > 2) {
-                this._message += NotebookPreviewElement._longNotebookMessage;
+            let markdownHtml = '';
+            firstTwoCells.forEach((cell) => {
+              if (cell.cell_type === 'markdown') {
+                markdownHtml += marked(cell.source);
               }
+            });
+            this.$.previewHtml.innerHTML = markdownHtml;
+            this._message = ' Notebook with ' + content.cells.length + ' cells. ';
+            if (content.cells.length > 2) {
+              this._message += NotebookPreviewElement._longNotebookMessage;
             }
           }
-        })
-        .catch(() => {
-          this.$.previewHtml.innerHTML = '';
-          this._message = '';
-          Utils.log.error('Could not get item details.');
-        });
-    } else {
-      this.$.previewHtml.innerHTML = '';
-      this._message = '';
-    }
+        }
+      })
+      .catch(() => {
+        this.$.previewHtml.innerHTML = '';
+        this._message = '';
+        Utils.log.error('Could not get notebook preview.');
+      });
   }
 
 }

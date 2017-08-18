@@ -25,8 +25,9 @@ class TablePreviewElement extends Polymer.Element {
   /**
    * File whose details to show.
    */
-  public file: DatalabFile;
+  public file: BigQueryFile;
 
+  // TODO(jimmc) - once datalab-data is deleted, make this private
   /**
    * Id for table whose preview to show.
    */
@@ -93,6 +94,7 @@ class TablePreviewElement extends Polymer.Element {
 
   _fileChanged() {
     if (this.file && this.file.id) {
+      // TODO(jimmc) - move this into BigQueryFile?
       const path = this.file.id.path;
       const parts = path.split('/');
       this.tableId = parts[0] + ':' + parts[1] + '.' + parts[2];

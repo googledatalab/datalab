@@ -18,13 +18,13 @@
 class TextPreviewElement extends Polymer.Element {
 
   private static _maxLinesInTextSummary = 30;
-  private static _noFileMessage = 'Select an item to view its details.';
+  private static _noFileMessage = 'Select an item to view a preview.';
   private static _emptyFileMessage = 'Empty file.';
   private static _longFileMessage = 'Showing the first ' +
       TextPreviewElement._maxLinesInTextSummary + '.';
 
   /**
-   * File whose details to show.
+   * File whose preview to show.
    */
   public file: DatalabFile;
 
@@ -45,12 +45,12 @@ class TextPreviewElement extends Polymer.Element {
         value: '',
       },
       active: {
-        observer: '_reloadDetails',
+        observer: '_reloadPreview',
         type: Boolean,
         value: true,
       },
       file: {
-        observer: '_reloadDetails',
+        observer: '_reloadPreview',
         type: Object,
         value: {},
       },
@@ -60,61 +60,41 @@ class TextPreviewElement extends Polymer.Element {
   /**
    * Previews a text file.
    */
-  _reloadDetails() {
+  _reloadPreview() {
     if (!this.file || !this.active) {
+      this.$.previewHtml.innerHTML = '';
       this._message = TextPreviewElement._noFileMessage;
       return;
     }
 
-    if (this._isPlainTextFile(this.file)) {
-      const fileManager = FileManagerFactory.getInstanceForType(this.file.id.source);
-      fileManager.getContent(this.file.id)
-        .then((content: DatalabContent) => {
+    const fileManager = FileManagerFactory.getInstanceForType(this.file.id.source);
+    fileManager.getContent(this.file.id)
+      .then((content: DatalabContent) => {
 
-          // If this is a text file, show the first N lines.
-          if (content instanceof TextContent) {
+        // If this is a text file, show the first N lines.
+        if (content instanceof TextContent) {
 
-            if (content.text.trim() === '') {
-              this.$.previewHtml.innerHTML = '';
-              this._message = TextPreviewElement._emptyFileMessage;
-            } else {
-              const lines = content.text.split('\n');
-              this._message = 'File with ' + lines.length + ' lines. ';
-              this.$.previewHtml.innerText = '\n' +
-                  lines.slice(0, TextPreviewElement._maxLinesInTextSummary).join('\n') +
-                  '\n';
-              if (lines.length > TextPreviewElement._maxLinesInTextSummary) {
-                this.$.previewHtml.innerText += '...\n\n';
-                this._message += TextPreviewElement._longFileMessage;
-              }
+          if (content.text.trim() === '') {
+            this.$.previewHtml.innerHTML = '';
+            this._message = TextPreviewElement._emptyFileMessage;
+          } else {
+            const lines = content.text.split('\n');
+            this._message = 'File with ' + lines.length + ' lines. ';
+            this.$.previewHtml.innerText = '\n' +
+                lines.slice(0, TextPreviewElement._maxLinesInTextSummary).join('\n') +
+                '\n';
+            if (lines.length > TextPreviewElement._maxLinesInTextSummary) {
+              this.$.previewHtml.innerText += '...\n\n';
+              this._message += TextPreviewElement._longFileMessage;
             }
           }
-        })
-        .catch(() => {
-          this.$.previewHtml.innerHTML = '';
-          this._message = '';
-          Utils.log.error('Could not get item details.');
-        });
-    } else {
-      this.$.previewHtml.innerHTML = '';
-      this._message = '';
-    }
-  }
-
-  /**
-   * Returns true if the contents of this file can be read as plain text.
-   * @param file object for the file whose details to display.
-   */
-  _isPlainTextFile(file: DatalabFile) {
-    if (file instanceof JupyterFile) {
-      return file &&
-            file.mimetype && (
-              file.mimetype.indexOf('text/') > -1 ||
-              file.mimetype.indexOf('application/json') > -1
-            );
-    } else {
-      return false;
-    }
+        }
+      })
+      .catch(() => {
+        this.$.previewHtml.innerHTML = '';
+        this._message = '';
+        Utils.log.error('Could not get text preview.');
+      });
   }
 
 }

@@ -17,7 +17,7 @@ the License.
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
 <link rel="import" href="../../modules/file-manager-factory/file-manager-factory.html">
 
-<dom-module id="details-pane">
+<dom-module id="preview-pane">
   <template>
     <style include="datalab-shared-styles">
       #container {
@@ -38,11 +38,11 @@ the License.
         <table-preview class="preview" name="table" file="{{file}}" active="{{active}}"></table-preview>
         <text-preview class="preview" name="text" file="{{file}}" active="{{active}}"></text-preview>
       </iron-pages>
-      <div class="placeholder">
-        {{_message}}
+      <div class="placeholder" hidden$="{{file}}">
+        Select an item to view a preview.
       </div>
     </div>
   </template>
 </dom-module>
 
-<script src="details-pane.js"></script>
+<script src="preview-pane.js"></script>
