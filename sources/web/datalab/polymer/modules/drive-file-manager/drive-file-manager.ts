@@ -27,12 +27,6 @@ class DriveFileManager implements FileManager {
 
   private static readonly _directoryMimeType = 'application/vnd.google-apps.folder';
 
-  private _loadPromise: Promise<any>;
-
-  constructor() {
-    this._loadPromise = GapiManager.grantScope(GapiScopes.DRIVE);
-  }
-
   private static _upstreamToDriveFile(file: gapi.client.drive.File) {
     const datalabFile: DriveFile = {
       icon: file.iconLink,
@@ -45,26 +39,24 @@ class DriveFileManager implements FileManager {
     };
     return datalabFile;
   }
-  public async get(_fileId: DatalabFileId): Promise<DatalabFile> {
+  public get(_fileId: DatalabFileId): Promise<DatalabFile> {
     throw new UnsupportedMethod('get', this);
   }
 
-  public async getContent(_fileId: DatalabFileId, _asText?: boolean): Promise<DatalabContent> {
+  public getContent(_fileId: DatalabFileId, _asText?: boolean): Promise<DatalabContent> {
     throw new UnsupportedMethod('getContent', this);
   }
 
   public async getRootFile(): Promise<DatalabFile> {
-    await this._loadPromise;
     const upstreamFile = await GapiManager.drive.getRoot();
     return DriveFileManager._upstreamToDriveFile(upstreamFile);
   }
 
-  public async saveText(_file: DatalabFile): Promise<DatalabFile> {
+  public saveText(_file: DatalabFile): Promise<DatalabFile> {
     throw new UnsupportedMethod('getRootFile', this);
   }
 
   public async list(fileId: DatalabFileId): Promise<DatalabFile[]> {
-    await this._loadPromise;
     const queryPredicates = [
       '"' + fileId.path + '" in parents',
       'trashed = false',
