@@ -75,7 +75,7 @@ class DatalabAppElement extends Polymer.Element {
       page: {
         observer: '_pageChanged',
         type: String,
-        value: 'files',
+        value: '',
       },
       rootPattern: String,
       routeData: Object,
@@ -110,8 +110,7 @@ class DatalabAppElement extends Polymer.Element {
    * so it can be used by other elements.
    */
   _routePageChanged(page: string) {
-    // Defaults to the files view
-    this.page = page || 'files';
+    this.page = page;
   }
 
   /**
@@ -123,16 +122,12 @@ class DatalabAppElement extends Polymer.Element {
   _pageChanged(newPage: string, oldPage: string) {
     // Build the path using the page name as suffix for directory
     // and file names.
-    const newElement = this._getPageElement(newPage);
-    const oldElement = this._getPageElement(oldPage);
-    const elName = newElement.tagName.toLowerCase();
-    const resolvedPageUrl = this.resolveUrl('../' + elName + '/' + elName + '.html');
-    Polymer.importHref(resolvedPageUrl, undefined, undefined, true);
+    if (newPage) {
+      const newElement = this._getPageElement(newPage);
+      const elName = newElement.tagName.toLowerCase();
+      const resolvedPageUrl = this.resolveUrl('../' + elName + '/' + elName + '.html');
+      Polymer.importHref(resolvedPageUrl, undefined, undefined, true);
 
-    // Call proper event handlers on changed pages.
-    // TODO: Explore making all datalab pages extend a custom element that has
-    // these event handlers defined to keep things consistent and get rid of the checks.
-    if (newElement) {
       if (newElement.focusHandler) {
         newElement.focusHandler();
       }
@@ -140,10 +135,16 @@ class DatalabAppElement extends Polymer.Element {
         newElement.resizeHandler();
       }
     }
-    if (oldElement && oldElement.blurHandler) {
-      oldElement.blurHandler();
-    }
 
+    if (oldPage) {
+      const oldElement = this._getPageElement(oldPage);
+      // Call proper event handlers on changed pages.
+      // TODO: Explore making all datalab pages extend a custom element that has
+      // these event handlers defined to keep things consistent and get rid of the checks.
+      if (oldElement && oldElement.blurHandler) {
+        oldElement.blurHandler();
+      }
+    }
   }
 
   /**
