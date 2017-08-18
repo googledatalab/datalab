@@ -34,10 +34,15 @@ describe('settings', function() {
     });
 
     it('returns empty settings for invalid JSON', () => {
+      let existsCallCount = 0;
       spyOn(userManager, 'getUserDir').and.returnValue('/fake/path');
-      spyOn(fs, 'existsSync').and.returnValue(true);
+      spyOn(fs, 'existsSync').and.callFake((path) => {
+        existsCallCount = existsCallCount + 1;
+        return (existsCallCount <= 2);
+      });
       const invalidContent = '{"startuppath":"/a/b/c"}"idleTimeoutSeconds":600}';
       spyOn(fs, 'readFileSync').and.returnValue(invalidContent);
+      spyOn(fs, 'renameSync');
       const userSettings = settings.loadUserSettings(null);
       expect(userSettings).toEqual({});
     });

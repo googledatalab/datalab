@@ -181,6 +181,9 @@ export function loadUserSettings(userId: string): common.UserSettings {
   }
   catch (e) {
     _logError('Failed to load user settings from ' + settingsPath + ':', e);
+    // Move the corrupt file to another name where the user can examine the
+    // contents later to see what went wrong.
+    renameBadUserSettings(settingsPath);
     return {} as common.UserSettings;
   }
 }
@@ -394,6 +397,21 @@ function formHandler(userId: string, formData: any, request: http.ServerRequest,
  */
 export function createHandler(): http.RequestHandler {
   return requestHandler;
+}
+
+function renameBadUserSettings(settingsPath: string) {
+  let newPath = settingsPath + ".bad";
+  let n = 0;
+  while (fs.existsSync(newPath)) {
+    n = n + 1;
+    newPath = settingsPath + ".bad-" + n;
+  }
+  fs.renameSync(settingsPath, newPath);
+  if (fs.existsSync(newPath)) {
+    _logError('Moved bad file %s to %s', settingsPath, newPath);
+  } else {
+    _logError('Failed to move bad file %s to %s', settingsPath, newPath);
+  }
 }
 
 /**
