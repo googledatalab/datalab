@@ -89,7 +89,7 @@ class TablePreviewElement extends Polymer.Element {
       const datasetId = matches[2];
       const tableId = matches[3];
 
-      GapiManager.getBigqueryTableDetails(projectId, datasetId, tableId)
+      GapiManager.bigquery.getTableDetails(projectId, datasetId, tableId)
         .then((response: HttpResponse<gapi.client.bigquery.Table>) => {
           this._table = response.result;
         }, (errorResponse: any) =>
