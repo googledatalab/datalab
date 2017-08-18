@@ -18,7 +18,7 @@
 /**
  * Data Browser element for Datalab.
  */
-class DataBrowserElement extends Polymer.Element {
+class DataBrowserElement extends Polymer.Element implements DatalabPageElement {
 
   public resizeHandler = null;
   public focusHandler = null;
