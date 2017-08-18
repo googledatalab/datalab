@@ -61,7 +61,8 @@ class GapiManager {
 
     private static _load(): Promise<void> {
       return GapiManager.loadGapi()
-        .then(() => gapi.client.load('drive', 'v3'));
+        .then(() => gapi.client.load('drive', 'v3'))
+        .then(() => GapiManager.grantScope(GapiScopes.DRIVE));
     }
 
   };
