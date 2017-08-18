@@ -13,17 +13,21 @@ the License.
 -->
 
 <link rel="import" href="../../components/file-browser/file-browser.html">
+<link rel="import" href="../../components/shared-styles/shared-styles.html">
 
 <dom-module id="data-browser">
   <template>
     <style include="datalab-shared-styles">
+      :host {
+        display: flex;
+        flex-direction: column;
+      }
+      file-browser {
+        height: 100%;
+      }
     </style>
 
-    <div id="data-container">
-
-      <file-browser file-manager-type='bigquery' hide-toolbar></file-browser>
-
-    </div>
+    <file-browser file-manager-type='bigquery' hide-toolbar></file-browser>
 
   </template>
 </dom-module>
