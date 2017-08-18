@@ -150,7 +150,11 @@ class Utils {
 }
 
 class UnsupportedMethod extends Error {
-  constructor(methodName: string, objectType: any) {
-    super('Method ' + methodName + ' is not supported on type: ' + objectType.name);
+  constructor(methodName: string, object: {}) {
+    let type = 'Unknown';
+    if (object && object.constructor && object.constructor.name) {
+      type = object.constructor.name;
+    }
+    super('Method ' + methodName + ' is not supported on type ' + type);
   }
 }

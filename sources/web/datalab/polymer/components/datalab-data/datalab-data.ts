@@ -90,10 +90,11 @@ class DataElement extends Polymer.Element {
   // Make some calls to the BigQuery API and pass the results to the resultHandler
   _callBigQuery(searchValue: string, resultHandler: (partialResults: Result[]) => void) {
     const sampleProject = 'bigquery-public-data';
-    GapiManager.listBigQueryProjects()
+    GapiManager.bigquery.listProjects()
         .then((response: HttpResponse<gapi.client.bigquery.ListProjectsResponse>) => {
           Utils.log.verbose('== projects: ', response);
-          const projectResults: Result[] = response.result.projects.map(this._bqProjectToResult.bind(this)) as Result[];
+          const projectResults: Result[] =
+              response.result.projects.map(this._bqProjectToResult.bind(this)) as Result[];
           resultHandler(projectResults);
         })
         .catch(() => {
@@ -101,19 +102,21 @@ class DataElement extends Polymer.Element {
         });
     // The filter arg when querying for datasets must be of the form labels.<name>[:<value>],
     // see https://cloud.google.com/bigquery/docs/reference/rest/v2/datasets/list
-    GapiManager.listBigQueryDatasets(sampleProject, searchValue /* label filter */)
+    GapiManager.bigquery.listDatasets(sampleProject, searchValue /* label filter */)
         .then((response: HttpResponse<gapi.client.bigquery.ListDatasetsResponse>) => {
           Utils.log.verbose('== datasets: ', response);
-          const datasetResults: Result[] = response.result.datasets.map(this._bqDatasetToResult.bind(this)) as Result[];
+          const datasetResults: Result[] =
+              response.result.datasets.map(this._bqDatasetToResult.bind(this)) as Result[];
           resultHandler(datasetResults);
         })
         .catch(() => {
           // TODO: handle errors getting datasets
         });
-    GapiManager.listBigQueryTables(sampleProject, searchValue /* datasetId */)
+    GapiManager.bigquery.listTables(sampleProject, searchValue /* datasetId */)
         .then((response: HttpResponse<gapi.client.bigquery.ListTablesResponse>) => {
           Utils.log.verbose('== tables: ', response);
-          const tableResults: Result[] = response.result.tables.map(this._bqTableToResult.bind(this)) as Result[];
+          const tableResults: Result[] =
+              response.result.tables.map(this._bqTableToResult.bind(this)) as Result[];
           resultHandler(tableResults);
         })
         .catch(() => {
