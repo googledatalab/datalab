@@ -13,6 +13,12 @@
  */
 
 class BigQueryFile extends DatalabFile {
+  public getPreviewName(): string {
+    if (this.type == DatalabFileType.FILE) {
+      return 'table';
+    }
+    return '';
+  }
 }
 
 /**
@@ -118,46 +124,46 @@ class BigQueryFileManager implements FileManager {
 
   private _bqRootDatalabFile(): DatalabFile {
     const path = '/';
-    return {
+    return new BigQueryFile({
       icon: '',
       id: new DatalabFileId(path, FileManagerType.BIG_QUERY),
       name: '/',
       status: DatalabFileStatus.IDLE,
       type: DatalabFileType.FILE,
-    } as DatalabFile;
+    } as DatalabFile);
   }
 
   private _bqProjectToDatalabFile(bqProject: gapi.client.bigquery.ProjectResource): DatalabFile {
     const path = bqProject.projectReference.projectId;
-    return {
+    return new BigQueryFile({
       icon: 'datalab-icons:bq-project',
       id: new DatalabFileId(path, FileManagerType.BIG_QUERY),
       name: bqProject.projectReference.projectId,
       status: DatalabFileStatus.IDLE,
       type: DatalabFileType.DIRECTORY,
-    } as DatalabFile;
+    } as DatalabFile);
   }
 
   private _bqDatasetToDatalabFile(bqDataset: gapi.client.bigquery.DatasetResource): DatalabFile {
     const path = bqDataset.datasetReference.projectId + '/' + bqDataset.datasetReference.datasetId;
-    return {
+    return new BigQueryFile({
       icon: 'folder',   // TODO(jimmc) - make a custom icon
       id: new DatalabFileId(path, FileManagerType.BIG_QUERY),
       name: bqDataset.datasetReference.datasetId,
       status: DatalabFileStatus.IDLE,
       type: DatalabFileType.DIRECTORY,
-    } as DatalabFile;
+    } as DatalabFile);
   }
 
   private _bqTableToDatalabFile(bqTable: gapi.client.bigquery.TableResource): DatalabFile {
     const path = bqTable.tableReference.projectId + '/' +
           bqTable.tableReference.datasetId + '/' + bqTable.tableReference.tableId;
-    return {
+    return new BigQueryFile({
       icon: 'list',   // TODO(jimmc) - make a custom icon
       id: new DatalabFileId(path, FileManagerType.BIG_QUERY),
       name: bqTable.tableReference.tableId,
       status: DatalabFileStatus.IDLE,
       type: DatalabFileType.FILE,
-    } as DatalabFile;
+    } as DatalabFile);
   }
 }

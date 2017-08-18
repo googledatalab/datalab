@@ -9,7 +9,10 @@
     "components/datalab-sidebar/datalab-sidebar.html",
     "components/datalab-terminal/datalab-terminal.html",
     "components/datalab-toolbar/datalab-toolbar.html",
-    "components/file-browser/file-browser.html"
+    "components/file-browser/file-browser.html",
+    "components/notebook-preview/notebook-preview.html",
+    "components/table-preview/table-preview.html",
+    "components/text-preview/text-preview.html"
   ],
   "sources": [
     "modules/**/*.js",

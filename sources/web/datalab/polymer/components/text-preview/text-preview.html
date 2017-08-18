@@ -15,15 +15,9 @@ the License.
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
 <link rel="import" href="../../modules/file-manager-factory/file-manager-factory.html">
 
-<dom-module id="details-pane">
+<dom-module id="text-preview">
   <template>
     <style include="datalab-shared-styles">
-      #container {
-        height: 100%;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-      }
       #previewHtml {
         background-color: var(--primary-bg-color);
         padding: 10px;
@@ -32,20 +26,15 @@ the License.
         overflow-x: hidden;
         box-shadow: 5px 5px 10px -3px rgba(0, 0, 0, 0.1);
       }
-      .placeholder {
+      .message {
         padding: 15px;
         text-align: center;
         color: #777;
       }
     </style>
-    <div id="container" hidden$="{{!file}}">
-      <div id="previewHtml"></div>
-      <div class="placeholder">
-        {{_message}}
-      </div>
-    </div>
+    <div id="previewHtml"></div>
+    <div class="message">{{_message}}</div>
   </template>
 </dom-module>
 
-<script src="../../bower_components/marked/lib/marked.js"></script>
-<script src="details-pane.js"></script>
+<script src="text-preview.js"></script>

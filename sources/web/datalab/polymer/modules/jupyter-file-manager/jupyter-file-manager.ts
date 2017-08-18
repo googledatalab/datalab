@@ -25,6 +25,20 @@ class JupyterFile extends DatalabFile {
   mimetype?: string;
   path: string;
   writable?: boolean;
+
+  public getPreviewName(): string {
+    const superPreview = super.getPreviewName();
+    if (superPreview) {
+      return superPreview;
+    }
+    if (this.mimetype && (
+        this.mimetype.indexOf('text/') > -1 ||
+        this.mimetype.indexOf('application/json') > -1
+    )) {
+      return 'text';
+    }
+    return '';
+  }
 }
 
 /**

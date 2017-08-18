@@ -23,6 +23,12 @@
 class TablePreviewElement extends Polymer.Element {
 
   /**
+   * File whose details to show.
+   */
+  public file: BigQueryFile;
+
+  // TODO(jimmc) - once datalab-data is deleted, make this private
+  /**
    * Id for table whose preview to show.
    */
   public tableId: string;
@@ -45,6 +51,11 @@ class TablePreviewElement extends Polymer.Element {
       creationTime: {
         computed: '_computeCreationTime(_table)',
         type: String,
+      },
+      file: {
+        observer: '_fileChanged',
+        type: Object,
+        value: {},
       },
       lastModifiedTime: {
         computed: '_computeLastModifiedTime(_table)',
@@ -79,6 +90,17 @@ class TablePreviewElement extends Polymer.Element {
 
     this._apiManager = ApiManagerFactory.getInstance();
     this._fileManager = FileManagerFactory.getInstance();
+  }
+
+  _fileChanged() {
+    if (this.file && this.file.id) {
+      // TODO(jimmc) - move this into BigQueryFile?
+      const path = this.file.id.path;
+      const parts = path.split('/');
+      this.tableId = parts[0] + ':' + parts[1] + '.' + parts[2];
+    } else {
+      this.tableId = '';
+    }
   }
 
   _tableIdChanged() {
