@@ -19,12 +19,14 @@
  * Contains an item-list element to display sessions, a toolbar to interact with these sessions,
  * a progress bar that appears while loading the list
  */
-class SessionsElement extends Polymer.Element {
+class SessionsElement extends Polymer.Element implements DatalabPageElement {
 
   /**
    * The currently selected session if exactly one is selected, or null if none is.
    */
   public selectedSession: Session | null;
+
+  public resizeHandler = null;
 
   private _sessionList: Session[];
   private _fetching: boolean;
@@ -65,7 +67,7 @@ class SessionsElement extends Polymer.Element {
                                     this._handleSelectionChanged.bind(this));
     }
 
-    this._focusHandler();
+    this.focusHandler();
   }
 
   /**
@@ -162,7 +164,7 @@ class SessionsElement extends Polymer.Element {
   /**
    * Starts auto refreshing the session list, and also triggers an immediate refresh.
    */
-  _focusHandler() {
+  focusHandler() {
     // Refresh the session list periodically as long as the document has focus.
     // Note that we don't rely solely on the interval to keep the list in sync,
     // the refresh also happens when the sessions page gains focus, which is
@@ -184,7 +186,7 @@ class SessionsElement extends Polymer.Element {
    * Stops the auto refresh of the session list. This happens when the user moves
    * away from the page.
    */
-  _blurHandler() {
+  blurHandler() {
     if (this._sessionListRefreshIntervalHandle) {
       clearInterval(this._sessionListRefreshIntervalHandle);
       this._sessionListRefreshIntervalHandle = 0;

@@ -75,6 +75,7 @@ the License.
         <div class="datalab-main-content">
           <iron-pages id="pages" selected="{{page}}" attr-for-selected="name"
                       fallback-selection="files">
+            <!-- Elements here must implement the DatalabPageElement interface -->
             <data-browser class="page" name="data2"></data-browser>
             <datalab-data class="page" name="data"></datalab-data>
             <file-browser class="page" name="files"></file-browser>

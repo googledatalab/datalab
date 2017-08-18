@@ -32,7 +32,7 @@
  * and no selection. It also doesn't do anything when a file is double clicked.
  * This is meant to be used for browsing only, such as the case for picking files or directories.
  */
-class FileBrowserElement extends Polymer.Element {
+class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
   private static readonly _deleteListLimit = 10;
 
@@ -734,7 +734,7 @@ class FileBrowserElement extends Polymer.Element {
    * Called on window.resize, collapses elements to keep the element usable
    * on small screens.
    */
-  _resizeHandler() {
+  resizeHandler() {
     const width = this.$.toolbar.clientWidth;
     // Collapse the add buttons on the toolbar
     if (width < this._addToolbarCollapseThreshold) {
@@ -760,12 +760,14 @@ class FileBrowserElement extends Polymer.Element {
     if (width < this._detailsPaneCollapseThreshold) {
       this._isDetailsPaneToggledOn = false;
     }
+
+    (this.$.breadCrumbs as BreadCrumbsElement).resizeHandler();
   }
 
   /**
    * Starts auto refreshing the file list, and also triggers an immediate refresh.
    */
-  _focusHandler() {
+  focusHandler() {
     // Refresh the file list periodically as long as the document is focused.
     // Note that we don't rely solely on the interval to keep the list in sync,
     // the refresh also happens after file operations, and when the files page
@@ -785,7 +787,7 @@ class FileBrowserElement extends Polymer.Element {
    * Stops the auto refresh of the file list. This happens when the user moves
    * away from the page.
    */
-  _blurHandler() {
+  blurHandler() {
     if (this._fileListRefreshIntervalHandle) {
       clearInterval(this._fileListRefreshIntervalHandle);
       this._fileListRefreshIntervalHandle = 0;
@@ -822,8 +824,8 @@ class FileBrowserElement extends Polymer.Element {
   }
 
   private _finishLoadingFiles() {
-    this._resizeHandler();
-    this._focusHandler();
+    this.resizeHandler();
+    this.focusHandler();
 
     const filesElement = this.shadowRoot.querySelector('#files');
     if (filesElement) {

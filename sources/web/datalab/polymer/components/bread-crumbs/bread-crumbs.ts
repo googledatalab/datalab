@@ -50,17 +50,11 @@ class BreadCrumbsElement extends Polymer.Element {
     };
   }
 
-  ready() {
-    super.ready();
-
-    window.addEventListener('resize', () => this._resizeHandler());
-  }
-
   _crumbsChanged() {
-    this._resizeHandler();
+    this.resizeHandler();
   }
 
-  _resizeHandler() {
+  resizeHandler() {
     // Let the items render first, before hiding overflowing items
     Polymer.dom.flush();
 
