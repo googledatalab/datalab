@@ -12,25 +12,30 @@ or implied. See the License for the specific language governing permissions and 
 the License.
 -->
 
-<link rel="import" href="../../components/datalab-page/datalab-page.html">
-<link rel="import" href="../../components/file-browser/file-browser.html">
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
+<link rel="import" href="../../modules/file-manager-factory/file-manager-factory.html">
 
-<dom-module id="data-browser">
+<dom-module id="notebook-preview">
   <template>
     <style include="datalab-shared-styles">
-      :host {
-        display: flex;
-        flex-direction: column;
+      #previewHtml {
+        background-color: var(--primary-bg-color);
+        padding: 10px;
+        margin: 10px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        box-shadow: 5px 5px 10px -3px rgba(0, 0, 0, 0.1);
       }
-      file-browser {
-        height: 100%;
+      .message {
+        padding: 15px;
+        text-align: center;
+        color: #777;
       }
     </style>
-
-    <file-browser file-manager-type='bigquery' hide-toolbar></file-browser>
-
+    <div id="previewHtml"></div>
+    <div class="message">{{_message}}</div>
   </template>
 </dom-module>
 
-<script src="data-browser.js"></script>
+<script src="../../bower_components/marked/lib/marked.js"></script>
+<script src="notebook-preview.js"></script>

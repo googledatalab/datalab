@@ -12,20 +12,14 @@
  * the License.
  */
 
-/// <reference path="../input-dialog/input-dialog.ts" />
-/// <reference path="../item-list/item-list.ts" />
-
 /**
- * Data Browser element for Datalab.
+ * Interface for an element that is shown as a navigation page in Datalab.
+ * These elements can support resizing, focusing, and blurring, and so must
+ * define the functions below if that functionality is needed, otherwise
+ * explicitly set it to null.
  */
-class DataBrowserElement extends Polymer.Element implements DatalabPageElement {
-
-  public resizeHandler = null;
-  public focusHandler = null;
-  public blurHandler = null;
-
-  static get is() { return 'data-browser'; }
-
+interface DatalabPageElement extends Polymer.Element {
+  resizeHandler: (() => void) | null;
+  focusHandler: (() => void) | null;
+  blurHandler: (() => void) | null;
 }
-
-customElements.define(DataBrowserElement.is, DataBrowserElement);

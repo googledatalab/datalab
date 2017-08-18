@@ -14,9 +14,11 @@ the License.
 
 <link rel="import" href="../../components/base-dialog/base-dialog.html">
 <link rel="import" href="../../components/bread-crumbs/bread-crumbs.html">
-<link rel="import" href="../../components/details-pane/details-pane.html">
+<link rel="import" href="../../components/datalab-page/datalab-page.html">
 <link rel="import" href="../../components/input-dialog/input-dialog.html">
+<link rel="import" href="../../components/preview-pane/preview-pane.html">
 <link rel="import" href="../../components/item-list/item-list.html">
+<link rel="import" href="../../components/resizable-divider/resizable-divider.html">
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
 <link rel="import" href="../../modules/api-manager-factory/api-manager-factory.html">
 <link rel="import" href="../../modules/file-manager-factory/file-manager-factory.html">
@@ -42,6 +44,10 @@ the License.
         font-family: var(--app-content-font-family);
         font-size: var(--app-content-font-size);
         color: var(--primary-fg-color);
+      }
+      resizable-divider {
+        width: 100%;
+        height: 100%;
       }
       #toolbar {
         flex: 0 0 var(--toolbar-height);
@@ -120,15 +126,15 @@ the License.
         flex: 1 1 auto;
         background-color: var(--primary-bg-color);
       }
-      #detailsPane {
+      #previewPane {
         background-color: var(--secondary-bg-color);
         box-shadow: inset 4px 0px 10px -3px rgba(0, 0, 0, 0.1);
         transition: width var(--app-animation-duration);
       }
-      .details-pane-enabled--true {
+      .preview-pane-enabled--true {
         width: var(--preview-pane-width);
       }
-      .details-pane-enabled--false {
+      .preview-pane-enabled--false {
         width: 0px;
       }
       .vseparator {
@@ -236,7 +242,7 @@ the License.
         </paper-button>
         <div class="vseparator"></div>
         <bread-crumbs id="breadCrumbs"></bread-crumbs>
-        <paper-button id="toggleDetails" class="navbar-button" on-click="_toggleDetailsPane"
+        <paper-button id="togglePreview" class="navbar-button" on-click="_togglePreviewPane"
                       hidden$="{{small}}">
           <iron-icon icon="visibility"></iron-icon>
         </paper-button>
@@ -249,10 +255,9 @@ the License.
       <!--File listing-->
       <div class="files-container">
         <item-list id="files" hide-header$="{{small}}" disable-selection$="{{small}}"></item-list>
-        <details-pane id="detailsPane" file="{{selectedFile}}" active="{{_isDetailsPaneEnabled}}"
-                      class$="details-pane-enabled--{{_isDetailsPaneEnabled}}">
-        </details-pane>
-        </div>
+        <preview-pane id="previewPane" file="{{selectedFile}}" active="{{_isPreviewPaneEnabled}}"
+                      class$="preview-pane-enabled--{{_isPreviewPaneEnabled}}">
+        </preview-pane>
       </div>
     </div>
 

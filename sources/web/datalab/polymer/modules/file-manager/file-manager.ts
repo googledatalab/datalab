@@ -130,6 +130,23 @@ abstract class DatalabFile {
   name: string;
   status?: DatalabFileStatus;
   type: DatalabFileType;
+
+  constructor(obj?: DatalabFile) {
+    if (obj) {
+      this.icon = obj.icon;
+      this.name = obj.name;
+      this.id = obj.id;
+      this.status = obj.status;
+      this.type = obj.type;
+    }
+  }
+
+  public getPreviewName(): string {
+    if (this.type == DatalabFileType.NOTEBOOK) {
+      return 'notebook';
+    }
+    return '';
+  }
 }
 
 interface FileManager {

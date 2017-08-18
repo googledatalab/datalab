@@ -1,0 +1,48 @@
+<!--
+Copyright 2017 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License
+is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+or implied. See the License for the specific language governing permissions and limitations under
+the License.
+-->
+
+<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
+
+<link rel="import" href="../../components/shared-styles/shared-styles.html">
+<link rel="import" href="../../modules/file-manager-factory/file-manager-factory.html">
+
+<dom-module id="preview-pane">
+  <template>
+    <style include="datalab-shared-styles">
+      #container {
+        height: 100%;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+      .placeholder {
+        padding: 15px;
+        text-align: center;
+        color: #777;
+      }
+    </style>
+    <div id="container" hidden$="{{!file}}">
+      <iron-pages id="preview" selected="{{preview}}" attr-for-selected="name">
+        <notebook-preview class="preview" name="notebook" file="{{file}}" active="{{active}}"></notebook-preview>
+        <table-preview class="preview" name="table" file="{{file}}" active="{{active}}"></table-preview>
+        <text-preview class="preview" name="text" file="{{file}}" active="{{active}}"></text-preview>
+      </iron-pages>
+      <div class="placeholder" hidden$="{{file}}">
+        Select an item to view a preview.
+      </div>
+    </div>
+  </template>
+</dom-module>
+
+<script src="preview-pane.js"></script>

@@ -26,7 +26,11 @@ interface Result {
  * Data element for Datalab.
  * Contains a form for initial user input, and a list of results.
  */
-class DataElement extends Polymer.Element {
+class DataElement extends Polymer.Element implements DatalabPageElement {
+
+  public resizeHandler = null;
+  public focusHandler = null;
+  public blurHandler = null;
 
   private _resultsList: Result[];
   private _searchValue: string;
