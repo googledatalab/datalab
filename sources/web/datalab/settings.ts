@@ -51,7 +51,7 @@ export function loadAppSettings(): common.AppSettings {
   var metadataPath = path.join(__dirname, 'config', METADATA_FILE);
 
   if (!fs.existsSync(settingsPath)) {
-    _log('App settings file %s not found.', settingsPath);
+    _logError('App settings file %s not found.', settingsPath);
     return null;
   }
 
@@ -97,7 +97,7 @@ export function loadAppSettings(): common.AppSettings {
     return settings;
   }
   catch (e) {
-    _log(e);
+    _logError(e);
     return null;
   }
 }
@@ -180,8 +180,8 @@ export function loadUserSettings(userId: string): common.UserSettings {
     return settings;
   }
   catch (e) {
-    _log(e);
-    return null;
+    _logError('Failed to load user settings from ' + settingsPath + ':', e);
+    return {} as common.UserSettings;
   }
 }
 
@@ -407,5 +407,19 @@ function _log(...args: Object[]) {
     logger.debug(msg);
   } else {
     console.log.apply(console, args);
+  }
+}
+
+/**
+ * Logs an error message if the logger has been initialized,
+ * else logs to console.error.
+ */
+function _logError(...args: Object[]) {
+  const logger = logging.getLogger();
+  if (logger) {
+    const msg = util.format.apply(util.format, args);
+    logger.error(msg);
+  } else {
+    console.error.apply(console, args);
   }
 }
