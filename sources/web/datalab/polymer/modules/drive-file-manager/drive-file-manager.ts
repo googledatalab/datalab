@@ -28,7 +28,7 @@ class DriveFileManager implements FileManager {
   private static readonly _directoryMimeType = 'application/vnd.google-apps.folder';
 
   private static _upstreamToDriveFile(file: gapi.client.drive.File) {
-    const datalabFile: DriveFile = {
+    const datalabFile: DriveFile = new DriveFile({
       icon: file.iconLink,
       id: new DatalabFileId(file.id, FileManagerType.DRIVE),
       name: file.name,
@@ -36,7 +36,7 @@ class DriveFileManager implements FileManager {
       type: file.mimeType === DriveFileManager._directoryMimeType ?
                               DatalabFileType.DIRECTORY :
                               DatalabFileType.FILE,
-    };
+    } as DatalabFile);
     return datalabFile;
   }
   public get(_fileId: DatalabFileId): Promise<DatalabFile> {

@@ -13,15 +13,6 @@
  */
 
 class BigQueryFile extends DatalabFile {
-  constructor(obj: DatalabFile) {
-    super();
-    this.icon = obj.icon;
-    this.name = obj.name;
-    this.id = obj.id;
-    this.status = obj.status;
-    this.type = obj.type;
-  }
-
   public getPreviewName(): string {
     if (this.type == DatalabFileType.FILE) {
       return 'table';
