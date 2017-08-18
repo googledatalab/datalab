@@ -79,12 +79,7 @@ class SessionsElement extends Polymer.Element {
     }
 
     (this.$.sessions as ItemListElement).rows = this._sessionList.map((session) => {
-      return {
-        firstCol: session.notebook.path,
-        icon: 'editor:insert-drive-file',
-        secondCol: 'running',
-        selected: false
-      };
+      return new ItemListRow(session.notebook.path, '', 'editor:insert-drive-file');
     });
   }
 

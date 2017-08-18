@@ -21,6 +21,11 @@ const FILE_MANAGER_ELEMENT = {
     path: 'modules/bigquery-file-manager/bigquery-file-manager.html',
     type: BigQueryFileManager,
   },
+  drive: {
+    name: 'drive',
+    path: 'modules/drive-file-manager/drive-file/manager.html',
+    type: DriveFileManager,
+  },
   jupyter: {
     name: 'jupyter',
     path: 'modules/jupyter-file-manager/jupyter-file-manager.html',
@@ -30,6 +35,7 @@ const FILE_MANAGER_ELEMENT = {
 
 enum FileManagerType {
   BIG_QUERY,
+  DRIVE,
   JUPYTER,
 }
 
@@ -50,6 +56,7 @@ class FileManagerFactory {
   public static fileManagerNameToType(name: string): FileManagerType {
     switch (name) {
       case 'bigquery': return FileManagerType.BIG_QUERY;
+      case 'drive': return FileManagerType.DRIVE;
       case 'jupyter': return FileManagerType.JUPYTER;
       default: throw new Error('Unknown FileManagerType name ' + name);
     }
@@ -77,6 +84,7 @@ class FileManagerFactory {
   private static _getBackendType(fileManagerType: FileManagerType) {
     switch (fileManagerType) {
       case FileManagerType.BIG_QUERY: return FILE_MANAGER_ELEMENT.bigquery;
+      case FileManagerType.DRIVE: return FILE_MANAGER_ELEMENT.drive;
       case FileManagerType.JUPYTER: return FILE_MANAGER_ELEMENT.jupyter;
       default: throw new Error('Unknown FileManagerType');
     }

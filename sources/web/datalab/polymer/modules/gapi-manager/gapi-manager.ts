@@ -13,6 +13,7 @@
  */
 
 /// <reference path="../../../../../../third_party/externs/ts/gapi/bigquery.d.ts" />
+/// <reference path="../../../../../../third_party/externs/ts/gapi/drive.d.ts" />
 
 class MissingClientIdError extends Error {
   message = 'No oauth2ClientId found in user or config settings';
@@ -27,9 +28,112 @@ enum GapiScopes {
 const initialScopeString = 'profile email';
 
 /**
- * This file contains a collection of functions that interact with gapi.
+ * This module contains a collection of functions that interact with gapi.
  */
 class GapiManager {
+
+  public static drive = class {
+
+    public static getRoot(): Promise<gapi.client.drive.File> {
+      const request: gapi.client.drive.GetFileRequest = {
+        fileId: 'root',
+      };
+      return this._load()
+        .then(() => gapi.client.drive.files.get(request))
+        .then((response) => JSON.parse(response.body));
+    }
+
+    public static getFiles(fileFields: string[], queryPredicates: string[], orderBy?: string[]):
+        Promise<gapi.client.drive.File[]> {
+      return this._load()
+        .then(() => gapi.client.drive.files.list({
+          fields: 'nextPageToken, files(' + fileFields.join(',') + ')',
+          orderBy: orderBy ? orderBy.join(',') : '',
+          pageSize: 30,
+          q: queryPredicates.join(' and '),
+        }))
+        .then((response: HttpResponse<gapi.client.drive.ListFilesResponse>) => {
+          return response.result.files;
+        }, (response: HttpResponse<{error: Error}>) => {
+          throw response.result.error;
+        });
+    }
+
+    private static _load(): Promise<void> {
+      return GapiManager.loadGapi()
+        .then(() => gapi.client.load('drive', 'v3'))
+        .then(() => GapiManager.grantScope(GapiScopes.DRIVE));
+    }
+
+  };
+
+  public static bigquery = class {
+
+    /**
+     * Gets the list of BigQuery projects, returns a Promise.
+     */
+    public static listProjects():
+        Promise<gapi.client.HttpRequestFulfilled<gapi.client.bigquery.ListProjectsResponse>> {
+      const request = {
+        maxResults: 1000,
+      };
+      return this._load()
+        .then(() => gapi.client.bigquery.projects.list(request));
+    }
+
+    /**
+     * Gets the list of BigQuery datasets in the specified project, returns a Promise.
+     * @param projectId
+     * @param filter A label filter of the form label.<name>[:<value>], as described in
+     *     https://cloud.google.com/bigquery/docs/reference/rest/v2/datasets/list
+     */
+    public static listDatasets(projectId: string, filter: string):
+        Promise<gapi.client.HttpRequestFulfilled<gapi.client.bigquery.ListDatasetsResponse>> {
+      const request = {
+        filter,
+        maxResults: 1000,
+        projectId,
+      };
+      return this._load()
+        .then(() => gapi.client.bigquery.datasets.list(request));
+    }
+
+    /**
+     * Gets the list of BigQuery tables in the specified project and dataset,
+     * returns a Promise.
+     */
+    public static listTables(projectId: string, datasetId: string):
+        Promise<gapi.client.HttpRequestFulfilled<gapi.client.bigquery.ListTablesResponse>> {
+      const request = {
+        datasetId,
+        maxResults: 1000,
+        projectId,
+      };
+      return this._load()
+        .then(() => gapi.client.bigquery.tables.list(request));
+    }
+
+    /**
+     * Fetches table details from BigQuery
+     */
+    public static getTableDetails(projectId: string, datasetId: string, tableId: string):
+        Promise<gapi.client.HttpRequestFulfilled<gapi.client.bigquery.Table>> {
+      const request = {
+        datasetId,
+        projectId,
+        tableId,
+      };
+      return this._load()
+        .then(() => gapi.client.bigquery.tables.get(request));
+    }
+
+    private static _load(): Promise<void> {
+      return GapiManager.loadGapi()
+        .then(() => gapi.client.load('bigquery', 'v2'))
+        .then(() => GapiManager.grantScope(GapiScopes.BIGQUERY));
+    }
+
+  };
 
   private static _clientId = '';   // Gets set by _loadClientId()
   private static _loadPromise: Promise<void>;
@@ -115,64 +219,6 @@ class GapiManager {
   }
 
   /**
-   * Gets the list of BigQuery projects, returns a Promise.
-   */
-  public static listBigQueryProjects():
-      Promise<gapi.client.HttpRequestFulfilled<gapi.client.bigquery.ListProjectsResponse>> {
-    const request = {
-      maxResults: 1000,
-    };
-    return this._loadBigQuery()
-      .then(() => gapi.client.bigquery.projects.list(request));
-  }
-
-  /**
-   * Gets the list of BigQuery datasets in the specified project, returns a Promise.
-   * @param projectId
-   * @param filter A label filter of the form label.<name>[:<value>], as described in
-   *     https://cloud.google.com/bigquery/docs/reference/rest/v2/datasets/list
-   */
-  public static listBigQueryDatasets(projectId: string, filter: string):
-      Promise<gapi.client.HttpRequestFulfilled<gapi.client.bigquery.ListDatasetsResponse>> {
-    const request = {
-      filter,
-      maxResults: 1000,
-      projectId,
-    };
-    return GapiManager._loadBigQuery()
-      .then(() => gapi.client.bigquery.datasets.list(request));
-  }
-
-  /**
-   * Gets the list of BigQuery tables in the specified project and dataset,
-   * returns a Promise.
-   */
-  public static listBigQueryTables(projectId: string, datasetId: string):
-      Promise<gapi.client.HttpRequestFulfilled<gapi.client.bigquery.ListTablesResponse>> {
-    const request = {
-      datasetId,
-      maxResults: 1000,
-      projectId,
-    };
-    return GapiManager._loadBigQuery()
-      .then(() => gapi.client.bigquery.tables.list(request));
-  }
-
-  /**
-   * Fetches table details from BigQuery
-   */
-  public static getBigqueryTableDetails(projectId: string, datasetId: string, tableId: string):
-      Promise<gapi.client.HttpRequestFulfilled<gapi.client.bigquery.Table>> {
-    const request = {
-      datasetId,
-      projectId,
-      tableId,
-    };
-    return GapiManager._loadBigQuery()
-      .then(() => gapi.client.bigquery.tables.get(request));
-  }
-
-  /**
    * Observes changes to the sign in status, and calls the provided callback
    * with the changes.
    */
@@ -249,18 +295,12 @@ class GapiManager {
       });
   }
 
-  private static _loadBigQuery(): Promise<void> {
-    return this.loadGapi()
-      .then(() => gapi.client.load('bigquery', 'v2'))
-      .then(() => GapiManager.grantScope(GapiScopes.BIGQUERY));
-  }
-
   private static _getScopeString(scope: GapiScopes): string {
     switch (scope) {
       case GapiScopes.BIGQUERY:
         return 'https://www.googleapis.com/auth/bigquery';
       case GapiScopes.DRIVE:
-          return 'https://www.googleapis.com/auth/drive.metadata.readonly ';
+          return 'https://www.googleapis.com/auth/drive.metadata.readonly';
       case GapiScopes.GCS:
           return 'https://www.googleapis.com/auth/devstorage.full_control';
       default:
