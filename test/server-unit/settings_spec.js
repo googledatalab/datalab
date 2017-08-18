@@ -21,6 +21,33 @@ const userManager = require(BASE + 'userManager');
 describe('Unit tests', function() {
 describe('settings', function() {
 
+  describe('loadUserSettings', () => {
+    it('parses valid JSON files and returns them', () => {
+      spyOn(userManager, 'getUserDir').and.returnValue('/fake/path');
+      spyOn(fs, 'existsSync').and.returnValue(true);
+      const validContent = '{"startuppath":"/a/b/c","idleTimeoutInterval":"30m"}';
+      spyOn(fs, 'readFileSync').and.returnValue(validContent);
+      const userSettings = settings.loadUserSettings(null);
+      expect(userSettings).not.toBeNull();
+      expect(userSettings.startuppath).toEqual('/a/b/c');
+      expect(userSettings.idleTimeoutInterval).toEqual('30m');
+    });
+
+    it('returns empty settings for invalid JSON', () => {
+      let existsCallCount = 0;
+      spyOn(userManager, 'getUserDir').and.returnValue('/fake/path');
+      spyOn(fs, 'existsSync').and.callFake((path) => {
+        existsCallCount = existsCallCount + 1;
+        return (existsCallCount <= 2);
+      });
+      const invalidContent = '{"startuppath":"/a/b/c"}"idleTimeoutSeconds":600}';
+      spyOn(fs, 'readFileSync').and.returnValue(invalidContent);
+      spyOn(fs, 'renameSync');
+      const userSettings = settings.loadUserSettings(null);
+      expect(userSettings).toEqual({});
+    });
+  });
+
   describe('mergeUserSettings', function() {
     it('merges empty strings to empty object', function() {
       const dflt = '';

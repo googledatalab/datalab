@@ -51,7 +51,7 @@ export function loadAppSettings(): common.AppSettings {
   var metadataPath = path.join(__dirname, 'config', METADATA_FILE);
 
   if (!fs.existsSync(settingsPath)) {
-    _log('App settings file %s not found.', settingsPath);
+    _logError('App settings file %s not found.', settingsPath);
     return null;
   }
 
@@ -97,7 +97,7 @@ export function loadAppSettings(): common.AppSettings {
     return settings;
   }
   catch (e) {
-    _log(e);
+    _logError(e);
     return null;
   }
 }
@@ -180,8 +180,11 @@ export function loadUserSettings(userId: string): common.UserSettings {
     return settings;
   }
   catch (e) {
-    _log(e);
-    return null;
+    _logError('Failed to load user settings from ' + settingsPath + ':', e);
+    // Move the corrupt file to another name where the user can examine the
+    // contents later to see what went wrong.
+    renameBadUserSettings(settingsPath);
+    return {} as common.UserSettings;
   }
 }
 
@@ -396,6 +399,27 @@ export function createHandler(): http.RequestHandler {
   return requestHandler;
 }
 
+function renameBadUserSettings(settingsPath: string) {
+  let newPath = settingsPath + ".bad";
+  let n = 0;
+  const maxBackups = 10;
+  while (fs.existsSync(newPath) && n < maxBackups) {
+    n = n + 1;
+    newPath = settingsPath + ".bad-" + n;
+  }
+  if (n >= maxBackups) {
+    _logError('Too many backups already (%d), not renaming bad file %s',
+        maxBackups, settingsPath);
+  } else {
+    fs.renameSync(settingsPath, newPath);
+    if (fs.existsSync(newPath)) {
+      _logError('Moved bad file %s to %s', settingsPath, newPath);
+    } else {
+      _logError('Failed to move bad file %s to %s', settingsPath, newPath);
+    }
+  }
+}
+
 /**
  * Logs a debug message if the logger has been initialized,
  * else logs to console.log.
@@ -407,5 +431,19 @@ function _log(...args: Object[]) {
     logger.debug(msg);
   } else {
     console.log.apply(console, args);
+  }
+}
+
+/**
+ * Logs an error message if the logger has been initialized,
+ * else logs to console.error.
+ */
+function _logError(...args: Object[]) {
+  const logger = logging.getLogger();
+  if (logger) {
+    const msg = util.format.apply(util.format, args);
+    logger.error(msg);
+  } else {
+    console.error.apply(console, args);
   }
 }
