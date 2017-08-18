@@ -402,15 +402,21 @@ export function createHandler(): http.RequestHandler {
 function renameBadUserSettings(settingsPath: string) {
   let newPath = settingsPath + ".bad";
   let n = 0;
-  while (fs.existsSync(newPath)) {
+  const maxBackups = 10;
+  while (fs.existsSync(newPath) && n < maxBackups) {
     n = n + 1;
     newPath = settingsPath + ".bad-" + n;
   }
-  fs.renameSync(settingsPath, newPath);
-  if (fs.existsSync(newPath)) {
-    _logError('Moved bad file %s to %s', settingsPath, newPath);
+  if (n >= maxBackups) {
+    _logError('Too many backups already (%d), not renaming bad file %s',
+        maxBackups, settingsPath);
   } else {
-    _logError('Failed to move bad file %s to %s', settingsPath, newPath);
+    fs.renameSync(settingsPath, newPath);
+    if (fs.existsSync(newPath)) {
+      _logError('Moved bad file %s to %s', settingsPath, newPath);
+    } else {
+      _logError('Failed to move bad file %s to %s', settingsPath, newPath);
+    }
   }
 }
 
