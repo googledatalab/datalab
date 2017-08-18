@@ -120,27 +120,28 @@ class DatalabAppElement extends Polymer.Element {
    * the browser pre-load all the pages on the first request.
    */
   _pageChanged(newPage: string, oldPage: string) {
-    // Build the path using the page name as suffix for directory
-    // and file names.
     if (newPage) {
+      // Lazy load the requested page. Build the path using the page's element
+      // name.
       const newElement = this._getPageElement(newPage);
       const elName = newElement.tagName.toLowerCase();
       const resolvedPageUrl = this.resolveUrl('../' + elName + '/' + elName + '.html');
-      Polymer.importHref(resolvedPageUrl, undefined, undefined, true);
 
-      if (newElement.focusHandler) {
-        newElement.focusHandler();
-      }
-      if (newElement.resizeHandler) {
-        newElement.resizeHandler();
-      }
+      Polymer.importHref(resolvedPageUrl, () => {
+        // After the element has loaded, call proper event handlers on it.
+        if (newElement.focusHandler) {
+          newElement.focusHandler();
+        }
+        if (newElement.resizeHandler) {
+          newElement.resizeHandler();
+        }
+      }, undefined, true);
+
     }
 
     if (oldPage) {
       const oldElement = this._getPageElement(oldPage);
-      // Call proper event handlers on changed pages.
-      // TODO: Explore making all datalab pages extend a custom element that has
-      // these event handlers defined to keep things consistent and get rid of the checks.
+      // Call proper event handlers on old page, which should already exist.
       if (oldElement && oldElement.blurHandler) {
         oldElement.blurHandler();
       }
