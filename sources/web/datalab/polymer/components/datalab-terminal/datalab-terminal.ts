@@ -34,7 +34,10 @@ declare class Terminal {
  * If the user closes the terminal session, either by typing 'exit' or ctrl+d, this
  * element will automatically reset the terminal.
  */
-class TerminalElement extends Polymer.Element {
+class TerminalElement extends Polymer.Element implements DatalabPageElement {
+
+  public focusHandler = null;
+  public blurHandler = null;
 
   private _xterm: Terminal;
   private _wsConnection: WebSocket;
@@ -97,7 +100,7 @@ class TerminalElement extends Polymer.Element {
 
       // Now, create the front-end terminal.
       this._xterm.open(this.$.theTerminal, true);
-      this._resizeHandler();
+      this.resizeHandler();
     };
   }
 
@@ -105,7 +108,7 @@ class TerminalElement extends Polymer.Element {
    * On window resize, both front-end and Jupyter terminal instances need to be resized and
    * kept in sync, otherwise line wrapping issues will happen.
    */
-  _resizeHandler() {
+  resizeHandler() {
     if (this._xterm) {
       const rows = this.$.theTerminal.clientHeight / this._charHeight;
       const cols = this.$.theTerminal.clientWidth / this._charWidth;

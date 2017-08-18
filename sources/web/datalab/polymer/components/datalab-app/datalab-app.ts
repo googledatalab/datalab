@@ -52,7 +52,7 @@ class DatalabAppElement extends Polymer.Element {
     // Set the pattern once to be the current document pathname.
     this.rootPattern = (new URL(this.rootPath)).pathname;
 
-    this._boundResizeHandler = this._resizeHandler.bind(this);
+    this._boundResizeHandler = this.resizeHandler.bind(this);
     window.addEventListener('resize', this._boundResizeHandler, true);
 
     const apiManager = ApiManagerFactory.getInstance();
@@ -75,7 +75,7 @@ class DatalabAppElement extends Polymer.Element {
       page: {
         observer: '_pageChanged',
         type: String,
-        value: 'files',
+        value: '',
       },
       rootPattern: String,
       routeData: Object,
@@ -110,8 +110,7 @@ class DatalabAppElement extends Polymer.Element {
    * so it can be used by other elements.
    */
   _routePageChanged(page: string) {
-    // Defaults to the files view
-    this.page = page || 'files';
+    this.page = page;
   }
 
   /**
@@ -121,31 +120,32 @@ class DatalabAppElement extends Polymer.Element {
    * the browser pre-load all the pages on the first request.
    */
   _pageChanged(newPage: string, oldPage: string) {
-    // Build the path using the page name as suffix for directory
-    // and file names.
-    const el = this.$.pages.querySelector('[name=' + newPage + ']') as HTMLElement;
-    const elName = el.tagName.toLowerCase();
-    const resolvedPageUrl = this.resolveUrl('../' + elName + '/' + elName + '.html');
-    Polymer.importHref(resolvedPageUrl, undefined, undefined, true);
+    if (newPage) {
+      // Lazy load the requested page. Build the path using the page's element
+      // name.
+      const newElement = this._getPageElement(newPage);
+      const elName = newElement.tagName.toLowerCase();
+      const resolvedPageUrl = this.resolveUrl('../' + elName + '/' + elName + '.html');
 
-    const newElement = this._getPageElement(newPage);
-    const oldElement = this._getPageElement(oldPage);
+      Polymer.importHref(resolvedPageUrl, () => {
+        // After the element has loaded, call proper event handlers on it.
+        if (newElement.focusHandler) {
+          newElement.focusHandler();
+        }
+        if (newElement.resizeHandler) {
+          newElement.resizeHandler();
+        }
+      }, undefined, true);
 
-    // Call proper event handlers on changed pages.
-    // TODO: Explore making all datalab pages extend a custom element that has
-    // these event handlers defined to keep things consistent and get rid of the checks.
-    if (newElement) {
-      if (newElement._focusHandler) {
-        newElement._focusHandler();
-      }
-      if (newElement._resizeHandler) {
-        newElement._resizeHandler();
-      }
-    }
-    if (oldElement && oldElement._blurHandler) {
-      oldElement._blurHandler();
     }
 
+    if (oldPage) {
+      const oldElement = this._getPageElement(oldPage);
+      // Call proper event handlers on old page, which should already exist.
+      if (oldElement && oldElement.blurHandler) {
+        oldElement.blurHandler();
+      }
+    }
   }
 
   /**
@@ -153,17 +153,16 @@ class DatalabAppElement extends Polymer.Element {
    * @param pageName name of the page whose element to return
    */
   _getPageElement(pageName: string) {
-    const elName = 'datalab-' + pageName;
-    return this.$.pages.items.find((element: HTMLElement) => element.localName === elName);
+    return this.$.pages.querySelector('[name=' + pageName + ']') as DatalabPageElement;
   }
 
   /**
    * If the selected page has a resize handler, calls it.
    */
-  _resizeHandler() {
+  resizeHandler() {
     const selectedPage = this.$.pages.selectedItem;
-    if (selectedPage && selectedPage._resizeHandler) {
-      selectedPage._resizeHandler();
+    if (selectedPage && selectedPage.resizeHandler) {
+      selectedPage.resizeHandler();
     }
   }
 
