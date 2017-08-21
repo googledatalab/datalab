@@ -149,7 +149,8 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     super.ready();
 
     this.$.breadCrumbs.addEventListener('crumbClicked', (e: ItemClickEvent) => {
-      this._pathHistoryIndex = e.detail.index;
+      // Take the default root file into account, increment clicked index by one.
+      this._pathHistoryIndex = e.detail.index + 1;
     });
     this.$.breadCrumbs.addEventListener('rootClicked', () => {
       this._pathHistoryIndex = 0;
