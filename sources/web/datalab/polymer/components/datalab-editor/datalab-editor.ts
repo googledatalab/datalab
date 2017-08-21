@@ -105,6 +105,23 @@ class DatalabEditorElement extends Polymer.Element {
     this._editor = CodeMirror(this.$.editorContainer, editorConfig);
   }
 
+  _download() {
+    if (this._file) {
+      // This works by creating an invisible anchor element that points to the
+      // contents of the editor, and clicking it, then removing it from the DOM.
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute('href', 'data:text/plain;charset=utf-8,' +
+          encodeURIComponent(this._editor.getDoc().getValue()));
+      downloadAnchor.setAttribute('download', this._file.name);
+      downloadAnchor.style.display = 'none';
+      document.body.appendChild(downloadAnchor);
+
+      downloadAnchor.click();
+
+      document.body.removeChild(downloadAnchor);
+    }
+  }
+
   /**
    * Saves the currently open file.
    */
