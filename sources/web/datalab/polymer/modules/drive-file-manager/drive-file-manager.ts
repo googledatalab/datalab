@@ -37,6 +37,9 @@ class DriveFileManager implements FileManager {
                               DatalabFileType.DIRECTORY :
                               DatalabFileType.FILE,
     } as DatalabFile);
+    if (datalabFile.name.endsWith('.ipynb')) {
+      datalabFile.type = DatalabFileType.NOTEBOOK;
+    }
     return datalabFile;
   }
   public get(_fileId: DatalabFileId): Promise<DatalabFile> {
@@ -98,11 +101,19 @@ class DriveFileManager implements FileManager {
     throw new UnsupportedMethod('copy', this);
   }
 
-  public getEditorUrl(): Promise<string> {
-    throw new UnsupportedMethod('getEditorUrl', this);
+  public async getEditorUrl(fileId: DatalabFileId) {
+    // Files that are stored on the VM require the basepath.
+    const apiManager = ApiManagerFactory.getInstance();
+    const basepath = await apiManager.getBasePath();
+    return location.protocol + '//' + location.host + basepath +
+        '/editor?file=' + fileId.toQueryString();
   }
 
-  public getNotebookUrl(): Promise<string> {
-    throw new UnsupportedMethod('getNotebookUrl', this);
+  public async getNotebookUrl(fileId: DatalabFileId): Promise<string> {
+    // Notebooks that are stored on the VM require the basepath.
+    const apiManager = ApiManagerFactory.getInstance();
+    const basepath = await apiManager.getBasePath();
+    return location.protocol + '//' + location.host + basepath +
+        '/notebook#fileId=' + fileId.toQueryString();
   }
 }
