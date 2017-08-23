@@ -24,6 +24,9 @@ the License.
 <dom-module id="datalab-sidebar">
   <template>
     <style include="datalab-shared-styles">
+      :host {
+        --button-contents-height: 21px;
+      }
       a, u {
         text-decoration: none;
       }
@@ -54,7 +57,7 @@ the License.
         display: flex;
       }
       .sidebar-button-icon {
-        height: 21px;
+        height: --button-contents-height;
         flex: 0 0 60px;
       }
       .sidebar-button-title {
@@ -62,6 +65,7 @@ the License.
         overflow: hidden;
         width: 100%;
         transition: width var(--app-animation-duration);
+        line-height: --button-contents-height;
       }
       .iron-selected > .sidebar-button {
         background-color: var(--selection-bg-color);

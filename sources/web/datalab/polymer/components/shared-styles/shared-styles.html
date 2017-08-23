@@ -15,9 +15,12 @@ the License.
 <dom-module id="datalab-shared-styles">
   <template>
     <style>
+
+      @import url(https://fonts.googleapis.com/css?family=Source+Code+Pro:400,700|Open+Sans:400,700|Material+Icons);
+
       :host {
         --app-animation-duration: 0.3s;
-        --app-content-font-family: 'Roboto', 'Noto', sans-serif;
+        --app-content-font-family: 'Open Sans', 'Helvetica', sans-serif;
         --app-content-font-size: 13px;
         --collapsed-sidebar-width: 65px;
         --preview-pane-width: 350px;
@@ -48,6 +51,7 @@ the License.
         color: var(--primary-fg-color);
         display: flex;
         flex-direction: column;
+        font-family: var(--app-content-font-family);
       }
       .dialog.small {
         min-width: 300px;
