@@ -66,6 +66,7 @@ class FileManagerFactory {
   public static fileManagerTypetoString(type: FileManagerType) {
     switch (type) {
       case FileManagerType.BIG_QUERY: return 'bigquery';
+      case FileManagerType.DRIVE: return 'drive';
       case FileManagerType.JUPYTER: return 'jupyter';
       default: throw new Error('Unknown FileManager type: ' + type);
     }
