@@ -113,7 +113,7 @@ class DriveFileManager implements FileManager {
     // Notebooks that are stored on the VM require the basepath.
     const apiManager = ApiManagerFactory.getInstance();
     const basepath = await apiManager.getBasePath();
-		return location.protocol + '//' + location.host + basepath +
+    return location.protocol + '//' + location.host + basepath +
         '/notebook#fileId=' + fileId.toQueryString();
   }
 }
