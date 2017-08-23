@@ -33,9 +33,12 @@ the License.
       :host {
         background-color: var(--primary-bg-color);
         height: 100%;
+        display: flex;
+        flex-direction: column;
       }
       #editorContainer {
-        height: calc(100% - 2 * var(--toolbar-height) - var(--progressbar-height));
+        flex: 1 1 auto;
+        overflow: auto;
       }
       div.CodeMirror {
         height: 100%;
@@ -44,7 +47,7 @@ the License.
       }
       #editorToolbar {
         display: flex;
-        height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
+        flex: 0 0 var(--toolbar-height);
         width: 100%;
         background-color: var(--secondary-bg-color);
         font-family: var(--app-content-font-family);
@@ -108,7 +111,7 @@ the License.
         <iron-icon icon="editor:border-color"></iron-icon>
         <span>Rename</span>
       </paper-button>
-      <paper-button class="toolbar-button" on-click="">
+      <paper-button class="toolbar-button" on-click="_download">
         <iron-icon icon="file-download"></iron-icon>
         <span>Download</span>
       </paper-button>
