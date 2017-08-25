@@ -76,7 +76,7 @@ if [ "${ENABLE_USAGE_REPORTING}" = "true" ]
 then
   if [ -n "${PROJECT_ID}" ]
   then
-    export PROJECT_NUMBER=`gcloud projects describe "${PROJECT_ID}" --format 'value(projectNumber)' 2>/dev/null || true`
+    export PROJECT_NUMBER=${PROJECT_NUMBER:-`gcloud projects describe "${PROJECT_ID}" --format 'value(projectNumber)' 2>/dev/null || true`}
   fi
 fi
 
