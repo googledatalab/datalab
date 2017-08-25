@@ -137,7 +137,7 @@ function parseCreds(request: http.ServerRequest, callback: Function): void {
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
   var requestUrl = url.parse(request.url);
   var path = requestUrl.pathname;
-  if (request.url.indexOf('/api/creds') === 0 && 'POST' == request.method) {
+  if (request.url == '/api/creds' && 'POST' == request.method) {
     parseCreds(request, function(c: any): void {
       const creds = metadata.creds;
       for (const key of Object.keys(c)) {

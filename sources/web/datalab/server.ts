@@ -153,7 +153,7 @@ function handleRequest(request: http.ServerRequest,
     return;
   }
 
-  if (requestPath.indexOf('/api/creds') == 0) {
+  if (requestPath == '/api/creds') {
     metadataHandler(request, response);
     return;
   }
