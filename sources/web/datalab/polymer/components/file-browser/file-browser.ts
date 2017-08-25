@@ -240,7 +240,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   _drawFileList() {
     (this.$.files as ItemListElement).rows = this._fileList.map((file) => {
       return new ItemListRow(
-        file.name, Utils.getFileStatusString(file.status || DatalabFileStatus.IDLE) , file.icon);
+        [file.name, Utils.getFileStatusString(file.status || DatalabFileStatus.IDLE)], file.icon);
     });
   }
 

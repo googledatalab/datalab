@@ -16,15 +16,13 @@
  * Object representing a row in the item list
  */
 class ItemListRow {
-  public firstCol: string;
-  public secondCol: string;
   public selected: boolean;
+  public columns: string[];
 
   private _icon: string;
 
-  constructor(firstCol: string, secondCol: string, icon: string, selected?: boolean) {
-    this.firstCol = firstCol;
-    this.secondCol = secondCol;
+  constructor(columns: string[], icon: string, selected?: boolean) {
+    this.columns = columns;
     this.selected = selected || false;
     this._icon = icon;
   }
@@ -52,8 +50,8 @@ class ItemClickEvent extends CustomEvent {
 }
 
 /**
- * Two-column list element.
- * This element takes a list of two column names, and a list of row objects,
+ * Multi-column list element.
+ * This element takes a list of column names, and a list of row objects,
  * each containing values for each of the columns, an icon name, and a selected
  * property. The items are displayed in a table form. Clicking an item selects
  * it and unselects all other items. Clicking the checkbox next to an item
