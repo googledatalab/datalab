@@ -20,6 +20,7 @@ the License.
         --app-content-font-family: 'Open Sans', 'Helvetica', sans-serif;
         --app-content-font-size: 13px;
         --collapsed-sidebar-width: 65px;
+        --neutral-fg-color: #777;
         --preview-pane-width: 350px;
         --primary-text-color : var(--primary-fg-color);
         --progressbar-height: 1px;
@@ -79,10 +80,12 @@ the License.
         flex: 0 0 auto;
         margin: 0px;
         padding: 15px;
-        direction: rtl;
         display: flex;
-        justify-content: center;
+        justify-content: flex-end;
         color: var(--primary-fg-color);
+      }
+      .dialog-footer > paper-button:first-of-type {
+        @apply --shadow-elevation-2dp;
       }
       a {
         color: var(--selection-fg-color);
@@ -96,6 +99,7 @@ the License.
       .progressbar {
         width: 100%;
         flex: 0 0 var(--progressbar-height);
+        height: var(--progressbar-height);
         --paper-progress-active-color: var(--selection-fg-color);
         --paper-progress-container-color: var(--border-color);
       }
