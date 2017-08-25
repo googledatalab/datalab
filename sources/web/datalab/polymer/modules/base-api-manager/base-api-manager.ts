@@ -100,8 +100,8 @@ abstract class BaseApiManager implements ApiManager {
 
   public async sendRequestAsync(url: string, options?: XhrOptions, prependBasepath = true)
       : Promise<any> {
-    const basepath = await this.getBasePath();
     if (prependBasepath) {
+      const basepath = await this.getBasePath();
       url = basepath + url;
     }
     return this._xhrJsonAsync(url, options);
@@ -109,8 +109,8 @@ abstract class BaseApiManager implements ApiManager {
 
   public async sendTextRequestAsync(url: string, options?: XhrOptions, prependBasepath = true)
       : Promise<string> {
-    const basepath = await this.getBasePath();
     if (prependBasepath) {
+      const basepath = await this.getBasePath();
       url = basepath + url;
     }
     return this._xhrTextAsync(url, options);
