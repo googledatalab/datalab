@@ -98,16 +98,35 @@ abstract class BaseApiManager implements ApiManager {
 
   public abstract getBasePath(): Promise<string>;
 
-  public abstract getServiceUrl(_: ServiceId): string;
-
-  public sendRequestAsync(url: string, options?: XhrOptions) {
-    return this.getBasePath()
-      .then((base: string) => this._xhrJsonAsync(base + url, options));
+  public async sendRequestAsync(url: string, options?: XhrOptions): Promise<string> {
+    const basepath = await this.getBasePath();
+    return this._xhrJsonAsync(basepath + url, options);
   }
 
-  public sendTextRequestAsync(url: string, options?: XhrOptions): Promise<string> {
-    return this.getBasePath()
-      .then((base: string) => this._xhrTextAsync(base + url, options));
+  public async sendTextRequestAsync(url: string, options?: XhrOptions): Promise<string> {
+    const basepath = await this.getBasePath();
+    return this._xhrTextAsync(basepath + url, options);
+  }
+
+  public getServiceUrl(serviceId: ServiceId): string {
+    switch (serviceId) {
+      case ServiceId.APP_SETTINGS:
+        return '/api/settings';
+      case ServiceId.BASE_PATH:
+        return '/api/basepath';
+      case ServiceId.CONTENT:
+        return '/api/contents';
+      case ServiceId.SESSIONS:
+        return '/api/sessions';
+      case ServiceId.TERMINALS:
+        return '/api/terminals';
+      case ServiceId.TIMEOUT:
+        return '/_timeout';
+      case ServiceId.USER_SETTINGS:
+        return '/_settings';
+      default:
+        throw new Error('Unknown service id: ' + serviceId);
+    }
   }
 
   /**
