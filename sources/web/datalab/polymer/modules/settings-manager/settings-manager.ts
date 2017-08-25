@@ -71,7 +71,7 @@ class SettingsManager {
     const apiManager = ApiManagerFactory.getInstance();
     const requestUrl = apiManager.getServiceUrl(ServiceId.USER_SETTINGS) +
         '?key=' + setting + '&value=' + value;
-    return apiManager.sendRequestAsync(requestUrl, xhrOptions);
+    return apiManager.sendRequestAsync(requestUrl, xhrOptions, false /* prependBasepath*/);
   }
 
   /**
@@ -116,7 +116,8 @@ class SettingsManager {
    */
   private static _getUserSettingsAsync() {
     const apiManager = ApiManagerFactory.getInstance();
-    return apiManager.sendRequestAsync(apiManager.getServiceUrl(ServiceId.USER_SETTINGS));
+    return apiManager.sendRequestAsync(apiManager.getServiceUrl(ServiceId.USER_SETTINGS),
+                                       undefined, false /* prependBasepath*/);
   }
 
   /**
@@ -124,7 +125,8 @@ class SettingsManager {
    */
   private static _getAppSettingsAsync() {
     const apiManager = ApiManagerFactory.getInstance();
-    return apiManager.sendRequestAsync(apiManager.getServiceUrl(ServiceId.APP_SETTINGS));
+    return apiManager.sendRequestAsync(apiManager.getServiceUrl(ServiceId.APP_SETTINGS),
+                                       undefined, false /* prependBasepath*/);
   }
 
 }
