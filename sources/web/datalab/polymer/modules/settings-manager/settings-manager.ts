@@ -125,6 +125,6 @@ class SettingsManager {
   private static _getAppSettingsAsync() {
     const apiManager = ApiManagerFactory.getInstance();
     return apiManager.sendRequestAsync(apiManager.getServiceUrl(ServiceId.APP_SETTINGS));
-}
+  }
 
 }

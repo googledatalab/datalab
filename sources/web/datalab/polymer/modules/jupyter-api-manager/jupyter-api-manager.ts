@@ -27,25 +27,4 @@ class JupyterApiManager extends BaseApiManager {
     }
     return this._basepathPromise;
   }
-
-  public getServiceUrl(serviceId: ServiceId): string {
-    switch (serviceId) {
-      case ServiceId.APP_SETTINGS:
-        return '/api/settings';
-      case ServiceId.BASE_PATH:
-        return '/api/basepath';
-      case ServiceId.CONTENT:
-        return '/api/contents';
-      case ServiceId.SESSIONS:
-        return '/api/sessions';
-      case ServiceId.TERMINALS:
-        return '/api/terminals';
-      case ServiceId.TIMEOUT:
-        return '/_timeout';
-      case ServiceId.USER_SETTINGS:
-        return '/_settings';
-      default:
-        throw new Error('Unknown service id: ' + serviceId);
-    }
-  }
 }
