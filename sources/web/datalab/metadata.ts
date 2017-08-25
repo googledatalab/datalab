@@ -34,7 +34,7 @@ interface FakeMetadata {
   creds: Creds;
 }
 
-var metadata: FakeMetadata = {
+const metadata: FakeMetadata = {
   project: process.env.PROJECT_ID,
   project_number: process.env.PROJECT_NUMBER,
   creds: {
@@ -141,7 +141,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     parseCreds(request, function(c: any): void {
       const creds = metadata.creds;
       for (const key of Object.keys(c)) {
-        (<any>creds)[key] = c[key];
+        (creds as any)[key] = c[key];
       }
       response.writeHead(200, { 'Content-Type': 'text/plain' });
       response.end('ok');
