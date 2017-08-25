@@ -30,8 +30,9 @@ the License.
         font-size: var(--app-content-font-size);
         color: var(--primary-fg-color);
       }
-      #header-container {
+      #headerContainer {
         flex: 0 0 var(--toolbar-height);
+        z-index: 1;
       }
       #header {
         user-select: none;
@@ -66,7 +67,7 @@ the License.
       }
       .checkbox-col > paper-checkbox {
         --paper-checkbox-size: 15px;
-        --paper-checkbox-unchecked-color: var(--primary-fg-color);
+        --paper-checkbox-unchecked-color: var(--neutral-fg-color);
         --paper-checkbox-checked-color: var(--selection-fg-color);
       }
       .first-col {
@@ -88,7 +89,7 @@ the License.
 
     <!--Header row-->
     <!--Need this extra div because #header has a display modifier, cannot set hidden-->
-    <div class="header-container" hidden$="{{hideHeader}}">
+    <div id="headerContainer" hidden$="{{hideHeader}}">
       <div id="header">
         <div class="checkbox-col">
           <paper-checkbox id="selectAllCheckbox" on-checked-changed="_selectAllChanged"
