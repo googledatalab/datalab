@@ -130,6 +130,64 @@ define(['appbar', 'minitoolbar', 'idle-timeout', 'util'], function(appbar, minit
       updateNavigation();
     });
 
+    require(['notebook/js/codecell'], function(ipy) {
+      var codeCell = ipy.CodeCell;
+      var codeCellProto = codeCell.prototype;
+
+      var statusContent = document.getElementById('cellStatus').text;
+      codeCellProto.set_input_prompt = function(number) {
+        this.input_prompt_number = number;
+
+        if (number !== undefined) {
+          if (number === null) {
+          }
+          else if (number == '*') {
+            this.element.addClass('session');
+            this.element.removeClass('completed');
+
+            var status = $(statusContent);
+            this.element.find('div.output').css('display', '').empty().append(status);
+            status.delay(2000).show(0);
+          }
+          else {
+            this.element.addClass('completed');
+            var status = this.element.find('div.status');
+            if (status) {
+              status.remove();
+            }
+          }
+        } else {
+          var status = this.element.find('div.status');
+          if (status) {
+            status.remove();
+          }
+        }
+      }
+
+      // Configure CodeMirror settings
+      var codeConfig = codeCell.options_default.cm_config;
+      codeConfig.indentUnit = 2;
+      codeConfig.smartIndent = true;
+      codeConfig.autoClearEmptyLines = true;
+      codeConfig.styleActiveLine = true;
+      codeConfig.gutter = true;
+      codeConfig.fixedGutter = true;
+      codeConfig.lineNumbers = true;
+      codeConfig.lineNumberFormatter = function(n) { return n.toString(); };
+
+      codeCell.config_defaults.highlight_modes.magic_javascript.reg = [
+        /^%%javascript/,
+        /^%%bigquery udf/
+      ];
+
+      codeCell.config_defaults.highlight_modes['magic_text/sql'] = {
+        reg: [ /%%?sql\b/ ]
+      };
+      codeCell.config_defaults.highlight_modes['magic_text/bigquery'] = {
+        reg: [ /%%?bq\s+query\b/ ]
+      };
+    });
+
     events.on('open_with_text.Pager', function(e, payload) {
       var help = payload.data['text/html'];
       if (!help) {
@@ -311,64 +369,6 @@ define(['appbar', 'minitoolbar', 'idle-timeout', 'util'], function(appbar, minit
     require(['notebook/js/textcell'], function(ipy) {
       var markdownCell = ipy.MarkdownCell;
       markdownCell.options_default.placeholder = 'Double-click here to enter some markdown text...';
-    });
-
-    require(['notebook/js/codecell'], function(ipy) {
-      var codeCell = ipy.CodeCell;
-      var codeCellProto = codeCell.prototype;
-
-      var statusContent = document.getElementById('cellStatus').text;
-      codeCellProto.set_input_prompt = function(number) {
-        this.input_prompt_number = number;
-
-        if (number !== undefined) {
-          if (number === null) {
-          }
-          else if (number == '*') {
-            this.element.addClass('session');
-            this.element.removeClass('completed');
-
-            var status = $(statusContent);
-            this.element.find('div.output').css('display', '').empty().append(status);
-            status.delay(2000).show(0);
-          }
-          else {
-            this.element.addClass('completed');
-            var status = this.element.find('div.status');
-            if (status) {
-              status.remove();
-            }
-          }
-        } else {
-          var status = this.element.find('div.status');
-          if (status) {
-            status.remove();
-          }
-        }
-      }
-
-      // Configure CodeMirror settings
-      var codeConfig = codeCell.options_default.cm_config;
-      codeConfig.indentUnit = 2;
-      codeConfig.smartIndent = true;
-      codeConfig.autoClearEmptyLines = true;
-      codeConfig.styleActiveLine = true;
-      codeConfig.gutter = true;
-      codeConfig.fixedGutter = true;
-      codeConfig.lineNumbers = true;
-      codeConfig.lineNumberFormatter = function(n) { return n.toString(); };
-
-      codeCell.config_defaults.highlight_modes.magic_javascript.reg = [
-        /^%%javascript/,
-        /^%%bigquery udf/
-      ];
-
-      codeCell.config_defaults.highlight_modes['magic_text/sql'] = {
-        reg: [ /%%?sql\b/ ]
-      };
-      codeCell.config_defaults.highlight_modes['magic_text/bigquery'] = {
-        reg: [ /%%?bq\s+query\b/ ]
-      };
     });
 
     require(["services/kernels/kernel"], function(ipy) {
