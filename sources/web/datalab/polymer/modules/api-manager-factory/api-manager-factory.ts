@@ -44,6 +44,18 @@ class ApiManagerFactory {
   }
 
   private static _getBackendType() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('backend')) {
+      const backend = params.get('backend');
+      switch (backend) {
+        case 'daas':
+          return API_MANAGER_ELEMENT.daas;
+        case 'jupyter':
+          return API_MANAGER_ELEMENT.jupyter;
+        default:
+          throw new Error('Unknown backend: ' + backend);
+      }
+    }
     return API_MANAGER_ELEMENT.jupyter;
   }
 }
