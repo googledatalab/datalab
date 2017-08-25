@@ -53,8 +53,8 @@ function launchFakeServer(metadata: FakeMetadata): void {
                            metadata_host, port, JSON.stringify(metadata));
 
   const server = http.createServer((req, res) => {
-    var parsed_url = url.parse(req.url, true);
-    var urlpath = parsed_url.pathname;
+    const parsed_url = url.parse(req.url, true);
+    const urlpath = parsed_url.pathname;
     logging.getLogger().info('Service a fake metadata request at %s', urlpath);
 
     if (urlpath == '/computeMetadata/v1/project/numeric-project-id') {
@@ -86,7 +86,7 @@ function launchFakeServer(metadata: FakeMetadata): void {
       res.write(metadata.creds.scopes);
     } else if (urlpath == '/computeMetadata/v1/instance/service-accounts/default/token' ||
                urlpath == '/computeMetadata/v1/instance/service-accounts/' + metadata.creds.account + '/token') {
-      var token: any = {
+      const token: any = {
         access_token: metadata.creds.access_token,
         expires_in: metadata.creds.expires_in,
         token_type: metadata.creds.token_type,
@@ -122,7 +122,7 @@ export function init(settings: common.AppSettings): void {
 }
 
 function parseCreds(request: http.ServerRequest, callback: Function): void {
-  var body : string = "";
+  let body : string = "";
   request.on('data', function(chunk: string) { body += chunk; });
   request.on('end', function() {
     callback(JSON.parse(body));
@@ -135,8 +135,8 @@ function parseCreds(request: http.ServerRequest, callback: Function): void {
  * @param response the outgoing response.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
-  var requestUrl = url.parse(request.url);
-  var path = requestUrl.pathname;
+  const requestUrl = url.parse(request.url);
+  const path = requestUrl.pathname;
   if (request.url == '/api/creds' && 'POST' == request.method) {
     parseCreds(request, function(c: any): void {
       const creds = metadata.creds;
