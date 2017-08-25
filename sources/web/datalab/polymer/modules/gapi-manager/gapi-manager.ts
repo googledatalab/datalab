@@ -72,11 +72,14 @@ class GapiManager {
     /**
      * Gets the list of BigQuery projects, returns a Promise.
      */
-    public static listProjects():
+    public static listProjects(pageToken?: string):
         Promise<gapi.client.HttpRequestFulfilled<gapi.client.bigquery.ListProjectsResponse>> {
       const request = {
         maxResults: 1000,
-      };
+      } as gapi.client.bigquery.ListProjectsRequest;
+      if (pageToken) {
+        request.pageToken = pageToken;
+      }
       return this._load()
         .then(() => gapi.client.bigquery.projects.list(request));
     }

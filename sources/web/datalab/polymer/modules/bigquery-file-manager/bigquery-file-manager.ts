@@ -12,6 +12,13 @@
  * the License.
  */
 
+type ListDatasetsResponse = gapi.client.bigquery.ListDatasetsResponse;
+type ListProjectsResponse = gapi.client.bigquery.ListProjectsResponse;
+type ListTablesResponse = gapi.client.bigquery.ListTablesResponse;
+type DatasetResource = gapi.client.bigquery.DatasetResource;
+type ProjectResource = gapi.client.bigquery.ProjectResource;
+type TableResource = gapi.client.bigquery.TableResource;
+
 class BigQueryFile extends DatalabFile {
   public getPreviewName(): string {
     if (this.type == DatalabFileType.FILE) {
@@ -92,19 +99,31 @@ class BigQueryFileManager implements FileManager {
     throw new UnsupportedMethod('getEditorUrl', this);
   }
 
+  private async _listMoreProjects(accumulatedProjects: ProjectResource[],
+      pageToken: string): Promise<DatalabFile[]> {
+    const response: HttpResponse<ListProjectsResponse> =
+        await GapiManager.bigquery.listProjects(pageToken);
+    const additionalProjects = response.result.projects || [];
+    const projects = accumulatedProjects.concat(additionalProjects);
+    if (response.result.nextPageToken) {
+      return this._listMoreProjects(projects, response.result.nextPageToken);
+    } else {
+      projects.sort((a: ProjectResource, b: ProjectResource) => {
+        return a.projectReference.projectId.localeCompare(b.projectReference.projectId);
+      });
+      return projects.map(
+          this._bqProjectToDatalabFile.bind(this)) as DatalabFile[];
+    }
+  }
+
   private _listProjects(): Promise<DatalabFile[]> {
-    return GapiManager.bigquery.listProjects()
-      .then((response: HttpResponse<gapi.client.bigquery.ListProjectsResponse>) => {
-        const projects = response.result.projects || [];
-        return projects.map(
-            this._bqProjectToDatalabFile.bind(this)) as DatalabFile[];
-      })
-      .catch((e) => { Utils.log.error(e); throw e; });
+    return this._listMoreProjects([], '')
+      .catch((e: Error) => { Utils.log.error(e); throw e; });
   }
 
   private _listDatasets(projectId: string): Promise<DatalabFile[]> {
     return GapiManager.bigquery.listDatasets(projectId, '')
-      .then((response: HttpResponse<gapi.client.bigquery.ListDatasetsResponse>) => {
+      .then((response: HttpResponse<ListDatasetsResponse>) => {
         const datasets = response.result.datasets || [];
         return datasets.map(
             this._bqDatasetToDatalabFile.bind(this)) as DatalabFile[];
@@ -114,7 +133,7 @@ class BigQueryFileManager implements FileManager {
 
   private _listTables(projectId: string, datasetId: string): Promise<DatalabFile[]> {
     return GapiManager.bigquery.listTables(projectId, datasetId)
-      .then((response: HttpResponse<gapi.client.bigquery.ListTablesResponse>) => {
+      .then((response: HttpResponse<ListTablesResponse>) => {
         const tables = response.result.tables || [];
         return tables.map(
             this._bqTableToDatalabFile.bind(this)) as DatalabFile[];
@@ -133,7 +152,7 @@ class BigQueryFileManager implements FileManager {
     } as DatalabFile);
   }
 
-  private _bqProjectToDatalabFile(bqProject: gapi.client.bigquery.ProjectResource): DatalabFile {
+  private _bqProjectToDatalabFile(bqProject: ProjectResource): DatalabFile {
     const path = bqProject.projectReference.projectId;
     return new BigQueryFile({
       icon: 'datalab-icons:bq-project',
@@ -144,7 +163,7 @@ class BigQueryFileManager implements FileManager {
     } as DatalabFile);
   }
 
-  private _bqDatasetToDatalabFile(bqDataset: gapi.client.bigquery.DatasetResource): DatalabFile {
+  private _bqDatasetToDatalabFile(bqDataset: DatasetResource): DatalabFile {
     const path = bqDataset.datasetReference.projectId + '/' + bqDataset.datasetReference.datasetId;
     return new BigQueryFile({
       icon: 'folder',   // TODO(jimmc) - make a custom icon
@@ -155,7 +174,7 @@ class BigQueryFileManager implements FileManager {
     } as DatalabFile);
   }
 
-  private _bqTableToDatalabFile(bqTable: gapi.client.bigquery.TableResource): DatalabFile {
+  private _bqTableToDatalabFile(bqTable: TableResource): DatalabFile {
     const path = bqTable.tableReference.projectId + '/' +
           bqTable.tableReference.datasetId + '/' + bqTable.tableReference.tableId;
     return new BigQueryFile({
