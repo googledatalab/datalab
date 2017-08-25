@@ -147,7 +147,7 @@ class BigQueryFileManager implements FileManager {
   private _bqDatasetToDatalabFile(bqDataset: gapi.client.bigquery.DatasetResource): DatalabFile {
     const path = bqDataset.datasetReference.projectId + '/' + bqDataset.datasetReference.datasetId;
     return new BigQueryFile({
-      icon: 'folder',   // TODO(jimmc) - make a custom icon
+      icon: 'datalab-icons:bq-dataset',
       id: new DatalabFileId(path, FileManagerType.BIG_QUERY),
       name: bqDataset.datasetReference.datasetId,
       status: DatalabFileStatus.IDLE,
@@ -159,7 +159,7 @@ class BigQueryFileManager implements FileManager {
     const path = bqTable.tableReference.projectId + '/' +
           bqTable.tableReference.datasetId + '/' + bqTable.tableReference.tableId;
     return new BigQueryFile({
-      icon: 'list',   // TODO(jimmc) - make a custom icon
+      icon: 'datalab-icons:bq-table',
       id: new DatalabFileId(path, FileManagerType.BIG_QUERY),
       name: bqTable.tableReference.tableId,
       status: DatalabFileStatus.IDLE,
