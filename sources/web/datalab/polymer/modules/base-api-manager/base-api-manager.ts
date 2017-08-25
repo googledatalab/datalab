@@ -74,7 +74,7 @@ interface ApiManager {
    * base path, and expecting a JSON response. This method returns immediately
    * with a promise that resolves with the parsed object when the request completes.
    */
-  sendRequestAsync(url: string, options?: XhrOptions): Promise<any>;
+  sendRequestAsync(url: string, options?: XhrOptions, prependBasepath?: boolean): Promise<any>;
 
   /**
    * Sends an XMLHttpRequest to the specified URL, adding the required
@@ -98,14 +98,22 @@ abstract class BaseApiManager implements ApiManager {
 
   public abstract getBasePath(): Promise<string>;
 
-  public async sendRequestAsync(url: string, options?: XhrOptions): Promise<string> {
+  public async sendRequestAsync(url: string, options?: XhrOptions, prependBasepath = true)
+      : Promise<any> {
     const basepath = await this.getBasePath();
-    return this._xhrJsonAsync(basepath + url, options);
+    if (prependBasepath) {
+      url = basepath + url;
+    }
+    return this._xhrJsonAsync(url, options);
   }
 
-  public async sendTextRequestAsync(url: string, options?: XhrOptions): Promise<string> {
+  public async sendTextRequestAsync(url: string, options?: XhrOptions, prependBasepath = true)
+      : Promise<string> {
     const basepath = await this.getBasePath();
-    return this._xhrTextAsync(basepath + url, options);
+    if (prependBasepath) {
+      url = basepath + url;
+    }
+    return this._xhrTextAsync(url, options);
   }
 
   public getServiceUrl(serviceId: ServiceId): string {
