@@ -1,10 +1,10 @@
 define(['idle-timeout', 'util'], (idleTimeout, util) => {
   function getSettingsAddress() {
-    return util.datalabLink("/_settings");
+    return util.datalabLink("/_usersettings");
   }
 
   function getSettingKeyAddress(setting) {
-    return util.datalabLink("/_settings?key=" + setting);
+    return util.datalabLink("/_usersettings?key=" + setting);
   }
 
   function init() {
