@@ -60,7 +60,7 @@ class ApiManagerFactory {
 
     // Use the server host name to determine the default api manager type.
     const apiHost = location.host;
-    if ((apiHost.startsWith('datalab.') || apiHost.startsWith('cloud-datalab.')) &&
+    if ((apiHost.startsWith('datalab.') || apiHost.startsWith('cloud-datalab')) &&
         apiHost.endsWith('.google.com')) {
       return API_MANAGER_ELEMENT.daas;
     } else {
