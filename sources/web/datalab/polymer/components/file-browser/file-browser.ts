@@ -158,9 +158,10 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
     this._apiManager = ApiManagerFactory.getInstance();
 
-    // Allow forcing an file manager type.
+    // Allow forcing a file manager type.
     // TODO: Consider writing a config element instead of parsing URL parameters
     //       everywhere configs are needed.
+    // TODO: Remove once we have the file id in the querystring.
     const params = new URLSearchParams(window.location.search);
     if (params.has('filemanager')) {
       this.fileManagerType = params.get('filemanager') as string;
