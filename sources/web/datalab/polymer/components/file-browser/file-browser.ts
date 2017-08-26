@@ -158,8 +158,16 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
     this._apiManager = ApiManagerFactory.getInstance();
 
+    // Allow forcing a file manager type.
+    // TODO: Consider writing a config element instead of parsing URL parameters
+    //       everywhere configs are needed.
+    // TODO: Remove once we have the file id in the querystring.
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('filemanager')) {
+      this.fileManagerType = params.get('filemanager') as string;
+    }
     if (!this.fileManagerType) {
-      // TODO - This element should nto have to set a default file manager type, but
+      // TODO - This element should not have to set a default file manager type, but
       // it is currently required to know that we should load the startuppath.
       this.fileManagerType = 'jupyter';
       this._fileManager = FileManagerFactory.getInstance();
