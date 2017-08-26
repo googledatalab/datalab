@@ -99,14 +99,14 @@ class BigQueryFileManager implements FileManager {
     throw new UnsupportedMethod('getEditorUrl', this);
   }
 
-  private async _listMoreProjects(accumulatedProjects: ProjectResource[],
+  private async _collectAllProjects(accumulatedProjects: ProjectResource[],
       pageToken: string): Promise<DatalabFile[]> {
     const response: HttpResponse<ListProjectsResponse> =
         await GapiManager.bigquery.listProjects(pageToken);
     const additionalProjects = response.result.projects || [];
     const projects = accumulatedProjects.concat(additionalProjects);
     if (response.result.nextPageToken) {
-      return this._listMoreProjects(projects, response.result.nextPageToken);
+      return this._collectAllProjects(projects, response.result.nextPageToken);
     } else {
       projects.sort((a: ProjectResource, b: ProjectResource) => {
         return a.projectReference.projectId.localeCompare(b.projectReference.projectId);
@@ -117,27 +117,53 @@ class BigQueryFileManager implements FileManager {
   }
 
   private _listProjects(): Promise<DatalabFile[]> {
-    return this._listMoreProjects([], '')
+    return this._collectAllProjects([], '')
       .catch((e: Error) => { Utils.log.error(e); throw e; });
   }
 
+  private async _collectAllDatasets(projectId: string,
+      accumulatedDatasets: DatasetResource[],
+      pageToken: string): Promise<DatalabFile[]> {
+    const response: HttpResponse<ListDatasetsResponse> =
+        await GapiManager.bigquery.listDatasets(projectId, pageToken);
+    const additionalDatasets = response.result.datasets || [];
+    const datasets = accumulatedDatasets.concat(additionalDatasets);
+    if (response.result.nextPageToken) {
+      return this._collectAllDatasets(projectId, datasets, response.result.nextPageToken);
+    } else {
+      datasets.sort((a: DatasetResource, b: DatasetResource) => {
+        return a.datasetReference.datasetId.localeCompare(b.datasetReference.datasetId);
+      });
+      return datasets.map(
+          this._bqDatasetToDatalabFile.bind(this)) as DatalabFile[];
+    }
+  }
+
   private _listDatasets(projectId: string): Promise<DatalabFile[]> {
-    return GapiManager.bigquery.listDatasets(projectId, '')
-      .then((response: HttpResponse<ListDatasetsResponse>) => {
-        const datasets = response.result.datasets || [];
-        return datasets.map(
-            this._bqDatasetToDatalabFile.bind(this)) as DatalabFile[];
-      })
+    return this._collectAllDatasets(projectId, [], '')
       .catch((e) => { Utils.log.error(e); throw e; });
   }
 
+  private async _collectAllTables(projectId: string, datasetId: string,
+      accumulatedTables: TableResource[],
+      pageToken: string): Promise<DatalabFile[]> {
+    const response: HttpResponse<ListTablesResponse> =
+        await GapiManager.bigquery.listTables(projectId, datasetId, pageToken);
+    const additionalTables = response.result.tables || [];
+    const tables = accumulatedTables.concat(additionalTables);
+    if (response.result.nextPageToken) {
+      return this._collectAllTables(projectId, datasetId, tables, response.result.nextPageToken);
+    } else {
+      tables.sort((a: TableResource, b: TableResource) => {
+        return a.tableReference.tableId.localeCompare(b.tableReference.tableId);
+      });
+      return tables.map(
+          this._bqTableToDatalabFile.bind(this)) as DatalabFile[];
+    }
+  }
+
   private _listTables(projectId: string, datasetId: string): Promise<DatalabFile[]> {
-    return GapiManager.bigquery.listTables(projectId, datasetId)
-      .then((response: HttpResponse<ListTablesResponse>) => {
-        const tables = response.result.tables || [];
-        return tables.map(
-            this._bqTableToDatalabFile.bind(this)) as DatalabFile[];
-      })
+    return this._collectAllTables(projectId, datasetId, [], '')
       .catch((e) => { Utils.log.error(e); throw e; });
   }
 
