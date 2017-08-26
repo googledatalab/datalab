@@ -119,7 +119,7 @@ abstract class BaseApiManager implements ApiManager {
   public getServiceUrl(serviceId: ServiceId): string {
     switch (serviceId) {
       case ServiceId.APP_SETTINGS:
-        return '/api/settings';
+        return '/_appsettings';
       case ServiceId.BASE_PATH:
         return '/api/basepath';
       case ServiceId.CONTENT:
@@ -131,7 +131,7 @@ abstract class BaseApiManager implements ApiManager {
       case ServiceId.TIMEOUT:
         return '/_timeout';
       case ServiceId.USER_SETTINGS:
-        return '/_settings';
+        return '/_usersettings';
       default:
         throw new Error('Unknown service id: ' + serviceId);
     }

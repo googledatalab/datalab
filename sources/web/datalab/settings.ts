@@ -269,7 +269,7 @@ export function updateUserSettingAsync(userId: string, key: string, value: strin
  * @param response the outgoing http response.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
-  if (request.url.indexOf('/api/settings') === 0) {
+  if (request.url.indexOf('/_appsettings') === 0) {
     appSettingsHandler(request, response);
   } else {
     var userId = userManager.getUserId(request);

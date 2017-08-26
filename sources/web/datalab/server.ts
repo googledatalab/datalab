@@ -164,7 +164,7 @@ function handleRequest(request: http.ServerRequest,
     return;
   }
   
-  if (requestPath.indexOf('/api/settings') === 0) {
+  if (requestPath.indexOf('/_appsettings') === 0) {
     settingHandler(request, response);
     return;
   }
@@ -222,8 +222,8 @@ function handleRequest(request: http.ServerRequest,
     return;
   }
 
-  // /setting updates a per-user setting.
-  if (requestPath.indexOf('/_setting') == 0) {
+  // /_usersettings updates a per-user setting.
+  if (requestPath.indexOf('/_usersettings') == 0) {
     settingHandler(request, response);
     return;
   }
