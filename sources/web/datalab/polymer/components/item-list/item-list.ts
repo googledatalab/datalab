@@ -127,6 +127,19 @@ class ItemListElement extends Polymer.Element {
     };
   }
 
+  ready() {
+    super.ready();
+
+    // Add box-shadow to header container on scroll
+    const container = this.$.listContainer as HTMLDivElement;
+    const headerContainer = this.$.headerContainer as HTMLDivElement;
+    container.addEventListener('scroll', () => {
+      const yOffset = Math.min(container.scrollTop / 5, 5);
+      const shadow = '0px ' + yOffset + 'px 10px -3px #ccc';
+      headerContainer.style.boxShadow = shadow;
+    });
+  }
+
   /**
    * Returns value for the computed property selectedIndices, which is the list
    * of indices of the currently selected items.

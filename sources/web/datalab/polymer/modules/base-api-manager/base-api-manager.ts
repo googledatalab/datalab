@@ -74,7 +74,7 @@ interface ApiManager {
    * base path, and expecting a JSON response. This method returns immediately
    * with a promise that resolves with the parsed object when the request completes.
    */
-  sendRequestAsync(url: string, options?: XhrOptions): Promise<any>;
+  sendRequestAsync(url: string, options?: XhrOptions, prependBasepath?: boolean): Promise<any>;
 
   /**
    * Sends an XMLHttpRequest to the specified URL, adding the required
@@ -98,16 +98,43 @@ abstract class BaseApiManager implements ApiManager {
 
   public abstract getBasePath(): Promise<string>;
 
-  public abstract getServiceUrl(_: ServiceId): string;
-
-  public sendRequestAsync(url: string, options?: XhrOptions) {
-    return this.getBasePath()
-      .then((base: string) => this._xhrJsonAsync(base + url, options));
+  public async sendRequestAsync(url: string, options?: XhrOptions, prependBasepath = true)
+      : Promise<any> {
+    if (prependBasepath) {
+      const basepath = await this.getBasePath();
+      url = basepath + url;
+    }
+    return this._xhrJsonAsync(url, options);
   }
 
-  public sendTextRequestAsync(url: string, options?: XhrOptions): Promise<string> {
-    return this.getBasePath()
-      .then((base: string) => this._xhrTextAsync(base + url, options));
+  public async sendTextRequestAsync(url: string, options?: XhrOptions, prependBasepath = true)
+      : Promise<string> {
+    if (prependBasepath) {
+      const basepath = await this.getBasePath();
+      url = basepath + url;
+    }
+    return this._xhrTextAsync(url, options);
+  }
+
+  public getServiceUrl(serviceId: ServiceId): string {
+    switch (serviceId) {
+      case ServiceId.APP_SETTINGS:
+        return '/_appsettings';
+      case ServiceId.BASE_PATH:
+        return '/api/basepath';
+      case ServiceId.CONTENT:
+        return '/api/contents';
+      case ServiceId.SESSIONS:
+        return '/api/sessions';
+      case ServiceId.TERMINALS:
+        return '/api/terminals';
+      case ServiceId.TIMEOUT:
+        return '/_timeout';
+      case ServiceId.USER_SETTINGS:
+        return '/_usersettings';
+      default:
+        throw new Error('Unknown service id: ' + serviceId);
+    }
   }
 
   /**

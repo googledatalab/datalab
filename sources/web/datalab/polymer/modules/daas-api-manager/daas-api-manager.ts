@@ -23,11 +23,6 @@ interface XssiResponse {
 // DaaS is Datalab as a Service
 class DaasApiManager extends BaseApiManager {
 
-  /**
-   * URL for retrieving the base path
-   */
-  private readonly _basepathApiUrl = '/api/basepath';
-
   private _basepathPromise: Promise<string>;
 
   /**
@@ -36,8 +31,9 @@ class DaasApiManager extends BaseApiManager {
   private _xsrfToken = '';
 
   public getBasePath(): Promise<string> {
+    const basePathUrl = this.getServiceUrl(ServiceId.BASE_PATH);
     if (!this._basepathPromise) {
-      this._basepathPromise = this._xhrTextAsync(this._basepathApiUrl)
+      this._basepathPromise = this._xhrTextAsync(basePathUrl)
         .then((response: string) => {
           // The server may add the xssiPrefix to the response to prevent.
           // it being parsed as if it were a javascript file.
@@ -68,7 +64,7 @@ class DaasApiManager extends BaseApiManager {
                 noCache: true,
                 parameters: formData,
               };
-              return this._xhrTextAsync(this._basepathApiUrl, xhrOptions)
+              return this._xhrTextAsync(basePathUrl, xhrOptions)
                 .then((basePathResponse: string) => {
                   if (!basePathResponse.startsWith(xssiPrefix)) {
                     // The server didn't give us a basepath, even after we sent
@@ -87,9 +83,5 @@ class DaasApiManager extends BaseApiManager {
         });
     }
     return this._basepathPromise;
-  }
-
-  public getServiceUrl(_: ServiceId): string {
-    throw new Error('Not implemented');
   }
 }

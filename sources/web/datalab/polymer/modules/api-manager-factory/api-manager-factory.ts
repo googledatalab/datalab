@@ -44,6 +44,7 @@ class ApiManagerFactory {
   }
 
   private static _getBackendType() {
+    // Allow forcing an api manager type.
     const params = new URLSearchParams(window.location.search);
     if (params.has('backend')) {
       const backend = params.get('backend');
@@ -56,6 +57,14 @@ class ApiManagerFactory {
           throw new Error('Unknown backend: ' + backend);
       }
     }
-    return API_MANAGER_ELEMENT.jupyter;
+
+    // Use the server host name to determine the default api manager type.
+    const apiHost = location.host;
+    if ((apiHost.startsWith('datalab.') || apiHost.startsWith('cloud-datalab')) &&
+        apiHost.endsWith('.google.com')) {
+      return API_MANAGER_ELEMENT.daas;
+    } else {
+      return API_MANAGER_ELEMENT.jupyter;
+    }
   }
 }
