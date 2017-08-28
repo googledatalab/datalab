@@ -37,6 +37,11 @@ declare module common {
      */
     consoleLogLevel: string;
 
+    /**
+     * The default file manager type to use if none is specified.
+     */
+    defaultFileManager: string;
+
     logFilePath: string;
     logFilePeriod: string;
     logFileCount: number;

@@ -166,15 +166,20 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     if (params.has('filemanager')) {
       this.fileManagerType = params.get('filemanager') as string;
     }
+    // If no file manager type is specified in the element's attributes, try to
+    // get it from the app settings. If it's not specified there either, default
+    // to drive.
     if (!this.fileManagerType) {
-      // TODO - This element should not have to set a default file manager type, but
-      // it is currently required to know that we should load the startuppath.
-      this.fileManagerType = 'jupyter';
-      this._fileManager = FileManagerFactory.getInstance();
-    } else {
-      this._fileManager = FileManagerFactory.getInstanceForType(
-          FileManagerFactory.fileManagerNameToType(this.fileManagerType));
+      const appSettings = await SettingsManager.getAppSettingsAsync();
+      if (appSettings.defaultFileManager) {
+        this.fileManagerType = appSettings.defaultFileManager;
+      } else {
+        this.fileManagerType = 'drive';
+      }
     }
+
+    this._fileManager = FileManagerFactory.getInstanceForType(
+        FileManagerFactory.fileManagerNameToType(this.fileManagerType));
 
     // TODO: Using a ready promise might be common enough a need that we should
     // consider adding it to a super class, maybe DatalabElement. For now, this
