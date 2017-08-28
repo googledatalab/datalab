@@ -33,7 +33,7 @@ const initTimeout = 10000;   // 10 seconds for initialization time, building the
 const scriptTimeout = 10000; // 10 seconds for running synchronous js scripts in the driver
 jasmine.DEFAULT_TIMEOUT_INTERVAL = testTimeout;
 
-const misMatchThreshold = 0;
+const misMatchThreshold = 1;
 const goldenPathPrefix = 'ui/golden/';
 const brokenPathPrefix = 'ui/broken/';
 
