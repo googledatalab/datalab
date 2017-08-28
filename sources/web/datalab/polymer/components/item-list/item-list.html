@@ -62,8 +62,12 @@ the License.
         color: var(--selection-fg-color);
       }
       .checkbox-col {
-        flex: 0 0 50px;
-        text-align: center;
+        flex: 0 0 65px;
+        padding-left: 15px;
+      }
+      .checkbox-col > iron-icon {
+        width: 17px;
+        height: 17px;
       }
       .checkbox-col > paper-checkbox {
         --paper-checkbox-size: 15px;
@@ -73,17 +77,19 @@ the License.
       .first-col {
         flex-grow: 1;
       }
-      .first-col > iron-icon {
-        padding-right: 10px;
-        width: 17px;
-        height: 17px;
-      }
       .second-col {
         flex-basis: 100px;
       }
       .title {
         padding-left: 5px;
         line-height: 26px;
+      }
+      .column {
+        flex: 2;
+      }
+      .column + .column {
+        flex: 1;
+        max-width: 150px;
       }
     </style>
 
@@ -96,8 +102,11 @@ the License.
                           checked={{_isAllSelected}}>
           </paper-checkbox>
         </div>
-        <div class="first-col"><strong>{{columns.0}}</strong></div>
-        <div class="second-col"><strong>{{columns.1}}</strong></div>
+        <template is="dom-repeat" items="{{columns}}" as="column">
+          <div class="column">
+            <strong>{{column}}</strong>
+          </div>
+        </template>
       </div>
     </div>
 
@@ -109,14 +118,13 @@ the License.
           <div class="checkbox-col">
             <paper-checkbox checked={{row.selected}} hidden$="{{disableSelection}}">
             </paper-checkbox>
-          </div>
-          <div class="first-col">
             <iron-icon hidden$="{{!row._icon}}" icon="{{row.icon}}" src="{{row.src}}"></iron-icon>
-            <span>{{row.firstCol}}</span>
           </div>
-          <div class="second-col" hidden$="{{disableSelection}}">
-            {{row.secondCol}}
-          </div>
+          <template is="dom-repeat" items="{{row.columns}}" as="column">
+            <div class="column">
+              <span>{{column}}</span>
+            </div>
+          </template>
         </paper-item>
       </template>
     </div>

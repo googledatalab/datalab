@@ -68,11 +68,11 @@ describe('<item-list>', () => {
   beforeEach(() => {
     testFixture = fixture('item-list-fixture');
     const rows = [
-      new ItemListRow('first column 1', 'second column 1', 'folder'),
-      new ItemListRow('first column 2', 'second column 2', 'folder'),
-      new ItemListRow('first column 3', 'second column 3', 'folder'),
-      new ItemListRow('first column 4', 'second column 4', 'folder'),
-      new ItemListRow('first column 5', 'second column 5', 'folder'),
+      new ItemListRow(['first column 1', 'second column 1'], 'folder'),
+      new ItemListRow(['first column 2', 'second column 2'], 'folder'),
+      new ItemListRow(['first column 3', 'second column 3'], 'folder'),
+      new ItemListRow(['first column 4', 'second column 4'], 'folder'),
+      new ItemListRow(['first column 5', 'second column 5'], 'folder'),
     ];
     testFixture.rows = rows;
     Polymer.dom.flush();
