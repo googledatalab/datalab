@@ -91,16 +91,6 @@ function testNotebook(driver, path, ignoreList = [], done) {
           });
         });
     })
-    .then(function() {
-      // saving the notebook avoids having to deal with an alert when navigating away
-      return driver.executeScript('Jupyter.notebook.save_notebook();')
-      .then(driver.wait(function() {
-        return driver.executeScript('return Jupyter.notebook.dirty')
-          .then(function(dirty) {
-            return dirty === false;
-          });
-      }, 2000));
-    })
     .finally(function() {
       since('"expect" for output.name was not executed')
           .expect(testComplete).toBe(true);
@@ -112,10 +102,10 @@ describe('Notebook tests', function() {
 
   let driver;
 
-  beforeAll(function() {
+  beforeEach(function() {
     driver = createDriver();
   });
-  afterAll(function() {
+  afterEach(function() {
     releaseDriver(driver);
   });
 
