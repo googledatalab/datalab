@@ -125,7 +125,7 @@ describe('<file-browser>', () => {
     assert(files.rows.length === 3, 'should have three files');
 
     mockFiles.forEach((file: DatalabFile, i: number) => {
-      assert(files.rows[i].firstCol === file.name,
+      assert(files.rows[i].columns[0] === file.name,
           'mock file ' + i + 'name not shown in first column');
       assert(files.rows[i].icon === file.icon, 'mock file ' + i + ' type not shown as icon');
     });
@@ -134,7 +134,7 @@ describe('<file-browser>', () => {
   it('starts up with no files selected, and no files running', () => {
     const files: ItemListElement = testFixture.$.files;
     files.rows.forEach((row: ItemListRow, i: number) => {
-      assert(row.secondCol === Utils.getFileStatusString(mockFiles[i].status as DatalabFileStatus),
+      assert(row.columns[1] === Utils.getFileStatusString(mockFiles[i].status as DatalabFileStatus),
           'file ' + i + 'should have an empty status');
       assert(!row.selected, 'file ' + i + ' should not be selected');
     });

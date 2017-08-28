@@ -154,14 +154,8 @@ class DataElement extends Polymer.Element implements DatalabPageElement {
    * the created list to the item-list to render.
    */
   _renderResultsList() {
-    this.$.results.rows = this._resultsList.map((result) => {
-      return {
-        firstCol: result.name,
-        icon: this._typeToIcon(result.type),
-        secondCol: result.type,
-        selected: false,
-      };
-    });
+    this.$.results.rows = this._resultsList.map((result) =>
+      new ItemListRow([result.name, result.type], this._typeToIcon(result.type)));
   }
 
   _typeToIcon(type: string): string {
