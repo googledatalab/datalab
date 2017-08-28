@@ -76,10 +76,8 @@ class GapiManager {
         Promise<gapi.client.HttpRequestFulfilled<gapi.client.bigquery.ListProjectsResponse>> {
       const request = {
         maxResults: 1000,
+        pageToken,
       } as gapi.client.bigquery.ListProjectsRequest;
-      if (pageToken) {
-        request.pageToken = pageToken;
-      }
       return this._load()
         .then(() => gapi.client.bigquery.projects.list(request));
     }
