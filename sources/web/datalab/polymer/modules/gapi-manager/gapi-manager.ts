@@ -96,6 +96,14 @@ class GapiManager {
     }
 
     /**
+     * Delete the given file.
+     */
+    public static async deleteFile(fileId: string): Promise<void> {
+      return gapi.client.drive.files.delete({fileId})
+        .then((response) => response.result);
+    }
+
+    /**
      * Gets a list of files with the specified query.
      */
     public static async listFiles(fileFields: string[], queryPredicates: string[],

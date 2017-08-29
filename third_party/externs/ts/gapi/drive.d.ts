@@ -19,13 +19,18 @@ declare namespace gapi.client {
       get: () => any;
     }
 
+    // https://developers.google.com/drive/v3/reference/files/<api>
+
     interface CreateFileRequest {
       mimeType: string;
       name: string;
       parents: string[];
     }
 
-    // https://developers.google.com/drive/v3/reference/files/list
+    interface DeleteFileRequest {
+      fileId: string;
+    }
+
     interface ListFilesRequest {
       fields?: string;
       orderBy?: string;
@@ -71,9 +76,10 @@ declare namespace gapi.client {
     }
 
     const files: {
-      create: (request: CreateFileRequest) => Promise<HttpResponse<File>>;
-      get: (fileId: GetFileRequest) => Promise<HttpResponse<File>>;
-      list: (request?: ListFilesRequest) => Promise<HttpResponse<ListFilesResponse>>;
+      create: (request: CreateFileRequest)  => Promise<HttpResponse<File>>;
+      delete: (request: DeleteFileRequest)  => Promise<HttpResponse<void>>;
+      get:    (request: GetFileRequest)     => Promise<HttpResponse<File>>;
+      list:   (request?: ListFilesRequest)  => Promise<HttpResponse<ListFilesResponse>>;
       update: (request?: UpdateFileRequest) => Promise<HttpResponse<File>>;
     }
   }

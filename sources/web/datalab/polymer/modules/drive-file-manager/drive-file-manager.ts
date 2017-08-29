@@ -138,8 +138,9 @@ class DriveFileManager implements FileManager {
       .then((upstreamFile) => DriveFileManager._upstreamToDriveFile(upstreamFile));
   }
 
-  public delete(_fileId: DatalabFileId): Promise<boolean> {
-    throw new UnsupportedMethod('delete', this);
+  public delete(fileId: DatalabFileId): Promise<boolean> {
+    return GapiManager.drive.deleteFile(fileId.path)
+      .then(() => true, () => false);
   }
 
   public copy(_file: DatalabFileId, _destinationDirectoryId: DatalabFileId): Promise<DatalabFile> {
