@@ -93,7 +93,7 @@ class NotebookPreviewElement extends Polymer.Element {
             let markdownHtml = '';
             firstTwoCells.forEach((cell) => {
               if (cell.cell_type === 'markdown') {
-                markdownHtml += marked(cell.source);
+                markdownHtml += marked(cell.source.toString());
               }
             });
             this.$.previewHtml.innerHTML = markdownHtml;
