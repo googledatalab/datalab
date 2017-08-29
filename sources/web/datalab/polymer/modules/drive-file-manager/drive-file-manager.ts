@@ -42,12 +42,31 @@ class DriveFileManager implements FileManager {
     }
     return datalabFile;
   }
-  public get(_fileId: DatalabFileId): Promise<DatalabFile> {
-    throw new UnsupportedMethod('get', this);
+  public async get(fileId: DatalabFileId): Promise<DatalabFile> {
+    const upstreamFile = await GapiManager.drive.getFile(fileId.path);
+    return DriveFileManager._upstreamToDriveFile(upstreamFile);
   }
 
-  public getContent(_fileId: DatalabFileId, _asText?: boolean): Promise<DatalabContent> {
-    throw new UnsupportedMethod('getContent', this);
+  public async getContent(fileId: DatalabFileId, _asText?: boolean): Promise<DatalabContent> {
+    const [file, content] = await GapiManager.drive.getFileWithContent(fileId.path);
+    if (content === null) {
+      throw new Error('Could not download file: ' + fileId.toQueryString());
+    }
+    if (file.fileExtension && file.fileExtension === 'ipynb') {
+      try {
+        return new NotebookContent(JSON.parse(content).cells);
+      } catch (e) {
+        throw new Error('Could not parse notebook: ' + e.message);
+      }
+    } else if (file.mimeType === DriveFileManager._directoryMimeType) {
+      try {
+        return new DirectoryContent(JSON.parse(content).files);
+      } catch (e) {
+        throw new Error('Could not parse directory listing: ' + e.message);
+      }
+    } else {
+      return new TextContent(content);
+    }
   }
 
   public async getRootFile(): Promise<DatalabFile> {
@@ -85,7 +104,7 @@ class DriveFileManager implements FileManager {
       'name',
     ];
     const upstreamFiles =
-        await GapiManager.drive.getFiles(fileFields, queryPredicates, orderModifiers);
+        await GapiManager.drive.listFiles(fileFields, queryPredicates, orderModifiers);
     // TODO: Check which files are running from the SessionsManager and modify
     // their status accordingly.
     return upstreamFiles.map((file) => DriveFileManager._upstreamToDriveFile(file));

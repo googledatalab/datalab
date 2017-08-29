@@ -36,6 +36,8 @@ declare namespace gapi.client {
     interface File {
       createdTime: string;
       description: string;
+      downloadUrl?: string;
+      fileExtension?: string;
       iconLink: string;
       id: string;
       kind: string; // 'drive#file'

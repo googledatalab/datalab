@@ -77,12 +77,12 @@ abstract class DatalabContent {
 
 class NotebookContent extends DatalabContent {
   public cells: NotebookCell[];
-  metadata: object;
-  nbformat: number;
+  metadata?: object;
+  nbformat?: number;
   // tslint:disable-next-line:variable-name
-  nbformat_minor: number;
+  nbformat_minor?: number;
 
-  constructor(cells: NotebookCell[], metadata: object, nbformat: number, nbformatMinor: number) {
+  constructor(cells: NotebookCell[], metadata?: object, nbformat?: number, nbformatMinor?: number) {
     super();
     this.cells = cells;
     this.metadata = metadata;
@@ -142,7 +142,7 @@ abstract class DatalabFile {
   }
 
   public getPreviewName(): string {
-    if (this.type == DatalabFileType.NOTEBOOK) {
+    if (this.type === DatalabFileType.NOTEBOOK) {
       return 'notebook';
     }
     return '';

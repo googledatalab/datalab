@@ -22,6 +22,7 @@
  */
 interface XhrOptions {
   failureCodes?: number[];
+  headers?: {[key: string]: string};
   method?: string;
   noCache?: boolean;
   parameters?: string | FormData;
@@ -81,7 +82,8 @@ interface ApiManager {
    * base path, and expecting a text response. This method returns immediately
    * with a promise that resolves with the returned text when the request completes.
    */
-  sendTextRequestAsync(url: string, options?: XhrOptions): Promise<string>;
+  sendTextRequestAsync(url: string, options?: XhrOptions, prependBasepath?: boolean)
+      : Promise<string>;
 
   /**
    * Returns the relative path for the given service name.
@@ -151,6 +153,7 @@ abstract class BaseApiManager implements ApiManager {
     const request = new XMLHttpRequest();
     const noCache = options.noCache || false;
     const failureCodes = options.failureCodes;
+    const headers = options.headers;
 
     return new Promise((resolve, reject) => {
       request.onreadystatechange = () => {
@@ -192,6 +195,11 @@ abstract class BaseApiManager implements ApiManager {
       };
 
       request.open(method, url);
+      if (headers) {
+        for (const k of Object.keys(headers)) {
+          request.setRequestHeader(k, headers[k]);
+        }
+      }
       if (noCache) {
         request.setRequestHeader('Cache-Control', 'no-cache');
       }
