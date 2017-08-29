@@ -35,7 +35,15 @@ declare namespace gapi.client {
     }
 
     interface GetFileRequest {
+      fields?: string;
       fileId: string;
+    }
+
+    interface UpdateFileRequest {
+      addParents?: string;
+      fileId?: string;
+      removeParents?: string;
+      resource?: any;
     }
 
     // https://developers.google.com/drive/v3/reference/files#resource
@@ -66,6 +74,7 @@ declare namespace gapi.client {
       create: (request: CreateFileRequest) => Promise<HttpResponse<File>>;
       get: (fileId: GetFileRequest) => Promise<HttpResponse<File>>;
       list: (request?: ListFilesRequest) => Promise<HttpResponse<ListFilesResponse>>;
+      update: (request?: UpdateFileRequest) => Promise<HttpResponse<File>>;
     }
   }
 }

@@ -74,28 +74,52 @@ class GapiManager {
       return createPromise;
     }
 
-    public static listFiles(fileFields: string[], queryPredicates: string[], orderBy?: string[]):
-        Promise<gapi.client.drive.File[]> {
-      return this._load()
-        .then(() => gapi.client.drive.files.list({
-          fields: 'nextPageToken, files(' + fileFields.join(',') + ')',
-          orderBy: orderBy ? orderBy.join(',') : '',
-          pageSize: 30,
-          q: queryPredicates.join(' and '),
-        }))
-        .then((response: HttpResponse<gapi.client.drive.ListFilesResponse>) => {
-          return response.result.files;
-        }, (response: HttpResponse<{error: Error}>) => {
-          throw response.result.error;
-        });
+    /**
+     * Rename the given file to the new name, and optionally move it to the
+     * given parent directory.
+     */
+    public static async renameFile(fileId: string, newName: string, newParentId?: string) {
+      const request: gapi.client.drive.UpdateFileRequest = {
+        fileId,
+        resource: {
+          name: newName,
+        },
+      };
+      if (newParentId) {
+        const file = await this.getFile(fileId, ['parents']);
+        const prevParents = file.parents.join(',');
+        request.addParents = newParentId;
+        request.removeParents = prevParents;
+      }
+      return gapi.client.drive.files.update(request)
+        .then((response) => response.result);
+    }
+
+    /**
+     * Gets a list of files with the specified query.
+     */
+    public static async listFiles(fileFields: string[], queryPredicates: string[],
+                                  orderBy?: string[]): Promise<gapi.client.drive.File[]> {
+      await this._load();
+      return gapi.client.drive.files.list({
+        fields: 'nextPageToken, files(' + fileFields.join(',') + ')',
+        orderBy: orderBy ? orderBy.join(',') : '',
+        pageSize: 30,
+        q: queryPredicates.join(' and '),
+      })
+      .then((response: HttpResponse<gapi.client.drive.ListFilesResponse>) => {
+        return response.result.files;
+      }, (response: HttpResponse<{error: Error}>) => {
+        throw response.result.error;
+      });
     }
 
     /**
      * Get the file object associated with the given id.
      */
-    public static getFile(id: string): Promise<gapi.client.drive.File> {
+    public static getFile(id: string, fields: string[] = []): Promise<gapi.client.drive.File> {
       return this._load()
-        .then(() => gapi.client.drive.files.get({fileId: id}))
+        .then(() => gapi.client.drive.files.get({fileId: id, fields: fields.join(',')}))
         .then((response: HttpResponse<gapi.client.drive.File>) => response.result,
               (response: HttpResponse<{error: Error}>) => {
           throw response.result.error;

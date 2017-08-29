@@ -111,7 +111,8 @@ class DriveFileManager implements FileManager {
     return upstreamFiles.map((file) => DriveFileManager._upstreamToDriveFile(file));
   }
 
-  public async create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string): Promise<DatalabFile> {
+  public async create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string)
+      : Promise<DatalabFile> {
     let mimeType: string;
     switch (fileType) {
       case DatalabFileType.DIRECTORY:
@@ -130,8 +131,11 @@ class DriveFileManager implements FileManager {
     return DriveFileManager._upstreamToDriveFile(upstreamFile);
   }
 
-  public rename(_oldFileId: DatalabFileId, _newName: string, _newContainerId?: DatalabFileId): Promise<DatalabFile> {
-    throw new UnsupportedMethod('rename', this);
+  public rename(oldFileId: DatalabFileId, newName: string, newContainerId?: DatalabFileId)
+      : Promise<DatalabFile> {
+    const newContainerPath = newContainerId ? newContainerId.path : undefined;
+    return GapiManager.drive.renameFile(oldFileId.path, newName, newContainerPath)
+      .then((upstreamFile) => DriveFileManager._upstreamToDriveFile(upstreamFile));
   }
 
   public delete(_fileId: DatalabFileId): Promise<boolean> {
