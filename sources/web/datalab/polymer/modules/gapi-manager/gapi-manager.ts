@@ -43,6 +43,37 @@ class GapiManager {
         .then((response) => JSON.parse(response.body));
     }
 
+    /**
+     * Creates a file with the specified name under the specified parent
+     * directory. If the content argument isn't empty, it's patched to the file
+     * in a subsequent request.
+     */
+    public static async create(mimeType: string, parentId: string, name: string, content = '')
+        : Promise<gapi.client.drive.File> {
+      await this._load;
+      let createPromise = gapi.client.drive.files.create({
+          mimeType,
+          name,
+          parents: [parentId],
+        })
+        .then((response) => response.result);
+
+      if (content) {
+        createPromise = createPromise
+          .then((file) => gapi.client.request({
+              body: content,
+              method: 'PATCH',
+              params: {
+                uploadType: 'media'
+              },
+              path: '/upload/drive/v3/files/' + file.id,
+            }))
+          .then((response) => response.result);
+      }
+
+      return createPromise;
+    }
+
     public static listFiles(fileFields: string[], queryPredicates: string[], orderBy?: string[]):
         Promise<gapi.client.drive.File[]> {
       return this._load()

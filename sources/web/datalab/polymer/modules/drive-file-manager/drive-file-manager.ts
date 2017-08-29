@@ -26,6 +26,7 @@ class DriveFile extends DatalabFile {
 class DriveFileManager implements FileManager {
 
   private static readonly _directoryMimeType = 'application/vnd.google-apps.folder';
+  private static readonly _notebookMimeType = 'application/json';
 
   private static _upstreamToDriveFile(file: gapi.client.drive.File) {
     const datalabFile: DriveFile = new DriveFile({
@@ -82,7 +83,7 @@ class DriveFileManager implements FileManager {
     const whitelistFilePredicates = [
       'name contains \'.ipynb\'',
       'name contains \'.txt\'',
-      'mimeType = \'application/vnd.google-apps.folder\'',
+      'mimeType = \'' + DriveFileManager._directoryMimeType + '\'',
     ];
     const queryPredicates = [
       '"' + fileId.path + '" in parents',
@@ -110,8 +111,23 @@ class DriveFileManager implements FileManager {
     return upstreamFiles.map((file) => DriveFileManager._upstreamToDriveFile(file));
   }
 
-  public create(_fileType: DatalabFileType, _containerId?: DatalabFileId, _name?: string): Promise<DatalabFile> {
-    throw new UnsupportedMethod('create', this);
+  public async create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string): Promise<DatalabFile> {
+    let mimeType: string;
+    switch (fileType) {
+      case DatalabFileType.DIRECTORY:
+        mimeType = DriveFileManager._directoryMimeType; break;
+      case DatalabFileType.NOTEBOOK:
+        mimeType = DriveFileManager._notebookMimeType; break;
+      default:
+        mimeType = 'text/plain';
+    }
+    const content = fileType === DatalabFileType.NOTEBOOK ?
+        NotebookContent.EMPTY_NOTEBOOK_CONTENT : '';
+    const upstreamFile = await GapiManager.drive.create(mimeType,
+                                                        containerId ? containerId.path : 'root',
+                                                        name || 'New Item',
+                                                        content);
+    return DriveFileManager._upstreamToDriveFile(upstreamFile);
   }
 
   public rename(_oldFileId: DatalabFileId, _newName: string, _newContainerId?: DatalabFileId): Promise<DatalabFile> {

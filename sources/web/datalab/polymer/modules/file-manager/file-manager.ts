@@ -76,6 +76,8 @@ abstract class DatalabContent {
 }
 
 class NotebookContent extends DatalabContent {
+  public static EMPTY_NOTEBOOK_CONTENT = '{"cells": []}';
+
   public cells: NotebookCell[];
   metadata?: object;
   nbformat?: number;
