@@ -47,6 +47,7 @@ class DatalabEditorElement extends Polymer.Element {
       },
       fileId: {
         notify: true,
+        observer: '_loadFile',
         type: Object,
         value: '',
       },
@@ -64,6 +65,24 @@ class DatalabEditorElement extends Polymer.Element {
       this._theme = settings.theme;
     }
 
+    // Create the codemirror element and fill it with the file content.
+    // TODO: try to detect the language of the file before creating
+    //       the codemirror element. Perhaps use the file extension?
+    // TODO: load the mode dynamically instead of starting out with python.
+    const editorConfig: CodeMirror.EditorConfiguration = {
+      autofocus: true,
+      lineNumbers: true,
+      lineWrapping: true,
+      mode: 'python',
+      theme: this._getCodeMirrorTheme(this._theme),
+      value: '',
+    };
+
+    this._editor = CodeMirror(this.$.editorContainer, editorConfig);
+    this._loadFile();
+  }
+
+  async _loadFile() {
     // Get the file contents, or empty string if no path is specified or the
     // file could not be found.
     let content = '';
@@ -89,20 +108,10 @@ class DatalabEditorElement extends Polymer.Element {
       this._fileManager = FileManagerFactory.getInstanceForType(FileManagerType.JUPYTER);
     }
 
-    // Create the codemirror element and fill it with the file content.
-    // TODO: try to detect the language of the file before creating
-    //       the codemirror element. Perhaps use the file extension?
-    // TODO: load the mode dynamically instead of starting out with python.
-    const editorConfig: CodeMirror.EditorConfiguration = {
-      autofocus: true,
-      lineNumbers: true,
-      lineWrapping: true,
-      mode: 'python',
-      theme: this._getCodeMirrorTheme(this._theme),
-      value: content,
-    };
-
-    this._editor = CodeMirror(this.$.editorContainer, editorConfig);
+    // The editor will be undefined when this method is first called by the observer.
+    if (this._editor) {
+      this._editor.getDoc().setValue(content);
+    }
   }
 
   _download() {
