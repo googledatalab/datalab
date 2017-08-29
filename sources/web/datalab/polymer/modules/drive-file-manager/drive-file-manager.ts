@@ -102,18 +102,12 @@ class DriveFileManager implements FileManager {
   }
 
   public async getEditorUrl(fileId: DatalabFileId) {
-    // Files that are stored on the VM require the basepath.
-    const apiManager = ApiManagerFactory.getInstance();
-    const basepath = await apiManager.getBasePath();
-    return location.protocol + '//' + location.host + basepath +
+    return location.protocol + '//' + location.host +
         '/editor?file=' + fileId.toQueryString();
   }
 
   public async getNotebookUrl(fileId: DatalabFileId): Promise<string> {
-    // Notebooks that are stored on the VM require the basepath.
-    const apiManager = ApiManagerFactory.getInstance();
-    const basepath = await apiManager.getBasePath();
-    return location.protocol + '//' + location.host + basepath +
+    return location.protocol + '//' + location.host +
         '/notebook#fileId=' + fileId.toQueryString();
   }
 }

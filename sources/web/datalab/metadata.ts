@@ -48,9 +48,9 @@ const metadata: FakeMetadata = {
 
 function launchFakeServer(metadata: FakeMetadata): void {
   const port = 80;
-  const metadata_host = '169.254.169.254';
+  const host = 'metadata.google.internal';
   logging.getLogger().info('Starting fake metadata server at http://%s:%d with %s',
-                           metadata_host, port, JSON.stringify(metadata));
+                           host, port, JSON.stringify(metadata));
 
   const server = http.createServer((req, res) => {
     const parsed_url = url.parse(req.url, true);
@@ -98,7 +98,7 @@ function launchFakeServer(metadata: FakeMetadata): void {
     }
     res.end();
   });
-  server.listen(port, metadata_host, 511, () => {
+  server.listen(port, host, 511, () => {
     // The `gcloud` tool uses a file in its config directory named 'gce' to
     // cache whether or not it should read credentials from the metadata server.
     //

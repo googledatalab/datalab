@@ -313,17 +313,15 @@ class JupyterFileManager implements FileManager {
   }
 
   public async getNotebookUrl(fileId: DatalabFileId) {
-    // Notebooks that are stored on the VM require the basepath.
-    const apiManager = ApiManagerFactory.getInstance();
-    const basepath = await apiManager.getBasePath();
-    return location.protocol + '//' + location.host + basepath + '/notebooks/' + fileId.path;
+    // TODO: We will need to get the base path when loading files
+    // from a VM running Datalab with Jupyter.
+    return location.protocol + '//' + location.host + '/notebooks/' + fileId.path;
   }
 
   public async getEditorUrl(fileId: DatalabFileId) {
-    // Files that are stored on the VM require the basepath.
-    const apiManager = ApiManagerFactory.getInstance();
-    const basepath = await apiManager.getBasePath();
-    return location.protocol + '//' + location.host + basepath + '/editor?file=' +
+    // TODO: We will need to get the base path when loading notebooks
+    // from a VM running Datalab with Jupyter.
+    return location.protocol + '//' + location.host + '/editor?file=' +
         fileId.toQueryString();
   }
 }
