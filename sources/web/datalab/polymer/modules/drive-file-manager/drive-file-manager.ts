@@ -60,9 +60,15 @@ class DriveFileManager implements FileManager {
   }
 
   public async list(fileId: DatalabFileId): Promise<DatalabFile[]> {
+    const whitelistFilePredicates = [
+      'name contains \'.ipynb\'',
+      'name contains \'.txt\'',
+      'mimeType = \'application/vnd.google-apps.folder\'',
+    ];
     const queryPredicates = [
       '"' + fileId.path + '" in parents',
       'trashed = false',
+      '(' + whitelistFilePredicates.join(' or ') + ')',
     ];
     const fileFields = [
       'createdTime',
