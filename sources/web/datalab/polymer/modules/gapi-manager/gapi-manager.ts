@@ -305,7 +305,11 @@ class GapiManager {
       case GapiScopes.BIGQUERY:
         return 'https://www.googleapis.com/auth/bigquery';
       case GapiScopes.DRIVE:
-          return 'https://www.googleapis.com/auth/drive.metadata.readonly';
+        return ['https://www.googleapis.com/auth/drive',
+                'https://www.googleapis.com/auth/drive.appfolder',
+                'https://www.googleapis.com/auth/drive.readonly.metadata',
+                'https://www.googleapis.com/auth/drive.install',
+                'https://www.googleapis.com/auth/drive.file'].join(' ');
       case GapiScopes.GCS:
           return 'https://www.googleapis.com/auth/devstorage.full_control';
       default:
