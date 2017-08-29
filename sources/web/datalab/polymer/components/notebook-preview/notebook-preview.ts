@@ -93,7 +93,7 @@ class NotebookPreviewElement extends Polymer.Element {
             let markdownHtml = '';
             firstTwoCells.forEach((cell) => {
               if (cell.cell_type === 'markdown') {
-                markdownHtml += marked(cell.source);
+                markdownHtml += marked(cell.source.toString());
               }
             });
             this.$.previewHtml.innerHTML = markdownHtml;
@@ -106,8 +106,9 @@ class NotebookPreviewElement extends Polymer.Element {
       })
       .catch(() => {
         this.$.previewHtml.innerHTML = '';
-        this._message = '';
-        Utils.log.error('Could not get notebook preview.');
+        const message = 'Could not get notebook preview.';
+        this._message = message;
+        Utils.log.error(message);
       });
   }
 

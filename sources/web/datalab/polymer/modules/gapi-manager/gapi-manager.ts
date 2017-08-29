@@ -43,7 +43,7 @@ class GapiManager {
         .then((response) => JSON.parse(response.body));
     }
 
-    public static getFiles(fileFields: string[], queryPredicates: string[], orderBy?: string[]):
+    public static listFiles(fileFields: string[], queryPredicates: string[], orderBy?: string[]):
         Promise<gapi.client.drive.File[]> {
       return this._load()
         .then(() => gapi.client.drive.files.list({
@@ -57,6 +57,42 @@ class GapiManager {
         }, (response: HttpResponse<{error: Error}>) => {
           throw response.result.error;
         });
+    }
+
+    /**
+     * Get the file object associated with the given id.
+     */
+    public static getFile(id: string): Promise<gapi.client.drive.File> {
+      return this._load()
+        .then(() => gapi.client.drive.files.get({fileId: id}))
+        .then((response: HttpResponse<gapi.client.drive.File>) => response.result,
+              (response: HttpResponse<{error: Error}>) => {
+          throw response.result.error;
+        });
+    }
+
+    /**
+     * Get the file data associated with the given id, along with its contents
+     * as a string. Returns an array of the file object and its contents.
+     */
+    public static async getFileWithContent(id: string)
+        : Promise<[gapi.client.drive.File, string | null]> {
+      await this._load();
+      const apiManager = ApiManagerFactory.getInstance();
+      const xhrOptions: XhrOptions = {
+        headers: {Authorization: 'Bearer ' + GapiManager._accessToken.access_token},
+      };
+      const file: gapi.client.drive.File = await apiManager.sendRequestAsync(
+            'https://www.googleapis.com/drive/v2/files/' + id,
+            xhrOptions,
+            false);
+      let content = null;
+      if (file.downloadUrl) {
+        content = await apiManager.sendTextRequestAsync(file.downloadUrl,
+                                                        xhrOptions,
+                                                        false);
+      }
+      return [file, content];
     }
 
     private static _load(): Promise<void> {
@@ -88,8 +124,7 @@ class GapiManager {
      * @param filter A label filter of the form label.<name>[:<value>], as described in
      *     https://cloud.google.com/bigquery/docs/reference/rest/v2/datasets/list
      */
-    public static listDatasets(projectId: string, filter: string,
-        pageToken?: string):
+    public static listDatasets(projectId: string, filter: string, pageToken?: string):
         Promise<gapi.client.HttpRequestFulfilled<gapi.client.bigquery.ListDatasetsResponse>> {
       const request = {
         filter,
@@ -105,8 +140,7 @@ class GapiManager {
      * Gets the list of BigQuery tables in the specified project and dataset,
      * returns a Promise.
      */
-    public static listTables(projectId: string, datasetId: string,
-        pageToken?: string):
+    public static listTables(projectId: string, datasetId: string, pageToken?: string):
         Promise<gapi.client.HttpRequestFulfilled<gapi.client.bigquery.ListTablesResponse>> {
       const request = {
         datasetId,
@@ -141,6 +175,7 @@ class GapiManager {
   };
 
   private static _clientId = '';   // Gets set by _loadClientId()
+  private static _accessToken: gapi.auth2.AuthResponse; // Gets set by _loadClientId
   private static _loadPromise: Promise<void>;
 
   /**
@@ -252,7 +287,9 @@ class GapiManager {
       scope: initialScopeString,
     })
     // .init does not return a catch-able promise
-    .then(() => null, (errorReason: any) => {
+    .then(() => {
+      this._accessToken = gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse();
+    }, (errorReason: any) => {
       throw new Error('Error in gapi auth: ' + errorReason.details);
     });
   }
