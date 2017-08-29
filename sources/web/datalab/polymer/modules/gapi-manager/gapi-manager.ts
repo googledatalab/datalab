@@ -59,6 +59,9 @@ class GapiManager {
         });
     }
 
+    /**
+     * Get the file object associated with the given id.
+     */
     public static getFile(id: string): Promise<gapi.client.drive.File> {
       return this._load()
         .then(() => gapi.client.drive.files.get({fileId: id}))
@@ -68,22 +71,26 @@ class GapiManager {
         });
     }
 
+    /**
+     * Get the file data associated with the given id, along with its contents
+     * as a string. Returns an array of the file object and its contents.
+     */
     public static async getFileWithContent(id: string)
         : Promise<[gapi.client.drive.File, string | null]> {
       await this._load();
-      const api = ApiManagerFactory.getInstance();
+      const apiManager = ApiManagerFactory.getInstance();
       const xhrOptions: XhrOptions = {
         headers: {Authorization: 'Bearer ' + GapiManager._accessToken.access_token},
       };
-      const file: gapi.client.drive.File = await api.sendRequestAsync(
+      const file: gapi.client.drive.File = await apiManager.sendRequestAsync(
             'https://www.googleapis.com/drive/v2/files/' + id,
             xhrOptions,
             false);
       let content = null;
       if (file.downloadUrl) {
-        content = await ApiManagerFactory.getInstance().sendTextRequestAsync(file.downloadUrl,
-                                                                             xhrOptions,
-                                                                             false);
+        content = await apiManager.sendTextRequestAsync(file.downloadUrl,
+                                                        xhrOptions,
+                                                        false);
       }
       return [file, content];
     }

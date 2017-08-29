@@ -49,13 +49,21 @@ class DriveFileManager implements FileManager {
 
   public async getContent(fileId: DatalabFileId, _asText?: boolean): Promise<DatalabContent> {
     const [file, content] = await GapiManager.drive.getFileWithContent(fileId.path);
-    if (!content) {
-      throw new Error('Could not download file: ' + fileId);
+    if (content === null) {
+      throw new Error('Could not download file: ' + fileId.toQueryString());
     }
     if (file.fileExtension && file.fileExtension === 'ipynb') {
-      return new NotebookContent(JSON.parse(content).cells);
+      try {
+        return new NotebookContent(JSON.parse(content).cells);
+      } catch (e) {
+        throw new Error('Could not parse notebook: ' + e.message);
+      }
     } else if (file.mimeType === DriveFileManager._directoryMimeType) {
-      return new DirectoryContent(JSON.parse(content).files);
+      try {
+        return new DirectoryContent(JSON.parse(content).files);
+      } catch (e) {
+        throw new Error('Could not parse directory listing: ' + e.message);
+      }
     } else {
       return new TextContent(content);
     }

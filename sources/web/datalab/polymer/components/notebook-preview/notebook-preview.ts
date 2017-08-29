@@ -106,8 +106,9 @@ class NotebookPreviewElement extends Polymer.Element {
       })
       .catch(() => {
         this.$.previewHtml.innerHTML = '';
-        this._message = '';
-        Utils.log.error('Could not get notebook preview.');
+        const message = 'Could not get notebook preview.';
+        this._message = message;
+        Utils.log.error(message);
       });
   }
 
