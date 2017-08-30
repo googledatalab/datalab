@@ -26,6 +26,7 @@ class DriveFile extends DatalabFile {
 class DriveFileManager implements FileManager {
 
   private static readonly _directoryMimeType = 'application/vnd.google-apps.folder';
+  private static readonly _notebookMimeType = 'application/json';
 
   private static _upstreamToDriveFile(file: gapi.client.drive.File) {
     const datalabFile: DriveFile = new DriveFile({
@@ -47,26 +48,12 @@ class DriveFileManager implements FileManager {
     return DriveFileManager._upstreamToDriveFile(upstreamFile);
   }
 
-  public async getContent(fileId: DatalabFileId, _asText?: boolean): Promise<DatalabContent> {
-    const [file, content] = await GapiManager.drive.getFileWithContent(fileId.path);
+  public async getStringContent(fileId: DatalabFileId, _asText?: boolean): Promise<string> {
+    const [, content] = await GapiManager.drive.getFileWithContent(fileId.path);
     if (content === null) {
       throw new Error('Could not download file: ' + fileId.toQueryString());
     }
-    if (file.fileExtension && file.fileExtension === 'ipynb') {
-      try {
-        return new NotebookContent(JSON.parse(content).cells);
-      } catch (e) {
-        throw new Error('Could not parse notebook: ' + e.message);
-      }
-    } else if (file.mimeType === DriveFileManager._directoryMimeType) {
-      try {
-        return new DirectoryContent(JSON.parse(content).files);
-      } catch (e) {
-        throw new Error('Could not parse directory listing: ' + e.message);
-      }
-    } else {
-      return new TextContent(content);
-    }
+    return content;
   }
 
   public async getRootFile(): Promise<DatalabFile> {
@@ -74,15 +61,16 @@ class DriveFileManager implements FileManager {
     return DriveFileManager._upstreamToDriveFile(upstreamFile);
   }
 
-  public saveText(_file: DatalabFile): Promise<DatalabFile> {
-    throw new UnsupportedMethod('getRootFile', this);
+  public saveText(file: DatalabFile, text: string): Promise<DatalabFile> {
+    return GapiManager.drive.patchContent(file.id.path, text)
+      .then((upstreamFile) => DriveFileManager._upstreamToDriveFile(upstreamFile));
   }
 
   public async list(fileId: DatalabFileId): Promise<DatalabFile[]> {
     const whitelistFilePredicates = [
       'name contains \'.ipynb\'',
       'name contains \'.txt\'',
-      'mimeType = \'application/vnd.google-apps.folder\'',
+      'mimeType = \'' + DriveFileManager._directoryMimeType + '\'',
     ];
     const queryPredicates = [
       '"' + fileId.path + '" in parents',
@@ -110,20 +98,41 @@ class DriveFileManager implements FileManager {
     return upstreamFiles.map((file) => DriveFileManager._upstreamToDriveFile(file));
   }
 
-  public create(_fileType: DatalabFileType, _containerId?: DatalabFileId, _name?: string): Promise<DatalabFile> {
-    throw new UnsupportedMethod('create', this);
+  public async create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string)
+      : Promise<DatalabFile> {
+    let mimeType: string;
+    switch (fileType) {
+      case DatalabFileType.DIRECTORY:
+        mimeType = DriveFileManager._directoryMimeType; break;
+      case DatalabFileType.NOTEBOOK:
+        mimeType = DriveFileManager._notebookMimeType; break;
+      default:
+        mimeType = 'text/plain';
+    }
+    const content = fileType === DatalabFileType.NOTEBOOK ?
+        NotebookContent.EMPTY_NOTEBOOK_CONTENT : '';
+    const upstreamFile = await GapiManager.drive.create(mimeType,
+                                                        containerId ? containerId.path : 'root',
+                                                        name || 'New Item',
+                                                        content);
+    return DriveFileManager._upstreamToDriveFile(upstreamFile);
   }
 
-  public rename(_oldFileId: DatalabFileId, _newName: string, _newContainerId?: DatalabFileId): Promise<DatalabFile> {
-    throw new UnsupportedMethod('rename', this);
+  public rename(oldFileId: DatalabFileId, newName: string, newContainerId?: DatalabFileId)
+      : Promise<DatalabFile> {
+    const newContainerPath = newContainerId ? newContainerId.path : undefined;
+    return GapiManager.drive.renameFile(oldFileId.path, newName, newContainerPath)
+      .then((upstreamFile) => DriveFileManager._upstreamToDriveFile(upstreamFile));
   }
 
-  public delete(_fileId: DatalabFileId): Promise<boolean> {
-    throw new UnsupportedMethod('delete', this);
+  public delete(fileId: DatalabFileId): Promise<boolean> {
+    return GapiManager.drive.deleteFile(fileId.path)
+      .then(() => true, () => false);
   }
 
-  public copy(_file: DatalabFileId, _destinationDirectoryId: DatalabFileId): Promise<DatalabFile> {
-    throw new UnsupportedMethod('copy', this);
+  public copy(file: DatalabFileId, destinationDirectoryId: DatalabFileId): Promise<DatalabFile> {
+    return GapiManager.drive.copy(file.path, destinationDirectoryId.path)
+      .then((upstreamFile) => DriveFileManager._upstreamToDriveFile(upstreamFile));
   }
 
   public async getEditorUrl(fileId: DatalabFileId) {

@@ -68,25 +68,20 @@ class TextPreviewElement extends Polymer.Element {
     }
 
     const fileManager = FileManagerFactory.getInstanceForType(this.file.id.source);
-    fileManager.getContent(this.file.id)
-      .then((content: DatalabContent) => {
-
-        // If this is a text file, show the first N lines.
-        if (content instanceof TextContent) {
-
-          if (content.text.trim() === '') {
-            this.$.previewHtml.innerHTML = '';
-            this._message = TextPreviewElement._emptyFileMessage;
-          } else {
-            const lines = content.text.split('\n');
-            this._message = 'File with ' + lines.length + ' lines. ';
-            this.$.previewHtml.innerText = '\n' +
-                lines.slice(0, TextPreviewElement._maxLinesInTextSummary).join('\n') +
-                '\n';
-            if (lines.length > TextPreviewElement._maxLinesInTextSummary) {
-              this.$.previewHtml.innerText += '...\n\n';
-              this._message += TextPreviewElement._longFileMessage;
-            }
+    fileManager.getStringContent(this.file.id)
+      .then((content: string) => {
+        if (content.trim() === '') {
+          this.$.previewHtml.innerHTML = '';
+          this._message = TextPreviewElement._emptyFileMessage;
+        } else {
+          const lines = content.split('\n');
+          this._message = 'File with ' + lines.length + ' lines. ';
+          this.$.previewHtml.innerText = '\n' +
+              lines.slice(0, TextPreviewElement._maxLinesInTextSummary).join('\n') +
+              '\n';
+          if (lines.length > TextPreviewElement._maxLinesInTextSummary) {
+            this.$.previewHtml.innerText += '...\n\n';
+            this._message += TextPreviewElement._longFileMessage;
           }
         }
       })
