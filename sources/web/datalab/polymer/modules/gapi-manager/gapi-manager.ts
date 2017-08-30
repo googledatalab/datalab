@@ -60,18 +60,26 @@ class GapiManager {
 
       if (content) {
         createPromise = createPromise
-          .then((file) => gapi.client.request({
-              body: content,
-              method: 'PATCH',
-              params: {
-                uploadType: 'media'
-              },
-              path: '/upload/drive/v3/files/' + file.id,
-            }))
-          .then((response) => response.result);
+          .then((file) => this.patchContent(file.id, content));
       }
 
       return createPromise;
+    }
+
+    /**
+     * Saves the given string content to the specified file.
+     */
+    public static async patchContent(fileId: string, content: string)
+        : Promise<gapi.client.drive.File> {
+      return gapi.client.request({
+          body: content,
+          method: 'PATCH',
+          params: {
+            uploadType: 'media'
+          },
+          path: '/upload/drive/v3/files/' + fileId,
+        })
+      .then((response) => response.result);
     }
 
     /**
@@ -125,9 +133,15 @@ class GapiManager {
     /**
      * Get the file object associated with the given id.
      */
-    public static getFile(id: string, fields: string[] = []): Promise<gapi.client.drive.File> {
-      return this._load()
-        .then(() => gapi.client.drive.files.get({fileId: id, fields: fields.join(',')}))
+    public static async getFile(fileId: string, fields?: string[]): Promise<gapi.client.drive.File> {
+      const request: gapi.client.drive.GetFileRequest = {
+        fileId,
+      };
+      if (fields) {
+        request.fields = fields.join(',');
+      }
+      await this._load();
+      return gapi.client.drive.files.get(request)
         .then((response: HttpResponse<gapi.client.drive.File>) => response.result,
               (response: HttpResponse<{error: Error}>) => {
           throw response.result.error;

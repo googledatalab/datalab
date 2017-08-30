@@ -57,13 +57,15 @@ class DriveFileManager implements FileManager {
       try {
         return new NotebookContent(JSON.parse(content).cells);
       } catch (e) {
-        throw new Error('Could not parse notebook: ' + e.message);
+        Utils.log.error('Could not parse notebook: ' + e.message);
+        return new TextContent(content);
       }
     } else if (file.mimeType === DriveFileManager._directoryMimeType) {
       try {
         return new DirectoryContent(JSON.parse(content).files);
       } catch (e) {
-        throw new Error('Could not parse directory listing: ' + e.message);
+        Utils.log.error('Could not parse directory listing: ' + e.message);
+        return new TextContent(content);
       }
     } else {
       return new TextContent(content);
@@ -75,8 +77,9 @@ class DriveFileManager implements FileManager {
     return DriveFileManager._upstreamToDriveFile(upstreamFile);
   }
 
-  public saveText(_file: DatalabFile): Promise<DatalabFile> {
-    throw new UnsupportedMethod('getRootFile', this);
+  public saveText(file: DatalabFile, text: string): Promise<DatalabFile> {
+    return GapiManager.drive.patchContent(file.id.path, text)
+      .then((upstreamFile) => DriveFileManager._upstreamToDriveFile(upstreamFile));
   }
 
   public async list(fileId: DatalabFileId): Promise<DatalabFile[]> {
