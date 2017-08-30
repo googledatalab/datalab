@@ -383,6 +383,7 @@ class GapiManager {
       client_id: GapiManager._clientId,
       fetch_basic_profile: true,
       scope: initialScopeString,
+      ux_mode: 'redirect',
     })
     // .init does not return a catch-able promise
     .then(() => {
