@@ -33,12 +33,9 @@ the License.
       :host {
         background-color: var(--primary-bg-color);
         height: 100%;
-        display: flex;
-        flex-direction: column;
       }
       #editorContainer {
-        flex: 1 1 auto;
-        overflow: auto;
+        height: calc(100% - 2 * var(--toolbar-height) - var(--progressbar-height));
       }
       div.CodeMirror {
         height: 100%;
@@ -47,7 +44,7 @@ the License.
       }
       #editorToolbar {
         display: flex;
-        flex: 0 0 var(--toolbar-height);
+        height: calc(var(--toolbar-height) - 1px); /* for border-bottom */
         width: 100%;
         background-color: var(--secondary-bg-color);
         font-family: var(--app-content-font-family);
@@ -96,26 +93,27 @@ the License.
       {{_file.id.path}}
     </paper-tooltip>
 
-    <!--Thin progress bar that shows until the file is loaded-->
-    <paper-progress id="progressBar" class="progressbar" indeterminate disabled={{!_busy}}>
-    </paper-progress>
-
     <!--Toolbar to contain buttons for interacting with the file-->
     <div id="editorToolbar">
       <!--TODO: Make these buttons do stuff.-->
-      <paper-button class="toolbar-button" on-click="_saveAsync">
+      <paper-button class="toolbar-button" on-click="_saveClicked">
         <iron-icon icon="save"></iron-icon>
         <span>Save</span>
       </paper-button>
-      <paper-button class="toolbar-button" on-click="_renameAsync">
+      <paper-button class="toolbar-button" on-click="_renameClicked">
         <iron-icon icon="editor:border-color"></iron-icon>
         <span>Rename</span>
       </paper-button>
-      <paper-button class="toolbar-button" on-click="_download">
+      <paper-button class="toolbar-button" on-click="_downloadClicked">
         <iron-icon icon="file-download"></iron-icon>
         <span>Download</span>
       </paper-button>
     </div>
+
+    <!--Thin progress bar that shows until the file is loaded-->
+    <paper-progress id="progressBar" class="progressbar" indeterminate disabled={{!_busy}}>
+    </paper-progress>
+
     <div id="editorContainer"></div>
 
     <datalab-notification></datalab-notification>
