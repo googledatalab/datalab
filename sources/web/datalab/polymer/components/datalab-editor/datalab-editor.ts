@@ -82,6 +82,23 @@ class DatalabEditorElement extends Polymer.Element {
     this._loadFile();
   }
 
+  async _saveClicked() {
+    await this._saveAsync()
+      .catch((e) => Utils.log.error(e.message));
+    this._editor.focus();
+  }
+
+  async _renameClicked() {
+    await this._renameAsync()
+      .catch((e) => Utils.log.error(e.message));
+    this._editor.focus();
+  }
+
+  async _downloadClicked() {
+    await this._download();
+    this._editor.focus();
+  }
+
   async _loadFile() {
     // Get the file contents, or empty string if no path is specified or the
     // file could not be found.
@@ -111,6 +128,11 @@ class DatalabEditorElement extends Polymer.Element {
     // The editor will be undefined when this method is first called by the observer.
     if (this._editor) {
       this._editor.getDoc().setValue(content);
+
+      // Sometimes needed to fix gutter render issues.
+      // See https://github.com/JedWatson/react-codemirror/issues/6.
+      this._editor.refresh();
+      this._editor.focus();
     }
   }
 
