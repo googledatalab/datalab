@@ -27,6 +27,10 @@ declare namespace gapi.client {
       parents: string[];
     }
 
+    interface CopyFileRequest {
+      fileId: string;
+    }
+
     interface DeleteFileRequest {
       fileId: string;
     }
@@ -77,6 +81,7 @@ declare namespace gapi.client {
 
     const files: {
       create: (request: CreateFileRequest)  => Promise<HttpResponse<File>>;
+      copy:   (request: CopyFileRequest)    => Promise<HttpResponse<File>>;
       delete: (request: DeleteFileRequest)  => Promise<HttpResponse<void>>;
       get:    (request: GetFileRequest)     => Promise<HttpResponse<File>>;
       list:   (request?: ListFilesRequest)  => Promise<HttpResponse<ListFilesResponse>>;

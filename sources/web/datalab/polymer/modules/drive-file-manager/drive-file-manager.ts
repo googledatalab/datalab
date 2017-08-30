@@ -146,8 +146,9 @@ class DriveFileManager implements FileManager {
       .then(() => true, () => false);
   }
 
-  public copy(_file: DatalabFileId, _destinationDirectoryId: DatalabFileId): Promise<DatalabFile> {
-    throw new UnsupportedMethod('copy', this);
+  public copy(file: DatalabFileId, destinationDirectoryId: DatalabFileId): Promise<DatalabFile> {
+    return GapiManager.drive.copy(file.path, destinationDirectoryId.path)
+      .then((upstreamFile) => DriveFileManager._upstreamToDriveFile(upstreamFile));
   }
 
   public async getEditorUrl(fileId: DatalabFileId) {

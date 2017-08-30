@@ -67,10 +67,29 @@ class GapiManager {
     }
 
     /**
+     * Makes a copy of the given file, and optionally moves this new copy into
+     * the given parent directory.
+     */
+    public static async copy(fileId: string, destinationId?: string)
+        : Promise<gapi.client.drive.File> {
+      await this._load();
+      return gapi.client.drive.files.copy({fileId})
+        .then((response) => {
+          const newFile = response.result;
+          if (destinationId) {
+            return this.renameFile(newFile.id, newFile.name, destinationId);
+          } else {
+            return newFile;
+          }
+        });
+    }
+
+    /**
      * Saves the given string content to the specified file.
      */
     public static async patchContent(fileId: string, content: string)
         : Promise<gapi.client.drive.File> {
+      await this._load();
       return gapi.client.request({
           body: content,
           method: 'PATCH',
@@ -87,6 +106,7 @@ class GapiManager {
      * given parent directory.
      */
     public static async renameFile(fileId: string, newName: string, newParentId?: string) {
+      await this._load();
       const request: gapi.client.drive.UpdateFileRequest = {
         fileId,
         resource: {
@@ -107,6 +127,7 @@ class GapiManager {
      * Delete the given file.
      */
     public static async deleteFile(fileId: string): Promise<void> {
+      await this._load();
       return gapi.client.drive.files.delete({fileId})
         .then((response) => response.result);
     }
@@ -134,13 +155,13 @@ class GapiManager {
      * Get the file object associated with the given id.
      */
     public static async getFile(fileId: string, fields?: string[]): Promise<gapi.client.drive.File> {
+      await this._load();
       const request: gapi.client.drive.GetFileRequest = {
         fileId,
       };
       if (fields) {
         request.fields = fields.join(',');
       }
-      await this._load();
       return gapi.client.drive.files.get(request)
         .then((response: HttpResponse<gapi.client.drive.File>) => response.result,
               (response: HttpResponse<{error: Error}>) => {
