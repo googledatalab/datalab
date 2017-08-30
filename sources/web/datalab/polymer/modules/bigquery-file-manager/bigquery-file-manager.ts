@@ -21,7 +21,7 @@ type TableResource = gapi.client.bigquery.TableResource;
 
 class BigQueryFile extends DatalabFile {
   public getPreviewName(): string {
-    if (this.type == DatalabFileType.FILE) {
+    if (this.type === DatalabFileType.FILE) {
       return 'table';
     }
     return '';
@@ -41,7 +41,7 @@ class BigQueryFileManager implements FileManager {
     throw new UnsupportedMethod('get', this);
   }
 
-  public getContent(_fileId: DatalabFileId, _asText?: boolean): Promise<DatalabContent> {
+  public getStringContent(_fileId: DatalabFileId, _asText?: boolean): Promise<string> {
     throw new UnsupportedMethod('getContent', this);
   }
 
@@ -100,7 +100,7 @@ class BigQueryFileManager implements FileManager {
   }
 
   private async _collectAllProjects(accumulatedProjects: ProjectResource[],
-      pageToken: string): Promise<DatalabFile[]> {
+                                    pageToken: string): Promise<DatalabFile[]> {
     const response: HttpResponse<ListProjectsResponse> =
         await GapiManager.bigquery.listProjects(pageToken);
     const additionalProjects = response.result.projects || [];
@@ -122,8 +122,8 @@ class BigQueryFileManager implements FileManager {
   }
 
   private async _collectAllDatasets(projectId: string,
-      accumulatedDatasets: DatasetResource[],
-      pageToken: string): Promise<DatalabFile[]> {
+                                    accumulatedDatasets: DatasetResource[],
+                                    pageToken: string): Promise<DatalabFile[]> {
     const response: HttpResponse<ListDatasetsResponse> =
         await GapiManager.bigquery.listDatasets(projectId, pageToken);
     const additionalDatasets = response.result.datasets || [];
@@ -145,8 +145,8 @@ class BigQueryFileManager implements FileManager {
   }
 
   private async _collectAllTables(projectId: string, datasetId: string,
-      accumulatedTables: TableResource[],
-      pageToken: string): Promise<DatalabFile[]> {
+                                  accumulatedTables: TableResource[],
+                                  pageToken: string): Promise<DatalabFile[]> {
     const response: HttpResponse<ListTablesResponse> =
         await GapiManager.bigquery.listTables(projectId, datasetId, pageToken);
     const additionalTables = response.result.tables || [];

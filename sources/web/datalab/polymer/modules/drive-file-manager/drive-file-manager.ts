@@ -48,28 +48,12 @@ class DriveFileManager implements FileManager {
     return DriveFileManager._upstreamToDriveFile(upstreamFile);
   }
 
-  public async getContent(fileId: DatalabFileId, _asText?: boolean): Promise<DatalabContent> {
-    const [file, content] = await GapiManager.drive.getFileWithContent(fileId.path);
+  public async getStringContent(fileId: DatalabFileId, _asText?: boolean): Promise<string> {
+    const [, content] = await GapiManager.drive.getFileWithContent(fileId.path);
     if (content === null) {
       throw new Error('Could not download file: ' + fileId.toQueryString());
     }
-    if (file.fileExtension && file.fileExtension === 'ipynb') {
-      try {
-        return new NotebookContent(JSON.parse(content).cells);
-      } catch (e) {
-        Utils.log.error('Could not parse notebook: ' + e.message);
-        return new TextContent(content);
-      }
-    } else if (file.mimeType === DriveFileManager._directoryMimeType) {
-      try {
-        return new DirectoryContent(JSON.parse(content).files);
-      } catch (e) {
-        Utils.log.error('Could not parse directory listing: ' + e.message);
-        return new TextContent(content);
-      }
-    } else {
-      return new TextContent(content);
-    }
+    return content;
   }
 
   public async getRootFile(): Promise<DatalabFile> {

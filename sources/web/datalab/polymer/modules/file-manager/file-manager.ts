@@ -71,11 +71,7 @@ class DatalabFileId {
 
 }
 
-abstract class DatalabContent {
-  public abstract getEditorText(): string;
-}
-
-class NotebookContent extends DatalabContent {
+class NotebookContent {
   public static EMPTY_NOTEBOOK_CONTENT = '{"cells": []}';
 
   public cells: NotebookCell[];
@@ -85,41 +81,15 @@ class NotebookContent extends DatalabContent {
   nbformat_minor?: number;
 
   constructor(cells: NotebookCell[], metadata?: object, nbformat?: number, nbformatMinor?: number) {
-    super();
     this.cells = cells;
     this.metadata = metadata;
     this.nbformat = nbformat;
     this.nbformat_minor = nbformatMinor;
   }
 
-  public getEditorText() {
-    return JSON.stringify(this);
-  }
-}
-
-class DirectoryContent extends DatalabContent {
-  files: DatalabFile[];
-
-  constructor(files: DatalabFile[]) {
-    super();
-    this.files = files;
-  }
-
-  public getEditorText() {
-    return JSON.stringify(this.files);
-  }
-}
-
-class TextContent extends DatalabContent {
-  text: string;
-
-  constructor(text: string) {
-    super();
-    this.text = text;
-  }
-
-  public getEditorText() {
-    return this.text;
+  public static fromString(content: string) {
+    const json = JSON.parse(content);
+    return new NotebookContent(json.cells, json.metadata, json.nbformat, json.nbformatMinor);
   }
 }
 
@@ -162,13 +132,13 @@ interface FileManager {
   get(fileId: DatalabFileId): Promise<DatalabFile>;
 
   /**
-   * Returns the content of the file with the specified id.
+   * Returns the string content of the file with the specified id.
    * @param fileId id of the requested file.
    * @param asText whether the file should be downloaded as plain text. This is
    *               useful for downloading notebooks, which are by default read
    *               as JSON, which doesn't preserve formatting.
    */
-  getContent(fileId: DatalabFileId, asText?: boolean): Promise<DatalabContent>;
+  getStringContent(fileId: DatalabFileId, asText?: boolean): Promise<string>;
 
   /**
    * Returns a DatalabFile object for the root directory.

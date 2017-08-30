@@ -130,29 +130,15 @@ class JupyterFileManager implements FileManager {
       .then((file: any) => JupyterFileManager._upstreamFileToJupyterFile(file));
   }
 
-  public async getContent(fileId: DatalabFileId, asText?: boolean): Promise<DatalabContent> {
-    const apiManager = ApiManagerFactory.getInstance();
-    if (fileId.path.startsWith('/')) {
-      fileId.path = fileId.path.substr(1);
-    }
+  public async getStringContent(fileId: DatalabFileId, asText?: boolean): Promise<string> {
     if (asText === true) {
       fileId.path += '?format=text&type=file';
     }
-    const xhrOptions: XhrOptions = {
-      noCache: true,
-    };
-    const upstreamFile = await apiManager.sendRequestAsync(
-        apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + fileId.path, xhrOptions);
-    switch (upstreamFile.type) {
-      case 'directory':
-        return new DirectoryContent(upstreamFile.content);
-      case 'file':
-        return new TextContent(upstreamFile.content);
-      case 'notebook':
-        return new NotebookContent(upstreamFile.content.cells, upstreamFile.content.metadata,
-            upstreamFile.content.nbformat, upstreamFile.content.nbformat_minor);
-      default:
-        throw new Error('Unknown Jupyter file type: ' + upstreamFile.type);
+    const upstreamFile = await this._getFileWithContent(fileId.path);
+    if (upstreamFile.type === 'file') {
+      return upstreamFile.content;
+    } else {
+      return JSON.stringify(upstreamFile.content);
     }
   }
 
@@ -192,14 +178,14 @@ class JupyterFileManager implements FileManager {
       .then((savedFile: any) => JupyterFileManager._upstreamFileToJupyterFile(savedFile));
   }
 
-  public list(containerId: DatalabFileId): Promise<DatalabFile[]> {
-    const filesPromise = this.getContent(containerId)
-      .then((content: DatalabContent) => {
-        if (content instanceof DirectoryContent) {
-          return content.files;
-        } else {
-          throw new Error('Can only list files in a directory. Found type: ' + typeof(content));
+  public async list(containerId: DatalabFileId): Promise<DatalabFile[]> {
+    const filesPromise = this._getFileWithContent(containerId.path)
+      .then((container) => {
+        if (container.type !== 'directory') {
+          throw new Error('Can only list files in a directory. Found type: ' +
+              typeof(container.type));
         }
+        return container.content;
       });
 
     const sessionsPromise: Promise<Session[]> = SessionManager.listSessionsAsync();
@@ -323,5 +309,17 @@ class JupyterFileManager implements FileManager {
     // from a VM running Datalab with Jupyter.
     return location.protocol + '//' + location.host + '/editor?file=' +
         fileId.toQueryString();
+  }
+
+  private _getFileWithContent(fileId: string) {
+    const apiManager = ApiManagerFactory.getInstance();
+    if (fileId.startsWith('/')) {
+      fileId = fileId.substr(1);
+    }
+    const xhrOptions: XhrOptions = {
+      noCache: true,
+    };
+    return apiManager.sendRequestAsync(
+        apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + fileId, xhrOptions);
   }
 }

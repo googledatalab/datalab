@@ -110,8 +110,7 @@ class DatalabEditorElement extends Polymer.Element {
 
         // Get the file object and its contents
         this._file = await this._fileManager.get(this.fileId);
-        content =
-            (await this._fileManager.getContent(this.fileId, true /*asText*/)).getEditorText();
+        content = await this._fileManager.getStringContent(this.fileId, true /*asText*/);
       } catch (e) {
         Utils.showErrorDialog('Error loading file', e.message);
         this.fileId = null;

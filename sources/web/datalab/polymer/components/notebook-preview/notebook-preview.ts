@@ -27,6 +27,7 @@ class NotebookPreviewElement extends Polymer.Element {
   private static _noFileMessage = 'Select an item to view a preview.';
   private static _emptyNotebookMessage = 'Empty notebook.';
   private static _longNotebookMessage = 'Showing markdown from the first two.';
+  private static _errorMessage = 'Could not retrieve notebook preview.';
 
   /**
    * File whose preview to show.
@@ -79,34 +80,39 @@ class NotebookPreviewElement extends Polymer.Element {
     }
 
     const fileManager = FileManagerFactory.getInstanceForType(this.file.id.source);
-    fileManager.getContent(this.file.id)
-      .then((content: DatalabContent) => {
+    fileManager.getStringContent(this.file.id)
+      .then((stringContent: string) => {
 
-        // If this is a notebook, get the first two cells and render any markdown in them.
-        if (content instanceof NotebookContent) {
-          if (content.cells.length === 0) {
-            this.$.previewHtml.innerHTML = '';
-            this._message = NotebookPreviewElement._emptyNotebookMessage;
-          } else {
-            const firstTwoCells = content.cells.slice(0, 2);
+        let content: NotebookContent;
+        try {
+          const json = JSON.parse(stringContent);
+          content = new NotebookContent(json.cells, json.metadata, json.nbformat, json.nbformatMinor);
+        } catch (e) {
+          this._message = NotebookPreviewElement._errorMessage;
+          throw e;
+        }
+        if (content.cells.length === 0) {
+          this.$.previewHtml.innerHTML = '';
+          this._message = NotebookPreviewElement._emptyNotebookMessage;
+        } else {
+          const firstTwoCells = content.cells.slice(0, 2);
 
-            let markdownHtml = '';
-            firstTwoCells.forEach((cell) => {
-              if (cell.cell_type === 'markdown') {
-                markdownHtml += marked(cell.source.toString());
-              }
-            });
-            this.$.previewHtml.innerHTML = markdownHtml;
-            this._message = ' Notebook with ' + content.cells.length + ' cells. ';
-            if (content.cells.length > 2) {
-              this._message += NotebookPreviewElement._longNotebookMessage;
+          let markdownHtml = '';
+          firstTwoCells.forEach((cell) => {
+            if (cell.cell_type === 'markdown') {
+              markdownHtml += marked(cell.source.toString());
             }
+          });
+          this.$.previewHtml.innerHTML = markdownHtml;
+          this._message = ' Notebook with ' + content.cells.length + ' cells. ';
+          if (content.cells.length > 2) {
+            this._message += NotebookPreviewElement._longNotebookMessage;
           }
         }
       })
       .catch(() => {
         this.$.previewHtml.innerHTML = '';
-        const message = 'Could not get notebook preview.';
+        const message = NotebookPreviewElement._errorMessage;
         this._message = message;
         Utils.log.error(message);
       });

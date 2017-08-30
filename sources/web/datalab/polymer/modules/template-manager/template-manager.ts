@@ -104,8 +104,11 @@ class TemplateManager {
 
     if (closeResult.confirmed && closeResult.fileName) {
       const fileManager = FileManagerFactory.getInstanceForType(template.fileId.source);
-      const templateContent = await fileManager.getContent(template.fileId);
-      if (!(templateContent instanceof NotebookContent)) {
+      const templateStringContent = await fileManager.getStringContent(template.fileId);
+      let templateNotebookContent: NotebookContent;
+      try {
+        templateNotebookContent = NotebookContent.fromString(templateStringContent);
+      } catch (e) {
         throw new Error('Template file is not a notebook.');
       }
       const templateFile = await fileManager.get(template.fileId);
@@ -114,12 +117,12 @@ class TemplateManager {
       if (!templateFile.name.endsWith('.ipynb')) {
         templateFile.name += '.ipynb';
       }
-      template.populatePlaceholders(templateContent);
+      template.populatePlaceholders(templateNotebookContent);
 
       const newFile = await
           fileManager.create(DatalabFileType.NOTEBOOK, closeResult.selectedDirectory.id,
               templateFile.name);
-      return fileManager.saveText(newFile, templateContent.getEditorText());
+      return fileManager.saveText(newFile, JSON.stringify(templateNotebookContent));
     } else {
       return null;
     }
