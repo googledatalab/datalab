@@ -359,16 +359,13 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    * uses the FileManager to save it on the backend.
    */
   async _upload() {
-    // TODO: Explore enabling this feature for non-jupyter file managers
-    if (this.fileManagerType !== 'jupyter') {
-      return;
-    }
     const inputElement = this.$.altFileUpload as HTMLInputElement;
     const files = [...inputElement.files as any];
     const uploadPromises: Array<Promise<any>> = [];
 
-    // TODO: Check if the file already exists at the current path, otherwise the upload
-    // might still occur (Jupyter overwrites by default).
+    // TODO: Check if the file already exists at the current path and provide a
+    // consistent experience. Jupyter overwrites by default, but Drive stores
+    // multiple files with the same name.
 
     // Find out if there's at least one large file.
     const hasLargeFile = files.some((file: File) =>
