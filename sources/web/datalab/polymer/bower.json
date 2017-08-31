@@ -3,7 +3,7 @@
   "main": "index.html",
   "dependencies": {
     "app-layout": "PolymerElements/app-layout#^2.0.0",
-    "app-route": "PolymerElements/app-route#^2.0.0",
+    "app-route": "PolymerElements/app-route#^2.0.2",
     "codemirror": "^5.27.2",
     "iron-a11y-keys": "PolymerElements/iron-a11y-keys#^2.0.0",
     "iron-a11y-keys-behavior": "PolymerElements/iron-a11y-keys-behavior#^2.0.0",
@@ -23,7 +23,7 @@
     "paper-spinner": "PolymerElements/paper-spinner#^2.0.0",
     "paper-toast": "PolymerElements/paper-toast#^2.0.0",
     "paper-tooltip": "PolymerElements/paper-tooltip#^2.0.0",
-    "polymer": "Polymer/polymer#^2.0.1",
+    "polymer": "Polymer/polymer#^2.0.2",
     "webcomponentsjs": "webcomponents/webcomponentsjs#^1.0.0-rc.9",
     "xterm.js": "^2.7.0"
   },
