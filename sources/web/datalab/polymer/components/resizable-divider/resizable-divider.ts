@@ -40,7 +40,6 @@ class ResizableDividerElement extends Polymer.Element {
   private _dividerWidth: number;
   private _lastMouseDownPosition: number;
   private _lastMouseUpPosition: number;
-  private _readyDone = false;
 
   static get is() { return 'resizable-divider'; }
 
@@ -74,10 +73,6 @@ class ResizableDividerElement extends Polymer.Element {
 
     divider.addEventListener('mousedown', this._boundMouseDownHandler);
     this._dividerWidth = divider.getBoundingClientRect().width;
-
-    // Initialize the divider position.
-    // this._dividerPositionChanged();
-    this._readyDone = true;
   }
 
   resizeHandler() {
@@ -116,8 +111,8 @@ class ResizableDividerElement extends Polymer.Element {
   /**
    * Calculate the new divider position after hideRight changes.
    */
-  _hideRightChanged() {
-    if (!this._readyDone) {
+  _hideRightChanged(_: boolean, oldValue: boolean) {
+    if (oldValue === undefined) {
       return;   // Leave divider position unchanged on startup
     } else if (this.hideRight) {
       this.dividerPosition = 100;
