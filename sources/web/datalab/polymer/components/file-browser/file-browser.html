@@ -254,9 +254,8 @@ the License.
 
       <!--File listing-->
       <resizable-divider id="filesContainer" class="files-container"
-          divider-position="{{_dividerPosition}}" minimum-width-px="0"
-          hide-right="{{!_isPreviewPaneToggledOn}}"
-        >
+          divider-position="{{_dividerPosition}}"
+          hide-right="{{!_isPreviewPaneToggledOn}}">
         <item-list id="files" slot="left" hide-header$="{{small}}" disable-selection$="{{small}}"></item-list>
         <preview-pane id="previewPane" slot="right" file="{{selectedFile}}" active="{{_isPreviewPaneEnabled}}"
                       class$="preview-pane-enabled--{{_isPreviewPaneEnabled}}">

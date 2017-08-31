@@ -297,8 +297,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
   /**
    * Called when the selection changes on the item list. If exactly one file
-   * is selected, sets the selectedFile property to the selected file object
-   * and opens the preview pane.
+   * is selected, sets the selectedFile property to the selected file object.
    */
   _handleSelectionChanged() {
     const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
