@@ -179,6 +179,7 @@ class GapiManager {
       const apiManager = ApiManagerFactory.getInstance();
       const xhrOptions: XhrOptions = {
         headers: {Authorization: 'Bearer ' + GapiManager._accessToken.access_token},
+        noCache: true,
       };
       const file: gapi.client.drive.File = await apiManager.sendRequestAsync(
             'https://www.googleapis.com/drive/v2/files/' + id,

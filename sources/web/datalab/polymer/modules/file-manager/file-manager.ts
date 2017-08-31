@@ -72,7 +72,14 @@ class DatalabFileId {
 }
 
 class NotebookContent {
-  public static EMPTY_NOTEBOOK_CONTENT = '{"cells": []}';
+  public static EMPTY_NOTEBOOK_CONTENT = `{
+    "cells": [
+    ],
+    "metadata": {},
+    "nbformat": 4,
+    "nbformat_minor": 0
+  }
+  `;
 
   public cells: NotebookCell[];
   metadata?: object;
