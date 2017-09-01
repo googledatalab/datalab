@@ -12,6 +12,8 @@
  * the License.
  */
 
+type HttpResponse<T> = gapi.client.HttpRequestFulfilled<T>;
+
 /**
  * Table preview pane element for Datalab.
  * This element is designed to be displayed in a side bar that displays more
@@ -27,7 +29,6 @@ class TablePreviewElement extends Polymer.Element {
    */
   public file: BigQueryFile;
 
-  // TODO(jimmc) - once datalab-data is deleted, make this private
   /**
    * Id for table whose preview to show.
    */

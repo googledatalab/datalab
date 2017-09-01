@@ -24,7 +24,6 @@ class SidebarElement extends Polymer.Element {
    */
   public page: string;
 
-  private _dataTabId: string;
   // TODO - remove _showDataTab once the Data tab is ready to be visible
   private _showDataTab = false;
   private _uiroot: string;
@@ -33,10 +32,6 @@ class SidebarElement extends Polymer.Element {
 
   static get properties() {
     return {
-      _dataTabId: {
-        type: String,
-        value: 'data',
-      },
       _showDataTab: {
         type: Boolean,
         value: false,
@@ -60,10 +55,6 @@ class SidebarElement extends Polymer.Element {
     if (location.pathname.startsWith('/exp/data') ||
         location.pathname.startsWith('/data')) {
       this._showDataTab = true;
-    }
-    if (location.pathname.startsWith('/exp/data2') ||
-        location.pathname.startsWith('/data2')) {
-      this._dataTabId = 'data2';
     }
   }
 }
