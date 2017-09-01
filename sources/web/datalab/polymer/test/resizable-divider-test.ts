@@ -65,26 +65,30 @@ describe('<resizable-divider>', () => {
   it('shows left pane to the left of the right pane, and divider in between', () => {
     const offset = testFixture.getBoundingClientRect().left;
     assert(left.getBoundingClientRect().left === offset, 'left pane should stick to the left');
-    assert(left.getBoundingClientRect().right === offset + 200,
-        'left pane should extend all the way to the middle of the container');
+    assert(left.getBoundingClientRect().right === offset + 195,
+        'left pane should extend to the divider');
 
-    assert(divider.getBoundingClientRect().left === offset + 200,
-        'divider should start at the middle of the container');
+    assert(divider.getBoundingClientRect().left === offset + 195,
+        'divider should start to the right of the left pane');
+    assert(divider.getBoundingClientRect().right === offset + 205,
+        'divider should have the right width');
 
-    assert(right.getBoundingClientRect().left === offset + 200,
-        'right pane should start at the middle of the container');
-    assert(right.getBoundingClientRect().left === offset + 200,
+    assert(right.getBoundingClientRect().left === offset + 205,
+        'right pane should start to the right of the divider');
+    assert(right.getBoundingClientRect().right === offset + 400,
         'right pane stick to the right of the container');
   });
 
   it('makes child panes fill height', () => {
-    assert(left.getBoundingClientRect().height === 800, 'left pane should be fill the height');
-    assert(right.getBoundingClientRect().height === 800, 'right pane should be fill the height');
+    assert(left.getBoundingClientRect().height === 800, 'left pane should fill the height');
+    assert(right.getBoundingClientRect().height === 800, 'right pane should fill the height');
   });
 
   it('shows panes with half the element width by default', () => {
-    assert(left.getBoundingClientRect().width === 200, 'left pane should be half the width');
-    assert(right.getBoundingClientRect().width === 200, 'right pane should be half the width');
+    assert(left.getBoundingClientRect().width === 195,
+        'left pane should be half the width less divider half-width');
+    assert(right.getBoundingClientRect().width === 195,
+        'right pane should be half the width less divider half-width');
   });
 
   it('resizes panes when divider is dragged', () => {
@@ -94,12 +98,12 @@ describe('<resizable-divider>', () => {
 
     dragAndDrop(divider, x, y, x - 100, y + 300);
 
-    assert(left.getBoundingClientRect().width === 100,
-        'left pane should be 100px after resizing');
-    assert(right.getBoundingClientRect().width === 300,
-        'right pane should be 100px after resizing');
-    assert(divider.getBoundingClientRect().left === offset + 100,
-        'divider should move with mouse when resizing');
+    assert(left.getBoundingClientRect().width === 95,
+        'left pane should be 95px after resizing');
+    assert(right.getBoundingClientRect().width === 295,
+        'right pane should be 295px after resizing');
+    assert(divider.getBoundingClientRect().left === offset + 95,
+        'divider should move with mouse.x when resizing');
   });
 
 });
