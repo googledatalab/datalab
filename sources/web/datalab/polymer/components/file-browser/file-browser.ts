@@ -68,6 +68,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
   private _addToolbarCollapseThreshold = 900;
   private _apiManager: ApiManager;
+  private _dividerPosition: number;
   private _previewPaneCollapseThreshold = 600;
   private _fetching: boolean;
   private _fileList: DatalabFile[];
@@ -85,6 +86,11 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
   static get properties() {
     return {
+      _dividerPosition: {
+        observer: '_dividerPositionChanged',
+        type: Number,
+        value: 70,
+      },
       _fetching: {
         type: Boolean,
         value: false,
@@ -630,6 +636,18 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   }
 
   /**
+   * Gets called when the divider position changes, to update ToggledOn
+   * if the user moves the position to or from 100%.
+   */
+  _dividerPositionChanged() {
+    if (this._dividerPosition === 100 && this._isPreviewPaneToggledOn) {
+      this._isPreviewPaneToggledOn = false;
+    } else if (this._dividerPosition < 100 && !this._isPreviewPaneToggledOn) {
+      this._isPreviewPaneToggledOn = true;
+    }
+  }
+
+  /**
    * Computes whether the preview pane should be enabled. This depends on two values:
    * whether the element has the small attribute, and whether the user has switched it
    * off manually.
@@ -767,6 +785,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     }
 
     (this.$.breadCrumbs as BreadCrumbsElement).resizeHandler();
+    (this.$.filesContainer as ResizableDividerElement).resizeHandler();
   }
 
   /**

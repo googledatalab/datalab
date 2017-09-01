@@ -253,12 +253,14 @@ the License.
       </paper-progress>
 
       <!--File listing-->
-      <div class="files-container">
-        <item-list id="files" hide-header$="{{small}}" disable-selection$="{{small}}"></item-list>
-        <preview-pane id="previewPane" file="{{selectedFile}}" active="{{_isPreviewPaneEnabled}}"
+      <resizable-divider id="filesContainer" class="files-container"
+          divider-position="{{_dividerPosition}}"
+          hide-right="{{!_isPreviewPaneToggledOn}}">
+        <item-list id="files" slot="left" hide-header$="{{small}}" disable-selection$="{{small}}"></item-list>
+        <preview-pane id="previewPane" slot="right" file="{{selectedFile}}" active="{{_isPreviewPaneEnabled}}"
                       class$="preview-pane-enabled--{{_isPreviewPaneEnabled}}">
         </preview-pane>
-      </div>
+      </resizable-divider>
     </div>
 
   </template>

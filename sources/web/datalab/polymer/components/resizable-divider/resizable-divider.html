@@ -29,8 +29,13 @@ the License.
       }
       .pane {
         overflow: auto;
-        width: 50%;
+        height: 100%;
+        width: calc(50% - var(--divider-half-width));
         user-select: none;
+      }
+      .right {
+        position: absolute;
+        left: calc(50% + var(--divider-half-width));
       }
       /**
        * Slotted elements should fill the content slots, and be border-boxed so
@@ -51,24 +56,24 @@ the License.
         top: 0px;
         bottom: 0px;
         left: calc(50% - var(--divider-half-width));
-        right: calc(50% + var(--divider-half-width));
         width: calc(2 * var(--divider-half-width));
+        background-color: var(--selection-bg-color);
       }
       #divider.active {
         user-select: none;
-        background-color: var(--selection-bg-color);
+        background-color: var(--border-color);
       }
     </style>
 
     <div id="container">
 
-      <div id="leftPane" class="pane">
+      <div id="leftPane" class="pane left">
         <slot name="left"></slot>
       </div>
 
       <div id="divider" on-mousedown="{{_mouseDownHandler}}"></div>
 
-      <div id="rightPane" class="pane">
+      <div id="rightPane" class="pane right">
         <slot name="right"></slot>
       </div>
 
