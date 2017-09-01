@@ -57,6 +57,11 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   public hideToolbar: boolean;
 
   /**
+   * The query parameters (from app-location) used when the file browser is opened.
+   */
+  public queryParams: {};
+
+  /**
    * The currently selected file if exactly one is selected, or null if none is.
    */
   public selectedFile: DatalabFile | null;
@@ -132,6 +137,10 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         type: Boolean,
         value: false,
       },
+      queryParams: {
+        notify: true,
+        type: Object,
+      },
       selectedFile: {
         type: Object,
         value: null,
@@ -164,14 +173,33 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
     this._apiManager = ApiManagerFactory.getInstance();
 
-    // Allow forcing a file manager type.
+    const queryParams = (this.queryParams || {}) as {[key: string]: string};
+    const fileParamName = 'file';
+    const fileParam = queryParams[fileParamName] || '';
+    const filemanagerParamName = 'filemanager';
+    const filemanagerParam = queryParams[filemanagerParamName] || '';
+    let fileId: DatalabFileId|null = null;
+    // Ignore fileParam if we are not the visible tab
+    if (fileParam && this.offsetParent) {
+      try {
+        fileId = DatalabFileId.fromQueryString(fileParam);
+      } catch (e) {
+        // TODO - present error info to user
+        console.error('Error parsing file query parameter:', e);
+        // Fall through with fileId unset
+      }
+      if (fileId) {
+        this.fileManagerType = FileManagerFactory.fileManagerTypetoString(fileId.source);
+      }
+    }
+
+    // Allow forcing a file manager type if not specified by file parameter.
     // TODO: Consider writing a config element instead of parsing URL parameters
     //       everywhere configs are needed.
-    // TODO: Remove once we have the file id in the querystring.
-    const params = new URLSearchParams(window.location.search);
-    if (params.has('filemanager')) {
-      this.fileManagerType = params.get('filemanager') as string;
+    if (!this.fileManagerType && filemanagerParam) {
+      this.fileManagerType = filemanagerParam;
     }
+
     // If no file manager type is specified in the element's attributes, try to
     // get it from the app settings. If it's not specified there either, default
     // to drive.
@@ -191,11 +219,15 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     // consider adding it to a super class, maybe DatalabElement. For now, this
     // is the only element that needs it.
     if (!this.readyPromise) {
-      this.readyPromise = this._loadStartupPath()
+      this.readyPromise = this._loadStartupPath(fileId)
           .then(() => this._finishLoadingFiles());
     }
 
-    return this.readyPromise;
+    return this.readyPromise.catch((e) => {
+      // TODO - present error info to user
+      this._fetching = false; // Stop looking busy
+      throw e;
+    });
   }
 
   disconnectedCallback() {
@@ -222,6 +254,9 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     // - Files page gaining focus.
     if (this._fetching) {
       return this._fileListFetchPromise;
+    }
+    if (!this.currentFile) {
+      throw new Error('No current file to retrieve');
     }
 
     this._fetching = true;
@@ -336,7 +371,15 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         this._pathHistory.slice(1, this._pathHistoryIndex + 1).map((p) => p.name);
 
     this.currentFile = this._pathHistory[this._pathHistoryIndex];
+    this._setFileParamToCurrentFile();
     this._fetchFileList();
+  }
+
+  _setFileParamToCurrentFile() {
+    // Only update the location if we are currently visible
+    if (this.currentFile && this.offsetParent) {
+      this.set('queryParams.file', this.currentFile.id.toQueryString());
+    }
   }
 
   _createNewNotebook() {
@@ -803,8 +846,15 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         }
       }, this._fileListRefreshInterval);
     }
-    // Now refresh the list once.
-    this._fetchFileList();
+    // Refresh the list and update the window location.
+    this._pathHistoryIndexChanged();
+
+    // This method is called when we are switching tabs, and when that is
+    // happening, iron-location sets an internal dontUpdateUrl flag that
+    // prevents our update of queryParams.file from happening. In order to
+    // get our file param in place, we delay execution until after
+    // _urlChanged() in iron-location.html has completed.
+    window.setTimeout(() => this._setFileParamToCurrentFile(), 0);
   }
 
   /**
@@ -818,28 +868,18 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     }
   }
 
-  private async _loadStartupPath() {
+  private async _loadStartupPath(fileId: DatalabFileId|null) {
     // TODO - move this to SettingsManager and make it able to store startuppaths
     // for multiple file managers.
-    if (this.fileManagerType === 'jupyter') {
+    this._pathHistory = [];
+    if (fileId) {
+      this._pathHistory = this._fileManager.pathToPathHistory(fileId.path);
+    } else if (this.fileManagerType === 'jupyter') {
       const settings = await SettingsManager.getUserSettingsAsync(true /*forceRefresh*/);
-      if (settings.startuppath) {
-        let path = settings.startuppath;
-        // For backward compatibility with the current path format.
-        if (path.startsWith('/tree/')) {
-          path = path.substr('/tree/'.length);
-        }
-        const tokens = path.split('/').filter((p) => !!p);
-        this._pathHistory = tokens.map((token, i) => {
-          const f = new JupyterFile();
-          f.path = tokens.slice(0, i + 1).join('/');
-          f.name = token;
-          f.id = new DatalabFileId(f.path, FileManagerType.JUPYTER);
-          return f;
-        });
+      const startuppath = settings.startuppath;
+      if (startuppath) {
+        this._pathHistory = this._fileManager.pathToPathHistory(startuppath);
       }
-    } else {
-      this._pathHistory = [];
     }
     // Always add the root file to the beginning.
     const root = await this._fileManager.getRootFile();

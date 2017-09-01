@@ -99,6 +99,32 @@ class BigQueryFileManager implements FileManager {
     throw new UnsupportedMethod('getEditorUrl', this);
   }
 
+  public pathToPathHistory(path: string): DatalabFile[] {
+    const pathParts = path.split('/').filter((part) => !!part);
+    if (pathParts.length === 0) {
+      return [];
+    }
+    if (pathParts.length === 1) {
+      return [
+        this._bqProjectIdToDatalabFile(pathParts[0])
+      ];
+    }
+    if (pathParts.length === 2) {
+      return [
+        this._bqProjectIdToDatalabFile(pathParts[0]),
+        this._bqProjectDatasetIdsToDatalabFile(pathParts[0], pathParts[1]),
+      ];
+    } else {
+      // We ignore any path parts past 3
+      return [
+        this._bqProjectIdToDatalabFile(pathParts[0]),
+        this._bqProjectDatasetIdsToDatalabFile(pathParts[0], pathParts[1]),
+        this._bqProjectDatasetTableIdsToDatalabFile(
+            pathParts[0], pathParts[1], pathParts[2]),
+      ];
+    }
+  }
+
   private async _collectAllProjects(accumulatedProjects: ProjectResource[],
                                     pageToken: string): Promise<DatalabFile[]> {
     const response: HttpResponse<ListProjectsResponse> =
@@ -179,34 +205,50 @@ class BigQueryFileManager implements FileManager {
   }
 
   private _bqProjectToDatalabFile(bqProject: ProjectResource): DatalabFile {
-    const path = bqProject.projectReference.projectId;
+    return this._bqProjectIdToDatalabFile(bqProject.projectReference.projectId);
+  }
+
+  private _bqProjectIdToDatalabFile(projectId: string): DatalabFile {
+    const path = projectId;
     return new BigQueryFile({
       icon: 'datalab-icons:bq-project',
       id: new DatalabFileId(path, FileManagerType.BIG_QUERY),
-      name: bqProject.projectReference.projectId,
+      name: projectId,
       status: DatalabFileStatus.IDLE,
       type: DatalabFileType.DIRECTORY,
     } as DatalabFile);
   }
 
   private _bqDatasetToDatalabFile(bqDataset: DatasetResource): DatalabFile {
-    const path = bqDataset.datasetReference.projectId + '/' + bqDataset.datasetReference.datasetId;
+    return this._bqProjectDatasetIdsToDatalabFile(
+        bqDataset.datasetReference.projectId, bqDataset.datasetReference.datasetId);
+  }
+
+  private _bqProjectDatasetIdsToDatalabFile(projectId: string, datasetId: string): DatalabFile {
+    const path = projectId + '/' + datasetId;
     return new BigQueryFile({
       icon: 'datalab-icons:bq-dataset',
       id: new DatalabFileId(path, FileManagerType.BIG_QUERY),
-      name: bqDataset.datasetReference.datasetId,
+      name: datasetId,
       status: DatalabFileStatus.IDLE,
       type: DatalabFileType.DIRECTORY,
     } as DatalabFile);
   }
 
   private _bqTableToDatalabFile(bqTable: TableResource): DatalabFile {
-    const path = bqTable.tableReference.projectId + '/' +
-          bqTable.tableReference.datasetId + '/' + bqTable.tableReference.tableId;
+    return this._bqProjectDatasetTableIdsToDatalabFile(
+      bqTable.tableReference.projectId, bqTable.tableReference.datasetId,
+      bqTable.tableReference.tableId
+    );
+  }
+
+  private _bqProjectDatasetTableIdsToDatalabFile(
+      projectId: string, datasetId: string, tableId: string): DatalabFile {
+    const path = projectId + '/' + datasetId + '/' + tableId;
     return new BigQueryFile({
       icon: 'datalab-icons:bq-table',
       id: new DatalabFileId(path, FileManagerType.BIG_QUERY),
-      name: bqTable.tableReference.tableId,
+      name: tableId,
       status: DatalabFileStatus.IDLE,
       type: DatalabFileType.FILE,
     } as DatalabFile);

@@ -20,12 +20,20 @@
  */
 class DataBrowserElement extends Polymer.Element implements DatalabPageElement {
 
-  public resizeHandler = null;
-  public focusHandler = null;
-  public blurHandler = null;
-
   static get is() { return 'data-browser'; }
 
+  /**
+   * Pass through requests to our file-browser element.
+   */
+  focusHandler() {
+    this.$.fileBrowser.focusHandler();
+  }
+  blurHandler() {
+    this.$.fileBrowser.blurHandler();
+  }
+  resizeHandler() {
+    this.$.fileBrowser.resizeHandler();
+  }
 }
 
 customElements.define(DataBrowserElement.is, DataBrowserElement);

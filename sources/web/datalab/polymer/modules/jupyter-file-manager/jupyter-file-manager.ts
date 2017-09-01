@@ -311,6 +311,22 @@ class JupyterFileManager implements FileManager {
         fileId.toQueryString();
   }
 
+  public pathToPathHistory(path: string): DatalabFile[] {
+    // For backward compatibility with the current path format.
+    if (path.startsWith('/tree/')) {
+      path = path.substr('/tree/'.length);
+    }
+    const tokens = path.split('/').filter((p) => !!p);
+    const pathHistory = tokens.map((token, i) => {
+      const f = new JupyterFile();
+      f.path = tokens.slice(0, i + 1).join('/');
+      f.name = token;
+      f.id = new DatalabFileId(f.path, FileManagerType.JUPYTER);
+      return f;
+    });
+    return pathHistory;
+  }
+
   private _getFileWithContent(fileId: string) {
     const apiManager = ApiManagerFactory.getInstance();
     if (fileId.startsWith('/')) {

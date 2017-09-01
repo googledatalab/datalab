@@ -62,7 +62,7 @@ the License.
     </style>
 
     <!--Router-->
-    <app-location route="{{route}}"></app-location>
+    <app-location route="{{route}}" query-params={{queryParams}}></app-location>
     <app-route
         route="{{route}}"
         pattern="{{rootPattern}}:page"
@@ -75,8 +75,8 @@ the License.
         <div class="datalab-main-content">
           <iron-pages id="pages" selected="{{page}}" attr-for-selected="name">
             <!-- Elements here must implement the DatalabPageElement interface -->
-            <data-browser class="page" name="data"></data-browser>
-            <file-browser class="page" name="files"></file-browser>
+            <data-browser class="page" name="data" query-params="{{queryParams}}"></data-browser>
+            <file-browser class="page" name="files" query-params="{{queryParams}}"></file-browser>
             <datalab-sessions class="page" name="sessions"></datalab-sessions>
             <datalab-terminal class="page" name="terminal"></datalab-terminal>
           </iron-pages>
