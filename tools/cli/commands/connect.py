@@ -159,7 +159,9 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
     instance = args.instance
     connect_msg = ('Connecting to {0}.\n'
                    'This will create an SSH tunnel '
-                   'and may prompt you to create an rsa key pair.')
+                   'and may prompt you to create an rsa key pair. '
+                   'To manage these keys, see https://cloud.google.com/'
+                   'compute/docs/instances/adding-removing-ssh-keys')
     print(connect_msg.format(instance))
 
     datalab_port = args.port
