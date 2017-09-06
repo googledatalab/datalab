@@ -38,3 +38,6 @@ ENV ENABLE_USAGE_REPORTING true
 
 # Startup
 ENTRYPOINT [ "/datalab/run.sh" ]
+
+# Install additional Python libraries
+RUN pip install noop
