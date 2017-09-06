@@ -25,7 +25,9 @@
     "paper-tooltip": "PolymerElements/paper-tooltip#^2.0.0",
     "polymer": "Polymer/polymer#^2.0.2",
     "webcomponentsjs": "webcomponents/webcomponentsjs#^1.0.0-rc.9",
-    "xterm.js": "^2.7.0"
+    "xterm.js": "^2.7.0",
+    "socket.io": "^2.0.3",
+    "socket.io-client": "^2.0.3"
   },
   "devDependencies": {
     "web-component-tester": "^6.0.0"
