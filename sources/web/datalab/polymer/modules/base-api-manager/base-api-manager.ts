@@ -36,6 +36,7 @@ enum ServiceId {
   APP_SETTINGS,
   BASE_PATH,
   CONTENT,
+  CREDENTIALS,
   SESSIONS,
   TERMINALS,
   TIMEOUT,
@@ -89,6 +90,11 @@ interface ApiManager {
    * Returns the relative path for the given service name.
    */
   getServiceUrl(serviceId: ServiceId): string;
+
+  /**
+   * Sends the user's oauth access token to the backend VM.
+   */
+  uploadOauthAccessToken(): Promise<void>;
 }
 
 abstract class BaseApiManager implements ApiManager {
@@ -126,6 +132,8 @@ abstract class BaseApiManager implements ApiManager {
         return '/api/basepath';
       case ServiceId.CONTENT:
         return '/api/contents';
+      case ServiceId.CREDENTIALS:
+        return '/api/creds';
       case ServiceId.SESSIONS:
         return '/api/sessions';
       case ServiceId.TERMINALS:
@@ -137,6 +145,23 @@ abstract class BaseApiManager implements ApiManager {
       default:
         throw new Error('Unknown service id: ' + serviceId);
     }
+  }
+
+  public async uploadOauthAccessToken() {
+    const account = await GapiManager.getCurrentUser();
+    const token = account.getAuthResponse();
+    const creds = {
+        access_token: token.access_token,
+        account: account.getBasicProfile().getEmail(),
+        expires_in: token.expires_in,
+        scopes: token.scope,
+        token_type: 'Bearer',
+      };
+    const options: XhrOptions = {
+      method: 'POST',
+      parameters: JSON.stringify(creds)
+    };
+    return this.sendRequestAsync(this.getServiceUrl(ServiceId.CREDENTIALS), options);
   }
 
   /**

@@ -176,9 +176,10 @@ class GapiManager {
     public static async getFileWithContent(id: string)
         : Promise<[gapi.client.drive.File, string | null]> {
       await this._load();
+      const user = await GapiManager.getCurrentUser();
       const apiManager = ApiManagerFactory.getInstance();
       const xhrOptions: XhrOptions = {
-        headers: {Authorization: 'Bearer ' + GapiManager._accessToken.access_token},
+        headers: {Authorization: 'Bearer ' + user.getAuthResponse().access_token},
         noCache: true,
       };
       const file: gapi.client.drive.File = await apiManager.sendRequestAsync(
@@ -274,7 +275,7 @@ class GapiManager {
   };
 
   private static _clientId = '';   // Gets set by _loadClientId()
-  private static _accessToken: gapi.auth2.AuthResponse; // Gets set by _loadClientId
+  private static _currentUser: gapi.auth2.GoogleUser; // Gets set by _loadClientId
   private static _loadPromise: Promise<void>;
 
   /**
@@ -282,7 +283,7 @@ class GapiManager {
    */
   public static async grantScope(scope: GapiScopes): Promise<any> {
     await this.loadGapi();
-    const currentUser = gapi.auth2.getAuthInstance().currentUser.get();
+    const currentUser = await this.getCurrentUser();
     if (!currentUser.hasGrantedScopes(this._getScopeString(scope))) {
       return new Promise((resolve, reject) => {
         const options = new gapi.auth2.SigninOptionsBuilder();
@@ -324,6 +325,14 @@ class GapiManager {
   }
 
   /**
+   * Get the currently logged in user.
+   */
+  public static async getCurrentUser(): Promise<gapi.auth2.GoogleUser> {
+    await this.loadGapi();
+    return this._currentUser;
+  }
+
+  /**
    * Starts the sign-in flow using gapi.
    * If the user has not previously authorized our app, this will open a pop-up window
    * to ask the user to select an account and to consent to our use of the scopes.
@@ -352,9 +361,10 @@ class GapiManager {
   /**
    * Returns a promise that resolves to the signed-in user's email address.
    */
-  public static getSignedInEmail(): Promise<string> {
-    return this.loadGapi()
-      .then(() => gapi.auth2.getAuthInstance().currentUser.get().getBasicProfile().getEmail());
+  public static async getSignedInEmail(): Promise<string> {
+    await this.loadGapi();
+    const user = await this.getCurrentUser();
+    return user.getBasicProfile().getEmail();
   }
 
   /**
@@ -388,7 +398,7 @@ class GapiManager {
     })
     // .init does not return a catch-able promise
     .then(() => {
-      this._accessToken = gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse();
+      this._currentUser = gapi.auth2.getAuthInstance().currentUser.get();
     }, (errorReason: any) => {
       throw new Error('Error in gapi auth: ' + errorReason.details);
     });
