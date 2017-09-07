@@ -86,7 +86,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir crcmod==1.7 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir pillow==3.4.1 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir google-cloud-dataflow==2.0.0 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow==1.2.1 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow==1.3.0 && \
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf && \
 
 # Python 3
@@ -133,7 +133,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir bs4==0.0.1 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir crcmod==1.7 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir pillow==3.4.1 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow==1.2.1 && \
+    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow==1.3.0 && \
 # Install IPython related packages with no-deps, to ensure that we don't
 # Overwrite the python 2 version of jupyter with the python 3 version.
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir ipywidgets==6.0.0 && \
