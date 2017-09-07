@@ -19,6 +19,9 @@ enum WebSocketState {
   OPEN = 1,
 }
 
+/**
+ * Wrapper for socket.io to expose the same interface as native WebSocket object.
+ */
 class WebSocketShim {
   public readyState: WebSocketState;
   public onerror: ((_: any) => void)|null = null;
@@ -44,7 +47,7 @@ class WebSocketShim {
     this._socket = io.connect(socketUri);
     this._socket.on('connect', () => {
       if (this._socket) {
-        this._socket.emit('start', {url});
+        this._socket.emit('start', { url });
       }
     });
     this._socket.on('disconnect', () => {
@@ -98,11 +101,11 @@ class WebSocketShim {
   }
 }
 
-// Override WebSocket
+// If socket.io was loaded successfully into the page, override the existing
+// WebSocket functionality.
 if (window.hasOwnProperty('io')) {
-  // If socket.io was not loaded into the page, then do not override the existing
-  // WebSocket functionality.
-  Utils.log.verbose('Replacing native websockets with socket.io');
-  (window as any).NativeWebSocket = (window as any).WebSocket;
-  (window as any).WebSocket = WebSocketShim;
+  const w = window as any;
+  w.NativeWebSocket = w.WebSocket;
+  w.WebSocket = WebSocketShim;
+  Utils.log.verbose('Replaced native websockets with socket.io');
 }

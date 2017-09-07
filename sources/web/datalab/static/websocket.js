@@ -4,8 +4,7 @@ define(['util'], (util) => {
     if (document.body.getAttribute('data-proxy-web-sockets') == 'true') {
       return true;
     }
-    return location.host.toLowerCase().substr(-12) === '.appspot.com' ||
-        location.hostname === 'localhost';
+    return location.host.toLowerCase().substr(-12) === '.appspot.com';
   }
 
   // Override WebSocket
