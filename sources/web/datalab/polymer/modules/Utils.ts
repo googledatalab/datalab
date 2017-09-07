@@ -147,6 +147,14 @@ class Utils {
         throw new Error('Unknown file type: ' + type);
     }
   }
+
+  /**
+   * Returns the current root URI.
+   */
+  public static getHostRoot() {
+    return location.protocol + '//' + location.host + Utils.uiroot;
+  }
+  static uiroot = '';   // Gets set to "/exp"
 }
 
 class UnsupportedMethod extends Error {
