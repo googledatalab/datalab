@@ -34,11 +34,6 @@ class WebSocketShim {
     this.readyState = WebSocketState.CLOSED;
 
     const socketUri = location.protocol + '//' + location.host + '/session';
-    const socketOptions = {
-      multiplex: false,
-      path: 'socket.io',
-      upgrade: false,
-    };
 
     const errorHandler = () => {
       if (this.onerror) {
@@ -46,7 +41,7 @@ class WebSocketShim {
       }
     };
 
-    this._socket = io.connect(socketUri, socketOptions);
+    this._socket = io.connect(socketUri);
     this._socket.on('connect', () => {
       if (this._socket) {
         this._socket.emit('start', {url});
@@ -104,7 +99,7 @@ class WebSocketShim {
 }
 
 // Override WebSocket
-if (!window.hasOwnProperty('io')) {
+if (window.hasOwnProperty('io')) {
   // If socket.io was not loaded into the page, then do not override the existing
   // WebSocket functionality.
   Utils.log.verbose('Replacing native websockets with socket.io');
