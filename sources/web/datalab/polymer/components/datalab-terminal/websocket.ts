@@ -100,12 +100,3 @@ class WebSocketShim {
     }
   }
 }
-
-// If socket.io was loaded successfully into the page, override the existing
-// WebSocket functionality.
-if (window.hasOwnProperty('io')) {
-  const w = window as any;
-  w.NativeWebSocket = w.WebSocket;
-  w.WebSocket = WebSocketShim;
-  Utils.log.verbose('Replaced native websockets with socket.io');
-}

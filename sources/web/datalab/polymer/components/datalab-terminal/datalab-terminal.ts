@@ -74,6 +74,19 @@ class TerminalElement extends Polymer.Element implements DatalabPageElement {
     this.$.theTerminal.innerHTML = '';
     this._xterm = new Terminal();
 
+    // If socket.io was loaded successfully into the page, override the existing
+    // WebSocket functionality. This is needed because WebSocket is not fully
+    // supported by GFE.
+    if (window.hasOwnProperty('io')) {
+      const w = window as any;
+      w.NativeWebSocket = w.WebSocket;
+      w.WebSocket = WebSocketShim;
+      Utils.log.verbose('Replaced native websockets with socket.io');
+    } else {
+      Utils.log.error('Could not find socket.io, will not replace WebSocket. ' +
+          'Terminal might not function correctly.');
+    }
+
     // First, create the connection to the Jupyter terminal.
     const protocol = location.protocol === 'https' ? 'wss' : 'ws';
     this._wsConnection = new WebSocket(protocol + '://' +
