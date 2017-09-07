@@ -161,7 +161,7 @@ abstract class BaseApiManager implements ApiManager {
       method: 'POST',
       parameters: JSON.stringify(creds)
     };
-    return this.sendRequestAsync(this.getServiceUrl(ServiceId.CREDENTIALS), options);
+    return this.sendTextRequestAsync(this.getServiceUrl(ServiceId.CREDENTIALS), options);
   }
 
   /**
