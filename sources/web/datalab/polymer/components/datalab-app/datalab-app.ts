@@ -27,6 +27,16 @@
 class DatalabAppElement extends Polymer.Element {
 
   /**
+   * The query parameters (from app-location).
+   */
+  public queryParams: {};
+
+  /**
+   * The fileId being propagated to and from our pages.
+   */
+  public fileId: string;
+
+  /**
    * Current displayed page name
    */
   public page: string;
@@ -82,10 +92,19 @@ class DatalabAppElement extends Polymer.Element {
 
   static get properties() {
     return {
+      fileId: {
+        observer: '_fileIdChanged',
+        type: String,
+      },
       page: {
         observer: '_pageChanged',
         type: String,
         value: '',
+      },
+      queryParams: {
+        notify: true,
+        observer: '_queryParamsChanged',
+        type: Object,
       },
       rootPattern: String,
       routeData: Object,
@@ -113,6 +132,19 @@ class DatalabAppElement extends Polymer.Element {
     if (this._boundResizeHandler) {
       window.removeEventListener('resize', this._boundResizeHandler);
     }
+  }
+
+  _queryParamsChanged() {
+    const queryParams = (this.queryParams || {}) as {[key: string]: string};
+    const fileParamName = 'file';
+    const fileParam = queryParams[fileParamName] || '';
+    if (fileParam !== this.fileId) {
+      this.fileId = fileParam;
+    }
+  }
+
+  _fileIdChanged() {
+    this.set('queryParams.file', this.fileId);
   }
 
   /**

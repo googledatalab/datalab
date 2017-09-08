@@ -46,6 +46,11 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   public currentFile: DatalabFile;
 
   /**
+   * The fileId of currentFile as a string
+   */
+  public fileId: string;
+
+  /**
    * The type of FileManager we want to use for this file-browser.
    */
   public fileManagerType: string;   // default is in code below
@@ -54,11 +59,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    * True makes the toolbar never visible.
    */
   public hideToolbar: boolean;
-
-  /**
-   * The query parameters (from app-location) used when the file browser is opened.
-   */
-  public queryParams: {};
 
   /**
    * The currently selected file if exactly one is selected, or null if none is.
@@ -128,6 +128,11 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         type: Object,
         value: null,
       },
+      fileId: {
+        notify: true,
+        observer: '_fileIdChanged',
+        type: String,
+      },
       fileManagerType: {
         type: String,
         value: '',
@@ -135,11 +140,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       hideToolbar: {
         type: Boolean,
         value: false,
-      },
-      queryParams: {
-        notify: true,
-        observer: '_queryParamsChanged',
-        type: Object,
       },
       selectedFile: {
         type: Object,
@@ -173,7 +173,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
     this._apiManager = ApiManagerFactory.getInstance();
 
-    const fileId = this._getFileIdFromQueryParams();
+    const fileId = this._getFileIdFromProperty();
     if (fileId) {
       this.fileManagerType = FileManagerFactory.fileManagerTypetoString(fileId.source);
     }
@@ -212,15 +212,15 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     });
   }
 
-  _getFileIdFromQueryParams() {
-    const queryParams = (this.queryParams || {}) as {[key: string]: string};
-    const fileParamName = 'file';
-    const fileParam = queryParams[fileParamName] || '';
+  _getFileIdFromProperty() {
     let fileId: DatalabFileId|null = null;
-    // Ignore fileParam if we are not the visible tab
-    if (fileParam && this.offsetParent) {
+    if (this.fileId) {
+      if (!this.offsetParent) {
+        // Ignore fileId property if we are not visible
+        return null;
+      }
       try {
-        fileId = DatalabFileId.fromQueryString(fileParam);
+        fileId = DatalabFileId.fromQueryString(this.fileId);
       } catch (e) {
         Utils.showErrorDialog('Invalid file query parameter', e.message);
         // Fall through with fileId unset
@@ -233,18 +233,18 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     // Allow forcing a file manager type if not specified by file parameter.
     // TODO: Consider writing a config element instead of parsing URL parameters
     //       everywhere configs are needed.
-    const queryParams = (this.queryParams || {}) as {[key: string]: string};
-    const filemanagerParamName = 'filemanager';
-    const filemanagerParam = queryParams[filemanagerParamName] || '';
-    if (!this.fileManagerType && filemanagerParam) {
-      return filemanagerParam;
-    } else {
-      return '';
+    const queryParams = new URLSearchParams(window.location.search);
+    if (queryParams.has('filemanager')) {
+      const filemanagerParam = queryParams.get('filemanager');
+      if (!this.fileManagerType && filemanagerParam) {
+        return filemanagerParam;
+      }
     }
+    return '';
   }
 
-  async _queryParamsChanged() {
-    const fileId = this._getFileIdFromQueryParams();
+  async _fileIdChanged() {
+    const fileId = this._getFileIdFromProperty();
     if (!fileId) {
       return;
     }
@@ -399,14 +399,17 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         this._pathHistory.slice(1, this._pathHistoryIndex + 1).map((p) => p.name);
 
     this.currentFile = this._pathHistory[this._pathHistoryIndex];
-    this._setFileParamToCurrentFile();
+    this._setFileIdPropertyToCurrentFile();
     this._fetchFileList();
   }
 
-  _setFileParamToCurrentFile() {
-    // Only update the location if we are currently visible
-    if (this.currentFile && this.offsetParent) {
-      this.set('queryParams.file', this.currentFile.id.toQueryString());
+  _setFileIdPropertyToCurrentFile() {
+    if (this.currentFile) {
+      if (!this.offsetParent) {
+        // Don't update the location if we are not visible
+        return;
+      }
+      this.fileId = this.currentFile.id.toQueryString();
     }
   }
 
@@ -879,10 +882,10 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
     // This method is called when we are switching tabs, and when that is
     // happening, iron-location sets an internal dontUpdateUrl flag that
-    // prevents our update of queryParams.file from happening. In order to
+    // prevents our update of the fileIdProperty from happening. In order to
     // get our file param in place, we delay execution until after
     // _urlChanged() in iron-location.html has completed.
-    window.setTimeout(() => this._setFileParamToCurrentFile(), 0);
+    window.setTimeout(() => this._setFileIdPropertyToCurrentFile(), 0);
   }
 
   /**
