@@ -80,6 +80,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   private _fileListRefreshInterval = 60 * 1000;
   private _fileListRefreshIntervalHandle = 0;
   private _fileManager: FileManager;
+  private _ignoreFileIdChange = false;
   private _isPreviewPaneToggledOn: boolean;
   private _pathHistory: DatalabFile[];
   private _pathHistoryIndex: number;
@@ -244,6 +245,9 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   }
 
   async _fileIdChanged() {
+    if (this._ignoreFileIdChange) {
+      return;
+    }
     const fileId = this._getFileIdFromProperty();
     if (!fileId) {
       return;
@@ -409,7 +413,9 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         // Don't update the location if we are not visible
         return;
       }
+      this._ignoreFileIdChange = true;
       this.fileId = this.currentFile.id.toQueryString();
+      this._ignoreFileIdChange = false;
     }
   }
 
@@ -915,7 +921,11 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     // Always add the root file to the beginning.
     const root = await this._fileManager.getRootFile();
     this._pathHistory.unshift(root);
-    this._pathHistoryIndex = this._pathHistory.length - 1;
+    if (this._pathHistoryIndex === this._pathHistory.length - 1) {
+      this._pathHistoryIndexChanged();
+    } else {
+      this._pathHistoryIndex = this._pathHistory.length - 1;
+    }
   }
 
   private _finishLoadingFiles() {
