@@ -14,11 +14,13 @@
     "components/text-preview/text-preview.html"
   ],
   "sources": [
-    "modules/**/*.js",
-    "images/**/*",
     "editor.html",
     "editor.js",
-    "index.*.css"
+    "images/**/*",
+    "index.*.css",
+    "modules/**/*.js",
+    "notebook.html",
+    "notebook.js"
   ],
   "extraDependencies": [
     "bower_components/codemirror/addon/**",
