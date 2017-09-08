@@ -54,6 +54,12 @@ class MockFileManager implements FileManager {
   public getEditorUrl(_fileId: DatalabFileId): Promise<string> {
     throw new UnsupportedMethod('getEditorUrl', this);
   }
+  public pathToPathHistory(path: string): DatalabFile[] {
+    const datalabFile = {
+      id: new DatalabFileId(path, FileManagerType.JUPYTER),
+    } as DatalabFile;
+    return [datalabFile];
+  }
 }
 
 describe('<file-browser>', () => {

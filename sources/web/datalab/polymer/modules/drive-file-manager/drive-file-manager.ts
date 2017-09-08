@@ -143,4 +143,18 @@ class DriveFileManager implements FileManager {
     return location.protocol + '//' + location.host +
         '/notebook?file=' + fileId.toQueryString();
   }
+
+  public pathToPathHistory(path: string): DatalabFile[] {
+    if (path == '') {
+      return [];
+    } else {
+      // TODO - create the real path to this object, or figure out
+      // a better way to handle not having the full path in the breadcrumbs
+      const fileId = path;  // We assume the entire path is one fileId
+      const datalabFile: DriveFile = new DriveFile({
+        id: new DatalabFileId(fileId, FileManagerType.DRIVE),
+      } as DatalabFile);
+      return [datalabFile];
+    }
+  }
 }

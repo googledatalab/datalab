@@ -207,4 +207,9 @@ interface FileManager {
    * @param fileId id for the file to open in the text editor.
    */
   getEditorUrl(file: DatalabFileId): Promise<string>;
+
+  /**
+   * Creates a path history from a path string.
+   */
+  pathToPathHistory(path: string): DatalabFile[];
 }
