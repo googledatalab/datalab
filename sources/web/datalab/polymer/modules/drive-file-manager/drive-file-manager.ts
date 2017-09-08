@@ -142,6 +142,6 @@ class DriveFileManager implements FileManager {
 
   public async getNotebookUrl(fileId: DatalabFileId): Promise<string> {
     return location.protocol + '//' + location.host +
-        '/notebook#fileId=' + fileId.toQueryString();
+        '/notebook?file=' + fileId.toQueryString();
   }
 }
