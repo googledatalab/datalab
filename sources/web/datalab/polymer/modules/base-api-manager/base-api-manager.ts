@@ -94,7 +94,7 @@ interface ApiManager {
   /**
    * Sends the user's oauth access token to the backend VM.
    */
-  uploadOauthAccessToken(): Promise<void>;
+  uploadOauthAccessToken(): Promise<string>;
 }
 
 abstract class BaseApiManager implements ApiManager {
