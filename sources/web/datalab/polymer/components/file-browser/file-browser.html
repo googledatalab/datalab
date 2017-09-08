@@ -245,7 +245,8 @@ the License.
         <bread-crumbs id="breadCrumbs"></bread-crumbs>
         <paper-button id="togglePreview" class="navbar-button" on-click="_togglePreviewPane"
                       hidden$="{{small}}">
-          <iron-icon icon="visibility"></iron-icon>
+          <iron-icon icon="visibility" hidden$="{{_isPreviewPaneToggledOn}}"></iron-icon>
+          <iron-icon icon="visibility-off" hidden$="{{!_isPreviewPaneToggledOn}}"></iron-icon>
         </paper-button>
       </div>
 
