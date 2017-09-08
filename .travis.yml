@@ -24,8 +24,8 @@ cache:
   - node_modules
 
 before_install:
-- pip install -U pip
-- pip install flake8
+- pip install -U pip --user travis
+- pip install flake8 --user travis
 
 install:
 - cd $TRAVIS_BUILD_DIR/containers/datalab
