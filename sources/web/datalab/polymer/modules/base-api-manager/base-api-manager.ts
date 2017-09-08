@@ -94,7 +94,7 @@ interface ApiManager {
   /**
    * Sends the user's oauth access token to the backend VM.
    */
-  uploadOauthAccessToken(): Promise<void>;
+  uploadOauthAccessToken(): Promise<string>;
 }
 
 abstract class BaseApiManager implements ApiManager {
@@ -161,7 +161,7 @@ abstract class BaseApiManager implements ApiManager {
       method: 'POST',
       parameters: JSON.stringify(creds)
     };
-    return this.sendRequestAsync(this.getServiceUrl(ServiceId.CREDENTIALS), options);
+    return this.sendTextRequestAsync(this.getServiceUrl(ServiceId.CREDENTIALS), options);
   }
 
   /**

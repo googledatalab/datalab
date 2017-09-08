@@ -12,7 +12,6 @@
  * the License.
  */
 
-/// <reference path="../../modules/Utils.ts" />
 /// <reference path="../item-list/item-list.ts" />
 /// <reference path="../input-dialog/input-dialog.ts" />
 /// <reference path="../datalab-notification/datalab-notification.ts" />
