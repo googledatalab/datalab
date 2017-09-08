@@ -136,8 +136,7 @@ class DriveFileManager implements FileManager {
   }
 
   public async getEditorUrl(fileId: DatalabFileId) {
-    return location.protocol + '//' + location.host +
-        '/editor?file=' + fileId.toQueryString();
+    return Utils.getHostRoot() + '/editor?file=' + fileId.toQueryString();
   }
 
   public async getNotebookUrl(fileId: DatalabFileId): Promise<string> {

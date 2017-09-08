@@ -51,6 +51,7 @@ class SidebarElement extends Polymer.Element {
     super.ready();
     if (location.pathname.startsWith('/exp/')) {
       this._uiroot = '/exp';
+      Utils.uiroot = this._uiroot;
     }
     if (location.pathname.startsWith('/exp/data') ||
         location.pathname.startsWith('/data')) {

@@ -24,6 +24,7 @@
     "paper-toast": "PolymerElements/paper-toast#^2.0.0",
     "paper-tooltip": "PolymerElements/paper-tooltip#^2.0.0",
     "polymer": "Polymer/polymer#^2.0.2",
+    "socket.io-client": "^2.0.3",
     "webcomponentsjs": "webcomponents/webcomponentsjs#^1.0.0-rc.9",
     "xterm.js": "^2.7.0"
   },
