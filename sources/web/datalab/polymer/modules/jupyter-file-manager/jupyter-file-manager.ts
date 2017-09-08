@@ -307,8 +307,7 @@ class JupyterFileManager implements FileManager {
   public async getEditorUrl(fileId: DatalabFileId) {
     // TODO: We will need to get the base path when loading notebooks
     // from a VM running Datalab with Jupyter.
-    return location.protocol + '//' + location.host + '/editor?file=' +
-        fileId.toQueryString();
+    return Utils.getHostRoot() + '/editor?file=' + fileId.toQueryString();
   }
 
   public pathToPathHistory(path: string): DatalabFile[] {
