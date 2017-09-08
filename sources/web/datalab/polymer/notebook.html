@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport"
+          content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+    <title>Google Cloud Datalab</title>
+    <link rel="shortcut icon" href="images/favicon.ico">
+
+    <link id="themeStylesheet" rel="stylesheet" href="index.light.css">
+    <link rel="import" href="modules/api-manager-factory/api-manager-factory.html">
+    <link rel="import" href="modules/utils/utils.html">
+  </head>
+  <body>
+    <style>
+      body {
+        margin: 0px;
+        padding: 0px;
+        height: 100%;
+      }
+      iframe {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border: none;
+      }
+    </style>
+
+    <iframe id="editor" sandbox="allow-scripts allow-same-origin"></iframe>
+
+    <script src="notebook.js"></script>
+  </body>
+</html>
