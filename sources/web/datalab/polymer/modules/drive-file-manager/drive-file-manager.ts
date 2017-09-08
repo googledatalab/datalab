@@ -151,7 +151,7 @@ class DriveFileManager implements FileManager {
     } else {
       // TODO - create the real path to this object, or figure out
       // a better way to handle not having the full path in the breadcrumbs
-      const fileId = path;
+      const fileId = path;  // We assume the entire path is one fileId
       const datalabFile: DriveFile = new DriveFile({
         id: new DatalabFileId(fileId, FileManagerType.DRIVE),
       } as DatalabFile);

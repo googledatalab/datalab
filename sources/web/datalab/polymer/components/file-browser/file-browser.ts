@@ -139,6 +139,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       },
       queryParams: {
         notify: true,
+        observer: '_queryParamsChanged',
         type: Object,
       },
       selectedFile: {
@@ -173,31 +174,13 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
     this._apiManager = ApiManagerFactory.getInstance();
 
-    const queryParams = (this.queryParams || {}) as {[key: string]: string};
-    const fileParamName = 'file';
-    const fileParam = queryParams[fileParamName] || '';
-    const filemanagerParamName = 'filemanager';
-    const filemanagerParam = queryParams[filemanagerParamName] || '';
-    let fileId: DatalabFileId|null = null;
-    // Ignore fileParam if we are not the visible tab
-    if (fileParam && this.offsetParent) {
-      try {
-        fileId = DatalabFileId.fromQueryString(fileParam);
-      } catch (e) {
-        // TODO - present error info to user
-        console.error('Error parsing file query parameter:', e);
-        // Fall through with fileId unset
-      }
-      if (fileId) {
-        this.fileManagerType = FileManagerFactory.fileManagerTypetoString(fileId.source);
-      }
+    const fileId = this._getFileIdFromQueryParams();
+    if (fileId) {
+      this.fileManagerType = FileManagerFactory.fileManagerTypetoString(fileId.source);
     }
 
-    // Allow forcing a file manager type if not specified by file parameter.
-    // TODO: Consider writing a config element instead of parsing URL parameters
-    //       everywhere configs are needed.
-    if (!this.fileManagerType && filemanagerParam) {
-      this.fileManagerType = filemanagerParam;
+    if (!this.fileManagerType) {
+      this.fileManagerType = this._getFileManagerTypeFromQueryParams();
     }
 
     // If no file manager type is specified in the element's attributes, try to
@@ -224,10 +207,56 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     }
 
     return this.readyPromise.catch((e) => {
-      // TODO - present error info to user
+      Utils.showErrorDialog('Error loading file', e.message);
       this._fetching = false; // Stop looking busy
       throw e;
     });
+  }
+
+  _getFileIdFromQueryParams() {
+    const queryParams = (this.queryParams || {}) as {[key: string]: string};
+    const fileParamName = 'file';
+    const fileParam = queryParams[fileParamName] || '';
+    let fileId: DatalabFileId|null = null;
+    // Ignore fileParam if we are not the visible tab
+    if (fileParam && this.offsetParent) {
+      try {
+        fileId = DatalabFileId.fromQueryString(fileParam);
+      } catch (e) {
+        Utils.showErrorDialog('Invalid file query parameter', e.message);
+        // Fall through with fileId unset
+      }
+    }
+    return fileId;
+  }
+
+  _getFileManagerTypeFromQueryParams() {
+    // Allow forcing a file manager type if not specified by file parameter.
+    // TODO: Consider writing a config element instead of parsing URL parameters
+    //       everywhere configs are needed.
+    const queryParams = (this.queryParams || {}) as {[key: string]: string};
+    const filemanagerParamName = 'filemanager';
+    const filemanagerParam = queryParams[filemanagerParamName] || '';
+    if (!this.fileManagerType && filemanagerParam) {
+      return filemanagerParam;
+    } else {
+      return '';
+    }
+  }
+
+  async _queryParamsChanged() {
+    const fileId = this._getFileIdFromQueryParams();
+    if (!fileId) {
+      return;
+    }
+    const newFileManagerType =
+        FileManagerFactory.fileManagerTypetoString(fileId.source);
+    if (newFileManagerType !== this.fileManagerType) {
+      this.fileManagerType = newFileManagerType;
+      this._fileManager = FileManagerFactory.getInstanceForType(
+          FileManagerFactory.fileManagerNameToType(this.fileManagerType));
+    }
+    this._loadStartupPath(fileId);
   }
 
   disconnectedCallback() {
@@ -846,8 +875,8 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         }
       }, this._fileListRefreshInterval);
     }
-    // Refresh the list and update the window location.
-    this._pathHistoryIndexChanged();
+    // Refresh the list
+    this._fetchFileList();
 
     // This method is called when we are switching tabs, and when that is
     // happening, iron-location sets an internal dontUpdateUrl flag that
@@ -869,12 +898,12 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   }
 
   private async _loadStartupPath(fileId: DatalabFileId|null) {
-    // TODO - move this to SettingsManager and make it able to store startuppaths
-    // for multiple file managers.
     this._pathHistory = [];
     if (fileId) {
       this._pathHistory = this._fileManager.pathToPathHistory(fileId.path);
     } else if (this.fileManagerType === 'jupyter') {
+      // TODO - make SettingsManager able to store startuppaths
+      // for multiple file managers.
       const settings = await SettingsManager.getUserSettingsAsync(true /*forceRefresh*/);
       const startuppath = settings.startuppath;
       if (startuppath) {

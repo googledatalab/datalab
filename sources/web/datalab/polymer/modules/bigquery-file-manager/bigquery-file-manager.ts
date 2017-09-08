@@ -70,7 +70,7 @@ class BigQueryFileManager implements FileManager {
     if (pathParts.length === 2) {
       return this._listTables(pathParts[0], pathParts[1]);
     }
-    throw new UnsupportedMethod('listing datasets', this);
+    throw new UnsupportedMethod('list on BigQuery table', this);
   }
 
   public create(_fileType: DatalabFileType, _containerId: DatalabFileId, _name: string):
@@ -115,7 +115,9 @@ class BigQueryFileManager implements FileManager {
         this._bqProjectDatasetIdsToDatalabFile(pathParts[0], pathParts[1]),
       ];
     } else {
-      // We ignore any path parts past 3
+      // We log but ignore any path parts past 3
+      Utils.log.error(
+        'Ignoring bigquery path components after third component:', path);
       return [
         this._bqProjectIdToDatalabFile(pathParts[0]),
         this._bqProjectDatasetIdsToDatalabFile(pathParts[0], pathParts[1]),
