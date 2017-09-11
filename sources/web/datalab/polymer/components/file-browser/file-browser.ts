@@ -72,6 +72,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
   private _addToolbarCollapseThreshold = 900;
   private _apiManager: ApiManager;
+  private _canPreview = false;
   private _dividerPosition: number;
   private _previewPaneCollapseThreshold = 600;
   private _fetching: boolean;
@@ -91,6 +92,10 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
   static get properties() {
     return {
+      _canPreview: {
+        type: Boolean,
+        value: false,
+      },
       _dividerPosition: {
         observer: '_dividerPositionChanged',
         type: Number,
@@ -370,8 +375,10 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
     if (selectedIndices.length === 1) {
       this.selectedFile = this._fileList[selectedIndices[0]];
+      this._canPreview = !!this.selectedFile.getPreviewName();
     } else {
       this.selectedFile = null;
+      this._canPreview = false;
     }
   }
 
