@@ -58,13 +58,13 @@ function launchFakeServer(metadata: FakeMetadata): void {
     logging.getLogger().info('Service a fake metadata request at %s', urlpath);
 
     if (urlpath == '/computeMetadata/v1/project/numeric-project-id') {
-      res.writeHead(200, { 'Content-Type': 'application/text' });
+      res.writeHead(200, { 'Metadata-Flavor': 'Google', 'Content-Type': 'application/text' });
       res.write(metadata.project_number);
     } else if (urlpath == '/computeMetadata/v1/project/project-id') {
-      res.writeHead(200, { 'Content-Type': 'application/text' });
+      res.writeHead(200, { 'Metadata-Flavor': 'Google', 'Content-Type': 'application/text' });
       res.write(metadata.project);
     } else if (urlpath == '/computeMetadata/v1/instance/service-accounts/') {
-      res.writeHead(200, { 'Content-Type': 'application/text' });
+      res.writeHead(200, { 'Metadata-Flavor': 'Google', 'Content-Type': 'application/text' });
       res.write('default/\n');
       res.write(metadata.creds.account + '/\n');
     } else if (urlpath == '/computeMetadata/v1/instance/service-accounts/default/' &&
@@ -74,15 +74,15 @@ function launchFakeServer(metadata: FakeMetadata): void {
         email: metadata.creds.account,
         scopes: [metadata.creds.scopes],
       };
-      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.writeHead(200, { 'Metadata-Flavor': 'Google', 'Content-Type': 'application/json' });
       res.write(JSON.stringify(accountJSON));
     } else if (urlpath == '/computeMetadata/v1/instance/service-accounts/default/email' ||
                urlpath == '/computeMetadata/v1/instance/service-accounts/' + metadata.creds.account + '/email') {
-      res.writeHead(200, { 'Content-Type': 'application/text' });
+      res.writeHead(200, { 'Metadata-Flavor': 'Google', 'Content-Type': 'application/text' });
       res.write(metadata.creds.account);
     } else if (urlpath == '/computeMetadata/v1/instance/service-accounts/default/scopes' ||
                urlpath == '/computeMetadata/v1/instance/service-accounts/' + metadata.creds.account + '/scopes') {
-      res.writeHead(200, { 'Content-Type': 'application/text' });
+      res.writeHead(200, { 'Metadata-Flavor': 'Google', 'Content-Type': 'application/text' });
       res.write(metadata.creds.scopes);
     } else if (urlpath == '/computeMetadata/v1/instance/service-accounts/default/token' ||
                urlpath == '/computeMetadata/v1/instance/service-accounts/' + metadata.creds.account + '/token') {
@@ -91,7 +91,7 @@ function launchFakeServer(metadata: FakeMetadata): void {
         expires_in: metadata.creds.expires_in,
         token_type: metadata.creds.token_type,
       };
-      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.writeHead(200, { 'Metadata-Flavor': 'Google', 'Content-Type': 'application/json' });
       res.write(JSON.stringify(token));
     } else {
       res.writeHead(404);
