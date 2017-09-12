@@ -167,6 +167,9 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     // that. We want ready() to be the entry point so it gets the user's last saved path.
     this._fetching = true;
 
+    // Likewise, we set the flag to prevent _fileIdChanged from taking action.
+    this._ignoreFileIdChange = true;
+
     super.ready();
 
     this.$.breadCrumbs.addEventListener('crumbClicked', (e: ItemClickEvent) => {
@@ -211,6 +214,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
           .then(() => this._finishLoadingFiles());
     }
 
+    this._ignoreFileIdChange = false;
     return this.readyPromise.catch((e) => {
       Utils.showErrorDialog('Error loading file', e.message);
       this._fetching = false; // Stop looking busy
