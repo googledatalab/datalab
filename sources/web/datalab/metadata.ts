@@ -93,6 +93,9 @@ function launchFakeServer(metadata: FakeMetadata): void {
       };
       res.writeHead(200, { 'Metadata-Flavor': 'Google', 'Content-Type': 'application/json' });
       res.write(JSON.stringify(token));
+    } else if (urlpath == '' || urlpath == '/') {
+      res.writeHead(200, { 'Metadata-Flavor': 'Google', 'Content-Type': 'application/text' });
+      res.write('computeMetadata/');
     } else {
       res.writeHead(404);
     }
