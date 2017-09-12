@@ -1,0 +1,133 @@
+<!--
+Copyright 2017 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License
+is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+or implied. See the License for the specific language governing permissions and limitations under
+the License.
+-->
+
+<link rel="import" href="../../components/shared-styles/shared-styles.html">
+<link rel="import" href="../../modules/api-manager-factory/api-manager-factory.html">
+<link rel="import" href="../../modules/file-manager-factory/file-manager-factory.html">
+<link rel="import" href="../../modules/template-manager/template-manager.html">
+<link rel="import" href="../../modules/utils/utils.html">
+
+<link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
+
+<dom-module id="table-inline-details">
+  <template>
+    <style include="datalab-shared-styles">
+      #placeholder {
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      paper-spinner {
+        --paper-spinner-stroke-width: 2px;
+      }
+      #container {
+        padding: 0px 20px;
+        height: 100%;
+        overflow-y: auto;
+        color: var(--primary-fg-color);
+      }
+      .strong {
+        font-weight: bold;
+      }
+      .description {
+        font-style: italic;
+        overflow-wrap: break-word;
+      }
+      table {
+        border-spacing: 1px;
+        padding: 0 0 4px 0;
+        width: 100%;
+      }
+      td.field {
+        padding: 10px;
+        background-color: #eee;
+        font-weight: bold;
+      }
+      td.value {
+        padding: 10px;
+        background-color: #fff;
+      }
+      .separator {
+        margin: 20px 0px;
+      }
+    </style>
+    <div id="placeholder" hidden$={{_table}}>
+      <paper-spinner active hidden$={{!_busy}}></paper-spinner>
+    </div>
+    <div id="container" hidden$={{!_table}}>
+      <br>
+      <span class="strong">Project: </span>
+      <span id="projectId">{{_table.tableReference.projectId}}</span>
+      <br>
+      <br>
+      <span class="strong">Dataset: </span>
+      <span id="datasetId">{{_table.tableReference.datasetId}}</span>
+      <br>
+      <br>
+      <div hidden$={{!_table.description}}>
+        <div class="strong">Description</div>
+        <br>
+        <div class="description">{{_table.description}}</div>
+        <br>
+      </div>
+      <table>
+        <tr>
+          <td class="field">Table Size</td>
+          <td id="tableSize" class="value">{{tableSize}}</td>
+        </tr>
+        <tr>
+          <td class="field">Long Term Storage Size</td>
+          <td id="longTermTableSize" class="value">{{longTermTableSize}}</td>
+        </tr>
+        <tr>
+          <td class="field">Number of Rows</td>
+          <td id="numRows" class="value">{{numRows}}</td>
+        </tr>
+        <tr>
+          <td class="field">Creation Time</td>
+          <td id="creationTime" class="value">{{creationTime}}</td>
+        </tr>
+        <tr>
+          <td class="field">Last Modified</td>
+          <td id="lastModifiedTime" class="value">{{lastModifiedTime}}</td>
+        </tr>
+        <tr>
+          <td class="field">Data Location</td>
+          <td id="location" class="value">{{_table.location}}</td>
+        </tr>
+        <!--TODO: Consider showing the table's label somewhere-->
+      </table>
+
+      <hr class="separator">
+
+      <div class="strong">Schema</div>
+      <br>
+
+      <table id="schema">
+        <template is="dom-repeat" items={{schemaFields}} as="field">
+          <tr>
+            <td class="field">{{field.name}}</td>
+            <td class="value">{{field.type}}</td>
+            <td class="value">{{_formatMode(field.mode)}}</td>
+            <!--TODO: Consider showing the field's description somehow-->
+          </tr>
+        </template>
+      </table>
+
+    </div>
+  </template>
+</dom-module>
+
+<script src="table-inline-details.js"></script>
