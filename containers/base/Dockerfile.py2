@@ -134,7 +134,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     cd /
 
 # Install TensorFlow
-RUN pip install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow==1.2.0 &&
+RUN pip install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow==1.2.1 &&
 
 ADD config/ipython.py /etc/ipython/ipython_config.py
 ADD config/nbconvert.py /etc/jupyter/jupyter_notebook_config.py
