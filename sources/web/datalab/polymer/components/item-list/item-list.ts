@@ -13,6 +13,17 @@
  */
 
 /**
+ * Mode definition for which items, out of all items that are capable
+ * of showing details, actually show those details.
+ */
+enum InlineDetailsDisplay {
+  NONE,               // Don't show any inline details elements
+  SINGLE_SELECT,      // Show details only when a single item is selected
+  MULTIPLE_SELECT,    // Show details for all selected items
+  ALL                 // Show details for all items
+}
+
+/**
  * Object representing a row in the item list
  */
 class ItemListRow {
@@ -43,16 +54,25 @@ class ItemListRow {
   /**
    * Updates our showInlineDetails flag after a selection change.
    */
-  _updateShowInlineDetails() {
+  _updateShowInlineDetails(
+      inlineDetailsMode: InlineDetailsDisplay, multiSelect: boolean) {
     if (!this.detailsName) {
+      // If we don't know how to dislay details element, then we never do
       this.showInlineDetails = false;
-      return;
-    }
-    if (!this.selected) {
+    } else if (inlineDetailsMode === InlineDetailsDisplay.NONE) {
       this.showInlineDetails = false;
-      return;
+    } else if (inlineDetailsMode === InlineDetailsDisplay.ALL) {
+      this.showInlineDetails = true;
+    } else if (!this.selected) {
+      this.showInlineDetails = false;
+    } else if (!multiSelect) {
+      this.showInlineDetails = true;
+    } else if (inlineDetailsMode === InlineDetailsDisplay.MULTIPLE_SELECT) {
+      this.showInlineDetails = true;
+    } else {
+      // Assume SINGLE_SELECT, but we know multiple items are selected
+      this.showInlineDetails = false;
     }
-    this.showInlineDetails = true;
   }
 
   private _hasLinkIcon() {
@@ -112,6 +132,11 @@ class ItemListElement extends Polymer.Element {
    */
   public selectedIndices: number[];
 
+  /**
+   * Display mode for inline details
+   */
+  public inlineDetailsMode: InlineDetailsDisplay;
+
   private _lastSelectedIndex = -1;
 
   static get is() { return 'item-list'; }
@@ -133,6 +158,10 @@ class ItemListElement extends Polymer.Element {
       hideHeader: {
         type: Boolean,
         value: false,
+      },
+      inlineDetailsMode: {
+        type: Number,
+        value: InlineDetailsDisplay.NONE,
       },
       rows: {
         type: Array,
@@ -187,10 +216,7 @@ class ItemListElement extends Polymer.Element {
    * @param index index of item to select
    */
   _selectItem(index: number) {
-    this.set('rows.' + index + '.selected', true);
-    this.rows[index]._updateShowInlineDetails();
-    this.notifyPath('rows.' + index + '.showInlineDetails',
-        this.rows[index].showInlineDetails);
+    this._changeSelectItem(index, true);
   }
 
   /**
@@ -198,10 +224,35 @@ class ItemListElement extends Polymer.Element {
    * @param index index of item to unselect
    */
   _unselectItem(index: number) {
-    this.set('rows.' + index + '.selected', false);
-    this.rows[index]._updateShowInlineDetails();
+    this._changeSelectItem(index, false);
+  }
+
+  /**
+   * Updates the show-details flag for a row after selection change.
+   */
+  _changeSelectItem(index: number, newValue: boolean) {
+    const previousSelectedCount =
+        this.selectedIndices.length + (newValue ? -1 : 1);
+    const previousMultiSelect = previousSelectedCount > 1;
+    this.set('rows.' + index + '.selected', newValue);
+    const multiSelect = this.selectedIndices.length > 1;
+    this.rows[index]._updateShowInlineDetails(this.inlineDetailsMode, multiSelect);
     this.notifyPath('rows.' + index + '.showInlineDetails',
         this.rows[index].showInlineDetails);
+    if (this.inlineDetailsMode === InlineDetailsDisplay.SINGLE_SELECT &&
+        multiSelect !== previousMultiSelect) {
+      /** If we are in SINGLE_SELECT mode and we have changed from having one
+       * item selected to many or vice-versa, we need to update all the other
+       * selected items.
+       */
+      for (let i = 0; i < this.rows.length; i++) {
+        if (i !== index) {
+          this.rows[i]._updateShowInlineDetails(this.inlineDetailsMode, multiSelect);
+          this.notifyPath('rows.' + i + '.showInlineDetails',
+            this.rows[i].showInlineDetails);
+        }
+      }
+    }
   }
 
   /**
