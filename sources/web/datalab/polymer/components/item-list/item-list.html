@@ -61,6 +61,9 @@ the License.
       .row[selected] > * {
         color: var(--selection-fg-color);
       }
+      .row-details {
+        padding: 0px;
+      }
       .checkbox-col {
         flex: 0 0 65px;
         padding-left: 15px;
@@ -125,6 +128,9 @@ the License.
               <span>{{column}}</span>
             </div>
           </template>
+        </paper-item>
+        <paper-item class="row-details" hidden$="{{!row.showInlineDetails}}">
+          TODO - This is the row details.
         </paper-item>
       </template>
     </div>

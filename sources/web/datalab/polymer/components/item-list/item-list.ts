@@ -18,12 +18,17 @@
 class ItemListRow {
   public selected: boolean;
   public columns: string[];
+  public detailsName: string;
+  public showInlineDetails = false;
 
   private _icon: string;
 
-  constructor(columns: string[], icon: string, selected?: boolean) {
+  constructor({columns, icon, selected, detailsName}:
+      { columns: string[], icon: string,
+        selected?: boolean, detailsName?: string}) {
     this.columns = columns;
     this.selected = selected || false;
+    this.detailsName = detailsName || '';
     this._icon = icon;
   }
 
@@ -34,6 +39,21 @@ class ItemListRow {
    */
   get icon() { return this._hasLinkIcon() ? '' : this._icon; }
   get src() { return this._hasLinkIcon() ? this._icon : ''; }
+
+  /**
+   * Updates our showInlineDetails flag after a selection change.
+   */
+  _updateShowInlineDetails() {
+    if (!this.detailsName) {
+      this.showInlineDetails = false;
+      return;
+    }
+    if (!this.selected) {
+      this.showInlineDetails = false;
+      return;
+    }
+    this.showInlineDetails = true;
+  }
 
   private _hasLinkIcon() {
     return this._icon.startsWith('http://') || this._icon.startsWith('https://');
@@ -168,6 +188,9 @@ class ItemListElement extends Polymer.Element {
    */
   _selectItem(index: number) {
     this.set('rows.' + index + '.selected', true);
+    this.rows[index]._updateShowInlineDetails();
+    this.notifyPath('rows.' + index + '.showInlineDetails',
+        this.rows[index].showInlineDetails);
   }
 
   /**
@@ -176,6 +199,9 @@ class ItemListElement extends Polymer.Element {
    */
   _unselectItem(index: number) {
     this.set('rows.' + index + '.selected', false);
+    this.rows[index]._updateShowInlineDetails();
+    this.notifyPath('rows.' + index + '.showInlineDetails',
+        this.rows[index].showInlineDetails);
   }
 
   /**

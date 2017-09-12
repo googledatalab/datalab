@@ -81,7 +81,10 @@ class SessionsElement extends Polymer.Element implements DatalabPageElement {
     }
 
     (this.$.sessions as ItemListElement).rows = this._sessionList.map((session) => {
-      return new ItemListRow([session.notebook.path, ''], 'editor:insert-drive-file');
+      return new ItemListRow({
+          columns: [session.notebook.path, ''],
+          icon: 'editor:insert-drive-file',
+      });
     });
   }
 

@@ -333,9 +333,14 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    * the created list to the item-list to render.
    */
   _drawFileList() {
-    (this.$.files as ItemListElement).rows = this._fileList.map((file) =>
-        new ItemListRow([file.name, Utils.getFileStatusString(file.status || DatalabFileStatus.IDLE)],
-                        file.icon));
+    (this.$.files as ItemListElement).rows = this._fileList.map((file) => {
+      const row = new ItemListRow({
+          columns: [file.name, Utils.getFileStatusString(file.status || DatalabFileStatus.IDLE)],
+          detailsName: file.getPreviewName(),
+          icon: file.icon,
+      });
+      return row;
+    });
   }
 
   /**
