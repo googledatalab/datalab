@@ -29,17 +29,21 @@ enum InlineDetailsDisplay {
 class ItemListRow {
   public selected: boolean;
   public columns: string[];
-  public detailsName: string;
+  public canShowDetails: boolean;
   public showInlineDetails = false;
 
+  private _createDetailsElement: (() => HTMLElement) | undefined;
+  private _detailsElement: HTMLElement;
   private _icon: string;
 
-  constructor({columns, icon, selected, detailsName}:
+  constructor({columns, icon, selected, createDetailsElement}:
       { columns: string[], icon: string,
-        selected?: boolean, detailsName?: string}) {
+        selected?: boolean, canShowDetails?: boolean,
+        createDetailsElement?: () => HTMLElement}) {
     this.columns = columns;
     this.selected = selected || false;
-    this.detailsName = detailsName || '';
+    this.canShowDetails = (!!createDetailsElement);
+    this._createDetailsElement = createDetailsElement;
     this._icon = icon;
   }
 
@@ -55,8 +59,9 @@ class ItemListRow {
    * Updates our showInlineDetails flag after a selection change.
    */
   _updateShowInlineDetails(
-      inlineDetailsMode: InlineDetailsDisplay, multiSelect: boolean) {
-    if (!this.detailsName) {
+      inlineDetailsMode: InlineDetailsDisplay,
+      multiSelect: boolean, rowDetailsElement: HTMLElement) {
+    if (!this.canShowDetails) {
       // If we don't know how to dislay details element, then we never do
       this.showInlineDetails = false;
     } else if (inlineDetailsMode === InlineDetailsDisplay.NONE) {
@@ -73,6 +78,18 @@ class ItemListRow {
       // Assume SINGLE_SELECT, but we know multiple items are selected
       this.showInlineDetails = false;
     }
+    if (this.showInlineDetails && !this._detailsElement) {
+      this._addDetailsElement(rowDetailsElement);
+    }
+  }
+
+  // Create and add the details element for this item when we first display it.
+  private _addDetailsElement(rowDetailsElement: HTMLElement) {
+    if (!this._createDetailsElement) {
+      return;
+    }
+    this._detailsElement = this._createDetailsElement();
+    rowDetailsElement.appendChild(this._detailsElement);
   }
 
   private _hasLinkIcon() {
@@ -236,7 +253,10 @@ class ItemListElement extends Polymer.Element {
     const previousMultiSelect = previousSelectedCount > 1;
     this.set('rows.' + index + '.selected', newValue);
     const multiSelect = this.selectedIndices.length > 1;
-    this.rows[index]._updateShowInlineDetails(this.inlineDetailsMode, multiSelect);
+    const nthDivSelector = 'div:nth-of-type(' + (index + 1) + ')';
+    const rowDetailsElement = this.$.listContainer.querySelector(nthDivSelector);
+    this.rows[index]._updateShowInlineDetails(
+        this.inlineDetailsMode, multiSelect, rowDetailsElement);
     this.notifyPath('rows.' + index + '.showInlineDetails',
         this.rows[index].showInlineDetails);
     if (this.inlineDetailsMode === InlineDetailsDisplay.SINGLE_SELECT &&
@@ -247,7 +267,11 @@ class ItemListElement extends Polymer.Element {
        */
       for (let i = 0; i < this.rows.length; i++) {
         if (i !== index) {
-          this.rows[i]._updateShowInlineDetails(this.inlineDetailsMode, multiSelect);
+          const otherNthDivSelector = 'div:nth-of-type(' + (i + 1) + ')';
+          const otherRowDetailsElement =
+              this.$.listContainer.querySelector(otherNthDivSelector);
+          this.rows[i]._updateShowInlineDetails(
+              this.inlineDetailsMode, multiSelect, otherRowDetailsElement);
           this.notifyPath('rows.' + i + '.showInlineDetails',
             this.rows[i].showInlineDetails);
         }
