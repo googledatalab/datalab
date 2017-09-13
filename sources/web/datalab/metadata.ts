@@ -63,7 +63,8 @@ function launchFakeServer(metadata: FakeMetadata): void {
     } else if (urlpath == '/computeMetadata/v1/project/project-id') {
       res.writeHead(200, { 'Metadata-Flavor': 'Google', 'Content-Type': 'application/text' });
       res.write(metadata.project);
-    } else if (urlpath == '/computeMetadata/v1/instance/service-accounts/') {
+    } else if (urlpath == '/computeMetadata/v1/instance/service-accounts/' ||
+               urlpath == '/computeMetadata/v1/instance/service-accounts') {
       res.writeHead(200, { 'Metadata-Flavor': 'Google', 'Content-Type': 'application/text' });
       res.write('default/\n');
       res.write(metadata.creds.account + '/\n');
