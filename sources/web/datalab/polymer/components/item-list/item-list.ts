@@ -88,6 +88,13 @@ class ItemListRow {
     if (!this._createDetailsElement) {
       return;
     }
+
+    // The list gets reused, so we need to clear potential old details.
+    while (rowDetailsElement.firstChild) {
+      rowDetailsElement.removeChild(rowDetailsElement.firstChild);
+    }
+
+    // Create and add the new details element
     this._detailsElement = this._createDetailsElement();
     rowDetailsElement.appendChild(this._detailsElement);
   }
