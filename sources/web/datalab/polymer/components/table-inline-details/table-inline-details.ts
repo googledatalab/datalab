@@ -31,6 +31,7 @@ class TableInlineDetailsElement extends Polymer.Element {
 
   private _apiManager: ApiManager;
   private _fileManager: FileManager;
+  private _rows: gapi.client.bigquery.TabledataRow[];
   private _table: gapi.client.bigquery.Table | null;
   private _busy = false;
   private readonly DEFAULT_MODE = 'NULLABLE';
@@ -39,31 +40,19 @@ class TableInlineDetailsElement extends Polymer.Element {
 
   static get properties() {
     return {
+      _rows: {
+        type: Object,
+        value: null,
+      },
       _table: {
         notify: true, // For unit tests
         type: Object,
         value: null,
       },
-      creationTime: {
-        computed: '_computeCreationTime(_table)',
-        type: String,
-      },
       file: {
         observer: '_fileChanged',
         type: Object,
         value: {},
-      },
-      lastModifiedTime: {
-        computed: '_computeLastModifiedTime(_table)',
-        type: String,
-      },
-      longTermTableSize: {
-        computed: '_computeLongTermTableSize(_table)',
-        type: String,
-      },
-      numRows: {
-        computed: '_computeNumRows(_table)',
-        type: String,
       },
       schemaFields: {
         computed: '_computeSchemaFields(_table)',
@@ -73,10 +62,6 @@ class TableInlineDetailsElement extends Polymer.Element {
         observer: '_tableIdChanged',
         type: String,
         value: '',
-      },
-      tableSize: {
-        computed: '_computeTableSize(_table)',
-        type: String,
       },
     };
   }
@@ -107,14 +92,15 @@ class TableInlineDetailsElement extends Polymer.Element {
       const datasetId = matches[2];
       const tableId = matches[3];
 
-      GapiManager.bigquery.getTableDetails(projectId, datasetId, tableId)
-        .then((response: HttpResponse<gapi.client.bigquery.Table>) => {
-          this._table = response.result;
+      GapiManager.bigquery.getTableRows(projectId, datasetId, tableId, 5)
+        .then((response: HttpResponse<gapi.client.bigquery.ListTabledataResponse>) => {
+          this._rows = response.result.rows;
         }, (errorResponse: any) =>
-            Utils.log.error('Failed to get table details: ' + errorResponse.body))
+            Utils.log.error('Failed to get table rows: ' + errorResponse.body))
         .then(() => this._busy = false);
     } else {
       this._table = null;
+      this._rows = [];
     }
   }
 

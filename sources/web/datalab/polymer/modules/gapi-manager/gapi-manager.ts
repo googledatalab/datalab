@@ -267,6 +267,22 @@ class GapiManager {
         .then(() => gapi.client.bigquery.tables.get(request));
     }
 
+    /**
+     * Fetches table rows from BigQuery
+     */
+    public static getTableRows(projectId: string, datasetId: string,
+        tableId: string, maxResults: number):
+        Promise<gapi.client.HttpRequestFulfilled<gapi.client.bigquery.ListTabledataResponse>> {
+      const request = {
+        datasetId,
+        maxResults,
+        projectId,
+        tableId,
+      };
+      return this._load()
+        .then(() => gapi.client.bigquery.tabledata.list(request));
+    }
+
     private static _load(): Promise<void> {
       return GapiManager.loadGapi()
         .then(() => gapi.client.load('bigquery', 'v2'))

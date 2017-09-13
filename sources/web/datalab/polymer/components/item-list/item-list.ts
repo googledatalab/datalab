@@ -253,7 +253,7 @@ class ItemListElement extends Polymer.Element {
     const previousMultiSelect = previousSelectedCount > 1;
     this.set('rows.' + index + '.selected', newValue);
     const multiSelect = this.selectedIndices.length > 1;
-    const nthDivSelector = 'div:nth-of-type(' + (index + 1) + ')';
+    const nthDivSelector = 'div.row-details:nth-of-type(' + (index + 1) + ')';
     const rowDetailsElement = this.$.listContainer.querySelector(nthDivSelector);
     this.rows[index]._updateShowInlineDetails(
         this.inlineDetailsMode, multiSelect, rowDetailsElement);
@@ -267,7 +267,7 @@ class ItemListElement extends Polymer.Element {
        */
       for (let i = 0; i < this.rows.length; i++) {
         if (i !== index) {
-          const otherNthDivSelector = 'div:nth-of-type(' + (i + 1) + ')';
+          const otherNthDivSelector = 'div.row-details:nth-of-type(' + (i + 1) + ')';
           const otherRowDetailsElement =
               this.$.listContainer.querySelector(otherNthDivSelector);
           this.rows[i]._updateShowInlineDetails(

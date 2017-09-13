@@ -63,65 +63,16 @@ the License.
         margin: 20px 0px;
       }
     </style>
-    <div id="placeholder" hidden$={{_table}}>
+    <div id="placeholder" hidden$={{_rows}}>
       <paper-spinner active hidden$={{!_busy}}></paper-spinner>
     </div>
-    <div id="container" hidden$={{!_table}}>
-      <br>
-      <span class="strong">Project: </span>
-      <span id="projectId">{{_table.tableReference.projectId}}</span>
-      <br>
-      <br>
-      <span class="strong">Dataset: </span>
-      <span id="datasetId">{{_table.tableReference.datasetId}}</span>
-      <br>
-      <br>
-      <div hidden$={{!_table.description}}>
-        <div class="strong">Description</div>
-        <br>
-        <div class="description">{{_table.description}}</div>
-        <br>
-      </div>
-      <table>
-        <tr>
-          <td class="field">Table Size</td>
-          <td id="tableSize" class="value">{{tableSize}}</td>
-        </tr>
-        <tr>
-          <td class="field">Long Term Storage Size</td>
-          <td id="longTermTableSize" class="value">{{longTermTableSize}}</td>
-        </tr>
-        <tr>
-          <td class="field">Number of Rows</td>
-          <td id="numRows" class="value">{{numRows}}</td>
-        </tr>
-        <tr>
-          <td class="field">Creation Time</td>
-          <td id="creationTime" class="value">{{creationTime}}</td>
-        </tr>
-        <tr>
-          <td class="field">Last Modified</td>
-          <td id="lastModifiedTime" class="value">{{lastModifiedTime}}</td>
-        </tr>
-        <tr>
-          <td class="field">Data Location</td>
-          <td id="location" class="value">{{_table.location}}</td>
-        </tr>
-        <!--TODO: Consider showing the table's label somewhere-->
-      </table>
-
-      <hr class="separator">
-
-      <div class="strong">Schema</div>
-      <br>
-
-      <table id="schema">
-        <template is="dom-repeat" items={{schemaFields}} as="field">
+    <div id="container" hidden$={{!_rows}}>
+      <table id="rows">
+        <template is="dom-repeat" items={{_rows}} as="row">
           <tr>
-            <td class="field">{{field.name}}</td>
-            <td class="value">{{field.type}}</td>
-            <td class="value">{{_formatMode(field.mode)}}</td>
-            <!--TODO: Consider showing the field's description somehow-->
+            <template is="dom-repeat" items={{row.f}} as="field">
+              <td class="field">{{field.v}}</td>
+            </template>
           </tr>
         </template>
       </table>
