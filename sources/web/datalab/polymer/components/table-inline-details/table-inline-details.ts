@@ -92,7 +92,12 @@ class TableInlineDetailsElement extends Polymer.Element {
       const datasetId = matches[2];
       const tableId = matches[3];
 
-      GapiManager.bigquery.getTableRows(projectId, datasetId, tableId, 5)
+      GapiManager.bigquery.getTableDetails(projectId, datasetId, tableId)
+        .then((response: HttpResponse<gapi.client.bigquery.Table>) => {
+          this._table = response.result;
+        }, (errorResponse: any) =>
+            Utils.log.error('Failed to get table details: ' + errorResponse.body))
+        .then(() => GapiManager.bigquery.getTableRows(projectId, datasetId, tableId, 5))
         .then((response: HttpResponse<gapi.client.bigquery.ListTabledataResponse>) => {
           this._rows = response.result.rows;
         }, (errorResponse: any) =>

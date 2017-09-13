@@ -50,14 +50,14 @@ the License.
         padding: 0 0 4px 0;
         width: 100%;
       }
-      td.field {
+      th.field {
         padding: 10px;
         background-color: #eee;
         font-weight: bold;
       }
-      td.value {
+      td.field {
         padding: 10px;
-        background-color: #fff;
+        background-color: #eee;
       }
       .separator {
         margin: 20px 0px;
@@ -68,6 +68,11 @@ the License.
     </div>
     <div id="container" hidden$={{!_rows}}>
       <table id="rows">
+        <tr>
+          <template is="dom-repeat" items={{schemaFields}} as="field">
+            <th class="field">{{field.name}}<br>{{field.type}}</th>
+          </template>
+        </tr>
         <template is="dom-repeat" items={{_rows}} as="row">
           <tr>
             <template is="dom-repeat" items={{row.f}} as="field">
