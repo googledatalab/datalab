@@ -25,7 +25,8 @@ enum GapiScopes {
   GCS,
 }
 
-const initialScopeString = 'profile email';
+// Authorize GCP scope by default
+const initialScopeString = 'profile email https://www.googleapis.com/auth/cloud-platform';
 
 /**
  * This module contains a collection of functions that interact with gapi.
