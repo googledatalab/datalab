@@ -343,7 +343,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       return detailsPane;
     };
     (this.$.files as ItemListElement).rows = this._fileList.map((file) => {
-      const createDetailsElement = file.getPreviewName() ?
+      const createDetailsElement = file.getInlineDetailsName() ?
           () => createDetailsPaneFromFile(file) : undefined;
       const row = new ItemListRow({
           columns: [file.name, Utils.getFileStatusString(file.status || DatalabFileStatus.IDLE)],

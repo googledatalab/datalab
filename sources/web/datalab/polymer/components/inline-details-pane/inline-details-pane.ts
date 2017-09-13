@@ -69,9 +69,7 @@ class InlineDetailsPaneElement extends Polymer.Element {
       return;
     }
 
-    // TODO - use file.getInlineDetailsName instead of getPreviewName */
-    this.details = this.file.getPreviewName();
-
+    this.details = this.file.getInlineDetailsName();
     if (this.details) {
       const elName = this.details + '-inline-details';
       const pageUrl = this.resolveUrl('../' + elName + '/' + elName + '.html');

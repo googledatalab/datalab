@@ -126,6 +126,10 @@ abstract class DatalabFile {
     }
     return '';
   }
+
+  public getInlineDetailsName(): string {
+    return '';
+  }
 }
 
 interface FileManager {
