@@ -55,13 +55,12 @@ the License.
         height: var(--toolbar-height);
         padding-right: 6px;
       }
-      .toolbar-button {
+      paper-icon-button {
         margin-right: 16px;
         --paper-icon-button: {
           width: var(--toolbar-button-dimension);
           height: var(--toolbar-button-dimension);
         };
-        color: var(--toolbar-fg-color);
       }
       .title-cloud-datalab {
         font-weight: lighter;
@@ -76,7 +75,7 @@ the License.
         padding: 10px;
         min-width: 250px;
         max-width: 300px;
-        box-shadow: -3px 3px 10px -3px rgba(0, 0, 0, 0.3);
+        box-shadow: -3px 3px 5px 1px var(--shadow-box-color);
         z-index: 3;
       }
       datalab-info {
@@ -94,11 +93,11 @@ the License.
           <slot name="content"></slot>
         </div>
         <div class="right">
-          <paper-icon-button id="infoButton" class="toolbar-button" icon="info"
+          <paper-icon-button id="infoButton" icon="info"
                             on-click="_infoClicked"></paper-icon-button>
-          <paper-icon-button id="settingsButton" class="toolbar-button" icon="settings"
+          <paper-icon-button id="settingsButton" icon="settings"
                             on-click="_settingsClicked"></paper-icon-button>
-          <paper-icon-button id="accountButton" class="toolbar-button" icon="account-circle"
+          <paper-icon-button id="accountButton" icon="account-circle"
                             on-click="_accountIconClicked">
           </paper-icon-button>
         </div>

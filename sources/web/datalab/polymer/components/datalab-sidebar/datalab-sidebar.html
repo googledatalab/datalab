@@ -35,7 +35,8 @@ the License.
         height: 100%;
       }
       .button-placeholder {
-        height: var(--toolbar-height);
+        height: calc(var(--toolbar-height) + 1px); /* Because it doesn't have a border */
+        box-shadow: inset -1px -3px 2px -2px var(--box-shadow-color);
       }
       .sidebar-button {
         height: calc(var(--toolbar-height) - 1px);

@@ -19,13 +19,14 @@ the License.
         --app-animation-duration: 0.3s;
         --app-content-font-family: 'Open Sans', 'Helvetica', sans-serif;
         --app-content-font-size: 13px;
+        --box-shadow-color: rgba(0, 0, 0, 0.1);
         --collapsed-sidebar-width: 65px;
         --neutral-fg-color: #777;
         --preview-pane-width: 350px;
         --primary-text-color : var(--primary-fg-color);
         --progressbar-height: 1px;
         --sidebar-width: 200px;
-        --toolbar-height: 48px;
+        --toolbar-height: 44px;
       }
       hr {
         border-left: none;
@@ -102,6 +103,27 @@ the License.
         height: var(--progressbar-height);
         --paper-progress-active-color: var(--selection-fg-color);
         --paper-progress-container-color: var(--border-color);
+      }
+      .toolbar-button {
+        height: 100%;
+        color: var(--primary-fg-color);
+        font-weight: normal;
+        min-width: 35px;
+        border-radius: 0px;
+        white-space: nowrap;
+      }
+      .toolbar-button > span {
+        width: 70%;
+      }
+      .toolbar-button[disabled] {
+        color: var(--disabled-fg-color);
+        background-color: transparent;
+      }
+      .toolbar-button > iron-icon {
+        width: 20px;
+        min-width: 20px;
+        height: 20px;
+        padding-right: 3px;
       }
     </style>
   </template>

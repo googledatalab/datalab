@@ -73,31 +73,12 @@ the License.
         margin: 0px;
         padding: 10px;
         min-width: 150px;
-        box-shadow: 0px 5px 10px 0px rgba(1, 0, 0, 0.3);
+        box-shadow: 1px 5px 10px 2px var(--box-shadow-color);
       }
       #altAddToolbar > *, #altUpdateToolbar > * {
         padding: 10px 0px;
         margin: 0px;
         width: 100%;
-      }
-      .toolbar-button {
-        color: var(--primary-fg-color);
-        margin: 4px;
-        font-weight: normal;
-        border-radius: 0px;
-        white-space: nowrap;
-      }
-      .toolbar-button > iron-icon {
-        min-width: 20px;
-        max-width: 20px;
-        padding-right: 5px;
-      }
-      .toolbar-button > span {
-        width: 70%;
-      }
-      .toolbar-button[disabled] {
-        color: var(--disabled-fg-color);
-        background-color: var(--secondary-bg-color);
       }
       #file-picker {
         display: flex;
@@ -106,18 +87,8 @@ the License.
       }
       #navbar {
         display: flex;
-        flex: 0 0 var(--toolbar-height);
+        flex: 0 0 calc(var(--toolbar-height) - 1px);
         background-color: var(--primary-bg-color);
-      }
-      .navbar-button {
-        min-width: 35px;
-        margin: 0px;
-        border-radius: 0px;
-        flex: 0 0 auto;
-      }
-      .navbar-button[disabled] {
-        color: var(--disabled-fg-color);
-        background-color: var(--disabled-bg-color);
       }
       .files-container {
         display: flex;
@@ -129,7 +100,7 @@ the License.
       }
       #previewPane {
         background-color: var(--secondary-bg-color);
-        box-shadow: inset 4px 0px 10px -3px rgba(0, 0, 0, 0.1);
+        box-shadow: inset 4px 0px 10px -3px var(--box-shadow-color);
         transition: width var(--app-animation-duration);
       }
       .preview-pane-enabled--true {
@@ -144,7 +115,7 @@ the License.
       .vseparator {
         display: inline;
         border-left: 1px solid var(--border-color);
-        line-height: 48px;
+        line-height: var(--toolbar-height);
       }
       #breadCrumbs {
         flex: 1 1 auto;
@@ -235,18 +206,18 @@ the License.
     <div id="file-picker">
       <!--Navigation bar with back/forward buttons, refresh, and breadcrumbs-->
       <div id="navbar">
-        <paper-button id="backNav" class="navbar-button" on-click="_navBackward">
+        <paper-button id="backNav" class="toolbar-button" on-click="_navBackward">
           <iron-icon icon="chevron-left"></iron-icon>
         </paper-button>
-        <paper-button id="forwardNav" class="navbar-button" on-click="_navForward">
+        <paper-button id="forwardNav" class="toolbar-button" on-click="_navForward">
           <iron-icon icon="chevron-right"></iron-icon>
         </paper-button>
-        <paper-button class="navbar-button" hidden$="{{small}}" on-click="_fetchFileList">
+        <paper-button class="toolbar-button" hidden$="{{small}}" on-click="_fetchFileList">
           <iron-icon icon="refresh"></iron-icon>
         </paper-button>
         <div class="vseparator"></div>
         <bread-crumbs id="breadCrumbs"></bread-crumbs>
-        <paper-button id="togglePreview" class="navbar-button" on-click="_togglePreviewPane"
+        <paper-button id="togglePreview" class="toolbar-button" on-click="_togglePreviewPane"
                       hidden$="{{small}}">
           <iron-icon icon="visibility" hidden$="{{_isPreviewPaneToggledOn}}"
                      class$="visibility-highlighted--{{_canPreview}}"></iron-icon>
