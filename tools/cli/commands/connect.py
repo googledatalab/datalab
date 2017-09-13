@@ -63,8 +63,8 @@ wrong_user_message = (
 
 
 web_preview_message = (
-    'Click on the *Web Preview* (up-arrow button at top-left), '
-    'select *port {}*, and start using Datalab.')
+    'Click on the *Web Preview* (square button at top-right), '
+    'select *Change port > Port {}*, and start using Datalab.')
 
 
 # The list of web browsers that we don't want to automatically open.
