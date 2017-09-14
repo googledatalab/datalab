@@ -89,8 +89,8 @@ class TerminalElement extends Polymer.Element implements DatalabPageElement {
 
     // First, create the connection to the Jupyter terminal.
     const basepath = await ApiManagerFactory.getInstance().getBasePath();
-    const protocol = location.protocol === 'https' ? 'wss' : 'ws';
-    this._wsConnection = new WebSocket(protocol + '://' +
+    const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    this._wsConnection = new WebSocket(protocol + '//' +
                                        location.host +
                                        basepath +
                                        '/terminals/websocket/' +

@@ -41,7 +41,12 @@ class DatalabWebSocketShim {
 
     ApiManagerFactory.getInstance().getBasePath()
       .then((basepath: string) => {
-        const socketUri = location.protocol + '//' + location.host + basepath + '/session';
+        const socketUri = location.protocol + '//' + location.host + '/session';
+        const socketOptions: SocketIOClient.ConnectOpts = {
+          multiplex: false,
+          path: basepath + '/socket.io',
+          upgrade: false,
+        };
 
         const errorHandler = () => {
           if (this.onerror) {
@@ -49,7 +54,7 @@ class DatalabWebSocketShim {
           }
         };
 
-        this._socket = io.connect(socketUri);
+        this._socket = io.connect(socketUri, socketOptions);
         this._socket.on('connect', () => {
           if (this._socket) {
             this._socket.emit('start', { url });
