@@ -98,7 +98,7 @@ if [[ $LIVE_MODE == 1 ]]; then
 fi
 
 docker run -it --entrypoint=$ENTRYPOINT \
-  -p 127.0.0.1:8081:8080 \
+  -p 127.0.0.1:8080:8080 \
   -v "$CONTENT/datalab:/content/datalab" \
   $PYDATALAB_MOUNT_OPT \
   ${DEVROOT_DOCKER_OPTION} \

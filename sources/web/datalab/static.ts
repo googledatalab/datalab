@@ -180,6 +180,7 @@ export function isExperimentalResource(pathname: string) {
       // TODO: use a different API to download files when we have a content service.
       pathname.indexOf('/sessions') === 0 ||
       pathname.indexOf('/terminal') === 0 ||
+      pathname.indexOf('/docs') === 0 ||
       pathname.indexOf('/editor') === 0 ||
       pathname.indexOf('/bower_components') === 0 ||
       pathname.indexOf('/components') === 0 ||
@@ -213,6 +214,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       return;
     } else if (pathname === '/data' ||
         pathname === '/files' ||
+        pathname === '/docs' ||
         pathname === '/sessions' ||
         pathname === '/terminal') {
       pathname = '/index.html';

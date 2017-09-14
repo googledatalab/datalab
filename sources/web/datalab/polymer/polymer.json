@@ -3,6 +3,7 @@
   "shell": "components/datalab-app/datalab-app.html",
   "fragments": [
     "components/data-browser/data-browser.html",
+    "components/datalab-docs/datalab-docs.html",
     "components/datalab-editor/datalab-editor.html",
     "components/datalab-sessions/datalab-sessions.html",
     "components/datalab-sidebar/datalab-sidebar.html",
