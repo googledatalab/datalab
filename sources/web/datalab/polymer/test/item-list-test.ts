@@ -313,7 +313,7 @@ describe('<item-list>', () => {
 
   describe('inline details', () => {
     it('should not create a details element for an item without details', () => {
-      testFixture.inlineDetailsMode = InlineDetailsDisplay.SINGLE_SELECT;
+      testFixture.inlineDetailsMode = InlineDetailsDisplayMode.SINGLE_SELECT;
       const firstRow = getRow(0);
       const firstRowDetailsContainer = getRowDetailsContainer(0);
       firstRow.click();
@@ -323,7 +323,7 @@ describe('<item-list>', () => {
     });
 
     it('should create a details element for an item with details', () => {
-      testFixture.inlineDetailsMode = InlineDetailsDisplay.SINGLE_SELECT;
+      testFixture.inlineDetailsMode = InlineDetailsDisplayMode.SINGLE_SELECT;
       const fourthRow = getRow(3);
       const fourthRowDetailsContainer = getRowDetailsContainer(3);
       fourthRow.click();
@@ -337,7 +337,7 @@ describe('<item-list>', () => {
     });
 
     it('should not create a details element in NONE display mode', () => {
-      testFixture.inlineDetailsMode = InlineDetailsDisplay.NONE;
+      testFixture.inlineDetailsMode = InlineDetailsDisplayMode.NONE;
       const fourthRow = getRow(3);
       const fourthRowDetailsContainer = getRowDetailsContainer(0);
       fourthRow.click();
@@ -349,7 +349,7 @@ describe('<item-list>', () => {
     });
 
     it('should show details even when not clicked in ALL mode', () => {
-      testFixture.inlineDetailsMode = InlineDetailsDisplay.ALL;
+      testFixture.inlineDetailsMode = InlineDetailsDisplayMode.ALL;
       // TODO: the current behavior of ALL does not show all of the details when
       // the page first renders, but only displays the details when the
       // selection state for an item changes. We might want to change this
@@ -357,18 +357,26 @@ describe('<item-list>', () => {
       // all the details.
       testFixture._unselectAll();   // Recalculate details display for all items
       const fourthRowDetailsContainer = getRowDetailsContainer(3);
+      const fifthRowDetailsContainer = getRowDetailsContainer(3);
 
-      const detailsElement: HTMLElement =
+      const fourthDetailsElement: HTMLElement =
           fourthRowDetailsContainer.firstChild as HTMLElement;
-      assert(!!detailsElement,
+      assert(!!fourthDetailsElement,
           'fourth item should have details element');
       assert(fourthRowDetailsContainer.getAttribute('hidden') == null,
           'fourth details container should be visible');
+
+      const fifthDetailsElement: HTMLElement =
+          fifthRowDetailsContainer.firstChild as HTMLElement;
+      assert(!!fifthDetailsElement,
+          'fifth item should have details element');
+      assert(fifthRowDetailsContainer.getAttribute('hidden') == null,
+          'fitth details container should be visible');
     });
 
     it('should not show details for previously selected item ' +
         'in single-select mode', () => {
-      testFixture.inlineDetailsMode = InlineDetailsDisplay.SINGLE_SELECT;
+      testFixture.inlineDetailsMode = InlineDetailsDisplayMode.SINGLE_SELECT;
       const fourthRow = getRow(3);
       const fifthRow = getRow(4);
       const fourthDetailsContainer = getRowDetailsContainer(3);
@@ -384,7 +392,7 @@ describe('<item-list>', () => {
 
     it('should not show any details when multiple items selected ' +
         'in single-select mode', () => {
-      testFixture.inlineDetailsMode = InlineDetailsDisplay.SINGLE_SELECT;
+      testFixture.inlineDetailsMode = InlineDetailsDisplayMode.SINGLE_SELECT;
       const fourthRow = getRow(3);
       const fifthCheckbox = getCheckbox(4);
       const fourthDetailsContainer = getRowDetailsContainer(3);
@@ -400,7 +408,7 @@ describe('<item-list>', () => {
 
     it('should show details for multiple selected items ' +
         'in multi-select mode', () => {
-      testFixture.inlineDetailsMode = InlineDetailsDisplay.MULTIPLE_SELECT;
+      testFixture.inlineDetailsMode = InlineDetailsDisplayMode.MULTIPLE_SELECT;
       const fourthRow = getRow(3);
       const fifthCheckbox = getCheckbox(4);
       const fourthDetailsContainer = getRowDetailsContainer(3);

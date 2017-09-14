@@ -16,9 +16,7 @@
 declare function marked(markdown: string): string;
 
 /**
- * InlineDetails pane element for Datalab.
- * This element is designed to be displayed in a side bar that displays more
- * information about a selected file.
+ * Inline details pane element for Datalab.
  */
 class InlineDetailsPaneElement extends Polymer.Element {
 
@@ -61,8 +59,6 @@ class InlineDetailsPaneElement extends Polymer.Element {
 
   /**
    * Shows inline details of the selected file for known file types.
-   *
-   * TODO: Consider adding a spinning animation while this data loads.
    */
   _reloadInlineDetails() {
     if (!this.file || !this.active) {

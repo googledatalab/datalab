@@ -112,15 +112,16 @@ describe('<table-inline-details>', () => {
       assert(JSON.stringify((testFixture as any)._table) === JSON.stringify(mockTable),
           'element should have fetched table info');
 
-      const schemaRow = testFixture.$.tabledata.rows[0];
+      const schemaRow = testFixture.$.tabledata.querySelector('tr.header');
       const columns = schemaRow.querySelectorAll('th');
       assert(columns.length === mockTable.schema.fields.length,
           'unexpected number of schema rows');
 
       mockTable.schema.fields.forEach((field, i) => {
-        const spans = schemaRow.children[i].querySelectorAll('span');
-        assert(spans[0].innerText === field.name, 'field name does not match');
-        assert(spans[1].innerText === field.type, 'field type does not match');
+        const nameSpan = schemaRow.children[i].querySelector('span.field-name');
+        const typeSpan = schemaRow.children[i].querySelector('span.field-type');
+        assert(nameSpan.innerText === field.name, 'field name does not match');
+        assert(typeSpan.innerText === field.type, 'field type does not match');
       });
 
       done();
@@ -156,4 +157,6 @@ describe('<table-inline-details>', () => {
     testFixture.tableId = 'pid:did.tid';
   });
 
+  // TODO - after we figure out how we should deal with errors,
+  // add some tests for that here.
 });

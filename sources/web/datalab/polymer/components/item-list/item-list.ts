@@ -16,11 +16,24 @@
  * Mode definition for which items, out of all items that are capable
  * of showing details, actually show those details.
  */
-enum InlineDetailsDisplay {
+enum InlineDetailsDisplayMode {
   NONE,               // Don't show any inline details elements
   SINGLE_SELECT,      // Show details only when a single item is selected
   MULTIPLE_SELECT,    // Show details for all selected items
   ALL                 // Show details for all items
+}
+// TODO: the current behavior of ALL does not show all of the details when
+// the page first renders, but only displays the details when the
+// selection state for an item changes. We might want to change this
+// behavior so that it figures out in advance that it should show
+// all the details.
+
+/** Fields that can be passed to the ItemListRow constructor. */
+interface ItemListRowParameters {
+  columns: string[];
+  createDetailsElement?: () => HTMLElement;
+  icon: string;
+  selected?: boolean;
 }
 
 /**
@@ -36,10 +49,8 @@ class ItemListRow {
   private _detailsElement: HTMLElement;
   private _icon: string;
 
-  constructor({columns, icon, selected, createDetailsElement}:
-      { columns: string[], icon: string,
-        selected?: boolean, canShowDetails?: boolean,
-        createDetailsElement?: () => HTMLElement}) {
+  constructor(
+      {columns, icon, selected, createDetailsElement}: ItemListRowParameters) {
     this.columns = columns;
     this.selected = selected || false;
     this.canShowDetails = (!!createDetailsElement);
@@ -57,22 +68,24 @@ class ItemListRow {
 
   /**
    * Updates our showInlineDetails flag after a selection change.
+   * If we are showing details for the first time for this row,
+   * create the details element and add it to the DOM.
    */
-  _updateShowInlineDetails(
-      inlineDetailsMode: InlineDetailsDisplay,
+  _updateInlineDetails(
+      inlineDetailsMode: InlineDetailsDisplayMode,
       multiSelect: boolean, rowDetailsElement: HTMLElement) {
     if (!this.canShowDetails) {
       // If we don't know how to dislay details element, then we never do
       this.showInlineDetails = false;
-    } else if (inlineDetailsMode === InlineDetailsDisplay.NONE) {
+    } else if (inlineDetailsMode === InlineDetailsDisplayMode.NONE) {
       this.showInlineDetails = false;
-    } else if (inlineDetailsMode === InlineDetailsDisplay.ALL) {
+    } else if (inlineDetailsMode === InlineDetailsDisplayMode.ALL) {
       this.showInlineDetails = true;
     } else if (!this.selected) {
       this.showInlineDetails = false;
     } else if (!multiSelect) {
       this.showInlineDetails = true;
-    } else if (inlineDetailsMode === InlineDetailsDisplay.MULTIPLE_SELECT) {
+    } else if (inlineDetailsMode === InlineDetailsDisplayMode.MULTIPLE_SELECT) {
       this.showInlineDetails = true;
     } else {
       // Assume SINGLE_SELECT, but we know multiple items are selected
@@ -89,10 +102,9 @@ class ItemListRow {
       return;
     }
 
-    // The list gets reused, so we need to clear potential old details.
-    while (rowDetailsElement.firstChild) {
-      rowDetailsElement.removeChild(rowDetailsElement.firstChild);
-    }
+    // The list can get reused when we switch to display a different directory,
+    // so we need to clear potential old details.
+    Utils.deleteAllChildren(rowDetailsElement);
 
     // Create and add the new details element
     this._detailsElement = this._createDetailsElement();
@@ -159,7 +171,7 @@ class ItemListElement extends Polymer.Element {
   /**
    * Display mode for inline details
    */
-  public inlineDetailsMode: InlineDetailsDisplay;
+  public inlineDetailsMode: InlineDetailsDisplayMode;
 
   private _lastSelectedIndex = -1;
 
@@ -185,7 +197,7 @@ class ItemListElement extends Polymer.Element {
       },
       inlineDetailsMode: {
         type: Number,
-        value: InlineDetailsDisplay.NONE,
+        value: InlineDetailsDisplayMode.NONE,
       },
       rows: {
         type: Array,
@@ -240,7 +252,8 @@ class ItemListElement extends Polymer.Element {
    * @param index index of item to select
    */
   _selectItem(index: number) {
-    this._changeSelectItem(index, true);
+    this.set('rows.' + index + '.selected', true);
+    this._updateItemSelection(index, true);
   }
 
   /**
@@ -248,25 +261,24 @@ class ItemListElement extends Polymer.Element {
    * @param index index of item to unselect
    */
   _unselectItem(index: number) {
-    this._changeSelectItem(index, false);
+    this.set('rows.' + index + '.selected', false);
+    this._updateItemSelection(index, false);
   }
 
   /**
    * Updates the show-details flag for a row after selection change.
    */
-  _changeSelectItem(index: number, newValue: boolean) {
-    const previousSelectedCount =
-        this.selectedIndices.length + (newValue ? -1 : 1);
-    const previousMultiSelect = previousSelectedCount > 1;
-    this.set('rows.' + index + '.selected', newValue);
+  _updateItemSelection(index: number, newValue: boolean) {
     const multiSelect = this.selectedIndices.length > 1;
-    const nthDivSelector = 'div.row-details:nth-of-type(' + (index + 1) + ')';
-    const rowDetailsElement = this.$.listContainer.querySelector(nthDivSelector);
-    this.rows[index]._updateShowInlineDetails(
+    const rowDetailsElement = this._getRowDetailsContainer(index);
+    this.rows[index]._updateInlineDetails(
         this.inlineDetailsMode, multiSelect, rowDetailsElement);
     this.notifyPath('rows.' + index + '.showInlineDetails',
         this.rows[index].showInlineDetails);
-    if (this.inlineDetailsMode === InlineDetailsDisplay.SINGLE_SELECT &&
+    const previousSelectedCount =
+        this.selectedIndices.length + (newValue ? -1 : 1);
+    const previousMultiSelect = previousSelectedCount > 1;
+    if (this.inlineDetailsMode === InlineDetailsDisplayMode.SINGLE_SELECT &&
         multiSelect !== previousMultiSelect) {
       /** If we are in SINGLE_SELECT mode and we have changed from having one
        * item selected to many or vice-versa, we need to update all the other
@@ -274,11 +286,9 @@ class ItemListElement extends Polymer.Element {
        */
       for (let i = 0; i < this.rows.length; i++) {
         if (i !== index) {
-          const otherNthDivSelector = 'div.row-details:nth-of-type(' + (i + 1) + ')';
-          const otherRowDetailsElement =
-              this.$.listContainer.querySelector(otherNthDivSelector);
-          this.rows[i]._updateShowInlineDetails(
-              this.inlineDetailsMode, multiSelect, otherRowDetailsElement);
+          const otherRowDetailsContainer = this._getRowDetailsContainer(i);
+          this.rows[i]._updateInlineDetails(
+              this.inlineDetailsMode, multiSelect, otherRowDetailsContainer);
           this.notifyPath('rows.' + i + '.showInlineDetails',
             this.rows[i].showInlineDetails);
         }
@@ -375,6 +385,12 @@ class ItemListElement extends Polymer.Element {
     const ev = new ItemClickEvent('itemDoubleClick', { detail: {index} });
     this.dispatchEvent(ev);
   }
+
+  private _getRowDetailsContainer(index: number) {
+    const nthDivSelector = 'div.row-details:nth-of-type(' + (index + 1) + ')';
+    return this.$.listContainer.querySelector(nthDivSelector);
+  }
+
 }
 
 customElements.define(ItemListElement.is, ItemListElement);

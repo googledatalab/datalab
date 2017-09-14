@@ -29,21 +29,11 @@ the License.
         justify-content: center;
         align-items: center;
       }
-      paper-spinner {
-        --paper-spinner-stroke-width: 2px;
-      }
       #container {
         padding: 0px 20px;
         height: 100%;
         overflow-y: auto;
         color: var(--primary-fg-color);
-      }
-      .strong {
-        font-weight: bold;
-      }
-      .description {
-        font-style: italic;
-        overflow-wrap: break-word;
       }
       table {
         border-spacing: 1px;
@@ -52,15 +42,12 @@ the License.
       }
       th.field {
         padding: 10px;
-        background-color: #eee;
+        background-color: var(--secondary-bg-color);
         font-weight: bold;
       }
       td.field {
         padding: 10px;
-        background-color: #eee;
-      }
-      .separator {
-        margin: 20px 0px;
+        background-color: var(--secondary-bg-color);
       }
     </style>
     <div id="placeholder" hidden$={{_table}}>
@@ -69,7 +56,7 @@ the License.
     <div id="container" hidden$={{!_table}}>
       <table id="tabledata">
         <tr class="header">
-          <template is="dom-repeat" items={{schemaFields}} as="field">
+          <template is="dom-repeat" items={{_schemaFields}} as="field">
             <th class="field">
               <span class="field-name">{{field.name}}</span><br>
               <span class="field-type">{{field.type}}</span>

@@ -34,7 +34,7 @@ class TableInlineDetailsElement extends Polymer.Element {
   private _rows: gapi.client.bigquery.TabledataRow[];
   private _table: gapi.client.bigquery.Table | null;
   private _busy = false;
-  private readonly DEFAULT_MODE = 'NULLABLE';
+  private readonly TABLE_PREVIEW_ROW_COUNT = 5;
 
   static get is() { return 'table-inline-details'; }
 
@@ -45,6 +45,10 @@ class TableInlineDetailsElement extends Polymer.Element {
         type: Object,
         value: null,
       },
+      _schemaFields: {
+        computed: '_computeSchemaFields(_table)',
+        type: Array,
+      },
       _table: {
         notify: true, // For unit tests
         type: Object,
@@ -54,10 +58,6 @@ class TableInlineDetailsElement extends Polymer.Element {
         observer: '_fileChanged',
         type: Object,
         value: {},
-      },
-      schemaFields: {
-        computed: '_computeSchemaFields(_table)',
-        type: Array,
       },
       tableId: {
         observer: '_tableIdChanged',
@@ -97,41 +97,20 @@ class TableInlineDetailsElement extends Polymer.Element {
         .then((response: HttpResponse<gapi.client.bigquery.Table>) => {
           this._table = response.result;
         }, (errorResponse: any) =>
+            // TODO - display error to user in the details pane
             Utils.log.error('Failed to get table details: ' + errorResponse.body))
-        .then(() => GapiManager.bigquery.getTableRows(projectId, datasetId, tableId, 5))
+        .then(() => GapiManager.bigquery.getTableRows(
+            projectId, datasetId, tableId, this.TABLE_PREVIEW_ROW_COUNT))
         .then((response: HttpResponse<gapi.client.bigquery.ListTabledataResponse>) => {
           this._rows = response.result.rows;
         }, (errorResponse: any) =>
+            // TODO - display error to user in the details pane
             Utils.log.error('Failed to get table rows: ' + errorResponse.body))
         .then(() => this._busy = false);
     } else {
       this._table = null;
       this._rows = [];
     }
-  }
-
-  _computeCreationTime(table: gapi.client.bigquery.Table | null) {
-    if (table) {
-      return new Date(parseInt(table.creationTime, 10)).toUTCString();
-    } else {
-      return '';
-    }
-  }
-
-  _computeLastModifiedTime(table: gapi.client.bigquery.Table | null) {
-    if (table) {
-      return new Date(parseInt(table.lastModifiedTime, 10)).toUTCString();
-    } else {
-      return '';
-    }
-  }
-
-  _computeNumRows(table: gapi.client.bigquery.Table | null) {
-    return table ? parseInt(table.numRows, 10).toLocaleString() : '';
-  }
-
-  _computeLongTermTableSize(table: gapi.client.bigquery.Table | null) {
-    return table ? this._bytesToReadableSize(table.numLongTermBytes) : '';
   }
 
   // TODO: Consider adding expanders and nested tables to make the schema viewer
@@ -162,54 +141,6 @@ class TableInlineDetailsElement extends Polymer.Element {
   _computeSchemaFields(table: gapi.client.bigquery.Table | null) {
     return table ? this._flattenFields(table.schema.fields) : [];
   }
-
-  _computeTableSize(table: gapi.client.bigquery.Table | null) {
-    return table ? this._bytesToReadableSize(table.numBytes) : '';
-  }
-
-  /**
-   * Converts the given number of bytes into a human readable string with units
-   * and a two-decimal-point number
-   */
-  _bytesToReadableSize(bytesStr: string) {
-    const kilo = 1024;
-    const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-    let bytesLeft = parseInt(bytesStr, 10);
-    let level = 0;
-
-    while (bytesLeft >= kilo) {
-      bytesLeft /= kilo;
-      ++level;
-    }
-    return bytesLeft.toFixed(2) + ' ' + units[level];
-  }
-
-  _formatMode(mode: string) {
-    return mode || this.DEFAULT_MODE;
-  }
-
-  /**
-   * Opens the current table in the table schema template notebook.
-   */
-  async _openInNotebook() {
-
-    if (this._table) {
-      const tableName = this._table.id.replace(':', '.'); // Standard BigQuery table name
-      const template = new TableSchemaTemplate(tableName);
-
-      try {
-        const notebook = await TemplateManager.newNotebookFromTemplate(template);
-
-        if (notebook) {
-          FileManagerFactory.getInstanceForType(notebook.id.source).getNotebookUrl(notebook.id)
-            .then((url) => window.open(url, '_blank'));
-        }
-      } catch (e) {
-        Utils.showErrorDialog('Error', e.message);
-      }
-    }
-  }
-
 }
 
 customElements.define(TableInlineDetailsElement.is, TableInlineDetailsElement);

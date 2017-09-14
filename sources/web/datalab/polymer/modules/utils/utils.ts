@@ -105,6 +105,15 @@ class Utils {
   }
 
   /**
+   * Deletes all child elements of an element.
+   */
+  public static deleteAllChildren(parent: HTMLElement) {
+    while (parent.firstChild) {
+      parent.removeChild(parent.firstChild);
+    }
+  }
+
+  /**
    * Moves all child elements from one element to another.
    * @param from element whose children to move
    * @param to destination elements where children will be moved to
