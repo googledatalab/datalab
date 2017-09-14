@@ -69,7 +69,7 @@ class TerminalElement extends Polymer.Element implements DatalabPageElement {
    * TODO: Consider adding a loading experience while the connection is made.
    * @param terminalName name of the Jupyter terminal session to be used in websocket connection
    */
-  _initTerminal(terminalName: string) {
+  async _initTerminal(terminalName: string) {
     // Clear any older terminal elements created.
     this.$.theTerminal.innerHTML = '';
     this._xterm = new Terminal();
@@ -80,7 +80,7 @@ class TerminalElement extends Polymer.Element implements DatalabPageElement {
     if (window.hasOwnProperty('io')) {
       const w = window as any;
       w.NativeWebSocket = w.WebSocket;
-      w.WebSocket = WebSocketShim;
+      w.WebSocket = DatalabWebSocketShim;
       Utils.log.verbose('Replaced native websockets with socket.io');
     } else {
       Utils.log.error('Could not find socket.io, will not replace WebSocket. ' +
@@ -88,9 +88,11 @@ class TerminalElement extends Polymer.Element implements DatalabPageElement {
     }
 
     // First, create the connection to the Jupyter terminal.
+    const basepath = await ApiManagerFactory.getInstance().getBasePath();
     const protocol = location.protocol === 'https' ? 'wss' : 'ws';
     this._wsConnection = new WebSocket(protocol + '://' +
-                                       window.location.host +
+                                       location.host +
+                                       basepath +
                                        '/terminals/websocket/' +
                                        terminalName);
 
