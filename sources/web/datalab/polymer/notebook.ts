@@ -19,34 +19,67 @@
  * and will trigger this code to call methods in the rest of the UI components
  * to act according to the requested action.
  */
-enum IframeMessageCommand {
-  UPLOAD_USER_CREDS,
-}
+
+const iframe = document.querySelector('#editor') as HTMLIFrameElement;
+
+// tslint:disable-next-line:variable-name
+const CommandId = {
+  ERROR: 'error',
+  LOAD_NOTEBOOK: 'load-notebook',
+  UPLOAD_USER_CREDS: 'upload-user-creds',
+};
 
 interface IframeMessage {
-  command: IframeMessageCommand;
+  command?: string;
   arguments: any;
+  guid?: string;
 }
 
-function processMessageEvent(e: MessageEvent) {
+async function processMessageEvent(e: MessageEvent) {
   if (!e.data || !e.data.hasOwnProperty('command')) {
-    Utils.log.error('Received unknown message: ', e.data);
+    // Ignore silently. The notebook editor sends other types of messages.
     return;
   }
 
   const message = e.data as IframeMessage;
 
-  if (message.command === IframeMessageCommand.UPLOAD_USER_CREDS) {
+  if (message.command === CommandId.UPLOAD_USER_CREDS) {
     ApiManagerFactory.getInstance().uploadOauthAccessToken();
+  } else if (message.command === CommandId.LOAD_NOTEBOOK) {
+    let outgoingMessage: IframeMessage;
+    try {
+      const id = DatalabFileId.fromQueryString(message.arguments);
+      const fileManager = FileManagerFactory.getInstanceForType(id.source);
+      const [file, doc] = await Promise.all([
+        fileManager.get(id),
+        fileManager.getStringContent(id),
+      ]);
+      outgoingMessage = {
+        arguments: [file, doc],
+      };
+    } catch (e) {
+      outgoingMessage = {
+        arguments: e,
+        command: CommandId.ERROR,
+      };
+    }
+    // Attach the same guid in case this message was sent in an async context
+    outgoingMessage.guid = message.guid;
+    sendMessageToNotebookEditor(outgoingMessage);
   } else {
     Utils.log.error('Received unknown message command: ', message.command);
     return;
   }
 }
 
+function sendMessageToNotebookEditor(message: IframeMessage) {
+  if (iframe) {
+    iframe.contentWindow.postMessage(message, location.href);
+  }
+}
+
 const params = new URLSearchParams(window.location.search);
 if (params.has('file')) {
-  const iframe = document.querySelector('#editor') as HTMLIFrameElement;
   // Currently this is one-directional, iframe wrapper querystring -> iframe hash param.
   // We will need to change this if the editor is allowed to change the id of the
   // open file, for example in the case of Jupyter files where the id is the file path.
