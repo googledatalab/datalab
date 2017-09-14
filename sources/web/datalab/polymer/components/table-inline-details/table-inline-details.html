@@ -63,18 +63,21 @@ the License.
         margin: 20px 0px;
       }
     </style>
-    <div id="placeholder" hidden$={{_rows}}>
+    <div id="placeholder" hidden$={{_table}}>
       <paper-spinner active hidden$={{!_busy}}></paper-spinner>
     </div>
-    <div id="container" hidden$={{!_rows}}>
-      <table id="rows">
-        <tr>
+    <div id="container" hidden$={{!_table}}>
+      <table id="tabledata">
+        <tr class="header">
           <template is="dom-repeat" items={{schemaFields}} as="field">
-            <th class="field">{{field.name}}<br>{{field.type}}</th>
+            <th class="field">
+              <span class="field-name">{{field.name}}</span><br>
+              <span class="field-type">{{field.type}}</span>
+            </th>
           </template>
         </tr>
         <template is="dom-repeat" items={{_rows}} as="row">
-          <tr>
+          <tr class="data">
             <template is="dom-repeat" items={{row.f}} as="field">
               <td class="field">{{field.v}}</td>
             </template>

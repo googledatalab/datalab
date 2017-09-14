@@ -54,6 +54,14 @@ describe('<item-list>', () => {
   }
 
   /**
+   * Returns the row element at the specified index
+   * @param i index of row whose element to return
+   */
+  function getRowDetailsContainer(i: number): HTMLElement {
+    return testFixture.$.listContainer.querySelectorAll('div.row-details')[i];
+  }
+
+  /**
    * Returns the checkbox element at the specified index
    * @param i index of row whose checkbox element to return
    */
@@ -67,17 +75,34 @@ describe('<item-list>', () => {
    */
   beforeEach(() => {
     testFixture = fixture('item-list-fixture');
+    const createDetailsElement: () => HTMLElement = () => {
+      const span = document.createElement('span');
+      span.innerHTML = 'Mock details';
+      return span;
+    };
     const rows = [
-      new ItemListRow(
-          {columns: ['first column 1', 'second column 1'], icon: 'folder'}),
-      new ItemListRow(
-          {columns: ['first column 2', 'second column 2'], icon: 'folder'}),
-      new ItemListRow(
-          {columns: ['first column 3', 'second column 3'], icon: 'folder'}),
-      new ItemListRow(
-          {columns: ['first column 4', 'second column 4'], icon: 'folder'}),
-      new ItemListRow(
-          {columns: ['first column 5', 'second column 5'], icon: 'folder'}),
+      new ItemListRow({
+        columns: ['first column 1', 'second column 1'],
+        icon: 'folder',
+      }),
+      new ItemListRow({
+        columns: ['first column 2', 'second column 2'],
+        icon: 'folder',
+      }),
+      new ItemListRow({
+        columns: ['first column 3', 'second column 3'],
+        icon: 'folder',
+      }),
+      new ItemListRow({
+        columns: ['first column 4', 'second column 4'],
+        createDetailsElement,
+        icon: 'folder',
+      }),
+      new ItemListRow({
+        columns: ['first column 5', 'second column 5'],
+        createDetailsElement,
+        icon: 'folder',
+      }),
     ];
     testFixture.rows = rows;
     Polymer.dom.flush();
@@ -286,4 +311,113 @@ describe('<item-list>', () => {
     assert(!isSelected(0), 'first item should not be selected when selection is disabled');
   });
 
+  describe('inline details', () => {
+    it('should not create a details element for an item without details', () => {
+      testFixture.inlineDetailsMode = InlineDetailsDisplay.SINGLE_SELECT;
+      const firstRow = getRow(0);
+      const firstRowDetailsContainer = getRowDetailsContainer(0);
+      firstRow.click();
+
+      assert(!firstRowDetailsContainer.firstChild,
+          'first item should not show details when clicked');
+    });
+
+    it('should create a details element for an item with details', () => {
+      testFixture.inlineDetailsMode = InlineDetailsDisplay.SINGLE_SELECT;
+      const fourthRow = getRow(3);
+      const fourthRowDetailsContainer = getRowDetailsContainer(3);
+      fourthRow.click();
+
+      const detailsElement: HTMLElement =
+          fourthRowDetailsContainer.firstChild as HTMLElement;
+      assert(!!detailsElement,
+          'fourth item should create details element when clicked');
+      assert(fourthRowDetailsContainer.getAttribute('hidden') == null,
+          'fourth details container should be visible');
+    });
+
+    it('should not create a details element in NONE display mode', () => {
+      testFixture.inlineDetailsMode = InlineDetailsDisplay.NONE;
+      const fourthRow = getRow(3);
+      const fourthRowDetailsContainer = getRowDetailsContainer(0);
+      fourthRow.click();
+
+      assert(!fourthRowDetailsContainer.firstChild,
+          'fourth item should not create details element when clicked');
+      assert(fourthRowDetailsContainer.getAttribute('hidden') != null,
+          'fourth details container should not be visible');
+    });
+
+    it('should show details even when not clicked in ALL mode', () => {
+      testFixture.inlineDetailsMode = InlineDetailsDisplay.ALL;
+      // TODO: the current behavior of ALL does not show all of the details when
+      // the page first renders, but only displays the details when the
+      // selection state for an item changes. We might want to change this
+      // behavior so that it figures out in advance that it should show
+      // all the details.
+      testFixture._unselectAll();   // Recalculate details display for all items
+      const fourthRowDetailsContainer = getRowDetailsContainer(3);
+
+      const detailsElement: HTMLElement =
+          fourthRowDetailsContainer.firstChild as HTMLElement;
+      assert(!!detailsElement,
+          'fourth item should have details element');
+      assert(fourthRowDetailsContainer.getAttribute('hidden') == null,
+          'fourth details container should be visible');
+    });
+
+    it('should not show details for previously selected item ' +
+        'in single-select mode', () => {
+      testFixture.inlineDetailsMode = InlineDetailsDisplay.SINGLE_SELECT;
+      const fourthRow = getRow(3);
+      const fifthRow = getRow(4);
+      const fourthDetailsContainer = getRowDetailsContainer(3);
+      const fifthDetailsContainer = getRowDetailsContainer(4);
+      fourthRow.click();
+
+      fifthRow.click();
+      assert(fourthDetailsContainer.getAttribute('hidden') != null,
+          'fourth details container should be hidden');
+      assert(fifthDetailsContainer.getAttribute('hidden') == null,
+          'fifth details container should be visible');
+    });
+
+    it('should not show any details when multiple items selected ' +
+        'in single-select mode', () => {
+      testFixture.inlineDetailsMode = InlineDetailsDisplay.SINGLE_SELECT;
+      const fourthRow = getRow(3);
+      const fifthCheckbox = getCheckbox(4);
+      const fourthDetailsContainer = getRowDetailsContainer(3);
+      const fifthDetailsContainer = getRowDetailsContainer(4);
+      fourthRow.click();
+
+      fifthCheckbox.click();
+      assert(fourthDetailsContainer.getAttribute('hidden') != null,
+          'fourth details container should be hidden');
+      assert(fifthDetailsContainer.getAttribute('hidden') != null,
+          'fifth details container should be hidden');
+    });
+
+    it('should show details for multiple selected items ' +
+        'in multi-select mode', () => {
+      testFixture.inlineDetailsMode = InlineDetailsDisplay.MULTIPLE_SELECT;
+      const fourthRow = getRow(3);
+      const fifthCheckbox = getCheckbox(4);
+      const fourthDetailsContainer = getRowDetailsContainer(3);
+      const fifthDetailsContainer = getRowDetailsContainer(4);
+      fourthRow.click();
+      fifthCheckbox.click();
+
+      assert(fourthDetailsContainer.getAttribute('hidden') == null,
+          'fourth details container should be visible');
+      assert(fifthDetailsContainer.getAttribute('hidden') == null,
+          'fifth details container should be visible');
+
+      fifthCheckbox.click();
+      assert(fourthDetailsContainer.getAttribute('hidden') == null,
+          'fourth details container should be visible');
+      assert(fifthDetailsContainer.getAttribute('hidden') != null,
+          'fifth details container should be hidden');
+    });
+  });
 });

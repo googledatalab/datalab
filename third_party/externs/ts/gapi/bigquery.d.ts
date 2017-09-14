@@ -82,7 +82,7 @@ declare namespace gapi.client {
     }
 
     interface TabledataRowColumn {
-      v: object;
+      v: any;
     }
 
     interface TabledataRow {

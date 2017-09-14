@@ -41,6 +41,7 @@ class TableInlineDetailsElement extends Polymer.Element {
   static get properties() {
     return {
       _rows: {
+        notify: true, // For unit tests
         type: Object,
         value: null,
       },
