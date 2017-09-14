@@ -24,11 +24,6 @@ class TableInlineDetailsElement extends Polymer.Element {
    */
   public file: BigQueryFile;
 
-  /**
-   * Id for table whose inline-details to show.
-   */
-  public tableId: string;
-
   private _apiManager: ApiManager;
   private _fileManager: FileManager;
   private _rows: gapi.client.bigquery.TabledataRow[];
@@ -59,11 +54,6 @@ class TableInlineDetailsElement extends Polymer.Element {
         type: Object,
         value: {},
       },
-      tableId: {
-        observer: '_tableIdChanged',
-        type: String,
-        value: '',
-      },
     };
   }
 
@@ -75,23 +65,14 @@ class TableInlineDetailsElement extends Polymer.Element {
   }
 
   _fileChanged() {
-    if (this.file && this.file.id) {
-      // TODO(jimmc) - move this into BigQueryFile?
-      const path = this.file.id.path;
-      const parts = path.split('/');
-      this.tableId = parts[0] + ':' + parts[1] + '.' + parts[2];
-    } else {
-      this.tableId = '';
-    }
-  }
+    const path = this.file && this.file.id && this.file.id.path;
+    const pathParts = path ? path.split('/') : [];
 
-  _tableIdChanged() {
-    const matches = this.tableId.match(/^(.*):(.*)\.(.*)$/);
-    if (matches && matches.length === 4) { // The whole string is matched as first result
+    if (pathParts.length === 3) {
       this._busy = true;
-      const projectId = matches[1];
-      const datasetId = matches[2];
-      const tableId = matches[3];
+      const projectId = pathParts[0];
+      const datasetId = pathParts[1];
+      const tableId = pathParts[2];
 
       GapiManager.bigquery.getTableDetails(projectId, datasetId, tableId)
         .then((response: HttpResponse<gapi.client.bigquery.Table>) => {

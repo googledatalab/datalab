@@ -68,6 +68,16 @@ describe('<table-inline-details>', () => {
     totalRows: 0,
   };
 
+  const fileForTableId = (tableId: string) => {
+    return new BigQueryFile({
+      icon: '',
+      id: new DatalabFileId(tableId, FileManagerType.BIG_QUERY),
+      name: '/',
+      status: DatalabFileStatus.IDLE,
+      type: DatalabFileType.FILE,
+    } as DatalabFile);
+  };
+
   /**
    * Rows must be recreated on each test with the fixture, to avoid state leakage.
    */
@@ -94,7 +104,6 @@ describe('<table-inline-details>', () => {
     };
 
     testFixture = fixture('table-inline-details-fixture');
-    testFixture.tableId = '';
     Polymer.dom.flush();
   });
 
@@ -127,7 +136,7 @@ describe('<table-inline-details>', () => {
       done();
     });
 
-    testFixture.tableId = 'pid:did.tid';
+    testFixture.file = fileForTableId('pid/did/tid');
   });
 
   it('loads the table data', (done: () => null) => {
@@ -154,7 +163,7 @@ describe('<table-inline-details>', () => {
       done();
     });
 
-    testFixture.tableId = 'pid:did.tid';
+    testFixture.file = fileForTableId('pid/did/tid');
   });
 
   // TODO - after we figure out how we should deal with errors,
