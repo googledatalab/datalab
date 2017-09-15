@@ -317,6 +317,7 @@ describe('<item-list>', () => {
       const firstRow = getRow(0);
       const firstRowDetailsContainer = getRowDetailsContainer(0);
       firstRow.click();
+      Polymer.dom.flush();
 
       assert(!firstRowDetailsContainer.firstChild,
           'first item should not show details when clicked');
@@ -327,6 +328,7 @@ describe('<item-list>', () => {
       const fourthRow = getRow(3);
       const fourthRowDetailsContainer = getRowDetailsContainer(3);
       fourthRow.click();
+      Polymer.dom.flush();
 
       const detailsElement: HTMLElement =
           fourthRowDetailsContainer.firstChild as HTMLElement;
@@ -341,6 +343,7 @@ describe('<item-list>', () => {
       const fourthRow = getRow(3);
       const fourthRowDetailsContainer = getRowDetailsContainer(0);
       fourthRow.click();
+      Polymer.dom.flush();
 
       assert(!fourthRowDetailsContainer.firstChild,
           'fourth item should not create details element when clicked');
@@ -356,6 +359,7 @@ describe('<item-list>', () => {
       // behavior so that it figures out in advance that it should show
       // all the details.
       testFixture._unselectAll();   // Recalculate details display for all items
+      Polymer.dom.flush();
       const fourthRowDetailsContainer = getRowDetailsContainer(3);
       const fifthRowDetailsContainer = getRowDetailsContainer(3);
 
@@ -382,8 +386,9 @@ describe('<item-list>', () => {
       const fourthDetailsContainer = getRowDetailsContainer(3);
       const fifthDetailsContainer = getRowDetailsContainer(4);
       fourthRow.click();
-
       fifthRow.click();
+      Polymer.dom.flush();
+
       assert(fourthDetailsContainer.getAttribute('hidden') != null,
           'fourth details container should be hidden');
       assert(fifthDetailsContainer.getAttribute('hidden') == null,
@@ -398,8 +403,9 @@ describe('<item-list>', () => {
       const fourthDetailsContainer = getRowDetailsContainer(3);
       const fifthDetailsContainer = getRowDetailsContainer(4);
       fourthRow.click();
-
       fifthCheckbox.click();
+      Polymer.dom.flush();
+
       assert(fourthDetailsContainer.getAttribute('hidden') != null,
           'fourth details container should be hidden');
       assert(fifthDetailsContainer.getAttribute('hidden') != null,
@@ -415,6 +421,7 @@ describe('<item-list>', () => {
       const fifthDetailsContainer = getRowDetailsContainer(4);
       fourthRow.click();
       fifthCheckbox.click();
+      Polymer.dom.flush();
 
       assert(fourthDetailsContainer.getAttribute('hidden') == null,
           'fourth details container should be visible');
@@ -422,6 +429,8 @@ describe('<item-list>', () => {
           'fifth details container should be visible');
 
       fifthCheckbox.click();
+      Polymer.dom.flush();
+
       assert(fourthDetailsContainer.getAttribute('hidden') == null,
           'fourth details container should be visible');
       assert(fifthDetailsContainer.getAttribute('hidden') != null,
