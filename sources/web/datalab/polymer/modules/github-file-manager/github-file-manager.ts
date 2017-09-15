@@ -17,7 +17,11 @@
  * as documented at developer.github.com/v3.
  */
 
-// TODO(jimmc) - handle paged results
+// TODO(jimmc): Need to deal with the following
+// paged results (default page size is 30, can request up to 100)
+// error conditions
+// rate limiting (default is 60 per hour)
+// size and dates for display in file browser (once it can do that)
 
 class GithubFile extends DatalabFile {}
 
@@ -277,6 +281,8 @@ class GithubFileManager implements FileManager {
   }
 }
 
+// TODO(jimmc): See if we can drop this class as part of moving
+// back towards having just one ApiManager.
 // We just want the sendRequestAsync method of BaseApimanager.
 class GithubApiManager extends BaseApiManager {
   // We don't care about this method, but it is abstract in the base class.
