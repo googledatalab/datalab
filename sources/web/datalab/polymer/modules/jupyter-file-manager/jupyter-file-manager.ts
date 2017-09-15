@@ -179,35 +179,24 @@ class JupyterFileManager implements FileManager {
   }
 
   public async list(containerId: DatalabFileId): Promise<DatalabFile[]> {
-    const filesPromise = this._getFileWithContent(containerId.path)
-      .then((container) => {
-        if (container.type !== 'directory') {
-          throw new Error('Can only list files in a directory. Found type: ' +
-              typeof(container.type));
-        }
-        return container.content;
-      });
-
-    const sessionsPromise: Promise<Session[]> = SessionManager.listSessionsAsync();
+    const [container, sessions] = await Promise.all([
+      this._getFileWithContent(containerId.path),
+      SessionManager.listSessionPaths(),
+    ]);
+    if (container.type !== 'directory') {
+      throw new Error('Can only list files in a directory. Found type: ' +
+          typeof(container.type));
+    }
 
     // Combine the return values of the two requests to supplement the files
     // array with the status value.
-    return Promise.all([filesPromise, sessionsPromise])
-      .then((values) => {
-        const files = values[0];
-        const sessions = values[1];
-        const runningPaths: string[] = [];
-        // TODO: Generalize checking the file status by looking up its file id.
-        sessions.forEach((session: Session) => {
-          runningPaths.push(session.notebook.path);
-        });
-        return files.map((file: any) => {
-          const jupyterFile = JupyterFileManager._upstreamFileToJupyterFile(file);
-          jupyterFile.status = runningPaths.indexOf(jupyterFile.path) > -1 ?
-              DatalabFileStatus.RUNNING : DatalabFileStatus.IDLE;
-          return jupyterFile;
-        });
-      });
+    const files = container.content;
+    return files.map((file: any) => {
+      const jupyterFile = JupyterFileManager._upstreamFileToJupyterFile(file);
+      jupyterFile.status = sessions.indexOf(jupyterFile.path) > -1 ?
+          DatalabFileStatus.RUNNING : DatalabFileStatus.IDLE;
+      return jupyterFile;
+    });
   }
 
   public create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string) {
