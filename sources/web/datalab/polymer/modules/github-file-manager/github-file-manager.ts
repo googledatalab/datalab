@@ -59,12 +59,10 @@ class GithubFileManager implements FileManager {
   private _githubApiManager: GithubApiManager;
 
   public get(fileId: DatalabFileId): Promise<DatalabFile> {
-    const pathParts = fileId.path.split('/').filter((part) => !!part);
-    if (pathParts.length === 0) {
+    if (fileId.path === '' || fileId.path === '/') {
       return Promise.resolve(this._ghRootDatalabFile());
     }
-    const githubPath = '/repos/' + pathParts.slice(0,2).join('/') +
-        '/contents/' + pathParts.slice(2).join('/');
+    const githubPath = this._githubPathForFileId(fileId, 'get');
     return this._githubApiPathRequest(githubPath)
         .then((response: GhFileResponse) => {
           return this._ghFileToDatalabFile(response);
@@ -73,9 +71,7 @@ class GithubFileManager implements FileManager {
 
   public getStringContent(fileId: DatalabFileId, _asText?: boolean):
       Promise<string> {
-    const pathParts = fileId.path.split('/').filter((part) => !!part);
-    const githubPath = '/repos/' + pathParts.slice(0,2).join('/') +
-        '/contents/' + pathParts.slice(2).join('/');
+    const githubPath = this._githubPathForFileId(fileId, 'getStringContent');
     return this._githubApiPathRequest(githubPath)
         .then((response: GhFileResponse) => {
           return this._ghFileToContentString(response);
@@ -95,6 +91,8 @@ class GithubFileManager implements FileManager {
     if (pathParts.length === 0) {
       // No org/user specified. This would mean we should list all of them,
       // but we know that's too many, so we return an empty list.
+      // TODO(jimmc): After fixing file-browser to handle throwing an error
+      // here, do that instead.
       return Promise.resolve([]);
     } else if (pathParts.length === 1) {
       // Only the username or org was specified, list their repos
@@ -152,8 +150,22 @@ class GithubFileManager implements FileManager {
     return files;
   }
 
-  // We don't know if the tyep of the item is actually a directory without
+  private _githubPathForFileId(fileId: DatalabFileId, op: string): string {
+    const pathParts = fileId.path.split('/').filter((part) => !!part);
+    if (pathParts.length === 0) {
+      throw new Error(op + ' on github root is not allowed');
+    } else if (pathParts.length === 1) {
+      throw new Error(op + ' on a github user is not allowed');
+    }
+    const githubPath = '/repos/' + pathParts.slice(0,2).join('/') +
+        '/contents/' + pathParts.slice(2).join('/');
+    return githubPath;
+  }
+
+  // We don't know if the type of the item is actually a directory without
   // querying the github API, so we assume every component is a dir.
+  // TODO(jimmc): update pathToPathHistory to query github for the last
+  // component on the list to see whether it is a file or directory.
   private _ghPathPartsToDatalabFile(parts: string[]): DatalabFile {
     const path = parts.join('/');
     return new GithubFile({
@@ -171,7 +183,12 @@ class GithubFileManager implements FileManager {
     const options: XhrOptions = {
       headers: {
         'Accept': 'application/vnd.github.v3+json',
-        'User-Agent': 'googledatalab-datalab-app',
+        // The github docs request that we set User-Agent so they can tell
+        // what code is sending the API request, but Chrome doesn't let us
+        // do that, and the list of Access-Control-Allow-Headers from
+        // the preflight to api.github.com pretty much means the only
+        // header we can use for this is X-Requested-With.
+        'X-Requested-With': 'XMLHttpRequest; googledatalab-datalab-app',
       },
     };
     return this._getGithubApiManager().sendRequestAsync(restUrl, options, false);
@@ -191,7 +208,7 @@ class GithubFileManager implements FileManager {
       id: new DatalabFileId(path, FileManagerType.GITHUB),
       name: '/',
       status: DatalabFileStatus.IDLE,
-      type: DatalabFileType.FILE,
+      type: DatalabFileType.DIRECTORY,
     } as DatalabFile);
   }
 
@@ -262,6 +279,7 @@ class GithubFileManager implements FileManager {
 
 // We just want the sendRequestAsync method of BaseApimanager.
 class GithubApiManager extends BaseApiManager {
+  // We don't care about this method, but it is abstract in the base class.
   getBasePath() {
     return Promise.resolve('');
   }
