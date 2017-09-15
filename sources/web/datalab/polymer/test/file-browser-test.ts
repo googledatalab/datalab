@@ -12,6 +12,8 @@
  * the License.
  */
 
+class MockDatalabFile extends DatalabFile {}
+
 class MockFileManager implements FileManager {
   public get(_fileId: DatalabFileId): Promise<DatalabFile> {
     throw new UnsupportedMethod('get', this);
@@ -20,12 +22,12 @@ class MockFileManager implements FileManager {
     throw new UnsupportedMethod('getContent', this);
   }
   public async getRootFile() {
-    const file: DatalabFile = {
+    const file: DatalabFile = new MockDatalabFile({
       icon: '/',
       id: new DatalabFileId('/', FileManagerType.JUPYTER),
       name: 'root',
       type: DatalabFileType.DIRECTORY,
-    } as DatalabFile;
+    } as DatalabFile);
     return file;
   }
   public saveText(_file: DatalabFile, _content: string): Promise<DatalabFile> {
@@ -55,9 +57,9 @@ class MockFileManager implements FileManager {
     throw new UnsupportedMethod('getEditorUrl', this);
   }
   public pathToPathHistory(path: string): DatalabFile[] {
-    const datalabFile = {
+    const datalabFile = new MockDatalabFile({
       id: new DatalabFileId(path, FileManagerType.JUPYTER),
-    } as DatalabFile;
+    } as DatalabFile);
     return [datalabFile];
   }
 }
@@ -66,27 +68,28 @@ describe('<file-browser>', () => {
   let testFixture: FileBrowserElement;
   const startuppath = new DatalabFileId('testpath', FileManagerType.JUPYTER);
 
-  const mockFiles: DatalabFile[] = [{
+  const mockFiles: DatalabFile[] = [
+    new MockDatalabFile({
       icon: '',
       id: new DatalabFileId('', FileManagerType.JUPYTER),
       name: 'file1',
       status: DatalabFileStatus.IDLE,
       type: DatalabFileType.DIRECTORY,
-    } as DatalabFile,
-    {
+    } as DatalabFile),
+    new MockDatalabFile({
       icon: '',
       id: new DatalabFileId('', FileManagerType.JUPYTER),
       name: 'file2',
       status: DatalabFileStatus.IDLE,
       type: DatalabFileType.DIRECTORY,
-    } as DatalabFile,
-    {
+    } as DatalabFile),
+    new MockDatalabFile({
       icon: '',
       id: new DatalabFileId('', FileManagerType.JUPYTER),
       name: 'file3',
       status: DatalabFileStatus.RUNNING,
       type: DatalabFileType.DIRECTORY,
-    } as DatalabFile,
+    } as DatalabFile),
   ];
 
   before(() => {

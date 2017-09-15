@@ -20,6 +20,13 @@ type ProjectResource = gapi.client.bigquery.ProjectResource;
 type TableResource = gapi.client.bigquery.TableResource;
 
 class BigQueryFile extends DatalabFile {
+  public getInlineDetailsName(): string {
+    if (this.type === DatalabFileType.FILE) {
+      return 'table';
+    }
+    return '';
+  }
+
   public getPreviewName(): string {
     if (this.type === DatalabFileType.FILE) {
       return 'table';

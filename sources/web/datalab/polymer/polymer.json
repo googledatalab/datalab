@@ -10,6 +10,7 @@
     "components/datalab-toolbar/datalab-toolbar.html",
     "components/file-browser/file-browser.html",
     "components/notebook-preview/notebook-preview.html",
+    "components/table-inline-details/table-inline-details.html",
     "components/table-preview/table-preview.html",
     "components/text-preview/text-preview.html"
   ],

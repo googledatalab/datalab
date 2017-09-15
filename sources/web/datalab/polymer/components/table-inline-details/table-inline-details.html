@@ -1,0 +1,79 @@
+<!--
+Copyright 2017 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License
+is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+or implied. See the License for the specific language governing permissions and limitations under
+the License.
+-->
+
+<link rel="import" href="../../components/shared-styles/shared-styles.html">
+<link rel="import" href="../../modules/api-manager-factory/api-manager-factory.html">
+<link rel="import" href="../../modules/file-manager-factory/file-manager-factory.html">
+<link rel="import" href="../../modules/template-manager/template-manager.html">
+<link rel="import" href="../../modules/utils/utils.html">
+
+<link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
+
+<dom-module id="table-inline-details">
+  <template>
+    <style include="datalab-shared-styles">
+      #placeholder {
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      #container {
+        padding: 0px 20px;
+        height: 100%;
+        overflow-y: auto;
+        color: var(--primary-fg-color);
+      }
+      table {
+        border-spacing: 1px;
+        padding: 0 0 4px 0;
+        width: 100%;
+      }
+      th.field {
+        padding: 10px;
+        background-color: var(--secondary-bg-color);
+        font-weight: bold;
+      }
+      td.field {
+        padding: 10px;
+        background-color: var(--secondary-bg-color);
+      }
+    </style>
+    <div id="placeholder" hidden$={{_table}}>
+      <paper-spinner active hidden$={{!_busy}}></paper-spinner>
+    </div>
+    <div id="container" hidden$={{!_table}}>
+      <table id="tabledata">
+        <tr class="header">
+          <template is="dom-repeat" items={{_schemaFields}} as="field">
+            <th class="field">
+              <span class="field-name">{{field.name}}</span><br>
+              <span class="field-type">{{field.type}}</span>
+            </th>
+          </template>
+        </tr>
+        <template is="dom-repeat" items={{_rows}} as="row">
+          <tr class="data">
+            <template is="dom-repeat" items={{row.f}} as="field">
+              <td class="field">{{field.v}}</td>
+            </template>
+          </tr>
+        </template>
+      </table>
+
+    </div>
+  </template>
+</dom-module>
+
+<script src="table-inline-details.js"></script>

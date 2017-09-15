@@ -105,6 +105,15 @@ class Utils {
   }
 
   /**
+   * Deletes all child elements of an element.
+   */
+  public static deleteAllChildren(parent: HTMLElement) {
+    while (parent.firstChild) {
+      parent.removeChild(parent.firstChild);
+    }
+  }
+
+  /**
    * Moves all child elements from one element to another.
    * @param from element whose children to move
    * @param to destination elements where children will be moved to
@@ -155,6 +164,32 @@ class Utils {
     return location.protocol + '//' + location.host + Utils.uiroot;
   }
   static uiroot = '';   // Gets set to "/exp"
+
+  /**
+   * Flattens a BigQuery table schema
+   */
+  public static flattenFields(fields: gapi.client.bigquery.Field[]) {
+    const flatFields: gapi.client.bigquery.Field[] = [];
+    fields.forEach((field) => {
+
+      // First push the record field itself
+      flatFields.push(field);
+
+      // Then flatten it and push its children
+      if (field.type === 'RECORD' && field.fields) {
+        // Make sure we copy the flattened nested fields before modifying their
+        // name to prepend the parent field name. This way the original name in
+        // the schema object does not change.
+        const nestedFields = [...Utils.flattenFields(field.fields)];
+        nestedFields.forEach((f) => {
+          const flat = {...f};
+          flat.name = field.name + '.' + f.name;
+          flatFields.push(flat);
+        });
+      }
+    });
+    return flatFields;
+  }
 }
 
 class UnsupportedMethod extends Error {

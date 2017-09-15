@@ -19,23 +19,19 @@ the License.
 
     <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
     <script src="../../web-component-tester/browser.js"></script>
-    <script src="test-utils.js"></script>
+
+    <link rel="import" href="../components/table-inline-details/table-inline-details.html">
+    <link rel="import" href="../modules/gapi-manager/gapi-manager.html">
   </head>
   <body>
-    <script>
-      // Load and run all tests (.html, .js). Keep element tests in HTML files so we
-      // can use fixtures, and keep all other tests in javascript files
-      WCT.loadSuites([
-        'datalab-toolbar-test.html',
-        'file-browser-test.html',
-        'item-list-test.html',
-        'resizable-divider-test.html',
-        'settings-manager-test.html',
-        'table-inline-details-test.html',
-        'table-preview-test.html',
-        'timeout-manager-test.html',
-        'timeout-panel-test.html',
-      ]);
-    </script>
+
+    <test-fixture id="table-inline-details-fixture">
+      <template>
+        <table-inline-details></table-inline-details>
+      </template>
+    </test-fixture>
+
+    <script src="table-inline-details-test.js"></script>
+
   </body>
 </html>

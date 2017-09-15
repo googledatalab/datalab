@@ -8,6 +8,10 @@ declare namespace gapi.client {
       list: (request?: ListProjectsRequest) => HttpRequest<ListProjectsResponse>;
     }
 
+    const tabledata: {
+      list: (request?: ListTabledataRequest) => HttpRequest<ListTabledataResponse>;
+    }
+
     const tables: {
       list: (request?: ListTablesRequest) => HttpRequest<ListTablesResponse>;
       get: (request?: GetTableRequest) => HttpRequest<Table>;
@@ -57,6 +61,16 @@ declare namespace gapi.client {
       totalItems: number;
     }
 
+    interface ListTabledataRequest {
+      datasetId: string;
+      maxResults?: number;  // unsigned integer
+      pageToken?: string;
+      projectId: string;
+      selectedFields?: string;  // comma-separated
+      startIndex?: number;  // zero-based unsigned long
+      tableId: string;
+    }
+
     interface ListTablesRequest {
       projectId: string;
     }
@@ -65,6 +79,22 @@ declare namespace gapi.client {
       datasetId: string;
       projectId: string;
       tableId: string;
+    }
+
+    interface TabledataRowColumn {
+      v: any;
+    }
+
+    interface TabledataRow {
+      f: TabledataRowColumn[];
+    }
+
+    interface ListTabledataResponse {
+      kind: string;   // Should always be "bigquery#tableDataList"
+      etag: string;
+      pageToken: string;
+      rows: TabledataRow[];
+      totalRows: number;  // total number of rows in the table (long)
     }
 
     interface ListTablesResponse {
