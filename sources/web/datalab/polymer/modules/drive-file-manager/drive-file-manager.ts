@@ -97,13 +97,17 @@ class DriveFileManager implements FileManager {
     // and sessions and build the resulting DatalabFile list.
     const [upstreamFiles, sessions] = await Promise.all([
       GapiManager.drive.listFiles(fileFields, queryPredicates, orderModifiers),
-      SessionManager.listSessionPaths(),
+      SessionManager.listSessionPaths()
+        .catch((e) => {
+          Utils.log.error('Could not load sessions: ' + e.message);
+          return [];
+        }),
     ]);
     // Combine the return values of the two requests to supplement the files
     // array with the status value.
     return upstreamFiles.map((file) => {
       const driveFile = DriveFileManager._upstreamToDriveFile(file);
-      driveFile.status = sessions.indexOf(driveFile.id.path) > -1 ?
+      driveFile.status = (sessions as string[]).indexOf(driveFile.id.path) > -1 ?
           DatalabFileStatus.RUNNING : DatalabFileStatus.IDLE;
       return driveFile;
     });
