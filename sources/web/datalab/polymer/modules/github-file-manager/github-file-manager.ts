@@ -223,7 +223,12 @@ class GithubFileManager implements FileManager {
 
   private _ghDirEntriesResponseToDatalabFiles(response: GhDirEntryResponse[]):
       DatalabFile[] {
-    return response.map(file => this._ghDirEntryToDatalabFile(file));
+    return response.filter((file) =>
+      file.name.endsWith('.ipynb') ||
+      file.name.endsWith('.txt') ||
+      file.type === 'dir'
+    )
+    .map((file) => this._ghDirEntryToDatalabFile(file));
   }
 
   private _ghRepoToDatalabFile(repo: GhRepoResponse): DatalabFile {
