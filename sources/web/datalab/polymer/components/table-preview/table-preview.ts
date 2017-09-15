@@ -149,31 +149,8 @@ class TablePreviewElement extends Polymer.Element {
 
   // TODO: Consider adding expanders and nested tables to make the schema viewer
   // narrower
-  _flattenFields(fields: gapi.client.bigquery.Field[]) {
-    const flatFields: gapi.client.bigquery.Field[] = [];
-    fields.forEach((field) => {
-
-      // First push the record field itself
-      flatFields.push(field);
-
-      // Then flatten it and push its children
-      if (field.type === 'RECORD' && field.fields) {
-        // Make sure we copy the flattened nested fields before modifying their
-        // name to prepend the parent field name. This way the original name in
-        // the schema object does not change.
-        const nestedFields = [...this._flattenFields(field.fields)];
-        nestedFields.forEach((f) => {
-          const flat = {...f};
-          flat.name = field.name + '.' + f.name;
-          flatFields.push(flat);
-        });
-      }
-    });
-    return flatFields;
-  }
-
   _computeSchemaFields(table: gapi.client.bigquery.Table | null) {
-    return table ? this._flattenFields(table.schema.fields) : [];
+    return table ? Utils.flattenFields(table.schema.fields) : [];
   }
 
   _computeTableSize(table: gapi.client.bigquery.Table | null) {
