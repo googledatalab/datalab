@@ -88,7 +88,7 @@ class DriveFileManager implements FileManager {
     ];
     const orderModifiers = [
       'folder',
-      'modifiedTime',
+      'modifiedTime desc',
       'name',
     ];
     const upstreamFiles =
