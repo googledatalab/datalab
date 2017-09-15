@@ -40,15 +40,11 @@ interface Session {
 class SessionManager {
 
   /**
-   * Returns a list of currently running sessions, each implementing the Session interface
+   * Returns a list of currently running session paths.
    */
-  public static listSessionsAsync(): Promise<Session[]> {
-    const apiManager = ApiManagerFactory.getInstance();
-    const xhrOptions: XhrOptions = {
-      noCache: true,
-    };
-    return apiManager.sendRequestAsync(apiManager.getServiceUrl(ServiceId.SESSIONS),
-        xhrOptions) as Promise<Session[]>;
+  public static listSessionPaths(): Promise<string[]> {
+    return this.listSessionsAsync()
+      .then((sessions: Session[]) => sessions.map((s) => s.notebook.path));
   }
 
   /**
@@ -62,6 +58,18 @@ class SessionManager {
     };
     return apiManager.sendRequestAsync(
         apiManager.getServiceUrl(ServiceId.SESSIONS) + '/' + sessionId, xhrOptions);
+  }
+
+  /**
+   * Returns a list of currently running Session objects.
+   */
+  public static listSessionsAsync(): Promise<Session[]> {
+    const apiManager = ApiManagerFactory.getInstance();
+    const xhrOptions: XhrOptions = {
+      noCache: true,
+    };
+    return apiManager.sendRequestAsync(apiManager.getServiceUrl(ServiceId.SESSIONS),
+        xhrOptions) as Promise<Session[]>;
   }
 
 }

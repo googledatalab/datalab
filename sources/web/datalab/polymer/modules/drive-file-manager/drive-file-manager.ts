@@ -91,11 +91,22 @@ class DriveFileManager implements FileManager {
       'modifiedTime desc',
       'name',
     ];
-    const upstreamFiles =
-        await GapiManager.drive.listFiles(fileFields, queryPredicates, orderModifiers);
-    // TODO: Check which files are running from the SessionsManager and modify
-    // their status accordingly.
-    return upstreamFiles.map((file) => DriveFileManager._upstreamToDriveFile(file));
+
+    // TODO: Put this code in a common place, instead of doing this for every
+    // file manager. Perhaps a base file manager should get the list of files
+    // and sessions and build the resulting DatalabFile list.
+    const [upstreamFiles, sessions] = await Promise.all([
+      GapiManager.drive.listFiles(fileFields, queryPredicates, orderModifiers),
+      SessionManager.listSessionPaths(),
+    ]);
+    // Combine the return values of the two requests to supplement the files
+    // array with the status value.
+    return upstreamFiles.map((file) => {
+      const driveFile = DriveFileManager._upstreamToDriveFile(file);
+      driveFile.status = sessions.indexOf(driveFile.id.path) > -1 ?
+          DatalabFileStatus.RUNNING : DatalabFileStatus.IDLE;
+      return driveFile;
+    });
   }
 
   public async create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string)
@@ -145,7 +156,7 @@ class DriveFileManager implements FileManager {
   }
 
   public pathToPathHistory(path: string): DatalabFile[] {
-    if (path == '') {
+    if (path === '') {
       return [];
     } else {
       // TODO - create the real path to this object, or figure out

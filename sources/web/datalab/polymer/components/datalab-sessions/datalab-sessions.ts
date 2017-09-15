@@ -59,7 +59,7 @@ class SessionsElement extends Polymer.Element implements DatalabPageElement {
   ready() {
     super.ready();
 
-    (this.$.sessions as ItemListElement).columns = ['Session Path', 'Status'];
+    (this.$.sessions as ItemListElement).columns = ['Session Path', 'Kernel'];
 
     const sessionsElement = this.shadowRoot.querySelector('#sessions');
     if (sessionsElement) {
@@ -82,7 +82,7 @@ class SessionsElement extends Polymer.Element implements DatalabPageElement {
 
     (this.$.sessions as ItemListElement).rows = this._sessionList.map((session) => {
       return new ItemListRow({
-          columns: [session.notebook.path, ''],
+          columns: [session.notebook.path, session.kernel.name],
           icon: 'editor:insert-drive-file',
       });
     });
