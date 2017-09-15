@@ -70,6 +70,11 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    */
   public small: boolean;
 
+  /**
+   * Number of leading breadcrumbs to trim.
+   */
+  public nLeadingBreadcrumbsToTrim: number;
+
   private _addToolbarCollapseThreshold = 900;
   private _apiManager: ApiManager;
   private _canPreview = false;
@@ -147,6 +152,10 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         type: Boolean,
         value: false,
       },
+      nLeadingBreadcrumbsToTrim: {
+        type: Number,
+        value: 0,
+      },
       selectedFile: {
         type: Object,
         value: null,
@@ -177,10 +186,12 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
     this.$.breadCrumbs.addEventListener('crumbClicked', (e: ItemClickEvent) => {
       // Take the default root file into account, increment clicked index by one.
-      this._pathHistoryIndex = e.detail.index + 1;
+      // If there are any leading breadcrumbs we trimmed, add that number back.
+      this._pathHistoryIndex = e.detail.index + 1 + this.nLeadingBreadcrumbsToTrim;
     });
     this.$.breadCrumbs.addEventListener('rootClicked', () => {
-      this._pathHistoryIndex = 0;
+      // If there are any leading breadcrumbs we trimmed, add that number back.
+      this._pathHistoryIndex = 0 + this.nLeadingBreadcrumbsToTrim;
     });
 
     this._apiManager = ApiManagerFactory.getInstance();
@@ -425,9 +436,11 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     this.$.forwardNav.disabled = this._pathHistoryIndex === this._pathHistory.length - 1;
 
     // Ignore the root file since that's shown by the crumbs element anyway,
-    // slice up till the current history index.
+    // also ignore any trimmed leading breadcrumbs. Slice up till the current
+    // history index.
+    const rootBreadcrumbs = 1 + this.nLeadingBreadcrumbsToTrim;
     this.$.breadCrumbs.crumbs =
-        this._pathHistory.slice(1, this._pathHistoryIndex + 1).map((p) => p.name);
+        this._pathHistory.slice(rootBreadcrumbs, this._pathHistoryIndex + 1).map((p) => p.name);
 
     this.currentFile = this._pathHistory[this._pathHistoryIndex];
     this._setFileIdPropertyToCurrentFile();
