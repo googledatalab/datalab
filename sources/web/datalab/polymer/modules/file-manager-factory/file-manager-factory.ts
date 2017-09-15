@@ -23,8 +23,13 @@ const FILE_MANAGER_ELEMENT = {
   },
   drive: {
     name: 'drive',
-    path: 'modules/drive-file-manager/drive-file/manager.html',
+    path: 'modules/drive-file-manager/drive-file-manager.html',
     type: DriveFileManager,
+  },
+  github: {
+    name: 'github',
+    path: 'modules/github-file-manager/github-file-manager.html',
+    type: GithubFileManager,
   },
   jupyter: {
     name: 'jupyter',
@@ -36,6 +41,7 @@ const FILE_MANAGER_ELEMENT = {
 enum FileManagerType {
   BIG_QUERY,
   DRIVE,
+  GITHUB,
   JUPYTER,
 }
 
@@ -57,6 +63,7 @@ class FileManagerFactory {
     switch (name) {
       case 'bigquery': return FileManagerType.BIG_QUERY;
       case 'drive': return FileManagerType.DRIVE;
+      case 'github': return FileManagerType.GITHUB;
       case 'jupyter': return FileManagerType.JUPYTER;
       default: throw new Error('Unknown FileManagerType name ' + name);
     }
@@ -67,6 +74,7 @@ class FileManagerFactory {
     switch (type) {
       case FileManagerType.BIG_QUERY: return 'bigquery';
       case FileManagerType.DRIVE: return 'drive';
+      case FileManagerType.GITHUB: return 'github';
       case FileManagerType.JUPYTER: return 'jupyter';
       default: throw new Error('Unknown FileManager type: ' + type);
     }
@@ -86,6 +94,7 @@ class FileManagerFactory {
     switch (fileManagerType) {
       case FileManagerType.BIG_QUERY: return FILE_MANAGER_ELEMENT.bigquery;
       case FileManagerType.DRIVE: return FILE_MANAGER_ELEMENT.drive;
+      case FileManagerType.GITHUB: return FILE_MANAGER_ELEMENT.github;
       case FileManagerType.JUPYTER: return FILE_MANAGER_ELEMENT.jupyter;
       default: throw new Error('Unknown FileManagerType');
     }
