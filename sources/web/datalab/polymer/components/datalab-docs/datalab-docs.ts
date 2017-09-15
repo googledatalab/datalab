@@ -16,7 +16,7 @@
 /// <reference path="../item-list/item-list.ts" />
 
 /**
- * Data Browser element for Datalab.
+ * Docs element for Datalab.
  */
 class DatalabDocsElement extends Polymer.Element implements DatalabPageElement {
 
