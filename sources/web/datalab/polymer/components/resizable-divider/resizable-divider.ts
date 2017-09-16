@@ -29,6 +29,11 @@ class ResizableDividerElement extends Polymer.Element {
   public dividerPosition = 50;
 
   /**
+   * Set to true to completely disable the right-hand pane and the divider.
+   */
+  public disableRight: boolean;
+
+  /**
    * Set to true to hide the right-hand pane.
    */
   public hideRight: boolean;
@@ -45,6 +50,11 @@ class ResizableDividerElement extends Polymer.Element {
 
   static get properties() {
     return {
+      disableRight: {
+        observer: '_disableRightChanged',
+        type: Boolean,
+        value: false,
+      },
       dividerPosition: {
         notify: true,
         observer: '_dividerPositionChanged',
@@ -108,6 +118,17 @@ class ResizableDividerElement extends Polymer.Element {
     // Let observer call _dividerPositionChanged
   }
 
+  _disableRightChanged(_: boolean, oldValue: boolean) {
+    if (oldValue === undefined) {
+      return;   // Ignore during initialization
+    }
+    if (this.disableRight) {
+      this.hideRight = true;
+      this.dividerPosition = 100;
+    }
+    this._dividerPositionChanged();
+  }
+
   /**
    * Calculate the new divider position after hideRight changes.
    */
@@ -136,7 +157,8 @@ class ResizableDividerElement extends Polymer.Element {
   _dividerPositionChanged() {
     const container = this.$.container as HTMLDivElement;
     const containerRect = container.getBoundingClientRect();
-    const widthMinusDivider = containerRect.width - this._dividerWidth;
+    const dividerWidth = this.disableRight ? 0 : this._dividerWidth;
+    const widthMinusDivider = containerRect.width - dividerWidth;
     const dividerPosition =
         this.dividerPosition > -1 ? this.dividerPosition : 50;
     const newPos =
@@ -146,7 +168,7 @@ class ResizableDividerElement extends Polymer.Element {
     const rightPane = this.$.rightPane as HTMLDivElement;
 
     let newLeftPaneWidth = newPos - containerRect.left;
-    let newRightPaneWidth = containerRect.right - newPos - this._dividerWidth;
+    let newRightPaneWidth = containerRect.right - newPos - dividerWidth;
 
     // If either pane is getting too small, make it minimum width
     // TODO: Check whether minimum width makes sense here, and bail out if it's
@@ -154,17 +176,17 @@ class ResizableDividerElement extends Polymer.Element {
     if (newLeftPaneWidth > 0 && newLeftPaneWidth < this.minimumWidthPx) {
       newLeftPaneWidth = this.minimumWidthPx;
       newRightPaneWidth =
-          containerRect.width - newLeftPaneWidth - this._dividerWidth;
+          containerRect.width - newLeftPaneWidth - dividerWidth;
     } else if (newRightPaneWidth > 0 && newRightPaneWidth < this.minimumWidthPx) {
       newRightPaneWidth = this.minimumWidthPx;
       newLeftPaneWidth =
-          containerRect.width - newRightPaneWidth - this._dividerWidth;
+          containerRect.width - newRightPaneWidth - dividerWidth;
     }
 
     leftPane.style.width = newLeftPaneWidth + 'px';
     divider.style.left = leftPane.style.width;
     rightPane.style.width = newRightPaneWidth + 'px';
-    rightPane.style.left = (newLeftPaneWidth + this._dividerWidth) + 'px';
+    rightPane.style.left = (newLeftPaneWidth + dividerWidth) + 'px';
   }
 
 }

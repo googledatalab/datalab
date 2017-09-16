@@ -71,7 +71,7 @@ the License.
         <slot name="left"></slot>
       </div>
 
-      <div id="divider" on-mousedown="{{_mouseDownHandler}}"></div>
+      <div id="divider" on-mousedown="{{_mouseDownHandler}}" hidden$="{{disableRight}}"></div>
 
       <div id="rightPane" class="pane right">
         <slot name="right"></slot>
