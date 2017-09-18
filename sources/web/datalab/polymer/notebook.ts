@@ -31,7 +31,7 @@ const CommandId = {
 
 interface IframeMessage {
   command?: string;
-  arguments: any;
+  arguments?: any;
   guid?: string;
 }
 
@@ -44,13 +44,16 @@ async function processMessageEvent(e: MessageEvent) {
   const message = e.data as IframeMessage;
 
   if (message.command === CommandId.UPLOAD_USER_CREDS) {
+    const ackMessage: IframeMessage = {
+      guid: message.guid,
+    };
     try {
       await ApiManagerFactory.getInstance().uploadOauthAccessToken();
     } catch (e) {
-      message.command = CommandId.ERROR;
-      message.arguments = e;
+      ackMessage.command = CommandId.ERROR;
+      ackMessage.arguments = e;
     }
-    sendMessageToNotebookEditor(message);
+    sendMessageToNotebookEditor(ackMessage);
   } else if (message.command === CommandId.LOAD_NOTEBOOK) {
     let outgoingMessage: IframeMessage;
     try {
