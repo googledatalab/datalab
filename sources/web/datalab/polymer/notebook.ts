@@ -44,7 +44,13 @@ async function processMessageEvent(e: MessageEvent) {
   const message = e.data as IframeMessage;
 
   if (message.command === CommandId.UPLOAD_USER_CREDS) {
-    ApiManagerFactory.getInstance().uploadOauthAccessToken();
+    try {
+      await ApiManagerFactory.getInstance().uploadOauthAccessToken();
+    } catch (e) {
+      message.command = CommandId.ERROR;
+      message.arguments = e;
+    }
+    sendMessageToNotebookEditor(message);
   } else if (message.command === CommandId.LOAD_NOTEBOOK) {
     let outgoingMessage: IframeMessage;
     try {
