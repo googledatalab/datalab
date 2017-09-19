@@ -21,6 +21,7 @@ the License.
 <link rel="import" href="../../components/datalab-toolbar/datalab-toolbar.html">
 <link rel="import" href="../../components/resizable-divider/resizable-divider.html">
 <link rel="import" href="../../modules/api-manager-factory/api-manager-factory.html">
+<link rel="import" href="../../modules/settings-manager/settings-manager.html">
 
 <dom-module id="datalab-app">
   <template>
@@ -78,7 +79,8 @@ the License.
           <iron-pages id="pages" selected="{{page}}" attr-for-selected="name">
             <!-- Elements here must implement the DatalabPageElement interface -->
             <data-browser class="page" name="data" file-id="{{fileId}}"></data-browser>
-            <file-browser class="page" name="files" file-id="{{fileId}}"></file-browser>
+            <file-browser class="page" name="files" file-id="{{fileId}}"
+                          file-manager-type-list="{{_fileBrowserSources}}"></file-browser>
             <datalab-sessions class="page" name="sessions"></datalab-sessions>
             <datalab-terminal class="page" name="terminal"></datalab-terminal>
             <datalab-docs class="page" name="docs"></datalab-docs>

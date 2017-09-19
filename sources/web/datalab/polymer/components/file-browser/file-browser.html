@@ -63,6 +63,10 @@ the License.
       #altAddToolbarToggle, #altUpdateToolbarToggle {
         display: none;
       }
+      #fileSourceToggle {
+        color: var(--primary-fg-color);
+        padding-right: 15px;
+      }
       .dropdown-menu-container {
         position: relative;
       }
@@ -223,20 +227,14 @@ the License.
 
         <span id="fileSourcesContainer" class="dropdown-menu-container">
           <paper-button id="fileSourceToggle" class="toolbar-button"
-                        on-click="_toggleFileSourceDropdown">
-            <iron-icon icon="datalab-icons:drive-logo"></iron-icon>
-            <span>My Drive</span>
-            <iron-icon icon="hardware:keyboard-arrow-down"></iron-icon>
+                        on-click="_toggleFileSourceDropdown"
+                        disabled$="{{!_hasMultipleFileSources}}">
+            <iron-icon icon="{{_fileManagerDisplayIcon}}"></iron-icon>
+            <span>{{_fileManagerDisplayName}}</span>
+            <iron-icon icon="hardware:keyboard-arrow-down" hidden$="{{!_hasMultipleFileSources}}">
+            </iron-icon>
           </paper-button>
           <paper-dialog id="fileSourcesDropdown" class="dropdown-menu" on-blur="_closeDropdown">
-            <paper-button class="toolbar-button" on-click="_sourceDrive">
-              <iron-icon icon="datalab-icons:drive-logo"></iron-icon>
-              <span>My Drive</span>
-            </paper-button>
-            <paper-button class="toolbar-button" on-click="_sourceDriveShared">
-              <iron-icon icon="folder-shared"></iron-icon>
-              <span>Shared on Drive</span>
-            </paper-button>
           </paper-dialog>
         </span>
 

@@ -55,6 +55,7 @@ class DatalabAppElement extends Polymer.Element {
   public routeData: object;
 
   private _boundResizeHandler: EventListenerObject;
+  private _fileBrowserSources: string[];
 
   constructor() {
     super();
@@ -92,6 +93,10 @@ class DatalabAppElement extends Polymer.Element {
 
   static get properties() {
     return {
+      _fileBrowserSources: {
+        type: Array,
+        value: () => [],
+      },
       fileId: {
         observer: '_fileIdChanged',
         type: String,
@@ -119,10 +124,13 @@ class DatalabAppElement extends Polymer.Element {
     ];
   }
 
-  ready() {
+  async ready() {
     super.ready();
 
     window.addEventListener('focus', () => this._focusHandler());
+
+    const settings = await SettingsManager.getAppSettingsAsync();
+    this._fileBrowserSources = settings.supportedFileBrowserSources;
   }
 
   /**

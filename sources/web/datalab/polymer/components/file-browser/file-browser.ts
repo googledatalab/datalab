@@ -56,6 +56,12 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   public fileManagerType: string;   // default is in code below
 
   /**
+   * List of supported file manager types. If this is not specified, it will be
+   * read from the app settings.
+   */
+  public fileManagerTypeList: FileManagerType[];
+
+  /**
    * True makes the toolbar never visible.
    */
   public hideToolbar: boolean;
@@ -86,6 +92,9 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   private _fileListRefreshInterval = 60 * 1000;
   private _fileListRefreshIntervalHandle = 0;
   private _fileManager: FileManager;
+  private _fileManagerDisplayName: string;
+  private _fileManagerDisplayIcon: string;
+  private _hasMultipleFileSources: boolean;
   private _ignoreFileIdChange = false;
   private _isPreviewPaneToggledOn: boolean;
   private _pathHistory: DatalabFile[];
@@ -147,6 +156,11 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       fileManagerType: {
         type: String,
         value: '',
+      },
+      fileManagerTypeList: {
+        observer: '_fileManagerTypeListChanged',
+        type: Array,
+        value: () => [],
       },
       hideToolbar: {
         type: Boolean,
@@ -283,6 +297,45 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
           FileManagerFactory.fileManagerNameToType(this.fileManagerType));
     }
     this._loadStartupPath(fileId);
+  }
+
+  async _fileManagerTypeListChanged() {
+    if (!this.fileManagerTypeList) {
+      const settings = await SettingsManager.getAppSettingsAsync();
+      this.fileManagerTypeList = settings.supportedFileBrowserSources.map((source) =>
+          FileManagerFactory.fileManagerNameToType(source));
+    }
+
+    const menu = this.$.fileSourcesDropdown as HTMLDivElement;
+    // Build and add buttons to the switcher dropdown menu
+    Utils.deleteAllChildren(menu);
+
+    this.fileManagerTypeList.forEach((type) => {
+      const config = FILE_MANAGER_CONFIG.get(type);
+      if (!config) {
+        throw new Error('Unknown FileManagerType: ' + type.toString());
+      }
+      const btn = document.createElement('paper-button');
+      btn.classList.add('toolbar-button');
+      btn.addEventListener('click', () => {
+        this.fileManagerType = type;
+        this._fileManager = FileManagerFactory.getInstanceForType(type);
+        this.fileId = '';
+
+        this._loadStartupPath(null);
+      });
+
+      const icon = document.createElement('iron-icon');
+      icon.setAttribute('icon', config.displayIcon);
+      btn.appendChild(icon);
+
+      const span = document.createElement('span');
+      span.innerText = config.displayName;
+      btn.appendChild(span);
+
+      menu.appendChild(btn);
+    });
+    this._hasMultipleFileSources = this.fileManagerTypeList.length > 1;
   }
 
   disconnectedCallback() {
@@ -874,7 +927,9 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   }
 
   _toggleFileSourceDropdown() {
-    this.$.fileSourcesDropdown.toggle();
+    if (this._hasMultipleFileSources) {
+      this.$.fileSourcesDropdown.toggle();
+    }
   }
 
   _closeDropdown(e: MouseEvent) {
@@ -980,6 +1035,13 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     } else {
       this._pathHistoryIndex = this._pathHistory.length - 1;
     }
+    const type = FileManagerFactory.fileManagerNameToType(this.fileManagerType);
+    const config = FILE_MANAGER_CONFIG.get(type);
+    if (!config) {
+      throw new Error('Unknown FileManagerType: ' + this.fileManagerType);
+    }
+    this._fileManagerDisplayIcon = config.displayIcon;
+    this._fileManagerDisplayName = config.displayName;
   }
 
   private _finishLoadingFiles() {

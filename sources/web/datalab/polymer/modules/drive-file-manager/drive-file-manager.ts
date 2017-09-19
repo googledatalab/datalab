@@ -28,24 +28,9 @@ class DriveFileManager implements FileManager {
   private static readonly _directoryMimeType = 'application/vnd.google-apps.folder';
   private static readonly _notebookMimeType = 'application/json';
 
-  private static _upstreamToDriveFile(file: gapi.client.drive.File) {
-    const datalabFile: DriveFile = new DriveFile({
-      icon: file.iconLink,
-      id: new DatalabFileId(file.id, FileManagerType.DRIVE),
-      name: file.name,
-      status: DatalabFileStatus.IDLE,
-      type: file.mimeType === DriveFileManager._directoryMimeType ?
-                              DatalabFileType.DIRECTORY :
-                              DatalabFileType.FILE,
-    } as DatalabFile);
-    if (datalabFile.name.endsWith('.ipynb')) {
-      datalabFile.type = DatalabFileType.NOTEBOOK;
-    }
-    return datalabFile;
-  }
   public async get(fileId: DatalabFileId): Promise<DatalabFile> {
     const upstreamFile = await GapiManager.drive.getFile(fileId.path);
-    return DriveFileManager._upstreamToDriveFile(upstreamFile);
+    return this._fromUpstreamFile(upstreamFile);
   }
 
   public async getStringContent(fileId: DatalabFileId, _asText?: boolean): Promise<string> {
@@ -58,25 +43,16 @@ class DriveFileManager implements FileManager {
 
   public async getRootFile(): Promise<DatalabFile> {
     const upstreamFile = await GapiManager.drive.getRoot();
-    return DriveFileManager._upstreamToDriveFile(upstreamFile);
+    return this._fromUpstreamFile(upstreamFile);
   }
 
   public saveText(file: DatalabFile, text: string): Promise<DatalabFile> {
     return GapiManager.drive.patchContent(file.id.path, text)
-      .then((upstreamFile) => DriveFileManager._upstreamToDriveFile(upstreamFile));
+      .then((upstreamFile) => this._fromUpstreamFile(upstreamFile));
   }
 
   public async list(fileId: DatalabFileId): Promise<DatalabFile[]> {
-    const whitelistFilePredicates = [
-      'name contains \'.ipynb\'',
-      'name contains \'.txt\'',
-      'mimeType = \'' + DriveFileManager._directoryMimeType + '\'',
-    ];
-    const queryPredicates = [
-      '"' + fileId.path + '" in parents',
-      'trashed = false',
-      '(' + whitelistFilePredicates.join(' or ') + ')',
-    ];
+    const queryPredicates = await this._getQueryPredicates(fileId);
     const fileFields = [
       'createdTime',
       'iconLink',
@@ -106,7 +82,7 @@ class DriveFileManager implements FileManager {
     // Combine the return values of the two requests to supplement the files
     // array with the status value.
     return upstreamFiles.map((file) => {
-      const driveFile = DriveFileManager._upstreamToDriveFile(file);
+      const driveFile = this._fromUpstreamFile(file);
       driveFile.status = (sessions as string[]).indexOf(driveFile.id.path) > -1 ?
           DatalabFileStatus.RUNNING : DatalabFileStatus.IDLE;
       return driveFile;
@@ -130,14 +106,14 @@ class DriveFileManager implements FileManager {
                                                         containerId ? containerId.path : 'root',
                                                         name || 'New Item',
                                                         content);
-    return DriveFileManager._upstreamToDriveFile(upstreamFile);
+    return this._fromUpstreamFile(upstreamFile);
   }
 
   public rename(oldFileId: DatalabFileId, newName: string, newContainerId?: DatalabFileId)
       : Promise<DatalabFile> {
     const newContainerPath = newContainerId ? newContainerId.path : undefined;
     return GapiManager.drive.renameFile(oldFileId.path, newName, newContainerPath)
-      .then((upstreamFile) => DriveFileManager._upstreamToDriveFile(upstreamFile));
+      .then((upstreamFile) => this._fromUpstreamFile(upstreamFile));
   }
 
   public delete(fileId: DatalabFileId): Promise<boolean> {
@@ -147,7 +123,7 @@ class DriveFileManager implements FileManager {
 
   public copy(file: DatalabFileId, destinationDirectoryId: DatalabFileId): Promise<DatalabFile> {
     return GapiManager.drive.copy(file.path, destinationDirectoryId.path)
-      .then((upstreamFile) => DriveFileManager._upstreamToDriveFile(upstreamFile));
+      .then((upstreamFile) => this._fromUpstreamFile(upstreamFile));
   }
 
   public async getEditorUrl(fileId: DatalabFileId) {
@@ -170,6 +146,69 @@ class DriveFileManager implements FileManager {
         id: new DatalabFileId(fileId, FileManagerType.DRIVE),
       } as DatalabFile);
       return [datalabFile];
+    }
+  }
+
+  protected _fromUpstreamFile(file: gapi.client.drive.File) {
+    const datalabFile: DriveFile = new DriveFile({
+      icon: file.iconLink,
+      id: new DatalabFileId(file.id, FileManagerType.DRIVE),
+      name: file.name,
+      status: DatalabFileStatus.IDLE,
+      type: file.mimeType === DriveFileManager._directoryMimeType ?
+                              DatalabFileType.DIRECTORY :
+                              DatalabFileType.FILE,
+    } as DatalabFile);
+    if (datalabFile.name.endsWith('.ipynb')) {
+      datalabFile.type = DatalabFileType.NOTEBOOK;
+    }
+    return datalabFile;
+  }
+
+  protected _getWhitelistFilePredicates() {
+    return [
+      'name contains \'.ipynb\'',
+      'name contains \'.txt\'',
+      'mimeType = \'' + DriveFileManager._directoryMimeType + '\'',
+    ];
+  }
+
+  protected async _getQueryPredicates(fileId: DatalabFileId) {
+    return [
+      '"' + fileId.path + '" in parents',
+      'trashed = false',
+      '(' + this._getWhitelistFilePredicates().join(' or ') + ')',
+    ];
+  }
+
+}
+
+class SharedDriveFileManager extends DriveFileManager {
+
+  public pathToPathHistory(path: string) {
+    const pathHistory = super.pathToPathHistory(path);
+    pathHistory.forEach((f) => {
+      f.id.source = FileManagerType.SHARED_DRIVE;
+    });
+    return pathHistory;
+  }
+
+  protected _fromUpstreamFile(file: gapi.client.drive.File) {
+    const driveFile = super._fromUpstreamFile(file);
+    driveFile.id.source = FileManagerType.SHARED_DRIVE;
+    return driveFile;
+  }
+
+  protected async _getQueryPredicates(fileId: DatalabFileId) {
+    const root = await this.getRootFile();
+    if (root.id.path === fileId.path) {
+      return [
+        'trashed = false',
+        'sharedWithMe',
+        '(' + this._getWhitelistFilePredicates().join(' or ') + ')',
+      ];
+    } else {
+      return super._getQueryPredicates(fileId);
     }
   }
 }

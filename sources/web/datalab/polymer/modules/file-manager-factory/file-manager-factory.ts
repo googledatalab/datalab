@@ -12,38 +12,69 @@
  * the License.
  */
 
+enum FileManagerType {
+  BIG_QUERY = 'bigquery',
+  DRIVE = 'drive',
+  GITHUB = 'github',
+  JUPYTER = 'jupyter',
+  MOCK = 'mock',
+  SHARED_DRIVE = 'sharedDrive',
+}
+
+interface FileManagerConfig {
+  className: any;
+  displayIcon: string;
+  displayName: string;
+  name: string;
+  path: string;
+}
+
 /**
  * Dependency custom element for ApiManager
  */
-const FILE_MANAGER_ELEMENT = {
-  bigquery: {
-    name: 'bigquery',
-    path: 'modules/bigquery-file-manager/bigquery-file-manager.html',
-    type: BigQueryFileManager,
-  },
-  drive: {
-    name: 'drive',
-    path: 'modules/drive-file-manager/drive-file-manager.html',
-    type: DriveFileManager,
-  },
-  github: {
-    name: 'github',
-    path: 'modules/github-file-manager/github-file-manager.html',
-    type: GithubFileManager,
-  },
-  jupyter: {
-    name: 'jupyter',
-    path: 'modules/jupyter-file-manager/jupyter-file-manager.html',
-    type: JupyterFileManager,
-  },
-};
-
-enum FileManagerType {
-  BIG_QUERY,
-  DRIVE,
-  GITHUB,
-  JUPYTER,
-}
+const FILE_MANAGER_CONFIG = new Map<FileManagerType, FileManagerConfig> ([
+  [
+    FileManagerType.BIG_QUERY, {
+      className: BigQueryFileManager,
+      displayIcon: 'datalab-icons:bigquery-logo',
+      displayName: 'BigQuery',
+      name: 'bigquery',
+      path: 'modules/bigquery-file-manager/bigquery-file-manager.html',
+    }
+  ], [
+    FileManagerType.DRIVE, {
+      className: DriveFileManager,
+      displayIcon: 'datalab-icons:drive-logo',
+      displayName: 'My Drive',
+      name: 'drive',
+      path: 'modules/drive-file-manager/drive-file-manager.html',
+    }
+  ], [
+    FileManagerType.GITHUB, {
+      className: GithubFileManager,
+      displayIcon: 'datalab-icons:github-logo',
+      displayName: 'Github',
+      name: 'github',
+      path: 'modules/github-file-manager/github-file-manager.html',
+    }
+  ], [
+    FileManagerType.JUPYTER, {
+      className: JupyterFileManager,
+      displayIcon: 'datalab-icons:local-disk',
+      displayName: 'Local Disk',
+      name: 'jupyter',
+      path: 'modules/jupyter-file-manager/jupyter-file-manager.html',
+    }
+  ], [
+    FileManagerType.SHARED_DRIVE, {
+      className: SharedDriveFileManager,
+      displayIcon: 'folder-shared',
+      displayName: 'Shared on Drive',
+      name: 'sharedDrive',
+      path: 'modules/drive-file-manager/drive-file-manager.html',
+    }
+  ]
+]);
 
 /**
  * Maintains and gets the static FileManager singleton.
@@ -65,38 +96,27 @@ class FileManagerFactory {
       case 'drive': return FileManagerType.DRIVE;
       case 'github': return FileManagerType.GITHUB;
       case 'jupyter': return FileManagerType.JUPYTER;
+      case 'sharedDrive': return FileManagerType.SHARED_DRIVE;
       default: throw new Error('Unknown FileManagerType name ' + name);
     }
   }
 
   // Consider moving this to a strings module
   public static fileManagerTypetoString(type: FileManagerType) {
-    switch (type) {
-      case FileManagerType.BIG_QUERY: return 'bigquery';
-      case FileManagerType.DRIVE: return 'drive';
-      case FileManagerType.GITHUB: return 'github';
-      case FileManagerType.JUPYTER: return 'jupyter';
-      default: throw new Error('Unknown FileManager type: ' + type);
-    }
+    return type.toString();
   }
 
   public static getInstanceForType(fileManagerType: FileManagerType) {
-    const backendType = FileManagerFactory._getBackendType(fileManagerType);
-    if (!FileManagerFactory._fileManagers[backendType.name]) {
+    const config = FILE_MANAGER_CONFIG.get(fileManagerType);
+    if (!config) {
+      throw new Error('Unknown FileManagerType: ' + fileManagerType.toString());
+    }
+    if (!FileManagerFactory._fileManagers[config.name]) {
 
-      FileManagerFactory._fileManagers[fileManagerType] = new backendType.type();
+      FileManagerFactory._fileManagers[fileManagerType] = new config.className();
     }
 
     return FileManagerFactory._fileManagers[fileManagerType];
   }
 
-  private static _getBackendType(fileManagerType: FileManagerType) {
-    switch (fileManagerType) {
-      case FileManagerType.BIG_QUERY: return FILE_MANAGER_ELEMENT.bigquery;
-      case FileManagerType.DRIVE: return FILE_MANAGER_ELEMENT.drive;
-      case FileManagerType.GITHUB: return FILE_MANAGER_ELEMENT.github;
-      case FileManagerType.JUPYTER: return FILE_MANAGER_ELEMENT.jupyter;
-      default: throw new Error('Unknown FileManagerType');
-    }
-  }
 }

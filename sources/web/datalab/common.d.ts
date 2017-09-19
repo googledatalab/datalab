@@ -168,6 +168,12 @@ declare module common {
      * The shutdown command to use after an idle timeout.
      */
     idleTimeoutShutdownCommand: string;
+
+    /**
+     * List of supported sources for the file browser.
+     * Possible options are: jupyter, drive, sharedDrive, docs, and bigquery
+     */
+    supportedFileBrowserSources: string[];
   }
 
   interface TimeoutInfo {
