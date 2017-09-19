@@ -69,7 +69,7 @@ function launchFakeServer(metadata: FakeMetadata): void {
       res.write('default/\n');
       res.write(metadata.creds.account + '/\n');
     } else if (urlpath == '/computeMetadata/v1/instance/service-accounts/default/' &&
-               parsed_url.query['recursive'] == "True") {
+               (parsed_url.query['recursive'] || '').toLowerCase() == "true") {
       const accountJSON: any = {
         aliases: ["default"],
         email: metadata.creds.account,
