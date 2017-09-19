@@ -14,9 +14,10 @@ the License.
 
 <link rel="import" href="../../components/base-dialog/base-dialog.html">
 <link rel="import" href="../../components/bread-crumbs/bread-crumbs.html">
+<link rel="import" href="../../components/datalab-icons/datalab-icons.html">
 <link rel="import" href="../../components/datalab-page/datalab-page.html">
-<link rel="import" href="../../components/input-dialog/input-dialog.html">
 <link rel="import" href="../../components/inline-details-pane/inline-details-pane.html">
+<link rel="import" href="../../components/input-dialog/input-dialog.html">
 <link rel="import" href="../../components/item-list/item-list.html">
 <link rel="import" href="../../components/preview-pane/preview-pane.html">
 <link rel="import" href="../../components/resizable-divider/resizable-divider.html">
@@ -62,10 +63,10 @@ the License.
       #altAddToolbarToggle, #altUpdateToolbarToggle {
         display: none;
       }
-      #altAddToolbarContainer, #altUpdateToolbarContainer {
+      .dropdown-menu-container {
         position: relative;
       }
-      #altAddToolbar, #altUpdateToolbar {
+      .dropdown-menu {
         display: flex;
         flex-direction: column;
         align-items: flex-start;
@@ -74,13 +75,13 @@ the License.
         position: absolute;
         left: 0px;
         margin: 0px;
-        padding: 10px;
+        padding: 3px 0px;
         min-width: 200px;
         box-shadow: 0px 0px 10px 1px var(--box-shadow-color);
         border: 1px solid var(--outline-color);
       }
-      #altAddToolbar > *, #altUpdateToolbar > * {
-        padding: 5px;
+      .dropdown-menu > * {
+        padding: 10px;
         margin: 0px;
         width: 100%;
       }
@@ -145,14 +146,14 @@ the License.
       </span>
 
       <!--Alternative Add toolbar, shows up when toolbar is too small-->
-      <span id="altAddToolbarContainer">
+      <span id="altAddToolbarContainer" class="dropdown-menu-container">
         <paper-button id="altAddToolbarToggle" class="toolbar-button"
                       on-click="_toggleAltAddToolbar">
           <iron-icon icon="add-box"></iron-icon>
           <span>New</span>
           <iron-icon icon="hardware:keyboard-arrow-down"></iron-icon>
         </paper-button>
-        <paper-dialog id="altAddToolbar">
+        <paper-dialog id="altAddToolbar" class="dropdown-menu" on-blur="_closeDropdown">
         </paper-dialog>
       </span>
 
@@ -196,12 +197,12 @@ the License.
       </span>
 
       <!--Alternative Update toolbar, shows up when toolbar is too small-->
-      <span id="altUpdateToolbarContainer">
+      <span id="altUpdateToolbarContainer" class="dropdown-menu-container">
         <paper-button id="altUpdateToolbarToggle" class="toolbar-button"
                       on-click="_toggleAltUpdateToolbar">
           <iron-icon icon="more-horiz"></iron-icon>
         </paper-button>
-        <paper-dialog id="altUpdateToolbar">
+        <paper-dialog id="altUpdateToolbar" class="dropdown-menu" on-blur="_closeDropdown">
         </paper-dialog>
       </span>
 
@@ -219,6 +220,26 @@ the License.
         <paper-button class="toolbar-button" hidden$="{{small}}" on-click="_fetchFileList">
           <iron-icon icon="refresh"></iron-icon>
         </paper-button>
+
+        <span id="fileSourcesContainer" class="dropdown-menu-container">
+          <paper-button id="fileSourceToggle" class="toolbar-button"
+                        on-click="_toggleFileSourceDropdown">
+            <iron-icon icon="datalab-icons:drive-logo"></iron-icon>
+            <span>My Drive</span>
+            <iron-icon icon="hardware:keyboard-arrow-down"></iron-icon>
+          </paper-button>
+          <paper-dialog id="fileSourcesDropdown" class="dropdown-menu" on-blur="_closeDropdown">
+            <paper-button class="toolbar-button" on-click="_sourceDrive">
+              <iron-icon icon="datalab-icons:drive-logo"></iron-icon>
+              <span>My Drive</span>
+            </paper-button>
+            <paper-button class="toolbar-button" on-click="_sourceDriveShared">
+              <iron-icon icon="folder-shared"></iron-icon>
+              <span>Shared on Drive</span>
+            </paper-button>
+          </paper-dialog>
+        </span>
+
         <div class="vseparator"></div>
         <bread-crumbs id="breadCrumbs"></bread-crumbs>
         <paper-button id="togglePreview" class="toolbar-button" on-click="_togglePreviewPane"

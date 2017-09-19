@@ -873,6 +873,20 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     this.$.altUpdateToolbar.toggle();
   }
 
+  _toggleFileSourceDropdown() {
+    this.$.fileSourcesDropdown.toggle();
+  }
+
+  _closeDropdown(e: MouseEvent) {
+    const element = e.target as HTMLDivElement;
+    if (element.classList.contains('dropdown-menu')) {
+      // Brief pause for ripple animation
+      setTimeout(() => {
+        (element as any).close();
+      }, 150);
+    }
+  }
+
   /**
    * Called on window.resize, collapses elements to keep the element usable
    * on small screens.
