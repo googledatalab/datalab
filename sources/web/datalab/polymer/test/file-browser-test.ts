@@ -13,12 +13,12 @@
  */
 
 class MockFile extends DatalabFile {
-  constructor(name: string) {
+  constructor(name = '', path = '') {
     super({
       getInlineDetailsName: () => '',
       getPreviewName: () => '',
       icon: '',
-      id: new DatalabFileId('', FileManagerType.MOCK),
+      id: new DatalabFileId(path, FileManagerType.MOCK),
       name,
       status: DatalabFileStatus.IDLE,
       type: DatalabFileType.DIRECTORY,
@@ -27,14 +27,6 @@ class MockFile extends DatalabFile {
 }
 
 class MockFileManager implements FileManager {
-  public getDisplayName() {
-    return 'Mock';
-  }
-
-  public getDisplayIcon() {
-    return 'mock-icon';
-  }
-
   public get(_fileId: DatalabFileId): Promise<DatalabFile> {
     throw new UnsupportedMethod('get', this);
   }
@@ -70,14 +62,14 @@ class MockFileManager implements FileManager {
   public getEditorUrl(_fileId: DatalabFileId): Promise<string> {
     throw new UnsupportedMethod('getEditorUrl', this);
   }
-  public pathToPathHistory(_path: string): DatalabFile[] {
-    throw new UnsupportedMethod('getEditorUrl', this);
+  public pathToPathHistory(path: string): DatalabFile[] {
+    return [new MockFile('', path)];
   }
 }
 
 describe('<file-browser>', () => {
   let testFixture: FileBrowserElement;
-  const startuppath = new DatalabFileId('testpath', FileManagerType.JUPYTER);
+  const startuppath = new DatalabFileId('testpath', FileManagerType.MOCK);
 
   const mockFiles = [
     new MockFile('file1'),
