@@ -302,7 +302,9 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   async _fileManagerTypeListChanged() {
     if (!this.fileManagerTypeList) {
       const settings = await SettingsManager.getAppSettingsAsync();
-      this.fileManagerTypeList = settings.supportedFileBrowserSources.map((source) =>
+      // Fall back to Jupyter if settings are somehow outdated.
+      const types = settings.supportedFileBrowserSources || ['jupyter'];
+      this.fileManagerTypeList = types.map((source) =>
           FileManagerFactory.fileManagerNameToType(source));
     }
 
@@ -927,7 +929,10 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   }
 
   _toggleFileSourceDropdown() {
-    if (this._hasMultipleFileSources) {
+    // Only toggle the dropdown open if there are multiple file sources. We do
+    // this so that it looks like a static div instead of a dropdown if only
+    // once source is supported.
+    if (this._hasMultipleFileSources || this.$.fileSourcesDropdown.opened) {
       this.$.fileSourcesDropdown.toggle();
     }
   }
