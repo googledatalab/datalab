@@ -12,7 +12,19 @@
  * the License.
  */
 
-class MockDatalabFile extends DatalabFile {}
+class MockFile extends DatalabFile {
+  constructor(name = '', path = '') {
+    super({
+      getInlineDetailsName: () => '',
+      getPreviewName: () => '',
+      icon: '',
+      id: new DatalabFileId(path, FileManagerType.MOCK),
+      name,
+      status: DatalabFileStatus.IDLE,
+      type: DatalabFileType.DIRECTORY,
+    });
+  }
+}
 
 class MockFileManager implements FileManager {
   public get(_fileId: DatalabFileId): Promise<DatalabFile> {
@@ -22,13 +34,7 @@ class MockFileManager implements FileManager {
     throw new UnsupportedMethod('getContent', this);
   }
   public async getRootFile() {
-    const file: DatalabFile = new MockDatalabFile({
-      icon: '/',
-      id: new DatalabFileId('/', FileManagerType.JUPYTER),
-      name: 'root',
-      type: DatalabFileType.DIRECTORY,
-    } as DatalabFile);
-    return file;
+    return new MockFile('root');
   }
   public saveText(_file: DatalabFile, _content: string): Promise<DatalabFile> {
     throw new UnsupportedMethod('saveText', this);
@@ -57,39 +63,18 @@ class MockFileManager implements FileManager {
     throw new UnsupportedMethod('getEditorUrl', this);
   }
   public pathToPathHistory(path: string): DatalabFile[] {
-    const datalabFile = new MockDatalabFile({
-      id: new DatalabFileId(path, FileManagerType.JUPYTER),
-    } as DatalabFile);
-    return [datalabFile];
+    return [new MockFile('', path)];
   }
 }
 
 describe('<file-browser>', () => {
   let testFixture: FileBrowserElement;
-  const startuppath = new DatalabFileId('testpath', FileManagerType.JUPYTER);
+  const startuppath = new DatalabFileId('testpath', FileManagerType.MOCK);
 
-  const mockFiles: DatalabFile[] = [
-    new MockDatalabFile({
-      icon: '',
-      id: new DatalabFileId('', FileManagerType.JUPYTER),
-      name: 'file1',
-      status: DatalabFileStatus.IDLE,
-      type: DatalabFileType.DIRECTORY,
-    } as DatalabFile),
-    new MockDatalabFile({
-      icon: '',
-      id: new DatalabFileId('', FileManagerType.JUPYTER),
-      name: 'file2',
-      status: DatalabFileStatus.IDLE,
-      type: DatalabFileType.DIRECTORY,
-    } as DatalabFile),
-    new MockDatalabFile({
-      icon: '',
-      id: new DatalabFileId('', FileManagerType.JUPYTER),
-      name: 'file3',
-      status: DatalabFileStatus.RUNNING,
-      type: DatalabFileType.DIRECTORY,
-    } as DatalabFile),
+  const mockFiles = [
+    new MockFile('file1'),
+    new MockFile('file2'),
+    new MockFile('file3'),
   ];
 
   before(() => {

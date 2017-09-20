@@ -56,6 +56,12 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   public fileManagerType: string;   // default is in code below
 
   /**
+   * List of supported file manager types. If this is not specified, it will be
+   * read from the app settings.
+   */
+  public fileManagerTypeList: FileManagerType[];
+
+  /**
    * True makes the toolbar never visible.
    */
   public hideToolbar: boolean;
@@ -86,6 +92,9 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   private _fileListRefreshInterval = 60 * 1000;
   private _fileListRefreshIntervalHandle = 0;
   private _fileManager: FileManager;
+  private _fileManagerDisplayName: string;
+  private _fileManagerDisplayIcon: string;
+  private _hasMultipleFileSources: boolean;
   private _ignoreFileIdChange = false;
   private _isPreviewPaneToggledOn: boolean;
   private _pathHistory: DatalabFile[];
@@ -147,6 +156,11 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       fileManagerType: {
         type: String,
         value: '',
+      },
+      fileManagerTypeList: {
+        observer: '_fileManagerTypeListChanged',
+        type: Array,
+        value: () => [],
       },
       hideToolbar: {
         type: Boolean,
@@ -283,6 +297,47 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
           FileManagerFactory.fileManagerNameToType(this.fileManagerType));
     }
     this._loadStartupPath(fileId);
+  }
+
+  async _fileManagerTypeListChanged() {
+    if (!this.fileManagerTypeList) {
+      const settings = await SettingsManager.getAppSettingsAsync();
+      // Fall back to Jupyter if settings are somehow outdated.
+      const types = settings.supportedFileBrowserSources || ['jupyter'];
+      this.fileManagerTypeList = types.map((source) =>
+          FileManagerFactory.fileManagerNameToType(source));
+    }
+
+    const menu = this.$.fileSourcesDropdown as HTMLDivElement;
+    // Build and add buttons to the switcher dropdown menu
+    Utils.deleteAllChildren(menu);
+
+    this.fileManagerTypeList.forEach((type) => {
+      const config = FileManagerFactory.getFileManagerConfig(type);
+      const strType = FileManagerFactory.fileManagerTypetoString(type);
+      const btn = document.createElement('paper-button');
+      btn.classList.add('toolbar-button');
+      btn.addEventListener('click', () => {
+        if (this.fileManagerType !== strType) {
+          this.fileManagerType = strType;
+          this._fileManager = FileManagerFactory.getInstanceForType(type);
+          this.fileId = '';
+
+          this._loadStartupPath(null);
+        }
+      });
+
+      const icon = document.createElement('iron-icon');
+      icon.setAttribute('icon', config.displayIcon);
+      btn.appendChild(icon);
+
+      const span = document.createElement('span');
+      span.innerText = config.displayName;
+      btn.appendChild(span);
+
+      menu.appendChild(btn);
+    });
+    this._hasMultipleFileSources = this.fileManagerTypeList.length > 1;
   }
 
   disconnectedCallback() {
@@ -873,6 +928,25 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     this.$.altUpdateToolbar.toggle();
   }
 
+  _toggleFileSourceDropdown() {
+    // Only toggle the dropdown open if there are multiple file sources. We do
+    // this so that it looks like a static div instead of a dropdown if only
+    // once source is supported.
+    if (this._hasMultipleFileSources || this.$.fileSourcesDropdown.opened) {
+      this.$.fileSourcesDropdown.toggle();
+    }
+  }
+
+  _closeDropdown(e: MouseEvent) {
+    const element = e.target as HTMLDivElement;
+    if (element.classList.contains('dropdown-menu')) {
+      // Brief pause for ripple animation
+      setTimeout(() => {
+        (element as any).close();
+      }, 150);
+    }
+  }
+
   /**
    * Called on window.resize, collapses elements to keep the element usable
    * on small screens.
@@ -966,6 +1040,10 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     } else {
       this._pathHistoryIndex = this._pathHistory.length - 1;
     }
+    const type = FileManagerFactory.fileManagerNameToType(this.fileManagerType);
+    const config = FileManagerFactory.getFileManagerConfig(type);
+    this._fileManagerDisplayIcon = config.displayIcon;
+    this._fileManagerDisplayName = config.displayName;
   }
 
   private _finishLoadingFiles() {
