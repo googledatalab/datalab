@@ -22,7 +22,7 @@ enum FileManagerType {
 }
 
 interface FileManagerConfig {
-  className: new () => FileManager;
+  class: new () => FileManager;
   displayIcon: string;
   displayName: string;
   name: string;
@@ -40,7 +40,7 @@ class FileManagerFactory {
   private static _fileManagerConfig = new Map<FileManagerType, FileManagerConfig> ([
     [
       FileManagerType.BIG_QUERY, {
-        className: BigQueryFileManager,
+        class: BigQueryFileManager,
         displayIcon: 'datalab-icons:bigquery-logo',
         displayName: 'BigQuery',
         name: 'bigquery',
@@ -48,7 +48,7 @@ class FileManagerFactory {
       }
     ], [
       FileManagerType.DRIVE, {
-        className: DriveFileManager,
+        class: DriveFileManager,
         displayIcon: 'datalab-icons:drive-logo',
         displayName: 'My Drive',
         name: 'drive',
@@ -56,7 +56,7 @@ class FileManagerFactory {
       }
     ], [
       FileManagerType.GITHUB, {
-        className: GithubFileManager,
+        class: GithubFileManager,
         displayIcon: 'datalab-icons:github-logo',
         displayName: 'Github',
         name: 'github',
@@ -64,7 +64,7 @@ class FileManagerFactory {
       }
     ], [
       FileManagerType.JUPYTER, {
-        className: JupyterFileManager,
+        class: JupyterFileManager,
         displayIcon: 'datalab-icons:local-disk',
         displayName: 'Local Disk',
         name: 'jupyter',
@@ -72,7 +72,7 @@ class FileManagerFactory {
       }
     ], [
       FileManagerType.SHARED_DRIVE, {
-        className: SharedDriveFileManager,
+        class: SharedDriveFileManager,
         displayIcon: 'folder-shared',
         displayName: 'Shared on Drive',
         name: 'sharedDrive',
@@ -108,7 +108,7 @@ class FileManagerFactory {
     const config = this.getFileManagerConfig(fileManagerType);
     if (!FileManagerFactory._fileManagers[config.name]) {
 
-      FileManagerFactory._fileManagers[fileManagerType] = new config.className();
+      FileManagerFactory._fileManagers[fileManagerType] = new config.class();
     }
 
     return FileManagerFactory._fileManagers[fileManagerType];
