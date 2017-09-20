@@ -320,11 +320,13 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       const btn = document.createElement('paper-button');
       btn.classList.add('toolbar-button');
       btn.addEventListener('click', () => {
-        this.fileManagerType = type;
-        this._fileManager = FileManagerFactory.getInstanceForType(type);
-        this.fileId = '';
+        if (this.fileManagerType !== type) {
+          this.fileManagerType = type;
+          this._fileManager = FileManagerFactory.getInstanceForType(type);
+          this.fileId = '';
 
-        this._loadStartupPath(null);
+          this._loadStartupPath(null);
+        }
       });
 
       const icon = document.createElement('iron-icon');
