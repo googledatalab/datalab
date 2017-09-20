@@ -199,6 +199,12 @@ class SharedDriveFileManager extends DriveFileManager {
     return driveFile;
   }
 
+  /**
+   * For shared files, the query should include the 'sharedWithMe' predicate
+   * without any parents, but if the user wants to dig in on a specific
+   * directory, it should be included as the parent, and `sharedWithMe` should
+   * be removed.
+   */
   protected async _getQueryPredicates(fileId: DatalabFileId) {
     const root = await this.getRootFile();
     if (root.id.path === fileId.path) {

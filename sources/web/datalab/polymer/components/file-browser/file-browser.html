@@ -65,7 +65,7 @@ the License.
       }
       #fileSourceToggle {
         color: var(--primary-fg-color);
-        padding-right: 15px;
+        padding: 0px 15px;
       }
       .dropdown-menu-container {
         position: relative;
@@ -98,6 +98,7 @@ the License.
         display: flex;
         flex: 0 0 calc(var(--toolbar-height) - 1px);
         background-color: var(--primary-bg-color);
+        padding-left: 10px;
       }
       .files-container {
         display: flex;
@@ -215,16 +216,6 @@ the License.
     <div id="file-picker">
       <!--Navigation bar with back/forward buttons, refresh, and breadcrumbs-->
       <div id="navbar">
-        <paper-button id="backNav" class="toolbar-button" on-click="_navBackward">
-          <iron-icon icon="chevron-left"></iron-icon>
-        </paper-button>
-        <paper-button id="forwardNav" class="toolbar-button" on-click="_navForward">
-          <iron-icon icon="chevron-right"></iron-icon>
-        </paper-button>
-        <paper-button class="toolbar-button" hidden$="{{small}}" on-click="_fetchFileList">
-          <iron-icon icon="refresh"></iron-icon>
-        </paper-button>
-
         <span id="fileSourcesContainer" class="dropdown-menu-container">
           <paper-button id="fileSourceToggle" class="toolbar-button"
                         on-click="_toggleFileSourceDropdown"
@@ -237,6 +228,16 @@ the License.
           <paper-dialog id="fileSourcesDropdown" class="dropdown-menu" on-blur="_closeDropdown">
           </paper-dialog>
         </span>
+
+        <paper-button id="backNav" class="toolbar-button" on-click="_navBackward">
+          <iron-icon icon="chevron-left"></iron-icon>
+        </paper-button>
+        <paper-button id="forwardNav" class="toolbar-button" on-click="_navForward">
+          <iron-icon icon="chevron-right"></iron-icon>
+        </paper-button>
+        <paper-button class="toolbar-button" hidden$="{{small}}" on-click="_fetchFileList">
+          <iron-icon icon="refresh"></iron-icon>
+        </paper-button>
 
         <div class="vseparator"></div>
         <bread-crumbs id="breadCrumbs"></bread-crumbs>
