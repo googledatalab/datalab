@@ -22,7 +22,7 @@ enum FileManagerType {
 }
 
 interface FileManagerConfig {
-  className: any;
+  className: new () => FileManager;
   displayIcon: string;
   displayName: string;
   name: string;
@@ -30,58 +30,56 @@ interface FileManagerConfig {
 }
 
 /**
- * Dependency custom element for ApiManager
- */
-const FILE_MANAGER_CONFIG = new Map<FileManagerType, FileManagerConfig> ([
-  [
-    FileManagerType.BIG_QUERY, {
-      className: BigQueryFileManager,
-      displayIcon: 'datalab-icons:bigquery-logo',
-      displayName: 'BigQuery',
-      name: 'bigquery',
-      path: 'modules/bigquery-file-manager/bigquery-file-manager.html',
-    }
-  ], [
-    FileManagerType.DRIVE, {
-      className: DriveFileManager,
-      displayIcon: 'datalab-icons:drive-logo',
-      displayName: 'My Drive',
-      name: 'drive',
-      path: 'modules/drive-file-manager/drive-file-manager.html',
-    }
-  ], [
-    FileManagerType.GITHUB, {
-      className: GithubFileManager,
-      displayIcon: 'datalab-icons:github-logo',
-      displayName: 'Github',
-      name: 'github',
-      path: 'modules/github-file-manager/github-file-manager.html',
-    }
-  ], [
-    FileManagerType.JUPYTER, {
-      className: JupyterFileManager,
-      displayIcon: 'datalab-icons:local-disk',
-      displayName: 'Local Disk',
-      name: 'jupyter',
-      path: 'modules/jupyter-file-manager/jupyter-file-manager.html',
-    }
-  ], [
-    FileManagerType.SHARED_DRIVE, {
-      className: SharedDriveFileManager,
-      displayIcon: 'folder-shared',
-      displayName: 'Shared on Drive',
-      name: 'sharedDrive',
-      path: 'modules/drive-file-manager/drive-file-manager.html',
-    }
-  ]
-]);
-
-/**
  * Maintains and gets the static FileManager singleton.
  */
-// TODO: Find a better way to switch the FileManager instance based on the
-// environment
 class FileManagerFactory {
+
+  /**
+   * Dependency custom element for ApiManager
+   */
+  private static _fileManagerConfig = new Map<FileManagerType, FileManagerConfig> ([
+    [
+      FileManagerType.BIG_QUERY, {
+        className: BigQueryFileManager,
+        displayIcon: 'datalab-icons:bigquery-logo',
+        displayName: 'BigQuery',
+        name: 'bigquery',
+        path: 'modules/bigquery-file-manager/bigquery-file-manager.html',
+      }
+    ], [
+      FileManagerType.DRIVE, {
+        className: DriveFileManager,
+        displayIcon: 'datalab-icons:drive-logo',
+        displayName: 'My Drive',
+        name: 'drive',
+        path: 'modules/drive-file-manager/drive-file-manager.html',
+      }
+    ], [
+      FileManagerType.GITHUB, {
+        className: GithubFileManager,
+        displayIcon: 'datalab-icons:github-logo',
+        displayName: 'Github',
+        name: 'github',
+        path: 'modules/github-file-manager/github-file-manager.html',
+      }
+    ], [
+      FileManagerType.JUPYTER, {
+        className: JupyterFileManager,
+        displayIcon: 'datalab-icons:local-disk',
+        displayName: 'Local Disk',
+        name: 'jupyter',
+        path: 'modules/jupyter-file-manager/jupyter-file-manager.html',
+      }
+    ], [
+      FileManagerType.SHARED_DRIVE, {
+        className: SharedDriveFileManager,
+        displayIcon: 'folder-shared',
+        displayName: 'Shared on Drive',
+        name: 'sharedDrive',
+        path: 'modules/drive-file-manager/drive-file-manager.html',
+      }
+    ]
+  ]);
 
   private static _fileManagers: { [fileManagerType: string]: FileManager } = {};
 
@@ -107,16 +105,21 @@ class FileManagerFactory {
   }
 
   public static getInstanceForType(fileManagerType: FileManagerType) {
-    const config = FILE_MANAGER_CONFIG.get(fileManagerType);
-    if (!config) {
-      throw new Error('Unknown FileManagerType: ' + fileManagerType.toString());
-    }
+    const config = this.getFileManagerConfig(fileManagerType);
     if (!FileManagerFactory._fileManagers[config.name]) {
 
       FileManagerFactory._fileManagers[fileManagerType] = new config.className();
     }
 
     return FileManagerFactory._fileManagers[fileManagerType];
+  }
+
+  public static getFileManagerConfig(type: FileManagerType) {
+    const config = this._fileManagerConfig.get(type);
+    if (!config) {
+      throw new Error('Unknown FileManagerType: ' + type.toString());
+    }
+    return config;
   }
 
 }

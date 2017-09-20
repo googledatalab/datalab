@@ -313,15 +313,13 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     Utils.deleteAllChildren(menu);
 
     this.fileManagerTypeList.forEach((type) => {
-      const config = FILE_MANAGER_CONFIG.get(type);
-      if (!config) {
-        throw new Error('Unknown FileManagerType: ' + type.toString());
-      }
+      const config = FileManagerFactory.getFileManagerConfig(type);
+      const strType = FileManagerFactory.fileManagerTypetoString(type);
       const btn = document.createElement('paper-button');
       btn.classList.add('toolbar-button');
       btn.addEventListener('click', () => {
-        if (this.fileManagerType !== type) {
-          this.fileManagerType = type;
+        if (this.fileManagerType !== strType) {
+          this.fileManagerType = strType;
           this._fileManager = FileManagerFactory.getInstanceForType(type);
           this.fileId = '';
 
@@ -1043,10 +1041,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       this._pathHistoryIndex = this._pathHistory.length - 1;
     }
     const type = FileManagerFactory.fileManagerNameToType(this.fileManagerType);
-    const config = FILE_MANAGER_CONFIG.get(type);
-    if (!config) {
-      throw new Error('Unknown FileManagerType: ' + this.fileManagerType);
-    }
+    const config = FileManagerFactory.getFileManagerConfig(type);
     this._fileManagerDisplayIcon = config.displayIcon;
     this._fileManagerDisplayName = config.displayName;
   }
