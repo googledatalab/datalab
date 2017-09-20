@@ -151,7 +151,8 @@ class DriveFileManager implements FileManager {
 
   protected _fromUpstreamFile(file: gapi.client.drive.File) {
     const datalabFile: DriveFile = new DriveFile({
-      icon: file.iconLink,
+      icon: file.mimeType === DriveFileManager._directoryMimeType ?
+                              file.iconLink : 'editor:insert-drive-file',
       id: new DatalabFileId(file.id, FileManagerType.DRIVE),
       name: file.name,
       status: DatalabFileStatus.IDLE,
