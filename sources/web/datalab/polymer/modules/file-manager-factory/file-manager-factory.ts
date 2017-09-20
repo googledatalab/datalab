@@ -22,7 +22,7 @@ enum FileManagerType {
 }
 
 interface FileManagerConfig {
-  class: new () => FileManager;
+  typeClass: new () => FileManager;
   displayIcon: string;
   displayName: string;
   name: string;
@@ -40,43 +40,43 @@ class FileManagerFactory {
   private static _fileManagerConfig = new Map<FileManagerType, FileManagerConfig> ([
     [
       FileManagerType.BIG_QUERY, {
-        class: BigQueryFileManager,
         displayIcon: 'datalab-icons:bigquery-logo',
         displayName: 'BigQuery',
         name: 'bigquery',
         path: 'modules/bigquery-file-manager/bigquery-file-manager.html',
+        typeClass: BigQueryFileManager,
       }
     ], [
       FileManagerType.DRIVE, {
-        class: DriveFileManager,
         displayIcon: 'datalab-icons:drive-logo',
         displayName: 'My Drive',
         name: 'drive',
         path: 'modules/drive-file-manager/drive-file-manager.html',
+        typeClass: DriveFileManager,
       }
     ], [
       FileManagerType.GITHUB, {
-        class: GithubFileManager,
         displayIcon: 'datalab-icons:github-logo',
         displayName: 'Github',
         name: 'github',
         path: 'modules/github-file-manager/github-file-manager.html',
+        typeClass: GithubFileManager,
       }
     ], [
       FileManagerType.JUPYTER, {
-        class: JupyterFileManager,
         displayIcon: 'datalab-icons:local-disk',
         displayName: 'Local Disk',
         name: 'jupyter',
         path: 'modules/jupyter-file-manager/jupyter-file-manager.html',
+        typeClass: JupyterFileManager,
       }
     ], [
       FileManagerType.SHARED_DRIVE, {
-        class: SharedDriveFileManager,
         displayIcon: 'folder-shared',
         displayName: 'Shared on Drive',
         name: 'sharedDrive',
         path: 'modules/drive-file-manager/drive-file-manager.html',
+        typeClass: SharedDriveFileManager,
       }
     ]
   ]);
@@ -108,7 +108,7 @@ class FileManagerFactory {
     const config = this.getFileManagerConfig(fileManagerType);
     if (!FileManagerFactory._fileManagers[config.name]) {
 
-      FileManagerFactory._fileManagers[fileManagerType] = new config.class();
+      FileManagerFactory._fileManagers[fileManagerType] = new config.typeClass();
     }
 
     return FileManagerFactory._fileManagers[fileManagerType];
