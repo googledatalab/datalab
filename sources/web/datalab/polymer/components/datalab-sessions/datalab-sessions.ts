@@ -34,7 +34,7 @@ class SessionsElement extends Polymer.Element implements DatalabPageElement {
 
   public resizeHandler = null;
 
-  private _sessionList: Session[];
+  private _sessionList: Session[] = [];
   private _fetching: boolean;
   private _sessionListRefreshInterval = 60 * 1000;
   private _sessionListRefreshIntervalHandle = 0;
@@ -81,46 +81,58 @@ class SessionsElement extends Polymer.Element implements DatalabPageElement {
    * the created list to the item-list to render.
    */
   async _drawSessionList() {
-    // initial value
-    if (!Array.isArray(this._sessionList)) {
-      return;
-    }
-
-    const sessionDescriptions = this._sessionList.map((session) => {
-      // Try to parse the given path. If it's a valid DatalabId, extract the
-      // file manager from it, and get the file name and icon from that.
-      // Otherwise, assume it's a Jupyter file.
-      try {
-        const id = DatalabFileId.fromQueryString(session.notebook.path);
-        const type = FileManagerFactory.fileManagerNameToType(id.source);
-        const config = FileManagerFactory.getFileManagerConfig(type);
-        const fileManager = FileManagerFactory.getInstanceForType(type);
-        return fileManager.get(id)
-          .then((file) => {
-            const description: SessionDescription = {
-              icon: config.displayIcon,
-              kernel: session.kernel.name,
-              name: file.name,
-            };
-            return description;
-          });
-      } catch (e) {
-        const config = FileManagerFactory.getFileManagerConfig(FileManagerType.JUPYTER);
-        const description: SessionDescription = {
-          icon: config.displayIcon,
-          kernel: session.kernel.name,
-          name: session.notebook.path,
-        };
-        return Promise.resolve(description);
-      }
-    });
-    const sessions = await Promise.all(sessionDescriptions);
-    (this.$.sessions as ItemListElement).rows = sessions.map((session) => {
+    const sessionsDescriptions = await Promise.all(this._sessionList.map((session) =>
+        this._sessionToDescriptionPromise(session)));
+    (this.$.sessions as ItemListElement).rows = sessionsDescriptions.map((description) => {
         return new ItemListRow({
-            columns: [session.name, session.kernel],
-            icon: session.icon,
+            columns: [description.name, description.kernel],
+            icon: description.icon,
         });
     });
+  }
+
+  /**
+   * Convert a session object to a SessionDescription promise. If a file
+   * manager type is also specified, it is used instead to get the
+   * description's icon. Otherwise, we try to get the file manager type from
+   * the session path and use that type's icon. If we fail to do that, we
+   * default to using Jupyter as the file manager type.
+   */
+  _sessionToDescriptionPromise(session: Session, fileManagerType?: FileManagerType)
+      : Promise<SessionDescription> {
+    if (fileManagerType) {
+      const config = FileManagerFactory.getFileManagerConfig(fileManagerType);
+      const description: SessionDescription = {
+        icon: config.displayIcon,
+        kernel: session.kernel.name,
+        name: session.notebook.path,
+      };
+      return Promise.resolve(description);
+    } else {
+      let id: DatalabFileId;
+      try {
+        id = DatalabFileId.fromQueryString(session.notebook.path);
+      } catch (e) {
+        // If we fail to parse the path as a file id, default to using Jupyter,
+        // since the V1 Jupyter notebook editor does not pass a full file id.
+        return this._sessionToDescriptionPromise(session, FileManagerType.JUPYTER);
+      }
+      const type = FileManagerFactory.fileManagerNameToType(id.source);
+      const config = FileManagerFactory.getFileManagerConfig(type);
+      const fileManager = FileManagerFactory.getInstanceForType(type);
+      return fileManager.get(id)
+        .then((file) => file.name)
+        // On error to get the file object, use the notebook path as is
+        .catch(() => id.path)
+        .then((fileName: string) => {
+          const description: SessionDescription = {
+            icon: config.displayIcon,
+            kernel: session.kernel.name,
+            name: fileName,
+          };
+          return description;
+        });
+      }
   }
 
   /**
