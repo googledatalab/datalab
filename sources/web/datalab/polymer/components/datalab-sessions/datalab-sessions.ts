@@ -14,6 +14,12 @@
 
 /// <reference path="../item-list/item-list.ts" />
 
+interface SessionDescription {
+  icon: string;
+  kernel: string;
+  name: string;
+}
+
 /**
  * Session listing element for Datalab.
  * Contains an item-list element to display sessions, a toolbar to interact with these sessions,
@@ -74,17 +80,46 @@ class SessionsElement extends Polymer.Element implements DatalabPageElement {
    * Creates a new ItemListRow object for each entry in the session list, and sends
    * the created list to the item-list to render.
    */
-  _drawSessionList() {
+  async _drawSessionList() {
     // initial value
     if (!Array.isArray(this._sessionList)) {
       return;
     }
 
-    (this.$.sessions as ItemListElement).rows = this._sessionList.map((session) => {
-      return new ItemListRow({
-          columns: [session.notebook.path, session.kernel.name],
-          icon: 'editor:insert-drive-file',
-      });
+    const sessionDescriptions = this._sessionList.map((session) => {
+      // Try to parse the given path. If it's a valid DatalabId, extract the
+      // file manager from it, and get the file name and icon from that.
+      // Otherwise, assume it's a Jupyter file.
+      try {
+        const id = DatalabFileId.fromQueryString(session.notebook.path);
+        const type = FileManagerFactory.fileManagerNameToType(id.source);
+        const config = FileManagerFactory.getFileManagerConfig(type);
+        const fileManager = FileManagerFactory.getInstanceForType(type);
+        return fileManager.get(id)
+          .then((file) => {
+            const description: SessionDescription = {
+              icon: config.displayIcon,
+              kernel: session.kernel.name,
+              name: file.name,
+            };
+            return description;
+          });
+      } catch (e) {
+        const config = FileManagerFactory.getFileManagerConfig(FileManagerType.JUPYTER);
+        const description: SessionDescription = {
+          icon: config.displayIcon,
+          kernel: session.kernel.name,
+          name: session.notebook.path,
+        };
+        return Promise.resolve(description);
+      }
+    });
+    const sessions = await Promise.all(sessionDescriptions);
+    (this.$.sessions as ItemListElement).rows = sessions.map((session) => {
+        return new ItemListRow({
+            columns: [session.name, session.kernel],
+            icon: session.icon,
+        });
     });
   }
 
