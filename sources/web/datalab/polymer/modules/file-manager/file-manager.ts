@@ -91,7 +91,7 @@ class NotebookContent {
     this.cells = cells;
     this.metadata = metadata;
     this.nbformat = nbformat;
-    this.nbformat_minor = nbformatMinor;
+    this.nbformat_minor = nbformatMinor || 0;
   }
 
   public static fromString(content: string) {

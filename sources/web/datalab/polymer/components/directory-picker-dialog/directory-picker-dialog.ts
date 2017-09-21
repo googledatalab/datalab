@@ -96,6 +96,11 @@ class DirectoryPickerDialogElement extends BaseDialogElement {
     if (!this.readyPromise) {
       super.ready();
       this.readyPromise = this.$.filePicker.ready();
+      // We need to notice when the dialog becomes visible so we can rerun our
+      // sizing calculations after the dialog opens so that components like the
+      // resizable divider make the correct calculations. Without this, those
+      // calculations get done before the component is visible, with some zero
+      // sizes, so the component does not display properly.
       this.addEventListener('iron-overlay-opened',
         () => { this.resizeHandler(); });
     }
