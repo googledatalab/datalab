@@ -594,20 +594,21 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         // each separately, but this requires the backend to support partial
         // chunk uploads. For Jupyter, this is supported in 5.0.0, see:
         // https://github.com/jupyter/notebook/pull/2162/files
-        reader.readAsDataURL(file);
+        reader.readAsText(file);
       });
 
       // Now upload the file data to the backend server.
       const uploadPromise = readPromise
         .then((itemData: string) => {
-          // Extract the base64 data string
-          itemData = itemData.substr(itemData.indexOf(',') + 1);
-
           return this._fileManager.create(DatalabFileType.FILE, this.currentFile.id, file.name)
-            .then((newFile: JupyterFile) => {
-              newFile.format = 'base64';
+            .then((newFile: DatalabFile) => {
+              // Jupyter requires format and path fields to be filled on the
+              // uploaded file object
+              if (this._fileManager instanceof JupyterFileManager) {
+                (newFile as JupyterFile).format = 'text';
+                (newFile as JupyterFile).path = (this.currentFile as JupyterFile).path;
+              }
               newFile.name = file.name;
-              newFile.path = (this.currentFile as JupyterFile).path;
               newFile.status = DatalabFileStatus.IDLE;
               return newFile;
             })
