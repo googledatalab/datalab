@@ -183,8 +183,26 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
   /**
    * Called when the element's local DOM is ready and initialized.
+   * @returns a promise that completes when we have finished all of our
+   * asynchronous initialization. A caller that needs to wait for this
+   * to be done can call ready() again and wait on the returned promise.
    */
-  async ready() {
+  ready() {
+    // TODO: Using a ready promise might be common enough a need that we should
+    // consider adding it to a super class, maybe DatalabElement.
+    if (!this.readyPromise) {
+      // We kick off our aync stuff only the first time ready() is called.
+      // On subsequent calls, we return the same promise.
+      this.readyPromise = this._init().catch((e) => {
+        Utils.showErrorDialog('Error loading file', e.message);
+        this._fetching = false; // Stop looking busy
+        throw e;
+      });
+    }
+    return this.readyPromise;
+  }
+
+  async _init() {
     // Must set this to true before calling super.ready(), because the latter will cause
     // property updates that will cause _fetchFileList to be called first, we don't want
     // that. We want ready() to be the entry point so it gets the user's last saved path.
@@ -234,29 +252,15 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     this._fileManager = FileManagerFactory.getInstanceForType(
         FileManagerFactory.fileManagerNameToType(this.fileManagerType));
 
-    // TODO: Using a ready promise might be common enough a need that we should
-    // consider adding it to a super class, maybe DatalabElement. For now, this
-    // is the only element that needs it.
-    if (!this.readyPromise) {
-      this.readyPromise = this._loadStartupPath(fileId)
-          .then(() => this._finishLoadingFiles());
-    }
+    await this._loadStartupPath(fileId);
+    await this._finishLoadingFiles();
 
     this._ignoreFileIdChange = false;
-    return this.readyPromise.catch((e) => {
-      Utils.showErrorDialog('Error loading file', e.message);
-      this._fetching = false; // Stop looking busy
-      throw e;
-    });
   }
 
   _getFileIdFromProperty() {
     let fileId: DatalabFileId|null = null;
     if (this.fileId) {
-      if (!this.offsetParent) {
-        // Ignore fileId property if we are not visible
-        return null;
-      }
       try {
         fileId = DatalabFileId.fromQueryString(this.fileId);
       } catch (e) {
@@ -386,10 +390,12 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         }
       })
       .catch((e: Error) => {
+        const fileSpec = this.currentFile.id.toQueryString();
+        const msgPrefix = 'Error getting list of files from ' + fileSpec + ':';
         if (throwOnError === true) {
-          throw new Error('Error getting list of files: ' + e.message);
+          throw new Error(msgPrefix + ' ' + e.message);
         } else {
-          Utils.log.error('Error getting list of files:', e);
+          Utils.log.error(msgPrefix, e);
         }
       })
       .then(() => this._fetching = false);
