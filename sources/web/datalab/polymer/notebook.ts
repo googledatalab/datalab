@@ -50,8 +50,8 @@ async function processMessageEvent(e: MessageEvent) {
     try {
       await ApiManagerFactory.getInstance().uploadOauthAccessToken();
     } catch (e) {
+      ackMessage.arguments = e.toString();
       ackMessage.command = CommandId.ERROR;
-      ackMessage.arguments = e;
     }
     sendMessageToNotebookEditor(ackMessage);
   } else if (message.command === CommandId.LOAD_NOTEBOOK) {
@@ -68,7 +68,7 @@ async function processMessageEvent(e: MessageEvent) {
       };
     } catch (e) {
       outgoingMessage = {
-        arguments: e,
+        arguments: e.toString(),
         command: CommandId.ERROR,
       };
     }
