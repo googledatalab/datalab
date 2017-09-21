@@ -92,15 +92,37 @@ class TemplateManager {
 
   public static async newNotebookFromTemplate(template: NotebookTemplate) {
 
+    const appSettings = await SettingsManager.getAppSettingsAsync();
+
+    // TODO(jimmc): Look for a user preference for baseDir
+    const baseDir = (appSettings.defaultFileManager || 'drive') + ':';
+    // TODO(jimmc): Allow specifying a path with baseDir. For now, we are
+    // just using the root of the filesystem as the default location.
+    const baseName = 'temp';
+    // Add some more stuff to the name to make it different each time.
+    // We are not checking to see if the file exists, so it is not
+    // guaranteed to produce a unique filename, but since we are doing
+    // it based on the current time down to the second, and it is scoped
+    // only to this user, the odds of a collision are pretty low.
+    const dateStr = new Date().toISOString();
+    const yearStr =
+        dateStr.slice(0,4) + dateStr.slice(5, 7) + dateStr.slice(8, 10);
+    const timeStr =
+        dateStr.slice(11,13) + dateStr.slice(14, 16) + dateStr.slice(17, 19);
+    const moreName = yearStr + '_' + timeStr;
+    const fileName = baseName + '_' + moreName + '.ipynb';
     const options: DirectoryPickerDialogOptions = {
       big: true,
+      fileId: baseDir,
+      fileName,
       okLabel: 'Save Here',
       title: 'New Notebook',
       withFileName: true,
     };
 
-    const closeResult = await Utils.showDialog(DirectoryPickerDialogElement, options) as
-        DirectoryPickerDialogCloseResult;
+    const closeResult =
+        await Utils.showDialog(DirectoryPickerDialogElement, options) as
+            DirectoryPickerDialogCloseResult;
 
     if (closeResult.confirmed && closeResult.fileName) {
       const fileManager = FileManagerFactory.getInstanceForType(template.fileId.source);
