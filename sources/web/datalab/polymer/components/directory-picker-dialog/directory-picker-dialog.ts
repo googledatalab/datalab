@@ -27,6 +27,7 @@ interface DirectoryPickerDialogCloseResult extends BaseDialogCloseResult {
  * Options for opening a directory picker dialog.
  */
 interface DirectoryPickerDialogOptions extends BaseDialogOptions {
+  fileId?: string;    // The initial directory to use
   fileName?: string;
   withFileName: boolean;
 }
@@ -42,6 +43,11 @@ interface DirectoryPickerDialogOptions extends BaseDialogOptions {
 class DirectoryPickerDialogElement extends BaseDialogElement {
 
   private static _memoizedTemplate: PolymerTemplate;
+
+  /**
+   * Initial value of fileId.
+   */
+  public fileId: string;
 
   /**
    * Initial value of input box.
@@ -60,6 +66,9 @@ class DirectoryPickerDialogElement extends BaseDialogElement {
   static get properties() {
     return {
       ...super.properties,
+      fileId: {
+        type: DatalabFileId,
+      },
       fileName: {
         type: String,
         value: '',
