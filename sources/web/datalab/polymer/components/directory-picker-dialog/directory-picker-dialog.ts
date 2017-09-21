@@ -53,6 +53,8 @@ class DirectoryPickerDialogElement extends BaseDialogElement {
    */
   public withFileName: boolean;
 
+  public readyPromise: Promise<any>;
+
   static get is() { return 'directory-picker-dialog'; }
 
   static get properties() {
@@ -79,6 +81,21 @@ class DirectoryPickerDialogElement extends BaseDialogElement {
       this._memoizedTemplate = Utils.stampInBaseTemplate(this.is, super.is, '#body');
     }
     return this._memoizedTemplate;
+  }
+
+  ready() {
+    if (!this.readyPromise) {
+      super.ready();
+      this.readyPromise = this.$.filePicker.ready();
+      this.addEventListener('iron-overlay-opened',
+        () => { this.resizeHandler(); });
+    }
+    return this.readyPromise;
+  }
+
+  resizeHandler() {
+    const picker: FileBrowserElement = this.$.filePicker;
+    picker.resizeHandler();
   }
 
   /**

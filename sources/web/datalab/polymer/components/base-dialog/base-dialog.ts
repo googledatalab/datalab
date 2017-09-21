@@ -116,6 +116,12 @@ class BaseDialogElement extends Polymer.Element {
     this.$.theDialog.open();
   }
 
+  openAndWait(): Promise<BaseDialogCloseResult> {
+    return new Promise<BaseDialogCloseResult>((resolve, _reject) => {
+      this.openAndWaitAsync(resolve);
+    });
+  }
+
   /**
    * Opens the dialog and takes a callback function that will be called when
    * the dialog is closed with the close options.

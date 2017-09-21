@@ -20,11 +20,11 @@ class Utils {
   public static log = class {
     public static verbose(...args: any[]) {
       // tslint:disable-next-line:no-console
-      console.log(args.join(' '));
+      console.log(...args);
     }
     public static error(...args: any[]) {
       // tslint:disable-next-line:no-console
-      console.error(args.join(' '));
+      console.error(...args);
     }
   };
 
@@ -32,6 +32,9 @@ class Utils {
    * Opens a dialog with the specified options. It uses the Datalab custom element
    * according to the specified dialog type, attaches a new instance to the current
    * document, opens it, and returns a promise that resolves when the dialog is closed.
+   * If you are using a dialog that needs to know its size in order to render,
+   * make sure you include an event listener on iron-overlay-opened in the
+   * dialog so that it can render itself properly once it becomes visible.
    * @param type specifies which type of dialog to use
    * @param dialogOptions specifies different options for opening the dialog
    */
@@ -40,18 +43,22 @@ class Utils {
     const dialog = document.createElement(dialogType.is) as any;
     document.body.appendChild(dialog);
 
+    if (dialog.readyPromise) {
+      // Wait for the element to finish its initialization before we set
+      // property values on it so that we don't have two threads running
+      // at the same time fiddling with properties.
+      await dialog.readyPromise;
+    }
+
     // Copy the dialog options fields into the dialog element
     Object.keys(dialogOptions).forEach((key) => {
       dialog[key] = (dialogOptions as any)[key];
     });
 
     // Open the dialog
-    return new Promise((resolve) => {
-      dialog.openAndWaitAsync((closeResult: BaseDialogCloseResult) => {
-        document.body.removeChild(dialog);
-        resolve(closeResult);
-      });
-    }) as Promise<BaseDialogCloseResult>;
+    const closeResult = await dialog.openAndWait();
+    document.body.removeChild(dialog);
+    return closeResult;
   }
 
   /**
