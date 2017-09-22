@@ -95,9 +95,14 @@ class TemplateManager {
     const appSettings = await SettingsManager.getAppSettingsAsync();
 
     // TODO(jimmc): Look for a user preference for baseDir
-    const baseDir = (appSettings.defaultFileManager || 'drive') + ':';
+    let baseDir = (appSettings.defaultFileManager || 'drive') + ':';
     // TODO(jimmc): Allow specifying a path with baseDir. For now, we are
     // just using the root of the filesystem as the default location.
+    if (baseDir === 'jupyter:') {
+      // Jupyter root directory does not persist between container restarts,
+      // so we use the datalab dir as the default in this case.
+      baseDir = baseDir + 'datalab/';
+    }
     const baseName = 'temp';
     // Add some more stuff to the name to make it different each time.
     // We are not checking to see if the file exists, so it is not
