@@ -183,9 +183,8 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 # Add some unchanging bits - specifically node modules (that need to be kept in sync
 # with packages.json manually, but help save build time, by preincluding them in an
 # earlier layer).
-# Note: ws is now over 1.0 but using that gives issues so leaving at 0.4.2 for now.
     /tools/node/bin/npm install \
-        ws@0.4.32 \
+        ws@1.1.4 \
         http-proxy@1.13.2 \
         mkdirp@0.5.1 \
         node-uuid@1.4.7 \
