@@ -261,6 +261,10 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   _getFileIdFromProperty() {
     let fileId: DatalabFileId|null = null;
     if (this.fileId) {
+      if (!this.offsetParent && !this.small) {
+        // Ignore fileId property if we are not visible, unless we are a dialog
+        return null;
+      }
       try {
         fileId = DatalabFileId.fromQueryString(this.fileId);
       } catch (e) {
