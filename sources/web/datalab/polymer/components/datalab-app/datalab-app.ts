@@ -76,15 +76,13 @@ class DatalabAppElement extends Polymer.Element {
     this._boundResizeHandler = this.resizeHandler.bind(this);
     window.addEventListener('resize', this._boundResizeHandler, true);
 
-    const apiManager = ApiManagerFactory.getInstance();
-
-    apiManager.disconnectedHandler = () => {
+    ApiManager.disconnectedHandler = () => {
       this.dispatchEvent(new NotificationEvent('Failed to connect to the server.',
                                                true /* show */,
                                                true /* sticky */));
     };
 
-    apiManager.connectedHandler = () => {
+    ApiManager.connectedHandler = () => {
       this.dispatchEvent(new NotificationEvent('', false /* show */));
     };
   }

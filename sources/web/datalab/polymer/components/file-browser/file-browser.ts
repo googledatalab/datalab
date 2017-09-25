@@ -82,7 +82,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   public nLeadingBreadcrumbsToTrim: number;
 
   private _addToolbarCollapseThreshold = 900;
-  private _apiManager: ApiManager;
   private _canPreview = false;
   private _dividerPosition: number;
   private _previewPaneCollapseThreshold = 600;
@@ -225,8 +224,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       // If there are any leading breadcrumbs we trimmed, add that number back.
       this._pathHistoryIndex = 0 + this.nLeadingBreadcrumbsToTrim;
     });
-
-    this._apiManager = ApiManagerFactory.getInstance();
 
     const fileId = this._getFileIdFromProperty();
     if (fileId) {

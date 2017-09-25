@@ -24,7 +24,6 @@ class TableInlineDetailsElement extends Polymer.Element {
    */
   public file: BigQueryFile;
 
-  private _apiManager: ApiManager;
   private _fileManager: FileManager;
   private _rows: gapi.client.bigquery.TabledataRow[];
   private _table: gapi.client.bigquery.Table | null;
@@ -60,7 +59,6 @@ class TableInlineDetailsElement extends Polymer.Element {
   constructor() {
     super();
 
-    this._apiManager = ApiManagerFactory.getInstance();
     this._fileManager = FileManagerFactory.getInstance();
   }
 

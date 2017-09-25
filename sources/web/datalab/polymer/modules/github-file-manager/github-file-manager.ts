@@ -193,7 +193,7 @@ class GithubFileManager implements FileManager {
         'X-Requested-With': 'XMLHttpRequest; googledatalab-datalab-app',
       },
     };
-    return ApiManagerFactory.getInstance().sendRequestAsync(restUrl, options, false);
+    return ApiManager.sendRequestAsync(restUrl, options, false);
   }
 
   private _ghRootDatalabFile(): DatalabFile {

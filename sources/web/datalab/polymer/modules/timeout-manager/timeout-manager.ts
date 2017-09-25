@@ -27,8 +27,7 @@ class TimeoutManager {
    * Queries the server for the timeout info.
    */
   public static getTimeout(): Promise<common.TimeoutInfo> {
-    const apiManager = ApiManagerFactory.getInstance();
-    return apiManager.sendRequestAsync(apiManager.getServiceUrl(ServiceId.TIMEOUT))
+    return ApiManager.sendRequestAsync(ApiManager.getServiceUrl(ServiceId.TIMEOUT))
         .then((timeoutInfo) => {
           timeoutInfo.expirationTime = (timeoutInfo.idleTimeoutSeconds > 0) ?
             Date.now() + timeoutInfo.secondsRemaining * 1000 : 0;
@@ -40,12 +39,11 @@ class TimeoutManager {
    * Enables or disables idle timeout.
    */
    public static setTimeoutEnabled(enabled: boolean): Promise<string> {
-    const apiManager = ApiManagerFactory.getInstance();
-    const timeoutUrl = apiManager.getServiceUrl(ServiceId.TIMEOUT) + '?enabled=' + enabled;
+    const timeoutUrl = ApiManager.getServiceUrl(ServiceId.TIMEOUT) + '?enabled=' + enabled;
     const xhrOptions: XhrOptions = {
       method: 'POST',
     };
-    return apiManager.sendTextRequestAsync(timeoutUrl, xhrOptions);
+    return ApiManager.sendTextRequestAsync(timeoutUrl, xhrOptions);
   }
 
   /**

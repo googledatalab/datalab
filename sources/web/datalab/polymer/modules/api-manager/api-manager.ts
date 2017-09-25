@@ -57,19 +57,20 @@ interface XssiResponse {
  */
 class ApiManager implements ApiManager {
 
-  public isConnected = true;
+  public static isConnected = true;
 
-  public connectedHandler: () => void;
-  public disconnectedHandler: () => void;
+  // TODO: Consider making these event targets to allow multiple listeners
+  public static connectedHandler: () => void;
+  public static disconnectedHandler: () => void;
 
-  private _basepathPromise: Promise<string>;
+  private static _basepathPromise: Promise<string>;
 
   /**
    * XSRF token, if required, undefined until we call basepathApiUrl
    */
-  private _xsrfToken = '';
+  private static _xsrfToken = '';
 
-  public getBasePath(): Promise<string> {
+  public static getBasePath(): Promise<string> {
     const basePathUrl = this.getServiceUrl(ServiceId.BASE_PATH);
     if (!this._basepathPromise) {
       this._basepathPromise = this._xhrTextAsync(basePathUrl)
@@ -124,7 +125,7 @@ class ApiManager implements ApiManager {
     return this._basepathPromise;
   }
 
-  public async sendRequestAsync(url: string, options?: XhrOptions, prependBasepath = true)
+  public static async sendRequestAsync(url: string, options?: XhrOptions, prependBasepath = true)
       : Promise<any> {
     if (prependBasepath) {
       const basepath = await this.getBasePath();
@@ -133,7 +134,7 @@ class ApiManager implements ApiManager {
     return this._xhrJsonAsync(url, options);
   }
 
-  public async sendTextRequestAsync(url: string, options?: XhrOptions, prependBasepath = true)
+  public static async sendTextRequestAsync(url: string, options?: XhrOptions, prependBasepath = true)
       : Promise<string> {
     if (prependBasepath) {
       const basepath = await this.getBasePath();
@@ -142,7 +143,7 @@ class ApiManager implements ApiManager {
     return this._xhrTextAsync(url, options);
   }
 
-  public getServiceUrl(serviceId: ServiceId): string {
+  public static getServiceUrl(serviceId: ServiceId): string {
     switch (serviceId) {
       case ServiceId.APP_SETTINGS:
         return '/_appsettings';
@@ -165,7 +166,7 @@ class ApiManager implements ApiManager {
     }
   }
 
-  public async uploadOauthAccessToken() {
+  public static async uploadOauthAccessToken() {
     const account = await GapiManager.getCurrentUser();
     const token = account.getAuthResponse();
     const creds = {
@@ -187,7 +188,7 @@ class ApiManager implements ApiManager {
    * the response text. This method returns immediately with a promise
    * that resolves with the response text when the request completes.
    */
-  protected _xhrTextAsync(url: string, options?: XhrOptions): Promise<string> {
+  protected static _xhrTextAsync(url: string, options?: XhrOptions): Promise<string> {
 
     options = options || {};
     const method = options.method || 'GET';
@@ -255,19 +256,8 @@ class ApiManager implements ApiManager {
    * the response text as json. This method returns immediately with a promise
    * that resolves with the parsed object when the request completes.
    */
-  private _xhrJsonAsync(url: string, options?: XhrOptions) {
+  private static _xhrJsonAsync(url: string, options?: XhrOptions) {
     return this._xhrTextAsync(url, options)
       .then((response: string) => JSON.parse(response || 'null'));
-  }
-}
-
-class ApiManagerFactory {
-  private static _apiManager: ApiManager;
-
-  public static getInstance() {
-    if (!this._apiManager) {
-      this._apiManager = new ApiManager();
-    }
-    return this._apiManager;
   }
 }

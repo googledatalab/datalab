@@ -178,18 +178,17 @@ class GapiManager {
         : Promise<[gapi.client.drive.File, string | null]> {
       await this._load();
       const user = await GapiManager.getCurrentUser();
-      const apiManager = ApiManagerFactory.getInstance();
       const xhrOptions: XhrOptions = {
         headers: {Authorization: 'Bearer ' + user.getAuthResponse().access_token},
         noCache: true,
       };
-      const file: gapi.client.drive.File = await apiManager.sendRequestAsync(
+      const file: gapi.client.drive.File = await ApiManager.sendRequestAsync(
             'https://www.googleapis.com/drive/v2/files/' + id,
             xhrOptions,
             false);
       let content = null;
       if (file.downloadUrl) {
-        content = await apiManager.sendTextRequestAsync(file.downloadUrl,
+        content = await ApiManager.sendTextRequestAsync(file.downloadUrl,
                                                         xhrOptions,
                                                         false);
       }

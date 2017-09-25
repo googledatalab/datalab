@@ -39,7 +39,7 @@ class DatalabWebSocketShim {
     this._url = url;
     this.readyState = WebSocketState.CLOSED;
 
-    ApiManagerFactory.getInstance().getBasePath()
+    ApiManager.getBasePath()
       .then((basepath: string) => {
         const socketUri = location.protocol + '//' + location.host + '/session';
         const socketOptions: SocketIOClient.ConnectOpts = {

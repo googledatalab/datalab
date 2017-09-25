@@ -121,12 +121,11 @@ class JupyterFileManager implements FileManager {
   }
 
   public async get(fileId: DatalabFileId) {
-    const apiManager = ApiManagerFactory.getInstance();
     const xhrOptions: XhrOptions = {
       noCache: true,
     };
-    return apiManager.sendRequestAsync(
-        apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + fileId.path, xhrOptions)
+    return ApiManager.sendRequestAsync(
+        ApiManager.getServiceUrl(ServiceId.CONTENT) + '/' + fileId.path, xhrOptions)
       .then((file: any) => JupyterFileManager._upstreamFileToJupyterFile(file));
   }
 
@@ -147,7 +146,6 @@ class JupyterFileManager implements FileManager {
   }
 
   public async saveText(file: JupyterFile, content: string) {
-    const apiManager = ApiManagerFactory.getInstance();
     if (!file.mimetype) {
       file.mimetype = 'plain/text';
     }
@@ -173,8 +171,8 @@ class JupyterFileManager implements FileManager {
       successCodes: [200, 201],
     };
     const requestPath =
-        apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + file.id.path;
-    return apiManager.sendRequestAsync(requestPath, xhrOptions)
+        ApiManager.getServiceUrl(ServiceId.CONTENT) + '/' + file.id.path;
+    return ApiManager.sendRequestAsync(requestPath, xhrOptions)
       .then((savedFile: any) => JupyterFileManager._upstreamFileToJupyterFile(savedFile));
   }
 
@@ -200,7 +198,6 @@ class JupyterFileManager implements FileManager {
   }
 
   public create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string) {
-    const apiManager = ApiManagerFactory.getInstance();
     const jupyterFile = new JupyterFile();
     jupyterFile.created = new Date().toISOString();
     jupyterFile.format = 'text';
@@ -220,7 +217,7 @@ class JupyterFileManager implements FileManager {
       }),
       successCodes: [201],
     };
-    let createPromise = apiManager.sendRequestAsync(apiManager.getServiceUrl(ServiceId.CONTENT),
+    let createPromise = ApiManager.sendRequestAsync(ApiManager.getServiceUrl(ServiceId.CONTENT),
         xhrOptions)
       .then((file) => JupyterFileManager._upstreamFileToJupyterFile(file));
 
@@ -243,8 +240,7 @@ class JupyterFileManager implements FileManager {
   }
 
   public rename(oldFileId: DatalabFileId, newName: string, newContainerId?: DatalabFileId) {
-    const apiManager = ApiManagerFactory.getInstance();
-    const oldPath = apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + oldFileId.path;
+    const oldPath = ApiManager.getServiceUrl(ServiceId.CONTENT) + '/' + oldFileId.path;
     let newPath = newContainerId ?
         newContainerId.path : JupyterFileManager._getParentDir(oldFileId.path);
     newPath += '/' + newName;
@@ -256,25 +252,23 @@ class JupyterFileManager implements FileManager {
       }),
     };
 
-    return apiManager.sendRequestAsync(oldPath, xhrOptions)
+    return ApiManager.sendRequestAsync(oldPath, xhrOptions)
       .then((file) => JupyterFileManager._upstreamFileToJupyterFile(file));
   }
 
   public delete(fileId: DatalabFileId) {
-    const apiManager = ApiManagerFactory.getInstance();
-    const path = apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + fileId.path;
+    const path = ApiManager.getServiceUrl(ServiceId.CONTENT) + '/' + fileId.path;
     const xhrOptions: XhrOptions = {
       failureCodes: [400],
       method: 'DELETE',
       successCodes: [204],
     };
 
-    return apiManager.sendRequestAsync(path, xhrOptions);
+    return ApiManager.sendRequestAsync(path, xhrOptions);
   }
 
   public copy(fileId: DatalabFileId, destinationDirectoryId: DatalabFileId) {
-    const apiManager = ApiManagerFactory.getInstance();
-    const path = apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + destinationDirectoryId.path;
+    const path = ApiManager.getServiceUrl(ServiceId.CONTENT) + '/' + destinationDirectoryId.path;
     const xhrOptions: XhrOptions = {
       failureCodes: [409],
       method: 'POST',
@@ -284,7 +278,7 @@ class JupyterFileManager implements FileManager {
       successCodes: [201],
     };
 
-    return apiManager.sendRequestAsync(path, xhrOptions);
+    return ApiManager.sendRequestAsync(path, xhrOptions);
   }
 
   public async getNotebookUrl(fileId: DatalabFileId) {
@@ -316,14 +310,13 @@ class JupyterFileManager implements FileManager {
   }
 
   private _getFileWithContent(fileId: string) {
-    const apiManager = ApiManagerFactory.getInstance();
     if (fileId.startsWith('/')) {
       fileId = fileId.substr(1);
     }
     const xhrOptions: XhrOptions = {
       noCache: true,
     };
-    return apiManager.sendRequestAsync(
-        apiManager.getServiceUrl(ServiceId.CONTENT) + '/' + fileId, xhrOptions);
+    return ApiManager.sendRequestAsync(
+        ApiManager.getServiceUrl(ServiceId.CONTENT) + '/' + fileId, xhrOptions);
   }
 }
