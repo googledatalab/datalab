@@ -14,7 +14,7 @@
 
 /**
  * This file contains a collection of functions that call the Google Drive APIs, and are
- * wrapped in the ApiManager class.
+ * wrapped in the FileManager class.
  */
 
 class DriveFile extends DatalabFile {
