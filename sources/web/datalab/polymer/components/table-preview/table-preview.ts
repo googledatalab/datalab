@@ -186,6 +186,7 @@ class TablePreviewElement extends Polymer.Element {
         BIGQUERY_DATASET_ID: this._table.tableReference.datasetId,
         BIGQUERY_FULL_ID: this._table.id.replace(':', '.'),
         BIGQUERY_PROJECT_ID: this._table.tableReference.projectId,
+        BIGQUERY_TABLE_DESCRIPTION: this._table.description,
         BIGQUERY_TABLE_ID: this._table.tableReference.tableId,
       };
       const template = new BigQueryTableOverviewTemplate(dict);
