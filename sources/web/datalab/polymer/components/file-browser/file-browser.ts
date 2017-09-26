@@ -379,7 +379,24 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
     this._fetching = true;
 
-    this._fileListFetchPromise = this._fileManager.list(this.currentFile.id)
+    // Load files and running sessions, and set each file's status to Running
+    // if it's id is in the session list.
+    this._fileListFetchPromise = Promise.all([
+        this._fileManager.list(this.currentFile.id),
+        SessionManager.listSessionPaths()
+          .catch((e) => {
+            // Do not block loading files if sessions don't load for some reason.
+            Utils.log.error('Could not load sessions: ' + e.message);
+            return [];
+          }),
+      ])
+      .then(([files, sessions]) => {
+        return files.map((file) => {
+          file.status = (sessions as string[]).indexOf(file.id.path) > -1 ?
+              DatalabFileStatus.RUNNING : DatalabFileStatus.IDLE;
+          return file;
+        });
+      })
       .then((newList) => {
         // Only refresh the UI list if there are any changes. This helps keep
         // the item list's selections intact most of the time
