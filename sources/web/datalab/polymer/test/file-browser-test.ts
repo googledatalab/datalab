@@ -92,6 +92,9 @@ describe('<file-browser>', () => {
     ApiManager.getBasePath = () => {
       return Promise.resolve('');
     };
+    SessionManager.listSessionsAsync = () => {
+      return Promise.resolve([]);
+    };
     const mockFileManager = new MockFileManager();
     mockFileManager.list = () => {
       return Promise.resolve(mockFiles);

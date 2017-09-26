@@ -379,16 +379,30 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     this._fileListFetchPromise = this._fileManager.list(this.currentFile.id)
       .then((newList) => {
         // Only refresh the UI list if there are any changes. This helps keep
-        // the item list's selections intact most of the time
-        // TODO: [yebrahim] Try to diff the two lists and only inject the
-        // differences in the DOM instead of refreshing the entire list if
-        // one item changes. This is tricky because we don't have unique
-        // ids for the items. Using paths might work for files, but is not
-        // a clean solution.
+        // the item list's selections intact most of the time.
         if (JSON.stringify(this._fileList) !== JSON.stringify(newList)) {
           this._fileList = newList;
           this._drawFileList();
         }
+      })
+      // Now load the sessions and update the running status of each file
+      // whose id is in the session list.
+      .then(() => SessionManager.listSessionPaths())
+      .catch((e) => {
+        // Do not block loading files if sessions don't load for some reason.
+        Utils.log.error('Could not load sessions: ' + e.message);
+        return [] as string[];
+      })
+      .then((sessions) => {
+        const listElement = this.$.files as ItemListElement;
+        this._fileList.forEach((file, i) => {
+          // The v1 notebook editor creates sessions with just the file path,
+          // while v2 editor uses the full id string.
+          if (sessions.indexOf(file.id.path) > -1 ||
+              sessions.indexOf(file.id.toQueryString()) > -1) {
+            listElement.set('rows.' + i + '.columns.1', Utils.getFileStatusString(DatalabFileStatus.RUNNING));
+          }
+        });
       })
       .catch((e: Error) => {
         const fileSpec = this.currentFile.id.toQueryString();
