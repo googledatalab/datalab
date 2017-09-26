@@ -399,7 +399,10 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       .then((sessions) => {
         const listElement = this.$.files as ItemListElement;
         this._fileList.forEach((file, i) => {
-          if (sessions.indexOf(file.id.path) > -1) {
+          // The v1 notebook editor creates sessions with just the file path,
+          // while v2 editor uses the full id string.
+          if (sessions.indexOf(file.id.path) > -1 ||
+              sessions.indexOf(file.id.toQueryString()) > -1) {
             listElement.set('rows.' + i + '.columns.1', Utils.getFileStatusString(DatalabFileStatus.RUNNING));
           }
         });
