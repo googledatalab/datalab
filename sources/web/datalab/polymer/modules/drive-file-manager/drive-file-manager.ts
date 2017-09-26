@@ -68,25 +68,8 @@ class DriveFileManager implements FileManager {
       'name',
     ];
 
-    // TODO: Put this code in a common place, instead of doing this for every
-    // file manager. Perhaps a base file manager should get the list of files
-    // and sessions and build the resulting DatalabFile list.
-    const [upstreamFiles, sessions] = await Promise.all([
-      GapiManager.drive.listFiles(fileFields, queryPredicates, orderModifiers),
-      SessionManager.listSessionPaths()
-        .catch((e) => {
-          Utils.log.error('Could not load sessions: ' + e.message);
-          return [];
-        }),
-    ]);
-    // Combine the return values of the two requests to supplement the files
-    // array with the status value.
-    return upstreamFiles.map((file) => {
-      const driveFile = this._fromUpstreamFile(file);
-      driveFile.status = (sessions as string[]).indexOf(driveFile.id.path) > -1 ?
-          DatalabFileStatus.RUNNING : DatalabFileStatus.IDLE;
-      return driveFile;
-    });
+    const upstreamFiles = await GapiManager.drive.listFiles(fileFields, queryPredicates, orderModifiers);
+    return upstreamFiles.map((file) => this._fromUpstreamFile(file));
   }
 
   public async create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string)
