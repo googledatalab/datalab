@@ -179,10 +179,7 @@ class JupyterFileManager implements FileManager {
   }
 
   public async list(containerId: DatalabFileId): Promise<DatalabFile[]> {
-    const [container, sessions] = await Promise.all([
-      this._getFileWithContent(containerId.path),
-      SessionManager.listSessionPaths(),
-    ]);
+    const container = await this._getFileWithContent(containerId.path);
     if (container.type !== 'directory') {
       throw new Error('Can only list files in a directory. Found type: ' +
           typeof(container.type));
@@ -191,12 +188,7 @@ class JupyterFileManager implements FileManager {
     // Combine the return values of the two requests to supplement the files
     // array with the status value.
     const files = container.content;
-    return files.map((file: any) => {
-      const jupyterFile = JupyterFileManager._upstreamFileToJupyterFile(file);
-      jupyterFile.status = sessions.indexOf(jupyterFile.path) > -1 ?
-          DatalabFileStatus.RUNNING : DatalabFileStatus.IDLE;
-      return jupyterFile;
-    });
+    return files.map((file: any) => JupyterFileManager._upstreamFileToJupyterFile(file));
   }
 
   public create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string) {
