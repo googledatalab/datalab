@@ -182,8 +182,13 @@ class TablePreviewElement extends Polymer.Element {
   async _openInNotebook() {
 
     if (this._table) {
-      const tableName = this._table.id.replace(':', '.'); // Standard BigQuery table name
-      const template = new TableSchemaTemplate(tableName);
+      const dict = {
+        BIGQUERY_DATASET_ID: this._table.tableReference.datasetId,
+        BIGQUERY_FULL_ID: this._table.id.replace(':', '.'),
+        BIGQUERY_PROJECT_ID: this._table.tableReference.projectId,
+        BIGQUERY_TABLE_ID: this._table.tableReference.tableId,
+      };
+      const template = new BigQueryTableOverviewTemplate(dict);
 
       try {
         const notebook = await TemplateManager.newNotebookFromTemplate(template);

@@ -12,10 +12,8 @@
  * the License.
  */
 
-const PLACEHOLDER_PREFIX = '#$';
-
 interface TemplateParameter {
-  placeholder: string;
+  name: string;
   value: string | number;
 }
 
@@ -36,57 +34,59 @@ class NotebookTemplate {
   }
 
   /**
-   * Escapes all regex modifier characters in the given string.
+   * Inserts a new cell at position zero that defines python variables
+   * for all of the parameters.
    */
-  private static _regexEscapeAll(s: string) {
-    return s.replace(/([.*+?^${}()|\[\]\/\\])/g, '\\$1');
-  }
-
-  /**
-   * Substitutes all placeholders in the given notebook's cells with their
-   * values.
-   */
-  public populatePlaceholders(notebook: NotebookContent) {
-
-    notebook.cells.forEach((cell: NotebookCell) => {
-      this.parameters.forEach((parameter: TemplateParameter) => {
-        const placeholder = PLACEHOLDER_PREFIX + parameter.placeholder;
-        const escapedPlaceholder = NotebookTemplate._regexEscapeAll(placeholder);
-        const regex = new RegExp(escapedPlaceholder);
-        const value = '\'' + parameter.value.toString() + '\'';
-        cell.source = cell.source.replace(regex, value);
-      });
-    });
-
+  public addParameterCell(notebook: NotebookContent) {
+    const definitionLines = this.parameters.map(parameter =>
+        parameter.name + ' = ' + JSON.stringify(parameter.value));
+    const header = '# Auto-generated parameter definitions';
+    const cellText = header + '\n' + definitionLines.join('\n');
+    const newCell: NotebookCell = {
+      cell_type: 'code',
+      execution_count: 0,
+      metadata: {},
+      outputs: [] as string[],
+      source: cellText,
+    } as NotebookCell;
+    notebook.cells.unshift(newCell);  // insert new cell as the first cell
   }
 }
 
 /**
  * This template contains one cell that shows the given table's schema.
  */
-class TableSchemaTemplate extends NotebookTemplate {
-  constructor(tableName: string) {
-    const parameters = [{
-      placeholder: 'TABLE_NAME_PLACEHOLDER',
-      value: tableName,
-    }];
+class BigQueryTableOverviewTemplate extends NotebookTemplate {
+  constructor(dict: { [key: string]: any }) {
+    const parameters = [];
+    for (const k in dict) {
+      parameters.push({
+        name: k,
+        value: dict[k],
+      });
+    }
 
     // TODO: The actual template files should live somewhere more static.
-    const templateId = new DatalabFileId('datalab/templates/tableSchema.ipynb',
-        FileManagerType.JUPYTER);
+    const defaultTemplateLocation =
+        'jupyter:datalab/templates/BigQueryTableOverview.ipynb';
+
+    // TODO(jimmc); Until we have a user setting, allow specifying an alternate
+    // location for the template file, for debugging.
+    const templateLocation =
+        window.datalab.tableSchemaTemplateFileId || defaultTemplateLocation;
+    const templateId = DatalabFileId.fromQueryString(templateLocation);
     super(templateId, parameters);
   }
 }
 
 /**
- * Manages notebook templates, which are notebooks that contain parameter
- * placeholders. This class can also generate a notebook out of any such
+ * Manages notebook templates, which are notebooks that reference parameter
+ * with specific names. This class can also generate a notebook out of any such
  * template. New templates can be created by extending the NotebookTemplate
- * class, and adding a file on disk with placeholders. All placeholders have to
- * use the same prefix declared in this file.
+ * class, and adding a file on disk with appropriate references.
  * TODO: Consider adding an isTemplateAvailable method that checks the
  * existence of a given template on disk and ensures it has the right
- * placeholders.
+ * parameters.
  */
 class TemplateManager {
 
@@ -95,7 +95,8 @@ class TemplateManager {
     const appSettings = await SettingsManager.getAppSettingsAsync();
 
     // TODO(jimmc): Look for a user preference for baseDir
-    const baseDir = (appSettings.defaultFileManager || 'drive') + ':';
+    const baseType = (appSettings.defaultFileManager || 'drive');
+    const baseDir = baseType + ':';
     // TODO(jimmc): Allow specifying a path with baseDir. For now, we are
     // just using the root of the filesystem as the default location.
     const baseName = 'temp';
@@ -119,32 +120,33 @@ class TemplateManager {
       title: 'New Notebook',
       withFileName: true,
     };
+    const instanceFileManager = FileManagerFactory.getInstanceForType(
+      FileManagerFactory.fileManagerNameToType(baseType));
 
     const closeResult =
         await Utils.showDialog(DirectoryPickerDialogElement, options) as
             DirectoryPickerDialogCloseResult;
 
     if (closeResult.confirmed && closeResult.fileName) {
-      const fileManager = FileManagerFactory.getInstanceForType(template.fileId.source);
-      const templateStringContent = await fileManager.getStringContent(template.fileId);
+      const templateFileManager = FileManagerFactory.getInstanceForType(template.fileId.source);
+      const templateStringContent = await templateFileManager.getStringContent(template.fileId);
       let templateNotebookContent: NotebookContent;
       try {
         templateNotebookContent = NotebookContent.fromString(templateStringContent);
       } catch (e) {
         throw new Error('Template file is not a notebook.');
       }
-      const templateFile = await fileManager.get(template.fileId);
+      template.addParameterCell(templateNotebookContent);
 
-      templateFile.name = closeResult.fileName;
-      if (!templateFile.name.endsWith('.ipynb')) {
-        templateFile.name += '.ipynb';
+      let instanceName = closeResult.fileName;
+      if (!instanceName.endsWith('.ipynb')) {
+        instanceName += '.ipynb';
       }
-      template.populatePlaceholders(templateNotebookContent);
 
       const newFile = await
-          fileManager.create(DatalabFileType.NOTEBOOK, closeResult.selectedDirectory.id,
-              templateFile.name);
-      return fileManager.saveText(newFile, JSON.stringify(templateNotebookContent));
+          instanceFileManager.create(DatalabFileType.NOTEBOOK, closeResult.selectedDirectory.id,
+              instanceName);
+      return instanceFileManager.saveText(newFile, JSON.stringify(templateNotebookContent));
     } else {
       return null;
     }
