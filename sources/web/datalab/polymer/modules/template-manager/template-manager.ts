@@ -12,6 +12,15 @@
  * the License.
  */
 
+// Parameter placeholders are of the form #${foo} for key foo, which will be
+// replaced by the value of foo passed in to the NotebookTemplate constructor.
+// Placeholders in the template which are not specified in the parameters
+// passed to the NotebookTemplate will remain as-is in the output.
+// Parameters passed in to the NotebookTemplate for which there are no
+// corresponding placeholders in the template are silently ignored.
+const PLACEHOLDER_PREFIX = '#${';
+const PLACEHOLDER_POSTFIX = '}';
+
 interface TemplateParameter {
   name: string;
   value: string | number;
@@ -31,6 +40,39 @@ class NotebookTemplate {
   constructor(fileId: DatalabFileId, parameters: TemplateParameter[]) {
     this.fileId = fileId;
     this.parameters = parameters;
+  }
+
+  /**
+   * Escapes all regex modifier characters in the given string.
+   * Inserts a new cell at position zero that defines python variables
+   * for all of the parameters.
+   */
+  private static _regexEscapeAll(s: string) {
+    return s.replace(/([.*+?^${}()|\[\]\/\\])/g, '\\$1');
+  }
+
+  /**
+   * Substitutes all placeholders in the given notebook's cells with their
+   * values.
+   * @returns the number of cells that were modified
+   */
+  public populatePlaceholders(notebook: NotebookContent) {
+    let cellChangeCount = 0;
+    notebook.cells.forEach((cell: NotebookCell) => {
+      const oldCellSource = cell.source;
+      this.parameters.forEach((parameter: TemplateParameter) => {
+        const placeholder =
+            PLACEHOLDER_PREFIX + parameter.name + PLACEHOLDER_POSTFIX;
+        const escapedPlaceholder = NotebookTemplate._regexEscapeAll(placeholder);
+        const regex = new RegExp(escapedPlaceholder);
+        const value = parameter.value.toString();
+        cell.source = cell.source.replace(regex, value);
+      });
+      if (cell.source !== oldCellSource) {
+        cellChangeCount ++;
+      }
+    });
+    return cellChangeCount;
   }
 
   /**
@@ -136,7 +178,11 @@ class TemplateManager {
       } catch (e) {
         throw new Error('Template file is not a notebook.');
       }
-      template.addParameterCell(templateNotebookContent);
+      if (template.populatePlaceholders(templateNotebookContent) == 0) {
+        // If we found no placeholders, assume we are using parameters instead
+        // and add an initial cell with our parameter definitions.
+        template.addParameterCell(templateNotebookContent);
+      }
 
       let instanceName = closeResult.fileName;
       if (!instanceName.endsWith('.ipynb')) {
