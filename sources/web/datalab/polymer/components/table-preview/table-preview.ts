@@ -34,7 +34,6 @@ class TablePreviewElement extends Polymer.Element {
    */
   public tableId: string;
 
-  private _apiManager: ApiManager;
   private _fileManager: FileManager;
   private _table: gapi.client.bigquery.Table | null;
   private _busy = false;
@@ -89,7 +88,6 @@ class TablePreviewElement extends Polymer.Element {
   constructor() {
     super();
 
-    this._apiManager = ApiManagerFactory.getInstance();
     this._fileManager = FileManagerFactory.getInstance();
   }
 

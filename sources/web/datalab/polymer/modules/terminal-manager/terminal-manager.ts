@@ -30,19 +30,17 @@ class TerminalManager {
    * Initializes a terminal session.
    */
   public static startTerminalAsync() {
-    const apiManager = ApiManagerFactory.getInstance();
     const xhrOptions: XhrOptions = {
       method: 'POST',
     };
-    return apiManager.sendRequestAsync(apiManager.getServiceUrl(ServiceId.TERMINALS), xhrOptions);
+    return ApiManager.sendRequestAsync(ApiManager.getServiceUrl(ServiceId.TERMINALS), xhrOptions);
   }
 
   /**
    * Returns a list of active terminal sessions.
    */
   public static listTerminalsAsync() {
-    const apiManager = ApiManagerFactory.getInstance();
-    return apiManager.sendRequestAsync(apiManager.getServiceUrl(ServiceId.TERMINALS));
+    return ApiManager.sendRequestAsync(ApiManager.getServiceUrl(ServiceId.TERMINALS));
   }
 
 }

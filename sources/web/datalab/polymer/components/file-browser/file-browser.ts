@@ -82,7 +82,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   public nLeadingBreadcrumbsToTrim: number;
 
   private _addToolbarCollapseThreshold = 900;
-  private _apiManager: ApiManager;
   private _canPreview = false;
   private _dividerPosition: number;
   private _previewPaneCollapseThreshold = 600;
@@ -225,8 +224,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       // If there are any leading breadcrumbs we trimmed, add that number back.
       this._pathHistoryIndex = 0 + this.nLeadingBreadcrumbsToTrim;
     });
-
-    this._apiManager = ApiManagerFactory.getInstance();
 
     const fileId = this._getFileIdFromProperty();
     if (fileId) {
@@ -670,7 +667,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    * In order to offer a better experience, we create an untitled item in the current path,
    * then rename it to whatever the user specified.
    *
-   * This method creates an input modal to get the user input, then calls the ApiManager to
+   * This method creates an input modal to get the user input, then calls the FileManager to
    * create a new notebook/directory at the current path, and fetches the updated list
    * of files to redraw.
    */
@@ -723,7 +720,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   }
 
   /**
-   * Creates an input modal to get the user input, then calls the ApiManager to
+   * Creates an input modal to get the user input, then calls the FileManager to
    * rename the currently selected item. This only works if exactly one item is
    * selected.
    */
@@ -767,7 +764,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
   /**
    * Creates a modal to get the user's confirmation with a list of the items
-   * to be deleted, then calls the ApiManager for each of these items to delete,
+   * to be deleted, then calls the FileManager for each of these items to delete,
    * then refreshes the file list.
    */
   _deleteSelectedItems() {
@@ -807,7 +804,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         title,
       };
 
-      // Only if the dialog has been confirmed, call the ApiManager to delete each
+      // Only if the dialog has been confirmed, call the FileManager to delete each
       // of the selected items, and wait for all promises to finish. Then if that
       // is successful, reload the file list.
       return Utils.showDialog(BaseDialogElement, inputOptions)

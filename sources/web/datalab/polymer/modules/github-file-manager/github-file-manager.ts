@@ -60,8 +60,6 @@ interface GhFileResponse {
  */
 class GithubFileManager implements FileManager {
 
-  private _githubApiManager: GithubApiManager;
-
   public get(fileId: DatalabFileId): Promise<DatalabFile> {
     if (fileId.path === '' || fileId.path === '/') {
       return Promise.resolve(this._ghRootDatalabFile());
@@ -109,7 +107,7 @@ class GithubFileManager implements FileManager {
       // If at least two path components were specified, then we have
       // a username and a project. Everything after that, if specified,
       // are folders or files under that.
-      const githubPath = '/repos/' + pathParts.slice(0,2).join('/') +
+      const githubPath = '/repos/' + pathParts.slice(0, 2).join('/') +
         '/contents/' + pathParts.slice(2).join('/');
       return this._githubApiPathRequest(githubPath)
           .then((response: GhDirEntryResponse[]) => {
@@ -161,7 +159,7 @@ class GithubFileManager implements FileManager {
     } else if (pathParts.length === 1) {
       throw new Error(op + ' on a github user is not allowed');
     }
-    const githubPath = '/repos/' + pathParts.slice(0,2).join('/') +
+    const githubPath = '/repos/' + pathParts.slice(0, 2).join('/') +
         '/contents/' + pathParts.slice(2).join('/');
     return githubPath;
   }
@@ -195,14 +193,7 @@ class GithubFileManager implements FileManager {
         'X-Requested-With': 'XMLHttpRequest; googledatalab-datalab-app',
       },
     };
-    return this._getGithubApiManager().sendRequestAsync(restUrl, options, false);
-  }
-
-  private _getGithubApiManager(): GithubApiManager {
-    if (!this._githubApiManager) {
-      this._githubApiManager = new GithubApiManager();
-    }
-    return this._githubApiManager;
+    return ApiManager.sendRequestAsync(restUrl, options, false);
   }
 
   private _ghRootDatalabFile(): DatalabFile {
@@ -218,7 +209,7 @@ class GithubFileManager implements FileManager {
 
   private _ghReposResponseToDatalabFiles(response: GhRepoResponse[]):
       DatalabFile[] {
-    return response.map(repo => this._ghRepoToDatalabFile(repo));
+    return response.map((repo) => this._ghRepoToDatalabFile(repo));
   }
 
   private _ghDirEntriesResponseToDatalabFiles(response: GhDirEntryResponse[]):
@@ -278,20 +269,10 @@ class GithubFileManager implements FileManager {
   }
 
   private _ghFileToContentString(file: GhFileResponse): string {
-    if (file.encoding != 'base64') {
+    if (file.encoding !== 'base64') {
       throw new Error('github file encoding "' + file.encoding +
         '" is not supported');
     }
     return atob(file.content);
-  }
-}
-
-// TODO(jimmc): See if we can drop this class as part of moving
-// back towards having just one ApiManager.
-// We just want the sendRequestAsync method of BaseApimanager.
-class GithubApiManager extends BaseApiManager {
-  // We don't care about this method, but it is abstract in the base class.
-  getBasePath() {
-    return Promise.resolve('');
   }
 }

@@ -51,24 +51,22 @@ class SessionManager {
    * Terminates a running session.
    */
   public static shutdownSessionAsync(sessionId: string) {
-    const apiManager = ApiManagerFactory.getInstance();
     const xhrOptions: XhrOptions = {
       method: 'DELETE',
       successCodes: [204],
     };
-    return apiManager.sendRequestAsync(
-        apiManager.getServiceUrl(ServiceId.SESSIONS) + '/' + sessionId, xhrOptions);
+    return ApiManager.sendRequestAsync(
+        ApiManager.getServiceUrl(ServiceId.SESSIONS) + '/' + sessionId, xhrOptions);
   }
 
   /**
    * Returns a list of currently running Session objects.
    */
   public static listSessionsAsync(): Promise<Session[]> {
-    const apiManager = ApiManagerFactory.getInstance();
     const xhrOptions: XhrOptions = {
       noCache: true,
     };
-    return apiManager.sendRequestAsync(apiManager.getServiceUrl(ServiceId.SESSIONS),
+    return ApiManager.sendRequestAsync(ApiManager.getServiceUrl(ServiceId.SESSIONS),
         xhrOptions) as Promise<Session[]>;
   }
 

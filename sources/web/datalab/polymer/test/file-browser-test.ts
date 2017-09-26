@@ -89,7 +89,7 @@ describe('<file-browser>', () => {
       };
       return Promise.resolve(mockSettings);
     };
-    ApiManagerFactory.getInstance().getBasePath = () => {
+    ApiManager.getBasePath = () => {
       return Promise.resolve('');
     };
     SessionManager.listSessionsAsync = () => {

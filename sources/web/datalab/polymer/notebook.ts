@@ -48,7 +48,7 @@ async function processMessageEvent(e: MessageEvent) {
       guid: message.guid,
     };
     try {
-      await ApiManagerFactory.getInstance().uploadOauthAccessToken();
+      await ApiManager.uploadOauthAccessToken();
     } catch (e) {
       ackMessage.arguments = e.toString();
       ackMessage.command = CommandId.ERROR;
