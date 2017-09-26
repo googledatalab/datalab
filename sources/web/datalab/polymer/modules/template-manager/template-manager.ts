@@ -44,8 +44,6 @@ class NotebookTemplate {
 
   /**
    * Escapes all regex modifier characters in the given string.
-   * Inserts a new cell at position zero that defines python variables
-   * for all of the parameters.
    */
   private static _regexEscapeAll(s: string) {
     return s.replace(/([.*+?^${}()|\[\]\/\\])/g, '\\$1');
