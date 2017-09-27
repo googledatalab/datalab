@@ -100,15 +100,6 @@ class NotebookTemplate {
   }
 }
 
-// A small hack to allow us to have a unified way of expressing
-// a file location on any of Drive, Jupyter, or our API.
-class ApiFileId extends DatalabFileId {
-  constructor(queryString: string) {
-    const tokens = queryString.split(':');
-    super(tokens[1], FileManagerType.MOCK);
-  }
-}
-
 /**
  * This template contains one cell that shows the given table's schema.
  */
@@ -131,9 +122,7 @@ class BigQueryTableOverviewTemplate extends NotebookTemplate {
     // 'jupyter:datalab/templates/BigQueryTableOverview.ipynb';
     const templateLocation =
         window.datalab.tableSchemaTemplateFileId || defaultTemplateLocation;
-    const templateId = templateLocation.startsWith('api:') ?
-      new ApiFileId(templateLocation) :
-      DatalabFileId.fromQueryString(templateLocation);
+    const templateId = DatalabFileId.fromQueryString(templateLocation);
     super(templateId, parameters);
   }
 }
@@ -216,7 +205,7 @@ class TemplateManager {
   }
 
   public static async getTemplateStringContent(fileId: DatalabFileId) {
-    if (fileId instanceof ApiFileId) {
+    if (fileId.source === FileManagerType.API) {
       const templateStringContent =
           await ApiManager.sendTextRequestAsync(fileId.path);
       return templateStringContent;

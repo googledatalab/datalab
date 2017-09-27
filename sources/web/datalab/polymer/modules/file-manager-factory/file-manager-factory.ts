@@ -13,6 +13,7 @@
  */
 
 enum FileManagerType {
+  API = 'api',  // For internal use, there is no corresponding FileManager
   BIG_QUERY = 'bigquery',
   DRIVE = 'drive',
   GITHUB = 'github',
@@ -90,6 +91,7 @@ class FileManagerFactory {
 
   public static fileManagerNameToType(name: string): FileManagerType {
     switch (name) {
+      case 'api': return FileManagerType.API;
       case 'bigquery': return FileManagerType.BIG_QUERY;
       case 'drive': return FileManagerType.DRIVE;
       case 'github': return FileManagerType.GITHUB;
