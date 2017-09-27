@@ -70,7 +70,9 @@ function reinstall_pydatalab() {
   echo "Done reinstalling pydatalab"
 }
 
-source /datalab/setup-env.sh
+if [ -d "$HOME" ]; then
+  source /datalab/setup-env.sh
+fi
 
 if [ "${ENABLE_USAGE_REPORTING}" = "true" ]
 then
