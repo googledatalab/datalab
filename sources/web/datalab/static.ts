@@ -187,6 +187,7 @@ export function isExperimentalResource(pathname: string) {
       pathname.indexOf('/images') === 0 ||
       pathname.indexOf('/index.css') === 0 ||
       pathname.indexOf('/modules') === 0 ||
+      pathname.indexOf('/templates') === 0 ||
       pathname === '/'
   );
 }
