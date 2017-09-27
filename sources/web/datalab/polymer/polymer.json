@@ -22,7 +22,8 @@
     "index.*.css",
     "modules/**/*.js",
     "notebook.html",
-    "notebook.js"
+    "notebook.js",
+    "templates/*.ipynb"
   ],
   "extraDependencies": [
     "bower_components/codemirror/addon/**",

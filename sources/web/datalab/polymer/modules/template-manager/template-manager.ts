@@ -57,13 +57,20 @@ class NotebookTemplate {
   public populatePlaceholders(notebook: NotebookContent) {
     let cellChangeCount = 0;
     notebook.cells.forEach((cell: NotebookCell) => {
+      // TODO(jimmc) - is there a better way to handle this?
+      // When reading from Jupyter, it joins all the source strings before
+      // sending us the file, but when reading through our api we get the
+      // raw text file in which the source is an array of strings.
+      if ((cell.source as any) instanceof Array) {
+        cell.source = ((cell.source as any) as Array<string>).join('');
+      }
       const oldCellSource = cell.source;
       this.parameters.forEach((parameter: TemplateParameter) => {
         const placeholder =
             PLACEHOLDER_PREFIX + parameter.name + PLACEHOLDER_POSTFIX;
         const escapedPlaceholder = NotebookTemplate._regexEscapeAll(placeholder);
         const regex = new RegExp(escapedPlaceholder);
-        const value = parameter.value.toString();
+        const value = (parameter.value || '').toString();
         cell.source = cell.source.replace(regex, value);
       });
       if (cell.source !== oldCellSource) {
@@ -93,6 +100,15 @@ class NotebookTemplate {
   }
 }
 
+// A small hack to allow us to have a unified way of expressing
+// a file location on any of Drive, Jupyter, or our API.
+class ApiFileId extends DatalabFileId {
+  constructor(queryString: string) {
+    const tokens = queryString.split(':');
+    super(tokens[1], FileManagerType.MOCK);
+  }
+}
+
 /**
  * This template contains one cell that shows the given table's schema.
  */
@@ -107,14 +123,17 @@ class BigQueryTableOverviewTemplate extends NotebookTemplate {
     }
 
     // TODO: The actual template files should live somewhere more static.
-    const defaultTemplateLocation =
-        'jupyter:datalab/templates/BigQueryTableOverview.ipynb';
+    // Specify the default location of the template.
+    const defaultTemplateLocation = 'api:templates/BigQueryTableOverview.ipynb';
 
     // TODO(jimmc); Until we have a user setting, allow specifying an alternate
-    // location for the template file, for debugging.
+    // location for the template file, for debugging, such as
+    // 'jupyter:datalab/templates/BigQueryTableOverview.ipynb';
     const templateLocation =
         window.datalab.tableSchemaTemplateFileId || defaultTemplateLocation;
-    const templateId = DatalabFileId.fromQueryString(templateLocation);
+    const templateId = templateLocation.startsWith('api:') ?
+      new ApiFileId(templateLocation) :
+      DatalabFileId.fromQueryString(templateLocation);
     super(templateId, parameters);
   }
 }
@@ -168,8 +187,8 @@ class TemplateManager {
             DirectoryPickerDialogCloseResult;
 
     if (closeResult.confirmed && closeResult.fileName) {
-      const templateFileManager = FileManagerFactory.getInstanceForType(template.fileId.source);
-      const templateStringContent = await templateFileManager.getStringContent(template.fileId);
+      const templateStringContent =
+          await this.getTemplateStringContent(template.fileId);
       let templateNotebookContent: NotebookContent;
       try {
         templateNotebookContent = NotebookContent.fromString(templateStringContent);
@@ -193,6 +212,18 @@ class TemplateManager {
       return instanceFileManager.saveText(newFile, JSON.stringify(templateNotebookContent));
     } else {
       return null;
+    }
+  }
+
+  public static async getTemplateStringContent(fileId: DatalabFileId) {
+    if (fileId instanceof ApiFileId) {
+      const templateStringContent =
+          await ApiManager.sendTextRequestAsync(fileId.path);
+      return templateStringContent;
+    } else {
+      const templateFileManager = FileManagerFactory.getInstanceForType(fileId.source);
+      const templateStringContent = await templateFileManager.getStringContent(fileId);
+      return templateStringContent;
     }
   }
 }
