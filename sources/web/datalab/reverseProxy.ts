@@ -71,8 +71,14 @@ export function handleRequest(request: http.ServerRequest,
                               response: http.ServerResponse,
                               port: String) {
   request.url = request.url.replace(regex, '');
+  let target = 'http://localhost:' + port;
+
+  // Only web socket requests (through socket.io) need the basepath appended
+  if (request.url.indexOf('/socket.io/') === 0) {
+    target += appSettings.datalabBasePath;
+  }
   proxy.web(request, response, {
-    target: 'http://localhost:' + port + appSettings.datalabBasePath
+    target
   });
 }
 
