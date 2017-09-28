@@ -32,9 +32,12 @@ let lastReset: number;  // The epoch, in seconds, since the last timout reset
 let shutdownCommand = '';
 
 export function initAndStart() {
-  init();
-  reset();
-  startChecker();
+  let disableIdleTimeoutProcess = process.env.DATALAB_DISABLE_IDLE_TIMEOUT_PROCESS || 'false';
+  if (disableIdleTimeoutProcess === 'false') {
+    init();
+    reset();
+    startChecker();
+  }
 }
 
 export function init() {
