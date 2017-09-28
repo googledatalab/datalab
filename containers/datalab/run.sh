@@ -36,6 +36,7 @@ LIVE_MODE=1
 PYDATALAB=''
 MORE_ENV=''
 CONSOLE_LOG_LEVEL='debug'
+DATALAB_PORT="${DATALAB_PORT:-8081}"
 
 function realpath() {
   perl -MCwd -e 'print Cwd::realpath($ARGV[0]),qq<\n>' $1
@@ -72,6 +73,11 @@ while [ $# -gt 0 ]; do
       LIVE_MODE=0
       shift
       ;;
+    -p | --port)
+      DATALAB_PORT="$2"
+      shift
+      shift
+      ;;
     --pydatalab)
       if [ $# -lt 2 ]; then
         echo "--pydatalab requires an argument"
@@ -98,7 +104,7 @@ if [[ $LIVE_MODE == 1 ]]; then
 fi
 
 docker run -it --entrypoint=$ENTRYPOINT \
-  -p 127.0.0.1:8081:8080 \
+  -p 127.0.0.1:${DATALAB_PORT}:8080 \
   -v "$CONTENT/datalab:/content/datalab" \
   $PYDATALAB_MOUNT_OPT \
   ${DEVROOT_DOCKER_OPTION} \
