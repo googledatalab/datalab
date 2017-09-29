@@ -37,9 +37,14 @@ class NotebookTemplate {
   // List of parameters required by the template
   parameters: TemplateParameter[];
 
-  constructor(fileId: DatalabFileId, parameters: TemplateParameter[]) {
+  // Element to use to resolve a URL to load the template
+  resolver: Polymer.Element;
+
+  constructor(fileId: DatalabFileId, parameters: TemplateParameter[],
+      resolver: Polymer.Element) {
     this.fileId = fileId;
     this.parameters = parameters;
+    this.resolver = resolver;
   }
 
   /**
@@ -104,7 +109,7 @@ class NotebookTemplate {
  * This template contains one cell that shows the given table's schema.
  */
 class BigQueryTableOverviewTemplate extends NotebookTemplate {
-  constructor(dict: { [key: string]: any }) {
+  constructor(dict: { [key: string]: any }, resolver: Polymer.Element) {
     const parameters = [];
     for (const k in dict) {
       parameters.push({
@@ -113,17 +118,17 @@ class BigQueryTableOverviewTemplate extends NotebookTemplate {
       });
     }
 
-    // TODO: The actual template files should live somewhere more static.
     // Specify the default location of the template.
-    const defaultTemplateLocation = 'api:templates/BigQueryTableOverview.ipynb';
+    const defaultTemplateLocation = 'static:/templates/BigQueryTableOverview.ipynb';
 
     // TODO(jimmc); Until we have a user setting, allow specifying an alternate
     // location for the template file, for debugging, such as
     // 'jupyter:datalab/templates/BigQueryTableOverview.ipynb';
+    const windowDatalab = window.datalab || {}
     const templateLocation =
-        window.datalab.tableSchemaTemplateFileId || defaultTemplateLocation;
+        windowDatalab.tableSchemaTemplateFileId || defaultTemplateLocation;
     const templateId = DatalabFileId.fromQueryString(templateLocation);
-    super(templateId, parameters);
+    super(templateId, parameters, resolver);
   }
 }
 
@@ -136,7 +141,7 @@ class BigQueryTableOverviewTemplate extends NotebookTemplate {
  * existence of a given template on disk and ensures it has the right
  * parameters.
  */
-class TemplateManager {
+class TemplateManager extends Polymer.Element {
 
   public static async newNotebookFromTemplate(template: NotebookTemplate) {
 
@@ -177,7 +182,7 @@ class TemplateManager {
 
     if (closeResult.confirmed && closeResult.fileName) {
       const templateStringContent =
-          await this.getTemplateStringContent(template.fileId);
+          await this.getTemplateStringContent(template.fileId, template.resolver);
       let templateNotebookContent: NotebookContent;
       try {
         templateNotebookContent = NotebookContent.fromString(templateStringContent);
@@ -204,10 +209,12 @@ class TemplateManager {
     }
   }
 
-  public static async getTemplateStringContent(fileId: DatalabFileId) {
-    if (fileId.source === FileManagerType.API) {
+  public static async getTemplateStringContent(fileId: DatalabFileId,
+      resolver: Polymer.Element) {
+    if (fileId.source === FileManagerType.STATIC) {
+      const resolvedUrl = resolver.resolveUrl('../..' + fileId.path);
       const templateStringContent =
-          await ApiManager.sendTextRequestAsync(fileId.path);
+          await ApiManager.sendTextRequestAsync(resolvedUrl, {}, false);
       return templateStringContent;
     } else {
       const templateFileManager = FileManagerFactory.getInstanceForType(fileId.source);

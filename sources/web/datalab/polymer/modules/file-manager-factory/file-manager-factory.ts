@@ -13,13 +13,13 @@
  */
 
 enum FileManagerType {
-  API = 'api',  // For internal use, there is no corresponding FileManager
   BIG_QUERY = 'bigquery',
   DRIVE = 'drive',
   GITHUB = 'github',
   JUPYTER = 'jupyter',
   MOCK = 'mock',
   SHARED_DRIVE = 'sharedDrive',
+  STATIC = 'static',  // For internal use, there is no corresponding FileManager
 }
 
 interface FileManagerConfig {
@@ -91,12 +91,12 @@ class FileManagerFactory {
 
   public static fileManagerNameToType(name: string): FileManagerType {
     switch (name) {
-      case 'api': return FileManagerType.API;
       case 'bigquery': return FileManagerType.BIG_QUERY;
       case 'drive': return FileManagerType.DRIVE;
       case 'github': return FileManagerType.GITHUB;
       case 'jupyter': return FileManagerType.JUPYTER;
       case 'sharedDrive': return FileManagerType.SHARED_DRIVE;
+      case 'static': return FileManagerType.STATIC;
       default: throw new Error('Unknown FileManagerType name ' + name);
     }
   }
