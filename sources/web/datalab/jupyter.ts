@@ -186,9 +186,17 @@ function createJupyterServerAtPort(port: number, userId: string, userDir: string
 function createJupyterServer(userId: string, remainingAttempts: number) {
   logging.getLogger().info('Checking user dir for %s exists', userId);
   var userDir = userManager.getUserDir(userId);
+  logging.getLogger().info('Checking dir %s exists', userDir);
   if (!fs.existsSync(userDir)) {
     logging.getLogger().info('Creating user dir %s', userDir);
-    fs.mkdirSync(userDir, parseInt('0755', 8));
+    try {
+      fs.mkdirSync(userDir, parseInt('0755', 8));
+    } catch (e) {
+      // This likely means the disk is not yet ready.
+      // We'll fall back to /content for now.
+      logging.getLogger().info('User dir %s does not exist', userDir);
+      userDir = '/content'
+    }
   }
 
   nextJupyterPort = appSettings.nextJupyterPort;
