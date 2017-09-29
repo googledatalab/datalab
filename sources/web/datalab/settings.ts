@@ -239,7 +239,13 @@ export function updateUserSettingAsync(userId: string, key: string, value: strin
   const doUpdate = () => {
     if (!fs.existsSync(settingsPath)) {
       _log('User settings file %s not found, copying default settings.', settingsPath);
-      copyDefaultUserSettings(userId);
+      try {
+        copyDefaultUserSettings(userId);
+      }
+      catch (e) {
+        _log('Failed to copy default settings, using from existing location.', e);
+        return <common.UserSettings>JSON.parse(getDefaultUserSettings(userId));
+      }
     }
 
     let settings: common.UserSettings;
