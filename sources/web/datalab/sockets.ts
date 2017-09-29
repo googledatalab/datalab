@@ -49,13 +49,14 @@ var sessionCounter = 0;
  */
 function createWebSocket(port: number, session: Session): WebSocket {
   var socketUrl = 'ws://localhost:' + port + url.parse(session.url).path;
-  logging.getLogger().debug('Creating WebSocket to %s for session %d', socketUrl, session.id);
+  logging.getLogger().debug('WebSocket [%d] creating to %s', session.id, socketUrl);
 
   var ws = new WebSocket(socketUrl);
   ws.on('open', function() {
       // Stash the resulting WebSocket, now that it is in open state
       session.webSocket = ws;
       session.socket.emit('open', { url: session.url });
+      logging.getLogger().debug('WebSocket [%d] opened', session.id);
     })
     .on('close', function() {
       // Remove the WebSocket from the session, once it is in closed state
@@ -65,11 +66,11 @@ function createWebSocket(port: number, session: Session): WebSocket {
     })
     .on('message', function(data: any) {
       // Propagate messages arriving on the WebSocket to the client.
-      logging.getLogger().debug('WebSocket [%d] message\n%j', session.id, data);
+      logging.getLogger().debug('WebSocket [%d] message: %j', session.id, data);
       session.socket.emit('data', { data: data });
     })
     .on('error', function(e: any) {
-      logging.getLogger().error('WebSocket [%d] error\n%j', session.id, e);
+      logging.getLogger().error('WebSocket [%d] error: %j', session.id, e);
       if (e.code == 'ECONNREFUSED') {
         // This happens in the following situation -- old kernel that has gone away
         // likely due to a restart/shutdown... and an old notebook client attempts to
