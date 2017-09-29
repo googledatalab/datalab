@@ -116,16 +116,24 @@ export function getUserConfigDir(userId: string): string {
 /**
  * Copies the default user settings into the user's directory.
  */
-function copyDefaultUserSettings(userId: string) {
-  var userSettingsPath = path.join(getUserConfigDir(userId), SETTINGS_FILE);
+function getDefaultUserSettings(userId: string) {
   const defaultUserSettingsPath = path.join(__dirname, 'config', DEFAULT_USER_SETTINGS_FILE);
-  _log('Copying default settings: ' + defaultUserSettingsPath + ' to: ' + userSettingsPath);
+  _log('Getting default settings: ' + defaultUserSettingsPath);
   // Copy the default user settings file into user's directory.
   const defaultUserSettings = fs.readFileSync(defaultUserSettingsPath, {encoding: 'utf8'});
   const initialUserSettings = process.env.DATALAB_INITIAL_USER_SETTINGS;
   const mergedUserSettings : string = initialUserSettings ?
       mergeUserSettings(defaultUserSettings, initialUserSettings) : defaultUserSettings;
-  fs.writeFileSync(userSettingsPath, mergedUserSettings);
+  return mergedUserSettings;
+}
+
+/**
+ * Copies the default user settings into the user's directory.
+ */
+function copyDefaultUserSettings(userId: string) {
+  var userSettingsPath = path.join(getUserConfigDir(userId), SETTINGS_FILE);
+  _log('Copying default settings to: ' + userSettingsPath);
+  fs.writeFileSync(userSettingsPath, getDefaultUserSettings(userId));
   // writeFileSync does not return a status; let's see if it wrote a file.
   if (!fs.existsSync(userSettingsPath)) {
     _log('Failed to write new user settings file ' + userSettingsPath);
@@ -172,7 +180,13 @@ export function loadUserSettings(userId: string): common.UserSettings {
   var settingsPath = path.join(getUserConfigDir(userId), SETTINGS_FILE);
   if (!fs.existsSync(settingsPath)) {
     _log('User settings file %s not found, copying default settings.', settingsPath);
-    copyDefaultUserSettings(userId);
+    try {
+      copyDefaultUserSettings(userId);
+    }
+    catch (e) {
+      _log('Failed to copy default settings, using from existing location.', e);
+      return <common.UserSettings>JSON.parse(getDefaultUserSettings(userId));
+    }
   }
 
   try {
