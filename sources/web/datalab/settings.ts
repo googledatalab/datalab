@@ -243,8 +243,8 @@ export function updateUserSettingAsync(userId: string, key: string, value: strin
         copyDefaultUserSettings(userId);
       }
       catch (e) {
-        _log('Failed to copy default settings, using from existing location.', e);
-        return <common.UserSettings>JSON.parse(getDefaultUserSettings(userId));
+        _log('Failed to update settings.', e);
+        return false;
       }
     }
 
