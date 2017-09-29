@@ -189,7 +189,7 @@ class TablePreviewElement extends Polymer.Element {
         BIGQUERY_TABLE_DESCRIPTION: this._table.description,
         BIGQUERY_TABLE_ID: this._table.tableReference.tableId,
       };
-      const template = new BigQueryTableOverviewTemplate(dict);
+      const template = new BigQueryTableOverviewTemplate(dict, this);
 
       try {
         const notebook = await TemplateManager.newNotebookFromTemplate(template);
