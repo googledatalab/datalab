@@ -32,8 +32,8 @@ the License.
         color: var(--neutral-fg-color);
       }
     </style>
-    <div id="container" hidden$="{{!file}}">
-      <iron-pages id="preview" selected="{{preview}}" attr-for-selected="name">
+    <div id="container">
+      <iron-pages id="preview" selected="{{preview}}" attr-for-selected="name" hidden$="{{!file}}">
         <notebook-preview class="preview" name="notebook" file="{{file}}" active="{{active}}"></notebook-preview>
         <table-preview class="preview" name="table" file="{{file}}" active="{{active}}"></table-preview>
         <text-preview class="preview" name="text" file="{{file}}" active="{{active}}"></text-preview>

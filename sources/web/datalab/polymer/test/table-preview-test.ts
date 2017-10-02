@@ -74,13 +74,6 @@ describe('<table-preview>', () => {
     Polymer.dom.flush();
   });
 
-  it('displays an empty element if no table is provided', () => {
-    assert(!testFixture.$.placeholder.hidden, 'placeholder should be shown');
-    assert(testFixture.$.container.hidden, 'container should be hidden');
-    assert(testFixture.$.placeholder.querySelector('paper-spinner'),
-        'spinner should be hidden if no table is loading');
-  });
-
   it('loads the table given its id and gets its details', (done: () => null) => {
     testFixture.addEventListener('_table-changed', () => {
       Polymer.dom.flush();
