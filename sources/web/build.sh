@@ -32,7 +32,7 @@ mkdir -p $WEB_DIR
 # Experimental UI build step
 cd datalab/polymer
 npm run build
-rsync -avpq ./build/experimental/ ../static/experimental
+rsync -avpq ./build/polymer_bundled/ ../static/experimental
 cd ../..
 # End experimental UI build step
 
