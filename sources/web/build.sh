@@ -18,6 +18,18 @@
 # Fail the build on the first error, instead of carrying on by default
 set -o errexit;
 
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -d | --debug)
+      DEBUG=1
+      shift
+      ;;
+    -*) echo "Unrecognized option '$1'"
+      exit 1
+      ;;
+  esac
+done
+
 cd $(dirname $0)
 
 if [ -z "$REPO_DIR" ]; then
@@ -32,7 +44,12 @@ mkdir -p $WEB_DIR
 # Experimental UI build step
 cd datalab/polymer
 npm run build
-rsync -avpq ./build/polymer_bundled/ ../static/experimental
+if [[ $DEBUG == 1 ]]; then
+  rsync -avpq ./build/polymer_unbundled/ ../static/experimental
+else
+echo "Using bundled polymer resources.."
+  rsync -avpq ./build/polymer_bundled/ ../static/experimental
+fi
 cd ../..
 # End experimental UI build step
 
