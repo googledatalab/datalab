@@ -22,12 +22,6 @@ the License.
 <dom-module id="table-preview">
   <template>
     <style include="datalab-shared-styles">
-      #placeholder {
-        height: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
       #openInNotebookButton {
         background-color: var(--paper-blue-600);
         color: white;
@@ -67,9 +61,6 @@ the License.
         margin: 20px 0px;
       }
     </style>
-    <div id="placeholder" hidden$={{_table}}>
-      <paper-spinner active hidden$={{!_busy}}></paper-spinner>
-    </div>
     <div id="container" hidden$={{!_table}}>
       <br>
       <paper-button id="openInNotebookButton" raised on-click="_openInNotebook">
