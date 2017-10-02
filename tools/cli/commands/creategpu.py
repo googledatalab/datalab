@@ -47,7 +47,7 @@ install_cuda() {{
     curl -O http://developer.download.nvidia.com/\
 compute/cuda/repos/ubuntu1604/x86_64/{5}
     dpkg -i ./{5}
-    apt-get update
+    apt-get update -y
     apt-get install cuda -y
   fi
 }}
@@ -59,9 +59,14 @@ install_nvidia_docker() {{
     curl -L -O https://github.com/NVIDIA/nvidia-docker/releases/\
 download/v1.0.1/nvidia-docker_1.0.1-1_amd64.deb
     dpkg -i ./nvidia-docker_1.0.1-1_amd64.deb
-    apt-get update
+    apt-get update -y
     apt-get install nvidia-docker -y
   fi
+}}
+
+cleanup_packages() {{
+  apt-get update -y
+  apt-get remove -y dnsmasq-base || true
 }}
 
 pull_datalab_image() {{
@@ -89,8 +94,10 @@ start_fluentd_docker() {{
     gcr.io/google_containers/fluentd-gcp:1.18
 }}
 
+cleanup_packages
 install_cuda
 install_nvidia_docker
+cleanup_packages
 pull_datalab_image
 mount_and_prepare_disk
 configure_swap
