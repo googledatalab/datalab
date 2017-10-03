@@ -39,6 +39,16 @@
     ]
   },
   "builds": [{
-    "name": "experimental"
+    "name": "polymer_bundled",
+    "browserCapabilities": ["es2015"],
+    "js": {"minify": false, "compile": false},
+    "css": {"minify": true},
+    "html": {"minify": true},
+    "bundle": true,
+    "addServiceWorker": true,
+    "addPushManifest": true,
+    "insertPrefetchLinks": true
+  }, {
+    "name": "polymer_unbundled"
   }]
 }
