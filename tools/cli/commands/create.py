@@ -46,7 +46,7 @@ _DATALAB_NETWORK_DESCRIPTION = 'Network for Google Cloud Datalab instances'
 
 _DATALAB_FIREWALL_RULE_TEMPLATE = '{0}-allow-ssh'
 _DATALAB_FIREWALL_RULE_DESCRIPTION = 'Allow SSH access to Datalab instances'
-_DATALAB_FIREWALLS_WARNING_TEMPLATE = (
+_DATALAB_UNEXPECTED_FIREWALLS_WARNING_TEMPLATE = (
     'The network `{0}` has firewall rules that were not created by the '
     '`datalab` command line tool. Instances created in that network may '
     'be open to traffic that they should not be exposed to.')
@@ -460,7 +460,9 @@ def has_unexpected_firewall_rules(args, gcloud_compute, network_name):
 
 def prompt_on_unexpected_firewall_rules(args, gcloud_compute, network_name):
     if has_unexpected_firewall_rules(args, gcloud_compute, network_name):
-        print(_DATALAB_FIREWALLS_WARNING_TEMPLATE.format(network_name))
+        warning = _DATALAB_UNEXPECTED_FIREWALLS_WARNING_TEMPLATE.format(
+            network_name)
+        print(warning)
         resp = read_input('Do you still want to use this network? (y/[n]): ')
         if len(resp) < 1 or (resp[0] != 'y' and resp[0] != 'Y'):
             raise CancelledException()
