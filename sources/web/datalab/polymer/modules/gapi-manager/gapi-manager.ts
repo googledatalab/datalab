@@ -142,7 +142,8 @@ class GapiManager {
       return gapi.client.drive.files.list({
         fields: 'nextPageToken, files(' + fileFields.join(',') + ')',
         orderBy: orderBy ? orderBy.join(',') : '',
-        pageSize: 30,
+        // TODO: Implement paging.
+        pageSize: 1000,
         q: queryPredicates.join(' and '),
       })
       .then((response: HttpResponse<gapi.client.drive.ListFilesResponse>) => {
