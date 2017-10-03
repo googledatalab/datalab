@@ -422,7 +422,7 @@ def ensure_network_exists(args, gcloud_compute, network_name):
 
 
 def create_firewall_rule(args, gcloud_compute, network_name, rule_name):
-    """Create the `{rule_name}` firewall rule.
+    """Create the specified firewall rule to allow SSH access.
 
     Args:
       args: The Namespace returned by argparse
@@ -443,7 +443,7 @@ def create_firewall_rule(args, gcloud_compute, network_name, rule_name):
     return
 
 
-def has_non_standard_firewall_rules(args, gcloud_compute, network_name):
+def has_unexpected_firewall_rules(args, gcloud_compute, network_name):
     rule_name = _DATALAB_FIREWALL_RULE_TEMPLATE.format(network_name)
     list_cmd = [
         'firewall-rules', 'list',
@@ -458,8 +458,8 @@ def has_non_standard_firewall_rules(args, gcloud_compute, network_name):
     return False
 
 
-def prompt_on_non_standard_firewall_rules(args, gcloud_compute, network_name):
-    if has_non_standard_firewall_rules(args, gcloud_compute, network_name):
+def prompt_on_unexpected_firewall_rules(args, gcloud_compute, network_name):
+    if has_unexpected_firewall_rules(args, gcloud_compute, network_name):
         print(_DATALAB_FIREWALLS_WARNING_TEMPLATE.format(network_name))
         resp = read_input('Do you still want to use this network? (y/[n]): ')
         if len(resp) < 1 or (resp[0] != 'y' and resp[0] != 'Y'):
@@ -468,7 +468,7 @@ def prompt_on_non_standard_firewall_rules(args, gcloud_compute, network_name):
 
 
 def ensure_firewall_rule_exists(args, gcloud_compute, network_name):
-    """Create the `{network_name}-allow-ssh` firewall rule if it necessary.
+    """Create a firewall rule to allow SSH access if necessary.
 
     Args:
       args: The Namespace returned by argparse
@@ -609,7 +609,7 @@ def prepare(args, gcloud_compute, gcloud_repos):
     """
     network_name = args.network_name
     ensure_network_exists(args, gcloud_compute, network_name)
-    prompt_on_non_standard_firewall_rules(args, gcloud_compute, network_name)
+    prompt_on_unexpected_firewall_rules(args, gcloud_compute, network_name)
     ensure_firewall_rule_exists(args, gcloud_compute, network_name)
 
     disk_name = args.disk_name or '{0}-pd'.format(args.instance)
