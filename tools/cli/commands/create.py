@@ -46,10 +46,10 @@ _DATALAB_NETWORK_DESCRIPTION = 'Network for Google Cloud Datalab instances'
 
 _DATALAB_FIREWALL_RULE_TEMPLATE = '{0}-allow-ssh'
 _DATALAB_FIREWALL_RULE_DESCRIPTION = 'Allow SSH access to Datalab instances'
-_DATALAB_FIREWALLS_WARNING_TEMPLATE = ('The network `{0}` has firewall rules '
-    'that were not created by the `datalab` command line tool. Instances '
-    'created in that network may be open to traffic that they should not '
-    'be exposed to.')
+_DATALAB_FIREWALLS_WARNING_TEMPLATE = (
+    'The network `{0}` has firewall rules that were not created by the '
+    '`datalab` command line tool. Instances created in that network may '
+    'be open to traffic that they should not be exposed to.')
 
 _DATALAB_DEFAULT_DISK_SIZE_GB = 200
 _DATALAB_DISK_DESCRIPTION = (
