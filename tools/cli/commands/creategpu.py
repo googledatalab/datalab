@@ -199,7 +199,7 @@ def run(args, gcloud_beta_compute, gcloud_repos,
             cmd.extend([
                 '--format=none',
                 '--boot-disk-size=20GB',
-                '--network', create._DATALAB_NETWORK,
+                '--network', args.network_name,
                 '--image-family', 'ubuntu-1604-lts',
                 '--image-project', 'ubuntu-os-cloud',
                 '--machine-type', args.machine_type,
