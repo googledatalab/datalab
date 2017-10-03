@@ -22,6 +22,14 @@ import tempfile
 import connect
 import utils
 
+try:
+    # If we are running in Python 2, builtins is available in 'future'.
+    from builtins import input as read_input
+except:
+    # We don't want to require the installation of future, so fallback
+    # to using raw_input from Py2.
+    read_input = raw_input
+
 
 description = ("""`{0} {1}` creates a new Datalab instances running in a Google
 Compute Engine VM.
@@ -36,8 +44,12 @@ created instance. You can disable that behavior by passing in the
 _DATALAB_NETWORK = 'datalab-network'
 _DATALAB_NETWORK_DESCRIPTION = 'Network for Google Cloud Datalab instances'
 
-_DATALAB_FIREWALL_RULE = 'datalab-network-allow-ssh'
+_DATALAB_FIREWALL_RULE_TEMPLATE = '{0}-allow-ssh'
 _DATALAB_FIREWALL_RULE_DESCRIPTION = 'Allow SSH access to Datalab instances'
+_DATALAB_UNEXPECTED_FIREWALLS_WARNING_TEMPLATE = (
+    'The network `{0}` has firewall rules that were not created by the '
+    '`datalab` command line tool. Instances created in that network may '
+    'be open to traffic that they should not be exposed to.')
 
 _DATALAB_DEFAULT_DISK_SIZE_GB = 200
 _DATALAB_DISK_DESCRIPTION = (
@@ -243,6 +255,14 @@ class RepositoryException(Exception):
             RepositoryException._MESSAGE.format(repo_name))
 
 
+class CancelledException(Exception):
+
+    _MESSAGE = 'Operation cancelled.'
+
+    def __init__(self):
+        super(CancelledException, self).__init__(CancelledException._MESSAGE)
+
+
 def flags(parser):
     """Add command line flags for the `create` subcommand.
 
@@ -277,6 +297,11 @@ def flags(parser):
         dest='disk_size_gb',
         default=_DATALAB_DEFAULT_DISK_SIZE_GB,
         help='size of the persistent disk in GB.')
+    parser.add_argument(
+        '--network-name',
+        dest='network_name',
+        default=_DATALAB_NETWORK,
+        help='name of the network to which the instance will be attached.')
 
     parser.add_argument(
         '--idle-timeout',
@@ -358,80 +383,110 @@ def flags(parser):
     return
 
 
-def create_network(args, gcloud_compute):
-    """Create the `datalab-network` network.
+def create_network(args, gcloud_compute, network_name):
+    """Create the specified network.
 
     Args:
       args: The Namespace returned by argparse
       gcloud_compute: Function that can be used for invoking `gcloud compute`
+      network_name: The name of the network
     Raises:
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
     if utils.print_info_messages(args):
-        print('Creating the network {0}'.format(_DATALAB_NETWORK))
+        print('Creating the network {0}'.format(network_name))
     create_cmd = [
-        'networks', 'create', _DATALAB_NETWORK,
+        'networks', 'create', network_name,
         '--description', _DATALAB_NETWORK_DESCRIPTION]
     utils.call_gcloud_quietly(args, gcloud_compute, create_cmd)
     return
 
 
-def ensure_network_exists(args, gcloud_compute):
-    """Create the `datalab-network` network if it does not already exist.
+def ensure_network_exists(args, gcloud_compute, network_name):
+    """Create the specified network if it does not already exist.
 
     Args:
       args: The Namespace returned by argparse
       gcloud_compute: Function that can be used for invoking `gcloud compute`
+      network_name: The name of the network
     Raises:
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
-    get_cmd = ['networks', 'describe', '--format', 'value(name)',
-               _DATALAB_NETWORK]
+    get_cmd = ['networks', 'describe', '--format', 'value(name)', network_name]
     try:
         utils.call_gcloud_quietly(
             args, gcloud_compute, get_cmd, report_errors=False)
     except subprocess.CalledProcessError:
-        create_network(args, gcloud_compute)
+        create_network(args, gcloud_compute, network_name)
     return
 
 
-def create_firewall_rule(args, gcloud_compute):
-    """Create the `datalab-network-allow-ssh` firewall rule.
+def create_firewall_rule(args, gcloud_compute, network_name, rule_name):
+    """Create the specified firewall rule to allow SSH access.
 
     Args:
       args: The Namespace returned by argparse
       gcloud_compute: Function that can be used for invoking `gcloud compute`
+      network_name: The name of the network on which to allow SSH access
+      rule_name: The name of the firewall rule
     Raises:
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
     if utils.print_info_messages(args):
-        print('Creating the firewall rule {0}'.format(_DATALAB_FIREWALL_RULE))
+        print('Creating the firewall rule {0}'.format(rule_name))
     create_cmd = [
-        'firewall-rules', 'create', _DATALAB_FIREWALL_RULE,
+        'firewall-rules', 'create', rule_name,
         '--allow', 'tcp:22',
-        '--network', _DATALAB_NETWORK,
+        '--network', network_name,
         '--description', _DATALAB_FIREWALL_RULE_DESCRIPTION]
     utils.call_gcloud_quietly(args, gcloud_compute, create_cmd)
     return
 
 
-def ensure_firewall_rule_exists(args, gcloud_compute):
-    """Create the `datalab-network-allow-ssh` firewall rule if it necessary.
+def has_unexpected_firewall_rules(args, gcloud_compute, network_name):
+    rule_name = _DATALAB_FIREWALL_RULE_TEMPLATE.format(network_name)
+    list_cmd = [
+        'firewall-rules', 'list',
+        '--filter', 'network~.^*{0}$'.format(network_name),
+        '--format', 'value(name)']
+    with tempfile.TemporaryFile() as tf:
+        gcloud_compute(args, list_cmd, stdout=tf)
+        tf.seek(0)
+        matching_rules = tf.read().strip()
+        if matching_rules and (matching_rules != rule_name):
+            return True
+    return False
+
+
+def prompt_on_unexpected_firewall_rules(args, gcloud_compute, network_name):
+    if has_unexpected_firewall_rules(args, gcloud_compute, network_name):
+        warning = _DATALAB_UNEXPECTED_FIREWALLS_WARNING_TEMPLATE.format(
+            network_name)
+        print(warning)
+        resp = read_input('Do you still want to use this network? (y/[n]): ')
+        if len(resp) < 1 or (resp[0] != 'y' and resp[0] != 'Y'):
+            raise CancelledException()
+    return
+
+
+def ensure_firewall_rule_exists(args, gcloud_compute, network_name):
+    """Create a firewall rule to allow SSH access if necessary.
 
     Args:
       args: The Namespace returned by argparse
       gcloud_compute: Function that can be used for invoking `gcloud compute`
+      network_name: The name of the network on which to allow SSH access
     Raises:
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
+    rule_name = _DATALAB_FIREWALL_RULE_TEMPLATE.format(network_name)
     get_cmd = [
-        'firewall-rules', 'describe', _DATALAB_FIREWALL_RULE,
-        '--format', 'value(name)']
+        'firewall-rules', 'describe', rule_name, '--format', 'value(name)']
     try:
         utils.call_gcloud_quietly(
             args, gcloud_compute, get_cmd, report_errors=False)
     except subprocess.CalledProcessError:
-        create_firewall_rule(args, gcloud_compute)
+        create_firewall_rule(args, gcloud_compute, network_name, rule_name)
     return
 
 
@@ -554,8 +609,10 @@ def prepare(args, gcloud_compute, gcloud_repos):
     Raises:
       subprocess.CalledProcessError: If a nested `gcloud` calls fails
     """
-    ensure_network_exists(args, gcloud_compute)
-    ensure_firewall_rule_exists(args, gcloud_compute)
+    network_name = args.network_name
+    ensure_network_exists(args, gcloud_compute, network_name)
+    prompt_on_unexpected_firewall_rules(args, gcloud_compute, network_name)
+    ensure_firewall_rule_exists(args, gcloud_compute, network_name)
 
     disk_name = args.disk_name or '{0}-pd'.format(args.instance)
     ensure_disk_exists(args, gcloud_compute, disk_name)
@@ -625,7 +682,7 @@ def run(args, gcloud_compute, gcloud_repos,
             cmd.extend([
                 '--format=none',
                 '--boot-disk-size=20GB',
-                '--network', _DATALAB_NETWORK,
+                '--network', args.network_name,
                 '--image-family', 'cos-stable',
                 '--image-project', 'cos-cloud',
                 '--machine-type', args.machine_type,
