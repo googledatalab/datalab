@@ -403,7 +403,8 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       })
       // Now load the sessions and update the running status of each file
       // whose id is in the session list.
-      .then(() => SessionManager.listSessionPaths())
+      // We do not need to load sessions when in small mode.
+      .then(() => this.small ? Promise.resolve([]) : SessionManager.listSessionPaths())
       .catch((e) => {
         // Do not block loading files if sessions don't load for some reason.
         Utils.log.error('Could not load sessions: ' + e.message);
