@@ -202,9 +202,17 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   }
 
   async _init() {
-    // Must set this to true before calling super.ready(), because the latter will cause
-    // property updates that will cause _fetchFileList to be called first, we don't want
-    // that. We want ready() to be the entry point so it gets the user's last saved path.
+    // TODO(yelsayed): We use this flag to prevent multiple async operations to
+    // step on each other. It basically acts as a semaphore; when an operation
+    // is called, it first checks if this flag is raised, and it stops if it is.
+    // Otherwise it raises it first. This result in operations stopping if
+    // others are executing, instead of queueing, which is not obviously a
+    // better experience. We might want to revisit this later.
+
+    // Additionally, we must set this to true before calling super.ready(),
+    // because the latter will cause property updates that will cause
+    // _fetchFileList to be called first, we don't want that. We want ready() to
+    // be the entry point so it gets the user's last saved path.
     this._fetching = true;
 
     // Likewise, we set the flag to prevent _fileIdChanged from taking action.
