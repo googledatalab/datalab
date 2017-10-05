@@ -84,7 +84,8 @@ function getContent(filePath: string, cb: common.Callback<Buffer>, isDynamic: bo
  * @param isDynamic indication of whether or not the file contents might change.
  */
 function sendFile(filePath: string, response: http.ServerResponse,
-                  alternatePath: string = "", isDynamic: boolean = false) {
+                  alternatePath: string = "", isDynamic: boolean = false,
+                  replaceBasepath: boolean = false) {
   var extension = path.extname(filePath);
   var contentType = CONTENT_TYPES[extension.toLowerCase()] || 'application/octet-stream';
 
@@ -105,8 +106,10 @@ function sendFile(filePath: string, response: http.ServerResponse,
         response.setHeader('Cache-Control', 'no-cache');
       }
       response.writeHead(200, { 'Content-Type': contentType });
-      const contentStr = content.toString().replace(
-          /\{base_url}/g, appSettings.datalabBasePath);
+      let contentStr = content.toString();
+      if (replaceBasepath) {
+        contentStr = contentStr.replace(/\{base_url}/g, appSettings.datalabBasePath);
+      }
       response.end(contentStr);
     }
   }, isDynamic);
@@ -118,7 +121,8 @@ function sendFile(filePath: string, response: http.ServerResponse,
  * @param response the out-going response associated with the current HTTP request.
  * @param isDynamic indication of whether or not the file contents might change.
  */
-function sendDataLabFile(filePath: string, response: http.ServerResponse, isDynamic: boolean = false) {
+function sendDataLabFile(filePath: string, response: http.ServerResponse,
+    isDynamic: boolean = false, replaceBasepath: boolean = false) {
   let live = isDynamic;
   let staticDir = path.join(__dirname, 'static')
   // Set this env var to point to source directory for live updates without restart.
@@ -127,7 +131,7 @@ function sendDataLabFile(filePath: string, response: http.ServerResponse, isDyna
     live = true
     staticDir = liveStaticDir
   }
-  sendFile(path.join(staticDir, filePath), response, '', live);
+  sendFile(path.join(staticDir, filePath), response, '', live, replaceBasepath);
 }
 
 /**
@@ -203,6 +207,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   var pathname = url.parse(request.url).pathname;
 
   // -------------------------------- start of experimental UI resources
+  let replaceBasepath = false;
   if (isExperimentalResource(pathname)) {
     logging.getLogger().debug('Serving experimental UI resource: ' + pathname);
     let rootRedirect = 'files';
@@ -221,15 +226,17 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
         pathname.indexOf('/sessions') === 0 ||
         pathname.indexOf('/terminal') === 0) {
       pathname = '/index.html';
+      replaceBasepath = true;
     } else if (pathname === '/editor') {
       pathname = '/editor.html';
+      replaceBasepath = true;
     } else if (pathname === '/index.css') {
       var userSettings: common.UserSettings = settings.loadUserSettings(userId);
       pathname = '/index.' + (userSettings.theme || 'light') + '.css';
     }
     pathname = 'experimental' + pathname;
     logging.getLogger().debug('sending experimental file: ' + pathname);
-    sendDataLabFile(pathname, response);
+    sendDataLabFile(pathname, response, undefined, replaceBasepath);
     return;
   }
   // -------------------------------- end of experimental resources

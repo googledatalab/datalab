@@ -42,9 +42,15 @@ class DatalabAppElement extends Polymer.Element {
   public page: string;
 
   /**
-   * Current matching result from the window.location. This gets re-evaluated
-   * every time the current page changes, and can be used to get the current
-   * active page's name.
+   * Pattern for extracting current pathname component. This is matched
+   * against current location to extract the page name.
+   */
+  public rootPattern: string;
+
+  /**
+   * Current matching result from the window.location against the
+   * root pattern. This gets re-evaluated every time the current page
+   * changes, and can be used to get the current active page's name.
    */
   public routeData: object;
 
@@ -53,6 +59,19 @@ class DatalabAppElement extends Polymer.Element {
 
   constructor() {
     super();
+
+    // Fix the root path (see https://github.com/Polymer/polymer/issues/4822)
+    const rootUrl = new URL(this.rootPath);
+    rootUrl.hash = '';
+    rootUrl.search = '';
+    const strippedRoot = rootUrl.toString();
+    const rootPath =
+        strippedRoot.substring(0, strippedRoot.lastIndexOf('/') + 1);
+    // TODO - once polymer #4822 is fixed, remove the above code that
+    // creates rootPath and use this.rootPath in the following line.
+
+    // Set the pattern once to be the current document pathname.
+    this.rootPattern = (new URL(rootPath)).pathname;
 
     this._boundResizeHandler = this.resizeHandler.bind(this);
     window.addEventListener('resize', this._boundResizeHandler, true);
@@ -90,6 +109,7 @@ class DatalabAppElement extends Polymer.Element {
         observer: '_queryParamsChanged',
         type: Object,
       },
+      rootPattern: String,
       routeData: Object,
     };
   }
