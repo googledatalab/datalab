@@ -68,7 +68,8 @@ function launchFakeServer(metadata: FakeMetadata): void {
       res.writeHead(200, { 'Metadata-Flavor': 'Google', 'Content-Type': 'application/text' });
       res.write('default/\n');
       res.write(metadata.creds.account + '/\n');
-    } else if (urlpath == '/computeMetadata/v1/instance/service-accounts/default/' &&
+    } else if ((urlpath == '/computeMetadata/v1/instance/service-accounts/default/' ||
+                urlpath == '/computeMetadata/v1/instance/service-accounts/' + metadata.creds.account + '/') &&
                (parsed_url.query['recursive'] || '').toLowerCase() == "true") {
       const accountJSON: any = {
         aliases: ["default"],
