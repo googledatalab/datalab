@@ -73,7 +73,7 @@ class ApiManager implements ApiManager {
   public static getBasePath(): Promise<string> {
     const basePathUrl = this.getServiceUrl(ServiceId.BASE_PATH);
     if (!this._basepathPromise) {
-      this._basepathPromise = this._xhrTextAsync(basePathUrl)
+      this._basepathPromise = this._xhrTextAsync(basePathUrl, { noCache: true })
         .then((response: string) => {
           // The server may add the xssiPrefix to the response to prevent.
           // it being parsed as if it were a javascript file.
