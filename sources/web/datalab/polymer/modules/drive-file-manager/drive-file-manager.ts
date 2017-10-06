@@ -36,7 +36,7 @@ class DriveFileManager implements FileManager {
   public async getStringContent(fileId: DatalabFileId, _asText?: boolean): Promise<string> {
     const [, content] = await GapiManager.drive.getFileWithContent(fileId.path);
     if (content === null) {
-      throw new Error('Could not download file: ' + fileId.toQueryString());
+      throw new Error('Could not download file: ' + fileId.toString());
     }
     return content;
   }
@@ -110,12 +110,12 @@ class DriveFileManager implements FileManager {
   }
 
   public async getEditorUrl(fileId: DatalabFileId) {
-    return Utils.getHostRoot() + '/editor?file=' + fileId.toQueryString();
+    return Utils.getHostRoot() + '/editor/' + fileId.toString();
   }
 
   public async getNotebookUrl(fileId: DatalabFileId): Promise<string> {
     return location.protocol + '//' + location.host +
-        '/notebook?file=' + fileId.toQueryString();
+        '/notebook/' + fileId.toString();
   }
 
   public pathToPathHistory(path: string): DatalabFile[] {

@@ -27,11 +27,6 @@
 class DatalabAppElement extends Polymer.Element {
 
   /**
-   * The query parameters (from app-location).
-   */
-  public queryParams: {};
-
-  /**
    * The fileId being propagated to and from our pages.
    */
   public fileId: string;
@@ -42,36 +37,20 @@ class DatalabAppElement extends Polymer.Element {
   public page: string;
 
   /**
-   * Pattern for extracting current pathname component. This is matched
-   * against current location to extract the page name.
-   */
-  public rootPattern: string;
-
-  /**
-   * Current matching result from the window.location against the
-   * root pattern. This gets re-evaluated every time the current page
-   * changes, and can be used to get the current active page's name.
+   * Current matching result from the window.location. This gets re-evaluated
+   * every time the current page changes, and can be used to get the current
+   * active page's name.
    */
   public routeData: object;
+
+  // TODO: doc
+  public routeTail: object;
 
   private _boundResizeHandler: EventListenerObject;
   private _fileBrowserSources: string[];
 
   constructor() {
     super();
-
-    // Fix the root path (see https://github.com/Polymer/polymer/issues/4822)
-    const rootUrl = new URL(this.rootPath);
-    rootUrl.hash = '';
-    rootUrl.search = '';
-    const strippedRoot = rootUrl.toString();
-    const rootPath =
-        strippedRoot.substring(0, strippedRoot.lastIndexOf('/') + 1);
-    // TODO - once polymer #4822 is fixed, remove the above code that
-    // creates rootPath and use this.rootPath in the following line.
-
-    // Set the pattern once to be the current document pathname.
-    this.rootPattern = (new URL(rootPath)).pathname;
 
     this._boundResizeHandler = this.resizeHandler.bind(this);
     window.addEventListener('resize', this._boundResizeHandler, true);
@@ -104,13 +83,11 @@ class DatalabAppElement extends Polymer.Element {
         type: String,
         value: '',
       },
-      queryParams: {
+      routeData: Object,
+      routeTail: {
         notify: true,
-        observer: '_queryParamsChanged',
         type: Object,
       },
-      rootPattern: String,
-      routeData: Object,
     };
   }
 
@@ -119,6 +96,7 @@ class DatalabAppElement extends Polymer.Element {
       // We need a complex observer for changes to the routeData
       // object's page property.
       '_routePageChanged(routeData.page)',
+      '_routeTailPathChanged(routeTail.path)',
     ];
   }
 
@@ -140,17 +118,8 @@ class DatalabAppElement extends Polymer.Element {
     }
   }
 
-  _queryParamsChanged() {
-    const queryParams = (this.queryParams || {}) as {[key: string]: string};
-    const fileParamName = 'file';
-    const fileParam = queryParams[fileParamName] || '';
-    if (fileParam !== this.fileId) {
-      this.fileId = fileParam;
-    }
-  }
-
   _fileIdChanged() {
-    this.set('queryParams.file', this.fileId);
+    this.set('routeTail.path', this.fileId);
   }
 
   /**
@@ -159,6 +128,14 @@ class DatalabAppElement extends Polymer.Element {
    */
   _routePageChanged(page: string) {
     this.page = page;
+  }
+
+  _routeTailPathChanged() {
+    let path = (this.routeTail as any).path as string;
+    if (path.startsWith('/')) {
+      path = path.substr(1);
+    }
+    this.fileId = path;
   }
 
   /**

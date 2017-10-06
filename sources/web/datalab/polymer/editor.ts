@@ -38,21 +38,15 @@ if (editorElement) {
   // the url querystring
   editorElement.addEventListener('file-id-changed', (e: CustomEvent) => {
     const newId = e.detail.value as DatalabFileId;
-    if (newId) {
-      params.set('file', newId ? newId.toQueryString() : '');
-    } else {
-      params.delete('file');
-    }
-    const url = location.protocol + '//' + location.host + location.pathname +
-                '?' + decodeURIComponent(params.toString());
+    const url = location.protocol + '//' + location.host + '/editor/' + (newId || '');
     window.history.replaceState({}, '', url);
   });
 
   // Pass the file's path if it's specified in the location.
-  const params = new URLSearchParams(window.location.search);
-  if (params.has('file')) {
+  if (location.pathname.startsWith('/editor/')) {
+    const path = location.pathname.substr('/editor/'.length);
     try {
-      editorElement.fileId = DatalabFileId.fromQueryString(params.get('file') as string);
+      editorElement.fileId = DatalabFileId.fromString(path);
     } catch (e) {
       Utils.showErrorDialog('Error loading file', e.message);
       editorElement.fileId = null;

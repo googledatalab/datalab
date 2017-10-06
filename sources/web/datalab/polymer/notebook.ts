@@ -57,7 +57,7 @@ async function processMessageEvent(e: MessageEvent) {
   } else if (message.command === CommandId.LOAD_NOTEBOOK) {
     let outgoingMessage: IframeMessage;
     try {
-      const id = DatalabFileId.fromQueryString(message.arguments);
+      const id = DatalabFileId.fromString(message.arguments);
       const fileManager = FileManagerFactory.getInstanceForType(id.source);
       const [file, doc] = await Promise.all([
         fileManager.get(id),
@@ -87,13 +87,13 @@ function sendMessageToNotebookEditor(message: IframeMessage) {
   }
 }
 
-const params = new URLSearchParams(window.location.search);
-if (params.has('file')) {
+if (location.pathname.startsWith('/notebook/')) {
+  const path = location.pathname.substr('/notebook/'.length);
   // Currently this is one-directional, iframe wrapper querystring -> iframe hash param.
   // We will need to change this if the editor is allowed to change the id of the
   // open file, for example in the case of Jupyter files where the id is the file path.
   if (iframe) {
     window.top.addEventListener('message', processMessageEvent);
-    iframe.src = '/notebookeditor#fileId=' + params.get('file');
+    iframe.src = 'notebookeditor#fileId=' + path;
   }
 }

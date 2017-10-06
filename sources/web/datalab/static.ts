@@ -198,6 +198,10 @@ export function isExperimentalResource(pathname: string) {
   );
 }
 
+function firstComponent(pathname: string) {
+  return pathname.split('/')[1];
+}
+
 /**
  * Implements static file handling.
  * @param request the incoming file request.
@@ -208,6 +212,8 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
 
   // -------------------------------- start of experimental UI resources
   let replaceBasepath = false;
+  // List of page names that resolve to index.html
+  const indexPageNames = ['data', 'files', 'docs', 'sessions', 'terminal'];
   if (isExperimentalResource(pathname)) {
     logging.getLogger().debug('Serving experimental UI resource: ' + pathname);
     let rootRedirect = 'files';
@@ -220,14 +226,10 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       response.setHeader('Location', path.join(appSettings.datalabBasePath, rootRedirect));
       response.end();
       return;
-    } else if (pathname.indexOf('/data') === 0 ||
-        pathname.indexOf('/files') === 0||
-        pathname.indexOf('/docs') === 0 ||
-        pathname.indexOf('/sessions') === 0 ||
-        pathname.indexOf('/terminal') === 0) {
+    } else if (indexPageNames.indexOf(firstComponent(pathname)) > -1) {
       pathname = '/index.html';
       replaceBasepath = true;
-    } else if (pathname === '/editor') {
+    } else if (firstComponent(pathname) === 'editor') {
       pathname = '/editor.html';
       replaceBasepath = true;
     } else if (pathname === '/index.css') {

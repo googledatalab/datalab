@@ -284,9 +284,9 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         return null;
       }
       try {
-        fileId = DatalabFileId.fromQueryString(this.fileId);
+        fileId = DatalabFileId.fromString(this.fileId);
       } catch (e) {
-        Utils.showErrorDialog('Invalid file query parameter', e.message);
+        Utils.showErrorDialog('Invalid file path', e.message);
         // Fall through with fileId unset
       }
     }
@@ -424,13 +424,13 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
           // The v1 notebook editor creates sessions with just the file path,
           // while v2 editor uses the full id string.
           if (sessions.indexOf(file.id.path) > -1 ||
-              sessions.indexOf(file.id.toQueryString()) > -1) {
+              sessions.indexOf(file.id.toString()) > -1) {
             listElement.set('rows.' + i + '.columns.1', Utils.getFileStatusString(DatalabFileStatus.RUNNING));
           }
         });
       })
       .catch((e: Error) => {
-        const fileSpec = this.currentFile.id.toQueryString();
+        const fileSpec = this.currentFile.id.toString();
         const msgPrefix = 'Error getting list of files from ' + fileSpec + ':';
         if (throwOnError === true) {
           throw new Error(msgPrefix + ' ' + e.message);
@@ -558,7 +558,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         return;
       }
       this._ignoreFileIdChange = true;
-      this.fileId = this.currentFile.id.toQueryString();
+      this.fileId = this.currentFile.id.toString();
       this._ignoreFileIdChange = false;
     }
   }
@@ -1101,7 +1101,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     // This method is called when we are switching tabs, and when that is
     // happening, iron-location sets an internal dontUpdateUrl flag that
     // prevents our update of the fileIdProperty from happening. In order to
-    // get our file param in place, we delay execution until after
+    // get our file path in place, we delay execution until after
     // _urlChanged() in iron-location.html has completed.
     window.setTimeout(() => this._setFileIdPropertyToCurrentFile(), 0);
   }

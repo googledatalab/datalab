@@ -119,7 +119,7 @@ class BigQueryTableOverviewTemplate extends NotebookTemplate {
     }
 
     // Specify the default location of the template.
-    const defaultTemplateLocation = 'static:/templates/BigQueryTableOverview.ipynb';
+    const defaultTemplateLocation = 'static/templates/BigQueryTableOverview.ipynb';
 
     // TODO(jimmc); Until we have a user setting, allow specifying an alternate
     // location for the template file, for debugging, such as
@@ -127,7 +127,7 @@ class BigQueryTableOverviewTemplate extends NotebookTemplate {
     const windowDatalab = window.datalab || {}
     const templateLocation =
         windowDatalab.tableSchemaTemplateFileId || defaultTemplateLocation;
-    const templateId = DatalabFileId.fromQueryString(templateLocation);
+    const templateId = DatalabFileId.fromString(templateLocation);
     super(templateId, parameters, resolver);
   }
 }
@@ -149,7 +149,7 @@ class TemplateManager extends Polymer.Element {
 
     // TODO(jimmc): Look for a user preference for baseDir
     const baseType = (appSettings.defaultFileManager || 'drive');
-    const baseDir = baseType + ':';
+    const baseDir = baseType + '/';
     // TODO(jimmc): Allow specifying a path with baseDir. For now, we are
     // just using the root of the filesystem as the default location.
     const baseName = 'temp';
