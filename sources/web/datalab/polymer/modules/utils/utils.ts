@@ -28,6 +28,11 @@ class Utils {
     }
   };
 
+  public static constants = {
+    editorUrlComponent:   '/editor/',
+    notebookUrlComponent: '/notebook/',
+  };
+
   /**
    * Opens a dialog with the specified options. It uses the Datalab custom element
    * according to the specified dialog type, attaches a new instance to the current
@@ -168,9 +173,8 @@ class Utils {
    * Returns the current root URI.
    */
   public static getHostRoot() {
-    return location.protocol + '//' + location.host + Utils.uiroot;
+    return location.protocol + '//' + location.host;
   }
-  static uiroot = '';   // Gets set to "/exp"
 
   /**
    * Flattens a BigQuery table schema

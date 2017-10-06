@@ -57,7 +57,7 @@ async function processMessageEvent(e: MessageEvent) {
   } else if (message.command === CommandId.LOAD_NOTEBOOK) {
     let outgoingMessage: IframeMessage;
     try {
-      const id = DatalabFileId.fromQueryString(message.arguments);
+      const id = DatalabFileId.fromString(message.arguments);
       const fileManager = FileManagerFactory.getInstanceForType(id.source);
       const [file, doc] = await Promise.all([
         fileManager.get(id),
@@ -87,13 +87,23 @@ function sendMessageToNotebookEditor(message: IframeMessage) {
   }
 }
 
-const params = new URLSearchParams(window.location.search);
-if (params.has('file')) {
-  // Currently this is one-directional, iframe wrapper querystring -> iframe hash param.
-  // We will need to change this if the editor is allowed to change the id of the
-  // open file, for example in the case of Jupyter files where the id is the file path.
+if (location.pathname.startsWith(Utils.constants.notebookUrlComponent)) {
   if (iframe) {
     window.top.addEventListener('message', processMessageEvent);
-    iframe.src = '/notebookeditor#fileId=' + params.get('file');
+
+    const path = location.pathname.substr(Utils.constants.notebookUrlComponent.length);
+
+    // Set the iframe source to load the notebook editor resources.
+    // TODO: Currently this is one-directional, iframe wrapper url -> iframe
+    // hash param. We will need to change this if the editor is allowed to
+    // change the id of the open file, for example in the case of the editor
+    // renaming the file.
+
+    // Adding the 'inIframe' query parameter signals to the server that we want
+    // to load the notebook editor resources as opposed to the notebook shell
+    // (this file). Both resources are loaded at /notebook in order to make any
+    // links in the editor relative to /notebook as well.
+    iframe.src = Utils.constants.notebookUrlComponent + path +
+        '?inIframe#fileId=' + path;
   }
 }

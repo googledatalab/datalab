@@ -46,7 +46,7 @@ enum DatalabFileStatus {
  * Unique identifier for a file object.
  */
 class DatalabFileId {
-  private static _delim = ':';
+  private static _delim = '/';
 
   path: string;
   source: FileManagerType;
@@ -56,19 +56,21 @@ class DatalabFileId {
     this.source = source;
   }
 
-  public static fromQueryString(querystring: string) {
-    const tokens = querystring.split(DatalabFileId._delim);
-    if (tokens.length !== 2) {
-      throw new Error('Invalid format for file id: ' + querystring);
+  public static fromString(path: string) {
+    const tokens = path.split(this._delim);
+    // Allow an empty path token
+    if (tokens.length === 1) {
+      tokens.push('');
     }
-    return new DatalabFileId(tokens[1], FileManagerFactory.fileManagerNameToType(tokens[0]));
+    const source = tokens.shift() as string;
+    return new DatalabFileId(tokens.join(this._delim),
+        FileManagerFactory.fileManagerNameToType(source));
   }
 
-  public toQueryString() {
-    return FileManagerFactory.fileManagerTypetoString(this.source) + DatalabFileId._delim +
-        this.path;
+  public toString() {
+    return FileManagerFactory.fileManagerTypetoString(this.source) +
+        DatalabFileId._delim + this.path;
   }
-
 }
 
 class NotebookContent {

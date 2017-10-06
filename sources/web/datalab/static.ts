@@ -84,7 +84,8 @@ function getContent(filePath: string, cb: common.Callback<Buffer>, isDynamic: bo
  * @param isDynamic indication of whether or not the file contents might change.
  */
 function sendFile(filePath: string, response: http.ServerResponse,
-                  alternatePath: string = "", isDynamic: boolean = false) {
+                  alternatePath: string = "", isDynamic: boolean = false,
+                  replaceBasepath: boolean = false) {
   var extension = path.extname(filePath);
   var contentType = CONTENT_TYPES[extension.toLowerCase()] || 'application/octet-stream';
 
@@ -105,7 +106,13 @@ function sendFile(filePath: string, response: http.ServerResponse,
         response.setHeader('Cache-Control', 'no-cache');
       }
       response.writeHead(200, { 'Content-Type': contentType });
-      response.end(content);
+      if (replaceBasepath) {
+        const contentStr = content.toString().replace(
+            /\{base_url}/g, appSettings.datalabBasePath);
+        response.end(contentStr);
+      } else {
+        response.end(content);
+      }
     }
   }, isDynamic);
 }
@@ -116,7 +123,8 @@ function sendFile(filePath: string, response: http.ServerResponse,
  * @param response the out-going response associated with the current HTTP request.
  * @param isDynamic indication of whether or not the file contents might change.
  */
-function sendDataLabFile(filePath: string, response: http.ServerResponse, isDynamic: boolean = false) {
+function sendDataLabFile(filePath: string, response: http.ServerResponse,
+    isDynamic: boolean = false, replaceBasepath: boolean = false) {
   let live = isDynamic;
   let staticDir = path.join(__dirname, 'static')
   // Set this env var to point to source directory for live updates without restart.
@@ -125,7 +133,7 @@ function sendDataLabFile(filePath: string, response: http.ServerResponse, isDyna
     live = true
     staticDir = liveStaticDir
   }
-  sendFile(path.join(staticDir, filePath), response, '', live);
+  sendFile(path.join(staticDir, filePath), response, '', live, replaceBasepath);
 }
 
 /**
@@ -175,7 +183,7 @@ export function isExperimentalResource(pathname: string) {
   const experimentalUiEnabled = process.env.DATALAB_EXPERIMENTAL_UI;
   return experimentalUiEnabled === 'true' && (
       pathname.indexOf('/data') === 0 ||
-      pathname === '/files' ||
+      pathname.indexOf('/files') === 0 ||
       // /files/path?download=true is used to download files from Jupyter
       // TODO: use a different API to download files when we have a content service.
       pathname.indexOf('/sessions') === 0 ||
@@ -193,6 +201,13 @@ export function isExperimentalResource(pathname: string) {
 }
 
 /**
+ * Parses the given url path and returns the first component.
+ */
+function firstComponent(pathname: string) {
+  return pathname.split('/')[1];
+}
+
+/**
  * Implements static file handling.
  * @param request the incoming file request.
  * @param response the outgoing file response.
@@ -201,6 +216,9 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   var pathname = url.parse(request.url).pathname;
 
   // -------------------------------- start of experimental UI resources
+  let replaceBasepath = false;
+  // List of page names that resolve to index.html
+  const indexPageNames = ['data', 'files', 'docs', 'sessions', 'terminal'];
   if (isExperimentalResource(pathname)) {
     logging.getLogger().debug('Serving experimental UI resource: ' + pathname);
     let rootRedirect = 'files';
@@ -213,21 +231,19 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       response.setHeader('Location', path.join(appSettings.datalabBasePath, rootRedirect));
       response.end();
       return;
-    } else if (pathname === '/data' ||
-        pathname === '/files' ||
-        pathname === '/docs' ||
-        pathname === '/sessions' ||
-        pathname === '/terminal') {
+    } else if (indexPageNames.indexOf(firstComponent(pathname)) > -1) {
       pathname = '/index.html';
-    } else if (pathname === '/editor') {
+      replaceBasepath = true;
+    } else if (firstComponent(pathname) === 'editor') {
       pathname = '/editor.html';
+      replaceBasepath = true;
     } else if (pathname === '/index.css') {
       var userSettings: common.UserSettings = settings.loadUserSettings(userId);
       pathname = '/index.' + (userSettings.theme || 'light') + '.css';
     }
     pathname = 'experimental' + pathname;
-    console.log('sending experimental file: ' + pathname);
-    sendDataLabFile(pathname, response);
+    logging.getLogger().debug('sending experimental file: ' + pathname);
+    sendDataLabFile(pathname, response, undefined, replaceBasepath);
     return;
   }
   // -------------------------------- end of experimental resources

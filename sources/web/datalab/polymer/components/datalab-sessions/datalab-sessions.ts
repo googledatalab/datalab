@@ -111,7 +111,7 @@ class SessionsElement extends Polymer.Element implements DatalabPageElement {
     } else {
       let id: DatalabFileId;
       try {
-        id = DatalabFileId.fromQueryString(session.notebook.path);
+        id = DatalabFileId.fromString(session.notebook.path);
       } catch (e) {
         // If we fail to parse the path as a file id, default to using Jupyter,
         // since the V1 Jupyter notebook editor does not pass a full file id.

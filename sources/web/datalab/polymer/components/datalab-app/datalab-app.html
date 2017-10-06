@@ -21,6 +21,7 @@ the License.
 <link rel="import" href="../../components/datalab-toolbar/datalab-toolbar.html">
 <link rel="import" href="../../components/resizable-divider/resizable-divider.html">
 <link rel="import" href="../../modules/api-manager/api-manager.html">
+<link rel="import" href="../../modules/file-manager-factory/file-manager-factory.html">
 <link rel="import" href="../../modules/settings-manager/settings-manager.html">
 
 <dom-module id="datalab-app">
@@ -66,11 +67,12 @@ the License.
     </style>
 
     <!--Router-->
-    <app-location route="{{route}}" query-params={{queryParams}}></app-location>
+    <app-location route="{{route}}"></app-location>
     <app-route
         route="{{route}}"
-        pattern="{{rootPattern}}:page"
-        data="{{routeData}}"></app-route>
+        pattern="/:page"
+        data="{{routeData}}"
+        tail="{{routeTail}}"></app-route>
 
     <div id="container">
       <datalab-toolbar></datalab-toolbar>
