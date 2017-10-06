@@ -106,11 +106,13 @@ function sendFile(filePath: string, response: http.ServerResponse,
         response.setHeader('Cache-Control', 'no-cache');
       }
       response.writeHead(200, { 'Content-Type': contentType });
-      let contentStr = content.toString();
       if (replaceBasepath) {
-        contentStr = contentStr.replace(/\{base_url}/g, appSettings.datalabBasePath);
+        const contentStr = content.toString().replace(
+            /\{base_url}/g, appSettings.datalabBasePath);
+        response.end(contentStr);
+      } else {
+        response.end(content);
       }
-      response.end(contentStr);
     }
   }, isDynamic);
 }
