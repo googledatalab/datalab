@@ -17,8 +17,6 @@
  */
 class Utils {
 
-  static uiroot = '';   // Gets set to "/exp"
-
   public static log = class {
     public static verbose(...args: any[]) {
       // tslint:disable-next-line:no-console
@@ -175,7 +173,7 @@ class Utils {
    * Returns the current root URI.
    */
   public static getHostRoot() {
-    return location.protocol + '//' + location.host + Utils.uiroot;
+    return location.protocol + '//' + location.host;
   }
 
   /**
