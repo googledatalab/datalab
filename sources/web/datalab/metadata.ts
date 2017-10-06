@@ -46,9 +46,9 @@ const metadata: FakeMetadata = {
   },
 };
 
-function launchFakeServer(metadata: FakeMetadata): void {
-  const port = 80;
-  const host = 'metadata.google.internal';
+function launchFakeServer(metadata: FakeMetadata, settings: common.AppSettings): void {
+  const port = settings.fakeMetadataAddress.port;
+  const host = settings.fakeMetadataAddress.host;
   logging.getLogger().info('Starting fake metadata server at http://%s:%d with %s',
                            host, port, JSON.stringify(metadata));
 
@@ -68,7 +68,8 @@ function launchFakeServer(metadata: FakeMetadata): void {
       res.writeHead(200, { 'Metadata-Flavor': 'Google', 'Content-Type': 'application/text' });
       res.write('default/\n');
       res.write(metadata.creds.account + '/\n');
-    } else if (urlpath == '/computeMetadata/v1/instance/service-accounts/default/' &&
+    } else if ((urlpath == '/computeMetadata/v1/instance/service-accounts/default/' ||
+                urlpath == '/computeMetadata/v1/instance/service-accounts/' + metadata.creds.account + '/') &&
                (parsed_url.query['recursive'] || '').toLowerCase() == "true") {
       const accountJSON: any = {
         aliases: ["default"],
@@ -110,19 +111,19 @@ function launchFakeServer(metadata: FakeMetadata): void {
     // earlier invocation of `gcloud` could have written that file. To account
     // for this, we overwrite the file with the value that indicates the tool
     // should read from the metadata server.
-    const gceFile = '/content/datalab/.config/gce'
+    const gceFile = settings.contentDir + '/datalab/.config/gce';
     fs.writeFileSync(gceFile, "True");
   });
 }
 
 /**
- * Initializes the Jupyter server manager.
+ * Initializes the GCE metadata service fake.
  */
 export function init(settings: common.AppSettings): void {
   if (process.env.DATALAB_FAKE_METADATA_SERVER != 'true') {
     return;
   }
-  launchFakeServer(metadata);
+  launchFakeServer(metadata, settings);
 }
 
 function parseCreds(request: http.ServerRequest, callback: Function): void {

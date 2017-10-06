@@ -174,6 +174,11 @@ declare module common {
      * Possible options are: jupyter, drive, sharedDrive, docs, and bigquery
      */
     supportedFileBrowserSources: string[];
+
+    /**
+     * The host/port on which to serve the fake metadata service, if active.
+     */
+    fakeMetadataAddress: {host: "metadata.google.internal"|"metadata"|null, port: number};
   }
 
   interface TimeoutInfo {

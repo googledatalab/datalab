@@ -46,5 +46,6 @@
     "--MultiKernelManager.default_kernel_name=\"python2\"",
     "--ip=\"127.0.0.1\""
   ],
-  "supportedFileBrowserSources": ["jupyter"]
+  "supportedFileBrowserSources": ["jupyter"],
+  "fakeMetadataAddress": {"host": "metadata.google.internal", "port": 80}
 }
