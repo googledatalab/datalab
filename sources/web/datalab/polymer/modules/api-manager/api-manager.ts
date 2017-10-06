@@ -63,66 +63,57 @@ class ApiManager implements ApiManager {
   public static connectedHandler: () => void;
   public static disconnectedHandler: () => void;
 
-  private static _basepathPromise: Promise<string>;
-
   /**
    * XSRF token, if required, undefined until we call basepathApiUrl
    */
   private static _xsrfToken = '';
 
-  public static getBasePath(): Promise<string> {
+  public static async getBasePath(): Promise<string> {
     const basePathUrl = this.getServiceUrl(ServiceId.BASE_PATH);
-    if (!this._basepathPromise) {
-      this._basepathPromise = this._xhrTextAsync(basePathUrl, { noCache: true })
-        .then((response: string) => {
-          // The server may add the xssiPrefix to the response to prevent.
-          // it being parsed as if it were a javascript file.
-          const xssiPrefix = ')]}\'\n';
-          if (!response.startsWith(xssiPrefix)) {
-            // If no xssi prefix is there, the response should be pure text.
-            // This will be the case when the basepath is on localhost.
-            return response.replace(/\/$/, '');
-          } else {
-            // We did get a response with an xssi prefix, the rest of the
-            // response will be JSON, which we can parse after removing the
-            // prefix.
-            response = response.substr(xssiPrefix.length);
-            const j = JSON.parse(response) as XssiResponse;
-            if (j.basepath) {
-              // The response includes a basepath.
-              // Check to ensure that the basepath doesn't have a trailing slash.
-              return j.basepath.replace(/\/$/, '');
-            } else {
-              // The response didn't include the basepath, it should have
-              // and xsrf token for us to use to retry our request as a POST.
-              this._xsrfToken = j.token;
-              const formData = new FormData();
-              // The server expects the xsrfToken as FormData.
-              formData.append('token', this._xsrfToken);
-              const xhrOptions: XhrOptions = {
-                method: 'POST',
-                noCache: true,
-                parameters: formData,
-              };
-              return this._xhrTextAsync(basePathUrl, xhrOptions)
-                .then((basePathResponse: string) => {
-                  if (!basePathResponse.startsWith(xssiPrefix)) {
-                    // The server didn't give us a basepath, even after we sent
-                    // it the token. We give up.
-                    throw new Error('unknown basepath prefix');
-                  } else {
-                    // We sent the token, so we should have a basepath.
-                    // Make sure it doesn't have a trailing slash.
-                    basePathResponse = basePathResponse.substr(xssiPrefix.length);
-                    const basepath = (JSON.parse(basePathResponse) as XssiResponse).basepath;
-                    return basepath.replace(/\/$/, '');
-                  }
-                });
-            }
-          }
-        });
+    let response = await this._xhrTextAsync(basePathUrl, { noCache: true });
+    // The server may add the xssiPrefix to the response to prevent.
+    // it being parsed as if it were a javascript file.
+    const xssiPrefix = ')]}\'\n';
+    if (!response.startsWith(xssiPrefix)) {
+      // If no xssi prefix is there, the response should be pure text.
+      // This will be the case when the basepath is on localhost.
+      return response.replace(/\/$/, '');
+    } else {
+      // We did get a response with an xssi prefix, the rest of the
+      // response will be JSON, which we can parse after removing the
+      // prefix.
+      response = response.substr(xssiPrefix.length);
+      const j = JSON.parse(response) as XssiResponse;
+      if (j.basepath) {
+        // The response includes a basepath.
+        // Check to ensure that the basepath doesn't have a trailing slash.
+        return j.basepath.replace(/\/$/, '');
+      } else {
+        // The response didn't include the basepath, it should have
+        // and xsrf token for us to use to retry our request as a POST.
+        this._xsrfToken = j.token;
+        const formData = new FormData();
+        // The server expects the xsrfToken as FormData.
+        formData.append('token', this._xsrfToken);
+        const xhrOptions: XhrOptions = {
+          method: 'POST',
+          noCache: true,
+          parameters: formData,
+        };
+        let postResponse = await this._xhrTextAsync(basePathUrl, xhrOptions);
+        if (!postResponse.startsWith(xssiPrefix)) {
+          // The server didn't give us a basepath, even after we sent
+          // it the token. We give up.
+          throw new Error('unknown basepath prefix');
+        } else {
+          // We sent the token, so we should have a basepath.
+          // Make sure it doesn't have a trailing slash.
+          postResponse = postResponse.substr(xssiPrefix.length);
+          const basepath = (JSON.parse(postResponse) as XssiResponse).basepath;
+          return basepath.replace(/\/$/, '');
+        }
+      }
     }
-    return this._basepathPromise;
   }
 
   public static async sendRequestAsync(url: string, options?: XhrOptions, prependBasepath = true)
