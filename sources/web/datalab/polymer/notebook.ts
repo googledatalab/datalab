@@ -94,6 +94,6 @@ if (location.pathname.startsWith('/notebook/')) {
   // open file, for example in the case of Jupyter files where the id is the file path.
   if (iframe) {
     window.top.addEventListener('message', processMessageEvent);
-    iframe.src = 'notebookeditor#fileId=' + path;
+    iframe.src = '/notebookeditor/' + path + '#fileId=' + path;
   }
 }
