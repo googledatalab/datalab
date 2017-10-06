@@ -87,11 +87,11 @@ function sendMessageToNotebookEditor(message: IframeMessage) {
   }
 }
 
-if (location.pathname.startsWith('/notebook/')) {
+if (location.pathname.startsWith(Utils.constants.notebookUrlComponent)) {
   if (iframe) {
     window.top.addEventListener('message', processMessageEvent);
 
-    const path = location.pathname.substr('/notebook/'.length);
+    const path = location.pathname.substr(Utils.constants.notebookUrlComponent.length);
 
     // Set the iframe source to load the notebook editor resources.
     // TODO: Currently this is one-directional, iframe wrapper url -> iframe
@@ -103,6 +103,7 @@ if (location.pathname.startsWith('/notebook/')) {
     // to load the notebook editor resources as opposed to the notebook shell
     // (this file). Both resources are loaded at /notebook in order to make any
     // links in the editor relative to /notebook as well.
-    iframe.src = '/notebook/' + path + '?inIframe#fileId=' + path;
+    iframe.src = Utils.constants.notebookUrlComponent + path +
+        '?inIframe#fileId=' + path;
   }
 }

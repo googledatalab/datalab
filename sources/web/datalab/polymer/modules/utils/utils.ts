@@ -17,6 +17,8 @@
  */
 class Utils {
 
+  static uiroot = '';   // Gets set to "/exp"
+
   public static log = class {
     public static verbose(...args: any[]) {
       // tslint:disable-next-line:no-console
@@ -26,6 +28,11 @@ class Utils {
       // tslint:disable-next-line:no-console
       console.error(...args);
     }
+  };
+
+  public static constants = {
+    editorUrlComponent:   '/editor/',
+    notebookUrlComponent: '/notebook/',
   };
 
   /**
@@ -170,7 +177,6 @@ class Utils {
   public static getHostRoot() {
     return location.protocol + '//' + location.host + Utils.uiroot;
   }
-  static uiroot = '';   // Gets set to "/exp"
 
   /**
    * Flattens a BigQuery table schema

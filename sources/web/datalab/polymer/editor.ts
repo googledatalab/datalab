@@ -38,13 +38,14 @@ if (editorElement) {
   // the url querystring
   editorElement.addEventListener('file-id-changed', (e: CustomEvent) => {
     const newId = e.detail.value as DatalabFileId;
-    const url = location.protocol + '//' + location.host + '/editor/' + (newId || '');
+    const url = location.protocol + '//' + location.host +
+        Utils.constants.editorUrlComponent + (newId || '');
     window.history.replaceState({}, '', url);
   });
 
   // Pass the file's path if it's specified in the location.
-  if (location.pathname.startsWith('/editor/')) {
-    const path = location.pathname.substr('/editor/'.length);
+  if (location.pathname.startsWith(Utils.constants.editorUrlComponent)) {
+    const path = location.pathname.substr(Utils.constants.editorUrlComponent.length);
     try {
       editorElement.fileId = DatalabFileId.fromString(path);
     } catch (e) {
