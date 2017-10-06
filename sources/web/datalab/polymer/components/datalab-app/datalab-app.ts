@@ -43,7 +43,9 @@ class DatalabAppElement extends Polymer.Element {
    */
   public routeData: object;
 
-  // TODO: doc
+  /**
+   * Tail of the parsed route, which contains the file id in its path property.
+   */
   public routeTail: object;
 
   private _boundResizeHandler: EventListenerObject;
@@ -93,8 +95,9 @@ class DatalabAppElement extends Polymer.Element {
 
   static get observers() {
     return [
-      // We need a complex observer for changes to the routeData
-      // object's page property.
+      // We need a complex observer for changes to the routeData object's page
+      // property, and the path property of routeTail, which contains the file
+      // id.
       '_routePageChanged(routeData.page)',
       '_routeTailPathChanged(routeTail.path)',
     ];
