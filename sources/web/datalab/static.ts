@@ -198,6 +198,9 @@ export function isExperimentalResource(pathname: string) {
   );
 }
 
+/**
+ * Parses the given url path and returns the first component.
+ */
 function firstComponent(pathname: string) {
   return pathname.split('/')[1];
 }

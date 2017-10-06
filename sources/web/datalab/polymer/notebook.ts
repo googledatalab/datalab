@@ -88,12 +88,21 @@ function sendMessageToNotebookEditor(message: IframeMessage) {
 }
 
 if (location.pathname.startsWith('/notebook/')) {
-  const path = location.pathname.substr('/notebook/'.length);
-  // Currently this is one-directional, iframe wrapper querystring -> iframe hash param.
-  // We will need to change this if the editor is allowed to change the id of the
-  // open file, for example in the case of Jupyter files where the id is the file path.
   if (iframe) {
     window.top.addEventListener('message', processMessageEvent);
-    iframe.src = '/notebookeditor/' + path + '#fileId=' + path;
+
+    const path = location.pathname.substr('/notebook/'.length);
+
+    // Set the iframe source to load the notebook editor resources.
+    // TODO: Currently this is one-directional, iframe wrapper url -> iframe
+    // hash param. We will need to change this if the editor is allowed to
+    // change the id of the open file, for example in the case of the editor
+    // renaming the file.
+
+    // Adding the 'inIframe' query parameter signals to the server that we want
+    // to load the notebook editor resources as opposed to the notebook shell
+    // (this file). Both resources are loaded at /notebook in order to make any
+    // links in the editor relative to /notebook as well.
+    iframe.src = '/notebook/' + path + '?inIframe#fileId=' + path;
   }
 }
