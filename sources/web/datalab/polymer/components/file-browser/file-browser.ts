@@ -62,9 +62,9 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   public fileManagerTypeList: FileManagerType[];
 
   /**
-   * True makes the toolbar never visible.
+   * Toolbar display mode.
    */
-  public hideToolbar: boolean;
+  public toolbarMode: string;
 
   /**
    * The currently selected file if exactly one is selected, or null if none is.
@@ -82,6 +82,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   public nLeadingBreadcrumbsToTrim: number;
 
   private _addToolbarCollapseThreshold = 900;
+  private _canOpenInNotebook = false;
   private _canPreview = false;
   private _dividerPosition: number;
   private _previewPaneCollapseThreshold = 600;
@@ -95,6 +96,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   private _fileManagerDisplayIcon: string;
   private _hasMultipleFileSources: boolean;
   private _ignoreFileIdChange = false;
+  private _inlineDetailsOpenInNotebook: () => void | null;
   private _isPreviewPaneToggledOn: boolean;
   private _pathHistory: DatalabFile[];
   private _pathHistoryIndex: number;
@@ -105,6 +107,9 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
   static get properties() {
     return {
+      _canOpenInNotebook: {
+        type: Boolean,
+      },
       _canPreview: {
         type: Boolean,
         value: false,
@@ -131,7 +136,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         value: true,
       },
       _isToolbarHidden: {
-        computed: '_computeIsToolbarHidden(small, hideToolbar)',
+        computed: '_computeIsToolbarHidden(small, toolbarMode)',
         type: Boolean,
       },
       _pathHistory: {
@@ -161,10 +166,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         type: Array,
         value: () => [],
       },
-      hideToolbar: {
-        type: Boolean,
-        value: false,
-      },
       nLeadingBreadcrumbsToTrim: {
         type: Number,
         value: 0,
@@ -176,6 +177,10 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       small: {
         type: Boolean,
         value: false,
+      },
+      toolbarMode: {
+        type: String,
+        value: 'files',
       },
     };
   }
@@ -266,6 +271,9 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
                                   this._handleDoubleClicked.bind(this));
     filesElement.addEventListener('selected-indices-changed',
                                   this._handleSelectionChanged.bind(this));
+
+    document.addEventListener('inline-details-loaded',
+        this._handleInlineDetailsLoaded.bind(this));
 
     // For a small file/directory picker, we don't need to show the status.
     filesElement.columns = this.small ? ['Name'] : ['Name', 'Status'];
@@ -375,8 +383,13 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     clearInterval(this._fileListRefreshIntervalHandle);
   }
 
-  _computeIsToolbarHidden(small: boolean, hideToolbar: boolean) {
+  _computeIsToolbarHidden(small: boolean, toolbarMode: string) {
+    const hideToolbar = !toolbarMode || toolbarMode === 'none';
     return small || hideToolbar;
+  }
+
+  _isToolbarMode(mode: string) {
+    return this.toolbarMode === mode;
   }
 
   /**
@@ -508,12 +521,26 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    */
   _handleSelectionChanged() {
     const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
-    if (selectedIndices.length === 1) {
-      this.selectedFile = this._fileList[selectedIndices[0]];
-      this._canPreview = !!this.selectedFile.getPreviewName();
-    } else {
-      this.selectedFile = null;
-      this._canPreview = false;
+    const newSelectedFile = (selectedIndices.length === 1) ?
+      this._fileList[selectedIndices[0]] : null;
+    if (newSelectedFile !== this.selectedFile) {
+      this._canOpenInNotebook = false;
+      this.selectedFile = newSelectedFile;
+      this._canPreview =
+          !!this.selectedFile && !!this.selectedFile.getPreviewName();
+    }
+  }
+
+  /**
+   * Called when the inline details are done loading for an item in our list.
+   */
+  _handleInlineDetailsLoaded(e: CustomEvent) {
+    Utils.log.verbose('Got inline-details-loaded event:', e);
+    const eventFields = e.detail as any;
+    const file = eventFields.file as DatalabFile;
+    if (file === this.selectedFile) {
+      this._inlineDetailsOpenInNotebook = eventFields.openInNotebook;
+      this._canOpenInNotebook = !!this._inlineDetailsOpenInNotebook;
     }
   }
 
@@ -573,6 +600,15 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
   _createNewDirectory() {
     return this._createNewItem(DatalabFileType.DIRECTORY);
+  }
+
+  /**
+   * Opens the current table in the table schema template notebook.
+   */
+  async _openInNotebook() {
+    if (this._inlineDetailsOpenInNotebook) {
+      this._inlineDetailsOpenInNotebook();
+    }
   }
 
   /**

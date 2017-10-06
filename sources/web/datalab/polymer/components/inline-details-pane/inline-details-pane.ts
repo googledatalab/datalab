@@ -72,6 +72,16 @@ class InlineDetailsPaneElement extends Polymer.Element {
       Polymer.importHref(pageUrl, undefined, undefined, true);
     }
   }
+
+  show() {
+    if (this.details) {
+      const elementId = this.details + '-inline-details';
+      const element = this.$[elementId];
+      if (element && element.show) {
+        element.show();
+      }
+    }
+  }
 }
 
 customElements.define(InlineDetailsPaneElement.is, InlineDetailsPaneElement);

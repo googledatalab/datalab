@@ -82,6 +82,7 @@ class TableInlineDetailsElement extends Polymer.Element {
             projectId, datasetId, tableId, this.TABLE_PREVIEW_ROW_COUNT))
         .then((response: HttpResponse<gapi.client.bigquery.ListTabledataResponse>) => {
           this._rows = response.result.rows;
+          this.show();
         }, (errorResponse: any) =>
             // TODO - display error to user in the details pane
             Utils.log.error('Failed to get table rows: ' + errorResponse.body))
@@ -92,8 +93,49 @@ class TableInlineDetailsElement extends Polymer.Element {
     }
   }
 
+  /**
+   * Dispatches an event when we get shown.
+   */
+  show() {
+    const eventFields = {
+      file: this.file,
+      openInNotebook: this._openInNotebook.bind(this)
+    };
+    const e =
+        new CustomEvent('inline-details-loaded', {detail: eventFields});
+    document.dispatchEvent(e);
+  }
+
   _computeSchemaFields(table: gapi.client.bigquery.Table | null) {
     return table ? Utils.flattenFields(table.schema.fields) : [];
+  }
+
+  /**
+   * Opens the current table in the table schema template notebook.
+   */
+  async _openInNotebook() {
+
+    if (this._table) {
+      const dict = {
+        BIGQUERY_DATASET_ID: this._table.tableReference.datasetId,
+        BIGQUERY_FULL_ID: this._table.id.replace(':', '.'),
+        BIGQUERY_PROJECT_ID: this._table.tableReference.projectId,
+        BIGQUERY_TABLE_DESCRIPTION: this._table.description,
+        BIGQUERY_TABLE_ID: this._table.tableReference.tableId,
+      };
+      const template = new BigQueryTableOverviewTemplate(dict, this);
+
+      try {
+        const notebook = await TemplateManager.newNotebookFromTemplate(template);
+
+        if (notebook) {
+          FileManagerFactory.getInstanceForType(notebook.id.source).getNotebookUrl(notebook.id)
+            .then((url) => window.open(url, '_blank'));
+        }
+      } catch (e) {
+        Utils.showErrorDialog('Error', e.message);
+      }
+    }
   }
 }
 
