@@ -212,7 +212,7 @@ class TemplateManager extends Polymer.Element {
   public static async getTemplateStringContent(fileId: DatalabFileId,
       resolver: Polymer.Element) {
     if (fileId.source === FileManagerType.STATIC) {
-      const resolvedUrl = resolver.resolveUrl('../..' + fileId.path);
+      const resolvedUrl = resolver.resolveUrl('../../' + fileId.path);
       const templateStringContent =
           await ApiManager.sendTextRequestAsync(resolvedUrl, {}, false);
       return templateStringContent;
