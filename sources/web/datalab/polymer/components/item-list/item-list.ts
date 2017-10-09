@@ -74,6 +74,7 @@ class ItemListRow {
   _updateInlineDetails(
       inlineDetailsMode: InlineDetailsDisplayMode,
       multiSelect: boolean, rowDetailsElement: HTMLElement) {
+    const oldShowInlineDetails = this.showInlineDetails;
     if (!this.canShowDetails) {
       // If we don't know how to dislay details element, then we never do
       this.showInlineDetails = false;
@@ -91,8 +92,15 @@ class ItemListRow {
       // Assume SINGLE_SELECT, but we know multiple items are selected
       this.showInlineDetails = false;
     }
-    if (this.showInlineDetails && !this._detailsElement) {
-      this._addDetailsElement(rowDetailsElement);
+    if (this.showInlineDetails) {
+      if (!this._detailsElement) {
+        this._addDetailsElement(rowDetailsElement);
+      } else if (!oldShowInlineDetails) {
+        const detailsElementAsAny = this._detailsElement as any;
+        if (detailsElementAsAny.show) {
+          detailsElementAsAny.show();
+        }
+      }
     }
   }
 

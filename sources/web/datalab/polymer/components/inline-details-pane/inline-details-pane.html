@@ -29,7 +29,8 @@ the License.
     </style>
     <div id="container" hidden$="{{!file}}">
       <iron-pages id="inline-details" selected="{{details}}" attr-for-selected="name">
-        <table-inline-details class="inline-details" name="table" file="{{file}}" active="{{active}}"></table-inline-details>
+        <table-inline-details id="table-inline-details" class="inline-details"
+            name="table" file="{{file}}" active="{{active}}"></table-inline-details>
       </iron-pages>
     </div>
   </template>

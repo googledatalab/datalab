@@ -131,86 +131,100 @@ the License.
       }
     </style>
 
-    <div id="toolbar" hidden$={{_isToolbarHidden}}>
+    <div id="toolbar" hidden$="{{_isToolbarHidden}}">
 
-      <!--Default Add toolbar, contains Add buttons for notebook, file, and folder-->
-      <span id="addToolbar">
-        <paper-button class="toolbar-button" on-click="_createNewNotebook">
+      <div id="fileToolbar" hidden$="[[!_isToolbarMode('files')]]">
+
+        <!--Default Add toolbar, contains Add buttons for notebook, file, and folder-->
+        <span id="addToolbar">
+          <paper-button class="toolbar-button" on-click="_createNewNotebook">
+            <iron-icon icon="add-box"></iron-icon>
+            <span>Notebook</span>
+          </paper-button>
+          <paper-button class="toolbar-button" on-click="_createNewFile">
+            <iron-icon icon="add-box"></iron-icon>
+            <span>File</span>
+          </paper-button>
+          <paper-button class="toolbar-button" on-click="_createNewDirectory">
+            <iron-icon icon="add-box"></iron-icon>
+            <span>Folder</span>
+          </paper-button>
+        </span>
+
+        <!--Alternative Add toolbar, shows up when toolbar is too small-->
+        <span id="altAddToolbarContainer" class="dropdown-menu-container">
+          <paper-button id="altAddToolbarToggle" class="toolbar-button"
+                        on-click="_toggleAltAddToolbar">
+            <iron-icon icon="add-box"></iron-icon>
+            <span>New</span>
+            <iron-icon icon="hardware:keyboard-arrow-down"></iron-icon>
+          </paper-button>
+          <paper-dialog id="altAddToolbar" class="dropdown-menu" on-blur="_closeDropdown">
+          </paper-dialog>
+        </span>
+
+        <!--Default Update toolbar, contains buttons to modify files/folders-->
+        <span id="updateToolbar">
+          <paper-button class="toolbar-button" on-click="_altUpload">
+            <iron-icon icon="file-upload"></iron-icon>
+            <span>Upload</span>
+          </paper-button>
+          <!--This is hidden but its functionality is used by the alt upload button above-->
+          <input type="file" id="altFileUpload" multiple style="display: none"
+                 on-change="_upload">
+          <paper-button class="toolbar-button" on-click="_openSelectedInEditor"
+                        disabled$={{!selectedFile}}>
+            <iron-icon icon="editor:short-text"></iron-icon>
+            <span>Edit as Text</span>
+          </paper-button>
+          <paper-button class="toolbar-button" on-click="_copySelectedItem"
+                        disabled$={{!selectedFile}}>
+            <iron-icon icon="content-copy"></iron-icon>
+            <span>Copy</span>
+          </paper-button>
+          <paper-button class="toolbar-button" on-click="_moveSelectedItem"
+                        disabled$={{!selectedFile}}>
+            <iron-icon icon="redo"></iron-icon>
+            <span>Move</span>
+          </paper-button>
+          <paper-button class="toolbar-button" on-click="_renameSelectedItem"
+                        disabled$={{!selectedFile}}>
+            <iron-icon icon="editor:border-color"></iron-icon>
+            <span>Rename</span>
+          </paper-button>
+          <!--TODO: Delete operation supports deleting multiple files, but we'll
+          only enable the button when one file is selected for now, until we get
+          the group moving/copying functionality too-->
+          <paper-button class="toolbar-button" on-click="_deleteSelectedItems"
+                        disabled$={{!selectedFile}}>
+            <iron-icon icon="delete"></iron-icon>
+            <span>Delete</span>
+          </paper-button>
+        </span>
+
+        <!--Alternative Update toolbar, shows up when toolbar is too small-->
+        <span id="altUpdateToolbarContainer" class="dropdown-menu-container">
+          <paper-button id="altUpdateToolbarToggle" class="toolbar-button"
+                        on-click="_toggleAltUpdateToolbar">
+            <iron-icon icon="more-horiz"></iron-icon>
+          </paper-button>
+          <paper-dialog id="altUpdateToolbar" class="dropdown-menu" on-blur="_closeDropdown">
+          </paper-dialog>
+        </span>
+
+      </div> <!-- fileToolbar -->
+
+      <div id="dataToolbar" hidden$=[[!_isToolbarMode('data')]]>
+
+        <paper-button class="toolbar-button" on-click="_openInNotebook"
+                        disabled$={{!_canOpenInNotebook}}>
           <iron-icon icon="add-box"></iron-icon>
-          <span>Notebook</span>
+          <span>Open in Notebook</span>
         </paper-button>
-        <paper-button class="toolbar-button" on-click="_createNewFile">
-          <iron-icon icon="add-box"></iron-icon>
-          <span>File</span>
-        </paper-button>
-        <paper-button class="toolbar-button" on-click="_createNewDirectory">
-          <iron-icon icon="add-box"></iron-icon>
-          <span>Folder</span>
-        </paper-button>
-      </span>
 
-      <!--Alternative Add toolbar, shows up when toolbar is too small-->
-      <span id="altAddToolbarContainer" class="dropdown-menu-container">
-        <paper-button id="altAddToolbarToggle" class="toolbar-button"
-                      on-click="_toggleAltAddToolbar">
-          <iron-icon icon="add-box"></iron-icon>
-          <span>New</span>
-          <iron-icon icon="hardware:keyboard-arrow-down"></iron-icon>
-        </paper-button>
-        <paper-dialog id="altAddToolbar" class="dropdown-menu" on-blur="_closeDropdown">
-        </paper-dialog>
-      </span>
+      </div> <!-- dataToolbar -->
 
-      <!--Default Update toolbar, contains buttons to modify files/folders-->
-      <span id="updateToolbar">
-        <paper-button class="toolbar-button" on-click="_altUpload">
-          <iron-icon icon="file-upload"></iron-icon>
-          <span>Upload</span>
-        </paper-button>
-        <!--This is hidden but its functionality is used by the alt upload button above-->
-        <input type="file" id="altFileUpload" multiple style="display: none"
-               on-change="_upload">
-      <paper-button class="toolbar-button" on-click="_openSelectedInEditor"
-                    disabled$={{!selectedFile}}>
-        <iron-icon icon="editor:short-text"></iron-icon>
-        <span>Edit as Text</span>
-      </paper-button>
-        <paper-button class="toolbar-button" on-click="_copySelectedItem"
-                      disabled$={{!selectedFile}}>
-          <iron-icon icon="content-copy"></iron-icon>
-          <span>Copy</span>
-        </paper-button>
-        <paper-button class="toolbar-button" on-click="_moveSelectedItem"
-                      disabled$={{!selectedFile}}>
-          <iron-icon icon="redo"></iron-icon>
-          <span>Move</span>
-        </paper-button>
-        <paper-button class="toolbar-button" on-click="_renameSelectedItem"
-                      disabled$={{!selectedFile}}>
-          <iron-icon icon="editor:border-color"></iron-icon>
-          <span>Rename</span>
-        </paper-button>
-        <!--TODO: Delete operation supports deleting multiple files, but we'll
-        only enable the button when one file is selected for now, until we get
-        the group moving/copying functionality too-->
-        <paper-button class="toolbar-button" on-click="_deleteSelectedItems"
-                      disabled$={{!selectedFile}}>
-          <iron-icon icon="delete"></iron-icon>
-          <span>Delete</span>
-        </paper-button>
-      </span>
-
-      <!--Alternative Update toolbar, shows up when toolbar is too small-->
-      <span id="altUpdateToolbarContainer" class="dropdown-menu-container">
-        <paper-button id="altUpdateToolbarToggle" class="toolbar-button"
-                      on-click="_toggleAltUpdateToolbar">
-          <iron-icon icon="more-horiz"></iron-icon>
-        </paper-button>
-        <paper-dialog id="altUpdateToolbar" class="dropdown-menu" on-blur="_closeDropdown">
-        </paper-dialog>
-      </span>
-
-    </div>
+    </div> <!-- toolbar -->
 
     <div id="file-picker">
       <!--Navigation bar with back/forward buttons, refresh, and breadcrumbs-->
