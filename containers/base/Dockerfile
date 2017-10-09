@@ -195,7 +195,6 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     /tools/node/bin/npm install -g forever && \
 
 # Clean up
-    apt-get purge -y build-essential bzip2 cpp pkg-config libfreetype6-dev && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /var/lib/dpkg/info/* && \
