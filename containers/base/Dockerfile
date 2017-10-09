@@ -191,18 +191,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         tcp-port-used@0.1.2 \
         node-cache@3.2.0 && \
     cd / && \
-    /tools/node/bin/npm install -g forever && \
-
-# Clean up
-    apt-get purge -y build-essential bzip2 cpp pkg-config libfreetype6-dev && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm -rf /var/lib/dpkg/info/* && \
-    rm -rf /tmp/* && \
-    rm -rf /root/.cache/* && \
-    rm -rf /usr/share/locale/* && \
-    rm -rf /usr/share/i18n/locales/* && \
-    cd /
+    /tools/node/bin/npm install -g forever
 
 
 ENV LANG en_US.UTF-8
@@ -246,3 +235,15 @@ RUN cd /datalab/lib/pydatalab && \
     ln -s /usr/local/lib/python2.7/dist-packages/notebook/static/custom/custom.css /datalab/nbconvert/custom.css && \
     cd /
 
+
+# Clean up
+RUN cd / && \
+    apt-get purge -y build-essential bzip2 cpp pkg-config libfreetype6-dev && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /var/lib/dpkg/info/* && \
+    rm -rf /tmp/* && \
+    rm -rf /root/.cache/* && \
+    rm -rf /usr/share/locale/* && \
+    rm -rf /usr/share/i18n/locales/* && \
+    cd /
