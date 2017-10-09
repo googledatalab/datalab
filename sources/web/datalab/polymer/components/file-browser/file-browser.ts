@@ -63,6 +63,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
   /**
    * Toolbar display mode.
+   * Possible values: 'none', 'data', 'files'.
    */
   public toolbarMode: string;
 
@@ -522,7 +523,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   _handleSelectionChanged() {
     const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
     const newSelectedFile = (selectedIndices.length === 1) ?
-      this._fileList[selectedIndices[0]] : null;
+        this._fileList[selectedIndices[0]] : null;
     if (newSelectedFile !== this.selectedFile) {
       this._canOpenInNotebook = false;
       this.selectedFile = newSelectedFile;
@@ -535,7 +536,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    * Called when the inline details are done loading for an item in our list.
    */
   _handleInlineDetailsLoaded(e: CustomEvent) {
-    Utils.log.verbose('Got inline-details-loaded event:', e);
     const eventFields = e.detail as any;
     const file = eventFields.file as DatalabFile;
     if (file === this.selectedFile) {
