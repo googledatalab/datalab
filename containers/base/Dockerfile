@@ -29,6 +29,8 @@ ENV PYTHONPATH /env/python
 # Setup OS and core packages
 RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sources.list && \
     apt-get update -y && \
+    apt-get install -y -q debian-archive-keyring debian-keyring && \
+    apt-get update -y && \
     apt-get install --no-install-recommends -y -q python unzip ca-certificates build-essential \
     libatlas-base-dev liblapack-dev gfortran libpng-dev libfreetype6-dev libxft-dev libxml2-dev \
     python-dev python-setuptools python-zmq openssh-client wget curl git pkg-config zip && \
@@ -38,10 +40,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 # Save GPL source packages
     mkdir -p /srcs && \
     cd /srcs && \
-    # We have to use allow-unauthenticated since Ubuntu can't verify the keys for the source
-    # repos.  We don't care since we only download these sources for licensing reasons and
-    # don't actually use them.
-    apt-get source --allow-unauthenticated -d wget git python-zmq ca-certificates pkg-config libpng-dev && \
+    apt-get source -d wget git python-zmq ca-certificates pkg-config libpng-dev && \
     wget --progress=dot:mega https://mirrors.kernel.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.bz2 && \
     cd / && \
 
@@ -192,7 +191,17 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         tcp-port-used@0.1.2 \
         node-cache@3.2.0 && \
     cd / && \
-    /tools/node/bin/npm install -g forever
+    /tools/node/bin/npm install -g forever && \
+
+# Clean up
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /var/lib/dpkg/info/* && \
+    rm -rf /tmp/* && \
+    rm -rf /root/.cache/* && \
+    rm -rf /usr/share/locale/* && \
+    rm -rf /usr/share/i18n/locales/* && \
+    cd /
 
 
 ENV LANG en_US.UTF-8
@@ -236,15 +245,3 @@ RUN cd /datalab/lib/pydatalab && \
     ln -s /usr/local/lib/python2.7/dist-packages/notebook/static/custom/custom.css /datalab/nbconvert/custom.css && \
     cd /
 
-
-# Clean up
-RUN cd / && \
-    apt-get purge -y build-essential bzip2 cpp pkg-config libfreetype6-dev && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm -rf /var/lib/dpkg/info/* && \
-    rm -rf /tmp/* && \
-    rm -rf /root/.cache/* && \
-    rm -rf /usr/share/locale/* && \
-    rm -rf /usr/share/i18n/locales/* && \
-    cd /
