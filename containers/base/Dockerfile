@@ -29,6 +29,8 @@ ENV PYTHONPATH /env/python
 # Setup OS and core packages
 RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sources.list && \
     apt-get update -y && \
+    apt-get install -y -q debian-archive-keyring debian-keyring && \
+    apt-get update -y && \
     apt-get install --no-install-recommends -y -q python unzip ca-certificates build-essential \
     libatlas-base-dev liblapack-dev gfortran libpng-dev libfreetype6-dev libxft-dev libxml2-dev \
     python-dev python-setuptools python-zmq openssh-client wget curl git pkg-config zip && \
@@ -38,10 +40,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 # Save GPL source packages
     mkdir -p /srcs && \
     cd /srcs && \
-    # We have to use allow-unauthenticated since Ubuntu can't verify the keys for the source
-    # repos.  We don't care since we only download these sources for licensing reasons and
-    # don't actually use them.
-    apt-get source --allow-unauthenticated -d wget git python-zmq ca-certificates pkg-config libpng-dev && \
+    apt-get source -d wget git python-zmq ca-certificates pkg-config libpng-dev && \
     wget --progress=dot:mega https://mirrors.kernel.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.bz2 && \
     cd / && \
 
