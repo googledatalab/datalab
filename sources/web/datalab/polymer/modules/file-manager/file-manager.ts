@@ -134,7 +134,7 @@ abstract class DatalabFile {
   }
 }
 
-interface FileManager {
+abstract class BaseFileManager {
   // TODO: Consider supporting getting both the file and content objects with
   // one call.
 
@@ -142,7 +142,7 @@ interface FileManager {
    * Returns a DatalabFile object representing the file or directory requested
    * @param fileId id of the requested file.
    */
-  get(fileId: DatalabFileId): Promise<DatalabFile>;
+  abstract get(fileId: DatalabFileId): Promise<DatalabFile>;
 
   /**
    * Returns the string content of the file with the specified id.
@@ -151,12 +151,12 @@ interface FileManager {
    *               useful for downloading notebooks, which are by default read
    *               as JSON, which doesn't preserve formatting.
    */
-  getStringContent(fileId: DatalabFileId, asText?: boolean): Promise<string>;
+  abstract getStringContent(fileId: DatalabFileId, asText?: boolean): Promise<string>;
 
   /**
    * Returns a DatalabFile object for the root directory.
    */
-  getRootFile(): Promise<DatalabFile>;
+  abstract getRootFile(): Promise<DatalabFile>;
 
   /**
    * Saves the given string as a file's content.
@@ -164,13 +164,13 @@ interface FileManager {
    *             save to.
    * @param content string to be saved in the file
    */
-  saveText(file: DatalabFile, content: string): Promise<DatalabFile>;
+  abstract saveText(file: DatalabFile, content: string): Promise<DatalabFile>;
 
   /**
    * Returns a list of file objects that are children of the given container file id.
    * @param containerId file id whose children to list.
    */
-  list(containerId: DatalabFileId): Promise<DatalabFile[]>;
+  abstract list(containerId: DatalabFileId): Promise<DatalabFile[]>;
 
   /**
    * Creates a new Datalab item
@@ -178,7 +178,7 @@ interface FileManager {
    * @param containerId id for the container
    * @param name name for the created item. Default is 'New item'.
    */
-  create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string): Promise<DatalabFile>;
+  abstract create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string): Promise<DatalabFile>;
 
   /**
    * Renames an item
@@ -186,13 +186,13 @@ interface FileManager {
    * @param newName new name for the item.
    * @param newContainerId id of the destination path of the renamed item
    */
-  rename(oldFileId: DatalabFileId, newName: string, newContainerId?: DatalabFileId): Promise<DatalabFile>;
+  abstract rename(oldFileId: DatalabFileId, newName: string, newContainerId?: DatalabFileId): Promise<DatalabFile>;
 
   /**
    * Deletes an item
    * @param fileId id for the item to delete
    */
-  delete(fileId: DatalabFileId): Promise<boolean>;
+  abstract delete(fileId: DatalabFileId): Promise<boolean>;
 
   /*
    * Copies an item from source to destination. If an item with the same name
@@ -200,22 +200,27 @@ interface FileManager {
    * @param fileId item to copy
    * @param destinationDirectoryId id of the directory to copy the item into
    */
-  copy(file: DatalabFileId, destinationDirectoryId: DatalabFileId): Promise<DatalabFile>;
+  abstract copy(file: DatalabFileId, destinationDirectoryId: DatalabFileId): Promise<DatalabFile>;
 
   /**
    * Returns the url to open the given file in the notebook editor.
    * @param fileId id for the file to open in the notebook editor.
    */
-  getNotebookUrl(file: DatalabFileId): Promise<string>;
+  getNotebookUrl(fileId: DatalabFileId): string {
+    return location.protocol + '//' + location.host +
+        Utils.constants.notebookUrlComponent + fileId.toString();
+  }
 
   /**
    * Returns the url to open the given file in the text editor.
    * @param fileId id for the file to open in the text editor.
    */
-  getEditorUrl(file: DatalabFileId): Promise<string>;
+  getEditorUrl(fileId: DatalabFileId): string {
+    return Utils.getHostRoot() + Utils.constants.editorUrlComponent + fileId.toString();
+  }
 
   /**
    * Creates a path history from a path string.
    */
-  pathToPathHistory(path: string): DatalabFile[];
+  abstract pathToPathHistory(path: string): DatalabFile[];
 }

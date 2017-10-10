@@ -26,7 +26,7 @@ class MockFile extends DatalabFile {
   }
 }
 
-class MockFileManager implements FileManager {
+class MockFileManager extends BaseFileManager {
   public get(_fileId: DatalabFileId): Promise<DatalabFile> {
     throw new UnsupportedMethod('get', this);
   }
@@ -56,10 +56,10 @@ class MockFileManager implements FileManager {
   public copy(_fileId: DatalabFileId, _destinationDirectoryId: DatalabFileId): Promise<DatalabFile> {
     throw new UnsupportedMethod('copy', this);
   }
-  public getNotebookUrl(_fileId: DatalabFileId): Promise<string> {
+  public getNotebookUrl(_fileId: DatalabFileId): string {
     throw new UnsupportedMethod('getNotebookUrl', this);
   }
-  public getEditorUrl(_fileId: DatalabFileId): Promise<string> {
+  public getEditorUrl(_fileId: DatalabFileId): string {
     throw new UnsupportedMethod('getEditorUrl', this);
   }
   public pathToPathHistory(path: string): DatalabFile[] {

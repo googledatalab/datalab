@@ -58,7 +58,7 @@ interface GhFileResponse {
  * A file manager that wraps the Github API so that we can browse github
  * repositories.
  */
-class GithubFileManager implements FileManager {
+class GithubFileManager extends BaseFileManager {
 
   public get(fileId: DatalabFileId): Promise<DatalabFile> {
     if (fileId.path === '' || fileId.path === '/') {
@@ -132,15 +132,6 @@ class GithubFileManager implements FileManager {
 
   public copy(_fileId: DatalabFileId, _destinationDirectoryId: DatalabFileId): Promise<DatalabFile> {
     throw new UnsupportedMethod('copy', this);
-  }
-
-  public async getEditorUrl(fileId: DatalabFileId) {
-    return Utils.getHostRoot() + Utils.constants.editorUrlComponent + fileId.toString();
-  }
-
-  public async getNotebookUrl(fileId: DatalabFileId): Promise<string> {
-    return location.protocol + '//' + location.host +
-        Utils.constants.notebookUrlComponent + fileId.toString();
   }
 
   public pathToPathHistory(path: string): DatalabFile[] {
