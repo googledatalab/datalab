@@ -89,7 +89,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   private _previewPaneCollapseThreshold = 600;
   private _fetching: boolean;
   private _fileList: DatalabFile[];
-  private _fileListFetchPromise: Promise<any>;
   private _fileListRefreshInterval = 60 * 1000;
   private _fileListRefreshIntervalHandle = 0;
   private _fileManager: BaseFileManager;
@@ -401,53 +400,68 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   /**
    * Calls the FileManager to get the list of files at the current path, and
    * updates the _fileList property.
+   * This method can be called multiple times, and it will ignore the fetch
+   * result if the currentFild object has changed after the request was made.
+   * This can happen because we set up fetch from several sources:
+   * - Initialization in the ready() event handler.
+   * - Various file operations modifying the tree (new file, delete... etc)
+   * - Refresh mechanism called by the setInterval().
+   * - User clicking refresh button.
+   * - Files page gaining focus.
    * @param throwOnError whether to throw an exception if the refresh fails. This
    *                     is false by default because throwing is currently not used.
    */
   _fetchFileList(throwOnError = false): Promise<any> {
-    // Don't overlap fetch requests. This can happen because we set up fetch from several sources:
-    // - Initialization in the ready() event handler.
-    // - Refresh mechanism called by the setInterval().
-    // - User clicking refresh button.
-    // - Files page gaining focus.
-    if (this._fetching) {
-      return this._fileListFetchPromise;
-    }
     if (!this.currentFile) {
-      throw new Error('No current file to retrieve');
+      // No current file to retrieve
+      return Promise.resolve();
     }
+    const fetchFileId = this.currentFile.id;
 
     this._fetching = true;
 
     const hideStatus = this.small || !this._showStatus;
-    this._fileListFetchPromise = this._fileManager.list(this.currentFile.id)
+    return this._fileManager.list(this.currentFile.id)
       .then((newList) => {
-        // Only refresh the UI list if there are any changes. This helps keep
-        // the item list's selections intact most of the time.
-        if (JSON.stringify(this._fileList) !== JSON.stringify(newList)) {
-          this._fileList = newList;
-          this._drawFileList();
+        // Check if the current file has changed since this fetch request was made.
+        if (fetchFileId === this.currentFile.id) {
+          // Only refresh the UI list if there are any changes. This helps keep
+          // the item list's selections intact most of the time.
+          if (JSON.stringify(this._fileList) !== JSON.stringify(newList)) {
+            this._fileList = newList;
+            this._drawFileList();
+          }
         }
       })
       // Now load the sessions and update the running status of each file
       // whose id is in the session list.
       // We do not need to load sessions if not displaying the Status column.
-      .then(() => hideStatus ? Promise.resolve([]) : SessionManager.listSessionPaths())
+      // Also skip this if current file id has changed since this request was made.
+      .then(() => {
+        if (fetchFileId === this.currentFile.id || hideStatus) {
+          return Promise.resolve([]);
+        } else {
+          return SessionManager.listSessionPaths();
+        }
+      })
       .catch((e) => {
         // Do not block loading files if sessions don't load for some reason.
         Utils.log.error('Could not load sessions: ' + e.message);
         return [] as string[];
       })
       .then((sessions) => {
-        const listElement = this.$.files as ItemListElement;
-        this._fileList.forEach((file, i) => {
-          // The v1 notebook editor creates sessions with just the file path,
-          // while v2 editor uses the full id string.
-          if (sessions.indexOf(file.id.path) > -1 ||
-              sessions.indexOf(file.id.toString()) > -1) {
-            listElement.set('rows.' + i + '.columns.1', Utils.getFileStatusString(DatalabFileStatus.RUNNING));
-          }
-        });
+        // Check if the current file has changed since this fetch request was made.
+        if (fetchFileId === this.currentFile.id) {
+          const listElement = this.$.files as ItemListElement;
+          this._fileList.forEach((file, i) => {
+            // The v1 notebook editor creates sessions with just the file path,
+            // while v2 editor uses the full id string.
+            if (sessions.indexOf(file.id.path) > -1 ||
+                sessions.indexOf(file.id.toString()) > -1) {
+              listElement.set('rows.' + i + '.columns.1', Utils.getFileStatusString(DatalabFileStatus.RUNNING));
+            }
+          });
+        }
       })
       .catch((e: Error) => {
         const fileSpec = this.currentFile.id.toString();
@@ -459,8 +473,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         }
       })
       .then(() => this._fetching = false);
-
-    return this._fileListFetchPromise;
   }
 
   /**
