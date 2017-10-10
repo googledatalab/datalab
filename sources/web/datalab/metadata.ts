@@ -112,7 +112,14 @@ function launchFakeServer(metadata: FakeMetadata, settings: common.AppSettings):
     // for this, we overwrite the file with the value that indicates the tool
     // should read from the metadata server.
     const gceFile = settings.contentDir + '/datalab/.config/gce';
-    fs.writeFileSync(gceFile, "True");
+    try {
+      fs.writeFileSync(gceFile, "True");
+    } catch (ex) {
+      // If the parent directory does not exist, we do not need to overwrite
+      // the file. Ignore errors in this case, but log them just in case
+      // there is something else wrong.
+      logging.getLogger().info('Failure overwriting the file %s: %s', gceFile, ex);
+    }
   });
 }
 
