@@ -18,8 +18,5 @@
   },
   "scripts": {
     "start": "node app.js"
-  },
-  "devDependencies": {
-    "tslint": "^5.5.0"
   }
 }
