@@ -139,6 +139,12 @@ interface FileManager {
   // one call.
 
   /**
+   * Returns true if we can host notebooks on this filesystem, and thus should
+   * display the Status column in the file browser.
+   */
+  canHostNotebooks(): boolean;
+
+  /**
    * Returns a DatalabFile object representing the file or directory requested
    * @param fileId id of the requested file.
    */

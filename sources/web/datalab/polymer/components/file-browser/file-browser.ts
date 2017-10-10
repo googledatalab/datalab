@@ -101,6 +101,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   private _isPreviewPaneToggledOn: boolean;
   private _pathHistory: DatalabFile[];
   private _pathHistoryIndex: number;
+  private _showStatus: boolean;
   private _updateToolbarCollapseThreshold = 720;
   private _uploadFileSizeWarningLimit = 25 * 1024 * 1024;
 
@@ -262,6 +263,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
     this._fileManager = FileManagerFactory.getInstanceForType(
         FileManagerFactory.fileManagerNameToType(this.fileManagerType));
+    this._showStatus = this._fileManager.canHostNotebooks();
 
     await this._loadStartupPath(fileId);
 
@@ -277,7 +279,8 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         this._handleInlineDetailsLoaded.bind(this));
 
     // For a small file/directory picker, we don't need to show the status.
-    filesElement.columns = this.small ? ['Name'] : ['Name', 'Status'];
+    const hideStatus = this.small || !this._showStatus;
+    filesElement.columns = hideStatus ? ['Name'] : ['Name', 'Status'];
 
     this._fetching = false;
     await this._fetchFileList();
@@ -330,6 +333,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       this.fileManagerType = newFileManagerType;
       this._fileManager = FileManagerFactory.getInstanceForType(
           FileManagerFactory.fileManagerNameToType(this.fileManagerType));
+      this._showStatus = this._fileManager.canHostNotebooks();
     }
     this._loadStartupPath(fileId);
   }
@@ -359,6 +363,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         if (this.fileManagerType !== strType) {
           this.fileManagerType = strType;
           this._fileManager = FileManagerFactory.getInstanceForType(type);
+          this._showStatus = this._fileManager.canHostNotebooks();
           this.fileId = '';
 
           this._loadStartupPath(null);
@@ -414,6 +419,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
     this._fetching = true;
 
+    const hideStatus = this.small || !this._showStatus;
     this._fileListFetchPromise = this._fileManager.list(this.currentFile.id)
       .then((newList) => {
         // Only refresh the UI list if there are any changes. This helps keep
@@ -425,8 +431,8 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       })
       // Now load the sessions and update the running status of each file
       // whose id is in the session list.
-      // We do not need to load sessions when in small mode.
-      .then(() => this.small ? Promise.resolve([]) : SessionManager.listSessionPaths())
+      // We do not need to load sessions if not displaying the Status column.
+      .then(() => hideStatus ? Promise.resolve([]) : SessionManager.listSessionPaths())
       .catch((e) => {
         // Do not block loading files if sessions don't load for some reason.
         Utils.log.error('Could not load sessions: ' + e.message);
