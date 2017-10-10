@@ -46,11 +46,6 @@ function install_typescript() {
   npm install -g typescript
 }
 
-function install_tslint() {
-  echo "Installing tslint"
-  npm install -g tslint
-}
-
 function install_git() {
   echo "Updating apt repository"
   apt-get update -y -qq
