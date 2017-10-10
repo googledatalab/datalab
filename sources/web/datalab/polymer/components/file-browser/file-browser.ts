@@ -423,7 +423,8 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     const hideStatus = this.small || !this._showStatus;
     return this._fileManager.list(this.currentFile.id)
       .then((newList) => {
-        // Check if the current file has changed since this fetch request was made.
+        // Make sure the current file hasn't changed since this fetch request was made.
+        // Skip updating the list if it has.
         if (fetchFileId === this.currentFile.id) {
           // Only refresh the UI list if there are any changes. This helps keep
           // the item list's selections intact most of the time.
@@ -444,13 +445,9 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
           return SessionManager.listSessionPaths();
         }
       })
-      .catch((e) => {
-        // Do not block loading files if sessions don't load for some reason.
-        Utils.log.error('Could not load sessions: ' + e.message);
-        return [] as string[];
-      })
       .then((sessions) => {
-        // Check if the current file has changed since this fetch request was made.
+        // Make sure the current file hasn't changed since this fetch request was made.
+        // Skip updating the list if it has.
         if (fetchFileId === this.currentFile.id) {
           const listElement = this.$.files as ItemListElement;
           this._fileList.forEach((file, i) => {
@@ -472,6 +469,10 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
           Utils.log.error(msgPrefix, e);
         }
       })
+      // TODO: This is not very accurate if multiple fetch requests are running
+      // in parallel. The first request will set this to false even though the
+      // others might still be running. We should look into adding some sort of
+      // operation queue to handle this.
       .then(() => this._fetching = false);
   }
 
