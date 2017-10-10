@@ -239,7 +239,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       this._pathHistoryIndex = 0 + this.nLeadingBreadcrumbsToTrim;
     });
 
-    const fileId = this._getFileIdFromProperty();
+    let fileId = this._getFileIdFromProperty();
     if (fileId) {
       this.fileManagerType = FileManagerFactory.fileManagerTypetoString(fileId.source);
     }
@@ -258,6 +258,12 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       } else {
         this.fileManagerType = 'drive';
       }
+    }
+
+    if (!fileId && this.fileManagerType === 'bigquery') {
+      // Set the default starting location for bigquery browsing to be
+      // the bigquery-public-data project.
+      fileId = DatalabFileId.fromString('bigquery/bigquery-public-data');
     }
 
     this._fileManager = FileManagerFactory.getInstanceForType(
