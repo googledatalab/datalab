@@ -273,7 +273,7 @@ class JupyterFileManager extends BaseFileManager {
     return ApiManager.sendRequestAsync(path, xhrOptions);
   }
 
-  public async getNotebookUrl(fileId: DatalabFileId) {
+  public getNotebookUrl(fileId: DatalabFileId) {
     // TODO: We will need to get the base path when loading files
     // from a VM running Datalab with Jupyter.
     return Utils.getHostRoot() + '/notebooks/' + fileId.path;
