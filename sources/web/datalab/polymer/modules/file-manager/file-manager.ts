@@ -225,9 +225,7 @@ interface FileManager {
   /**
    * Creates a path history from a path string.
    */
-  pathToPathHistory(_path: string): DatalabFile[] {
-    throw new UnsupportedMethod('pathToPathHistory', this);
-  }
+  pathToPathHistory(path: string): DatalabFile[];
 }
 
 /**
