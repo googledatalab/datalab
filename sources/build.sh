@@ -66,7 +66,6 @@ function install_prereqs() {
   # Use -v instead of -h to test npm installation, since -h returns non-zero
   npm -v >/dev/null 2>&1 || install_node
   tsc -h >/dev/null 2>&1  || install_typescript
-  tslint -h >/dev/null 2>&1  || install_tslint
   bower -h >/dev/null 2>&1  || install_bower
   polymer -h >/dev/null 2>&1  || install_polyer_cli
   source ./tools/initenv.sh
