@@ -46,10 +46,6 @@ class JupyterFile extends DatalabFile {
  */
 class JupyterFileManager extends BaseFileManager {
 
-  public canHostNotebooks() {
-    return true;
-  }
-
   /**
    * Converts the given JupyterFile into the type understood by the Jupyter
    * backend.

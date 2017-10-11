@@ -60,10 +60,6 @@ interface GhFileResponse {
  */
 class GithubFileManager extends BaseFileManager {
 
-  public canHostNotebooks() {
-    return true;
-  }
-
   public get(fileId: DatalabFileId): Promise<DatalabFile> {
     if (fileId.path === '' || fileId.path === '/') {
       return Promise.resolve(this._ghRootDatalabFile());
