@@ -24,7 +24,7 @@ class TableInlineDetailsElement extends Polymer.Element {
    */
   public file: BigQueryFile;
 
-  private _fileManager: FileManager;
+  private _fileManager: BaseFileManager;
   private _rows: gapi.client.bigquery.TabledataRow[];
   private _table: gapi.client.bigquery.Table | null;
   private _busy = false;

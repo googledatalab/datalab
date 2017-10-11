@@ -92,7 +92,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   private _fileListFetchPromise: Promise<any>;
   private _fileListRefreshInterval = 60 * 1000;
   private _fileListRefreshIntervalHandle = 0;
-  private _fileManager: FileManager;
+  private _fileManager: BaseFileManager;
   private _fileManagerDisplayName: string;
   private _fileManagerDisplayIcon: string;
   private _hasMultipleFileSources: boolean;
