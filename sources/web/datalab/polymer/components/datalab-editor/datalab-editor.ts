@@ -30,7 +30,7 @@ class DatalabEditorElement extends Polymer.Element {
   private _busy: boolean;
   private _editor: CodeMirror.Editor;
   private _file: DatalabFile | null;
-  private _fileManager: FileManager;
+  private _fileManager: BaseFileManager;
   private _theme: string;
 
   static get is() { return 'datalab-editor'; }
