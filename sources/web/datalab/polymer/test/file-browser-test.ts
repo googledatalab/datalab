@@ -27,6 +27,10 @@ class MockFile extends DatalabFile {
 }
 
 class MockFileManager implements FileManager {
+  public canHostNotebooks() {
+    return true;
+  }
+
   public get(_fileId: DatalabFileId): Promise<DatalabFile> {
     throw new UnsupportedMethod('get', this);
   }
