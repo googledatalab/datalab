@@ -23,14 +23,10 @@ class DriveFile extends DatalabFile {
 /**
  * An Google Drive specific file manager.
  */
-class DriveFileManager implements FileManager {
+class DriveFileManager extends BaseFileManager {
 
   private static readonly _directoryMimeType = 'application/vnd.google-apps.folder';
   private static readonly _notebookMimeType = 'application/json';
-
-  public canHostNotebooks() {
-    return true;
-  }
 
   public async get(fileId: DatalabFileId): Promise<DatalabFile> {
     const upstreamFile = await GapiManager.drive.getFile(fileId.path);
@@ -111,15 +107,6 @@ class DriveFileManager implements FileManager {
   public copy(file: DatalabFileId, destinationDirectoryId: DatalabFileId): Promise<DatalabFile> {
     return GapiManager.drive.copy(file.path, destinationDirectoryId.path)
       .then((upstreamFile) => this._fromUpstreamFile(upstreamFile));
-  }
-
-  public async getEditorUrl(fileId: DatalabFileId) {
-    return Utils.getHostRoot() + Utils.constants.editorUrlComponent + fileId.toString();
-  }
-
-  public async getNotebookUrl(fileId: DatalabFileId): Promise<string> {
-    return location.protocol + '//' + location.host +
-        Utils.constants.notebookUrlComponent + fileId.toString();
   }
 
   public pathToPathHistory(path: string): DatalabFile[] {

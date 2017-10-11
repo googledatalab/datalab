@@ -39,7 +39,7 @@ class BigQueryFile extends DatalabFile {
  * A file manager that wraps the BigQuery API so that we can browse BQ projects,
  * datasets, and tables like a filesystem.
  */
-class BigQueryFileManager implements FileManager {
+class BigQueryFileManager extends BaseFileManager {
 
   public canHostNotebooks() {
     return false;

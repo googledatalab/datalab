@@ -184,7 +184,8 @@ interface FileManager {
    * @param containerId id for the container
    * @param name name for the created item. Default is 'New item'.
    */
-  create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string): Promise<DatalabFile>;
+  create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string):
+      Promise<DatalabFile>;
 
   /**
    * Renames an item
@@ -192,7 +193,8 @@ interface FileManager {
    * @param newName new name for the item.
    * @param newContainerId id of the destination path of the renamed item
    */
-  rename(oldFileId: DatalabFileId, newName: string, newContainerId?: DatalabFileId): Promise<DatalabFile>;
+  rename(oldFileId: DatalabFileId, newName: string, newContainerId?: DatalabFileId):
+      Promise<DatalabFile>;
 
   /**
    * Deletes an item
@@ -212,16 +214,77 @@ interface FileManager {
    * Returns the url to open the given file in the notebook editor.
    * @param fileId id for the file to open in the notebook editor.
    */
-  getNotebookUrl(file: DatalabFileId): Promise<string>;
+  getNotebookUrl(fileId: DatalabFileId): Promise<string>;
 
   /**
    * Returns the url to open the given file in the text editor.
    * @param fileId id for the file to open in the text editor.
    */
-  getEditorUrl(file: DatalabFileId): Promise<string>;
+  getEditorUrl(fileId: DatalabFileId): Promise<string>;
 
   /**
    * Creates a path history from a path string.
    */
   pathToPathHistory(path: string): DatalabFile[];
+}
+
+/**
+ * Base implementation of the FileManager interface that contains common
+ * functionality for the different FileManager classes.
+ */
+class BaseFileManager implements FileManager {
+  canHostNotebooks(): boolean {
+    return true;
+  }
+
+  get(_fileId: DatalabFileId): Promise<DatalabFile> {
+    throw new UnsupportedMethod('get', this);
+  }
+
+  getStringContent(_fileId: DatalabFileId, _asText?: boolean): Promise<string> {
+    throw new UnsupportedMethod('getStringContent', this);
+  }
+
+  getRootFile(): Promise<DatalabFile> {
+    throw new UnsupportedMethod('getRootFile', this);
+  }
+
+  saveText(_file: DatalabFile, _content: string): Promise<DatalabFile> {
+    throw new UnsupportedMethod('saveText', this);
+  }
+
+  list(_containerId: DatalabFileId): Promise<DatalabFile[]> {
+    throw new UnsupportedMethod('list', this);
+  }
+  create(_fileType: DatalabFileType, _containerId?: DatalabFileId, _name?: string):
+      Promise<DatalabFile> {
+    throw new UnsupportedMethod('create', this);
+  }
+
+  rename(_oldFileId: DatalabFileId, _newName: string, _newContainerId?: DatalabFileId):
+      Promise<DatalabFile> {
+    throw new UnsupportedMethod('rename', this);
+  }
+
+  delete(_fileId: DatalabFileId): Promise<boolean> {
+    throw new UnsupportedMethod('delete', this);
+  }
+
+  copy(_file: DatalabFileId, _destinationDirectoryId: DatalabFileId): Promise<DatalabFile> {
+    throw new UnsupportedMethod('copy', this);
+  }
+
+  getNotebookUrl(fileId: DatalabFileId): Promise<string> {
+    return Promise.resolve(Utils.getHostRoot() +
+        Utils.constants.notebookUrlComponent + fileId.toString());
+  }
+
+  getEditorUrl(fileId: DatalabFileId): Promise<string> {
+    return Promise.resolve(Utils.getHostRoot() +
+        Utils.constants.editorUrlComponent + fileId.toString());
+  }
+
+  pathToPathHistory(_path: string): DatalabFile[] {
+    throw new UnsupportedMethod('pathToPathHistory', this);
+  }
 }
