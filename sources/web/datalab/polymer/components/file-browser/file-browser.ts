@@ -411,7 +411,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    * @param throwOnError whether to throw an exception if the refresh fails. This
    *                     is false by default because throwing is currently not used.
    */
-  _fetchFileList(throwOnError = false): Promise<any> {
+  async _fetchFileList(throwOnError = false): Promise<any> {
     if (!this.currentFile) {
       // No current file to retrieve
       return Promise.resolve();
@@ -419,61 +419,62 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     const fetchFileId = this.currentFile.id;
 
     this._fetching = true;
-
+    
     const hideStatus = this.small || !this._showStatus;
-    return this._fileManager.list(this.currentFile.id)
-      .then((newList) => {
-        // Make sure the current file hasn't changed since this fetch request was made.
-        // Skip updating the list if it has.
-        if (fetchFileId === this.currentFile.id) {
-          // Only refresh the UI list if there are any changes. This helps keep
-          // the item list's selections intact most of the time.
-          if (JSON.stringify(this._fileList) !== JSON.stringify(newList)) {
-            this._fileList = newList;
-            this._drawFileList();
+
+    try {
+      const newList = await this._fileManager.list(fetchFileId);
+      // If the current file has changed since this fetch request was made, abort
+      // now. The other request causing the change will eventually update the file
+      // list and unset the _fetching flag.
+      if (fetchFileId !== this.currentFile.id) {
+        return;
+      }
+
+      // Only refresh the UI list if there are any changes. This helps keep
+      // the item list's selections intact most of the time.
+      if (JSON.stringify(this._fileList) !== JSON.stringify(newList)) {
+        this._fileList = newList;
+        this._drawFileList();
+      }
+    } catch (e) {
+      const fileSpec = fetchFileId.toString();
+      const msgPrefix = 'Error getting list of files from ' + fileSpec + ':';
+      if (throwOnError === true) {
+        throw new Error(msgPrefix + ' ' + e.message);
+      } else {
+        Utils.log.error(msgPrefix, e);
+      }
+    }
+
+    // Now load the sessions and update the running status of each file
+    // whose id is in the session list.
+    // We do not need to load sessions when not displaying the Status column,
+    // or if the current fild id has changed since the beginning of this request.
+    if (!hideStatus && fetchFileId === this.currentFile.id) {
+      try {
+        const sessions = await SessionManager.listSessionPaths();
+        const listElement = this.$.files as ItemListElement;
+        this._fileList.forEach((file, i) => {
+          // The v1 notebook editor creates sessions with just the file path,
+          // while v2 editor uses the full id string.
+          if (sessions.indexOf(file.id.path) > -1 ||
+              sessions.indexOf(file.id.toString()) > -1) {
+            listElement.set('rows.' + i + '.columns.1', Utils.getFileStatusString(DatalabFileStatus.RUNNING));
           }
-        }
-      })
-      // Now load the sessions and update the running status of each file
-      // whose id is in the session list.
-      // We do not need to load sessions if not displaying the Status column.
-      // Also skip this if current file id has changed since this request was made.
-      .then(() => {
-        if (fetchFileId === this.currentFile.id || hideStatus) {
-          return Promise.resolve([]);
-        } else {
-          return SessionManager.listSessionPaths();
-        }
-      })
-      .then((sessions) => {
-        // Make sure the current file hasn't changed since this fetch request was made.
-        // Skip updating the list if it has.
-        if (fetchFileId === this.currentFile.id) {
-          const listElement = this.$.files as ItemListElement;
-          this._fileList.forEach((file, i) => {
-            // The v1 notebook editor creates sessions with just the file path,
-            // while v2 editor uses the full id string.
-            if (sessions.indexOf(file.id.path) > -1 ||
-                sessions.indexOf(file.id.toString()) > -1) {
-              listElement.set('rows.' + i + '.columns.1', Utils.getFileStatusString(DatalabFileStatus.RUNNING));
-            }
-          });
-        }
-      })
-      .catch((e: Error) => {
-        const fileSpec = this.currentFile.id.toString();
-        const msgPrefix = 'Error getting list of files from ' + fileSpec + ':';
-        if (throwOnError === true) {
-          throw new Error(msgPrefix + ' ' + e.message);
-        } else {
-          Utils.log.error(msgPrefix, e);
-        }
-      })
-      // TODO: This is not very accurate if multiple fetch requests are running
-      // in parallel. The first request will set this to false even though the
-      // others might still be running. We should look into adding some sort of
-      // operation queue to handle this.
-      .then(() => this._fetching = false);
+        });
+      } catch (e) {
+        // Don't let session fetch errors block displaying the files, just report.
+        Utils.log.error('Error getting list of sessions: ' + e.message);
+      }
+    }
+
+    // Only unset the _fetching flag if the current fild id is equal to the one
+    // that started this call. If it's different, another call to this function
+    // has likely started, and will take care of unsetting the flag.
+    if (fetchFileId === this.currentFile.id) {
+      this._fetching = false;
+    }
   }
 
   /**
