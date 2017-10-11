@@ -134,7 +134,7 @@ abstract class DatalabFile {
   }
 }
 
-interface BaseFileManager {
+interface FileManager {
   // TODO: Consider supporting getting both the file and content objects with
   // one call.
 

@@ -83,11 +83,12 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   public nLeadingBreadcrumbsToTrim: number;
 
   private _addToolbarCollapseThreshold = 900;
+  private _busy: boolean; // Indicates an async file operation is taking place
   private _canOpenInNotebook = false;
   private _canPreview = false;
   private _dividerPosition: number;
   private _previewPaneCollapseThreshold = 600;
-  private _fetching: boolean;
+  private _fetching: boolean; // Indicates the file list is being fetched and updated
   private _fileList: DatalabFile[];
   private _fileListRefreshInterval = 60 * 1000;
   private _fileListRefreshIntervalHandle = 0;
@@ -108,6 +109,10 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
   static get properties() {
     return {
+      _busy: {
+        type: Boolean,
+        value: false,
+      },
       _canOpenInNotebook: {
         type: Boolean,
       },
@@ -148,6 +153,9 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         observer: '_pathHistoryIndexChanged',
         type: Number,
         value: -1,
+      },
+      _showProgressBar: {
+        computed: '_computeShowProgressBar(_fetching, _busy)'
       },
       currentFile: {
         type: Object,
@@ -200,7 +208,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       // On subsequent calls, we return the same promise.
       this.readyPromise = this._init().catch((e) => {
         Utils.showErrorDialog('Error loading file', e.message);
-        this._fetching = false; // Stop looking busy
         throw e;
       });
     }
@@ -208,19 +215,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   }
 
   async _init() {
-    // TODO(yelsayed): We use this flag to prevent multiple async operations to
-    // step on each other. It basically acts as a semaphore; when an operation
-    // is called, it first checks if this flag is raised, and it stops if it is.
-    // Otherwise it raises it first. This result in operations stopping if
-    // others are executing, instead of queueing, which is not obviously a
-    // better experience. We might want to revisit this later.
-
-    // Additionally, we must set this to true before calling super.ready(),
-    // because the latter will cause property updates that will cause
-    // _fetchFileList to be called first, we don't want that. We want ready() to
-    // be the entry point so it gets the user's last saved path.
-    this._fetching = true;
-
     // Likewise, we set the flag to prevent _fileIdChanged from taking action.
     this._ignoreFileIdChange = true;
 
@@ -252,11 +246,20 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     // get it from the app settings. If it's not specified there either, default
     // to drive.
     if (!this.fileManagerType) {
-      const appSettings = await SettingsManager.getAppSettingsAsync();
-      if (appSettings.defaultFileManager) {
-        this.fileManagerType = appSettings.defaultFileManager;
-      } else {
-        this.fileManagerType = 'drive';
+      this._fetching = true;
+      try {
+        const appSettings = await SettingsManager.getAppSettingsAsync();
+
+        if (appSettings.defaultFileManager) {
+          this.fileManagerType = appSettings.defaultFileManager;
+        } else {
+          this.fileManagerType = 'drive';
+        }
+        this._fetching = true;
+      } catch (e) {
+        Utils.showErrorDialog('Error', e);
+        this._fetching = true;
+        throw e;
       }
     }
 
@@ -264,7 +267,13 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         FileManagerFactory.fileManagerNameToType(this.fileManagerType));
     this._showStatus = this._fileManager.canHostNotebooks();
 
-    await this._loadStartupPath(fileId);
+    this._fetching = true;
+    try {
+      await this._loadStartupPath(fileId);
+    } catch (e) {
+      // Ignore errors with startup path.
+    }
+    this._fetching = false;
 
     this.resizeHandler();
     this.focusHandler();
@@ -281,10 +290,13 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     const hideStatus = this.small || !this._showStatus;
     filesElement.columns = hideStatus ? ['Name'] : ['Name', 'Status'];
 
-    this._fetching = false;
     await this._fetchFileList();
 
     this._ignoreFileIdChange = false;
+  }
+
+  _computeShowProgressBar(fetching: boolean, busy: boolean) {
+    return fetching || busy;
   }
 
   _getFileIdFromProperty() {
@@ -356,9 +368,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       const btn = document.createElement('paper-button');
       btn.classList.add('toolbar-button');
       btn.addEventListener('click', () => {
-        if (this._fetching) {
-          return;
-        }
         if (this.fileManagerType !== strType) {
           this.fileManagerType = strType;
           this._fileManager = FileManagerFactory.getInstanceForType(type);
@@ -642,10 +651,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    * uses the FileManager to save it on the backend.
    */
   async _upload() {
-    if (this._fetching) {
-      return;
-    }
-
     const inputElement = this.$.altFileUpload as HTMLInputElement;
     const files = [...inputElement.files as any];
     const uploadPromises: Array<Promise<any>> = [];
@@ -680,7 +685,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       }
     }
 
-    this._fetching = true;
+    this._busy = true;
     files.forEach((file: File) => {
 
       // First, load the file data into memory.
@@ -732,7 +737,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     // Wait on all upload requests before declaring success or failure.
     try {
       await Promise.all(uploadPromises);
-      this._fetching = false;
+      this._busy = false;
       if (uploadPromises.length) {
         // Dispatch a success notification, and refresh the file list
         const message = files.length > 1 ? files.length + ' files' : files[0].name;
@@ -743,7 +748,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       // Reset the input element.
       inputElement.value = '';
     } catch (e) {
-      this._fetching = false;
+      this._busy = false;
       Utils.showErrorDialog('Error uploading file', e.message);
     }
   }
@@ -760,11 +765,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    * of files to redraw.
    */
   _createNewItem(itemType: DatalabFileType) {
-
-    if (this._fetching) {
-      return;
-    }
-
     // First, open a dialog to let the user specify a name for the notebook.
     const inputOptions: InputDialogOptions = {
       inputLabel: 'Name',
@@ -783,16 +783,16 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
             newName += '.ipynb';
           }
 
-          this._fetching = true;
+          this._busy = true;
           return this._fileManager.create(itemType, this.currentFile.id, newName)
             .then(() => {
               // Dispatch a success notification, and refresh the file list
               this.dispatchEvent(new NotificationEvent('Created ' + newName + '.'));
-              this._fetching = false;
+              this._busy = false;
               this._fetchFileList();
             })
             .catch((e: Error) => {
-              this._fetching = false;
+              this._busy = false;
               Utils.showErrorDialog('Error creating item', e.message);
             });
         } else {
@@ -822,10 +822,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    * selected.
    */
   _renameSelectedItem() {
-    if (this._fetching) {
-      return;
-    }
-
     const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
     if (selectedIndices.length === 1) {
       const i = selectedIndices[0];
@@ -844,18 +840,18 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       return Utils.showDialog(InputDialogElement, inputOptions)
         .then((closeResult: InputDialogCloseResult) => {
           if (closeResult.confirmed && closeResult.userInput) {
-            this._fetching = true;
+            this._busy = true;
             return this._fileManager.rename(selectedObject.id, closeResult.userInput)
               .then(() => {
                 // Dispatch a success notification, and refresh the file list
                 const message = 'Renamed ' + selectedObject.name +
                     ' to ' + closeResult.userInput + '.';
                 this.dispatchEvent(new NotificationEvent(message));
-                this._fetching = false;
+                this._busy = false;
                 this._fetchFileList();
               })
               .catch((e: Error) => {
-                this._fetching = false;
+                this._busy = false;
                 Utils.showErrorDialog('Error renaming item', e.message);
               });
           } else {
@@ -873,10 +869,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    * then refreshes the file list.
    */
   _deleteSelectedItems() {
-    if (this._fetching) {
-      return;
-    }
-
     const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
     if (selectedIndices.length) {
       // Build friendly title and body messages that adapt to the number of items.
@@ -921,7 +913,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
             const deletePromises = selectedIndices.map((i: number) => {
               return this._fileManager.delete(this._fileList[i].id);
             });
-            this._fetching = true;
+            this._busy = true;
             // TODO: [yebrahim] If at least one delete fails, _fetchFileList will never be called,
             // even if some other deletes completed.
             return Promise.all(deletePromises)
@@ -929,11 +921,11 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
                 // Dispatch a success notification, and refresh the file list
                 const message = 'Deleted ' + num + (num === 1 ? ' file.' : 'files.');
                 this.dispatchEvent(new NotificationEvent(message));
-                this._fetching = false;
+                this._busy = false;
                 this._fetchFileList();
               })
               .catch((e: Error) => {
-                this._fetching = false;
+                this._busy = false;
                 Utils.showErrorDialog('Error deleting item', e.message);
               });
           } else {
@@ -980,10 +972,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    * TODO: Consider allowing multiple items to be copied.
    */
   _copySelectedItem() {
-    if (this._fetching) {
-      return;
-    }
-
     const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
 
     if (selectedIndices.length === 1) {
@@ -999,17 +987,17 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       return Utils.showDialog(DirectoryPickerDialogElement, options)
         .then((closeResult: DirectoryPickerDialogCloseResult) => {
           if (closeResult.confirmed) {
-            this._fetching = true;
+            this._busy = true;
             return this._fileManager.copy(selectedObject.id, closeResult.selectedDirectory.id)
               .then(() => {
                 // Dispatch a success notification, and refresh the file list
                 const message = 'Copied item.';
                 this.dispatchEvent(new NotificationEvent(message));
-                this._fetching = false;
+                this._busy = false;
                 this._fetchFileList();
               })
               .catch((e: Error) => {
-                this._fetching = false;
+                this._busy = false;
                 Utils.showErrorDialog('Error copying item', e.message);
               });
           } else {
@@ -1028,10 +1016,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    * TODO: Consider allowing multiple items to be moved.
    */
   _moveSelectedItem() {
-    if (this._fetching) {
-      return;
-    }
-
     const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
 
     if (selectedIndices.length === 1) {
@@ -1047,7 +1031,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       return Utils.showDialog(DirectoryPickerDialogElement, options)
         .then((closeResult: DirectoryPickerDialogCloseResult) => {
           if (closeResult.confirmed) {
-            this._fetching = true;
+            this._busy = true;
             // Moving is renaming.
             return this._fileManager.rename(selectedObject.id, selectedObject.name,
                                             closeResult.selectedDirectory.id)
@@ -1055,11 +1039,11 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
                 // Dispatch a success notification, and refresh the file list
                 const message = 'Moved item.';
                 this.dispatchEvent(new NotificationEvent(message));
-                this._fetching = false;
+                this._busy = false;
                 this._fetchFileList();
               })
               .catch((e: Error) => {
-                this._fetching = false;
+                this._busy = false;
                 Utils.showErrorDialog('Error moving item', e.message);
               });
           } else {
