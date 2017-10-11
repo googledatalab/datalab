@@ -134,7 +134,7 @@ abstract class DatalabFile {
   }
 }
 
-abstract class BaseFileManager {
+interface BaseFileManager {
   // TODO: Consider supporting getting both the file and content objects with
   // one call.
 
@@ -148,7 +148,7 @@ abstract class BaseFileManager {
    * Returns a DatalabFile object representing the file or directory requested
    * @param fileId id of the requested file.
    */
-  abstract get(fileId: DatalabFileId): Promise<DatalabFile>;
+  get(fileId: DatalabFileId): Promise<DatalabFile>;
 
   /**
    * Returns the string content of the file with the specified id.
@@ -157,12 +157,12 @@ abstract class BaseFileManager {
    *               useful for downloading notebooks, which are by default read
    *               as JSON, which doesn't preserve formatting.
    */
-  abstract getStringContent(fileId: DatalabFileId, asText?: boolean): Promise<string>;
+  getStringContent(fileId: DatalabFileId, asText?: boolean): Promise<string>;
 
   /**
    * Returns a DatalabFile object for the root directory.
    */
-  abstract getRootFile(): Promise<DatalabFile>;
+  getRootFile(): Promise<DatalabFile>;
 
   /**
    * Saves the given string as a file's content.
@@ -170,13 +170,13 @@ abstract class BaseFileManager {
    *             save to.
    * @param content string to be saved in the file
    */
-  abstract saveText(file: DatalabFile, content: string): Promise<DatalabFile>;
+  saveText(file: DatalabFile, content: string): Promise<DatalabFile>;
 
   /**
    * Returns a list of file objects that are children of the given container file id.
    * @param containerId file id whose children to list.
    */
-  abstract list(containerId: DatalabFileId): Promise<DatalabFile[]>;
+  list(containerId: DatalabFileId): Promise<DatalabFile[]>;
 
   /**
    * Creates a new Datalab item
@@ -184,7 +184,7 @@ abstract class BaseFileManager {
    * @param containerId id for the container
    * @param name name for the created item. Default is 'New item'.
    */
-  abstract create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string): Promise<DatalabFile>;
+  create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string): Promise<DatalabFile>;
 
   /**
    * Renames an item
@@ -192,13 +192,13 @@ abstract class BaseFileManager {
    * @param newName new name for the item.
    * @param newContainerId id of the destination path of the renamed item
    */
-  abstract rename(oldFileId: DatalabFileId, newName: string, newContainerId?: DatalabFileId): Promise<DatalabFile>;
+  rename(oldFileId: DatalabFileId, newName: string, newContainerId?: DatalabFileId): Promise<DatalabFile>;
 
   /**
    * Deletes an item
    * @param fileId id for the item to delete
    */
-  abstract delete(fileId: DatalabFileId): Promise<boolean>;
+  delete(fileId: DatalabFileId): Promise<boolean>;
 
   /*
    * Copies an item from source to destination. If an item with the same name
@@ -206,29 +206,24 @@ abstract class BaseFileManager {
    * @param fileId item to copy
    * @param destinationDirectoryId id of the directory to copy the item into
    */
-  abstract copy(file: DatalabFileId, destinationDirectoryId: DatalabFileId): Promise<DatalabFile>;
+  copy(file: DatalabFileId, destinationDirectoryId: DatalabFileId): Promise<DatalabFile>;
 
   /**
    * Returns the url to open the given file in the notebook editor.
    * @param fileId id for the file to open in the notebook editor.
    */
-  getNotebookUrl(fileId: DatalabFileId): string {
-    return location.protocol + '//' + location.host +
-        Utils.constants.notebookUrlComponent + fileId.toString();
-  }
+  getNotebookUrl(fileId: DatalabFileId): string;
 
   /**
    * Returns the url to open the given file in the text editor.
    * @param fileId id for the file to open in the text editor.
    */
-  getEditorUrl(fileId: DatalabFileId): string {
-    return Utils.getHostRoot() + Utils.constants.editorUrlComponent + fileId.toString();
-  }
+  getEditorUrl(fileId: DatalabFileId): string;
 
   /**
    * Creates a path history from a path string.
    */
-  abstract pathToPathHistory(path: string): DatalabFile[];
+  pathToPathHistory(path: string): DatalabFile[];
 }
 
 /**
@@ -277,14 +272,12 @@ class BaseFileManager implements FileManager {
     throw new UnsupportedMethod('copy', this);
   }
 
-  getNotebookUrl(fileId: DatalabFileId): Promise<string> {
-    return Promise.resolve(Utils.getHostRoot() +
-        Utils.constants.notebookUrlComponent + fileId.toString());
+  getNotebookUrl(fileId: DatalabFileId): string {
+    return Utils.getHostRoot() + Utils.constants.notebookUrlComponent + fileId.toString();
   }
 
-  getEditorUrl(fileId: DatalabFileId): Promise<string> {
-    return Promise.resolve(Utils.getHostRoot() +
-        Utils.constants.editorUrlComponent + fileId.toString());
+  getEditorUrl(fileId: DatalabFileId): string {
+    return Utils.getHostRoot() + Utils.constants.editorUrlComponent + fileId.toString();
   }
 
   pathToPathHistory(_path: string): DatalabFile[] {
