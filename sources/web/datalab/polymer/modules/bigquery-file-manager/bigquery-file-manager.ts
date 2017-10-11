@@ -41,6 +41,10 @@ class BigQueryFile extends DatalabFile {
  */
 class BigQueryFileManager extends BaseFileManager {
 
+  public canHostNotebooks() {
+    return false;
+  }
+
   public get(fileId: DatalabFileId): Promise<DatalabFile> {
     if (fileId.path === '/') {
       return Promise.resolve(this._bqRootDatalabFile());
