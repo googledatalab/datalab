@@ -44,7 +44,7 @@ class JupyterFile extends DatalabFile {
 /**
  * An Jupyter-specific file manager.
  */
-class JupyterFileManager implements FileManager {
+class JupyterFileManager extends BaseFileManager {
 
   /**
    * Converts the given JupyterFile into the type understood by the Jupyter
@@ -273,16 +273,10 @@ class JupyterFileManager implements FileManager {
     return ApiManager.sendRequestAsync(path, xhrOptions);
   }
 
-  public async getNotebookUrl(fileId: DatalabFileId) {
+  public getNotebookUrl(fileId: DatalabFileId) {
     // TODO: We will need to get the base path when loading files
     // from a VM running Datalab with Jupyter.
     return location.protocol + '//' + location.host + '/notebooks/' + fileId.path;
-  }
-
-  public async getEditorUrl(fileId: DatalabFileId) {
-    // TODO: We will need to get the base path when loading notebooks
-    // from a VM running Datalab with Jupyter.
-    return Utils.getHostRoot() + Utils.constants.editorUrlComponent + fileId.toString();
   }
 
   public pathToPathHistory(path: string): DatalabFile[] {

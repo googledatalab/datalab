@@ -39,7 +39,7 @@ class BigQueryFile extends DatalabFile {
  * A file manager that wraps the BigQuery API so that we can browse BQ projects,
  * datasets, and tables like a filesystem.
  */
-class BigQueryFileManager implements FileManager {
+class BigQueryFileManager extends BaseFileManager {
 
   public get(fileId: DatalabFileId): Promise<DatalabFile> {
     if (fileId.path === '/') {
@@ -98,11 +98,11 @@ class BigQueryFileManager implements FileManager {
     throw new UnsupportedMethod('copy', this);
   }
 
-  public getNotebookUrl(_fileId: DatalabFileId): Promise<string> {
+  public getNotebookUrl(_fileId: DatalabFileId): string {
     throw new UnsupportedMethod('getNotebookUrl', this);
   }
 
-  public getEditorUrl(_fileId: DatalabFileId): Promise<string> {
+  public getEditorUrl(_fileId: DatalabFileId): string {
     throw new UnsupportedMethod('getEditorUrl', this);
   }
 
