@@ -179,6 +179,11 @@ declare module common {
      * The host/port on which to serve the fake metadata service, if active.
      */
     fakeMetadataAddress: {host: "metadata.google.internal"|"metadata"|null, port: number};
+
+    /**
+     * List of features that can be optinally enabled.
+     */
+    gatedFeatures: string[];
   }
 
   interface TimeoutInfo {
