@@ -35,6 +35,8 @@ the License.
       .right {
         position: absolute;
         left: calc(50% + var(--divider-half-width));
+        background-color: var(--secondary-bg-color);
+        box-shadow: inset 5px 0px 5px -2px var(--box-shadow-color);
       }
       /**
        * Slotted elements should fill the content slots, and be border-boxed so
@@ -56,11 +58,15 @@ the License.
         bottom: 0px;
         left: calc(50% - var(--divider-half-width));
         width: calc(2 * var(--divider-half-width));
-        background-color: var(--selection-bg-color);
+        line-height: 0.5;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        font-weight: bold;
+        color: var(--neutral-fg-color);
       }
       #divider.active {
         user-select: none;
-        background-color: var(--border-color);
       }
     </style>
 
@@ -70,7 +76,11 @@ the License.
         <slot name="left"></slot>
       </div>
 
-      <div id="divider" on-mousedown="{{_mouseDownHandler}}" hidden$="{{disableRight}}"></div>
+      <div id="divider" on-mousedown="{{_mouseDownHandler}}" hidden$="{{disableRight}}">
+        .
+        .
+        .
+      </div>
 
       <div id="rightPane" class="pane right">
         <slot name="right"></slot>
