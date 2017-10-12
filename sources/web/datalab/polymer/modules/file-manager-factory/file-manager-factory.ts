@@ -14,6 +14,7 @@
 
 enum FileManagerType {
   BIG_QUERY = 'bigquery',
+  BIG_QUERY_PUBLIC = 'bigqueryPublic',
   DRIVE = 'drive',
   GITHUB = 'github',
   JUPYTER = 'jupyter',
@@ -46,6 +47,14 @@ class FileManagerFactory {
         name: 'bigquery',
         path: 'modules/bigquery-file-manager/bigquery-file-manager.html',
         typeClass: BigQueryFileManager,
+      }
+    ], [
+      FileManagerType.BIG_QUERY_PUBLIC, {
+        displayIcon: 'datalab-icons:bigquery-logo',
+        displayName: 'Public Datasets',
+        name: 'bigqueryPublic',
+        path: 'modules/bigquery-file-manager/bigquery-file-manager.html',
+        typeClass: BigQueryPublicFileManager,
       }
     ], [
       FileManagerType.DRIVE, {
@@ -92,6 +101,7 @@ class FileManagerFactory {
   public static fileManagerNameToType(name: string): FileManagerType {
     switch (name) {
       case 'bigquery': return FileManagerType.BIG_QUERY;
+      case 'bigqueryPublic': return FileManagerType.BIG_QUERY_PUBLIC;
       case 'drive': return FileManagerType.DRIVE;
       case 'github': return FileManagerType.GITHUB;
       case 'jupyter': return FileManagerType.JUPYTER;

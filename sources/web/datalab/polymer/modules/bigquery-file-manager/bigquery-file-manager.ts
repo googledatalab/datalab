@@ -57,7 +57,7 @@ class BigQueryFileManager extends BaseFileManager {
   }
 
   public async getRootFile() {
-    return this.get(new DatalabFileId('/', FileManagerType.BIG_QUERY));
+    return this.get(new DatalabFileId('/', this.myFileManagerType()));
   }
 
   public saveText(_file: DatalabFile, _content: string): Promise<DatalabFile> {
@@ -138,6 +138,26 @@ class BigQueryFileManager extends BaseFileManager {
     }
   }
 
+  protected myFileManagerType() {
+    return FileManagerType.BIG_QUERY;
+  }
+
+  protected _listProjects(): Promise<DatalabFile[]> {
+    return this._collectAllProjects([], '')
+      .catch((e: Error) => { Utils.log.error(e); throw e; });
+  }
+
+  protected _bqProjectIdToDatalabFile(projectId: string): DatalabFile {
+    const path = projectId;
+    return new BigQueryFile({
+      icon: 'datalab-icons:bq-project',
+      id: new DatalabFileId(path, this.myFileManagerType()),
+      name: projectId,
+      status: DatalabFileStatus.IDLE,
+      type: DatalabFileType.DIRECTORY,
+    } as DatalabFile);
+  }
+
   private async _collectAllProjects(accumulatedProjects: ProjectResource[],
                                     pageToken: string): Promise<DatalabFile[]> {
     const response: HttpResponse<ListProjectsResponse> =
@@ -153,11 +173,6 @@ class BigQueryFileManager extends BaseFileManager {
       return projects.map(
           this._bqProjectToDatalabFile.bind(this)) as DatalabFile[];
     }
-  }
-
-  private _listProjects(): Promise<DatalabFile[]> {
-    return this._collectAllProjects([], '')
-      .catch((e: Error) => { Utils.log.error(e); throw e; });
   }
 
   private async _collectAllDatasets(projectId: string,
@@ -210,7 +225,7 @@ class BigQueryFileManager extends BaseFileManager {
     const path = '/';
     return new BigQueryFile({
       icon: '',
-      id: new DatalabFileId(path, FileManagerType.BIG_QUERY),
+      id: new DatalabFileId(path, this.myFileManagerType()),
       name: '/',
       status: DatalabFileStatus.IDLE,
       type: DatalabFileType.FILE,
@@ -219,17 +234,6 @@ class BigQueryFileManager extends BaseFileManager {
 
   private _bqProjectToDatalabFile(bqProject: ProjectResource): DatalabFile {
     return this._bqProjectIdToDatalabFile(bqProject.projectReference.projectId);
-  }
-
-  private _bqProjectIdToDatalabFile(projectId: string): DatalabFile {
-    const path = projectId;
-    return new BigQueryFile({
-      icon: 'datalab-icons:bq-project',
-      id: new DatalabFileId(path, FileManagerType.BIG_QUERY),
-      name: projectId,
-      status: DatalabFileStatus.IDLE,
-      type: DatalabFileType.DIRECTORY,
-    } as DatalabFile);
   }
 
   private _bqDatasetToDatalabFile(bqDataset: DatasetResource): DatalabFile {
@@ -241,7 +245,7 @@ class BigQueryFileManager extends BaseFileManager {
     const path = projectId + '/' + datasetId;
     return new BigQueryFile({
       icon: 'datalab-icons:bq-dataset',
-      id: new DatalabFileId(path, FileManagerType.BIG_QUERY),
+      id: new DatalabFileId(path, this.myFileManagerType()),
       name: datasetId,
       status: DatalabFileStatus.IDLE,
       type: DatalabFileType.DIRECTORY,
@@ -260,10 +264,34 @@ class BigQueryFileManager extends BaseFileManager {
     const path = projectId + '/' + datasetId + '/' + tableId;
     return new BigQueryFile({
       icon: 'datalab-icons:bq-table',
-      id: new DatalabFileId(path, FileManagerType.BIG_QUERY),
+      id: new DatalabFileId(path, this.myFileManagerType()),
       name: tableId,
       status: DatalabFileStatus.IDLE,
       type: DatalabFileType.FILE,
     } as DatalabFile);
+  }
+}
+
+/**
+ * A file manager that is just like BigQueryFileManager except that listing the
+ * project returns a list of projects such as bigquery-public-data that contain
+ * public datasets.
+ */
+class BigQueryPublicFileManager extends BigQueryFileManager {
+  publicProjectNames = [
+    'bigquery-public-data',
+    'gdelt-bq',
+    'lookerdata',
+    'nyc-tlc',
+  ];
+
+  protected myFileManagerType() {
+    return FileManagerType.BIG_QUERY_PUBLIC;
+  }
+
+  protected _listProjects(): Promise<DatalabFile[]> {
+    const datalabFiles = this.publicProjectNames.map(
+        this._bqProjectIdToDatalabFile.bind(this)) as DatalabFile[];
+    return Promise.resolve(datalabFiles);
   }
 }
