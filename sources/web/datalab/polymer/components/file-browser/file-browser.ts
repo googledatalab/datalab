@@ -1175,11 +1175,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       if (startuppath) {
         this._pathHistory = this._fileManager.pathToPathHistory(startuppath);
       }
-    } else if (this.fileManagerType === 'bigquery') {
-      // Set the default starting location for bigquery browsing to be
-      // the bigquery-public-data project.
-      this._pathHistory =
-          this._fileManager.pathToPathHistory('bigquery-public-data');
     }
 
     // Always add the root file to the beginning.
