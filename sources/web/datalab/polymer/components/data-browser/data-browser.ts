@@ -43,6 +43,15 @@ class DataBrowserElement extends Polymer.Element implements DatalabPageElement {
   resizeHandler() {
     this.$.fileBrowser.resizeHandler();
   }
+
+  ready() {
+    super.ready();
+
+    this.$.fileBrowser.fileManagerTypeList = [
+      FileManagerType.BIG_QUERY,
+      FileManagerType.BIG_QUERY_PUBLIC,
+    ];
+  }
 }
 
 customElements.define(DataBrowserElement.is, DataBrowserElement);
