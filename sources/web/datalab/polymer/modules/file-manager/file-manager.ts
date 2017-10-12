@@ -184,7 +184,8 @@ interface FileManager {
    * @param containerId id for the container
    * @param name name for the created item. Default is 'New item'.
    */
-  create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string): Promise<DatalabFile>;
+  create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string):
+      Promise<DatalabFile>;
 
   /**
    * Renames an item
@@ -192,7 +193,8 @@ interface FileManager {
    * @param newName new name for the item.
    * @param newContainerId id of the destination path of the renamed item
    */
-  rename(oldFileId: DatalabFileId, newName: string, newContainerId?: DatalabFileId): Promise<DatalabFile>;
+  rename(oldFileId: DatalabFileId, newName: string, newContainerId?: DatalabFileId):
+      Promise<DatalabFile>;
 
   /**
    * Deletes an item

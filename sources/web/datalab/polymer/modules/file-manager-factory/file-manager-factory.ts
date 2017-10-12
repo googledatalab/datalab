@@ -23,7 +23,7 @@ enum FileManagerType {
 }
 
 interface FileManagerConfig {
-  typeClass: typeof BaseFileManager;
+  typeClass: new () => FileManager;
   displayIcon: string;
   displayName: string;
   name: string;
@@ -82,7 +82,7 @@ class FileManagerFactory {
     ]
   ]);
 
-  private static _fileManagers: { [fileManagerType: string]: BaseFileManager } = {};
+  private static _fileManagers: { [fileManagerType: string]: FileManager } = {};
 
   /** Get the default FileManager. */
   public static getInstance() {
@@ -110,7 +110,7 @@ class FileManagerFactory {
     const config = this.getFileManagerConfig(fileManagerType);
     if (!FileManagerFactory._fileManagers[config.name]) {
 
-      FileManagerFactory._fileManagers[fileManagerType] = new (config.typeClass as any)();
+      FileManagerFactory._fileManagers[fileManagerType] = new config.typeClass();
     }
 
     return FileManagerFactory._fileManagers[fileManagerType];

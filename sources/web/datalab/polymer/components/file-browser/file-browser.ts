@@ -92,7 +92,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   private _fileList: DatalabFile[];
   private _fileListRefreshInterval = 60 * 1000;
   private _fileListRefreshIntervalHandle = 0;
-  private _fileManager: BaseFileManager;
+  private _fileManager: FileManager;
   private _fileManagerDisplayName: string;
   private _fileManagerDisplayIcon: string;
   private _hasMultipleFileSources: boolean;
@@ -410,7 +410,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    * Calls the FileManager to get the list of files at the current path, and
    * updates the _fileList property.
    * This method can be called multiple times, and it will ignore the fetch
-   * result if the currentFild object has changed after the request was made.
+   * result if the currentFile object has changed after the request was made.
    * This can happen because we set up fetch from several sources:
    * - Initialization in the ready() event handler.
    * - Various file operations modifying the tree (new file, delete... etc)
@@ -420,7 +420,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    * @param throwOnError whether to throw an exception if the refresh fails. This
    *                     is false by default because throwing is currently not used.
    */
-  async _fetchFileList(throwOnError = false): Promise<any> {
+  async _fetchFileList(throwOnError = false): Promise<void> {
     if (!this.currentFile) {
       // No current file to retrieve
       return Promise.resolve();
@@ -428,7 +428,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     const fetchFileId = this.currentFile.id;
 
     this._fetching = true;
-    
+
     const hideStatus = this.small || !this._showStatus;
 
     try {
