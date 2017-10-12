@@ -102,11 +102,11 @@ class BigQueryFileManager extends BaseFileManager {
     throw new UnsupportedMethod('copy', this);
   }
 
-  public getNotebookUrl(_fileId: DatalabFileId): Promise<string> {
+  public getNotebookUrl(_fileId: DatalabFileId): string {
     throw new UnsupportedMethod('getNotebookUrl', this);
   }
 
-  public getEditorUrl(_fileId: DatalabFileId): Promise<string> {
+  public getEditorUrl(_fileId: DatalabFileId): string {
     throw new UnsupportedMethod('getEditorUrl', this);
   }
 

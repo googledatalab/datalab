@@ -214,13 +214,13 @@ interface FileManager {
    * Returns the url to open the given file in the notebook editor.
    * @param fileId id for the file to open in the notebook editor.
    */
-  getNotebookUrl(fileId: DatalabFileId): Promise<string>;
+  getNotebookUrl(fileId: DatalabFileId): string;
 
   /**
    * Returns the url to open the given file in the text editor.
    * @param fileId id for the file to open in the text editor.
    */
-  getEditorUrl(fileId: DatalabFileId): Promise<string>;
+  getEditorUrl(fileId: DatalabFileId): string;
 
   /**
    * Creates a path history from a path string.
@@ -274,14 +274,12 @@ class BaseFileManager implements FileManager {
     throw new UnsupportedMethod('copy', this);
   }
 
-  getNotebookUrl(fileId: DatalabFileId): Promise<string> {
-    return Promise.resolve(Utils.getHostRoot() +
-        Utils.constants.notebookUrlComponent + fileId.toString());
+  getNotebookUrl(fileId: DatalabFileId): string {
+    return Utils.getHostRoot() + Utils.constants.notebookUrlComponent + fileId.toString();
   }
 
-  getEditorUrl(fileId: DatalabFileId): Promise<string> {
-    return Promise.resolve(Utils.getHostRoot() +
-        Utils.constants.editorUrlComponent + fileId.toString());
+  getEditorUrl(fileId: DatalabFileId): string {
+    return Utils.getHostRoot() + Utils.constants.editorUrlComponent + fileId.toString();
   }
 
   pathToPathHistory(_path: string): DatalabFile[] {

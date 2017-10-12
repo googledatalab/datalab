@@ -129,8 +129,9 @@ class TableInlineDetailsElement extends Polymer.Element {
         const notebook = await TemplateManager.newNotebookFromTemplate(template);
 
         if (notebook) {
-          FileManagerFactory.getInstanceForType(notebook.id.source).getNotebookUrl(notebook.id)
-            .then((url) => window.open(url, '_blank'));
+          const url = FileManagerFactory.getInstanceForType(notebook.id.source)
+              .getNotebookUrl(notebook.id);
+          window.open(url, '_blank');
         }
       } catch (e) {
         Utils.showErrorDialog('Error', e.message);
