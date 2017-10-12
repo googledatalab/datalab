@@ -96,6 +96,12 @@ class ResizableDividerElement extends Polymer.Element {
     // Style the divider while dragging
     this.$.divider.classList.add('active');
     this._lastMouseDownPosition = this.dividerPosition;
+
+    // Disable pointer events on the panes while dragging. This is to avoid
+    // annoying hover effects that flicker as the pointer is moving faster
+    // than the divider element.
+    (this.$.leftPane as HTMLDivElement).style.pointerEvents = 'none';
+    (this.$.rightPane as HTMLDivElement).style.pointerEvents = 'none';
   }
 
   _mouseUpHandler() {
@@ -105,6 +111,10 @@ class ResizableDividerElement extends Polymer.Element {
     // stop styling the handle as active because dragging is done
     this.$.divider.classList.remove('active');
     this._lastMouseUpPosition = this.dividerPosition;
+
+    // Re-enable pointer events on the panes
+    (this.$.leftPane as HTMLDivElement).style.pointerEvents = 'all';
+    (this.$.rightPane as HTMLDivElement).style.pointerEvents = 'all';
   }
 
   _mouseMoveHandler(event: MouseEvent) {
