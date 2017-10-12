@@ -41,10 +41,6 @@ class BigQueryFile extends DatalabFile {
  */
 class BigQueryFileManager extends BaseFileManager {
 
-  protected myFileManagerType() {
-    return FileManagerType.BIG_QUERY;
-  }
-
   public canHostNotebooks() {
     return false;
   }
@@ -142,6 +138,26 @@ class BigQueryFileManager extends BaseFileManager {
     }
   }
 
+  protected myFileManagerType() {
+    return FileManagerType.BIG_QUERY;
+  }
+
+  protected _listProjects(): Promise<DatalabFile[]> {
+    return this._collectAllProjects([], '')
+      .catch((e: Error) => { Utils.log.error(e); throw e; });
+  }
+
+  protected _bqProjectIdToDatalabFile(projectId: string): DatalabFile {
+    const path = projectId;
+    return new BigQueryFile({
+      icon: 'datalab-icons:bq-project',
+      id: new DatalabFileId(path, this.myFileManagerType()),
+      name: projectId,
+      status: DatalabFileStatus.IDLE,
+      type: DatalabFileType.DIRECTORY,
+    } as DatalabFile);
+  }
+
   private async _collectAllProjects(accumulatedProjects: ProjectResource[],
                                     pageToken: string): Promise<DatalabFile[]> {
     const response: HttpResponse<ListProjectsResponse> =
@@ -157,11 +173,6 @@ class BigQueryFileManager extends BaseFileManager {
       return projects.map(
           this._bqProjectToDatalabFile.bind(this)) as DatalabFile[];
     }
-  }
-
-  protected _listProjects(): Promise<DatalabFile[]> {
-    return this._collectAllProjects([], '')
-      .catch((e: Error) => { Utils.log.error(e); throw e; });
   }
 
   private async _collectAllDatasets(projectId: string,
@@ -223,17 +234,6 @@ class BigQueryFileManager extends BaseFileManager {
 
   private _bqProjectToDatalabFile(bqProject: ProjectResource): DatalabFile {
     return this._bqProjectIdToDatalabFile(bqProject.projectReference.projectId);
-  }
-
-  protected _bqProjectIdToDatalabFile(projectId: string): DatalabFile {
-    const path = projectId;
-    return new BigQueryFile({
-      icon: 'datalab-icons:bq-project',
-      id: new DatalabFileId(path, this.myFileManagerType()),
-      name: projectId,
-      status: DatalabFileStatus.IDLE,
-      type: DatalabFileType.DIRECTORY,
-    } as DatalabFile);
   }
 
   private _bqDatasetToDatalabFile(bqDataset: DatasetResource): DatalabFile {
