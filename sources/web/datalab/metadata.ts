@@ -133,7 +133,7 @@ export function init(settings: common.AppSettings): void {
   launchFakeServer(metadata, settings);
 }
 
-function parseCreds(request: http.ServerRequest, callback: Function): void {
+function parseRequest(request: http.ServerRequest, callback: Function): void {
   let body : string = "";
   request.on('data', function(chunk: string) { body += chunk; });
   request.on('end', function() {
@@ -150,10 +150,18 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
   const requestUrl = url.parse(request.url);
   const path = requestUrl.pathname;
   if (request.url == '/api/creds' && 'POST' == request.method) {
-    parseCreds(request, function(c: any): void {
+    parseRequest(request, function(c: any): void {
       const creds = metadata.creds;
       for (const key of Object.keys(c)) {
         (creds as any)[key] = c[key];
+      }
+      response.writeHead(200, { 'Content-Type': 'text/plain' });
+      response.end('ok');
+    });
+  } else if (request.url == '/api/metadata' && 'POST' == request.method) {
+    parseRequest(request, function(m: any): void {
+      for (const key of Object.keys(m)) {
+        (metadata as any)[key] = m[key];
       }
       response.writeHead(200, { 'Content-Type': 'text/plain' });
       response.end('ok');
