@@ -410,7 +410,8 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    * Calls the FileManager to get the list of files at the current path, and
    * updates the _fileList property.
    * This method can be called multiple times, and it will ignore the fetch
-   * result if the currentFile object has changed after the request was made.
+   * result if the currentFile object has changed to a different file from the
+   * one that this request started out with.
    * This can happen because we set up fetch from several sources:
    * - Initialization in the ready() event handler.
    * - Various file operations modifying the tree (new file, delete... etc)
@@ -459,10 +460,13 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     // Now load the sessions and update the running status of each file
     // whose id is in the session list.
     // We do not need to load sessions when not displaying the Status column,
-    // or if the current fild id has changed since the beginning of this request.
-    if (!hideStatus && fetchFileId === this.currentFile.id) {
+    if (!hideStatus) {
       try {
         const sessions = await SessionManager.listSessionPaths();
+        // Abort if the current fild id has changed while loading sessions.
+        if (fetchFileId !== this.currentFile.id) {
+          return;
+        }
         const listElement = this.$.files as ItemListElement;
         this._fileList.forEach((file, i) => {
           // The v1 notebook editor creates sessions with just the file path,
@@ -685,6 +689,11 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       }
     }
 
+    // TODO: Clearing this flag isn't accurate, since multiple async operations
+    // can set it, then clear it in any random order, which means it could be
+    // cleared while some operations are still running. We should look into
+    // adding some sort of a counting semaphore that we check before clearing
+    // the flag.
     this._busy = true;
     files.forEach((file: File) => {
 
