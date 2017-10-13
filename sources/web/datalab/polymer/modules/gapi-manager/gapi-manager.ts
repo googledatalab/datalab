@@ -407,6 +407,8 @@ class GapiManager {
   * OAuth 2.0 client ID and scopes (space delimited string) to request access.
   */
   private static _initClient(): Promise<void> {
+    // TODO: Add state parameter to redirect the user back to the current URL
+    // after the OAuth flow finishes.
     return gapi.auth2.init({
       client_id: GapiManager._clientId,
       fetch_basic_profile: true,
