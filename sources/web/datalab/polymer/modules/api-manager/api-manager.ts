@@ -37,6 +37,7 @@ enum ServiceId {
   BASE_PATH,
   CONTENT,
   CREDENTIALS,
+  METADATA,
   SESSIONS,
   TERMINALS,
   TIMEOUT,
@@ -55,7 +56,7 @@ interface XssiResponse {
  * An abstraction for sending xhr requests to the backend service, including
  * getting the basepath for all upcoming requests
  */
-class ApiManager implements ApiManager {
+class ApiManager {
 
   public static isConnected = true;
 
@@ -144,6 +145,8 @@ class ApiManager implements ApiManager {
         return '/api/contents';
       case ServiceId.CREDENTIALS:
         return '/api/creds';
+      case ServiceId.METADATA:
+        return '/api/metadata';
       case ServiceId.SESSIONS:
         return '/api/sessions';
       case ServiceId.TERMINALS:

@@ -15,6 +15,7 @@ the License.
 <link rel="import" href="../../components/auth-panel/auth-panel.html">
 <link rel="import" href="../../components/datalab-info/datalab-info.html">
 <link rel="import" href="../../components/datalab-settings/datalab-settings.html">
+<link rel="import" href="../../components/project-picker-dialog/project-picker-dialog.html">
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
 <link rel="import" href="../../components/timeout-panel/timeout-panel.html">
 <link rel="import" href="../../modules/settings-manager/settings-manager.html">
@@ -45,6 +46,14 @@ the License.
       .title-image {
         height: 30px;
         vertical-align: middle;
+      }
+      #projectContainer {
+        display: inline-block;
+        font-size: var(--app-content-font-size);
+      }
+      #projectContainer a paper-button, #projectContainer a:active paper-button,
+      #projectContainer a:visited paper-button {
+        color: var(--toolbar-fg-color);
       }
       app-header {
         background-color: var(--primary-accent-color);
@@ -94,6 +103,10 @@ the License.
           <slot name="content"></slot>
         </div>
         <div class="right">
+          <div id="projectContainer" on-click="pickProject">
+            <a href="#" hidden$="{{!selectedProject}}"><paper-button>{{selectedProject}}</paper-button></a>
+            <a href="#" hidden$="{{selectedProject}}"><paper-button>No project selected</paper-button></a>
+          </div>
           <paper-icon-button id="infoButton" icon="info"
                             on-click="_infoClicked"></paper-icon-button>
           <paper-icon-button id="settingsButton" icon="settings"

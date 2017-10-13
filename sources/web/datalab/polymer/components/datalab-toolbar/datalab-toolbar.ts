@@ -20,6 +20,8 @@
  */
 class ToolbarElement extends Polymer.Element {
 
+  public selectedProject: string;
+
   private _timeoutEnabled: boolean;
 
   static get is() { return 'datalab-toolbar'; }
@@ -27,10 +29,11 @@ class ToolbarElement extends Polymer.Element {
   static get properties() {
     return {
       _timeoutEnabled: Boolean,
+      selectedProject: String,
     };
   }
 
-  async ready() {
+  ready() {
     super.ready();
 
     this._timeoutEnabled = await SettingsManager.isAppFeatureEnabled(
@@ -41,6 +44,28 @@ class ToolbarElement extends Polymer.Element {
       if (authPanel) {
         authPanel.addEventListener('signInOutDone', this._closeAccountDropdown.bind(this));
       }
+    }
+  }
+
+  async pickProject() {
+    const options: BaseDialogOptions = {
+      big: true,
+      okLabel: 'Pick',
+      title: 'Pick Project',
+    };
+    const result = await Utils.showDialog(ProjectPickerDialogElement, options) as
+        ProjectPickerDialogCloseResult;
+
+    if (result.confirmed) {
+      const xhrOptions: XhrOptions = {
+        method: 'POST',
+        parameters: JSON.stringify({
+          project: result.projectName,
+          project_number: result.projectId,
+        })
+      };
+      await ApiManager.sendTextRequestAsync(ApiManager.getServiceUrl(ServiceId.METADATA), xhrOptions);
+      this.selectedProject = result.projectName;
     }
   }
 

@@ -121,7 +121,7 @@ the License.
         <paper-item class="row" selected$={{row.selected}} on-click="_rowClicked"
                     on-dblclick="_rowDoubleClicked">
           <div class="checkbox-col">
-            <paper-checkbox checked={{row.selected}} hidden$="{{disableSelection}}">
+            <paper-checkbox checked={{row.selected}} hidden$="{{_hideCheckboxes}}">
             </paper-checkbox>
             <iron-icon hidden$="{{!row._icon}}" icon="{{row.icon}}" src="{{row.src}}"></iron-icon>
           </div>

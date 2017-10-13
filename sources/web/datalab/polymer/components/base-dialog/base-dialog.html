@@ -34,7 +34,6 @@ the License.
       }
       .confirm {
         background-color: var(--secondary-bg-color);
-        font-weight: bold;
       }
     </style>
     <paper-dialog id="theDialog" class$="{{_sizeCssClass}} dialog" with-backdrop
@@ -49,7 +48,7 @@ the License.
       </div>
       <hr>
       <div class="dialog-footer">
-        <paper-button id="okButton" on-click="_confirmClose" class="confirm" >
+        <paper-button id="okButton" on-click="_confirmClose" class="confirm bold" >
           {{okLabel}}
         </paper-button>
         <paper-button hidden$={{isError}} on-click="_cancelClose">

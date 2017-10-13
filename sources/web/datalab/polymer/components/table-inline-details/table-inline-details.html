@@ -43,7 +43,6 @@ the License.
       th.field {
         padding: 10px;
         background-color: var(--secondary-bg-color);
-        font-weight: bold;
       }
       td.field {
         padding: 10px;
@@ -57,7 +56,7 @@ the License.
       <table id="tabledata">
         <tr class="header">
           <template is="dom-repeat" items={{_schemaFields}} as="field">
-            <th class="field">
+            <th class="bold field">
               <span class="field-name">{{field.name}}</span><br>
               <span class="field-type">{{field.type}}</span>
             </th>

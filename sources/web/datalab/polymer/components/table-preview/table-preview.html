@@ -36,9 +36,6 @@ the License.
         overflow-y: auto;
         color: var(--primary-fg-color);
       }
-      .strong {
-        font-weight: bold;
-      }
       .description {
         font-style: italic;
         overflow-wrap: break-word;
@@ -51,7 +48,6 @@ the License.
       td.field {
         padding: 10px;
         background-color: #eee;
-        font-weight: bold;
       }
       td.value {
         padding: 10px;
@@ -63,43 +59,43 @@ the License.
     </style>
     <div id="container" hidden$={{!_table}}>
       <h3>Table Details: <span id="tableId">{{_table.tableReference.tableId}}</span></h3>
-      <span class="strong">Project: </span>
+      <span class="bold">Project: </span>
       <span id="projectId">{{_table.tableReference.projectId}}</span>
       <br>
       <br>
-      <span class="strong">Dataset: </span>
+      <span class="bold">Dataset: </span>
       <span id="datasetId">{{_table.tableReference.datasetId}}</span>
       <br>
       <br>
       <div hidden$={{!_table.description}}>
-        <div class="strong">Description</div>
+        <div class="bold">Description</div>
         <br>
         <div class="description">{{_table.description}}</div>
         <br>
       </div>
       <table>
         <tr>
-          <td class="field">Table Size</td>
+          <td class="bold field">Table Size</td>
           <td id="tableSize" class="value">{{tableSize}}</td>
         </tr>
         <tr>
-          <td class="field">Long Term Storage Size</td>
+          <td class="bold field">Long Term Storage Size</td>
           <td id="longTermTableSize" class="value">{{longTermTableSize}}</td>
         </tr>
         <tr>
-          <td class="field">Number of Rows</td>
+          <td class="bold field">Number of Rows</td>
           <td id="numRows" class="value">{{numRows}}</td>
         </tr>
         <tr>
-          <td class="field">Creation Time</td>
+          <td class="bold field">Creation Time</td>
           <td id="creationTime" class="value">{{creationTime}}</td>
         </tr>
         <tr>
-          <td class="field">Last Modified</td>
+          <td class="bold field">Last Modified</td>
           <td id="lastModifiedTime" class="value">{{lastModifiedTime}}</td>
         </tr>
         <tr>
-          <td class="field">Data Location</td>
+          <td class="bold field">Data Location</td>
           <td id="location" class="value">{{_table.location}}</td>
         </tr>
         <!--TODO: Consider showing the table's label somewhere-->
@@ -107,13 +103,13 @@ the License.
 
       <hr class="separator">
 
-      <div class="strong">Schema</div>
+      <div class="bold">Schema</div>
       <br>
 
       <table id="schema">
-        <template is="dom-repeat" items={{schemaFields}} as="field">
+        <template is="dom-repeat" items={{schemaFields}} as="bold field">
           <tr>
-            <td class="field">{{field.name}}</td>
+            <td class="bold field">{{field.name}}</td>
             <td class="value">{{field.type}}</td>
             <td class="value">{{_formatMode(field.mode)}}</td>
             <!--TODO: Consider showing the field's description somehow-->
