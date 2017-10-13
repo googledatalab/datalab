@@ -410,6 +410,7 @@ class GapiManager {
     return gapi.auth2.init({
       client_id: GapiManager._clientId,
       fetch_basic_profile: true,
+      redirect_uri: Utils.getHostRoot(),
       scope: initialScopeString,
       ux_mode: 'redirect',
     })
