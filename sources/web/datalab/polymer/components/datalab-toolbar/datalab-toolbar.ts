@@ -33,7 +33,7 @@ class ToolbarElement extends Polymer.Element {
     };
   }
 
-  ready() {
+  async ready() {
     super.ready();
 
     this._timeoutEnabled = await SettingsManager.isAppFeatureEnabled(
@@ -45,13 +45,24 @@ class ToolbarElement extends Polymer.Element {
         authPanel.addEventListener('signInOutDone', this._closeAccountDropdown.bind(this));
       }
     }
+
+    // Populate selected project
+    try {
+      const metadata =
+          await ApiManager.sendRequestAsync(ApiManager.getServiceUrl(ServiceId.METADATA));
+      if (metadata.project) {
+        this.selectedProject = metadata.project;
+      }
+    } catch (e) {
+      Utils.log.error('Could not get project name from metadata');
+    }
   }
 
   async pickProject() {
     const options: BaseDialogOptions = {
       big: true,
-      okLabel: 'Pick',
-      title: 'Pick Project',
+      okLabel: 'Select',
+      title: 'Select Project',
     };
     const result = await Utils.showDialog(ProjectPickerDialogElement, options) as
         ProjectPickerDialogCloseResult;
