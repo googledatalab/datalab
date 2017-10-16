@@ -5,7 +5,7 @@
     "test": "test"
   },
   "scripts": {
-    "pretranspile": "tslint *.ts components/**/*.ts module/*.ts",
+    "pretranspile": "tslint *.ts components/**/*.ts modules/**/*.ts",
     "transpile": "tsc",
     "prebuild": "npm install && bower --allow-root install",
     "build": "npm run transpile && polymer build",
