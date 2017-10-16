@@ -51,7 +51,7 @@ class GapiManager {
      */
     public static async create(mimeType: string, parentId: string, name: string, content = '')
         : Promise<gapi.client.drive.File> {
-      await this._load;
+      await this._load();
       let createPromise = gapi.client.drive.files.create({
           mimeType,
           name,
