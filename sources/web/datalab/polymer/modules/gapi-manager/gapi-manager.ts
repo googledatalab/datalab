@@ -271,7 +271,7 @@ class GapiManager {
      * Fetches table rows from BigQuery
      */
     public static getTableRows(projectId: string, datasetId: string,
-        tableId: string, maxResults: number):
+                               tableId: string, maxResults: number):
         Promise<gapi.client.HttpRequestFulfilled<gapi.client.bigquery.ListTabledataResponse>> {
       const request = {
         datasetId,

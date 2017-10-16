@@ -41,7 +41,7 @@ class NotebookTemplate {
   resolver: Polymer.Element;
 
   constructor(fileId: DatalabFileId, parameters: TemplateParameter[],
-      resolver: Polymer.Element) {
+              resolver: Polymer.Element) {
     this.fileId = fileId;
     this.parameters = parameters;
     this.resolver = resolver;
@@ -67,7 +67,7 @@ class NotebookTemplate {
       // sending us the file, but when reading through our api we get the
       // raw text file in which the source is an array of strings.
       if ((cell.source as any) instanceof Array) {
-        cell.source = ((cell.source as any) as Array<string>).join('');
+        cell.source = ((cell.source as any) as string[]).join('');
       }
       const oldCellSource = cell.source;
       this.parameters.forEach((parameter: TemplateParameter) => {
@@ -90,7 +90,7 @@ class NotebookTemplate {
    * for all of the parameters.
    */
   public addParameterCell(notebook: NotebookContent) {
-    const definitionLines = this.parameters.map(parameter =>
+    const definitionLines = this.parameters.map((parameter) =>
         parameter.name + ' = ' + JSON.stringify(parameter.value));
     const header = '# Auto-generated parameter definitions';
     const cellText = header + '\n' + definitionLines.join('\n');
@@ -110,13 +110,7 @@ class NotebookTemplate {
  */
 class BigQueryTableOverviewTemplate extends NotebookTemplate {
   constructor(dict: { [key: string]: any }, resolver: Polymer.Element) {
-    const parameters = [];
-    for (const k in dict) {
-      parameters.push({
-        name: k,
-        value: dict[k],
-      });
-    }
+    const parameters = Object.keys(dict).map((k) => ({name: k, value: dict[k]}));
 
     // Specify the default location of the template.
     const defaultTemplateLocation = 'static/templates/BigQueryTableOverview.ipynb';
@@ -124,7 +118,7 @@ class BigQueryTableOverviewTemplate extends NotebookTemplate {
     // TODO(jimmc); Until we have a user setting, allow specifying an alternate
     // location for the template file, for debugging, such as
     // 'jupyter:datalab/templates/BigQueryTableOverview.ipynb';
-    const windowDatalab = window.datalab || {}
+    const windowDatalab = window.datalab || {};
     const templateLocation =
         windowDatalab.tableSchemaTemplateFileId || defaultTemplateLocation;
     const templateId = DatalabFileId.fromString(templateLocation);
@@ -160,9 +154,9 @@ class TemplateManager extends Polymer.Element {
     // only to this user, the odds of a collision are pretty low.
     const dateStr = new Date().toISOString();
     const yearStr =
-        dateStr.slice(0,4) + dateStr.slice(5, 7) + dateStr.slice(8, 10);
+        dateStr.slice(0, 4) + dateStr.slice(5, 7) + dateStr.slice(8, 10);
     const timeStr =
-        dateStr.slice(11,13) + dateStr.slice(14, 16) + dateStr.slice(17, 19);
+        dateStr.slice(11, 13) + dateStr.slice(14, 16) + dateStr.slice(17, 19);
     const moreName = yearStr + '_' + timeStr;
     const fileName = baseName + '_' + moreName + '.ipynb';
     const options: DirectoryPickerDialogOptions = {
@@ -189,7 +183,7 @@ class TemplateManager extends Polymer.Element {
       } catch (e) {
         throw new Error('Template file is not a notebook.');
       }
-      if (template.populatePlaceholders(templateNotebookContent) == 0) {
+      if (template.populatePlaceholders(templateNotebookContent) === 0) {
         // If we found no placeholders, assume we are using parameters instead
         // and add an initial cell with our parameter definitions.
         template.addParameterCell(templateNotebookContent);
@@ -210,7 +204,7 @@ class TemplateManager extends Polymer.Element {
   }
 
   public static async getTemplateStringContent(fileId: DatalabFileId,
-      resolver: Polymer.Element) {
+                                               resolver: Polymer.Element) {
     if (fileId.source === FileManagerType.STATIC) {
       const resolvedUrl = resolver.resolveUrl('../../' + fileId.path);
       const templateStringContent =
