@@ -106,7 +106,7 @@ class DatalabAppElement extends Polymer.Element {
   async ready() {
     super.ready();
 
-    window.addEventListener('focus', () => this._focusHandler());
+    window.addEventListener('focus', () => this.focusHandler());
 
     const settings = await SettingsManager.getAppSettingsAsync();
     this._fileBrowserSources = settings.supportedFileBrowserSources;
@@ -197,10 +197,10 @@ class DatalabAppElement extends Polymer.Element {
   /**
    * If the selected page has a focus handler, calls it.
    */
-  _focusHandler() {
+  focusHandler() {
     const selectedPage = this.$.pages.selectedItem;
-    if (selectedPage && selectedPage._focusHandler) {
-      selectedPage._focusHandler();
+    if (selectedPage && selectedPage.focusHandler) {
+      selectedPage.focusHandler();
     }
   }
 
