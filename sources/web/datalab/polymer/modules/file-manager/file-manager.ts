@@ -220,10 +220,6 @@ interface FileManager {
  * functionality for the different FileManager classes.
  */
 class BaseFileManager implements FileManager {
-  canHostNotebooks(): boolean {
-    return true;
-  }
-
   get(_fileId: DatalabFileId): Promise<DatalabFile> {
     throw new UnsupportedMethod('get', this);
   }
