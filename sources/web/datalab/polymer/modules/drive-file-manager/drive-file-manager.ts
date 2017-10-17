@@ -129,7 +129,6 @@ class DriveFileManager extends BaseFileManager {
                               file.iconLink : 'editor:insert-drive-file',
       id: new DatalabFileId(file.id, FileManagerType.DRIVE),
       name: file.name,
-      status: DatalabFileStatus.IDLE,
       type: file.mimeType === DriveFileManager._directoryMimeType ?
                               DatalabFileType.DIRECTORY :
                               DatalabFileType.FILE,

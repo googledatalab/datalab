@@ -110,7 +110,6 @@ class JupyterFileManager extends BaseFileManager {
     jupyterFile.mimetype = file.mimetype;
     jupyterFile.name = file.name;
     jupyterFile.path = file.path;
-    jupyterFile.status = DatalabFileStatus.IDLE;
     jupyterFile.writable = file.writable;
     return jupyterFile;
   }
@@ -183,8 +182,6 @@ class JupyterFileManager extends BaseFileManager {
           typeof(container.type));
     }
 
-    // Combine the return values of the two requests to supplement the files
-    // array with the status value.
     const files = container.content;
     return files.map((file: any) => JupyterFileManager._upstreamFileToJupyterFile(file));
   }

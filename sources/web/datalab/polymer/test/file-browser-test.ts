@@ -20,7 +20,6 @@ class MockFile extends DatalabFile {
       icon: '',
       id: new DatalabFileId(path, FileManagerType.MOCK),
       name,
-      status: DatalabFileStatus.IDLE,
       type: DatalabFileType.DIRECTORY,
     });
   }
@@ -99,8 +98,6 @@ describe('<file-browser>', () => {
   it('starts up with no files selected, and no files running', () => {
     const files: ItemListElement = testFixture.$.files;
     files.rows.forEach((row: ItemListRow, i: number) => {
-      assert(row.columns[1] === Utils.getFileStatusString(mockFiles[i].status as DatalabFileStatus),
-          'file ' + i + 'should have an empty status');
       assert(!row.selected, 'file ' + i + ' should not be selected');
     });
   });
