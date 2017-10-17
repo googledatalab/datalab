@@ -9,6 +9,7 @@
     <link rel="shortcut icon" href="{base_url}images/favicon.ico">
 
     <link id="themeStylesheet" rel="stylesheet" href="{base_url}index.light.css">
+    <link rel="import" href="{base_url}bower_modules/paper-toast/paper-toast.html">
     <link rel="import" href="{base_url}components/datalab-app/datalab-app.html">
     <link rel="import" href="{base_url}modules/template-manager/template-manager.html">
   </head>
@@ -27,6 +28,7 @@
       }
     </style>
 
+    <paper-toast id="datalabNotification" text="Creating notebook..." duration="0"></paper-toast>
     <iframe id="editor" sandbox="allow-forms allow-scripts allow-popups allow-modals allow-popups-to-escape-sandbox allow-same-origin"></iframe>
 
     <script src="notebook.js"></script>

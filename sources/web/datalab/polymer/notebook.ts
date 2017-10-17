@@ -21,6 +21,7 @@
  */
 
 const iframe = document.querySelector('#editor') as HTMLIFrameElement;
+const toast = document.querySelector('#datalabNotification') as any;
 const queryParams = new URLSearchParams(window.location.search);
 
 // tslint:disable-next-line:variable-name
@@ -89,22 +90,30 @@ function sendMessageToNotebookEditor(message: IframeMessage) {
 }
 
 async function createNew(path: string) {
-  await GapiManager.listenForSignInChanges(() => null);
+  toast.open();
 
-  const parentId = DatalabFileId.fromString(path.substr('new/'.length));
-  const fileName = queryParams.get('fileName') as string;
-  const fileManager = FileManagerFactory.getInstanceForType(
-    FileManagerFactory.fileManagerNameToType(parentId.source));
-  const newFile = await fileManager.create(DatalabFileType.NOTEBOOK, parentId, fileName);
+  try {
+    await GapiManager.listenForSignInChanges(() => null);
 
-  // If this is a template, populate it
-  if (queryParams.has('templateName')) {
-    const templateName = queryParams.get('templateName') as string;
-    const params = JSON.parse(decodeURIComponent(queryParams.get('params') || '{}'));
-    const template = await TemplateManager.newNotebookFromTemplate(templateName, params);
-    await fileManager.saveText(newFile, JSON.stringify(template));
+    const parentId = DatalabFileId.fromString(path.substr('new/'.length));
+    const fileName = queryParams.get('fileName') as string;
+    const fileManager = FileManagerFactory.getInstanceForType(
+      FileManagerFactory.fileManagerNameToType(parentId.source));
+    const newFile = await fileManager.create(DatalabFileType.NOTEBOOK, parentId, fileName);
+
+    // If this is a template, populate it
+    if (queryParams.has('templateName')) {
+      const templateName = queryParams.get('templateName') as string;
+      const params = JSON.parse(decodeURIComponent(queryParams.get('params') || '{}'));
+      const template = await TemplateManager.newNotebookFromTemplate(templateName, params);
+      await fileManager.saveText(newFile, JSON.stringify(template));
+    }
+    location.href = fileManager.getNotebookUrl(newFile.id);
+  } catch (e) {
+    // TODO: Add some error message here.
+    Utils.log.error('Failed to create notebook:', e.message);
   }
-  location.href = fileManager.getNotebookUrl(newFile.id);
+  toast.close();
 }
 
 if (location.pathname.startsWith(Utils.constants.notebookUrlComponent) && iframe) {
