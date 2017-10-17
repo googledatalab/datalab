@@ -37,14 +37,9 @@ class NotebookTemplate {
   // List of parameters required by the template
   parameters: TemplateParameter[];
 
-  // Element to use to resolve a URL to load the template
-  resolver: Polymer.Element;
-
-  constructor(fileId: DatalabFileId, parameters: TemplateParameter[],
-              resolver: Polymer.Element) {
+  constructor(fileId: DatalabFileId, parameters: TemplateParameter[]) {
     this.fileId = fileId;
     this.parameters = parameters;
-    this.resolver = resolver;
   }
 
   /**
@@ -109,7 +104,7 @@ class NotebookTemplate {
  * This template contains one cell that shows the given table's schema.
  */
 class BigQueryTableOverviewTemplate extends NotebookTemplate {
-  constructor(dict: { [key: string]: any }, resolver: Polymer.Element) {
+  constructor(dict: { [key: string]: any }) {
     const parameters = Object.keys(dict).map((k) => ({name: k, value: dict[k]}));
 
     // Specify the default location of the template.
@@ -122,7 +117,7 @@ class BigQueryTableOverviewTemplate extends NotebookTemplate {
     const templateLocation =
         windowDatalab.tableSchemaTemplateFileId || defaultTemplateLocation;
     const templateId = DatalabFileId.fromString(templateLocation);
-    super(templateId, parameters, resolver);
+    super(templateId, parameters);
   }
 }
 
@@ -137,76 +132,34 @@ class BigQueryTableOverviewTemplate extends NotebookTemplate {
  */
 class TemplateManager extends Polymer.Element {
 
-  public static async newNotebookFromTemplate(template: NotebookTemplate) {
-
-    const appSettings = await SettingsManager.getAppSettingsAsync();
-
-    // TODO(jimmc): Look for a user preference for baseDir
-    const baseType = (appSettings.defaultFileManager || 'drive');
-    const baseDir = baseType + '/';
-    // TODO(jimmc): Allow specifying a path with baseDir. For now, we are
-    // just using the root of the filesystem as the default location.
-    const baseName = 'temp';
-    // Add some more stuff to the name to make it different each time.
-    // We are not checking to see if the file exists, so it is not
-    // guaranteed to produce a unique filename, but since we are doing
-    // it based on the current time down to the second, and it is scoped
-    // only to this user, the odds of a collision are pretty low.
-    const dateStr = new Date().toISOString();
-    const yearStr =
-        dateStr.slice(0, 4) + dateStr.slice(5, 7) + dateStr.slice(8, 10);
-    const timeStr =
-        dateStr.slice(11, 13) + dateStr.slice(14, 16) + dateStr.slice(17, 19);
-    const moreName = yearStr + '_' + timeStr;
-    const fileName = baseName + '_' + moreName + '.ipynb';
-    const options: DirectoryPickerDialogOptions = {
-      big: true,
-      fileId: baseDir,
-      fileName,
-      okLabel: 'Save Here',
-      title: 'New Notebook',
-      withFileName: true,
-    };
-    const instanceFileManager = FileManagerFactory.getInstanceForType(
-      FileManagerFactory.fileManagerNameToType(baseType));
-
-    const closeResult =
-        await Utils.showDialog(DirectoryPickerDialogElement, options) as
-            DirectoryPickerDialogCloseResult;
-
-    if (closeResult.confirmed && closeResult.fileName) {
-      const templateStringContent =
-          await this.getTemplateStringContent(template.fileId, template.resolver);
-      let templateNotebookContent: NotebookContent;
-      try {
-        templateNotebookContent = NotebookContent.fromString(templateStringContent);
-      } catch (e) {
-        throw new Error('Template file is not a notebook.');
-      }
-      if (template.populatePlaceholders(templateNotebookContent) === 0) {
-        // If we found no placeholders, assume we are using parameters instead
-        // and add an initial cell with our parameter definitions.
-        template.addParameterCell(templateNotebookContent);
-      }
-
-      let instanceName = closeResult.fileName;
-      if (!instanceName.endsWith('.ipynb')) {
-        instanceName += '.ipynb';
-      }
-
-      const newFile = await
-          instanceFileManager.create(DatalabFileType.NOTEBOOK, closeResult.selectedDirectory.id,
-              instanceName);
-      return instanceFileManager.saveText(newFile, JSON.stringify(templateNotebookContent));
-    } else {
-      return null;
+  public static async newNotebookFromTemplate(name: string, params: {}) {
+    let templateType: any;
+    switch (name) {
+      case 'bigqueryOverview':
+        templateType = BigQueryTableOverviewTemplate; break;
+      default:
+        throw new Error('Unknown template name: ' + name);
     }
+    const template = new templateType(params);
+
+    const templateStringContent = await this.getTemplateStringContent(template.fileId);
+    let templateNotebookContent: NotebookContent;
+    try {
+      templateNotebookContent = NotebookContent.fromString(templateStringContent);
+    } catch (e) {
+      throw new Error('Template file is not a notebook.');
+    }
+    if (template.populatePlaceholders(templateNotebookContent) === 0) {
+      // If we found no placeholders, assume we are using parameters instead
+      // and add an initial cell with our parameter definitions.
+      template.addParameterCell(templateNotebookContent);
+    }
+    return templateNotebookContent;
   }
 
-  public static async getTemplateStringContent(fileId: DatalabFileId,
-                                               resolver: Polymer.Element) {
+  public static async getTemplateStringContent(fileId: DatalabFileId) {
     if (fileId.source === FileManagerType.STATIC) {
-      const resolvedUrl = resolver.resolveUrl('../../' + fileId.path);
+      const resolvedUrl = Utils.resolveUrlToDatalabApp('../../' + fileId.path);
       const templateStringContent =
           await ApiManager.sendTextRequestAsync(resolvedUrl, {}, false);
       return templateStringContent;

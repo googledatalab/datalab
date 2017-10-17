@@ -30,8 +30,18 @@ class Utils {
 
   public static constants = {
     editorUrlComponent:   '/editor/',
+    newNotebookUrlComponent:  '/notebook/new/',
     notebookUrlComponent: '/notebook/',
   };
+
+  /**
+   * Resolves the given URL using the datalab-app element's base URI. This
+   * obviously requires the element to exist on the calling document.
+   */
+  public static resolveUrlToDatalabApp(url: string) {
+    const mod = Polymer.DomModule.import('datalab-app', '');
+    return Polymer.ResolveUrl.resolveUrl(url, mod.assetpath);
+  }
 
   /**
    * Opens a dialog with the specified options. It uses the Datalab custom element
