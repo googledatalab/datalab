@@ -73,7 +73,6 @@ describe('<table-inline-details>', () => {
       icon: '',
       id: new DatalabFileId(tableId, FileManagerType.BIG_QUERY),
       name: '/',
-      status: DatalabFileStatus.IDLE,
       type: DatalabFileType.FILE,
     } as DatalabFile);
   };

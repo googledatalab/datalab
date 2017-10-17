@@ -153,7 +153,6 @@ class BigQueryFileManager extends BaseFileManager {
       icon: 'datalab-icons:bq-project',
       id: new DatalabFileId(path, this.myFileManagerType()),
       name: projectId,
-      status: DatalabFileStatus.IDLE,
       type: DatalabFileType.DIRECTORY,
     } as DatalabFile);
   }
@@ -227,7 +226,6 @@ class BigQueryFileManager extends BaseFileManager {
       icon: '',
       id: new DatalabFileId(path, this.myFileManagerType()),
       name: '/',
-      status: DatalabFileStatus.IDLE,
       type: DatalabFileType.FILE,
     } as DatalabFile);
   }
@@ -247,7 +245,6 @@ class BigQueryFileManager extends BaseFileManager {
       icon: 'datalab-icons:bq-dataset',
       id: new DatalabFileId(path, this.myFileManagerType()),
       name: datasetId,
-      status: DatalabFileStatus.IDLE,
       type: DatalabFileType.DIRECTORY,
     } as DatalabFile);
   }
@@ -266,7 +263,6 @@ class BigQueryFileManager extends BaseFileManager {
       icon: 'datalab-icons:bq-table',
       id: new DatalabFileId(path, this.myFileManagerType()),
       name: tableId,
-      status: DatalabFileStatus.IDLE,
       type: DatalabFileType.FILE,
     } as DatalabFile);
   }
