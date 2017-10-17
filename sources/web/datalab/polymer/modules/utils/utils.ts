@@ -32,6 +32,9 @@ class Utils {
     editorUrlComponent:   '/editor/',
     newNotebookUrlComponent:  '/notebook/new/',
     notebookUrlComponent: '/notebook/',
+
+    // Feature names
+    timeoutFeature:       'timeout',
   };
 
   /**

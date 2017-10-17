@@ -17,6 +17,7 @@ the License.
 <link rel="import" href="../../components/datalab-settings/datalab-settings.html">
 <link rel="import" href="../../components/shared-styles/shared-styles.html">
 <link rel="import" href="../../components/timeout-panel/timeout-panel.html">
+<link rel="import" href="../../modules/settings-manager/settings-manager.html">
 
 <link rel="import" href="../../bower_components/app-layout/app-header/app-header.html">
 <link rel="import" href="../../bower_components/app-layout/app-toolbar/app-toolbar.html">
@@ -108,7 +109,7 @@ the License.
     below the toolbar-->
     <paper-dialog id="accountDropdown" class="account-dropdown">
       <auth-panel></auth-panel>
-      <timeout-panel id="accountTimeoutPanel"></timeout-panel>
+      <timeout-panel id="accountTimeoutPanel" hidden="{{!_timeoutEnabled}}"></timeout-panel>
     </paper-dialog>
 
     <!--Info dialog. This shows centered in the middle of the window-->

@@ -60,6 +60,15 @@ class SettingsManager {
   }
 
   /**
+   * Returns true iff the given feature is listed in the enabled gated features list.
+   */
+  public static async isAppFeatureEnabled(featureName: string) {
+    const settings = await this.getAppSettingsAsync();
+    const features = settings.gatedFeatures || [];
+    return features.indexOf(featureName) > -1;
+  }
+
+  /**
    * Sets a user setting.
    * @param setting name of the setting to change.
    * @param value new setting value.
