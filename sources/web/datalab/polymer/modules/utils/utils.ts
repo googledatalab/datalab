@@ -36,7 +36,9 @@ class Utils {
 
   /**
    * Resolves the given URL using the datalab-app element's base URI. This
-   * obviously requires the element to exist on the calling document.
+   * obviously requires the element to exist on the calling document. If we
+   * move away from requiring a datalab-app element on each entrypoint page,
+   * we will need some other common element here.
    */
   public static resolveUrlToDatalabApp(url: string) {
     const mod = Polymer.DomModule.import('datalab-app', '');

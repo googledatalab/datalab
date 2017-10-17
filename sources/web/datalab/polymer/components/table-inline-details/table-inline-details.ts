@@ -166,7 +166,7 @@ class TableInlineDetailsElement extends Polymer.Element {
         const params = encodeURIComponent(JSON.stringify(dict));
         const url = Utils.getHostRoot() + Utils.constants.newNotebookUrlComponent +
             closeResult.selectedDirectory.id.toString() + '?fileName=' + instanceName +
-            '&templateName=bigqueryOverview&params=' + params;
+            '&templateName=' + TEMPLATE_NAME.bigqueryOverview + '&params=' + params;
         window.open(url, '_blank');
       }
     }

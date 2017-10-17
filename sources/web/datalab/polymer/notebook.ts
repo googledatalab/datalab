@@ -89,13 +89,13 @@ function sendMessageToNotebookEditor(message: IframeMessage) {
   }
 }
 
-async function createNew(path: string) {
+async function createNew(parentPath: string) {
   toast.open();
 
   try {
-    await GapiManager.listenForSignInChanges(() => null);
+    await GapiManager.loadGapi();
 
-    const parentId = DatalabFileId.fromString(path.substr('new/'.length));
+    const parentId = DatalabFileId.fromString(parentPath);
     const fileName = queryParams.get('fileName') as string;
     const fileManager = FileManagerFactory.getInstanceForType(
       FileManagerFactory.fileManagerNameToType(parentId.source));
@@ -119,12 +119,12 @@ async function createNew(path: string) {
 if (location.pathname.startsWith(Utils.constants.notebookUrlComponent) && iframe) {
   window.top.addEventListener('message', processMessageEvent);
 
-  const path = location.pathname.substr(Utils.constants.notebookUrlComponent.length);
-
-  if (path.startsWith('new/') && queryParams.has('fileName')) {
+  if (location.pathname.startsWith(Utils.constants.newNotebookUrlComponent) &&
+      queryParams.has('fileName')) {
     // If this is a new notebook being created, make sure it's created and populated
-    // first (if it's a template), then set the iframe path.
-    createNew(path);
+    // first (if it's a template), then redirect this window to that new file.
+    const parentPath = location.pathname.substr(Utils.constants.newNotebookUrlComponent.length);
+    createNew(parentPath);
   } else {
     // Set the iframe source to load the notebook editor resources.
     // TODO: Currently this is one-directional, iframe wrapper url -> iframe
@@ -136,6 +136,7 @@ if (location.pathname.startsWith(Utils.constants.notebookUrlComponent) && iframe
     // to load the notebook editor resources as opposed to the notebook shell
     // (this file). Both resources are loaded at /notebook in order to make any
     // links in the editor relative to /notebook as well.
+    const path = location.pathname.substr(Utils.constants.notebookUrlComponent.length);
     iframe.src = Utils.constants.notebookUrlComponent + path +
         '?inIframe#fileId=' + path;
   }

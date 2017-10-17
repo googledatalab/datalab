@@ -26,6 +26,10 @@ interface TemplateParameter {
   value: string | number;
 }
 
+enum TEMPLATE_NAME {
+  bigqueryOverview = 'bigqueryOverview',
+}
+
 /**
  * This models a notebook template, including its path on disk as well as a
  * list of its required parameters.
@@ -133,14 +137,14 @@ class BigQueryTableOverviewTemplate extends NotebookTemplate {
 class TemplateManager extends Polymer.Element {
 
   public static async newNotebookFromTemplate(name: string, params: {}) {
-    let templateType: any;
+    let templateClassName: new ({}) => NotebookTemplate;
     switch (name) {
-      case 'bigqueryOverview':
-        templateType = BigQueryTableOverviewTemplate; break;
+      case TEMPLATE_NAME.bigqueryOverview:
+        templateClassName = BigQueryTableOverviewTemplate; break;
       default:
         throw new Error('Unknown template name: ' + name);
     }
-    const template = new templateType(params);
+    const template = new templateClassName(params);
 
     const templateStringContent = await this.getTemplateStringContent(template.fileId);
     let templateNotebookContent: NotebookContent;
