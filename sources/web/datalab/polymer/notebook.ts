@@ -21,6 +21,8 @@
  */
 
 const iframe = document.querySelector('#editor') as HTMLIFrameElement;
+const toast = document.querySelector('#datalabNotification') as any;
+const queryParams = new URLSearchParams(window.location.search);
 
 // tslint:disable-next-line:variable-name
 const CommandId = {
@@ -87,12 +89,43 @@ function sendMessageToNotebookEditor(message: IframeMessage) {
   }
 }
 
-if (location.pathname.startsWith(Utils.constants.notebookUrlComponent)) {
-  if (iframe) {
-    window.top.addEventListener('message', processMessageEvent);
+async function createNew(parentPath: string) {
+  toast.open();
 
-    const path = location.pathname.substr(Utils.constants.notebookUrlComponent.length);
+  try {
+    await GapiManager.loadGapi();
 
+    const parentId = DatalabFileId.fromString(parentPath);
+    const fileName = queryParams.get('fileName') as string;
+    const fileManager = FileManagerFactory.getInstanceForType(
+      FileManagerFactory.fileManagerNameToType(parentId.source));
+    const newFile = await fileManager.create(DatalabFileType.NOTEBOOK, parentId, fileName);
+
+    // If this is a template, populate it
+    if (queryParams.has('templateName')) {
+      const templateName = queryParams.get('templateName') as string;
+      const params = JSON.parse(decodeURIComponent(queryParams.get('params') || '{}'));
+      const template = await TemplateManager.newNotebookFromTemplate(templateName, params);
+      await fileManager.saveText(newFile, JSON.stringify(template));
+    }
+    location.href = fileManager.getNotebookUrl(newFile.id);
+  } catch (e) {
+    // TODO: Add some error message here.
+    Utils.log.error('Failed to create notebook:', e.message);
+  }
+  toast.close();
+}
+
+if (location.pathname.startsWith(Utils.constants.notebookUrlComponent) && iframe) {
+  window.top.addEventListener('message', processMessageEvent);
+
+  if (location.pathname.startsWith(Utils.constants.newNotebookUrlComponent) &&
+      queryParams.has('fileName')) {
+    // If this is a new notebook being created, make sure it's created and populated
+    // first (if it's a template), then redirect this window to that new file.
+    const parentPath = location.pathname.substr(Utils.constants.newNotebookUrlComponent.length);
+    createNew(parentPath);
+  } else {
     // Set the iframe source to load the notebook editor resources.
     // TODO: Currently this is one-directional, iframe wrapper url -> iframe
     // hash param. We will need to change this if the editor is allowed to
@@ -103,6 +136,7 @@ if (location.pathname.startsWith(Utils.constants.notebookUrlComponent)) {
     // to load the notebook editor resources as opposed to the notebook shell
     // (this file). Both resources are loaded at /notebook in order to make any
     // links in the editor relative to /notebook as well.
+    const path = location.pathname.substr(Utils.constants.notebookUrlComponent.length);
     iframe.src = Utils.constants.notebookUrlComponent + path +
         '?inIframe#fileId=' + path;
   }

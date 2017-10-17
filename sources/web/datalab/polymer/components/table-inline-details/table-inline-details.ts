@@ -117,24 +117,57 @@ class TableInlineDetailsElement extends Polymer.Element {
 
     if (this._table) {
       const dict = {
-        BIGQUERY_DATASET_ID: this._table.tableReference.datasetId,
-        BIGQUERY_FULL_ID: this._table.id.replace(':', '.'),
-        BIGQUERY_PROJECT_ID: this._table.tableReference.projectId,
-        BIGQUERY_TABLE_DESCRIPTION: this._table.description,
-        BIGQUERY_TABLE_ID: this._table.tableReference.tableId,
+        BIGQUERY_DATASET_ID: this._table.tableReference.datasetId || '',
+        BIGQUERY_FULL_ID: this._table.id.replace(':', '.') || '',
+        BIGQUERY_PROJECT_ID: this._table.tableReference.projectId || '',
+        BIGQUERY_TABLE_DESCRIPTION: this._table.description || '',
+        BIGQUERY_TABLE_ID: this._table.tableReference.tableId || '',
       };
-      const template = new BigQueryTableOverviewTemplate(dict, this);
 
-      try {
-        const notebook = await TemplateManager.newNotebookFromTemplate(template);
+      const appSettings = await SettingsManager.getAppSettingsAsync();
 
-        if (notebook) {
-          const url = FileManagerFactory.getInstanceForType(notebook.id.source)
-              .getNotebookUrl(notebook.id);
-          window.open(url, '_blank');
+      // TODO(jimmc): Look for a user preference for baseDir
+      const baseType = (appSettings.defaultFileManager || 'drive');
+      const baseDir = baseType + '/';
+      // TODO(jimmc): Allow specifying a path with baseDir. For now, we are
+      // just using the root of the filesystem as the default location.
+      const baseName = 'temp';
+      // Add some more stuff to the name to make it different each time.
+      // We are not checking to see if the file exists, so it is not
+      // guaranteed to produce a unique filename, but since we are doing
+      // it based on the current time down to the second, and it is scoped
+      // only to this user, the odds of a collision are pretty low.
+      const dateStr = new Date().toISOString();
+      const yearStr =
+          dateStr.slice(0, 4) + dateStr.slice(5, 7) + dateStr.slice(8, 10);
+      const timeStr =
+          dateStr.slice(11, 13) + dateStr.slice(14, 16) + dateStr.slice(17, 19);
+      const moreName = yearStr + '_' + timeStr;
+      const fileName = baseName + '_' + moreName + '.ipynb';
+      const options: DirectoryPickerDialogOptions = {
+        big: true,
+        fileId: baseDir,
+        fileName,
+        okLabel: 'Save Here',
+        title: 'New Notebook',
+        withFileName: true,
+      };
+
+      const closeResult =
+          await Utils.showDialog(DirectoryPickerDialogElement, options) as
+              DirectoryPickerDialogCloseResult;
+
+      if (closeResult.confirmed && closeResult.fileName) {
+        let instanceName = closeResult.fileName;
+        if (!instanceName.endsWith('.ipynb')) {
+          instanceName += '.ipynb';
         }
-      } catch (e) {
-        Utils.showErrorDialog('Error', e.message);
+
+        const params = encodeURIComponent(JSON.stringify(dict));
+        const url = Utils.getHostRoot() + Utils.constants.newNotebookUrlComponent +
+            closeResult.selectedDirectory.id.toString() + '?fileName=' + instanceName +
+            '&templateName=' + TEMPLATE_NAME.bigqueryOverview + '&params=' + params;
+        window.open(url, '_blank');
       }
     }
   }
