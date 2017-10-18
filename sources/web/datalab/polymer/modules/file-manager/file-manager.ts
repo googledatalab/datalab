@@ -37,11 +37,6 @@ enum DatalabFileType {
   NOTEBOOK,
 }
 
-enum DatalabFileStatus {
-  IDLE,
-  RUNNING,
-}
-
 /**
  * Unique identifier for a file object.
  */
@@ -109,7 +104,6 @@ abstract class DatalabFile {
   icon: string;
   id: DatalabFileId;
   name: string;
-  status?: DatalabFileStatus;
   type: DatalabFileType;
 
   constructor(obj?: DatalabFile) {
@@ -117,7 +111,6 @@ abstract class DatalabFile {
       this.icon = obj.icon;
       this.name = obj.name;
       this.id = obj.id;
-      this.status = obj.status;
       this.type = obj.type;
     }
   }
@@ -137,12 +130,6 @@ abstract class DatalabFile {
 interface FileManager {
   // TODO: Consider supporting getting both the file and content objects with
   // one call.
-
-  /**
-   * Returns true if we can host notebooks on this filesystem, and thus should
-   * display the Status column in the file browser.
-   */
-  canHostNotebooks(): boolean;
 
   /**
    * Returns a DatalabFile object representing the file or directory requested
@@ -233,10 +220,6 @@ interface FileManager {
  * functionality for the different FileManager classes.
  */
 class BaseFileManager implements FileManager {
-  canHostNotebooks(): boolean {
-    return true;
-  }
-
   get(_fileId: DatalabFileId): Promise<DatalabFile> {
     throw new UnsupportedMethod('get', this);
   }

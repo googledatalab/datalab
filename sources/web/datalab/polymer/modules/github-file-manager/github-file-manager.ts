@@ -165,7 +165,6 @@ class GithubFileManager extends BaseFileManager {
       icon: '',
       id: new DatalabFileId(path, FileManagerType.GITHUB),
       name: parts[parts.length - 1],
-      status: DatalabFileStatus.IDLE,
       type: DatalabFileType.DIRECTORY,
     } as DatalabFile);
   }
@@ -193,7 +192,6 @@ class GithubFileManager extends BaseFileManager {
       icon: '',
       id: new DatalabFileId(path, FileManagerType.GITHUB),
       name: '/',
-      status: DatalabFileStatus.IDLE,
       type: DatalabFileType.DIRECTORY,
     } as DatalabFile);
   }
@@ -220,7 +218,6 @@ class GithubFileManager extends BaseFileManager {
       icon,
       id: new DatalabFileId(repo.full_name, FileManagerType.GITHUB),
       name: repo.name,
-      status: DatalabFileStatus.IDLE,
       type,
     } as DatalabFile);
   }
@@ -238,7 +235,6 @@ class GithubFileManager extends BaseFileManager {
       icon,
       id: new DatalabFileId(path, FileManagerType.GITHUB),
       name: file.name,
-      status: DatalabFileStatus.IDLE,
       type,
     } as DatalabFile);
   }
@@ -254,7 +250,6 @@ class GithubFileManager extends BaseFileManager {
       icon,
       id: new DatalabFileId(path, FileManagerType.GITHUB),
       name: file.name,
-      status: DatalabFileStatus.IDLE,
       type,
     } as DatalabFile);
   }

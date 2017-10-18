@@ -20,13 +20,27 @@
  */
 class ToolbarElement extends Polymer.Element {
 
+  private _timeoutEnabled: boolean;
+
   static get is() { return 'datalab-toolbar'; }
 
-  ready() {
+  static get properties() {
+    return {
+      _timeoutEnabled: Boolean,
+    };
+  }
+
+  async ready() {
     super.ready();
-    const authPanel = this.shadowRoot.querySelector('auth-panel');
-    if (authPanel) {
-      authPanel.addEventListener('signInOutDone', this._closeAccountDropdown.bind(this));
+
+    this._timeoutEnabled = await SettingsManager.isAppFeatureEnabled(
+        Utils.constants.timeoutFeature);
+
+    if (this._timeoutEnabled) {
+      const authPanel = this.shadowRoot.querySelector('auth-panel');
+      if (authPanel) {
+        authPanel.addEventListener('signInOutDone', this._closeAccountDropdown.bind(this));
+      }
     }
   }
 

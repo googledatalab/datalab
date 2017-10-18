@@ -51,7 +51,7 @@ class GapiManager {
      */
     public static async create(mimeType: string, parentId: string, name: string, content = '')
         : Promise<gapi.client.drive.File> {
-      await this._load;
+      await this._load();
       let createPromise = gapi.client.drive.files.create({
           mimeType,
           name,
@@ -271,7 +271,7 @@ class GapiManager {
      * Fetches table rows from BigQuery
      */
     public static getTableRows(projectId: string, datasetId: string,
-        tableId: string, maxResults: number):
+                               tableId: string, maxResults: number):
         Promise<gapi.client.HttpRequestFulfilled<gapi.client.bigquery.ListTabledataResponse>> {
       const request = {
         datasetId,
@@ -351,10 +351,10 @@ class GapiManager {
 
   /**
    * Starts the sign-in flow using gapi.
-   * If the user has not previously authorized our app, this will open a pop-up window
+   * If the user has not previously authorized our app, this will redirect to oauth url
    * to ask the user to select an account and to consent to our use of the scopes.
-   * If the user has previously signed in and the doPrompt flag is false, the pop-up will
-   * appear momentarily before automatically closing. If the doPrompt flag is set, then
+   * If the user has previously signed in and the doPrompt flag is false, the redirect will
+   * happen momentarily before automatically closing. If the doPrompt flag is set, then
    * the user will be prompted as if authorization has not previously been provided.
    */
    public static signIn(doPrompt: boolean): Promise<gapi.auth2.GoogleUser> {

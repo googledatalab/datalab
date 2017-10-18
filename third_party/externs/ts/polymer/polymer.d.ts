@@ -28,6 +28,7 @@ interface ElementDefinitionOptions {
 
 interface PolymerTemplate extends Node {
   content: HTMLElement;
+  assetpath: string;
 }
 
 declare module Polymer {
@@ -119,6 +120,10 @@ declare module Polymer {
 
   class dom {
     static flush(): null;
+  }
+
+  class ResolveUrl {
+    static resolveUrl(url: string, base: string): string;
   }
 
   function importHref(href: string,

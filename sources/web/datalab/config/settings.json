@@ -47,5 +47,6 @@
     "--ip=\"127.0.0.1\""
   ],
   "supportedFileBrowserSources": ["jupyter"],
-  "fakeMetadataAddress": {"host": "metadata.google.internal", "port": 80}
+  "fakeMetadataAddress": {"host": "metadata.google.internal", "port": 80},
+  "gatedFeatures": []
 }

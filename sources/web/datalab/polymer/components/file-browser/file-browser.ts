@@ -101,7 +101,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   private _isPreviewPaneToggledOn: boolean;
   private _pathHistory: DatalabFile[];
   private _pathHistoryIndex: number;
-  private _showStatus: boolean;
   private _updateToolbarCollapseThreshold = 720;
   private _uploadFileSizeWarningLimit = 25 * 1024 * 1024;
 
@@ -265,7 +264,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
     this._fileManager = FileManagerFactory.getInstanceForType(
         FileManagerFactory.fileManagerNameToType(this.fileManagerType));
-    this._showStatus = this._fileManager.canHostNotebooks();
 
     this._fetching = true;
     try {
@@ -285,10 +283,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
     document.addEventListener('inline-details-loaded',
         this._handleInlineDetailsLoaded.bind(this));
-
-    // For a small file/directory picker, we don't need to show the status.
-    const hideStatus = this.small || !this._showStatus;
-    filesElement.columns = hideStatus ? ['Name'] : ['Name', 'Status'];
 
     await this._fetchFileList();
 
@@ -344,7 +338,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       this.fileManagerType = newFileManagerType;
       this._fileManager = FileManagerFactory.getInstanceForType(
           FileManagerFactory.fileManagerNameToType(this.fileManagerType));
-      this._showStatus = this._fileManager.canHostNotebooks();
     }
     this._loadStartupPath(fileId);
   }
@@ -371,7 +364,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         if (this.fileManagerType !== strType) {
           this.fileManagerType = strType;
           this._fileManager = FileManagerFactory.getInstanceForType(type);
-          this._showStatus = this._fileManager.canHostNotebooks();
           this.fileId = '';
 
           this._loadStartupPath(null);
@@ -430,8 +422,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
     this._fetching = true;
 
-    const hideStatus = this.small || !this._showStatus;
-
     try {
       const newList = await this._fileManager.list(fetchFileId);
       // If the current file has changed since this fetch request was made, abort
@@ -454,31 +444,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         throw new Error(msgPrefix + ' ' + e.message);
       } else {
         Utils.log.error(msgPrefix, e);
-      }
-    }
-
-    // Now load the sessions and update the running status of each file
-    // whose id is in the session list.
-    // We do not need to load sessions when not displaying the Status column,
-    if (!hideStatus) {
-      try {
-        const sessions = await SessionManager.listSessionPaths();
-        // Abort if the current fild id has changed while loading sessions.
-        if (fetchFileId !== this.currentFile.id) {
-          return;
-        }
-        const listElement = this.$.files as ItemListElement;
-        this._fileList.forEach((file, i) => {
-          // The v1 notebook editor creates sessions with just the file path,
-          // while v2 editor uses the full id string.
-          if (sessions.indexOf(file.id.path) > -1 ||
-              sessions.indexOf(file.id.toString()) > -1) {
-            listElement.set('rows.' + i + '.columns.1', Utils.getFileStatusString(DatalabFileStatus.RUNNING));
-          }
-        });
-      } catch (e) {
-        // Don't let session fetch errors block displaying the files, just report.
-        Utils.log.error('Error getting list of sessions: ' + e.message);
       }
     }
 
@@ -505,7 +470,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       const createDetailsElement = file.getInlineDetailsName() ?
           () => createDetailsPaneFromFile(file) : undefined;
       const row = new ItemListRow({
-          columns: [file.name, Utils.getFileStatusString(file.status || DatalabFileStatus.IDLE)],
+          columns: [file.name],
           createDetailsElement,
           icon: file.icon,
       });
@@ -730,7 +695,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
                 (newFile as JupyterFile).path = (this.currentFile as JupyterFile).path;
               }
               newFile.name = file.name;
-              newFile.status = DatalabFileStatus.IDLE;
               return newFile;
             })
             .then((newFile) => this._fileManager.saveText(newFile, itemData))

@@ -30,8 +30,23 @@ class Utils {
 
   public static constants = {
     editorUrlComponent:   '/editor/',
+    newNotebookUrlComponent:  '/notebook/new/',
     notebookUrlComponent: '/notebook/',
+
+    // Feature names
+    timeoutFeature:       'timeout',
   };
+
+  /**
+   * Resolves the given URL using the datalab-app element's base URI. This
+   * obviously requires the element to exist on the calling document. If we
+   * move away from requiring a datalab-app element on each entrypoint page,
+   * we will need some other common element here.
+   */
+  public static resolveUrlToDatalabApp(url: string) {
+    const mod = Polymer.DomModule.import('datalab-app', '');
+    return Polymer.ResolveUrl.resolveUrl(url, mod.assetpath);
+  }
 
   /**
    * Opens a dialog with the specified options. It uses the Datalab custom element
@@ -141,18 +156,6 @@ class Utils {
    */
   public static getItemIconString(type: DatalabFileType) {
     return type === DatalabFileType.DIRECTORY ? 'folder' : 'editor:insert-drive-file';
-  }
-
-  // TODO: Consider moving to a dedicated strings module
-  public static getFileStatusString(status: DatalabFileStatus) {
-    switch (status) {
-      case DatalabFileStatus.IDLE:
-        return '';
-      case DatalabFileStatus.RUNNING:
-        return 'Running';
-      default:
-        throw new Error('Unknown file status: ' + status);
-    }
   }
 
   // TODO: Consider moving to a dedicated strings module
