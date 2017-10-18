@@ -156,6 +156,10 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
       in_cloud_shell: Whether or not the command is being run in the
         Google Cloud Shell
     """
+    if __name__ == '__main__':
+        CallFlag = False
+    else:
+        CallFlag = True
     instance = args.instance
     connect_msg = ('Connecting to {0}.\n'
                    'This will create an SSH tunnel '
@@ -223,6 +227,9 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
             print('You can connect to Datalab at ' + datalab_address)
             if not args.no_launch_browser:
                 maybe_open_browser(datalab_address)
+        if CallFlag is True:
+            print('\nTo re-connect to datalab ,please run the '
+                  'command , datalab connect <vm-instance-name>')
         return
 
     def health_check(cancelled_event):
