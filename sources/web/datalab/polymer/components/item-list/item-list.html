@@ -16,6 +16,7 @@ the License.
 
 <link rel="import" href="../../bower_components/iron-icons/editor-icons.html">
 <link rel="import" href="../../bower_components/iron-icons/hardware-icons.html">
+<link rel="import" href="../../bower_components/iron-list/iron-list.html">
 <link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
 <link rel="import" href="../../bower_components/paper-item/paper-item.html">
 
@@ -25,6 +26,7 @@ the License.
     <style include="datalab-shared-styles">
       :host {
         display: flex;
+        flex: 1 1 auto;
         flex-direction: column;
       }
       div {
@@ -45,6 +47,11 @@ the License.
       #listContainer {
         flex: 1 1 auto;
         overflow: auto;
+        display: flex;
+        flex-direction: column;
+      }
+      #list {
+        flex: 1 1 auto;
       }
       .row {
         user-select: none;
@@ -117,22 +124,24 @@ the License.
 
     <!--Item list-->
     <div id="listContainer">
-      <template is="dom-repeat" id="list" items="{{rows}}" as="row">
-        <paper-item class="row" selected$={{row.selected}} on-click="_rowClicked"
-                    on-dblclick="_rowDoubleClicked">
-          <div class="checkbox-col">
-            <paper-checkbox checked={{row.selected}} hidden$="{{_hideCheckboxes}}">
-            </paper-checkbox>
-            <iron-icon hidden$="{{!row._icon}}" icon="{{row.icon}}" src="{{row.src}}"></iron-icon>
-          </div>
-          <template is="dom-repeat" items="{{row.columns}}" as="column">
-            <div class="column">
-              <span>{{column}}</span>
+      <iron-list items="[[rows]]" as="row" id="list">
+        <template>
+          <paper-item class="row" selected$=[[selected]] on-click="_rowClicked"
+                      on-dblclick="_rowDoubleClicked">
+            <div class="checkbox-col">
+              <paper-checkbox checked=[[selected]] hidden$="[[_hideCheckboxes]]">
+              </paper-checkbox>
+              <iron-icon hidden$="[[!row._icon]]" icon="[[row.icon]]" src="[[row.src]]"></iron-icon>
             </div>
-          </template>
-        </paper-item>
-        <div id="details" class="row-details" hidden$="{{!row.showInlineDetails}}"></div>
-      </template>
+            <template is="dom-repeat" items="[[row.columns]]" as="column">
+              <div class="column">
+                <span>[[column]]</span>
+              </div>
+            </template>
+          </paper-item>
+          <div id="details" class="row-details" hidden$="{{!row.showInlineDetails}}"></div>
+        </template>
+      </iron-list>
     </div>
 
   </template>

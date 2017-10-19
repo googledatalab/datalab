@@ -73,8 +73,8 @@ class ProjectPickerDialogElement extends BaseDialogElement {
 
     this._busy = true;
     try {
-      const projectsQueryResults = await GapiManager.bigquery.listProjects();
-      const listItems = this._projectsToListItems(projectsQueryResults.result.projects);
+      const projects = await GapiManager.resourceManager.listAllProjects();
+      const listItems = this._projectsToListItems(projects);
       itemlist.rows = listItems;
 
       this._busy = false;
@@ -92,9 +92,9 @@ class ProjectPickerDialogElement extends BaseDialogElement {
                                   this._handleSelectionChanged.bind(this));
   }
 
-  _projectsToListItems(projects: gapi.client.bigquery.ProjectResource[]): ItemListRow[] {
+  _projectsToListItems(projects: ResourceManagerProject[]): ItemListRow[] {
     return projects.map((project) => new ItemListRow({
-        columns: [project.id, project.numericId.toString()],
+        columns: [project.projectId, project.projectNumber],
         icon: 'datalab-icons:bq-project',
       }));
   }
