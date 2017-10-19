@@ -60,6 +60,8 @@ interface GhFileResponse {
  */
 class GithubFileManager extends BaseFileManager {
 
+  cache = new GithubCache();
+
   public get(fileId: DatalabFileId): Promise<DatalabFile> {
     if (fileId.path === '' || fileId.path === '/') {
       return Promise.resolve(this._ghRootDatalabFile());
@@ -169,7 +171,36 @@ class GithubFileManager extends BaseFileManager {
     } as DatalabFile);
   }
 
-  private _githubApiPathRequest(githubPath: string): Promise<any> {
+  // Gets the requested data, from our cache if we have it and it is
+  // up to date, else from the github API.
+  private _githubApiPathRequest(githubPath: string): Promise<object> {
+    const entry = this.cache.get(githubPath) || {} as GithubCacheEntry;
+    if (entry.promise) {
+      // There is already a fetch in progress for this data
+      return entry.promise;
+    }
+    const fetchPromise = this._sendApiPathRequest(githubPath, entry.etag)
+      .then((request) => {
+        entry.promise = undefined;
+        if (request.status === 304) {
+          // Item has not changed since our last request.
+          // This request did not count against the rate limit.
+          return entry.data;
+        }
+        const newEtag = request.getResponseHeader('etag');
+        const newData = JSON.parse(request.responseText || 'null');
+        if (newEtag) {
+          entry.etag = newEtag;
+        }
+        entry.data = newData;
+        return newData;
+      });
+    entry.promise = fetchPromise;
+    this.cache.put(githubPath, entry);
+    return fetchPromise;
+  }
+
+  private _sendApiPathRequest(githubPath: string, etag?: string): Promise<any> {
     const githubBaseUrl = 'https://api.github.com';
     const restUrl = githubBaseUrl + githubPath;
     const options: XhrOptions = {
@@ -183,7 +214,16 @@ class GithubFileManager extends BaseFileManager {
         'X-Requested-With': 'XMLHttpRequest; googledatalab-datalab-app',
       },
     };
-    return ApiManager.sendRequestAsync(restUrl, options, false);
+    if (etag) {
+      // This item is in our cache, don't retrieve it if it hasn't changed.
+      // Hack: TS compiler thinks options.header 'is possibly undefined';
+      // we know it is defined, this shuts up the compiler.
+      if (options.headers) {
+        options.headers['If-None-Match'] = etag;
+        options.successCodes = [200, 304];
+      }
+    }
+    return ApiManager.sendRawRequestAsync(restUrl, options, false);
   }
 
   private _ghRootDatalabFile(): DatalabFile {
