@@ -291,6 +291,25 @@ class GapiManager {
 
   };
 
+  public static resourceManager = class {
+
+    public static async listAllProjects() {
+      await this._load();
+      return gapi.client.request({
+          method: 'GET',
+          path: 'https://cloudresourcemanager.googleapis.com/v1/projects',
+        })
+      .then((response) => response.result);
+    }
+
+    private static _load(): Promise<void> {
+      return GapiManager.loadGapi()
+        .then(() => gapi.client.load('cloudresourcemanager', 'v1'))
+        .then(() => GapiManager.grantScope(GapiScopes.BIGQUERY));
+    }
+
+  };
+
   private static _clientId = '';   // Gets set by _loadClientId()
   private static _currentUser: gapi.auth2.GoogleUser; // Gets set by _loadClientId
   private static _loadPromise: Promise<void>;
