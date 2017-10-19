@@ -159,13 +159,13 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       response.end('ok');
     });
   } else if (request.url == '/api/metadata' && 'POST' == request.method) {
-      parseRequest(request, function(m: any): void {
-        for (const key of Object.keys(m)) {
-          (metadata as any)[key] = m[key];
-        }
-        response.writeHead(200, { 'Content-Type': 'text/plain' });
-        response.end('ok');
-      });
+    parseRequest(request, function(m: any): void {
+      for (const key of Object.keys(m)) {
+        (metadata as any)[key] = m[key];
+      }
+      response.writeHead(200, { 'Content-Type': 'text/plain' });
+      response.end('ok');
+    });
   } else {
     response.writeHead(404, 'Not Found', { 'Content-Type': 'text/plain' });
     response.end();

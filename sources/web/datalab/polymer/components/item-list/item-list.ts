@@ -240,8 +240,8 @@ class ItemListElement extends Polymer.Element {
     const container = this.$.listContainer as HTMLDivElement;
     const headerContainer = this.$.headerContainer as HTMLDivElement;
     container.addEventListener('scroll', () => {
-      const yOffset = Math.min(container.scrollTop / 5, 5);
-      const shadow = '0px ' + yOffset + 'px 10px -3px #ccc';
+      const yOffset = Math.min(container.scrollTop / 20, 5);
+      const shadow = '0px ' + yOffset + 'px 10px -5px #ccc';
       headerContainer.style.boxShadow = shadow;
     });
   }

@@ -20,8 +20,6 @@
  */
 class ToolbarElement extends Polymer.Element {
 
-  public selectedProject: string;
-
   private _timeoutEnabled: boolean;
 
   static get is() { return 'datalab-toolbar'; }
@@ -29,7 +27,6 @@ class ToolbarElement extends Polymer.Element {
   static get properties() {
     return {
       _timeoutEnabled: Boolean,
-      selectedProject: String,
     };
   }
 
@@ -44,20 +41,6 @@ class ToolbarElement extends Polymer.Element {
       if (authPanel) {
         authPanel.addEventListener('signInOutDone', this._closeAccountDropdown.bind(this));
       }
-    }
-  }
-
-  async pickProject() {
-    const options: BaseDialogOptions = {
-      big: true,
-      okLabel: 'Select',
-      title: 'Select Project',
-    };
-    const result = await Utils.showDialog(ProjectPickerDialogElement, options) as
-        ProjectPickerDialogCloseResult;
-
-    if (result.confirmed) {
-      this.selectedProject = result.projectName;
     }
   }
 

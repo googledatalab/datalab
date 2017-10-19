@@ -104,7 +104,7 @@ the License.
       <div id="header">
         <div class="checkbox-col">
           <paper-checkbox id="selectAllCheckbox" on-checked-changed="_selectAllChanged"
-                          checked={{_isAllSelected}}>
+                          checked={{_isAllSelected}} hidden$="{{_hideCheckboxes}}">
           </paper-checkbox>
         </div>
         <template is="dom-repeat" items="{{columns}}" as="column">
