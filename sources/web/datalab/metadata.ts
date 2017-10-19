@@ -158,8 +158,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       response.writeHead(200, { 'Content-Type': 'text/plain' });
       response.end('ok');
     });
-  } else if (request.url == '/api/metadata') {
-    if ('POST' === request.method) {
+  } else if (request.url == '/api/metadata' && 'POST' == request.method) {
       parseRequest(request, function(m: any): void {
         for (const key of Object.keys(m)) {
           (metadata as any)[key] = m[key];
@@ -167,10 +166,6 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
         response.writeHead(200, { 'Content-Type': 'text/plain' });
         response.end('ok');
       });
-    } else if ('GET' === request.method) {
-      response.writeHead(200, { 'Content-Type': 'application/json' });
-      response.end(JSON.stringify(metadata));
-    }
   } else {
     response.writeHead(404, 'Not Found', { 'Content-Type': 'text/plain' });
     response.end();

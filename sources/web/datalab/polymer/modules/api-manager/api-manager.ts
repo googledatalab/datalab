@@ -37,7 +37,6 @@ enum ServiceId {
   BASE_PATH,
   CONTENT,
   CREDENTIALS,
-  METADATA,
   SESSIONS,
   TERMINALS,
   TIMEOUT,
@@ -145,8 +144,6 @@ class ApiManager {
         return '/api/contents';
       case ServiceId.CREDENTIALS:
         return '/api/creds';
-      case ServiceId.METADATA:
-        return '/api/metadata';
       case ServiceId.SESSIONS:
         return '/api/sessions';
       case ServiceId.TERMINALS:

@@ -45,17 +45,6 @@ class ToolbarElement extends Polymer.Element {
         authPanel.addEventListener('signInOutDone', this._closeAccountDropdown.bind(this));
       }
     }
-
-    // Populate selected project
-    try {
-      const metadata =
-          await ApiManager.sendRequestAsync(ApiManager.getServiceUrl(ServiceId.METADATA));
-      if (metadata.project) {
-        this.selectedProject = metadata.project;
-      }
-    } catch (e) {
-      Utils.log.error('Could not get project name from metadata');
-    }
   }
 
   async pickProject() {
@@ -68,14 +57,6 @@ class ToolbarElement extends Polymer.Element {
         ProjectPickerDialogCloseResult;
 
     if (result.confirmed) {
-      const xhrOptions: XhrOptions = {
-        method: 'POST',
-        parameters: JSON.stringify({
-          project: result.projectName,
-          project_number: result.projectId,
-        })
-      };
-      await ApiManager.sendTextRequestAsync(ApiManager.getServiceUrl(ServiceId.METADATA), xhrOptions);
       this.selectedProject = result.projectName;
     }
   }
