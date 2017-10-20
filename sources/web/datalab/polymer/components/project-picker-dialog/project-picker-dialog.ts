@@ -92,9 +92,10 @@ class ProjectPickerDialogElement extends BaseDialogElement {
                                   this._handleSelectionChanged.bind(this));
   }
 
-  _projectsToListItems(projects: ResourceManagerProject[]): ItemListRow[] {
+  _projectsToListItems(projects: gapi.client.cloudresourcemanager.Project[])
+      : ItemListRow[] {
     return projects.map((project) => new ItemListRow({
-        columns: [project.projectId, project.projectNumber],
+        columns: [project.projectId || '', project.projectNumber || ''],
         icon: 'datalab-icons:bq-project',
       }));
   }

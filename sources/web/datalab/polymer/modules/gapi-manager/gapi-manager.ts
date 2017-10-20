@@ -19,17 +19,6 @@ class MissingClientIdError extends Error {
   message = 'No oauth2ClientId found in user or config settings';
 }
 
-interface ResourceManagerProject {
-  createTime: string;
-  lifecycleState: string;
-  parent: {
-    id: string;
-    type: string;
-  };
-  projectId: string;
-  projectNumber: string;
-}
-
 enum GapiScopes {
   BIGQUERY,
   DRIVE,
@@ -110,7 +99,7 @@ class GapiManager {
           },
           path: '/upload/drive/v3/files/' + fileId,
         })
-      .then((response) => response.result);
+      .then((response) => response.result as gapi.client.drive.File);
     }
 
     /**
@@ -311,7 +300,7 @@ class GapiManager {
     public static async listAllProjects() {
       await this._load();
       let nextPageToken = null;
-      const allProjects: ResourceManagerProject[] = [];
+      const allProjects: gapi.client.cloudresourcemanager.Project[] = [];
       do {
         const result: any = await gapi.client.request({
             method: 'GET',
