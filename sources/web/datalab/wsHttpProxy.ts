@@ -64,6 +64,9 @@ export class WsHttpProxy {
             port: server.address().port,
             path: request.path,
           };
+          if (request.binary) {
+            options.encoding = null;
+          }
           // Requests have a unique message ID which is used by the client to differentiate
           // responses.
           const wsResponse: any = {
@@ -72,14 +75,26 @@ export class WsHttpProxy {
 
           const httpRequest = http.request(options, (httpResponse: http.ClientResponse) => {
             wsResponse.status = httpResponse.statusCode;
+            wsResponse.statusText = httpResponse.statusMessage;
+            // Headers is an array of arrays of key/value pairs
+            wsResponse.headers = httpResponse.rawHeaders.reduce((result: string[][], value: string, index: number, array: string[]) => {
+              if (index % 2 === 0)
+                result.push(array.slice(index, index + 2));
+              return result;
+            }, []);
             // Accumulate the full response and send as a single message over the websocket.
-            wsResponse.data = '';
-            httpResponse.on('data', (chunk: string) => {
-              wsResponse.data += chunk;
+            const data:any[] = [];
+            httpResponse.on('data', (chunk: any) => {
+              data.push(chunk);
             });
             httpResponse.on('end', () => {
               // Ensure that the socket hasn't been closed while the request was being processed.
               if (client.readyState === client.OPEN) {
+                if (request.binary) {
+                  wsResponse.data = Buffer.concat(<Buffer[]>data).toString('base64');
+                } else {
+                  wsResponse.data = data.join('');
+                }
                 client.send(JSON.stringify(wsResponse));
               }
             });
