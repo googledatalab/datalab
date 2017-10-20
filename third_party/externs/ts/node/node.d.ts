@@ -346,8 +346,10 @@ declare module "http" {
     }
     export interface ClientResponse extends events.EventEmitter, stream.Readable {
         statusCode: number;
+        statusMessage: string;
         httpVersion: string;
         headers: any;
+        rawHeaders: string[];
         trailers: any;
         setEncoding(encoding?: string): void;
         pause(): void;
