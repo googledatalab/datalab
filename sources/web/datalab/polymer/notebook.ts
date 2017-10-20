@@ -28,6 +28,7 @@ const queryParams = new URLSearchParams(window.location.search);
 const CommandId = {
   ERROR: 'error',
   LOAD_NOTEBOOK: 'load-notebook',
+  PICK_PROJECT: 'pick-project',
   UPLOAD_USER_CREDS: 'upload-user-creds',
 };
 
@@ -45,41 +46,65 @@ async function processMessageEvent(e: MessageEvent) {
 
   const message = e.data as IframeMessage;
 
-  if (message.command === CommandId.UPLOAD_USER_CREDS) {
-    const ackMessage: IframeMessage = {
-      guid: message.guid,
-    };
-    try {
-      await ApiManager.uploadOauthAccessToken();
-    } catch (e) {
-      ackMessage.arguments = e.toString();
-      ackMessage.command = CommandId.ERROR;
-    }
-    sendMessageToNotebookEditor(ackMessage);
-  } else if (message.command === CommandId.LOAD_NOTEBOOK) {
-    let outgoingMessage: IframeMessage;
-    try {
-      const id = DatalabFileId.fromString(message.arguments);
-      const fileManager = FileManagerFactory.getInstanceForType(id.source);
-      const [file, doc] = await Promise.all([
-        fileManager.get(id),
-        fileManager.getStringContent(id),
-      ]);
-      outgoingMessage = {
-        arguments: [file, doc],
+  switch (message.command) {
+    case CommandId.UPLOAD_USER_CREDS:
+      const ackMessage: IframeMessage = {
+        guid: message.guid,
       };
-    } catch (e) {
-      outgoingMessage = {
-        arguments: e.toString(),
-        command: CommandId.ERROR,
+      try {
+        await ApiManager.uploadOauthAccessToken();
+      } catch (e) {
+        ackMessage.arguments = e.toString();
+        ackMessage.command = CommandId.ERROR;
+      }
+      sendMessageToNotebookEditor(ackMessage);
+      break;
+
+    case CommandId.LOAD_NOTEBOOK:
+      let outgoingMessage: IframeMessage;
+      try {
+        const id = DatalabFileId.fromString(message.arguments);
+        const fileManager = FileManagerFactory.getInstanceForType(id.source);
+        const [file, doc] = await Promise.all([
+          fileManager.get(id),
+          fileManager.getStringContent(id),
+        ]);
+        outgoingMessage = {
+          arguments: [file, doc],
+        };
+      } catch (e) {
+        outgoingMessage = {
+          arguments: e.toString(),
+          command: CommandId.ERROR,
+        };
+      }
+      // Attach the same guid in case this message was sent in an async context
+      outgoingMessage.guid = message.guid;
+      sendMessageToNotebookEditor(outgoingMessage);
+      break;
+
+    case CommandId.PICK_PROJECT:
+      const options: BaseDialogOptions = {
+        big: true,
+        okLabel: 'Select',
+        title: 'Select Project',
       };
-    }
-    // Attach the same guid in case this message was sent in an async context
-    outgoingMessage.guid = message.guid;
-    sendMessageToNotebookEditor(outgoingMessage);
-  } else {
-    Utils.log.error('Received unknown message command: ', message.command);
-    return;
+      const result = await Utils.showDialog(ProjectPickerDialogElement, options) as
+          ProjectPickerDialogCloseResult;
+
+      const projectName = result.confirmed ? result.projectName : null;
+
+      // Attach the same guid in case this message was sent in an async context
+      const projectMessage: IframeMessage = {
+        arguments: projectName,
+        guid: message.guid,
+      };
+      sendMessageToNotebookEditor(projectMessage);
+      break;
+
+    default:
+      Utils.log.error('Received unknown message command: ', message.command);
+      return;
   }
 }
 
