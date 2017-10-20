@@ -13,25 +13,26 @@
  */
 
 describe('GithubCache', () => {
-  const fixture = new GithubCache();
 
   it('should return undefined for path not in the cache', () => {
-    assert(fixture.get('/no/such/path') === undefined,
+    const cache = new GithubCache();
+    assert(cache.get('/no/such/path') === undefined,
         'unexpected entry for unknown path');
   });
 
   it('should return the entry for a stored values', () => {
+    const cache = new GithubCache();
     const path = '/path/to/our/data';
     const entry = {
       data: { foo: 'bar' },
       etag: '1234',
     } as any as GithubCacheEntry;
 
-    fixture.put(path, entry);
+    cache.put(path, entry);
 
-    assert(fixture.get(path) === entry,
+    assert(cache.get(path) === entry,
         'unexpected entry for known path');
-    assert(fixture.get('/no/such/path') === undefined,
+    assert(cache.get('/no/such/path') === undefined,
         'unexpected entry for unknown path');
   });
 

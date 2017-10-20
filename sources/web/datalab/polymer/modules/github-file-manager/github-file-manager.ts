@@ -54,13 +54,42 @@ interface GhFileResponse {
   url: string;  // the url to access this file via the api
 }
 
+interface GithubCacheEntry {
+  data?: object;   // The payload
+  etag?: string;   // The value of the etag header in the github response
+  promise?: Promise<object>;  // The fetch promise if we don't yet have the data
+}
+
+/**
+ * A cache that holds github responses.
+ */
+class GithubCache {
+
+  cache: {[key: string]: GithubCacheEntry} = {};
+
+  // TODO(jimmc) - allow specifying some limits for the cache,
+  // such as time limit, count limit, or entry size limit
+
+  // Returns the entry for the given path, or null if not in the cache.
+  public get(path: string): GithubCacheEntry | null {
+    const entry = this.cache[path];
+    return entry;
+  }
+
+  // Puts the given data into the cache. If there is an existing entry
+  // at that path, updates that entry.
+  public put(path: string, entry: GithubCacheEntry) {
+    this.cache[path] = entry;
+  }
+}
+
 /**
  * A file manager that wraps the Github API so that we can browse github
  * repositories.
  */
 class GithubFileManager extends BaseFileManager {
 
-  cache = new GithubCache();
+  private static cache = new GithubCache();
 
   public get(fileId: DatalabFileId): Promise<DatalabFile> {
     if (fileId.path === '' || fileId.path === '/') {
@@ -174,7 +203,7 @@ class GithubFileManager extends BaseFileManager {
   // Gets the requested data, from our cache if we have it and it is
   // up to date, else from the github API.
   private _githubApiPathRequest(githubPath: string): Promise<object> {
-    const entry = this.cache.get(githubPath) || {} as GithubCacheEntry;
+    const entry = GithubFileManager.cache.get(githubPath) || {} as GithubCacheEntry;
     if (entry.promise) {
       // There is already a fetch in progress for this data
       return entry.promise;
@@ -196,7 +225,7 @@ class GithubFileManager extends BaseFileManager {
         return newData;
       });
     entry.promise = fetchPromise;
-    this.cache.put(githubPath, entry);
+    GithubFileManager.cache.put(githubPath, entry);
     return fetchPromise;
   }
 
