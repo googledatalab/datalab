@@ -162,6 +162,11 @@ class ItemListElement extends Polymer.Element {
   public columns: string[];
 
   /**
+   * Filter function to show a subset of the rows
+   */
+  public filter: Function|null;
+
+  /**
    * Whether to hide the header row
    */
   public hideHeader: boolean;
@@ -186,7 +191,13 @@ class ItemListElement extends Polymer.Element {
    */
   public inlineDetailsMode: InlineDetailsDisplayMode;
 
+  /**
+   * Number of items to show before considering the list too long.
+   */
+  public readonly defaultMaxLength = 100;
+
   private _lastSelectedIndex = -1;
+  // private _completeListShown = true;
 
   static get is() { return 'item-list'; }
 
@@ -208,6 +219,7 @@ class ItemListElement extends Polymer.Element {
         type: Boolean,
         value: false,
       },
+      filter: Function,
       hideHeader: {
         type: Boolean,
         value: false,
@@ -221,6 +233,7 @@ class ItemListElement extends Polymer.Element {
         value: false,
       },
       rows: {
+        observer: '_rowsChanged',
         type: Array,
         value: () => [],
       },
@@ -244,6 +257,15 @@ class ItemListElement extends Polymer.Element {
       const shadow = '0px ' + yOffset + 'px 10px -5px #ccc';
       headerContainer.style.boxShadow = shadow;
     });
+  }
+
+  _rowsChanged() {
+    this.filter = this.rows.length <= this.defaultMaxLength ? null :
+        (_: any, i: number) => i < this.defaultMaxLength;
+    // if (this.rows.length > this.defaultMaxLength) {
+    //   this._completeListShown = false;
+    //   this.filter = null;
+    // }
   }
 
   /**
@@ -415,10 +437,19 @@ class ItemListElement extends Polymer.Element {
     this.dispatchEvent(ev);
   }
 
-  private _getRowDetailsContainer(index: number) {
+  _getRowDetailsContainer(index: number) {
     const nthDivSelector = 'div.row-details:nth-of-type(' + (index + 1) + ')';
     return this.$.listContainer.querySelector(nthDivSelector);
   }
+
+  _showCompleteList() {
+    // this._completeListShown = true;
+    this.filter = null;
+  }
+
+  // _filterMethod(_: ItemListRow, index: number) {
+  //   return this._completeListShown ? true : index < this.defaultMaxLength;
+  // }
 
 }
 

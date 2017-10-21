@@ -96,6 +96,11 @@ the License.
         flex: 1;
         max-width: 150px;
       }
+      #longListMessage {
+        display: block;
+        padding: 20px;
+        text-align: center;
+      }
     </style>
 
     <!--Header row-->
@@ -134,6 +139,10 @@ the License.
         <div id="details" class="row-details" hidden$="{{!row.showInlineDetails}}"></div>
       </template>
     </div>
+    <span id="longListMessage" hidden$="[[!filter]]">
+      Showing [[defaultMaxLength]] out of [[rows.length]] items.
+      <a href="#" on-click="_showCompleteList">Show all items.</a>
+    </span>
 
   </template>
 </dom-module>
