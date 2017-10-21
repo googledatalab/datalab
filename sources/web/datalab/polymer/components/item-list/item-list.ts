@@ -162,11 +162,6 @@ class ItemListElement extends Polymer.Element {
   public columns: string[];
 
   /**
-   * Filter function to show a subset of the rows
-   */
-  public filter: Function|null;
-
-  /**
    * Whether to hide the header row
    */
   public hideHeader: boolean;
@@ -194,10 +189,10 @@ class ItemListElement extends Polymer.Element {
   /**
    * Number of items to show before considering the list too long.
    */
-  public readonly defaultMaxLength = 100;
+  public readonly defaultMaxLength = 50;
 
   private _lastSelectedIndex = -1;
-  // private _completeListShown = true;
+  private _completeListShown = true;
 
   static get is() { return 'item-list'; }
 
@@ -260,12 +255,7 @@ class ItemListElement extends Polymer.Element {
   }
 
   _rowsChanged() {
-    this.filter = this.rows.length <= this.defaultMaxLength ? null :
-        (_: any, i: number) => i < this.defaultMaxLength;
-    // if (this.rows.length > this.defaultMaxLength) {
-    //   this._completeListShown = false;
-    //   this.filter = null;
-    // }
+    this._completeListShown = this.rows.length < this.defaultMaxLength;
   }
 
   /**
@@ -443,14 +433,13 @@ class ItemListElement extends Polymer.Element {
   }
 
   _showCompleteList() {
-    // this._completeListShown = true;
-    this.filter = null;
+    this._completeListShown = true;
+    this.$.list.render();
   }
 
-  // _filterMethod(_: ItemListRow, index: number) {
-  //   return this._completeListShown ? true : index < this.defaultMaxLength;
-  // }
-
+  filterMethod(_: any, i: number) {
+    return this._completeListShown ? true : i < this.defaultMaxLength;
+  }
 }
 
 customElements.define(ItemListElement.is, ItemListElement);
