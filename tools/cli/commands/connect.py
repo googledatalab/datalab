@@ -253,7 +253,7 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
                 if health_resp.getcode() == 200:
                     healthy = True
                     break
-            except:
+            except Exception:
                 continue
 
         if healthy:
