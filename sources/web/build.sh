@@ -55,6 +55,7 @@ cd ../..
 
 # Compile the nodejs server
 cd datalab
+npm install
 npm run transpile -- --outDir $WEB_DIR 
 cd ..
 
