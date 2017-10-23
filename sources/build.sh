@@ -31,21 +31,6 @@ function install_node() {
   export "PATH=${PATH}:/tools/node/bin"
 }
 
-function install_bower() {
-  echo "Installing Bower"
-  npm install -g bower
-}
-
-function install_polyer_cli() {
-  echo "Installing Polymer CLI"
-  npm install -g polymer-cli
-}
-
-function install_typescript() {
-  echo "Installing Typescript"
-  npm install -g typescript
-}
-
 function install_git() {
   echo "Updating apt repository"
   apt-get update -y -qq
@@ -65,9 +50,6 @@ function install_prereqs() {
 
   # Use -v instead of -h to test npm installation, since -h returns non-zero
   npm -v >/dev/null 2>&1 || install_node
-  tsc -h >/dev/null 2>&1  || install_typescript
-  bower -h >/dev/null 2>&1  || install_bower
-  polymer -h >/dev/null 2>&1  || install_polyer_cli
   source ./tools/initenv.sh
 }
 
