@@ -116,6 +116,15 @@ class ApiManager {
     }
   }
 
+  public static async sendRawRequestAsync(url: string, options?: XhrOptions, prependBasepath = true)
+      : Promise<XMLHttpRequest> {
+    if (prependBasepath) {
+      const basepath = await this.getBasePath();
+      url = basepath + url;
+    }
+    return this._xhrRequestAsync(url, options);
+  }
+
   public static async sendRequestAsync(url: string, options?: XhrOptions, prependBasepath = true)
       : Promise<any> {
     if (prependBasepath) {
@@ -179,7 +188,8 @@ class ApiManager {
    * the response text. This method returns immediately with a promise
    * that resolves with the response text when the request completes.
    */
-  protected static _xhrTextAsync(url: string, options?: XhrOptions): Promise<string> {
+  protected static _xhrRequestAsync(url: string, options?: XhrOptions):
+      Promise<XMLHttpRequest> {
 
     options = options || {};
     const method = options.method || 'GET';
@@ -202,7 +212,7 @@ class ApiManager {
             this.isConnected = true;
 
             try {
-              resolve(request.responseText);
+              resolve(request);
             } catch (e) {
               reject(e);
             }
@@ -240,6 +250,16 @@ class ApiManager {
       }
       request.send(params);
     });
+  }
+
+  /**
+   * Sends an XMLHttpRequest to the specified URL, and returns the
+   * the response text. This method returns immediately with a promise
+   * that resolves with the response text when the request completes.
+   */
+  protected static _xhrTextAsync(url: string, options?: XhrOptions): Promise<string> {
+    return this._xhrRequestAsync(url, options)
+      .then((request) => request.responseText);
   }
 
   /**
