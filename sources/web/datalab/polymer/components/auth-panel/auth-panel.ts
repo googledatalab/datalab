@@ -19,7 +19,6 @@
  */
 class AuthPanel extends Polymer.Element {
 
-  private _projectInfo: string;
   private _signedIn: boolean;
   private _userInfo: string;
   private _promptOnSignIn = false;
@@ -28,10 +27,6 @@ class AuthPanel extends Polymer.Element {
 
   static get properties() {
     return {
-      _projectInfo: {
-        type: String,
-        value: '',
-      },
       _signedIn: {
         type: Boolean,
         value: false,
@@ -68,7 +63,6 @@ class AuthPanel extends Polymer.Element {
       GapiManager.getSignedInEmail()
         .then((email: string) => {
           this._userInfo = 'Signed in as ' + email;
-          this._projectInfo = 'No project is set';  // TODO
 
           const ev = new Event('signInOutDone');
           this.dispatchEvent(ev);
