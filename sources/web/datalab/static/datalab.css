@@ -575,6 +575,9 @@ div.selected .CodeMirror-linenumber, div#texteditor-container .CodeMirror-linenu
 div.modal-dialog pre, div.modal-dialog code, #help code, #help pre {
   font-size: 13px !important;
 }
+#help {
+  font-family: 'Source Code Pro', monospace;
+}
 #help pre {
   border: none;
 }
