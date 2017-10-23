@@ -108,7 +108,7 @@ try:
     with open(os.devnull, 'w') as dn:
         subprocess.call(['gcloud', '--version'], stderr=dn, stdout=dn)
     gcloud_cmd = 'gcloud'
-except:
+except Exception:
     gcloud_cmd = 'gcloud.cmd'
 
 
