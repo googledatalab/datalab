@@ -133,7 +133,7 @@ def prompt_for_zone(args, gcloud_compute, instance=None):
     try:
         zone_number = int(selected)
         return zone_map[zone_number]
-    except:
+    except Exception:
         if selected not in matching_zones:
             print('Zone {} not recognized'.format(selected))
             return prompt_for_zone(args, gcloud_compute, instance=instance)

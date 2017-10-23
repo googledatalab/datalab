@@ -25,7 +25,7 @@ import utils
 try:
     # If we are running in Python 2, builtins is available in 'future'.
     from builtins import input as read_input
-except:
+except Exception:
     # We don't want to require the installation of future, so fallback
     # to using raw_input from Py2.
     read_input = raw_input
@@ -534,7 +534,7 @@ def ensure_disk_exists(args, gcloud_compute, disk_name, report_errors=False):
     except subprocess.CalledProcessError:
         try:
             create_disk(args, gcloud_compute, disk_name, report_errors)
-        except:
+        except Exception:
             if (not args.zone) and (not args.quiet):
                 # We take this failure as a sign that gcloud might need
                 # to prompt for a zone. As such, we do that prompting
@@ -592,7 +592,7 @@ def ensure_repo_exists(args, gcloud_repos, repo_name):
         if not matching_repos:
             try:
                 create_repo(args, gcloud_repos, repo_name)
-            except:
+            except Exception:
                 raise RepositoryException(repo_name)
 
 
