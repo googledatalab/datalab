@@ -23,7 +23,7 @@ import connect
 try:
     # If we are running in Python 2, builtins is available in 'future'.
     from builtins import input as read_input
-except:
+except Exception:
     # We don't want to require the installation of future, so fallback
     # to using raw_input from Py2.
     read_input = raw_input
