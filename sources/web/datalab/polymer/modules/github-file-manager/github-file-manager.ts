@@ -65,21 +65,21 @@ interface GithubCacheEntry {
  */
 class GithubCache {
 
-  cache: {[key: string]: GithubCacheEntry} = {};
+  cache_: {[key: string]: GithubCacheEntry} = {};
 
   // TODO(jimmc) - allow specifying some limits for the cache,
   // such as time limit, count limit, or entry size limit
 
   // Returns the entry for the given path, or null if not in the cache.
   public get(path: string): GithubCacheEntry | null {
-    const entry = this.cache[path];
+    const entry = this.cache_[path];
     return entry;
   }
 
   // Puts the given data into the cache. If there is an existing entry
   // at that path, updates that entry.
   public put(path: string, entry: GithubCacheEntry) {
-    this.cache[path] = entry;
+    this.cache_[path] = entry;
   }
 }
 
@@ -89,7 +89,7 @@ class GithubCache {
  */
 class GithubFileManager extends BaseFileManager {
 
-  private static cache = new GithubCache();
+  private static cache_ = new GithubCache();
 
   public get(fileId: DatalabFileId): Promise<DatalabFile> {
     if (fileId.path === '' || fileId.path === '/') {
@@ -203,7 +203,7 @@ class GithubFileManager extends BaseFileManager {
   // Gets the requested data, from our cache if we have it and it is
   // up to date, else from the github API.
   private _githubApiPathRequest(githubPath: string): Promise<object> {
-    const entry = GithubFileManager.cache.get(githubPath) || {} as GithubCacheEntry;
+    const entry = GithubFileManager.cache_.get(githubPath) || {} as GithubCacheEntry;
     if (entry.promise) {
       // There is already a fetch in progress for this data
       return entry.promise;
@@ -225,7 +225,7 @@ class GithubFileManager extends BaseFileManager {
         return newData;
       });
     entry.promise = fetchPromise;
-    GithubFileManager.cache.put(githubPath, entry);
+    GithubFileManager.cache_.put(githubPath, entry);
     return fetchPromise;
   }
 
