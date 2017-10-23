@@ -54,11 +54,42 @@ interface GhFileResponse {
   url: string;  // the url to access this file via the api
 }
 
+interface GithubCacheEntry {
+  data?: object;   // The payload
+  etag?: string;   // The value of the etag header in the github response
+  promise?: Promise<object>;  // The fetch promise if we don't yet have the data
+}
+
+/**
+ * A cache that holds github responses.
+ */
+class GithubCache {
+
+  cache_: {[key: string]: GithubCacheEntry} = {};
+
+  // TODO(jimmc) - allow specifying some limits for the cache,
+  // such as time limit, count limit, or entry size limit
+
+  // Returns the entry for the given path, or null if not in the cache.
+  public get(path: string): GithubCacheEntry | null {
+    const entry = this.cache_[path];
+    return entry;
+  }
+
+  // Puts the given data into the cache. If there is an existing entry
+  // at that path, updates that entry.
+  public put(path: string, entry: GithubCacheEntry) {
+    this.cache_[path] = entry;
+  }
+}
+
 /**
  * A file manager that wraps the Github API so that we can browse github
  * repositories.
  */
 class GithubFileManager extends BaseFileManager {
+
+  private static cache_ = new GithubCache();
 
   public get(fileId: DatalabFileId): Promise<DatalabFile> {
     if (fileId.path === '' || fileId.path === '/') {
@@ -169,7 +200,36 @@ class GithubFileManager extends BaseFileManager {
     } as DatalabFile);
   }
 
-  private _githubApiPathRequest(githubPath: string): Promise<any> {
+  // Gets the requested data, from our cache if we have it and it is
+  // up to date, else from the github API.
+  private _githubApiPathRequest(githubPath: string): Promise<object> {
+    const entry = GithubFileManager.cache_.get(githubPath) || {} as GithubCacheEntry;
+    if (entry.promise) {
+      // There is already a fetch in progress for this data
+      return entry.promise;
+    }
+    const fetchPromise = this._sendApiPathRequest(githubPath, entry.etag)
+      .then((request) => {
+        entry.promise = undefined;
+        if (request.status === 304) {
+          // Item has not changed since our last request.
+          // This request did not count against the rate limit.
+          return entry.data;
+        }
+        const newEtag = request.getResponseHeader('etag');
+        const newData = JSON.parse(request.responseText || 'null');
+        if (newEtag) {
+          entry.etag = newEtag;
+        }
+        entry.data = newData;
+        return newData;
+      });
+    entry.promise = fetchPromise;
+    GithubFileManager.cache_.put(githubPath, entry);
+    return fetchPromise;
+  }
+
+  private _sendApiPathRequest(githubPath: string, etag?: string): Promise<any> {
     const githubBaseUrl = 'https://api.github.com';
     const restUrl = githubBaseUrl + githubPath;
     const options: XhrOptions = {
@@ -183,7 +243,16 @@ class GithubFileManager extends BaseFileManager {
         'X-Requested-With': 'XMLHttpRequest; googledatalab-datalab-app',
       },
     };
-    return ApiManager.sendRequestAsync(restUrl, options, false);
+    if (etag) {
+      // This item is in our cache, don't retrieve it if it hasn't changed.
+      // Hack: TS compiler thinks options.header 'is possibly undefined';
+      // we know it is defined, this shuts up the compiler.
+      if (options.headers) {
+        options.headers['If-None-Match'] = etag;
+        options.successCodes = [200, 304];
+      }
+    }
+    return ApiManager.sendRawRequestAsync(restUrl, options, false);
   }
 
   private _ghRootDatalabFile(): DatalabFile {
