@@ -55,7 +55,7 @@ interface XssiResponse {
  * An abstraction for sending xhr requests to the backend service, including
  * getting the basepath for all upcoming requests
  */
-class ApiManager implements ApiManager {
+class ApiManager {
 
   public static isConnected = true;
 

@@ -1,0 +1,49 @@
+<!--
+Copyright 2017 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License
+is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+or implied. See the License for the specific language governing permissions and limitations under
+the License.
+-->
+
+<link rel="import" href="../../bower_components/paper-progress/paper-progress.html">
+
+<link rel="import" href="../../components/base-dialog/base-dialog.html">
+<link rel="import" href="../../components/datalab-icons/datalab-icons.html">
+<link rel="import" href="../../components/item-list/item-list.html">
+<link rel="import" href="../../components/shared-styles/shared-styles.html">
+
+<dom-module id="project-picker-dialog">
+  <template>
+    <style include="datalab-shared-styles">
+      .current, .placeholder {
+        padding: 10px;
+        font-size: var(--app-content-font-size);
+      }
+    </style>
+
+    <!--Thin progress bar that shows until the file is loaded-->
+    <paper-progress id="progressBar" class="progressbar" indeterminate disabled={{!_busy}}>
+    </paper-progress>
+
+    <div class="current" hidden$={{!selectedProjectName}}>
+      Current Project: 
+      <span class="bold">{{selectedProjectName}}</span>
+      <span>[{{selectedProjectId}}]</span>
+    </div>
+    <div class="placeholder" hidden$={{selectedProjectName}}>
+      No project is currently selected.
+    </div>
+
+    <item-list id="projectList" columns='["Name", "ID"]' no-multiselect></item-list>
+
+  </template>
+</dom-module>
+
+<script src="project-picker-dialog.js"></script>

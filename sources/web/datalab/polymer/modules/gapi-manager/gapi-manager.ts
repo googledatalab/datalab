@@ -99,7 +99,7 @@ class GapiManager {
           },
           path: '/upload/drive/v3/files/' + fileId,
         })
-      .then((response) => response.result);
+      .then((response) => response.result as gapi.client.drive.File);
     }
 
     /**
@@ -286,6 +286,40 @@ class GapiManager {
     private static _load(): Promise<void> {
       return GapiManager.loadGapi()
         .then(() => gapi.client.load('bigquery', 'v2'))
+        .then(() => GapiManager.grantScope(GapiScopes.BIGQUERY));
+    }
+
+  };
+
+  public static resourceManager = class {
+
+    /**
+     * Returns a list of all projects from the resource manager API. It concatenates
+     * all projects returned into one long list.
+     */
+    public static async listAllProjects() {
+      await this._load();
+      let nextPageToken = null;
+      const allProjects: gapi.client.cloudresourcemanager.Project[] = [];
+      do {
+        const result: any = await gapi.client.request({
+            method: 'GET',
+            params: {
+              pageToken: nextPageToken,
+            },
+            path: 'https://cloudresourcemanager.googleapis.com/v1/projects',
+          })
+          .then((response) => response.result);
+        allProjects.push(...result.projects);
+        nextPageToken = result.nextPageToken;
+      } while (nextPageToken);
+
+      return allProjects;
+    }
+
+    private static _load(): Promise<void> {
+      return GapiManager.loadGapi()
+        .then(() => gapi.client.load('cloudresourcemanager', 'v1'))
         .then(() => GapiManager.grantScope(GapiScopes.BIGQUERY));
     }
 
