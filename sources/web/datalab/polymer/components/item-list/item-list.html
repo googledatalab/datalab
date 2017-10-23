@@ -96,6 +96,11 @@ the License.
         flex: 1;
         max-width: 150px;
       }
+      #longListMessage {
+        display: block;
+        padding: 20px;
+        text-align: center;
+      }
     </style>
 
     <!--Header row-->
@@ -117,7 +122,7 @@ the License.
 
     <!--Item list-->
     <div id="listContainer">
-      <template is="dom-repeat" id="list" items="{{rows}}" as="row">
+      <template is="dom-repeat" id="list" items="{{rows}}" as="row" filter="filterMethod">
         <paper-item class="row" selected$={{row.selected}} on-click="_rowClicked"
                     on-dblclick="_rowDoubleClicked">
           <div class="checkbox-col">
@@ -133,6 +138,10 @@ the License.
         </paper-item>
         <div id="details" class="row-details" hidden$="{{!row.showInlineDetails}}"></div>
       </template>
+      <span id="longListMessage" hidden$="[[_completeListShown]]">
+        Showing [[defaultMaxLength]] out of [[rows.length]] items.
+        <a href="#" on-click="_showCompleteList">Show all items.</a>
+      </span>
     </div>
 
   </template>
