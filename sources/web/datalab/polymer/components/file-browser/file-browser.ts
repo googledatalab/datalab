@@ -1099,7 +1099,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     // the refresh also happens after file operations, and when the files page
     // gains focus.
     if (!this._fileListRefreshIntervalHandle) {
-      this._fileListRefreshIntervalHandle = setInterval(() => {
+      this._fileListRefreshIntervalHandle = window.setInterval(() => {
         if (document.hasFocus()) {
           this._fetchFileList();
         }
