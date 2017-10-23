@@ -54,10 +54,10 @@ cd ../..
 # End experimental UI build step
 
 # Compile the nodejs server
-tsc --module commonjs --noImplicitAny \
-    --outDir $WEB_DIR \
-    --target es6 \
-    ./datalab/*.ts
+cd datalab
+npm install
+npm run transpile -- --outDir $WEB_DIR 
+cd ..
 
 rsync -avpq ./datalab/config/ $WEB_DIR/config
 rsync -avpq ./datalab/static/ $WEB_DIR/static

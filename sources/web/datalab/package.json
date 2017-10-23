@@ -17,6 +17,10 @@
     "node": "0.10.x"
   },
   "scripts": {
+    "transpile": "tsc --module commonjs --noImplicitAny --target es6 ./*.ts",
     "start": "node app.js"
+  },
+  "devDependencies": {
+    "typescript": "^2.5.3"
   }
 }
