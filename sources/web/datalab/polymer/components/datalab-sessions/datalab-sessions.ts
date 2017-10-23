@@ -217,7 +217,7 @@ class SessionsElement extends Polymer.Element implements DatalabPageElement {
     // notebook, then switches back to the sessions page. Killing a session also
     // triggers a refresh.
     if (!this._sessionListRefreshIntervalHandle) {
-      this._sessionListRefreshIntervalHandle = setInterval(() => {
+      this._sessionListRefreshIntervalHandle = window.setInterval(() => {
         if (document.hasFocus()) {
           this._fetchSessionList();
         }
