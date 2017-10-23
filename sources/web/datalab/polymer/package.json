@@ -15,6 +15,7 @@
     "@types/chai": "^4.0.1",
     "@types/codemirror": "0.0.42",
     "@types/gapi.auth2": "0.0.42",
+    "@types/gapi.client.cloudresourcemanager": "^1.0.0",
     "@types/mocha": "^2.2.41",
     "@types/socket.io-client": "^1.4.30",
     "tslint": "^5.7.0",

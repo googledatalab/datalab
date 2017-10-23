@@ -73,7 +73,7 @@ class ItemListRow {
    */
   _updateInlineDetails(
       inlineDetailsMode: InlineDetailsDisplayMode,
-      multiSelect: boolean, rowDetailsElement: HTMLElement) {
+      multipleSelected: boolean, rowDetailsElement: HTMLElement) {
     const oldShowInlineDetails = this.showInlineDetails;
     if (!this.canShowDetails) {
       // If we don't know how to dislay details element, then we never do
@@ -84,7 +84,7 @@ class ItemListRow {
       this.showInlineDetails = true;
     } else if (!this.selected) {
       this.showInlineDetails = false;
-    } else if (!multiSelect) {
+    } else if (!multipleSelected) {
       this.showInlineDetails = true;
     } else if (inlineDetailsMode === InlineDetailsDisplayMode.MULTIPLE_SELECT) {
       this.showInlineDetails = true;
@@ -172,6 +172,11 @@ class ItemListElement extends Polymer.Element {
   public disableSelection: boolean;
 
   /**
+   * Whether to disable multi-selection
+   */
+  public noMultiselect: boolean;
+
+  /**
    * The list of currently selected indices
    */
   public selectedIndices: number[];
@@ -187,6 +192,10 @@ class ItemListElement extends Polymer.Element {
 
   static get properties() {
     return {
+      _hideCheckboxes: {
+        computed: '_computeHideCheckboxes(disableSelection, noMultiselect)',
+        type: Boolean,
+      },
       _isAllSelected: {
         computed: '_computeIsAllSelected(selectedIndices)',
         type: Boolean,
@@ -206,6 +215,10 @@ class ItemListElement extends Polymer.Element {
       inlineDetailsMode: {
         type: Number,
         value: InlineDetailsDisplayMode.NONE,
+      },
+      noMultiselect: {
+        type: Boolean,
+        value: false,
       },
       rows: {
         type: Array,
@@ -227,8 +240,8 @@ class ItemListElement extends Polymer.Element {
     const container = this.$.listContainer as HTMLDivElement;
     const headerContainer = this.$.headerContainer as HTMLDivElement;
     container.addEventListener('scroll', () => {
-      const yOffset = Math.min(container.scrollTop / 5, 5);
-      const shadow = '0px ' + yOffset + 'px 10px -3px #ccc';
+      const yOffset = Math.min(container.scrollTop / 20, 5);
+      const shadow = '0px ' + yOffset + 'px 10px -5px #ccc';
       headerContainer.style.boxShadow = shadow;
     });
   }
@@ -256,6 +269,13 @@ class ItemListElement extends Polymer.Element {
   }
 
   /**
+   * Returns the value for the computed property hideCheckboxes.
+   */
+  _computeHideCheckboxes(disableSelection: boolean, noMultiselect: boolean) {
+    return disableSelection || noMultiselect;
+  }
+
+  /**
    * Selects an item in the list.
    * @param index index of item to select
    */
@@ -277,17 +297,17 @@ class ItemListElement extends Polymer.Element {
    * Updates the show-details flag for a row after selection change.
    */
   _updateItemSelection(index: number, newValue: boolean) {
-    const multiSelect = this.selectedIndices.length > 1;
+    const multipleSelected = this.selectedIndices.length > 1;
     const rowDetailsElement = this._getRowDetailsContainer(index);
     this.rows[index]._updateInlineDetails(
-        this.inlineDetailsMode, multiSelect, rowDetailsElement);
+        this.inlineDetailsMode, multipleSelected, rowDetailsElement);
     this.notifyPath('rows.' + index + '.showInlineDetails',
         this.rows[index].showInlineDetails);
     const previousSelectedCount =
         this.selectedIndices.length + (newValue ? -1 : 1);
-    const previousMultiSelect = previousSelectedCount > 1;
+    const previousMultipleSelected = previousSelectedCount > 1;
     if (this.inlineDetailsMode === InlineDetailsDisplayMode.SINGLE_SELECT &&
-        multiSelect !== previousMultiSelect) {
+        multipleSelected !== previousMultipleSelected) {
       /** If we are in SINGLE_SELECT mode and we have changed from having one
        * item selected to many or vice-versa, we need to update all the other
        * selected items.
@@ -296,7 +316,7 @@ class ItemListElement extends Polymer.Element {
         if (i !== index) {
           const otherRowDetailsContainer = this._getRowDetailsContainer(i);
           this.rows[i]._updateInlineDetails(
-              this.inlineDetailsMode, multiSelect, otherRowDetailsContainer);
+              this.inlineDetailsMode, multipleSelected, otherRowDetailsContainer);
           this.notifyPath('rows.' + i + '.showInlineDetails',
             this.rows[i].showInlineDetails);
         }
@@ -346,14 +366,15 @@ class ItemListElement extends Polymer.Element {
 
     // If shift key is pressed and we had saved the last selected index, select
     // all items from this index till the last selected.
-    if (e.shiftKey && this._lastSelectedIndex !== -1 && this.selectedIndices.length > 0) {
+    if (!this.noMultiselect && e.shiftKey && this._lastSelectedIndex !== -1 &&
+        this.selectedIndices.length > 0) {
       this._unselectAll();
       const start = Math.min(this._lastSelectedIndex, index);
       const end = Math.max(this._lastSelectedIndex, index);
       for (let i = start; i <= end; ++i) {
         this._selectItem(i);
       }
-    } else if (e.ctrlKey || e.metaKey) {
+    } else if (!this.noMultiselect && (e.ctrlKey || e.metaKey)) {
       // If ctrl (or Meta for MacOS) key is pressed, toggle its selection.
 
       if (this.rows[index].selected === false) {
