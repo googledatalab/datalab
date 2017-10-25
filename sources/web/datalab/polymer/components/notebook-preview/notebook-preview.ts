@@ -13,7 +13,9 @@
  */
 
 // Instead of writing a .d.ts file containing this one line.
-declare function marked(markdown: string): string;
+declare function markdownit(): {
+  render(markdown: string): string;
+};
 
 // TODO(jimmc) - consider creating a common superclass, such as item-preview,
 // for notebook-preview and the other preview classes, to contain common
@@ -101,7 +103,7 @@ class NotebookPreviewElement extends Polymer.Element {
           firstTwoCells.forEach((cell) => {
             if (cell.cell_type === 'markdown') {
               const cellSource = Array.isArray(cell.source) ? cell.source.join('\n') : cell.source;
-              markdownHtml += marked(cellSource);
+              markdownHtml += markdownit().render(cellSource);
             }
           });
           this.$.previewHtml.innerHTML = markdownHtml;
