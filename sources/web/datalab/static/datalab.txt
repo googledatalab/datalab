@@ -57,7 +57,7 @@ cat /datalab/license.txt
 ## Js Libraries
 - Sylvester [https://github.com/jcoglan/sylvester]
 - Parallel Coordinates [https://github.com/syntagmatic/parallel-coordinates]
-- marked [https://github.com/chjj/marked]
+- markdown-it [https://github.com/markdown-it/markdown-it]
 
 ## Node.js Modules
 - bunyan [https://www.npmjs.com/package/bunyan]

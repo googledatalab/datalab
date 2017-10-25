@@ -12,9 +12,6 @@
  * the License.
  */
 
-// Instead of writing a .d.ts file containing this one line.
-declare function marked(markdown: string): string;
-
 /**
  * Inline details pane element for Datalab.
  */
