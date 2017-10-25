@@ -50,7 +50,6 @@ describe('<file-browser>', () => {
       const mockSettings: common.UserSettings = {
         idleTimeoutInterval: '',
         idleTimeoutShutdownCommand: '',
-        oauth2ClientId: '',
         startuppath: startuppath.path,
         theme: 'light',
       };

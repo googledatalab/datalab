@@ -34,7 +34,11 @@ class Utils {
     notebookUrlComponent: '/notebook/',
 
     // Feature names
-    timeoutFeature:       'timeout',
+    // tslint:disable-next-line:object-literal-sort-keys
+    features: {
+      timeout: 'timeout',
+      userSettings: 'userSettings',
+    },
   };
 
   /**
