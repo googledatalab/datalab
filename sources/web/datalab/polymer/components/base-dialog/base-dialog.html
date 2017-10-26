@@ -40,8 +40,7 @@ the License.
                   on-keydown="_checkEnter">
       <div class$="dialog-title error-title--{{isError}}">{{title}}</div>
       <div class="dialog-content">
-        <!--message value is bound in javascript because it needs to bind to innerHTML-->
-        <div id="message" hidden$="{{!messageHtml}}">{{messageHtml}}</div>
+        <div id="message" hidden$="{{!message}}">{{message}}</div>
         <!--body acts as a place holder for extending elements, their custom
         markup is inserted here by stamping it from Javascript-->
         <div id="body"></div>

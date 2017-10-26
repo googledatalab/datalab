@@ -88,12 +88,12 @@ class Utils {
   /**
    * Shows a base dialog with error formatting.
    * @param title error title
-   * @param messageHtml error message
+   * @param message error message
    */
-  public static async showErrorDialog(title: string, messageHtml: string) {
+  public static async showErrorDialog(title: string, message: string) {
     const dialogOptions: BaseDialogOptions = {
       isError: true,
-      messageHtml,
+      message,
       okLabel: 'Close',
       title,
     };

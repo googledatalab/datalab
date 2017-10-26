@@ -24,7 +24,6 @@ interface InputDialogCloseResult extends BaseDialogCloseResult {
  * Options for opening an input dialog.
  */
 interface InputDialogOptions extends BaseDialogOptions {
-  bodyHtml?: string;
   inputLabel?: string;
   inputValue?: string;
 }
@@ -41,11 +40,6 @@ class InputDialogElement extends BaseDialogElement {
   private static _memoizedTemplate: PolymerTemplate;
 
   /**
-   * HTML for message in the dialog, will be inserted as innerHTML
-   */
-  public bodyHtml: string;
-
-  /**
    * Text that shows up inside the input field when it's empty
    */
   public inputLabel: string;
@@ -59,10 +53,6 @@ class InputDialogElement extends BaseDialogElement {
 
   static get properties() {
     return Object.assign(super.properties, {
-      bodyHtml: {
-        type: String,
-        value: '',
-      },
       inputLabel: {
         type: String,
         value: '',

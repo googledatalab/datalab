@@ -26,7 +26,7 @@ interface BaseDialogOptions extends Object {
   big?: boolean;
   cancelLabel?: string;
   isError?: boolean;
-  messageHtml?: string;
+  message?: string;
   okLabel?: string;
   title: string;
 }
@@ -46,7 +46,7 @@ class BaseDialogElement extends Polymer.Element {
   /**
    * Message to show in dialog
    */
-  public messageHtml: string;
+  public message: string;
 
   /**
    * Whether to show a big dialog
@@ -90,7 +90,7 @@ class BaseDialogElement extends Polymer.Element {
         type: String,
         value: false,
       },
-      messageHtml: {
+      message: {
         type: String,
         value: '',
       },
@@ -106,11 +106,6 @@ class BaseDialogElement extends Polymer.Element {
   }
 
   open() {
-    // Set the message's inner HTML
-    if (this.messageHtml) {
-      this.$.message.innerHTML = this.messageHtml;
-    }
-
     // If the closed event fires then the confirm button hasn't been clicked
     this.$.theDialog.addEventListener('iron-overlay-closed', () => this._cancelClose());
     this.$.theDialog.open();
