@@ -637,7 +637,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
                                           : 'The file you selected is ';
       warningMsg += 'larger than 25MB. You might experience browser freeze or crash.';
       const dialogOptions: BaseDialogOptions = {
-        messageHtml: warningMsg,
+        message: warningMsg,
         okLabel: 'Upload Anyway',
         title: 'Warning: Large File',
       };
