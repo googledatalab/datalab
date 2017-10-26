@@ -841,41 +841,49 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    * to be deleted, then calls the FileManager for each of these items to delete,
    * then refreshes the file list.
    */
-  _deleteSelectedItems() {
+  async _deleteSelectedItems() {
     const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
     if (selectedIndices.length) {
       // Build friendly title and body messages that adapt to the number of items.
-      const num = selectedIndices.length;
-      let title = 'Delete ';
+      // const num = selectedIndices.length;
+      // let title = 'Delete ';
 
-      // Title
-      if (num === 1) {
-        const i = selectedIndices[0];
-        const selectedObject = this._fileList[i];
-        title += selectedObject.type.toString();
-      } else {
-        title += num + ' items';
-      }
+      // // Title
+      // if (num === 1) {
+      //   const i = selectedIndices[0];
+      //   const selectedObject = this._fileList[i];
+      //   title += selectedObject.type.toString();
+      // } else {
+      //   title += num + ' items';
+      // }
 
-      // Body
-      let itemList = '<ul>\n';
-      selectedIndices.forEach((fileIdx: number, i: number) => {
-        if (i < FileBrowserElement._deleteListLimit) {
-          itemList += '<li>' + this._fileList[fileIdx].name + '</li>\n';
-        }
-      });
-      if (num > FileBrowserElement._deleteListLimit) {
-        itemList += '+ ' + (num - FileBrowserElement._deleteListLimit) + ' more.';
-      }
-      itemList += '</ul>';
-      const messageHtml = '<div>Are you sure you want to delete:</div>' + itemList;
+      // // Body
+      // let itemList = '<ul>\n';
+      // selectedIndices.forEach((fileIdx: number, i: number) => {
+      //   if (i < FileBrowserElement._deleteListLimit) {
+      //     itemList += '<li>' + this._fileList[fileIdx].name + '</li>\n';
+      //   }
+      // });
+      // if (num > FileBrowserElement._deleteListLimit) {
+      //   itemList += '+ ' + (num - FileBrowserElement._deleteListLimit) + ' more.';
+      // }
+      // itemList += '</ul>';
+      // const messageHtml = '<div>Are you sure you want to delete:</div>' + itemList;
 
-      // Open a dialog to let the user confirm deleting the list of selected items.
-      const inputOptions: BaseDialogOptions = {
-        messageHtml,
-        okLabel: 'Delete',
-        title,
+      // // Open a dialog to let the user confirm deleting the list of selected items.
+      // const inputOptions: BaseDialogOptions = {
+      //   messageHtml,
+      //   okLabel: 'Delete',
+      //   title,
+      // };
+      const deletedList = selectedIndices.map((i) => new ItemListElement({
+        columns: [this._fileList[i].name],
+      }));
+      const deleteOptions: DeleteDialogOptions = {
+        deletedList,
       };
+
+      await Utils.showDialog(DeleteDialogElement, deleteOptions);
 
       // Only if the dialog has been confirmed, call the FileManager to delete each
       // of the selected items, and wait for all promises to finish. Then if that
