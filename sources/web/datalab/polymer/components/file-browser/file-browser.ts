@@ -1147,10 +1147,10 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     // Always add the root file to the beginning.
     const root = await this._fileManager.getRootFile()
       .catch((e) => {
-          Utils.showErrorDialog('Error', 'Could not load files from ' +
-              config.displayName + ': ' + e);
-          throw e;
-        });
+        Utils.showErrorDialog('Error', 'Could not load files from ' +
+            config.displayName + ': ' + e);
+        throw e;
+      });
     this._pathHistory.unshift(root);
     if (this._pathHistoryIndex === this._pathHistory.length - 1) {
       this._pathHistoryIndexChanged();
