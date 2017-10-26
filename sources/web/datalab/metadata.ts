@@ -38,7 +38,7 @@ const metadata: FakeMetadata = {
   project: process.env.PROJECT_ID,
   project_number: process.env.PROJECT_NUMBER,
   creds: {
-    account: process.env.DATALAB_GIT_AUTHOR,
+    account: "",
     scopes: "",
     access_token: "",
     expires_in: 0,
