@@ -58,11 +58,13 @@ class DatalabEditorElement extends Polymer.Element {
     super.ready();
 
     // Get the theme.
-    const settings = await SettingsManager.getUserSettingsAsync()
-      .catch(() => Utils.log.error('Could not load user settings.'));
+    if (await SettingsManager.isAppFeatureEnabled(Utils.constants.features.userSettings)) {
+      const settings = await SettingsManager.getUserSettingsAsync()
+        .catch(() => Utils.log.error('Could not load user settings.'));
 
-    if (settings && settings.theme) {
-      this._theme = settings.theme;
+      if (settings && settings.theme) {
+        this._theme = settings.theme;
+      }
     }
 
     // Create the codemirror element and fill it with the file content.

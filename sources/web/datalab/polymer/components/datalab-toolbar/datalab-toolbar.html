@@ -95,11 +95,11 @@ the License.
         </div>
         <div class="right">
           <paper-icon-button id="infoButton" icon="info"
-                            on-click="_infoClicked"></paper-icon-button>
-          <paper-icon-button id="settingsButton" icon="settings"
-                            on-click="_settingsClicked"></paper-icon-button>
+                             on-click="_infoClicked"></paper-icon-button>
+          <paper-icon-button id="settingsButton" icon="settings" on-click="_settingsClicked"
+                             hidden="{{!_userSettingsEnabled}}"></paper-icon-button>
           <paper-icon-button id="accountButton" icon="account-circle"
-                            on-click="_accountIconClicked">
+                             on-click="_accountIconClicked">
           </paper-icon-button>
         </div>
       </app-toolbar>

@@ -1113,16 +1113,22 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       }
     }
 
+    const type = FileManagerFactory.fileManagerNameToType(this.fileManagerType);
+    const config = FileManagerFactory.getFileManagerConfig(type);
+
     // Always add the root file to the beginning.
-    const root = await this._fileManager.getRootFile();
+    const root = await this._fileManager.getRootFile()
+      .catch((e) => {
+        Utils.showErrorDialog('Error', 'Could not load files from ' +
+            config.displayName + ': ' + e);
+        throw e;
+      });
     this._pathHistory.unshift(root);
     if (this._pathHistoryIndex === this._pathHistory.length - 1) {
       this._pathHistoryIndexChanged();
     } else {
       this._pathHistoryIndex = this._pathHistory.length - 1;
     }
-    const type = FileManagerFactory.fileManagerNameToType(this.fileManagerType);
-    const config = FileManagerFactory.getFileManagerConfig(type);
     this._fileManagerDisplayIcon = config.displayIcon;
     this._fileManagerDisplayName = config.displayName;
   }

@@ -48,5 +48,5 @@
   ],
   "supportedFileBrowserSources": ["jupyter"],
   "fakeMetadataAddress": {"host": "metadata.google.internal", "port": 80},
-  "gatedFeatures": []
+  "gatedFeatures": ["timeout", "userSettings"]
 }
