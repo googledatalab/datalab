@@ -33,8 +33,6 @@
  */
 class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
-  private static readonly _deleteListLimit = 10;
-
   /**
    * Promise that gets resolved when the element finished initialization.
    */
@@ -843,78 +841,44 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    */
   async _deleteSelectedItems() {
     const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
-    if (selectedIndices.length) {
-      // Build friendly title and body messages that adapt to the number of items.
-      // const num = selectedIndices.length;
-      // let title = 'Delete ';
+    if (!selectedIndices.length) {
+      return;
+    }
+    const num = selectedIndices.length;
+    const deletedList = selectedIndices.map((i) => new ItemListRow({
+      columns: [this._fileList[i].name],
+      icon: this._fileList[i].icon,
+    }));
+    const deleteOptions: DeleteDialogOptions = {
+      deletedList,
+      okLabel: 'Delete',
+      title: 'Delete ' + num + ' items',
+    };
 
-      // // Title
-      // if (num === 1) {
-      //   const i = selectedIndices[0];
-      //   const selectedObject = this._fileList[i];
-      //   title += selectedObject.type.toString();
-      // } else {
-      //   title += num + ' items';
-      // }
+    const closeResult = await Utils.showDialog(DeleteDialogElement, deleteOptions);
 
-      // // Body
-      // let itemList = '<ul>\n';
-      // selectedIndices.forEach((fileIdx: number, i: number) => {
-      //   if (i < FileBrowserElement._deleteListLimit) {
-      //     itemList += '<li>' + this._fileList[fileIdx].name + '</li>\n';
-      //   }
-      // });
-      // if (num > FileBrowserElement._deleteListLimit) {
-      //   itemList += '+ ' + (num - FileBrowserElement._deleteListLimit) + ' more.';
-      // }
-      // itemList += '</ul>';
-      // const messageHtml = '<div>Are you sure you want to delete:</div>' + itemList;
-
-      // // Open a dialog to let the user confirm deleting the list of selected items.
-      // const inputOptions: BaseDialogOptions = {
-      //   messageHtml,
-      //   okLabel: 'Delete',
-      //   title,
-      // };
-      const deletedList = selectedIndices.map((i) => new ItemListElement({
-        columns: [this._fileList[i].name],
-      }));
-      const deleteOptions: DeleteDialogOptions = {
-        deletedList,
-      };
-
-      await Utils.showDialog(DeleteDialogElement, deleteOptions);
-
-      // Only if the dialog has been confirmed, call the FileManager to delete each
-      // of the selected items, and wait for all promises to finish. Then if that
-      // is successful, reload the file list.
-      return Utils.showDialog(BaseDialogElement, inputOptions)
-        .then((closeResult: BaseDialogCloseResult) => {
-          if (closeResult.confirmed) {
-            const deletePromises = selectedIndices.map((i: number) => {
-              return this._fileManager.delete(this._fileList[i].id);
-            });
-            this._busy = true;
-            // TODO: [yebrahim] If at least one delete fails, _fetchFileList will never be called,
-            // even if some other deletes completed.
-            return Promise.all(deletePromises)
-              .then(() => {
-                // Dispatch a success notification, and refresh the file list
-                const message = 'Deleted ' + num + (num === 1 ? ' file.' : 'files.');
-                this.dispatchEvent(new NotificationEvent(message));
-                this._busy = false;
-                this._fetchFileList();
-              })
-              .catch((e: Error) => {
-                this._busy = false;
-                Utils.showErrorDialog('Error deleting item', e.message);
-              });
-          } else {
-            return Promise.resolve(null);
-          }
+    // Only if the dialog has been confirmed, call the FileManager to delete each
+    // of the selected items, and wait for all promises to finish. Then if that
+    // is successful, reload the file list.
+    if (closeResult.confirmed) {
+      const deletePromises = selectedIndices.map((i: number) => {
+        return this._fileManager.delete(this._fileList[i].id);
+      });
+      this._busy = true;
+      // TODO: [yebrahim] If at least one delete fails, _fetchFileList will never be called,
+      // even if some other deletes completed.
+      return Promise.all(deletePromises)
+        .then(() => {
+          // Dispatch a success notification, and refresh the file list
+          const message = 'Deleted ' + num + (num === 1 ? ' file.' : 'files.');
+          this.dispatchEvent(new NotificationEvent(message));
+          this._busy = false;
+          this._fetchFileList();
+        })
+        .catch((e: Error) => {
+          this._busy = false;
+          Utils.showErrorDialog('Error deleting item', e.message);
         });
-    } else {
-      return Promise.resolve(null);
     }
   }
 

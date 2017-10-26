@@ -20,14 +20,17 @@ the License.
   <template>
     <style>
       #list {
-        margin: 20px;
+        margin: 10px;
+      }
+      #text {
+        margin: 10px 25px;
       }
     </style>
 
-    <span id="message">
+    <span id="text">
       Are you sure you want to delete the following [[deletedList.length]] items?
     </span>
-    <item-list id="list"></item-list>
+    <item-list id="list" disable-selection hide-header></item-list>
 
   </template>
 </dom-module>

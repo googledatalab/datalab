@@ -33,7 +33,7 @@ class DeleteDialogElement extends BaseDialogElement {
    */
   public deletedList: ItemListRow[];
 
-  static get is() { return 'input-dialog'; }
+  static get is() { return 'delete-dialog'; }
 
   static get properties() {
     return Object.assign(super.properties, {
@@ -48,6 +48,10 @@ class DeleteDialogElement extends BaseDialogElement {
     this.$.theDialog.addEventListener('iron-overlay-opened', () => {
       const listElement = this.$.list as ItemListElement;
       listElement.rows = this.deletedList;
+      // The dialog might need resizing if the list is long. Wait for the DOM
+      // flush then tell it to resize.
+      Polymer.dom.flush();
+      this.$.theDialog.notifyResize();
     });
   }
 
@@ -65,4 +69,4 @@ class DeleteDialogElement extends BaseDialogElement {
 
 }
 
-customElements.define(InputDialogElement.is, InputDialogElement);
+customElements.define(DeleteDialogElement.is, DeleteDialogElement);
