@@ -19,7 +19,6 @@ declare module common {
     theme: string,
     idleTimeoutShutdownCommand: string,
     idleTimeoutInterval: string,
-    oauth2ClientId: string,
     [index: string]: string,
   }
 
@@ -184,6 +183,11 @@ declare module common {
      * List of features that can be optinally enabled.
      */
     gatedFeatures: string[];
+
+    /**
+     * OAuth client ID to use for Google service APIs.
+     */
+    oauth2ClientId: string,
   }
 
   interface TimeoutInfo {

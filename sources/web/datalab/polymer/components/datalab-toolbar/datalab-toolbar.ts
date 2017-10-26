@@ -21,12 +21,14 @@
 class ToolbarElement extends Polymer.Element {
 
   private _timeoutEnabled: boolean;
+  private _userSettingsEnabled: boolean;
 
   static get is() { return 'datalab-toolbar'; }
 
   static get properties() {
     return {
       _timeoutEnabled: Boolean,
+      _userSettingsEnabled: Boolean,
     };
   }
 
@@ -34,7 +36,9 @@ class ToolbarElement extends Polymer.Element {
     super.ready();
 
     this._timeoutEnabled = await SettingsManager.isAppFeatureEnabled(
-        Utils.constants.timeoutFeature);
+        Utils.constants.features.timeout);
+    this._userSettingsEnabled = await SettingsManager.isAppFeatureEnabled(
+        Utils.constants.features.userSettings);
 
     if (this._timeoutEnabled) {
       const authPanel = this.shadowRoot.querySelector('auth-panel');
@@ -49,12 +53,16 @@ class ToolbarElement extends Polymer.Element {
    */
   _accountIconClicked() {
     this.$.accountDropdown.toggle();
-    this.$.accountTimeoutPanel.onOpenChange(this.$.accountDropdown.opened);
+    if (this._timeoutEnabled) {
+      this.$.accountTimeoutPanel.onOpenChange(this.$.accountDropdown.opened);
+    }
   }
 
   _closeAccountDropdown() {
     this.$.accountDropdown.close();
-    this.$.accountTimeoutPanel.onOpenChange(false);
+    if (this._timeoutEnabled) {
+      this.$.accountTimeoutPanel.onOpenChange(false);
+    }
   }
 
   /**
@@ -68,8 +76,10 @@ class ToolbarElement extends Polymer.Element {
    * Opens the settings dialog
    */
   _settingsClicked() {
-    this.$.settingsDialog.open();
-    this.$.settingsElement.loadSettings();
+    if (this._userSettingsEnabled) {
+      this.$.settingsDialog.open();
+      this.$.settingsElement.loadSettings();
+    }
   }
 }
 

@@ -16,7 +16,7 @@
 /// <reference path="../../../../../../third_party/externs/ts/gapi/drive.d.ts" />
 
 class MissingClientIdError extends Error {
-  message = 'No oauth2ClientId found in user or config settings';
+  message = 'No oauth2ClientId found in app settings or config';
 }
 
 enum GapiScopes {
@@ -440,45 +440,44 @@ class GapiManager {
   * Initialize the client with API key and People API, and initialize OAuth with an
   * OAuth 2.0 client ID and scopes (space delimited string) to request access.
   */
-  private static _initClient(): Promise<void> {
+  private static _initClient() {
     // TODO: Add state parameter to redirect the user back to the current URL
     // after the OAuth flow finishes.
-    return gapi.auth2.init({
-      client_id: GapiManager._clientId,
-      fetch_basic_profile: true,
-      redirect_uri: Utils.getHostRoot(),
-      scope: initialScopeString,
-      ux_mode: 'redirect',
-    })
-    // .init does not return a catch-able promise
-    .then(() => {
-      this._currentUser = gapi.auth2.getAuthInstance().currentUser.get();
-    }, (errorReason: any) => {
-      throw new Error('Error in gapi auth: ' + errorReason.details);
-    });
+    try {
+      const auth2 = gapi.auth2.init({
+        client_id: GapiManager._clientId,
+        fetch_basic_profile: true,
+        redirect_uri: Utils.getHostRoot(),
+        scope: initialScopeString,
+        ux_mode: 'redirect',
+      });
+      this._currentUser = auth2.currentUser.get();
+    } catch (e) {
+      throw new Error('Error in gapi auth: ' + e.details);
+    }
   }
 
   /**
    * Loads the oauth2 client id. Looks first in the user settings,
    * then in the config-local file.
    */
-  private static _loadClientId(): Promise<void> {
-    return GapiManager._loadClientIdFromUserSettings()
-      .then((clientId) => clientId || GapiManager._loadClientIdFromConfigFile())
-      .then((clientId) => {
-        if (!clientId) {
-          throw new MissingClientIdError();
-        }
-        GapiManager._clientId = clientId;
-      });
+  private static async _loadClientId(): Promise<void> {
+    let clientId = await this._loadClientIdFromAppSettings();
+    if (!clientId) {
+      clientId = await this._loadClientIdFromConfigFile();
+    }
+    if (!clientId) {
+      throw new MissingClientIdError();
+    }
+    this._clientId = clientId;
   }
 
   /**
    * Loads the oauth2 client id from the user settings.
    */
-  private static _loadClientIdFromUserSettings(): Promise<string> {
-    return SettingsManager.getUserSettingsAsync()
-      .then((settings: common.UserSettings) => {
+  private static _loadClientIdFromAppSettings(): Promise<string> {
+    return SettingsManager.getAppSettingsAsync()
+      .then((settings: common.AppSettings) => {
         return settings.oauth2ClientId;
       })
       .catch(() => {
