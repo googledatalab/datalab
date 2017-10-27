@@ -23,7 +23,7 @@ import webbrowser
 import utils
 
 
-description = ("""`{0} {1}` creates a persistent connection to a
+description = """`{0} {1}` creates a persistent connection to a
 Datalab instance running in a Google Compute Engine VM.
 
 This is a thin wrapper around the *ssh(1)* command that takes care
@@ -42,16 +42,16 @@ the --no-launch-browser flag.
 This command will attempt to re-establish the connection if it
 gets dropped. However, that connection will only exist while
 this command is running.
-""")
+"""
 
 
-examples = ("""
+examples = """
 To connect to 'example-instance' in zone 'us-central1-a', run:
 
-    $ {0} {1} example-instance --zone us-central1-a""")
+    $ {0} {1} example-instance --zone us-central1-a"""
 
 
-wrong_user_message = (
+wrong_user_message_template = (
     'The specified Datalab instance was created for {0}, but you '
     'are attempting to connect to it as {1}.'
     '\n\n'
@@ -62,9 +62,18 @@ wrong_user_message = (
     '--no-user-checking flag.')
 
 
-web_preview_message = (
+web_preview_message_template = (
     'Click on the *Web Preview* (square button at top-right), '
     'select *Change port > Port {}*, and start using Datalab.')
+
+
+connection_closed_message_template = """
+Connection closed.
+
+To re-connect to your datalab instance, run the following command:
+
+    datalab connect{1}{0}
+"""
 
 
 # The list of web browsers that we don't want to automatically open.
@@ -156,10 +165,6 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
       in_cloud_shell: Whether or not the command is being run in the
         Google Cloud Shell
     """
-    if __name__ == '__main__':
-        CallFlag = False
-    else:
-        CallFlag = True
     instance = args.instance
     connect_msg = ('Connecting to {0}.\n'
                    'This will create an SSH tunnel '
@@ -180,7 +185,7 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
           KeyboardInterrupt: When the end user kills the connection
           subprocess.CalledProcessError: If the connection dies on its own
         """
-        if utils.print_info_messages(args):
+        if utils.print_info_message_templates(args):
             print('Connecting to {0} via SSH').format(instance)
 
         cmd = ['ssh']
@@ -222,17 +227,14 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         print('\nThe connection to Datalab is now open and will '
               'remain until this command is killed.')
         if in_cloud_shell:
-            print(web_preview_message.format(datalab_port))
+            print(web_preview_message_template.format(datalab_port))
         else:
             print('You can connect to Datalab at ' + datalab_address)
             if not args.no_launch_browser:
                 maybe_open_browser(datalab_address)
-        if CallFlag is True:
-            print('\nTo re-connect to datalab ,please run the '
-                  'command , datalab connect <vm-instance-name>')
         return
 
-    def health_check(cancelled_event):
+    def health_check(cancelled_event, healthy_event):
         """Check if the Datalab instance is reachable via the connection.
 
         After the instance is reachable, the `on_ready` method is called.
@@ -243,6 +245,8 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         Args:
           cancelled_event: A threading.Event instance that indicates we should
             give up on the instance becoming reachable.
+          healthy_event: A threading.Event instance that can be used to
+            indicate that the instance became reachable.
         """
         health_url = '{0}_info/'.format(datalab_address)
         healthy = False
@@ -257,21 +261,27 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
                 continue
 
         if healthy:
+            healthy_event.set()
             on_ready()
         return
 
-    def connect_and_check():
+    def connect_and_check(healthy_event):
         """Create a connection to Datalab and notify the user when ready.
 
         This method blocks for as long as the connection is open.
 
+        Args:
+          healthy_event: A threading.Event instance that can be used to
+            indicate that the instance became reachable.
+        Returns:
+          True iff the Datalab instance became reachable.
         Raises:
           KeyboardInterrupt: If the user kills the connection.
         """
         cancelled_event = threading.Event()
         health_check_thread = threading.Thread(
             target=health_check,
-            args=[cancelled_event])
+            args=[cancelled_event, healthy_event])
         health_check_thread.start()
         try:
             create_tunnel()
@@ -280,13 +290,23 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         finally:
             cancelled_event.set()
             health_check_thread.join()
-        return
+        return healthy_event.is_set()
 
     remaining_reconnects = args.max_reconnects
     while True:
+        healthy_event = threading.Event()
         try:
-            connect_and_check()
+            connect_and_check(healthy_event)
         except KeyboardInterrupt:
+            if healthy_event.is_set():
+                cli_flags = ' '
+                if args.project:
+                    cli_flags += '--project {} '.format(args.project)
+                if args.zone:
+                    cli_flags += '--zone {} '.format(args.zone)
+                cli_flags += '--port {} '.format(args.port)
+                print(connection_closed_message_template.format(
+                    instance, cli_flags))
             return
         if remaining_reconnects == 0:
             return
@@ -316,7 +336,7 @@ def maybe_start(args, gcloud_compute, instance, status):
       subprocess.CalledProcessError: If one of the `gcloud` calls fail
     """
     if status != _STATUS_RUNNING:
-        if utils.print_info_messages(args):
+        if utils.print_info_message_templates(args):
             print('Restarting the instance {0} with status {1}'.format(
                 instance, status))
         start_cmd = ['instances', 'start']
@@ -344,7 +364,7 @@ def run(args, gcloud_compute, email='', in_cloud_shell=False, **unused_kwargs):
         args, gcloud_compute, instance)
     for_user = metadata_items.get('for-user', '')
     if (not args.no_user_checking) and for_user and (for_user != email):
-        print(wrong_user_message.format(for_user, email))
+        print(wrong_user_message_template.format(for_user, email))
         return
 
     maybe_start(args, gcloud_compute, instance, status)
