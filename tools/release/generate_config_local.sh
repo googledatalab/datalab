@@ -32,6 +32,7 @@ export REVISION_ID=${3:-$(git log --pretty=format:'%H' -n 1)}
 if [[ $(cat ${OLD_CONFIG} | grep "LATEST_SEMVER = ") ]]; then
   CURRENT_VERSION=`cat ${OLD_CONFIG} | grep "LATEST_SEMVER = " | cut -d '=' -f 2 | tr -d '" ;'`
   GTM_ACCOUNT=`cat ${OLD_CONFIG} | grep "GTM_ACCOUNT = " | cut -d '=' -f 2 | tr -d '"; '`
+  OAUTH_CLIENT_ID=`cat ${OLD_CONFIG} | grep "OAUTH_CLIENT_ID = " | cut -d '=' -f 2 | tr -d '"; '`
 else
   CURRENT_VERSION=`cat ${OLD_CONFIG} | grep "latest: " | cut -d ':' -f 2 | tr -d ', '`
   GTM_ACCOUNT=`cat ${OLD_CONFIG} | grep "gtmAccount = " | cut -d '=' -f 2 | tr -d "'; "`
@@ -62,3 +63,5 @@ echo "Filling previous=${CURRENT_VERSION}"
 sed -i -e s/{{PREV_SEMVER_PLACEHOLDER}}/\"${CURRENT_VERSION}\"/ ${NEW_CONFIG}
 echo "Filling gtm account=${GTM_ACCOUNT}"
 sed -i -e s/{{GTM_ACCOUNT_PLACEHOLDER}}/\"${GTM_ACCOUNT}\"/ ${NEW_CONFIG}
+echo "Filling client id=${OAUTH_CLIENT_ID}"
+sed -i -e s/{{DATALAB_LOCAL_CLIENT_ID}}/\"${OAUTH_CLIENT_ID}\"/ ${NEW_CONFIG}

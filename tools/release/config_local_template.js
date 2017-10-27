@@ -1,6 +1,7 @@
 const vid = document.body.getAttribute("data-version-id");
 const GTM_ACCOUNT = {{GTM_ACCOUNT_PLACEHOLDER}};
 const LATEST_SEMVER = {{DATALAB_VERSION_PLACEHOLDER}};
+const OAUTH2_CLIENT_ID = {{DATALAB_LOCAL_CLIENT_ID}};
 const version_tokens = vid.split('.');
 if (version_tokens.length === 3) {
   const latest = version_tokens[2] < "20170523" ? {{DATALAB_VERSION_PATCH_PLACEHOLDER}} : LATEST_SEMVER;
@@ -15,6 +16,7 @@ if (version_tokens.length === 3) {
 }
 
 window.datalab.gtmAccount = GTM_ACCOUNT;
+window.datalab.oauth2ClientId = OAUTH2_CLIENT_ID;
 window.dataLayer = window.dataLayer || [];
 window.dataLayer.push({
 	hostname:"datalab.cloud.google.com",
