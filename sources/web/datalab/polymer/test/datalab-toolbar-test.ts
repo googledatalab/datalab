@@ -24,19 +24,43 @@ describe('<table-preview>', () => {
   before(() => {
     SettingsManager.getAppSettingsAsync = () => {
       const mockSettings: common.AppSettings = {
-        allowHttpOverWebsocket: true, allowOriginOverrides: [], configUrl:
-        '', consoleLogLevel: 'verbose', consoleLogging: true, contentDir: '',
-        datalabBasePath: '', datalabRoot: '', defaultFileManager: 'mock',
-        docsGcsPath: '', enableAutoGCSBackups: true, enableFilesystemIndex:
-        true, fakeMetadataAddress: {host: 'metadata.google.internal', port:
-        80}, feedbackId: '', gatedFeatures: ['userSettings'],
-        idleTimeoutInterval: '', idleTimeoutShutdownCommand: '', instanceId:
-        '', jupyterArgs: [''], knownTutorialsUrl: '', logEndpoint: '',
-        logFileCount: 0, logFilePath: '', logFilePeriod: '', metadataHost:
-        '', nextJupyterPort: 0, numDailyBackups: 0, numHourlyBackups: 0,
-        numWeeklyBackups: 0, oauth2ClientId: '', proxyWebSockets: '',
-        release: '', serverPort: 0, socketioPort: 0, supportUserOverride:
-        true, supportedFileBrowserSources: [''], useWorkspace: true,
+        allowHttpOverWebsocket: true,
+        allowOriginOverrides: [],
+        configUrl: '',
+        consoleLogLevel: 'verbose',
+        consoleLogging: true,
+        contentDir: '',
+        datalabBasePath: '',
+        datalabRoot: '',
+        defaultFileManager: 'mock',
+        docsGcsPath: '',
+        enableAutoGCSBackups: true,
+        enableFilesystemIndex: true,
+        fakeMetadataAddress: {host: 'metadata.google.internal', port: 80},
+        feedbackId: '',
+        gatedFeatures: ['userSettings'],
+        idleTimeoutInterval: '',
+        idleTimeoutShutdownCommand: '',
+        instanceId: '',
+        jupyterArgs: [''],
+        knownTutorialsUrl: '',
+        logEndpoint: '',
+        logFileCount: 0,
+        logFilePath: '',
+        logFilePeriod: '',
+        metadataHost: '',
+        nextJupyterPort: 0,
+        numDailyBackups: 0,
+        numHourlyBackups: 0,
+        numWeeklyBackups: 0,
+        oauth2ClientId: '',
+        proxyWebSockets: '',
+        release: '',
+        serverPort: 0,
+        socketioPort: 0,
+        supportUserOverride: true,
+        supportedFileBrowserSources: [''],
+        useWorkspace: true,
         versionId: '',
       };
       return Promise.resolve(mockSettings);
