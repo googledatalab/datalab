@@ -67,6 +67,15 @@ web_preview_message = (
     'select *Change port > Port {}*, and start using Datalab.')
 
 
+connection_closed_message = ("""
+Connection closed.
+
+To re-connect to your datalab instance, run the following command:
+
+    datalab connect{1}{0}
+""")
+
+
 # The list of web browsers that we don't want to automatically open.
 #
 # This is a subset of the canonical list of python browser types
@@ -156,10 +165,6 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
       in_cloud_shell: Whether or not the command is being run in the
         Google Cloud Shell
     """
-    if __name__ == '__main__':
-        CallFlag = False
-    else:
-        CallFlag = True
     instance = args.instance
     connect_msg = ('Connecting to {0}.\n'
                    'This will create an SSH tunnel '
@@ -227,12 +232,9 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
             print('You can connect to Datalab at ' + datalab_address)
             if not args.no_launch_browser:
                 maybe_open_browser(datalab_address)
-        if CallFlag is True:
-            print('\nTo re-connect to datalab ,please run the '
-                  'command , datalab connect <vm-instance-name>')
         return
 
-    def health_check(cancelled_event):
+    def health_check(cancelled_event, healthy_event):
         """Check if the Datalab instance is reachable via the connection.
 
         After the instance is reachable, the `on_ready` method is called.
@@ -243,6 +245,8 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         Args:
           cancelled_event: A threading.Event instance that indicates we should
             give up on the instance becoming reachable.
+          healthy_event: A threading.Event instance that can be used to indicate
+            that the instance became reachable.
         """
         health_url = '{0}_info/'.format(datalab_address)
         healthy = False
@@ -257,21 +261,27 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
                 continue
 
         if healthy:
+            healthy_event.set()
             on_ready()
         return
 
-    def connect_and_check():
+    def connect_and_check(healthy_event):
         """Create a connection to Datalab and notify the user when ready.
 
         This method blocks for as long as the connection is open.
 
+        Args:
+          healthy_event: A threading.Event instance that can be used to indicate
+            that the instance became reachable.
+        Returns:
+          True iff the Datalab instance became reachable.
         Raises:
           KeyboardInterrupt: If the user kills the connection.
         """
         cancelled_event = threading.Event()
         health_check_thread = threading.Thread(
             target=health_check,
-            args=[cancelled_event])
+            args=[cancelled_event, healthy_event])
         health_check_thread.start()
         try:
             create_tunnel()
@@ -280,13 +290,22 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         finally:
             cancelled_event.set()
             health_check_thread.join()
-        return
+        return healthy_event.is_set()
 
     remaining_reconnects = args.max_reconnects
     while True:
+        healthy_event = threading.Event()
         try:
-            connect_and_check()
+            connect_and_check(healthy_event)
         except KeyboardInterrupt:
+            if healthy_event.is_set():
+                cli_flags = ' '
+                if args.project:
+                    cli_flags += '--project {} '.format(args.project)
+                if args.zone:
+                    cli_flags += '--zone {} '.format(args.zone)
+                cli_flags += '--port {} '.format(args.port)
+                print(connection_closed_message.format(instance, cli_flags))
             return
         if remaining_reconnects == 0:
             return
