@@ -245,8 +245,8 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         Args:
           cancelled_event: A threading.Event instance that indicates we should
             give up on the instance becoming reachable.
-          healthy_event: A threading.Event instance that can be used to indicate
-            that the instance became reachable.
+          healthy_event: A threading.Event instance that can be used to
+            indicate that the instance became reachable.
         """
         health_url = '{0}_info/'.format(datalab_address)
         healthy = False
@@ -271,8 +271,8 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         This method blocks for as long as the connection is open.
 
         Args:
-          healthy_event: A threading.Event instance that can be used to indicate
-            that the instance became reachable.
+          healthy_event: A threading.Event instance that can be used to
+            indicate that the instance became reachable.
         Returns:
           True iff the Datalab instance became reachable.
         Raises:
