@@ -458,7 +458,7 @@ class GapiManager {
   }
 
   /**
-   * Loads the oauth2 client id. Looks first in the user settings,
+   * Loads the oauth2 client id. Looks first in the app settings,
    * then in the config-local file.
    */
   private static async _loadClientId(): Promise<void> {
@@ -473,7 +473,7 @@ class GapiManager {
   }
 
   /**
-   * Loads the oauth2 client id from the user settings.
+   * Loads the oauth2 client id from the app settings.
    */
   private static _loadClientIdFromAppSettings(): Promise<string> {
     return SettingsManager.getAppSettingsAsync()
