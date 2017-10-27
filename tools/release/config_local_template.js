@@ -16,6 +16,7 @@ if (version_tokens.length === 3) {
 }
 
 window.datalab.gtmAccount = GTM_ACCOUNT;
+window.datalab.oauth2ClientId = OAUTH2_CLIENT_ID;
 window.dataLayer = window.dataLayer || [];
 window.dataLayer.push({
 	hostname:"datalab.cloud.google.com",
