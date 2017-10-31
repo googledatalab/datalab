@@ -52,7 +52,6 @@ class DatalabAppElement extends Polymer.Element {
 
   private _boundResizeHandler: EventListenerObject;
 
-
   constructor() {
     super();
 
