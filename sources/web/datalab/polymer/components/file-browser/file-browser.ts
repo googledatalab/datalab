@@ -80,19 +80,20 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    */
   public nLeadingBreadcrumbsToTrim: number;
 
+  protected _busy: boolean; // Indicates an async file operation is taking place
+  protected _canOpenInNotebook = false;
+  protected _canPreview = false;
+  protected _fetching: boolean; // Indicates the file list is being fetched and updated
+  protected _fileManagerDisplayName: string;
+  protected _fileManagerDisplayIcon: string;
+
   private _addToolbarCollapseThreshold = 900;
-  private _busy: boolean; // Indicates an async file operation is taking place
-  private _canOpenInNotebook = false;
-  private _canPreview = false;
   private _dividerPosition: number;
   private _previewPaneCollapseThreshold = 600;
-  private _fetching: boolean; // Indicates the file list is being fetched and updated
   private _fileList: DatalabFile[];
   private _fileListRefreshInterval = 60 * 1000;
   private _fileListRefreshIntervalHandle = 0;
   private _fileManager: FileManager;
-  private _fileManagerDisplayName: string;
-  private _fileManagerDisplayIcon: string;
   private _hasMultipleFileSources: boolean;
   private _ignoreFileIdChange = false;
   private _inlineDetailsOpenInNotebook: () => void | null;
@@ -583,15 +584,15 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     }
   }
 
-  _createNewNotebook() {
+  async _createNewNotebook() {
     return this._createNewItem(DatalabFileType.NOTEBOOK);
   }
 
-  _createNewFile() {
+  async _createNewFile() {
     return this._createNewItem(DatalabFileType.FILE);
   }
 
-  _createNewDirectory() {
+  async _createNewDirectory() {
     return this._createNewItem(DatalabFileType.DIRECTORY);
   }
 
@@ -735,7 +736,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    * create a new notebook/directory at the current path, and fetches the updated list
    * of files to redraw.
    */
-  _createNewItem(itemType: DatalabFileType) {
+  async _createNewItem(itemType: DatalabFileType) {
     // First, open a dialog to let the user specify a name for the notebook.
     const inputOptions: InputDialogOptions = {
       inputLabel: 'Name',
@@ -743,33 +744,33 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       title: 'New ' + Utils.getFileTypeString(itemType),
     };
 
-    return Utils.showDialog(InputDialogElement, inputOptions)
-      .then((closeResult: InputDialogCloseResult) => {
-        // Only if the dialog has been confirmed with some user input, rename the
-        // newly created file. Then if that is successful, reload the file list
-        if (closeResult.confirmed && closeResult.userInput) {
-          let newName = closeResult.userInput;
-          // Make sure the name ends with .ipynb for notebooks for convenience
-          if (itemType === DatalabFileType.NOTEBOOK && !newName.endsWith('.ipynb')) {
-            newName += '.ipynb';
-          }
+    const closeResult = await Utils.showDialog(InputDialogElement, inputOptions);
 
-          this._busy = true;
-          return this._fileManager.create(itemType, this.currentFile.id, newName)
-            .then(() => {
-              // Dispatch a success notification, and refresh the file list
-              this.dispatchEvent(new NotificationEvent('Created ' + newName + '.'));
-              this._busy = false;
-              this._fetchFileList();
-            })
-            .catch((e: Error) => {
-              this._busy = false;
-              Utils.showErrorDialog('Error creating item', e.message);
-            });
-        } else {
-          return Promise.resolve(null);
+    // Only if the dialog has been confirmed with some user input, rename the
+    // newly created file. Then if that is successful, reload the file list
+    if (closeResult.confirmed && closeResult.userInput) {
+      try {
+        let newName = closeResult.userInput;
+        // Make sure the name ends with .ipynb for notebooks for convenience
+        if (itemType === DatalabFileType.NOTEBOOK && !newName.endsWith('.ipynb')) {
+          newName += '.ipynb';
         }
-      });
+
+        this._busy = true;
+        const newFile = await this._fileManager.create(itemType, this.currentFile.id, newName);
+        if (itemType === DatalabFileType.NOTEBOOK ) {
+          const template = await TemplateManager.newNotebookFromTemplate('newNotebook', {});
+          await this._fileManager.saveText(newFile, JSON.stringify(template));
+        }
+        // Dispatch a success notification, and refresh the file list
+        this.dispatchEvent(new NotificationEvent('Created ' + newName + '.'));
+        this._busy = false;
+        this._fetchFileList();
+      } catch (e) {
+        this._busy = false;
+        Utils.showErrorDialog('Error creating item', e.message);
+      }
+    }
   }
 
   /**

@@ -20,17 +20,17 @@
  * When the icon is clicked, it toggles whether the idle timeout is enabled.
  */
 class TimeoutPanel extends Polymer.Element {
-
   private static _displayInterval = 1000;  // Update display every second
   private static _queryIntervalWhenEnabled = 15 * 1000;  // How often to query when timeout is enabled
   private static _queryIntervalWhenDisabled = 60 * 1000;  // How often to query when timeout is disabled
 
+  protected _timeoutControlsEnabled: boolean;
+  protected _timeoutText: string;
+
   private _isOpen: boolean;
   private _lastQueryTime = 0;
-  private _timeoutControlsEnabled: boolean;
   private _timeoutEnabled: boolean;
   private _timeoutInfo: common.TimeoutInfo;
-  private _timeoutText: string;
   private _updateTimer: number;
 
   static get is() { return 'timeout-panel'; }

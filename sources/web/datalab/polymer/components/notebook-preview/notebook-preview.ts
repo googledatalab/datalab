@@ -42,7 +42,7 @@ class NotebookPreviewElement extends Polymer.Element {
    */
   public active: boolean;
 
-  private _message = '';
+  protected _message = '';
 
   static get is() { return 'notebook-preview'; }
 
