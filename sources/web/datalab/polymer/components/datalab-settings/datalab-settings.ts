@@ -33,7 +33,7 @@ class SettingsElement extends Polymer.Element {
 
   private _busy: boolean;
   private _idleTimeoutUpdateStatus: string;
-  private _updateError: boolean;
+  protected _updateError: boolean;
 
   static get is() { return 'datalab-settings'; }
 

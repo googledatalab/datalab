@@ -34,8 +34,8 @@ class TablePreviewElement extends Polymer.Element {
    */
   public tableId: string;
 
-  private _fileManager: FileManager;
-  private _table: gapi.client.bigquery.Table | null;
+  protected _fileManager: FileManager;
+  protected _table: gapi.client.bigquery.Table | null;
   private _busy = false;
   private readonly DEFAULT_MODE = 'NULLABLE';
 

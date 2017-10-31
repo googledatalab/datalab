@@ -27,10 +27,10 @@ class TimeoutPanel extends Polymer.Element {
 
   private _isOpen: boolean;
   private _lastQueryTime = 0;
-  private _timeoutControlsEnabled: boolean;
+  protected _timeoutControlsEnabled: boolean;
   private _timeoutEnabled: boolean;
   private _timeoutInfo: common.TimeoutInfo;
-  private _timeoutText: string;
+  protected _timeoutText: string;
   private _updateTimer: number;
 
   static get is() { return 'timeout-panel'; }
