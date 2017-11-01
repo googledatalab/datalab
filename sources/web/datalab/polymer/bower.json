@@ -28,6 +28,6 @@
     "xterm.js": "^2.7.0"
   },
   "devDependencies": {
-    "web-component-tester": "^6.0.0"
+    "web-component-tester": "~6.3.0"
   }
 }
