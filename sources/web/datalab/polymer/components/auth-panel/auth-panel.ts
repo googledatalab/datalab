@@ -42,8 +42,8 @@ class AuthPanel extends Polymer.Element {
   ready() {
     super.ready();
     GapiManager.listenForSignInChanges(this._signInChanged.bind(this))
-      .catch(() => {
-        // TODO: handle errors authenticating
+      .catch((e) => {
+        Utils.showErrorDialog('Authentication error', e.message);
       });
   }
 
