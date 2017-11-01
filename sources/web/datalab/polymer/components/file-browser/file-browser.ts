@@ -80,19 +80,20 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    */
   public nLeadingBreadcrumbsToTrim: number;
 
+  _busy: boolean; // Indicates an async file operation is taking place
+  _canOpenInNotebook = false;
+  _canPreview = false;
+  _fetching: boolean; // Indicates the file list is being fetched and updated
+  _fileManagerDisplayName: string;
+  _fileManagerDisplayIcon: string;
+
   private _addToolbarCollapseThreshold = 900;
-  private _busy: boolean; // Indicates an async file operation is taking place
-  private _canOpenInNotebook = false;
-  private _canPreview = false;
   private _dividerPosition: number;
   private _previewPaneCollapseThreshold = 600;
-  private _fetching: boolean; // Indicates the file list is being fetched and updated
   private _fileList: DatalabFile[];
   private _fileListRefreshInterval = 60 * 1000;
   private _fileListRefreshIntervalHandle = 0;
   private _fileManager: FileManager;
-  private _fileManagerDisplayName: string;
-  private _fileManagerDisplayIcon: string;
   private _hasMultipleFileSources: boolean;
   private _ignoreFileIdChange = false;
   private _inlineDetailsOpenInNotebook: () => void | null;
