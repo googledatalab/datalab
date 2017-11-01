@@ -48,8 +48,9 @@ class DatalabAppElement extends Polymer.Element {
    */
   public routeTail: object;
 
+  _fileBrowserSources: string[];
+
   private _boundResizeHandler: EventListenerObject;
-  private _fileBrowserSources: string[];
 
   constructor() {
     super();

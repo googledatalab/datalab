@@ -36,7 +36,7 @@ class ProjectPickerDialogElement extends BaseDialogElement {
   public selectedProjectId: string;
   public selectedProjectName: string;
 
-  private _busy: boolean;
+  _busy: boolean;
 
   static get is() { return 'project-picker-dialog'; }
 
