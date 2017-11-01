@@ -27,7 +27,8 @@ class DatalabEditorElement extends Polymer.Element {
    */
   public fileId: DatalabFileId | null;
 
-  private _busy: boolean;
+  _busy: boolean;
+
   private _editor: CodeMirror.Editor;
   private _file: DatalabFile | null;
   private _fileManager: FileManager;
