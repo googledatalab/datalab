@@ -52,6 +52,7 @@ interface GhFileResponse {
   encoding: string;
   content: string;
   url: string;  // the url to access this file via the api
+  git_url: string;  // the url to access this file via the Blob api
 }
 
 interface GithubCacheEntry {
@@ -91,20 +92,19 @@ class GithubFileManager extends BaseFileManager {
 
   private static cache_ = new GithubCache();
 
-  public get(fileId: DatalabFileId): Promise<DatalabFile> {
+  public async get(fileId: DatalabFileId) {
     if (fileId.path === '' || fileId.path === '/') {
-      return Promise.resolve(this._ghRootDatalabFile());
+      return this._ghRootDatalabFile();
     }
-    const githubPath = this._githubPathForFileId(fileId, 'get');
+    const githubPath = await this._githubPathForFileId(fileId, 'get');
     return this._githubApiPathRequest(githubPath)
         .then((response: GhFileResponse) => {
           return this._ghFileToDatalabFile(response);
         });
   }
 
-  public getStringContent(fileId: DatalabFileId, _asText?: boolean):
-      Promise<string> {
-    const githubPath = this._githubPathForFileId(fileId, 'getStringContent');
+  public async getStringContent(fileId: DatalabFileId, _asText?: boolean) {
+    const githubPath = await this._githubPathForFileId(fileId, 'getStringContent');
     return this._githubApiPathRequest(githubPath)
         .then((response: GhFileResponse) => {
           return this._ghFileToContentString(response);
@@ -174,16 +174,24 @@ class GithubFileManager extends BaseFileManager {
     return files;
   }
 
-  private _githubPathForFileId(fileId: DatalabFileId, op: string): string {
+  private async _githubPathForFileId(fileId: DatalabFileId, op: string) {
     const pathParts = fileId.path.split('/').filter((part) => !!part);
     if (pathParts.length === 0) {
       throw new Error(op + ' on github root is not allowed');
     } else if (pathParts.length === 1) {
       throw new Error(op + ' on a github user is not allowed');
     }
-    const githubPath = '/repos/' + pathParts.slice(0, 2).join('/') +
+    const fileName = pathParts.pop();
+    const githubTreePath = '/repos/' + pathParts.slice(0, 2).join('/') +
         '/contents/' + pathParts.slice(2).join('/');
-    return githubPath;
+    const directory = await this._githubApiPathRequest(githubTreePath) as GhFileResponse[];
+    for (const file of directory) {
+      if (file.name === fileName) {
+        // Return the Blob API link.
+        return file.git_url.replace('https://api.github.com', '');
+      }
+    }
+    throw new Error('File not found on github.');
   }
 
   // We don't know if the type of the item is actually a directory without
