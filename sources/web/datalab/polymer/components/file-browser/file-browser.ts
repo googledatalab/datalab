@@ -736,7 +736,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    * create a new notebook/directory at the current path, and fetches the updated list
    * of files to redraw.
    */
-  _createNewItem(itemType: DatalabFileType) {
+  async _createNewItem(itemType: DatalabFileType) {
     // First, open a dialog to let the user specify a name for the notebook.
     const inputOptions: InputDialogOptions = {
       inputLabel: 'Name',
@@ -744,33 +744,37 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       title: 'New ' + Utils.getFileTypeString(itemType),
     };
 
-    return Utils.showDialog(InputDialogElement, inputOptions)
-      .then((closeResult: InputDialogCloseResult) => {
-        // Only if the dialog has been confirmed with some user input, rename the
-        // newly created file. Then if that is successful, reload the file list
-        if (closeResult.confirmed && closeResult.userInput) {
-          let newName = closeResult.userInput;
-          // Make sure the name ends with .ipynb for notebooks for convenience
-          if (itemType === DatalabFileType.NOTEBOOK && !newName.endsWith('.ipynb')) {
-            newName += '.ipynb';
-          }
+    const closeResult = await Utils.showDialog(InputDialogElement, inputOptions);
 
-          this._busy = true;
-          return this._fileManager.create(itemType, this.currentFile.id, newName)
-            .then(() => {
-              // Dispatch a success notification, and refresh the file list
-              this.dispatchEvent(new NotificationEvent('Created ' + newName + '.'));
-              this._busy = false;
-              this._fetchFileList();
-            })
-            .catch((e: Error) => {
-              this._busy = false;
-              Utils.showErrorDialog('Error creating item', e.message);
-            });
-        } else {
-          return Promise.resolve(null);
+    // Only if the dialog has been confirmed with some user input, rename the
+    // newly created file. Then if that is successful, reload the file list
+    if (closeResult.confirmed && closeResult.userInput) {
+      try {
+        let newName = closeResult.userInput;
+        // Make sure the name ends with .ipynb for notebooks for convenience
+        if (itemType === DatalabFileType.NOTEBOOK && !newName.endsWith('.ipynb')) {
+          newName += '.ipynb';
         }
-      });
+
+        this._busy = true;
+        if (itemType === DatalabFileType.NOTEBOOK) {
+          const url = Utils.getHostRoot() + Utils.constants.newNotebookUrlComponent +
+              this.currentFile.id + '?fileName=' + newName +
+              '&templateName=newNotebook';
+          window.open(url, '_blank');
+        } else {
+          await this._fileManager.create(itemType, this.currentFile.id, newName);
+        }
+
+        // Dispatch a success notification, and refresh the file list
+        this.dispatchEvent(new NotificationEvent('Created ' + newName + '.'));
+        this._busy = false;
+        this._fetchFileList();
+      } catch (e) {
+        this._busy = false;
+        Utils.showErrorDialog('Error creating item', e.message);
+      }
+    }
   }
 
   /**

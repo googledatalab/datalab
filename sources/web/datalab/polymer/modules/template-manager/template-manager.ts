@@ -28,6 +28,7 @@ interface TemplateParameter {
 
 enum TEMPLATE_NAME {
   bigqueryOverview = 'bigqueryOverview',
+  newNotebook = 'newNotebook',
 }
 
 /**
@@ -126,6 +127,18 @@ class BigQueryTableOverviewTemplate extends NotebookTemplate {
 }
 
 /**
+ * This template contains intro cells so the notebook isn't empty on creation.
+ */
+class NewNotebookTemplate extends NotebookTemplate {
+  constructor(dict: { [key: string]: any }) {
+    const parameters = Object.keys(dict).map((k) => ({name: k, value: dict[k]}));
+
+    const templateId = DatalabFileId.fromString('static/templates/NewNotebookTemplate.ipynb');
+    super(templateId, parameters);
+  }
+}
+
+/**
  * Manages notebook templates, which are notebooks that reference parameter
  * with specific names. This class can also generate a notebook out of any such
  * template. New templates can be created by extending the NotebookTemplate
@@ -141,6 +154,8 @@ class TemplateManager extends Polymer.Element {
     switch (name) {
       case TEMPLATE_NAME.bigqueryOverview:
         templateClassName = BigQueryTableOverviewTemplate; break;
+      case TEMPLATE_NAME.newNotebook:
+        templateClassName = NewNotebookTemplate; break;
       default:
         throw new Error('Unknown template name: ' + name);
     }
@@ -153,7 +168,7 @@ class TemplateManager extends Polymer.Element {
     } catch (e) {
       throw new Error('Template file is not a notebook.');
     }
-    if (template.populatePlaceholders(templateNotebookContent) === 0) {
+    if (template.parameters.length > 0 && template.populatePlaceholders(templateNotebookContent) === 0) {
       // If we found no placeholders, assume we are using parameters instead
       // and add an initial cell with our parameter definitions.
       template.addParameterCell(templateNotebookContent);
