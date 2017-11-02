@@ -339,6 +339,7 @@ class GapiManager {
       return new Promise((resolve, reject) => {
         const options = new gapi.auth2.SigninOptionsBuilder();
         options.setScope(this._getScopeString(scope));
+        options.setPrompt('consent');
         gapi.auth2.getAuthInstance().signIn(options)
           .then(() => {
             resolve();
