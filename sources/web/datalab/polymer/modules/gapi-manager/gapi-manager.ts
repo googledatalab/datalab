@@ -441,21 +441,22 @@ class GapiManager {
   * Initialize the client with API key and People API, and initialize OAuth with an
   * OAuth 2.0 client ID and scopes (space delimited string) to request access.
   */
-  private static _initClient() {
+  private static _initClient(): Promise<void> {
     // TODO: Add state parameter to redirect the user back to the current URL
     // after the OAuth flow finishes.
-    try {
-      const auth2 = gapi.auth2.init({
-        client_id: GapiManager._clientId,
-        fetch_basic_profile: true,
-        redirect_uri: Utils.getHostRoot(),
-        scope: initialScopeString,
-        ux_mode: 'redirect',
-      });
-      this._currentUser = auth2.currentUser.get();
-    } catch (e) {
-      throw new Error('Error in gapi auth: ' + e.details);
-    }
+    return gapi.auth2.init({
+      client_id: GapiManager._clientId,
+      fetch_basic_profile: true,
+      redirect_uri: Utils.getHostRoot(),
+      scope: initialScopeString,
+      ux_mode: 'redirect',
+    })
+    // The return value of gapi.auth2.init is not a normal promise
+    .then(() => {
+      this._currentUser = gapi.auth2.getAuthInstance().currentUser.get();
+    }, (errorReason: any) => {
+      throw new Error('Error in gapi auth: ' + errorReason.details);
+    });
   }
 
   /**
