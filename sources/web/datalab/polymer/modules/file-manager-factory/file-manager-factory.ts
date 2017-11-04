@@ -111,7 +111,6 @@ class FileManagerFactory {
     }
   }
 
-  // Consider moving this to a strings module
   public static fileManagerTypetoString(type: FileManagerType) {
     return type.toString();
   }
