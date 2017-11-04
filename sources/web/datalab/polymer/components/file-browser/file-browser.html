@@ -197,7 +197,7 @@ the License.
           only enable the button when one file is selected for now, until we get
           the group moving/copying functionality too-->
           <paper-button class="toolbar-button" on-click="_deleteSelectedItems"
-                        disabled$={{!selectedFile}}>
+                        disabled$=[[!_selectedFilesLength]]>
             <iron-icon icon="delete"></iron-icon>
             <span>Delete</span>
           </paper-button>

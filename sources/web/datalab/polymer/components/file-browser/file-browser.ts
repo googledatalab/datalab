@@ -86,6 +86,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   _fetching: boolean; // Indicates the file list is being fetched and updated
   _fileManagerDisplayName: string;
   _fileManagerDisplayIcon: string;
+  _selectedFilesLength: number;
 
   private _addToolbarCollapseThreshold = 900;
   private _dividerPosition: number;
@@ -151,6 +152,10 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         observer: '_pathHistoryIndexChanged',
         type: Number,
         value: -1,
+      },
+      _selectedFilesLength: {
+        type: Number,
+        value: 0,
       },
       _showProgressBar: {
         computed: '_computeShowProgressBar(_fetching, _busy)'
@@ -516,6 +521,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    */
   _handleSelectionChanged() {
     const selectedIndices = (this.$.files as ItemListElement).selectedIndices;
+    this._selectedFilesLength = selectedIndices.length;
     const newSelectedFile = (selectedIndices.length === 1) ?
         this._fileList[selectedIndices[0]] : null;
     if (newSelectedFile !== this.selectedFile) {
