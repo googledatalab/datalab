@@ -138,15 +138,15 @@ the License.
 
         <!--Default Add toolbar, contains Add buttons for notebook, file, and folder-->
         <span id="addToolbar">
-          <paper-button class="toolbar-button" on-click="_createNewNotebook">
+          <paper-button id="addNotebookButton" class="toolbar-button" on-click="_createNewNotebook">
             <iron-icon icon="add-box"></iron-icon>
             <span>Notebook</span>
           </paper-button>
-          <paper-button class="toolbar-button" on-click="_createNewFile">
+          <paper-button id="addFileButton" class="toolbar-button" on-click="_createNewFile">
             <iron-icon icon="add-box"></iron-icon>
             <span>File</span>
           </paper-button>
-          <paper-button class="toolbar-button" on-click="_createNewDirectory">
+          <paper-button id="addFolderButton" class="toolbar-button" on-click="_createNewDirectory">
             <iron-icon icon="add-box"></iron-icon>
             <span>Folder</span>
           </paper-button>
@@ -166,37 +166,35 @@ the License.
 
         <!--Default Update toolbar, contains buttons to modify files/folders-->
         <span id="updateToolbar">
-          <paper-button class="toolbar-button" on-click="_altUpload">
+          <paper-button id="uploadButton" class="toolbar-button" on-click="_altUpload">
             <iron-icon icon="file-upload"></iron-icon>
             <span>Upload</span>
           </paper-button>
           <!--This is hidden but its functionality is used by the alt upload button above-->
           <input type="file" id="altFileUpload" multiple style="display: none"
                  on-change="_upload">
-          <paper-button class="toolbar-button" on-click="_openSelectedInEditor"
-                        disabled$={{!selectedFile}}>
+          <paper-button id="editAsTextButton" class="toolbar-button"
+                        on-click="_openSelectedInEditor" disabled$={{!selectedFile}}>
             <iron-icon icon="editor:short-text"></iron-icon>
             <span>Edit as Text</span>
           </paper-button>
-          <paper-button class="toolbar-button" on-click="_copySelectedItem"
+          <!--TODO: Enable copy/move buttons when multiple files are selected-->
+          <paper-button id="copyButton" class="toolbar-button" on-click="_copySelectedItem"
                         disabled$={{!selectedFile}}>
             <iron-icon icon="content-copy"></iron-icon>
             <span>Copy</span>
           </paper-button>
-          <paper-button class="toolbar-button" on-click="_moveSelectedItem"
+          <paper-button id="moveButton" class="toolbar-button" on-click="_moveSelectedItem"
                         disabled$={{!selectedFile}}>
             <iron-icon icon="redo"></iron-icon>
             <span>Move</span>
           </paper-button>
-          <paper-button class="toolbar-button" on-click="_renameSelectedItem"
+          <paper-button id="renameButton" class="toolbar-button" on-click="_renameSelectedItem"
                         disabled$={{!selectedFile}}>
             <iron-icon icon="editor:border-color"></iron-icon>
             <span>Rename</span>
           </paper-button>
-          <!--TODO: Delete operation supports deleting multiple files, but we'll
-          only enable the button when one file is selected for now, until we get
-          the group moving/copying functionality too-->
-          <paper-button class="toolbar-button" on-click="_deleteSelectedItems"
+          <paper-button id="deleteButton" class="toolbar-button" on-click="_deleteSelectedItems"
                         disabled$=[[!_selectedFilesLength]]>
             <iron-icon icon="delete"></iron-icon>
             <span>Delete</span>

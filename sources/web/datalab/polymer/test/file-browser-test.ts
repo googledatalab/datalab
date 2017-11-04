@@ -44,6 +44,20 @@ describe('<file-browser>', () => {
     new MockFile('file3'),
   ];
 
+  const fileAddButtonIds = [
+    'addNotebookButton',
+    'addFileButton',
+    'addFolderButton',
+  ];
+  const fileOpsButtonIds = [
+    'uploadButton',
+    'editAsTextButton',
+    'copyButton',
+    'moveButton',
+    'renameButton',
+    'deleteButton',
+  ];
+
   before(() => {
     SettingsManager.getUserSettingsAsync = (forceRefresh: boolean) => {
       assert(forceRefresh === true, 'file-browser should refresh settings on load');
@@ -98,6 +112,59 @@ describe('<file-browser>', () => {
     const files: ItemListElement = testFixture.$.files;
     files.rows.forEach((row: ItemListRow, i: number) => {
       assert(!row.selected, 'file ' + i + ' should not be selected');
+    });
+  });
+
+  it('file operations are disabled when no items selected', () => {
+    const files: ItemListElement = testFixture.$.files;
+    files._unselectAll();
+    fileAddButtonIds.forEach((id) => {
+      const button = testFixture.$[id] as HTMLElement;
+      assert(!button.hasAttribute('disabled'), id + ' button should always be enabled');
+    });
+    fileOpsButtonIds.forEach((id) => {
+      const button = testFixture.$[id] as HTMLElement;
+      if (id === 'uploadButton') {
+        assert(!button.hasAttribute('disabled'), 'upload button should always be enabled');
+      } else {
+        assert(button.hasAttribute('disabled'), id + ' should be disabled when no items selected');
+      }
+    });
+  });
+
+  it('enables file operation buttons when one item is selected', () => {
+    const files: ItemListElement = testFixture.$.files;
+    files._unselectAll();
+    files._selectItem(0);
+    fileAddButtonIds.forEach((id) => {
+      const button = testFixture.$[id] as HTMLElement;
+      assert(!button.hasAttribute('disabled'), id + ' button should always be enabled');
+    });
+    fileOpsButtonIds.forEach((id) => {
+      const button = testFixture.$[id] as HTMLElement;
+      assert(!button.hasAttribute('disabled'),
+          id + ' button should be enabled when one item selected');
+    });
+  });
+
+  it('enables only delete file button when more than one item is selected', () => {
+    const files: ItemListElement = testFixture.$.files;
+    files._unselectAll();
+    files._selectItem(0);
+    files._selectItem(1);
+    fileAddButtonIds.forEach((id) => {
+      const button = testFixture.$[id] as HTMLElement;
+      assert(!button.hasAttribute('disabled'), id + ' button should always be enabled');
+    });
+    fileOpsButtonIds.forEach((id) => {
+      const button = testFixture.$[id] as HTMLElement;
+      if (id === 'uploadButton' || id === 'deleteButton') {
+        assert(!button.hasAttribute('disabled'),
+            id + ' should be enabled if more than one item selected');
+      } else {
+        assert(button.hasAttribute('disabled'),
+            id + ' should be disabled when more than one item selected');
+      }
     });
   });
 });
