@@ -29,6 +29,7 @@ const CommandId = {
   ERROR: 'error',
   LOAD_NOTEBOOK: 'load-notebook',
   PICK_PROJECT: 'pick-project',
+  REDIRECT_TO_NOTEBOOK: 'redirect-to-notebook',
   UPLOAD_USER_CREDS: 'upload-user-creds',
 };
 
@@ -45,6 +46,7 @@ async function processMessageEvent(e: MessageEvent) {
   }
 
   const message = e.data as IframeMessage;
+  let outgoingMessage: IframeMessage;
 
   switch (message.command) {
     case CommandId.UPLOAD_USER_CREDS:
@@ -61,7 +63,6 @@ async function processMessageEvent(e: MessageEvent) {
       break;
 
     case CommandId.LOAD_NOTEBOOK:
-      let outgoingMessage: IframeMessage;
       try {
         const id = DatalabFileId.fromString(message.arguments);
         const fileManager = FileManagerFactory.getInstanceForType(id.source);
@@ -71,6 +72,25 @@ async function processMessageEvent(e: MessageEvent) {
         ]);
         outgoingMessage = {
           arguments: [file, doc],
+        };
+      } catch (e) {
+        outgoingMessage = {
+          arguments: e.toString(),
+          command: CommandId.ERROR,
+        };
+      }
+      // Attach the same guid in case this message was sent in an async context
+      outgoingMessage.guid = message.guid;
+      sendMessageToNotebookEditor(outgoingMessage);
+      break;
+
+    case CommandId.REDIRECT_TO_NOTEBOOK:
+      try {
+        const id = message.arguments;
+        const url = '/notebook/' + id;
+        window.location.href = url;
+        outgoingMessage = {
+          arguments: 'OK',
         };
       } catch (e) {
         outgoingMessage = {

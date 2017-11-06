@@ -44,7 +44,20 @@ class NotebookTemplate {
 
   constructor(fileId: DatalabFileId, parameters: TemplateParameter[]) {
     this.fileId = fileId;
-    this.parameters = parameters;
+    this.parameters = NotebookTemplate._sanitizeParams(parameters);
+  }
+
+  /**
+   * Strictly sanitizes the parameters.
+   */
+  private static _sanitizeParams(params: TemplateParameter[]) {
+    params.forEach((p: TemplateParameter, i) => {
+      params[i].name = p.name.replace(/[^A-Za-z0-9._\-]/g, '');
+      if (typeof p.value === 'string') {
+        params[i].value = p.value.replace(/[^A-Za-z0-9._\-]/g, '');
+      }
+    });
+    return params;
   }
 
   /**

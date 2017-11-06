@@ -99,6 +99,13 @@ class GithubFileManager extends BaseFileManager {
     const githubPath = await this._githubPathForFileId(fileId, 'get');
     return this._githubApiPathRequest(githubPath)
         .then((response: GhFileResponse) => {
+          // Put in the fields that the blob API doesn't populate
+          if (!response.name) {
+            response.name = fileId.path.split('/').pop() || '';
+          }
+          if (!response.path) {
+            response.path = fileId.path;
+          }
           return this._ghFileToDatalabFile(response);
         });
   }
