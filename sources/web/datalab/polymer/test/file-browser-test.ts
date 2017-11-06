@@ -74,6 +74,8 @@ window.addEventListener('WebComponentsReady', () => {
           idleTimeoutShutdownCommand: '',
           startuppath: startuppath.path,
           theme: 'light',
+        };
+        return Promise.resolve(mockSettings);
       };
       ApiManager.getBasePath = () => {
         return Promise.resolve('');
