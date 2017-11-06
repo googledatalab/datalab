@@ -186,6 +186,8 @@ class ItemListElement extends Polymer.Element {
    */
   public inlineDetailsMode: InlineDetailsDisplayMode;
 
+  _showFilterBox: boolean;
+
   private _lastSelectedIndex = -1;
 
   static get is() { return 'item-list'; }
@@ -199,6 +201,10 @@ class ItemListElement extends Polymer.Element {
       _isAllSelected: {
         computed: '_computeIsAllSelected(selectedIndices)',
         type: Boolean,
+      },
+      _showFilterBox: {
+        type: Boolean,
+        value: false,
       },
       columns: {
         type: Array,
@@ -244,6 +250,10 @@ class ItemListElement extends Polymer.Element {
       const shadow = '0px ' + yOffset + 'px 10px -5px #ccc';
       headerContainer.style.boxShadow = shadow;
     });
+  }
+
+  _toggleFilter() {
+    this._showFilterBox = !this._showFilterBox;
   }
 
   /**

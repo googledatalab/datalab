@@ -14,10 +14,12 @@ the License.
 
 <link rel="import" href="../../modules/utils/utils.html">
 
+<link rel="import" href="../../bower_components/iron-a11y-keys/iron-a11y-keys.html">
 <link rel="import" href="../../bower_components/iron-icons/editor-icons.html">
 <link rel="import" href="../../bower_components/iron-icons/hardware-icons.html">
 <link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
 <link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 
 <dom-module id="item-list">
   <template>
@@ -96,6 +98,46 @@ the License.
         flex: 1;
         max-width: 150px;
       }
+      #filterToggle {
+        --paper-icon-button: {
+          width: 38px;
+          height: 38px;
+        };
+      }
+      .filterShown--true {
+        color: var(--selection-fg-color);
+      }
+      .filterShown--false {
+        color: var(--disabled-fg-color);
+      }
+      #search-div {
+        position: relative;
+      }
+      #search-icon {
+        position: absolute;
+        top: 5px;
+        right: 10px;
+        color: var(--disabled-fg-color);
+        width: 22px;
+        height: 22px;
+      }
+      #searchBox {
+        height: 35px;
+        width: 100%;
+        border: solid 1px var(--border-color);
+        text-indent: 75px;
+        padding: 5px;
+        box-sizing: border-box;
+        background-color: var(--primary-bg-color);
+        color: var(--primary-fg-color);
+        outline: none;
+      }
+      #searchBox:hover {
+        border: solid 1px var(--outline-color);
+      }
+      #searchBox:active {
+        border: solid 1px var(--outline-color);
+      }
     </style>
 
     <!--Header row-->
@@ -106,12 +148,20 @@ the License.
           <paper-checkbox id="selectAllCheckbox" on-checked-changed="_selectAllChanged"
                           checked={{_isAllSelected}} hidden$="{{_hideCheckboxes}}">
           </paper-checkbox>
+          <paper-icon-button id="filterToggle" class$="filterShown--[[_showFilterBox]]"
+                             icon="filter-list" on-click="_toggleFilter"></paper-icon-button>
         </div>
         <template is="dom-repeat" items="{{columns}}" as="column">
           <div class="column">
             <strong>{{column}}</strong>
           </div>
         </template>
+      </div>
+      <div id="search-div" hidden$="[[!_showFilterBox]]">
+        <iron-a11y-keys id="searchKeys" keys="enter" on-keys-pressed="_filter"></iron-a11y-keys>
+        <iron-icon icon="filter-list" id="search-icon"></iron-icon>
+        <input id="searchBox" placeholder="Filter by [[columns.0]]"
+               value="{{_searchValue::input}}"></input>
       </div>
     </div>
 
