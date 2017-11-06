@@ -39,6 +39,8 @@ class TerminalElement extends Polymer.Element implements DatalabPageElement {
   public focusHandler = null;
   public blurHandler = null;
 
+  _busy: boolean;
+
   private _xterm: Terminal;
   private _wsConnection: WebSocket;
   private _charHeight: number;
@@ -46,8 +48,15 @@ class TerminalElement extends Polymer.Element implements DatalabPageElement {
 
   static get is() { return 'datalab-terminal'; }
 
-  ready() {
+  static get properties() {
+    return {
+      _busy: Boolean,
+    };
+  }
+
+  async ready() {
     super.ready();
+    this._busy = true;
     // Use the size helper element to get the height and width of a character. This
     // makes changing the style simpler, instead of hard-coding these values.
     this._charHeight = this.$.sizeHelper.clientHeight;
@@ -55,13 +64,15 @@ class TerminalElement extends Polymer.Element implements DatalabPageElement {
 
     // Get the first terminal instance by calling the Jupyter API. If none are returned,
     // start a new one.
-    TerminalManager.listTerminalsAsync()
-      .then((terminals: [JupyterTerminal]) => {
-        return terminals.length === 0 ? TerminalManager.startTerminalAsync() : terminals[0];
-      })
-      .then((terminal: JupyterTerminal) => {
-        this._initTerminal(terminal.name);
-      });
+    try {
+      const terminals = await TerminalManager.listTerminalsAsync();
+      const terminal = terminals.length === 0 ?
+          await TerminalManager.startTerminalAsync() : terminals[0];
+      await this._initTerminal(terminal.name);
+    } catch (e) {
+      Utils.showErrorDialog('Error', 'Failed to initialize terminal: ' + e.message);
+    }
+    this._busy = false;
   }
 
   /**

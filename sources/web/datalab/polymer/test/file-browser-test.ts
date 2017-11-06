@@ -95,11 +95,17 @@ window.addEventListener('WebComponentsReady', () => {
       });
     });
 
+    it('shows Name column in header', () => {
+      const files: ItemListElement = testFixture.$.files;
+      const columns = files.$.header.querySelectorAll('.column');
+      assert(columns.length === 1, 'exactly one column is expected');
+      assert(columns[0].innerText === 'Name', 'Name column missing');
+    });
+
     it('starts up with no files selected, and no files running', () => {
       const files: ItemListElement = testFixture.$.files;
       files.rows.forEach((row: ItemListRow, i: number) => {
         assert(!row.selected, 'file ' + i + ' should not be selected');
-      });
     });
 
     it('shows new notebook dialog', async () => {

@@ -16,6 +16,8 @@ the License.
 <link rel="import" href="../../modules/terminal-manager/terminal-manager.html">
 <link rel="import" href="../../modules/api-manager/api-manager.html">
 
+<link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
+
 <dom-module id="datalab-terminal">
   <link rel="import" type="css" href="../../bower_components/xterm.js/dist/xterm.css" />
   <template>
@@ -25,6 +27,11 @@ the License.
           font-family: monospace;
           font-size: 14px;
         }
+      }
+      paper-spinner {
+        position: absolute;
+        left: 50%;
+        top: 50%;
       }
       #container {
         background-color: #000;
@@ -48,6 +55,7 @@ the License.
     </style>
     <!--Hidden helper element to calculate character width and height during run time-->
     <div id="sizeHelper">0123456789</div>
+    <paper-spinner active hidden$={{!_busy}}></paper-spinner>
     <div id="container">
       <div id="theTerminal"></div>
     </div>
