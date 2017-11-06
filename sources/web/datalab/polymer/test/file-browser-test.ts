@@ -102,4 +102,40 @@ window.addEventListener('WebComponentsReady', () => {
       });
     });
   });
+
+  it('shows new notebook dialog', async () => {
+    // Make sure no dialogs are shown
+    assert(document.querySelector('input-dialog') === null,
+        'no input dialogs should be shown before clicking new');
+    testFixture.$.newNotebookButton.click();
+    const dialog = TestUtils.getDialog(InputDialogElement);
+    assert(dialog, 'an input dialog should show after clicking new notebook');
+    assert(dialog.$.dialogTitle.innerText === 'New ' + Utils.constants.notebook);
+
+    await TestUtils.cancelDialog(dialog);
+  });
+
+  it('shows new file dialog', async () => {
+    // Make sure no dialogs are shown
+    assert(document.querySelector('input-dialog') === null,
+        'no input dialogs should be shown before clicking new');
+    testFixture.$.newFileButton.click();
+    const dialog = TestUtils.getDialog(InputDialogElement);
+    assert(dialog, 'an input dialog should show after clicking new file');
+    assert(dialog.$.dialogTitle.innerText === 'New ' + Utils.constants.file);
+
+    await TestUtils.cancelDialog(dialog);
+  });
+
+  it('shows new folder dialog', async () => {
+    // Make sure no dialogs are shown
+    assert(document.querySelector('input-dialog') === null,
+        'no input dialogs should be shown before clicking new');
+    testFixture.$.newFolderButton.click();
+    const dialog = TestUtils.getDialog(InputDialogElement);
+    assert(dialog, 'an input dialog should show after clicking new folder');
+    assert(dialog.$.dialogTitle.innerText === 'New ' + Utils.constants.directory);
+
+    await TestUtils.cancelDialog(dialog);
+  });
 });

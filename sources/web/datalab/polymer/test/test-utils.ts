@@ -17,3 +17,35 @@
 
 declare function assert(condition: boolean, message: string): null;
 declare function fixture(element: string): any;
+
+class TestUtils {
+  /**
+   * Returns the currently open dialog object, and asserts that there is exactly
+   * one dialog open.
+   */
+  public static getDialog(dialogType: typeof BaseDialogElement) {
+    const dialogs = document.querySelectorAll(dialogType.is) as NodeListOf<BaseDialogElement>;
+    assert(dialogs.length === 1, 'either no dialogs or more than one dialog open');
+    return dialogs[0];
+  }
+
+  /**
+   * Dismisses the given dialog element by clicking its cancel button.
+   * Returns a promise that resolves after the dialog is dismissed.
+   */
+  public static cancelDialog(dialog: BaseDialogElement) {
+    // Dismiss the dialog
+    const p = new Promise((resolve, reject) => {
+      dialog.addEventListener('iron-overlay-closed', () => {
+        Polymer.dom.flush();
+        if (document.querySelector('input-dialog') === null) {
+          resolve();
+        } else {
+          reject();
+        }
+      });
+    });
+    dialog.$.cancelButton.click();
+    return p;
+  }
+}
