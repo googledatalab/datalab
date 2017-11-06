@@ -106,6 +106,7 @@ window.addEventListener('WebComponentsReady', () => {
       const files: ItemListElement = testFixture.$.files;
       files.rows.forEach((row: ItemListRow, i: number) => {
         assert(!row.selected, 'file ' + i + ' should not be selected');
+      });
     });
 
     it('shows new notebook dialog', async () => {
