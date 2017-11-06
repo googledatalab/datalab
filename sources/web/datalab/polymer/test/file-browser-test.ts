@@ -44,19 +44,26 @@ describe('<file-browser>', () => {
     new MockFile('file3'),
   ];
 
-  const fileAddButtonIds = [
+  const alwaysEnabledButtonIds = [
     'newNotebookButton',
     'newFileButton',
     'newFolderButton',
-  ];
-  const fileOpsButtonIds = [
     'uploadButton',
+  ];
+  const singleSelectionEnabledButtonIds = [
     'editAsTextButton',
     'copyButton',
     'moveButton',
     'renameButton',
+  ];
+  const multiSelectionEnabledButtonIds = [
     'deleteButton',
   ];
+
+  function assertEnabledState(id: string, enabled: boolean) {
+    const button = testFixture.$[id] as HTMLElement;
+    assert(button.hasAttribute('disabled') === !enabled, id + ' is expected to be enabled');
+  }
 
   before(() => {
     SettingsManager.getUserSettingsAsync = (forceRefresh: boolean) => {
@@ -151,56 +158,31 @@ describe('<file-browser>', () => {
     await TestUtils.cancelDialog(dialog);
   });
 
-  it('file operations are disabled when no items selected', () => {
+  it('enables always-enabled buttons, disables the rest when no file is selected', () => {
     const files: ItemListElement = testFixture.$.files;
     files._unselectAll();
-    fileAddButtonIds.forEach((id) => {
-      const button = testFixture.$[id] as HTMLElement;
-      assert(!button.hasAttribute('disabled'), id + ' button should always be enabled');
-    });
-    fileOpsButtonIds.forEach((id) => {
-      const button = testFixture.$[id] as HTMLElement;
-      if (id === 'uploadButton') {
-        assert(!button.hasAttribute('disabled'), 'upload button should always be enabled');
-      } else {
-        assert(button.hasAttribute('disabled'), id + ' should be disabled when no items selected');
-      }
-    });
+    alwaysEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
+    singleSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, false));
+    multiSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, false));
   });
 
-  it('enables file operation buttons when one item is selected', () => {
+  it('enables all buttons when one file is selected', () => {
     const files: ItemListElement = testFixture.$.files;
     files._unselectAll();
     files._selectItem(0);
-    fileAddButtonIds.forEach((id) => {
-      const button = testFixture.$[id] as HTMLElement;
-      assert(!button.hasAttribute('disabled'), id + ' button should always be enabled');
-    });
-    fileOpsButtonIds.forEach((id) => {
-      const button = testFixture.$[id] as HTMLElement;
-      assert(!button.hasAttribute('disabled'),
-          id + ' button should be enabled when one item selected');
-    });
+    alwaysEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
+    singleSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
+    multiSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
   });
 
-  it('enables only delete file button when more than one item is selected', () => {
+  it(`enables always enabled and multi-selection enabled buttons, and
+      disables the rest when two files are selected`, () => {
     const files: ItemListElement = testFixture.$.files;
     files._unselectAll();
     files._selectItem(0);
     files._selectItem(1);
-    fileAddButtonIds.forEach((id) => {
-      const button = testFixture.$[id] as HTMLElement;
-      assert(!button.hasAttribute('disabled'), id + ' button should always be enabled');
-    });
-    fileOpsButtonIds.forEach((id) => {
-      const button = testFixture.$[id] as HTMLElement;
-      if (id === 'uploadButton' || id === 'deleteButton') {
-        assert(!button.hasAttribute('disabled'),
-            id + ' should be enabled if more than one item selected');
-      } else {
-        assert(button.hasAttribute('disabled'),
-            id + ' should be disabled when more than one item selected');
-      }
-    });
-  });	
+    alwaysEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
+    singleSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, false));
+    multiSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
+  });
 });
