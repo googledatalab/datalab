@@ -225,6 +225,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
     const filesElement = this.$.files as ItemListElement;
     filesElement.inlineDetailsMode = InlineDetailsDisplayMode.SINGLE_SELECT;
+    filesElement.columns = ['Name'];
 
     this.$.breadCrumbs.addEventListener('crumbClicked', (e: ItemClickEvent) => {
       // Take the default root file into account, increment clicked index by one.
