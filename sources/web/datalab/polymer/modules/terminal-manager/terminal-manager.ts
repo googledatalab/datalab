@@ -29,7 +29,7 @@ class TerminalManager {
   /**
    * Initializes a terminal session.
    */
-  public static startTerminalAsync() {
+  public static startTerminalAsync(): Promise<JupyterTerminal> {
     const xhrOptions: XhrOptions = {
       method: 'POST',
     };
@@ -39,7 +39,7 @@ class TerminalManager {
   /**
    * Returns a list of active terminal sessions.
    */
-  public static listTerminalsAsync() {
+  public static listTerminalsAsync(): Promise<[JupyterTerminal]> {
     return ApiManager.sendRequestAsync(ApiManager.getServiceUrl(ServiceId.TERMINALS));
   }
 
