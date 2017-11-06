@@ -63,7 +63,8 @@ window.addEventListener('WebComponentsReady', () => {
 
     function assertEnabledState(id: string, enabled: boolean) {
       const button = testFixture.$[id] as HTMLElement;
-      assert(button.hasAttribute('disabled') === !enabled, id + ' is expected to be enabled');
+      assert(button.hasAttribute('disabled') === !enabled,
+          id + ' is expected to be ' + enabled ? 'enabled' : 'disabled');
     }
 
     before(() => {
@@ -165,33 +166,33 @@ window.addEventListener('WebComponentsReady', () => {
 
       await TestUtils.cancelDialog(dialog);
     });
-  });
 
-  it('enables always-enabled buttons, disables the rest when no file is selected', () => {
-    const files: ItemListElement = testFixture.$.files;
-    files._unselectAll();
-    alwaysEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
-    singleSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, false));
-    multiSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, false));
-  });
+    it('enables always-enabled buttons, disables the rest when no file is selected', () => {
+      const files: ItemListElement = testFixture.$.files;
+      files._unselectAll();
+      alwaysEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
+      singleSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, false));
+      multiSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, false));
+    });
 
-  it('enables all buttons when one file is selected', () => {
-    const files: ItemListElement = testFixture.$.files;
-    files._unselectAll();
-    files._selectItem(0);
-    alwaysEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
-    singleSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
-    multiSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
-  });
+    it('enables all buttons when one file is selected', () => {
+      const files: ItemListElement = testFixture.$.files;
+      files._unselectAll();
+      files._selectItem(0);
+      alwaysEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
+      singleSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
+      multiSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
+    });
 
-  it(`enables always enabled and multi-selection enabled buttons, and
-      disables the rest when two files are selected`, () => {
-    const files: ItemListElement = testFixture.$.files;
-    files._unselectAll();
-    files._selectItem(0);
-    files._selectItem(1);
-    alwaysEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
-    singleSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, false));
-    multiSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
+    it(`enables always enabled and multi-selection enabled buttons, and
+        disables the rest when two files are selected`, () => {
+      const files: ItemListElement = testFixture.$.files;
+      files._unselectAll();
+      files._selectItem(0);
+      files._selectItem(1);
+      alwaysEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
+      singleSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, false));
+      multiSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
+    });
   });
 });
