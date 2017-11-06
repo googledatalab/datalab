@@ -21,12 +21,14 @@ class MissingClientIdError extends Error {
 
 enum GapiScopes {
   BIGQUERY,
+  CLOUD,
   DRIVE,
   GCS,
 }
 
-// Authorize GCP scope by default
-const initialScopeString = 'profile email https://www.googleapis.com/auth/cloud-platform';
+// Ask for all necesary scopes up front so we don't need to ask again later.
+// Cloud-platform scope covers BigQuery and GCS but not Drive.
+const initialScopes = [ GapiScopes.CLOUD, GapiScopes.DRIVE ];
 
 /**
  * This module contains a collection of functions that interact with gapi.
@@ -286,7 +288,8 @@ class GapiManager {
     private static _load(): Promise<void> {
       return GapiManager.loadGapi()
         .then(() => gapi.client.load('bigquery', 'v2'))
-        .then(() => GapiManager.grantScope(GapiScopes.BIGQUERY));
+        .then(() => GapiManager.grantScope(GapiScopes.CLOUD));
+            // CLOUD scope subsumes BIGQUERY
     }
 
   };
@@ -320,7 +323,7 @@ class GapiManager {
     private static _load(): Promise<void> {
       return GapiManager.loadGapi()
         .then(() => gapi.client.load('cloudresourcemanager', 'v1'))
-        .then(() => GapiManager.grantScope(GapiScopes.BIGQUERY));
+        .then(() => GapiManager.grantScope(GapiScopes.CLOUD));
     }
 
   };
@@ -442,6 +445,8 @@ class GapiManager {
   * OAuth 2.0 client ID and scopes (space delimited string) to request access.
   */
   private static _initClient(): Promise<void> {
+    const initialScopeString = initialScopes.map(
+      (scopeEnum) => this._getScopeString(scopeEnum)).join(' ');
     // TODO: Add state parameter to redirect the user back to the current URL
     // after the OAuth flow finishes.
     return gapi.auth2.init({
@@ -503,9 +508,12 @@ class GapiManager {
   }
 
   private static _getScopeString(scope: GapiScopes): string {
+    // https://developers.google.com/identity/protocols/googlescopes
     switch (scope) {
       case GapiScopes.BIGQUERY:
         return 'https://www.googleapis.com/auth/bigquery';
+      case GapiScopes.CLOUD:
+        return 'https://www.googleapis.com/auth/cloud-platform';
       case GapiScopes.DRIVE:
         return ['https://www.googleapis.com/auth/drive',
                 'https://www.googleapis.com/auth/drive.appfolder',
