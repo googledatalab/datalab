@@ -29,8 +29,11 @@ class Utils {
   };
 
   public static constants = {
+    directory: 'folder',
     editorUrlComponent:   '/editor/',
+    file: 'file',
     newNotebookUrlComponent:  '/notebook/new/',
+    notebook: 'notebook',
     notebookUrlComponent: '/notebook/',
 
     // Feature names
@@ -162,15 +165,14 @@ class Utils {
     return type === DatalabFileType.DIRECTORY ? 'folder' : 'editor:insert-drive-file';
   }
 
-  // TODO: Consider moving to a dedicated strings module
   public static getFileTypeString(type: DatalabFileType) {
     switch (type) {
       case DatalabFileType.DIRECTORY:
-        return 'directory';
+        return this.constants.directory;
       case DatalabFileType.FILE:
-        return 'file';
+        return this.constants.file;
       case DatalabFileType.NOTEBOOK:
-        return 'notebook';
+        return this.constants.notebook;
       default:
         throw new Error('Unknown file type: ' + type);
     }
