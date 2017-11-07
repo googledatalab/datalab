@@ -24,11 +24,12 @@ enum GapiScopes {
   CLOUD,
   DRIVE,
   GCS,
+  SIGNIN,
 }
 
 // Ask for all necesary scopes up front so we don't need to ask again later.
 // Cloud-platform scope covers BigQuery and GCS but not Drive.
-const initialScopes = [ GapiScopes.CLOUD, GapiScopes.DRIVE ];
+const initialScopes = [ GapiScopes.SIGNIN, GapiScopes.CLOUD, GapiScopes.DRIVE ];
 
 /**
  * This module contains a collection of functions that interact with gapi.
@@ -522,6 +523,8 @@ class GapiManager {
                 'https://www.googleapis.com/auth/drive.file'].join(' ');
       case GapiScopes.GCS:
           return 'https://www.googleapis.com/auth/devstorage.full_control';
+      case GapiScopes.SIGNIN:
+          return 'profile email';
       default:
         throw new Error('Unknown gapi scope: ' + scope);
     }
