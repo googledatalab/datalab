@@ -20,10 +20,8 @@ class MissingClientIdError extends Error {
 }
 
 enum GapiScopes {
-  BIGQUERY,
   CLOUD,
   DRIVE,
-  GCS,
   SIGNIN,
 }
 
@@ -290,7 +288,6 @@ class GapiManager {
       return GapiManager.loadGapi()
         .then(() => gapi.client.load('bigquery', 'v2'))
         .then(() => GapiManager.grantScope(GapiScopes.CLOUD));
-            // CLOUD scope subsumes BIGQUERY
     }
 
   };
@@ -511,8 +508,6 @@ class GapiManager {
   private static _getScopeString(scope: GapiScopes): string {
     // https://developers.google.com/identity/protocols/googlescopes
     switch (scope) {
-      case GapiScopes.BIGQUERY:
-        return 'https://www.googleapis.com/auth/bigquery';
       case GapiScopes.CLOUD:
         return 'https://www.googleapis.com/auth/cloud-platform';
       case GapiScopes.DRIVE:
@@ -521,8 +516,6 @@ class GapiManager {
                 'https://www.googleapis.com/auth/drive.readonly.metadata',
                 'https://www.googleapis.com/auth/drive.install',
                 'https://www.googleapis.com/auth/drive.file'].join(' ');
-      case GapiScopes.GCS:
-          return 'https://www.googleapis.com/auth/devstorage.full_control';
       case GapiScopes.SIGNIN:
           return 'profile email';
       default:
