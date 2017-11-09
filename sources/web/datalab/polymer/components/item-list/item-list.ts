@@ -255,11 +255,15 @@ class ItemListElement extends Polymer.Element {
   }
 
   _rowsChanged() {
+    // Reset the filter if the items change
     this._filterString = '';
   }
 
   _toggleFilter() {
     this._showFilterBox = !this._showFilterBox;
+
+    // If the filter box is now visible, focus it.
+    // If not, reset the filter to go back to showing the full list.
     if (this._showFilterBox) {
       this.$.filterBox.focus();
     } else {
@@ -394,7 +398,7 @@ class ItemListElement extends Polymer.Element {
       return;
     }
     const target = e.target as HTMLDivElement;
-    const index = this.$.list.indexForElement(target);
+    const index = this.$.list.modelForElement(target).itemsIndex;
 
     // If shift key is pressed and we had saved the last selected index, select
     // all items from this index till the last selected.
@@ -442,7 +446,7 @@ class ItemListElement extends Polymer.Element {
    * On row double click, fires an event with the clicked item's index.
    */
   _rowDoubleClicked(e: MouseEvent) {
-    const index = this.$.list.indexForElement(e.target);
+    const index = this.$.list.modelForElement(e.target).itemsIndex;
     const ev = new ItemClickEvent('itemDoubleClick', { detail: {index} });
     this.dispatchEvent(ev);
   }

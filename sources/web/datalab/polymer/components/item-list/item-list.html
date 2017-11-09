@@ -14,7 +14,6 @@ the License.
 
 <link rel="import" href="../../modules/utils/utils.html">
 
-<link rel="import" href="../../bower_components/iron-a11y-keys/iron-a11y-keys.html">
 <link rel="import" href="../../bower_components/iron-icons/editor-icons.html">
 <link rel="import" href="../../bower_components/iron-icons/hardware-icons.html">
 <link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
@@ -115,7 +114,7 @@ the License.
       }
       #filter-icon {
         position: absolute;
-        top: 5px;
+        top: 8px;
         right: 10px;
         color: var(--disabled-fg-color);
         width: 18px;
@@ -149,7 +148,8 @@ the License.
                           checked={{_isAllSelected}} hidden$="{{_hideCheckboxes}}">
           </paper-checkbox>
           <paper-icon-button id="filterToggle" class$="filterShown--[[_showFilterBox]]"
-                             icon="filter-list" on-click="_toggleFilter"></paper-icon-button>
+                             icon="filter-list" on-click="_toggleFilter"
+                             title="Filter by [[columns.0]]"></paper-icon-button>
         </div>
         <template is="dom-repeat" items="{{columns}}" as="column">
           <div class="column">
