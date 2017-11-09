@@ -437,7 +437,7 @@ describe('<item-list>', () => {
           'fifth details container should be hidden');
     });
 
-    it('should hide the filter box by default', () => {
+    it('hides the filter box by default', () => {
       assert(testFixture.$.filterBox.offsetHeight === 0, 'filter box should not show by default');
     });
 
@@ -482,10 +482,12 @@ describe('<item-list>', () => {
 
     it('ignores case when filtering', () => {
       testFixture.$.filterToggle.click();
-      testFixture._filterString = 'FIRST';
+      testFixture._filterString = 'COLUMN 4';
       Polymer.dom.flush();
       const rows = testFixture.$.listContainer.querySelectorAll('.row');
-      assert(rows.length === 5, 'should show all rows, since filtering is case insensitive');
+      assert(rows.length === 1, 'should show all rows, since filtering is case insensitive');
+      assert(rows[0].children[1].innerText === 'first column 4',
+          'filter should return the fourth item');
     });
 
     it('resets filter when filter box is closed', () => {
