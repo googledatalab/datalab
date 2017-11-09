@@ -186,6 +186,9 @@ class ItemListElement extends Polymer.Element {
    */
   public inlineDetailsMode: InlineDetailsDisplayMode;
 
+  _filterString: string;
+  _showFilterBox: boolean;
+
   private _lastSelectedIndex = -1;
 
   static get is() { return 'item-list'; }
@@ -199,6 +202,10 @@ class ItemListElement extends Polymer.Element {
       _isAllSelected: {
         computed: '_computeIsAllSelected(selectedIndices)',
         type: Boolean,
+      },
+      _showFilterBox: {
+        type: Boolean,
+        value: false,
       },
       columns: {
         type: Array,
@@ -244,6 +251,33 @@ class ItemListElement extends Polymer.Element {
       const shadow = '0px ' + yOffset + 'px 10px -5px #ccc';
       headerContainer.style.boxShadow = shadow;
     });
+  }
+
+  resetFilter() {
+    this._filterString = '';
+  }
+
+  _toggleFilter() {
+    this._showFilterBox = !this._showFilterBox;
+
+    // If the filter box is now visible, focus it.
+    // If not, reset the filter to go back to showing the full list.
+    if (this._showFilterBox) {
+      this.$.filterBox.focus();
+    } else {
+      this._filterString = '';
+    }
+  }
+
+  _computeFilter(filterString: string) {
+    if (!filterString) {
+      // set filter to null to disable filtering
+      return null;
+    } else {
+      // return a filter function for the current search string
+      filterString = filterString.toLowerCase();
+      return (item: ItemListRow) => item.columns[0].toLowerCase().indexOf(filterString) > -1;
+    }
   }
 
   /**
@@ -362,7 +396,7 @@ class ItemListElement extends Polymer.Element {
       return;
     }
     const target = e.target as HTMLDivElement;
-    const index = this.$.list.indexForElement(target);
+    const index = this.$.list.modelForElement(target).itemsIndex;
 
     // If shift key is pressed and we had saved the last selected index, select
     // all items from this index till the last selected.
@@ -410,7 +444,7 @@ class ItemListElement extends Polymer.Element {
    * On row double click, fires an event with the clicked item's index.
    */
   _rowDoubleClicked(e: MouseEvent) {
-    const index = this.$.list.indexForElement(e.target);
+    const index = this.$.list.modelForElement(e.target).itemsIndex;
     const ev = new ItemClickEvent('itemDoubleClick', { detail: {index} });
     this.dispatchEvent(ev);
   }

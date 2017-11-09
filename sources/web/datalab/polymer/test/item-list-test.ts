@@ -436,5 +436,70 @@ describe('<item-list>', () => {
       assert(fifthDetailsContainer.getAttribute('hidden') != null,
           'fifth details container should be hidden');
     });
+
+    it('hides the filter box by default', () => {
+      assert(testFixture.$.filterBox.offsetHeight === 0, 'filter box should not show by default');
+    });
+
+    it('shows/hides filter box when toggle is clicked', () => {
+      testFixture.$.filterToggle.click();
+      assert(testFixture.$.filterBox.offsetHeight > 0,
+          'filter box should show when toggle is clicked');
+
+      testFixture.$.filterToggle.click();
+      assert(testFixture.$.filterBox.offsetHeight === 0,
+          'filter box should hide when toggle is clicked again');
+    });
+
+    it('filters items when typing characters in the filter box', () => {
+      testFixture.$.filterToggle.click();
+      testFixture._filterString = '3';
+      Polymer.dom.flush();
+      const rows = testFixture.$.listContainer.querySelectorAll('.row');
+      assert(rows.length === 1, 'only one item has "3" in its name');
+      assert(rows[0].children[1].innerText === 'first column 3',
+          'filter should only return the third item');
+    });
+
+    it('shows all items when filter string is deleted', () => {
+      testFixture.$.filterToggle.click();
+      testFixture._filterString = '3';
+      Polymer.dom.flush();
+      testFixture._filterString = '';
+      Polymer.dom.flush();
+      const rows = testFixture.$.listContainer.querySelectorAll('.row');
+      assert(rows.length === 5, 'should show all rows after filter string is deleted');
+    });
+
+    it('filters items based on first column only', () => {
+      testFixture.$.filterToggle.click();
+      testFixture._filterString = 'second';
+      Polymer.dom.flush();
+      const rows = testFixture.$.listContainer.querySelectorAll('.row');
+      assert(rows.length === 0,
+          'should not show any rows, since no row has "second" in its first column');
+    });
+
+    it('ignores case when filtering', () => {
+      testFixture.$.filterToggle.click();
+      testFixture._filterString = 'COLUMN 4';
+      Polymer.dom.flush();
+      const rows = testFixture.$.listContainer.querySelectorAll('.row');
+      assert(rows.length === 1,
+          'should show one row containing "column 4", since filtering is case insensitive');
+      assert(rows[0].children[1].innerText === 'first column 4',
+          'filter should return the fourth item');
+    });
+
+    it('resets filter when filter box is closed', () => {
+      testFixture.$.filterToggle.click();
+      testFixture._filterString = '3';
+      Polymer.dom.flush();
+      testFixture.$.filterToggle.click();
+      Polymer.dom.flush();
+      assert(testFixture.$.listContainer.querySelectorAll('.row').length === 5,
+          'all rows should show after closing filter box');
+    });
+
   });
 });
