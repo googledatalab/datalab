@@ -197,7 +197,7 @@ window.addEventListener('WebComponentsReady', () => {
       multiSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
     });
 
-    it('creates new notebook correctly', async () => {
+    it('correctly opens new tab to create a notebook', async () => {
       const notebookName = 'newMockNotebook';
       // Validate window.open is called with the correct url
       sinon.stub(window, 'open');
@@ -216,7 +216,7 @@ window.addEventListener('WebComponentsReady', () => {
       (window.open as sinon.SinonStub).restore();
     });
 
-    it('creates new file correctly', async () => {
+    it('calls FileManager.create correctly to create a new file', async () => {
       const fileName = 'newMockFile';
       sinon.stub(mockFileManager, 'create');
       testFixture.$.newFileButton.click();
@@ -233,7 +233,7 @@ window.addEventListener('WebComponentsReady', () => {
       (mockFileManager.create as sinon.SinonStub).restore();
     });
 
-    it('creates new folder correctly', async () => {
+    it('calls FileManager.create correctly to create a new directory', async () => {
       const folderName = 'newMockDirectory';
       sinon.stub(mockFileManager, 'create');
       testFixture.$.newFolderButton.click();
