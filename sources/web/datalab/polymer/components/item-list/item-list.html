@@ -100,8 +100,8 @@ the License.
       }
       #filterToggle {
         --paper-icon-button: {
-          width: 38px;
-          height: 38px;
+          width: 34px;
+          height: 34px;
         };
       }
       .filterShown--true {
@@ -110,18 +110,18 @@ the License.
       .filterShown--false {
         color: var(--disabled-fg-color);
       }
-      #search-div {
+      #filter-div {
         position: relative;
       }
-      #search-icon {
+      #filter-icon {
         position: absolute;
         top: 5px;
         right: 10px;
         color: var(--disabled-fg-color);
-        width: 22px;
-        height: 22px;
+        width: 18px;
+        height: 18px;
       }
-      #searchBox {
+      #filterBox {
         height: 35px;
         width: 100%;
         border: solid 1px var(--border-color);
@@ -132,10 +132,10 @@ the License.
         color: var(--primary-fg-color);
         outline: none;
       }
-      #searchBox:hover {
+      #filterBox:hover {
         border: solid 1px var(--outline-color);
       }
-      #searchBox:active {
+      #filterBox:active {
         border: solid 1px var(--outline-color);
       }
     </style>
@@ -157,17 +157,17 @@ the License.
           </div>
         </template>
       </div>
-      <div id="search-div" hidden$="[[!_showFilterBox]]">
-        <iron-a11y-keys id="searchKeys" keys="enter" on-keys-pressed="_filter"></iron-a11y-keys>
-        <iron-icon icon="filter-list" id="search-icon"></iron-icon>
-        <input id="searchBox" placeholder="Filter by [[columns.0]]"
-               value="{{_searchValue::input}}"></input>
+      <div id="filter-div" hidden$="[[!_showFilterBox]]">
+        <iron-icon icon="filter-list" id="filter-icon"></iron-icon>
+        <input id="filterBox" placeholder="Filter by [[columns.0]]"
+               value="{{_filterString::input}}"></input>
       </div>
     </div>
 
     <!--Item list-->
     <div id="listContainer">
-      <template is="dom-repeat" id="list" items="{{rows}}" as="row">
+      <template is="dom-repeat" id="list" items="{{rows}}" as="row"
+                filter="{{_computeFilter(_filterString)}}">
         <paper-item class="row" selected$={{row.selected}} on-click="_rowClicked"
                     on-dblclick="_rowDoubleClicked">
           <div class="checkbox-col">

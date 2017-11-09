@@ -186,6 +186,7 @@ class ItemListElement extends Polymer.Element {
    */
   public inlineDetailsMode: InlineDetailsDisplayMode;
 
+  _filterString: string;
   _showFilterBox: boolean;
 
   private _lastSelectedIndex = -1;
@@ -227,6 +228,7 @@ class ItemListElement extends Polymer.Element {
         value: false,
       },
       rows: {
+        observer: '_rowsChanged',
         type: Array,
         value: () => [],
       },
@@ -252,8 +254,28 @@ class ItemListElement extends Polymer.Element {
     });
   }
 
+  _rowsChanged() {
+    this._filterString = '';
+  }
+
   _toggleFilter() {
     this._showFilterBox = !this._showFilterBox;
+    if (this._showFilterBox) {
+      this.$.filterBox.focus();
+    } else {
+      this._filterString = '';
+    }
+  }
+
+  _computeFilter(filterString: string) {
+    if (!filterString) {
+      // set filter to null to disable filtering
+      return null;
+    } else {
+      // return a filter function for the current search string
+      filterString = filterString.toLowerCase();
+      return (item: ItemListRow) => item.columns[0].toLowerCase().indexOf(filterString) > -1;
+    }
   }
 
   /**
