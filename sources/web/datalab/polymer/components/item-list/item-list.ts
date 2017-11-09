@@ -228,7 +228,6 @@ class ItemListElement extends Polymer.Element {
         value: false,
       },
       rows: {
-        observer: '_rowsChanged',
         type: Array,
         value: () => [],
       },
@@ -254,8 +253,7 @@ class ItemListElement extends Polymer.Element {
     });
   }
 
-  _rowsChanged() {
-    // Reset the filter if the items change
+  resetFilter() {
     this._filterString = '';
   }
 

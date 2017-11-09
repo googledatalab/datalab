@@ -575,6 +575,10 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         this._pathHistory.slice(rootBreadcrumbs, this._pathHistoryIndex + 1).map((p) => p.name);
 
     this.currentFile = this._pathHistory[this._pathHistoryIndex];
+
+    // Reset any filter on the item list
+    (this.$.files as ItemListElement).resetFilter();
+
     this._setFileIdPropertyToCurrentFile();
     this._fetchFileList();
   }

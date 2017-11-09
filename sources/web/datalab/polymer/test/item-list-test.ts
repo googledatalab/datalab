@@ -485,7 +485,8 @@ describe('<item-list>', () => {
       testFixture._filterString = 'COLUMN 4';
       Polymer.dom.flush();
       const rows = testFixture.$.listContainer.querySelectorAll('.row');
-      assert(rows.length === 1, 'should show all rows, since filtering is case insensitive');
+      assert(rows.length === 1,
+          'should show one row containing "column 4", since filtering is case insensitive');
       assert(rows[0].children[1].innerText === 'first column 4',
           'filter should return the fourth item');
     });
