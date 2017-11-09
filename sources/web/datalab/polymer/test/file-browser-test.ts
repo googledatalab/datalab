@@ -35,15 +35,18 @@ window.addEventListener('WebComponentsReady', () => {
     }
   }
 
+  const testPath = 'testpath';
+
   describe('<file-browser>', () => {
     let testFixture: FileBrowserElement;
-    const startuppath = new DatalabFileId('testpath', FileManagerType.MOCK);
+    const startuppath = new DatalabFileId(testPath, FileManagerType.MOCK);
 
     const mockFiles = [
       new MockFile('file1'),
       new MockFile('file2'),
       new MockFile('file3'),
     ];
+    const mockFileManager = new MockFileManager();
 
     const alwaysEnabledButtonIds = [
       'newNotebookButton',
@@ -84,7 +87,6 @@ window.addEventListener('WebComponentsReady', () => {
       SessionManager.listSessionsAsync = () => {
         return Promise.resolve([]);
       };
-      const mockFileManager = new MockFileManager();
       mockFileManager.list = () => {
         return Promise.resolve(mockFiles);
       };
@@ -140,7 +142,7 @@ window.addEventListener('WebComponentsReady', () => {
       assert(dialog, 'an input dialog should show after clicking new notebook');
       assert(dialog.$.dialogTitle.innerText === 'New ' + Utils.constants.notebook);
 
-      await TestUtils.cancelDialog(dialog);
+      await TestUtils.closeDialog(dialog, false);
     });
 
     it('shows new file dialog', async () => {
@@ -152,7 +154,7 @@ window.addEventListener('WebComponentsReady', () => {
       assert(dialog, 'an input dialog should show after clicking new file');
       assert(dialog.$.dialogTitle.innerText === 'New ' + Utils.constants.file);
 
-      await TestUtils.cancelDialog(dialog);
+      await TestUtils.closeDialog(dialog, false);
     });
 
     it('shows new folder dialog', async () => {
@@ -164,7 +166,7 @@ window.addEventListener('WebComponentsReady', () => {
       assert(dialog, 'an input dialog should show after clicking new folder');
       assert(dialog.$.dialogTitle.innerText === 'New ' + Utils.constants.directory);
 
-      await TestUtils.cancelDialog(dialog);
+      await TestUtils.closeDialog(dialog, false);
     });
 
     it('enables always-enabled buttons, disables the rest when no file is selected', () => {
@@ -194,5 +196,59 @@ window.addEventListener('WebComponentsReady', () => {
       singleSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, false));
       multiSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
     });
+
+    it('correctly opens new tab to create a notebook', async () => {
+      const notebookName = 'newMockNotebook';
+      // Validate window.open is called with the correct url
+      sinon.stub(window, 'open');
+      testFixture.$.newNotebookButton.click();
+      const dialog = TestUtils.getDialog(InputDialogElement) as InputDialogElement;
+      dialog.$.inputBox.value = notebookName;
+      await TestUtils.closeDialog(dialog, true);
+
+      const result = await TestUtils.waitUntilTrue(() =>
+          (window.open as sinon.SinonStub).called, 5000);
+      assert(result, 'create should be called when create button clicked');
+      assert((window.open as sinon.SinonStub).calledWithExactly(
+                location.origin + '/notebook/new/mock/' + testPath +
+                '?fileName=' + notebookName + '.ipynb&templateName=newNotebook', '_blank'),
+              'window.open should be created with the newNotebook template');
+      (window.open as sinon.SinonStub).restore();
+    });
+
+    it('calls FileManager.create correctly to create a new file', async () => {
+      const fileName = 'newMockFile';
+      sinon.stub(mockFileManager, 'create');
+      testFixture.$.newFileButton.click();
+      const dialog = TestUtils.getDialog(InputDialogElement) as InputDialogElement;
+      dialog.$.inputBox.value = fileName;
+      await TestUtils.closeDialog(dialog, true);
+
+      const result = await TestUtils.waitUntilTrue(() =>
+          (mockFileManager.create as sinon.SinonStub).called, 5000);
+      assert(result, 'create should be called when create button clicked');
+      assert((mockFileManager.create as sinon.SinonStub).calledWithExactly(
+                DatalabFileType.FILE, testFixture.currentFile.id, fileName),
+             'filemanager.create should be created with the new file args');
+      (mockFileManager.create as sinon.SinonStub).restore();
+    });
+
+    it('calls FileManager.create correctly to create a new directory', async () => {
+      const folderName = 'newMockDirectory';
+      sinon.stub(mockFileManager, 'create');
+      testFixture.$.newFolderButton.click();
+      const dialog = TestUtils.getDialog(InputDialogElement) as InputDialogElement;
+      dialog.$.inputBox.value = folderName;
+      await TestUtils.closeDialog(dialog, true);
+
+      const result = await TestUtils.waitUntilTrue(() =>
+          (mockFileManager.create as sinon.SinonStub).called, 5000);
+      assert(result, 'create should be called when create button clicked');
+      assert((mockFileManager.create as sinon.SinonStub).calledWithExactly(
+                DatalabFileType.DIRECTORY, testFixture.currentFile.id, folderName),
+             'filemanager.create should be created with the new folder args');
+      (mockFileManager.create as sinon.SinonStub).restore();
+    });
+
   });
 });

@@ -14,6 +14,7 @@
 
 /// <reference path="../node_modules/@types/mocha/index.d.ts" />
 /// <reference path="../node_modules/@types/chai/index.d.ts" />
+/// <reference path="../node_modules/@types/sinon/index.d.ts" />
 
 declare function assert(condition: boolean, message: string): null;
 declare function fixture(element: string): any;
@@ -30,10 +31,10 @@ class TestUtils {
   }
 
   /**
-   * Dismisses the given dialog element by clicking its cancel button.
+   * Dismisses the given dialog element by clicking its ok or cancel button.
    * Returns a promise that resolves after the dialog is dismissed.
    */
-  public static cancelDialog(dialog: BaseDialogElement) {
+  public static closeDialog(dialog: BaseDialogElement, confirm: boolean) {
     // Dismiss the dialog
     const p = new Promise((resolve, reject) => {
       dialog.addEventListener('iron-overlay-closed', () => {
@@ -45,7 +46,38 @@ class TestUtils {
         }
       });
     });
-    dialog.$.cancelButton.click();
+    if (confirm) {
+      dialog.$.okButton.click();
+    } else {
+      dialog.$.cancelButton.click();
+    }
     return p;
+  }
+
+  /**
+   * Waits for the given condition to evaluate to true, with a given timeout in
+   * milliseconds. It achieves this by polling on the condition function every
+   * 10 milliseconds.
+   * Returns a promise that always resolves, returning true or false to
+   * indicate whether or not the condition was satisfied within the timeout.
+   */
+  public static waitUntilTrue(func: () => boolean, timeoutMs: number) {
+    const start = Date.now();
+
+    return new Promise((resolve) => {
+      if (func()) {
+        resolve(true);
+      } else {
+        const handle = window.setInterval(() => {
+          if (func()) {
+            window.clearInterval(handle);
+            resolve(true);
+          } else if (Date.now() > start + timeoutMs) {
+            window.clearInterval(handle);
+            resolve(false);
+          }
+        }, 10);
+      }
+    });
   }
 }
