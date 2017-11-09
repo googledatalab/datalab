@@ -501,18 +501,5 @@ describe('<item-list>', () => {
           'all rows should show after closing filter box');
     });
 
-    it('resets filter when rows change', () => {
-      testFixture.$.filterToggle.click();
-      testFixture._filterString = '3';
-      Polymer.dom.flush();
-
-      testFixture.rows = [...testFixture.rows];
-      Polymer.dom.flush();
-
-      assert(testFixture._filterString === '', 'should reset filter string after changing rows');
-      assert(testFixture.$.listContainer.querySelectorAll('.row').length === 5,
-          'all rows should show after changing rows');
-    });
-
   });
 });
