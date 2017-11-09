@@ -117,7 +117,7 @@ the License.
 
     <!--Item list-->
     <div id="listContainer">
-      <template is="dom-repeat" id="list" items="{{rows}}" as="row">
+      <template is="dom-repeat" id="list" items="{{rows}}" as="row" initial-count="100">
         <paper-item class="row" selected$={{row.selected}} on-click="_rowClicked"
                     on-dblclick="_rowDoubleClicked">
           <div class="checkbox-col">
