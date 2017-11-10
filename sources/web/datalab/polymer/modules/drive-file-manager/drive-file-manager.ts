@@ -54,10 +54,10 @@ class DriveFileManager extends BaseFileManager {
 
   public newFileNameError(fileName: string): string | null {
     // Must match _getWhitelistFilePredicates()
-    if (fileName.indexOf('.ipynb') > -1 || fileName.indexOf('.txt') > -1) {
+    if (fileName.endsWith('.txt')) {
       return null;
     } else {
-      return 'File name must include .txt';
+      return 'File name must end with .txt';
     }
   }
 

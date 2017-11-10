@@ -154,7 +154,7 @@ interface FileManager {
   getRootFile(): Promise<DatalabFile>;
 
   /**
-   * Checks whether the given filename is valid for this file manager.
+   * Checks whether the given non-notebook filename is valid for this file manager.
    * Return an error message if the file would not be returned from list().
    * Returns null if the name is valid.
    */
