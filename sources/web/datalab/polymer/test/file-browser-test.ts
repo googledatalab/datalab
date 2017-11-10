@@ -21,9 +21,15 @@ window.addEventListener('WebComponentsReady', () => {
         DatalabFileType.DIRECTORY,
       );
     }
+    getColumnValues() {
+      return [this.name, this.type.toString()];
+    }
   }
 
   class MockFileManager extends BaseFileManager {
+    public getColumns() {
+      return ['Name', 'Type'];
+    }
     public async getRootFile() {
       return new MockFile('root');
     }
@@ -112,15 +118,18 @@ window.addEventListener('WebComponentsReady', () => {
       mockFiles.forEach((file: DatalabFile, i: number) => {
         assert(files.rows[i].columns[0] === file.name,
             'mock file ' + i + 'name not shown in first column');
+        assert(files.rows[i].columns[1] === file.type.toString(),
+            'mock file ' + i + 'type not shown in first column');
         assert(files.rows[i].icon === file.icon, 'mock file ' + i + ' type not shown as icon');
       });
     });
 
-    it('shows Name column in header', () => {
+    it('shows column names returned from the file manager in header', () => {
       const files: ItemListElement = testFixture.$.files;
       const columns = files.$.header.querySelectorAll('.column');
-      assert(columns.length === 1, 'exactly one column is expected');
+      assert(columns.length === 2, 'exactly two column are expected');
       assert(columns[0].innerText === 'Name', 'Name column missing');
+      assert(columns[1].innerText === 'Type', 'Type column missing');
     });
 
     it('starts up with no files selected, and no files running', () => {
