@@ -15,14 +15,11 @@
 window.addEventListener('WebComponentsReady', () => {
   class MockFile extends DatalabFile {
     constructor(name = '', path = '') {
-      super({
-        getInlineDetailsName: () => '',
-        getPreviewName: () => '',
-        icon: '',
-        id: new DatalabFileId(path, FileManagerType.MOCK),
+      super(
+        new DatalabFileId(path, FileManagerType.MOCK),
         name,
-        type: DatalabFileType.DIRECTORY,
-      });
+        DatalabFileType.DIRECTORY,
+      );
     }
   }
 

@@ -32,6 +32,7 @@ class Utils {
     directory: 'folder',
     editorUrlComponent:   '/editor/',
     file: 'file',
+    me: 'Me',
     newNotebookUrlComponent:  '/notebook/new/',
     notebook: 'notebook',
     notebookUrlComponent: '/notebook/',
@@ -42,6 +43,16 @@ class Utils {
       timeout: 'timeout',
       userSettings: 'userSettings',
     },
+
+    // File browser column names
+    columns: {
+      dataset: 'Dataset',
+      lastModified: 'Last Modified',
+      name: 'Name',
+      owner: 'Owner',
+      project: 'Project',
+      table: 'Table',
+    }
   };
 
   /**

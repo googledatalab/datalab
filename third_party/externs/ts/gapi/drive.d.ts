@@ -67,6 +67,14 @@ declare namespace gapi.client {
       mimeType: string;
       modifiedTime: string;
       name: string;
+      owners: [{
+        kind: string;
+        displayName: string;
+        photoLink: string;
+        me: boolean;
+        permissionId: string;
+        emailAddress: string;
+      }];
       parents: string[];
       starred: boolean;
       trashed: boolean;

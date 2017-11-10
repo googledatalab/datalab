@@ -106,13 +106,15 @@ abstract class DatalabFile {
   name: string;
   type: DatalabFileType;
 
-  constructor(obj?: DatalabFile) {
-    if (obj) {
-      this.icon = obj.icon;
-      this.name = obj.name;
-      this.id = obj.id;
-      this.type = obj.type;
-    }
+  constructor(id: DatalabFileId, name: string, type: DatalabFileType, icon?: string) {
+    this.id = id;
+    this.name = name;
+    this.type = type;
+    this.icon = icon || '';
+  }
+
+  public getColumnValues(): string[] {
+    return [this.name];
   }
 
   public getPreviewName(): string {
@@ -164,6 +166,12 @@ interface FileManager {
    * @param containerId file id whose children to list.
    */
   list(containerId: DatalabFileId): Promise<DatalabFile[]>;
+
+  /**
+   * Returns a list of column names. A file id for the current file can be  passed
+   * to optionally customize the column names based on the current view.
+   */
+  getColumns(currentFileId?: DatalabFileId): string[];
 
   /**
    * Creates a new Datalab item
@@ -239,6 +247,11 @@ class BaseFileManager implements FileManager {
   list(_containerId: DatalabFileId): Promise<DatalabFile[]> {
     throw new UnsupportedMethod('list', this);
   }
+
+  getColumns(_currentFileId?: DatalabFileId) {
+    return [Utils.constants.columns.name];
+  }
+
   create(_fileType: DatalabFileType, _containerId?: DatalabFileId, _name?: string):
       Promise<DatalabFile> {
     throw new UnsupportedMethod('create', this);

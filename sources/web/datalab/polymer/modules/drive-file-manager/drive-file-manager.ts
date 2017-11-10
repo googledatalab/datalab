@@ -18,6 +18,12 @@
  */
 
 class DriveFile extends DatalabFile {
+  lastModified?: string;
+  owner?: string;
+
+  getColumnValues() {
+    return [this.name, this.lastModified || '', this.owner || ''];
+  }
 }
 
 /**
@@ -60,16 +66,20 @@ class DriveFileManager extends BaseFileManager {
       'mimeType',
       'modifiedTime',
       'name',
+      'owners',
       'parents',
     ];
-    const orderModifiers = [
-      'folder',
-      'modifiedTime desc',
-      'name',
-    ];
 
-    const upstreamFiles = await GapiManager.drive.listFiles(fileFields, queryPredicates, orderModifiers);
+    const upstreamFiles = await GapiManager.drive.listFiles(fileFields, queryPredicates);
     return upstreamFiles.map((file) => this._fromUpstreamFile(file));
+  }
+
+  public getColumns() {
+    return [
+      Utils.constants.columns.name,
+      Utils.constants.columns.lastModified,
+      Utils.constants.columns.owner,
+    ];
   }
 
   public async create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string)
@@ -116,27 +126,33 @@ class DriveFileManager extends BaseFileManager {
       // TODO - create the real path to this object, or figure out
       // a better way to handle not having the full path in the breadcrumbs
       const fileId = path;  // We assume the entire path is one fileId
-      const datalabFile: DriveFile = new DriveFile({
-        id: new DatalabFileId(fileId, FileManagerType.DRIVE),
-      } as DatalabFile);
+      const datalabFile: DriveFile = new DriveFile(
+        new DatalabFileId(fileId, FileManagerType.DRIVE),
+        path,
+        DatalabFileType.DIRECTORY,
+      );
       return [datalabFile];
     }
   }
 
   protected _fromUpstreamFile(file: gapi.client.drive.File) {
-    const datalabFile: DriveFile = new DriveFile({
-      icon: file.mimeType === DriveFileManager._directoryMimeType ?
-                              file.iconLink : 'editor:insert-drive-file',
-      id: new DatalabFileId(file.id, FileManagerType.DRIVE),
-      name: file.name,
-      type: file.mimeType === DriveFileManager._directoryMimeType ?
+    const driveFile = new DriveFile(
+      new DatalabFileId(file.id, FileManagerType.DRIVE),
+      file.name,
+      file.mimeType === DriveFileManager._directoryMimeType ?
                               DatalabFileType.DIRECTORY :
                               DatalabFileType.FILE,
-    } as DatalabFile);
-    if (datalabFile.name.endsWith('.ipynb')) {
-      datalabFile.type = DatalabFileType.NOTEBOOK;
+      file.mimeType === DriveFileManager._directoryMimeType ?
+                              file.iconLink : 'editor:insert-drive-file',
+    );
+    if (driveFile.type === DatalabFileType.FILE && driveFile.name.endsWith('.ipynb')) {
+      driveFile.type = DatalabFileType.NOTEBOOK;
     }
-    return datalabFile;
+    driveFile.lastModified = new Date(file.modifiedTime).toDateString();
+    if (file.owners) {
+      driveFile.owner = file.owners[0].me ? Utils.constants.me : file.owners[0].displayName;
+    }
+    return driveFile;
   }
 
   protected _getWhitelistFilePredicates() {
