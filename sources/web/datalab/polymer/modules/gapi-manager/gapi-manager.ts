@@ -511,11 +511,12 @@ class GapiManager {
       case GapiScopes.CLOUD:
         return 'https://www.googleapis.com/auth/cloud-platform';
       case GapiScopes.DRIVE:
-        return ['https://www.googleapis.com/auth/drive',
-                'https://www.googleapis.com/auth/drive.appfolder',
-                'https://www.googleapis.com/auth/drive.readonly.metadata',
-                'https://www.googleapis.com/auth/drive.install',
-                'https://www.googleapis.com/auth/drive.file'].join(' ');
+        const driveScopeList = [
+            'https://www.googleapis.com/auth/drive',
+            'https://www.googleapis.com/auth/drive.appfolder',
+            'https://www.googleapis.com/auth/drive.install',
+        ];
+        return driveScopeList.join(' ');
       case GapiScopes.SIGNIN:
           return 'profile email';
       default:
