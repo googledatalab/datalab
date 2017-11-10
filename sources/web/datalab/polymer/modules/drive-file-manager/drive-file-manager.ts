@@ -52,6 +52,15 @@ class DriveFileManager extends BaseFileManager {
     return this._fromUpstreamFile(upstreamFile);
   }
 
+  public newFileNameError(fileName: string): string | null {
+    // Must match _getWhitelistFilePredicates()
+    if (fileName.indexOf('.ipynb') > -1 || fileName.indexOf('.txt') > -1) {
+      return null;
+    } else {
+      return 'File name must include .txt';
+    }
+  }
+
   public saveText(file: DatalabFile, text: string): Promise<DatalabFile> {
     return GapiManager.drive.patchContent(file.id.path, text)
       .then((upstreamFile) => this._fromUpstreamFile(upstreamFile));
@@ -157,6 +166,7 @@ class DriveFileManager extends BaseFileManager {
 
   protected _getWhitelistFilePredicates() {
     return [
+      // Must match newFileNameIsValid()
       'name contains \'.ipynb\'',
       'name contains \'.txt\'',
       'mimeType = \'' + DriveFileManager._directoryMimeType + '\'',
