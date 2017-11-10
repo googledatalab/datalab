@@ -93,9 +93,14 @@ the License.
       .column {
         flex: 2;
       }
+      #header > .column {
+        color: var(--primary-fg-color);
+        font-size: 13px;
+      }
       .column + .column {
         flex: 1;
         max-width: 150px;
+        color: var(--neutral-fg-color);
       }
       #filterToggle {
         --paper-icon-button: {
@@ -153,7 +158,7 @@ the License.
         </div>
         <template is="dom-repeat" items="{{columns}}" as="column">
           <div class="column">
-            <strong>{{column}}</strong>
+            <span>{{column}}</span>
           </div>
         </template>
       </div>

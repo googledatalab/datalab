@@ -26,6 +26,15 @@ class JupyterFile extends DatalabFile {
   path: string;
   writable?: boolean;
 
+  constructor(id: DatalabFileId, name: string, type: DatalabFileType, icon?: string) {
+    super(id, name, type, icon);
+    this.path = id.path;
+  }
+
+  public getColumnValues() {
+    return [this.name, this.lastModified || ''];
+  }
+
   public getPreviewName(): string {
     const superPreview = super.getPreviewName();
     if (superPreview) {
@@ -100,15 +109,17 @@ class JupyterFileManager extends BaseFileManager {
    * Converts an object fetched from the Jupyter backend into a JupyterFile.
    */
   private static _upstreamFileToJupyterFile(file: any) {
-    const jupyterFile = new JupyterFile();
+    const fileType = JupyterFileManager._upstreamTypeToDatalabType(file.type);
+    const jupyterFile = new JupyterFile(
+      new DatalabFileId(file.path, FileManagerType.JUPYTER),
+      file.name,
+      fileType,
+      Utils.getItemIconString(fileType),
+    );
     jupyterFile.created = file.created;
     jupyterFile.format = file.format;
-    jupyterFile.type = JupyterFileManager._upstreamTypeToDatalabType(file.type);
-    jupyterFile.icon = Utils.getItemIconString(jupyterFile.type);
-    jupyterFile.id = new DatalabFileId(file.path, FileManagerType.JUPYTER);
-    jupyterFile.lastModified = file.last_modified;
+    jupyterFile.lastModified = new Date(file.last_modified).toLocaleString();
     jupyterFile.mimetype = file.mimetype;
-    jupyterFile.name = file.name;
     jupyterFile.path = file.path;
     jupyterFile.writable = file.writable;
     return jupyterFile;
@@ -186,15 +197,20 @@ class JupyterFileManager extends BaseFileManager {
     return files.map((file: any) => JupyterFileManager._upstreamFileToJupyterFile(file));
   }
 
+  public getColumnNames() {
+    return [Utils.constants.columns.name, Utils.constants.columns.lastModified];
+  }
+
   public create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string) {
-    const jupyterFile = new JupyterFile();
+    const jupyterFile = new JupyterFile(
+      new DatalabFileId(containerId ? containerId.path : '', FileManagerType.JUPYTER),
+      name || 'New item',
+      fileType,
+    );
     jupyterFile.created = new Date().toISOString();
     jupyterFile.format = 'text';
     jupyterFile.lastModified = jupyterFile.created;
     jupyterFile.mimetype = 'text/plain';
-    jupyterFile.name = name || 'New item';
-    jupyterFile.path = containerId ? containerId.path : '';
-    jupyterFile.type = fileType;
     jupyterFile.writable = true;
     const upstreamFile = JupyterFileManager._toUpstreamObject(jupyterFile, '');
     const xhrOptions: XhrOptions = {
@@ -282,13 +298,11 @@ class JupyterFileManager extends BaseFileManager {
       path = path.substr('/tree/'.length);
     }
     const tokens = path.split('/').filter((p) => !!p);
-    const pathHistory = tokens.map((token, i) => {
-      const f = new JupyterFile();
-      f.path = tokens.slice(0, i + 1).join('/');
-      f.name = token;
-      f.id = new DatalabFileId(f.path, FileManagerType.JUPYTER);
-      return f;
-    });
+    const pathHistory = tokens.map((token, i) => new JupyterFile(
+        new DatalabFileId(tokens.slice(0, i + 1).join('/'), FileManagerType.JUPYTER),
+        token,
+        DatalabFileType.DIRECTORY,
+    ));
     return pathHistory;
   }
 

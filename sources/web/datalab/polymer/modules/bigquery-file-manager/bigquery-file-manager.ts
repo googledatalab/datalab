@@ -79,6 +79,20 @@ class BigQueryFileManager extends BaseFileManager {
     throw new UnsupportedMethod('list on BigQuery table', this);
   }
 
+  public getColumnNames(currentFileId?: DatalabFileId) {
+    if (currentFileId) {
+      const len = currentFileId.path.split('/').filter((t) => !!t).length;
+      switch (len) {
+        case 0: return [Utils.constants.columns.project];
+        case 1: return [Utils.constants.columns.dataset];
+        case 2: return [Utils.constants.columns.table];
+        default: return super.getColumnNames();
+      }
+    } else {
+      return super.getColumnNames();
+    }
+  }
+
   public create(_fileType: DatalabFileType, _containerId: DatalabFileId, _name: string):
       Promise<DatalabFile> {
     throw new UnsupportedMethod('create', this);
@@ -144,12 +158,12 @@ class BigQueryFileManager extends BaseFileManager {
 
   protected _bqProjectIdToDatalabFile(projectId: string): DatalabFile {
     const path = projectId;
-    return new BigQueryFile({
-      icon: 'datalab-icons:bq-project',
-      id: new DatalabFileId(path, this.myFileManagerType()),
-      name: projectId,
-      type: DatalabFileType.DIRECTORY,
-    } as DatalabFile);
+    return new BigQueryFile(
+      new DatalabFileId(path, this.myFileManagerType()),
+      projectId,
+      DatalabFileType.DIRECTORY,
+      'datalab-icons:bq-project',
+    );
   }
 
   private async _collectAllProjects(accumulatedProjects: ProjectResource[],
@@ -217,12 +231,12 @@ class BigQueryFileManager extends BaseFileManager {
 
   private _bqRootDatalabFile(): DatalabFile {
     const path = '/';
-    return new BigQueryFile({
-      icon: '',
-      id: new DatalabFileId(path, this.myFileManagerType()),
-      name: '/',
-      type: DatalabFileType.FILE,
-    } as DatalabFile);
+    return new BigQueryFile(
+      new DatalabFileId(path, this.myFileManagerType()),
+      '/',
+      DatalabFileType.FILE,
+      '',
+    );
   }
 
   private _bqProjectToDatalabFile(bqProject: ProjectResource): DatalabFile {
@@ -236,12 +250,12 @@ class BigQueryFileManager extends BaseFileManager {
 
   private _bqProjectDatasetIdsToDatalabFile(projectId: string, datasetId: string): DatalabFile {
     const path = projectId + '/' + datasetId;
-    return new BigQueryFile({
-      icon: 'datalab-icons:bq-dataset',
-      id: new DatalabFileId(path, this.myFileManagerType()),
-      name: datasetId,
-      type: DatalabFileType.DIRECTORY,
-    } as DatalabFile);
+    return new BigQueryFile(
+      new DatalabFileId(path, this.myFileManagerType()),
+      datasetId,
+      DatalabFileType.DIRECTORY,
+      'datalab-icons:bq-dataset',
+    );
   }
 
   private _bqTableToDatalabFile(bqTable: TableResource): DatalabFile {
@@ -254,12 +268,12 @@ class BigQueryFileManager extends BaseFileManager {
   private _bqProjectDatasetTableIdsToDatalabFile(
       projectId: string, datasetId: string, tableId: string): DatalabFile {
     const path = projectId + '/' + datasetId + '/' + tableId;
-    return new BigQueryFile({
-      icon: 'datalab-icons:bq-table',
-      id: new DatalabFileId(path, this.myFileManagerType()),
-      name: tableId,
-      type: DatalabFileType.FILE,
-    } as DatalabFile);
+    return new BigQueryFile(
+      new DatalabFileId(path, this.myFileManagerType()),
+      tableId,
+      DatalabFileType.FILE,
+      'datalab-icons:bq-table',
+    );
   }
 }
 

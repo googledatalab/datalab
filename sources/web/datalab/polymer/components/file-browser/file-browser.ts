@@ -225,7 +225,6 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
 
     const filesElement = this.$.files as ItemListElement;
     filesElement.inlineDetailsMode = InlineDetailsDisplayMode.SINGLE_SELECT;
-    filesElement.columns = ['Name'];
 
     this.$.breadCrumbs.addEventListener('crumbClicked', (e: ItemClickEvent) => {
       // Take the default root file into account, increment clicked index by one.
@@ -471,11 +470,13 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       detailsPane.file = file;
       return detailsPane;
     };
-    (this.$.files as ItemListElement).rows = this._fileList.map((file) => {
+    const itemList = this.$.files as ItemListElement;
+    itemList.columns = this._fileManager.getColumnNames(this.currentFile.id);
+    itemList.rows = this._fileList.map((file) => {
       const createDetailsElement = file.getInlineDetailsName() ?
           () => createDetailsPaneFromFile(file) : undefined;
       const row = new ItemListRow({
-          columns: [file.name],
+          columns: file.getColumnValues(),
           createDetailsElement,
           icon: file.icon,
       });

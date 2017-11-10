@@ -207,12 +207,11 @@ class GithubFileManager extends BaseFileManager {
   // component on the list to see whether it is a file or directory.
   private _ghPathPartsToDatalabFile(parts: string[]): DatalabFile {
     const path = parts.join('/');
-    return new GithubFile({
-      icon: '',
-      id: new DatalabFileId(path, FileManagerType.GITHUB),
-      name: parts[parts.length - 1],
-      type: DatalabFileType.DIRECTORY,
-    } as DatalabFile);
+    return new GithubFile(
+      new DatalabFileId(path, FileManagerType.GITHUB),
+      parts[parts.length - 1],
+      DatalabFileType.DIRECTORY,
+    );
   }
 
   // Gets the requested data, from our cache if we have it and it is
@@ -272,12 +271,11 @@ class GithubFileManager extends BaseFileManager {
 
   private _ghRootDatalabFile(): DatalabFile {
     const path = '/';
-    return new GithubFile({
-      icon: '',
-      id: new DatalabFileId(path, FileManagerType.GITHUB),
-      name: '/',
-      type: DatalabFileType.DIRECTORY,
-    } as DatalabFile);
+    return new GithubFile(
+      new DatalabFileId(path, FileManagerType.GITHUB),
+      '/',
+      DatalabFileType.DIRECTORY,
+    );
   }
 
   private _ghReposResponseToDatalabFiles(response: GhRepoResponse[]):
@@ -298,12 +296,12 @@ class GithubFileManager extends BaseFileManager {
   private _ghRepoToDatalabFile(repo: GhRepoResponse): DatalabFile {
     const type = DatalabFileType.DIRECTORY;
     const icon = Utils.getItemIconString(type);
-    return new GithubFile({
-      icon,
-      id: new DatalabFileId(repo.full_name, FileManagerType.GITHUB),
-      name: repo.name,
+    return new GithubFile(
+      new DatalabFileId(repo.full_name, FileManagerType.GITHUB),
+      repo.name,
       type,
-    } as DatalabFile);
+      icon,
+    );
   }
 
   private _ghDirEntryToDatalabFile(file: GhDirEntryResponse): DatalabFile {
@@ -315,12 +313,12 @@ class GithubFileManager extends BaseFileManager {
     const pathParts = file.url.split('/');
     const prefix = pathParts.slice(4, 6).join('/'); // user and project
     const path = prefix + '/' + file.path;
-    return new GithubFile({
-      icon,
-      id: new DatalabFileId(path, FileManagerType.GITHUB),
-      name: file.name,
+    return new GithubFile(
+      new DatalabFileId(path, FileManagerType.GITHUB),
+      file.name,
       type,
-    } as DatalabFile);
+      icon,
+    );
   }
 
   private _ghFileToDatalabFile(file: GhFileResponse): DatalabFile {
@@ -330,12 +328,12 @@ class GithubFileManager extends BaseFileManager {
     const pathParts = file.url.split('/');
     const prefix = pathParts.slice(4, 6).join('/'); // user and project
     const path = prefix + '/' + file.path;
-    return new GithubFile({
-      icon,
-      id: new DatalabFileId(path, FileManagerType.GITHUB),
-      name: file.name,
+    return new GithubFile(
+      new DatalabFileId(path, FileManagerType.GITHUB),
+      file.name,
       type,
-    } as DatalabFile);
+      icon,
+    );
   }
 
   private _ghFileToContentString(file: GhFileResponse): string {
