@@ -127,7 +127,7 @@ window.addEventListener('WebComponentsReady', () => {
     it('shows column names returned from the file manager in header', () => {
       const files: ItemListElement = testFixture.$.files;
       const columns = files.$.header.querySelectorAll('.column');
-      assert(columns.length === 2, 'exactly two column are expected');
+      assert(columns.length === 2, 'exactly two columns are expected');
       assert(columns[0].innerText === 'Name', 'Name column missing');
       assert(columns[1].innerText === 'Type', 'Type column missing');
     });
@@ -145,8 +145,9 @@ window.addEventListener('WebComponentsReady', () => {
           'no input dialogs should be shown before clicking new');
       testFixture.$.newNotebookButton.click();
       const dialog = TestUtils.getDialog(InputDialogElement);
-      assert(dialog, 'an input dialog should show after clicking new notebook');
-      assert(dialog.$.dialogTitle.innerText === 'New ' + Utils.constants.notebook);
+      assert(!!dialog, 'an input dialog should show after clicking new notebook');
+      assert(dialog.$.dialogTitle.innerText === 'New ' + Utils.constants.notebook,
+          'dialog text should include type of new entity');
 
       await TestUtils.closeDialog(dialog, false);
     });
@@ -157,8 +158,9 @@ window.addEventListener('WebComponentsReady', () => {
           'no input dialogs should be shown before clicking new');
       testFixture.$.newFileButton.click();
       const dialog = TestUtils.getDialog(InputDialogElement);
-      assert(dialog, 'an input dialog should show after clicking new file');
-      assert(dialog.$.dialogTitle.innerText === 'New ' + Utils.constants.file);
+      assert(!!dialog, 'an input dialog should show after clicking new file');
+      assert(dialog.$.dialogTitle.innerText === 'New ' + Utils.constants.file,
+          'dialog text should include type of new entity');
 
       await TestUtils.closeDialog(dialog, false);
     });
@@ -169,8 +171,9 @@ window.addEventListener('WebComponentsReady', () => {
           'no input dialogs should be shown before clicking new');
       testFixture.$.newFolderButton.click();
       const dialog = TestUtils.getDialog(InputDialogElement);
-      assert(dialog, 'an input dialog should show after clicking new folder');
-      assert(dialog.$.dialogTitle.innerText === 'New ' + Utils.constants.directory);
+      assert(!!dialog, 'an input dialog should show after clicking new folder');
+      assert(dialog.$.dialogTitle.innerText === 'New ' + Utils.constants.directory,
+          'dialog text should include type of new entity');
 
       await TestUtils.closeDialog(dialog, false);
     });
@@ -214,7 +217,7 @@ window.addEventListener('WebComponentsReady', () => {
 
       const result = await TestUtils.waitUntilTrue(() =>
           (window.open as sinon.SinonStub).called, 5000);
-      assert(result, 'create should be called when create button clicked');
+      assert(!!result, 'create should be called when create button clicked');
       assert((window.open as sinon.SinonStub).calledWithExactly(
                 location.origin + '/notebook/new/mock/' + testPath +
                 '?fileName=' + notebookName + '.ipynb&templateName=newNotebook', '_blank'),
@@ -232,7 +235,7 @@ window.addEventListener('WebComponentsReady', () => {
 
       const result = await TestUtils.waitUntilTrue(() =>
           (mockFileManager.create as sinon.SinonStub).called, 5000);
-      assert(result, 'create should be called when create button clicked');
+      assert(!!result, 'create should be called when create button clicked');
       assert((mockFileManager.create as sinon.SinonStub).calledWithExactly(
                 DatalabFileType.FILE, testFixture.currentFile.id, fileName),
              'filemanager.create should be created with the new file args');
@@ -249,7 +252,7 @@ window.addEventListener('WebComponentsReady', () => {
 
       const result = await TestUtils.waitUntilTrue(() =>
           (mockFileManager.create as sinon.SinonStub).called, 5000);
-      assert(result, 'create should be called when create button clicked');
+      assert(!!result, 'create should be called when create button clicked');
       assert((mockFileManager.create as sinon.SinonStub).calledWithExactly(
                 DatalabFileType.DIRECTORY, testFixture.currentFile.id, folderName),
              'filemanager.create should be created with the new folder args');
