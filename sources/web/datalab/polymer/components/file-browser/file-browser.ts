@@ -866,10 +866,11 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       columns: [this._fileList[i].name],
       icon: this._fileList[i].icon,
     }));
+    const title = (num === 1) ? 'Delete 1 item' : 'Delete ' + num + ' items';
     const deleteOptions: DeleteDialogOptions = {
       deletedList,
       okLabel: 'Delete',
-      title: 'Delete ' + num + ' items',
+      title,
     };
 
     const closeResult = await Utils.showDialog(DeleteDialogElement, deleteOptions);

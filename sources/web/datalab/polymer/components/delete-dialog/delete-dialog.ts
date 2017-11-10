@@ -33,11 +33,17 @@ class DeleteDialogElement extends BaseDialogElement {
    */
   public deletedList: ItemListRow[];
 
+  /**
+   * Word to use after the count of items, properly pluralized
+   */
+  public itemsLabel: string;
+
   static get is() { return 'delete-dialog'; }
 
   static get properties() {
     return Object.assign(super.properties, {
       deletedList: Array,
+      itemsLabel: String,
     });
   }
 
@@ -48,6 +54,7 @@ class DeleteDialogElement extends BaseDialogElement {
     this.$.theDialog.addEventListener('iron-overlay-opened', () => {
       const listElement = this.$.list as ItemListElement;
       listElement.rows = this.deletedList;
+      this.itemsLabel = (this.deletedList.length === 1) ? 'item' : 'items';
       // The dialog might need resizing if the list is long. Wait for the DOM
       // flush then tell it to resize.
       Polymer.dom.flush();
@@ -66,7 +73,6 @@ class DeleteDialogElement extends BaseDialogElement {
     }
     return this._memoizedTemplate;
   }
-
 }
 
 customElements.define(DeleteDialogElement.is, DeleteDialogElement);
