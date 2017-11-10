@@ -118,7 +118,7 @@ class JupyterFileManager extends BaseFileManager {
     );
     jupyterFile.created = file.created;
     jupyterFile.format = file.format;
-    jupyterFile.lastModified = new Date(file.last_modified).toDateString();
+    jupyterFile.lastModified = new Date(file.last_modified).toLocaleString();
     jupyterFile.mimetype = file.mimetype;
     jupyterFile.path = file.path;
     jupyterFile.writable = file.writable;
@@ -197,7 +197,7 @@ class JupyterFileManager extends BaseFileManager {
     return files.map((file: any) => JupyterFileManager._upstreamFileToJupyterFile(file));
   }
 
-  public getColumns() {
+  public getColumnNames() {
     return [Utils.constants.columns.name, Utils.constants.columns.lastModified];
   }
 

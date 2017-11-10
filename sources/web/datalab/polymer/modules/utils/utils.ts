@@ -32,7 +32,7 @@ class Utils {
     directory: 'folder',
     editorUrlComponent:   '/editor/',
     file: 'file',
-    me: 'Me',
+    me: 'me',
     newNotebookUrlComponent:  '/notebook/new/',
     notebook: 'notebook',
     notebookUrlComponent: '/notebook/',

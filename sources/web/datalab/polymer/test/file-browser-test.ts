@@ -27,7 +27,7 @@ window.addEventListener('WebComponentsReady', () => {
   }
 
   class MockFileManager extends BaseFileManager {
-    public getColumns() {
+    public getColumnNames() {
       return ['Name', 'Type'];
     }
     public async getRootFile() {
@@ -119,7 +119,7 @@ window.addEventListener('WebComponentsReady', () => {
         assert(files.rows[i].columns[0] === file.name,
             'mock file ' + i + 'name not shown in first column');
         assert(files.rows[i].columns[1] === file.type.toString(),
-            'mock file ' + i + 'type not shown in first column');
+            'mock file ' + i + 'type not shown in second column');
         assert(files.rows[i].icon === file.icon, 'mock file ' + i + ' type not shown as icon');
       });
     });

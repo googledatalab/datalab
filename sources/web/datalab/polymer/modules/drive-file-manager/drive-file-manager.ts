@@ -74,7 +74,7 @@ class DriveFileManager extends BaseFileManager {
     return upstreamFiles.map((file) => this._fromUpstreamFile(file));
   }
 
-  public getColumns() {
+  public getColumnNames() {
     return [
       Utils.constants.columns.name,
       Utils.constants.columns.lastModified,
@@ -148,7 +148,7 @@ class DriveFileManager extends BaseFileManager {
     if (driveFile.type === DatalabFileType.FILE && driveFile.name.endsWith('.ipynb')) {
       driveFile.type = DatalabFileType.NOTEBOOK;
     }
-    driveFile.lastModified = new Date(file.modifiedTime).toDateString();
+    driveFile.lastModified = new Date(file.modifiedTime).toLocaleString();
     if (file.owners) {
       driveFile.owner = file.owners[0].me ? Utils.constants.me : file.owners[0].displayName;
     }

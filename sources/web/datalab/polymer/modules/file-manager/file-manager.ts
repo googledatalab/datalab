@@ -171,7 +171,7 @@ interface FileManager {
    * Returns a list of column names. A file id for the current file can be  passed
    * to optionally customize the column names based on the current view.
    */
-  getColumns(currentFileId?: DatalabFileId): string[];
+  getColumnNames(currentFileId?: DatalabFileId): string[];
 
   /**
    * Creates a new Datalab item
@@ -248,7 +248,7 @@ class BaseFileManager implements FileManager {
     throw new UnsupportedMethod('list', this);
   }
 
-  getColumns(_currentFileId?: DatalabFileId) {
+  getColumnNames(_currentFileId?: DatalabFileId) {
     return [Utils.constants.columns.name];
   }
 
