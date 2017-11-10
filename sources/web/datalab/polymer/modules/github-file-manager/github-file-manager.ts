@@ -122,6 +122,15 @@ class GithubFileManager extends BaseFileManager {
     return this.get(new DatalabFileId('/', FileManagerType.GITHUB));
   }
 
+  public newFileNameError(fileName: string): string | null {
+    // Must match _ghDirEntriesResponseToDatalabFiles()
+    if (fileName.endsWith('.txt')) {
+      return null;
+    } else {
+      return 'File name must end with .txt';
+    }
+  }
+
   public saveText(_file: DatalabFile, _content: string): Promise<DatalabFile> {
     throw new UnsupportedMethod('saveText', this);
   }
@@ -193,7 +202,7 @@ class GithubFileManager extends BaseFileManager {
         '/contents/' + pathParts.slice(2).join('/');
     const directory = await this._githubApiPathRequest(githubTreePath) as GhFileResponse[];
     for (const file of directory) {
-      if (file.name === fileName) {
+      if (file && file.name === fileName) {
         // Return the Blob API link.
         return file.git_url.replace('https://api.github.com', '');
       }
@@ -285,6 +294,7 @@ class GithubFileManager extends BaseFileManager {
 
   private _ghDirEntriesResponseToDatalabFiles(response: GhDirEntryResponse[]):
       DatalabFile[] {
+    // Must match newFileNameIsValid()
     return response.filter((file) =>
       file.name.endsWith('.ipynb') ||
       file.name.endsWith('.txt') ||

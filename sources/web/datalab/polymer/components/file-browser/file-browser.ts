@@ -766,6 +766,16 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         // Make sure the name ends with .ipynb for notebooks for convenience
         if (itemType === DatalabFileType.NOTEBOOK && !newName.endsWith('.ipynb')) {
           newName += '.ipynb';
+        } else if (itemType === DatalabFileType.FILE) {
+          if (newName.endsWith('.ipynb')) {
+            Utils.showErrorDialog('Invalid filename', 'Only notebooks can end with .ipynb');
+            return;
+          }
+          const fileNameError = this._fileManager.newFileNameError(newName);
+          if (fileNameError) {
+            Utils.showErrorDialog('Invalid filename', fileNameError);
+            return;
+          }
         }
 
         this._busy = true;

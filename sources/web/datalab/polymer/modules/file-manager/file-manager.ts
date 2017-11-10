@@ -154,6 +154,13 @@ interface FileManager {
   getRootFile(): Promise<DatalabFile>;
 
   /**
+   * Checks whether the given non-notebook filename is valid for this file manager.
+   * Return an error message if the file would not be returned from list().
+   * Returns null if the name is valid.
+   */
+  newFileNameError(filename: string): string | null;
+
+  /**
    * Saves the given string as a file's content.
    * @param file object containing information about the destination file to
    *             save to.
@@ -238,6 +245,10 @@ class BaseFileManager implements FileManager {
 
   getRootFile(): Promise<DatalabFile> {
     throw new UnsupportedMethod('getRootFile', this);
+  }
+
+  newFileNameError(_filename: string): string | null {
+    return null;
   }
 
   saveText(_file: DatalabFile, _content: string): Promise<DatalabFile> {
