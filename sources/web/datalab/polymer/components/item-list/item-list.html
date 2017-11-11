@@ -154,17 +154,17 @@ the License.
           </paper-checkbox>
           <paper-icon-button id="filterToggle" class$="filterShown--[[_showFilterBox]]"
                              icon="filter-list" on-click="_toggleFilter"
-                             title="Filter by [[columns.0]]"></paper-icon-button>
+                             title="Filter by [[columns.0.name]]"></paper-icon-button>
         </div>
         <template is="dom-repeat" items="{{columns}}" as="column">
           <div class="column">
-            <span>{{column}}</span>
+            <span>{{column.name}}</span>
           </div>
         </template>
       </div>
       <div id="filter-div" hidden$="[[!_showFilterBox]]">
         <iron-icon icon="filter-list" id="filter-icon"></iron-icon>
-        <input id="filterBox" placeholder="Filter by [[columns.0]]"
+        <input id="filterBox" placeholder="Filter by [[columns.0.name]]"
                value="{{_filterString::input}}"></input>
       </div>
     </div>

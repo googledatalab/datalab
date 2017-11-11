@@ -118,7 +118,13 @@ describe('<item-list>', () => {
   });
 
   it('displays column names in the header row', () => {
-    testFixture.columns = ['col1', 'col2'];
+    testFixture.columns = [{
+      name: 'col1',
+      type: 'string',
+    }, {
+      name: 'col2',
+      type: 'string',
+    }];
     Polymer.dom.flush();
 
     // Column 0 is for the checkbox

@@ -159,7 +159,7 @@ class ItemListElement extends Polymer.Element {
   /**
    * List of string data columns names
    */
-  public columns: string[];
+  public columns: Column[];
 
   /**
    * Whether to hide the header row

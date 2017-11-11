@@ -27,8 +27,14 @@ window.addEventListener('WebComponentsReady', () => {
   }
 
   class MockFileManager extends BaseFileManager {
-    public getColumnNames() {
-      return ['Name', 'Type'];
+    public getColumns(): Column[] {
+      return [{
+        name: 'Name',
+        type: 'string',
+      }, {
+        name: 'Type',
+        type: 'string',
+      }];
     }
     public async getRootFile() {
       return new MockFile('root');

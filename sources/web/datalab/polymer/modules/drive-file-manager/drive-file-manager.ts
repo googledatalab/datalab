@@ -83,12 +83,17 @@ class DriveFileManager extends BaseFileManager {
     return upstreamFiles.map((file) => this._fromUpstreamFile(file));
   }
 
-  public getColumnNames() {
-    return [
-      Utils.constants.columns.name,
-      Utils.constants.columns.lastModified,
-      Utils.constants.columns.owner,
-    ];
+  public getColumns(): Column[] {
+    return [{
+        name: Utils.constants.columns.name,
+        type: 'string',
+      }, {
+        name: Utils.constants.columns.lastModified,
+        type: 'date',
+      }, {
+        name: Utils.constants.columns.owner,
+        type: 'string',
+      }];
   }
 
   public async create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string)

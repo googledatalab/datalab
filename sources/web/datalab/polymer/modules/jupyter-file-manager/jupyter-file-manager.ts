@@ -197,8 +197,14 @@ class JupyterFileManager extends BaseFileManager {
     return files.map((file: any) => JupyterFileManager._upstreamFileToJupyterFile(file));
   }
 
-  public getColumnNames() {
-    return [Utils.constants.columns.name, Utils.constants.columns.lastModified];
+  public getColumns(): Column[] {
+    return [{
+        name: Utils.constants.columns.name,
+        type: 'string',
+      }, {
+        name: Utils.constants.columns.lastModified,
+        type: 'date',
+      }];
   }
 
   public create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string) {
