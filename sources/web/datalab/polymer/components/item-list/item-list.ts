@@ -189,6 +189,10 @@ class ItemListElement extends Polymer.Element {
   _filterString: string;
   _showFilterBox: boolean;
 
+  private _currentSort = {
+    asc: true,  // ascending or descending
+    column: 0,  // index of current sort column
+  };
   private _lastSelectedIndex = -1;
 
   static get is() { return 'item-list'; }
@@ -251,10 +255,34 @@ class ItemListElement extends Polymer.Element {
       const shadow = '0px ' + yOffset + 'px 10px -5px #ccc';
       headerContainer.style.boxShadow = shadow;
     });
+
+    // Initial sort
+    this._sortBy(0);
   }
 
   resetFilter() {
     this._filterString = '';
+  }
+
+  _sortBy(column: number) {
+    if (this._currentSort.column === column) {
+      this._currentSort.asc = !this._currentSort.asc;
+    } else {
+      this._currentSort = {
+        asc: true,
+        column,
+      };
+    }
+    this.$.list.sort = (a: ItemListRow, b: ItemListRow) => {
+      let compResult = -1;
+      if ((this.columns[column].type === 'string' &&
+          a.columns[column].toLowerCase() > b.columns[column].toLowerCase()) ||
+          (this.columns[column].type === 'date' &&
+          new Date(a.columns[column]) > new Date(b.columns[column]))) {
+        compResult = 1;
+      }
+      return this._currentSort.asc ? compResult : compResult * -1;
+    };
   }
 
   _toggleFilter() {
