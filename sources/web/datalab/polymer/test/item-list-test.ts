@@ -73,7 +73,7 @@ describe('<item-list>', () => {
   /**
    * Rows must be recreated on each test with the fixture, to avoid state leakage.
    */
-  beforeEach(() => {
+  beforeEach(async () => {
     testFixture = fixture('item-list-fixture');
     const createDetailsElement: () => HTMLElement = () => {
       const span = document.createElement('span');
@@ -105,6 +105,15 @@ describe('<item-list>', () => {
       }),
     ];
     testFixture.rows = rows;
+    testFixture.columns = [{
+      name: 'col1',
+      type: 'string',
+    }, {
+      name: 'col2',
+      type: 'string',
+    }];
+    await TestUtils.waitUntilTrue(() =>
+        !!testFixture.$.listContainer.querySelectorAll('paper-item').length, 5000);
     Polymer.dom.flush();
   });
 
@@ -118,15 +127,6 @@ describe('<item-list>', () => {
   });
 
   it('displays column names in the header row', () => {
-    testFixture.columns = [{
-      name: 'col1',
-      type: 'string',
-    }, {
-      name: 'col2',
-      type: 'string',
-    }];
-    Polymer.dom.flush();
-
     // Column 0 is for the checkbox
     assert(testFixture.$.header.children[1].innerText === 'col1',
         'header should have first column name');
@@ -442,7 +442,9 @@ describe('<item-list>', () => {
       assert(fifthDetailsContainer.getAttribute('hidden') != null,
           'fifth details container should be hidden');
     });
+  });
 
+  describe('filtering', () => {
     it('hides the filter box by default', () => {
       assert(testFixture.$.filterBox.offsetHeight === 0, 'filter box should not show by default');
     });
@@ -506,6 +508,100 @@ describe('<item-list>', () => {
       assert(testFixture.$.listContainer.querySelectorAll('.row').length === 5,
           'all rows should show after closing filter box');
     });
+  });
 
+  describe('sorting', () => {
+    const rows = [
+      new ItemListRow({
+        columns: ['item c*', 'Sat Nov 11 2017 18:58:42 GMT+0200 (EET)'],
+        icon: 'folder',
+      }),
+      new ItemListRow({
+        columns: ['item a*', 'Sat Nov 11 2017 18:59:42 GMT+0200 (EET)'],
+        icon: 'folder',
+      }),
+      new ItemListRow({
+        columns: ['item b', 'Fri Nov 10 2017 18:57:42 GMT+0200 (EET)'],
+        icon: 'folder',
+      })
+    ];
+
+    const col0SortedOrder = [1, 2, 0];
+    const col1SortedOrder = [2, 0, 1];
+    const col0ReverseOrder = col0SortedOrder.slice().reverse();
+
+    beforeEach(async () => {
+      testFixture = fixture('item-list-fixture');
+      testFixture.rows = rows;
+      testFixture.columns = [{
+        name: 'col1',
+        type: 'string',
+      }, {
+        name: 'col2',
+        type: 'string',
+      }];
+      await TestUtils.waitUntilTrue(() =>
+          !!testFixture.$.listContainer.querySelectorAll('paper-item').length, 5000);
+      testFixture.$.list.render();
+    });
+
+    it('sorts on first column by default', () => {
+      const renderedRows = testFixture.$.listContainer.querySelectorAll('.row');
+      for (let i = 0; i < testFixture.rows.length; ++i) {
+        const columns = renderedRows[i].querySelectorAll('.column');
+        assert(columns[0].innerText === testFixture.rows[col0SortedOrder[i]].columns[0]);
+        assert(columns[1].innerText === testFixture.rows[col0SortedOrder[i]].columns[1]);
+      }
+    });
+
+    it('switches sort to descending order if first column is sorted on again', () => {
+      const renderedRows = testFixture.$.listContainer.querySelectorAll('.row');
+      testFixture._sortBy(0);
+      testFixture.$.list.render();
+      for (let i = 0; i < testFixture.rows.length; ++i) {
+        const columns = renderedRows[i].querySelectorAll('.column');
+        assert(columns[0].innerText === testFixture.rows[col0ReverseOrder[i]].columns[0]);
+        assert(columns[1].innerText === testFixture.rows[col0ReverseOrder[i]].columns[1]);
+      }
+    });
+
+    it('when switching to sorting on second column, uses ascending order', () => {
+      testFixture._sortBy(1);
+      testFixture.$.list.render();
+      const renderedRows = testFixture.$.listContainer.querySelectorAll('.row');
+      for (let i = 0; i < testFixture.rows.length; ++i) {
+        const columns = renderedRows[i].querySelectorAll('.column');
+        assert(columns[0].innerText === testFixture.rows[col1SortedOrder[i]].columns[0]);
+        assert(columns[1].innerText === testFixture.rows[col1SortedOrder[i]].columns[1]);
+      }
+    });
+
+    it('does sorting while filtering is active', () => {
+      testFixture.$.filterToggle.click();
+      testFixture._filterString = '*';
+      testFixture.$.list.render();
+
+      let renderedRows = testFixture.$.listContainer.querySelectorAll('.row');
+      // row 0
+      let columns0 = renderedRows[0].querySelectorAll('.column');
+      assert(columns0[0].innerText === testFixture.rows[1].columns[0]);
+      assert(columns0[1].innerText === testFixture.rows[1].columns[1]);
+      // row 1
+      let columns1 = renderedRows[1].querySelectorAll('.column');
+      assert(columns1[0].innerText === testFixture.rows[0].columns[0]);
+      assert(columns1[1].innerText === testFixture.rows[0].columns[1]);
+
+      testFixture._sortBy(0);
+      testFixture.$.list.render();
+      renderedRows = testFixture.$.listContainer.querySelectorAll('.row');
+      // row 0
+      columns0 = renderedRows[0].querySelectorAll('.column');
+      assert(columns0[0].innerText === testFixture.rows[0].columns[0]);
+      assert(columns0[1].innerText === testFixture.rows[0].columns[1]);
+      // row 1
+      columns1 = renderedRows[1].querySelectorAll('.column');
+      assert(columns1[0].innerText === testFixture.rows[1].columns[0]);
+      assert(columns1[1].innerText === testFixture.rows[1].columns[1]);
+    });
   });
 });

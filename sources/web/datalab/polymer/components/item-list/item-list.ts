@@ -190,8 +190,8 @@ class ItemListElement extends Polymer.Element {
   _showFilterBox: boolean;
 
   private _currentSort = {
-    asc: true,  // ascending or descending
-    column: 0,  // index of current sort column
+    asc: true,   // ascending or descending
+    column: -1,  // index of current sort column
   };
   private _lastSelectedIndex = -1;
 
