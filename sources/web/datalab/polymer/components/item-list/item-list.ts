@@ -281,6 +281,9 @@ class ItemListElement extends Polymer.Element {
     }
 
     this.$.list.sort = (a: ItemListRow, b: ItemListRow) => {
+      if (!this.columns.length) {
+        return;
+      }
       let compResult = -1;
       if ((this.columns[column].type === 'string' &&
           a.columns[column].toLowerCase() > b.columns[column].toLowerCase()) ||
