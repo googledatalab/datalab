@@ -40,4 +40,4 @@ script:
 - for i in `ls ui/broken/`; do echo ui/broken/$i; base64 ui/broken/$i; echo \"-----\"; done
 - cd ../sources/web/datalab/polymer/test
 - export DISPLAY=:99.0
-- npm test -- --verbose
+- npm test -- --verbose -l chrome

@@ -18,6 +18,7 @@
  * mutation, wich is used by the dom-repeater in this case.
  */
 
+window.addEventListener('WebComponentsReady', () => {
 describe('<item-list>', () => {
   let testFixture: ItemListElement;
 
@@ -600,4 +601,5 @@ describe('<item-list>', () => {
       assert(columns1[1].innerText === testFixture.rows[1].columns[1]);
     });
   });
+});
 });
