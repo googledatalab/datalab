@@ -73,7 +73,7 @@ describe('<item-list>', () => {
   /**
    * Rows must be recreated on each test with the fixture, to avoid state leakage.
    */
-  beforeEach(async () => {
+  beforeEach(() => {
     testFixture = fixture('item-list-fixture');
     const createDetailsElement: () => HTMLElement = () => {
       const span = document.createElement('span');
@@ -112,8 +112,6 @@ describe('<item-list>', () => {
       name: 'col2',
       type: 'string',
     }];
-    await TestUtils.waitUntilTrue(() =>
-        !!testFixture.$.listContainer.querySelectorAll('paper-item').length, 5000);
     Polymer.dom.flush();
   });
 
@@ -540,8 +538,6 @@ describe('<item-list>', () => {
         name: 'col2',
         type: 'string',
       }];
-      await TestUtils.waitUntilTrue(() =>
-          !!testFixture.$.listContainer.querySelectorAll('paper-item').length, 5000);
       testFixture.$.list.render();
     });
 

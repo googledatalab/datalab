@@ -271,6 +271,8 @@ class ItemListElement extends Polymer.Element {
   }
 
   _sortBy(column: number) {
+    // If sort is requested on the current sort column, reverse the sort order.
+    // Otherwise, set the current sort column to that.
     if (this._currentSort.column === column) {
       this._currentSort.asc = !this._currentSort.asc;
     } else {
@@ -281,6 +283,7 @@ class ItemListElement extends Polymer.Element {
     }
 
     this.$.list.sort = (a: ItemListRow, b: ItemListRow) => {
+      // Bail out of sort if no columns have been set yet.
       if (!this.columns.length) {
         return;
       }
@@ -297,6 +300,7 @@ class ItemListElement extends Polymer.Element {
   }
 
   _updateSortIcons() {
+    // Make sure all elements have rendered.
     Polymer.dom.flush();
     const iconEls = this.$.header.querySelectorAll('.sort-icon');
     if (iconEls.length) {
