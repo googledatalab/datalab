@@ -212,6 +212,7 @@ class ItemListElement extends Polymer.Element {
         value: false,
       },
       columns: {
+        observer: '_updateSortIcons',
         type: Array,
         value: () => [],
       },
@@ -232,6 +233,7 @@ class ItemListElement extends Polymer.Element {
         value: false,
       },
       rows: {
+        observer: '_updateSortIcons',
         type: Array,
         value: () => [],
       },
@@ -264,6 +266,10 @@ class ItemListElement extends Polymer.Element {
     this._filterString = '';
   }
 
+  _columnButtonClicked(e: any) {
+    this._sortBy(e.model.itemsIndex);
+  }
+
   _sortBy(column: number) {
     if (this._currentSort.column === column) {
       this._currentSort.asc = !this._currentSort.asc;
@@ -273,6 +279,7 @@ class ItemListElement extends Polymer.Element {
         column,
       };
     }
+
     this.$.list.sort = (a: ItemListRow, b: ItemListRow) => {
       let compResult = -1;
       if ((this.columns[column].type === 'string' &&
@@ -283,6 +290,18 @@ class ItemListElement extends Polymer.Element {
       }
       return this._currentSort.asc ? compResult : compResult * -1;
     };
+    this._updateSortIcons();
+  }
+
+  _updateSortIcons() {
+    Polymer.dom.flush();
+    const iconEls = this.$.header.querySelectorAll('.sort-icon');
+    if (iconEls.length) {
+      iconEls.forEach((el: HTMLElement) => el.hidden = true);
+      iconEls[this._currentSort.column].hidden = false;
+      iconEls[this._currentSort.column].setAttribute('icon',
+          this._currentSort.asc ? 'arrow-upward' : 'arrow-downward');
+    }
   }
 
   _toggleFilter() {

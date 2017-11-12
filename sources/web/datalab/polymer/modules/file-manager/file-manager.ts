@@ -99,6 +99,7 @@ class NotebookContent {
 
 interface Column {
   name: string;
+  order?: 'asc'|'desc'|'none';
   type: 'string'|'date';
 }
 

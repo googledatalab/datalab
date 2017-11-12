@@ -16,9 +16,11 @@ the License.
 
 <link rel="import" href="../../bower_components/iron-icons/editor-icons.html">
 <link rel="import" href="../../bower_components/iron-icons/hardware-icons.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
-<link rel="import" href="../../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
 
 <dom-module id="item-list">
   <template>
@@ -97,6 +99,19 @@ the License.
         color: var(--primary-fg-color);
         font-size: 13px;
       }
+      .column-button {
+        display: flex;
+        justify-content: flex-start;
+        width: 100%;
+        padding: 0 10px;
+        margin: 0;
+        border-radius: 0;
+        text-transform: none;
+      }
+      .column-button > iron-icon {
+        width: 15px;
+        padding-left: 3px;
+      }
       .column + .column {
         flex: 1;
         max-width: 150px;
@@ -158,7 +173,10 @@ the License.
         </div>
         <template is="dom-repeat" items="{{columns}}" as="column">
           <div class="column">
-            <span>{{column.name}}</span>
+            <paper-button class="column-button" on-click="_columnButtonClicked">
+              {{column.name}}
+              <iron-icon class="sort-icon"></iron-icon>
+            </paper-button>
           </div>
         </template>
       </div>

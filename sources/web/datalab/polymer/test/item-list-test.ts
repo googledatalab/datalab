@@ -128,9 +128,9 @@ describe('<item-list>', () => {
 
   it('displays column names in the header row', () => {
     // Column 0 is for the checkbox
-    assert(testFixture.$.header.children[1].innerText === 'col1',
+    assert(testFixture.$.header.children[1].innerText.trim() === 'col1',
         'header should have first column name');
-    assert(testFixture.$.header.children[2].innerText === 'col2',
+    assert(testFixture.$.header.children[2].innerText.trim() === 'col2',
         'header should have second column name');
   });
 
