@@ -573,6 +573,43 @@ describe('<item-list>', () => {
       }
     });
 
+    it('shows arrow icon on the sorted column', () => {
+      const headerIcons = testFixture.$.header.querySelectorAll('.sort-icon');
+      assert(!headerIcons[0].hidden, 'first column should show sort icon');
+      assert(headerIcons[0].icon === 'arrow-upward',
+          'first column should show ascending sort icon');
+      assert(headerIcons[1].hidden, 'second column icon should be hidden');
+
+      testFixture._sortBy(1);
+      testFixture.$.list.render();
+      assert(headerIcons[0].hidden, 'first column icon should be hidden');
+      assert(!headerIcons[1].hidden, 'second column should show sort icon');
+      assert(headerIcons[1].icon === 'arrow-upward',
+          'second column should show ascending sort icon');
+
+      testFixture._sortBy(1);
+      testFixture.$.list.render();
+      assert(headerIcons[0].hidden, 'first column icon should be hidden');
+      assert(!headerIcons[1].hidden, 'second column should show sort icon');
+      assert(headerIcons[1].icon === 'arrow-downward',
+          'second column should show descending sort icon');
+    });
+
+    it('sorts the clicked column', () => {
+      const headerButtons = testFixture.$.header.querySelectorAll('.column-button');
+      const headerIcons = testFixture.$.header.querySelectorAll('.sort-icon');
+      debugger;
+      headerButtons[0].click();
+      testFixture.$.list.render();
+      assert(headerIcons[0].icon === 'arrow-downward',
+          'first column should show descending sort icon');
+
+      headerButtons[1].click();
+      testFixture.$.list.render();
+      assert(headerIcons[1].icon === 'arrow-upward',
+          'second column should show ascending sort icon');
+    });
+
     it('does sorting while filtering is active', () => {
       testFixture.$.filterToggle.click();
       testFixture._filterString = '*';
