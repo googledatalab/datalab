@@ -294,7 +294,7 @@ class GithubFileManager extends BaseFileManager {
 
   private _ghDirEntriesResponseToDatalabFiles(response: GhDirEntryResponse[]):
       DatalabFile[] {
-    // Must match newFileNameIsValid()
+    // Must match newFileNameError()
     return response.filter((file) =>
       file.name.endsWith('.ipynb') ||
       file.name.endsWith('.txt') ||

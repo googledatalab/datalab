@@ -166,7 +166,7 @@ class DriveFileManager extends BaseFileManager {
 
   protected _getWhitelistFilePredicates() {
     return [
-      // Must match newFileNameIsValid()
+      // Must match newFileNameError()
       'name contains \'.ipynb\'',
       'name contains \'.txt\'',
       'mimeType = \'' + DriveFileManager._directoryMimeType + '\'',
