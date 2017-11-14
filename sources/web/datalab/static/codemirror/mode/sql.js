@@ -428,10 +428,10 @@ define(
         } else {
           return context.indent + (closing ? 0 : indentUnit);
         }
-      }
+      },
+      lineComment: "--"
     };
   });
 
   CodeMirror.defineMIME('text/sql', 'sql');
 });
-
