@@ -33,6 +33,7 @@ class DriveFileManager extends BaseFileManager {
 
   private static readonly _directoryMimeType = 'application/vnd.google-apps.folder';
   private static readonly _notebookMimeType = 'application/json';
+  private _rootDriveId: string;
 
   public async get(fileId: DatalabFileId): Promise<DatalabFile> {
     const upstreamFile = await GapiManager.drive.getFile(fileId.path);
@@ -49,6 +50,7 @@ class DriveFileManager extends BaseFileManager {
 
   public async getRootFile(): Promise<DatalabFile> {
     const upstreamFile = await GapiManager.drive.getRoot();
+    this._rootDriveId = upstreamFile.id;
     return this._fromUpstreamFile(upstreamFile);
   }
 
@@ -134,10 +136,14 @@ class DriveFileManager extends BaseFileManager {
     } else {
       // TODO - create the real path to this object, or figure out
       // a better way to handle not having the full path in the breadcrumbs
+      if (!this._rootDriveId) {
+        await this.getRootFile();
+      }
       const fileId = path;  // We assume the entire path is one fileId
+      const filePath = (fileId === this._rootDriveId) ? '' : path;
       const datalabFile: DriveFile = new DriveFile(
         new DatalabFileId(fileId, FileManagerType.DRIVE),
-        path,
+        filePath,
         DatalabFileType.DIRECTORY,
       );
       return [datalabFile];
