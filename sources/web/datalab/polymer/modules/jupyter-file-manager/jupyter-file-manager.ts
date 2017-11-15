@@ -292,18 +292,18 @@ class JupyterFileManager extends BaseFileManager {
     return Utils.getHostRoot() + '/notebooks/' + fileId.path;
   }
 
-  public pathToPathHistory(path: string): DatalabFile[] {
+  public pathToFileHierarchy(path: string): DatalabFile[] {
     // For backward compatibility with the current path format.
     if (path.startsWith('/tree/')) {
       path = path.substr('/tree/'.length);
     }
     const tokens = path.split('/').filter((p) => !!p);
-    const pathHistory = tokens.map((token, i) => new JupyterFile(
+    const pathFileHierarchy = tokens.map((token, i) => new JupyterFile(
         new DatalabFileId(tokens.slice(0, i + 1).join('/'), FileManagerType.JUPYTER),
         token,
         DatalabFileType.DIRECTORY,
     ));
-    return pathHistory;
+    return pathFileHierarchy;
   }
 
   private _getFileWithContent(fileId: string) {

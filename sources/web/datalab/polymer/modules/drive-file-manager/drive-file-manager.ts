@@ -128,7 +128,7 @@ class DriveFileManager extends BaseFileManager {
       .then((upstreamFile) => this._fromUpstreamFile(upstreamFile));
   }
 
-  public pathToPathHistory(path: string): DatalabFile[] {
+  public pathToFileHierarchy(path: string): DatalabFile[] {
     if (path === '') {
       return [];
     } else {
@@ -185,12 +185,12 @@ class DriveFileManager extends BaseFileManager {
 
 class SharedDriveFileManager extends DriveFileManager {
 
-  public pathToPathHistory(path: string) {
-    const pathHistory = super.pathToPathHistory(path);
-    pathHistory.forEach((f) => {
+  public pathToFileHierarchy(path: string) {
+    const pathFileHierarchy = super.pathToFileHierarchy(path);
+    pathFileHierarchy.forEach((f) => {
       f.id.source = FileManagerType.SHARED_DRIVE;
     });
-    return pathHistory;
+    return pathFileHierarchy;
   }
 
   protected _fromUpstreamFile(file: gapi.client.drive.File) {
