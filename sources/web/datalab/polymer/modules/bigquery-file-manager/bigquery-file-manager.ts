@@ -18,6 +18,7 @@ type ListTablesResponse = gapi.client.bigquery.ListTablesResponse;
 type DatasetResource = gapi.client.bigquery.DatasetResource;
 type ProjectResource = gapi.client.bigquery.ProjectResource;
 type TableResource = gapi.client.bigquery.TableResource;
+type ResourceManagerProject = gapi.client.cloudresourcemanager.Project;
 
 class BigQueryFile extends DatalabFile {
   public getInlineDetailsName(): string {
@@ -151,9 +152,22 @@ class BigQueryFileManager extends BaseFileManager {
     return FileManagerType.BIG_QUERY;
   }
 
-  protected _listProjects(): Promise<DatalabFile[]> {
-    return this._collectAllProjects([], '')
-      .catch((e: Error) => { Utils.log.error(e); throw e; });
+  protected async _listProjects(): Promise<DatalabFile[]> {
+    let resourceProjects = await GapiManager.resourceManager.listAllProjects();
+    if (!resourceProjects) {
+      return [];
+    }
+    resourceProjects = resourceProjects.filter((project) => project.projectId);
+    if (!resourceProjects) {
+      return [];
+    }
+    // We know we have no blank project IDs here because we filtered them
+    // all out above. The or-blank stuff below is to make the compiler happy.
+    resourceProjects.sort((a: ResourceManagerProject, b: ResourceManagerProject) => {
+      return (a.projectId || '').localeCompare(b.projectId || '');
+    });
+    return resourceProjects.map((rmProject) =>
+        this._bqProjectIdToDatalabFile(rmProject.projectId || ''));
   }
 
   protected _bqProjectIdToDatalabFile(projectId: string): DatalabFile {
@@ -164,23 +178,6 @@ class BigQueryFileManager extends BaseFileManager {
       DatalabFileType.DIRECTORY,
       'datalab-icons:bq-project',
     );
-  }
-
-  private async _collectAllProjects(accumulatedProjects: ProjectResource[],
-                                    pageToken: string): Promise<DatalabFile[]> {
-    const response: HttpResponse<ListProjectsResponse> =
-        await GapiManager.bigquery.listProjects(pageToken);
-    const additionalProjects = response.result.projects || [];
-    const projects = accumulatedProjects.concat(additionalProjects);
-    if (response.result.nextPageToken) {
-      return this._collectAllProjects(projects, response.result.nextPageToken);
-    } else {
-      projects.sort((a: ProjectResource, b: ProjectResource) => {
-        return a.projectReference.projectId.localeCompare(b.projectReference.projectId);
-      });
-      return projects.map(
-          this._bqProjectToDatalabFile.bind(this)) as DatalabFile[];
-    }
   }
 
   private async _collectAllDatasets(projectId: string,
@@ -237,10 +234,6 @@ class BigQueryFileManager extends BaseFileManager {
       DatalabFileType.FILE,
       '',
     );
-  }
-
-  private _bqProjectToDatalabFile(bqProject: ProjectResource): DatalabFile {
-    return this._bqProjectIdToDatalabFile(bqProject.projectReference.projectId);
   }
 
   private _bqDatasetToDatalabFile(bqDataset: DatasetResource): DatalabFile {
