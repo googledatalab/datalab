@@ -128,7 +128,7 @@ class DriveFileManager extends BaseFileManager {
       .then((upstreamFile) => this._fromUpstreamFile(upstreamFile));
   }
 
-  public pathToFileHierarchy(path: string): DatalabFile[] {
+  public async pathToFileHierarchy(path: string): Promise<DatalabFile[]> {
     if (path === '') {
       return [];
     } else {
@@ -185,8 +185,8 @@ class DriveFileManager extends BaseFileManager {
 
 class SharedDriveFileManager extends DriveFileManager {
 
-  public pathToFileHierarchy(path: string) {
-    const pathFileHierarchy = super.pathToFileHierarchy(path);
+  public async pathToFileHierarchy(path: string) {
+    const pathFileHierarchy = await super.pathToFileHierarchy(path);
     pathFileHierarchy.forEach((f) => {
       f.id.source = FileManagerType.SHARED_DRIVE;
     });
