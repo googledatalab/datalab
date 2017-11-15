@@ -292,7 +292,7 @@ class JupyterFileManager extends BaseFileManager {
     return Utils.getHostRoot() + '/notebooks/' + fileId.path;
   }
 
-  public pathToFileHierarchy(path: string): DatalabFile[] {
+  public async pathToFileHierarchy(path: string): Promise<DatalabFile[]> {
     // For backward compatibility with the current path format.
     if (path.startsWith('/tree/')) {
       path = path.substr('/tree/'.length);

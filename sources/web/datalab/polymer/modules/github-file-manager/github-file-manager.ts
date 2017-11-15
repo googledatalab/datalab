@@ -181,7 +181,7 @@ class GithubFileManager extends BaseFileManager {
     throw new UnsupportedMethod('copy', this);
   }
 
-  public pathToFileHierarchy(path: string): DatalabFile[] {
+  public async pathToFileHierarchy(path: string): Promise<DatalabFile[]> {
     const pathParts = path.split('/').filter((part) => !!part);
     const files: DatalabFile[] = [];
     for (let p = 0; p < pathParts.length; p++) {

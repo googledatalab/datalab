@@ -1130,14 +1130,14 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   private async _loadStartupPath(fileId: DatalabFileId|null) {
     this._pathFileHierarchy = [];
     if (fileId) {
-      this._pathFileHierarchy = this._fileManager.pathToFileHierarchy(fileId.path);
+      this._pathFileHierarchy = await this._fileManager.pathToFileHierarchy(fileId.path);
     } else if (this.fileManagerType === 'jupyter') {
       // TODO - make SettingsManager able to store startuppaths
       // for multiple file managers.
       const settings = await SettingsManager.getUserSettingsAsync(true /*forceRefresh*/);
       const startuppath = settings.startuppath;
       if (startuppath) {
-        this._pathFileHierarchy = this._fileManager.pathToFileHierarchy(startuppath);
+        this._pathFileHierarchy = await this._fileManager.pathToFileHierarchy(startuppath);
       }
     }
 

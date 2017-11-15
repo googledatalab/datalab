@@ -227,7 +227,7 @@ interface FileManager {
   /**
    * Creates a path history from a path string.
    */
-  pathToFileHierarchy(path: string): DatalabFile[];
+  pathToFileHierarchy(path: string): Promise<DatalabFile[]>;
 }
 
 /**
@@ -289,7 +289,7 @@ class BaseFileManager implements FileManager {
     return Utils.getHostRoot() + Utils.constants.editorUrlComponent + fileId.toString();
   }
 
-  pathToFileHierarchy(_path: string): DatalabFile[] {
+  async pathToFileHierarchy(_path: string): Promise<DatalabFile[]> {
     throw new UnsupportedMethod('pathToFileHierarchy', this);
   }
 }
