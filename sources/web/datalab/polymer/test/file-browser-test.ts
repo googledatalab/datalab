@@ -33,7 +33,7 @@ window.addEventListener('WebComponentsReady', () => {
     public async getRootFile() {
       return new MockFile('root');
     }
-    public pathToPathHistory(path: string): DatalabFile[] {
+    public pathToFileHierarchy(path: string): DatalabFile[] {
       return [new MockFile('', path)];
     }
   }

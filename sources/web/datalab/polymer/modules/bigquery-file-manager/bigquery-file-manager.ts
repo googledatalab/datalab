@@ -119,7 +119,7 @@ class BigQueryFileManager extends BaseFileManager {
     throw new UnsupportedMethod('getEditorUrl', this);
   }
 
-  public pathToPathHistory(path: string): DatalabFile[] {
+  public pathToFileHierarchy(path: string): DatalabFile[] {
     const pathParts = path.split('/').filter((part) => !!part);
     if (pathParts.length === 0) {
       return [];
