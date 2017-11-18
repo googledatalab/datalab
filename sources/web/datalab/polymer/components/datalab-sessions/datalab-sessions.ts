@@ -67,10 +67,10 @@ class SessionsElement extends Polymer.Element implements DatalabPageElement {
 
     (this.$.sessions as ItemListElement).columns = [{
       name: 'Session Path',
-      type: 'string',
+      type: ColumnType.STRING,
     }, {
       name: 'Kernel',
-      type: 'string',
+      type: ColumnType.STRING,
     }];
 
     const sessionsElement = this.shadowRoot.querySelector('#sessions');

@@ -33,7 +33,7 @@ class ProjectPickerDialogElement extends BaseDialogElement {
 
   private static _memoizedTemplate: PolymerTemplate;
 
-  public selectedProjectId: string;
+  public selectedProjectId: number;
   public selectedProjectName: string;
 
   _busy: boolean;
@@ -75,6 +75,13 @@ class ProjectPickerDialogElement extends BaseDialogElement {
     try {
       const projects = await GapiManager.resourceManager.listAllProjects();
       const listItems = this._projectsToListItems(projects);
+      itemlist.columns = [{
+        name: 'Project Id',
+        type: ColumnType.STRING,
+      }, {
+        name: 'Project Number',
+        type: ColumnType.Number,
+      }];
       itemlist.rows = listItems;
 
       this._busy = false;
@@ -95,7 +102,7 @@ class ProjectPickerDialogElement extends BaseDialogElement {
   _projectsToListItems(projects: gapi.client.cloudresourcemanager.Project[])
       : ItemListRow[] {
     return projects.map((project) => new ItemListRow({
-        columns: [project.projectId || '', project.projectNumber || ''],
+        columns: [project.projectId || '', parseInt(project.projectNumber || '0', 10)],
         icon: 'datalab-icons:bq-project',
       }));
   }
@@ -120,8 +127,8 @@ class ProjectPickerDialogElement extends BaseDialogElement {
     const itemlist = this.$.projectList as ItemListElement;
     if (itemlist.selectedIndices.length === 1) {
       const item = itemlist.rows[itemlist.selectedIndices[0]];
-      this.selectedProjectName = item.columns[0];
-      this.selectedProjectId = item.columns[1];
+      this.selectedProjectName = item.columns[0] as string;
+      this.selectedProjectId = item.columns[1] as number;
     }
   }
 

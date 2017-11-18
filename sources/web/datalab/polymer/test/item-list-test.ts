@@ -108,10 +108,10 @@ describe('<item-list>', () => {
     testFixture.rows = rows;
     testFixture.columns = [{
       name: 'col1',
-      type: 'string',
+      type: ColumnType.STRING,
     }, {
       name: 'col2',
-      type: 'string',
+      type: ColumnType.STRING,
     }];
     Polymer.dom.flush();
   });
@@ -534,10 +534,10 @@ describe('<item-list>', () => {
       testFixture.rows = rows;
       testFixture.columns = [{
         name: 'col1',
-        type: 'string',
+        type: ColumnType.STRING,
       }, {
         name: 'col2',
-        type: 'string',
+        type: ColumnType.STRING,
       }];
       testFixture.$.list.render();
     });
@@ -598,7 +598,6 @@ describe('<item-list>', () => {
     it('sorts the clicked column', () => {
       const headerButtons = testFixture.$.header.querySelectorAll('.column-button');
       const headerIcons = testFixture.$.header.querySelectorAll('.sort-icon');
-      debugger;
       headerButtons[0].click();
       testFixture.$.list.render();
       assert(headerIcons[0].icon === 'arrow-downward',

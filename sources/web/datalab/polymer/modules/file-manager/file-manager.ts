@@ -97,9 +97,17 @@ class NotebookContent {
   }
 }
 
+type ColumnTypeList = Date|number|string;
+
+enum ColumnType {
+  DATE,
+  Number,
+  STRING,
+}
+
 interface Column {
   name: string;
-  type: 'string'|'date';
+  type: ColumnType;
 }
 
 /**
@@ -118,7 +126,7 @@ abstract class DatalabFile {
     this.icon = icon || '';
   }
 
-  public getColumnValues(): string[] {
+  public getColumnValues(): ColumnTypeList[] {
     return [this.name];
   }
 
@@ -267,7 +275,7 @@ class BaseFileManager implements FileManager {
   getColumns(_currentFileId?: DatalabFileId): Column[] {
     return [{
       name: Utils.constants.columns.name,
-      type: 'string',
+      type: ColumnType.STRING,
     }];
   }
 

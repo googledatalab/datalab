@@ -32,7 +32,7 @@ class JupyterFile extends DatalabFile {
   }
 
   public getColumnValues() {
-    return [this.name, this.lastModified || ''];
+    return [this.name, new Date(this.lastModified as string) || ''];
   }
 
   public getPreviewName(): string {
@@ -200,10 +200,10 @@ class JupyterFileManager extends BaseFileManager {
   public getColumns(): Column[] {
     return [{
         name: Utils.constants.columns.name,
-        type: 'string',
+        type: ColumnType.STRING,
       }, {
         name: Utils.constants.columns.lastModified,
-        type: 'date',
+        type: ColumnType.DATE,
       }];
   }
 

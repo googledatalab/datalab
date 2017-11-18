@@ -93,7 +93,7 @@ the License.
         line-height: 26px;
       }
       .column {
-        flex: 2;
+        flex: 1.5;
       }
       #header > .column {
         color: var(--primary-fg-color);
@@ -116,6 +116,7 @@ the License.
         flex: 1;
         max-width: 150px;
         color: var(--neutral-fg-color);
+        padding-left: 10px;
       }
       #filterToggle {
         --paper-icon-button: {
@@ -200,7 +201,7 @@ the License.
           </div>
           <template is="dom-repeat" items="{{row.columns}}" as="column">
             <div class="column">
-              <span>{{column}}</span>
+              <span>[[_formatColumnValue(column, index)]]</span>
             </div>
           </template>
         </paper-item>

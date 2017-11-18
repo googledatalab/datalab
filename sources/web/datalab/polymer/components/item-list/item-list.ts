@@ -30,7 +30,7 @@ enum InlineDetailsDisplayMode {
 
 /** Fields that can be passed to the ItemListRow constructor. */
 interface ItemListRowParameters {
-  columns: string[];
+  columns: ColumnTypeList[];
   createDetailsElement?: () => HTMLElement;
   icon: string;
   selected?: boolean;
@@ -41,7 +41,7 @@ interface ItemListRowParameters {
  */
 class ItemListRow {
   public selected: boolean;
-  public columns: string[];
+  public columns: ColumnTypeList[];
   public canShowDetails: boolean;
   public showInlineDetails = false;
 
@@ -266,6 +266,14 @@ class ItemListElement extends Polymer.Element {
     this._filterString = '';
   }
 
+  _formatColumnValue(value: ColumnTypeList, i: number): string {
+    if (this.columns[i].type === ColumnType.DATE) {
+      return (value as Date).toLocaleString();
+    } else {
+      return value.toString();
+    }
+  }
+
   _columnButtonClicked(e: any) {
     this._sortBy(e.model.itemsIndex);
   }
@@ -288,11 +296,19 @@ class ItemListElement extends Polymer.Element {
         return;
       }
       let compResult = -1;
-      if ((this.columns[column].type === 'string' &&
-          a.columns[column].toLowerCase() > b.columns[column].toLowerCase()) ||
-          (this.columns[column].type === 'date' &&
-          new Date(a.columns[column]) > new Date(b.columns[column]))) {
-        compResult = 1;
+      if (this.columns[column].type === ColumnType.STRING) {
+        if ((a.columns[column] as string).toLowerCase() >
+            (b.columns[column] as string).toLowerCase()) {
+          compResult = 1;
+        }
+      } else if (this.columns[column].type === ColumnType.Number) {
+        if ((a.columns[column] as number) > (b.columns[column] as number)) {
+          compResult = 1;
+        }
+      } else if (this.columns[column].type === ColumnType.DATE) {
+        if ((a.columns[column] as Date) > (b.columns[column] as Date)) {
+          compResult = 1;
+        }
       }
       return this._currentSort.asc ? compResult : compResult * -1;
     };
@@ -303,7 +319,7 @@ class ItemListElement extends Polymer.Element {
     // Make sure all elements have rendered.
     Polymer.dom.flush();
     const iconEls = this.$.header.querySelectorAll('.sort-icon');
-    if (iconEls.length) {
+    if (iconEls.length && this._currentSort.column > -1) {
       iconEls.forEach((el: HTMLElement) => el.hidden = true);
       iconEls[this._currentSort.column].hidden = false;
       iconEls[this._currentSort.column].setAttribute('icon',
@@ -330,7 +346,8 @@ class ItemListElement extends Polymer.Element {
     } else {
       // return a filter function for the current search string
       filterString = filterString.toLowerCase();
-      return (item: ItemListRow) => item.columns[0].toLowerCase().indexOf(filterString) > -1;
+      return (item: ItemListRow) =>
+          this._formatColumnValue(item.columns[0], 0).toLowerCase().indexOf(filterString) > -1;
     }
   }
 

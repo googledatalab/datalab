@@ -18,7 +18,7 @@
  */
 
 class DriveFile extends DatalabFile {
-  lastModified?: string;
+  lastModified?: Date;
   owner?: string;
 
   getColumnValues() {
@@ -86,13 +86,13 @@ class DriveFileManager extends BaseFileManager {
   public getColumns(): Column[] {
     return [{
         name: Utils.constants.columns.name,
-        type: 'string',
+        type: ColumnType.STRING,
       }, {
         name: Utils.constants.columns.lastModified,
-        type: 'date',
+        type: ColumnType.DATE,
       }, {
         name: Utils.constants.columns.owner,
-        type: 'string',
+        type: ColumnType.STRING,
       }];
   }
 
@@ -162,7 +162,7 @@ class DriveFileManager extends BaseFileManager {
     if (driveFile.type === DatalabFileType.FILE && driveFile.name.endsWith('.ipynb')) {
       driveFile.type = DatalabFileType.NOTEBOOK;
     }
-    driveFile.lastModified = new Date(file.modifiedTime).toLocaleString();
+    driveFile.lastModified = new Date(file.modifiedTime);
     if (file.owners) {
       driveFile.owner = file.owners[0].me ? Utils.constants.me : file.owners[0].displayName;
     }

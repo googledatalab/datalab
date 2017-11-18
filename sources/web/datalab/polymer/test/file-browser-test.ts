@@ -30,10 +30,10 @@ window.addEventListener('WebComponentsReady', () => {
     public getColumns(): Column[] {
       return [{
         name: 'Name',
-        type: 'string',
+        type: ColumnType.STRING,
       }, {
         name: 'Type',
-        type: 'string',
+        type: ColumnType.STRING,
       }];
     }
     public async getRootFile() {
