@@ -81,31 +81,6 @@ describe('<item-list>', () => {
       span.innerHTML = 'Mock details';
       return span;
     };
-    const rows = [
-      new ItemListRow({
-        columns: ['first column 1', 'second column 1'],
-        icon: 'folder',
-      }),
-      new ItemListRow({
-        columns: ['first column 2', 'second column 2'],
-        icon: 'folder',
-      }),
-      new ItemListRow({
-        columns: ['first column 3', 'second column 3'],
-        icon: 'folder',
-      }),
-      new ItemListRow({
-        columns: ['first column 4', 'second column 4'],
-        createDetailsElement,
-        icon: 'folder',
-      }),
-      new ItemListRow({
-        columns: ['first column 5', 'second column 5'],
-        createDetailsElement,
-        icon: 'folder',
-      }),
-    ];
-    testFixture.rows = rows;
     testFixture.columns = [{
       name: 'col1',
       type: ColumnType.STRING,
@@ -113,6 +88,26 @@ describe('<item-list>', () => {
       name: 'col2',
       type: ColumnType.STRING,
     }];
+    const rows = [
+      new ItemListRow({
+        columns: ['first column 1', 'second column 1'],
+      }),
+      new ItemListRow({
+        columns: ['first column 2', 'second column 2'],
+      }),
+      new ItemListRow({
+        columns: ['first column 3', 'second column 3'],
+      }),
+      new ItemListRow({
+        columns: ['first column 4', 'second column 4'],
+        createDetailsElement,
+      }),
+      new ItemListRow({
+        columns: ['first column 5', 'second column 5'],
+        createDetailsElement,
+      }),
+    ];
+    testFixture.rows = rows;
     Polymer.dom.flush();
   });
 
@@ -511,18 +506,9 @@ describe('<item-list>', () => {
 
   describe('sorting', () => {
     const rows = [
-      new ItemListRow({
-        columns: ['item c*', 'Sat Nov 11 2017 18:58:42 GMT+0200 (EET)'],
-        icon: 'folder',
-      }),
-      new ItemListRow({
-        columns: ['item a*', 'Sat Nov 11 2017 18:59:42 GMT+0200 (EET)'],
-        icon: 'folder',
-      }),
-      new ItemListRow({
-        columns: ['item b', 'Fri Nov 10 2017 18:57:42 GMT+0200 (EET)'],
-        icon: 'folder',
-      })
+      new ItemListRow({columns: ['item c*', 'Sat Nov 11 2017 18:58:42 GMT+0200 (EET)']}),
+      new ItemListRow({columns: ['item a*', 'Sat Nov 11 2017 18:59:42 GMT+0200 (EET)']}),
+      new ItemListRow({columns: ['item b', 'Fri Nov 10 2017 18:57:42 GMT+0200 (EET)']})
     ];
 
     const col0SortedOrder = [1, 2, 0];
@@ -609,7 +595,7 @@ describe('<item-list>', () => {
           'second column should show ascending sort icon');
     });
 
-    it('does sorting while filtering is active', () => {
+    it('sorts while filtering is active', () => {
       testFixture.$.filterToggle.click();
       testFixture._filterString = '*';
       testFixture.$.list.render();
@@ -635,6 +621,25 @@ describe('<item-list>', () => {
       columns1 = renderedRows[1].querySelectorAll('.column');
       assert(columns1[0].innerText === testFixture.rows[1].columns[0]);
       assert(columns1[1].innerText === testFixture.rows[1].columns[1]);
+    });
+
+    it('sorts numbers correctly', () => {
+      testFixture.columns = [{
+        name: 'col1',
+        type: ColumnType.NUMBER,
+      }];
+      testFixture.rows = [
+        new ItemListRow({columns: [11]}),
+        new ItemListRow({columns: [1]}),
+        new ItemListRow({columns: [2]}),
+      ];
+      const sortedOrder = [1, 2, 0];
+
+      const renderedRows = testFixture.$.listContainer.querySelectorAll('.row');
+      for (let i = 0; i < testFixture.rows.length; ++i) {
+        const columns = renderedRows[i].querySelectorAll('.column');
+        assert(columns[0].innerText === testFixture.rows[sortedOrder[i]].columns[0].toString());
+      }
     });
   });
 });
