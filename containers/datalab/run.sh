@@ -103,7 +103,8 @@ if [[ $LIVE_MODE == 1 ]]; then
   setup_live_mode
 fi
 
-docker run -it --entrypoint=$ENTRYPOINT \
+if [ -t 0 ]; then ITFLAG='-it'; else ITFLAG=''; fi
+docker run ${ITFLAG} --entrypoint=$ENTRYPOINT \
   -p 127.0.0.1:${DATALAB_PORT}:8080 \
   -v "$CONTENT/datalab:/content/datalab" \
   $PYDATALAB_MOUNT_OPT \
