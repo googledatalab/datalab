@@ -140,6 +140,19 @@ describe('<item-list>', () => {
     }
   });
 
+  it('displays icons correctly', () => {
+    testFixture.rows = [
+      new ItemListRow({columns: [''], icon: 'folder'}),
+      new ItemListRow({columns: [''], icon: 'search'}),
+    ];
+    const row0 = getRow(0);
+    const row1 = getRow(1);
+    const icon0 = row0.children[0].children[1] as any;
+    const icon1 = row1.children[0].children[1] as any;
+    assert(icon0.icon === 'folder');
+    assert(icon1.icon === 'search');
+  });
+
   it('selects items', () => {
     testFixture._selectItem(1);
 
