@@ -12,6 +12,19 @@
  * the License.
  */
 
+type ColumnTypeList = Date|number|string;
+
+enum ColumnType {
+  DATE,
+  NUMBER,
+  STRING,
+}
+
+interface Column {
+  name: string;
+  type: ColumnType;
+}
+
 /**
  * Mode definition for which items, out of all items that are capable
  * of showing details, actually show those details.
@@ -32,7 +45,7 @@ enum InlineDetailsDisplayMode {
 interface ItemListRowParameters {
   columns: ColumnTypeList[];
   createDetailsElement?: () => HTMLElement;
-  icon: string;
+  icon?: string;
   selected?: boolean;
 }
 
@@ -55,7 +68,7 @@ class ItemListRow {
     this.selected = selected || false;
     this.canShowDetails = (!!createDetailsElement);
     this._createDetailsElement = createDetailsElement;
-    this._icon = icon;
+    this._icon = icon || '';
   }
 
   /**
@@ -266,11 +279,15 @@ class ItemListElement extends Polymer.Element {
     this._filterString = '';
   }
 
-  _formatColumnValue(value: ColumnTypeList, i: number): string {
-    if (this.columns[i].type === ColumnType.DATE) {
-      return (value as Date).toLocaleString();
+  _formatColumnValue(value: ColumnTypeList, i: number, columns: Column[]): string {
+    if (columns[i]) {
+      if (columns[i].type === ColumnType.DATE) {
+        return (value as Date).toLocaleString();
+      } else {
+        return value.toString();
+      }
     } else {
-      return value.toString();
+      return '';
     }
   }
 
@@ -301,7 +318,7 @@ class ItemListElement extends Polymer.Element {
             (b.columns[column] as string).toLowerCase()) {
           compResult = 1;
         }
-      } else if (this.columns[column].type === ColumnType.Number) {
+      } else if (this.columns[column].type === ColumnType.NUMBER) {
         if ((a.columns[column] as number) > (b.columns[column] as number)) {
           compResult = 1;
         }
@@ -346,8 +363,10 @@ class ItemListElement extends Polymer.Element {
     } else {
       // return a filter function for the current search string
       filterString = filterString.toLowerCase();
-      return (item: ItemListRow) =>
-          this._formatColumnValue(item.columns[0], 0).toLowerCase().indexOf(filterString) > -1;
+      return (item: ItemListRow) => {
+          const strVal = this._formatColumnValue(item.columns[0], 0, this.columns);
+          return strVal.toLowerCase().indexOf(filterString) > -1;
+      };
     }
   }
 

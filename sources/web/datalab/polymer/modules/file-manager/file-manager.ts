@@ -97,19 +97,6 @@ class NotebookContent {
   }
 }
 
-type ColumnTypeList = Date|number|string;
-
-enum ColumnType {
-  DATE,
-  Number,
-  STRING,
-}
-
-interface Column {
-  name: string;
-  type: ColumnType;
-}
-
 /**
  * Represents a file object that can be displayed in the file browser.
  */

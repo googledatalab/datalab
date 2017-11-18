@@ -201,7 +201,7 @@ the License.
           </div>
           <template is="dom-repeat" items="{{row.columns}}" as="column">
             <div class="column">
-              <span>[[_formatColumnValue(column, index)]]</span>
+              <span>[[_formatColumnValue(column, index, columns)]]</span>
             </div>
           </template>
         </paper-item>

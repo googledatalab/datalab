@@ -80,7 +80,7 @@ class ProjectPickerDialogElement extends BaseDialogElement {
         type: ColumnType.STRING,
       }, {
         name: 'Project Number',
-        type: ColumnType.Number,
+        type: ColumnType.NUMBER,
       }];
       itemlist.rows = listItems;
 
