@@ -181,7 +181,7 @@ class GithubFileManager extends BaseFileManager {
     throw new UnsupportedMethod('copy', this);
   }
 
-  public pathToPathHistory(path: string): DatalabFile[] {
+  public async pathToFileHierarchy(path: string): Promise<DatalabFile[]> {
     const pathParts = path.split('/').filter((part) => !!part);
     const files: DatalabFile[] = [];
     for (let p = 0; p < pathParts.length; p++) {
@@ -212,7 +212,7 @@ class GithubFileManager extends BaseFileManager {
 
   // We don't know if the type of the item is actually a directory without
   // querying the github API, so we assume every component is a dir.
-  // TODO(jimmc): update pathToPathHistory to query github for the last
+  // TODO(jimmc): update pathToFileHierarchy to query github for the last
   // component on the list to see whether it is a file or directory.
   private _ghPathPartsToDatalabFile(parts: string[]): DatalabFile {
     const path = parts.join('/');

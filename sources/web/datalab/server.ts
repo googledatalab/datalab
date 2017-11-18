@@ -315,7 +315,12 @@ function socketHandler(request: http.ServerRequest, socket: net.Socket, head: Bu
 
 function trimBasePath(requestPath: string): string {
   let pathPrefix = appSettings.datalabBasePath;
-  if (requestPath.indexOf(pathPrefix) == 0) {
+  // The base path has been normalized to include leading and trailing slashes,
+  // but the request path may not include the trailing slash. Therefore, we
+  // first specially handle the case of the base path without the trailing slash
+  if (requestPath+"/" === pathPrefix) {
+    return "/";
+  } else if (requestPath.indexOf(pathPrefix) == 0) {
     let newPath = "/" + requestPath.substring(pathPrefix.length);
     return newPath;
   } else {

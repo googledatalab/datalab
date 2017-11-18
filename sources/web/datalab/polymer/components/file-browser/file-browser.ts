@@ -99,8 +99,8 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   private _ignoreFileIdChange = false;
   private _inlineDetailsOpenInNotebook: () => void | null;
   private _isPreviewPaneToggledOn: boolean;
-  private _pathHistory: DatalabFile[];
-  private _pathHistoryIndex: number;
+  private _pathFileHierarchy: DatalabFile[];
+  private _pathFileHierarchyIndex: number;
   private _updateToolbarCollapseThreshold = 720;
   private _uploadFileSizeWarningLimit = 25 * 1024 * 1024;
 
@@ -144,12 +144,12 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         computed: '_computeIsToolbarHidden(small, toolbarMode)',
         type: Boolean,
       },
-      _pathHistory: {
+      _pathFileHierarchy: {
         type: Array,
         value: () => [],
       },
-      _pathHistoryIndex: {
-        observer: '_pathHistoryIndexChanged',
+      _pathFileHierarchyIndex: {
+        observer: '_pathFileHierarchyIndexChanged',
         type: Number,
         value: -1,
       },
@@ -229,11 +229,11 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     this.$.breadCrumbs.addEventListener('crumbClicked', (e: ItemClickEvent) => {
       // Take the default root file into account, increment clicked index by one.
       // If there are any leading breadcrumbs we trimmed, add that number back.
-      this._pathHistoryIndex = e.detail.index + 1 + this.nLeadingBreadcrumbsToTrim;
+      this._pathFileHierarchyIndex = e.detail.index + 1 + this.nLeadingBreadcrumbsToTrim;
     });
     this.$.breadCrumbs.addEventListener('rootClicked', () => {
       // If there are any leading breadcrumbs we trimmed, add that number back.
-      this._pathHistoryIndex = 0 + this.nLeadingBreadcrumbsToTrim;
+      this._pathFileHierarchyIndex = 0 + this.nLeadingBreadcrumbsToTrim;
     });
 
     const fileId = this._getFileIdFromProperty();
@@ -497,16 +497,16 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       return;
     }
     if (clickedItem.type === DatalabFileType.DIRECTORY) {
-      // First, remove all items in the array past _pathHistoryIndex. These are
+      // First, remove all items in the array past _pathFileHierarchyIndex. These are
       // only there to allow for forward navigation after going back, but they
       // should be purged when adding a new directory, this effectively starts a
       // new branch in the navigation tree, and prunes the old one.
-      this._pathHistory.splice(this._pathHistoryIndex + 1);
+      this._pathFileHierarchy.splice(this._pathFileHierarchyIndex + 1);
       // Only push the new file if it's not already on top of the stack.
-      if (!this._pathHistory.length ||
-          this._pathHistory[this._pathHistory.length - 1].id !== clickedItem.id) {
-        this._pathHistory.push(clickedItem);
-        this._pathHistoryIndex = this._pathHistory.length - 1;
+      if (!this._pathFileHierarchy.length ||
+          this._pathFileHierarchy[this._pathFileHierarchy.length - 1].id !== clickedItem.id) {
+        this._pathFileHierarchy.push(clickedItem);
+        this._pathFileHierarchyIndex = this._pathFileHierarchy.length - 1;
       }
     } else if (clickedItem.type === DatalabFileType.NOTEBOOK) {
       const url = this._fileManager.getNotebookUrl(clickedItem.id);
@@ -550,32 +550,32 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    * Goes back one step in history.
    */
   _navBackward() {
-    this._pathHistoryIndex = Math.max(this._pathHistoryIndex - 1, 0);
+    this._pathFileHierarchyIndex = Math.max(this._pathFileHierarchyIndex - 1, 0);
   }
 
   /**
    * Goes forward one step in history.
    */
   _navForward() {
-    this._pathHistoryIndex = Math.min(this._pathHistoryIndex + 1, this._pathHistory.length - 1);
+    this._pathFileHierarchyIndex = Math.min(this._pathFileHierarchyIndex + 1, this._pathFileHierarchy.length - 1);
   }
 
   /**
    * Maintains the enabled/disabled state of the navigation buttons according to
    * the current history index value.
    */
-  _pathHistoryIndexChanged() {
-    this.$.backNav.disabled = this._pathHistoryIndex === 0;
-    this.$.forwardNav.disabled = this._pathHistoryIndex === this._pathHistory.length - 1;
+  _pathFileHierarchyIndexChanged() {
+    this.$.backNav.disabled = this._pathFileHierarchyIndex === 0;
+    this.$.forwardNav.disabled = this._pathFileHierarchyIndex === this._pathFileHierarchy.length - 1;
 
     // Ignore the root file since that's shown by the crumbs element anyway,
     // also ignore any trimmed leading breadcrumbs. Slice up till the current
     // history index.
     const rootBreadcrumbs = 1 + this.nLeadingBreadcrumbsToTrim;
     this.$.breadCrumbs.crumbs =
-        this._pathHistory.slice(rootBreadcrumbs, this._pathHistoryIndex + 1).map((p) => p.name);
+        this._pathFileHierarchy.slice(rootBreadcrumbs, this._pathFileHierarchyIndex + 1).map((p) => p.name);
 
-    this.currentFile = this._pathHistory[this._pathHistoryIndex];
+    this.currentFile = this._pathFileHierarchy[this._pathFileHierarchyIndex];
 
     // Reset any filter on the item list
     (this.$.files as ItemListElement).resetFilter();
@@ -1128,16 +1128,16 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
   }
 
   private async _loadStartupPath(fileId: DatalabFileId|null) {
-    this._pathHistory = [];
+    this._pathFileHierarchy = [];
     if (fileId) {
-      this._pathHistory = this._fileManager.pathToPathHistory(fileId.path);
+      this._pathFileHierarchy = await this._fileManager.pathToFileHierarchy(fileId.path);
     } else if (this.fileManagerType === 'jupyter') {
       // TODO - make SettingsManager able to store startuppaths
       // for multiple file managers.
       const settings = await SettingsManager.getUserSettingsAsync(true /*forceRefresh*/);
       const startuppath = settings.startuppath;
       if (startuppath) {
-        this._pathHistory = this._fileManager.pathToPathHistory(startuppath);
+        this._pathFileHierarchy = await this._fileManager.pathToFileHierarchy(startuppath);
       }
     }
 
@@ -1151,11 +1151,11 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
             config.displayName + ': ' + e);
         throw e;
       });
-    this._pathHistory.unshift(root);
-    if (this._pathHistoryIndex === this._pathHistory.length - 1) {
-      this._pathHistoryIndexChanged();
+    this._pathFileHierarchy.unshift(root);
+    if (this._pathFileHierarchyIndex === this._pathFileHierarchy.length - 1) {
+      this._pathFileHierarchyIndexChanged();
     } else {
-      this._pathHistoryIndex = this._pathHistory.length - 1;
+      this._pathFileHierarchyIndex = this._pathFileHierarchy.length - 1;
     }
     this._fileManagerDisplayIcon = config.displayIcon;
     this._fileManagerDisplayName = config.displayName;
