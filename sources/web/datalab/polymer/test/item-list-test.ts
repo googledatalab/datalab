@@ -519,9 +519,9 @@ describe('<item-list>', () => {
 
   describe('sorting', () => {
     const rows = [
-      new ItemListRow({columns: ['item c*', 'Sat Nov 11 2017 18:58:42 GMT+0200 (EET)']}),
-      new ItemListRow({columns: ['item a*', 'Sat Nov 11 2017 18:59:42 GMT+0200 (EET)']}),
-      new ItemListRow({columns: ['item b', 'Fri Nov 10 2017 18:57:42 GMT+0200 (EET)']})
+      new ItemListRow({columns: ['item c*', new Date('Sat Nov 11 2017 18:58:42 GMT+0200 (EET)')]}),
+      new ItemListRow({columns: ['item a*', new Date('Sat Nov 11 2017 18:59:42 GMT+0200 (EET)')]}),
+      new ItemListRow({columns: ['item b', new Date('Fri Nov 10 2017 18:57:42 GMT+0200 (EET)')]})
     ];
 
     const col0SortedOrder = [1, 2, 0];
@@ -536,7 +536,7 @@ describe('<item-list>', () => {
         type: ColumnType.STRING,
       }, {
         name: 'col2',
-        type: ColumnType.STRING,
+        type: ColumnType.DATE,
       }];
       testFixture.$.list.render();
     });
@@ -545,8 +545,9 @@ describe('<item-list>', () => {
       const renderedRows = testFixture.$.listContainer.querySelectorAll('.row');
       for (let i = 0; i < testFixture.rows.length; ++i) {
         const columns = renderedRows[i].querySelectorAll('.column');
-        assert(columns[0].innerText === testFixture.rows[col0SortedOrder[i]].columns[0]);
-        assert(columns[1].innerText === testFixture.rows[col0SortedOrder[i]].columns[1]);
+        const sortedColumns = testFixture.rows[col0SortedOrder[i]].columns;
+        assert(columns[0].innerText === sortedColumns[0]);
+        assert(columns[1].innerText === new Date(sortedColumns[1].toString()).toLocaleString());
       }
     });
 
@@ -556,8 +557,9 @@ describe('<item-list>', () => {
       testFixture.$.list.render();
       for (let i = 0; i < testFixture.rows.length; ++i) {
         const columns = renderedRows[i].querySelectorAll('.column');
-        assert(columns[0].innerText === testFixture.rows[col0ReverseOrder[i]].columns[0]);
-        assert(columns[1].innerText === testFixture.rows[col0ReverseOrder[i]].columns[1]);
+        const sortedColumns = testFixture.rows[col0ReverseOrder[i]].columns;
+        assert(columns[0].innerText === sortedColumns[0]);
+        assert(columns[1].innerText === new Date(sortedColumns[1].toString()).toLocaleString());
       }
     });
 
@@ -567,8 +569,9 @@ describe('<item-list>', () => {
       const renderedRows = testFixture.$.listContainer.querySelectorAll('.row');
       for (let i = 0; i < testFixture.rows.length; ++i) {
         const columns = renderedRows[i].querySelectorAll('.column');
-        assert(columns[0].innerText === testFixture.rows[col1SortedOrder[i]].columns[0]);
-        assert(columns[1].innerText === testFixture.rows[col1SortedOrder[i]].columns[1]);
+        const sortedColumns = testFixture.rows[col1SortedOrder[i]].columns;
+        assert(columns[0].innerText === sortedColumns[0]);
+        assert(columns[1].innerText === new Date(sortedColumns[1].toString()).toLocaleString());
       }
     });
 
@@ -617,11 +620,13 @@ describe('<item-list>', () => {
       // row 0
       let columns0 = renderedRows[0].querySelectorAll('.column');
       assert(columns0[0].innerText === testFixture.rows[1].columns[0]);
-      assert(columns0[1].innerText === testFixture.rows[1].columns[1]);
+      assert(columns0[1].innerText ===
+          new Date(testFixture.rows[1].columns[1].toString()).toLocaleString());
       // row 1
       let columns1 = renderedRows[1].querySelectorAll('.column');
       assert(columns1[0].innerText === testFixture.rows[0].columns[0]);
-      assert(columns1[1].innerText === testFixture.rows[0].columns[1]);
+      assert(columns1[1].innerText ===
+          new Date(testFixture.rows[0].columns[1].toString()).toLocaleString());
 
       testFixture._sortBy(0);
       testFixture.$.list.render();
@@ -629,11 +634,13 @@ describe('<item-list>', () => {
       // row 0
       columns0 = renderedRows[0].querySelectorAll('.column');
       assert(columns0[0].innerText === testFixture.rows[0].columns[0]);
-      assert(columns0[1].innerText === testFixture.rows[0].columns[1]);
+      assert(columns0[1].innerText ===
+          new Date(testFixture.rows[0].columns[1].toString()).toLocaleString());
       // row 1
       columns1 = renderedRows[1].querySelectorAll('.column');
       assert(columns1[0].innerText === testFixture.rows[1].columns[0]);
-      assert(columns1[1].innerText === testFixture.rows[1].columns[1]);
+      assert(columns1[1].innerText ===
+          new Date(testFixture.rows[1].columns[1].toString()).toLocaleString());
     });
 
     it('sorts numbers correctly', () => {
@@ -647,6 +654,28 @@ describe('<item-list>', () => {
         new ItemListRow({columns: [2]}),
       ];
       const sortedOrder = [1, 2, 0];
+
+      const renderedRows = testFixture.$.listContainer.querySelectorAll('.row');
+      for (let i = 0; i < testFixture.rows.length; ++i) {
+        const columns = renderedRows[i].querySelectorAll('.column');
+        assert(columns[0].innerText === testFixture.rows[sortedOrder[i]].columns[0].toString());
+      }
+    });
+
+    it('sorts correctly when there are equal values', () => {
+      testFixture.columns = [{
+        name: 'col1',
+        type: ColumnType.NUMBER,
+      }];
+      testFixture.rows = [
+        new ItemListRow({columns: [2]}),
+        new ItemListRow({columns: [1]}),
+        new ItemListRow({columns: [2]}),
+        new ItemListRow({columns: [1]}),
+        new ItemListRow({columns: [11]}),
+        new ItemListRow({columns: [2]}),
+      ];
+      const sortedOrder = [1, 3, 0, 2, 5, 4];
 
       const renderedRows = testFixture.$.listContainer.querySelectorAll('.row');
       for (let i = 0; i < testFixture.rows.length; ++i) {
