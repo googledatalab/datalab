@@ -13,31 +13,6 @@
  */
 
 window.addEventListener('WebComponentsReady', () => {
-  class MockFile extends DatalabFile {
-    constructor(name = '', path = '') {
-      super(
-        new DatalabFileId(path, FileManagerType.MOCK),
-        name,
-        DatalabFileType.DIRECTORY,
-      );
-    }
-    getColumnValues() {
-      return [this.name, this.type.toString()];
-    }
-  }
-
-  class MockFileManager extends BaseFileManager {
-    public getColumnNames() {
-      return ['Name', 'Type'];
-    }
-    public async getRootFile() {
-      return new MockFile('root');
-    }
-    public async pathToFileHierarchy(path: string): Promise<DatalabFile[]> {
-      return [new MockFile('', path)];
-    }
-  }
-
   const testPath = 'testpath';
 
   describe('<file-browser>', () => {

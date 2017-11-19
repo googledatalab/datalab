@@ -26,10 +26,10 @@ declare function markdownit(): {
  */
 class NotebookPreviewElement extends Polymer.Element {
 
-  private static _noFileMessage = 'Select an item to view a preview.';
-  private static _emptyNotebookMessage = 'Empty notebook.';
-  private static _longNotebookMessage = 'Showing markdown from the first two.';
-  private static _errorMessage = 'Could not retrieve notebook preview.';
+  static _noFileMessage = 'Select an item to view a preview.';
+  static _emptyNotebookMessage = 'Empty notebook.';
+  static _longNotebookMessage = 'Showing markdown from the first two.';
+  static _errorMessage = 'Could not retrieve notebook preview.';
 
   /**
    * File whose preview to show.
@@ -108,7 +108,7 @@ class NotebookPreviewElement extends Polymer.Element {
           });
           this.$.previewHtml.innerHTML = markdownHtml;
           this._message = ' Notebook with ' + content.cells.length + ' cells. ';
-          if (content.cells.length > 2) {
+          if (content.cells.length > 2 && !!markdownHtml) {
             this._message += NotebookPreviewElement._longNotebookMessage;
           }
         }

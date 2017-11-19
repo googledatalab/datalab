@@ -19,6 +19,31 @@
 declare function assert(condition: boolean, message: string): null;
 declare function fixture(element: string): any;
 
+class MockFile extends DatalabFile {
+  constructor(name = '', path = '', type = DatalabFileType.DIRECTORY) {
+    super(
+      new DatalabFileId(path, FileManagerType.MOCK),
+      name,
+      type,
+    );
+  }
+  getColumnValues() {
+    return [this.name, this.type.toString()];
+  }
+}
+
+class MockFileManager extends BaseFileManager {
+  public getColumnNames() {
+    return ['Name', 'Type'];
+  }
+  public async getRootFile() {
+    return new MockFile('root');
+  }
+  public async pathToFileHierarchy(path: string): Promise<DatalabFile[]> {
+    return [new MockFile('', path)];
+  }
+}
+
 class TestUtils {
   /**
    * Returns the currently open dialog object, and asserts that there is exactly
