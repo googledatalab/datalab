@@ -199,9 +199,9 @@ the License.
             </paper-checkbox>
             <iron-icon hidden$="{{!row._icon}}" icon="{{row.icon}}" src="{{row.src}}"></iron-icon>
           </div>
-          <template is="dom-repeat" items="{{row.columns}}" as="column">
+          <template is="dom-repeat" items="{{row.columns}}" as="column" index-as="columnIndex">
             <div class="column">
-              <span>[[_formatColumnValue(column, index, columns)]]</span>
+              <span>[[_formatColumnValue(column, columnIndex, columns)]]</span>
             </div>
           </template>
         </paper-item>
