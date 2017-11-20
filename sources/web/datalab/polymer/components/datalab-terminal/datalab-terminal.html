@@ -23,6 +23,8 @@ the License.
   <template>
     <style include="datalab-shared-styles">
       :host {
+        display: block;
+        position: relative;
         --terminal-style: {
           font-family: monospace;
           font-size: 14px;
@@ -30,8 +32,9 @@ the License.
       }
       paper-spinner {
         position: absolute;
-        left: 50%;
-        top: 50%;
+        z-index: 1;
+        left: calc(50% - var(--spinner-dimension) / 2);
+        top: calc(50% - var(--spinner-dimension) / 2);
       }
       #container {
         background-color: #000;
