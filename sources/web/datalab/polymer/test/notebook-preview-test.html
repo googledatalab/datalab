@@ -20,18 +20,18 @@ the License.
     <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
     <script src="../../web-component-tester/browser.js"></script>
 
+    <link rel="import" href="../components/notebook-preview/notebook-preview.html">
     <link rel="import" href="test-utils.html">
-    <link rel="import" href="../components/file-browser/file-browser.html">
   </head>
   <body>
 
-    <test-fixture id="files-fixture">
+    <test-fixture id="notebook-preview-fixture">
       <template>
-        <file-browser file-manager-type="jupyter"></file-browser>
+        <notebook-preview></notebook-preview>
       </template>
     </test-fixture>
 
-    <script src="file-browser-test.js"></script>
+    <script src="notebook-preview-test.js"></script>
 
   </body>
 </html>
