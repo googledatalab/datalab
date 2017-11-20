@@ -199,7 +199,6 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 # Clean up
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* && \
-    rm -rf /var/lib/dpkg/info/* && \
     rm -rf /tmp/* && \
     rm -rf /root/.cache/* && \
     rm -rf /usr/share/locale/* && \
