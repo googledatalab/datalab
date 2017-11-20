@@ -100,7 +100,6 @@ window.addEventListener('WebComponentsReady', () => {
     });
 
     it('shows column names returned from the file manager in header', () => {
-      debugger;
       const files: ItemListElement = testFixture.$.files;
       const columns = files.$.header.querySelectorAll('.column');
       assert(columns.length === 2, 'exactly two columns are expected');
