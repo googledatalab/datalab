@@ -26,10 +26,10 @@ declare function markdownit(): {
  */
 class NotebookPreviewElement extends Polymer.Element {
 
-  private static _noFileMessage = 'Select an item to view a preview.';
-  private static _emptyNotebookMessage = 'Empty notebook.';
-  private static _longNotebookMessage = 'Showing markdown from the first two.';
-  private static _errorMessage = 'Could not retrieve notebook preview.';
+  static _noFileMessage = 'Select an item to view a preview.';
+  static _emptyNotebookMessage = 'Empty notebook.';
+  static _longNotebookMessage = 'Showing markdown from the first two.';
+  static _errorMessage = 'Could not retrieve notebook preview.';
 
   /**
    * File whose preview to show.
@@ -42,15 +42,25 @@ class NotebookPreviewElement extends Polymer.Element {
    */
   public active: boolean;
 
-  _message = '';
+  _busy: boolean;
+  _message: string;
+  _showPreview: boolean;
 
   static get is() { return 'notebook-preview'; }
 
   static get properties() {
     return {
+      _busy: {
+        type: Boolean,
+        value: false,
+      },
       _message: {
         type: String,
         value: '',
+      },
+      _showPreview: {
+        type: Boolean,
+        value: false,
       },
       active: {
         observer: '_reloadPreview',
@@ -68,21 +78,19 @@ class NotebookPreviewElement extends Polymer.Element {
   /**
    * Loads the preview of the given file in the preview pane. No preview is shown if the
    * selected item is a directory. For notebooks, the first two cells are pulled from the file,
-   * and any markdown they contain is rendered in the pane. For now, we also support other
-   * plain text files with mime type text/*, and JSON files.
-   *
-   * TODO: Consider adding a spinning animation while this data loads.
+   * and any markdown they contain is rendered in the pane.
    */
-  _reloadPreview() {
-    if (!this.file || !this.active ||
-        this.file.type !== DatalabFileType.NOTEBOOK) {
-      this.$.previewHtml.innerHTML = '';
+  _reloadPreview(newFile: DatalabFile) {
+    if (!newFile || !this.active ||
+        newFile.type !== DatalabFileType.NOTEBOOK) {
+      this._showPreview = false;
       this._message = NotebookPreviewElement._noFileMessage;
       return;
     }
 
-    const fileManager = FileManagerFactory.getInstanceForType(this.file.id.source);
-    fileManager.getStringContent(this.file.id)
+    this._busy = true;
+    const fileManager = FileManagerFactory.getInstanceForType(newFile.id.source);
+    fileManager.getStringContent(newFile.id)
       .then((stringContent: string) => {
 
         let content: NotebookContent;
@@ -108,17 +116,19 @@ class NotebookPreviewElement extends Polymer.Element {
           });
           this.$.previewHtml.innerHTML = markdownHtml;
           this._message = ' Notebook with ' + content.cells.length + ' cells. ';
-          if (content.cells.length > 2) {
+          if (content.cells.length > 2 && !!markdownHtml) {
             this._message += NotebookPreviewElement._longNotebookMessage;
           }
+          this._showPreview = !!markdownHtml;
         }
       })
       .catch(() => {
-        this.$.previewHtml.innerHTML = '';
+        this._showPreview = false;
         const message = NotebookPreviewElement._errorMessage;
         this._message = message;
         Utils.log.error(message);
-      });
+      })
+      .then(() => this._busy = false);
   }
 
 }
