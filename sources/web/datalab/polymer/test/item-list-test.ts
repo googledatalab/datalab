@@ -530,6 +530,7 @@ describe('<item-list>', () => {
 
     beforeEach(async () => {
       testFixture = fixture('item-list-fixture');
+      testFixture.useRelativeDates = false;
       testFixture.rows = rows;
       testFixture.columns = [{
         name: 'col1',
@@ -549,6 +550,21 @@ describe('<item-list>', () => {
         assert(columns[0].innerText === sortedColumns[0]);
         assert(columns[1].innerText === new Date(sortedColumns[1].toString()).toLocaleString());
       }
+    });
+
+    it('uses moment for relative dates when enabled', () => {
+      testFixture.useRelativeDates = true;
+      testFixture.rows = [
+        new ItemListRow({columns: [Date.now()]})
+      ];
+      testFixture.columns = [{
+        name: 'col1',
+        type: ColumnTypeName.DATE,
+      }];
+      const renderedRows = testFixture.$.listContainer.querySelectorAll('.row');
+      assert(renderedRows.length === 1);
+      const columns = renderedRows[0].querySelectorAll('.column');
+      assert(columns[0].innerText === 'a few seconds ago');
     });
 
     it('switches sort to descending order if first column is sorted on again', () => {
