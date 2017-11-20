@@ -12,9 +12,9 @@
  * the License.
  */
 
-type ColumnTypeList = Date|number|string;
+type ColumnType = Date|number|string;
 
-enum ColumnType {
+enum ColumnTypeName {
   DATE,
   NUMBER,
   STRING,
@@ -22,7 +22,7 @@ enum ColumnType {
 
 interface Column {
   name: string;
-  type: ColumnType;
+  type: ColumnTypeName;
 }
 
 /**
@@ -43,7 +43,7 @@ enum InlineDetailsDisplayMode {
 
 /** Fields that can be passed to the ItemListRow constructor. */
 interface ItemListRowParameters {
-  columns: ColumnTypeList[];
+  columns: ColumnType[];
   createDetailsElement?: () => HTMLElement;
   icon?: string;
   selected?: boolean;
@@ -54,7 +54,7 @@ interface ItemListRowParameters {
  */
 class ItemListRow {
   public selected: boolean;
-  public columns: ColumnTypeList[];
+  public columns: ColumnType[];
   public canShowDetails: boolean;
   public showInlineDetails = false;
 
@@ -279,9 +279,9 @@ class ItemListElement extends Polymer.Element {
     this._filterString = '';
   }
 
-  _formatColumnValue(value: ColumnTypeList, i: number, columns: Column[]): string {
+  _formatColumnValue(value: ColumnType, i: number, columns: Column[]): string {
     if (columns[i]) {
-      if (columns[i].type === ColumnType.DATE) {
+      if (columns[i].type === ColumnTypeName.DATE) {
         return (value as Date).toLocaleString();
       } else {
         return value.toString();
@@ -312,17 +312,20 @@ class ItemListElement extends Polymer.Element {
       if (!this.columns.length) {
         return;
       }
+      if (a.columns[column] === b.columns[column]) {
+        return 0;
+      }
       let compResult = -1;
-      if (this.columns[column].type === ColumnType.STRING) {
+      if (this.columns[column].type === ColumnTypeName.STRING) {
         if ((a.columns[column] as string).toLowerCase() >
             (b.columns[column] as string).toLowerCase()) {
           compResult = 1;
         }
-      } else if (this.columns[column].type === ColumnType.NUMBER) {
+      } else if (this.columns[column].type === ColumnTypeName.NUMBER) {
         if ((a.columns[column] as number) > (b.columns[column] as number)) {
           compResult = 1;
         }
-      } else if (this.columns[column].type === ColumnType.DATE) {
+      } else if (this.columns[column].type === ColumnTypeName.DATE) {
         if ((a.columns[column] as Date) > (b.columns[column] as Date)) {
           compResult = 1;
         }

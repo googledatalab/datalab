@@ -83,10 +83,10 @@ describe('<item-list>', () => {
     };
     testFixture.columns = [{
       name: 'col1',
-      type: ColumnType.STRING,
+      type: ColumnTypeName.STRING,
     }, {
       name: 'col2',
-      type: ColumnType.STRING,
+      type: ColumnTypeName.STRING,
     }];
     const rows = [
       new ItemListRow({
@@ -533,10 +533,10 @@ describe('<item-list>', () => {
       testFixture.rows = rows;
       testFixture.columns = [{
         name: 'col1',
-        type: ColumnType.STRING,
+        type: ColumnTypeName.STRING,
       }, {
         name: 'col2',
-        type: ColumnType.DATE,
+        type: ColumnTypeName.DATE,
       }];
       testFixture.$.list.render();
     });
@@ -646,7 +646,7 @@ describe('<item-list>', () => {
     it('sorts numbers correctly', () => {
       testFixture.columns = [{
         name: 'col1',
-        type: ColumnType.NUMBER,
+        type: ColumnTypeName.NUMBER,
       }];
       testFixture.rows = [
         new ItemListRow({columns: [11]}),
@@ -665,7 +665,7 @@ describe('<item-list>', () => {
     it('sorts correctly when there are equal values', () => {
       testFixture.columns = [{
         name: 'col1',
-        type: ColumnType.NUMBER,
+        type: ColumnTypeName.NUMBER,
       }];
       testFixture.rows = [
         new ItemListRow({columns: [2]}),

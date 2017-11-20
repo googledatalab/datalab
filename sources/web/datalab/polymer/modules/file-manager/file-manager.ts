@@ -113,7 +113,7 @@ abstract class DatalabFile {
     this.icon = icon || '';
   }
 
-  public getColumnValues(): ColumnTypeList[] {
+  public getColumnValues(): ColumnType[] {
     return [this.name];
   }
 
@@ -262,7 +262,7 @@ class BaseFileManager implements FileManager {
   getColumns(_currentFileId?: DatalabFileId): Column[] {
     return [{
       name: Utils.constants.columns.name,
-      type: ColumnType.STRING,
+      type: ColumnTypeName.STRING,
     }];
   }
 

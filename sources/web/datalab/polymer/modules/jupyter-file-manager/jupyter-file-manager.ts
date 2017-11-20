@@ -200,10 +200,10 @@ class JupyterFileManager extends BaseFileManager {
   public getColumns(): Column[] {
     return [{
         name: Utils.constants.columns.name,
-        type: ColumnType.STRING,
+        type: ColumnTypeName.STRING,
       }, {
         name: Utils.constants.columns.lastModified,
-        type: ColumnType.DATE,
+        type: ColumnTypeName.DATE,
       }];
   }
 

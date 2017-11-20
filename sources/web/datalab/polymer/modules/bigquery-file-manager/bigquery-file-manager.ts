@@ -92,7 +92,7 @@ class BigQueryFileManager extends BaseFileManager {
       }
       return [{
         name: columnName,
-        type: ColumnType.STRING,
+        type: ColumnTypeName.STRING,
       }];
     } else {
       return super.getColumns();

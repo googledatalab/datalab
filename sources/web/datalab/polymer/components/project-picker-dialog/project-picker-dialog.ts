@@ -77,10 +77,10 @@ class ProjectPickerDialogElement extends BaseDialogElement {
       const listItems = this._projectsToListItems(projects);
       itemlist.columns = [{
         name: 'Project Id',
-        type: ColumnType.STRING,
+        type: ColumnTypeName.STRING,
       }, {
         name: 'Project Number',
-        type: ColumnType.NUMBER,
+        type: ColumnTypeName.NUMBER,
       }];
       itemlist.rows = listItems;
 

@@ -88,13 +88,13 @@ class DriveFileManager extends BaseFileManager {
   public getColumns(): Column[] {
     return [{
         name: Utils.constants.columns.name,
-        type: ColumnType.STRING,
+        type: ColumnTypeName.STRING,
       }, {
         name: Utils.constants.columns.lastModified,
-        type: ColumnType.DATE,
+        type: ColumnTypeName.DATE,
       }, {
         name: Utils.constants.columns.owner,
-        type: ColumnType.STRING,
+        type: ColumnTypeName.STRING,
       }];
   }
 
