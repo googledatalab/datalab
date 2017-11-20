@@ -16,6 +16,8 @@ the License.
 <link rel="import" href="../../modules/file-manager-factory/file-manager-factory.html">
 <link rel="import" href="../../modules/utils/utils.html">
 
+<link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
+
 <dom-module id="notebook-preview">
   <template>
     <style include="datalab-shared-styles">
@@ -27,14 +29,28 @@ the License.
         overflow-x: hidden;
         box-shadow: 5px 5px 10px -3px var(--box-shadow-color);
       }
-      .message {
+      #message {
         padding: 15px;
         text-align: center;
         color: var(--neutral-fg-color);
       }
+      #loadingDiv {
+        position: absolute;
+        top: calc(50% - 30px);
+        width: 100%;
+        text-align: center;
+        color: var(--neutral-fg-color);
+      }
     </style>
-    <div id="previewHtml"></div>
-    <div class="message">{{_message}}</div>
+    <div id="previewDiv" hidden$="[[_busy]]">
+      <div id="previewHtml" hidden$="[[!_showPreview]]"></div>
+      <div id="message">[[_message]]</div>
+    </div>
+    <div id="loadingDiv" hidden$="[[!_busy]]">
+      Loading preview..
+      <br><br>
+      <paper-spinner active></paper-spinner>
+    </div>
   </template>
 </dom-module>
 
