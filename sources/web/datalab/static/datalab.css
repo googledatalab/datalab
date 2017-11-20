@@ -295,6 +295,7 @@ i.material-icons {
 }
 #uploadButton {
   padding: 4px 8px;
+  margin: 0;
 }
 #editorButton {
   display: none;
