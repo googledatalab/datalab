@@ -80,17 +80,22 @@ class BigQueryFileManager extends BaseFileManager {
     throw new UnsupportedMethod('list on BigQuery table', this);
   }
 
-  public getColumnNames(currentFileId?: DatalabFileId) {
+  public getColumns(currentFileId?: DatalabFileId): Column[] {
     if (currentFileId) {
       const len = currentFileId.path.split('/').filter((t) => !!t).length;
+      let columnName = '';
       switch (len) {
-        case 0: return [Utils.constants.columns.project];
-        case 1: return [Utils.constants.columns.dataset];
-        case 2: return [Utils.constants.columns.table];
-        default: return super.getColumnNames();
+        case 0: columnName = Utils.constants.columns.project; break;
+        case 1: columnName = Utils.constants.columns.dataset; break;
+        case 2: columnName = Utils.constants.columns.table; break;
+        default: return super.getColumns();
       }
+      return [{
+        name: columnName,
+        type: ColumnTypeName.STRING,
+      }];
     } else {
-      return super.getColumnNames();
+      return super.getColumns();
     }
   }
 

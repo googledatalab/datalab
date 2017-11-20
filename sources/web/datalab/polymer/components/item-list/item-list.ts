@@ -12,6 +12,19 @@
  * the License.
  */
 
+type ColumnType = Date|number|string;
+
+enum ColumnTypeName {
+  DATE,
+  NUMBER,
+  STRING,
+}
+
+interface Column {
+  name: string;
+  type: ColumnTypeName;
+}
+
 /**
  * Mode definition for which items, out of all items that are capable
  * of showing details, actually show those details.
@@ -30,9 +43,9 @@ enum InlineDetailsDisplayMode {
 
 /** Fields that can be passed to the ItemListRow constructor. */
 interface ItemListRowParameters {
-  columns: string[];
+  columns: ColumnType[];
   createDetailsElement?: () => HTMLElement;
-  icon: string;
+  icon?: string;
   selected?: boolean;
 }
 
@@ -41,7 +54,7 @@ interface ItemListRowParameters {
  */
 class ItemListRow {
   public selected: boolean;
-  public columns: string[];
+  public columns: ColumnType[];
   public canShowDetails: boolean;
   public showInlineDetails = false;
 
@@ -55,7 +68,7 @@ class ItemListRow {
     this.selected = selected || false;
     this.canShowDetails = (!!createDetailsElement);
     this._createDetailsElement = createDetailsElement;
-    this._icon = icon;
+    this._icon = icon || '';
   }
 
   /**
@@ -159,7 +172,7 @@ class ItemListElement extends Polymer.Element {
   /**
    * List of string data columns names
    */
-  public columns: string[];
+  public columns: Column[];
 
   /**
    * Whether to hide the header row
@@ -189,6 +202,10 @@ class ItemListElement extends Polymer.Element {
   _filterString: string;
   _showFilterBox: boolean;
 
+  private _currentSort = {
+    asc: true,   // ascending or descending
+    column: -1,  // index of current sort column
+  };
   private _lastSelectedIndex = -1;
 
   static get is() { return 'item-list'; }
@@ -208,6 +225,7 @@ class ItemListElement extends Polymer.Element {
         value: false,
       },
       columns: {
+        observer: '_updateSortIcons',
         type: Array,
         value: () => [],
       },
@@ -228,6 +246,7 @@ class ItemListElement extends Polymer.Element {
         value: false,
       },
       rows: {
+        observer: '_updateSortIcons',
         type: Array,
         value: () => [],
       },
@@ -251,10 +270,81 @@ class ItemListElement extends Polymer.Element {
       const shadow = '0px ' + yOffset + 'px 10px -5px #ccc';
       headerContainer.style.boxShadow = shadow;
     });
+
+    // Initial sort
+    this._sortBy(0);
   }
 
   resetFilter() {
     this._filterString = '';
+  }
+
+  _formatColumnValue(value: ColumnType, i: number, columns: Column[]): string {
+    if (columns[i]) {
+      if (columns[i].type === ColumnTypeName.DATE) {
+        return (value as Date).toLocaleString();
+      } else {
+        return value.toString();
+      }
+    } else {
+      return '';
+    }
+  }
+
+  _columnButtonClicked(e: any) {
+    this._sortBy(e.model.itemsIndex);
+  }
+
+  _sortBy(column: number) {
+    // If sort is requested on the current sort column, reverse the sort order.
+    // Otherwise, set the current sort column to that.
+    if (this._currentSort.column === column) {
+      this._currentSort.asc = !this._currentSort.asc;
+    } else {
+      this._currentSort = {
+        asc: true,
+        column,
+      };
+    }
+
+    this.$.list.sort = (a: ItemListRow, b: ItemListRow) => {
+      // Bail out of sort if no columns have been set yet.
+      if (!this.columns.length) {
+        return;
+      }
+      if (a.columns[column] === b.columns[column]) {
+        return 0;
+      }
+      let compResult = -1;
+      if (this.columns[column].type === ColumnTypeName.STRING) {
+        if ((a.columns[column] as string).toLowerCase() >
+            (b.columns[column] as string).toLowerCase()) {
+          compResult = 1;
+        }
+      } else if (this.columns[column].type === ColumnTypeName.NUMBER) {
+        if ((a.columns[column] as number) > (b.columns[column] as number)) {
+          compResult = 1;
+        }
+      } else if (this.columns[column].type === ColumnTypeName.DATE) {
+        if ((a.columns[column] as Date) > (b.columns[column] as Date)) {
+          compResult = 1;
+        }
+      }
+      return this._currentSort.asc ? compResult : compResult * -1;
+    };
+    this._updateSortIcons();
+  }
+
+  _updateSortIcons() {
+    // Make sure all elements have rendered.
+    Polymer.dom.flush();
+    const iconEls = this.$.header.querySelectorAll('.sort-icon');
+    if (iconEls.length && this._currentSort.column > -1) {
+      iconEls.forEach((el: HTMLElement) => el.hidden = true);
+      iconEls[this._currentSort.column].hidden = false;
+      iconEls[this._currentSort.column].setAttribute('icon',
+          this._currentSort.asc ? 'arrow-upward' : 'arrow-downward');
+    }
   }
 
   _toggleFilter() {
@@ -276,7 +366,10 @@ class ItemListElement extends Polymer.Element {
     } else {
       // return a filter function for the current search string
       filterString = filterString.toLowerCase();
-      return (item: ItemListRow) => item.columns[0].toLowerCase().indexOf(filterString) > -1;
+      return (item: ItemListRow) => {
+          const strVal = this._formatColumnValue(item.columns[0], 0, this.columns);
+          return strVal.toLowerCase().indexOf(filterString) > -1;
+      };
     }
   }
 

@@ -27,8 +27,14 @@ window.addEventListener('WebComponentsReady', () => {
   }
 
   class MockFileManager extends BaseFileManager {
-    public getColumnNames() {
-      return ['Name', 'Type'];
+    public getColumns(): Column[] {
+      return [{
+        name: 'Name',
+        type: ColumnTypeName.STRING,
+      }, {
+        name: 'Type',
+        type: ColumnTypeName.STRING,
+      }];
     }
     public async getRootFile() {
       return new MockFile('root');
@@ -128,8 +134,8 @@ window.addEventListener('WebComponentsReady', () => {
       const files: ItemListElement = testFixture.$.files;
       const columns = files.$.header.querySelectorAll('.column');
       assert(columns.length === 2, 'exactly two columns are expected');
-      assert(columns[0].innerText === 'Name', 'Name column missing');
-      assert(columns[1].innerText === 'Type', 'Type column missing');
+      assert(columns[0].innerText.trim() === 'Name', 'Name column missing');
+      assert(columns[1].innerText.trim() === 'Type', 'Type column missing');
     });
 
     it('starts up with no files selected, and no files running', () => {
