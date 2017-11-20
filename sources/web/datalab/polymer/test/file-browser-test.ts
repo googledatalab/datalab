@@ -100,11 +100,12 @@ window.addEventListener('WebComponentsReady', () => {
     });
 
     it('shows column names returned from the file manager in header', () => {
+      debugger;
       const files: ItemListElement = testFixture.$.files;
       const columns = files.$.header.querySelectorAll('.column');
       assert(columns.length === 2, 'exactly two columns are expected');
-      assert(columns[0].innerText === 'Name', 'Name column missing');
-      assert(columns[1].innerText === 'Type', 'Type column missing');
+      assert(columns[0].innerText.trim() === 'Name', 'Name column missing');
+      assert(columns[1].innerText.trim() === 'Type', 'Type column missing');
     });
 
     it('starts up with no files selected, and no files running', () => {

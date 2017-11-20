@@ -33,8 +33,14 @@ class MockFile extends DatalabFile {
 }
 
 class MockFileManager extends BaseFileManager {
-  public getColumnNames() {
-    return ['Name', 'Type'];
+  public getColumns() {
+    return [{
+        name: Utils.constants.columns.name,
+        type: ColumnTypeName.STRING,
+      }, {
+        name: 'Type',
+        type: ColumnTypeName.STRING,
+      }];
   }
   public async getRootFile() {
     return new MockFile('root');

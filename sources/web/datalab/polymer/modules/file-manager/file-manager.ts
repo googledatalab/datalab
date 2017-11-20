@@ -113,7 +113,7 @@ abstract class DatalabFile {
     this.icon = icon || '';
   }
 
-  public getColumnValues(): string[] {
+  public getColumnValues(): ColumnType[] {
     return [this.name];
   }
 
@@ -175,10 +175,10 @@ interface FileManager {
   list(containerId: DatalabFileId): Promise<DatalabFile[]>;
 
   /**
-   * Returns a list of column names. A file id for the current file can be  passed
-   * to optionally customize the column names based on the current view.
+   * Returns a list of columns. A file id for the current file can be passed to
+   * optionally customize the columns based on the current view.
    */
-  getColumnNames(currentFileId?: DatalabFileId): string[];
+  getColumns(currentFileId?: DatalabFileId): Column[];
 
   /**
    * Creates a new Datalab item
@@ -259,8 +259,11 @@ class BaseFileManager implements FileManager {
     throw new UnsupportedMethod('list', this);
   }
 
-  getColumnNames(_currentFileId?: DatalabFileId) {
-    return [Utils.constants.columns.name];
+  getColumns(_currentFileId?: DatalabFileId): Column[] {
+    return [{
+      name: Utils.constants.columns.name,
+      type: ColumnTypeName.STRING,
+    }];
   }
 
   create(_fileType: DatalabFileType, _containerId?: DatalabFileId, _name?: string):

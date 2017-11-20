@@ -32,7 +32,7 @@ class JupyterFile extends DatalabFile {
   }
 
   public getColumnValues() {
-    return [this.name, this.lastModified || ''];
+    return [this.name, new Date(this.lastModified as string) || ''];
   }
 
   public getPreviewName(): string {
@@ -197,8 +197,14 @@ class JupyterFileManager extends BaseFileManager {
     return files.map((file: any) => JupyterFileManager._upstreamFileToJupyterFile(file));
   }
 
-  public getColumnNames() {
-    return [Utils.constants.columns.name, Utils.constants.columns.lastModified];
+  public getColumns(): Column[] {
+    return [{
+        name: Utils.constants.columns.name,
+        type: ColumnTypeName.STRING,
+      }, {
+        name: Utils.constants.columns.lastModified,
+        type: ColumnTypeName.DATE,
+      }];
   }
 
   public create(fileType: DatalabFileType, containerId?: DatalabFileId, name?: string) {
