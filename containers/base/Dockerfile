@@ -97,6 +97,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     wget https://bootstrap.pypa.io/get-pip.py && \
     python3 ./get-pip.py && \
     python ./get-pip.py --force-reinstall && \
+    rm ./get-pip.py && \
 
 # Install other Python 3 packages
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir numpy==1.11.2 && \
