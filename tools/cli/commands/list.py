@@ -82,9 +82,9 @@ def _filter(args):
         zones.append(args.zone)
     if zones:
         zones_filter = "zone:({0})".format(" ".join(zones))
-        filter_expr='({0}) ({1})'.format(filter_expr, zones_filter)
+        filter_expr = '({0}) ({1})'.format(filter_expr, zones_filter)
     if args.filter:
-        filter_expr='({0}) ({1})'.format(filter_expr, args.filter)
+        filter_expr = '({0}) ({1})'.format(filter_expr, args.filter)
     return filter_expr
 
 
