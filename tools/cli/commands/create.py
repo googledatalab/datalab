@@ -194,6 +194,7 @@ write_files:
 
     [Service]
     Environment="HOME=/home/datalab"
+    ExecStartPre=docker-credential-gcr configure-docker
     ExecStart=/usr/bin/docker run --rm -u 0 \
        --name=datalab \
        -p 127.0.0.1:8080:8080 \
