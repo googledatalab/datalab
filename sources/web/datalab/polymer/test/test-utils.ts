@@ -16,7 +16,6 @@
 /// <reference path="../node_modules/@types/chai/index.d.ts" />
 /// <reference path="../node_modules/@types/sinon/index.d.ts" />
 
-declare function assert(condition: boolean, message: string): null;
 declare function fixture(element: string): any;
 
 class MockFile extends DatalabFile {
