@@ -12,6 +12,9 @@
  * the License.
  */
 
+// moment.js typings
+declare function moment(d: Date): any;
+
 type ColumnType = Date|number|string;
 
 enum ColumnTypeName {
@@ -199,6 +202,11 @@ class ItemListElement extends Polymer.Element {
    */
   public inlineDetailsMode: InlineDetailsDisplayMode;
 
+  /**
+   * Whether dates should be shown as time-ago
+   */
+  public useRelativeDates: boolean;
+
   _filterString: string;
   _showFilterBox: boolean;
 
@@ -256,6 +264,10 @@ class ItemListElement extends Polymer.Element {
         type: Array,
         value: () => [],
       },
+      useRelativeDates: {
+        type: Boolean,
+        value: true,
+      },
     };
   }
 
@@ -282,7 +294,9 @@ class ItemListElement extends Polymer.Element {
   _formatColumnValue(value: ColumnType, i: number, columns: Column[]): string {
     if (columns[i]) {
       if (columns[i].type === ColumnTypeName.DATE) {
-        return (value as Date).toLocaleString();
+        return this.useRelativeDates ?
+                  moment(value as Date).fromNow() :
+                  (value as Date).toLocaleString();
       } else {
         return value.toString();
       }
@@ -309,10 +323,7 @@ class ItemListElement extends Polymer.Element {
 
     this.$.list.sort = (a: ItemListRow, b: ItemListRow) => {
       // Bail out of sort if no columns have been set yet.
-      if (!this.columns.length) {
-        return;
-      }
-      if (a.columns[column] === b.columns[column]) {
+      if (!this.columns.length || a.columns[column] === b.columns[column]) {
         return 0;
       }
       let compResult = -1;
