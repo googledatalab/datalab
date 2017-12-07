@@ -291,6 +291,7 @@ i.material-icons {
   font-weight: normal;
 }
 .alternate_upload input.fileinput {
+  visibility: hidden;
   height: 40px;
 }
 #uploadButton {
