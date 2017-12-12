@@ -20,6 +20,7 @@
 import http = require('http');
 import httpProxy = require('http-proxy');
 import logging = require('./logging');
+import path = require('path');
 import url = require('url');
 
 var appSettings: common.AppSettings;
@@ -70,7 +71,7 @@ export function getRequestPort(request: http.ServerRequest, path: string): strin
 export function handleRequest(request: http.ServerRequest,
                               response: http.ServerResponse,
                               port: String) {
-  request.url = request.url.replace(regex, '');
+  request.url = path.join(appSettings.datalabBasePath, request.url.replace(regex, ''));
   let target = 'http://localhost:' + port;
 
   // Only web socket requests (through socket.io) need the basepath appended
