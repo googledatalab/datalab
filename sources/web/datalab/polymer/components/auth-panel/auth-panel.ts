@@ -55,7 +55,9 @@ class AuthPanel extends Polymer.Element {
     // If the user explicitly signs out, then set a flag so that we ask for
     // confirmation when he logs back in.
     this._promptOnSignIn = true;
-    GapiManager.signOut();
+    GapiManager.signOut()
+      .catch()
+      .then(() => window.location.reload());
   }
 
   _signInChanged(signedIn: boolean) {
