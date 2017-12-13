@@ -126,6 +126,13 @@ configure_swap() {{
   mem_total_line=`cat /proc/meminfo | grep MemTotal`
   mem_total_value=`echo "${{mem_total_line}}" | cut -d ':' -f 2`
   memory_kb=`echo "${{mem_total_value}}" | cut -d 'k' -f 1 | tr -d '[:space:]'`
+
+  disk_kb_cutoff=`expr 10 "*" ${{memory_kb}}`
+  disk_kb=`df --output=size ${{MOUNT_DIR}} | tail -n 1`
+  if [ "${{disk_kb}}" -lt "${{disk_kb_cutoff}}" ]; then
+    return
+  fi
+
   swapfile="${{MOUNT_DIR}}/swapfile"
 
   # Create the swapfile if it is either missing or not big enough
