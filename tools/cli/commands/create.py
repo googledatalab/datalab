@@ -127,9 +127,14 @@ configure_swap() {{
   mem_total_value=`echo "${{mem_total_line}}" | cut -d ':' -f 2`
   memory_kb=`echo "${{mem_total_value}}" | cut -d 'k' -f 1 | tr -d '[:space:]'`
 
+  # Before proceeding, check if we have more disk than memory.
+  # Specifically, if the free space on disk is not N times the
+  # size of memory, then enabling swap makes no sense.
+  #
+  # Arbitrarily choosing a value of N=10 
   disk_kb_cutoff=`expr 10 "*" ${{memory_kb}}`
-  disk_kb=`df --output=size ${{MOUNT_DIR}} | tail -n 1`
-  if [ "${{disk_kb}}" -lt "${{disk_kb_cutoff}}" ]; then
+  disk_kb_available=`df --output=avail ${{MOUNT_DIR}} | tail -n 1`
+  if [ "${{disk_kb_available}}" -lt "${{disk_kb_cutoff}}" ]; then
     return
   fi
 
