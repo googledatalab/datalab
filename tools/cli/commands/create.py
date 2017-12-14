@@ -123,6 +123,9 @@ mount_and_prepare_disk() {{
 }}
 
 configure_swap() {{
+  if [ "{2}" == "false" ]; then
+    return
+  fi
   mem_total_line=`cat /proc/meminfo | grep MemTotal`
   mem_total_value=`echo "${{mem_total_line}}" | cut -d ':' -f 2`
   memory_kb=`echo "${{mem_total_value}}" | cut -d 'k' -f 1 | tr -d '[:space:]'`
@@ -345,6 +348,13 @@ def flags(parser):
         action='store_true',
         default=False,
         help='do not connect to the newly created instance')
+
+    parser.add_argument(
+        '--no-swap',
+        dest='no_swap',
+        action='store_true',
+        default=False,
+        help='do not enable swap on the newly created instance')
 
     parser.add_argument(
         '--no-backups',
@@ -661,6 +671,7 @@ def run(args, gcloud_compute, gcloud_repos,
     if args.zone:
         cmd.extend(['--zone', args.zone])
 
+    enable_swap = "false" if args.no_swap else "true"
     enable_backups = "false" if args.no_backups else "true"
     idle_timeout = args.idle_timeout
     console_log_level = args.log_level or "warn"
@@ -675,7 +686,7 @@ def run(args, gcloud_compute, gcloud_repos,
             tempfile.NamedTemporaryFile(delete=False) as for_user_file:
         try:
             startup_script_file.write(_DATALAB_STARTUP_SCRIPT.format(
-                args.image_name, _DATALAB_NOTEBOOKS_REPOSITORY))
+                args.image_name, _DATALAB_NOTEBOOKS_REPOSITORY, enable_swap))
             startup_script_file.close()
             user_data_file.write(_DATALAB_CLOUD_CONFIG.format(
                 args.image_name, enable_backups,

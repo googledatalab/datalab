@@ -45,8 +45,8 @@ install_cuda() {{
   # Check for CUDA and try to install.
   if ! dpkg-query -W cuda; then
     curl -O http://developer.download.nvidia.com/\
-compute/cuda/repos/ubuntu1604/x86_64/{5}
-    dpkg -i ./{5}
+compute/cuda/repos/ubuntu1604/x86_64/{6}
+    dpkg -i ./{6}
     apt-get update -y
     apt-get install cuda -y
   fi
@@ -79,8 +79,8 @@ start_datalab_docker() {{
   nvidia-docker run --restart always -p '127.0.0.1:8080:8080' \
     -e DATALAB_ENV='GCE' -e DATALAB_DEBUG='true' \
     -e DATALAB_SETTINGS_OVERRIDES=\
-'{{"enableAutoGCSBackups": {2}, "consoleLogLevel": "{3}" }}' \
-    -e DATALAB_GIT_AUTHOR='{4}' \
+'{{"enableAutoGCSBackups": {3}, "consoleLogLevel": "{4}" }}' \
+    -e DATALAB_GIT_AUTHOR='{5}' \
     -v "${{MOUNT_DIR}}/content:/content" \
     -v "${{MOUNT_DIR}}/tmp:/tmp" \
     {0} -c /datalab/run.sh
@@ -173,6 +173,7 @@ def run(args, gcloud_beta_compute, gcloud_repos,
     cmd = ['instances', 'create']
     if args.zone:
         cmd.extend(['--zone', args.zone])
+    enable_swap = "false" if args.no_swap else "true"
     enable_backups = "false" if args.no_backups else "true"
     console_log_level = args.log_level or "warn"
     user_email = args.for_user or email
@@ -184,8 +185,8 @@ def run(args, gcloud_beta_compute, gcloud_repos,
         try:
             startup_script_file.write(_DATALAB_STARTUP_SCRIPT.format(
                 args.image_name, create._DATALAB_NOTEBOOKS_REPOSITORY,
-                enable_backups, console_log_level, escaped_email,
-                _NVIDIA_PACKAGE))
+                enable_swap, enable_backups, console_log_level,
+                escaped_email, _NVIDIA_PACKAGE))
             startup_script_file.close()
             for_user_file.write(user_email)
             for_user_file.close()
