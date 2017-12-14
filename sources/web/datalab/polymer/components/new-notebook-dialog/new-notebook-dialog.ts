@@ -52,10 +52,16 @@ class NewNotebookDialogElement extends BaseDialogElement {
    */
   public selectedKernel: string;
 
+  private _kernelNames: string[];
+
   static get is() { return 'new-notebook-dialog'; }
 
   static get properties() {
     return Object.assign(super.properties, {
+      _kernelNames: {
+        type: Array,
+        value: [],
+      },
       inputLabel: {
         type: String,
         value: '',
@@ -72,6 +78,7 @@ class NewNotebookDialogElement extends BaseDialogElement {
   }
 
   open() {
+    this._kernelNames = KernelManager.getAllKernelNames();
     super.open();
   }
 

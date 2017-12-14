@@ -24,22 +24,28 @@ the License.
   <template>
     <style>
       #inputBox {
-        margin: 20px;
         /*Disable input underline animation*/
         --paper-input-container-underline-focus: {
           display: none;
         };
         --primary-text-color: var(--primary-fg-color);
       }
+      #inputBox, #kernelDropdown {
+        width: 80%;
+        align-self: center;
+      }
+      paper-item {
+        cursor: default;
+      }
     </style>
     <paper-input id="inputBox" label="{{inputLabel}}" spellcheck=false autofocus
-                 value="{{inputValue}}" no-label-float>
-    </paper-input>
+                 value="{{inputValue}}"></paper-input>
 
-    <paper-dropdown-menu-light id="kernelDropdown" label="Kernel">
+    <paper-dropdown-menu-light id="kernelDropdown" label="Kernel" noink>
       <paper-listbox slot="dropdown-content" class="dropdown-content" selected="0">
-        <paper-item>Python 2</paper-item>
-        <paper-item>Python 3</paper-item>
+        <template is="dom-repeat" items="{{_kernelNames}}" as="name">
+          <paper-item>[[name]]</paper-item>
+        </template>
       </paper-listbox>
     </paper-dropdown-menu-light>
   </template>

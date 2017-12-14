@@ -162,7 +162,7 @@ class NewNotebookTemplate extends NotebookTemplate {
  */
 class TemplateManager extends Polymer.Element {
 
-  public static async newNotebookFromTemplate(name: string, params: {}) {
+  public static async newNotebookFromTemplate(name: string, params: {}, kernel?: string) {
     let templateClassName: new ({}) => NotebookTemplate;
     switch (name) {
       case TEMPLATE_NAME.bigqueryOverview:
@@ -177,7 +177,7 @@ class TemplateManager extends Polymer.Element {
     const templateStringContent = await this.getTemplateStringContent(template.fileId);
     let templateNotebookContent: NotebookContent;
     try {
-      templateNotebookContent = NotebookContent.fromString(templateStringContent);
+      templateNotebookContent = NotebookContent.fromString(templateStringContent, kernel);
     } catch (e) {
       throw new Error('Template file is not a notebook.');
     }
