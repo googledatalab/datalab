@@ -126,6 +126,18 @@ configure_swap() {{
   mem_total_line=`cat /proc/meminfo | grep MemTotal`
   mem_total_value=`echo "${{mem_total_line}}" | cut -d ':' -f 2`
   memory_kb=`echo "${{mem_total_value}}" | cut -d 'k' -f 1 | tr -d '[:space:]'`
+
+  # Before proceeding, check if we have more disk than memory.
+  # Specifically, if the free space on disk is not N times the
+  # size of memory, then enabling swap makes no sense.
+  #
+  # Arbitrarily choosing a value of N=10
+  disk_kb_cutoff=`expr 10 "*" ${{memory_kb}}`
+  disk_kb_available=`df --output=avail ${{MOUNT_DIR}} | tail -n 1`
+  if [ "${{disk_kb_available}}" -lt "${{disk_kb_cutoff}}" ]; then
+    return
+  fi
+
   swapfile="${{MOUNT_DIR}}/swapfile"
 
   # Create the swapfile if it is either missing or not big enough
@@ -666,8 +678,8 @@ def run(args, gcloud_compute, gcloud_repos,
                 args.image_name, _DATALAB_NOTEBOOKS_REPOSITORY))
             startup_script_file.close()
             user_data_file.write(_DATALAB_CLOUD_CONFIG.format(
-                    args.image_name, enable_backups,
-                    console_log_level, escaped_email, initial_user_settings))
+                args.image_name, enable_backups,
+                console_log_level, escaped_email, initial_user_settings))
             user_data_file.close()
             for_user_file.write(user_email)
             for_user_file.close()
