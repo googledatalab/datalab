@@ -756,7 +756,10 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       title: 'New ' + Utils.getFileTypeString(itemType),
     };
 
-    const closeResult = await Utils.showDialog(InputDialogElement, inputOptions);
+    const dialogElem = itemType === DatalabFileType.NOTEBOOK ?
+        NewNotebookDialogElement :
+        InputDialogElement;
+    const closeResult = await Utils.showDialog(dialogElem, inputOptions);
 
     // Only if the dialog has been confirmed with some user input, rename the
     // newly created file. Then if that is successful, reload the file list
