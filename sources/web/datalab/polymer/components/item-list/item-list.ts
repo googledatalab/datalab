@@ -378,13 +378,10 @@ class ItemListElement extends Polymer.Element {
    * of indices of the currently selected items.
    */
   _computeSelectedIndices() {
-    const selected: number[] = [];
-    this.rows.forEach((row, i) => {
-      if (row.selected) {
-        selected.push(i);
-      }
-    });
-    return selected;
+    const allElements = this.$.listContainer.querySelectorAll('paper-item') as NodeList;
+    return Array.from(allElements)
+        .filter((el: HTMLElement) => el.hasAttribute('selected'))
+        .map((el: HTMLElement) => this.$.list.indexForElement(el));
   }
 
   /**
@@ -407,7 +404,10 @@ class ItemListElement extends Polymer.Element {
    * @param index index of item to select
    */
   _selectItem(index: number) {
-    this.set('rows.' + index + '.selected', true);
+    // Get the real item's index
+    const element = this.$.listContainer.querySelector('paper-item:nth-of-type(' + (index + 1 ) + ')');
+    const itemsIndex = this.$.list.modelForElement(element).itemsIndex;
+    this.set('rows.' + itemsIndex + '.selected', true);
     this._updateItemSelection(index, true);
   }
 
@@ -416,7 +416,9 @@ class ItemListElement extends Polymer.Element {
    * @param index index of item to unselect
    */
   _unselectItem(index: number) {
-    this.set('rows.' + index + '.selected', false);
+    const element = this.$.listContainer.querySelector('paper-item:nth-of-type(' + (index + 1 ) + ')');
+    const itemsIndex = this.$.list.modelForElement(element).itemsIndex;
+    this.set('rows.' + itemsIndex + '.selected', false);
     this._updateItemSelection(index, false);
   }
 
@@ -489,25 +491,26 @@ class ItemListElement extends Polymer.Element {
       return;
     }
     const target = e.target as HTMLDivElement;
-    const index = this.$.list.modelForElement(target).itemsIndex;
+    const displayedIndex = this.$.list.indexForElement(target);
+    const itemsIndex = this.$.list.modelForElement(target).itemsIndex;
 
     // If shift key is pressed and we had saved the last selected index, select
     // all items from this index till the last selected.
     if (!this.noMultiselect && e.shiftKey && this._lastSelectedIndex !== -1 &&
         this.selectedIndices.length > 0) {
       this._unselectAll();
-      const start = Math.min(this._lastSelectedIndex, index);
-      const end = Math.max(this._lastSelectedIndex, index);
+      const start = Math.min(this._lastSelectedIndex, displayedIndex);
+      const end = Math.max(this._lastSelectedIndex, displayedIndex);
       for (let i = start; i <= end; ++i) {
         this._selectItem(i);
       }
     } else if (!this.noMultiselect && (e.ctrlKey || e.metaKey)) {
       // If ctrl (or Meta for MacOS) key is pressed, toggle its selection.
 
-      if (this.rows[index].selected === false) {
-        this._selectItem(index);
+      if (this.rows[itemsIndex].selected === false) {
+        this._selectItem(displayedIndex);
       } else {
-        this._unselectItem(index);
+        this._unselectItem(displayedIndex);
       }
     } else {
       // No modifier keys are pressed, proceed normally to select/unselect the item.
@@ -516,21 +519,21 @@ class ItemListElement extends Polymer.Element {
       // the UI, so change the item's selection state to match the checkbox's new value.
       // Otherwise, select this element, unselect all others.
       if (target.tagName === 'PAPER-CHECKBOX') {
-        if (this.rows[index].selected === false) {
+        if (this.rows[itemsIndex].selected === false) {
           // Remove this element from the selected elements list if it's being unselected
-          this._unselectItem(index);
+          this._unselectItem(displayedIndex);
         } else {
           // Add this element to the selected elements list if it's being selected,
-          this._selectItem(index);
+          this._selectItem(displayedIndex);
         }
       } else {
         this._unselectAll();
-        this._selectItem(index);
+        this._selectItem(displayedIndex);
       }
     }
 
     // Save this index to enable multi-selection using shift later.
-    this._lastSelectedIndex = index;
+    this._lastSelectedIndex = displayedIndex;
   }
 
   /**
