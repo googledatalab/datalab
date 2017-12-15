@@ -37,7 +37,7 @@ interface InputDialogOptions extends BaseDialogOptions {
  */
 class InputDialogElement extends BaseDialogElement {
 
-  protected static _memoizedTemplate: PolymerTemplate;
+  private static _memoizedTemplate: PolymerTemplate;
 
   /**
    * Text that shows up inside the input field when it's empty
@@ -93,7 +93,7 @@ class InputDialogElement extends BaseDialogElement {
   /**
    * Also send back the user input value in the closing context.
    */
-  getCloseResult(): any {
+  getCloseResult() {
     return {
       userInput: this.$.inputBox.value,
     };

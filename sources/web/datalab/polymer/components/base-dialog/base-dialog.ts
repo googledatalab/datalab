@@ -107,7 +107,7 @@ class BaseDialogElement extends Polymer.Element {
 
   open() {
     // If the closed event fires then the confirm button hasn't been clicked
-    this.$.theDialog.addEventListener('iron-overlay-closed', () => this._cancelClose.bind(this));
+    this.$.theDialog.addEventListener('iron-overlay-closed', () => this._cancelClose());
     this.$.theDialog.open();
   }
 
