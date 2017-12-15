@@ -143,6 +143,9 @@ async function createNew(parentPath: string) {
     const kernel = queryParams.get('kernel') as string;
     const fileManager = FileManagerFactory.getInstanceForType(
       FileManagerFactory.fileManagerNameToType(parentId.source));
+    if (fileManager instanceof DriveFileManager) {
+      await GapiManager.loadGapi();
+    }
     const newFile = await fileManager.create(DatalabFileType.NOTEBOOK, parentId, fileName);
 
     if (fileManager instanceof DriveFileManager) {

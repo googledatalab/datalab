@@ -52,13 +52,13 @@ class NewNotebookDialogElement extends BaseDialogElement {
    */
   public selectedKernel: string;
 
-  private _kernelNames: string[];
+  protected _kernelSpecs: KernelSpec[];
 
   static get is() { return 'new-notebook-dialog'; }
 
   static get properties() {
     return Object.assign(super.properties, {
-      _kernelNames: {
+      _kernelSpecs: {
         type: Array,
         value: [],
       },
@@ -78,7 +78,7 @@ class NewNotebookDialogElement extends BaseDialogElement {
   }
 
   open() {
-    this._kernelNames = KernelManager.getAllKernelNames();
+    this._kernelSpecs = KernelManager.getAllKernelSpecs();
     super.open();
   }
 
@@ -99,7 +99,7 @@ class NewNotebookDialogElement extends BaseDialogElement {
    */
   getCloseResult() {
     return Object.assign(super.getCloseResult(), {
-      kernel: this.$.kernelDropdown.value,
+      kernel: this.$.dropdownItems.selectedItem.value,
       userInput: this.$.inputBox.value,
     });
   }

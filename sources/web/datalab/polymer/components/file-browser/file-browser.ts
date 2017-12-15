@@ -786,7 +786,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
           const url = Utils.getHostRoot() + Utils.constants.newNotebookUrlComponent +
               this.currentFile.id + '?fileName=' + newName +
               '&templateName=newNotebook' +
-              '?params=' + closeResult.kernel;
+              '&kernel=' + closeResult.kernel;
           window.open(url, '_blank');
         } else {
           await this._fileManager.create(itemType, this.currentFile.id, newName);

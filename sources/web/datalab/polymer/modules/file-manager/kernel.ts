@@ -13,10 +13,10 @@
  */
 
 // tslint:disable-next-line:variable-name
-const KernelType = {
-  PYTHON2: 'python2',
-  PYTHON3: 'python3',
-};
+enum KernelType {
+  PYTHON2 = 'python2',
+  PYTHON3 = 'python3',
+}
 
 interface KernelSpec {
   display_name: string;
@@ -34,6 +34,13 @@ class KernelManager {
         name: 'python2',
       }
     ],
+    [
+      KernelType.PYTHON3, {
+        display_name: 'Python 3',
+        language: 'python',
+        name: 'python3',
+      }
+    ],
   ]);
 
   static getKernelSpec(kernel: string): KernelSpec {
@@ -44,7 +51,7 @@ class KernelManager {
     return spec;
   }
 
-  static getAllKernelNames(): string[] {
-    return Array.from(this._kernelSpecs.values()).map((spec) => spec.display_name);
+  static getAllKernelSpecs(): KernelSpec[] {
+    return Array.from(this._kernelSpecs.values());
   }
 }

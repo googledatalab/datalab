@@ -36,15 +36,17 @@ the License.
       }
       paper-item {
         cursor: default;
+        white-space: nowrap; /* To avoid a flicker when items first show up */
       }
     </style>
     <paper-input id="inputBox" label="{{inputLabel}}" spellcheck=false autofocus
                  value="{{inputValue}}"></paper-input>
 
     <paper-dropdown-menu-light id="kernelDropdown" label="Kernel" noink>
-      <paper-listbox slot="dropdown-content" class="dropdown-content" selected="0">
-        <template is="dom-repeat" items="{{_kernelNames}}" as="name">
-          <paper-item>[[name]]</paper-item>
+      <paper-listbox id="dropdownItems" slot="dropdown-content"
+                     class="dropdown-content" selected="0">
+        <template is="dom-repeat" items="{{_kernelSpecs}}" as="spec">
+          <paper-item value="[[spec.name]]">[[spec.display_name]]</paper-item>
         </template>
       </paper-listbox>
     </paper-dropdown-menu-light>
