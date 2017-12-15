@@ -21,31 +21,15 @@ interface NewNotebookDialogCloseResult extends BaseDialogCloseResult {
   kernel: string;
 }
 
-interface NewNotebookDialogOptions extends BaseDialogOptions {
-  inputLabel?: string;
-  inputValue?: string;
-  selectedKernel?: string;
-}
-
 /**
- * New Notebook Dialog element for Datalab, extends the Input dialog element.
+ * New Notebook Dialog element for Datalab, extends the Base Dialog element.
  * This element is a modal dialog that presents the user with an input box, and
- * a dropdown list with possible kernel values. The input can optionally start
- * up with a value that is selected. The default kernel will be selected.
+ * a dropdown list with possible kernel values. The default kernel will be
+ * selected.
  */
 class NewNotebookDialogElement extends BaseDialogElement {
 
   protected static _memoizedTemplate: PolymerTemplate;
-
-  /**
-   * Text that shows up inside the input field when it's empty
-   */
-  public inputLabel: string;
-
-  /**
-   * If an input field is included, this will be its initial value
-   */
-  public inputValue: string;
 
   /**
    * The kernel that should be selected by default.
@@ -61,14 +45,6 @@ class NewNotebookDialogElement extends BaseDialogElement {
       _kernelSpecs: {
         type: Array,
         value: [],
-      },
-      inputLabel: {
-        type: String,
-        value: '',
-      },
-      inputValue: {
-        type: String,
-        value: '',
       },
       selectedKernel: {
         type: String,
@@ -103,10 +79,10 @@ class NewNotebookDialogElement extends BaseDialogElement {
    * Also send back the user selected kernel in the closing context.
    */
   getCloseResult() {
-    return Object.assign(super.getCloseResult(), {
+    return {
       kernel: this.$.dropdownItems.selectedItem.value,
       userInput: this.$.inputBox.value,
-    });
+    };
   }
 
 }
