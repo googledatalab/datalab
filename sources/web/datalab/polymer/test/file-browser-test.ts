@@ -186,7 +186,6 @@ window.addEventListener('WebComponentsReady', () => {
     });
 
     describe('creating new notebook', () => {
-      debugger;
       const notebookName = 'newMockNotebook';
       let dialog: NewNotebookDialogElement;
       const specs = [{
