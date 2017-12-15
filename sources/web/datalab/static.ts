@@ -176,26 +176,28 @@ function sendUserCustomTheme(userId: string, response: http.ServerResponse): voi
  * Returns true if this path should return an experimental UI resource
  * @param path the incoming request path
  */
-export function isExperimentalResource(pathname: string) {
+export function isExperimentalResource(pathname: string, search: string) {
   if (pathname.indexOf('/exp/') === 0) {
     return true;
   }
   const experimentalUiEnabled = process.env.DATALAB_EXPERIMENTAL_UI;
   return experimentalUiEnabled === 'true' && (
-      pathname.indexOf('/data') === 0 ||
-      pathname.indexOf('/files') === 0 ||
+      firstComponent(pathname) === 'data' ||
       // /files/path?download=true is used to download files from Jupyter
       // TODO: use a different API to download files when we have a content service.
-      pathname.indexOf('/sessions') === 0 ||
-      pathname.indexOf('/terminal') === 0 ||
-      pathname.indexOf('/docs') === 0 ||
-      pathname.indexOf('/editor') === 0 ||
-      pathname.indexOf('/bower_components') === 0 ||
-      pathname.indexOf('/components') === 0 ||
-      pathname.indexOf('/images') === 0 ||
+      (firstComponent(pathname) === 'files' && search !== '?download=true') ||
+      firstComponent(pathname) === 'sessions' ||
+      firstComponent(pathname) === 'terminal' ||
+      firstComponent(pathname) === 'docs' ||
+      firstComponent(pathname) === 'editor' ||
+      firstComponent(pathname) === 'notebook' ||
+      pathname.indexOf('/notebook.js') === 0 ||
+      firstComponent(pathname) === 'bower_components' ||
+      firstComponent(pathname) === 'components' ||
+      firstComponent(pathname) === 'images' ||
       pathname.indexOf('/index.css') === 0 ||
-      pathname.indexOf('/modules') === 0 ||
-      pathname.indexOf('/templates') === 0 ||
+      firstComponent(pathname) === 'modules' ||
+      firstComponent(pathname) === 'templates' ||
       pathname === '/'
   );
 }
@@ -213,13 +215,14 @@ function firstComponent(pathname: string) {
  * @param response the outgoing file response.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
-  var pathname = url.parse(request.url).pathname;
+  let pathname = url.parse(request.url).pathname;
+  const search = url.parse(request.url).search;
 
   // -------------------------------- start of experimental UI resources
   let replaceBasepath = false;
   // List of page names that resolve to index.html
   const indexPageNames = ['data', 'files', 'docs', 'sessions', 'terminal'];
-  if (isExperimentalResource(pathname)) {
+  if (isExperimentalResource(pathname, search)) {
     logging.getLogger().debug('Serving experimental UI resource: ' + pathname);
     let rootRedirect = 'files';
     if (pathname.indexOf('/exp/') === 0) {
@@ -236,6 +239,9 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       replaceBasepath = true;
     } else if (firstComponent(pathname) === 'editor') {
       pathname = '/editor.html';
+      replaceBasepath = true;
+    } else if (firstComponent(pathname) === 'notebook') {
+      pathname = '/notebook.html';
       replaceBasepath = true;
     } else if (pathname === '/index.css') {
       var userSettings: common.UserSettings = settings.loadUserSettings(userId);
