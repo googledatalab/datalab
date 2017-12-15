@@ -248,11 +248,11 @@ function handleRequest(request: http.ServerRequest,
 /**
  * Returns true iff the supplied path should be handled by the static handler
  */
-function isStaticResource(urlpath: string) {
+function isStaticResource(urlpath: string, search: string) {
   // /static and /custom paths for returning static content
   return urlpath.indexOf('/custom') == 0 ||
          urlpath.indexOf('/static') == 0 ||
-         static_.isExperimentalResource(urlpath);
+         static_.isExperimentalResource(urlpath, search);
 }
 
 /**
@@ -279,7 +279,7 @@ function uncheckedRequestHandler(request: http.ServerRequest, response: http.Ser
     auth.handleAuthFlow(request, response, parsed_url, appSettings);
   } else if (reverseProxyPort) {
     reverseProxy.handleRequest(request, response, reverseProxyPort);
-  } else if (isStaticResource(urlpath)) {
+  } else if (isStaticResource(urlpath, parsed_url.search)) {
     staticHandler(request, response);
   } else {
     handleRequest(request, response, urlpath);

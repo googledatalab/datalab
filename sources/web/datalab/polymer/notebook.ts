@@ -138,13 +138,15 @@ async function createNew(parentPath: string) {
   toast.open();
 
   try {
-    await GapiManager.loadGapi();
-
     const parentId = DatalabFileId.fromString(parentPath);
     const fileName = queryParams.get('fileName') as string;
     const fileManager = FileManagerFactory.getInstanceForType(
       FileManagerFactory.fileManagerNameToType(parentId.source));
     const newFile = await fileManager.create(DatalabFileType.NOTEBOOK, parentId, fileName);
+
+    if (fileManager instanceof DriveFileManager) {
+      await GapiManager.loadGapi();
+    }
 
     // If this is a template, populate it
     if (queryParams.has('templateName')) {
