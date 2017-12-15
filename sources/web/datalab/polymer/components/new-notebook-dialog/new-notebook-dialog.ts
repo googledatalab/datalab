@@ -79,6 +79,11 @@ class NewNotebookDialogElement extends BaseDialogElement {
 
   open() {
     this._kernelSpecs = KernelManager.getAllKernelSpecs();
+    // Prevent propagation of the iron-overlay-closed event fired by the
+    // dropdown. Otherwise, it'll cause the dialog to close.
+    this.$.kernelDropdown.addEventListener('iron-overlay-closed', (e: Event) => {
+      e.stopPropagation();
+    });
     super.open();
   }
 
