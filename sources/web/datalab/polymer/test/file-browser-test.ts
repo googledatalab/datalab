@@ -119,10 +119,14 @@ window.addEventListener('WebComponentsReady', () => {
       assert(document.querySelector('input-dialog') === null,
           'no input dialogs should be shown before clicking new');
       testFixture.$.newNotebookButton.click();
-      const dialog = TestUtils.getDialog(InputDialogElement);
+      const dialog = TestUtils.getDialog(NewNotebookDialogElement);
       assert(!!dialog, 'an input dialog should show after clicking new notebook');
       assert(dialog.$.dialogTitle.innerText === 'New ' + Utils.constants.notebook,
           'dialog text should include type of new entity');
+
+      // Force update items in the dropdown instead of waiting on the event
+      Polymer.dom.flush();
+      dialog.$.dropdownItems.forceSynchronousItemUpdate();
 
       await TestUtils.closeDialog(dialog, false);
     });
@@ -181,23 +185,73 @@ window.addEventListener('WebComponentsReady', () => {
       multiSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
     });
 
-    it('correctly opens new tab to create a notebook', async () => {
+    describe('creating new notebook', () => {
       const notebookName = 'newMockNotebook';
-      // Validate window.open is called with the correct url
-      sinon.stub(window, 'open');
-      testFixture.$.newNotebookButton.click();
-      const dialog = TestUtils.getDialog(InputDialogElement) as InputDialogElement;
-      dialog.$.inputBox.value = notebookName;
-      await TestUtils.closeDialog(dialog, true);
+      let dialog: NewNotebookDialogElement;
+      const specs = [{
+        display_name: 'Kernel 1',
+        language: 'kernel1Lang',
+        name: 'kernel1',
+      }, {
+        display_name: 'Kernel 2',
+        language: 'kernel2Lang',
+        name: 'kernel2',
+      }];
+      KernelManager.getAllKernelSpecs = () => specs;
 
-      const result = await TestUtils.waitUntilTrue(() =>
-          (window.open as sinon.SinonStub).called, 5000);
-      assert(!!result, 'create should be called when create button clicked');
-      assert((window.open as sinon.SinonStub).calledWithExactly(
-                location.origin + '/notebook/new/mock/' + testPath +
-                '?fileName=' + notebookName + '.ipynb&templateName=newNotebook', '_blank'),
-              'window.open should be created with the newNotebook template');
-      (window.open as sinon.SinonStub).restore();
+      beforeEach(async () => {
+        // Validate window.open is called with the correct url
+        sinon.stub(window, 'open');
+        testFixture.$.newNotebookButton.click();
+        dialog = TestUtils.getDialog(NewNotebookDialogElement) as NewNotebookDialogElement;
+        dialog.$.inputBox.value = notebookName;
+
+        // Force update items in the dropdown instead of waiting on the event
+        Polymer.dom.flush();
+        dialog.$.dropdownItems.forceSynchronousItemUpdate();
+      });
+
+      afterEach(() => {
+        (window.open as sinon.SinonStub).restore();
+      });
+
+      it('shows a list of supported kernel names in new notebook dialog', async () => {
+        assert(dialog.$.dropdownItems.items.length === 2, 'two kernels should be listed');
+        dialog.$.dropdownItems.items.forEach((item: any, i: number) => {
+          assert(item.innerText.trim() === specs[i].display_name,
+              'the kernel\'s display name should be shown in the list');
+          assert(item.value.trim() === specs[i].name,
+              'the kernel\'s name should be stored in the value attribute');
+        });
+        await TestUtils.closeDialog(dialog, false);
+      });
+
+      it('correctly opens new tab to create a notebook using the default kernel', async () => {
+        await TestUtils.closeDialog(dialog, true);
+
+        const result = await TestUtils.waitUntilTrue(() =>
+            (window.open as sinon.SinonStub).called, 5000);
+        assert(!!result, 'create should be called when create button clicked');
+        assert((window.open as sinon.SinonStub).calledWithExactly(
+                  location.origin + '/notebook/new/mock/' + testPath +
+                  '?fileName=' + notebookName + '.ipynb&templateName=newNotebook' +
+                  '&kernel=' + specs[0].name, '_blank'),
+                'window.open should be created with the newNotebook template');
+      });
+
+      it('uses the selected kernel name when creating a new notebook', async () => {
+        dialog.$.dropdownItems.selected = 1;
+        await TestUtils.closeDialog(dialog, true);
+
+        const result = await TestUtils.waitUntilTrue(() =>
+            (window.open as sinon.SinonStub).called, 5000);
+        assert(!!result, 'create should be called when create button clicked');
+        assert((window.open as sinon.SinonStub).calledWithExactly(
+                  location.origin + '/notebook/new/mock/' + testPath +
+                  '?fileName=' + notebookName + '.ipynb&templateName=newNotebook' +
+                  '&kernel=' + specs[1].name, '_blank'),
+                'window.open should be created with the newNotebook template');
+      });
     });
 
     it('calls FileManager.create correctly to create a new file', async () => {

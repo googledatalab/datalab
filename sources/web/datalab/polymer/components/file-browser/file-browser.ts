@@ -756,10 +756,13 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
       title: 'New ' + Utils.getFileTypeString(itemType),
     };
 
-    const closeResult = await Utils.showDialog(InputDialogElement, inputOptions);
+    const dialogElem = itemType === DatalabFileType.NOTEBOOK ?
+        NewNotebookDialogElement :
+        InputDialogElement;
+    const closeResult = await Utils.showDialog(dialogElem, inputOptions);
 
-    // Only if the dialog has been confirmed with some user input, rename the
-    // newly created file. Then if that is successful, reload the file list
+    // Only if the dialog has been confirmed with some user input, create the
+    // new file. Then if that is successful, reload the file list
     if (closeResult.confirmed && closeResult.userInput) {
       try {
         let newName = closeResult.userInput;
@@ -782,7 +785,8 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         if (itemType === DatalabFileType.NOTEBOOK) {
           const url = Utils.getHostRoot() + Utils.constants.newNotebookUrlComponent +
               this.currentFile.id + '?fileName=' + newName +
-              '&templateName=newNotebook';
+              '&templateName=newNotebook' +
+              '&kernel=' + closeResult.kernel;
           window.open(url, '_blank');
         } else {
           await this._fileManager.create(itemType, this.currentFile.id, newName);

@@ -91,8 +91,11 @@ class NotebookContent {
     this.nbformat_minor = nbformatMinor || 0;
   }
 
-  public static fromString(content: string) {
+  public static fromString(content: string, kernel?: string) {
     const json = JSON.parse(content);
+    if (kernel !== undefined) {
+      json.metadata.kernelspec = KernelManager.getKernelSpec(kernel);
+    }
     return new NotebookContent(json.cells, json.metadata, json.nbformat, json.nbformatMinor);
   }
 }

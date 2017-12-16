@@ -140,6 +140,7 @@ async function createNew(parentPath: string) {
   try {
     const parentId = DatalabFileId.fromString(parentPath);
     const fileName = queryParams.get('fileName') as string;
+    const kernel = queryParams.get('kernel') as string;
     const fileManager = FileManagerFactory.getInstanceForType(
       FileManagerFactory.fileManagerNameToType(parentId.source));
     const newFile = await fileManager.create(DatalabFileType.NOTEBOOK, parentId, fileName);
@@ -152,7 +153,7 @@ async function createNew(parentPath: string) {
     if (queryParams.has('templateName')) {
       const templateName = queryParams.get('templateName') as string;
       const params = JSON.parse(decodeURIComponent(queryParams.get('params') || '{}'));
-      const template = await TemplateManager.newNotebookFromTemplate(templateName, params);
+      const template = await TemplateManager.newNotebookFromTemplate(templateName, params, kernel);
       await fileManager.saveText(newFile, JSON.stringify(template));
     }
     location.href = fileManager.getNotebookUrl(newFile.id);
