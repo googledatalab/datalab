@@ -218,9 +218,9 @@ window.addEventListener('WebComponentsReady', () => {
       it('shows a list of supported kernel names in new notebook dialog', async () => {
         assert(dialog.$.dropdownItems.items.length === 2, 'two kernels should be listed');
         dialog.$.dropdownItems.items.forEach((item: any, i: number) => {
-          assert(item.innerText === specs[i].display_name,
+          assert(item.innerText.trim() === specs[i].display_name,
               'the kernel\'s display name should be shown in the list');
-          assert(item.value === specs[i].name,
+          assert(item.value.trim() === specs[i].name,
               'the kernel\'s name should be stored in the value attribute');
         });
         await TestUtils.closeDialog(dialog, false);
