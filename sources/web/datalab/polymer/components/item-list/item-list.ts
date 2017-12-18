@@ -400,24 +400,25 @@ class ItemListElement extends Polymer.Element {
   }
 
   /**
-   * Selects an item in the list.
+   * Selects an item in the list using its display index. Note the item must be
+   * visible in the rendered list.
    * @param index display index of item to select
    */
-  _selectItemByDisplayedIndex(index: number) {
-    // Get the real item's index
+  _selectItemByDisplayIndex(index: number) {
     const realIndex = this._displayIndexToRealIndex(index);
     this.set('rows.' + realIndex + '.selected', true);
     this._updateItemSelection(index, true);
   }
 
   /**
-   * Unselects an item in the list.
+   * Unselects an item in the list using its display index. Note the item must be
+   * visible in the rendered list.
    * @param index display index of item to unselect
    */
-  _unselectItemByDisplayedIndex(index: number) {
+  _unselectItemByDisplayIndex(index: number) {
     const realIndex = this._displayIndexToRealIndex(index);
-    this.set('rows.' + realIndex + '.selected', false);
-    this._updateItemSelection(index, false);
+    this.set('rows.' + index + '.selected', false);
+    this._updateItemSelection(realIndex, false);
   }
 
   /**
@@ -452,21 +453,41 @@ class ItemListElement extends Polymer.Element {
   }
 
   /**
+   * Selects all displayed items in the list.
+   */
+  _selectAllDisplayedItems() {
+    const allElements = this.$.listContainer.querySelectorAll('paper-item') as NodeList;
+    allElements.forEach((_, i) => {
+      this._selectItemByDisplayIndex(i);
+    });
+  }
+
+  /**
+   * Unselects all displayed items in the list.
+   */
+  _unselectAllDisplayedItems() {
+    const allElements = this.$.listContainer.querySelectorAll('paper-item') as NodeList;
+    allElements.forEach((_, i) => {
+      this._unselectItemByDisplayIndex(i);
+    });
+  }
+
+  /**
    * Selects all items in the list.
    */
   _selectAll() {
-    this.rows.forEach((_, i) => {
-      this._selectItemByDisplayedIndex(i);
-    });
+    for (let i = 0; i < this.rows.length; ++i) {
+      this._selectItemByDisplayIndex(i);
+    }
   }
 
   /**
    * Unselects all items in the list.
    */
   _unselectAll() {
-    this.rows.forEach((_, i) => {
-      this._unselectItemByDisplayedIndex(i);
-    });
+    for (let i = 0; i < this.rows.length; ++i) {
+      this._unselectItemByDisplayIndex(i);
+    }
   }
 
   /**
@@ -474,22 +495,26 @@ class ItemListElement extends Polymer.Element {
    */
   _selectAllChanged() {
     if (this.$.selectAllCheckbox.checked === true) {
-      this._selectAll();
+      this._selectAllDisplayedItems();
     } else {
-      this._unselectAll();
+      this._unselectAllDisplayedItems();
     }
   }
 
   /**
    * On row click, checks the click target, if it's the checkbox, adds it to
    * the selected rows, otherwise selects it only.
+   * Note the distinction between displayIndex, which is the index of the item
+   * in the rendered list, which might be different from its realIndex in the
+   * original list that was submitted to the item-list element, due to
+   * filtering or sorting.
    */
   _rowClicked(e: MouseEvent) {
     if (this.disableSelection) {
       return;
     }
     const target = e.target as HTMLDivElement;
-    const displayedIndex = this.$.list.indexForElement(target);
+    const displayIndex = this.$.list.indexForElement(target);
     const realIndex = this.$.list.modelForElement(target).itemsIndex;
 
     // If shift key is pressed and we had saved the last selected index, select
@@ -497,18 +522,18 @@ class ItemListElement extends Polymer.Element {
     if (!this.noMultiselect && e.shiftKey && this._lastSelectedIndex !== -1 &&
         this.selectedIndices.length > 0) {
       this._unselectAll();
-      const start = Math.min(this._lastSelectedIndex, displayedIndex);
-      const end = Math.max(this._lastSelectedIndex, displayedIndex);
+      const start = Math.min(this._lastSelectedIndex, displayIndex);
+      const end = Math.max(this._lastSelectedIndex, displayIndex);
       for (let i = start; i <= end; ++i) {
-        this._selectItemByDisplayedIndex(i);
+        this._selectItemByDisplayIndex(i);
       }
     } else if (!this.noMultiselect && (e.ctrlKey || e.metaKey)) {
       // If ctrl (or Meta for MacOS) key is pressed, toggle its selection.
 
       if (this.rows[realIndex].selected === false) {
-        this._selectItemByDisplayedIndex(displayedIndex);
+        this._selectItemByDisplayIndex(displayIndex);
       } else {
-        this._unselectItemByDisplayedIndex(displayedIndex);
+        this._unselectItemByDisplayIndex(displayIndex);
       }
     } else {
       // No modifier keys are pressed, proceed normally to select/unselect the item.
@@ -519,19 +544,19 @@ class ItemListElement extends Polymer.Element {
       if (target.tagName === 'PAPER-CHECKBOX') {
         if (this.rows[realIndex].selected === false) {
           // Remove this element from the selected elements list if it's being unselected
-          this._unselectItemByDisplayedIndex(displayedIndex);
+          this._unselectItemByDisplayIndex(displayIndex);
         } else {
           // Add this element to the selected elements list if it's being selected,
-          this._selectItemByDisplayedIndex(displayedIndex);
+          this._selectItemByDisplayIndex(displayIndex);
         }
       } else {
         this._unselectAll();
-        this._selectItemByDisplayedIndex(displayedIndex);
+        this._selectItemByDisplayIndex(displayIndex);
       }
     }
 
     // Save this index to enable multi-selection using shift later.
-    this._lastSelectedIndex = displayedIndex;
+    this._lastSelectedIndex = displayIndex;
   }
 
   /**

@@ -154,7 +154,7 @@ describe('<item-list>', () => {
   });
 
   it('selects items', () => {
-    testFixture._selectItemByDisplayedIndex(1);
+    testFixture._selectItemByDisplayIndex(1);
 
     assert(!isSelected(0), 'first item should not be selected');
     assert(isSelected(1), 'second item should be selected');
@@ -164,8 +164,8 @@ describe('<item-list>', () => {
   });
 
   it('returns selected items', () => {
-    testFixture._selectItemByDisplayedIndex(0);
-    testFixture._selectItemByDisplayedIndex(2);
+    testFixture._selectItemByDisplayIndex(0);
+    testFixture._selectItemByDisplayIndex(2);
 
     assert(JSON.stringify(testFixture.selectedIndices) === '[0,2]',
         'first and third items should be selected');
@@ -189,7 +189,7 @@ describe('<item-list>', () => {
   });
 
   it('selects all items if the Select All checkbox is clicked with one item selected', () => {
-    testFixture._selectItemByDisplayedIndex(1);
+    testFixture._selectItemByDisplayIndex(1);
     const c = testFixture.$.header.querySelector('#selectAllCheckbox') as HTMLElement;
     c.click();
 
@@ -202,11 +202,11 @@ describe('<item-list>', () => {
 
     assert(!c.checked, 'Select All checkbox should start out unchecked');
 
-    testFixture._selectItemByDisplayedIndex(0);
-    testFixture._selectItemByDisplayedIndex(1);
-    testFixture._selectItemByDisplayedIndex(2);
-    testFixture._selectItemByDisplayedIndex(3);
-    testFixture._selectItemByDisplayedIndex(4);
+    testFixture._selectItemByDisplayIndex(0);
+    testFixture._selectItemByDisplayIndex(1);
+    testFixture._selectItemByDisplayIndex(2);
+    testFixture._selectItemByDisplayIndex(3);
+    testFixture._selectItemByDisplayIndex(4);
 
     assert(c.checked, 'Select All checkbox should become checked');
   });
@@ -217,7 +217,7 @@ describe('<item-list>', () => {
     testFixture._selectAll();
     assert(c.checked, 'Select All checkbox should be checked');
 
-    testFixture._unselectItemByDisplayedIndex(1);
+    testFixture._unselectItemByDisplayIndex(1);
     assert(!c.checked, 'Select All checkbox should become unchecked after unselecting an item');
   });
 
@@ -514,6 +514,22 @@ describe('<item-list>', () => {
       Polymer.dom.flush();
       assert(testFixture.$.listContainer.querySelectorAll('.row').length === 5,
           'all rows should show after closing filter box');
+    });
+
+    it('selects only visible items when Select All checkbox is clicked', () => {
+      testFixture.$.filterToggle.click();
+      testFixture._filterString = '3';
+      Polymer.dom.flush();
+      testFixture.$.selectAllCheckbox.click();
+
+      testFixture._filterString = '';
+      Polymer.dom.flush();
+
+      assert(!isSelected(0), 'only third item should be selected');
+      assert(!isSelected(1), 'only third item should be selected');
+      assert(isSelected(2), 'only third item should be selected');
+      assert(!isSelected(3), 'only third item should be selected');
+      assert(!isSelected(4), 'only third item should be selected');
     });
   });
 
