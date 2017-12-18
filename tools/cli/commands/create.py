@@ -513,14 +513,13 @@ def ensure_firewall_rule_exists(args, gcloud_compute, network_name):
     return
 
 
-def create_disk(args, gcloud_compute, disk_name, report_errors):
+def create_disk(args, gcloud_compute, disk_name):
     """Create the user's persistent disk.
 
     Args:
       args: The Namespace returned by argparse
       gcloud_compute: Function that can be used for invoking `gcloud compute`
       disk_name: The name of the persistent disk to create
-      report_errors: Whether or not to report errors to the end user
     Raises:
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
@@ -533,11 +532,11 @@ def create_disk(args, gcloud_compute, disk_name, report_errors):
         '--size', str(args.disk_size_gb) + 'GB',
         '--description', _DATALAB_DISK_DESCRIPTION,
         disk_name])
-    utils.call_gcloud_quietly(args, gcloud_compute, create_cmd, report_errors)
+    utils.call_gcloud_quietly(args, gcloud_compute, create_cmd)
     return
 
 
-def ensure_disk_exists(args, gcloud_compute, disk_name, report_errors=False):
+def ensure_disk_exists(args, gcloud_compute, disk_name):
     """Create the given persistent disk if it does not already exist.
 
     Args:
@@ -555,24 +554,7 @@ def ensure_disk_exists(args, gcloud_compute, disk_name, report_errors=False):
         utils.call_gcloud_quietly(
             args, gcloud_compute, get_cmd, report_errors=False)
     except subprocess.CalledProcessError:
-        try:
-            create_disk(args, gcloud_compute, disk_name, report_errors)
-        except Exception:
-            if (not args.zone) and (not args.quiet):
-                # We take this failure as a sign that gcloud might need
-                # to prompt for a zone. As such, we do that prompting
-                # for it, and then try again.
-                args.zone = utils.prompt_for_zone(args, gcloud_compute)
-                ensure_disk_exists(args, gcloud_compute, disk_name,
-                                   report_errors=True)
-            elif not report_errors:
-                # We know the command failed (and will almost certainly
-                # fail again), but we did not forward the errors that
-                # it reported to the user. To work around this, we
-                # re-run the command with 'report_errors' set to True
-                create_disk(args, gcloud_compute, disk_name, True)
-            else:
-                raise
+        create_disk(args, gcloud_compute, disk_name)
     return
 
 
@@ -650,7 +632,7 @@ def prepare(args, gcloud_compute, gcloud_repos):
 
 
 def run(args, gcloud_compute, gcloud_repos,
-        email='', in_cloud_shell=False, **kwargs):
+        email='', in_cloud_shell=False, gcloud_zone=None, **kwargs):
     """Implementation of the `datalab create` subcommand.
 
     Args:
@@ -661,9 +643,14 @@ def run(args, gcloud_compute, gcloud_repos,
       email: The user's email address
       in_cloud_shell: Whether or not the command is being run in the
         Google Cloud Shell
+      gcloud_zone: The zone that gcloud is configured to use
     Raises:
       subprocess.CalledProcessError: If a nested `gcloud` calls fails
     """
+    if (not args.zone) and (not args.disk_name):
+        args.zone = gcloud_zone
+    if (not args.zone) and (not args.quiet):
+        args.zone = utils.prompt_for_zone(args, gcloud_compute)
     disk_cfg = prepare(args, gcloud_compute, gcloud_repos)
 
     print('Creating the instance {0}'.format(args.instance))

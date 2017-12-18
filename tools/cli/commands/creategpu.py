@@ -19,6 +19,7 @@ import tempfile
 
 import create
 import connect
+import utils
 
 try:
     # If we are running in Python 2, builtins is available in 'future'.
@@ -143,7 +144,7 @@ def flags(parser):
 
 
 def run(args, gcloud_beta_compute, gcloud_repos,
-        email='', in_cloud_shell=False, **kwargs):
+        email='', in_cloud_shell=False, gcloud_zone=None, **kwargs):
     """Implementation of the `datalab create` subcommand.
 
     Args:
@@ -154,6 +155,7 @@ def run(args, gcloud_beta_compute, gcloud_repos,
       email: The user's email address
       in_cloud_shell: Whether or not the command is being run in the
         Google Cloud Shell
+      gcloud_zone: The zone that gcloud is configured to use
     Raises:
       subprocess.CalledProcessError: If a nested `gcloud` calls fails
     """
@@ -165,6 +167,10 @@ def run(args, gcloud_beta_compute, gcloud_repos,
         print('Installation not accepted; Exiting.')
         return
 
+    if (not args.zone) and (not args.disk_name):
+        args.zone = gcloud_zone
+    if (not args.zone) and (not args.quiet):
+        args.zone = utils.prompt_for_zone(args, gcloud_beta_compute)
     disk_cfg = create.prepare(args, gcloud_beta_compute, gcloud_repos)
     print('Creating the instance {0}'.format(args.instance))
     print('\n\nDue to GPU Driver installation, please note that '
