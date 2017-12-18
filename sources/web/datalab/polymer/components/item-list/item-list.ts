@@ -519,7 +519,7 @@ class ItemListElement extends Polymer.Element {
    * the selected rows, otherwise selects it only.
    * Note the distinction between displayIndex, which is the index of the item
    * in the rendered list, and realIndex, which is the index of the item in the
-   * original list that was submitte to the item-list element. These might be
+   * original list that was submitted to the item-list element. These might be
    * different when filtering or sorting.
    */
   _rowClicked(e: MouseEvent) {
@@ -577,7 +577,7 @@ class ItemListElement extends Polymer.Element {
    */
   _rowDoubleClicked(e: MouseEvent) {
     const realIndex = this.$.list.modelForElement(e.target).itemsIndex;
-    const ev = new ItemClickEvent('itemDoubleClick', { detail: {realIndex} });
+    const ev = new ItemClickEvent('itemDoubleClick', { detail: {index: realIndex} });
     this.dispatchEvent(ev);
   }
 
