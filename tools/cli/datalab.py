@@ -200,6 +200,17 @@ def get_email_address():
         'value(account)', '--filter', 'status:ACTIVE']).strip()
 
 
+def get_gcloud_zone():
+    """Get the zone (if any) that gcloud is configured to use.
+
+    Returns:
+      The name of the zone gcloud is configured to use.
+    """
+    return subprocess.check_output([
+        gcloud_cmd, 'config', 'config-helper', '--format',
+        'value(configuration.properties.compute.zone)']).strip()
+
+
 def add_sub_parser(subcommand, command_config, subparsers, prog):
     """Adds a subparser.
 
@@ -286,19 +297,21 @@ def run():
                        beta_subparsers, prog)
 
     args = parser.parse_args()
+    compute = gcloud_compute
+    gcloud_zone = ""
+    if args.subcommand == 'beta':
+        subcommand = _BETA_SUBCOMMANDS[args.beta_subcommand]
+        compute = gcloud_beta_compute
+    else:
+        subcommand = _SUBCOMMANDS[args.subcommand]
     try:
-        if args.subcommand == 'beta':
-            _BETA_SUBCOMMANDS[args.beta_subcommand]['run'](
-                args, gcloud_beta_compute,
-                gcloud_repos=gcloud_repos,
-                email=get_email_address(),
-                in_cloud_shell=('DEVSHELL_CLIENT_PORT' in os.environ))
-        else:
-            _SUBCOMMANDS[args.subcommand]['run'](
-                args, gcloud_compute,
-                gcloud_repos=gcloud_repos,
-                email=get_email_address(),
-                in_cloud_shell=('DEVSHELL_CLIENT_PORT' in os.environ))
+        if subcommand['require-zone']:
+            gcloud_zone = get_gcloud_zone()
+        subcommand['run'](
+            args, compute, gcloud_repos=gcloud_repos,
+            email=get_email_address(),
+            in_cloud_shell=('DEVSHELL_CLIENT_PORT' in os.environ),
+            gcloud_zone=gcloud_zone)
     except subprocess.CalledProcessError:
         print('A nested call to gcloud failed.')
     except Exception as e:
