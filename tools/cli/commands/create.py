@@ -588,7 +588,7 @@ def ensure_repo_exists(args, gcloud_repos, repo_name):
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
     list_cmd = ['list', '--quiet',
-                '--filter', 'name:*/repos/{}'.format(repo_name),
+                '--filter', 'name~^.*/repos/{}$'.format(repo_name),
                 '--format', 'value(name)']
     with tempfile.TemporaryFile() as tf:
         gcloud_repos(args, list_cmd, stdout=tf)
