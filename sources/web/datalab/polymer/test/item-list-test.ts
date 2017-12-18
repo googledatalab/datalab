@@ -531,6 +531,18 @@ describe('<item-list>', () => {
       assert(!isSelected(3), 'only third item should be selected');
       assert(!isSelected(4), 'only third item should be selected');
     });
+
+    it('returns the correct selectedIndices result matching clicked items when filtering', () => {
+      testFixture.$.filterToggle.click();
+      testFixture._filterString = '2';
+      Polymer.dom.flush();
+
+      const firstRow = getRow(0);
+      firstRow.click();
+      const selectedIndices = testFixture.selectedIndices;
+      assert(selectedIndices.length === 1, 'only one item should be selected');
+      assert(selectedIndices[0] === 1, 'the second index (only one shown) should be selected');
+    });
   });
 
   describe('sorting', () => {
@@ -700,7 +712,7 @@ describe('<item-list>', () => {
       }
     });
 
-    it('returns the correct selectedIndices result matching clicked items', () => {
+    it('returns the correct selectedIndices result matching clicked items when sorted', () => {
       testFixture.columns = [{
         name: 'col1',
         type: ColumnTypeName.NUMBER,
