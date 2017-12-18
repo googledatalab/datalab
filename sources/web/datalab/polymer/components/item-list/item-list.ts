@@ -401,24 +401,22 @@ class ItemListElement extends Polymer.Element {
 
   /**
    * Selects an item in the list.
-   * @param index index of item to select
+   * @param index display index of item to select
    */
   _selectItemByDisplayedIndex(index: number) {
     // Get the real item's index
-    const element = this.$.listContainer.querySelector('paper-item:nth-of-type(' + (index + 1 ) + ')');
-    const itemsIndex = this.$.list.modelForElement(element).itemsIndex;
-    this.set('rows.' + itemsIndex + '.selected', true);
+    const realIndex = this._displayIndexToRealIndex(index);
+    this.set('rows.' + realIndex + '.selected', true);
     this._updateItemSelection(index, true);
   }
 
   /**
    * Unselects an item in the list.
-   * @param index index of item to unselect
+   * @param index display index of item to unselect
    */
   _unselectItemByDisplayedIndex(index: number) {
-    const element = this.$.listContainer.querySelector('paper-item:nth-of-type(' + (index + 1 ) + ')');
-    const itemsIndex = this.$.list.modelForElement(element).itemsIndex;
-    this.set('rows.' + itemsIndex + '.selected', false);
+    const realIndex = this._displayIndexToRealIndex(index);
+    this.set('rows.' + realIndex + '.selected', false);
     this._updateItemSelection(index, false);
   }
 
@@ -492,7 +490,7 @@ class ItemListElement extends Polymer.Element {
     }
     const target = e.target as HTMLDivElement;
     const displayedIndex = this.$.list.indexForElement(target);
-    const itemsIndex = this.$.list.modelForElement(target).itemsIndex;
+    const realIndex = this.$.list.modelForElement(target).itemsIndex;
 
     // If shift key is pressed and we had saved the last selected index, select
     // all items from this index till the last selected.
@@ -507,7 +505,7 @@ class ItemListElement extends Polymer.Element {
     } else if (!this.noMultiselect && (e.ctrlKey || e.metaKey)) {
       // If ctrl (or Meta for MacOS) key is pressed, toggle its selection.
 
-      if (this.rows[itemsIndex].selected === false) {
+      if (this.rows[realIndex].selected === false) {
         this._selectItemByDisplayedIndex(displayedIndex);
       } else {
         this._unselectItemByDisplayedIndex(displayedIndex);
@@ -519,7 +517,7 @@ class ItemListElement extends Polymer.Element {
       // the UI, so change the item's selection state to match the checkbox's new value.
       // Otherwise, select this element, unselect all others.
       if (target.tagName === 'PAPER-CHECKBOX') {
-        if (this.rows[itemsIndex].selected === false) {
+        if (this.rows[realIndex].selected === false) {
           // Remove this element from the selected elements list if it's being unselected
           this._unselectItemByDisplayedIndex(displayedIndex);
         } else {
@@ -540,14 +538,20 @@ class ItemListElement extends Polymer.Element {
    * On row double click, fires an event with the clicked item's index.
    */
   _rowDoubleClicked(e: MouseEvent) {
-    const index = this.$.list.modelForElement(e.target).itemsIndex;
-    const ev = new ItemClickEvent('itemDoubleClick', { detail: {index} });
+    const realIndex = this.$.list.modelForElement(e.target).itemsIndex;
+    const ev = new ItemClickEvent('itemDoubleClick', { detail: {realIndex} });
     this.dispatchEvent(ev);
   }
 
   private _getRowDetailsContainer(index: number) {
     const nthDivSelector = 'div.row-details:nth-of-type(' + (index + 1) + ')';
     return this.$.listContainer.querySelector(nthDivSelector);
+  }
+
+  private _displayIndexToRealIndex(index: number) {
+    const element = this.$.listContainer.querySelector(
+        'paper-item:nth-of-type(' + (index + 1 ) + ')');
+    return this.$.list.modelForElement(element).itemsIndex;
   }
 
 }
