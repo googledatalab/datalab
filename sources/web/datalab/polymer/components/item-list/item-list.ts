@@ -378,10 +378,13 @@ class ItemListElement extends Polymer.Element {
    * of indices of the currently selected items.
    */
   _computeSelectedIndices() {
-    const allElements = this.$.listContainer.querySelectorAll('paper-item') as NodeList;
-    return Array.from(allElements)
-        .filter((el: HTMLElement) => el.hasAttribute('selected'))
-        .map((el: HTMLElement) => this.$.list.modelForElement(el).itemsIndex);
+    const selected: number[] = [];
+    this.rows.forEach((row, i) => {
+      if (row.selected) {
+        selected.push(i);
+      }
+    });
+    return selected;
   }
 
   /**
@@ -406,8 +409,7 @@ class ItemListElement extends Polymer.Element {
    */
   _selectItemByDisplayIndex(index: number) {
     const realIndex = this._displayIndexToRealIndex(index);
-    this.set('rows.' + realIndex + '.selected', true);
-    this._updateItemSelection(index, true);
+    this._selectItemByRealIndex(realIndex);
   }
 
   /**
@@ -417,7 +419,22 @@ class ItemListElement extends Polymer.Element {
    */
   _unselectItemByDisplayIndex(index: number) {
     const realIndex = this._displayIndexToRealIndex(index);
-    this.set('rows.' + index + '.selected', false);
+    this._unselectItemByRealIndex(realIndex);
+  }
+
+  /**
+   * Selects an item in the list using its real index.
+   */
+  _selectItemByRealIndex(realIndex: number) {
+    this.set('rows.' + realIndex + '.selected', true);
+    this._updateItemSelection(realIndex, true);
+  }
+
+  /**
+   * Unselects an item in the list using its real index.
+   */
+  _unselectItemByRealIndex(realIndex: number) {
+    this.set('rows.' + realIndex + '.selected', false);
     this._updateItemSelection(realIndex, false);
   }
 
@@ -457,9 +474,7 @@ class ItemListElement extends Polymer.Element {
    */
   _selectAllDisplayedItems() {
     const allElements = this.$.listContainer.querySelectorAll('paper-item') as NodeList;
-    allElements.forEach((_, i) => {
-      this._selectItemByDisplayIndex(i);
-    });
+    allElements.forEach((_, i) => this._selectItemByDisplayIndex(i));
   }
 
   /**
@@ -467,9 +482,7 @@ class ItemListElement extends Polymer.Element {
    */
   _unselectAllDisplayedItems() {
     const allElements = this.$.listContainer.querySelectorAll('paper-item') as NodeList;
-    allElements.forEach((_, i) => {
-      this._unselectItemByDisplayIndex(i);
-    });
+    allElements.forEach((_, i) => this._unselectItemByDisplayIndex(i));
   }
 
   /**
@@ -477,7 +490,7 @@ class ItemListElement extends Polymer.Element {
    */
   _selectAll() {
     for (let i = 0; i < this.rows.length; ++i) {
-      this._selectItemByDisplayIndex(i);
+      this._selectItemByRealIndex(i);
     }
   }
 
@@ -486,7 +499,7 @@ class ItemListElement extends Polymer.Element {
    */
   _unselectAll() {
     for (let i = 0; i < this.rows.length; ++i) {
-      this._unselectItemByDisplayIndex(i);
+      this._unselectItemByRealIndex(i);
     }
   }
 
@@ -505,9 +518,9 @@ class ItemListElement extends Polymer.Element {
    * On row click, checks the click target, if it's the checkbox, adds it to
    * the selected rows, otherwise selects it only.
    * Note the distinction between displayIndex, which is the index of the item
-   * in the rendered list, which might be different from its realIndex in the
-   * original list that was submitted to the item-list element, due to
-   * filtering or sorting.
+   * in the rendered list, and realIndex, which is the index of the item in the
+   * original list that was submitte to the item-list element. These might be
+   * different when filtering or sorting.
    */
   _rowClicked(e: MouseEvent) {
     if (this.disableSelection) {
@@ -515,7 +528,7 @@ class ItemListElement extends Polymer.Element {
     }
     const target = e.target as HTMLDivElement;
     const displayIndex = this.$.list.indexForElement(target);
-    const realIndex = this.$.list.modelForElement(target).itemsIndex;
+    const realIndex = this._displayIndexToRealIndex(displayIndex);
 
     // If shift key is pressed and we had saved the last selected index, select
     // all items from this index till the last selected.
