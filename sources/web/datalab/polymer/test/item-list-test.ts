@@ -154,7 +154,7 @@ describe('<item-list>', () => {
   });
 
   it('selects items', () => {
-    testFixture._selectItem(1);
+    testFixture._selectItemByDisplayedIndex(1);
 
     assert(!isSelected(0), 'first item should not be selected');
     assert(isSelected(1), 'second item should be selected');
@@ -164,8 +164,8 @@ describe('<item-list>', () => {
   });
 
   it('returns selected items', () => {
-    testFixture._selectItem(0);
-    testFixture._selectItem(2);
+    testFixture._selectItemByDisplayedIndex(0);
+    testFixture._selectItemByDisplayedIndex(2);
 
     assert(JSON.stringify(testFixture.selectedIndices) === '[0,2]',
         'first and third items should be selected');
@@ -189,7 +189,7 @@ describe('<item-list>', () => {
   });
 
   it('selects all items if the Select All checkbox is clicked with one item selected', () => {
-    testFixture._selectItem(1);
+    testFixture._selectItemByDisplayedIndex(1);
     const c = testFixture.$.header.querySelector('#selectAllCheckbox') as HTMLElement;
     c.click();
 
@@ -202,11 +202,11 @@ describe('<item-list>', () => {
 
     assert(!c.checked, 'Select All checkbox should start out unchecked');
 
-    testFixture._selectItem(0);
-    testFixture._selectItem(1);
-    testFixture._selectItem(2);
-    testFixture._selectItem(3);
-    testFixture._selectItem(4);
+    testFixture._selectItemByDisplayedIndex(0);
+    testFixture._selectItemByDisplayedIndex(1);
+    testFixture._selectItemByDisplayedIndex(2);
+    testFixture._selectItemByDisplayedIndex(3);
+    testFixture._selectItemByDisplayedIndex(4);
 
     assert(c.checked, 'Select All checkbox should become checked');
   });
@@ -217,7 +217,7 @@ describe('<item-list>', () => {
     testFixture._selectAll();
     assert(c.checked, 'Select All checkbox should be checked');
 
-    testFixture._unselectItem(1);
+    testFixture._unselectItemByDisplayedIndex(1);
     assert(!c.checked, 'Select All checkbox should become unchecked after unselecting an item');
   });
 
@@ -682,6 +682,26 @@ describe('<item-list>', () => {
         const columns = renderedRows[i].querySelectorAll('.column');
         assert(columns[0].innerText === testFixture.rows[sortedOrder[i]].columns[0].toString());
       }
+    });
+
+    it('returns the correct selectedIndices result matching clicked items', () => {
+      testFixture.columns = [{
+        name: 'col1',
+        type: ColumnTypeName.NUMBER,
+      }];
+      testFixture.rows = [
+        new ItemListRow({columns: [1]}),
+        new ItemListRow({columns: [2]}),
+        new ItemListRow({columns: [3]}),
+      ];
+      // Reverse the sorting
+      testFixture._sortBy(0);
+
+      const firstRow = getRow(0);
+      firstRow.click();
+      const selectedIndices = testFixture.selectedIndices;
+      assert(selectedIndices.length === 1, 'only one item should be selected');
+      assert(selectedIndices[0] === 2, 'the third index (shown first) should be selected');
     });
   });
 });

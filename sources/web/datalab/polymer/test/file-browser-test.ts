@@ -168,7 +168,7 @@ window.addEventListener('WebComponentsReady', () => {
     it('enables all buttons when one file is selected', () => {
       const files: ItemListElement = testFixture.$.files;
       files._unselectAll();
-      files._selectItem(0);
+      files._selectItemByDisplayedIndex(0);
       alwaysEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
       singleSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
       multiSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
@@ -178,8 +178,8 @@ window.addEventListener('WebComponentsReady', () => {
         disables the rest when two files are selected`, () => {
       const files: ItemListElement = testFixture.$.files;
       files._unselectAll();
-      files._selectItem(0);
-      files._selectItem(1);
+      files._selectItemByDisplayedIndex(0);
+      files._selectItemByDisplayedIndex(1);
       alwaysEnabledButtonIds.forEach((id) => assertEnabledState(id, true));
       singleSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, false));
       multiSelectionEnabledButtonIds.forEach((id) => assertEnabledState(id, true));

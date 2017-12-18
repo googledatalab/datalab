@@ -381,7 +381,7 @@ class ItemListElement extends Polymer.Element {
     const allElements = this.$.listContainer.querySelectorAll('paper-item') as NodeList;
     return Array.from(allElements)
         .filter((el: HTMLElement) => el.hasAttribute('selected'))
-        .map((el: HTMLElement) => this.$.list.indexForElement(el));
+        .map((el: HTMLElement) => this.$.list.modelForElement(el).itemsIndex);
   }
 
   /**
@@ -403,7 +403,7 @@ class ItemListElement extends Polymer.Element {
    * Selects an item in the list.
    * @param index index of item to select
    */
-  _selectItem(index: number) {
+  _selectItemByDisplayedIndex(index: number) {
     // Get the real item's index
     const element = this.$.listContainer.querySelector('paper-item:nth-of-type(' + (index + 1 ) + ')');
     const itemsIndex = this.$.list.modelForElement(element).itemsIndex;
@@ -415,7 +415,7 @@ class ItemListElement extends Polymer.Element {
    * Unselects an item in the list.
    * @param index index of item to unselect
    */
-  _unselectItem(index: number) {
+  _unselectItemByDisplayedIndex(index: number) {
     const element = this.$.listContainer.querySelector('paper-item:nth-of-type(' + (index + 1 ) + ')');
     const itemsIndex = this.$.list.modelForElement(element).itemsIndex;
     this.set('rows.' + itemsIndex + '.selected', false);
@@ -458,7 +458,7 @@ class ItemListElement extends Polymer.Element {
    */
   _selectAll() {
     this.rows.forEach((_, i) => {
-      this._selectItem(i);
+      this._selectItemByDisplayedIndex(i);
     });
   }
 
@@ -467,7 +467,7 @@ class ItemListElement extends Polymer.Element {
    */
   _unselectAll() {
     this.rows.forEach((_, i) => {
-      this._unselectItem(i);
+      this._unselectItemByDisplayedIndex(i);
     });
   }
 
@@ -502,15 +502,15 @@ class ItemListElement extends Polymer.Element {
       const start = Math.min(this._lastSelectedIndex, displayedIndex);
       const end = Math.max(this._lastSelectedIndex, displayedIndex);
       for (let i = start; i <= end; ++i) {
-        this._selectItem(i);
+        this._selectItemByDisplayedIndex(i);
       }
     } else if (!this.noMultiselect && (e.ctrlKey || e.metaKey)) {
       // If ctrl (or Meta for MacOS) key is pressed, toggle its selection.
 
       if (this.rows[itemsIndex].selected === false) {
-        this._selectItem(displayedIndex);
+        this._selectItemByDisplayedIndex(displayedIndex);
       } else {
-        this._unselectItem(displayedIndex);
+        this._unselectItemByDisplayedIndex(displayedIndex);
       }
     } else {
       // No modifier keys are pressed, proceed normally to select/unselect the item.
@@ -521,14 +521,14 @@ class ItemListElement extends Polymer.Element {
       if (target.tagName === 'PAPER-CHECKBOX') {
         if (this.rows[itemsIndex].selected === false) {
           // Remove this element from the selected elements list if it's being unselected
-          this._unselectItem(displayedIndex);
+          this._unselectItemByDisplayedIndex(displayedIndex);
         } else {
           // Add this element to the selected elements list if it's being selected,
-          this._selectItem(displayedIndex);
+          this._selectItemByDisplayedIndex(displayedIndex);
         }
       } else {
         this._unselectAll();
-        this._selectItem(displayedIndex);
+        this._selectItemByDisplayedIndex(displayedIndex);
       }
     }
 
