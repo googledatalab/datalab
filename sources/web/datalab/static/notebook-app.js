@@ -19,6 +19,47 @@ define(['appbar', 'minitoolbar', 'idle-timeout', 'util'], function(appbar, minit
       }
     });
 
+    require(['notebook/js/menubar'], function(ipy) {
+      // Disable add_kernel_help_links as early as possible to avoid a race
+      // condition, where it tries to find some HTML elements that our template
+      // doesn't have, causing the notebook editor to freeze.
+      ipy.MenuBar.prototype.add_kernel_help_links = placeHolder;
+
+      // This is just a copy of the one from Jupyter but changes the first
+      // line from this.element.find('restore_checkpoint') to
+      // $('#restoreButton').
+      ipy.MenuBar.prototype.update_restore_checkpoint = function(checkpoints) {
+          var ul = $('#restoreButton').find("ul");
+          ul.empty();
+          if (!checkpoints || checkpoints.length === 0) {
+              ul.append(
+                  $("<li/>")
+                  .addClass("disabled")
+                  .append(
+                      $("<a/>")
+                      .text("No checkpoints")
+                  )
+              );
+              return;
+          }
+
+          var that = this;
+          checkpoints.map(function (checkpoint) {
+              var d = new Date(checkpoint.last_modified);
+              ul.append(
+                  $("<li/>").append(
+                      $("<a/>")
+                      .attr("href", "#")
+                      .text(moment(d).format("LLLL"))
+                      .click(function () {
+                          that.notebook.restore_checkpoint_dialog(checkpoint);
+                      })
+                  )
+              );
+    });
+      };
+    });
+
     function updateNavigation() {
       var content = [];
       var prefixes = [ '', '&nbsp;&nbsp;&nbsp;', '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' ];
@@ -325,42 +366,6 @@ define(['appbar', 'minitoolbar', 'idle-timeout', 'util'], function(appbar, minit
             that.events.trigger('notebook_copy_failed', error);
           }
         );
-      };
-    });
-
-    require(['notebook/js/menubar'], function(ipy) {
-      // This is just a copy of the one from Jupyter but changes the first
-      // line from this.element.find('restore_checkpoint') to
-      // $('#restoreButton').
-      ipy.MenuBar.prototype.update_restore_checkpoint = function(checkpoints) {
-          var ul = $('#restoreButton').find("ul");
-          ul.empty();
-          if (!checkpoints || checkpoints.length === 0) {
-              ul.append(
-                  $("<li/>")
-                  .addClass("disabled")
-                  .append(
-                      $("<a/>")
-                      .text("No checkpoints")
-                  )
-              );
-              return;
-          }
-
-          var that = this;
-          checkpoints.map(function (checkpoint) {
-              var d = new Date(checkpoint.last_modified);
-              ul.append(
-                  $("<li/>").append(
-                      $("<a/>")
-                      .attr("href", "#")
-                      .text(moment(d).format("LLLL"))
-                      .click(function () {
-                          that.notebook.restore_checkpoint_dialog(checkpoint);
-                      })
-                  )
-              );
-    });
       };
     });
 
