@@ -21,6 +21,50 @@ import sys
 import tempfile
 
 
+try:
+    # If we are running in Python 2, builtins is available in 'future'.
+    from builtins import input as read_input
+except Exception:
+    # We don't want to require the installation of future, so fallback
+    # to using raw_input from Py2.
+    read_input = raw_input
+
+
+def prompt_for_confirmation(
+        args,
+        message,
+        question='Do you want to continue',
+        accept_by_default=False):
+    """Prompt the user for confirmation.
+
+    Args:
+      args: The Namespace returned by argparse
+      message: A preliminary message explaining the question to the user.
+      question: The prompt for the user to either accept or decline.
+      accept_by_default: If True, then an empty response is treated as
+          acceptance. Otherwise, an empty response is treated as declining.
+    Returns:
+      True iff the user accepted.
+    """
+
+    print(message)
+    if args.quiet:
+        return accept_by_default
+
+    question_suffix = ' (Y/n)?: ' if accept_by_default else ' (y/N)?: '
+    full_question = question + question_suffix
+    resp = read_input(full_question)
+
+    while resp and resp[0] not in ['y', 'Y', 'n', 'N']:
+        print('Unexpected response {}, please enter "y" or "n"'.format(resp))
+        resp = read_input(full_question)
+
+    if len(resp) < 1:
+        return accept_by_default
+
+    return len(resp) < 1 or resp[0] in ['y', 'Y']
+
+
 class InvalidInstanceException(Exception):
 
     _MESSAGE = (
@@ -41,6 +85,25 @@ class NoSuchInstanceException(Exception):
     def __init__(self, instance_name):
         super(NoSuchInstanceException, self).__init__(
             NoSuchInstanceException._MESSAGE.format(instance_name))
+
+
+class MissingZoneFlagException(Exception):
+
+    _DEFAULT_MESSAGE = (
+        'You must specify a zone using the --zone flag.')
+    _INSTANCE_MESSAGE = (
+        'You must specify a zone for the instance {} using the --zone flag.')
+
+    def get_message(instance_name=None):
+        if not instance_name:
+            return MissingZoneFlagException._DEFAULT_MESSAGE
+        else:
+            return MissingZoneFlagException._INSTANCE_MESSAGE.format(
+                instance_name)
+
+    def __init__(self, instance_name=None):
+        super(MissingZoneFlagException, self).__init__(
+            MissingZoneFlagException.get_message(instance_name))
 
 
 def call_gcloud_quietly(args, gcloud_surface, cmd, report_errors=True):
@@ -121,6 +184,8 @@ def prompt_for_zone(args, gcloud_compute, instance=None):
         return matching_zones[0]
     elif (instance and len(matching_zones) == 0):
         raise NoSuchInstanceException(instance)
+    if args.quiet:
+        raise MissingZoneFlagException(instance)
 
     zone_number = 1
     zone_map = {}
@@ -129,7 +194,7 @@ def prompt_for_zone(args, gcloud_compute, instance=None):
         zone_map[zone_number] = zone
         print(' [{}] {}'.format(zone_number, zone))
         zone_number += 1
-    selected = raw_input('Your selected zone: ')
+    selected = read_input('Your selected zone: ')
     try:
         zone_number = int(selected)
         return zone_map[zone_number]
@@ -240,6 +305,45 @@ def describe_instance(args, gcloud_compute, instance):
     return ('UNKNOWN', [])
 
 
+def instance_notebook_disk(args, gcloud_compute, instance):
+    """Get the config for the notebooks disk attached to the instance.
+
+    This returns None if there is no notebooks disk attached.
+
+    Args:
+      args: The Namespace instance returned by argparse
+      gcloud_compute: Function that can be used to invoke `gcloud compute`
+      instance: The name of the instance to check
+    Returns:
+      An object containing the configuration for attaching the disk to
+      the instance.
+    Raises:
+      subprocess.CalledProcessError: If the `gcloud` call fails
+    """
+    get_cmd = ['instances', 'describe', '--quiet']
+    if args.zone:
+        get_cmd.extend(['--zone', args.zone])
+    get_cmd.extend(['--format', 'json', instance])
+    with tempfile.TemporaryFile() as stdout, \
+            tempfile.TemporaryFile() as stderr:
+        try:
+            gcloud_compute(args, get_cmd, stdout=stdout, stderr=stderr)
+            stdout.seek(0)
+            instance_json = json.loads(stdout.read().strip())
+            disk_configs = instance_json.get('disks', [])
+            for cfg in disk_configs:
+                if cfg['deviceName'] == 'datalab-pd':
+                    return cfg
+
+            # There is no notebooks disk attached. This can happen
+            # if the user manually detached it.
+            return None
+        except subprocess.CalledProcessError:
+            stderr.seek(0)
+            sys.stderr.write(stderr.read())
+            raise
+
+
 def maybe_prompt_for_zone(args, gcloud_compute, instance):
     """Prompt for the zone of the given VM if it is ambiguous.
 
@@ -256,8 +360,7 @@ def maybe_prompt_for_zone(args, gcloud_compute, instance):
       NoSuchInstanceException: If the user specified an instance that
           does not exist in any zone.
     """
-    if not args.quiet:
-        describe_instance(args, gcloud_compute, instance)
+    describe_instance(args, gcloud_compute, instance)
     return
 
 

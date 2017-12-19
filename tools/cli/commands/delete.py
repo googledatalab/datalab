@@ -39,6 +39,13 @@ _KEEP_DISK_HELP = ("""Whether or not to keep the instance's persistent disk
 regardless of the disks' auto-delete configuration.""")
 
 
+_DELETE_BASE_PROMPT = ("""The following instance will be deleted:
+ - [{}] in [{}]
+
+The corresponding notebooks disk {}.
+""")
+
+
 def flags(parser):
     """Add command line flags for the `delete` subcommand.
 
@@ -64,25 +71,50 @@ def flags(parser):
     return
 
 
-def run(args, gcloud_compute, **unused_kwargs):
+def run(args, gcloud_compute, gcloud_zone=None, **unused_kwargs):
     """Implementation of the `datalab delete` subcommand.
 
     Args:
       args: The Namespace instance returned by argparse
       gcloud_compute: Function that can be used to invoke `gcloud compute`
+      gcloud_zone: The zone that gcloud is configured to use
     Raises:
       subprocess.CalledProcessError: If a nested `gcloud` calls fails
     """
     instance = args.instance
     utils.maybe_prompt_for_zone(args, gcloud_compute, instance)
 
-    print('Deleting {0}'.format(instance))
-    base_cmd = ['instances', 'delete']
+    base_cmd = ['instances', 'delete', '--quiet']
     if args.zone:
         base_cmd.extend(['--zone', args.zone])
+        instance_zone = args.zone
+    else:
+        instance_zone = gcloud_zone
+
     if args.delete_disk:
         base_cmd.extend(['--delete-disks', 'data'])
+        notebooks_disk_message_part = 'will be deleted'
     elif args.keep_disk:
         base_cmd.extend(['--keep-disks', 'data'])
+        notebooks_disk_message_part = 'will not be deleted'
+    else:
+        disk_cfg = utils.instance_notebook_disk(args, gcloud_compute, instance)
+        if not disk_cfg:
+            notebooks_disk_message_part = 'is not attached'
+        elif disk_cfg['autoDelete']:
+            notebooks_disk_message_part = 'will be deleted'
+        else:
+            notebooks_disk_message_part = 'will not be deleted'
+
+    message = _DELETE_BASE_PROMPT.format(
+        instance, instance_zone, notebooks_disk_message_part)
+    if not utils.prompt_for_confirmation(
+            args=args,
+            message=message,
+            accept_by_default=True):
+        print('Deletion aborted by user; Exiting.')
+        return
+
+    print('Deleting {0}'.format(instance))
     gcloud_compute(args, base_cmd + [instance])
     return
