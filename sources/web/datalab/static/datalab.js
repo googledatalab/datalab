@@ -18,6 +18,12 @@ function initializeDataLab(
     ipy, events, dialog, utils, security, appbar, editapp,
     notebookapp, notebooklist
   ) {
+
+  // Disable add_kernel_help_links as early as possible to avoid a race
+  // condition, where it tries to find some HTML elements that our template
+  // doesn't have, causing the notebook editor to freeze.
+  ipy.MenuBar.prototype.add_kernel_help_links = placeHolder;
+
   var saveFn = function() {
     if (('notebook' in ipy) && ipy.notebook) {
       ipy.notebook.save_checkpoint();

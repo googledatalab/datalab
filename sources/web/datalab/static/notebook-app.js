@@ -329,8 +329,6 @@ define(['appbar', 'minitoolbar', 'idle-timeout', 'util'], function(appbar, minit
     });
 
     require(['notebook/js/menubar'], function(ipy) {
-      ipy.MenuBar.prototype.add_kernel_help_links = placeHolder;
-
       // This is just a copy of the one from Jupyter but changes the first
       // line from this.element.find('restore_checkpoint') to
       // $('#restoreButton').
