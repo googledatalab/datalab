@@ -270,4 +270,16 @@ def print_info_messages(args):
       True iff the verbosity has been set to a level that includes
           info messages.
     """
-    return args.verbosity in ['debug', 'info']
+    return args.verbosity in ['debug', 'info', 'default']
+
+
+def print_debug_messages(args):
+    """Return whether or not debug messages should be printed.
+
+    Args:
+      args: The Namespace instance returned by argparse
+    Returns:
+      True iff the verbosity has been set to a level that includes
+          debug messages.
+    """
+    return args.verbosity == 'debug'
