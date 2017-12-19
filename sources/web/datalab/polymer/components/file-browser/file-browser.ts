@@ -759,7 +759,8 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
     const dialogElem = itemType === DatalabFileType.NOTEBOOK ?
         NewNotebookDialogElement :
         InputDialogElement;
-    const closeResult = await Utils.showDialog(dialogElem, inputOptions);
+    const closeResult = await Utils.showDialog(dialogElem, inputOptions) as
+        InputDialogCloseResult;
 
     // Only if the dialog has been confirmed with some user input, create the
     // new file. Then if that is successful, reload the file list
@@ -786,7 +787,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
           const url = Utils.getHostRoot() + Utils.constants.newNotebookUrlComponent +
               this.currentFile.id + '?fileName=' + newName +
               '&templateName=newNotebook' +
-              '&kernel=' + closeResult.kernel;
+              '&kernel=' + (closeResult as NewNotebookDialogCloseResult).kernel;
           window.open(url, '_blank');
         } else {
           await this._fileManager.create(itemType, this.currentFile.id, newName);
