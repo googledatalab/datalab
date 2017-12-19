@@ -185,7 +185,7 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
           KeyboardInterrupt: When the end user kills the connection
           subprocess.CalledProcessError: If the connection dies on its own
         """
-        if utils.print_info_messages(args):
+        if utils.print_debug_messages(args):
             print('Connecting to {0} via SSH').format(instance)
 
         cmd = ['ssh']
@@ -336,7 +336,7 @@ def maybe_start(args, gcloud_compute, instance, status):
       subprocess.CalledProcessError: If one of the `gcloud` calls fail
     """
     if status != _STATUS_RUNNING:
-        if utils.print_info_messages(args):
+        if utils.print_debug_messages(args):
             print('Restarting the instance {0} with status {1}'.format(
                 instance, status))
         start_cmd = ['instances', 'start']

@@ -112,6 +112,19 @@ except Exception:
     gcloud_cmd = 'gcloud.cmd'
 
 
+def add_gcloud_verbosity_flag(args, gcloud_cmd):
+    """Add the appropriate '---verbosity' flag to the given gcloud command.
+
+    Args:
+      args: The Namespace instance returned by argparse
+      gcloud_cmd: The `gcloud ...` command to run
+    """
+    gcloud_verbosity = (
+        'error' if args.verbosity == 'default' else args.verbosity)
+    gcloud_cmd.append('--verbosity={}'.format(gcloud_verbosity))
+    return
+
+
 def gcloud_compute(
         args, compute_cmd, stdin=None, stdout=None, stderr=None):
     """Run the given subcommand of `gcloud compute`
@@ -132,7 +145,7 @@ def gcloud_compute(
         base_cmd.extend(['--project', args.project])
     if args.quiet:
         base_cmd.append('--quiet')
-    base_cmd.append('--verbosity={}'.format(args.verbosity))
+    add_gcloud_verbosity_flag(args, base_cmd)
     cmd = base_cmd + compute_cmd
     return subprocess.check_call(
         cmd, stdin=stdin, stdout=stdout, stderr=stderr)
@@ -157,7 +170,7 @@ def gcloud_beta_compute(
         base_cmd.extend(['--project', args.project])
     if args.quiet:
         base_cmd.append('--quiet')
-    base_cmd.append('--verbosity={}'.format(args.verbosity))
+    add_gcloud_verbosity_flag(args, base_cmd)
     cmd = base_cmd + compute_cmd
     return subprocess.check_call(
         cmd, stdin=stdin, stdout=stdout, stderr=stderr)
@@ -180,7 +193,7 @@ def gcloud_repos(
     base_cmd = [gcloud_cmd, 'source', 'repos']
     if args.project:
         base_cmd.extend(['--project', args.project])
-    base_cmd.append('--verbosity={}'.format(args.verbosity))
+    add_gcloud_verbosity_flag(args, base_cmd)
     cmd = base_cmd + repos_cmd
     return subprocess.check_call(
         cmd, stdin=stdin, stdout=stdout, stderr=stderr)
@@ -245,8 +258,9 @@ def add_sub_parser(subcommand, command_config, subparsers, prog):
     subcommand_parser.add_argument(
         '--verbosity',
         dest='verbosity',
-        choices=['debug', 'info', 'warning', 'error', 'critical', 'none'],
-        default='error',
+        choices=['debug', 'info', 'default',
+                 'warning', 'error', 'critical', 'none'],
+        default='default',
         help='Override the default output verbosity for this command.')
     if command_config['require-zone']:
         subcommand_parser.add_argument(
@@ -279,8 +293,9 @@ def run():
     parser.add_argument(
         '--verbosity',
         dest='verbosity',
-        choices=['debug', 'info', 'warning', 'error', 'critical', 'none'],
-        default='error',
+        choices=['debug', 'info', 'default',
+                 'warning', 'error', 'critical', 'none'],
+        default='default',
         help='Override the default output verbosity for this command.')
 
     subparsers = parser.add_subparsers(dest='subcommand')
@@ -315,7 +330,7 @@ def run():
     except subprocess.CalledProcessError:
         print('A nested call to gcloud failed.')
     except Exception as e:
-        if utils.print_info_messages(args):
+        if utils.print_debug_messages(args):
             traceback.print_exc(e)
         print(e)
 
