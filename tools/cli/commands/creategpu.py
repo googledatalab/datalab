@@ -21,14 +21,6 @@ import create
 import connect
 import utils
 
-try:
-    # If we are running in Python 2, builtins is available in 'future'.
-    from builtins import input as read_input
-except Exception:
-    # We don't want to require the installation of future, so fallback
-    # to using raw_input from Py2.
-    read_input = raw_input
-
 
 description = ("""`{0} {1}` creates a new Datalab instance running in a Google
 Compute Engine VM with a GPU.
@@ -40,6 +32,11 @@ created instance. You can disable that behavior by passing in the
 '--no-connect' flag.""")
 
 _NVIDIA_PACKAGE = 'cuda-repo-ubuntu1604_8.0.61-1_amd64.deb'
+
+_THIRD_PARTY_SOFTWARE_DIALOG = (
+    """By accepting below, you will download and install the
+following third-party software onto your managed GCE instances:
+    NVidia GPU CUDA Toolkit Drivers: """ + _NVIDIA_PACKAGE)
 
 _DATALAB_STARTUP_SCRIPT = create._DATALAB_BASE_STARTUP_SCRIPT + """
 install_cuda() {{
@@ -159,11 +156,11 @@ def run(args, gcloud_beta_compute, gcloud_repos,
     Raises:
       subprocess.CalledProcessError: If a nested `gcloud` calls fails
     """
-    print('By accepting below, you will download and install the '
-          'following third-party software onto your managed GCE instances: '
-          'NVidia GPU CUDA Toolkit Drivers: ' + _NVIDIA_PACKAGE)
-    resp = read_input('Do you accept? (y/[n]): ')
-    if len(resp) < 1 or (resp[0] != 'y' and resp[0] != 'Y'):
+    if not utils.prompt_for_confirmation(
+            args=args,
+            message=_THIRD_PARTY_SOFTWARE_DIALOG,
+            question='Do you accept',
+            accept_by_default=False):
         print('Installation not accepted; Exiting.')
         return
 
