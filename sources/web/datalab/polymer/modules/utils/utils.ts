@@ -77,7 +77,17 @@ class Utils {
    * @param dialogOptions specifies different options for opening the dialog
    */
   public static async showDialog(dialogType: typeof BaseDialogElement,
-                                 dialogOptions: BaseDialogOptions) {
+                                 dialogOptions: BaseDialogOptions)
+                                 : Promise<BaseDialogCloseResult> {
+    // First, make sure another dialog of the same type isn't shown. If it is,
+    // cancel this one.
+    const dialogs = document.querySelectorAll(dialogType.is) as NodeListOf<BaseDialogElement>;
+    if (dialogs.length) {
+      return {
+        confirmed: false,
+      };
+    }
+
     const dialog = document.createElement(dialogType.is) as any;
     document.body.appendChild(dialog);
 
