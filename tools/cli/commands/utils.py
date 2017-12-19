@@ -95,7 +95,7 @@ class MissingZoneFlagException(Exception):
         'You must specify a zone for the instance {} using the --zone flag.')
 
     def get_message(instance_name=None):
-        if instance_name:
+        if not instance_name:
             return MissingZoneFlagException._DEFAULT_MESSAGE
         else:
             return MissingZoneFlagException._INSTANCE_MESSAGE.format(
