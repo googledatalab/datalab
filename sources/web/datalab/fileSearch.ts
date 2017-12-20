@@ -16,12 +16,13 @@
 /// <reference path="../../../third_party/externs/ts/chokidar/chokidar.d.ts" />
 /// <reference path="common.d.ts" />
 
-import http = require('http');
-import url = require('url');
-import fs = require('fs');
-import path = require('path');
-import logging = require('./logging');
 import chokidar = require('chokidar');
+import fs = require('fs');
+import http = require('http');
+import info = require('./info');
+import logging = require('./logging');
+import path = require('path');
+import url = require('url');
 
 let appSettings: common.AppSettings;
 let fileIndex: string[] = [];
@@ -54,7 +55,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     fullResultSize: results.length,
     tooManyFiles: tooManyFiles,
     indexReady: indexReady,
-    indexingEnabled: appSettings.enableFilesystemIndex,
+    indexingEnabled: appSettings.enableFilesystemIndex || info.getVmInfo().vm_name,
   }));
   response.end();
 }
@@ -131,7 +132,8 @@ function filter(pattern: string, data: string[]): string[] {
  */
 export function createHandler(settings: common.AppSettings): http.RequestHandler {
   appSettings = settings;
-  if (appSettings.enableFilesystemIndex) {
+  // Always enable the filesystem index on GCP VMs
+  if (appSettings.enableFilesystemIndex || info.getVmInfo().vm_name) {
     indexFiles();
   }
 

@@ -10,7 +10,7 @@
   "defaultFileManager": "jupyter",
   "docsGcsPath": "gs://cloud-datalab/deploy/docs/",
   "enableAutoGCSBackups": false,
-  "enableFilesystemIndex": true,
+  "enableFilesystemIndex": false,
   "fakeMetadataAddress": {"host": "metadata.google.internal", "port": 80},
   "feedbackId": "",
   "gatedFeatures": ["timeout", "userSettings"],
