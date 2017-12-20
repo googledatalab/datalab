@@ -55,7 +55,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     fullResultSize: results.length,
     tooManyFiles: tooManyFiles,
     indexReady: indexReady,
-    indexingEnabled: appSettings.enableFilesystemIndex || info.getVmInfo().vm_name,
+    indexingEnabled: appSettings.enableFilesystemIndex,
   }));
   response.end();
 }
@@ -132,8 +132,12 @@ function filter(pattern: string, data: string[]): string[] {
  */
 export function createHandler(settings: common.AppSettings): http.RequestHandler {
   appSettings = settings;
-  // Always enable the filesystem index on GCP VMs
-  if (appSettings.enableFilesystemIndex || info.getVmInfo().vm_name) {
+  // Unless it has been explicitly disabled, always enable the filesystem index
+  // on GCP VMs
+  if (appSettings.enableFilesystemIndex === undefined && info.getVmInfo().vm_name) {
+    appSettings.enableFilesystemIndex = true;
+  }
+  if (appSettings.enableFilesystemIndex) {
     indexFiles();
   }
 
