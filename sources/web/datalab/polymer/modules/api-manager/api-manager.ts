@@ -167,15 +167,7 @@ class ApiManager {
   }
 
   public static async uploadOauthAccessToken() {
-    const account = await GapiManager.auth.getCurrentUser();
-    const token = account.getAuthResponse();
-    const creds = {
-        access_token: token.access_token,
-        account: account.getBasicProfile().getEmail(),
-        expires_in: token.expires_in,
-        scopes: token.scope,
-        token_type: 'Bearer',
-      };
+    const creds = GapiManager.auth.getAccessTokenInfo();
     const options: XhrOptions = {
       method: 'POST',
       parameters: JSON.stringify(creds)
