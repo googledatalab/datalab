@@ -179,7 +179,7 @@ class GapiManager {
     public static async getFileWithContent(id: string)
         : Promise<[gapi.client.drive.File, string | null]> {
       await this._load();
-      const accessToken = await GapiManager.authManager.getAccessToken();
+      const accessToken = await GapiManager.auth.getAccessToken();
       const xhrOptions: XhrOptions = {
         headers: {Authorization: 'Bearer ' + accessToken},
         noCache: true,
@@ -326,7 +326,7 @@ class GapiManager {
 
   };
 
-  public static authManager = class {
+  public static auth = class {
 
     /**
      * Starts the sign-in flow using gapi.
@@ -359,7 +359,7 @@ class GapiManager {
      */
     public static async getSignedInEmail(): Promise<string> {
       await GapiManager.loadGapi();
-      const user = await GapiManager.authManager.getCurrentUser();
+      const user = await GapiManager.auth.getCurrentUser();
       return user.getBasicProfile().getEmail();
     }
 
@@ -407,7 +407,7 @@ class GapiManager {
    */
   public static async grantScope(scope: GapiScopes): Promise<any> {
     await this.loadGapi();
-    const currentUser = await this.authManager.getCurrentUser();
+    const currentUser = await this.auth.getCurrentUser();
     if (!currentUser.hasGrantedScopes(this._getScopeString(scope))) {
       return new Promise((resolve, reject) => {
         const options = new gapi.auth2.SigninOptionsBuilder();

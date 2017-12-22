@@ -41,21 +41,21 @@ class AuthPanel extends Polymer.Element {
 
   ready() {
     super.ready();
-    GapiManager.authManager.listenForSignInChanges(this._signInChanged.bind(this))
+    GapiManager.auth.listenForSignInChanges(this._signInChanged.bind(this))
       .catch((e) => {
         Utils.showErrorDialog('Authentication error', e.message);
       });
   }
 
   _signInClicked() {
-    GapiManager.authManager.signIn(this._promptOnSignIn);
+    GapiManager.auth.signIn(this._promptOnSignIn);
   }
 
   _signOutClicked() {
     // If the user explicitly signs out, then set a flag so that we ask for
     // confirmation when he logs back in.
     this._promptOnSignIn = true;
-    GapiManager.authManager.signOut()
+    GapiManager.auth.signOut()
       .catch()
       .then(() => window.location.reload());
   }
@@ -63,7 +63,7 @@ class AuthPanel extends Polymer.Element {
   _signInChanged(signedIn: boolean) {
     this._signedIn = signedIn;
     if (signedIn) {
-      GapiManager.authManager.getSignedInEmail()
+      GapiManager.auth.getSignedInEmail()
         .then((email: string) => {
           this._userInfo = 'Signed in as ' + email;
 
