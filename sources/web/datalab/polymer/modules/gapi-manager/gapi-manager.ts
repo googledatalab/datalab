@@ -179,9 +179,9 @@ class GapiManager {
     public static async getFileWithContent(id: string)
         : Promise<[gapi.client.drive.File, string | null]> {
       await this._load();
-      const user = await GapiManager.getCurrentUser();
+      const accessToken = await GapiManager.auth.getAccessToken();
       const xhrOptions: XhrOptions = {
-        headers: {Authorization: 'Bearer ' + user.getAuthResponse().access_token},
+        headers: {Authorization: 'Bearer ' + accessToken},
         noCache: true,
       };
       const file: gapi.client.drive.File = await ApiManager.sendRequestAsync(
@@ -326,6 +326,78 @@ class GapiManager {
 
   };
 
+  public static auth = class {
+
+    /**
+     * Starts the sign-in flow using gapi.
+     * If the user has not previously authorized our app, this will redirect to oauth url
+     * to ask the user to select an account and to consent to our use of the scopes.
+     * If the user has previously signed in and the doPrompt flag is false, the redirect will
+     * happen momentarily before automatically closing. If the doPrompt flag is set, then
+     * the user will be prompted as if authorization has not previously been provided.
+     */
+    public static signIn(doPrompt: boolean): Promise<gapi.auth2.GoogleUser> {
+      const rePromptOptions = 'login consent select_account';
+      const promptFlags = doPrompt ? rePromptOptions : '';
+      const options = {
+        prompt: promptFlags,
+      };
+      return GapiManager.loadGapi()
+        .then(() => gapi.auth2.getAuthInstance().signIn(options));
+    }
+
+    /**
+     * Signs the user out using gapi.
+     */
+    public static signOut(): Promise<void> {
+      return GapiManager.loadGapi()
+        .then(() => gapi.auth2.getAuthInstance().signOut());
+    }
+
+    /**
+     * Returns a promise that resolves to the signed-in user's email address.
+     */
+    public static async getSignedInEmail(): Promise<string> {
+      await GapiManager.loadGapi();
+      const user = await GapiManager.auth.getCurrentUser();
+      return user.getBasicProfile().getEmail();
+    }
+
+    /**
+     * Observes changes to the sign in status, and calls the provided callback
+     * with the changes.
+     */
+    public static listenForSignInChanges(signInChangedCallback: (signedIn: boolean) => void):
+        Promise<void> {
+      return GapiManager.loadGapi()
+        .then(() => {
+          // Initialize the callback now
+          signInChangedCallback(gapi.auth2.getAuthInstance().isSignedIn.get());
+
+          // Listen for auth changes
+          gapi.auth2.getAuthInstance().isSignedIn.listen(() => {
+            signInChangedCallback(gapi.auth2.getAuthInstance().isSignedIn.get());
+          });
+        });
+    }
+
+    /**
+     * Get the currently logged in user.
+     */
+    public static async getCurrentUser(): Promise<gapi.auth2.GoogleUser> {
+      await GapiManager.loadGapi();
+      return GapiManager._currentUser;
+    }
+
+    /**
+     * Get the current user's access token.
+     */
+    public static async getAccessToken() {
+      const user = await this.getCurrentUser();
+      return user.getAuthResponse().access_token;
+    }
+  };
+
   private static _clientId = '';   // Gets set by _loadClientId()
   private static _currentUser: gapi.auth2.GoogleUser; // Gets set by _loadClientId
   private static _loadPromise: Promise<void>;
@@ -335,7 +407,7 @@ class GapiManager {
    */
   public static async grantScope(scope: GapiScopes): Promise<any> {
     await this.loadGapi();
-    const currentUser = await this.getCurrentUser();
+    const currentUser = await this.auth.getCurrentUser();
     if (!currentUser.hasGrantedScopes(this._getScopeString(scope))) {
       return new Promise((resolve, reject) => {
         const options = new gapi.auth2.SigninOptionsBuilder();
@@ -377,71 +449,10 @@ class GapiManager {
     return this._loadPromise;
   }
 
-  /**
-   * Get the currently logged in user.
-   */
-  public static async getCurrentUser(): Promise<gapi.auth2.GoogleUser> {
-    await this.loadGapi();
-    return this._currentUser;
-  }
-
-  /**
-   * Starts the sign-in flow using gapi.
-   * If the user has not previously authorized our app, this will redirect to oauth url
-   * to ask the user to select an account and to consent to our use of the scopes.
-   * If the user has previously signed in and the doPrompt flag is false, the redirect will
-   * happen momentarily before automatically closing. If the doPrompt flag is set, then
-   * the user will be prompted as if authorization has not previously been provided.
-   */
-   public static signIn(doPrompt: boolean): Promise<gapi.auth2.GoogleUser> {
-    const rePromptOptions = 'login consent select_account';
-    const promptFlags = doPrompt ? rePromptOptions : '';
-    const options = {
-      prompt: promptFlags,
-    };
-    return this.loadGapi()
-      .then(() => gapi.auth2.getAuthInstance().signIn(options));
-  }
-
-  /**
-   * Signs the user out using gapi.
-   */
-   public static signOut(): Promise<void> {
-    return this.loadGapi()
-      .then(() => gapi.auth2.getAuthInstance().signOut());
-  }
-
-  /**
-   * Returns a promise that resolves to the signed-in user's email address.
-   */
-  public static async getSignedInEmail(): Promise<string> {
-    await this.loadGapi();
-    const user = await this.getCurrentUser();
-    return user.getBasicProfile().getEmail();
-  }
-
-  /**
-   * Observes changes to the sign in status, and calls the provided callback
-   * with the changes.
-   */
-  public static listenForSignInChanges(signInChangedCallback: (signedIn: boolean) => void):
-      Promise<void> {
-    return this.loadGapi()
-      .then(() => {
-        // Initialize the callback now
-        signInChangedCallback(gapi.auth2.getAuthInstance().isSignedIn.get());
-
-        // Listen for auth changes
-        gapi.auth2.getAuthInstance().isSignedIn.listen(() => {
-          signInChangedCallback(gapi.auth2.getAuthInstance().isSignedIn.get());
-        });
-      });
-  }
-
   /*
-  * Initialize the client with API key and People API, and initialize OAuth with an
-  * OAuth 2.0 client ID and scopes (space delimited string) to request access.
-  */
+   * Initialize the client and initialize OAuth with an
+   * OAuth 2.0 client ID and scopes (space delimited string) to request access.
+   */
   private static _initClient(): Promise<void> {
     const initialScopeString = initialScopes.map(
       (scopeEnum) => this._getScopeString(scopeEnum)).join(' ');
