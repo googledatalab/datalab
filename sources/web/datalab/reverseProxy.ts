@@ -43,7 +43,7 @@ function getPortFromHost(request: http.ServerRequest) {
       return null;
     }
     const portNumber: string = sr[1];
-    let trimmedHost: string = sr[3];
+    const trimmedHost: string = sr[3];
     const hostname: string = os.hostname();
     if (trimmedHost === hostname) {
       return portNumber;
