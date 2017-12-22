@@ -167,7 +167,7 @@ class ApiManager {
   }
 
   public static async uploadOauthAccessToken() {
-    const account = await GapiManager.getCurrentUser();
+    const account = await GapiManager.authManager.getCurrentUser();
     const token = account.getAuthResponse();
     const creds = {
         access_token: token.access_token,
