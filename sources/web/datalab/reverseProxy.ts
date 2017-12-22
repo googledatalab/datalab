@@ -27,7 +27,7 @@ import url = require('url');
 var appSettings: common.AppSettings;
 var proxy: httpProxy.ProxyServer = httpProxy.createProxyServer(null);
 var regex: any = new RegExp('\/_proxy\/([0-9]+)($|\/)');
-var portInHostRegex: any = new RegExp('^([0-9]+)(\-dot\-|\.)(.*)$');
+var portInHostRegex: any = new RegExp('^([0-9]+)(\-dot\-|\.)(.*)((\:|\/)(.*))$');
 var socketioPort: string = '';
 
 function errorHandler(error: Error, request: http.ServerRequest, response: http.ServerResponse) {
@@ -45,9 +45,7 @@ function getPortFromHost(request: http.ServerRequest) {
     const portNumber: string = sr[1];
     let trimmedHost: string = sr[3];
     const hostname: string = os.hostname();
-    if (trimmedHost === hostname ||
-        trimmedHost.startsWith(hostname+"/") ||
-        trimmedHost.startsWith(hostname+":")) {
+    if (trimmedHost === hostname) {
       return portNumber;
     }
   }
