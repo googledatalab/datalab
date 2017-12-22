@@ -20,17 +20,38 @@
 import http = require('http');
 import httpProxy = require('http-proxy');
 import logging = require('./logging');
+import os = require('os');
 import path = require('path');
 import url = require('url');
 
 var appSettings: common.AppSettings;
 var proxy: httpProxy.ProxyServer = httpProxy.createProxyServer(null);
 var regex: any = new RegExp('\/_proxy\/([0-9]+)($|\/)');
+var portInHostRegex: any = new RegExp('^([0-9]+)(\-dot\-|\.)(.*)$');
 var socketioPort: string = '';
 
 function errorHandler(error: Error, request: http.ServerRequest, response: http.ServerResponse) {
   response.writeHead(500, 'Reverse Proxy Error.');
   response.end();
+}
+
+function getPortFromHost(request: http.ServerRequest) {
+  const host = request.headers.host;
+  if (host) {
+    const sr: any = portInHostRegex.exec(host);
+    if (!sr) {
+      return null;
+    }
+    const portNumber: string = sr[1];
+    let trimmedHost: string = sr[3];
+    const hostname: string = os.hostname();
+    if (trimmedHost === hostname ||
+        trimmedHost.startsWith(hostname+"/") ||
+        trimmedHost.startsWith(hostname+":")) {
+      return portNumber;
+    }
+  }
+  return null;
 }
 
 function getPort(url: string) {
@@ -48,14 +69,14 @@ function getPort(url: string) {
  */
 export function isReverseProxyRequest(request: http.ServerRequest) {
   var urlpath = url.parse(request.url, true).pathname;
-  return !!getRequestPort(request, urlpath);
+  return !!(getPortFromHost(request) || getRequestPort(request, urlpath));
 }
 
 /**
  * Get port from request. If the request should be handled by reverse proxy, returns
  * the port as a string. Othewise, returns null.
  */
-export function getRequestPort(request: http.ServerRequest, path: string): string {
+function getRequestPort(request: http.ServerRequest, path: string): string {
   var port: string = getPort(path) || getPort(request.headers.referer);
   if (!port) {
     if (path.indexOf('/socket.io/') == 0) {
@@ -70,7 +91,23 @@ export function getRequestPort(request: http.ServerRequest, path: string): strin
  */
 export function handleRequest(request: http.ServerRequest,
                               response: http.ServerResponse,
-                              port: String) {
+                              urlpath: string) {
+  // If the port is part of the host, then proxy the requests unchanged.
+  const portFromHost  = getPortFromHost(request);
+  if (portFromHost) {
+    logging.getLogger().info('Forwarding proxied request to host-specified port %d', portFromHost);
+
+    const target = 'http://localhost:' + portFromHost;
+    proxy.web(request, response, {
+      target
+    });
+    return
+  }
+
+  // If the port is part of the path or referrer, then we may need to strip the
+  // port portion of the path from the request before proxying.
+  var port: string = getRequestPort(request, urlpath);
+  logging.getLogger().info('Forwarding proxied request to path-specified port %d', port);
   request.url = path.join(appSettings.datalabBasePath, request.url.replace(regex, ''));
   let target = 'http://localhost:' + port;
 

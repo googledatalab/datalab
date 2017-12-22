@@ -144,12 +144,7 @@ function handleRequest(request: http.ServerRequest,
   }
 
   if (requestPath.indexOf('/_nocachecontent/') == 0) {
-    if (process.env.KG_URL) {
-      reverseProxy.handleRequest(request, response, null);
-    }
-    else {
-      noCacheContent.handleRequest(requestPath, response);
-    }
+    noCacheContent.handleRequest(requestPath, response);
     return;
   }
 
@@ -271,14 +266,12 @@ function uncheckedRequestHandler(request: http.ServerRequest, response: http.Ser
 
   logging.logRequest(request, response);
 
-  var reverseProxyPort: string = reverseProxy.getRequestPort(request, urlpath);
-
-  if (urlpath.indexOf('/signin') == 0 || urlpath.indexOf('/signout') == 0 ||
+  if (reverseProxy.isReverseProxyRequest(request)) {
+    reverseProxy.handleRequest(request, response, urlpath);
+  } else if (urlpath.indexOf('/signin') == 0 || urlpath.indexOf('/signout') == 0 ||
       urlpath.indexOf('/oauthcallback') == 0) {
     // Start or return from auth flow.
     auth.handleAuthFlow(request, response, parsed_url, appSettings);
-  } else if (reverseProxyPort) {
-    reverseProxy.handleRequest(request, response, reverseProxyPort);
   } else if (isStaticResource(urlpath, parsed_url.search)) {
     staticHandler(request, response);
   } else {
