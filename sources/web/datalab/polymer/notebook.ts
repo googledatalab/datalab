@@ -146,7 +146,7 @@ async function createNew(parentPath: string) {
     const newFile = await fileManager.create(DatalabFileType.NOTEBOOK, parentId, fileName);
 
     if (fileManager instanceof DriveFileManager) {
-      await GapiManager.loadGapi();
+      await GapiManager.drive.load();
     }
 
     // If this is a template, populate it

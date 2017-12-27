@@ -197,10 +197,12 @@ class GapiManager {
       return [file, content];
     }
 
+    public static load(): Promise<void> {
+      return this._load();
+    }
+
     private static _load(): Promise<void> {
-      return GapiManager.loadGapi()
-        .then(() => gapi.client.load('drive', 'v3'))
-        .then(() => GapiManager.grantScope(GapiScopes.DRIVE));
+      return GapiManager.auth.loadGapiAndScopes('drive', 'v3', GapiScopes.DRIVE);
     }
 
   };
@@ -285,9 +287,7 @@ class GapiManager {
     }
 
     private static _load(): Promise<void> {
-      return GapiManager.loadGapi()
-        .then(() => gapi.client.load('bigquery', 'v2'))
-        .then(() => GapiManager.grantScope(GapiScopes.CLOUD));
+      return GapiManager.auth.loadGapiAndScopes('bigquery', 'v2', GapiScopes.CLOUD);
     }
 
   };
@@ -319,14 +319,20 @@ class GapiManager {
     }
 
     private static _load(): Promise<void> {
-      return GapiManager.loadGapi()
-        .then(() => gapi.client.load('cloudresourcemanager', 'v1'))
-        .then(() => GapiManager.grantScope(GapiScopes.CLOUD));
+      return GapiManager.auth.loadGapiAndScopes('cloudresourcemanager', 'v1', GapiScopes.CLOUD);
     }
 
   };
 
+  /**
+   * The auth class is responsible for initializing authorization, including
+   * loading the gapi code and any data needed for oauth.
+   */
   public static auth = class {
+
+    private static _clientId = '';   // Gets set by _loadClientId()
+    private static _currentUser: gapi.auth2.GoogleUser; // Gets set by _loadClientId
+    private static _loadPromise: Promise<void>;
 
     /**
      * Starts the sign-in flow using gapi.
@@ -336,13 +342,13 @@ class GapiManager {
      * happen momentarily before automatically closing. If the doPrompt flag is set, then
      * the user will be prompted as if authorization has not previously been provided.
      */
-    public static signIn(doPrompt: boolean): Promise<gapi.auth2.GoogleUser> {
+    public static signIn(doPrompt?: boolean): Promise<gapi.auth2.GoogleUser> {
       const rePromptOptions = 'login consent select_account';
       const promptFlags = doPrompt ? rePromptOptions : '';
       const options = {
         prompt: promptFlags,
       };
-      return GapiManager.loadGapi()
+      return this._loadGapi()
         .then(() => gapi.auth2.getAuthInstance().signIn(options));
     }
 
@@ -350,7 +356,7 @@ class GapiManager {
      * Signs the user out using gapi.
      */
     public static signOut(): Promise<void> {
-      return GapiManager.loadGapi()
+      return this._loadGapi()
         .then(() => gapi.auth2.getAuthInstance().signOut());
     }
 
@@ -358,7 +364,7 @@ class GapiManager {
      * Returns a promise that resolves to the signed-in user's email address.
      */
     public static async getSignedInEmail(): Promise<string> {
-      await GapiManager.loadGapi();
+      await this._loadGapi();
       const user = await GapiManager.auth.getCurrentUser();
       return user.getBasicProfile().getEmail();
     }
@@ -367,9 +373,9 @@ class GapiManager {
      * Observes changes to the sign in status, and calls the provided callback
      * with the changes.
      */
-    public static listenForSignInChanges(signInChangedCallback: (signedIn: boolean) => void):
+    public static listenForSignInChanges(signInChangedCallback: (isSignedIn: boolean) => void):
         Promise<void> {
-      return GapiManager.loadGapi()
+      return this._loadGapi()
         .then(() => {
           // Initialize the callback now
           signInChangedCallback(gapi.auth2.getAuthInstance().isSignedIn.get());
@@ -385,153 +391,175 @@ class GapiManager {
      * Get the currently logged in user.
      */
     public static async getCurrentUser(): Promise<gapi.auth2.GoogleUser> {
-      await GapiManager.loadGapi();
-      return GapiManager._currentUser;
+      await this._loadGapi();
+      return this._currentUser;
     }
 
     /**
-     * Get the current user's access token.
+     * Gets the current user's access token.
      */
     public static async getAccessToken() {
       const user = await this.getCurrentUser();
       return user.getAuthResponse().access_token;
     }
-  };
 
-  private static _clientId = '';   // Gets set by _loadClientId()
-  private static _currentUser: gapi.auth2.GoogleUser; // Gets set by _loadClientId
-  private static _loadPromise: Promise<void>;
-
-  /**
-   * Request a new scope to be granted.
-   */
-  public static async grantScope(scope: GapiScopes): Promise<any> {
-    await this.loadGapi();
-    const currentUser = await this.auth.getCurrentUser();
-    if (!currentUser.hasGrantedScopes(this._getScopeString(scope))) {
-      return new Promise((resolve, reject) => {
-        const options = new gapi.auth2.SigninOptionsBuilder();
-        options.setScope(this._getScopeString(scope));
-        options.setPrompt('consent');
-        gapi.auth2.getAuthInstance().signIn(options)
-          .then(() => {
-            resolve();
-          }, () => reject());
-      });
+    /**
+     * Gets the info we need to pass along about our access token.
+     */
+    public static async getAccessTokenInfo() {
+      const account = await GapiManager.auth.getCurrentUser();
+      const token = account.getAuthResponse();
+      return {
+        access_token: token.access_token,
+        account: account.getBasicProfile().getEmail(),
+        expires_in: token.expires_in,
+        scopes: token.scope,
+        token_type: 'Bearer',
+      };
     }
-    return Promise.resolve();
-  }
 
-  /**
-   * Loads the gapi module and the auth2 modules. This can be called multiple
-   * times, and it will only load the gapi module once.
-   * @param signInChangedCallback callback to be called when the signed-in state changes
-   * @returns a promise that completes when the load is done or has failed
-   */
-   public static loadGapi(): Promise<void> {
-    // Loads the gapi client library and the auth2 library together for efficiency.
-    // Loading the auth2 library is optional here since `gapi.client.init` function will load
-    // it if not already loaded. Loading it upfront can save one network request.
-    if (!this._loadPromise) {
-      this._loadPromise = new Promise((resolve, reject) => {
-        return this._loadClientId()
-          .then(() => gapi.load('client:auth2', resolve))
-          .catch((e: Error) => {
-            if (e instanceof MissingClientIdError) {
-              Utils.log.error(e.message);
-            }
-            reject(e);
-          });
+    /**
+     * Loads the requested gapi module and ensures we have the requested scope.
+     */
+    public static async loadGapiAndScopes(
+        moduleName: string, moduleVersion: string, scopes: GapiScopes):
+        Promise<void> {
+      await this._loadGapi();
+      await gapi.client.load(moduleName, moduleVersion);
+      await this._grantScope(scopes);
+    }
+
+    /**
+     * Requests a new scope to be granted.
+     */
+    private static async _grantScope(scope: GapiScopes): Promise<any> {
+      await this._loadGapi();
+      const currentUser = await this.getCurrentUser();
+      if (!currentUser.hasGrantedScopes(this._getScopeString(scope))) {
+        return new Promise((resolve, reject) => {
+          const options = new gapi.auth2.SigninOptionsBuilder();
+          options.setScope(this._getScopeString(scope));
+          options.setPrompt('consent');
+          gapi.auth2.getAuthInstance().signIn(options)
+            .then(() => {
+              resolve();
+            }, () => reject());
+        });
+      }
+      return Promise.resolve();
+    }
+
+    /**
+     * Loads the gapi module and the auth2 modules. This can be called multiple
+     * times, and it will only load the gapi module once.
+     * @param signInChangedCallback callback to be called when the signed-in state changes
+     * @returns a promise that completes when the load is done or has failed
+     */
+     private static _loadGapi(): Promise<void> {
+      // Loads the gapi client library and the auth2 library together for efficiency.
+      // Loading the auth2 library is optional here since `gapi.client.init` function will load
+      // it if not already loaded. Loading it upfront can save one network request.
+      if (!this._loadPromise) {
+        this._loadPromise = new Promise((resolve, reject) => {
+          return this._loadClientId()
+            .then(() => gapi.load('client:auth2', resolve))
+            .catch((e: Error) => {
+              if (e instanceof MissingClientIdError) {
+                Utils.log.error(e.message);
+              }
+              reject(e);
+            });
+        })
+        .then(() => this._initClient());
+      }
+
+      return this._loadPromise;
+    }
+
+    /*
+     * Initialize the client and initialize OAuth with an
+     * OAuth 2.0 client ID and scopes (space delimited string) to request access.
+     */
+    private static _initClient(): Promise<void> {
+      const initialScopeString = initialScopes.map(
+        (scopeEnum) => this._getScopeString(scopeEnum)).join(' ');
+      // TODO: Add state parameter to redirect the user back to the current URL
+      // after the OAuth flow finishes.
+      return gapi.auth2.init({
+        client_id: this._clientId,
+        fetch_basic_profile: true,
+        redirect_uri: Utils.getHostRoot(),
+        scope: initialScopeString,
+        ux_mode: 'redirect',
       })
-      .then(() => this._initClient());
-    }
-
-    return this._loadPromise;
-  }
-
-  /*
-   * Initialize the client and initialize OAuth with an
-   * OAuth 2.0 client ID and scopes (space delimited string) to request access.
-   */
-  private static _initClient(): Promise<void> {
-    const initialScopeString = initialScopes.map(
-      (scopeEnum) => this._getScopeString(scopeEnum)).join(' ');
-    // TODO: Add state parameter to redirect the user back to the current URL
-    // after the OAuth flow finishes.
-    return gapi.auth2.init({
-      client_id: GapiManager._clientId,
-      fetch_basic_profile: true,
-      redirect_uri: Utils.getHostRoot(),
-      scope: initialScopeString,
-      ux_mode: 'redirect',
-    })
-    // The return value of gapi.auth2.init is not a normal promise
-    .then(() => {
-      this._currentUser = gapi.auth2.getAuthInstance().currentUser.get();
-    }, (errorReason: any) => {
-      throw new Error('Error in gapi auth: ' + errorReason.details);
-    });
-  }
-
-  /**
-   * Loads the oauth2 client id. Looks first in the app settings,
-   * then in the config-local file.
-   */
-  private static async _loadClientId(): Promise<void> {
-    let clientId = await this._loadClientIdFromAppSettings();
-    if (!clientId) {
-      clientId = await this._loadClientIdFromConfigFile();
-    }
-    if (!clientId) {
-      throw new MissingClientIdError();
-    }
-    this._clientId = clientId;
-  }
-
-  /**
-   * Loads the oauth2 client id from the app settings.
-   */
-  private static _loadClientIdFromAppSettings(): Promise<string> {
-    return SettingsManager.getAppSettingsAsync()
-      .then((settings: common.AppSettings) => {
-        return settings.oauth2ClientId;
-      })
-      .catch(() => {
-        return '';
-      });
-  }
-
-  /**
-   * Loads the oauth2 client id from the config-local file.
-   */
-  private static _loadClientIdFromConfigFile(): Promise<string> {
-    return SettingsManager.loadConfigToWindowDatalab()
-      .catch()  // We will detect errors below when we see if the clientId exists
+      // The return value of gapi.auth2.init is not a normal promise
       .then(() => {
-        if (window.datalab && window.datalab.oauth2ClientId) {
-          return window.datalab.oauth2ClientId;
-        } else {
-          return '';
-        }
+        this._currentUser = gapi.auth2.getAuthInstance().currentUser.get();
+      }, (errorReason: any) => {
+        throw new Error('Error in gapi auth: ' + errorReason.details);
       });
-  }
-
-  private static _getScopeString(scope: GapiScopes): string {
-    // https://developers.google.com/identity/protocols/googlescopes
-    switch (scope) {
-      case GapiScopes.CLOUD:
-        return 'https://www.googleapis.com/auth/cloud-platform';
-      case GapiScopes.DRIVE:
-        const driveScopeList = [
-            'https://www.googleapis.com/auth/drive',
-            'https://www.googleapis.com/auth/drive.appfolder',
-            'https://www.googleapis.com/auth/drive.install',
-        ];
-        return driveScopeList.join(' ');
-      case GapiScopes.SIGNIN:
-          return 'profile email';
-      default:
-        throw new Error('Unknown gapi scope: ' + scope);
     }
-  }
+
+    /**
+     * Loads the oauth2 client id. Looks first in the app settings,
+     * then in the config-local file.
+     */
+    private static async _loadClientId(): Promise<void> {
+      let clientId = await this._loadClientIdFromAppSettings();
+      if (!clientId) {
+        clientId = await this._loadClientIdFromConfigFile();
+      }
+      if (!clientId) {
+        throw new MissingClientIdError();
+      }
+      this._clientId = clientId;
+    }
+
+    /**
+     * Loads the oauth2 client id from the app settings.
+     */
+    private static _loadClientIdFromAppSettings(): Promise<string> {
+      return SettingsManager.getAppSettingsAsync()
+        .then((settings: common.AppSettings) => {
+          return settings.oauth2ClientId;
+        })
+        .catch(() => {
+          return '';
+        });
+    }
+
+    /**
+     * Loads the oauth2 client id from the config-local file.
+     */
+    private static _loadClientIdFromConfigFile(): Promise<string> {
+      return SettingsManager.loadConfigToWindowDatalab()
+        .catch()  // We will detect errors below when we see if the clientId exists
+        .then(() => {
+          if (window.datalab && window.datalab.oauth2ClientId) {
+            return window.datalab.oauth2ClientId;
+          } else {
+            return '';
+          }
+        });
+    }
+
+    private static _getScopeString(scope: GapiScopes): string {
+      // https://developers.google.com/identity/protocols/googlescopes
+      switch (scope) {
+        case GapiScopes.CLOUD:
+          return 'https://www.googleapis.com/auth/cloud-platform';
+        case GapiScopes.DRIVE:
+          const driveScopeList = [
+              'https://www.googleapis.com/auth/drive',
+              'https://www.googleapis.com/auth/drive.appfolder',
+              'https://www.googleapis.com/auth/drive.install',
+          ];
+          return driveScopeList.join(' ');
+        case GapiScopes.SIGNIN:
+            return 'profile email';
+        default:
+          throw new Error('Unknown gapi scope: ' + scope);
+      }
+    }
+  };
 }
