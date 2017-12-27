@@ -17,6 +17,8 @@
  */
 class Utils {
 
+  static cookies: { [key: string]: string };
+
   public static log = class {
     public static verbose(...args: any[]) {
       // tslint:disable-next-line:no-console
@@ -207,6 +209,26 @@ class Utils {
   }
 
   /**
+   * Returns the value for the named cookie.
+   */
+  public static readCookie(name: string) {
+    if (!Utils.cookies) {
+      Utils.parseCookies();
+    }
+    return Utils.cookies[name];
+  }
+
+  /**
+   * Deletes the named cookie.
+   * This assumes the cookie path is set to "/", which is how we are setting our
+   * Datalab auth cookies.
+   */
+  public static deleteCookie(name: string) {
+    document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT';
+    delete Utils.cookies[name];
+  }
+
+  /**
    * Flattens a BigQuery table schema
    */
   public static flattenFields(fields: gapi.client.bigquery.Field[]) {
@@ -223,13 +245,25 @@ class Utils {
         // the schema object does not change.
         const nestedFields = [...Utils.flattenFields(field.fields)];
         nestedFields.forEach((f) => {
-          const flat = {...f};
+          const flat = {...f} as any;
           flat.name = field.name + '.' + f.name;
           flatFields.push(flat);
         });
       }
     });
     return flatFields;
+  }
+
+  /**
+   * Reads document.cookie, splits it up, populates Utils.cookies.
+   */
+  private static parseCookies() {
+    const cookieList = document.cookie.split('; ');
+    Utils.cookies = {};
+    cookieList.forEach((cookie) => {
+      const cookieNameValue = cookie.split('=');
+      Utils.cookies[cookieNameValue[0]] = cookieNameValue[1];
+    });
   }
 }
 

@@ -12,6 +12,11 @@
  * the License.
  */
 
+/* test-utils contains utility functions for use in tests.
+ * If you are looking for the unit tests for polymer/modules/utils,
+ * those are in utils-test.
+ */
+
 /// <reference path="../node_modules/@types/mocha/index.d.ts" />
 /// <reference path="../node_modules/@types/chai/index.d.ts" />
 /// <reference path="../node_modules/@types/sinon/index.d.ts" />
