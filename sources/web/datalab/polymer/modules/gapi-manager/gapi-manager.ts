@@ -277,6 +277,165 @@ class ClientAuth implements GapiAuth {
   }
 }
 
+class ServerAuth implements GapiAuth {
+  _isSignedIn: boolean;
+  _signInChangedCallback: (isSignedIn: boolean) => void;
+
+  private _loadPromise: Promise<void>;
+
+  /**
+   * Starts the sign-in flow.
+   * If the user has not previously authorized our app, this will redirect to oauth url
+   * to ask the user to select an account and to consent to our use of the scopes.
+   * If the user has previously signed in, the redirect will
+   * happen momentarily before automatically closing.
+   */
+  public async signIn(_doPrompt?: boolean): Promise<void> {
+    const accessToken = await GapiManager.auth.getAccessToken();
+    if (!accessToken) {
+      const currentPath = window.location.pathname;
+      const authLoginUrl = window.location.origin + '/auth/login?page=' + currentPath;
+      window.location.replace(authLoginUrl);
+      return;
+    }
+    this.setIsSignedIn(true);
+  }
+
+  /**
+   * Signs the user out.
+   */
+  public signOut(): Promise<void> {
+    // We sign out by deleting our cookies.
+    Utils.deleteCookie('Datalab-access-token');
+    Utils.deleteCookie('Datalab-access-token-expiry');
+    Utils.deleteCookie('Datalab-refresh-token');
+    Utils.deleteCookie('Datalab-token-type');
+    this.setIsSignedIn(false);
+    return Promise.resolve();
+  }
+
+  /**
+   * Returns a promise that resolves to the signed-in user's email address.
+   */
+  public async getSignedInEmail(): Promise<string> {
+    const userInfo = await this.getUserInfo();
+    return userInfo.email;
+  }
+
+  /**
+   * Observes changes to the sign in status, and calls the provided callback
+   * with the changes.
+   */
+  public listenForSignInChanges(signInChangedCallback: (isSignedIn: boolean) => void):
+      Promise<void> {
+    this._signInChangedCallback = signInChangedCallback;
+    return Promise.resolve();
+  }
+
+  /**
+   * Gets the current user's access token.
+   */
+  public getAccessToken(): Promise<string> {
+    const accessToken = Utils.readCookie('Datalab-access-token');
+    return Promise.resolve(accessToken);
+  }
+
+  /**
+   * Gets the info we need to pass along about our access token.
+   */
+  public async getAccessTokenInfo() {
+    const xhrOptions: XhrOptions = {
+      successCodes: [200, 401],   // Auth errors are expected
+    };
+    const accessToken = await this.getAccessToken();
+    const infoUrl = 'https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=' + accessToken;
+    const tokenInfo = await ApiManager.sendRequestAsync(infoUrl, xhrOptions, false);
+    return {
+      access_token: accessToken,
+      account: tokenInfo.email,
+      expires_in: tokenInfo.expiresIn,
+      scopes: tokenInfo.scope,
+      token_type: 'Bearer',
+    };
+  }
+
+  public async loadGapiAndScopes(
+      moduleName: string, moduleVersion: string, _scopes: GapiScopes):
+      Promise<void> {
+    await this.signIn();
+    await this._loadGapi();
+    await gapi.client.load(moduleName, moduleVersion);
+  }
+
+  /**
+   * Sets our internal flag as to whether we are signed in, and calls the
+   * _signInChangedCallback if the signedIn value just changed and there is a
+   * callback.
+   */
+  private setIsSignedIn(isSignedIn: boolean) {
+    if (isSignedIn !== this._isSignedIn) {
+      this._isSignedIn = isSignedIn;
+      if (this._signInChangedCallback) {
+        this._signInChangedCallback(isSignedIn);
+      }
+    }
+  }
+
+  private async getUserInfo(): Promise<any> {
+    const xhrOptions: XhrOptions = {
+      successCodes: [200, 401],   // Auth errors are expected
+    };
+    const userInfoPath = '/_auth/userinfo';
+    const userInfo =
+      await ApiManager.sendRequestAsync(userInfoPath, xhrOptions, false);
+    if (userInfo && userInfo.error && userInfo.error.code === 401) {
+      // If we get an invalid-credentials errors, sign out so the user
+      // will be asked for sign in on the next request.
+      Utils.log.verbose('Auto-sign-out due to invalid credentials');
+      GapiManager.auth.signOut();
+      return {};
+    }
+    return userInfo;
+  }
+
+  /**
+   * Loads the gapi module and the gapi client modules. This can be called multiple
+   * times, and it will only load the gapi module once.
+   * @returns a promise that completes when the load is done or has failed
+   */
+   private _loadGapi(): Promise<void> {
+    // Loads the gapi client library.
+    if (!this._loadPromise) {
+      this._loadPromise = new Promise((resolve, reject) => {
+        return Promise.resolve()
+          .then(() => gapi.load('client',
+              () => { Utils.log.verbose('gapi loaded'); resolve(); }))
+          .catch((e: Error) => {
+            if (e instanceof MissingClientIdError) {
+              Utils.log.error(e.message);
+            }
+            reject(e);
+          });
+      })
+      .then(() => this._initClient());
+    }
+    return this._loadPromise;
+  }
+
+  /*
+  * Initialize the client and initialize OAuth with an
+  * OAuth 2.0 client ID and scopes (space delimited string) to request access.
+  */
+  private async _initClient(): Promise<void> {
+    Utils.log.verbose('in _initClient');
+    const accessToken = await this.getAccessToken();
+    if (accessToken) {
+      gapi.client.setToken({access_token: accessToken});
+    }
+    return Promise.resolve();
+  }
+}
+
 /**
  * This module contains a collection of functions that interact with gapi.
  */
@@ -569,7 +728,6 @@ class GapiManager {
     private static _load(): Promise<void> {
       return GapiManager.auth.loadGapiAndScopes('cloudresourcemanager', 'v1', GapiScopes.CLOUD);
     }
-
   };
 
   /**
@@ -577,4 +735,5 @@ class GapiManager {
    * loading the gapi code and any data needed for oauth.
    */
   public static auth = new ClientAuth();
+  // public static auth = new ServerAuth();
 }
