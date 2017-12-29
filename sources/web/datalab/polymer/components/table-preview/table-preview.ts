@@ -93,14 +93,16 @@ class TablePreviewElement extends Polymer.Element {
   }
 
   _fileChanged() {
+    let newTableId = '';
     if (this.file && this.file.id) {
       // TODO(jimmc) - move this into BigQueryFile?
       const path = this.file.id.path;
       const parts = path.split('/');
-      this.tableId = parts[0] + ':' + parts[1] + '.' + parts[2];
-    } else {
-      this.tableId = '';
+      if (parts.length === 3) {
+        newTableId = parts[0] + ':' + parts[1] + '.' + parts[2];
+      }
     }
+    this.tableId = newTableId;
   }
 
   _tableIdChanged() {
