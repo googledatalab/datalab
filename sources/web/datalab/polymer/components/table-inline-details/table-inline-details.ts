@@ -28,6 +28,9 @@ class TableInlineDetailsElement extends Polymer.Element {
   _rows: gapi.client.bigquery.TabledataRow[];
 
   private _table: gapi.client.bigquery.Table | null;
+  // @ts-ignore: _tableMessage is used in HTML
+  private _tableMessage: string;
+  // @ts-ignore: _busy is used in HTML
   private _busy = false;
   private readonly TABLE_PREVIEW_ROW_COUNT = 5;
 
@@ -35,6 +38,10 @@ class TableInlineDetailsElement extends Polymer.Element {
 
   static get properties() {
     return {
+      _busy: {
+        type: Boolean,
+        value: false,
+      },
       _rows: {
         notify: true, // For unit tests
         type: Object,
@@ -48,6 +55,10 @@ class TableInlineDetailsElement extends Polymer.Element {
         notify: true, // For unit tests
         type: Object,
         value: null,
+      },
+      _tableMessage: {
+        type: String,
+        value: '',
       },
       file: {
         observer: '_fileChanged',
@@ -68,34 +79,57 @@ class TableInlineDetailsElement extends Polymer.Element {
     const pathParts = path ? path.split('/') : [];
 
     if (pathParts.length === 3) {
-      this._busy = true;
-      const projectId = pathParts[0];
-      const datasetId = pathParts[1];
-      const tableId = pathParts[2];
-
-      GapiManager.bigquery.getTableDetails(projectId, datasetId, tableId)
-        .then((response: HttpResponse<gapi.client.bigquery.Table>) => {
-          this._table = response.result;
-        }, (errorResponse: any) =>
-            // TODO - display error to user in the details pane
-            Utils.log.error('Failed to get table details: ' + errorResponse.body))
-        .then(() => GapiManager.bigquery.getTableRows(
-            projectId, datasetId, tableId, this.TABLE_PREVIEW_ROW_COUNT))
-        .then((response: HttpResponse<gapi.client.bigquery.ListTabledataResponse>) => {
-          this._rows = response.result.rows;
-          this.show();
-        }, (errorResponse: any) =>
-            // TODO - display error to user in the details pane
-            Utils.log.error('Failed to get table rows: ' + errorResponse.body))
-        .then(() => this._busy = false);
+      this._loadTable(pathParts);
     } else {
       this._table = null;
       this._rows = [];
     }
   }
 
+  async _loadTable(pathParts: string[]) {
+    this._busy = true;
+
+    const projectId = pathParts[0];
+    const datasetId = pathParts[1];
+    const tableId = pathParts[2];
+
+    this._tableMessage = '';
+
+    await GapiManager.bigquery.getTableDetails(projectId, datasetId, tableId)
+      .then((response: HttpResponse<gapi.client.bigquery.Table>) => {
+        this._table = response.result;
+      }, (errorResponse: any) => {
+        // TODO - display error to user in the details pane
+        this._table = null;
+        Utils.log.error('Failed to get table details: ' + errorResponse.body);
+      });
+
+    if (this._table) {
+      if (this._table.type === 'VIEW') {
+        // BigQuery does not support the getTableRows call on views, as it has
+        // to execute the defining query to get the contents. We don't want to
+        // automatically load the view, as the underlying query could be
+        // arbitrarily complex and thus expensive.
+        this._tableMessage = 'Preview is not available for Views';
+      } else {
+        await GapiManager.bigquery.getTableRows(
+              projectId, datasetId, tableId, this.TABLE_PREVIEW_ROW_COUNT)
+          .then((response: HttpResponse<gapi.client.bigquery.ListTabledataResponse>) => {
+            this._rows = response.result.rows;
+            this.show();
+          }, (errorResponse: any) => {
+            // TODO - display error to user in the details pane
+            this._rows = [];
+            Utils.log.error('Failed to get table rows: ' + errorResponse.body);
+          });
+      }
+    }
+
+    this._busy = false;
+  }
+
   /**
-   * Dispatches an event when we get shown.
+   * Dispatches an event when our details have been loaded.
    */
   show() {
     const eventFields = {
