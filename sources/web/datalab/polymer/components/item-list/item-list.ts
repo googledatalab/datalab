@@ -406,26 +406,31 @@ class ItemListElement extends Polymer.Element {
    * Selects an item in the list using its display index. Note the item must be
    * visible in the rendered list.
    * @param index display index of item to select
+   * @param single true if we are not being called in a bulk operation
    */
-  _selectItemByDisplayIndex(index: number) {
+  _selectItemByDisplayIndex(index: number, single?: boolean) {
     const realIndex = this._displayIndexToRealIndex(index);
-    this._selectItemByRealIndex(realIndex);
+    this._selectItemByRealIndex(realIndex, single);
   }
 
   /**
    * Unselects an item in the list using its display index. Note the item must be
    * visible in the rendered list.
    * @param index display index of item to unselect
+   * @param single true if we are not being called in a bulk operation
    */
-  _unselectItemByDisplayIndex(index: number) {
+  _unselectItemByDisplayIndex(index: number, single?: boolean) {
     const realIndex = this._displayIndexToRealIndex(index);
-    this._unselectItemByRealIndex(realIndex);
+    this._unselectItemByRealIndex(realIndex, single);
   }
 
   /**
    * Selects an item in the list using its real index.
    */
-  _selectItemByRealIndex(realIndex: number) {
+  _selectItemByRealIndex(realIndex: number, single?: boolean) {
+    if (this.rows[realIndex].selected && !single) {
+      return;   // Avoid lots of useless work when no change.
+    }
     this.set('rows.' + realIndex + '.selected', true);
     this._updateItemSelection(realIndex, true);
   }
@@ -433,7 +438,10 @@ class ItemListElement extends Polymer.Element {
   /**
    * Unselects an item in the list using its real index.
    */
-  _unselectItemByRealIndex(realIndex: number) {
+  _unselectItemByRealIndex(realIndex: number, single?: boolean) {
+    if (!this.rows[realIndex].selected && !single) {
+      return;   // Avoid lots of useless work when no change.
+    }
     this.set('rows.' + realIndex + '.selected', false);
     this._updateItemSelection(realIndex, false);
   }
@@ -443,11 +451,7 @@ class ItemListElement extends Polymer.Element {
    */
   _updateItemSelection(index: number, newValue: boolean) {
     const multipleSelected = this.selectedIndices.length > 1;
-    const rowDetailsElement = this._getRowDetailsContainer(index);
-    this.rows[index]._updateInlineDetails(
-        this.inlineDetailsMode, multipleSelected, rowDetailsElement);
-    this.notifyPath('rows.' + index + '.showInlineDetails',
-        this.rows[index].showInlineDetails);
+    this._updateInlineDetailsForRow(index, multipleSelected);
     const previousSelectedCount =
         this.selectedIndices.length + (newValue ? -1 : 1);
     const previousMultipleSelected = previousSelectedCount > 1;
@@ -459,14 +463,21 @@ class ItemListElement extends Polymer.Element {
        */
       for (let i = 0; i < this.rows.length; i++) {
         if (i !== index) {
-          const otherRowDetailsContainer = this._getRowDetailsContainer(i);
-          this.rows[i]._updateInlineDetails(
-              this.inlineDetailsMode, multipleSelected, otherRowDetailsContainer);
-          this.notifyPath('rows.' + i + '.showInlineDetails',
-            this.rows[i].showInlineDetails);
+          this._updateInlineDetailsForRow(i, multipleSelected);
         }
       }
     }
+  }
+
+  /**
+   * Updates the inline details for one row after a selection change.
+   */
+  _updateInlineDetailsForRow(index: number, multipleSelected: boolean) {
+    const rowDetailsElement = this._getRowDetailsContainer(index);
+    this.rows[index]._updateInlineDetails(
+        this.inlineDetailsMode, multipleSelected, rowDetailsElement);
+    this.notifyPath('rows.' + index + '.showInlineDetails',
+        this.rows[index].showInlineDetails);
   }
 
   /**
@@ -544,9 +555,9 @@ class ItemListElement extends Polymer.Element {
       // If ctrl (or Meta for MacOS) key is pressed, toggle its selection.
 
       if (this.rows[realIndex].selected === false) {
-        this._selectItemByDisplayIndex(displayIndex);
+        this._selectItemByDisplayIndex(displayIndex, true);
       } else {
-        this._unselectItemByDisplayIndex(displayIndex);
+        this._unselectItemByDisplayIndex(displayIndex, true);
       }
     } else {
       // No modifier keys are pressed, proceed normally to select/unselect the item.
@@ -557,14 +568,14 @@ class ItemListElement extends Polymer.Element {
       if (target.tagName === 'PAPER-CHECKBOX') {
         if (this.rows[realIndex].selected === false) {
           // Remove this element from the selected elements list if it's being unselected
-          this._unselectItemByDisplayIndex(displayIndex);
+          this._unselectItemByDisplayIndex(displayIndex, true);
         } else {
           // Add this element to the selected elements list if it's being selected,
-          this._selectItemByDisplayIndex(displayIndex);
+          this._selectItemByDisplayIndex(displayIndex, true);
         }
       } else {
         this._unselectAll();
-        this._selectItemByDisplayIndex(displayIndex);
+        this._selectItemByDisplayIndex(displayIndex, true);
       }
     }
 
