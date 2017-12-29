@@ -371,6 +371,7 @@ describe('<item-list>', () => {
       // selection state for an item changes. We might want to change this
       // behavior so that it figures out in advance that it should show
       // all the details.
+      testFixture._selectAll();     // Force state change for all items
       testFixture._unselectAll();   // Recalculate details display for all items
       Polymer.dom.flush();
       const fourthRowDetailsContainer = getRowDetailsContainer(3);
