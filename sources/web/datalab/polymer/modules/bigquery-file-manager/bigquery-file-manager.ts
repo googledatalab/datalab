@@ -257,20 +257,22 @@ class BigQueryFileManager extends BaseFileManager {
   }
 
   private _bqTableToDatalabFile(bqTable: TableResource): DatalabFile {
+    const isView = (bqTable.type === 'VIEW');
     return this._bqProjectDatasetTableIdsToDatalabFile(
       bqTable.tableReference.projectId, bqTable.tableReference.datasetId,
-      bqTable.tableReference.tableId
+      bqTable.tableReference.tableId, isView
     );
   }
 
   private _bqProjectDatasetTableIdsToDatalabFile(
-      projectId: string, datasetId: string, tableId: string): DatalabFile {
+      projectId: string, datasetId: string, tableId: string, isView?: boolean): DatalabFile {
     const path = projectId + '/' + datasetId + '/' + tableId;
+    const icon = isView ? 'datalab-icons:bq-view' : 'datalab-icons:bq-table';
     return new BigQueryFile(
       new DatalabFileId(path, this.myFileManagerType()),
       tableId,
       DatalabFileType.FILE,
-      'datalab-icons:bq-table',
+      icon,
     );
   }
 }
