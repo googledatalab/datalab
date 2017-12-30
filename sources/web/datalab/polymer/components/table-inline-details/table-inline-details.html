@@ -53,6 +53,7 @@ the License.
       <paper-spinner active hidden$={{!_busy}}></paper-spinner>
     </div>
     <div id="container" hidden$={{!_table}}>
+      <span hidden$=[[!_tableMessage]]>[[_tableMessage]]</span>
       <table id="tabledata">
         <tr class="header">
           <template is="dom-repeat" items={{_schemaFields}} as="field">
