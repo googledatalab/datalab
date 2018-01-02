@@ -167,7 +167,7 @@ class ApiManager {
   }
 
   public static async uploadOauthAccessToken() {
-    const creds = GapiManager.auth.getAccessTokenInfo();
+    const creds = await GapiManager.auth.getAccessTokenInfo();
     const options: XhrOptions = {
       method: 'POST',
       parameters: JSON.stringify(creds)
