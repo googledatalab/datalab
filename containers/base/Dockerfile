@@ -26,6 +26,8 @@ EXPOSE 8080
 ENV PATH $PATH:/tools/node/bin:/tools/google-cloud-sdk/bin
 ENV PYTHONPATH /env/python
 
+RUN apt-get update -y && apt-get install -y --no-install-recommends apt-utils
+
 # Setup OS and core packages
 RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sources.list && \
     apt-get update -y && \
@@ -208,7 +210,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     rm -rf /usr/share/i18n/locales/* && \
     cd /
 
-
+ENV LC_ALL en_US.UTF-8
 ENV LANG en_US.UTF-8
 
 ADD config/ipython.py /etc/ipython/ipython_config.py
@@ -250,3 +252,42 @@ RUN cd /datalab/lib/pydatalab && \
     ln -s /usr/local/lib/python2.7/dist-packages/notebook/static/custom/custom.css /datalab/nbconvert/custom.css && \
     cd /
 
+## Use Debian unstable via pinning -- new style via APT::Default-Release
+RUN echo "deb http://http.debian.net/debian sid main" > /etc/apt/sources.list.d/debian-unstable.list \
+	&& echo 'APT::Default-Release "testing";' > /etc/apt/apt.conf.d/default
+
+ENV R_BASE_VERSION 3.4.3
+
+## Now install R and littler, and create a link for littler in /usr/local/bin
+## Also set a default CRAN repo, and make sure littler knows about it too
+RUN apt-get update \
+	&& apt-get install -t unstable -y --no-install-recommends \
+		libssh2-1-dev \
+		libcurl4-openssl-dev \
+		libssl-dev \
+		littler \
+                r-cran-littler \
+		r-base=${R_BASE_VERSION}* \
+		r-base-dev=${R_BASE_VERSION}* \
+		r-recommended=${R_BASE_VERSION}* \
+        && echo 'options(repos = c(CRAN = "https://cran.rstudio.com/"), download.file.method = "libcurl")' >> /etc/R/Rprofile.site \
+        && echo 'source("/etc/R/Rprofile.site")' >> /etc/littler.r \
+	&& ln -s /usr/share/doc/littler/examples/install.r /usr/local/bin/install.r \
+	&& ln -s /usr/share/doc/littler/examples/install2.r /usr/local/bin/install2.r \
+	&& ln -s /usr/share/doc/littler/examples/installGithub.r /usr/local/bin/installGithub.r \
+	&& ln -s /usr/share/doc/littler/examples/testInstalled.r /usr/local/bin/testInstalled.r \
+	&& install.r docopt \
+	&& rm -rf /tmp/downloaded_packages/ /tmp/*.rds \
+&& rm -rf /var/lib/apt/lists/*
+
+RUN 	R -e 'install.packages("devtools")' && \
+	R -e 'devtools::install_github("IRkernel/IRkernel")' && \
+	# or 'devtools::install_local("IRkernel-master.tar.gz")' && \
+	R -e 'IRkernel::installspec()' && \
+# to register the kernel in the current R installation 
+	R -e 'install.packages("googleAuthR"); library(googleAuthR); gar_gce_auth()' && \
+	R -e 'install.packages("bigQueryR"); install.packages("googleCloudStorageR")' && \
+	R -e 'install.packages("feather")' && \
+	R -e 'install.packages("tensorflow")' && \
+	R -e 'devtools::install_github("apache/spark@v2.2.0", subdir="R/pkg")'
+	
