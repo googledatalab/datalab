@@ -304,12 +304,13 @@ class ServerAuth implements GapiAuth {
   /**
    * Signs the user out.
    */
-  public signOut(): Promise<void> {
+  public async signOut(): Promise<void> {
     // We sign out by deleting our cookies.
     Utils.deleteCookie('DATALAB_ACCESS_TOKEN');
     Utils.deleteCookie('DATALAB_ACCESS_TOKEN_EXPIRY');
     Utils.deleteCookie('DATALAB_REFRESH_TOKEN');
     this.setIsSignedIn(false);
+    await this.logout();
     return Promise.resolve();
   }
 
@@ -395,6 +396,18 @@ class ServerAuth implements GapiAuth {
       return {};
     }
     return userInfo;
+  }
+
+  private async logout(): Promise<boolean> {
+    const xhrOptions: XhrOptions = {
+      successCodes: [200],
+    };
+    const logoutPath = '/_auth/logout';
+    const result = await ApiManager.sendRequestAsync(logoutPath, xhrOptions, false);
+    if (result && result.error) {
+      return Promise.resolve(false);
+    }
+    return Promise.resolve(true);
   }
 
   /**
