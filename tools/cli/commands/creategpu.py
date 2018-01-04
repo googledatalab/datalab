@@ -14,6 +14,7 @@
 
 """Methods for implementing the `datalab beta creategpu` command."""
 
+import json
 import os
 import tempfile
 
@@ -31,79 +32,129 @@ By default, the command creates a persistent connection to the newly
 created instance. You can disable that behavior by passing in the
 '--no-connect' flag.""")
 
-_NVIDIA_PACKAGE = 'cuda-repo-ubuntu1604_8.0.61-1_amd64.deb'
-
 _THIRD_PARTY_SOFTWARE_DIALOG = (
     """By accepting below, you will download and install the
 following third-party software onto your managed GCE instances:
-    NVidia GPU CUDA Toolkit Drivers: """ + _NVIDIA_PACKAGE)
+    NVidia GPU Driver: NVIDIA-Linux-x86_64-384.81""")
 
-_DATALAB_STARTUP_SCRIPT = create._DATALAB_BASE_STARTUP_SCRIPT + """
-install_cuda() {{
-  # Check for CUDA and try to install.
-  if ! dpkg-query -W cuda; then
-    curl -O http://developer.download.nvidia.com/\
-compute/cuda/repos/ubuntu1604/x86_64/{6}
-    dpkg -i ./{6}
-    apt-get update -y
-    apt-get install cuda -y
-  fi
-}}
+# The config for the 'cos-gpu-installer.service'
+# services comes from the 'GoogleCloudPlatform/cos-gpu-installer' project
+# here: https://github.com/GoogleCloudPlatform/cos-gpu-installer
 
-install_nvidia_docker() {{
-  # Install normal docker then install nvidia-docker
-  if ! dpkg-query -W docker; then
-    curl -sSL https://get.docker.com/ | sh
-    curl -L -O https://github.com/NVIDIA/nvidia-docker/releases/\
-download/v1.0.1/nvidia-docker_1.0.1-1_amd64.deb
-    dpkg -i ./nvidia-docker_1.0.1-1_amd64.deb
-    apt-get update -y
-    apt-get install nvidia-docker -y
-  fi
-}}
+_DATALAB_CLOUD_CONFIG = """
+#cloud-config
 
-cleanup_packages() {{
-  apt-get update -y
-  apt-get remove -y dnsmasq-base || true
-}}
+users:
+- name: datalab
+  uid: 2000
+  groups: docker
+- name: logger
+  uid: 2001
+  groups: docker
 
-pull_datalab_image() {{
-  if [[ "$(docker images -q {0})" == "" ]]; then
-    gcloud docker -- pull {0} ;
-  fi
-}}
+write_files:
+- path: /etc/nvidia-installer-env
+  permissions: 0755
+  owner: root
+  content: |
+    NVIDIA_DRIVER_VERSION=384.81
+    COS_NVIDIA_INSTALLER_CONTAINER=gcr.io/cos-cloud/cos-gpu-installer:latest
+    NVIDIA_INSTALL_DIR_HOST=/var/lib/nvidia
+    NVIDIA_INSTALL_DIR_CONTAINER=/usr/local/nvidia
+    ROOT_MOUNT_DIR=/root
 
-start_datalab_docker() {{
-  nvidia-docker run --restart always -p '127.0.0.1:8080:8080' \
-    -e DATALAB_ENV='GCE' -e DATALAB_DEBUG='true' \
-    -e DATALAB_SETTINGS_OVERRIDES=\
-'{{"enableAutoGCSBackups": {3}, "consoleLogLevel": "{4}" }}' \
-    -e DATALAB_GIT_AUTHOR='{5}' \
-    -v "${{MOUNT_DIR}}/content:/content" \
-    -v "${{MOUNT_DIR}}/tmp:/tmp" \
-    {0} -c /datalab/run.sh
-}}
+- path: /etc/systemd/system/cos-gpu-installer.service
+  permissions: 0755
+  owner: root
+  content: |
+    [Unit]
+    Description=Run the GPU driver installer container
+    Requires=network-online.target gcr-online.target
+    After=network-online.target gcr-online.target
 
-start_fluentd_docker() {{
-  docker run --restart always \
-    -e FLUENTD_ARGS='-q' \
-    -v /var/log:/var/log \
-    -v /var/lib/docker/containers:/var/lib/docker/containers:ro \
-    gcr.io/google_containers/fluentd-gcp:1.18
-}}
+    [Service]
+    User=root
+    Type=oneshot
+    RemainAfterExit=true
+    EnvironmentFile=/etc/nvidia-installer-env
+    ExecStartPre=docker-credential-gcr configure-docker
+    ExecStartPre=/bin/bash -c 'mkdir -p "${{NVIDIA_INSTALL_DIR_HOST}}" && \
+        mount --bind "${{NVIDIA_INSTALL_DIR_HOST}}" \
+        "${{NVIDIA_INSTALL_DIR_HOST}}" && \
+        mount -o remount,exec "${{NVIDIA_INSTALL_DIR_HOST}}"'
+    ExecStart=/usr/bin/docker run --privileged --net=host --pid=host \
+        --volume \
+        "${{NVIDIA_INSTALL_DIR_HOST}}":"${{NVIDIA_INSTALL_DIR_CONTAINER}}" \
+        --volume /dev:/dev --volume "/":"${{ROOT_MOUNT_DIR}}" \
+        --env-file /etc/nvidia-installer-env \
+        "${{COS_NVIDIA_INSTALLER_CONTAINER}}"
+    StandardOutput=journal+console
+    StandardError=journal+console
 
-cleanup_packages
-install_cuda
-install_nvidia_docker
-cleanup_packages
-pull_datalab_image
-mount_and_prepare_disk
-configure_swap
-cleanup_tmp
-start_datalab_docker
-start_fluentd_docker
+- path: /etc/systemd/system/datalab.service
+  permissions: 0644
+  owner: root
+  content: |
+    [Unit]
+    Description=datalab docker container
+    Requires=network-online.target cos-gpu-installer.service
+    After=network-online.target cos-gpu-installer.service
 
-journalctl -u google-startup-scripts --no-pager > /var/log/startupscript.log
+    [Service]
+    Environment="HOME=/home/datalab"
+    ExecStartPre=docker-credential-gcr configure-docker
+    ExecStart=/usr/bin/docker run --restart always \
+       -p '127.0.0.1:8080:8080' \
+       -v /mnt/disks/datalab-pd/content:/content \
+       -v /mnt/disks/datalab-pd/tmp:/tmp \
+       --volume /var/lib/nvidia:/usr/local/nvidia \
+       --device /dev/nvidia0:/dev/nvidia0 \
+       --device /dev/nvidia-uvm:/dev/nvidia-uvm \
+       --device /dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools \
+       --device /dev/nvidiactl:/dev/nvidiactl \
+       --env=HOME=/content \
+       --env=DATALAB_ENV=GCE \
+       --env=DATALAB_DEBUG=true \
+       --env='DATALAB_SETTINGS_OVERRIDES={{ \
+           "enableAutoGCSBackups": {1}, \
+           "consoleLogLevel": "{2}" \
+       }}' \
+       --env='DATALAB_GIT_AUTHOR={3}' \
+       --env='DATALAB_INITIAL_USER_SETTINGS={4}' \
+       {0} -c /datalab/run.sh
+    Restart=always
+    RestartSec=1
+
+- path: /etc/systemd/system/logger.service
+  permissions: 0644
+  owner: root
+  content: |
+    [Unit]
+    Description=logging docker container
+    Requires=network-online.target
+    After=network-online.target
+
+    [Service]
+    Environment="HOME=/home/logger"
+    ExecStartPre=/usr/share/google/dockercfg_update.sh
+    ExecStartPre=-/usr/bin/docker rm -fv logger
+    ExecStart=/usr/bin/docker run --rm -u 0 \
+       --name=logger \
+       -v /var/log:/var/log \
+       -v /var/lib/docker/containers:/var/lib/docker/containers \
+       --env='FLUENTD_ARGS=-q' \
+       gcr.io/google_containers/fluentd-gcp:1.18
+    Restart=always
+    RestartSec=1
+
+runcmd:
+- systemctl daemon-reload
+- systemctl enable cos-gpu-installer.service
+- systemctl start cos-gpu-installer.service
+- ['while', '[', '!', '-e', '/mnt/disks/datalab-pd/tmp', ']', ';',
+   'do', 'sleep', '1', ';', 'done']
+- systemctl start datalab.service
+- systemctl start logger.service
 """
 
 
@@ -169,6 +220,7 @@ def run(args, gcloud_beta_compute, gcloud_repos,
     if (not args.zone) and (not args.quiet):
         args.zone = utils.prompt_for_zone(args, gcloud_beta_compute)
     disk_cfg = create.prepare(args, gcloud_beta_compute, gcloud_repos)
+
     print('Creating the instance {0}'.format(args.instance))
     print('\n\nDue to GPU Driver installation, please note that '
           'Datalab GPU instances take significantly longer to '
@@ -176,36 +228,46 @@ def run(args, gcloud_beta_compute, gcloud_repos,
     cmd = ['instances', 'create']
     if args.zone:
         cmd.extend(['--zone', args.zone])
+
     enable_swap = "false" if args.no_swap else "true"
     enable_backups = "false" if args.no_backups else "true"
+    idle_timeout = args.idle_timeout
     console_log_level = args.log_level or "warn"
     user_email = args.for_user or email
     service_account = args.service_account or "default"
     # We have to escape the user's email before using it in the YAML template.
     escaped_email = user_email.replace("'", "''")
+    initial_user_settings = json.dumps({"idleTimeoutInterval": idle_timeout}) \
+        if idle_timeout else ''
     with tempfile.NamedTemporaryFile(delete=False) as startup_script_file, \
+            tempfile.NamedTemporaryFile(delete=False) as user_data_file, \
             tempfile.NamedTemporaryFile(delete=False) as for_user_file:
         try:
-            startup_script_file.write(_DATALAB_STARTUP_SCRIPT.format(
+            startup_script_file.write(create._DATALAB_STARTUP_SCRIPT.format(
                 args.image_name, create._DATALAB_NOTEBOOKS_REPOSITORY,
-                enable_swap, enable_backups, console_log_level,
-                escaped_email, _NVIDIA_PACKAGE))
+                enable_swap))
             startup_script_file.close()
+            user_data_file.write(_DATALAB_CLOUD_CONFIG.format(
+                args.image_name, enable_backups,
+                console_log_level, escaped_email, initial_user_settings))
+            user_data_file.close()
             for_user_file.write(user_email)
             for_user_file.close()
             metadata_template = (
                 'startup-script={0},' +
-                'for-user={1}')
+                'user-data={1},' +
+                'for-user={2}')
             metadata_from_file = (
                 metadata_template.format(
                     startup_script_file.name,
+                    user_data_file.name,
                     for_user_file.name))
             cmd.extend([
                 '--format=none',
                 '--boot-disk-size=20GB',
                 '--network', args.network_name,
-                '--image-family', 'ubuntu-1604-lts',
-                '--image-project', 'ubuntu-os-cloud',
+                '--image-family', 'cos-stable',
+                '--image-project', 'cos-cloud',
                 '--machine-type', args.machine_type,
                 '--accelerator',
                 'type=' + args.accelerator_type + ',count='
@@ -220,6 +282,7 @@ def run(args, gcloud_beta_compute, gcloud_repos,
             gcloud_beta_compute(args, cmd)
         finally:
             os.remove(startup_script_file.name)
+            os.remove(user_data_file.name)
             os.remove(for_user_file.name)
 
     if (not args.no_connect) and (not args.for_user):
