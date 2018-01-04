@@ -307,7 +307,6 @@ class ServerAuth implements GapiAuth {
   public async signOut(): Promise<void> {
     // We sign out by deleting our cookies.
     Utils.deleteCookie('DATALAB_ACCESS_TOKEN');
-    Utils.deleteCookie('DATALAB_ACCESS_TOKEN_EXPIRY');
     Utils.deleteCookie('DATALAB_REFRESH_TOKEN');
     this.setIsSignedIn(false);
     await this.logout();
@@ -335,9 +334,14 @@ class ServerAuth implements GapiAuth {
   /**
    * Gets the current user's access token.
    */
-  public getAccessToken(): Promise<string> {
-    const accessToken = Utils.readCookie('DATALAB_ACCESS_TOKEN');
-    return Promise.resolve(accessToken);
+  public async getAccessToken(): Promise<string> {
+    const accessTokenBase64 = Utils.readCookie('DATALAB_ACCESS_TOKEN');
+    if (!accessTokenBase64) {
+      return '';
+    }
+    const json = atob(accessTokenBase64);
+    const accessToken = JSON.parse(json);
+    return accessToken.value;
   }
 
   /**
