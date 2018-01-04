@@ -97,8 +97,8 @@ write_files:
   content: |
     [Unit]
     Description=datalab docker container
-    Requires=network-online.target
-    After=cos-gpu-installer.service
+    Requires=network-online.target cos-gpu-installer.service
+    After=network-online.target cos-gpu-installer.service
 
     [Service]
     Environment="HOME=/home/datalab"
