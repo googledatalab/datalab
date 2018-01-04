@@ -76,9 +76,9 @@ write_files:
     Type=oneshot
     RemainAfterExit=true
     EnvironmentFile=/etc/nvidia-installer-env
+    ExecStartPre=docker-credential-gcr configure-docker
     ExecStartPre=/bin/bash -c 'mkdir -p "${{NVIDIA_INSTALL_DIR_HOST}}" && mount --bind "${{NVIDIA_INSTALL_DIR_HOST}}" "${{NVIDIA_INSTALL_DIR_HOST}}" && mount -o remount,exec "${{NVIDIA_INSTALL_DIR_HOST}}"'
     ExecStart=/usr/bin/docker run --privileged --net=host --pid=host --volume "${{NVIDIA_INSTALL_DIR_HOST}}":"${{NVIDIA_INSTALL_DIR_CONTAINER}}" --volume /dev:/dev --volume "/":"${{ROOT_MOUNT_DIR}}" --env-file /etc/nvidia-installer-env "${{COS_NVIDIA_INSTALLER_CONTAINER}}"
-    ExecStartPost=/bin/bash -c "${{NVIDIA_INSTALL_DIR_HOST}}/bin/nvidia-smi"
     StandardOutput=journal+console
     StandardError=journal+console
 
