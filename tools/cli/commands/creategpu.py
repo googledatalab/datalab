@@ -14,6 +14,7 @@
 
 """Methods for implementing the `datalab beta creategpu` command."""
 
+import json
 import os
 import tempfile
 
@@ -77,8 +78,16 @@ write_files:
     RemainAfterExit=true
     EnvironmentFile=/etc/nvidia-installer-env
     ExecStartPre=docker-credential-gcr configure-docker
-    ExecStartPre=/bin/bash -c 'mkdir -p "${{NVIDIA_INSTALL_DIR_HOST}}" && mount --bind "${{NVIDIA_INSTALL_DIR_HOST}}" "${{NVIDIA_INSTALL_DIR_HOST}}" && mount -o remount,exec "${{NVIDIA_INSTALL_DIR_HOST}}"'
-    ExecStart=/usr/bin/docker run --privileged --net=host --pid=host --volume "${{NVIDIA_INSTALL_DIR_HOST}}":"${{NVIDIA_INSTALL_DIR_CONTAINER}}" --volume /dev:/dev --volume "/":"${{ROOT_MOUNT_DIR}}" --env-file /etc/nvidia-installer-env "${{COS_NVIDIA_INSTALLER_CONTAINER}}"
+    ExecStartPre=/bin/bash -c 'mkdir -p "${{NVIDIA_INSTALL_DIR_HOST}}" && \
+        mount --bind "${{NVIDIA_INSTALL_DIR_HOST}}" \
+        "${{NVIDIA_INSTALL_DIR_HOST}}" && \
+        mount -o remount,exec "${{NVIDIA_INSTALL_DIR_HOST}}"'
+    ExecStart=/usr/bin/docker run --privileged --net=host --pid=host \
+        --volume \
+        "${{NVIDIA_INSTALL_DIR_HOST}}":"${{NVIDIA_INSTALL_DIR_CONTAINER}}" \
+        --volume /dev:/dev --volume "/":"${{ROOT_MOUNT_DIR}}" \
+        --env-file /etc/nvidia-installer-env \
+        "${{COS_NVIDIA_INSTALLER_CONTAINER}}"
     StandardOutput=journal+console
     StandardError=journal+console
 
@@ -235,7 +244,8 @@ def run(args, gcloud_beta_compute, gcloud_repos,
             tempfile.NamedTemporaryFile(delete=False) as for_user_file:
         try:
             startup_script_file.write(create._DATALAB_STARTUP_SCRIPT.format(
-                args.image_name, create._DATALAB_NOTEBOOKS_REPOSITORY, enable_swap))
+                args.image_name, create._DATALAB_NOTEBOOKS_REPOSITORY,
+                enable_swap))
             startup_script_file.close()
             user_data_file.write(_DATALAB_CLOUD_CONFIG.format(
                 args.image_name, enable_backups,
