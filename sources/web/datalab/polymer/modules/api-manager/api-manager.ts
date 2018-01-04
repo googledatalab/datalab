@@ -249,9 +249,9 @@ class ApiManager {
    * the response text. This method returns immediately with a promise
    * that resolves with the response text when the request completes.
    */
-  protected static _xhrTextAsync(url: string, options?: XhrOptions): Promise<string> {
-    return this._xhrRequestAsync(url, options)
-      .then((request) => request.responseText);
+  protected static async _xhrTextAsync(url: string, options?: XhrOptions): Promise<string> {
+    const request = await this._xhrRequestAsync(url, options);
+    return request.responseText;
   }
 
   /**
@@ -259,8 +259,8 @@ class ApiManager {
    * the response text as json. This method returns immediately with a promise
    * that resolves with the parsed object when the request completes.
    */
-  private static _xhrJsonAsync(url: string, options?: XhrOptions) {
-    return this._xhrTextAsync(url, options)
-      .then((response: string) => JSON.parse(response || 'null'));
+  private static async _xhrJsonAsync(url: string, options?: XhrOptions) {
+    const response = await this._xhrTextAsync(url, options);
+    return JSON.parse(response || 'null');
   }
 }
