@@ -94,6 +94,8 @@ populate_repo() {{
 
 format_disk() {{
   echo "Formatting the persistent disk"
+  docker-credential-gcr configure-docker
+  docker pull {0}
   mkfs.ext4 -F \
     -E lazy_itable_init=0,lazy_journal_init=0,discard \
     ${{PERSISTENT_DISK_DEV}}
