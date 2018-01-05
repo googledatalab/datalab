@@ -750,6 +750,18 @@ class GapiManager {
    * The auth class is responsible for initializing authorization, including
    * loading the gapi code and any data needed for oauth.
    */
-  public static auth = new ClientAuth();
-  // public static auth = new ServerAuth();
+  public static auth = GapiManager._initAuth();
+
+  // Use server auth if we already have the access token, or if the user has
+  // asked us to in the URL.
+  private static _initAuth() {
+    const haveRefreshToken = !!Utils.readCookie('DATALAB_ACCESS_TOKEN');
+    const queryParams = new URLSearchParams(window.location.search);
+    const haveServerAuthQueryParam = queryParams.has('useServerAuth');
+    if (haveRefreshToken || haveServerAuthQueryParam) {
+      return new ServerAuth();
+    } else {
+      return new ClientAuth();
+    }
+  }
 }
