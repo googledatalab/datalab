@@ -148,11 +148,11 @@ write_files:
     RestartSec=1
 
 runcmd:
+- ['while', '[', '!', '-e', '/mnt/disks/datalab-pd/tmp', ']', ';',
+   'do', 'sleep', '1', ';', 'done']
 - systemctl daemon-reload
 - systemctl enable cos-gpu-installer.service
 - systemctl start cos-gpu-installer.service
-- ['while', '[', '!', '-e', '/mnt/disks/datalab-pd/tmp', ']', ';',
-   'do', 'sleep', '1', ';', 'done']
 - systemctl start datalab.service
 - systemctl start logger.service
 """
