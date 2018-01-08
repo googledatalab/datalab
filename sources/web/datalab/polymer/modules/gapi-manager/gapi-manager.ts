@@ -752,13 +752,11 @@ class GapiManager {
    */
   public static auth = GapiManager._initAuth();
 
-  // Use server auth if we already have the access token, or if the user has
-  // asked us to in the URL.
+  // Use server auth if the user has requested it by manually setting a cookie.
+  // In the dev console, when on a Datalab page, enter this command:
+  //   document.cookie="DATALAB_USE_SERVER_AUTH=1"
   private static _initAuth() {
-    const haveRefreshToken = !!Utils.readCookie('DATALAB_ACCESS_TOKEN');
-    const queryParams = new URLSearchParams(window.location.search);
-    const haveServerAuthQueryParam = queryParams.has('useServerAuth');
-    if (haveRefreshToken || haveServerAuthQueryParam) {
+    if (!!Utils.readCookie('DATALAB_USE_SERVER_AUTH')) {
       return new ServerAuth();
     } else {
       return new ClientAuth();
