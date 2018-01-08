@@ -102,6 +102,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     rm ./get-pip.py && \
 
 # Install other Python 3 packages
+    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir apache-airflow==1.9.0 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir numpy==1.11.2 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir pandas==0.19.1 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir scipy==0.18.0 && \
