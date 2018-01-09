@@ -282,6 +282,7 @@ class ServerAuth implements GapiAuth {
   _signInChangedCallback: (isSignedIn: boolean) => void;
 
   private _loadPromise: Promise<void>;
+  private _refreshTimeoutId: number;
 
   /**
    * Starts the sign-in flow.
@@ -291,8 +292,16 @@ class ServerAuth implements GapiAuth {
    * happen momentarily before automatically closing.
    */
   public async signIn(_doPrompt?: boolean): Promise<void> {
-    const accessToken = await GapiManager.auth.getAccessToken();
+    let accessToken = await GapiManager.auth.getAccessToken();
     if (!accessToken) {
+      // We don't have an access token, but we might have a refresh token (which
+      // we can't see because it is HttpOnly). Try refreshing our access token,
+      // then check again to see if that worked.
+      await this.refreshToken();
+      accessToken = await GapiManager.auth.getAccessToken();
+    }
+    if (!accessToken) {
+      // No access token, even after trying a refresh, so ask user to log in again.
       const currentPath = window.location.pathname;
       const authLoginUrl = window.location.origin + '/auth/login?page=' + currentPath;
       window.location.replace(authLoginUrl);
@@ -382,6 +391,11 @@ class ServerAuth implements GapiAuth {
       if (this._signInChangedCallback) {
         this._signInChangedCallback(isSignedIn);
       }
+      if (isSignedIn) {
+        this.setRefreshTokenTimeout();
+      } else {
+        this.clearRefreshTokenTimeout();
+      }
     }
   }
 
@@ -412,6 +426,74 @@ class ServerAuth implements GapiAuth {
       return Promise.resolve(false);
     }
     return Promise.resolve(true);
+  }
+
+  /**
+   * Gets the expiration time for the access token, or null if no token.
+   */
+  private async getAccessTokenExpiry(): Promise<Date | null> {
+    const accessTokenBase64 = Utils.readCookie('DATALAB_ACCESS_TOKEN');
+    if (!accessTokenBase64) {
+      return null;
+    }
+    const json = atob(accessTokenBase64);
+    const accessToken = JSON.parse(json);
+    return new Date(accessToken.expiry);
+  }
+
+  /**
+   * Sends a request to the service to refresh our access token.
+   */
+  private async refreshToken(): Promise<void> {
+    const xhrOptions: XhrOptions = {
+      failureCodes: [401],
+      successCodes: [200],
+    };
+    const refreshPath = '/_auth/refresh';
+    try {
+      await ApiManager.sendRequestAsync(refreshPath, xhrOptions, false);
+    } catch (e) {
+      // If we get an invalid-credentials errors, sign out so the user
+      // will be asked for sign in on the next request.
+      Utils.log.verbose('Auto-sign-out due to invalid credentials');
+      GapiManager.auth.signOut();
+    }
+  }
+
+  private async refreshTokenAndTimeout(): Promise<void> {
+    await this.refreshToken();
+    if (this._isSignedIn) {
+      this.setRefreshTokenTimeout();
+    }
+  }
+
+  private async setRefreshTokenTimeout() {
+    this.clearRefreshTokenTimeout();
+    const timeoutMillis = await this.calculateRefreshTokenTimeoutMillis();
+    this._refreshTimeoutId =
+        window.setTimeout(() => this.refreshTokenAndTimeout(), timeoutMillis);
+  }
+
+  private clearRefreshTokenTimeout() {
+    if (this._refreshTimeoutId) {
+      window.clearTimeout(this._refreshTimeoutId);
+      this._refreshTimeoutId = 0;
+    }
+  }
+
+  private async calculateRefreshTokenTimeoutMillis() {
+    const now = Date.now();
+    const tokenExpirationTime = await this.getAccessTokenExpiry();
+    const expirationMillis =
+        tokenExpirationTime ? tokenExpirationTime.getTime() : 0;
+    const millisToExpiration = expirationMillis - now;
+    const minCheckMillis = 60 * 1000;
+        // If expiration is less than this, refresh quickly
+    const minTimeoutMillis = 500;
+        // Wait minimum half second before refresh to avoid spinning in case of bugs
+    const timeoutMillis =
+        millisToExpiration < minCheckMillis ? minTimeoutMillis : millisToExpiration / 2;
+    return timeoutMillis;
   }
 
   /**
