@@ -49,7 +49,8 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 # to reduce the chance that prior steps can cause changes requiring a rebuild.
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir apache-airflow==1.9.0 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir numpy==1.11.2 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir pandas==0.19.1 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir pandas==0.22.0 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir pandas-gbq==0.3.0 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir scipy==0.18.0 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir scikit-learn==0.18.2 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir scikit-image==0.13.0 && \
@@ -104,7 +105,8 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 # Install other Python 3 packages
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir apache-airflow==1.9.0 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir numpy==1.11.2 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir pandas==0.19.1 && \
+    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir pandas==0.22.0 && \
+    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir pandas-gbq==0.3.0 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir scipy==0.18.0 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir scikit-learn==0.18.2 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir scikit-image==0.13.0 && \
