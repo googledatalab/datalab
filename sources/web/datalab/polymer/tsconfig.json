@@ -10,7 +10,7 @@
     "noEmitOnError": true,
     "strictNullChecks": true,
     "module": "commonjs",
-    "removeComments": true
+    "removeComments": true,
   },
   "include": [
     "**/*.ts",
