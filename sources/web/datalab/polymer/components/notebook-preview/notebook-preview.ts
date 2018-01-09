@@ -24,6 +24,7 @@ declare function markdownit(): {
 /**
  * Notebook preview element for Datalab.
  */
+@Polymer.decorators.customElement('notebook-preview')
 class NotebookPreviewElement extends Polymer.Element {
 
   static _noFileMessage = 'Select an item to view a preview.';
@@ -34,52 +35,31 @@ class NotebookPreviewElement extends Polymer.Element {
   /**
    * File whose preview to show.
    */
+  @Polymer.decorators.property({type: Object})
   public file: DatalabFile;
 
   /**
    * Whether the pane is actively tracking selected items. This is used to avoid fetching the
    * selected file's data if the pane is closed by the host element.
    */
-  public active: boolean;
+  @Polymer.decorators.property({type: Boolean})
+  public active = true;
 
-  _busy: boolean;
+  @Polymer.decorators.property({type: Boolean})
+  _busy = false;
+
+  @Polymer.decorators.property({type: String})
   _message: string;
-  _showPreview: boolean;
 
-  static get is() { return 'notebook-preview'; }
-
-  static get properties() {
-    return {
-      _busy: {
-        type: Boolean,
-        value: false,
-      },
-      _message: {
-        type: String,
-        value: '',
-      },
-      _showPreview: {
-        type: Boolean,
-        value: false,
-      },
-      active: {
-        observer: '_reloadPreview',
-        type: Boolean,
-        value: true,
-      },
-      file: {
-        observer: '_reloadPreview',
-        type: Object,
-        value: {},
-      },
-    };
-  }
+  @Polymer.decorators.property({type: Boolean})
+  _showPreview = false;
 
   /**
    * Loads the preview of the given file in the preview pane. No preview is shown if the
    * selected item is a directory. For notebooks, the first two cells are pulled from the file,
    * and any markdown they contain is rendered in the pane.
    */
+  @Polymer.decorators.observe(['file', 'active'])
   _reloadPreview(newFile: DatalabFile) {
     if (!newFile || !this.active ||
         newFile.type !== DatalabFileType.NOTEBOOK) {
@@ -132,5 +112,3 @@ class NotebookPreviewElement extends Polymer.Element {
   }
 
 }
-
-customElements.define(NotebookPreviewElement.is, NotebookPreviewElement);

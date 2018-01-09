@@ -20,40 +20,24 @@
  * Contains a <datalab-toolbar> element at the top, and a full screen editor
  * that uses CodeMirror.
  */
+@Polymer.decorators.customElement('datalab-editor')
 class DatalabEditorElement extends Polymer.Element {
 
   /**
    * FileId object for the file to load in the editor.
    */
+  @Polymer.decorators.property({type: Object, notify: true})
   public fileId: DatalabFileId | null;
 
-  _busy: boolean;
+  @Polymer.decorators.property({type: Boolean})
+  _busy = false;
+
+  @Polymer.decorators.property({type: Object})
+  private _file: DatalabFile | null;
 
   private _editor: CodeMirror.Editor;
-  private _file: DatalabFile | null;
   private _fileManager: FileManager;
   private _theme: string;
-
-  static get is() { return 'datalab-editor'; }
-
-  static get properties() {
-    return {
-      _busy: {
-        type: Boolean,
-        value: false
-      },
-      _file: {
-        type: Object,
-        value: null,
-      },
-      fileId: {
-        notify: true,
-        observer: '_loadFile',
-        type: Object,
-        value: '',
-      },
-    };
-  }
 
   async ready() {
     super.ready();
@@ -102,6 +86,7 @@ class DatalabEditorElement extends Polymer.Element {
     this._editor.focus();
   }
 
+  @Polymer.decorators.observe('fileId')
   async _loadFile() {
     // Get the file contents, or empty string if no path is specified or the
     // file could not be found.
@@ -257,5 +242,3 @@ class DatalabEditorElement extends Polymer.Element {
     return datalabTheme === 'dark' ? 'icecoder' : 'eclipse';
   }
 }
-
-customElements.define(DatalabEditorElement.is, DatalabEditorElement);

@@ -15,6 +15,7 @@
 /**
  * Text preview element for Datalab.
  */
+@Polymer.decorators.customElement('text-preview')
 class TextPreviewElement extends Polymer.Element {
 
   private static _maxLinesInTextSummary = 30;
@@ -26,40 +27,23 @@ class TextPreviewElement extends Polymer.Element {
   /**
    * File whose preview to show.
    */
+  @Polymer.decorators.property({type: Object})
   public file: DatalabFile;
 
   /**
    * Whether the pane is actively tracking selected items. This is used to avoid fetching the
    * selected file's data if the pane is closed by the host element.
    */
+  @Polymer.decorators.property({type: Boolean})
   public active: boolean;
 
+  @Polymer.decorators.property({type: String})
   _message = '';
-
-  static get is() { return 'text-preview'; }
-
-  static get properties() {
-    return {
-      _message: {
-        type: String,
-        value: '',
-      },
-      active: {
-        observer: '_reloadPreview',
-        type: Boolean,
-        value: true,
-      },
-      file: {
-        observer: '_reloadPreview',
-        type: Object,
-        value: {},
-      },
-    };
-  }
 
   /**
    * Previews a text file.
    */
+  @Polymer.decorators.observe(['file', 'active'])
   _reloadPreview() {
     if (!this.file || !this.active) {
       this.$.previewHtml.innerHTML = '';
@@ -93,5 +77,3 @@ class TextPreviewElement extends Polymer.Element {
   }
 
 }
-
-customElements.define(TextPreviewElement.is, TextPreviewElement);

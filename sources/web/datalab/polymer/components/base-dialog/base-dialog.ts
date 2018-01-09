@@ -36,74 +36,51 @@ interface BaseDialogOptions extends Object {
  * (including other custom elements) inside it. This can be best done by stamping the
  * subclass's element template into the #body element of this class.
  */
+@Polymer.decorators.customElement('base-dialog')
 class BaseDialogElement extends Polymer.Element {
 
   /**
    * Title string of the dialog, shows up as <h2>
    */
+  @Polymer.decorators.property({type: String})
   public title: string;
 
   /**
    * Message to show in dialog
    */
-  public message: string;
+  @Polymer.decorators.property({type: String})
+  public message = '';
 
   /**
    * Whether to show a big dialog
    */
-  public big: boolean;
+  @Polymer.decorators.property({type: Boolean})
+  public big = false;
 
   /**
    * String for confirm button
    */
-  public okLabel: string;
+  @Polymer.decorators.property({type: String})
+  public okLabel = 'Ok';
 
   /**
    * String for cancel button
    */
-  public cancelLabel: string;
+  @Polymer.decorators.property({type: String})
+  public cancelLabel = 'Cancel';
 
   /**
-   * Whether this dialog is showing an error
+   * Whether this is an error dialog (affects styling)
    */
-  public isError: boolean;
+  @Polymer.decorators.property({type: Boolean})
+  public isError = false;
+
+  @Polymer.decorators.property({computed: '_computeSizeCssClass(big)', type: String})
+  _sizeCssClass: string;
 
   private _closeCallback: (result: BaseDialogCloseResult) => void;
 
   static get is() { return 'base-dialog'; }
-
-  static get properties() {
-    return {
-      _sizeCssClass: {
-        computed: '_computeSizeCssClass(big)',
-        type: String,
-      },
-      big: {
-        type: Boolean,
-        value: false,
-      },
-      cancelLabel: {
-        type: String,
-        value: 'Cancel'
-      },
-      isError: {
-        type: String,
-        value: false,
-      },
-      message: {
-        type: String,
-        value: '',
-      },
-      okLabel: {
-        type: String,
-        value: 'Ok',
-      },
-      title: {
-        type: String,
-        value: '',
-      },
-    };
-  }
 
   open() {
     // If the closed event fires then the confirm button hasn't been clicked
@@ -136,8 +113,8 @@ class BaseDialogElement extends Polymer.Element {
     return {};
   }
 
-  _computeSizeCssClass(big: boolean) {
-    return big ? 'big' : 'small';
+  _computeSizeCssClass() {
+    return this.big ? 'big' : 'small';
   }
 
   _confirmClose() {
@@ -167,110 +144,3 @@ class BaseDialogElement extends Polymer.Element {
   }
 
 }
-
-customElements.define(BaseDialogElement.is, BaseDialogElement);
-
-// @Polymer.decorators.customElement('base-dialog')
-// class BaseDialogElement extends Polymer.Element {
-
-//   /**
-//    * Title string of the dialog, shows up as <h2>
-//    */
-//   @Polymer.decorators.property({type: String})
-//   public title: string;
-
-//   /**
-//    * Message to show in dialog
-//    */
-//   @Polymer.decorators.property({type: String})
-//   public message: string;
-
-//   /**
-//    * Whether to show a big dialog
-//    */
-//   @Polymer.decorators.property({type: Boolean})
-//   public big: boolean;
-
-//   /**
-//    * String for confirm button
-//    */
-//   @Polymer.decorators.property({type: String})
-//   public okLabel: string;
-
-//   /**
-//    * String for cancel button
-//    */
-//   @Polymer.decorators.property({type: String})
-//   public cancelLabel: string;
-
-//   /**
-//    * Whether this is an error dialog (affects styling)
-//    */
-//   @Polymer.decorators.property({type: Boolean})
-//   public isError: boolean;
-
-//   private _closeCallback: (result: BaseDialogCloseResult) => void;
-
-//   open() {
-//     // If the closed event fires then the confirm button hasn't been clicked
-//     this.$.theDialog.addEventListener('iron-overlay-closed', () => this._cancelClose());
-//     this.$.theDialog.open();
-//   }
-
-//   openAndWait(): Promise<BaseDialogCloseResult> {
-//     return new Promise<BaseDialogCloseResult>((resolve, _reject) => {
-//       this.openAndWaitAsync(resolve);
-//     });
-//   }
-
-//   /**
-//    * Opens the dialog and takes a callback function that will be called when
-//    * the dialog is closed with the close options.
-//    */
-//   openAndWaitAsync(callback: (_: BaseDialogCloseResult) => void) {
-//     if (callback) {
-//       this._closeCallback = callback;
-//     }
-//     this.open();
-//   }
-
-//   /**
-//    * Returns any extra data to be augmented with the closing context object. Classes
-//    * extending this element can override this method to pass back extra information.
-//    */
-//   getCloseResult() {
-//     return {};
-//   }
-
-//   @Polymer.decorators.computed('big')
-//   get _computeSizeCssClass() {
-//     return this.big ? 'big' : 'small';
-//   }
-
-//   _confirmClose() {
-//     this._dialogClosed(true);
-//   }
-
-//   _cancelClose() {
-//     this._dialogClosed(false);
-//   }
-
-//   _dialogClosed(confirmed: boolean) {
-//     if (this._closeCallback) {
-//       this._closeCallback(Object.assign({
-//         confirmed,
-//       }, this.getCloseResult()));
-//     }
-//     this.$.theDialog.close();
-//   }
-
-//   /**
-//    * Helper method to listen for Enter key when an input is present
-//    */
-//   _checkEnter(e: KeyboardEvent) {
-//     if (e.keyCode === 13) { // Enter
-//       this._confirmClose();
-//     }
-//   }
-
-// }

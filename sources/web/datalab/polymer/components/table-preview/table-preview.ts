@@ -22,69 +22,46 @@ type HttpResponse<T> = gapi.client.HttpRequestFulfilled<T>;
  * way they are presented. This is not necessarily the best experience, and we
  * might want to revisit this.
  */
+@Polymer.decorators.customElement('table-preview')
 class TablePreviewElement extends Polymer.Element {
 
   /**
    * File whose details to show.
    */
+  @Polymer.decorators.property({type: Object})
   public file: BigQueryFile;
 
   /**
    * Id for table whose preview to show.
    */
-  public tableId: string;
+  @Polymer.decorators.property({type: String})
+  public tableId = '';
+
+  @Polymer.decorators.property({computed: '_computeCreationTime(_table)', type: String})
+  creationTime: string;
+
+  @Polymer.decorators.property({computed: '_computeLastModifiedTime(_table)', type: String})
+  lastModifiedTime: string;
+
+  @Polymer.decorators.property({computed: '_computeLongTermTableSize(_table)', type: String})
+  longTermTableSize: string;
+
+  @Polymer.decorators.property({computed: '_computeNumRows(_table)', type: String})
+  numRows: string;
+
+  @Polymer.decorators.property({computed: '_computeSchemaFields(_table)', type: String})
+  schemaFields: string;
+
+  @Polymer.decorators.property({computed: '_computeTableSize(_table)', type: String})
+  tableSize: string;
+
+  @Polymer.decorators.property({type: Object, notify: true}) // Notify for unit tests
+  _table: gapi.client.bigquery.Table | null;
 
   _fileManager: FileManager;
-  _table: gapi.client.bigquery.Table | null;
 
   private _busy = false;
   private readonly DEFAULT_MODE = 'NULLABLE';
-
-  static get is() { return 'table-preview'; }
-
-  static get properties() {
-    return {
-      _table: {
-        notify: true, // For unit tests
-        type: Object,
-        value: null,
-      },
-      creationTime: {
-        computed: '_computeCreationTime(_table)',
-        type: String,
-      },
-      file: {
-        observer: '_fileChanged',
-        type: Object,
-        value: {},
-      },
-      lastModifiedTime: {
-        computed: '_computeLastModifiedTime(_table)',
-        type: String,
-      },
-      longTermTableSize: {
-        computed: '_computeLongTermTableSize(_table)',
-        type: String,
-      },
-      numRows: {
-        computed: '_computeNumRows(_table)',
-        type: String,
-      },
-      schemaFields: {
-        computed: '_computeSchemaFields(_table)',
-        type: Array,
-      },
-      tableId: {
-        observer: '_tableIdChanged',
-        type: String,
-        value: '',
-      },
-      tableSize: {
-        computed: '_computeTableSize(_table)',
-        type: String,
-      },
-    };
-  }
 
   constructor() {
     super();
@@ -92,6 +69,7 @@ class TablePreviewElement extends Polymer.Element {
     this._fileManager = FileManagerFactory.getInstance();
   }
 
+  @Polymer.decorators.observe('file')
   _fileChanged() {
     let newTableId = '';
     if (this.file && this.file.id) {
@@ -105,6 +83,7 @@ class TablePreviewElement extends Polymer.Element {
     this.tableId = newTableId;
   }
 
+  @Polymer.decorators.observe('tableId')
   _tableIdChanged() {
     const matches = this.tableId.match(/^(.*):(.*)\.(.*)$/);
     if (matches && matches.length === 4) { // The whole string is matched as first result
@@ -179,5 +158,3 @@ class TablePreviewElement extends Polymer.Element {
     return mode || this.DEFAULT_MODE;
   }
 }
-
-customElements.define(TablePreviewElement.is, TablePreviewElement);

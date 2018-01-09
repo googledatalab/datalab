@@ -29,31 +29,21 @@ interface ProjectPickerDialogCloseResult extends BaseDialogCloseResult {
  * TODO: Consider remembering the last few selected projects and showing those
  * first.
  */
+@Polymer.decorators.customElement('project-picker-dialog')
 class ProjectPickerDialogElement extends BaseDialogElement {
 
   private static _memoizedTemplate: PolymerTemplate;
 
+  @Polymer.decorators.property({type: String})
   public selectedProjectId: number;
+
+  @Polymer.decorators.property({type: String})
   public selectedProjectName: string;
 
+  @Polymer.decorators.property({type: Boolean})
   _busy: boolean;
 
   static get is() { return 'project-picker-dialog'; }
-
-  static get properties() {
-    return {
-      ...super.properties,
-      _busy: Boolean,
-      selectedProjectId: {
-        type: String,
-        value: null,
-      },
-      selectedProjectName: {
-        type: String,
-        value: null,
-      },
-    };
-  }
 
   /**
    * This template is calculated once in run time based on the template of  the
@@ -138,5 +128,3 @@ class ProjectPickerDialogElement extends BaseDialogElement {
   }
 
 }
-
-customElements.define(ProjectPickerDialogElement.is, ProjectPickerDialogElement);

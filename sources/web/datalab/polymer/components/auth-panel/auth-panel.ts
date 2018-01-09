@@ -12,8 +12,6 @@
  * the License.
  */
 
-/// <reference path="../../bower_components/polymer-decorators/global.d.ts" />
-
 /**
  * Auth sign-in/sign-out panel.
  * This element provides buttons to sign in and out, and display some

@@ -25,38 +25,25 @@ interface SessionDescription {
  * Contains an item-list element to display sessions, a toolbar to interact with these sessions,
  * a progress bar that appears while loading the list
  */
+@Polymer.decorators.customElement('datalab-sessions')
 class SessionsElement extends Polymer.Element implements DatalabPageElement {
 
   /**
    * The currently selected session if exactly one is selected, or null if none is.
    */
+  @Polymer.decorators.property({type: Object})
   public selectedSession: Session | null;
 
   public resizeHandler = null;
 
+  @Polymer.decorators.property({type: Array})
   private _sessionList: Session[] = [];
-  private _fetching: boolean;
+
+  @Polymer.decorators.property({type: Boolean})
+  private _fetching = false;
+
   private _sessionListRefreshInterval = 60 * 1000;
   private _sessionListRefreshIntervalHandle = 0;
-
-  static get is() { return 'datalab-sessions'; }
-
-  static get properties() {
-    return {
-      _fetching: {
-        type: Boolean,
-        value: false
-      },
-      _sessionList: {
-        type: Array,
-        value: () => [],
-      },
-      selectedSession: {
-        type: Object,
-        value: null,
-      },
-    };
-  }
 
   /**
    * Called when when the element's local DOM is ready and initialized We use it
@@ -245,5 +232,3 @@ class SessionsElement extends Polymer.Element implements DatalabPageElement {
   }
 
 }
-
-customElements.define(SessionsElement.is, SessionsElement);

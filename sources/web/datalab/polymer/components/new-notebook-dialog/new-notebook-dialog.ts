@@ -27,6 +27,7 @@ interface NewNotebookDialogCloseResult extends BaseDialogCloseResult {
  * a dropdown list with possible kernel values. The default kernel will be
  * selected.
  */
+@Polymer.decorators.customElement('new-notebook-dialog')
 class NewNotebookDialogElement extends BaseDialogElement {
 
   protected static _memoizedTemplate: PolymerTemplate;
@@ -34,24 +35,13 @@ class NewNotebookDialogElement extends BaseDialogElement {
   /**
    * The kernel that should be selected by default.
    */
+  @Polymer.decorators.property({type: String})
   public selectedKernel: string;
 
+  @Polymer.decorators.property({type: Array})
   protected _kernelSpecs: KernelSpec[];
 
   static get is() { return 'new-notebook-dialog'; }
-
-  static get properties() {
-    return Object.assign(super.properties, {
-      _kernelSpecs: {
-        type: Array,
-        value: [],
-      },
-      selectedKernel: {
-        type: String,
-        value: '',
-      },
-    });
-  }
 
   open() {
     this._kernelSpecs = KernelManager.getAllKernelSpecs();
@@ -86,5 +76,3 @@ class NewNotebookDialogElement extends BaseDialogElement {
   }
 
 }
-
-customElements.define(NewNotebookDialogElement.is, NewNotebookDialogElement);

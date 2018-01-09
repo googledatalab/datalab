@@ -22,11 +22,13 @@
   * dispatches the custom event with the index before the last visible item.
   * Clicking the root link dispatches a 'rootClicked' custom event.
   */
+@Polymer.decorators.customElement('bread-crumbs')
 class BreadCrumbsElement extends Polymer.Element {
 
   /**
    * Array of path parts to display as breadcrumbs.
    */
+  @Polymer.decorators.property({type: Array})
   public crumbs: string[];
 
   /**
@@ -38,18 +40,7 @@ class BreadCrumbsElement extends Polymer.Element {
   // crumb (...).
   private readonly _ellipsisCrumbWidth = 55;
 
-  static get is() { return 'bread-crumbs'; }
-
-  static get properties() {
-    return {
-      crumbs: {
-        observer: '_crumbsChanged',
-        type: Array,
-        value: [],
-      },
-    };
-  }
-
+  @Polymer.decorators.observe('crumbs')
   _crumbsChanged() {
     this.resizeHandler();
   }
@@ -115,5 +106,3 @@ class BreadCrumbsElement extends Polymer.Element {
   }
 
 }
-
-customElements.define(BreadCrumbsElement.is, BreadCrumbsElement);

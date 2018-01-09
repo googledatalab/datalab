@@ -19,47 +19,29 @@
  * On changing the selected theme, this element will trigger an event on the document
  * element to signal the change, which can be handled by the host.
  */
+@Polymer.decorators.customElement('datalab-settings')
 class SettingsElement extends Polymer.Element {
 
   /**
    * Current selected theme.
    */
+  @Polymer.decorators.property({type: String})
   public theme: string;
 
   /**
    * Idle timeout interval.
    */
+  @Polymer.decorators.property({type: String})
   public idleTimeoutInterval: string;
 
-  _updateError: boolean;
+  @Polymer.decorators.property({type: Boolean})
+  _updateError = false;
 
-  private _busy: boolean;
+  @Polymer.decorators.property({type: Boolean})
+  private _busy = false;
+
+  @Polymer.decorators.property({type: String})
   private _idleTimeoutUpdateStatus: string;
-
-  static get is() { return 'datalab-settings'; }
-
-  static get properties() {
-    return {
-      _busy: {
-        type: Boolean,
-        value: false,
-      },
-      _idleTimeoutUpdateStatus: {
-        type: String,
-        value: '',
-      },
-      _updateError: {
-        type: Boolean,
-        value: false,
-      },
-      idleTimeoutInterval: {
-        type: String,
-      },
-      theme: {
-        type: String,
-      },
-    };
-  }
 
   /**
    * Called when element is attached to DOM. Gets the user settings and sets
@@ -114,5 +96,3 @@ class SettingsElement extends Polymer.Element {
   }
 
 }
-
-customElements.define(SettingsElement.is, SettingsElement);

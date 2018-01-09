@@ -17,56 +17,33 @@
  * Displays information about the selected BigQuery table file inline in the
  * file browser item list.
  */
+@Polymer.decorators.customElement('table-inline-details')
 class TableInlineDetailsElement extends Polymer.Element {
 
   /**
    * File whose details to show.
    */
+  @Polymer.decorators.property({type: Object})
   public file: BigQueryFile;
 
-  _fileManager: FileManager;
+  @Polymer.decorators.property({computed: '_computeSchemaFields(_table)'})
+  _schemaFields: gapi.client.bigquery.Field[];
+
+  @Polymer.decorators.property({type: Object, notify: true}) // Notify for unit tests
   _rows: gapi.client.bigquery.TabledataRow[];
 
-  private _table: gapi.client.bigquery.Table | null;
-  // @ts-ignore: _tableMessage is used in HTML
-  private _tableMessage: string;
-  // @ts-ignore: _busy is used in HTML
-  private _busy = false;
+  @Polymer.decorators.property({type: Object, notify: true})
+  _table: gapi.client.bigquery.Table | null;
+
+  @Polymer.decorators.property({type: String})
+  _tableMessage = '';
+
+  @Polymer.decorators.property({type: Boolean})
+  _busy = false;
+
+  _fileManager: FileManager;
+
   private readonly TABLE_PREVIEW_ROW_COUNT = 5;
-
-  static get is() { return 'table-inline-details'; }
-
-  static get properties() {
-    return {
-      _busy: {
-        type: Boolean,
-        value: false,
-      },
-      _rows: {
-        notify: true, // For unit tests
-        type: Object,
-        value: null,
-      },
-      _schemaFields: {
-        computed: '_computeSchemaFields(_table)',
-        type: Array,
-      },
-      _table: {
-        notify: true, // For unit tests
-        type: Object,
-        value: null,
-      },
-      _tableMessage: {
-        type: String,
-        value: '',
-      },
-      file: {
-        observer: '_fileChanged',
-        type: Object,
-        value: {},
-      },
-    };
-  }
 
   constructor() {
     super();
@@ -74,6 +51,7 @@ class TableInlineDetailsElement extends Polymer.Element {
     this._fileManager = FileManagerFactory.getInstance();
   }
 
+  @Polymer.decorators.observe('file')
   _fileChanged() {
     const path = this.file && this.file.id && this.file.id.path;
     const pathParts = path ? path.split('/') : [];
@@ -207,5 +185,3 @@ class TableInlineDetailsElement extends Polymer.Element {
     }
   }
 }
-
-customElements.define(TableInlineDetailsElement.is, TableInlineDetailsElement);
