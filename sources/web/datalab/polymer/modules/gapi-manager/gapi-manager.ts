@@ -394,6 +394,7 @@ class ServerAuth implements GapiAuth {
       if (isSignedIn) {
         this.setRefreshTokenTimeout();
       } else {
+        Utils.log.debug('Not signed in, clearing refresh token timeout');
         this.clearRefreshTokenTimeout();
       }
     }
@@ -438,7 +439,9 @@ class ServerAuth implements GapiAuth {
     }
     const json = atob(accessTokenBase64);
     const accessToken = JSON.parse(json);
-    return new Date(accessToken.expiry);
+    const expiry = new Date(accessToken.expiry);
+    Utils.log.debug('Access token expires', expiry);
+    return expiry;
   }
 
   /**
@@ -493,6 +496,7 @@ class ServerAuth implements GapiAuth {
         // Wait minimum half second before refresh to avoid spinning in case of bugs
     const timeoutMillis =
         millisToExpiration < minCheckMillis ? minTimeoutMillis : millisToExpiration / 2;
+    Utils.log.debug('Seconds until token refresh:', timeoutMillis / 1000);
     return timeoutMillis;
   }
 
@@ -839,8 +843,10 @@ class GapiManager {
   //   document.cookie="DATALAB_USE_SERVER_AUTH=1"
   private static _initAuth() {
     if (!!Utils.readCookie('DATALAB_USE_SERVER_AUTH')) {
+      Utils.log.debug('Using ServerAuth');
       return new ServerAuth();
     } else {
+      Utils.log.debug('Using ClientAuth');
       return new ClientAuth();
     }
   }

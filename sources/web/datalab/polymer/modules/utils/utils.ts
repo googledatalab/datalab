@@ -24,9 +24,20 @@ class Utils {
       // tslint:disable-next-line:no-console
       console.log(...args);
     }
+
     public static error(...args: any[]) {
       // tslint:disable-next-line:no-console
       console.error(...args);
+    }
+
+    // To enable debug messages, set DATALAB_LOG_DEBUG=1 in your browser console
+    // while viewing the page on which you want to enable debug logging:
+    //   document.cookie='DATALAB_LOG_DEBUG=1'
+    public static debug(...args: any[]) {
+      if (!!Utils.readCookie('DATALAB_LOG_DEBUG')) {
+        // tslint:disable-next-line:no-console
+        console.log(...args);
+      }
     }
   };
 
