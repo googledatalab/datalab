@@ -42,8 +42,8 @@ var watchedDynamicContent: common.Map<boolean> = {};
 
 // Path to use for fetching static resources provided by Jupyter.
 function jupyterDir(): string {
-  var prefix = appSettings.datalabRoot || '/usr/local/lib/python2.7';
-  return path.join(prefix, '/dist-packages/notebook')
+  var prefix = appSettings.datalabRoot || '/usr/local/envs/py3env/lib/python3.5';
+  return path.join(prefix, '/site-packages/notebook')
 }
 
 function getContent(filePath: string, cb: common.Callback<Buffer>, isDynamic: boolean = false): void {

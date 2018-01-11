@@ -46,6 +46,9 @@ if [ -n "${GATEWAY_VM}" ] || [ -n "${EXPERIMENTAL_KERNEL_GATEWAY_URL}" ] || [ -n
   exit "${ERR_UNSUPPORTED_GATEWAY_OPTION}"
 fi
 
+PYTHON2_ENV='py2env'
+PYTHON3_ENV='py3env'
+
 check_tmp_directory() {
     echo "Verifying that the /tmp directory is writable"
     test_temp_file=$(mktemp --tmpdir=/tmp)
@@ -61,12 +64,17 @@ check_tmp_directory() {
 function reinstall_pydatalab() {
   PYDATALAB=/content/pydatalab
   echo "Reinstalling pydatalab from ${PYDATALAB}"
+  source deactivate
+  source activate ${PYTHON2_ENV}
   pip install --upgrade --no-deps --force-reinstall --no-cache-dir ${PYDATALAB}
   pip install --upgrade --no-deps --force-reinstall ${PYDATALAB}/solutionbox/image_classification/.
   pip install --upgrade --no-deps --force-reinstall ${PYDATALAB}/solutionbox/structured_data/.
-  pip3 install --upgrade --no-deps --force-reinstall --no-cache-dir ${PYDATALAB}
-  pip3 install --upgrade --no-deps --force-reinstall ${PYDATALAB}/solutionbox/image_classification/.
-  pip3 install --upgrade --no-deps --force-reinstall ${PYDATALAB}/solutionbox/structured_data/.
+  source deactivate
+  source activate ${PYTHON3_ENV}
+  pip install --upgrade --no-deps --force-reinstall --no-cache-dir ${PYDATALAB}
+  pip install --upgrade --no-deps --force-reinstall ${PYDATALAB}/solutionbox/image_classification/.
+  pip install --upgrade --no-deps --force-reinstall ${PYDATALAB}/solutionbox/structured_data/.
+  source deactivate
   echo "Done reinstalling pydatalab"
 }
 
@@ -165,9 +173,11 @@ if [ -d /devroot ]; then
   IGNOREFILE=/devroot/build/web/nb/.foreverignore
   [ -f ${IGNOREFILE} ] || touch ${IGNOREFILE}
   # Auto-restart when the developer builds from the typescript files.
+  source activate ${PYTHON3_ENV}
   echo ${FOREVER_CMD} --watch --watchDirectory /devroot/build/web/nb /devroot/build/web/nb/app.js
   ${FOREVER_CMD} --watch --watchDirectory /devroot/build/web/nb /devroot/build/web/nb/app.js
 else
+  source activate ${PYTHON3_ENV}
   echo "Open your browser to http://localhost:${EXTERNAL_PORT}/ to connect to Datalab."
   ${FOREVER_CMD} /datalab/web/app.js
 fi
