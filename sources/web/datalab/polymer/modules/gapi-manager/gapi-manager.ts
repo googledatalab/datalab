@@ -355,7 +355,7 @@ class ServerAuth implements GapiAuth {
    * Gets the current user's access token.
    */
   public async getAccessToken(): Promise<string> {
-    const accessTokenBase64 = Utils.readCookie('DATALAB_ACCESS_TOKEN');
+    const accessTokenBase64 = Utils.readCookie('DATALAB_ACCESS_TOKEN', true);
     if (!accessTokenBase64) {
       return '';
     }
@@ -444,7 +444,7 @@ class ServerAuth implements GapiAuth {
    * Gets the expiration time for the access token, or null if no token.
    */
   private async getAccessTokenExpiry(): Promise<Date | null> {
-    const accessTokenBase64 = Utils.readCookie('DATALAB_ACCESS_TOKEN');
+    const accessTokenBase64 = Utils.readCookie('DATALAB_ACCESS_TOKEN', true);
     if (!accessTokenBase64) {
       return null;
     }
