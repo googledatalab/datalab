@@ -36,7 +36,8 @@ class DatalabAppElement extends Polymer.Element {
   /**
    * Current displayed page name
    */
-  @Polymer.decorators.property({type: String})
+  @Polymer.decorators.property({  // Simple property observer to catch both old and new values
+      observer: DatalabAppElement.prototype._pageChanged, type: String})
   public page = '';
 
   /**
@@ -122,7 +123,6 @@ class DatalabAppElement extends Polymer.Element {
    * We do this to lazy load pages as the user clicks them instead of letting
    * the browser pre-load all the pages on the first request.
    */
-  @Polymer.decorators.observe('page')
   _pageChanged(newPage: string, oldPage: string) {
     if (newPage) {
       // Lazy load the requested page. Build the path using the page's element

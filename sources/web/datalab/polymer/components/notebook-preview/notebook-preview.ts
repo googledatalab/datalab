@@ -60,17 +60,17 @@ class NotebookPreviewElement extends Polymer.Element {
    * and any markdown they contain is rendered in the pane.
    */
   @Polymer.decorators.observe(['file', 'active'])
-  _reloadPreview(newFile: DatalabFile) {
-    if (!newFile || !this.active ||
-        newFile.type !== DatalabFileType.NOTEBOOK) {
+  _reloadPreview() {
+    if (!this.file || !this.active ||
+        this.file.type !== DatalabFileType.NOTEBOOK) {
       this._showPreview = false;
       this._message = NotebookPreviewElement._noFileMessage;
       return;
     }
 
     this._busy = true;
-    const fileManager = FileManagerFactory.getInstanceForType(newFile.id.source);
-    fileManager.getStringContent(newFile.id)
+    const fileManager = FileManagerFactory.getInstanceForType(this.file.id.source);
+    fileManager.getStringContent(this.file.id)
       .then((stringContent: string) => {
 
         let content: NotebookContent;

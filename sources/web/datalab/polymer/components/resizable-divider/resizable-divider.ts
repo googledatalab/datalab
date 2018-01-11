@@ -108,10 +108,7 @@ class ResizableDividerElement extends Polymer.Element {
   }
 
   @Polymer.decorators.observe('disableRight')
-  _disableRightChanged(_: boolean, oldValue: boolean) {
-    if (oldValue === undefined) {
-      return;   // Ignore during initialization
-    }
+  _disableRightChanged() {
     if (this.disableRight) {
       this.hideRight = true;
       this.dividerPosition = 100;
@@ -123,10 +120,8 @@ class ResizableDividerElement extends Polymer.Element {
    * Calculate the new divider position after hideRight changes.
    */
   @Polymer.decorators.observe('hideRight')
-  _hideRightChanged(_: boolean, oldValue: boolean) {
-    if (oldValue === undefined) {
-      return;   // Leave divider position unchanged on startup
-    } else if (this.hideRight) {
+  _hideRightChanged() {
+    if (this.hideRight) {
       this.dividerPosition = 100;
     } else {
       // Make the right pane visible
