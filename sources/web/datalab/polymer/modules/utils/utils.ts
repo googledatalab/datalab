@@ -220,9 +220,7 @@ class Utils {
    * Returns the value for the named cookie.
    */
   public static readCookie(name: string) {
-    if (!Utils.cookies) {
-      Utils.parseCookies();
-    }
+    Utils.parseCookies();
     return Utils.cookies[name];
   }
 
