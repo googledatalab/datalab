@@ -106,10 +106,29 @@ format_disk() {{
   fi
 }}
 
+checked_format_disk() {{
+  echo "Checking if the persistent disk needs to be formatted"
+  if [ -z "$(blkid ${{PERSISTENT_DISK_DEV}})" ]; then
+    format_disk
+  else
+    echo "Disk already formatted, but mounting failed; rebooting..."
+
+    # The mount failed, but the disk seems to already
+    # be formatted. Reboot the machine to try again.
+    reboot now
+  fi
+}}
+
 mount_and_prepare_disk() {{
   echo "Trying to mount the persistent disk"
   mkdir -p "${{MOUNT_DIR}}"
-  ${{MOUNT_CMD}} || format_disk
+  ${{MOUNT_CMD}} || checked_format_disk
+
+  if [ -z "$(mount | grep ${{MOUNT_DIR}})" ]; then
+    echo "Failed to mount the persistent disk; rebooting..."
+    reboot now
+  fi
+
   chmod a+w "${{MOUNT_DIR}}"
   mkdir -p "${{MOUNT_DIR}}/content"
 
@@ -200,14 +219,34 @@ users:
   groups: docker
 
 write_files:
+- path: /etc/systemd/system/wait-for-startup-script.service
+  permissions: 0755
+  owner: root
+  content: |
+    [Unit]
+    Description=Wait for the startup script to setup required directories
+    Requires=network-online.target gcr-online.target
+    After=network-online.target gcr-online.target
+
+    [Service]
+    User=root
+    Type=oneshot
+    RemainAfterExit=true
+    ExecStartPre=docker-credential-gcr configure-docker
+    ExecStart=/bin/bash -c 'while [ ! -e /mnt/disks/datalab-pd/tmp ]; do \
+        sleep 1; \
+        done'
+
 - path: /etc/systemd/system/datalab.service
   permissions: 0644
   owner: root
   content: |
     [Unit]
     Description=datalab docker container
-    Requires=network-online.target
-    After=network-online.target
+    Requires=network-online.target gcr-online.target \
+             wait-for-startup-script.service
+    After=network-online.target gcr-online.target \
+          wait-for-startup-script.service
 
     [Service]
     Environment="HOME=/home/datalab"
@@ -253,8 +292,6 @@ write_files:
     RestartSec=1
 
 runcmd:
-- ['while', '[', '!', '-e', '/mnt/disks/datalab-pd/tmp', ']', ';',
-   'do', 'sleep', '1', ';', 'done']
 - systemctl daemon-reload
 - systemctl start datalab.service
 - systemctl start logger.service
