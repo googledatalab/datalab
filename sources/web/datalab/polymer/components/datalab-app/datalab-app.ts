@@ -37,7 +37,7 @@ class DatalabAppElement extends Polymer.Element {
    * Current displayed page name
    */
   @Polymer.decorators.property({type: String})
-  public page: string;
+  public page = '';
 
   /**
    * Current matching result from the window.location. This gets re-evaluated
@@ -54,7 +54,7 @@ class DatalabAppElement extends Polymer.Element {
   public routeTail: object;
 
   @Polymer.decorators.property({type: Array})
-  _fileBrowserSources: string[];
+  _fileBrowserSources: string[] = [];
 
   private _boundResizeHandler: EventListenerObject;
 

@@ -22,7 +22,7 @@ class InlineDetailsPaneElement extends Polymer.Element {
    * Currently displayed inline-details pane name.
    */
   @Polymer.decorators.property({type: String})
-  public details: string;
+  public details = '';
 
   /**
    * File whose details to show.

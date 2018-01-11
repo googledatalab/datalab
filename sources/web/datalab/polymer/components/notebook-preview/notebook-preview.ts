@@ -49,7 +49,7 @@ class NotebookPreviewElement extends Polymer.Element {
   _busy = false;
 
   @Polymer.decorators.property({type: String})
-  _message: string;
+  _message = '';
 
   @Polymer.decorators.property({type: Boolean})
   _showPreview = false;

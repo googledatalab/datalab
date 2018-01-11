@@ -32,7 +32,7 @@ class SessionsElement extends Polymer.Element implements DatalabPageElement {
    * The currently selected session if exactly one is selected, or null if none is.
    */
   @Polymer.decorators.property({type: Object})
-  public selectedSession: Session | null;
+  public selectedSession: Session | null = null;
 
   public resizeHandler = null;
 

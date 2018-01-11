@@ -36,10 +36,10 @@ class NewNotebookDialogElement extends BaseDialogElement {
    * The kernel that should be selected by default.
    */
   @Polymer.decorators.property({type: String})
-  public selectedKernel: string;
+  public selectedKernel = '';
 
   @Polymer.decorators.property({type: Array})
-  protected _kernelSpecs: KernelSpec[];
+  protected _kernelSpecs: KernelSpec[] = [];
 
   static get is() { return 'new-notebook-dialog'; }
 

@@ -26,14 +26,14 @@ class TableInlineDetailsElement extends Polymer.Element {
   @Polymer.decorators.property({type: Object})
   public file: BigQueryFile;
 
-  @Polymer.decorators.property({computed: '_computeSchemaFields(_table)'})
+  @Polymer.decorators.property({computed: '_computeSchemaFields(_table)', type: Array})
   _schemaFields: gapi.client.bigquery.Field[];
 
-  @Polymer.decorators.property({type: Object, notify: true}) // Notify for unit tests
-  _rows: gapi.client.bigquery.TabledataRow[];
+  @Polymer.decorators.property({type: Array, notify: true}) // Notify for unit tests
+  _rows: gapi.client.bigquery.TabledataRow[] = [];
 
   @Polymer.decorators.property({type: Object, notify: true})
-  _table: gapi.client.bigquery.Table | null;
+  _table: gapi.client.bigquery.Table | null = null;
 
   @Polymer.decorators.property({type: String})
   _tableMessage = '';

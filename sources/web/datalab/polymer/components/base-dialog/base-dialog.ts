@@ -43,7 +43,7 @@ class BaseDialogElement extends Polymer.Element {
    * Title string of the dialog, shows up as <h2>
    */
   @Polymer.decorators.property({type: String})
-  public title: string;
+  public title = '';
 
   /**
    * Message to show in dialog
@@ -113,8 +113,8 @@ class BaseDialogElement extends Polymer.Element {
     return {};
   }
 
-  _computeSizeCssClass() {
-    return this.big ? 'big' : 'small';
+  _computeSizeCssClass(big: boolean) {
+    return big ? 'big' : 'small';
   }
 
   _confirmClose() {

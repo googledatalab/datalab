@@ -19,7 +19,7 @@ class InfoElement extends Polymer.Element {
    * The current Datalab version string.
    */
   @Polymer.decorators.property({type: String})
-  public version: string;
+  public version = '';
 
   ready() {
     super.ready();

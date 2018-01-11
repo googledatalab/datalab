@@ -44,13 +44,13 @@ class InputDialogElement extends BaseDialogElement {
    * Text that shows up inside the input field when it's empty
    */
   @Polymer.decorators.property({type: String})
-  public inputLabel: string;
+  public inputLabel = '';
 
   /**
    * If an input field is included, this will be its initial value
    */
   @Polymer.decorators.property({type: String})
-  public inputValue: string;
+  public inputValue = '';
 
   static get is() { return 'input-dialog'; }
 

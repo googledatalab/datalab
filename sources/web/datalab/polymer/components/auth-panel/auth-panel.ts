@@ -21,10 +21,10 @@
 class AuthPanel extends Polymer.Element {
 
   @Polymer.decorators.property({type: Boolean})
-  _signedIn: boolean;
+  _signedIn = false;
 
   @Polymer.decorators.property({type: String})
-  _userInfo: string;
+  _userInfo = '';
 
   _promptOnSignIn = false;
 

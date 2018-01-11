@@ -27,13 +27,13 @@ class DatalabEditorElement extends Polymer.Element {
    * FileId object for the file to load in the editor.
    */
   @Polymer.decorators.property({type: Object, notify: true})
-  public fileId: DatalabFileId | null;
+  public fileId: DatalabFileId | null = null;
 
   @Polymer.decorators.property({type: Boolean})
   _busy = false;
 
   @Polymer.decorators.property({type: Object})
-  private _file: DatalabFile | null;
+  private _file: DatalabFile | null = null;
 
   private _editor: CodeMirror.Editor;
   private _fileManager: FileManager;

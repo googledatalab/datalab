@@ -55,13 +55,13 @@ class DirectoryPickerDialogElement extends BaseDialogElement {
    * Initial value of input box.
    */
   @Polymer.decorators.property({type: String})
-  public fileName: string;
+  public fileName = '';
 
   /**
    * Whether to include an input box under the file picker.
    */
   @Polymer.decorators.property({type: Boolean})
-  public withFileName: boolean;
+  public withFileName = false;
 
   public readyPromise: Promise<any>;
 

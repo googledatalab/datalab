@@ -35,7 +35,7 @@ class TextPreviewElement extends Polymer.Element {
    * selected file's data if the pane is closed by the host element.
    */
   @Polymer.decorators.property({type: Boolean})
-  public active: boolean;
+  public active = true;
 
   @Polymer.decorators.property({type: String})
   _message = '';

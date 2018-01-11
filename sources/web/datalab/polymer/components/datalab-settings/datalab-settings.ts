@@ -38,10 +38,10 @@ class SettingsElement extends Polymer.Element {
   _updateError = false;
 
   @Polymer.decorators.property({type: Boolean})
-  private _busy = false;
+  _busy = false;
 
   @Polymer.decorators.property({type: String})
-  private _idleTimeoutUpdateStatus: string;
+  _idleTimeoutUpdateStatus = '';
 
   /**
    * Called when element is attached to DOM. Gets the user settings and sets

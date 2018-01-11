@@ -38,25 +38,25 @@ class TablePreviewElement extends Polymer.Element {
   public tableId = '';
 
   @Polymer.decorators.property({computed: '_computeCreationTime(_table)', type: String})
-  creationTime: string;
+  creationTime = '';
 
   @Polymer.decorators.property({computed: '_computeLastModifiedTime(_table)', type: String})
-  lastModifiedTime: string;
+  lastModifiedTime = '';
 
   @Polymer.decorators.property({computed: '_computeLongTermTableSize(_table)', type: String})
-  longTermTableSize: string;
+  longTermTableSize = '';
 
   @Polymer.decorators.property({computed: '_computeNumRows(_table)', type: String})
-  numRows: string;
+  numRows = '';
 
-  @Polymer.decorators.property({computed: '_computeSchemaFields(_table)', type: String})
-  schemaFields: string;
+  @Polymer.decorators.property({computed: '_computeSchemaFields(_table)', type: Array})
+  schemaFields: gapi.client.bigquery.Field[] = [];
 
   @Polymer.decorators.property({computed: '_computeTableSize(_table)', type: String})
-  tableSize: string;
+  tableSize = '';
 
   @Polymer.decorators.property({type: Object, notify: true}) // Notify for unit tests
-  _table: gapi.client.bigquery.Table | null;
+  _table: gapi.client.bigquery.Table | null = null;
 
   _fileManager: FileManager;
 

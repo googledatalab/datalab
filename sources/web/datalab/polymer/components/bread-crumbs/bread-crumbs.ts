@@ -29,7 +29,7 @@ class BreadCrumbsElement extends Polymer.Element {
    * Array of path parts to display as breadcrumbs.
    */
   @Polymer.decorators.property({type: Array})
-  public crumbs: string[];
+  public crumbs: string[] = [];
 
   /**
    * Index of the last path link that was fit in the breadcrumbs bar.
