@@ -20,10 +20,18 @@ class Utils {
   static cookies: { [key: string]: string };
 
   public static log = class {
+    // To enable verbose messages, set the cookie DATALAB_LOG_LEVEL=verbose
+    // in your browser console by using the following command while viewing
+    // any page in the domain for which you want to enable debug logging:
+    //   document.cookie='DATALAB_LOG_LEVEL=verbose; path=/'
     public static verbose(...args: any[]) {
-      // tslint:disable-next-line:no-console
-      console.log(...args);
+      const logLevel = Utils.readCookie('DATALAB_LOG_LEVEL');
+      if (logLevel === 'verbose') {
+        // tslint:disable-next-line:no-console
+        console.log(...args);
+      }
     }
+
     public static error(...args: any[]) {
       // tslint:disable-next-line:no-console
       console.error(...args);
