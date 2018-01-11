@@ -36,6 +36,7 @@ interface GapiAuth {
       Promise<void>;
   signIn(doPrompt?: boolean): Promise<void>;
   signOut(): Promise<void>;
+  isServerAuth(): boolean;
 }
 
 // Ask for all necesary scopes up front so we don't need to ask again later.
@@ -47,6 +48,11 @@ class ClientAuth implements GapiAuth {
   private _clientId = '';   // Gets set by _loadClientId()
   private _currentUser: gapi.auth2.GoogleUser; // Gets set by _loadClientId
   private _loadPromise: Promise<void>;
+
+  /** Always returns false because we do not do server-side auth flow. */
+  public isServerAuth() {
+    return false;
+  }
 
   /**
    * Starts the sign-in flow using gapi.
@@ -283,6 +289,11 @@ class ServerAuth implements GapiAuth {
 
   private _loadPromise: Promise<void>;
   private _refreshTimeoutId: number;
+
+  /** Always returns true because we do server-side auth flow. */
+  public isServerAuth() {
+    return true;
+  }
 
   /**
    * Starts the sign-in flow.
