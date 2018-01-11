@@ -53,6 +53,24 @@ users:
   groups: docker
 
 write_files:
+- path: /etc/systemd/system/wait-for-startup-script.service
+  permissions: 0755
+  owner: root
+  content: |
+    [Unit]
+    Description=Wait for the startup script to setup required directories
+    Requires=network-online.target gcr-online.target
+    After=network-online.target gcr-online.target
+
+    [Service]
+    User=root
+    Type=oneshot
+    RemainAfterExit=true
+    ExecStartPre=docker-credential-gcr configure-docker
+    ExecStart=/bin/bash -c 'while [ ! -e /mnt/disks/datalab-pd/tmp ]; do \
+        sleep 1; \
+        done'
+
 - path: /etc/nvidia-installer-env
   permissions: 0755
   owner: root
@@ -69,8 +87,10 @@ write_files:
   content: |
     [Unit]
     Description=Run the GPU driver installer container
-    Requires=network-online.target gcr-online.target
-    After=network-online.target gcr-online.target
+    Requires=network-online.target gcr-online.target \
+             wait-for-startup-script.service
+    After=network-online.target gcr-online.target \
+          wait-for-startup-script.service
 
     [Service]
     User=root
@@ -97,8 +117,10 @@ write_files:
   content: |
     [Unit]
     Description=datalab docker container
-    Requires=network-online.target cos-gpu-installer.service
-    After=network-online.target cos-gpu-installer.service
+    Requires=network-online.target gcr-online.target \
+             wait-for-startup-script.service cos-gpu-installer.service
+    After=network-online.target gcr-online.target \
+          wait-for-startup-script.service cos-gpu-installer.service
 
     [Service]
     Environment="HOME=/home/datalab"
@@ -148,8 +170,6 @@ write_files:
     RestartSec=1
 
 runcmd:
-- ['while', '[', '!', '-e', '/mnt/disks/datalab-pd/tmp', ']', ';',
-   'do', 'sleep', '1', ';', 'done']
 - systemctl daemon-reload
 - systemctl enable cos-gpu-installer.service
 - systemctl start cos-gpu-installer.service
