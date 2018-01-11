@@ -218,9 +218,13 @@ class Utils {
 
   /**
    * Returns the value for the named cookie.
+   * @param name Name of the cookie to read
+   * @param reload If true, reload the cookie cache
    */
-  public static readCookie(name: string) {
-    Utils.parseCookies();
+  public static readCookie(name: string, reload?: boolean) {
+    if (reload || !Utils.cookies) {
+      Utils.parseCookies();
+    }
     return Utils.cookies[name];
   }
 
