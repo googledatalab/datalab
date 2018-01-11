@@ -111,7 +111,7 @@ checked_format_disk() {{
   if [ -z "$(blkid ${{PERSISTENT_DISK_DEV}})" ]; then
     format_disk
   else
-    echo "Disk already formatted, but mounting failed"
+    echo "Disk already formatted, but mounting failed; rebooting..."
 
     # The mount failed, but the disk seems to already
     # be formatted. Reboot the machine to try again.
@@ -125,7 +125,7 @@ mount_and_prepare_disk() {{
   ${{MOUNT_CMD}} || checked_format_disk
 
   if [ -z "$(mount | grep ${{MOUNT_DIR}})" ]; then
-    echo "Failed to mount the persistent disk"
+    echo "Failed to mount the persistent disk; rebooting..."
     reboot now
   fi
 
