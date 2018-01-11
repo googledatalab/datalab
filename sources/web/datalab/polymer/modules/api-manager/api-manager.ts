@@ -70,7 +70,13 @@ class ApiManager {
 
   public static async getBasePath(): Promise<string> {
     const basePathUrl = this.getServiceUrl(ServiceId.BASE_PATH);
-    let response = await this._xhrTextAsync(basePathUrl, { noCache: true });
+    const accessToken = await GapiManager.auth.getAccessToken();
+    let response = await this._xhrTextAsync(basePathUrl, {
+      headers: {
+        Authorization: 'Bearer ' + accessToken,
+      },
+      noCache: true
+    });
     // The server may add the xssiPrefix to the response to prevent.
     // it being parsed as if it were a javascript file.
     const xssiPrefix = ')]}\'\n';
@@ -96,6 +102,9 @@ class ApiManager {
         // The server expects the xsrfToken as FormData.
         formData.append('token', this._xsrfToken);
         const xhrOptions: XhrOptions = {
+          headers: {
+            Authorization: 'Bearer ' + accessToken,
+          },
           method: 'POST',
           noCache: true,
           parameters: formData,
@@ -169,8 +178,11 @@ class ApiManager {
   public static async uploadOauthAccessToken() {
     const creds = await GapiManager.auth.getAccessTokenInfo();
     const options: XhrOptions = {
+      headers: {
+        Authorization: 'Bearer ' + creds.access_token,
+      },
       method: 'POST',
-      parameters: JSON.stringify(creds)
+      parameters: JSON.stringify(creds),
     };
     return this.sendTextRequestAsync(this.getServiceUrl(ServiceId.CREDENTIALS), options);
   }
