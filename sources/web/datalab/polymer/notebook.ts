@@ -164,7 +164,7 @@ async function createNew(parentPath: string) {
   toast.close();
 }
 
-if (location.pathname.startsWith(Utils.constants.notebookUrlComponent) && iframe) {
+function loadNotebook() {
   window.top.addEventListener('message', processMessageEvent);
 
   if (location.pathname.startsWith(Utils.constants.newNotebookUrlComponent) &&
@@ -188,4 +188,17 @@ if (location.pathname.startsWith(Utils.constants.notebookUrlComponent) && iframe
     iframe.src = Utils.constants.notebookUrlComponent + path +
         '?inIframe#fileId=' + path;
   }
+}
+
+async function loginAndLoadNotebook() {
+  if (GapiManager.auth.isServerAuth()) {
+    // We can't login from this page unless we are using server-side auth,
+    // because only server-side auth allows us to redirect back to this page.
+    await GapiManager.auth.signIn(false);
+  }
+  loadNotebook();
+}
+
+if (location.pathname.startsWith(Utils.constants.notebookUrlComponent) && iframe) {
+  loginAndLoadNotebook();
 }
