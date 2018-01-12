@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "es6",
+    "experimentalDecorators": true,
     "noImplicitReturns": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
@@ -17,5 +18,8 @@
   ],
   "exclude": [
     "bower_components"
+  ],
+  "files": [
+    "bower_components/polymer-decorators/global.d.ts"
   ]
 }
