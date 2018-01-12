@@ -19,39 +19,26 @@
  * This element provides a timeout icon and a timeout status string.
  * When the icon is clicked, it toggles whether the idle timeout is enabled.
  */
+@Polymer.decorators.customElement('timeout-panel')
 class TimeoutPanel extends Polymer.Element {
 
   private static _displayInterval = 1000;  // Update display every second
   private static _queryIntervalWhenEnabled = 15 * 1000;  // How often to query when timeout is enabled
   private static _queryIntervalWhenDisabled = 60 * 1000;  // How often to query when timeout is disabled
 
-  _timeoutControlsEnabled: boolean;
-  _timeoutText: string;
+  @Polymer.decorators.property({type: Boolean})
+  _timeoutControlsEnabled = false;
+
+  @Polymer.decorators.property({type: String})
+  _timeoutText = 'waiting for timeout status';
+
+  @Polymer.decorators.property({type: Boolean})
+  private _timeoutEnabled = false;
 
   private _isOpen: boolean;
   private _lastQueryTime = 0;
-  private _timeoutEnabled: boolean;
   private _timeoutInfo: common.TimeoutInfo;
   private _updateTimer: number;
-
-  static get is() { return 'timeout-panel'; }
-
-  static get properties() {
-    return {
-      _timeoutControlsEnabled: {
-        type: Boolean,
-        value: false,
-      },
-      _timeoutEnabled: {
-        type: Boolean,
-        value: false,
-      },
-      _timeoutText: {
-        type: String,
-        value: 'waiting for timeout status',
-      },
-    };
-  }
 
   /**
    * Updates our timeout controls.
@@ -126,5 +113,3 @@ class TimeoutPanel extends Polymer.Element {
     this._updateTimer = window.setTimeout(callback, TimeoutPanel._displayInterval);
   }
 }
-
-customElements.define(TimeoutPanel.is, TimeoutPanel);

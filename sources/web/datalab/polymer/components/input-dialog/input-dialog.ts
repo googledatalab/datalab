@@ -35,6 +35,7 @@ interface InputDialogOptions extends BaseDialogOptions {
  * treats this value as a file name with an extension, and it selects all characters
  * up to the last '.' to make it easy to edit file names.
  */
+@Polymer.decorators.customElement('input-dialog')
 class InputDialogElement extends BaseDialogElement {
 
   private static _memoizedTemplate: PolymerTemplate;
@@ -42,27 +43,16 @@ class InputDialogElement extends BaseDialogElement {
   /**
    * Text that shows up inside the input field when it's empty
    */
-  public inputLabel: string;
+  @Polymer.decorators.property({type: String})
+  public inputLabel = '';
 
   /**
    * If an input field is included, this will be its initial value
    */
-  public inputValue: string;
+  @Polymer.decorators.property({type: String})
+  public inputValue = '';
 
   static get is() { return 'input-dialog'; }
-
-  static get properties() {
-    return Object.assign(super.properties, {
-      inputLabel: {
-        type: String,
-        value: '',
-      },
-      inputValue: {
-        type: String,
-        value: '',
-      },
-    });
-  }
 
   open() {
     super.open();
@@ -100,5 +90,3 @@ class InputDialogElement extends BaseDialogElement {
   }
 
 }
-
-customElements.define(InputDialogElement.is, InputDialogElement);

@@ -18,18 +18,11 @@
 /**
  * Data Browser element for Datalab.
  */
+@Polymer.decorators.customElement('data-browser')
 class DataBrowserElement extends Polymer.Element implements DatalabPageElement {
 
-  static get is() { return 'data-browser'; }
-
-  static get properties() {
-    return {
-      fileId: {
-        notify: true,
-        type: String,
-      },
-    };
-  }
+  @Polymer.decorators.property({type: String, notify: true})
+  public fileId: string;
 
   /**
    * Pass through requests to our file-browser element.
@@ -53,5 +46,3 @@ class DataBrowserElement extends Polymer.Element implements DatalabPageElement {
     ];
   }
 }
-
-customElements.define(DataBrowserElement.is, DataBrowserElement);
