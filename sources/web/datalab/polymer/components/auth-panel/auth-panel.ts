@@ -17,27 +17,16 @@
  * This element provides buttons to sign in and out, and display some
  * information when signed in.
  */
+@Polymer.decorators.customElement('auth-panel')
 class AuthPanel extends Polymer.Element {
 
-  _signedIn: boolean;
-  _userInfo: string;
+  @Polymer.decorators.property({type: Boolean})
+  _signedIn = false;
+
+  @Polymer.decorators.property({type: String})
+  _userInfo = '';
 
   _promptOnSignIn = false;
-
-  static get is() { return 'auth-panel'; }
-
-  static get properties() {
-    return {
-      _signedIn: {
-        type: Boolean,
-        value: false,
-      },
-      _userInfo: {
-        type: String,
-        value: '',
-      },
-    };
-  }
 
   ready() {
     super.ready();
@@ -73,5 +62,3 @@ class AuthPanel extends Polymer.Element {
     }
   }
 }
-
-customElements.define(AuthPanel.is, AuthPanel);

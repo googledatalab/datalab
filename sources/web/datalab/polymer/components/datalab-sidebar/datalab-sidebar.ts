@@ -17,23 +17,13 @@
  * This element puts a side bar on the left side that contains links to
  * different pages, and exposes a two-way bound 'page' property.
  */
+@Polymer.decorators.customElement('datalab-sidebar')
 class SidebarElement extends Polymer.Element {
 
   /**
    * The currently selected page name
    */
-  public page: string;
+  @Polymer.decorators.property({type: String})
+  public page = 'files';
 
-  static get is() { return 'datalab-sidebar'; }
-
-  static get properties() {
-    return {
-      page: {
-        type: String,
-        value: 'files',
-      },
-    };
-  }
 }
-
-customElements.define(SidebarElement.is, SidebarElement);
