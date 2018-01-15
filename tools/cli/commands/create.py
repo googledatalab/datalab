@@ -207,6 +207,7 @@ cleanup_tmp
 journalctl -u google-startup-scripts --no-pager > /var/log/startupscript.log
 """
 
+
 _DATALAB_CLOUD_CONFIG = """
 #cloud-config
 
