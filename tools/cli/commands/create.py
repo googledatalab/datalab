@@ -232,7 +232,7 @@ write_files:
     User=root
     Type=oneshot
     RemainAfterExit=true
-    ExecStartPre=docker-credential-gcr configure-docker
+    ExecStartPre=/usr/bin/docker-credential-gcr configure-docker
     ExecStart=/bin/bash -c 'while [ ! -e /mnt/disks/datalab-pd/tmp ]; do \
         sleep 1; \
         done'
@@ -250,7 +250,7 @@ write_files:
 
     [Service]
     Environment="HOME=/home/datalab"
-    ExecStartPre=docker-credential-gcr configure-docker
+    ExecStartPre=/usr/bin/docker-credential-gcr configure-docker
     ExecStart=/usr/bin/docker run --rm -u 0 \
        --name=datalab \
        -p 127.0.0.1:8080:8080 \
