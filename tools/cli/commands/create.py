@@ -71,7 +71,6 @@ download_docker_image() {{
   export HOME=/home/datalab
   echo "Getting Docker credentials"
   docker-credential-gcr configure-docker
-  docker-credential-gcr gcr-login
   echo "Pulling latest image: {0}"
   docker pull {0}
   export HOME=$OLD_HOME
