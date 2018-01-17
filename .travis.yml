@@ -41,4 +41,5 @@ script:
 - cd ../sources/web/datalab/polymer/test
 - export DISPLAY=:99.0
 - export TEST_LOG="${HOME}/${TRAVIS_JOB_NUMBER}_npm_test.log"
-- timeout 2m bash -c "npm test -- --verbose | tee '${TEST_LOG}'; exit ${PIPESTATUS[0]}" || grep "Test run ended with great success" "${TEST_LOG}"
+- timeout 2m bash -c "npm test -- --verbose -l chrome | tee '${TEST_LOG}'; exit ${PIPESTATUS[0]}" || grep "Tests passed" "${TEST_LOG}"
+- timeout 2m bash -c "npm test -- --verbose -l firefox | tee '${TEST_LOG}'; exit ${PIPESTATUS[0]}" || grep "Tests passed" "${TEST_LOG}"
