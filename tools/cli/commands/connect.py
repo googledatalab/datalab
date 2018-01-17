@@ -20,6 +20,7 @@ import threading
 import urllib2
 import webbrowser
 
+import create
 import utils
 
 
@@ -311,7 +312,7 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         if remaining_reconnects == 0:
             return
         # Before we try to reconnect, check to see if the VM is still running.
-        status, unused_metadata_items = utils.describe_instance(
+        status, unused_metadata_items, _ = utils.describe_instance(
             args, gcloud_compute, instance)
         if status != _STATUS_RUNNING:
             print('Instance {0} is no longer running ({1})'.format(
@@ -324,7 +325,7 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
     return
 
 
-def maybe_start(args, gcloud_compute, instance, status):
+def maybe_start(args, gcloud_compute, instance, status, network_name = ''):
     """Start the given Google Compute Engine VM if it is not running.
 
     Args:
@@ -344,6 +345,8 @@ def maybe_start(args, gcloud_compute, instance, status):
             start_cmd.extend(['--zone', args.zone])
         start_cmd.extend([instance])
         gcloud_compute(args, start_cmd)
+        if network_name:
+            create.ensure_firewall_rule_exists(args, gcloud_compute, network_name)
     return
 
 
@@ -360,13 +363,13 @@ def run(args, gcloud_compute, email='', in_cloud_shell=False, **unused_kwargs):
       subprocess.CalledProcessError: If a nested `gcloud` calls fails
     """
     instance = args.instance
-    status, metadata_items = utils.describe_instance(
+    status, metadata_items, network_name = utils.describe_instance(
         args, gcloud_compute, instance)
     for_user = metadata_items.get('for-user', '')
     if (not args.no_user_checking) and for_user and (for_user != email):
         print(wrong_user_message_template.format(for_user, email))
         return
 
-    maybe_start(args, gcloud_compute, instance, status)
+    maybe_start(args, gcloud_compute, instance, status, network_name)
     connect(args, gcloud_compute, email, in_cloud_shell)
     return
