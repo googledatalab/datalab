@@ -88,6 +88,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir crcmod==1.7 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir pillow==3.4.1 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir google-cloud-dataflow==2.0.0 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir h5py==2.7.1 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow==1.4.1 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir python-snappy==0.5.1 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir xgboost==0.6a2 && \
