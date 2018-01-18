@@ -139,6 +139,14 @@ class ApiManager {
     if (prependBasepath) {
       const basepath = await this.getBasePath();
       url = basepath + url;
+
+      // Also add the Authorization header for any request using base path
+      const accessToken = await GapiManager.auth.getAccessToken();
+      options = options || {};
+      options.headers = options.headers || {};
+      if (!options.headers.Authorization) {
+        options.headers.Authorization = 'Bearer ' + accessToken;
+      }
     }
     return this._xhrJsonAsync(url, options);
   }

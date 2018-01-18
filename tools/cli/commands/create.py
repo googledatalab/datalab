@@ -63,10 +63,23 @@ PERSISTENT_DISK_DEV="/dev/disk/by-id/google-datalab-pd"
 MOUNT_DIR="/mnt/disks/datalab-pd"
 MOUNT_CMD="mount -o discard,defaults ${{PERSISTENT_DISK_DEV}} ${{MOUNT_DIR}}"
 
+download_docker_image() {{
+  # Since /root/.docker is not writable on the default image,
+  # we need to set HOME to be a writable directory. This same
+  # directory is used later on by the datalab.service.
+  export OLD_HOME=$HOME
+  export HOME=/home/datalab
+  echo "Getting Docker credentials"
+  docker-credential-gcr configure-docker
+  echo "Pulling latest image: {0}"
+  docker pull {0}
+  export HOME=$OLD_HOME
+}}
+
 clone_repo() {{
   echo "Creating the datalab directory"
   mkdir -p ${{MOUNT_DIR}}/content/datalab
-  echo "Cloning the repo {0}"
+  echo "Cloning the repo {1}"
   docker run --rm -v "${{MOUNT_DIR}}/content:/content" \
     --entrypoint "/bin/bash" {0} \
     gcloud source repos clone {1} /content/datalab/notebooks
@@ -94,8 +107,6 @@ populate_repo() {{
 
 format_disk() {{
   echo "Formatting the persistent disk"
-  docker-credential-gcr configure-docker
-  docker pull {0}
   mkfs.ext4 -F \
     -E lazy_itable_init=0,lazy_journal_init=0,discard \
     ${{PERSISTENT_DISK_DEV}}
@@ -200,6 +211,7 @@ cleanup_tmp() {{
 """
 
 _DATALAB_STARTUP_SCRIPT = _DATALAB_BASE_STARTUP_SCRIPT + """
+download_docker_image
 mount_and_prepare_disk
 configure_swap
 cleanup_tmp
@@ -232,7 +244,6 @@ write_files:
     User=root
     Type=oneshot
     RemainAfterExit=true
-    ExecStartPre=docker-credential-gcr configure-docker
     ExecStart=/bin/bash -c 'while [ ! -e /mnt/disks/datalab-pd/tmp ]; do \
         sleep 1; \
         done'
@@ -250,7 +261,7 @@ write_files:
 
     [Service]
     Environment="HOME=/home/datalab"
-    ExecStartPre=docker-credential-gcr configure-docker
+    ExecStartPre=/usr/bin/docker-credential-gcr configure-docker
     ExecStart=/usr/bin/docker run --rm -u 0 \
        --name=datalab \
        -p 127.0.0.1:8080:8080 \
