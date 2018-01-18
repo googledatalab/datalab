@@ -292,10 +292,14 @@ class JupyterFileManager extends BaseFileManager {
     return ApiManager.sendRequestAsync(path, xhrOptions);
   }
 
-  public getNotebookUrl(fileId: DatalabFileId) {
+  public async getNotebookUrl(fileId: DatalabFileId) {
     // TODO: We will need to get the base path when loading files
     // from a VM running Datalab with Jupyter.
-    return Utils.getHostRoot() + '/notebooks/' + fileId.path;
+    if (await SettingsManager.isAppFeatureEnabled('v2Editor')) {
+      return super.getNotebookUrl(fileId);
+    } else {
+      return Utils.getHostRoot() + '/notebooks/' + fileId.path;
+    }
   }
 
   public async pathToFileHierarchy(path: string): Promise<DatalabFile[]> {
