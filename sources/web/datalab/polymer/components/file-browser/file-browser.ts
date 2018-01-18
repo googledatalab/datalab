@@ -442,7 +442,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
    * If this element is in "small" mode, double clicking a file does not have
    * an effect, a directory will still navigate.
    */
-  _handleDoubleClicked(e: ItemClickEvent) {
+  async _handleDoubleClicked(e: ItemClickEvent) {
     const clickedItem = this._fileList[e.detail.index];
     if (this.small && clickedItem.type !== DatalabFileType.DIRECTORY) {
       return;
@@ -460,7 +460,7 @@ class FileBrowserElement extends Polymer.Element implements DatalabPageElement {
         this._pathFileHierarchyIndex = this._pathFileHierarchy.length - 1;
       }
     } else if (clickedItem.type === DatalabFileType.NOTEBOOK) {
-      const url = this._fileManager.getNotebookUrl(clickedItem.id);
+      const url = await this._fileManager.getNotebookUrl(clickedItem.id);
       window.open(url, '_blank');
     } else {
       const url = this._fileManager.getEditorUrl(clickedItem.id);

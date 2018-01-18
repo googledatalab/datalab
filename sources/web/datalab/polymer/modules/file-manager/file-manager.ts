@@ -219,7 +219,7 @@ interface FileManager {
    * Returns the url to open the given file in the notebook editor.
    * @param fileId id for the file to open in the notebook editor.
    */
-  getNotebookUrl(fileId: DatalabFileId): string;
+  getNotebookUrl(fileId: DatalabFileId): Promise<string>;
 
   /**
    * Returns the url to open the given file in the text editor.
@@ -287,7 +287,7 @@ class BaseFileManager implements FileManager {
     throw new UnsupportedMethod('copy', this);
   }
 
-  getNotebookUrl(fileId: DatalabFileId): string {
+  async getNotebookUrl(fileId: DatalabFileId): Promise<string> {
     return Utils.getHostRoot() + Utils.constants.notebookUrlComponent + fileId.toString();
   }
 

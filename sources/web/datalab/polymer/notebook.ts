@@ -30,6 +30,8 @@ const CommandId = {
   LOAD_NOTEBOOK: 'load-notebook',
   PICK_PROJECT: 'pick-project',
   REDIRECT_TO_NOTEBOOK: 'redirect-to-notebook',
+  RENAME_NOTEBOOK: 'rename-notebook',
+  SAVE_NOTEBOOK: 'save-notebook',
   UPLOAD_USER_CREDS: 'upload-user-creds',
 };
 
@@ -46,7 +48,7 @@ async function processMessageEvent(e: MessageEvent) {
   }
 
   const message = e.data as IframeMessage;
-  let outgoingMessage: IframeMessage;
+  let outgoingMessage: IframeMessage = {};
 
   switch (message.command) {
     case CommandId.UPLOAD_USER_CREDS:
@@ -72,6 +74,47 @@ async function processMessageEvent(e: MessageEvent) {
         ]);
         outgoingMessage = {
           arguments: [file, doc],
+        };
+      } catch (e) {
+        outgoingMessage = {
+          arguments: e.toString(),
+          command: CommandId.ERROR,
+        };
+      }
+      // Attach the same guid in case this message was sent in an async context
+      outgoingMessage.guid = message.guid;
+      sendMessageToNotebookEditor(outgoingMessage);
+      break;
+
+    case CommandId.SAVE_NOTEBOOK:
+      try {
+        const fileId = DatalabFileId.fromString(message.arguments[0]);
+        const content = message.arguments[1];
+        const fileManager = FileManagerFactory.getInstanceForType(fileId.source);
+        const file = await fileManager.get(fileId);
+        await fileManager.saveText(file, content);
+        outgoingMessage = {
+          arguments: 'OK',
+        };
+      } catch (e) {
+        outgoingMessage = {
+          arguments: e.toString(),
+          command: CommandId.ERROR,
+        };
+      }
+      // Attach the same guid in case this message was sent in an async context
+      outgoingMessage.guid = message.guid;
+      sendMessageToNotebookEditor(outgoingMessage);
+      break;
+
+    case CommandId.RENAME_NOTEBOOK:
+      try {
+        const fileId = DatalabFileId.fromString(message.arguments[0]);
+        const newName = message.arguments[1];
+        const fileManager = FileManagerFactory.getInstanceForType(fileId.source);
+        await fileManager.rename(fileId, newName);
+        outgoingMessage = {
+          arguments: 'OK',
         };
       } catch (e) {
         outgoingMessage = {
@@ -156,7 +199,7 @@ async function createNew(parentPath: string) {
       const template = await TemplateManager.newNotebookFromTemplate(templateName, params, kernel);
       await fileManager.saveText(newFile, JSON.stringify(template));
     }
-    location.href = fileManager.getNotebookUrl(newFile.id);
+    location.href = await fileManager.getNotebookUrl(newFile.id);
   } catch (e) {
     // TODO: Add some error message here.
     Utils.log.error('Failed to create notebook:', e.message);
