@@ -20,7 +20,6 @@
     "@types/sinon": "^2.3.7",
     "@types/socket.io-client": "^1.4.30",
     "bower": "^1.8.2",
-    "web-component-tester": "~6.3.0",
     "polymer-cli": "^1.5.7",
     "tslint": "^5.7.0",
     "typescript": "^2.5.3"
