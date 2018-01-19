@@ -39,56 +39,67 @@ class DatalabWebSocketShim {
     this._url = url;
     this.readyState = WebSocketState.CLOSED;
 
-    ApiManager.getBasePath()
-      .then((basepath: string) => {
-        const socketUri = location.protocol + '//' + location.host + '/session';
-        const socketOptions: SocketIOClient.ConnectOpts = {
-          multiplex: false,
-          path: basepath + '/socket.io',
-          upgrade: false,
-        };
+    GapiManager.auth.getAccessToken()
+      .then((accessToken) => {
 
-        const errorHandler = () => {
-          if (this.onerror) {
-            this.onerror({ target: self });
-          }
-        };
+        ApiManager.getBasePath()
+          .then((basepath: string) => {
+            const socketUri = location.protocol + '//' + location.host + '/session';
+            const socketOptions: SocketIOClient.ConnectOpts = {
+              multiplex: false,
+              path: basepath + '/socket.io',
+              transportOptions: {
+                polling: {
+                  extraHeaders: {
+                    Authorization: 'Bearer ' + accessToken,
+                  },
+                },
+              },
+              upgrade: false,
+            };
 
-        this._socket = io.connect(socketUri, socketOptions);
-        this._socket.on('connect', () => {
-          if (this._socket) {
-            this._socket.emit('start', { url });
-          }
-        });
-        this._socket.on('disconnect', () => {
-          this._socket = null;
-          this.readyState = WebSocketState.CLOSED;
-          if (this.onclose) {
-            this.onclose({ target: self });
-          }
-        });
-        this._socket.on('open', () => {
-          this.readyState = WebSocketState.OPEN;
-          if (this.onopen) {
-            this.onopen({ target: self });
-          }
-        });
-        this._socket.on('close', () => {
-          this._socket = null;
-          this.readyState = WebSocketState.CLOSED;
-          if (this.onclose) {
-            this.onclose({ target: self });
-          }
-        });
-        this._socket.on('data', (msg: any) => {
-          if (this.onmessage) {
-            this.onmessage({ target: self, data: msg.data });
-          }
-        });
+            const errorHandler = () => {
+              if (this.onerror) {
+                this.onerror({ target: self });
+              }
+            };
 
-        this._socket.on('error', errorHandler);
-        this._socket.on('connect_error', errorHandler);
-        this._socket.on('reconnect_error', errorHandler);
+            this._socket = io.connect(socketUri, socketOptions);
+            this._socket.on('connect', () => {
+              if (this._socket) {
+                this._socket.emit('start', { url });
+              }
+            });
+            this._socket.on('disconnect', () => {
+              this._socket = null;
+              this.readyState = WebSocketState.CLOSED;
+              if (this.onclose) {
+                this.onclose({ target: self });
+              }
+            });
+            this._socket.on('open', () => {
+              this.readyState = WebSocketState.OPEN;
+              if (this.onopen) {
+                this.onopen({ target: self });
+              }
+            });
+            this._socket.on('close', () => {
+              this._socket = null;
+              this.readyState = WebSocketState.CLOSED;
+              if (this.onclose) {
+                this.onclose({ target: self });
+              }
+            });
+            this._socket.on('data', (msg: any) => {
+              if (this.onmessage) {
+                this.onmessage({ target: self, data: msg.data });
+              }
+            });
+
+            this._socket.on('error', errorHandler);
+            this._socket.on('connect_error', errorHandler);
+            this._socket.on('reconnect_error', errorHandler);
+          });
       });
   }
 
