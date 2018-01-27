@@ -261,7 +261,8 @@ def run(args, gcloud_beta_compute, gcloud_repos,
         if idle_timeout else ''
     with tempfile.NamedTemporaryFile(delete=False) as startup_script_file, \
             tempfile.NamedTemporaryFile(delete=False) as user_data_file, \
-            tempfile.NamedTemporaryFile(delete=False) as for_user_file:
+            tempfile.NamedTemporaryFile(delete=False) as for_user_file, \
+            tempfile.NamedTemporaryFile(delete=False) as os_login_file:
         try:
             startup_script_file.write(create._DATALAB_STARTUP_SCRIPT.format(
                 args.image_name, create._DATALAB_NOTEBOOKS_REPOSITORY,
@@ -273,15 +274,19 @@ def run(args, gcloud_beta_compute, gcloud_repos,
             user_data_file.close()
             for_user_file.write(user_email)
             for_user_file.close()
+            os_login_file.write("FALSE")
+            os_login_file.close()
             metadata_template = (
                 'startup-script={0},' +
                 'user-data={1},' +
-                'for-user={2}')
+                'for-user={2},' +
+                'enable-oslogin={3}')
             metadata_from_file = (
                 metadata_template.format(
                     startup_script_file.name,
                     user_data_file.name,
-                    for_user_file.name))
+                    for_user_file.name,
+                    os_login_file.name))
             cmd.extend([
                 '--format=none',
                 '--boot-disk-size=20GB',
@@ -304,6 +309,7 @@ def run(args, gcloud_beta_compute, gcloud_repos,
             os.remove(startup_script_file.name)
             os.remove(user_data_file.name)
             os.remove(for_user_file.name)
+            os.remove(os_login_file.name)
 
     if (not args.no_connect) and (not args.for_user):
         connect.connect(args, gcloud_beta_compute, email, in_cloud_shell)
