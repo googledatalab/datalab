@@ -85,6 +85,9 @@ fi
 # Verify that we can write to the /tmp directory
 check_tmp_directory
 
+# Make sure widgets notebook extension is installed correctly at /content/.juptyer after docker volume mount.
+jupyter nbextension enable --py widgetsnbextension
+
 # Make sure the notebooks directory exists
 mkdir -p /content/datalab/notebooks
 
@@ -97,7 +100,7 @@ if [ -d /content/datalab/docs ]; then
   if [ -d /content/datalab/docs/.git ]; then
     git fetch origin master; git reset --hard origin/master
   else
-    git init; git remote add origin https://github.com/googledatalab/notebooks.git; git fetch origin; 
+    git init; git remote add origin https://github.com/googledatalab/notebooks.git; git fetch origin;
   fi
   popd
 else
@@ -106,7 +109,7 @@ fi
 (cd /content/datalab/docs; git config core.sparsecheckout true; echo $'intro/\nsamples/\ntutorials/\n*.ipynb\n' > .git/info/sparse-checkout; git checkout master)
 } || echo "Fetching tutorials and samples failed."
 
-# Run the user's custom extension script if it exists. To avoid platform issues with 
+# Run the user's custom extension script if it exists. To avoid platform issues with
 # execution permissions, line endings, etc, we create a local sanitized copy.
 if [ -f /content/datalab/.config/startup.sh ]
 then
