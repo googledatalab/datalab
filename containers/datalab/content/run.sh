@@ -85,7 +85,7 @@ fi
 # Verify that we can write to the /tmp directory
 check_tmp_directory
 
-# Make sure widgets notebook extension is installed correctly at /content/.juptyer after docker volume mount.
+# Make sure widgets notebook extension is installed correctly at /content/.jupyter after the docker volume is mounted.
 jupyter nbextension enable --py widgetsnbextension
 
 # Make sure the notebooks directory exists
