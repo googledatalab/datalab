@@ -26,7 +26,7 @@ interface XhrOptions {
   method?: string;
   noCache?: boolean;
   parameters?: string | FormData;
-  successCodes?: [number];
+  successCodes?: number[];
 }
 
 /**

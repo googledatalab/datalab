@@ -19,7 +19,7 @@
  * @param show whether the notification toast should be shown or hidden. Default true.
  * @param sticky whether the notification should stick around until dismissed. Default false.
  */
-class NotificationEvent extends CustomEvent {
+class NotificationEvent extends CustomEvent<any> {
   constructor(message = '', show = true, sticky = false) {
 
     const eventInit = {
