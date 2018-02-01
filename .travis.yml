@@ -38,7 +38,7 @@ script:
 - npm install -s -q --depth 0
 - npm test
 - for i in `ls ui/broken/`; do echo ui/broken/$i; base64 ui/broken/$i; echo \"-----\"; done
-- cd ../sources/web/datalab/polymer/test
+- cd $TRAVIS_BUILD_DIR/sources/web/datalab/polymer/test
 - export DISPLAY=:99.0
 - export TEST_LOG="${HOME}/${TRAVIS_JOB_NUMBER}_npm_test.log"
 - timeout 2m bash -c "npm test -- --verbose -l chrome | tee '${TEST_LOG}'; exit ${PIPESTATUS[0]}" || grep "Tests passed" "${TEST_LOG}"
