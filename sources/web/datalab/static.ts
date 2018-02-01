@@ -256,7 +256,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
 
   console.log('static request: ' + pathname);
   // List of resources that are passed through with the same name.
-  const staticResourcesList: [string] = [
+  const staticResourcesList: string[] = [
     'appbar.html',
     'appbar.js',
     'util.js',
