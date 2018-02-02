@@ -44,7 +44,7 @@ function testNotebook(driver, path, ignoreList = [], done) {
   const notebookTitle = path.substr(path.lastIndexOf('/') + 1).slice(0, -'.ipynb'.length);
   let testComplete = false;
   return driver.get('http://localhost:8081/notebooks/' + path)
-    .then(driver.wait(until.titleIs(notebookTitle), 5000))
+    .then(driver.wait(until.titleIs(notebookTitle), 10000))
     .then(function() {
       // wait for the Datalab page to finish loading
       return driver.wait(function() {
