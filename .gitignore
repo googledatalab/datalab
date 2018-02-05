@@ -1,6 +1,5 @@
 *.ipynb_checkpoints
 .DS_Store
-package-lock.json
 build
 staging
 *.gradle
