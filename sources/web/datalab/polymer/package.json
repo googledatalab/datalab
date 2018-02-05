@@ -5,6 +5,7 @@
     "test": "test"
   },
   "scripts": {
+    "postinstall": "bower i",
     "pretranspile": "tslint *.ts components/**/*.ts modules/**/*.ts",
     "transpile": "tsc",
     "prebuild": "npm install && bower --allow-root install",
@@ -12,16 +13,17 @@
     "test": "tsc && polymer test"
   },
   "devDependencies": {
-    "@types/chai": "^4.0.1",
-    "@types/codemirror": "0.0.42",
-    "@types/gapi.auth2": "0.0.42",
+    "@types/assert": "^0.0.31",
+    "@types/chai": "^4.1.2",
+    "@types/codemirror": "^0.0.55",
+    "@types/gapi.auth2": "^0.0.46",
     "@types/gapi.client.cloudresourcemanager": "^1.0.0",
-    "@types/mocha": "^2.2.41",
-    "@types/sinon": "^2.3.7",
+    "@types/mocha": "^2.2.48",
+    "@types/sinon": "^4.1.3",
     "@types/socket.io-client": "^1.4.30",
     "bower": "^1.8.2",
-    "polymer-cli": "^1.5.7",
+    "polymer-cli": "^1.6.0",
     "tslint": "^5.7.0",
-    "typescript": "2.7.1"
+    "typescript": "^2.7.1"
   }
 }
