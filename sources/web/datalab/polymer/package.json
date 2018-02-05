@@ -19,7 +19,6 @@
     "@types/mocha": "^2.2.41",
     "@types/sinon": "^2.3.7",
     "@types/socket.io-client": "^1.4.30",
-    "assert": "^1.4.1",
     "bower": "^1.8.2",
     "polymer-cli": "^1.5.7",
     "tslint": "^5.7.0",
