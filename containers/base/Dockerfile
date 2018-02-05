@@ -15,7 +15,7 @@
 # We use different base images for GPU vs CPU Dockerfiles, so we expect
 # that the appropriate image is pulled and tagged locally.
 # CPU should use ubuntu:16.04
-# and GPU uses nvidia/cuda:8.0-cudnn6-devel-ubuntu16.04
+# and GPU uses nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
 FROM datalab-external-base-image
 MAINTAINER Google Cloud DataLab
 
@@ -89,7 +89,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir pillow==3.4.1 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir google-cloud-dataflow==2.0.0 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir h5py==2.7.1 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow==1.4.1 && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow==1.5.0 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir python-snappy==0.5.1 && \
     pip install -U --upgrade-strategy only-if-needed --no-cache-dir xgboost==0.6a2 && \
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf && \
@@ -141,7 +141,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir bs4==0.0.1 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir crcmod==1.7 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir pillow==3.4.1 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow==1.4.1 && \
+    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow==1.5.0 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir python-snappy==0.5.1 && \
     pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir xgboost==0.6a2 && \
 # Install IPython related packages with no-deps, to ensure that we don't
