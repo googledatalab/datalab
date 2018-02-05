@@ -16,7 +16,7 @@ FROM datalab-core-gpu
 MAINTAINER Google Cloud DataLab
 
 # Download and Install GPU specific packages
-RUN pip install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow-gpu==1.4.1 tflearn h5py && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow-gpu==1.4.1 tflearn h5py
+RUN pip install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow-gpu==1.5.0 tflearn h5py && \
+    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow-gpu==1.5.0 tflearn h5py
 
 
