@@ -140,7 +140,7 @@ class ItemListRow {
 /**
  * CustomEvent that gets dispatched when an item is clicked or double clicked
  */
-class ItemClickEvent extends CustomEvent {
+class ItemClickEvent extends CustomEvent<any> {
   detail: {
     index: number;
   };

@@ -130,7 +130,7 @@ write_files:
        -v /mnt/disks/datalab-pd/content:/content \
        -v /mnt/disks/datalab-pd/tmp:/tmp \
        --volume /var/lib/nvidia:/usr/local/nvidia \
-       --device /dev/nvidia0:/dev/nvidia0 \
+       {5} \
        --device /dev/nvidia-uvm:/dev/nvidia-uvm \
        --device /dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools \
        --device /dev/nvidiactl:/dev/nvidiactl \
@@ -255,6 +255,11 @@ def run(args, gcloud_beta_compute, gcloud_repos,
     console_log_level = args.log_level or "warn"
     user_email = args.for_user or email
     service_account = args.service_account or "default"
+    # We need to map all of the GPUs.
+    device_mapping = ""
+    for i in range(min(args.accelerator_count, 32)):
+        device_mapping += (" --device /dev/nvidia" + str(i) +
+                           ":/dev/nvidia" + str(i) + " ")
     # We have to escape the user's email before using it in the YAML template.
     escaped_email = user_email.replace("'", "''")
     initial_user_settings = json.dumps({"idleTimeoutInterval": idle_timeout}) \
@@ -270,7 +275,8 @@ def run(args, gcloud_beta_compute, gcloud_repos,
             startup_script_file.close()
             user_data_file.write(_DATALAB_CLOUD_CONFIG.format(
                 args.image_name, enable_backups,
-                console_log_level, escaped_email, initial_user_settings))
+                console_log_level, escaped_email, initial_user_settings,
+                device_mapping))
             user_data_file.close()
             for_user_file.write(user_email)
             for_user_file.close()

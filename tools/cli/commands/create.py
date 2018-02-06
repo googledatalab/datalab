@@ -59,6 +59,10 @@ _DATALAB_NOTEBOOKS_REPOSITORY = 'datalab-notebooks'
 
 _DATALAB_BASE_STARTUP_SCRIPT = """#!/bin/bash
 
+# First, make sure the `datalab` user exists with their
+# home directory setup correctly.
+useradd datalab
+
 PERSISTENT_DISK_DEV="/dev/disk/by-id/google-datalab-pd"
 MOUNT_DIR="/mnt/disks/datalab-pd"
 MOUNT_CMD="mount -o discard,defaults ${{PERSISTENT_DISK_DEV}} ${{MOUNT_DIR}}"

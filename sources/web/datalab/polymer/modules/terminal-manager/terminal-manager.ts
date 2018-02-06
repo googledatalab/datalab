@@ -39,7 +39,7 @@ class TerminalManager {
   /**
    * Returns a list of active terminal sessions.
    */
-  public static listTerminalsAsync(): Promise<[JupyterTerminal]> {
+  public static listTerminalsAsync(): Promise<JupyterTerminal[]> {
     return ApiManager.sendRequestAsync(ApiManager.getServiceUrl(ServiceId.TERMINALS));
   }
 
