@@ -351,6 +351,11 @@ span.autosave_status {
 /* Edit page */
 #texteditor-backdrop {
   padding: 0px;
+  height: 100%;
+}
+
+#texteditor-backdrop .CodeMirror {
+  height: 100% !important;
 }
 
 /* Terminals page */
