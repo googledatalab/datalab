@@ -258,7 +258,8 @@ def run(args, gcloud_beta_compute, gcloud_repos,
     # We need to map all of the GPUs.
     device_mapping = ""
     for i in range(min(args.accelerator_count, 32)):
-      device_mapping += " --device /dev/nvidia" + str(i) + ":/dev/nvidia" + str(i) + " "
+        device_mapping += (" --device /dev/nvidia" + str(i) +
+                           ":/dev/nvidia" + str(i) + " ")
     # We have to escape the user's email before using it in the YAML template.
     escaped_email = user_email.replace("'", "''")
     initial_user_settings = json.dumps({"idleTimeoutInterval": idle_timeout}) \
