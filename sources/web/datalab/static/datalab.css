@@ -327,6 +327,10 @@ div.end_space {
 #notebook_name:hover {
   background-color: transparent;
 }
+span.save_widget label.rename {
+  vertical-align: text-top;
+  cursor: pointer;
+}
 span.save_widget span.filename {
   margin-left: 0px;
   border: none;
