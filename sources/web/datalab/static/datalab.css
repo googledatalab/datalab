@@ -189,7 +189,7 @@ body {
   padding: 10px 20px;
 }
 #notebook-container {
-  padding: 35px;
+  padding: 10px 35px 70px 35px;
 }
 .container {
   min-width: 200px;
