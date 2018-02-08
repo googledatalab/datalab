@@ -265,7 +265,7 @@ def describe_instance(args, gcloud_compute, instance):
       instance: The name of the instance to check
     Returns:
       A tuple of the string describing the status of the instance
-      (e.g. 'RUNNING' or 'TERMINATED'), and the list of metadata items.
+      (e.g. 'RUNNING' or 'TERMINATED'), the list of metadata items and the network name.
     Raises:
       subprocess.CalledProcessError: If the `gcloud` call fails
       ValueError: If the result returned by gcloud is not valid JSON
@@ -278,20 +278,22 @@ def describe_instance(args, gcloud_compute, instance):
     if args.zone:
         get_cmd.extend(['--zone', args.zone])
     get_cmd.extend(
-        ['--format', 'json(status,tags.items,metadata.items)', instance])
+        ['--format', 'json(status,tags.items,metadata.items,networkInterfaces)', instance])
     with tempfile.TemporaryFile() as stdout, \
             tempfile.TemporaryFile() as stderr:
         try:
             gcloud_compute(args, get_cmd, stdout=stdout, stderr=stderr)
             stdout.seek(0)
             json_result = stdout.read().strip()
-            status_tags_and_metadata = json.loads(json_result)
-            tags = status_tags_and_metadata.get('tags', {})
+            instance_description = json.loads(json_result)
+            tags = instance_description.get('tags', {})
             _check_datalab_tag(instance, tags)
+            network_uri = instance_description.get('networkInterfaces', [{}])[0].get('network', '')
+            network_name = network_uri.split("/")[-1]
 
-            status = status_tags_and_metadata.get('status', 'UNKNOWN')
-            metadata = status_tags_and_metadata.get('metadata', {})
-            return (status, flatten_metadata(metadata))
+            status = instance_description.get('status', 'UNKNOWN')
+            metadata = instance_description.get('metadata', {})
+            return (status, flatten_metadata(metadata), network_name)
         except subprocess.CalledProcessError:
             if args.zone:
                 stderr.seek(0)
@@ -302,7 +304,7 @@ def describe_instance(args, gcloud_compute, instance):
                     args, gcloud_compute, instance=instance)
                 return describe_instance(
                     args, gcloud_compute, instance)
-    return ('UNKNOWN', [])
+    return ('UNKNOWN', [], '')
 
 
 def instance_notebook_disk(args, gcloud_compute, instance):
