@@ -253,6 +253,7 @@ def add_sub_parser(subcommand, command_config, subparsers, prog):
     subcommand_parser.add_argument(
         '--quiet',
         dest='quiet',
+        default=None,
         action='store_true',
         help='do not issue any interactive prompts')
     subcommand_parser.add_argument(
@@ -260,14 +261,13 @@ def add_sub_parser(subcommand, command_config, subparsers, prog):
         dest='verbosity',
         choices=['debug', 'info', 'default',
                  'warning', 'error', 'critical', 'none'],
-        default='default',
+        default=None,
         help='Override the default output verbosity for this command.')
-    if command_config['require-zone']:
-        subcommand_parser.add_argument(
-            '--zone',
-            dest='zone',
-            default=None,
-            help=_ZONE_HELP)
+    subcommand_parser.add_argument(
+        '--zone',
+        dest='zone',
+        default=None,
+        help=_ZONE_HELP)
 
 
 def run():
@@ -277,22 +277,24 @@ def run():
         prog=prog, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument(
         '--project',
-        dest='project',
+        dest='top_level_project',
+        metavar='project',
         default=None,
         help=_PROJECT_HELP)
     parser.add_argument(
         '--zone',
-        dest='zone',
+        dest='top_level_zone',
+        metavar='zone',
         default=None,
         help=_ZONE_HELP)
     parser.add_argument(
         '--quiet',
-        dest='quiet',
+        dest='top_level_quiet',
         action='store_true',
         help='do not issue any interactive prompts')
     parser.add_argument(
         '--verbosity',
-        dest='verbosity',
+        dest='top_level_verbosity',
         choices=['debug', 'info', 'default',
                  'warning', 'error', 'critical', 'none'],
         default='default',
@@ -312,6 +314,14 @@ def run():
                        beta_subparsers, prog)
 
     args = parser.parse_args()
+    if args.project is None:
+        args.project = args.top_level_project
+    if args.quiet is None:
+        args.quiet = args.top_level_quiet
+    if args.verbosity is None:
+        args.verbosity = args.top_level_verbosity
+    if args.zone is None:
+        args.zone = args.top_level_zone
     compute = gcloud_compute
     gcloud_zone = ""
     if args.subcommand == 'beta':
