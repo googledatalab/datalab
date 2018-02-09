@@ -268,6 +268,12 @@ def add_sub_parser(subcommand, command_config, subparsers, prog):
         dest='zone',
         default=None,
         help=_ZONE_HELP)
+    subcommand_parser.add_argument(
+        '--diagnose-me',
+        dest='diagnose_me',
+        default=None,
+        action='store_true',
+        help='Print additional information for diagnosing issues.')
 
 
 def run():
@@ -299,6 +305,11 @@ def run():
                  'warning', 'error', 'critical', 'none'],
         default='default',
         help='Override the default output verbosity for this command.')
+    parser.add_argument(
+        '--diagnose-me',
+        dest='top_level_diagnose_me',
+        action='store_true',
+        help='Print additional information for diagnosing issues.')
 
     subparsers = parser.add_subparsers(dest='subcommand')
     for subcommand in _SUBCOMMANDS:
@@ -314,6 +325,7 @@ def run():
                        beta_subparsers, prog)
 
     args = parser.parse_args()
+    compute = gcloud_compute
     if args.project is None:
         args.project = args.top_level_project
     if args.quiet is None:
@@ -322,7 +334,15 @@ def run():
         args.verbosity = args.top_level_verbosity
     if args.zone is None:
         args.zone = args.top_level_zone
-    compute = gcloud_compute
+    if args.diagnose_me is None:
+        args.diagnose_me = args.top_level_diagnose_me
+    if args.diagnose_me:
+        if args.verbosity is 'default':
+            args.verbosity = 'debug'
+        print('Running with diagnostic messages enabled')
+        print('Using the command "{}" to invoke gcloud'.format(gcloud_cmd))
+        print('The installed gcloud version is:')
+        subprocess.check_call([gcloud_cmd, 'version'])
     gcloud_zone = ""
     if args.subcommand == 'beta':
         subcommand = _BETA_SUBCOMMANDS[args.beta_subcommand]
