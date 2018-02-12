@@ -358,9 +358,15 @@ def run():
             in_cloud_shell=('DEVSHELL_CLIENT_PORT' in os.environ),
             gcloud_zone=gcloud_zone)
     except subprocess.CalledProcessError as e:
-        print('A nested call to gcloud failed.')
-        print('Command: ["' + '","'.join(e.cmd) + '"]')
-        print('Return code: '+ str(e.returncode))
+        if utils.print_debug_messages(args):
+            print('A nested call to gcloud failed.')
+            print('Command: ["' + '","'.join(e.cmd) + '"]')
+            print('Return code: '+ str(e.returncode))
+            if e.output:
+                print('Output: ' +str(e.output))
+        else:
+            print('A nested call to gcloud failed, '
+                  'use --verbosity=debug for more info.')
     except Exception as e:
         if utils.print_debug_messages(args):
             traceback.print_exc(e)
