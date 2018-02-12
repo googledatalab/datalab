@@ -23,11 +23,16 @@ steps:
   id:   'pushConfigLocal'
   waitFor: ['catConfigLocal']
 
-# Push a tarball of the CLI
+# Validate and push a tarball of the CLI
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: '/usr/bin/env'
+  args: ['python', 'tools/cli/tests/end-to-end.py']
+  id:   'testCLI'
 - name: 'debian'
   args: ['tar', '-cvzf', '/workspace/datalab-cli-${REVISION_ID}.tgz',
          '--transform', 's,^tools/cli,datalab,', 'tools/cli']
   id:   'createTarball'
+  waitFor: ['testCLI']
 - name: 'gcr.io/cloud-builders/gsutil'
   args: ['cp',
          '/workspace/datalab-cli-${REVISION_ID}.tgz',
