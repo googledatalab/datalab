@@ -101,7 +101,6 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         six==1.11.0 \
         statsmodels==0.6.1 \
         sympy==0.7.6.1 \
-        tensorflow==1.4.0 \
         tornado==4.4.2 \
         xgboost==0.6a2 && \
 # Install Python2 packages that aren't available or up-to-date in Conda.
@@ -111,9 +110,8 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         bs4==0.0.1 \
         ggplot==0.6.8 \
         google-cloud-dataflow==2.0.0 \
-        lime==0.1.1.23 && \
-# Install Python2 IPython kernel
-    python -m ipykernel install && \
+        lime==0.1.1.23 \
+        tensorflow==1.5.0 && \
     source deactivate && \
 # Clean up before setting up the Python3 env.
     conda clean -tipsy && \
@@ -155,7 +153,6 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         six==1.11.0 \
         statsmodels==0.6.1 \
         sympy==0.7.6.1 \
-        tensorflow==1.4.0 \
         tornado==4.4.2 \
         xgboost==0.6a2 && \
 # Install Python3 packages that aren't available or up-to-date in Conda.
@@ -164,9 +161,15 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         apache-airflow==1.9.0 \
         bs4==0.0.1 \
         ggplot==0.6.8 \
-        lime==0.1.1.23 && \
+        lime==0.1.1.23 \
+        tensorflow==1.5.0 && \
 # Install Python3 IPython kernel
-    python -m ipykernel install && \
+    #python -m ipykernel install && \
+    source deactivate && \
+    # Install Python2 IPython kernel within the Python3 Jupyter directory since
+    # we will be running Jupyter from the Python3 conda env.
+    source activate $PYTHON_2_ENV && \
+    python -m ipykernel install --prefix=/usr/local/envs/py3env && \
     source deactivate && \
 # Clean up Python packages
     conda clean -tipsy && \
@@ -256,3 +259,10 @@ RUN if [ -d /datalab/lib/pydatalab/.git ]; then \
     cp -R /usr/local/share/jupyter/nbextensions/gcpdatalab/* /datalab/nbconvert && \
     ln -s $DATALAB_CONDA_DIR/envs/$PYTHON_3_ENV/lib/python3.5/site-packages/notebook/static/custom/custom.css /datalab/nbconvert/custom.css
 
+COPY config/py2-kernel.json $DATALAB_CONDA_DIR/envs/$PYTHON_3_ENV/share/jupyter/kernels/python2/kernel.json
+COPY config/py3-kernel.json $DATALAB_CONDA_DIR/envs/$PYTHON_3_ENV/share/jupyter/kernels/python3/kernel.json
+COPY config/py2-kernel-startup.sh $DATALAB_CONDA_DIR/envs/$PYTHON_3_ENV/share/jupyter/kernels/python2/kernel-startup.sh
+COPY config/py3-kernel-startup.sh $DATALAB_CONDA_DIR/envs/$PYTHON_3_ENV/share/jupyter/kernels/python3/kernel-startup.sh
+
+RUN chmod 755 $DATALAB_CONDA_DIR/envs/$PYTHON_3_ENV/share/jupyter/kernels/python2/kernel-startup.sh && \
+    chmod 755 $DATALAB_CONDA_DIR/envs/$PYTHON_3_ENV/share/jupyter/kernels/python3/kernel-startup.sh
