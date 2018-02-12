@@ -361,9 +361,9 @@ def run():
         if utils.print_debug_messages(args):
             print('A nested call to gcloud failed.')
             print('Command: ["' + '","'.join(e.cmd) + '"]')
-            print('Return code: '+ str(e.returncode))
+            print('Return code: ' + str(e.returncode))
             if e.output:
-                print('Output: ' +str(e.output))
+                print('Output: ' + str(e.output))
         else:
             print('A nested call to gcloud failed, '
                   'use --verbosity=debug for more info.')
