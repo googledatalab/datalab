@@ -57,7 +57,7 @@ class DatalabInstance(object):
                '--zone', self.zone,
                '--verbosity', 'debug',
                'create', '--no-connect',
-               '--network-name', self.network, 
+               '--network-name', self.network,
                self.name]
         print('Creating the instance "{}" with the command "{}"'.format(
             self.name, ' '.join(cmd)))
@@ -74,8 +74,8 @@ class DatalabInstance(object):
             self.name, ' '.join(cmd)))
         subprocess.check_output(cmd)
         delete_firewall_cmd = ['gcloud', 'compute', 'firewall-rules', 'delete',
-                              '--project', self.project,
-                              '--quiet', '{}-allow-ssh'.format(self.network)]
+                               '--project', self.project,
+                               '--quiet', '{}-allow-ssh'.format(self.network)]
         print('Deleting the firewall for "{}" with the command "{}"'.format(
             self.network, ' '.join(delete_firewall_cmd)))
         subprocess.check_output(delete_firewall_cmd)
