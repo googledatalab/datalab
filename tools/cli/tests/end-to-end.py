@@ -46,6 +46,8 @@ class DatalabInstance(object):
         self.project = project
         self.zone = zone
         name_suffix = generate_unique_id()
+        self.network = "test-network-{0}-{1}".format(
+            test_run_id, name_suffix)
         self.name = "test-instance-{0}-{1}".format(
             test_run_id, name_suffix)
 
@@ -53,6 +55,7 @@ class DatalabInstance(object):
         cmd = ['python', '-u', './tools/cli/datalab.py', '--quiet',
                '--project', self.project,
                '--zone', self.zone,
+               '--network-name', self.network, 
                '--verbosity', 'debug',
                'create', '--no-connect', self.name]
         print('Creating the instance "{}" with the command "{}"'.format(
@@ -70,6 +73,12 @@ class DatalabInstance(object):
         print('Deleting the instance "{}" with the command "{}"'.format(
             self.name, ' '.join(cmd)))
         subprocess.check_output(cmd)
+        delete_network_cmd = ['gcloud', 'compute', 'networks', 'delete',
+                              '--project', self.project,
+                              '--quiet', self.network]
+        subprocess.check_output(delete_network_cmd)
+        print('Deleting the network "{}" with the command "{}"'.format(
+            self.network, ' '.join(delete_network_cmd)))
 
     def status(self):
         cmd = ['python', '-u', './tools/cli/datalab.py', '--quiet',
