@@ -26,6 +26,7 @@ import json
 import os
 import subprocess
 import traceback
+import urllib2
 
 
 _SUBCOMMANDS = {
@@ -113,12 +114,42 @@ sdk_core_component = 'Google Cloud SDK'
 datalab_component = 'datalab'
 
 
+# Public file reporting all known version issues.
+version_issues_url = (
+    'https://storage.googleapis.com/cloud-datalab/version-issues.js')
+
+
 try:
     with open(os.devnull, 'w') as dn:
         subprocess.call(['gcloud', '--version'], stderr=dn, stdout=dn)
     gcloud_cmd = 'gcloud'
 except Exception:
     gcloud_cmd = 'gcloud.cmd'
+
+
+def report_known_issues(sdk_version, datalab_version):
+    try:
+        version_issues_resp = urllib2.urlopen(version_issues_url)
+        version_issues = json.loads(version_issues_resp.read())
+    except urllib2.HTTPError as e:
+        print('Error downloading the version information: {}'.format(e))
+        return
+
+    sdk_issues = version_issues.get(sdk_core_component, {})
+    known_sdk_issues = sdk_issues.get(sdk_version, [])
+    if known_sdk_issues:
+        print('You are using Cloud SDK version "{}", '
+              'which has the following known issues:\n\t{}'.format(
+                  sdk_version,
+                  '\n\t'.join(known_sdk_issues)))
+    datalab_issues = version_issues.get(datalab_component, {})
+    known_datalab_issues = datalab_issues.get(datalab_version, [])
+    if known_datalab_issues:
+        print('You are using the Datalab CLI version "{}", '
+              'which has the following known issues:\n\t{}'.format(
+                  datalab_version,
+                  '\n\t'.join(known_datalab_issues)))
+    return
 
 
 def add_gcloud_verbosity_flag(args, gcloud_cmd):
@@ -360,6 +391,9 @@ def run():
         print('The installed gcloud version is:'
               '\n\tCloud SDK: {}\n\tDatalab: {}'.format(
                   sdk_version, datalab_version))
+
+    if utils.print_warning_messages(args):
+        report_known_issues(sdk_version, datalab_version)
 
     gcloud_zone = ""
     if args.subcommand == 'beta':

@@ -368,6 +368,18 @@ def maybe_prompt_for_zone(args, gcloud_compute, instance):
     return
 
 
+def print_warning_messages(args):
+    """Return whether or not warning messages should be printed.
+
+    Args:
+      args: The Namespace instance returned by argparse
+    Returns:
+      True iff the verbosity has been set to a level that includes
+          warning messages.
+    """
+    return args.verbosity in ['debug', 'info', 'default', 'warning']
+
+
 def print_info_messages(args):
     """Return whether or not info messages should be printed.
 
