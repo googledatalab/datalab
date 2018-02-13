@@ -212,7 +212,8 @@ def flags(parser):
 
 
 def run(args, gcloud_beta_compute, gcloud_repos,
-        email='', in_cloud_shell=False, gcloud_zone=None, **kwargs):
+        email='', in_cloud_shell=False, gcloud_zone=None,
+        sdk_version='UNKNOWN', datalab_version='UNKNOWN', **kwargs):
     """Implementation of the `datalab create` subcommand.
 
     Args:
@@ -224,6 +225,8 @@ def run(args, gcloud_beta_compute, gcloud_repos,
       in_cloud_shell: Whether or not the command is being run in the
         Google Cloud Shell
       gcloud_zone: The zone that gcloud is configured to use
+      sdk_version: The version of the Cloud SDK being used
+      datalab_version: The version of the datalab CLI being used
     Raises:
       subprocess.CalledProcessError: If a nested `gcloud` calls fails
     """
@@ -267,7 +270,9 @@ def run(args, gcloud_beta_compute, gcloud_repos,
     with tempfile.NamedTemporaryFile(delete=False) as startup_script_file, \
             tempfile.NamedTemporaryFile(delete=False) as user_data_file, \
             tempfile.NamedTemporaryFile(delete=False) as for_user_file, \
-            tempfile.NamedTemporaryFile(delete=False) as os_login_file:
+            tempfile.NamedTemporaryFile(delete=False) as os_login_file, \
+            tempfile.NamedTemporaryFile(delete=False) as sdk_version_file, \
+            tempfile.NamedTemporaryFile(delete=False) as datalab_version_file:
         try:
             startup_script_file.write(create._DATALAB_STARTUP_SCRIPT.format(
                 args.image_name, create._DATALAB_NOTEBOOKS_REPOSITORY,
@@ -282,17 +287,25 @@ def run(args, gcloud_beta_compute, gcloud_repos,
             for_user_file.close()
             os_login_file.write("FALSE")
             os_login_file.close()
+            sdk_version_file.write(sdk_version)
+            sdk_version_file.close()
+            datalab_version_file.write(datalab_version)
+            datalab_version_file.close()
             metadata_template = (
                 'startup-script={0},' +
                 'user-data={1},' +
                 'for-user={2},' +
-                'enable-oslogin={3}')
+                'enable-oslogin={3},' +
+                'created-with-sdk-version={4},' +
+                'created-with-datalab-version={5}')
             metadata_from_file = (
                 metadata_template.format(
                     startup_script_file.name,
                     user_data_file.name,
                     for_user_file.name,
-                    os_login_file.name))
+                    os_login_file.name,
+                    sdk_version_file.name,
+                    datalab_version_file.name))
             cmd.extend([
                 '--format=none',
                 '--boot-disk-size=20GB',
@@ -316,6 +329,8 @@ def run(args, gcloud_beta_compute, gcloud_repos,
             os.remove(user_data_file.name)
             os.remove(for_user_file.name)
             os.remove(os_login_file.name)
+            os.remove(sdk_version_file.name)
+            os.remove(datalab_version_file.name)
 
     if (not args.no_connect) and (not args.for_user):
         connect.connect(args, gcloud_beta_compute, email, in_cloud_shell)

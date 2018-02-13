@@ -363,9 +363,19 @@ def run(args, gcloud_compute, email='', in_cloud_shell=False, **unused_kwargs):
     status, metadata_items = utils.describe_instance(
         args, gcloud_compute, instance)
     for_user = metadata_items.get('for-user', '')
+    sdk_version = metadata_items.get('created-with-sdk-version', 'UNKNOWN')
+    datalab_version = metadata_items.get(
+        'created-with-datalab-version', 'UNKNOWN')
     if (not args.no_user_checking) and for_user and (for_user != email):
         print(wrong_user_message_template.format(for_user, email))
         return
+
+    if args.diagnose_me:
+        print('Instance {} was created with the following '
+              'Cloud SDK component versions:'
+              '\n\tCloud SDK: {}'
+              '\n\tDatalab: {}'.format(
+                  instance, sdk_version, datalab_version))
 
     maybe_start(args, gcloud_compute, instance, status)
     connect(args, gcloud_compute, email, in_cloud_shell)

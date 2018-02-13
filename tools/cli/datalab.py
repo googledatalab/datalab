@@ -22,6 +22,7 @@ This tool is specific to the use case of running in the Google Cloud Platform.
 from commands import create, creategpu, connect, list, stop, delete, utils
 
 import argparse
+import json
 import os
 import subprocess
 import traceback
@@ -102,6 +103,14 @@ To unset the property, run:
 Alternatively, the zone can be stored in the
 environment variable CLOUDSDK_COMPUTE_ZONE.
 """)
+
+
+# Name of the core Cloud SDK component as reported by gcloud
+sdk_core_component = 'Google Cloud SDK'
+
+
+# Name of the datalab Cloud SDK component as reported by gcloud
+datalab_component = 'datalab'
 
 
 try:
@@ -336,13 +345,22 @@ def run():
         args.zone = args.top_level_zone
     if args.diagnose_me is None:
         args.diagnose_me = args.top_level_diagnose_me
+
+    gcloud_version_json = subprocess.check_output([
+        gcloud_cmd, 'version', '--format=json']).strip()
+    component_versions = json.loads(gcloud_version_json)
+    sdk_version = component_versions.get(sdk_core_component, 'UNKNOWN')
+    datalab_version = component_versions.get(datalab_component, 'UNKNOWN')
+
     if args.diagnose_me:
         if args.verbosity is 'default':
             args.verbosity = 'debug'
         print('Running with diagnostic messages enabled')
         print('Using the command "{}" to invoke gcloud'.format(gcloud_cmd))
-        print('The installed gcloud version is:')
-        subprocess.check_call([gcloud_cmd, 'version'])
+        print('The installed gcloud version is:'
+              '\n\tCloud SDK: {}\n\tDatalab: {}'.format(
+                  sdk_version, datalab_version))
+
     gcloud_zone = ""
     if args.subcommand == 'beta':
         subcommand = _BETA_SUBCOMMANDS[args.beta_subcommand]
@@ -356,7 +374,8 @@ def run():
             args, compute, gcloud_repos=gcloud_repos,
             email=get_email_address(),
             in_cloud_shell=('DEVSHELL_CLIENT_PORT' in os.environ),
-            gcloud_zone=gcloud_zone)
+            gcloud_zone=gcloud_zone,
+            sdk_version=sdk_version, datalab_version=datalab_version)
     except subprocess.CalledProcessError as e:
         if utils.print_debug_messages(args):
             print('A nested call to gcloud failed.')
