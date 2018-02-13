@@ -53,6 +53,7 @@ class DatalabInstance(object):
         cmd = ['python', '-u', './tools/cli/datalab.py', '--quiet',
                '--project', self.project,
                '--zone', self.zone,
+               '--verbosity', 'debug',
                'create', '--no-connect', self.name]
         print('Creating the instance "{}" with the command "{}"'.format(
             self.name, ' '.join(cmd)))
@@ -64,6 +65,7 @@ class DatalabInstance(object):
         cmd = ['python', '-u', './tools/cli/datalab.py', '--quiet',
                '--project', self.project,
                '--zone', self.zone,
+               '--verbosity', 'debug',
                'delete', '--delete-disk', self.name]
         print('Deleting the instance "{}" with the command "{}"'.format(
             self.name, ' '.join(cmd)))
@@ -87,6 +89,7 @@ class DatalabConnection(object):
     def __enter__(self):
         cmd = ['python', '-u', './tools/cli/datalab.py', '--quiet',
                '--project', self.project, '--zone', self.zone,
+               '--verbosity', 'debug',
                'connect', '--no-launch-browser', self.instance]
         self.process = subprocess.Popen(cmd, stdout=self.stdout)
         attempts = 0
