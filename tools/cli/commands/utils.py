@@ -15,7 +15,6 @@
 """Utility methods common to multiple commands."""
 
 import json
-import os
 import subprocess
 import sys
 import tempfile
@@ -173,11 +172,16 @@ def prompt_for_zone(args, gcloud_compute, instance=None):
             'instances', 'list', '--quiet', '--filter',
             'name={}'.format(instance), '--format', 'value(zone)']
     with tempfile.TemporaryFile() as stdout, \
-            open(os.devnull, 'w') as stderr:
-        gcloud_compute(args, list_cmd,
-                       stdout=stdout, stderr=stderr)
-        stdout.seek(0)
-        matching_zones = stdout.read().strip().splitlines()
+            tempfile.TemporaryFile() as stderr:
+        try:
+            gcloud_compute(args, list_cmd,
+                           stdout=stdout, stderr=stderr)
+            stdout.seek(0)
+            matching_zones = stdout.read().strip().splitlines()
+        except subprocess.CalledProcessError:
+            stderr.seek(0)
+            sys.stderr.write(stderr.read())
+            raise
 
     if len(matching_zones) == 1:
         # There is only one possible zone, so just return it.
