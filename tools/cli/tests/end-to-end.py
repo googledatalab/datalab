@@ -69,17 +69,22 @@ class DatalabInstance(object):
         cmd = ['python', '-u', './tools/cli/datalab.py', '--quiet',
                '--project', self.project,
                '--zone', self.zone,
-               '--verbosity', 'debug',
                'delete', '--delete-disk', self.name]
         print('Deleting the instance "{}" with the command "{}"'.format(
             self.name, ' '.join(cmd)))
         subprocess.check_output(cmd)
+        delete_firewall_cmd = ['gcloud', 'compute', 'firewall-rules', 'delete',
+                              '--project', self.project,
+                              '--quiet', '{}-allow-ssh'.format(self.network)]
+        print('Deleting the firewall for "{}" with the command "{}"'.format(
+            self.network, ' '.join(delete_firewall_cmd)))
+        subprocess.check_output(delete_firewall_cmd)
         delete_network_cmd = ['gcloud', 'compute', 'networks', 'delete',
                               '--project', self.project,
                               '--quiet', self.network]
-        subprocess.check_output(delete_network_cmd)
         print('Deleting the network "{}" with the command "{}"'.format(
             self.network, ' '.join(delete_network_cmd)))
+        subprocess.check_output(delete_network_cmd)
 
     def status(self):
         cmd = ['python', '-u', './tools/cli/datalab.py', '--quiet',
@@ -99,7 +104,6 @@ class DatalabConnection(object):
     def __enter__(self):
         cmd = ['python', '-u', './tools/cli/datalab.py', '--quiet',
                '--project', self.project, '--zone', self.zone,
-               '--verbosity', 'debug',
                'connect', '--no-launch-browser', self.instance]
         self.process = subprocess.Popen(cmd, stdout=self.stdout)
         attempts = 0
