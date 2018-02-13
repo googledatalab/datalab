@@ -54,7 +54,8 @@ class DatalabInstance(object):
                '--project', self.project,
                '--zone', self.zone,
                'create', '--no-connect', self.name]
-        print('Creating the datalab instance "{}"'.format(self.name))
+        print('Creating the instance "{}" with the command "{}"'.format(
+            self.name, ' '.join(cmd)))
         subprocess.check_output(cmd)
         print('Status of the instance: "{}"'.format(self.status()))
         return self
@@ -64,6 +65,8 @@ class DatalabInstance(object):
                '--project', self.project,
                '--zone', self.zone,
                'delete', '--delete-disk', self.name]
+        print('Deleting the instance "{}" with the command "{}"'.format(
+            self.name, ' '.join(cmd)))
         subprocess.check_output(cmd)
 
     def status(self):
