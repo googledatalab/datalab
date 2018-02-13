@@ -55,9 +55,10 @@ class DatalabInstance(object):
         cmd = ['python', '-u', './tools/cli/datalab.py', '--quiet',
                '--project', self.project,
                '--zone', self.zone,
-               '--network-name', self.network, 
                '--verbosity', 'debug',
-               'create', '--no-connect', self.name]
+               'create', '--no-connect',
+               '--network-name', self.network, 
+               self.name]
         print('Creating the instance "{}" with the command "{}"'.format(
             self.name, ' '.join(cmd)))
         subprocess.check_output(cmd)
