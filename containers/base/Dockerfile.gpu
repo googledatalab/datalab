@@ -15,8 +15,15 @@
 FROM datalab-core-gpu
 MAINTAINER Google Cloud DataLab
 
+# Needed to run "source" for switching Conda environments.
+SHELL ["/bin/bash", "-c"]
+
 # Download and Install GPU specific packages
-RUN pip install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow-gpu==1.5.0 tflearn h5py && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow-gpu==1.5.0 tflearn h5py
+RUN source activate py2env && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow-gpu==1.5.0 tflearn h5py && \
+    source deactivate && \
+    source activate py3env && \
+    pip install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow-gpu==1.5.0 tflearn h5py && \
+    source deactivate
 
 

@@ -22,7 +22,7 @@
     "--NotebookApp.allow_origin=\"*\"",
     "--NotebookApp.log_format=\"%(message)s\"",
     "--NotebookApp.token=",
-    "--Session.key=\"\"",
+    "--Session.key=b'\"\"'",
     "--Session.keyfile=\"\"",
     "--ContentsManager.untitled_directory=\"Untitled Folder\"",
     "--ContentsManager.untitled_file=\"Untitled File\"",

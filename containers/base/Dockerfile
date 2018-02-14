@@ -23,153 +23,163 @@ MAINTAINER Google Cloud DataLab
 EXPOSE 8080
 
 # Path configuration
-ENV PATH $PATH:/tools/node/bin:/tools/google-cloud-sdk/bin
-ENV PYTHONPATH /env/python
+ENV DATALAB_CONDA_DIR /usr/local
+ENV PATH $PATH:/tools/node/bin:/tools/google-cloud-sdk/bin:$DATALAB_CONDA_DIR/bin
+
+ENV PYTHON_2_ENV py2env
+ENV PYTHON_3_ENV py3env
+
+# Needed to run "source" for switching Conda environments.
+SHELL ["/bin/bash", "-c"]
 
 # Setup OS and core packages
 RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sources.list && \
     apt-get update -y && \
     apt-get install -y -q debian-archive-keyring debian-keyring && \
     apt-get update -y && \
-    apt-get install --no-install-recommends -y -q python unzip ca-certificates build-essential \
-    libatlas-base-dev liblapack-dev gfortran libpng-dev libfreetype6-dev libxft-dev libxml2-dev \
-    libsnappy-dev python-dev python-setuptools python-zmq openssh-client wget curl git \
-    pkg-config zip && \
-    easy_install pip && \
+    apt-get install --no-install-recommends -y -q \
+        build-essential \
+        ca-certificates \
+        curl \
+        git \
+        locales \
+        openssh-client \
+        pkg-config \
+        unzip \
+        wget \
+        zip && \
     mkdir -p /tools && \
-
 # Save GPL source packages
     mkdir -p /srcs && \
     cd /srcs && \
     apt-get source -d wget git python-zmq ca-certificates pkg-config libpng-dev && \
-    wget --progress=dot:mega https://mirrors.kernel.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.bz2 && \
     cd / && \
-
-# Setup Python packages. Rebuilding numpy/scipy is expensive so we move this early
-# to reduce the chance that prior steps can cause changes requiring a rebuild.
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir apache-airflow==1.9.0 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir numpy==1.11.2 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir pandas==0.22.0 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir pandas-gbq==0.3.0 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir scipy==0.18.0 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir scikit-learn==0.18.2 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir scikit-image==0.13.0 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir lime==0.1.1.23 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir sympy==0.7.6.1 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir statsmodels==0.6.1 && \
-
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir tornado==4.4.2 \
-                   --upgrade-strategy only-if-needed --no-cache-dir pyzmq==16.0.2 \
-                   --upgrade-strategy only-if-needed --no-cache-dir jinja2==2.8 \
-                   --upgrade-strategy only-if-needed --no-cache-dir jsonschema==2.5.1 \
-                   --upgrade-strategy only-if-needed --no-cache-dir python-dateutil==2.5.0 \
-                   --upgrade-strategy only-if-needed --no-cache-dir pytz==2016.7 \
-                   --upgrade-strategy only-if-needed --no-cache-dir pandocfilters==1.3.0 \
-                   --upgrade-strategy only-if-needed --no-cache-dir pygments==2.1.3 \
-                   --upgrade-strategy only-if-needed --no-cache-dir argparse==1.2.1 \
-                   --upgrade-strategy only-if-needed --no-cache-dir mock==2.0.0 \
-                   --upgrade-strategy only-if-needed --no-cache-dir requests==2.9.1 \
-                   --upgrade-strategy only-if-needed --no-cache-dir oauth2client==2.2.0 \
-                   --upgrade-strategy only-if-needed --no-cache-dir httplib2==0.10.3 \
-                   --upgrade-strategy only-if-needed --no-cache-dir futures==3.0.5 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir matplotlib==1.5.3 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir ggplot==0.6.8 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir seaborn==0.7.0 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir PyYAML==3.11 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir six==1.10.0 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir ipywidgets==6.0.0 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir ipykernel==4.5.2 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir future==0.15.2 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir psutil==4.3.0 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir google-api-python-client==1.5.1  && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir plotly==1.12.5 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir nltk==3.2.1 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir bs4==0.0.1 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir crcmod==1.7 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir pillow==3.4.1 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir google-cloud-dataflow==2.0.0 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir h5py==2.7.1 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow==1.5.0 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir python-snappy==0.5.1 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir xgboost==0.6a2 && \
-    find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf && \
-
-# Python 3
-    apt-get install --no-install-recommends -y -q python3-dev && \
-# Get pip set up such that pip -> py2 and pip3 -> py3
-# And they both work.
-    wget https://bootstrap.pypa.io/get-pip.py && \
-    python3 ./get-pip.py && \
-    python ./get-pip.py --force-reinstall && \
-    rm ./get-pip.py && \
-
-# Install other Python 3 packages
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir apache-airflow==1.9.0 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir numpy==1.11.2 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir pandas==0.22.0 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir pandas-gbq==0.3.0 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir scipy==0.18.0 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir scikit-learn==0.18.2 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir scikit-image==0.13.0 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir lime==0.1.1.23 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir sympy==0.7.6.1 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir statsmodels==0.6.1 && \
-
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir tornado==4.4.2 \
-                   --upgrade-strategy only-if-needed --no-cache-dir pyzmq==16.0.2 \
-                   --upgrade-strategy only-if-needed --no-cache-dir jinja2==2.8 \
-                   --upgrade-strategy only-if-needed --no-cache-dir jsonschema==2.5.1 \
-                   --upgrade-strategy only-if-needed --no-cache-dir python-dateutil==2.5.0 \
-                   --upgrade-strategy only-if-needed --no-cache-dir pytz==2016.7 \
-                   --upgrade-strategy only-if-needed --no-cache-dir pandocfilters==1.3.0 \
-                   --upgrade-strategy only-if-needed --no-cache-dir pygments==2.1.3 \
-                   --upgrade-strategy only-if-needed --no-cache-dir argparse==1.2.1 \
-                   --upgrade-strategy only-if-needed --no-cache-dir mock==2.0.0 \
-                   --upgrade-strategy only-if-needed --no-cache-dir requests==2.9.1 \
-                   --upgrade-strategy only-if-needed --no-cache-dir oauth2client==2.2.0 \
-                   --upgrade-strategy only-if-needed --no-cache-dir httplib2==0.10.3 \
-                   --upgrade-strategy only-if-needed --no-cache-dir futures==3.0.5 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir matplotlib==1.5.3 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir ggplot==0.6.8 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir seaborn==0.7.0 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir PyYAML==3.11 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir six==1.10.0 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir psutil==4.3.0 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir google-api-python-client==1.5.1  && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir plotly==1.12.5 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir nltk==3.2.1 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir bs4==0.0.1 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir crcmod==1.7 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir pillow==3.4.1 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir tensorflow==1.5.0 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir python-snappy==0.5.1 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir xgboost==0.6a2 && \
-# Install IPython related packages with no-deps, to ensure that we don't
-# Overwrite the python 2 version of jupyter with the python 3 version.
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir ipywidgets==6.0.0 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir notebook==4.2.3 && \
-    pip3 install -U --upgrade-strategy only-if-needed --no-cache-dir ipykernel==4.5.2 && \
-    find /usr/local/lib/python3.4 -type d -name tests | xargs rm -rf && \
-
-# Install python2 version of notebook after the python3 version, so that we
-# default to using python 2.
-# Install notebook after ipywidgets, and keep it pinned to 4.2.3, higher versions may
-# not work well with datalab. For example, kernel gateway doesn't work with 4.3.0 notebook
-# (https://github.com/googledatalab/datalab/issues/1083)
-    pip install -U --force-reinstall --no-deps --no-cache-dir notebook==4.2.3 && \
-    pip install -U --upgrade-strategy only-if-needed --no-cache-dir notebook==4.2.3 && \
-
-# Install the Python 2 and Python 3 kernels
-    python -m ipykernel install && \
-    python3 -m ipykernel install && \
-
-
+# Set our locale to en_US.UTF-8.
+    locale-gen en_US.UTF-8 && \
+    update-locale LANG=en_US.UTF-8 && \
+# Install MiniConda, set up Python 2.7 Conda env, and install packages.
+    wget --quiet -O ~/miniconda.sh \
+    http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh && \
+    chmod +x ~/miniconda.sh && \
+    ~/miniconda.sh -b -f -p $DATALAB_CONDA_DIR && \
+    rm ~/miniconda.sh && \
+    conda config --system --add channels conda-forge && \
+    conda config --system --set show_channel_urls true && \
+    conda update --all --quiet --yes && \
+    conda create --yes --quiet --name $PYTHON_2_ENV python=2.7 \
+        crcmod==1.7 \
+        future==0.16.0 \
+        futures==3.2.0 \
+        google-api-python-client==1.6.2 \
+        httplib2==0.10.3 \
+        h5py==2.7.1 \
+        ipykernel==4.5.2 \
+        ipywidgets==6.0.0 \
+        jinja2==2.8 \
+        jsonschema==2.6.0 \
+        matplotlib==2.1.2 \
+        mock==2.0.0 \
+        nltk==3.2.1 \
+        numpy==1.12.1 \
+        oauth2client==2.2.0 \
+        pandas-gbq==0.3.0 \
+        pandas==0.22.0 \
+        pandocfilters==1.4.2 \
+        pillow==5.0.0 \
+        plotly==1.12.5 \
+        psutil==4.3.0 \
+        pygments==2.1.3 \
+        python-dateutil==2.5.0 \
+        python-snappy==0.5.1 \
+        pytz==2016.7 \
+        pyzmq==16.0.2 \
+        requests==2.18.4 \
+        scikit-image==0.13.0 \
+        scikit-learn==0.18.2 \
+        scipy==1.0.0 \
+        seaborn==0.7.0 \
+        six==1.11.0 \
+        statsmodels==0.6.1 \
+        sympy==0.7.6.1 \
+        tornado==4.4.2 \
+        xgboost==0.6a2 && \
+# Install Python2 packages that aren't available or up-to-date in Conda.
+    source activate $PYTHON_2_ENV && \
+    pip install --quiet -U --upgrade-strategy only-if-needed --no-cache-dir \
+        apache-airflow==1.9.0 \
+        bs4==0.0.1 \
+        ggplot==0.6.8 \
+        google-cloud-dataflow==2.0.0 \
+        lime==0.1.1.23 \
+        tensorflow==1.5.0 && \
+    source deactivate && \
+# Clean up before setting up the Python3 env.
+    conda clean -tipsy && \
+# This var needs to be unset before installing the Python3 Conda env to
+# avoid subtle dependency issues.
+    unset OLDPWD && \
+# Set up Python 3.5 Conda env and install packages.
+    conda create --yes --quiet --name $PYTHON_3_ENV python=3.5 \
+        crcmod==1.7 \
+        google-api-python-client==1.6.2 \
+        httplib2==0.10.3 \
+        h5py==2.7.1 \
+        ipykernel==4.5.2 \
+        ipywidgets==6.0.0 \
+        jinja2==2.8 \
+        jsonschema==2.6.0 \
+        matplotlib==2.1.2 \
+        mock==2.0.0 \
+        nltk==3.2.1 \
+        notebook==4.4.1 \
+        numpy==1.12.1 \
+        oauth2client==2.2.0 \
+        pandas-gbq==0.3.0 \
+        pandas==0.22.0 \
+        pandocfilters==1.4.2 \
+        pillow==5.0.0 \
+        plotly==1.12.5 \
+        psutil==4.3.0 \
+        pygments==2.1.3 \
+        python-dateutil==2.5.0 \
+        python-snappy==0.5.1 \
+        pytz==2016.7 \
+        pyzmq==16.0.2 \
+        requests==2.18.4 \
+        scikit-image==0.13.0 \
+        scikit-learn==0.18.2 \
+        scipy==1.0.0 \
+        seaborn==0.7.0 \
+        six==1.11.0 \
+        statsmodels==0.6.1 \
+        sympy==0.7.6.1 \
+        tornado==4.4.2 \
+        xgboost==0.6a2 && \
+# Install Python3 packages that aren't available or up-to-date in Conda.
+    source activate $PYTHON_3_ENV && \
+    pip install --quiet -U --upgrade-strategy only-if-needed --no-cache-dir \
+        apache-airflow==1.9.0 \
+        bs4==0.0.1 \
+        ggplot==0.6.8 \
+        lime==0.1.1.23 \
+        tensorflow==1.5.0 && \
+# Install Python3 IPython kernel
+    #python -m ipykernel install && \
+    source deactivate && \
+    # Install Python2 IPython kernel within the Python3 Jupyter directory since
+    # we will be running Jupyter from the Python3 conda env.
+    source activate $PYTHON_2_ENV && \
+    python -m ipykernel install --prefix=/usr/local/envs/py3env && \
+    source deactivate && \
+# Clean up Python packages
+    conda clean -tipsy && \
+    find $DATALAB_CONDA_DIR/envs/*/lib -type d -name tests | xargs rm -rf && \
 # Setup Node.js using LTS 6.10
+    cd / && \
     mkdir -p /tools/node && \
     wget -nv https://nodejs.org/dist/v6.10.0/node-v6.10.0-linux-x64.tar.gz -O node.tar.gz && \
     tar xzf node.tar.gz -C /tools/node --strip-components=1 && \
     rm node.tar.gz && \
-
 # Setup Google Cloud SDK
 # Also apply workaround for gsutil failure brought by this version of Google Cloud.
 # (https://code.google.com/p/google-cloud-sdk/issues/detail?id=538) in final step.
@@ -181,77 +191,78 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         --disable-installation-options && \
     tools/google-cloud-sdk/bin/gcloud -q components update \
         gcloud core bq gsutil compute preview alpha beta && \
-    # disable the gcloud update message
+# Disable the gcloud update message
     tools/google-cloud-sdk/bin/gcloud config set component_manager/disable_update_check true && \
     touch /tools/google-cloud-sdk/lib/third_party/google.py && \
-
-# Set our locale to en_US.UTF-8.
-    apt-get install -y locales && \
-    locale-gen en_US.UTF-8 && \
-    update-locale LANG=en_US.UTF-8 && \
-
 # Add some unchanging bits - specifically node modules (that need to be kept in sync
 # with packages.json manually, but help save build time, by preincluding them in an
 # earlier layer).
     /tools/node/bin/npm install \
-        ws@1.1.4 \
+        bunyan@1.7.1 \
         http-proxy@1.13.2 \
         mkdirp@0.5.1 \
+        node-cache@3.2.0  \
         node-uuid@1.4.7 \
-        bunyan@1.7.1 \
         tcp-port-used@0.1.2 \
-        node-cache@3.2.0 && \
+        ws@1.1.4 && \
     cd / && \
     /tools/node/bin/npm install -g forever && \
-
 # Clean up
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /tmp/* && \
     rm -rf /root/.cache/* && \
     rm -rf /usr/share/locale/* && \
-    rm -rf /usr/share/i18n/locales/* && \
-    cd /
-
+    rm -rf /usr/share/i18n/locales/*
 
 ENV LANG en_US.UTF-8
 
-ADD config/ipython.py /etc/ipython/ipython_config.py
-ADD config/nbconvert.py /etc/jupyter/jupyter_notebook_config.py
+# Copy local configuration files
+COPY config/ipython.py /etc/ipython/ipython_config.py
+COPY config/nbconvert.py /etc/jupyter/jupyter_notebook_config.py
 
 # Directory "py" may be empty and in that case it will git clone pydatalab from repo
-ADD pydatalab /datalab/lib/pydatalab
-ADD nbconvert /datalab/nbconvert
-
-# Do IPython configuration and install build artifacts
-# Then link stuff needed for nbconvert to a location where Jinja will find it.
-# I'd prefer to just use absolute path in Jinja imports but those don't work.
-RUN ipython profile create default && \
-    jupyter notebook --generate-config
+COPY pydatalab /datalab/lib/pydatalab
+COPY nbconvert /datalab/nbconvert
 
 RUN if [ -d /datalab/lib/pydatalab/.git ]; then \
         echo "use local lib"; \
-      else \
+    else \
         git clone https://github.com/googledatalab/pydatalab.git /datalab/lib/pydatalab; \
-      fi
-RUN cd /datalab/lib/pydatalab && \
+    fi && \
+    cd /datalab/lib/pydatalab && \
     /tools/node/bin/npm install -g typescript && \
     tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts && \
     tsc --module amd --noImplicitAny --outdir google/datalab/notebook/static google/datalab/notebook/static/*.ts && \
-    /tools/node/bin/npm uninstall -g typescript
-RUN cd /datalab/lib/pydatalab && \
+    /tools/node/bin/npm uninstall -g typescript && \
+    cd /datalab/lib/pydatalab && \
+# Install Python2 pydatalab packages
+    source activate $PYTHON_2_ENV && \
     pip install --upgrade-strategy only-if-needed --no-cache-dir . && \
     pip install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/image_classification/. && \
     pip install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/structured_data/. && \
-    pip3 install --upgrade-strategy only-if-needed --no-cache-dir . && \
-    pip3 install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/image_classification/. && \
-    pip3 install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/structured_data/. && \
+    source deactivate && \
+# Install Python3 pydatalab packages and Jupyter extensions. The Datalab web app
+# will also be started from the Python3 env.
+    source activate $PYTHON_3_ENV && \
+    pip install --upgrade-strategy only-if-needed --no-cache-dir . && \
+    pip install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/image_classification/. && \
+    pip install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/structured_data/. && \
     jupyter nbextension install --py datalab.notebook && \
     jupyter nbextension install --py google.datalab.notebook && \
     jupyter nbextension enable --py widgetsnbextension && \
+    source deactivate && \
+# Clean up
     rm datalab/notebook/static/*.js google/datalab/notebook/static/*.js && \
+# Set up correct paths for nbconvert
     mkdir -p /datalab/nbconvert && \
     cp -R /usr/local/share/jupyter/nbextensions/gcpdatalab/* /datalab/nbconvert && \
-    ln -s /usr/local/lib/python2.7/dist-packages/notebook/static/custom/custom.css /datalab/nbconvert/custom.css && \
-    cd /
+    ln -s $DATALAB_CONDA_DIR/envs/$PYTHON_3_ENV/lib/python3.5/site-packages/notebook/static/custom/custom.css /datalab/nbconvert/custom.css
 
+COPY config/py2-kernel.json $DATALAB_CONDA_DIR/envs/$PYTHON_3_ENV/share/jupyter/kernels/python2/kernel.json
+COPY config/py3-kernel.json $DATALAB_CONDA_DIR/envs/$PYTHON_3_ENV/share/jupyter/kernels/python3/kernel.json
+COPY config/py2-kernel-startup.sh $DATALAB_CONDA_DIR/envs/$PYTHON_3_ENV/share/jupyter/kernels/python2/kernel-startup.sh
+COPY config/py3-kernel-startup.sh $DATALAB_CONDA_DIR/envs/$PYTHON_3_ENV/share/jupyter/kernels/python3/kernel-startup.sh
+
+RUN chmod 755 $DATALAB_CONDA_DIR/envs/$PYTHON_3_ENV/share/jupyter/kernels/python2/kernel-startup.sh && \
+    chmod 755 $DATALAB_CONDA_DIR/envs/$PYTHON_3_ENV/share/jupyter/kernels/python3/kernel-startup.sh
