@@ -1,0 +1,9 @@
+{
+ "display_name": "Python 2",
+ "language": "python",
+ "argv": [
+  "/usr/local/envs/py3env/share/jupyter/kernels/python2/kernel-startup.sh",
+  "-f",
+  "{connection_file}"
+ ]
+}
