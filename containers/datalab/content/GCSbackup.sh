@@ -139,9 +139,11 @@ echo
 echo "${timestamp}: Running GCS backup tool.." | tee -a ${log_file}
 
 # create an archive of the backup path
-archive_name=$(mktemp -d)"/archive.zip"
+tempdir="$(mktemp -d)"
+archive_name="${tempdir}/archive.zip"
+trap "rm -rf ${tempdir}" EXIT
 echo "Creating archive: $archive_name"
-zip -rq ${archive_name} "${backup_path}" || {
+zip -rq ${archive_name} "${backup_path}" -x '*/.forever/*' || {
   echo "Failed creating the backup archive" | tee -a ${log_file}
   exit 1
 }
@@ -171,13 +173,11 @@ echo "New archive md5 hash: ${new_backup_hash}"
 echo "Last backup md5 hash: ${last_backup_hash}"
 if [[ $new_backup_hash == $last_backup_hash ]]; then
   echo "Hash not different from last backup. Skipping this backup round." | tee -a $log_file
-  rm -f "${archive_name}"
   exit 0
 fi
 
 # copying backup to GCS
 gsutil cp ${archive_name} "gs://${backup_id}"
-rm -f "${archive_name}"
 
 # remove excessive backups
 all_backups=($(gsutil ls "gs://${gcs_bucket}/datalab-backups/${zone}/${machine_name}${backup_path}/${tag}-*"))
