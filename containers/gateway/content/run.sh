@@ -25,6 +25,7 @@ then
   . ~/startup.sh
 fi
 
+source activate ${PYTHON3_ENV}
 # Start the Datalab kernel gateway.
 KG_COMMAND="jupyter kernelgateway --JupyterWebsocketPersonality.list_kernels=True --KernelGatewayApp.port=8080 --KernelGatewayApp.ip=0.0.0.0"
 if [ -n "${DATALAB_NOTEBOOK}" ]; then
@@ -32,3 +33,4 @@ if [ -n "${DATALAB_NOTEBOOK}" ]; then
 fi
 
 ${KG_COMMAND}
+source deactivate

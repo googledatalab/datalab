@@ -31,3 +31,7 @@ export ZONE=${ZONE:-`gcloud config list -q --format 'value(compute.zone)' 2> /de
 export DATALAB_GIT_AUTHOR=${DATALAB_GIT_AUTHOR:-`gcloud auth list --format 'value(account)' --filter 'status:ACTIVE'`}
 git config --global user.email "${DATALAB_GIT_AUTHOR}"
 git config --global user.name "${DATALAB_GIT_AUTHOR}"
+
+# This is the name of the Python3 Conda environment which must be activated
+# before issuing Jupyter commands. See: datalab/containers/base/Dockerfile
+export PYTHON3_ENV="py3env"
