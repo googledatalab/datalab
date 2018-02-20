@@ -28,7 +28,8 @@
     "polymer-decorators": "Polymer/polymer-decorators#^0.1.2",
     "socket.io-client": "^2.0.3",
     "webcomponentsjs": "webcomponents/webcomponentsjs#^1.0.0-rc.9",
-    "xterm.js": "^2.7.0"
+    "xterm.js": "^2.7.0",
+    "web-animations-js": "^2.3.1"
   },
   "devDependencies": {
     "web-component-tester": "^6.5.0"
