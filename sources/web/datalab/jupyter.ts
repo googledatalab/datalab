@@ -149,7 +149,7 @@ function createJupyterServerAtPort(port: number, userId: string, userDir: string
     env: notebookEnv
   };
 
-  server.childProcess = childProcess.spawn('jupyter', processArgs, processOptions);
+  server.childProcess = childProcess.spawn('nice', '--10', 'jupyter', processArgs, processOptions);
   server.childProcess.on('exit', exitHandler);
   logging.getLogger().info('Jupyter process for user %s started with pid %d and args %j',
                            userId, server.childProcess.pid, processArgs);
