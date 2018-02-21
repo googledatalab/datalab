@@ -80,7 +80,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         matplotlib==2.1.2 \
         mock==2.0.0 \
         nltk==3.2.1 \
-        numpy==1.12.1 \
+        numpy==1.14.0 \
         oauth2client==2.2.0 \
         pandas-gbq==0.3.0 \
         pandas==0.22.0 \
@@ -95,11 +95,11 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         pyzmq==16.0.2 \
         requests==2.18.4 \
         scikit-image==0.13.0 \
-        scikit-learn==0.18.2 \
+        scikit-learn==0.19.1 \
         scipy==1.0.0 \
         seaborn==0.7.0 \
         six==1.11.0 \
-        statsmodels==0.6.1 \
+        statsmodels==0.8.0 \
         sympy==0.7.6.1 \
         tornado==4.4.2 \
         xgboost==0.6a2 && \
@@ -132,7 +132,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         mock==2.0.0 \
         nltk==3.2.1 \
         notebook==4.4.1 \
-        numpy==1.12.1 \
+        numpy==1.14.0 \
         oauth2client==2.2.0 \
         pandas-gbq==0.3.0 \
         pandas==0.22.0 \
@@ -147,11 +147,11 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         pyzmq==16.0.2 \
         requests==2.18.4 \
         scikit-image==0.13.0 \
-        scikit-learn==0.18.2 \
+        scikit-learn==0.19.1 \
         scipy==1.0.0 \
         seaborn==0.7.0 \
         six==1.11.0 \
-        statsmodels==0.6.1 \
+        statsmodels==0.8.0 \
         sympy==0.7.6.1 \
         tornado==4.4.2 \
         xgboost==0.6a2 && \
