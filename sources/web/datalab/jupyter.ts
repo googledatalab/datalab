@@ -149,9 +149,10 @@ function createJupyterServerAtPort(port: number, userId: string, userDir: string
     env: notebookEnv
   };
 
-  //var niceArgs = ['--10', 'jupyter']
-  //processArgs = niceArgs.concat(processArgs)
-  server.childProcess = childProcess.spawn('jupyter', processArgs, processOptions);
+  // We run jupyter at a higher priority (nice "-10") than other processes.
+  var niceArgs = ['--10', 'jupyter']
+  processArgs = niceArgs.concat(processArgs)
+  server.childProcess = childProcess.spawn('nice', processArgs, processOptions);
   server.childProcess.on('exit', exitHandler);
   logging.getLogger().info('Jupyter process for user %s started with pid %d and args %j',
                            userId, server.childProcess.pid, processArgs);
