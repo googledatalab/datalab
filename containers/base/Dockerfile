@@ -72,7 +72,6 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         futures==3.2.0 \
         google-api-python-client==1.6.2 \
         httplib2==0.10.3 \
-        h5py==2.7.1 \
         ipykernel==4.5.2 \
         ipywidgets==6.0.0 \
         jinja2==2.8 \
@@ -111,7 +110,8 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         ggplot==0.6.8 \
         google-cloud-dataflow==2.0.0 \
         lime==0.1.1.23 \
-        tensorflow==1.5.0 && \
+        tensorflow==1.5.0 \
+        h5py==2.7.1 && \
     source deactivate && \
 # Clean up before setting up the Python3 env.
     conda clean -tipsy && \
@@ -123,7 +123,6 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         crcmod==1.7 \
         google-api-python-client==1.6.2 \
         httplib2==0.10.3 \
-        h5py==2.7.1 \
         ipykernel==4.5.2 \
         ipywidgets==6.0.0 \
         jinja2==2.8 \
@@ -162,7 +161,10 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         bs4==0.0.1 \
         ggplot==0.6.8 \
         lime==0.1.1.23 \
-        tensorflow==1.5.0 && \
+        tensorflow==1.5.0 \
+        h5py==2.7.1 && \
+# Make pip3 a copy of pip for the Python 3 environment.
+    cp /usr/local/envs/py3env/bin/pip /usr/local/envs/py3env/bin/pip3 && \
 # Install Python3 IPython kernel
     #python -m ipykernel install && \
     source deactivate && \
