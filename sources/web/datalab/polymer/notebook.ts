@@ -172,7 +172,7 @@ async function processMessageEvent(e: MessageEvent) {
 }
 
 function sendMessageToNotebookEditor(message: IframeMessage) {
-  if (iframe) {
+  if (iframe && iframe.contentWindow) {
     iframe.contentWindow.postMessage(message, location.href);
   }
 }
