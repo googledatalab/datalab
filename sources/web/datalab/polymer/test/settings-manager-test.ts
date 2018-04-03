@@ -55,9 +55,8 @@ describe('SettingsManager', () => {
               'script element should have the expected src');
           documentHeadCalled = true;
           const fakeEvent = document.createEvent("Event");
-          if (script.onload)
-          {
-             script.onload(fakeEvent); // Resolve our promise
+          if (script.onload) {
+            script.onload(fakeEvent); // Resolve our promise
           }
         }
         return element;
