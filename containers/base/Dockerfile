@@ -63,6 +63,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     chmod +x ~/miniconda.sh && \
     ~/miniconda.sh -b -f -p $DATALAB_CONDA_DIR && \
     rm ~/miniconda.sh && \
+    conda update conda --quiet --yes && \
     conda config --system --append channels conda-forge && \
     conda config --system --set show_channel_urls true && \
     conda update --all --quiet --yes && \
