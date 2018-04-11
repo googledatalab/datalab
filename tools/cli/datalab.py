@@ -430,7 +430,7 @@ def run():
                   'use --verbosity=debug for more info.')
     except Exception as e:
         if utils.print_debug_messages(args):
-            traceback.print_exc(e)
+            traceback.print_exc()
         print(e)
 
 

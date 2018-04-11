@@ -19,13 +19,20 @@
 # test will create, connect to, and delete Datalab instances.
 
 import subprocess
+import sys
 import tempfile
 import time
 import unittest
-import urllib2
+
+try:
+    from urllib.request import urlopen
+except ImportError:
+    from urllib2 import urlopen
+
 import uuid
 
 
+python_executable = sys.executable
 connection_msg = (
     'The connection to Datalab is now open and will '
     'remain until this command is killed.')
@@ -38,7 +45,7 @@ def generate_unique_id():
 
 
 def call_gcloud(args):
-    return subprocess.check_output(['gcloud'] + args)
+    return subprocess.check_output(['gcloud'] + args).decode('utf-8')
 
 
 class DatalabInstance(object):
@@ -52,7 +59,7 @@ class DatalabInstance(object):
             test_run_id, name_suffix)
 
     def __enter__(self):
-        cmd = ['python', '-u', './tools/cli/datalab.py', '--quiet',
+        cmd = [python_executable, '-u', './tools/cli/datalab.py', '--quiet',
                '--project', self.project,
                '--zone', self.zone,
                '--verbosity', 'debug',
@@ -66,7 +73,7 @@ class DatalabInstance(object):
         return self
 
     def __exit__(self, *unused_args, **unused_kwargs):
-        cmd = ['python', '-u', './tools/cli/datalab.py', '--quiet',
+        cmd = [python_executable, '-u', './tools/cli/datalab.py', '--quiet',
                '--project', self.project,
                '--zone', self.zone,
                'delete', '--delete-disk', self.name]
@@ -87,11 +94,11 @@ class DatalabInstance(object):
         subprocess.check_output(delete_network_cmd)
 
     def status(self):
-        cmd = ['python', '-u', './tools/cli/datalab.py', '--quiet',
+        cmd = [python_executable, '-u', './tools/cli/datalab.py', '--quiet',
                '--project', self.project,
                '--zone', self.zone,
                'list', '--filter',  "(name={})".format(self.name)]
-        return subprocess.check_output(cmd)
+        return subprocess.check_output(cmd).decode('utf-8')
 
 
 class DatalabConnection(object):
@@ -102,7 +109,7 @@ class DatalabConnection(object):
         self.stdout = stdout
 
     def __enter__(self):
-        cmd = ['python', '-u', './tools/cli/datalab.py', '--quiet',
+        cmd = [python_executable, '-u', './tools/cli/datalab.py', '--quiet',
                '--project', self.project, '--zone', self.zone,
                'connect', '--no-launch-browser', self.instance]
         self.process = subprocess.Popen(cmd, stdout=self.stdout)
@@ -132,11 +139,11 @@ class TestEndToEnd(unittest.TestCase):
             self.zone, self.project))
 
     def call_datalab(self, subcommand, args):
-        cmd = ['python', '-u', './tools/cli/datalab.py', '--quiet',
+        cmd = [python_executable, '-u', './tools/cli/datalab.py', '--quiet',
                '--project', self.project,
                '--zone', self.zone, subcommand] + args
         print('Running datalab command "{}"'.format(' '.join(cmd)))
-        return subprocess.check_output(cmd)
+        return subprocess.check_output(cmd).decode('utf-8')
 
     def test_create_delete(self):
         instance_name = ""
@@ -160,7 +167,7 @@ class TestEndToEnd(unittest.TestCase):
             with tempfile.NamedTemporaryFile() as tmp:
                 with DatalabConnection(self.project, self.zone,
                                        instance.name, tmp):
-                    readme = urllib2.urlopen(readme_url)
+                    readme = urlopen(readme_url)
                     readme_contents = readme.read()
                     print('README contents returned: "{}"'.format(
                         readme_contents))

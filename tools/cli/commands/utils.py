@@ -143,11 +143,11 @@ def call_gcloud_quietly(args, gcloud_surface, cmd, report_errors=True):
             if report_errors:
                 stdout.seek(0)
                 stderr.seek(0)
-                print(stdout.read())
+                print(stdout.read().decode('utf-8'))
                 sys.stderr.write(stderr.read())
             raise
         stderr.seek(0)
-        gcloud_stderr = stderr.read()
+        gcloud_stderr = stderr.read().decode('utf-8')
         if 'WARNING' in gcloud_stderr:
             sys.stderr.write(gcloud_stderr)
     return
@@ -177,7 +177,7 @@ def prompt_for_zone(args, gcloud_compute, instance=None):
             gcloud_compute(args, list_cmd,
                            stdout=stdout, stderr=stderr)
             stdout.seek(0)
-            matching_zones = stdout.read().strip().splitlines()
+            matching_zones = stdout.read().decode('utf-8').strip().splitlines()
         except subprocess.CalledProcessError:
             stderr.seek(0)
             sys.stderr.write(stderr.read())
