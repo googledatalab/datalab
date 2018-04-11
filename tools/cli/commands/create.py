@@ -726,12 +726,18 @@ def run(args, gcloud_compute, gcloud_repos,
     escaped_email = user_email.replace("'", "''")
     initial_user_settings = json.dumps({"idleTimeoutInterval": idle_timeout}) \
         if idle_timeout else ''
-    with tempfile.NamedTemporaryFile(delete=False) as startup_script_file, \
-            tempfile.NamedTemporaryFile(delete=False) as user_data_file, \
-            tempfile.NamedTemporaryFile(delete=False) as for_user_file, \
-            tempfile.NamedTemporaryFile(delete=False) as os_login_file, \
-            tempfile.NamedTemporaryFile(delete=False) as sdk_version_file, \
-            tempfile.NamedTemporaryFile(delete=False) as datalab_version_file:
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) \
+            as startup_script_file, \
+            tempfile.NamedTemporaryFile(mode='w', delete=False) \
+            as user_data_file, \
+            tempfile.NamedTemporaryFile(mode='w', delete=False) \
+            as for_user_file, \
+            tempfile.NamedTemporaryFile(mode='w', delete=False) \
+            as os_login_file, \
+            tempfile.NamedTemporaryFile(mode='w', delete=False) \
+            as sdk_version_file, \
+            tempfile.NamedTemporaryFile(mode='w', delete=False) \
+            as datalab_version_file:
         try:
             startup_script_file.write(_DATALAB_STARTUP_SCRIPT.format(
                 args.image_name, _DATALAB_NOTEBOOKS_REPOSITORY, enable_swap))
