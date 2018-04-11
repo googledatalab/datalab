@@ -530,7 +530,7 @@ def has_unexpected_firewall_rules(args, gcloud_compute, network_name):
     with tempfile.TemporaryFile() as tf:
         gcloud_compute(args, list_cmd, stdout=tf)
         tf.seek(0)
-        matching_rules = tf.read().strip()
+        matching_rules = tf.read().decode('utf-8').strip()
         if matching_rules and (matching_rules != rule_name):
             return True
     return False
@@ -648,7 +648,7 @@ def ensure_repo_exists(args, gcloud_repos, repo_name):
     with tempfile.TemporaryFile() as tf:
         gcloud_repos(args, list_cmd, stdout=tf)
         tf.seek(0)
-        matching_repos = tf.read().strip()
+        matching_repos = tf.read().decode('utf-8').strip()
         if not matching_repos:
             try:
                 create_repo(args, gcloud_repos, repo_name)

@@ -80,18 +80,23 @@ class DatalabInstance(object):
         print('Deleting the instance "{}" with the command "{}"'.format(
             self.name, ' '.join(cmd)))
         subprocess.check_output(cmd)
-        delete_firewall_cmd = ['gcloud', 'compute', 'firewall-rules', 'delete',
-                               '--project', self.project,
-                               '--quiet', '{}-allow-ssh'.format(self.network)]
-        print('Deleting the firewall for "{}" with the command "{}"'.format(
-            self.network, ' '.join(delete_firewall_cmd)))
-        subprocess.check_output(delete_firewall_cmd)
-        delete_network_cmd = ['gcloud', 'compute', 'networks', 'delete',
+        firewalls = call_gcloud([
+            'compute', 'firewall-rules', 'list',
+            '--filter=network='+self.network,
+            '--format=value(name)']).strip().split()
+        for firewall in firewalls:
+            delete_firewall_cmd = ['compute', 'firewall-rules', 'delete',
+                                   '--project', self.project,
+                                   '--quiet', firewall]
+            print('Deleting the firewall "{}" with the command "{}"'.format(
+                firewall, ' '.join(delete_firewall_cmd)))
+            call_gcloud(delete_firewall_cmd)
+        delete_network_cmd = ['compute', 'networks', 'delete',
                               '--project', self.project,
                               '--quiet', self.network]
         print('Deleting the network "{}" with the command "{}"'.format(
             self.network, ' '.join(delete_network_cmd)))
-        subprocess.check_output(delete_network_cmd)
+        call_gcloud(delete_network_cmd)
 
     def status(self):
         cmd = [python_executable, '-u', './tools/cli/datalab.py', '--quiet',
@@ -168,7 +173,7 @@ class TestEndToEnd(unittest.TestCase):
                 with DatalabConnection(self.project, self.zone,
                                        instance.name, tmp):
                     readme = urlopen(readme_url)
-                    readme_contents = readme.read()
+                    readme_contents = readme.read().decode('utf-8')
                     print('README contents returned: "{}"'.format(
                         readme_contents))
                     self.assertIn(readme_header, readme_contents)
