@@ -14,7 +14,9 @@
 
 """Methods for implementing the `datalab delete` command."""
 
-import utils
+from __future__ import absolute_import
+
+from . import utils
 
 
 description = ("""`{0} {1}` deletes the given Datalab instance's

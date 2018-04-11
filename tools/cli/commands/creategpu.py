@@ -14,13 +14,13 @@
 
 """Methods for implementing the `datalab beta creategpu` command."""
 
+from __future__ import absolute_import
+
 import json
 import os
 import tempfile
 
-import create
-import connect
-import utils
+from . import create, connect, utils
 
 
 description = ("""`{0} {1}` creates a new Datalab instance running in a Google

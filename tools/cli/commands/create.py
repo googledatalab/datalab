@@ -14,13 +14,14 @@
 
 """Methods for implementing the `datalab create` command."""
 
+from __future__ import absolute_import
+
 import json
 import os
 import subprocess
 import tempfile
 
-import connect
-import utils
+from . import connect, utils
 
 try:
     # If we are running in Python 2, builtins is available in 'future'.
@@ -28,7 +29,7 @@ try:
 except Exception:
     # We don't want to require the installation of future, so fallback
     # to using raw_input from Py2.
-    read_input = raw_input
+    read_input = raw_input  # noqa: F821
 
 
 description = ("""`{0} {1}` creates a new Datalab instances running in a Google

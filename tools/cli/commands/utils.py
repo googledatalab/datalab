@@ -26,7 +26,7 @@ try:
 except Exception:
     # We don't want to require the installation of future, so fallback
     # to using raw_input from Py2.
-    read_input = raw_input
+    read_input = raw_input  # noqa: F821
 
 
 def prompt_for_confirmation(
@@ -288,7 +288,7 @@ def describe_instance(args, gcloud_compute, instance):
         try:
             gcloud_compute(args, get_cmd, stdout=stdout, stderr=stderr)
             stdout.seek(0)
-            json_result = stdout.read().strip()
+            json_result = stdout.read().decode('utf-8').strip()
             status_tags_and_metadata = json.loads(json_result)
             tags = status_tags_and_metadata.get('tags', {})
             _check_datalab_tag(instance, tags)
@@ -333,7 +333,7 @@ def instance_notebook_disk(args, gcloud_compute, instance):
         try:
             gcloud_compute(args, get_cmd, stdout=stdout, stderr=stderr)
             stdout.seek(0)
-            instance_json = json.loads(stdout.read().strip())
+            instance_json = json.loads(stdout.read().decode('utf-8').strip())
             disk_configs = instance_json.get('disks', [])
             for cfg in disk_configs:
                 if cfg['deviceName'] == 'datalab-pd':
