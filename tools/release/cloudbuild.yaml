@@ -27,12 +27,17 @@ steps:
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: '/usr/bin/env'
   args: ['python', 'tools/cli/tests/end-to-end.py']
-  id:   'testCLI'
+  id:   'testCLIpy2'
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: '/usr/bin/env'
+  args: ['python3', 'tools/cli/tests/end-to-end.py']
+  id:   'testCLIpy3'
+  waitFor: ['testCLIpy2']
 - name: 'debian'
   args: ['tar', '-cvzf', '/workspace/datalab-cli-${REVISION_ID}.tgz',
          '--transform', 's,^tools/cli,datalab,', 'tools/cli']
   id:   'createTarball'
-  waitFor: ['testCLI']
+  waitFor: ['testCLIpy2', 'testCLIpy3']
 - name: 'gcr.io/cloud-builders/gsutil'
   args: ['cp',
          '/workspace/datalab-cli-${REVISION_ID}.tgz',

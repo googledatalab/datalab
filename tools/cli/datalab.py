@@ -19,6 +19,8 @@
 This tool is specific to the use case of running in the Google Cloud Platform.
 """
 
+from __future__ import absolute_import
+
 from commands import create, creategpu, connect, list, stop, delete, utils
 
 import argparse
@@ -26,7 +28,11 @@ import json
 import os
 import subprocess
 import traceback
-import urllib2
+try:
+    from urllib.request import urlopen
+    from urllib.error import HTTPError
+except ImportError:
+    from urllib2 import urlopen, HTTPError
 
 
 _SUBCOMMANDS = {
@@ -129,9 +135,9 @@ except Exception:
 
 def report_known_issues(sdk_version, datalab_version):
     try:
-        version_issues_resp = urllib2.urlopen(version_issues_url)
-        version_issues = json.loads(version_issues_resp.read())
-    except urllib2.HTTPError as e:
+        version_issues_resp = urlopen(version_issues_url)
+        version_issues = json.loads(version_issues_resp.read().decode('utf-8'))
+    except HTTPError as e:
         print('Error downloading the version information: {}'.format(e))
         return
 
@@ -250,7 +256,7 @@ def get_email_address():
     """
     return subprocess.check_output([
         gcloud_cmd, 'auth', 'list', '--quiet', '--format',
-        'value(account)', '--filter', 'status:ACTIVE']).strip()
+        'value(account)', '--filter', 'status:ACTIVE']).decode('utf-8').strip()
 
 
 def get_gcloud_zone():
@@ -261,7 +267,8 @@ def get_gcloud_zone():
     """
     return subprocess.check_output([
         gcloud_cmd, 'config', 'config-helper', '--format',
-        'value(configuration.properties.compute.zone)']).strip()
+        'value(configuration.properties.compute.zone)']).decode(
+            'utf-8').strip()
 
 
 def add_sub_parser(subcommand, command_config, subparsers, prog):
@@ -352,6 +359,7 @@ def run():
         help='Print additional information for diagnosing issues.')
 
     subparsers = parser.add_subparsers(dest='subcommand')
+    subparsers.required = True
     for subcommand in _SUBCOMMANDS:
         add_sub_parser(subcommand, _SUBCOMMANDS[subcommand], subparsers, prog)
 
@@ -378,7 +386,7 @@ def run():
         args.diagnose_me = args.top_level_diagnose_me
 
     gcloud_version_json = subprocess.check_output([
-        gcloud_cmd, 'version', '--format=json']).strip()
+        gcloud_cmd, 'version', '--format=json']).decode('utf-8').strip()
     component_versions = json.loads(gcloud_version_json)
     sdk_version = component_versions.get(sdk_core_component, 'UNKNOWN')
     datalab_version = component_versions.get(datalab_component, 'UNKNOWN')
@@ -422,7 +430,7 @@ def run():
                   'use --verbosity=debug for more info.')
     except Exception as e:
         if utils.print_debug_messages(args):
-            traceback.print_exc(e)
+            traceback.print_exc()
         print(e)
 
 

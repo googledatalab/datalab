@@ -14,13 +14,14 @@
 
 """Methods for implementing the `datalab create` command."""
 
+from __future__ import absolute_import
+
 import json
 import os
 import subprocess
 import tempfile
 
-import connect
-import utils
+from . import connect, utils
 
 try:
     # If we are running in Python 2, builtins is available in 'future'.
@@ -28,7 +29,7 @@ try:
 except Exception:
     # We don't want to require the installation of future, so fallback
     # to using raw_input from Py2.
-    read_input = raw_input
+    read_input = raw_input  # noqa: F821
 
 
 description = ("""`{0} {1}` creates a new Datalab instances running in a Google
@@ -529,7 +530,7 @@ def has_unexpected_firewall_rules(args, gcloud_compute, network_name):
     with tempfile.TemporaryFile() as tf:
         gcloud_compute(args, list_cmd, stdout=tf)
         tf.seek(0)
-        matching_rules = tf.read().strip()
+        matching_rules = tf.read().decode('utf-8').strip()
         if matching_rules and (matching_rules != rule_name):
             return True
     return False
@@ -647,7 +648,7 @@ def ensure_repo_exists(args, gcloud_repos, repo_name):
     with tempfile.TemporaryFile() as tf:
         gcloud_repos(args, list_cmd, stdout=tf)
         tf.seek(0)
-        matching_repos = tf.read().strip()
+        matching_repos = tf.read().decode('utf-8').strip()
         if not matching_repos:
             try:
                 create_repo(args, gcloud_repos, repo_name)
@@ -725,12 +726,18 @@ def run(args, gcloud_compute, gcloud_repos,
     escaped_email = user_email.replace("'", "''")
     initial_user_settings = json.dumps({"idleTimeoutInterval": idle_timeout}) \
         if idle_timeout else ''
-    with tempfile.NamedTemporaryFile(delete=False) as startup_script_file, \
-            tempfile.NamedTemporaryFile(delete=False) as user_data_file, \
-            tempfile.NamedTemporaryFile(delete=False) as for_user_file, \
-            tempfile.NamedTemporaryFile(delete=False) as os_login_file, \
-            tempfile.NamedTemporaryFile(delete=False) as sdk_version_file, \
-            tempfile.NamedTemporaryFile(delete=False) as datalab_version_file:
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) \
+            as startup_script_file, \
+            tempfile.NamedTemporaryFile(mode='w', delete=False) \
+            as user_data_file, \
+            tempfile.NamedTemporaryFile(mode='w', delete=False) \
+            as for_user_file, \
+            tempfile.NamedTemporaryFile(mode='w', delete=False) \
+            as os_login_file, \
+            tempfile.NamedTemporaryFile(mode='w', delete=False) \
+            as sdk_version_file, \
+            tempfile.NamedTemporaryFile(mode='w', delete=False) \
+            as datalab_version_file:
         try:
             startup_script_file.write(_DATALAB_STARTUP_SCRIPT.format(
                 args.image_name, _DATALAB_NOTEBOOKS_REPOSITORY, enable_swap))
