@@ -166,8 +166,6 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         tensorflow==1.5.0 && \
 # Make pip3 a copy of pip for the Python 3 environment.
     cp /usr/local/envs/py3env/bin/pip /usr/local/envs/py3env/bin/pip3 && \
-# Install Python3 IPython kernel
-    #python -m ipykernel install && \
     source deactivate && \
     # Install Python2 IPython kernel within the Python3 Jupyter directory since
     # we will be running Jupyter from the Python3 conda env.

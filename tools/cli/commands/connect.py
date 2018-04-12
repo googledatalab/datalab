@@ -14,13 +14,19 @@
 
 """Methods for implementing the `datalab connect` command."""
 
+from __future__ import absolute_import
+
 import os
 import subprocess
 import threading
-import urllib2
 import webbrowser
 
-import utils
+try:
+    from urllib.request import urlopen
+except ImportError:
+    from urllib2 import urlopen
+
+from . import utils
 
 
 description = """`{0} {1}` creates a persistent connection to a
@@ -253,7 +259,7 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         print('Waiting for Datalab to be reachable at ' + datalab_address)
         while not cancelled_event.is_set():
             try:
-                health_resp = urllib2.urlopen(health_url)
+                health_resp = urlopen(health_url)
                 if health_resp.getcode() == 200:
                     healthy = True
                     break
