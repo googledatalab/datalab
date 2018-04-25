@@ -35,7 +35,7 @@ created instance. You can disable that behavior by passing in the
 _THIRD_PARTY_SOFTWARE_DIALOG = (
     """By accepting below, you will download and install the
 following third-party software onto your managed GCE instances:
-    NVidia GPU Driver: NVIDIA-Linux-x86_64-384.81""")
+    NVidia GPU Driver: NVIDIA-Linux-x86_64-390.46""")
 
 # The config for the 'cos-gpu-installer.service'
 # services comes from the 'GoogleCloudPlatform/cos-gpu-installer' project
@@ -75,7 +75,7 @@ write_files:
   permissions: 0755
   owner: root
   content: |
-    NVIDIA_DRIVER_VERSION=384.81
+    NVIDIA_DRIVER_VERSION=390.46
     COS_NVIDIA_INSTALLER_CONTAINER=gcr.io/cos-cloud/cos-gpu-installer:latest
     NVIDIA_INSTALL_DIR_HOST=/var/lib/nvidia
     NVIDIA_INSTALL_DIR_CONTAINER=/usr/local/nvidia
