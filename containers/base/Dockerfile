@@ -87,6 +87,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         pandas==0.22.0 \
         pandocfilters==1.4.2 \
         pillow==5.0.0 \
+        pip==9.0.3 \
         plotly==1.12.5 \
         psutil==4.3.0 \
         pygments==2.1.3 \
@@ -139,6 +140,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         pandas==0.22.0 \
         pandocfilters==1.4.2 \
         pillow==5.0.0 \
+        pip==9.0.3 \
         plotly==1.12.5 \
         psutil==4.3.0 \
         pygments==2.1.3 \
