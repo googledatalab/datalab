@@ -15,7 +15,7 @@
 # We use different base images for GPU vs CPU Dockerfiles, so we expect
 # that the appropriate image is pulled and tagged locally.
 # CPU should use ubuntu:16.04
-# and GPU uses nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
+# and GPU uses nvidia/cuda:9.1-cudnn7-devel-ubuntu16.04
 FROM datalab-external-base-image
 MAINTAINER Google Cloud DataLab
 
@@ -87,6 +87,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         pandas==0.22.0 \
         pandocfilters==1.4.2 \
         pillow==5.0.0 \
+        pip==9.0.3 \
         plotly==1.12.5 \
         psutil==4.3.0 \
         pygments==2.1.3 \
@@ -139,6 +140,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         pandas==0.22.0 \
         pandocfilters==1.4.2 \
         pillow==5.0.0 \
+        pip==9.0.3 \
         plotly==1.12.5 \
         psutil==4.3.0 \
         pygments==2.1.3 \
