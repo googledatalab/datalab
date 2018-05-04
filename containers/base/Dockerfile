@@ -113,6 +113,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         ggplot==0.6.8 \
         google-cloud-dataflow==2.0.0 \
         lime==0.1.1.23 \
+        protobuf==3.5.2 \
         tensorflow==1.8.0 && \
     source deactivate && \
 # Clean up before setting up the Python3 env.
@@ -165,6 +166,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         bs4==0.0.1 \
         ggplot==0.6.8 \
         lime==0.1.1.23 \
+        protobuf==3.5.2 \
         tensorflow==1.8.0 && \
 # Make pip3 a copy of pip for the Python 3 environment.
     cp /usr/local/envs/py3env/bin/pip /usr/local/envs/py3env/bin/pip3 && \
