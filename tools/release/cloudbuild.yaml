@@ -23,6 +23,11 @@ steps:
   id:   'pushConfigLocal'
   waitFor: ['catConfigLocal']
 
+# Push the checked-in version of version-issues.js
+- name: 'gcr.io/cloud-builders/gsutil'
+  args: ['cp', 'tools/release/version-issues.js', 'gs://cloud-datalab/version-issues.js']
+  id:   'pushVersionIssues'
+
 # Validate and push a tarball of the CLI
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: '/usr/bin/env'
