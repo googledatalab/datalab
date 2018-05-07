@@ -69,6 +69,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     conda update --all --quiet --yes && \
     conda create --yes --quiet --name $PYTHON_2_ENV python=2.7 \
         crcmod==1.7 \
+        dask==0.17.1 \
         future==0.16.0 \
         futures==3.2.0 \
         google-api-python-client==1.6.2 \
@@ -103,7 +104,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         six==1.11.0 \
         statsmodels==0.8.0 \
         sympy==0.7.6.1 \
-        tornado==4.4.2 \
+        tornado==4.5.1 \
         xgboost==0.6a2 && \
 # Install Python2 packages that aren't available or up-to-date in Conda.
     source activate $PYTHON_2_ENV && \
@@ -124,6 +125,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 # Set up Python 3.5 Conda env and install packages.
     conda create --yes --quiet --name $PYTHON_3_ENV python=3.5 \
         crcmod==1.7 \
+        dask==0.17.1 \
         google-api-python-client==1.6.2 \
         httplib2==0.10.3 \
         h5py==2.7.1 \
@@ -157,7 +159,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         six==1.11.0 \
         statsmodels==0.8.0 \
         sympy==0.7.6.1 \
-        tornado==4.4.2 \
+        tornado==4.5.1 \
         xgboost==0.6a2 && \
 # Install Python3 packages that aren't available or up-to-date in Conda.
     source activate $PYTHON_3_ENV && \
