@@ -18,6 +18,7 @@
 # of the bundled CLI tool. This requires a GCP project in which the
 # test will create, connect to, and delete Datalab instances.
 
+import socket
 import subprocess
 import sys
 import tempfile
@@ -36,7 +37,8 @@ python_executable = sys.executable
 connection_msg = (
     'The connection to Datalab is now open and will '
     'remain until this command is killed.')
-readme_url = 'http://localhost:8081/api/contents/datalab/docs/Readme.ipynb'
+readme_url_template = (
+    'http://localhost:{}/api/contents/datalab/docs/Readme.ipynb')
 readme_header = 'Guide to Google Cloud Datalab'
 
 
@@ -46,6 +48,14 @@ def generate_unique_id():
 
 def call_gcloud(args):
     return subprocess.check_output(['gcloud'] + args).decode('utf-8')
+
+
+def free_port():
+    auto_socket = socket.socket()
+    auto_socket.bind(('localhost', 0))
+    port_number = auto_socket.getsockname()[1]
+    auto_socket.close()
+    return port_number
 
 
 class DatalabInstance(object):
@@ -114,17 +124,22 @@ class DatalabConnection(object):
         self.stdout = stdout
 
     def __enter__(self):
+        self.port = free_port()
         cmd = [python_executable, '-u', './tools/cli/datalab.py', '--quiet',
                '--project', self.project, '--zone', self.zone,
-               'connect', '--no-launch-browser', self.instance]
+               'connect', '--no-launch-browser',
+               '--port={}'.format(self.port),
+               self.instance]
         self.process = subprocess.Popen(cmd, stdout=self.stdout)
         attempts = 0
         while attempts < 10:
             attempts += 1
             with open(self.stdout.name, "r") as written_stdout:
                 if connection_msg in written_stdout.read():
-                    return
+                    self.readme_url = readme_url_template.format(self.port)
+                    return self
             time.sleep(60)
+        return self
 
     def __exit__(self, *unused_args, **unused_kwargs):
         self.process.terminate()
@@ -171,8 +186,8 @@ class TestEndToEnd(unittest.TestCase):
             self.assertIn('TERMINATED', instance.status())
             with tempfile.NamedTemporaryFile() as tmp:
                 with DatalabConnection(self.project, self.zone,
-                                       instance.name, tmp):
-                    readme = urlopen(readme_url)
+                                       instance.name, tmp) as conn:
+                    readme = urlopen(conn.readme_url)
                     readme_contents = readme.read().decode('utf-8')
                     print('README contents returned: "{}"'.format(
                         readme_contents))
