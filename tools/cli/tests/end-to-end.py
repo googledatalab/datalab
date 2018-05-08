@@ -37,7 +37,8 @@ python_executable = sys.executable
 connection_msg = (
     'The connection to Datalab is now open and will '
     'remain until this command is killed.')
-readme_url_template = 'http://localhost:{}/api/contents/datalab/docs/Readme.ipynb'
+readme_url_template = (
+    'http://localhost:{}/api/contents/datalab/docs/Readme.ipynb')
 readme_header = 'Guide to Google Cloud Datalab'
 
 
