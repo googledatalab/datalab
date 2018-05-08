@@ -18,6 +18,7 @@
 # of the bundled CLI tool. This requires a GCP project in which the
 # test will create, connect to, and delete Datalab instances.
 
+import random
 import socket
 import subprocess
 import sys
@@ -56,6 +57,15 @@ def free_port():
     port_number = auto_socket.getsockname()[1]
     auto_socket.close()
     return port_number
+
+
+def random_zone():
+    zones_list = subprocess.check_output([
+        'gcloud', 'compute', 'zones', 'list',
+        '--filter=region~us-west', '--format=value(name)']).decode(
+            'utf-8')
+    zones = zones_list.split()
+    return random.choice(zones)
 
 
 class DatalabInstance(object):
@@ -154,7 +164,7 @@ class TestEndToEnd(unittest.TestCase):
         self.zone = call_gcloud(
             ['config', 'get-value', 'compute/zone']).strip()
         if self.zone == '':
-            self.zone = 'us-west1-a'
+            self.zone = random_zone()
         print('Testing with in the zone {} under the project {}'.format(
             self.zone, self.project))
 
