@@ -25,7 +25,7 @@ function install_node() {
 
   echo "Installing NodeJS"
   mkdir -p /tools/node
-  wget -nv https://nodejs.org/dist/v6.10.0/node-v6.10.0-linux-x64.tar.gz -O node.tar.gz
+  wget -nv https://nodejs.org/dist/v8.9.0/node-v8.9.0-linux-x64.tar.gz -O node.tar.gz
   tar xzf node.tar.gz -C /tools/node --strip-components=1
   rm node.tar.gz
   export "PATH=${PATH}:/tools/node/bin"
