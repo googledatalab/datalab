@@ -299,6 +299,12 @@ function stopVmHandler(request: http.ServerRequest, response: http.ServerRespons
 }
 
 function socketHandler(request: http.ServerRequest, socket: net.Socket, head: Buffer) {
+  // Websocket requests aren't CORS-checked by the browser. Reject any CORS requests here.
+  if (request.headers['origin']) {
+    socket.destroy();
+    return;
+  }
+
   request.url = trimBasePath(request.url);
   // Avoid proxying websocket requests on this path, as it's handled locally rather than by Jupyter.
   if (request.url != httpOverWebSocketPath) {
