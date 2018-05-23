@@ -41,18 +41,6 @@ WEB_DIR=$BUILD_DIR/web/nb
 
 mkdir -p $WEB_DIR
 
-# Experimental UI build step
-cd datalab/polymer
-npm run build
-if [[ $DEBUG == 1 ]]; then
-  rsync -avpq ./build/polymer_unbundled/ ../static/experimental
-else
-echo "Using bundled polymer resources.."
-  rsync -avpq ./build/polymer_bundled/ ../static/experimental
-fi
-cd ../..
-# End experimental UI build step
-
 # Compile the nodejs server
 cd datalab
 npm install
