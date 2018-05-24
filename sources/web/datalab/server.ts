@@ -298,7 +298,23 @@ function stopVmHandler(request: http.ServerRequest, response: http.ServerRespons
   }
 }
 
+function trimProtocol(requestPath: string) {
+  const start = requestPath.indexOf('://');
+  return start > -1 ? requestPath.slice(start + '://'.length) : requestPath;
+}
+
 function socketHandler(request: http.ServerRequest, socket: net.Socket, head: Buffer) {
+  // Websocket requests aren't CORS-checked by the browser. Reject any CORS
+  // requests here by checking their host vs origin request headers.
+  // Origin headers contain the protocol, while host headers do not, so we strip
+  // it off the origin header before matching.
+  if (request.headers.origin &&
+    trimProtocol(request.headers.origin) !== request.headers.host) {
+    logging.getLogger().error('Rejected websocket request with headers:', request.headers);
+    socket.destroy();
+    return;
+  }
+
   request.url = trimBasePath(request.url);
   // Avoid proxying websocket requests on this path, as it's handled locally rather than by Jupyter.
   if (request.url != httpOverWebSocketPath) {
