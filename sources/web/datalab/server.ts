@@ -299,8 +299,11 @@ function stopVmHandler(request: http.ServerRequest, response: http.ServerRespons
 }
 
 function socketHandler(request: http.ServerRequest, socket: net.Socket, head: Buffer) {
-  // Websocket requests aren't CORS-checked by the browser. Reject any CORS requests here.
-  if (request.headers['origin']) {
+  // Websocket requests aren't CORS-checked by the browser. Reject any CORS
+  // requests here by checking their host vs origin request headers.
+  if (request.headers.origin &&
+    request.headers.origin.replace(/^.*\/\//, '') !== request.headers.host) {
+    logging.getLogger().error('Rejected websocket request with headers:', request.headers);
     socket.destroy();
     return;
   }
