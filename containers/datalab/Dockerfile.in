@@ -24,7 +24,6 @@ RUN ln -s /datalab/web/static/datalab.css /datalab/nbconvert/datalab.css && \
     cd /datalab/web && /tools/node/bin/npm install && \
     mv /datalab/.bashrc /root/.bashrc && \
     cd / && \
-
 # Install ungit
     /tools/node/bin/npm install -g ungit@1.1.0 && \
     /tools/node/bin/npm install -s chokidar@1.6.1

@@ -15,7 +15,6 @@
 # limitations under the License.
 
 RUN_NOTEBOOK=0
-RUN_UI=0
 RUN_CLIENT_UNIT=0
 RUN_SERVER_UNIT=0
 
@@ -44,10 +43,6 @@ function parseOptions() {
         RUN_SERVER_UNIT=1
         shift
         ;;
-      --ui-tests)
-        RUN_UI=1
-        shift
-        ;;
       -*)
         echo "Uknown option '$1'"
         exit 1
@@ -59,13 +54,12 @@ function parseOptions() {
     esac
   done
 
-  if (( RUN_CLIENT_UNIT + RUN_SERVER_UNIT + RUN_NOTEBOOK + RUN_UI == 0 )); then
+  if (( RUN_CLIENT_UNIT + RUN_SERVER_UNIT + RUN_NOTEBOOK == 0 )); then
     # If no parts were specified, run all parts
     echo Run all test sections
     RUN_CLIENT_UNIT=1
     RUN_SERVER_UNIT=1
     RUN_NOTEBOOK=1
-    RUN_UI=1
   fi
 }
 
@@ -132,11 +126,6 @@ function runNotebookTests() {
   $JASMINE --config=$HERE/notebook/jasmine.json
 }
 
-function runUiTests() {
-  echo Running ui integration tests
-  $JASMINE --config=$HERE/ui/jasmine.json
-}
-
 function runClientUnitTests() {
   echo Running client unit tests
   $JASMINE --config=$HERE/client-unit/jasmine.json
@@ -165,16 +154,11 @@ function main() {
     runServerUnitTests
   fi
 
-  if (( RUN_NOTEBOOK + RUN_UI > 0 )); then
+  if (( RUN_NOTEBOOK > 0 )); then
     makeTestsHome
     cleanTestsHome
     startContainers
-    if (( RUN_NOTEBOOK > 0 )); then
-      runNotebookTests
-    fi
-    if (( RUN_UI > 0 )); then
-      runUiTests
-    fi
+    runNotebookTests
   fi
 }
 
