@@ -19,7 +19,6 @@
     "--no-browser",
     "--log-level=DEBUG",
     "--debug",
-    "--NotebookApp.allow_origin=\"*\"",
     "--NotebookApp.log_format=\"%(message)s\"",
     "--NotebookApp.token=",
     "--Session.key=b'\"\"'",
