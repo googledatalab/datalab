@@ -303,13 +303,24 @@ function trimProtocol(requestPath: string) {
   return start > -1 ? requestPath.slice(start + '://'.length) : requestPath;
 }
 
-function socketHandler(request: http.ServerRequest, socket: net.Socket, head: Buffer) {
-  // Websocket requests aren't CORS-checked by the browser. Reject any CORS
-  // requests here by checking their host vs origin request headers.
+function requestIsCrossOrigin(request: http.ServerRequest) {
   // Origin headers contain the protocol, while host headers do not, so we strip
   // it off the origin header before matching.
-  if (request.headers.origin &&
-    trimProtocol(request.headers.origin) !== request.headers.host) {
+  // Referer headers also contain the protocol, but they also contain the full
+  // pathname, so we extract the origin.
+  if (request.headers.origin) {
+    return trimProtocol(request.headers.origin) === request.headers.host;
+  } else if (request.headers.referer) {
+    return trimProtocol(new URL(request.headers.referer).origin) === request.headers.host;
+  } else {
+    return true;
+  }
+}
+
+function socketHandler(request: http.ServerRequest, socket: net.Socket, head: Buffer) {
+  // Websocket requests aren't CORS-checked by the browser. Reject any CORS
+  // requests here by checking their host vs origin/referer request headers.
+  if (!requestIsCrossOrigin(request)) {
     logging.getLogger().error('Rejected websocket request with headers:', request.headers);
     socket.destroy();
     return;
