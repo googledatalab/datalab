@@ -333,7 +333,7 @@ class SubnetException(Exception):
     _MESSAGE = (
         'Failed to find the subnet {}.'
         '\n\n'
-        'Ask a project owner to create it for you, ', 
+        'Ask a project owner to create it for you, '
         'or double check your gcloud config for the correct region.')
 
     def __init__(self, subnet_name):
