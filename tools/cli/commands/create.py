@@ -333,7 +333,8 @@ class SubnetException(Exception):
     _MESSAGE = (
         'Failed to find the subnet {}.'
         '\n\n'
-        'Ask a project owner to create it for you, or double check your gcloud config for the correct region.')
+        'Ask a project owner to create it for you, ', 
+        'or double check your gcloud config for the correct region.')
 
     def __init__(self, subnet_name):
         super(SubnetException, self).__init__(
@@ -528,7 +529,9 @@ def ensure_subnet_exists(args, gcloud_compute, subnet_name):
     Raises:
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
-    get_cmd = ['networks', 'subnets', 'describe', '--format', 'value(name)', subnet_name]
+    get_cmd = [
+        'networks', 'subnets', 'describe',
+        '--format', 'value(name)', subnet_name]
     try:
         utils.call_gcloud_quietly(
             args, gcloud_compute, get_cmd, report_errors=False)
