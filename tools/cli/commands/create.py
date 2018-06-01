@@ -44,6 +44,8 @@ created instance. You can disable that behavior by passing in the
 
 _DATALAB_NETWORK = 'datalab-network'
 _DATALAB_NETWORK_DESCRIPTION = 'Network for Google Cloud Datalab instances'
+_DATALAB_SUBNET = 'default'
+_DATALAB_SUBNET_DESCRIPTION = 'Subnet for Google Cloud Datalab instances'
 
 _DATALAB_FIREWALL_RULE_TEMPLATE = '{0}-allow-ssh'
 _DATALAB_FIREWALL_RULE_DESCRIPTION = 'Allow SSH access to Datalab instances'
@@ -326,6 +328,18 @@ class RepositoryException(Exception):
             RepositoryException._MESSAGE.format(repo_name))
 
 
+class SubnetException(Exception):
+
+    _MESSAGE = (
+        'Failed to find the subnet {}.'
+        '\n\n'
+        'Ask a project owner to create it for you.')
+
+    def __init__(self, subnet_name):
+        super(SubnetException, self).__init__(
+            SubnetException._MESSAGE.format(subnet_name))
+
+
 class CancelledException(Exception):
 
     _MESSAGE = 'Operation cancelled.'
@@ -373,6 +387,11 @@ def flags(parser):
         dest='network_name',
         default=_DATALAB_NETWORK,
         help='name of the network to which the instance will be attached.')
+    parser.add_argument(
+        '--subnet-name',
+        dest='subnet_name',
+        default=_DATALAB_SUBNET,
+        help='name of the subnet to which the instance will be attached.')
 
     parser.add_argument(
         '--idle-timeout',
@@ -496,6 +515,25 @@ def ensure_network_exists(args, gcloud_compute, network_name):
             args, gcloud_compute, get_cmd, report_errors=False)
     except subprocess.CalledProcessError:
         create_network(args, gcloud_compute, network_name)
+    return
+
+
+def ensure_subnet_exists(args, gcloud_compute, subnet_name):
+    """Check the specified subnet if it does not exit with error.
+
+    Args:
+      args: The Namespace returned by argparse
+      gcloud_compute: Function that can be used for invoking `gcloud compute`
+      subnet_name: The name of the subnet
+    Raises:
+      subprocess.CalledProcessError: If the `gcloud` command fails
+    """
+    get_cmd = ['networks', 'subnets', 'describe', '--format', 'value(name)', subnet_name]
+    try:
+        utils.call_gcloud_quietly(
+            args, gcloud_compute, get_cmd, report_errors=False)
+    except subprocess.CalledProcessError:
+        raise SubnetException(subnet_name)
     return
 
 
@@ -670,7 +708,9 @@ def prepare(args, gcloud_compute, gcloud_repos):
       subprocess.CalledProcessError: If a nested `gcloud` calls fails
     """
     network_name = args.network_name
+    subnet_name = args.subnet_name
     ensure_network_exists(args, gcloud_compute, network_name)
+    ensure_subnet_exists(args, gcloud_compute, subnet_name)
     prompt_on_unexpected_firewall_rules(args, gcloud_compute, network_name)
     ensure_firewall_rule_exists(args, gcloud_compute, network_name)
 
@@ -773,6 +813,7 @@ def run(args, gcloud_compute, gcloud_repos,
                 '--format=none',
                 '--boot-disk-size=20GB',
                 '--network', args.network_name,
+                '--subnet', args.subnet_name,
                 '--image-family', 'cos-stable',
                 '--image-project', 'cos-cloud',
                 '--machine-type', args.machine_type,
