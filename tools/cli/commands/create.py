@@ -326,6 +326,19 @@ class RepositoryException(Exception):
             RepositoryException._MESSAGE.format(repo_name))
 
 
+class SubnetException(Exception):
+
+    _MESSAGE = (
+        'Failed to find the subnet {}.'
+        '\n\n'
+        'Ask a project owner to create it for you, '
+        'or double check your gcloud config for the correct region.')
+
+    def __init__(self, subnet_name):
+        super(SubnetException, self).__init__(
+            SubnetException._MESSAGE.format(subnet_name))
+
+
 class CancelledException(Exception):
 
     _MESSAGE = 'Operation cancelled.'
@@ -373,6 +386,11 @@ def flags(parser):
         dest='network_name',
         default=_DATALAB_NETWORK,
         help='name of the network to which the instance will be attached.')
+    parser.add_argument(
+        '--subnet-name',
+        dest='subnet_name',
+        default=None,
+        help='name of the subnet to which the instance will be attached.')
 
     parser.add_argument(
         '--idle-timeout',
@@ -496,6 +514,27 @@ def ensure_network_exists(args, gcloud_compute, network_name):
             args, gcloud_compute, get_cmd, report_errors=False)
     except subprocess.CalledProcessError:
         create_network(args, gcloud_compute, network_name)
+    return
+
+
+def ensure_subnet_exists(args, gcloud_compute, subnet_name):
+    """Check the specified subnet if it does not exit with error.
+
+    Args:
+      args: The Namespace returned by argparse
+      gcloud_compute: Function that can be used for invoking `gcloud compute`
+      subnet_name: The name of the subnet
+    Raises:
+      subprocess.CalledProcessError: If the `gcloud` command fails
+    """
+    get_cmd = [
+        'networks', 'subnets', 'describe',
+        '--format', 'value(name)', subnet_name]
+    try:
+        utils.call_gcloud_quietly(
+            args, gcloud_compute, get_cmd, report_errors=False)
+    except subprocess.CalledProcessError:
+        raise SubnetException(subnet_name)
     return
 
 
@@ -680,6 +719,9 @@ def prepare(args, gcloud_compute, gcloud_repos):
         'auto-delete=no,boot=no,device-name=datalab-pd,mode=rw,name=' +
         disk_name)
 
+    if args.subnet_name:
+        ensure_subnet_exists(args, gcloud_compute, args.subnet_name)
+
     if not args.no_create_repository:
         ensure_repo_exists(args, gcloud_repos, _DATALAB_NOTEBOOKS_REPOSITORY)
 
@@ -715,6 +757,9 @@ def run(args, gcloud_compute, gcloud_repos,
     cmd = ['instances', 'create']
     if args.zone:
         cmd.extend(['--zone', args.zone])
+
+    if args.subnet_name:
+        cmd.extend(['--subnet', args.subnet_name])
 
     enable_swap = "false" if args.no_swap else "true"
     enable_backups = "false" if args.no_backups else "true"

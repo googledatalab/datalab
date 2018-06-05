@@ -252,6 +252,9 @@ def run(args, gcloud_beta_compute, gcloud_repos,
     if args.zone:
         cmd.extend(['--zone', args.zone])
 
+    if args.subnet_name:
+        cmd.extend(['--subnet', args.subnet_name])
+
     enable_swap = "false" if args.no_swap else "true"
     enable_backups = "false" if args.no_backups else "true"
     idle_timeout = args.idle_timeout
