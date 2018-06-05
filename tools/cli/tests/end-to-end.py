@@ -135,6 +135,9 @@ class DatalabConnection(object):
 
     def __enter__(self):
         self.port = free_port()
+        # Give a moment for the temporarily-acquired port to
+        # free up before trying to reuse it.
+        time.sleep(10)
         cmd = [python_executable, '-u', './tools/cli/datalab.py', '--quiet',
                '--project', self.project, '--zone', self.zone,
                'connect', '--no-launch-browser',
