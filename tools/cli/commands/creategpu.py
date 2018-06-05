@@ -251,7 +251,7 @@ def run(args, gcloud_beta_compute, gcloud_repos,
     cmd = ['instances', 'create']
     if args.zone:
         cmd.extend(['--zone', args.zone])
-        
+
     if args.subnet_name:
         cmd.extend(['--subnet', args.subnet_name])
 
