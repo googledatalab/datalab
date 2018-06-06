@@ -34,6 +34,7 @@ except ImportError:
 import uuid
 
 
+retry_count = 3
 python_executable = sys.executable
 connection_msg = (
     'The connection to Datalab is now open and will '
@@ -164,41 +165,61 @@ class TestEndToEnd(unittest.TestCase):
         self.test_run_name = generate_unique_id()
         self.project = call_gcloud(
             ['config', 'get-value', 'core/project']).strip()
-        self.zone = call_gcloud(
+        self._zone = call_gcloud(
             ['config', 'get-value', 'compute/zone']).strip()
-        if self.zone == '':
-            self.zone = random_zone()
-        print('Testing with in the zone {} under the project {}'.format(
-            self.zone, self.project))
+        print('Testing with in the zone "{}" under the project {}'.format(
+            self._zone, self.project))
+
+    def get_zone(self):
+        if self._zone == '':
+            return random_zone()
+        return self._zone
 
     def call_datalab(self, subcommand, args):
         cmd = [python_executable, '-u', './tools/cli/datalab.py', '--quiet',
-               '--project', self.project,
-               '--zone', self.zone, subcommand] + args
+               '--project', self.project, subcommand] + args
         print('Running datalab command "{}"'.format(' '.join(cmd)))
         return subprocess.check_output(cmd).decode('utf-8')
 
+    def retry_test(self, test_method):
+        last_error = None
+        for _ in range(retry_count):
+            try:
+                test_method()
+                return
+            except AssertionError as ae:
+                last_error = ae
+        raise last_error
+
     def test_create_delete(self):
+        self.retry_test(self.run_create_delete_test)
+
+    def run_create_delete_test(self):
         instance_name = ""
+        instance_zone = self.get_zone()
         with DatalabInstance(self.test_run_name,
                              self.project,
-                             self.zone) as instance:
+                             instance_zone) as instance:
             instance_name = instance.name
             self.assertIn('RUNNING', instance.status())
         instances = self.call_datalab('list', [])
         self.assertNotIn(instance_name, instances)
 
     def test_connect(self):
+        self.retry_test(self.run_connection_test)
+
+    def run_connection_test(self):
         instance_name = ""
+        instance_zone = self.get_zone()
         with DatalabInstance(self.test_run_name,
                              self.project,
-                             self.zone) as instance:
+                             instance_zone) as instance:
             instance_name = instance.name
             self.assertIn('RUNNING', instance.status())
-            self.call_datalab('stop', [instance.name])
+            self.call_datalab('stop', ['--zone', instance_zone, instance.name])
             self.assertIn('TERMINATED', instance.status())
             with tempfile.NamedTemporaryFile() as tmp:
-                with DatalabConnection(self.project, self.zone,
+                with DatalabConnection(self.project, instance_zone,
                                        instance.name, tmp) as conn:
                     readme = urlopen(conn.readme_url)
                     readme_contents = readme.read().decode('utf-8')
