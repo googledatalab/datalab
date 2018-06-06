@@ -181,7 +181,20 @@ class TestEndToEnd(unittest.TestCase):
         print('Running datalab command "{}"'.format(' '.join(cmd)))
         return subprocess.check_output(cmd).decode('utf-8')
 
+    def retry_test(self, test_method):
+        last_error = None
+        for _ in range(retry_count):
+            try:
+                test_method()
+                return
+            except AssertionError as ae:
+                last_error = ae
+        raise last_error
+
     def test_create_delete(self):
+        self.retry_test(self.run_create_delete_test)
+
+    def run_create_delete_test(self):
         instance_name = ""
         instance_zone = self.get_zone()
         with DatalabInstance(self.test_run_name,
@@ -193,6 +206,9 @@ class TestEndToEnd(unittest.TestCase):
         self.assertNotIn(instance_name, instances)
 
     def test_connect(self):
+        self.retry_test(self.run_connection_test)
+
+    def run_connection_test(self):
         instance_name = ""
         instance_zone = self.get_zone()
         with DatalabInstance(self.test_run_name,
@@ -216,9 +232,4 @@ class TestEndToEnd(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    for _ in range(retry_count):
-        runner = unittest.main(exit=False)
-        if runner.result.wasSuccessful():
-            sys.exit(0)
-    print('Test run failed {} times'.format(retry_count))
-    sys.exit(1)
+    unittest.main()
