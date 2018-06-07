@@ -187,8 +187,8 @@ class TestEndToEnd(unittest.TestCase):
             try:
                 test_method()
                 return
-            except AssertionError as ae:
-                last_error = ae
+            except Exception as ex:
+                last_error = ex
         raise last_error
 
     def test_create_delete(self):
