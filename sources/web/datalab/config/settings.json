@@ -19,6 +19,7 @@
     "--no-browser",
     "--log-level=DEBUG",
     "--debug",
+    "--NotebookApp.allow_origin_pat=\".*-dot-devshell.appspot.com$\"",
     "--NotebookApp.log_format=\"%(message)s\"",
     "--NotebookApp.token=",
     "--Session.key=b'\"\"'",
