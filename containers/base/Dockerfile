@@ -115,8 +115,9 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         google-cloud-dataflow==2.0.0 \
         lime==0.1.1.23 \
         protobuf==3.5.2 \
+        pyreadline==2.1 \
         tensorflow==1.8.0 && \
-        pyreadline \
+
     source deactivate && \
 # Clean up before setting up the Python3 env.
     conda clean -tipsy && \
