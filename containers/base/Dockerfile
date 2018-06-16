@@ -117,7 +117,6 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         protobuf==3.5.2 \
         pyreadline==2.1 \
         tensorflow==1.8.0 && \
-
     source deactivate && \
 # Clean up before setting up the Python3 env.
     conda clean -tipsy && \
