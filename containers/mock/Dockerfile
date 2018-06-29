@@ -17,7 +17,11 @@
 # the real image so that CLI tests can be run much faster.
 #
 # This only implements the subset of the server that is checked by the
-# CLI.
+# CLI. That, in turn, means that it must require the following:
+#
+# 1. The Cloud SDK, which is used for cloning the source repo.
+# 2. The git command line tool, which is used for populating the source repo.
+# 3. A webserver that serves a 200 response to the "/_info" path.
 #
 # This should not be used when testing a build or release; for those
 # scenarios use the real image. Instead, this is meant for developers
@@ -27,6 +31,14 @@ FROM nginx
 MAINTAINER Google Cloud DataLab
 EXPOSE 8080
 
-RUN mkdir -p /usr/share/nginx/html && \
-    sed -i -e "s/listen       80;/listen       8080;/g" /etc/nginx/conf.d/default.conf && \
-    echo "<html><body>Hello from mock Datalab</body></html>" >> /usr/share/nginx/html/_info
+RUN sed -i -e "s/listen       80;/listen       8080;/g" /etc/nginx/conf.d/default.conf && \
+    mkdir -p /usr/share/nginx/html/_info && \
+    echo "<html><body>Hello from mock Datalab</body></html>" >> /usr/share/nginx/html/_info/index.html && \
+    apt-get update -y && \
+    apt-get install -y -q git wget unzip python && \
+    wget -nv https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.zip && \
+    unzip -qq google-cloud-sdk.zip -d tools && \
+    rm google-cloud-sdk.zip && \
+    tools/google-cloud-sdk/install.sh --usage-reporting=false \
+        --path-update=false --bash-completion=false \
+        --disable-installation-options
