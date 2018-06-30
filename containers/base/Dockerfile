@@ -79,6 +79,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         ipywidgets==6.0.0 \
         jinja2==2.8 \
         jsonschema==2.6.0 \
+        jupyter_highlight_selected_word==0.2.0\
         matplotlib==2.1.2 \
         mock==2.0.0 \
         nltk==3.2.1 \
@@ -115,7 +116,6 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         google-cloud-dataflow==2.0.0 \
         lime==0.1.1.23 \
         protobuf==3.5.2 \
-        pyreadline==2.1 \
         tensorflow==1.8.0 && \
     source deactivate && \
 # Clean up before setting up the Python3 env.
@@ -261,6 +261,7 @@ RUN if [ -d /datalab/lib/pydatalab/.git ]; then \
     jupyter nbextension install --py datalab.notebook && \
     jupyter nbextension install --py google.datalab.notebook && \
     jupyter nbextension enable --py widgetsnbextension && \
+    jupyter nbextension enable highlight_selected_word/main
     source deactivate && \
 # Clean up
     rm datalab/notebook/static/*.js google/datalab/notebook/static/*.js && \
