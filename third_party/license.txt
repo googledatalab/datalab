@@ -4761,7 +4761,7 @@ limitations under the License.
 """
 
 jupyter_highlight_selected_word
-""""""
+""""""""
 This project is licensed under the terms of the Modified BSD License
 (also known as New or Revised or 3-Clause BSD), as follows:
 
