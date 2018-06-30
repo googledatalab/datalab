@@ -261,7 +261,7 @@ RUN if [ -d /datalab/lib/pydatalab/.git ]; then \
     jupyter nbextension install --py datalab.notebook && \
     jupyter nbextension install --py google.datalab.notebook && \
     jupyter nbextension enable --py widgetsnbextension && \
-    jupyter nbextension enable highlight_selected_word/main
+    jupyter nbextension enable highlight_selected_word/main \
     source deactivate && \
 # Clean up
     rm datalab/notebook/static/*.js google/datalab/notebook/static/*.js && \
