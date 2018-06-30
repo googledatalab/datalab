@@ -260,6 +260,7 @@ RUN if [ -d /datalab/lib/pydatalab/.git ]; then \
     pip install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/structured_data/. && \
     jupyter nbextension install --py datalab.notebook && \
     jupyter nbextension install --py google.datalab.notebook && \
+    jupyter nbextension install --py jupyter_highlight_selected_word \
     jupyter nbextension enable --py widgetsnbextension && \
     jupyter nbextension enable --py highlight_selected_word/main \
     source deactivate && \
