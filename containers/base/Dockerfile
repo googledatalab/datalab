@@ -256,7 +256,7 @@ RUN if [ -d /datalab/lib/pydatalab/.git ]; then \
     source activate $PYTHON_3_ENV && \
     pip install --upgrade-strategy only-if-needed --no-cache-dir . && \
     pip install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/image_classification/. && \
-    pip install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/structured_data/. &&
+    pip install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/structured_data/. && \
     pip install --upgrade-strategy only-if-needed jupyter_highlight_selected_word && \
     jupyter nbextension install --py datalab.notebook && \
     jupyter nbextension install --py google.datalab.notebook && \
