@@ -132,6 +132,11 @@ steps:
   id:   'buildDatalabGPU'
   waitFor: ['prepareDatalabGPU']
 
+## Build the mock image used for testing...
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/${PROJECT_ID}/mock-datalab:latest', '/workspace/containers/mock/']
+  id:   'buildMockDatalab'
+
 ## Tag all of the images as "commit-latest-master-build" so that other processes
 ## can easily pick up the latest one.
 - name: gcr.io/cloud-builders/docker
@@ -172,6 +177,7 @@ steps:
   waitFor: ['pushConfigLocal', 'buildDatalab', 'buildDatalabGPU', 'buildGateway']
 
 images:
+  - 'gcr.io/${PROJECT_ID}/mock-datalab:latest'
   - 'gcr.io/${PROJECT_ID}/datalab-gateway:commit-${REVISION_ID}'
   - 'gcr.io/${PROJECT_ID}/datalab:commit-${REVISION_ID}'
   - 'gcr.io/${PROJECT_ID}/datalab-gpu:commit-${REVISION_ID}'
