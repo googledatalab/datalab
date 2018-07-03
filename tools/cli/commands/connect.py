@@ -157,6 +157,14 @@ def connection_flags(parser):
         action='store_true',
         default=False,
         help='do not open a browser connected to Datalab')
+    parser.add_argument(
+        '--beta-internal-ip',
+        dest='internal_ip',
+        action='store_true',
+        default=False,
+        help=('connect to the internal IP address of the instance.'
+              '\n\n'
+              'Note that this is a beta feature and unsupported.'))
 
     return
 
@@ -214,6 +222,8 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
             '--ssh-flag=-L',
             '--ssh-flag=' + port_mapping])
         cmd.append('datalab@{0}'.format(instance))
+        if args.internal_ip:
+            cmd.extend(['--internal-ip'])
         gcloud_compute(args, cmd)
         return
 
@@ -311,6 +321,8 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
                 if args.zone:
                     cli_flags += '--zone {} '.format(args.zone)
                 cli_flags += '--port {} '.format(args.port)
+                if args.internal_ip:
+                    cli_flags += '--beta-internal-ip '
                 print(connection_closed_message_template.format(
                     instance, cli_flags))
             return
