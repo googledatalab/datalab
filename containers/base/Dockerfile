@@ -260,7 +260,6 @@ RUN if [ -d /datalab/lib/pydatalab/.git ]; then \
     pip install --upgrade-strategy only-if-needed jupyter_highlight_selected_word && \
     jupyter nbextension install --py datalab.notebook && \
     jupyter nbextension install --py google.datalab.notebook && \
-    jupyter nbextension install --py jupyter_highlight_selected_word && \
     jupyter nbextension enable --sys-prefix --py jupyter_highlight_selected_word && \
     jupyter nbextension enable --py widgetsnbextension && \
     source deactivate && \
