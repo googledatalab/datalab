@@ -93,11 +93,6 @@ fi
 # Verify that we can write to the /tmp directory
 check_tmp_directory
 
-# Make sure widgets notebook extension is installed correctly at /content/.jupyter after the docker volume is mounted.
-source activate ${PYTHON3_ENV}
-jupyter nbextension enable --py widgetsnbextension
-source deactivate
-
 # Make sure the notebooks directory exists
 mkdir -p /content/datalab/notebooks
 
