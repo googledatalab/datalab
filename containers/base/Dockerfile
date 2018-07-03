@@ -257,8 +257,10 @@ RUN if [ -d /datalab/lib/pydatalab/.git ]; then \
     pip install --upgrade-strategy only-if-needed --no-cache-dir . && \
     pip install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/image_classification/. && \
     pip install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/structured_data/. && \
+    pip install --upgrade-strategy only-if-needed jupyter_highlight_selected_word && \
     jupyter nbextension install --py datalab.notebook && \
     jupyter nbextension install --py google.datalab.notebook && \
+    jupyter nbextension enable --sys-prefix --py jupyter_highlight_selected_word && \
     jupyter nbextension enable --py widgetsnbextension && \
     source deactivate && \
 # Clean up
