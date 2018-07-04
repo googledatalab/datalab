@@ -70,6 +70,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     conda create --yes --quiet --name $PYTHON_2_ENV python=2.7 \
         crcmod==1.7 \
         dask==0.17.1 \
+	dill==0.2.6 \
         future==0.16.0 \
         futures==3.2.0 \
         google-api-python-client==1.6.2 \
@@ -111,6 +112,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     source activate $PYTHON_2_ENV && \
     pip install --quiet -U --upgrade-strategy only-if-needed --no-cache-dir \
         apache-airflow==1.9.0 \
+        apache-beam==2.4.0 \
         bs4==0.0.1 \
         ggplot==0.6.8 \
         google-cloud-dataflow==2.0.0 \
@@ -127,6 +129,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     conda create --yes --quiet --name $PYTHON_3_ENV python=3.5 \
         crcmod==1.7 \
         dask==0.17.1 \
+	dill==0.2.6 \
         google-api-python-client==1.6.2 \
         httplib2==0.10.3 \
         h5py==2.7.1 \
