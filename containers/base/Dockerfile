@@ -70,13 +70,14 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     conda create --yes --quiet --name $PYTHON_2_ENV python=2.7 \
         crcmod==1.7 \
         dask==0.17.1 \
+	dill==0.2.6 \
         future==0.16.0 \
         futures==3.2.0 \
         google-api-python-client==1.6.2 \
         httplib2==0.10.3 \
         h5py==2.7.1 \
         ipykernel==4.5.2 \
-        ipywidgets==6.0.0 \
+        ipywidgets==7.2.1 \
         jinja2==2.8 \
         jsonschema==2.6.0 \
         matplotlib==2.1.2 \
@@ -105,11 +106,13 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         statsmodels==0.8.0 \
         sympy==0.7.6.1 \
         tornado==4.5.1 \
+        widgetsnbextension==3.2.1 \
         xgboost==0.6a2 && \
 # Install Python2 packages that aren't available or up-to-date in Conda.
     source activate $PYTHON_2_ENV && \
     pip install --quiet -U --upgrade-strategy only-if-needed --no-cache-dir \
         apache-airflow==1.9.0 \
+        apache-beam==2.4.0 \
         bs4==0.0.1 \
         ggplot==0.6.8 \
         google-cloud-dataflow==2.0.0 \
@@ -126,11 +129,12 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     conda create --yes --quiet --name $PYTHON_3_ENV python=3.5 \
         crcmod==1.7 \
         dask==0.17.1 \
+	dill==0.2.6 \
         google-api-python-client==1.6.2 \
         httplib2==0.10.3 \
         h5py==2.7.1 \
         ipykernel==4.5.2 \
-        ipywidgets==6.0.0 \
+        ipywidgets==7.2.1 \
         jinja2==2.8 \
         jsonschema==2.6.0 \
         matplotlib==2.1.2 \
@@ -160,6 +164,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         statsmodels==0.8.0 \
         sympy==0.7.6.1 \
         tornado==4.5.1 \
+        widgetsnbextension==3.2.1 \
         xgboost==0.6a2 && \
 # Install Python3 packages that aren't available or up-to-date in Conda.
     source activate $PYTHON_3_ENV && \
@@ -257,9 +262,12 @@ RUN if [ -d /datalab/lib/pydatalab/.git ]; then \
     pip install --upgrade-strategy only-if-needed --no-cache-dir . && \
     pip install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/image_classification/. && \
     pip install --upgrade-strategy only-if-needed /datalab/lib/pydatalab/solutionbox/structured_data/. && \
+    pip install --upgrade-strategy only-if-needed jupyter_highlight_selected_word==0.2.0 && \
     jupyter nbextension install --py datalab.notebook && \
     jupyter nbextension install --py google.datalab.notebook && \
-    jupyter nbextension enable --py widgetsnbextension && \
+    jupyter nbextension install --py jupyter_highlight_selected_word && \
+    jupyter nbextension enable --sys-prefix --py jupyter_highlight_selected_word && \
+    jupyter nbextension enable --sys-prefix --py widgetsnbextension && \
     source deactivate && \
 # Clean up
     rm datalab/notebook/static/*.js google/datalab/notebook/static/*.js && \
