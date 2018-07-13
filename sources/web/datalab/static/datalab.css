@@ -279,6 +279,7 @@ i.material-icons {
   vertical-align: middle;
   line-height: 48px;
   padding: 0px;
+  cursor: pointer;
 }
 
 /* List page */
