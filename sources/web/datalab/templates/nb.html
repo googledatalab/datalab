@@ -14,7 +14,10 @@
   <link rel="stylesheet" href="<%baseUrl%>static/components/jquery-ui/themes/smoothness/jquery-ui.min.css" />
 
   <script src="<%baseUrl%>static/components/jquery/jquery.min.js"></script>
-  <script type="text/javascript" src="<%baseUrl%>static/components/MathJax/MathJax.js?config=TeX-AMS_HTML-full,Safe&delayStartupUntil=configured" charset="utf-8"></script>
+  <script src="<%baseUrl%>static/components/preact/index.js" type="text/javascript"></script>
+  <script src="<%baseUrl%>static/components/proptypes/index.js" type="text/javascript"></script>
+  <script src="<%baseUrl%>static/components/preact-compat/index.js" type="text/javascript"></script>
+  <script type="text/javascript" src="<%baseUrl%>static/components/MathJax/MathJax.js?config=TeX-AMS-MML_HTMLorMML-full.js,Safe&delayStartupUntil=configured" charset="utf-8"></script>
 </head>
 <body class="notebook_app"
   data-project=""
@@ -225,7 +228,7 @@
   <script src="<%baseUrl%>static/components/requirejs/require.js"></script>
   <script>
     window.sys_info = {};
-    require.config({
+    requirejs.config({
       baseUrl: '<%baseUrl%>static/',
       paths: {
         'auth/js/main': 'auth/js/main.min',
@@ -265,7 +268,7 @@
         }
       }
     });
-    require.config({
+    requirejs.config({
        map: {
          '*': {
            'contents': 'services/contents',
@@ -275,7 +278,7 @@
     window.datalab = {};
 
     $("#appBar").load("<%baseUrl%>static/appbar.html", function() {
-      require(['notebook/js/main.min']);
+      requirejs(['notebook/js/main.min']);
     });
   </script>
   <script src="//www.gstatic.com/feedback/api.js" async="true" defer="true"></script>

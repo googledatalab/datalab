@@ -15,25 +15,24 @@
 /// <reference path="common.d.ts" />
 
 import logging = require('./logging');
-import settings = require('./settings');
 import server = require('./server');
+import settings = require('./settings');
 
 /**
  * Load the configuration settings, and then start the server, which
  * runs indefinitely, listening to and processing incoming HTTP requests.
  */
-var appSettings = settings.loadAppSettings();
+const appSettings = settings.loadAppSettings();
 if (appSettings != null) {
   logging.initializeLoggers(appSettings);
   server.run(appSettings);
 }
 
-
 /**
  * Handle shutdown of this process, to also stop the server, which will in turn stop the
  * associated Jupyter server process.
  */
-function exit() {
+function exit(): void {
   server.stop();
 }
 

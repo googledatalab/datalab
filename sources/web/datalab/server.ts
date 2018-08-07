@@ -16,7 +16,7 @@
 /// <reference path="../../../third_party/externs/ts/request/request.d.ts" />
 /// <reference path="common.d.ts" />
 
-import auth = require('./auth')
+import auth = require('./auth');
 import fs = require('fs');
 import health = require('./health');
 import http = require('http');
@@ -27,7 +27,7 @@ import idleTimeout = require('./idleTimeout');
 import fileSearch = require('./fileSearch');
 import metadata = require('./metadata');
 import net = require('net');
-import noCacheContent = require('./noCacheContent')
+import noCacheContent = require('./noCacheContent');
 import path = require('path');
 import request = require('request');
 import reverseProxy = require('./reverseProxy');
@@ -158,7 +158,7 @@ function handleRequest(request: http.ServerRequest,
     response.end(appSettings.datalabBasePath);
     return;
   }
-  
+
   if (requestPath.indexOf('/_appsettings') === 0) {
     settingHandler(request, response);
     return;
