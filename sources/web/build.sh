@@ -51,5 +51,6 @@ rsync -avpq ./datalab/config/ $WEB_DIR/config
 rsync -avpq ./datalab/static/ $WEB_DIR/static
 rsync -avpq ./datalab/templates/ $WEB_DIR/templates
 rsync -avpq ./datalab/package.json $WEB_DIR/package.json
+
 cd $WEB_DIR
 npm install

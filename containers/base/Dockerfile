@@ -31,6 +31,7 @@ ENV PYTHON_3_ENV py3env
 
 # Needed to run "source" for switching Conda environments.
 SHELL ["/bin/bash", "-c"]
+
 # Setup OS and core packages
 RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sources.list && \
     apt-get update -y && \
