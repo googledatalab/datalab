@@ -15,8 +15,8 @@
 function placeHolder() {}
 
 function initializeDataLab(
-    promises, ipy, events, dialog, utils, security, appbar, editapp,
-    notebookapp, notebooklist
+    promises, ipy, events, dialog, utils, savewidget, security, appbar,
+    editapp, notebookapp, notebooklist
   ) {
   var saveFn = function() {
     if (('notebook' in ipy) && ipy.notebook) {
@@ -43,15 +43,15 @@ function initializeDataLab(
       window.datalab.loaded = true;
     });
   } else if (pageClass.indexOf('edit_app') >= 0) {
-    events.on('file_loaded.Editor', function() {
-      editapp.postLoad(ipy, ipy.editor);
+    $(document).ready(function() {
+      editapp.postLoad(ipy, ipy.editor, savewidget, events);
       window.datalab.loaded = true;
     });
   } else if (pageClass.indexOf('notebook_list') >= 0) {
     // The page is finished loading after the notebook list is drawn for the first
     // time. The list is refreshed periodically though, so we need to only capture
     // the first occurrence
-    events.on('draw_notebook_list.NotebookList', function() {
+    promises.app_initialized.then(function() {
       if (!window.datalab.loaded) {
         notebooklist.postLoad(ipy.notebook_list, ipy.new_notebook_widget, dialog);
         window.datalab.loaded = true;
@@ -70,10 +70,11 @@ function initializeDataLab(
 }
 
 define([
+  'base/js/promises',
   'base/js/namespace',
   'base/js/events',
-  'base/js/promises',
   'base/js/utils',
+  'edit/js/savewidget',
   'base/js/security',
   'appbar',
   'edit-app',
@@ -82,9 +83,9 @@ define([
   'minitoolbar',
   'websocket',
   'base/js/dialog'
-], function(promises, ipy, events, utils, security, appbar, editapp,
+], function(promises, ipy, events, utils, savewidget, security, appbar, editapp,
             notebookapp, notebooklist, minitoolbar, websocket, dialog) {
      initializeDataLab(
-            promises, ipy, events, dialog, utils, security, appbar, editapp,
+            promises, ipy, events, dialog, utils, savewidget, security, appbar, editapp,
             notebookapp, notebooklist);
 });
