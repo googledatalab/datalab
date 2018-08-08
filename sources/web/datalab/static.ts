@@ -18,59 +18,57 @@
 
 import fs = require('fs');
 import http = require('http');
-import logging = require('./logging');
 import path = require('path');
-import settings = require('./settings');
 import url = require('url');
+import logging = require('./logging');
+import settings = require('./settings');
 import userManager = require('./userManager');
 
-var appSettings: common.AppSettings;
-var CONTENT_TYPES: common.Map<string> = {
-  '.js': 'text/javascript',
+let appSettings: common.AppSettings;
+const CONTENT_TYPES: common.Map<string> = {
   '.css': 'text/css',
+  '.html': 'text/html',
+  '.ico': 'image/x-icon',
+  '.js': 'text/javascript',
   '.png': 'image/png',
   '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon',
   '.txt': 'text/plain',
-  '.html': 'text/html'
 };
-var CUSTOM_THEME_FILE = 'custom.css';
-var DEFAULT_THEME_FILE = 'light.css';
+const CUSTOM_THEME_FILE = 'custom.css';
+const DEFAULT_THEME_FILE = 'light.css';
 
-var contentCache: common.Map<Buffer> = {};
-var watchedDynamicContent: common.Map<boolean> = {};
+const contentCache: common.Map<Buffer> = {};
+const watchedDynamicContent: common.Map<boolean> = {};
 
 // Path to use for fetching static resources provided by Jupyter.
 function jupyterDir(): string {
-  var prefix = appSettings.datalabRoot || '/usr/local/envs/py3env/lib/python3.5';
-  return path.join(prefix, '/site-packages/notebook')
+  const prefix = appSettings.datalabRoot || '/usr/local/envs/py3env/lib/python3.5';
+  return path.join(prefix, '/site-packages/notebook');
 }
 
 function getContent(filePath: string, cb: common.Callback<Buffer>, isDynamic: boolean = false): void {
-  var content = contentCache[filePath];
+  const content = contentCache[filePath];
   if (content != null) {
-    process.nextTick(function() {
+    process.nextTick(() => {
       cb(null, content);
     });
-  }
-  else {
-    fs.readFile(filePath, function(error, content) {
+  } else {
+    fs.readFile(filePath, (error, fileContent) => {
       if (error) {
         cb(error, null);
-      }
-      else {
+      } else {
         if (isDynamic && !watchedDynamicContent[filePath]) {
-          fs.watch(filePath, function(eventType, filename) {
+          fs.watch(filePath, (eventType, filename) => {
             logging.getLogger().info('Clearing cache for updated file: %s', filePath);
             contentCache[filePath] = null;
-            if (eventType == 'rename') {
+            if (eventType === 'rename') {
               watchedDynamicContent[filePath] = false;
             }
           });
           watchedDynamicContent[filePath] = true;
         }
-        contentCache[filePath] = content;
-        cb(null, content);
+        contentCache[filePath] = fileContent;
+        cb(null, fileContent);
       }
     });
   }
@@ -84,23 +82,22 @@ function getContent(filePath: string, cb: common.Callback<Buffer>, isDynamic: bo
  * @param isDynamic indication of whether or not the file contents might change.
  */
 function sendFile(filePath: string, response: http.ServerResponse,
-                  alternatePath: string = "", isDynamic: boolean = false,
-                  replaceBasepath: boolean = false) {
-  var extension = path.extname(filePath);
-  var contentType = CONTENT_TYPES[extension.toLowerCase()] || 'application/octet-stream';
+                  alternatePath = '', isDynamic = false,
+                  replaceBasepath = false): void {
+  const extension = path.extname(filePath);
+  const contentType = CONTENT_TYPES[extension.toLowerCase()] || 'application/octet-stream';
 
-  getContent(filePath, function(error, content) {
+  getContent(filePath, (error, content) => {
     if (error) {
       logging.getLogger().error(error, 'Unable to send static file: %s', filePath);
 
-      if (alternatePath != "") {
+      if (alternatePath !== '') {
         sendDataLabFile(alternatePath, response);
       } else {
         response.writeHead(500);
         response.end();
       }
-    }
-    else {
+    } else {
       if (isDynamic) {
         response.removeHeader('Cache-Control');
         response.setHeader('Cache-Control', 'no-cache');
@@ -124,14 +121,14 @@ function sendFile(filePath: string, response: http.ServerResponse,
  * @param isDynamic indication of whether or not the file contents might change.
  */
 function sendDataLabFile(filePath: string, response: http.ServerResponse,
-    isDynamic: boolean = false, replaceBasepath: boolean = false) {
+    isDynamic = false, replaceBasepath = false): void {
   let live = isDynamic;
-  let staticDir = path.join(__dirname, 'static')
+  let staticDir = path.join(__dirname, 'static');
   // Set this env var to point to source directory for live updates without restart.
-  const liveStaticDir = process.env.DATALAB_LIVE_STATIC_DIR
+  const liveStaticDir = process.env.DATALAB_LIVE_STATIC_DIR;
   if (liveStaticDir) {
-    live = true
-    staticDir = liveStaticDir
+    live = true;
+    staticDir = liveStaticDir;
   }
   sendFile(path.join(staticDir, filePath), response, '', live, replaceBasepath);
 }
@@ -141,12 +138,13 @@ function sendDataLabFile(filePath: string, response: http.ServerResponse,
  * @param filePath the relative file path of the static file within the Jupyter directory to send.
  * @param response the out-going response associated with the current HTTP request.
  */
-function sendJupyterFile(relativePath: string, response: http.ServerResponse) {
-  var filePath = path.join(jupyterDir(), relativePath);
-  fs.stat(filePath, function(e, stats) {
+function sendJupyterFile(relativePath: string, response: http.ServerResponse): void {
+  const filePath = path.join(jupyterDir(), relativePath);
+  fs.stat(filePath, (e, stats) => {
     if (e || !stats.isFile()) {
       response.writeHead(404);
       response.end();
+      return;
     }
 
     sendFile(filePath, response);
@@ -157,7 +155,7 @@ function sendJupyterFile(relativePath: string, response: http.ServerResponse) {
  * Checks whether a requested static file exists in DataLab.
  * @param filePath the relative path of the file.
  */
-export function datalabFileExists(filePath: string) {
+export function datalabFileExists(filePath: string): boolean {
   return fs.existsSync(path.join(__dirname, 'static', filePath));
 }
 
@@ -168,7 +166,7 @@ export function datalabFileExists(filePath: string) {
  * @param response the out-going response associated with the current HTTP request.
  */
 function sendUserCustomTheme(userId: string, response: http.ServerResponse): void {
-  var customThemePath = path.join(settings.getUserConfigDir(userId), CUSTOM_THEME_FILE);
+  const customThemePath = path.join(settings.getUserConfigDir(userId), CUSTOM_THEME_FILE);
   sendFile(customThemePath, response, DEFAULT_THEME_FILE, true);
 }
 
@@ -176,7 +174,7 @@ function sendUserCustomTheme(userId: string, response: http.ServerResponse): voi
  * Returns true if this path should return an experimental UI resource
  * @param path the incoming request path
  */
-export function isExperimentalResource(pathname: string, search: string) {
+export function isExperimentalResource(pathname: string, search: string): boolean {
   if (pathname.indexOf('/exp/') === 0) {
     return true;
   }
@@ -205,7 +203,7 @@ export function isExperimentalResource(pathname: string, search: string) {
 /**
  * Parses the given url path and returns the first component.
  */
-function firstComponent(pathname: string) {
+function firstComponent(pathname: string): string {
   return pathname.split('/')[1];
 }
 
@@ -244,7 +242,8 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       pathname = '/notebook.html';
       replaceBasepath = true;
     } else if (pathname === '/index.css') {
-      var userSettings: common.UserSettings = settings.loadUserSettings(userId);
+      const userSettings: common.UserSettings =
+          settings.loadUserSettings(userManager.getUserId(request));
       pathname = '/index.' + (userSettings.theme || 'light') + '.css';
     }
     pathname = 'experimental' + pathname;
@@ -272,23 +271,21 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     'websocket.js',
   ];
   // Map of resources where we change the name.
-  const staticResourcesMap: {[key:string]: string} = {
+  const staticResourcesMap: {[key: string]: string} = {
     'about.txt': 'datalab.txt',
     'favicon.ico': 'datalab.ico',
     'logo.png': 'datalab.png',
   };
 
   response.setHeader('Cache-Control', 'public, max-age=3600');
-  var subpath = pathname.substr(pathname.lastIndexOf('/') + 1);
+  const subpath = pathname.substr(pathname.lastIndexOf('/') + 1);
   if (staticResourcesList.indexOf(subpath) >= 0) {
     sendDataLabFile(subpath, response);
-  }
-  else if (subpath in staticResourcesMap) {
+  } else if (subpath in staticResourcesMap) {
     sendDataLabFile(staticResourcesMap[subpath], response);
-  }
-  else if (pathname.indexOf('/codemirror/mode/') > 0) {
-    var split = pathname.lastIndexOf('/');
-    var newPath = 'codemirror/mode/' + pathname.substring(split + 1);
+  } else if (pathname.indexOf('/codemirror/mode/') > 0) {
+    const split = pathname.lastIndexOf('/');
+    const newPath = 'codemirror/mode/' + pathname.substring(split + 1);
     if (datalabFileExists(newPath)) {
       sendDataLabFile(newPath, response);
     } else {
@@ -296,8 +293,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
       pathname = pathname.substr(1).replace('static/codemirror', 'static/components/codemirror');
       sendJupyterFile(pathname, response);
     }
-  }
-  else if (pathname.lastIndexOf('/custom.js') >= 0) {
+  } else if (pathname.lastIndexOf('/custom.js') >= 0) {
     // NOTE: Uncomment to use external content mapped into the container.
     //       This is only useful when actively developing the content itself.
     // var text = fs.readFileSync('/sources/datalab/static/datalab.js', { encoding: 'utf8' });
@@ -305,15 +301,14 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     // response.end(text);
 
     sendDataLabFile('datalab.js', response);
-  }
-  else if (pathname.lastIndexOf('/custom.css') > 0) {
-    var userId: string = userManager.getUserId(request);
-    var userSettings: common.UserSettings = settings.loadUserSettings(userId);
+  } else if (pathname.lastIndexOf('/custom.css') > 0) {
+    const userId = userManager.getUserId(request);
+    const userSettings = settings.loadUserSettings(userId);
     if ('theme' in userSettings) {
-      var theme: string = userSettings['theme'];
-      if (theme == 'custom') {
+      const theme = userSettings['theme'];
+      if (theme === 'custom') {
         sendUserCustomTheme(userId, response);
-      } else if (theme == 'dark') {
+      } else if (theme === 'dark') {
         sendDataLabFile('dark.css', response, true);
       } else {
         sendDataLabFile('light.css', response, true);
@@ -321,10 +316,9 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
     } else {
       sendDataLabFile(DEFAULT_THEME_FILE, response, true);
     }
-  }
-  else if ((pathname.indexOf('/static/extensions/') == 0) ||
-           (pathname.indexOf('/static/require/') == 0) ||
-           (pathname.indexOf('/static/fonts/') == 0)) {
+  } else if ((pathname.indexOf('/static/extensions/') === 0) ||
+           (pathname.indexOf('/static/require/') === 0) ||
+           (pathname.indexOf('/static/fonts/') === 0)) {
     // Strip off the leading '/static/' to turn pathname into a relative path within the
     // static directory.
     sendDataLabFile(pathname.substr('/static/'.length), response);
@@ -336,10 +330,10 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
 
 /**
  * Creates the static content request handler.
- * @param settings configuration settings for the application.
+ * @param handlerSettings configuration settings for the application.
  * @returns the request handler to handle static requests.
  */
-export function createHandler(settings: common.AppSettings): http.RequestHandler {
-  appSettings = settings;
+export function createHandler(handlerSettings: common.AppSettings): http.RequestHandler {
+  appSettings = handlerSettings;
   return requestHandler;
 }

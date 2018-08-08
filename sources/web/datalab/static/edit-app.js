@@ -1,5 +1,5 @@
 define(() => {
-  function postLoad(ipy, editor) {
+  function postLoad(ipy, editor, savewidget, events) {
     function navigateAlternate(alt) {
       var url = document.location.href.replace('/edit', alt);
       if (url.includes("?")) {
@@ -22,7 +22,7 @@ define(() => {
     })
 
     $('#renameButton').click(function() {
-      Jupyter.notebook.save_widget.rename();
+      new savewidget.SaveWidget('span#save_widget', { editor: editor, events: events }).rename();
     })
 
     $('#downloadButton').click(function() {
