@@ -142,13 +142,12 @@
       baseUrl: '<%baseUrl%>static/',
     });
     requirejs.config({
-       map: {
-         '*': {
-           'contents': 'services/contents',
-         }
-       }
+      map: {
+        '*': {
+          'contents': 'services/contents',
+        }
+      }
     });
-
     $("#appBar").load("<%baseUrl%>static/appbar.html", function() {
       requirejs(['tree/js/main.min']);
     });

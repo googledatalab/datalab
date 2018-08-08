@@ -296,6 +296,7 @@ i.material-icons {
   height: 40px;
 }
 #uploadButton {
+  height: 28px;
   padding: 4px 8px;
   margin: 0;
 }
@@ -339,9 +340,10 @@ span.save_widget span.filename {
   margin: 0px;
 }
 span.save_widget {
+  flex: 1 1 auto;
+  margin-top: 10px;
   overflow: hidden;
   white-space: nowrap;
-  flex: 1 1 auto;
 }
 div.right-toolbar {
   flex: 0 0 auto;

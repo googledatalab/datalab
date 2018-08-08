@@ -15,7 +15,7 @@
 function placeHolder() {}
 
 function initializeDataLab(
-    ipy, events, dialog, utils, security, appbar, editapp,
+    promises, ipy, events, dialog, utils, security, appbar, editapp,
     notebookapp, notebooklist
   ) {
   var saveFn = function() {
@@ -35,18 +35,19 @@ function initializeDataLab(
   var pageClass = document.body.className;
   if (pageClass.indexOf('notebook_app') >= 0) {
     notebookapp.preLoad(ipy, ipy.notebook, events, dialog, utils);
-    events.on('notebook_loaded.Notebook', function() {
+    // All extensions now load after the notebook which means we need to use promises
+    // instead of events. This may also affect the other events.on(...) calls below.
+    // See https://github.com/jupyter/notebook/issues/2499
+    promises.notebook_loaded.then(function() {
       notebookapp.postLoad(ipy, ipy.notebook, events, dialog, utils);
       window.datalab.loaded = true;
     });
-  }
-  else if (pageClass.indexOf('edit_app') >= 0) {
+  } else if (pageClass.indexOf('edit_app') >= 0) {
     events.on('file_loaded.Editor', function() {
       editapp.postLoad(ipy, ipy.editor);
       window.datalab.loaded = true;
     });
-  }
-  else if (pageClass.indexOf('notebook_list') >= 0) {
+  } else if (pageClass.indexOf('notebook_list') >= 0) {
     // The page is finished loading after the notebook list is drawn for the first
     // time. The list is refreshed periodically though, so we need to only capture
     // the first occurrence
@@ -56,8 +57,7 @@ function initializeDataLab(
         window.datalab.loaded = true;
       }
     });
-  }
-  else if (pageClass.indexOf('session_list') >= 0) {
+  } else if (pageClass.indexOf('session_list') >= 0) {
     // The page is finished loading after the notebook list is drawn for the first
     // time. This event is used also after loading the terminal list. These lists are
     // refreshed periodically though, so we need to only capture the first occurrence
@@ -72,6 +72,7 @@ function initializeDataLab(
 define([
   'base/js/namespace',
   'base/js/events',
+  'base/js/promises',
   'base/js/utils',
   'base/js/security',
   'appbar',
@@ -81,9 +82,9 @@ define([
   'minitoolbar',
   'websocket',
   'base/js/dialog'
-], function(ipy, events, utils, security, appbar, editapp,
+], function(promises, ipy, events, utils, security, appbar, editapp,
             notebookapp, notebooklist, minitoolbar, websocket, dialog) {
      initializeDataLab(
-            ipy, events, dialog, utils, security, appbar, editapp,
+            promises, ipy, events, dialog, utils, security, appbar, editapp,
             notebookapp, notebooklist);
 });
