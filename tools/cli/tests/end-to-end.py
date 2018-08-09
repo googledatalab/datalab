@@ -234,13 +234,13 @@ class TestEndToEnd(unittest.TestCase):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--runs', type=int, default=1, choices=range(1,100),
+    parser.add_argument('--runs', type=int, default=1, choices=range(1, 100),
                         metavar='COUNT', dest='runs',
                         help='Number of times to run the test suite')
     args = parser.parse_args()
 
     failed_count, run_count = 0, 0
-    for _ in xrange(0, args.runs):
+    for _ in range(0, args.runs):
         suite = unittest.TestLoader().loadTestsFromTestCase(TestEndToEnd)
         result = unittest.TextTestRunner(buffer=True).run(suite)
         run_count += 1
