@@ -565,19 +565,20 @@ def ensure_network_exists(args, gcloud_compute, network_name):
     return
 
 
-def ensure_subnet_exists(args, gcloud_compute, subnet_name):
+def ensure_subnet_exists(args, gcloud_compute, subnet_region, subnet_name):
     """Check the specified subnet if it does not exit with error.
 
     Args:
       args: The Namespace returned by argparse
       gcloud_compute: Function that can be used for invoking `gcloud compute`
+      subnet_region: The name of the region of the subnet
       subnet_name: The name of the subnet
     Raises:
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
     get_cmd = [
         'networks', 'subnets', 'describe',
-        '--format', 'value(name)', subnet_name]
+        '--format', 'value(name)', '--region', subnet_region, subnet_name]
     try:
         utils.call_gcloud_quietly(
             args, gcloud_compute, get_cmd, report_errors=False)
@@ -768,7 +769,8 @@ def prepare(args, gcloud_compute, gcloud_repos):
         disk_name)
 
     if args.subnet_name:
-        ensure_subnet_exists(args, gcloud_compute, args.subnet_name)
+        subnet_region = args.zone[:-2]
+        ensure_subnet_exists(args, gcloud_compute, subnet_region, args.subnet_name)
 
     if not args.no_create_repository:
         ensure_repo_exists(args, gcloud_repos, _DATALAB_NOTEBOOKS_REPOSITORY)
