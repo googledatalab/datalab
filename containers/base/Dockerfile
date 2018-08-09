@@ -70,13 +70,13 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     conda create --yes --quiet --name $PYTHON_2_ENV python=2.7 \
         crcmod==1.7 \
         dask==0.17.1 \
-	dill==0.2.6 \
+        dill==0.2.6 \
         future==0.16.0 \
         futures==3.2.0 \
         google-api-python-client==1.6.2 \
         httplib2==0.10.3 \
         h5py==2.7.1 \
-        ipykernel==4.5.2 \
+        ipykernel==4.8.2 \
         ipywidgets==7.2.1 \
         jinja2==2.8 \
         jsonschema==2.6.0 \
@@ -89,14 +89,14 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         pandas==0.22.0 \
         pandocfilters==1.4.2 \
         pillow==5.0.0 \
-        pip==9.0.3 \
+        pip==18.0 \
         plotly==1.12.5 \
         psutil==4.3.0 \
         pygments==2.1.3 \
         python-dateutil==2.5.0 \
         python-snappy==0.5.1 \
         pytz==2016.7 \
-        pyzmq==16.0.2 \
+        pyzmq==17.1.0 \
         requests==2.18.4 \
         scikit-image==0.13.0 \
         scikit-learn==0.19.1 \
@@ -128,32 +128,32 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     conda create --yes --quiet --name $PYTHON_3_ENV python=3.5 \
         crcmod==1.7 \
         dask==0.17.1 \
-	dill==0.2.6 \
+        dill==0.2.6 \
         google-api-python-client==1.6.2 \
         httplib2==0.10.3 \
         h5py==2.7.1 \
-        ipykernel==4.5.2 \
+        ipykernel==4.8.2 \
         ipywidgets==7.2.1 \
         jinja2==2.8 \
         jsonschema==2.6.0 \
         matplotlib==2.1.2 \
         mock==2.0.0 \
         nltk==3.2.1 \
-        notebook==4.4.1 \
+        notebook==5.6.0 \
         numpy==1.14.0 \
         oauth2client==2.2.0 \
         pandas-gbq==0.3.0 \
         pandas==0.22.0 \
         pandocfilters==1.4.2 \
         pillow==5.0.0 \
-        pip==9.0.3 \
+        pip==18.0 \
         plotly==1.12.5 \
         psutil==4.3.0 \
         pygments==2.1.3 \
         python-dateutil==2.5.0 \
         python-snappy==0.5.1 \
         pytz==2016.7 \
-        pyzmq==16.0.2 \
+        pyzmq==17.1.0 \
         requests==2.18.4 \
         scikit-image==0.13.0 \
         scikit-learn==0.19.1 \

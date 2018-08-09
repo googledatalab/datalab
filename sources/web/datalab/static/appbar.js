@@ -113,7 +113,7 @@ define(['idle-timeout', 'util'], function(idleTimeout, util) {
         '<i class="material-icons">open_in_new</i><a href="' + util.datalabLink('/static/about.txt') + '" target="_blank"> License and software information</a><br />' +
         '<i class="material-icons">open_in_new</i><a href="https://cloud.google.com/terms/" target="_blank"> Terms of Service</a><br />' +
         '<i class="material-icons">open_in_new</i><a href="http://www.google.com/intl/en/policies/" target="_blank"> Privacy Policy</a><br />' +
-        '<i class="material-icons">open_in_new</i><a href="javascript:require([\'appbar\'],appbar=>appbar.restartDatalab())"> Restart Server</a><br />';
+        '<i class="material-icons">open_in_new</i><a href="javascript:requirejs([\'appbar\'],appbar=>appbar.restartDatalab())"> Restart Server</a><br />';
 
       var dialogOptions = {
         title: 'About Google Cloud Datalab',

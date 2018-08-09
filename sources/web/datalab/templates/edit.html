@@ -69,7 +69,7 @@
   <script src="<%baseUrl%>static/components/es6-promise/promise.min.js"></script>
   <script src="<%baseUrl%>static/components/requirejs/require.js"></script>
   <script>
-    require.config({
+    requirejs.config({
       baseUrl: '<%baseUrl%>static/',
       shim: {
         jqueryui: {
@@ -78,7 +78,7 @@
         }
       }
     });
-    require.config({
+    requirejs.config({
        map: {
          '*': {
            'contents': 'services/contents',
@@ -88,7 +88,7 @@
     window.datalab = {};
 
     $("#appBar").load("<%baseUrl%>static/appbar.html", function() {
-      require(['edit/js/main.min']);
+      requirejs(['edit/js/main.min']);
     });
   </script>
   <script src="//www.gstatic.com/feedback/api.js" async="true" defer="true"></script>
