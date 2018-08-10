@@ -17,7 +17,6 @@
 from __future__ import absolute_import
 
 import os
-import subprocess
 import threading
 import time
 import webbrowser
@@ -261,7 +260,6 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         """
         start_time = time.clock()
         health_url = '{0}_info/'.format(datalab_address)
-        healthy = False
         print('Waiting for Datalab to be reachable at ' + datalab_address)
         while tunnel_process.poll() is None:
             try:
