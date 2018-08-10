@@ -183,7 +183,7 @@ def gcloud_compute(
       stderr: The 'stderr' argument for the subprocess call
       wait: Whether or not to wait for the command to complete
     Returns:
-      A subprocess.Popen object iff `wait` is True
+      A subprocess.Popen object iff `wait` is falsy
     Raises:
       KeyboardInterrupt: If the user kills the command
       subprocess.CalledProcessError: If the command dies on its own
@@ -216,7 +216,7 @@ def gcloud_beta_compute(
       stderr: The 'stderr' argument for the subprocess call
       wait: Whether or not to wait for the command to complete
     Returns:
-      A subprocess.Popen object iff `wait` is True
+      A subprocess.Popen object iff `wait` is falsy
     Raises:
       KeyboardInterrupt: If the user kills the command
       subprocess.CalledProcessError: If the command dies on its own
