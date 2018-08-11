@@ -172,7 +172,7 @@ def add_gcloud_verbosity_flag(args, gcloud_cmd):
 
 
 def gcloud_compute(
-        args, compute_cmd, stdin=None, stdout=None, stderr=None):
+        args, compute_cmd, stdin=None, stdout=None, stderr=None, wait=True):
     """Run the given subcommand of `gcloud compute`
 
     Args:
@@ -181,6 +181,9 @@ def gcloud_compute(
       stdin: The 'stdin' argument for the subprocess call
       stdout: The 'stdout' argument for the subprocess call
       stderr: The 'stderr' argument for the subprocess call
+      wait: Whether or not to wait for the command to complete
+    Returns:
+      A subprocess.Popen object iff `wait` is falsy
     Raises:
       KeyboardInterrupt: If the user kills the command
       subprocess.CalledProcessError: If the command dies on its own
@@ -193,12 +196,16 @@ def gcloud_compute(
         base_cmd.append('--quiet')
     add_gcloud_verbosity_flag(args, base_cmd)
     cmd = base_cmd + compute_cmd
-    return subprocess.check_call(
-        cmd, stdin=stdin, stdout=stdout, stderr=stderr)
+    if wait:
+        return subprocess.check_call(
+            cmd, stdin=stdin, stdout=stdout, stderr=stderr)
+    else:
+        return subprocess.Popen(
+            cmd, stdin=stdin, stdout=stdout, stderr=stderr)
 
 
 def gcloud_beta_compute(
-        args, compute_cmd, stdin=None, stdout=None, stderr=None):
+        args, compute_cmd, stdin=None, stdout=None, stderr=None, wait=True):
     """Run the given subcommand of `gcloud beta compute`
 
     Args:
@@ -207,6 +214,9 @@ def gcloud_beta_compute(
       stdin: The 'stdin' argument for the subprocess call
       stdout: The 'stdout' argument for the subprocess call
       stderr: The 'stderr' argument for the subprocess call
+      wait: Whether or not to wait for the command to complete
+    Returns:
+      A subprocess.Popen object iff `wait` is falsy
     Raises:
       KeyboardInterrupt: If the user kills the command
       subprocess.CalledProcessError: If the command dies on its own
@@ -218,8 +228,12 @@ def gcloud_beta_compute(
         base_cmd.append('--quiet')
     add_gcloud_verbosity_flag(args, base_cmd)
     cmd = base_cmd + compute_cmd
-    return subprocess.check_call(
-        cmd, stdin=stdin, stdout=stdout, stderr=stderr)
+    if wait:
+        return subprocess.check_call(
+            cmd, stdin=stdin, stdout=stdout, stderr=stderr)
+    else:
+        return subprocess.Popen(
+            cmd, stdin=stdin, stdout=stdout, stderr=stderr)
 
 
 def gcloud_repos(
