@@ -138,56 +138,18 @@
   <script src="<%baseUrl%>static/components/es6-promise/promise.min.js"></script>
   <script src="<%baseUrl%>static/components/requirejs/require.js"></script>
   <script>
-    require.config({
+    requirejs.config({
       baseUrl: '<%baseUrl%>static/',
-      paths: {
-        'auth/js/main': 'auth/js/main.min',
-        custom : '<%baseUrl%>custom',
-        nbextensions : '<%baseUrl%>nbextensions',
-        widgets : '<%baseUrl%>deprecatedwidgets',
-        kernelspecs : '<%baseUrl%>kernelspecs',
-        underscore : 'components/underscore/underscore-min',
-        backbone : 'components/backbone/backbone-min',
-        jquery: 'components/jquery/jquery.min',
-        bootstrap: 'components/bootstrap/js/bootstrap.min',
-        bootstraptour: 'components/bootstrap-tour/build/js/bootstrap-tour.min',
-        jqueryui: 'components/jquery-ui/ui/minified/jquery-ui.min',
-        moment: 'components/moment/moment',
-        codemirror: 'components/codemirror',
-        termjs: 'components/term.js/src/term',
-      },
-      shim: {
-        underscore: {
-          exports: '_'
-        },
-        backbone: {
-          deps: ["underscore", "jquery"],
-          exports: "Backbone"
-        },
-        bootstrap: {
-          deps: ["jquery"],
-          exports: "bootstrap"
-        },
-        bootstraptour: {
-          deps: ["bootstrap"],
-          exports: "Tour"
-        },
-        jqueryui: {
-          deps: ["jquery"],
-          exports: "$"
+    });
+    requirejs.config({
+      map: {
+        '*': {
+          'contents': 'services/contents',
         }
       }
     });
-    require.config({
-       map: {
-         '*': {
-           'contents': 'services/contents',
-         }
-       }
-    });
-
     $("#appBar").load("<%baseUrl%>static/appbar.html", function() {
-      require(['tree/js/main.min']);
+      requirejs(['tree/js/main.min']);
     });
   </script>
   <script src="//www.gstatic.com/feedback/api.js" async="true" defer="true"></script>

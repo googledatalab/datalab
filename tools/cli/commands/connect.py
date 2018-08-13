@@ -17,8 +17,8 @@
 from __future__ import absolute_import
 
 import os
-import subprocess
 import threading
+import time
 import webbrowser
 
 try:
@@ -138,6 +138,14 @@ def connection_flags(parser):
             '\n\n'
             'A negative value means no limit.'))
     parser.add_argument(
+        '--connection-health-timeout-seconds',
+        dest='connection_health_timeout_seconds',
+        type=int,
+        default=120,
+        help=(
+            'maximum amount of time, in seconds, to wait for a connection '
+            'to become healthy before giving up and retrying.'))
+    parser.add_argument(
         '--ssh-log-level',
         dest='ssh_log_level',
         choices=['quiet', 'fatal', 'error', 'info', 'verbose',
@@ -197,7 +205,6 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
 
         Raises:
           KeyboardInterrupt: When the end user kills the connection
-          subprocess.CalledProcessError: If the connection dies on its own
         """
         if utils.print_debug_messages(args):
             print('Connecting to {0} via SSH').format(instance)
@@ -224,8 +231,7 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         cmd.append('datalab@{0}'.format(instance))
         if args.internal_ip:
             cmd.extend(['--internal-ip'])
-        gcloud_compute(args, cmd)
-        return
+        return gcloud_compute(args, cmd, wait=False)
 
     def maybe_open_browser(address):
         """Try to open a browser if we reasonably can."""
@@ -250,38 +256,37 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
                 maybe_open_browser(datalab_address)
         return
 
-    def health_check(cancelled_event, healthy_event):
+    def health_check(tunnel_process, healthy_event, timeout_secs):
         """Check if the Datalab instance is reachable via the connection.
 
         After the instance is reachable, the `on_ready` method is called.
 
-        This method is meant to be suitable for running in a separate thread,
-        and takes an event argument to indicate when that thread should exit.
-
         Args:
-          cancelled_event: A threading.Event instance that indicates we should
-            give up on the instance becoming reachable.
+          tunnel_process: A subprocess.Popen object for the SSH tunnel
           healthy_event: A threading.Event instance that can be used to
             indicate that the instance became reachable.
+          timeout_secs: Amount of time (in seconds) to wait for the connection
+            to become healthy before giving up and killing it.
         """
+        start_time = time.clock()
         health_url = '{0}_info/'.format(datalab_address)
-        healthy = False
         print('Waiting for Datalab to be reachable at ' + datalab_address)
-        while not cancelled_event.is_set():
+        while tunnel_process.poll() is None:
             try:
                 health_resp = urlopen(health_url)
                 if health_resp.getcode() == 200:
-                    healthy = True
-                    break
+                    healthy_event.set()
+                    on_ready()
+                    return
             except Exception:
-                continue
-
-        if healthy:
-            healthy_event.set()
-            on_ready()
+                if (time.clock() - start_time) > timeout_secs:
+                    print('Timeout waiting for the connection to become '
+                          'healthy. Trying again with a new connection...')
+                    tunnel_process.terminate()
+                    return
         return
 
-    def connect_and_check(healthy_event):
+    def connect_and_check(healthy_event, timeout_secs):
         """Create a connection to Datalab and notify the user when ready.
 
         This method blocks for as long as the connection is open.
@@ -289,30 +294,25 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
         Args:
           healthy_event: A threading.Event instance that can be used to
             indicate that the instance became reachable.
+          timeout_secs: Amount of time (in seconds) to wait for the connection
+            to become healthy before giving up and killing it.
         Returns:
           True iff the Datalab instance became reachable.
         Raises:
           KeyboardInterrupt: If the user kills the connection.
         """
-        cancelled_event = threading.Event()
-        health_check_thread = threading.Thread(
-            target=health_check,
-            args=[cancelled_event, healthy_event])
-        health_check_thread.start()
-        try:
-            create_tunnel()
-        except subprocess.CalledProcessError:
-            print('Connection broken')
-        finally:
-            cancelled_event.set()
-            health_check_thread.join()
+        tunnel_process = create_tunnel()
+        health_check(tunnel_process, healthy_event, timeout_secs)
+        tunnel_process.wait()
+        print('Connection closed')
         return healthy_event.is_set()
 
     remaining_reconnects = args.max_reconnects
+    timeout_secs = args.connection_health_timeout_seconds
     while True:
         healthy_event = threading.Event()
         try:
-            connect_and_check(healthy_event)
+            connect_and_check(healthy_event, timeout_secs)
         except KeyboardInterrupt:
             if healthy_event.is_set():
                 cli_flags = ' '

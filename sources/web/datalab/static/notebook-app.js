@@ -1,7 +1,7 @@
 define(['appbar', 'minitoolbar', 'idle-timeout', 'util'], function(appbar, minitoolbar, idleTimeout, util) {
   function preLoad(ipy, notebook, events, dialog, utils) {
     // Various RequireJS additions used for notebook functionality
-    require.config({
+    requirejs.config({
       paths: {
         extensions: 'extensions',
         d3: '//cdnjs.cloudflare.com/ajax/libs/d3/3.4.13/d3',
@@ -19,7 +19,7 @@ define(['appbar', 'minitoolbar', 'idle-timeout', 'util'], function(appbar, minit
       }
     });
 
-    require(['notebook/js/menubar'], function(ipy) {
+    requirejs(['notebook/js/menubar'], function(ipy) {
       // Disable add_kernel_help_links as early as possible to avoid a race
       // condition, where it tries to find some HTML elements that our template
       // doesn't have, causing the notebook editor to freeze.
@@ -171,7 +171,7 @@ define(['appbar', 'minitoolbar', 'idle-timeout', 'util'], function(appbar, minit
       updateNavigation();
     });
 
-    require(['notebook/js/codecell'], function(ipy) {
+    requirejs(['notebook/js/codecell'], function(ipy) {
       var codeCell = ipy.CodeCell;
       var codeCellProto = codeCell.prototype;
 
@@ -216,15 +216,15 @@ define(['appbar', 'minitoolbar', 'idle-timeout', 'util'], function(appbar, minit
       codeConfig.lineNumbers = true;
       codeConfig.lineNumberFormatter = function(n) { return n.toString(); };
 
-      codeCell.config_defaults.highlight_modes.magic_javascript.reg = [
+      codeCell.options_default.highlight_modes.magic_javascript.reg = [
         /^%%javascript/,
         /^%%bigquery udf/
       ];
 
-      codeCell.config_defaults.highlight_modes['magic_text/sql'] = {
+      codeCell.options_default.highlight_modes['magic_text/sql'] = {
         reg: [ /%%?sql\b/ ]
       };
-      codeCell.config_defaults.highlight_modes['magic_text/bigquery'] = {
+      codeCell.options_default.highlight_modes['magic_text/bigquery'] = {
         reg: [ /%%?bq\s+query\b/ ]
       };
     });
@@ -308,7 +308,7 @@ define(['appbar', 'minitoolbar', 'idle-timeout', 'util'], function(appbar, minit
 
     window.datalab.session = new DataLabSession();
 
-    require(['notebook/js/notebook'], function(ipy) {
+    requirejs(['notebook/js/notebook'], function(ipy) {
       var notebook = ipy.Notebook;
 
       var originalFromJSON = notebook.prototype.fromJSON;
@@ -369,12 +369,12 @@ define(['appbar', 'minitoolbar', 'idle-timeout', 'util'], function(appbar, minit
       };
     });
 
-    require(['notebook/js/textcell'], function(ipy) {
+    requirejs(['notebook/js/textcell'], function(ipy) {
       var markdownCell = ipy.MarkdownCell;
       markdownCell.options_default.placeholder = 'Double-click here to enter some markdown text...';
     });
 
-    require(["services/kernels/kernel"], function(ipy) {
+    requirejs(["services/kernels/kernel"], function(ipy) {
       var kernel = ipy.Kernel;
 
       var originalExecute = kernel.prototype.execute;
@@ -432,7 +432,7 @@ define(['appbar', 'minitoolbar', 'idle-timeout', 'util'], function(appbar, minit
       });
     }
 
-    require (["notebook/js/cell"], function(ipy) {
+    requirejs (["notebook/js/cell"], function(ipy) {
 
       var cell = ipy.Cell;
 
@@ -503,7 +503,7 @@ define(['appbar', 'minitoolbar', 'idle-timeout', 'util'], function(appbar, minit
       };
     });
 
-    require (["notebook/js/outputarea"], function(ipy) {
+    requirejs (["notebook/js/outputarea"], function(ipy) {
       ipy.OutputArea.auto_scroll_threshold = 1000;
     });
 

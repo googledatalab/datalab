@@ -62,13 +62,13 @@
         2
         3
         </pre>
-      <span id="dummy-screen-rows" style="">01234567890123456789012345678901234567890123456789012345678901234567890123456789012</span>
+      <span id="dummy-screen-rows">01234567890123456789012345678901234567890123456789012345678901234567890123456789012</span>
     </div>
   </div>
   <script src="<%baseUrl%>static/components/es6-promise/promise.min.js"></script>
   <script src="<%baseUrl%>static/components/requirejs/require.js"></script>
   <script>
-    require.config({
+    requirejs.config({
       baseUrl: '<%baseUrl%>static/',
       paths: {
         'auth/js/main': 'auth/js/main.min',
@@ -108,7 +108,7 @@
         }
       }
     });
-    require.config({
+    requirejs.config({
        map: {
          '*': {
            'contents': 'services/contents',
@@ -118,7 +118,7 @@
     window.datalab = {};
 
     $("#appBar").load("<%baseUrl%>static/appbar.html", function() {
-      require(['terminal/js/main.min', 'tree/js/main.min',
+      requirejs(['terminal/js/main.min', 'tree/js/main.min',
                'websocket']);
     });
   </script>

@@ -18,6 +18,7 @@
 # of the bundled CLI tool. This requires a GCP project in which the
 # test will create, connect to, and delete Datalab instances.
 
+import argparse
 import random
 import socket
 import subprocess
@@ -232,4 +233,18 @@ class TestEndToEnd(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--runs', type=int, default=1, choices=range(1, 100),
+                        metavar='COUNT', dest='runs',
+                        help='Number of times to run the test suite')
+    args = parser.parse_args()
+
+    failed_count, run_count = 0, 0
+    for _ in range(0, args.runs):
+        suite = unittest.TestLoader().loadTestsFromTestCase(TestEndToEnd)
+        result = unittest.TextTestRunner(buffer=True).run(suite)
+        run_count += 1
+        if not result.wasSuccessful():
+            failed_count += 1
+
+    print('Ran {} test runs with {} failing'.format(run_count, failed_count))
