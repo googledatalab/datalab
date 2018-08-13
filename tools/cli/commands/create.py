@@ -939,8 +939,7 @@ def prepare(args, gcloud_compute, gcloud_repos):
 
 def run(args, gcloud_compute, gcloud_repos,
         email='', in_cloud_shell=False, gcloud_zone=None,
-        sdk_version='UNKNOWN', datalab_version='UNKNOWN',
-        **kwargs):
+        sdk_version='UNKNOWN', datalab_version='UNKNOWN', **kwargs):
     """Implementation of the `datalab create` subcommand.
 
     Args:
