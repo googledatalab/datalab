@@ -719,19 +719,20 @@ def ensure_private_ip_google_access(args, gcloud_compute, subnet_name, region):
             raise
 
 
-def ensure_subnet_exists(args, gcloud_compute, subnet_name):
+def ensure_subnet_exists(args, gcloud_compute, subnet_region, subnet_name):
     """Check the specified subnet if it does not exit with error.
 
     Args:
       args: The Namespace returned by argparse
       gcloud_compute: Function that can be used for invoking `gcloud compute`
+      subnet_region: The name of the region of the subnet
       subnet_name: The name of the subnet
     Raises:
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
     get_cmd = [
         'networks', 'subnets', 'describe',
-        '--format', 'value(name)', subnet_name]
+        '--format', 'value(name)', '--region', subnet_region, subnet_name]
     try:
         utils.call_gcloud_quietly(
             args, gcloud_compute, get_cmd, report_errors=False)
@@ -920,12 +921,12 @@ def prepare(args, gcloud_compute, gcloud_repos):
     disk_cfg = (
         'auto-delete=no,boot=no,device-name=datalab-pd,mode=rw,name=' +
         disk_name)
+    region = get_region_name(args, gcloud_compute)
 
     if args.subnet_name:
-        ensure_subnet_exists(args, gcloud_compute, args.subnet_name)
+        ensure_subnet_exists(args, gcloud_compute, region, args.subnet_name)
 
     if args.no_external_ip:
-        region = get_region_name(args, gcloud_compute)
         subnet_name = args.subnet_name or get_subnet_name(
             args, gcloud_compute, network_name, region)
         ensure_private_ip_google_access(
