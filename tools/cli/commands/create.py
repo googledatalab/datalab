@@ -770,8 +770,8 @@ def prepare(args, gcloud_compute, gcloud_repos):
 
     if args.subnet_name:
         subnet_region = args.zone[:-2]
-        ensure_subnet_exists(args, gcloud_compute, 
-                             subnet_region, args.subnet_name)
+        ensure_subnet_exists(args, gcloud_compute, subnet_region, 
+                             args.subnet_name)
 
     if not args.no_create_repository:
         ensure_repo_exists(args, gcloud_repos, _DATALAB_NOTEBOOKS_REPOSITORY)
