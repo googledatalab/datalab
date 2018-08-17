@@ -187,4 +187,4 @@ images:
   - 'gcr.io/${PROJECT_ID}/datalab-preview'
   - 'gcr.io/${PROJECT_ID}/datalab-gpu-preview'
 
-timeout: '7200s'
+timeout: '10600s'
