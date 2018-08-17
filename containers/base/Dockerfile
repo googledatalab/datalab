@@ -115,6 +115,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         bs4==0.0.1 \
         ggplot==0.6.8 \
         google-cloud-dataflow==2.0.0 \
+        google-cloud-monitoring==0.28.0 \
         lime==0.1.1.23 \
         protobuf==3.5.2 \
         tensorflow==1.8.0 && \
@@ -171,6 +172,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         apache-airflow==1.9.0 \
         bs4==0.0.1 \
         ggplot==0.6.8 \
+        google-cloud-monitoring==0.28.0 \
         lime==0.1.1.23 \
         protobuf==3.5.2 \
         tensorflow==1.8.0 && \
