@@ -19,6 +19,7 @@ from __future__ import absolute_import
 import json
 import os
 import subprocess
+import sys
 import tempfile
 
 from . import connect, utils
@@ -365,7 +366,7 @@ runcmd:
 class RepositoryException(Exception):
 
     _MESSAGE = (
-        'Failed to find or create the repository {}.'
+        'Failed to find or create the repository `{}`.'
         '\n\n'
         'Ask a project owner to create it for you.')
 
@@ -377,7 +378,7 @@ class RepositoryException(Exception):
 class SubnetException(Exception):
 
     _MESSAGE = (
-        'Failed to find the subnet {}.'
+        'Failed to find the subnet `{}`.'
         '\n\n'
         'Ask a project owner to create it for you, '
         'or double check your gcloud config for the correct region.')
@@ -385,6 +386,36 @@ class SubnetException(Exception):
     def __init__(self, subnet_name):
         super(SubnetException, self).__init__(
             SubnetException._MESSAGE.format(subnet_name))
+
+
+class NoSubnetsFoundException(Exception):
+
+    _MESSAGE = (
+        'Failed to find a subnet for the network `{}` in the region `{}`.'
+        '\n\n'
+        'Ask a network admin to check it for you.'
+        '\n\n'
+        'Note that if this is a legacy network, then an '
+        'external IP address is required.')
+
+    def __init__(self, network_name, region):
+        super(NoSubnetsFoundException, self).__init__(
+            NoSubnetsFoundException._MESSAGE.format(network_name, region))
+
+
+class PrivateIpGoogleAccessException(Exception):
+
+    _MESSAGE = (
+        'The subnet `{}` in the region `{}` is not configured to '
+        'allow private IP addresses to access Google services.'
+        '\n\n'
+        'Either ask a network admin to configure it for you, or '
+        'create the instance with an external IP address.')
+
+    def __init__(self, subnet_name, region):
+        super(PrivateIpGoogleAccessException, self).__init__(
+            PrivateIpGoogleAccessException._MESSAGE.format(
+                subnet_name, region))
 
 
 class CancelledException(Exception):
@@ -485,6 +516,23 @@ def flags(parser):
         help='do not automatically backup the disk contents to GCS')
 
     parser.add_argument(
+        '--beta-no-external-ip',
+        dest='no_external_ip',
+        action='store_true',
+        default=False,
+        help=(
+            'do not assign the instance an external IP address.'
+            '\n\n'
+            'If specified, you must make sure that the machine where you '
+            'run `datalab connect` is on the same VPC as the instance '
+            '(the one specified via the `--network-name` flag).'
+            '\n\n'
+            'Additionally, you must pass the `--beta-internal-ip` flag '
+            'to the `datalab connect` command.'
+            '\n\n'
+            'Note that this is a beta feature and unsupported.'))
+
+    parser.add_argument(
         '--no-create-repository',
         dest='no_create_repository',
         action='store_true',
@@ -527,6 +575,41 @@ def flags(parser):
     return
 
 
+def get_region_name(args, gcloud_compute):
+    """Lookup the name of the GCP region.
+
+    Args:
+      args: The Namespace returned by argparse
+      gcloud_compute: Function that can be used for invoking `gcloud compute`
+    Raises:
+      subprocess.CalledProcessError: If a `gcloud` command fails
+    """
+
+    get_zone_cmd = ['zones', 'describe', '--format=value(region)', args.zone]
+    with tempfile.TemporaryFile() as stdout, \
+            tempfile.TemporaryFile() as stderr:
+        try:
+            gcloud_compute(args, get_zone_cmd, stdout=stdout, stderr=stderr)
+            stdout.seek(0)
+            region_uri = stdout.read().decode('utf-8').strip()
+        except subprocess.CalledProcessError:
+            stderr.seek(0)
+            sys.stderr.write(stderr.read())
+            raise
+    get_region_cmd = [
+        'regions', 'describe', '--format=value(name)', region_uri]
+    with tempfile.TemporaryFile() as stdout, \
+            tempfile.TemporaryFile() as stderr:
+        try:
+            gcloud_compute(args, get_region_cmd, stdout=stdout, stderr=stderr)
+            stdout.seek(0)
+            return stdout.read().decode('utf-8').strip()
+        except subprocess.CalledProcessError:
+            stderr.seek(0)
+            sys.stderr.write(stderr.read())
+            raise
+
+
 def create_network(args, gcloud_compute, network_name):
     """Create the specified network.
 
@@ -563,6 +646,77 @@ def ensure_network_exists(args, gcloud_compute, network_name):
     except subprocess.CalledProcessError:
         create_network(args, gcloud_compute, network_name)
     return
+
+
+def get_subnet_name(args, gcloud_compute, network_name, region):
+    """Lookup the name of the subnet.
+
+    The specified network must be either an `auto` or `custom` mode network;
+    legacy networks are not supported.
+
+    Args:
+      args: The Namespace returned by argparse
+      gcloud_compute: Function that can be used for invoking `gcloud compute`
+      network_name: Name of the VPC network
+      region: Name of the GCP region
+    Raises:
+      subprocess.CalledProcessError: If a `gcloud` command fails
+    """
+    get_subnet_cmd = ['networks', 'subnets', 'list',
+                      '--filter=network~/{}$ region~/{}$'.format(
+                          network_name, region),
+                      '--format=value(name)']
+    with tempfile.TemporaryFile() as stdout, \
+            tempfile.TemporaryFile() as stderr:
+        try:
+            gcloud_compute(args, get_subnet_cmd, stdout=stdout, stderr=stderr)
+            stdout.seek(0)
+            subnet_name = stdout.read().decode('utf-8').strip()
+            if not subnet_name:
+                raise NoSubnetsFoundException(network_name, region)
+            if utils.print_debug_messages(args):
+                print('Using the subnet {0}'.format(subnet_name))
+            return subnet_name
+        except subprocess.CalledProcessError:
+            stderr.seek(0)
+            sys.stderr.write(stderr.read())
+            raise
+
+
+def ensure_private_ip_google_access(args, gcloud_compute, subnet_name, region):
+    """Ensure that the subnet allows private IPs to access Google services.
+
+    Args:
+      args: The Namespace returned by argparse
+      gcloud_compute: Function that can be used for invoking `gcloud compute`
+      subnet_name: Name of the VPC sub-network
+      region: Name of the GCP region
+    Raises:
+      subprocess.CalledProcessError: If a `gcloud` command fails
+      subprocess.PrivateIpGoogleAccessException: If the check fails
+    """
+    if utils.print_debug_messages(args):
+        print('Checking private IP access to Google services for '
+              'the subnet `{0}` in the region `{1}`'.format(
+                  subnet_name, region))
+    get_subnet_cmd = ['networks', 'subnets', 'describe', subnet_name,
+                      '--region', region,
+                      '--format=get(privateIpGoogleAccess)']
+    with tempfile.TemporaryFile() as stdout, \
+            tempfile.TemporaryFile() as stderr:
+        try:
+            gcloud_compute(args, get_subnet_cmd, stdout=stdout, stderr=stderr)
+            stdout.seek(0)
+            has_access = stdout.read().decode('utf-8').strip()
+            if utils.print_debug_messages(args):
+                print('Private IP Google access allowed: `{0}`'.format(
+                    has_access))
+            if not (has_access == 'True'):
+                raise PrivateIpGoogleAccessException(subnet_name, region)
+        except subprocess.CalledProcessError:
+            stderr.seek(0)
+            sys.stderr.write(stderr.read())
+            raise
 
 
 def ensure_subnet_exists(args, gcloud_compute, subnet_region, subnet_name):
@@ -767,11 +921,16 @@ def prepare(args, gcloud_compute, gcloud_repos):
     disk_cfg = (
         'auto-delete=no,boot=no,device-name=datalab-pd,mode=rw,name=' +
         disk_name)
+    region = get_region_name(args, gcloud_compute)
 
     if args.subnet_name:
-        subnet_region = args.zone[:-2]
-        ensure_subnet_exists(args, gcloud_compute, subnet_region,
-                             args.subnet_name)
+        ensure_subnet_exists(args, gcloud_compute, region, args.subnet_name)
+
+    if args.no_external_ip:
+        subnet_name = args.subnet_name or get_subnet_name(
+            args, gcloud_compute, network_name, region)
+        ensure_private_ip_google_access(
+            args, gcloud_compute, subnet_name, region)
 
     if not args.no_create_repository:
         ensure_repo_exists(args, gcloud_repos, _DATALAB_NOTEBOOKS_REPOSITORY)
@@ -878,6 +1037,8 @@ def run(args, gcloud_compute, gcloud_repos,
                 '--service-account', service_account,
                 '--scopes', 'cloud-platform',
                 args.instance])
+            if args.no_external_ip:
+                cmd.extend(['--no-address'])
             gcloud_compute(args, cmd)
         finally:
             os.remove(startup_script_file.name)
@@ -888,5 +1049,7 @@ def run(args, gcloud_compute, gcloud_repos,
             os.remove(datalab_version_file.name)
 
     if (not args.no_connect) and (not args.for_user):
+        if args.no_external_ip:
+            args.internal_ip = True
         connect.connect(args, gcloud_compute, email, in_cloud_shell)
     return
