@@ -59,11 +59,20 @@ _DATALAB_DISK_DESCRIPTION = (
 
 _DATALAB_NOTEBOOKS_REPOSITORY = 'datalab-notebooks'
 
-_DATALAB_BASE_STARTUP_SCRIPT = """#!/bin/bash
+_DATALAB_STARTUP_SCRIPT = """#!/bin/bash
 
-# First, make sure the `datalab` user exists with their
-# home directory setup correctly.
-useradd datalab
+# First, make sure the `datalab` and `logger` users exist with their
+# home directories setup correctly.
+useradd datalab -u 2000 || useradd datalab
+useradd logger -u 2001 || useradd logger
+
+# In case the instance has started before, the `/home/datalab` directory
+# may already exist, but with the incorrect user ID (since `/etc/passwd`
+# is saved in a tmpfs and changes after restarts). To account for that,
+# we should force the file ownership under `/home/datalab` to match
+# the current UID for the `datalab` user.
+chown -R datalab /home/datalab
+chown -R logger /home/logger
 
 PERSISTENT_DISK_DEV="/dev/disk/by-id/google-datalab-pd"
 MOUNT_DIR="/mnt/disks/datalab-pd"
@@ -214,9 +223,6 @@ cleanup_tmp() {{
   find "${{tmpdir}}/" -mindepth 1 -delete
 }}
 
-"""
-
-_DATALAB_STARTUP_SCRIPT = _DATALAB_BASE_STARTUP_SCRIPT + """
 download_docker_image
 mount_and_prepare_disk
 configure_swap
