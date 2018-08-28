@@ -278,7 +278,7 @@
     window.datalab = {};
 
     $("#appBar").load("<%baseUrl%>static/appbar.html", function() {
-        require(['websocket'], (websocket) => {
+        requirejs(['websocket'], (websocket) => {
             requirejs(['notebook/js/main.min']);
         });
     });
