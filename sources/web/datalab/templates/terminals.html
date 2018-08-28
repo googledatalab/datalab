@@ -118,11 +118,11 @@
     window.datalab = {};
 
     $("#appBar").load("<%baseUrl%>static/appbar.html", function() {
-      requirejs(['terminal/js/main.min', 'tree/js/main.min',
-               'websocket']);
+        require(['websocket'], (websocket) => {
+            requirejs(['terminal/js/main.min', 'tree/js/main.min']);
+        });
     });
   </script>
   <script src="//www.gstatic.com/feedback/api.js" async="true" defer="true"></script>
 </body>
 </html>
-
