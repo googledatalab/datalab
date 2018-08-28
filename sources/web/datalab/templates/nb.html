@@ -278,7 +278,9 @@
     window.datalab = {};
 
     $("#appBar").load("<%baseUrl%>static/appbar.html", function() {
-      requirejs(['notebook/js/main.min']);
+        requirejs(['websocket'], (websocket) => {
+            requirejs(['notebook/js/main.min']);
+        });
     });
   </script>
   <script src="//www.gstatic.com/feedback/api.js" async="true" defer="true"></script>

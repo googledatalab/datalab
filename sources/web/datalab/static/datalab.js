@@ -81,10 +81,9 @@ define([
   'notebook-app',
   'notebook-list',
   'minitoolbar',
-  'websocket',
   'base/js/dialog'
 ], function(promises, ipy, events, utils, savewidget, security, appbar, editapp,
-            notebookapp, notebooklist, minitoolbar, websocket, dialog) {
+            notebookapp, notebooklist, minitoolbar, dialog) {
      initializeDataLab(
             promises, ipy, events, dialog, utils, savewidget, security, appbar, editapp,
             notebookapp, notebooklist);
