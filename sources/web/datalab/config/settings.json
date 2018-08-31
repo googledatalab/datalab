@@ -42,11 +42,11 @@
   "numHourlyBackups": 10,
   "numWeeklyBackups": 20,
   "proxyWebSockets": false,
+  "readOnly": false,
   "release": "beta",
   "serverPort": 8080,
   "socketioPort": 8084,
   "supportedFileBrowserSources": ["jupyter"],
   "supportUserOverride": false,
-  "useWorkspace": false,
-  "readOnly": false
+  "useWorkspace": false
 }
