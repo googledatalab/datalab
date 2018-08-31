@@ -348,6 +348,13 @@ function trimBasePath(requestPath: string): string {
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse) {
   request.url = trimBasePath(request.url);
   idleTimeout.resetBasedOnPath(request.url);
+  if (appSettings.readOnly) {
+    if (('GET' != request.method) &&  ('HEAD' != request.method)) {
+      response.statusCode = 403;
+      response.end();
+      return;
+    }
+  }
   try {
     uncheckedRequestHandler(request, response);
   } catch (e) {
@@ -378,10 +385,12 @@ export function run(settings: common.AppSettings): void {
   timeoutHandler = idleTimeout.createHandler();
 
   server = http.createServer(requestHandler);
-  server.on('upgrade', socketHandler);
+  if (!settings.readOnly) {
+    server.on('upgrade', socketHandler);
 
-  if (settings.allowHttpOverWebsocket) {
-    new wsHttpProxy.WsHttpProxy(server, httpOverWebSocketPath, settings.allowOriginOverrides);
+    if (settings.allowHttpOverWebsocket) {
+      new wsHttpProxy.WsHttpProxy(server, httpOverWebSocketPath, settings.allowOriginOverrides);
+    }
   }
 
   logging.getLogger().info('Starting DataLab server at http://localhost:%d%s',

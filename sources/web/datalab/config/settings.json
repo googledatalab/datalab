@@ -47,5 +47,6 @@
   "socketioPort": 8084,
   "supportedFileBrowserSources": ["jupyter"],
   "supportUserOverride": false,
-  "useWorkspace": false
+  "useWorkspace": false,
+  "readOnly": false
 }
