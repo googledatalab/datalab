@@ -25,6 +25,11 @@ declare module common {
   interface AppSettings {
 
     /**
+     * Whether or not to turn on read-only mode, where only GET requests are allowed.
+     */
+    readOnly: boolean;
+
+    /**
      * Whether or not to write log statements to stderr
      */
     consoleLogging: boolean;
