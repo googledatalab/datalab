@@ -1,5 +1,5 @@
 define(['appbar', 'minitoolbar', 'idle-timeout', 'util'], function(appbar, minitoolbar, idleTimeout, util) {
-  function preLoad(ipy, notebook, events, dialog, utils) {
+  function preLoad(ipy, notebook, promises, dialog, utils) {
     // Various RequireJS additions used for notebook functionality
     requirejs.config({
       paths: {
@@ -129,7 +129,7 @@ define(['appbar', 'minitoolbar', 'idle-timeout', 'util'], function(appbar, minit
       }
     };
 
-    events.on('kernel_connected.Kernel', function() {
+    $([IPython.events]).on('kernel_connected.Kernel', function() {
       $('#currentKernelName').text(Jupyter.kernelselector.current_selection);
       $('#kernelSelectorDropdown').empty();
       Object.keys(Jupyter.kernelselector.kernelspecs).forEach(function(kernel) {
@@ -147,7 +147,7 @@ define(['appbar', 'minitoolbar', 'idle-timeout', 'util'], function(appbar, minit
     idleTimeout.setupKernelBusyHeartbeat();
     $('#mainArea').scroll(idleTimeout.notebookScrolled);
 
-    events.on('notebook_loaded.Notebook', function() {
+    promises.notebook_loaded.then(function() {
 
       // create the cell toolbar
       Jupyter.notebook.get_cells().forEach(function(cell) {
@@ -156,15 +156,15 @@ define(['appbar', 'minitoolbar', 'idle-timeout', 'util'], function(appbar, minit
       });
 
       // patch any cell created from now on
-      events.on('create.Cell', function(e, params) {
+      $([IPython.events]).on('create.Cell', function(e, params) {
         minitoolbar.addCellMiniToolbar(params.cell);
       });
 
-      events.on('set_dirty.Notebook', function(e) {
+      $([IPython.events]).on('set_dirty.Notebook', function(e) {
         updateNavigation();
       });
 
-      events.on('command_mode.Cell', function(e) {
+      $([IPython.events]).on('command_mode.Cell', function(e) {
         updateNavigation();
       });
 
@@ -229,7 +229,7 @@ define(['appbar', 'minitoolbar', 'idle-timeout', 'util'], function(appbar, minit
       };
     });
 
-    events.on('open_with_text.Pager', function(e, payload) {
+    $([IPython.events]).on('open_with_text.Pager', function(e, payload) {
       var help = payload.data['text/html'];
       if (!help) {
         help = payload.data['text/plain'];
