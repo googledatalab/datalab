@@ -23,6 +23,9 @@ requirejs.config({
   nodeRequire: require,
 });
 
+// Stub the jquery-ui needed by the notebook-list module
+requirejs.define('jquery-ui', [], () => {});
+
 const notebookList = requirejs('notebook-list');
 const util = requirejs('util');
 
