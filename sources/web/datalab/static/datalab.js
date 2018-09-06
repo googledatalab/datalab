@@ -34,10 +34,7 @@ function initializeDataLab(
 
   var pageClass = document.body.className;
   if (pageClass.indexOf('notebook_app') >= 0) {
-    notebookapp.preLoad(ipy, ipy.notebook, events, dialog, utils);
-    // All extensions now load after the notebook which means we need to use promises
-    // instead of events. This may also affect the other events.on(...) calls below.
-    // See https://github.com/jupyter/notebook/issues/2499
+    notebookapp.preLoad(ipy, ipy.notebook, promises, dialog, utils);
     promises.notebook_loaded.then(function() {
       notebookapp.postLoad(ipy, ipy.notebook, events, dialog, utils);
       window.datalab.loaded = true;
@@ -61,7 +58,7 @@ function initializeDataLab(
     // The page is finished loading after the notebook list is drawn for the first
     // time. This event is used also after loading the terminal list. These lists are
     // refreshed periodically though, so we need to only capture the first occurrence
-    events.on('draw_notebook_list.NotebookList', function() {
+    $([IPython.events]).on('draw_notebook_list.NotebookList', function() {
       if (!window.datalab.loaded) {
         window.datalab.loaded = true;
       }

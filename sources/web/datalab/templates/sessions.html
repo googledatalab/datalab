@@ -83,11 +83,14 @@
       baseUrl: '<%baseUrl%>static/',
     });
     requirejs.config({
-       map: {
-         '*': {
-           'contents': 'services/contents',
-         }
-       }
+      map: {
+        '*': {
+          'contents': 'services/contents',
+        }
+      },
+      paths: {
+        'jquery-ui': 'components/jquery-ui/ui/minified/jquery-ui.min',
+      },
     });
     window.datalab = {};
 

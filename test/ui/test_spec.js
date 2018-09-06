@@ -116,7 +116,7 @@ describe('UI tests', function() {
       return driver.executeAsyncScript(function() {
         const callback = arguments[arguments.length - 1];
         require(['base/js/events'], function(events) {
-          events.on('draw_notebook_list.NotebookList', callback);
+          $([IPython.events]).on('draw_notebook_list.NotebookList', callback);
           Jupyter.notebook_list.load_list();
         });
       });
