@@ -285,6 +285,7 @@ i.material-icons {
 /* List page */
 #button-select-all {
   border-color: transparent;
+  box-shadow: none;
   background-color: transparent;
   min-width: 20px;
 }
