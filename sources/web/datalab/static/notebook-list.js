@@ -1,4 +1,4 @@
-define(['util'], (util) => {
+define(['util', 'jquery-ui'], (util) => {
 
   // Compare two arrays, each representing a semantic version in the form of [0,1,2]
   // Returns -1, 0, 1. Returns null if they're malformed
