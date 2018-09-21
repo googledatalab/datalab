@@ -57,6 +57,11 @@ gcloud --project ${PROJECT_ID} app deploy staticfiles/*.yaml
 
 Now, you can deploy the VM manager, which also runs in an App Engine Flex app.
 
+Before you do, set the value of the `MY_DOMAIN` environment variable to the
+domain portion of your user's email addresses. For example, if you are allowing
+users with `@example.com` email addresses, then you would run
+`export MY_DOMAIN=example.com`:
+
 ```sh
 sed -i -e "s/MY_DOMAIN/${MY_DOMAIN}/" vmmanager/vmmanager.yaml
 gcloud --project ${PROJECT_ID} app deploy vmmanager/vmmanager.yaml
