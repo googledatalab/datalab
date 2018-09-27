@@ -1,6 +1,6 @@
 # Managed Datalab Service Example
 
-This directory shows how you can run you own service for automatically
+This directory shows how you can run your own service for automatically
 allocating and managing Datalab instances.
 
 This is done by defining a VM manager that creates and deletes the instances,
@@ -41,7 +41,7 @@ make deploy
 popd
 ```
 
-Next, deploy the the `datalabstatic` App Engine service to your project.
+Next, deploy the `datalabstatic` App Engine service to your project.
 
 This serves static content for Datalab instances directly from a single,
 read-only instance of Datalab, and makes the UI much more responsive by
