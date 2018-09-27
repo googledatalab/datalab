@@ -1,0 +1,12 @@
+dispatch:
+  # Serve the favicon from the static server
+  - url: "*/favicon.ico"
+    service: datalabstatic
+
+  # We still want the user's chosen theme to be served by their backend
+  - url: "*/static/style*"
+    service: default
+
+  # Serve the remaining contents of the "/static/" path from the static server
+  - url: "*/static/*"
+    service: datalabstatic

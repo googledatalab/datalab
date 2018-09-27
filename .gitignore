@@ -22,7 +22,7 @@ containers/base/pydatalab
 node_modules/
 bower_components/
 test/ui/broken
-experimental
+sources/web/datalab/static/experimental
 polymer_bundled
 polymer_unbundled
 sources/web/datalab/polymer/**/*.js

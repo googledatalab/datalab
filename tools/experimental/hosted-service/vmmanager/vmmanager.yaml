@@ -1,0 +1,40 @@
+runtime: custom
+env: flex
+service: vmmanager
+
+liveness_check:
+  path: "/liveness_check"
+  check_interval_sec: 30
+  timeout_sec: 4
+  failure_threshold: 10
+  success_threshold: 2
+
+readiness_check:
+  path: "/readiness_check"
+  check_interval_sec: 30
+  timeout_sec: 4
+  failure_threshold: 10
+  success_threshold: 2
+  app_start_timeout_sec: 60
+
+automatic_scaling:
+  min_num_instances: 1
+
+resources:
+  cpu: 4
+  memory_gb: 16
+  disk_size_gb: 100
+
+env_variables:
+  MACHINE_TYPE: "n1-standard-1"
+  ZONE: "us-west1-a"
+  NETWORK: "datalab-network"
+  IMAGE: "gcr.io/cloud-datalab/datalab:commit-9dd43fe68e6cc2975ca0383caeb04caa4057ab91"
+  ALLOWED_DOMAIN: "MY_DOMAIN"
+
+beta_settings:
+  service_account_scopes: "https://www.googleapis.com/auth/userinfo.email"
+
+handlers:
+- url: /.*
+  script: this_is_required_but_ignored

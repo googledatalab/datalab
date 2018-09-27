@@ -246,7 +246,7 @@ RUN if [ -d /datalab/lib/pydatalab/.git ]; then \
         git clone https://github.com/googledatalab/pydatalab.git /datalab/lib/pydatalab; \
     fi && \
     cd /datalab/lib/pydatalab && \
-    /tools/node/bin/npm install -g typescript && \
+    /tools/node/bin/npm install -g typescript@3.0.3 && \
     tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts && \
     tsc --module amd --noImplicitAny --outdir google/datalab/notebook/static google/datalab/notebook/static/*.ts && \
     /tools/node/bin/npm uninstall -g typescript && \

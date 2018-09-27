@@ -1,0 +1,30 @@
+runtime: custom
+env: flex
+service: datalabstatic
+
+liveness_check:
+  path: "/static/logo.png"
+  check_interval_sec: 30
+  timeout_sec: 4
+  failure_threshold: 10
+  success_threshold: 2
+
+readiness_check:
+  path: "/static/logo.png"
+  check_interval_sec: 30
+  timeout_sec: 4
+  failure_threshold: 10
+  success_threshold: 2
+  app_start_timeout_sec: 60
+
+automatic_scaling:
+  min_num_instances: 1
+
+resources:
+  cpu: 4
+  memory_gb: 16
+  disk_size_gb: 100
+
+handlers:
+- url: /static/.*
+  script: this_is_required_but_ignored
