@@ -271,7 +271,7 @@ class ClientAuth implements GapiAuth {
       case GapiScopes.DRIVE:
         const driveScopeList = [
             'https://www.googleapis.com/auth/drive',
-            'https://www.googleapis.com/auth/drive.appfolder',
+            'https://www.googleapis.com/auth/drive.appdata',
             'https://www.googleapis.com/auth/drive.install',
         ];
         return driveScopeList.join(' ');
