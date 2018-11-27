@@ -277,6 +277,13 @@ RUN if [ -d /datalab/lib/pydatalab/.git ]; then \
     cp -R /usr/local/share/jupyter/nbextensions/gcpdatalab/* /datalab/nbconvert && \
     ln -s $DATALAB_CONDA_DIR/envs/$PYTHON_3_ENV/lib/python3.5/site-packages/notebook/static/custom/custom.css /datalab/nbconvert/custom.css
 
+# Add third party license files
+RUN mkdir -p /tools/license
+COPY license.sh /tools/license
+COPY third_party_licenses.csv /tools/license
+RUN mkdir /usr/licenses && \
+    /tools/license/license.sh /tools/license/third_party_licenses.csv /usr/licenses
+
 COPY config/py2-kernel.json $DATALAB_CONDA_DIR/envs/$PYTHON_3_ENV/share/jupyter/kernels/python2/kernel.json
 COPY config/py3-kernel.json $DATALAB_CONDA_DIR/envs/$PYTHON_3_ENV/share/jupyter/kernels/python3/kernel.json
 COPY config/py2-kernel-startup.sh $DATALAB_CONDA_DIR/envs/$PYTHON_3_ENV/share/jupyter/kernels/python2/kernel-startup.sh
