@@ -21,6 +21,9 @@
 #   license.sh third_party_licenses.csv /usr/licenses
 
 
+# switch to py2 conda virtual env.
+source activate py2env
+
 # Get the list of python packages installed locally.
 IFS=$'\n'
 INSTALLED_PACKAGES=($(pip freeze | sed s/=.*//))

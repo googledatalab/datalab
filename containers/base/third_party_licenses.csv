@@ -5,7 +5,7 @@ msgpack,https://raw.githubusercontent.com/msgpack/msgpack/python-0.1.7/python/CO
 Mako,https://raw.githubusercontent.com/zzzeek/mako/master/LICENSE,MIT
 python-editor,https://raw.githubusercontent.com/fmoo/python-editor/master/LICENSE,Apache v2
 tzlocal,https://raw.githubusercontent.com/regebro/tzlocal/master/LICENSE.txt,MIT
-itsdangerous,https://raw.githubusercontent.com/pallets/itsdangerous/master/LICENSE,3-Clause BSD
+itsdangerous,https://raw.githubusercontent.com/pallets/itsdangerous/master/LICENSE.rst,3-Clause BSD
 Werkzeug,https://raw.githubusercontent.com/pallets/werkzeug/master/LICENSE,3-Clause BSD
 click,https://raw.githubusercontent.com/pallets/click/master/LICENSE,3-Clause BSD
 alembic,https://raw.githubusercontent.com/zzzeek/alembic/master/LICENSE,MIT
@@ -176,3 +176,77 @@ pycrypto,https://raw.githubusercontent.com/dlitz/pycrypto/master/COPYRIGHT,PUBLI
 pyOpenSSL,https://raw.githubusercontent.com/pyca/pyopenssl/master/LICENSE,Apache 2.0
 PySocks,https://raw.githubusercontent.com/Anorov/PySocks/master/LICENSE,BSD
 ruamel-yaml,https://bitbucket.org/ruamel/yaml/raw/1364db82e3ad5680351e8a96323fa74ef9e662da/LICENSE,MIT
+apache-airflow,https://raw.githubusercontent.com/apache/incubator-airflow/master/LICENSE,Apache 2.0
+backports.functools-lru-cache,https://raw.githubusercontent.com/jaraco/backports.functools_lru_cache/master/LICENSE,MIT
+backports.ssl-match-hostname,https://bitbucket.org/brandon/backports.ssl_match_hostname/raw/76440258eb5e2aaac7c6f3d0b0a5afdbe335a502/LICENSE.txt,PSF
+beautifulsoup4,https://bazaar.launchpad.net/~leonardr/beautifulsoup/bs4/download/head:/copying-20110228012957-7ptf6yxua0sj3vhn-1/LICENSE,MIT
+blinker,https://raw.githubusercontent.com/jek/blinker/master/LICENSE,MIT
+bokeh,https://raw.githubusercontent.com/bokeh/bokeh/master/LICENSE.txt,3-Clause BSD
+brewer2mpl,https://raw.githubusercontent.com/jiffyclub/palettable/master/license.txt,MIT
+bs4,https://bazaar.launchpad.net/~leonardr/beautifulsoup/bs4/download/head:/copying-20110228012957-7ptf6yxua0sj3vhn-1/LICENSE,MIT
+Click,https://raw.githubusercontent.com/pallets/click/master/LICENSE.rst,BSD
+cloudpickle,https://raw.githubusercontent.com/cloudpipe/cloudpickle/master/LICENSE,3-Clause BSD
+croniter,https://raw.githubusercontent.com/kiorky/croniter/master/docs/LICENSE,MIT
+cycler,https://raw.githubusercontent.com/matplotlib/cycler/master/LICENSE,3-Clause BSD
+cytoolz,https://raw.githubusercontent.com/pytoolz/cytoolz/master/LICENSE.txt,BSD
+dask,https://raw.githubusercontent.com/dask/dask/master/LICENSE.txt,BSD
+datalab,https://raw.githubusercontent.com/googledatalab/pydatalab/master/LICENSE.txt,Apache 2.0
+distributed,https://raw.githubusercontent.com/dask/distributed/master/LICENSE.txt,BSD
+Flask-Admin,https://raw.githubusercontent.com/flask-admin/flask-admin/master/LICENSE,BSD
+Flask-Cache,https://raw.githubusercontent.com/thadeusb/flask-cache/master/LICENSE,BSD
+Flask-Login,https://raw.githubusercontent.com/maxcountryman/flask-login/master/LICENSE,MIT
+flask-swagger,https://raw.githubusercontent.com/gangverk/flask-swagger/master/LICENSE,MIT
+Flask-WTF,https://raw.githubusercontent.com/lepture/flask-wtf/master/LICENSE,BSD
+ggplot,https://raw.githubusercontent.com/yhat/ggpy/master/LICENSE,2-Clause BSD
+gitdb2,https://raw.githubusercontent.com/gitpython-developers/gitdb/master/LICENSE,BSD
+GitPython,https://raw.githubusercontent.com/gitpython-developers/GitPython/master/LICENSE,3-Clause BSD
+google-api-core,https://raw.githubusercontent.com/googleapis/google-cloud-python/master/LICENSE,Apache 2.0
+google-auth-oauthlib,https://raw.githubusercontent.com/GoogleCloudPlatform/google-auth-library-python-oauthlib/master/LICENSE,Apache 2.0
+google-cloud-monitoring,https://raw.githubusercontent.com/googleapis/google-cloud-python/master/LICENSE,Apache 2.0
+google-resumable-media,https://raw.githubusercontent.com/GoogleCloudPlatform/google-resumable-media-python/master/LICENSE,Apache 2.0
+gunicorn,https://raw.githubusercontent.com/benoitc/gunicorn/master/LICENSE,MIT
+h5py,https://raw.githubusercontent.com/h5py/h5py/master/docs/licenses.rst,BSD
+heapdict,https://raw.githubusercontent.com/DanielStutzbach/heapdict/master/LICENSE,BSD
+imageio,https://raw.githubusercontent.com/imageio/imageio/master/LICENSE,2-Clause BSD
+lime,https://raw.githubusercontent.com/marcotcr/lime/master/LICENSE,2-Clause BSD
+locket,https://raw.githubusercontent.com/mwilliamson/locket.py/master/LICENSE,BSD
+lockfile,https://launchpad.net/pylockfile,MIT
+lxml,https://raw.githubusercontent.com/lxml/lxml/master/LICENSES.txt,BSD
+matplotlib,https://raw.githubusercontent.com/matplotlib/matplotlib/master/LICENSE/LICENSE,BSD
+mltoolbox-datalab-classification-and-regression,https://raw.githubusercontent.com/googledatalab/pydatalab/master/LICENSE.txt,Apache 2.0
+mltoolbox-datalab-image-classification,https://raw.githubusercontent.com/googledatalab/pydatalab/master/LICENSE.txt,Apache 2.0
+networkx,https://raw.githubusercontent.com/networkx/networkx/master/LICENSE.txt,3-Clause BSD
+nltk,https://raw.githubusercontent.com/nltk/nltk/develop/LICENSE.txt,Apache 2.0
+olefile,https://raw.githubusercontent.com/decalage2/olefile/master/doc/License.rst,BSD
+ordereddict,https://raw.githubusercontent.com/sprintly/ordereddict/master/LICENSE,MIT
+pandas-gbq,https://raw.githubusercontent.com/pydata/pandas-gbq/master/LICENSE.txt,3-Clause BSD
+pandas-profiling,https://raw.githubusercontent.com/pandas-profiling/pandas-profiling/master/LICENSE,MIT
+partd,https://raw.githubusercontent.com/dask/partd/master/LICENSE.txt,BSD
+patsy,https://raw.githubusercontent.com/pydata/patsy/master/LICENSE.txt,BSD
+Pillow,https://raw.githubusercontent.com/python-pillow/Pillow/master/LICENSE,PIL
+plotly,https://raw.githubusercontent.com/plotly/plotly.py/master/LICENSE.txt,MIT
+psutil,https://raw.githubusercontent.com/giampaolo/psutil/master/LICENSE,BSD
+python-daemon,https://pagure.io/python-daemon/raw/master/f/LICENSE.ASF-2,Apache 2.0
+python-nvd3,https://raw.githubusercontent.com/areski/python-nvd3/develop/LICENSE,MIT
+python-slugify,https://raw.githubusercontent.com/un33k/python-slugify/master/LICENSE,MIT
+python-snappy,https://raw.githubusercontent.com/andrix/python-snappy/master/LICENSE,BSD
+PyWavelets,https://raw.githubusercontent.com/PyWavelets/pywt/master/LICENSE,MIT
+scikit-image,https://raw.githubusercontent.com/scikit-image/scikit-image/master/LICENSE.txt,BSD
+seaborn,https://raw.githubusercontent.com/mwaskom/seaborn/master/LICENSE,3-Clause BSD
+setproctitle,https://raw.githubusercontent.com/dvarrazzo/py-setproctitle/master/COPYRIGHT,BSD
+simplejson,https://raw.githubusercontent.com/simplejson/simplejson/master/LICENSE.txt,MIT
+smmap2,https://raw.githubusercontent.com/gitpython-developers/smmap/master/LICENSE,3-Clause BSD
+sortedcontainers,https://raw.githubusercontent.com/grantjenks/python-sortedcontainers/master/LICENSE,Apache 2.0
+SQLAlchemy,https://raw.githubusercontent.com/sqlalchemy/sqlalchemy/master/LICENSE,MIT
+statsmodels,https://raw.githubusercontent.com/statsmodels/statsmodels/master/LICENSE.txt,BSD
+sympy,https://raw.githubusercontent.com/sympy/sympy/master/LICENSE,BSD
+tabulate,https://bitbucket.org/astanin/python-tabulate/raw/30554300d76f673377956f7980ba4fd2f892c671/LICENSE,BSD
+tblib,https://raw.githubusercontent.com/ionelmc/python-tblib/master/LICENSE,BSD
+thrift,https://raw.githubusercontent.com/apache/thrift/master/LICENSE,Apache 2.0
+toolz,https://raw.githubusercontent.com/pytoolz/toolz/master/LICENSE.txt,BSD
+Unidecode,https://raw.githubusercontent.com/avian2/unidecode/master/LICENSE,GPL
+webencodings,https://raw.githubusercontent.com/gsnedders/python-webencodings/master/LICENSE,BSD
+WTForms,https://raw.githubusercontent.com/wtforms/wtforms/master/LICENSE.rst,BSD
+xgboost,https://raw.githubusercontent.com/dmlc/xgboost/master/LICENSE,Apache 2.0
+zict,https://raw.githubusercontent.com/dask/zict/master/LICENSE.txt,BSD
+zope.deprecation,https://raw.githubusercontent.com/zopefoundation/zope.deprecation/master/LICENSE.txt,ZPL
