@@ -126,7 +126,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 # avoid subtle dependency issues.
     unset OLDPWD && \
 # Set up Python 3.5 Conda env and install packages.
-    conda create --yes --quiet --name $PYTHON_3_ENV python=3.5 \
+    conda create --yes --quiet --name $PYTHON_3_ENV python=3.6 \
         crcmod==1.7 \
         dask==0.17.1 \
         dill==0.2.6 \
