@@ -177,9 +177,11 @@ RUN conda create --yes --quiet --name $PYTHON_3_ENV python=3.5 \
         google-cloud-monitoring==0.28.0 \
         lime==0.1.1.23 \
         protobuf==3.6.1 \
-        tensorflow==1.8.0 && \
+        tensorflow==1.8.0
+
+
 # Make pip3 a copy of pip for the Python 3 environment.
-    cp /usr/local/envs/py3env/bin/pip /usr/local/envs/py3env/bin/pip3 && \
+RUN cp /usr/local/envs/py3env/bin/pip /usr/local/envs/py3env/bin/pip3 && \
     source deactivate && \
     # Install Python2 IPython kernel within the Python3 Jupyter directory since
     # we will be running Jupyter from the Python3 conda env.
