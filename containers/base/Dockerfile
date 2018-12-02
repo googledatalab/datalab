@@ -125,10 +125,9 @@ RUN wget --quiet -O ~/miniconda.sh \
     conda clean -tipsy && \
 # This var needs to be unset before installing the Python3 Conda env to
 # avoid subtle dependency issues.
-    unset OLDPWD
+    unset OLDPWD && \
 # Set up Python 3.5 Conda env and install packages.
-
-RUN conda create --yes --quiet --name $PYTHON_3_ENV python=3.5 \
+    conda create --yes --quiet --name $PYTHON_3_ENV python=3.5 \
         crcmod==1.7 \
         dask==0.17.1 \
         dill==0.2.6 \
@@ -149,7 +148,7 @@ RUN conda create --yes --quiet --name $PYTHON_3_ENV python=3.5 \
         pandas==0.22.0 \
         pandocfilters==1.4.2 \
         pillow==5.0.0 \
-        pip==9.0.3 \
+        pip==18.0 \
         plotly==1.12.5 \
         psutil==4.3.0 \
         pygments==2.1.3 \
@@ -168,20 +167,8 @@ RUN conda create --yes --quiet --name $PYTHON_3_ENV python=3.5 \
         tornado==4.5.1 \
         widgetsnbextension==3.2.1 \
         xgboost==0.6a2 && \
-# Install Python3 packages that aren't available or up-to-date in Conda.
-    source activate $PYTHON_3_ENV && \
-    pip install --quiet -U --upgrade-strategy only-if-needed --no-cache-dir \
-        apache-airflow==1.9.0 \
-        bs4==0.0.1 \
-        ggplot==0.6.8 \
-        google-cloud-monitoring==0.28.0 \
-        lime==0.1.1.23 \
-        protobuf==3.6.1 \
-        tensorflow==1.8.0
-
-
 # Make pip3 a copy of pip for the Python 3 environment.
-RUN cp /usr/local/envs/py3env/bin/pip /usr/local/envs/py3env/bin/pip3 && \
+    cp /usr/local/envs/py3env/bin/pip /usr/local/envs/py3env/bin/pip3 && \
     source deactivate && \
     # Install Python2 IPython kernel within the Python3 Jupyter directory since
     # we will be running Jupyter from the Python3 conda env.
@@ -233,6 +220,18 @@ RUN cp /usr/local/envs/py3env/bin/pip /usr/local/envs/py3env/bin/pip3 && \
     rm -rf /root/.cache/* && \
     rm -rf /usr/share/locale/* && \
     rm -rf /usr/share/i18n/locales/*
+
+
+# Install Python3 packages that aren't available or up-to-date in Conda.
+RUN source activate $PYTHON_3_ENV && \
+    pip install --quiet -U --upgrade-strategy only-if-needed --no-cache-dir \
+        apache-airflow==1.9.0 \
+        bs4==0.0.1 \
+        ggplot==0.6.8 \
+        google-cloud-monitoring==0.28.0 \
+        lime==0.1.1.23 \
+        protobuf==3.6.1 \
+        tensorflow==1.8.0
 
 ENV LANG en_US.UTF-8
 
