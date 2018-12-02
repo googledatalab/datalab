@@ -221,6 +221,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     rm -rf /usr/share/i18n/locales/*
 
 # Install Python3 packages that aren't available or up-to-date in Conda.
+# For some reasons, merging it with the commands above does not work so creating a separate one.
 RUN source activate $PYTHON_3_ENV && \
     pip install --quiet -U --upgrade-strategy only-if-needed --no-cache-dir \
         apache-airflow==1.9.0 \
