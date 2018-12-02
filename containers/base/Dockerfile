@@ -56,10 +56,9 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     cd / && \
 # Set our locale to en_US.UTF-8.
     locale-gen en_US.UTF-8 && \
-    update-locale LANG=en_US.UTF-8
-
+    update-locale LANG=en_US.UTF-8 && \
 # Install MiniConda, set up Python 2.7 Conda env, and install packages.
-RUN wget --quiet -O ~/miniconda.sh \
+    wget --quiet -O ~/miniconda.sh \
     http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh && \
     chmod +x ~/miniconda.sh && \
     ~/miniconda.sh -b -f -p $DATALAB_CONDA_DIR && \
@@ -220,7 +219,6 @@ RUN wget --quiet -O ~/miniconda.sh \
     rm -rf /root/.cache/* && \
     rm -rf /usr/share/locale/* && \
     rm -rf /usr/share/i18n/locales/*
-
 
 # Install Python3 packages that aren't available or up-to-date in Conda.
 RUN source activate $PYTHON_3_ENV && \
