@@ -149,7 +149,7 @@ RUN conda create --yes --quiet --name $PYTHON_3_ENV python=3.5 \
         pandas==0.22.0 \
         pandocfilters==1.4.2 \
         pillow==5.0.0 \
-        pip==18.0 \
+        pip==9.0.3 \
         plotly==1.12.5 \
         psutil==4.3.0 \
         pygments==2.1.3 \
@@ -169,7 +169,6 @@ RUN conda create --yes --quiet --name $PYTHON_3_ENV python=3.5 \
         widgetsnbextension==3.2.1 \
         xgboost==0.6a2 && \
 # Install Python3 packages that aren't available or up-to-date in Conda.
-    sleep 2 && \
     source activate $PYTHON_3_ENV && \
     pip install --quiet -U --upgrade-strategy only-if-needed --no-cache-dir \
         apache-airflow==1.9.0 \
