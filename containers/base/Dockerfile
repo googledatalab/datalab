@@ -169,9 +169,16 @@ RUN conda create --yes --quiet --name $PYTHON_3_ENV python=3.5 \
         widgetsnbextension==3.2.1 \
         xgboost==0.6a2 && \
 # Install Python3 packages that aren't available or up-to-date in Conda.
+    sleep 2 && \
     source activate $PYTHON_3_ENV && \
     pip install --quiet -U --upgrade-strategy only-if-needed --no-cache-dir \
-        google-cloud-monitoring==0.28.0
+        apache-airflow==1.9.0 \
+        bs4==0.0.1 \
+        ggplot==0.6.8 \
+        google-cloud-monitoring==0.28.0 \
+        lime==0.1.1.23 \
+        protobuf==3.6.1 \
+        tensorflow==1.8.0
 
 
 # Make pip3 a copy of pip for the Python 3 environment.
