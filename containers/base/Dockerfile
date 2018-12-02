@@ -176,7 +176,6 @@ RUN conda create --yes --quiet --name $PYTHON_3_ENV python=3.5 \
         ggplot==0.6.8 \
         google-cloud-monitoring==0.28.0 \
         lime==0.1.1.23 \
-        protobuf==3.6.1 \
         tensorflow==1.8.0
 
 
