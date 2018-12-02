@@ -167,10 +167,9 @@ RUN conda create --yes --quiet --name $PYTHON_3_ENV python=3.5 \
         sympy==0.7.6.1 \
         tornado==4.5.1 \
         widgetsnbextension==3.2.1 \
-        xgboost==0.6a2
-
+        xgboost==0.6a2 && \
 # Install Python3 packages that aren't available or up-to-date in Conda.
-RUN source activate $PYTHON_3_ENV && \
+    source activate $PYTHON_3_ENV && \
     pip install --quiet -U --upgrade-strategy only-if-needed --no-cache-dir \
         apache-airflow==1.9.0 \
         bs4==0.0.1 \
