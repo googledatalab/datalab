@@ -166,16 +166,6 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         tornado==4.5.1 \
         widgetsnbextension==3.2.1 \
         xgboost==0.6a2 && \
-# Install Python3 packages that aren't available or up-to-date in Conda.
-    source activate $PYTHON_3_ENV && \
-    pip install --quiet -U --upgrade-strategy only-if-needed --no-cache-dir \
-        apache-airflow==1.9.0 \
-        bs4==0.0.1 \
-        ggplot==0.6.8 \
-        google-cloud-monitoring==0.28.0 \
-        lime==0.1.1.23 \
-        protobuf==3.6.1 \
-        tensorflow==1.8.0 && \
 # Make pip3 a copy of pip for the Python 3 environment.
     cp /usr/local/envs/py3env/bin/pip /usr/local/envs/py3env/bin/pip3 && \
     source deactivate && \
@@ -229,6 +219,18 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
     rm -rf /root/.cache/* && \
     rm -rf /usr/share/locale/* && \
     rm -rf /usr/share/i18n/locales/*
+
+# Install Python3 packages that aren't available or up-to-date in Conda.
+# For some reasons, merging it with the commands above does not work so creating a separate one.
+RUN source activate $PYTHON_3_ENV && \
+    pip install --quiet -U --upgrade-strategy only-if-needed --no-cache-dir \
+        apache-airflow==1.9.0 \
+        bs4==0.0.1 \
+        ggplot==0.6.8 \
+        google-cloud-monitoring==0.28.0 \
+        lime==0.1.1.23 \
+        protobuf==3.6.1 \
+        tensorflow==1.8.0
 
 ENV LANG en_US.UTF-8
 
