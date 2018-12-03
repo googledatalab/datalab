@@ -1,4 +1,0 @@
-# Use this file to add additional python packages to datalab
-
-# The following line will install package xlrd, as an example
-xlrd

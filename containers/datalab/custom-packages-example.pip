@@ -1,0 +1,6 @@
+# Use this file to add additional python packages to datalab using pip
+# You can use also wheel packages using the URL
+# ex : http://h2o-release.s3.amazonaws.com/h2o/rel-xia/2/Python/h2o-3.22.0.2-py2.py3-none-any.whl
+
+# The following line will install package xlrd, as an example
+xlrd

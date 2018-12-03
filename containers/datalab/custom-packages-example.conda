@@ -1,0 +1,5 @@
+# Use this file to add additional conda python packages to datalab 
+
+
+# The following line will install package xlrd, as an example
+xlrd

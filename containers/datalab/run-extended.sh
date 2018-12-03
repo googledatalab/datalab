@@ -34,36 +34,51 @@ if [ "$1" != "" ]; then
 fi
 
 # Custom packages can be installed in datalab prior to run time. There are 2 options
-# available. A simple option is to add the packages to a pip requirements file. Create a file
-# called 'custom-packages.txt' and place it in the $REPO_DIR/containers/datalab folder. Use
-# 'custom-packages-example.txt' as a starting point. Another option is to create a Dockerfile
+# available. A simple option is to add the packages to a pip or a Conda requirements file. 
+# Create a file called 'custom-packages.pip' or 'custom-packages.conda' and place it in the 
+# $REPO_DIR/containers/datalab folder. 
+# Use 'custom-packages-example.txt' as a starting point. Another option is to create a Dockerfile
 # called 'Dockerfile-extended.in' and place it in the $REPO_DIR/containers/datalab folder.
 # Use 'Dockerfile-extended-example.in' as a starting point. In both cases, a customized
 # docker image will be created which is derived from the standard datalab image.
-if [ -f custom-packages.txt ] || [ -f Dockerfile-extended.in ];
+if [ -f custom-packages.pip ] || [-f custom-packages.conda ] || [ -f Dockerfile-extended.in ];
 then
-    if [ -f custom-packages.txt ];
+
+  if [ -f custom-packages.pip ] || [-f custom-packages.conda ];
+  then
+    # First create a new Docker file called Dockerfile-custom-packages. Start with the standard image
+    # TODO: at some point the local Datalab container will be tagged 'latest' rather than 'local'
+    # and the line below should change.
+    echo 'FROM gcr.io/cloud-datalab/datalab:local' > Dockerfile-custom-packages 
+    
+    # Pip custom packages
+    if [ -f custom-packages.pip ];
     then
-        # First create a new Docker file called Dockerfile-custom-packages. Start with the standard image
-        # TODO: at some point the local Datalab container will be tagged 'latest' rather than 'local'
-        # and the line below should change.
-        echo 'FROM gcr.io/cloud-datalab/datalab:local' > Dockerfile-custom-packages
-
-        # Add the script with a list of custom packages to the Dockerfile
-        echo 'ADD custom-packages.txt /datalab/custom-packages.txt' >> Dockerfile-custom-packages
-        echo 'RUN pip install -r /datalab/custom-packages.txt' >> Dockerfile-custom-packages
-
-        DOCKERFILE=Dockerfile-custom-packages
-        DOCKERIMAGE=datalab-custom-packages
-
-    elif [ -f Dockerfile-extended.in ];
-    then
-        DOCKERFILE=Dockerfile-extended.in
-        DOCKERIMAGE=datalab-extended
+      # Add the script with a list of custom pip packages to the Dockerfile
+      echo 'ADD custom-packages.pip /datalab/custom-packages.pip' >> Dockerfile-custom-packages
+      echo 'RUN pip install -r /datalab/custom-packages.pip' >> Dockerfile-custom-packages
     fi
 
-    # Build the customized docker image derived from the standard datalab image
-    docker build ${DOCKER_BUILD_ARGS} -t $DOCKERIMAGE -f $DOCKERFILE .
+    # Conda custom packages
+    if [ -f custom-packages.conda ];
+    then
+      # Add the script with a list of custom conda packages to the Dockerfile
+      echo 'ADD custom-packages.conda /datalab/custom-packages.conda' >> Dockerfile-custom-packages
+      echo 'RUN conda install -y --file /datalab/custom-packages.conda' >> Dockerfile-custom-packages
+    fi
+
+    DOCKERFILE=Dockerfile-custom-packages
+    DOCKERIMAGE=datalab-custom-packages
+
+  elif [ -f Dockerfile-extended.in ];
+  then
+  # Extended Dockerfile
+      DOCKERFILE=Dockerfile-extended.in
+      DOCKERIMAGE=datalab-extended
+  fi
+  
+  # Build the customized docker image derived from the standard datalab image
+  docker build ${DOCKER_BUILD_ARGS} -t $DOCKERIMAGE -f $DOCKERFILE .
 fi
 
 # On linux docker runs directly on host machine, so bind to 127.0.0.1 only
