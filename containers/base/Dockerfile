@@ -111,7 +111,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
 # Install Python2 packages that aren't available or up-to-date in Conda.
     source activate $PYTHON_2_ENV && \
     pip install --quiet -U --upgrade-strategy only-if-needed --no-cache-dir \
-        apache-beam[gcp]==2.7.0 \
+        apache-airflow==1.9.0 \
         bs4==0.0.1 \
         ggplot==0.6.8 \
         google-cloud-dataflow==2.0.0 \
