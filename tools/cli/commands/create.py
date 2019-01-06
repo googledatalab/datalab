@@ -522,6 +522,13 @@ def flags(parser):
         help='do not automatically backup the disk contents to GCS')
 
     parser.add_argument(
+        '--no-firewall-rule',
+        dest='no_firewall_rule',
+        action='store_true',
+        default=False,
+        help='do not check and automatically create SSH firewall rule')
+
+    parser.add_argument(
         '--beta-no-external-ip',
         dest='no_external_ip',
         action='store_true',
@@ -919,8 +926,11 @@ def prepare(args, gcloud_compute, gcloud_repos):
     """
     network_name = args.network_name
     ensure_network_exists(args, gcloud_compute, network_name)
-    prompt_on_unexpected_firewall_rules(args, gcloud_compute, network_name)
-    ensure_firewall_rule_exists(args, gcloud_compute, network_name)
+    if not args.no_firewall_rule:
+        prompt_on_unexpected_firewall_rules(args, gcloud_compute, network_name)
+        ensure_firewall_rule_exists(args, gcloud_compute, network_name)
+    else:
+        print('Bypassing firewall rule check and creation')
 
     disk_name = args.disk_name or '{0}-pd'.format(args.instance)
     ensure_disk_exists(args, gcloud_compute, disk_name)
