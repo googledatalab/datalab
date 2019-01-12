@@ -69,8 +69,8 @@ class InvalidInstanceException(Exception):
     _MESSAGE = (
         'The specified instance, {}, does not appear '
         'to have been created by the `datalab` tool, or '
-        'from any GCE Deeplearning images, and '
-        'so cannot be managed by it.')
+        'from any GCE Deeplearning images. Therefore it '
+        'so cannot be managed by `datalab` tool.')
 
     def __init__(self, instance_name):
         super(InvalidInstanceException, self).__init__(
@@ -241,7 +241,7 @@ def flatten_metadata(metadata):
     return result
 
 
-def _check_datalab_tag(instance, status_tags_and_metadata):
+def _check_instance_allowed(instance, status_tags_and_metadata):
     """Check that the given "tags" object contains `datalab`.
 
     This is used to verify that a VM was created by the `datalab create`
@@ -304,7 +304,7 @@ def describe_instance(args, gcloud_compute, instance):
             stdout.seek(0)
             json_result = stdout.read().decode('utf-8').strip()
             status_tags_and_metadata = json.loads(json_result)
-            _check_datalab_tag(instance, status_tags_and_metadata)
+            _check_instance_allowed(instance, status_tags_and_metadata)
 
             status = status_tags_and_metadata.get('status', 'UNKNOWN')
             metadata = status_tags_and_metadata.get('metadata', {})
