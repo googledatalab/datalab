@@ -68,7 +68,8 @@ class InvalidInstanceException(Exception):
 
     _MESSAGE = (
         'The specified instance, {}, does not appear '
-        'to have been created by the `datalab` tool, and '
+        'to have been created by the `datalab` tool, or '
+        'from any GCE Deeplearning images, and '
         'so cannot be managed by it.')
 
     def __init__(self, instance_name):
@@ -240,22 +241,35 @@ def flatten_metadata(metadata):
     return result
 
 
-def _check_datalab_tag(instance, tags):
+def _check_datalab_tag(instance, status_tags_and_metadata):
     """Check that the given "tags" object contains `datalab`.
 
     This is used to verify that a VM was created by the `datalab create`
-    command.
+    command or was from GCE Deeplearning images, by checking if the VM
+    description contains a tag of 'datalab' or includes a c2d-tensorflow
+    licence string.
 
     Args:
       instance: The name of the instance to check
-      tags: An object with an 'items' field that is a list of tags.
+      status_tags_and_metadata: An object containing the result of GCE
+        VM instance description.
     Raises:
       InvalidInstanceException: If the check fails.
     """
+    tags = status_tags_and_metadata.get('tags', {})
     items = tags.get('items', [])
-    if 'datalab' not in items:
-        raise InvalidInstanceException(instance)
-    return
+
+    if 'datalab' in items:
+        return
+    else:
+      _license =  ('https://www.googleapis.com/compute/v1/projects/'
+                   'click-to-deploy-images/global/licenses/c2d-tensorflow')
+      disks = status_tags_and_metadata.get('disks', [])
+      for disk in disks:
+          if _license in disk.get('licenses', []):
+              return
+
+    raise InvalidInstanceException(instance)
 
 
 def describe_instance(args, gcloud_compute, instance):
@@ -282,7 +296,7 @@ def describe_instance(args, gcloud_compute, instance):
     if args.zone:
         get_cmd.extend(['--zone', args.zone])
     get_cmd.extend(
-        ['--format', 'json(status,tags.items,metadata.items)', instance])
+        ['--format', 'json(status,tags.items,metadata.items,disks[].licenses)', instance])
     with tempfile.TemporaryFile() as stdout, \
             tempfile.TemporaryFile() as stderr:
         try:
@@ -290,8 +304,7 @@ def describe_instance(args, gcloud_compute, instance):
             stdout.seek(0)
             json_result = stdout.read().decode('utf-8').strip()
             status_tags_and_metadata = json.loads(json_result)
-            tags = status_tags_and_metadata.get('tags', {})
-            _check_datalab_tag(instance, tags)
+            _check_datalab_tag(instance, status_tags_and_metadata)
 
             status = status_tags_and_metadata.get('status', 'UNKNOWN')
             metadata = status_tags_and_metadata.get('metadata', {})
