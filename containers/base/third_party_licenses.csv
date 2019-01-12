@@ -251,3 +251,4 @@ xgboost,https://raw.githubusercontent.com/dmlc/xgboost/master/LICENSE,Apache 2.0
 zict,https://raw.githubusercontent.com/dask/zict/master/LICENSE.txt,BSD
 zope.deprecation,https://raw.githubusercontent.com/zopefoundation/zope.deprecation/master/LICENSE.txt,ZPL
 google-cloud-dataflow,https://raw.githubusercontent.com/apache/beam/master/LICENSE,Apache 2.0
+soupsieve,https://raw.githubusercontent.com/facelessuser/soupsieve/master/LICENSE.md,MIT
