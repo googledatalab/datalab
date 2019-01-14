@@ -262,12 +262,12 @@ def _check_instance_allowed(instance, status_tags_and_metadata):
     if 'datalab' in items:
         return
     else:
-      _license =  ('https://www.googleapis.com/compute/v1/projects/'
-                   'click-to-deploy-images/global/licenses/c2d-tensorflow')
-      disks = status_tags_and_metadata.get('disks', [])
-      for disk in disks:
-          if _license in disk.get('licenses', []):
-              return
+        _license = ('https://www.googleapis.com/compute/v1/projects/'
+                    'click-to-deploy-images/global/licenses/c2d-tensorflow')
+        disks = status_tags_and_metadata.get('disks', [])
+        for disk in disks:
+            if _license in disk.get('licenses', []):
+                return
 
     raise InvalidInstanceException(instance)
 
@@ -296,7 +296,8 @@ def describe_instance(args, gcloud_compute, instance):
     if args.zone:
         get_cmd.extend(['--zone', args.zone])
     get_cmd.extend(
-        ['--format', 'json(status,tags.items,metadata.items,disks[].licenses)', instance])
+        ['--format', 'json(status,tags.items,metadata.items,disks[].licenses)',
+         instance])
     with tempfile.TemporaryFile() as stdout, \
             tempfile.TemporaryFile() as stderr:
         try:
