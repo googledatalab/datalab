@@ -70,7 +70,7 @@ class InvalidInstanceException(Exception):
         'The specified instance, {}, does not appear '
         'to have been created by the `datalab` tool, or '
         'from any GCE Deeplearning images. Therefore it '
-        'so cannot be managed by `datalab` tool.')
+        'cannot be managed by `datalab` tool.')
 
     def __init__(self, instance_name):
         super(InvalidInstanceException, self).__init__(
