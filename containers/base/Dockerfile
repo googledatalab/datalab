@@ -118,7 +118,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         google-cloud-monitoring==0.28.0 \
         lime==0.1.1.23 \
         protobuf==3.6.1 \
-        tensorflow==1.8.0 && \
+        tensorflow==1.13.1 && \
     source deactivate && \
 # Clean up before setting up the Python3 env.
     conda clean -tipsy && \
@@ -230,7 +230,7 @@ RUN source activate $PYTHON_3_ENV && \
         google-cloud-monitoring==0.28.0 \
         lime==0.1.1.23 \
         protobuf==3.6.1 \
-        tensorflow==1.8.0
+        tensorflow==1.13.1
 
 ENV LANG en_US.UTF-8
 
