@@ -15,7 +15,7 @@
 # We use different base images for GPU vs CPU Dockerfiles, so we expect
 # that the appropriate image is pulled and tagged locally.
 # CPU should use ubuntu:16.04
-# and GPU uses nvidia/cuda:9.1-cudnn7-devel-ubuntu16.04
+# and GPU uses nvidia/cuda:10.0-cudnn7-devel-ubuntu16.04
 FROM datalab-external-base-image
 MAINTAINER Google Cloud DataLab
 
