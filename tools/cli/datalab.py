@@ -406,7 +406,7 @@ def run():
     datalab_version = component_versions.get(datalab_component, 'UNKNOWN')
 
     if args.diagnose_me:
-        if args.verbosity is 'default':
+        if args.verbosity == 'default':
             args.verbosity = 'debug'
         print('Running with diagnostic messages enabled')
         print('Using the command "{}" to invoke gcloud'.format(gcloud_cmd))
