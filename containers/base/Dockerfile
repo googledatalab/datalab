@@ -96,7 +96,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         python-dateutil==2.5.0 \
         python-snappy==0.5.1 \
         pytz==2018.4 \
-        pyyaml==2.13 \
+        pyyaml==3.13 \
         pyzmq==17.1.0 \
         requests==2.18.4 \
         scikit-image==0.13.0 \
