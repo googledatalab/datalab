@@ -87,6 +87,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         oauth2client==2.2.0 \
         pandas-gbq==0.3.0 \
         pandas==0.22.0 \
+        pandas-profiling==1.4.2 \
         pandocfilters==1.4.2 \
         pillow==5.0.0 \
         pip==18.1 \
