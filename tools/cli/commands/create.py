@@ -477,7 +477,6 @@ def flags(parser):
         default=None,
         help='name of the subnet to which the instance will be attached.')
 
-
     parser.add_argument(
         '--idle-timeout',
         dest='idle_timeout',
