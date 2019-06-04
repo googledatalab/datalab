@@ -539,6 +539,14 @@ def flags(parser):
             'Note that this is a beta feature and unsupported.'))
 
     parser.add_argument(
+        '--no-firewall-rule',
+        dest='no_firewall_rule',
+        action='store_true',
+        default=False,
+        help='Disable the automatic creation of a firewall rule'
+    )
+
+    parser.add_argument(
         '--no-create-repository',
         dest='no_create_repository',
         action='store_true',
@@ -919,8 +927,9 @@ def prepare(args, gcloud_compute, gcloud_repos):
     """
     network_name = args.network_name
     ensure_network_exists(args, gcloud_compute, network_name)
-    prompt_on_unexpected_firewall_rules(args, gcloud_compute, network_name)
-    ensure_firewall_rule_exists(args, gcloud_compute, network_name)
+    if not args.no_firewall_rule:
+        prompt_on_unexpected_firewall_rules(args, gcloud_compute, network_name)
+        ensure_firewall_rule_exists(args, gcloud_compute, network_name)
 
     disk_name = args.disk_name or '{0}-pd'.format(args.instance)
     ensure_disk_exists(args, gcloud_compute, disk_name)
