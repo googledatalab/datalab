@@ -822,7 +822,8 @@ def ensure_firewall_rule_exists(args, gcloud_compute, network_name):
 def generate_firewall_rule_name(network_name):
     """Converts network name to a valid rule name to support shared vpc"""
     if "/" in network_name:
-        return _DATALAB_FIREWALL_RULE_TEMPLATE.format(network_name.split("/")[-1])
+        return _DATALAB_FIREWALL_RULE_TEMPLATE.format(
+            network_name.split("/")[-1])
     else:
         return _DATALAB_FIREWALL_RULE_TEMPLATE.format(network_name)
 
