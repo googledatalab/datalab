@@ -766,6 +766,7 @@ def create_firewall_rule(args, gcloud_compute, network_name, rule_name):
     Raises:
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
+    firewall_args = get_firewall_args(args, network_name)
     if utils.print_info_messages(args):
         print('Creating the firewall rule {0}'.format(rule_name))
     create_cmd = [
@@ -773,18 +774,19 @@ def create_firewall_rule(args, gcloud_compute, network_name, rule_name):
         '--allow', 'tcp:22',
         '--network', network_name,
         '--description', _DATALAB_FIREWALL_RULE_DESCRIPTION]
-    utils.call_gcloud_quietly(args, gcloud_compute, create_cmd)
+    utils.call_gcloud_quietly(firewall_args, gcloud_compute, create_cmd)
     return
 
 
 def has_unexpected_firewall_rules(args, gcloud_compute, network_name):
-    rule_name = _DATALAB_FIREWALL_RULE_TEMPLATE.format(network_name)
+    rule_name = generate_firewall_rule_name(network_name)
+    firewall_args = get_firewall_args(args, network_name)
     list_cmd = [
         'firewall-rules', 'list',
         '--filter', 'network~.^*{0}$'.format(network_name),
         '--format', 'value(name)']
     with tempfile.TemporaryFile() as tf:
-        gcloud_compute(args, list_cmd, stdout=tf)
+        gcloud_compute(firewall_args, list_cmd, stdout=tf)
         tf.seek(0)
         matching_rules = tf.read().decode('utf-8').strip()
         if matching_rules and (matching_rules != rule_name):
@@ -813,15 +815,37 @@ def ensure_firewall_rule_exists(args, gcloud_compute, network_name):
     Raises:
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
-    rule_name = _DATALAB_FIREWALL_RULE_TEMPLATE.format(network_name)
+    firewall_args = get_firewall_args(args, network_name)
+    rule_name = generate_firewall_rule_name(network_name)
     get_cmd = [
         'firewall-rules', 'describe', rule_name, '--format', 'value(name)']
     try:
         utils.call_gcloud_quietly(
-            args, gcloud_compute, get_cmd, report_errors=False)
+            firewall_args, gcloud_compute, get_cmd, report_errors=False)
     except subprocess.CalledProcessError:
         create_firewall_rule(args, gcloud_compute, network_name, rule_name)
     return
+
+
+def generate_firewall_rule_name(network_name):
+    """Converts network name to a valid rule name to support shared vpc"""
+    if "/" in network_name:
+        return _DATALAB_FIREWALL_RULE_TEMPLATE.format(
+            network_name.split("/")[-1])
+    else:
+        return _DATALAB_FIREWALL_RULE_TEMPLATE.format(network_name)
+
+
+def get_firewall_args(args, network_name):
+    """
+    Shared VPCs firewall rules need to be created in the host project.
+    This modifies the args to the host project for commands that need it.
+    """
+    if "/" in network_name:
+        project_name = network_name.split("/")[1]
+        args.project = project_name
+
+    return args
 
 
 def create_disk(args, gcloud_compute, disk_name):
