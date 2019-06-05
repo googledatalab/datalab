@@ -958,7 +958,7 @@ def prepare(args, gcloud_compute, gcloud_repos):
     """
     network_name = args.network_name
     ensure_network_exists(args, gcloud_compute, network_name)
-    if  args.no_firewall_rule:
+    if args.no_firewall_rule:
         print(_DATALAB_NO_FIREWALL_WARNING)
     else:
         prompt_on_unexpected_firewall_rules(args, gcloud_compute, network_name)
