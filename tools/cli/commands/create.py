@@ -53,6 +53,13 @@ _DATALAB_UNEXPECTED_FIREWALLS_WARNING_TEMPLATE = (
     '`datalab` command line tool. Instances created in that network may '
     'be open to traffic that they should not be exposed to.')
 
+_DATALAB_NO_FIREWALL_WARNING = (
+    '\nWarning: --no-firewall-rule requires firewall rules to be '
+    'configured in advance. \n'
+    'Incorrect configuration may result in errors like: \n'
+    'ssh_exchange_identification: Connection closed by remote host \n\n'
+)
+
 _DATALAB_DEFAULT_DISK_SIZE_GB = 200
 _DATALAB_DISK_DESCRIPTION = (
     'Persistent disk for a Google Cloud Datalab instance')
@@ -951,7 +958,9 @@ def prepare(args, gcloud_compute, gcloud_repos):
     """
     network_name = args.network_name
     ensure_network_exists(args, gcloud_compute, network_name)
-    if not args.no_firewall_rule:
+    if  args.no_firewall_rule:
+        print(_DATALAB_NO_FIREWALL_WARNING)
+    else:
         prompt_on_unexpected_firewall_rules(args, gcloud_compute, network_name)
         ensure_firewall_rule_exists(args, gcloud_compute, network_name)
 
