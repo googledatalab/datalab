@@ -53,6 +53,13 @@ _DATALAB_UNEXPECTED_FIREWALLS_WARNING_TEMPLATE = (
     '`datalab` command line tool. Instances created in that network may '
     'be open to traffic that they should not be exposed to.')
 
+_DATALAB_NO_FIREWALL_WARNING = (
+    '\nWarning: --no-firewall-rule requires firewall rules to be '
+    'configured in advance. \n'
+    'Incorrect configuration may result in errors like: \n'
+    'ssh_exchange_identification: Connection closed by remote host \n\n'
+)
+
 _DATALAB_DEFAULT_DISK_SIZE_GB = 200
 _DATALAB_DISK_DESCRIPTION = (
     'Persistent disk for a Google Cloud Datalab instance')
@@ -539,6 +546,14 @@ def flags(parser):
             'Note that this is a beta feature and unsupported.'))
 
     parser.add_argument(
+        '--no-firewall-rule',
+        dest='no_firewall_rule',
+        action='store_true',
+        default=False,
+        help='Disable the automatic creation of a firewall rule'
+    )
+
+    parser.add_argument(
         '--no-create-repository',
         dest='no_create_repository',
         action='store_true',
@@ -758,6 +773,7 @@ def create_firewall_rule(args, gcloud_compute, network_name, rule_name):
     Raises:
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
+    firewall_args = get_firewall_args(args, network_name)
     if utils.print_info_messages(args):
         print('Creating the firewall rule {0}'.format(rule_name))
     create_cmd = [
@@ -765,18 +781,19 @@ def create_firewall_rule(args, gcloud_compute, network_name, rule_name):
         '--allow', 'tcp:22',
         '--network', network_name,
         '--description', _DATALAB_FIREWALL_RULE_DESCRIPTION]
-    utils.call_gcloud_quietly(args, gcloud_compute, create_cmd)
+    utils.call_gcloud_quietly(firewall_args, gcloud_compute, create_cmd)
     return
 
 
 def has_unexpected_firewall_rules(args, gcloud_compute, network_name):
-    rule_name = _DATALAB_FIREWALL_RULE_TEMPLATE.format(network_name)
+    rule_name = generate_firewall_rule_name(network_name)
+    firewall_args = get_firewall_args(args, network_name)
     list_cmd = [
         'firewall-rules', 'list',
         '--filter', 'network~.^*{0}$'.format(network_name),
         '--format', 'value(name)']
     with tempfile.TemporaryFile() as tf:
-        gcloud_compute(args, list_cmd, stdout=tf)
+        gcloud_compute(firewall_args, list_cmd, stdout=tf)
         tf.seek(0)
         matching_rules = tf.read().decode('utf-8').strip()
         if matching_rules and (matching_rules != rule_name):
@@ -805,15 +822,37 @@ def ensure_firewall_rule_exists(args, gcloud_compute, network_name):
     Raises:
       subprocess.CalledProcessError: If the `gcloud` command fails
     """
-    rule_name = _DATALAB_FIREWALL_RULE_TEMPLATE.format(network_name)
+    firewall_args = get_firewall_args(args, network_name)
+    rule_name = generate_firewall_rule_name(network_name)
     get_cmd = [
         'firewall-rules', 'describe', rule_name, '--format', 'value(name)']
     try:
         utils.call_gcloud_quietly(
-            args, gcloud_compute, get_cmd, report_errors=False)
+            firewall_args, gcloud_compute, get_cmd, report_errors=False)
     except subprocess.CalledProcessError:
         create_firewall_rule(args, gcloud_compute, network_name, rule_name)
     return
+
+
+def generate_firewall_rule_name(network_name):
+    """Converts network name to a valid rule name to support shared vpc"""
+    if "/" in network_name:
+        return _DATALAB_FIREWALL_RULE_TEMPLATE.format(
+            network_name.split("/")[-1])
+    else:
+        return _DATALAB_FIREWALL_RULE_TEMPLATE.format(network_name)
+
+
+def get_firewall_args(args, network_name):
+    """
+    Shared VPCs firewall rules need to be created in the host project.
+    This modifies the args to the host project for commands that need it.
+    """
+    if "/" in network_name:
+        project_name = network_name.split("/")[1]
+        args.project = project_name
+
+    return args
 
 
 def create_disk(args, gcloud_compute, disk_name):
@@ -919,8 +958,11 @@ def prepare(args, gcloud_compute, gcloud_repos):
     """
     network_name = args.network_name
     ensure_network_exists(args, gcloud_compute, network_name)
-    prompt_on_unexpected_firewall_rules(args, gcloud_compute, network_name)
-    ensure_firewall_rule_exists(args, gcloud_compute, network_name)
+    if args.no_firewall_rule:
+        print(_DATALAB_NO_FIREWALL_WARNING)
+    else:
+        prompt_on_unexpected_firewall_rules(args, gcloud_compute, network_name)
+        ensure_firewall_rule_exists(args, gcloud_compute, network_name)
 
     disk_name = args.disk_name or '{0}-pd'.format(args.instance)
     ensure_disk_exists(args, gcloud_compute, disk_name)
