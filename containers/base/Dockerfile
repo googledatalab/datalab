@@ -33,6 +33,8 @@ ENV PYTHON_3_ENV py3env
 SHELL ["/bin/bash", "-c"]
 
 # Setup OS and core packages
+RUN apt-key adv --keyserver   keyserver.ubuntu.com --recv-keys 04EE7237B7D453EC
+RUN apt-key adv --keyserver   keyserver.ubuntu.com --recv-keys 648ACFD622F3D138
 RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sources.list && \
     apt-get update -y && \
     apt-get install -y -q debian-archive-keyring debian-keyring && \
