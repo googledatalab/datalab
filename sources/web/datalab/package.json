@@ -3,7 +3,7 @@
   "description": "Google Cloud Datalab Server",
   "dependencies": {
     "bunyan": "^1.2.0",
-    "googleapis": "^4.0.0",
+    "googleapis": "^59.0.0",
     "http-proxy": "^1.4.3",
     "mkdirp": "^0.5.0",
     "node-uuid": "^1.4.1",
