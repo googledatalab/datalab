@@ -300,6 +300,10 @@ function stopVmHandler(request: http.ServerRequest, response: http.ServerRespons
 
 function requestIsCrossOrigin(request: http.ServerRequest) {
   if (request.headers.origin) {
+    // Explicitly whitelist Cloud Shell's domain for cross-origin requests.
+    if (url.parse(request.headers.origin).host.endsWith('.cloudshell.dev')) {
+      return false;
+    }
     return url.parse(request.headers.origin).host !== request.headers.host;
   } else if (request.headers.referer) {
     return url.parse(request.headers.referer).host !== request.headers.host;
