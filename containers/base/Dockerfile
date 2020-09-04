@@ -33,7 +33,8 @@ ENV PYTHON_3_ENV py3env
 SHELL ["/bin/bash", "-c"]
 
 # Setup OS and core packages
-RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sources.list && \
+RUN echo "deb-src http://ftp.us.debian.org/debian stretch main" >> /etc/apt/sources.list && \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EF0F382A1A7B6500 04EE7237B7D453EC && \
     apt-get update -y && \
     apt-get install -y -q debian-archive-keyring debian-keyring && \
     apt-get update -y && \
@@ -94,7 +95,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         plotly==1.12.5 \
         psutil==4.3.0 \
         pygments==2.1.3 \
-        python-dateutil==2.5.0 \
+        python-dateutil==2.8.1 \
         python-snappy==0.5.1 \
         pytz==2018.4 \
         pyyaml==3.13 \
@@ -103,10 +104,10 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         scikit-image==0.13.0 \
         scikit-learn==0.19.1 \
         scipy==1.0.0 \
-        seaborn==0.7.0 \
+        seaborn==0.9.0 \
         six==1.11.0 \
         statsmodels==0.8.0 \
-        sympy==0.7.6.1 \
+        sympy==1.1.1 \
         tornado==4.5.1 \
         widgetsnbextension==3.2.1 \
         xgboost==0.6a2 && \
@@ -148,12 +149,13 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         pandas-gbq==0.3.0 \
         pandas==0.22.0 \
         pandocfilters==1.4.2 \
+        parso==0.7.0 \
         pillow==5.0.0 \
         pip==18.0 \
         plotly==1.12.5 \
         psutil==4.3.0 \
         pygments==2.1.3 \
-        python-dateutil==2.5.0 \
+        python-dateutil==2.8.1 \
         python-snappy==0.5.1 \
         pytz==2018.4 \
         pyzmq==17.1.0 \
@@ -161,10 +163,10 @@ RUN echo "deb-src http://ftp.us.debian.org/debian testing main" >> /etc/apt/sour
         scikit-image==0.13.0 \
         scikit-learn==0.19.1 \
         scipy==1.0.0 \
-        seaborn==0.7.0 \
+        seaborn==0.9.0 \
         six==1.11.0 \
         statsmodels==0.8.0 \
-        sympy==0.7.6.1 \
+        sympy==1.1.1 \
         tornado==4.5.1 \
         widgetsnbextension==3.2.1 \
         xgboost==0.6a2 && \
