@@ -105,7 +105,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian stretch main" >> /etc/apt/sour
         scikit-learn==0.19.1 \
         scipy==1.0.0 \
         seaborn==0.9.0 \
-        six==1.11.0 \
+        six==1.10.0 \
         statsmodels==0.8.0 \
         sympy==1.1.1 \
         tornado==4.5.1 \
@@ -164,7 +164,7 @@ RUN echo "deb-src http://ftp.us.debian.org/debian stretch main" >> /etc/apt/sour
         scikit-learn==0.19.1 \
         scipy==1.0.0 \
         seaborn==0.9.0 \
-        six==1.11.0 \
+        six==1.10.0 \
         statsmodels==0.8.0 \
         sympy==1.1.1 \
         tornado==4.5.1 \
