@@ -207,7 +207,7 @@ def connect(args, gcloud_compute, email, in_cloud_shell):
           KeyboardInterrupt: When the end user kills the connection
         """
         if utils.print_debug_messages(args):
-            print('Connecting to {0} via SSH').format(instance)
+            print('Connecting to {0} via SSH'.format(instance))
 
         cmd = ['ssh']
         if args.zone:
