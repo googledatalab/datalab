@@ -50,8 +50,9 @@ _DATALAB_FIREWALL_RULE_TEMPLATE = '{0}-allow-ssh'
 _DATALAB_FIREWALL_RULE_DESCRIPTION = 'Allow SSH access to Datalab instances'
 _DATALAB_UNEXPECTED_FIREWALLS_WARNING_TEMPLATE = (
     'The network `{0}` has firewall rules that were not created by the '
-    '`datalab` command line tool. Instances created in that network may '
-    'be open to traffic that they should not be exposed to.')
+    '`datalab` command line tool. Instances that have been created or existed '
+    'in that network may be open to traffic that they are not intended to due '
+    'to the customized firewall rules.')
 
 _DATALAB_NO_FIREWALL_WARNING = (
     '\nWarning: --no-firewall-rule requires firewall rules to be '
