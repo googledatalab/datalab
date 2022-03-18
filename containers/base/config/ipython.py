@@ -1,7 +1,7 @@
 # Copyright 2015 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
+# you may not use this, file except in compliance with the License.
 # You may obtain a copy of the License at
 #
 #  http://www.apache.org/licenses/LICENSE-2.0
@@ -25,8 +25,12 @@ c.InteractiveShellApp.extensions = [
 ]
 
 # Startup code.
+
 c.InteractiveShellApp.exec_lines = []
+#read command is the shell's internal tool for taking input from the user i.e. it makes the scripts interactive.
 
 # Enable matplotlib renderings to show up inline in the notebook.
 c.InteractiveShellApp.matplotlib = 'inline'
+
+
 
